@@ -3,6 +3,19 @@ name = "forma-server"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-description = "Forma server framework — SSR rendering, asset serving, middleware"
+authors = ["Forma <victor@getforma.dev>"]
+description = "Axum middleware for Forma SSR: page rendering, asset serving, CSP, service worker"
 repository = "https://github.com/getforma-dev/forma"
 homepage = "https://getforma.dev"
+keywords = ["ssr", "axum", "web-framework", "islands"]
+categories = ["web-programming::http-server"]
+
+[dependencies]
+forma-ir = { path = "../forma-ir" }
+axum = { version = "0.8", features = ["macros"] }
+rust-embed = "8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+ring = "0.17"
+tracing = "0.1"
