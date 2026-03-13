@@ -23,7 +23,9 @@ pub fn check_ir_compatibility(module: &IrModule) -> Result<(), String> {
 /// parsed modules.
 ///
 /// Routes with valid IR get `Phase2SsrReconcile`. Invalid or missing IR
-/// falls back to `Phase1ClientMount`.
+/// falls back to `Phase1ClientMount`. Routes with no `.ir` field in the
+/// manifest are not included in the returned map — callers should treat
+/// absent routes as `Phase1ClientMount`.
 pub fn load_ir_modules<A: Embed>(
     manifest: &AssetManifest,
 ) -> (HashMap<String, RenderMode>, HashMap<String, IrModule>) {

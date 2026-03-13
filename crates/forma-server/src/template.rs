@@ -85,7 +85,7 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
 
     let page_js_tag = js_urls
         .last()
-        .map(|url| format!("<script type=\"module\" src=\"{url}\"></script>"))
+        .map(|url| format!("<script type=\"module\" nonce=\"{nonce}\" src=\"{url}\"></script>"))
         .unwrap_or_default();
 
     let wasm_script = match (
