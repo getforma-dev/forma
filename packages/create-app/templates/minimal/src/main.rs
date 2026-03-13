@@ -13,7 +13,7 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::init();
+    tracing_subscriber::fmt::init();
     let manifest = assets::load_manifest::<Assets>();
     let state = Arc::new(AppState { manifest });
 

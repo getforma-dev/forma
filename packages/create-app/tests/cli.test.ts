@@ -44,6 +44,7 @@ describe('template files contain expected structure', () => {
         const main = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8');
         expect(main).toContain('forma_server');
         expect(main).toContain('render_page');
+        expect(main).toContain('tracing_subscriber::fmt::init()');
       });
 
       it('has admin/package.json with @getforma/core', () => {
