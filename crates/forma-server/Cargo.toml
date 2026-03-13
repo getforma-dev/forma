@@ -1,0 +1,8 @@
+[package]
+name = "forma-server"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Forma server framework — SSR rendering, asset serving, middleware"
+repository = "https://github.com/getforma-dev/forma"
+homepage = "https://getforma.dev"

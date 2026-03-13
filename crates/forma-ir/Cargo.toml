@@ -1,0 +1,27 @@
+[package]
+name = "forma-ir"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Forma <victor@getforma.dev>"]
+description = "Forma Module IR: binary format, parser, walker, and WASM exports"
+repository = "https://github.com/getforma-dev/forma"
+homepage = "https://getforma.dev"
+keywords = ["ssr", "binary-ir", "wasm", "web-framework"]
+categories = ["web-programming", "wasm"]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O3", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+
+[dependencies]
+serde_json = { version = "1", optional = true }
+tracing = { version = "0.1", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+
+[features]
+default = ["serde_json", "tracing", "dump"]
+wasm = ["serde_json", "wasm-bindgen"]
+dump = []
+
+[lib]
+crate-type = ["cdylib", "rlib"]
