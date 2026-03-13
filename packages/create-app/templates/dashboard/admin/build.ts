@@ -2,7 +2,7 @@ import { build } from '@getforma/build';
 
 await build({
   entryPoints: [
-    { entry: 'src/home/app.ts', outfile: 'dist/home.js' },
+    { entry: 'src/home/app.ts', outfile: 'home.js' },
   ],
   routes: {
     '/': { js: ['home'], css: [] },

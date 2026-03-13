@@ -45,6 +45,9 @@ describe('template files contain expected structure', () => {
         expect(main).toContain('forma_server');
         expect(main).toContain('render_page');
         expect(main).toContain('tracing_subscriber::fmt::init()');
+        expect(main).toContain('route("/favicon.ico"');
+        expect(main).toContain('route("/sw.js"');
+        expect(main).toContain('serve_asset::<Assets>');
       });
 
       it('has admin/package.json with @getforma/core', () => {
@@ -57,6 +60,12 @@ describe('template files contain expected structure', () => {
       it('has admin/build.ts', () => {
         const build = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'build.ts'), 'utf8');
         expect(build).toContain('@getforma/build');
+        expect(build).toContain("outfile: 'home.js'");
+      });
+
+      it('has admin/src/home/app.ts with mount render function', () => {
+        const app = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'app.ts'), 'utf8');
+        expect(app).toContain("mount(() => HomeIsland(), '#app')");
       });
 
       it('has admin/src/home/HomeIsland.ts with real DOM h()', () => {

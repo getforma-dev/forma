@@ -1,5 +1,5 @@
-use axum::{extract::State, response::{Html, IntoResponse, Response}, routing::get, Router};
-use forma_server::{assets, render_page, PageConfig, RenderMode};
+use axum::{extract::State, http::StatusCode, response::{Html, IntoResponse, Response}, routing::get, Router};
+use forma_server::{assets, render_page, sw, PageConfig, RenderMode};
 use rust_embed::Embed;
 use std::sync::Arc;
 
@@ -19,6 +19,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(home))
+        .route("/favicon.ico", get(favicon))
+        .route("/sw.js", get(sw::serve_sw::<Assets>))
         .route("/_assets/{*filename}", get(assets::serve_asset::<Assets>))
         .with_state(state);
 
@@ -41,4 +43,8 @@ async fn home(State(state): State<Arc<AppState>>) -> Response {
         slots: None,
     });
     Html(page.html).into_response()
+}
+
+async fn favicon() -> StatusCode {
+    StatusCode::NO_CONTENT
 }
