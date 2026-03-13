@@ -375,7 +375,7 @@ impl IrModule {
 /// Binary encoding helpers for building FMIR test data.
 ///
 /// These are always compiled (not behind `#[cfg(test)]`) so that other crates
-/// in the workspace (e.g., `gatewasm-server`) can use them in their own tests
+/// (e.g., `forma-server`) can use them in their own tests
 /// via `forma_ir::parser::test_helpers::build_minimal_ir`.
 pub mod test_helpers {
     use crate::format::{HEADER_SIZE, SECTION_TABLE_SIZE};
