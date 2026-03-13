@@ -1,5 +1,5 @@
 {
-  "name": "create-forma-app",
+  "name": "@getforma/create-app",
   "version": "0.1.0",
   "type": "module",
   "author": "Forma <victor@getforma.dev>",
@@ -10,7 +10,8 @@
     "url": "https://github.com/getforma-dev/create-forma-app.git"
   },
   "bin": {
-    "create-forma-app": "dist/index.js"
+    "create-forma-app": "dist/index.js",
+    "create-app": "dist/index.js"
   },
   "files": [
     "dist/",

@@ -1,11 +1,11 @@
-# create-forma-app
+# @getforma/create-app
 
 Scaffold a new [Forma](https://getforma.dev) application — Rust + TypeScript SSR framework with fine-grained reactivity and no virtual DOM.
 
 ## Usage
 
 ```bash
-npx create-forma-app my-app
+npx @getforma/create-app my-app
 ```
 
 You will be prompted to choose a template:
