@@ -35,6 +35,12 @@ async function main() {
     process.exit(1);
   }
 
+  // Validate project name (must be a valid directory + Cargo package name)
+  if (!/^[a-z0-9][a-z0-9_-]*$/.test(projectName)) {
+    console.error('Project name must be lowercase alphanumeric with hyphens/underscores. Cannot start with - or _.');
+    process.exit(1);
+  }
+
   const { template } = await prompts({
     type: 'select',
     name: 'template',

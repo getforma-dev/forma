@@ -16,9 +16,10 @@ const [rows, setRows] = createSignal(initialData);
 const [sortAsc, setSortAsc] = createSignal(true);
 
 function toggleSort() {
-  setSortAsc(!sortAsc());
+  const asc = !sortAsc();
+  setSortAsc(asc);
   setRows(
-    [...rows()].sort((a, b) => (sortAsc() ? a.value - b.value : b.value - a.value)),
+    [...rows()].sort((a, b) => (asc ? a.value - b.value : b.value - a.value)),
   );
 }
 
