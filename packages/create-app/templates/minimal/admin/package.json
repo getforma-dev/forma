@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx build.ts",
+    "build:ssr": "tsx build.ts --ssr",
+    "dev": "tsx build.ts --watch"
+  },
+  "dependencies": {
+    "@getforma/core": "^0.1.0"
+  },
+  "devDependencies": {
+    "@getforma/compiler": "^0.1.0",
+    "@getforma/build": "^0.1.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.0.0"
+  }
+}
