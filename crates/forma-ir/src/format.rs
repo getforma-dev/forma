@@ -207,11 +207,11 @@ impl SectionTable {
         }
 
         let mut sections = [SectionDescriptor { offset: 0, size: 0 }; 4];
-        for i in 0..4 {
+        for (i, section) in sections.iter_mut().enumerate() {
             let base = i * 8;
             let offset = u32::from_le_bytes(data[base..base + 4].try_into().unwrap());
             let size = u32::from_le_bytes(data[base + 4..base + 8].try_into().unwrap());
-            sections[i] = SectionDescriptor { offset, size };
+            *section = SectionDescriptor { offset, size };
         }
 
         Ok(SectionTable { sections })

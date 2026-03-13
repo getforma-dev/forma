@@ -245,7 +245,7 @@ fn walk_range(
                     };
                     out.push_str(" data-forma-hydrate=\"");
                     out.push_str(trigger_str);
-                    out.push_str("\"");
+                    out.push('"');
                     if let Some(ref props_json) = island.inline_props {
                         out.push_str(" data-forma-props='");
                         out.push_str(props_json);
@@ -306,7 +306,7 @@ fn walk_range(
                     };
                     out.push_str(" data-forma-hydrate=\"");
                     out.push_str(trigger_str);
-                    out.push_str("\"");
+                    out.push('"');
                     if let Some(ref props_json) = island.inline_props {
                         out.push_str(" data-forma-props='");
                         out.push_str(props_json);
@@ -712,7 +712,7 @@ fn walk_range_until_island_end(
                     };
                     out.push_str(" data-forma-hydrate=\"");
                     out.push_str(trigger_str);
-                    out.push_str("\"");
+                    out.push('"');
                     if let Some(ref props_json) = island.inline_props {
                         out.push_str(" data-forma-props='");
                         out.push_str(props_json);
@@ -768,7 +768,7 @@ fn walk_range_until_island_end(
                     };
                     out.push_str(" data-forma-hydrate=\"");
                     out.push_str(trigger_str);
-                    out.push_str("\"");
+                    out.push('"');
                     if let Some(ref props_json) = island.inline_props {
                         out.push_str(" data-forma-props='");
                         out.push_str(props_json);

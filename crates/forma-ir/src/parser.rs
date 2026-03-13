@@ -78,6 +78,11 @@ impl StringTable {
     pub fn len(&self) -> usize {
         self.strings.len()
     }
+
+    /// Returns true if the string table is empty.
+    pub fn is_empty(&self) -> bool {
+        self.strings.is_empty()
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -156,6 +161,11 @@ impl SlotTable {
     /// Number of slots in the table.
     pub fn len(&self) -> usize {
         self.slots.len()
+    }
+
+    /// Returns true if the slot table is empty.
+    pub fn is_empty(&self) -> bool {
+        self.slots.is_empty()
     }
 
     /// Access the underlying slot entries.
@@ -247,6 +257,11 @@ impl IslandTableParsed {
     /// Number of islands in the table.
     pub fn len(&self) -> usize {
         self.islands.len()
+    }
+
+    /// Returns true if the island table is empty.
+    pub fn is_empty(&self) -> bool {
+        self.islands.is_empty()
     }
 
     /// Access the underlying island entries.
@@ -414,7 +429,7 @@ pub mod test_helpers {
     pub fn build_island_table(entries: &[(u16, u8, u8, u32, u32, &[u16])]) -> Vec<u8> {
         let mut buf = Vec::new();
         buf.extend_from_slice(&(entries.len() as u16).to_le_bytes());
-        for &(id, trigger, props_mode, name_str_idx, byte_offset, ref slot_ids) in entries {
+        for &(id, trigger, props_mode, name_str_idx, byte_offset, slot_ids) in entries {
             buf.extend_from_slice(&id.to_le_bytes());
             buf.push(trigger);
             buf.push(props_mode);

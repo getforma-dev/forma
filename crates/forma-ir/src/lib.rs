@@ -3,6 +3,8 @@
 //! This crate provides the core IR types and parsing logic that can be compiled
 //! to both native Rust and WebAssembly targets.
 
+#![allow(clippy::type_complexity)]
+
 pub mod format;
 pub mod parser;
 pub mod slot;
