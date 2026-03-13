@@ -11,7 +11,7 @@ keywords = ["ssr", "axum", "web-framework", "islands"]
 categories = ["web-programming::http-server"]
 
 [dependencies]
-forma-ir = { path = "../forma-ir" }
+forma-ir = { version = "0.1", path = "../forma-ir" }
 axum = "0.8"
 rust-embed = "8"
 serde = { version = "1", features = ["derive"] }
