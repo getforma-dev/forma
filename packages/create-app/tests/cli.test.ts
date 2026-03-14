@@ -63,22 +63,31 @@ describe('template files contain expected structure', () => {
         expect(build).toContain("outfile: 'home.js'");
       });
 
-      it('has admin/src/home/app.ts with mount render function', () => {
-        const app = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'app.ts'), 'utf8');
+      it('has admin/src/home/app.tsx with mount render function', () => {
+        const app = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'app.tsx'), 'utf8');
         expect(app).toContain("mount(() => HomeIsland(), '#app')");
       });
 
-      it('has admin/src/home/HomeIsland.ts with real DOM h()', () => {
+      it('has admin/src/home/HomeIsland.tsx with JSX syntax', () => {
         const island = fs.readFileSync(
-          path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'HomeIsland.ts'),
+          path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'HomeIsland.tsx'),
           'utf8',
         );
         expect(island).toContain('@getforma/core');
-        expect(island).toContain("h(");
+        expect(island).toContain('<div');
+        expect(island).toContain('onClick');
         // Ensure no virtual DOM patterns
         expect(island).not.toContain('createElement');
         expect(island).not.toContain('render(');
-        expect(island).not.toContain('jsx');
+      });
+
+      it('has admin/tsconfig.json with JSX settings', () => {
+        const tsconfig = JSON.parse(
+          fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'tsconfig.json'), 'utf8'),
+        );
+        expect(tsconfig.compilerOptions.jsx).toBe('react');
+        expect(tsconfig.compilerOptions.jsxFactory).toBe('h');
+        expect(tsconfig.compilerOptions.jsxFragmentFactory).toBe('Fragment');
       });
 
       it('has README.md with placeholder', () => {
@@ -99,13 +108,13 @@ describe('template files contain expected structure', () => {
 describe('dashboard template specifics', () => {
   it('uses createList with plain T items (not signal getters)', () => {
     const island = fs.readFileSync(
-      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'home', 'HomeIsland.ts'),
+      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'home', 'HomeIsland.tsx'),
       'utf8',
     );
     expect(island).toContain('createList');
     expect(island).toContain('createSignal');
     // createList renderFn should receive plain item, not () => T
-    // The pattern: (r) => h(...) where r is used directly (r.id, r.name)
+    // The pattern: (r) => (...) where r is used directly (r.id, r.name)
     expect(island).toContain('r.id');
     expect(island).toContain('r.name');
     expect(island).toContain('r.value');
@@ -141,6 +150,17 @@ describe('replacePlaceholders', () => {
     replacePlaceholders(TEST_OUTPUT, { '{{PROJECT_NAME}}': 'test-project' });
     const result = fs.readFileSync(path.join(TEST_OUTPUT, 'main.rs'), 'utf8');
     expect(result).toBe('// test-project server');
+  });
+
+  it('replaces placeholders in .tsx files', () => {
+    fs.writeFileSync(
+      path.join(TEST_OUTPUT, 'HomeIsland.tsx'),
+      '<h1>{{PROJECT_NAME}}</h1>',
+    );
+    replacePlaceholders(TEST_OUTPUT, { '{{PROJECT_NAME}}': 'jsx-app' });
+    const result = fs.readFileSync(path.join(TEST_OUTPUT, 'HomeIsland.tsx'), 'utf8');
+    expect(result).toBe('<h1>jsx-app</h1>');
+    expect(result).not.toContain('{{PROJECT_NAME}}');
   });
 
   it('replaces placeholders in .md files', () => {

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 export const TEMPLATES = ['minimal', 'dashboard'];
 
 export function replacePlaceholders(dir: string, replacements: Record<string, string>) {
-  const TEXT_EXTS = new Set(['.toml', '.rs', '.ts', '.json', '.md', '.css', '.html']);
+  const TEXT_EXTS = new Set(['.toml', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html']);
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
