@@ -66,6 +66,8 @@ pub enum IrError {
     IslandNotFound(u16),
     /// Failed to parse JSON input.
     JsonParseError(String),
+    /// A section descriptor has invalid values (e.g. integer overflow).
+    InvalidSection,
 }
 
 impl fmt::Display for IrError {
@@ -113,6 +115,9 @@ impl fmt::Display for IrError {
             }
             IrError::JsonParseError(msg) => {
                 write!(f, "JSON parse error: {msg}")
+            }
+            IrError::InvalidSection => {
+                write!(f, "invalid section descriptor (integer overflow)")
             }
         }
     }
@@ -220,7 +225,9 @@ impl SectionTable {
     /// Validate that every section falls within `file_len` bytes.
     pub fn validate(&self, file_len: usize) -> Result<(), IrError> {
         for (i, sec) in self.sections.iter().enumerate() {
-            let end = sec.offset as usize + sec.size as usize;
+            let end = (sec.offset as usize)
+                .checked_add(sec.size as usize)
+                .ok_or(IrError::InvalidSection)?;
             if end > file_len {
                 return Err(IrError::SectionOutOfBounds {
                     section: i,

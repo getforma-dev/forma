@@ -31,6 +31,12 @@ impl StringTable {
         }
 
         let count = u32::from_le_bytes(data[0..4].try_into().unwrap()) as usize;
+        if count > data.len() {
+            return Err(IrError::BufferTooShort {
+                expected: count,
+                actual: data.len(),
+            });
+        }
         let mut offset = 4;
         let mut strings = Vec::with_capacity(count);
 

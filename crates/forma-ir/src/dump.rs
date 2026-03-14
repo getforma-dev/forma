@@ -324,6 +324,10 @@ pub fn dump_ir(module: &IrModule) -> String {
 
             Opcode::Preload => {
                 // resource_type(1) + url_str_idx(4) = 5 bytes
+                if pos >= ops.len() {
+                    writeln!(out, "{:04x}: PRELOAD       <error: buffer too short>", offset).unwrap();
+                    break;
+                }
                 let resource_type = ops[pos];
                 let url_str_idx = match read_u32(ops, pos + 1) {
                     Ok(v) => v,

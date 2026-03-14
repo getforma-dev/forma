@@ -97,7 +97,7 @@ pub fn walk_to_html(module: &IrModule, slots: &SlotData) -> Result<String, IrErr
         let json = serde_json::to_string(&state.script_tag_props)
             .unwrap_or_else(|_| "{}".to_string());
         out.push_str("<script id=\"__forma_islands\" type=\"application/json\">");
-        out.push_str(&json);
+        out.push_str(&json.replace("</", "<\\/"));
         out.push_str("</script>");
     }
 
@@ -247,9 +247,9 @@ fn walk_range(
                     out.push_str(trigger_str);
                     out.push('"');
                     if let Some(ref props_json) = island.inline_props {
-                        out.push_str(" data-forma-props='");
-                        out.push_str(props_json);
-                        out.push('\'');
+                        out.push_str(" data-forma-props=\"");
+                        push_escaped_attr(out, props_json);
+                        out.push('"');
                     }
                 }
                 // Inject pending list-item key
@@ -308,9 +308,9 @@ fn walk_range(
                     out.push_str(trigger_str);
                     out.push('"');
                     if let Some(ref props_json) = island.inline_props {
-                        out.push_str(" data-forma-props='");
-                        out.push_str(props_json);
-                        out.push('\'');
+                        out.push_str(" data-forma-props=\"");
+                        push_escaped_attr(out, props_json);
+                        out.push('"');
                     }
                 }
                 // Inject pending list-item key
@@ -437,7 +437,7 @@ fn walk_range(
                 pos += 4;
                 let text = strings.get(str_idx)?;
                 out.push_str("<!--");
-                out.push_str(text);
+                out.push_str(&text.replace("--", "&#45;&#45;"));
                 out.push_str("-->");
             }
 
@@ -577,6 +577,12 @@ fn walk_range(
             }
 
             Opcode::Preload => {
+                if pos >= ops.len() {
+                    return Err(IrError::BufferTooShort {
+                        expected: pos + 1,
+                        actual: ops.len(),
+                    });
+                }
                 let resource_type = ops[pos];
                 let url_str_idx = read_u32(ops, pos + 1)?;
                 let url = strings.get(url_str_idx)?;
@@ -714,9 +720,9 @@ fn walk_range_until_island_end(
                     out.push_str(trigger_str);
                     out.push('"');
                     if let Some(ref props_json) = island.inline_props {
-                        out.push_str(" data-forma-props='");
-                        out.push_str(props_json);
-                        out.push('\'');
+                        out.push_str(" data-forma-props=\"");
+                        push_escaped_attr(out, props_json);
+                        out.push('"');
                     }
                 }
                 if let Some(key) = state.pending_list_key.take() {
@@ -770,9 +776,9 @@ fn walk_range_until_island_end(
                     out.push_str(trigger_str);
                     out.push('"');
                     if let Some(ref props_json) = island.inline_props {
-                        out.push_str(" data-forma-props='");
-                        out.push_str(props_json);
-                        out.push('\'');
+                        out.push_str(" data-forma-props=\"");
+                        push_escaped_attr(out, props_json);
+                        out.push('"');
                     }
                 }
                 if let Some(key) = state.pending_list_key.take() {
@@ -873,7 +879,7 @@ fn walk_range_until_island_end(
                 pos += 4;
                 let text = strings.get(str_idx)?;
                 out.push_str("<!--");
-                out.push_str(text);
+                out.push_str(&text.replace("--", "&#45;&#45;"));
                 out.push_str("-->");
             }
 
@@ -993,6 +999,12 @@ fn walk_range_until_island_end(
             }
 
             Opcode::Preload => {
+                if pos >= ops.len() {
+                    return Err(IrError::BufferTooShort {
+                        expected: pos + 1,
+                        actual: ops.len(),
+                    });
+                }
                 let resource_type = ops[pos];
                 let url_str_idx = read_u32(ops, pos + 1)?;
                 let url = strings.get(url_str_idx)?;
@@ -2358,11 +2370,21 @@ mod tests {
             html.contains(r#"data-forma-component="MyComponent""#),
             "should contain component name, got: {html}"
         );
-        // Parse the JSON from the props attribute to verify correctness
-        let props_start = html.find("data-forma-props='").unwrap() + "data-forma-props='".len();
-        let props_end = html[props_start..].find('\'').unwrap() + props_start;
-        let props_json: serde_json::Value =
-            serde_json::from_str(&html[props_start..props_end]).unwrap();
+        // Parse the JSON from the props attribute to verify correctness.
+        // The attribute uses double quotes with HTML entity escaping:
+        //   data-forma-props="{&quot;title&quot;:&quot;Hello&quot;,&quot;count&quot;:42}"
+        // Browsers auto-decode &quot; back to " when reading getAttribute(),
+        // so we simulate that here by reversing the entity encoding.
+        let marker = "data-forma-props=\"";
+        let props_start = html.find(marker).unwrap() + marker.len();
+        let props_end = html[props_start..].find('"').unwrap() + props_start;
+        let raw_attr = &html[props_start..props_end];
+        let decoded = raw_attr
+            .replace("&quot;", "\"")
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">");
+        let props_json: serde_json::Value = serde_json::from_str(&decoded).unwrap();
         assert_eq!(props_json["title"], "Hello");
         assert_eq!(props_json["count"], 42);
     }
@@ -2689,8 +2711,8 @@ mod tests {
             serde_json::json!(42)
         );
         assert_eq!(
-            SlotValue::Number(3.14).to_json(),
-            serde_json::json!(3.14)
+            SlotValue::Number(3.15).to_json(),
+            serde_json::json!(3.15)
         );
         assert_eq!(
             SlotValue::Array(vec![SlotValue::Text("a".to_string()), SlotValue::Number(1.0)]).to_json(),

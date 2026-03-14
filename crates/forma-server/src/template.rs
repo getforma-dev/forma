@@ -10,6 +10,13 @@ struct ResolvedAssets {
 }
 
 /// Build the common `<head>` content shared by both render paths.
+fn escape_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+     .replace('<', "&lt;")
+     .replace('>', "&gt;")
+     .replace('"', "&quot;")
+}
+
 fn build_head(
     title: &str,
     nonce: &str,
@@ -19,7 +26,7 @@ fn build_head(
     let mut head = String::with_capacity(2048);
     head.push_str("<meta charset=\"utf-8\">\n");
     head.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-    head.push_str(&format!("<title>{}</title>\n", title));
+    head.push_str(&format!("<title>{}</title>\n", escape_html(title)));
 
     // Font preloads
     for font in &assets.fonts {
@@ -92,13 +99,13 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         &config.manifest.wasm,
         config.manifest.route(config.route_pattern),
     ) {
-        (Some(wasm), Some(route)) if route.ir.is_some() => {
-            let ir_name = route.ir.as_ref().unwrap();
-            format!(
+        (Some(wasm), Some(route)) => match route.ir.as_ref() {
+            Some(ir_name) => format!(
                 "<script nonce=\"{nonce}\">window.__FORMA_WASM__={{loader:\"/_assets/{}\",binary:\"/_assets/{}\",ir:\"/_assets/{}\"}};</script>\n",
                 wasm.loader, wasm.binary, ir_name
-            )
-        }
+            ),
+            None => String::new(),
+        },
         _ => String::new(),
     };
 

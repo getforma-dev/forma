@@ -312,7 +312,7 @@ mod tests {
 
     #[test]
     fn slot_value_number_float() {
-        assert_eq!(SlotValue::Number(3.14).to_text(), "3.14");
+        assert_eq!(SlotValue::Number(3.15).to_text(), "3.15");
     }
 
     #[test]
@@ -436,14 +436,14 @@ mod tests {
         // Verify Number parsing
         let bytes = build_slot_table_bytes(&[
             (0, 0, 0x03, 0x00, b"42"),   // Number, Server, default "42"
-            (1, 1, 0x03, 0x01, b"3.14"), // Number, Client, default "3.14"
+            (1, 1, 0x03, 0x01, b"3.15"), // Number, Client, default "3.15"
             (2, 2, 0x03, 0x00, b"nope"), // Number, Server, invalid default
         ]);
         let table = SlotTable::parse(&bytes).unwrap();
         let data = SlotData::new_from_defaults(&table);
 
         assert!(matches!(data.get(0), SlotValue::Number(n) if (*n - 42.0).abs() < f64::EPSILON));
-        assert!(matches!(data.get(1), SlotValue::Number(n) if (*n - 3.14).abs() < f64::EPSILON));
+        assert!(matches!(data.get(1), SlotValue::Number(n) if (*n - 3.15).abs() < f64::EPSILON));
         // Invalid number -> Null
         assert!(matches!(data.get(2), SlotValue::Null));
     }
