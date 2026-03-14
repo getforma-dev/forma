@@ -7,7 +7,7 @@
     "dev": "tsx build.ts --watch"
   },
   "dependencies": {
-    "@getforma/core": "^0.1.0"
+    "@getforma/core": "^0.3.0"
   },
   "devDependencies": {
     "@getforma/compiler": "^0.1.0",
