@@ -1,6 +1,6 @@
 [package]
 name = "forma-server"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 authors = ["Forma <victor@getforma.dev>"]
@@ -11,7 +11,7 @@ keywords = ["ssr", "axum", "web-framework", "islands"]
 categories = ["web-programming::http-server"]
 
 [dependencies]
-forma-ir = { version = "0.1", path = "../forma-ir" }
+forma-ir = "0.1.1"
 axum = "0.8"
 rust-embed = "8"
 serde = { version = "1", features = ["derive"] }

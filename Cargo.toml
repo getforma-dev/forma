@@ -6,3 +6,7 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+
+# Local dev overrides — forma-server resolves forma-ir from this workspace
+[patch.crates-io]
+forma-ir = { path = "crates/forma-ir" }
