@@ -24,4 +24,4 @@ wasm = ["wasm-bindgen"]
 dump = []
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
