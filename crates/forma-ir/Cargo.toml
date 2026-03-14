@@ -14,13 +14,13 @@ categories = ["web-programming", "wasm"]
 wasm-opt = ["-O3", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 
 [dependencies]
-serde_json = { version = "1", optional = true }
+serde_json = "1"
 tracing = { version = "0.1", optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
-default = ["serde_json", "tracing", "dump"]
-wasm = ["serde_json", "wasm-bindgen"]
+default = ["tracing", "dump"]
+wasm = ["wasm-bindgen"]
 dump = []
 
 [lib]
