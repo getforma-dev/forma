@@ -13,7 +13,7 @@ jobs:
       - name: Extract version from dispatch
         id: version
         run: |
-          # Strip leading "v" from tag name (v0.8.1 → 0.8.1)
+          # Strip leading "v" from tag name (v1.0.0 → 1.0.0)
           VERSION="${{ github.event.client_payload.version }}"
           VERSION="${VERSION#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
