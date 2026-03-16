@@ -1,0 +1,42 @@
+name: Update @getforma/core dependency
+
+on:
+  repository_dispatch:
+    types: [core-release]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from dispatch
+        id: version
+        run: |
+          # Strip leading "v" from tag name (v0.8.1 → 0.8.1)
+          VERSION="${{ github.event.client_payload.version }}"
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Updating @getforma/core to ^$VERSION"
+
+      - name: Update template dependencies
+        run: |
+          VERSION="^${{ steps.version.outputs.version }}"
+          # Update all template package.json files
+          find templates -name "package.json" -exec \
+            sed -i 's|"@getforma/core": "[^"]*"|"@getforma/core": "'$VERSION'"|g' {} +
+          echo "Updated to $VERSION:"
+          grep -r "@getforma/core" templates/ --include="package.json"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update @getforma/core to ^${{ steps.version.outputs.version }}"
+          title: "chore: update @getforma/core to ^${{ steps.version.outputs.version }}"
+          body: |
+            Automated dependency update triggered by [@getforma/core ${{ steps.version.outputs.version }}](https://www.npmjs.com/package/@getforma/core/v/${{ steps.version.outputs.version }}) release.
+
+            Updates `@getforma/core` in all template `package.json` files.
+          branch: update-core-${{ steps.version.outputs.version }}
+          base: main
