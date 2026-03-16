@@ -31,12 +31,10 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
-    let module = parser::IrModule::parse(ir_bytes)
-        .unwrap_or_else(|e| panic!("IR parse: {e}"));
-    let slots = slot::SlotData::from_json(slots_json, &module)
-        .unwrap_or_else(|e| panic!("slots: {e}"));
-    walker::walk_to_html(&module, &slots)
-        .unwrap_or_else(|e| panic!("walk: {e}"))
+    let module = parser::IrModule::parse(ir_bytes).unwrap_or_else(|e| panic!("IR parse: {e}"));
+    let slots =
+        slot::SlotData::from_json(slots_json, &module).unwrap_or_else(|e| panic!("slots: {e}"));
+    walker::walk_to_html(&module, &slots).unwrap_or_else(|e| panic!("walk: {e}"))
 }
 
 /// Fragment render: parse IR bytes + JSON slots → island inner HTML.
@@ -44,10 +42,8 @@ pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn render_island(ir_bytes: &[u8], slots_json: &str, island_id: u16) -> String {
-    let module = parser::IrModule::parse(ir_bytes)
-        .unwrap_or_else(|e| panic!("IR parse: {e}"));
-    let slots = slot::SlotData::from_json(slots_json, &module)
-        .unwrap_or_else(|e| panic!("slots: {e}"));
-    walker::walk_island(&module, &slots, island_id)
-        .unwrap_or_else(|e| panic!("walk island: {e}"))
+    let module = parser::IrModule::parse(ir_bytes).unwrap_or_else(|e| panic!("IR parse: {e}"));
+    let slots =
+        slot::SlotData::from_json(slots_json, &module).unwrap_or_else(|e| panic!("slots: {e}"));
+    walker::walk_island(&module, &slots, island_id).unwrap_or_else(|e| panic!("walk island: {e}"))
 }

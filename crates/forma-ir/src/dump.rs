@@ -6,7 +6,7 @@
 
 use crate::format::Opcode;
 use crate::parser::IrModule;
-use crate::walker::{read_u16, read_u32, read_tag_with_attrs};
+use crate::walker::{read_tag_with_attrs, read_u16, read_u32};
 use std::fmt::Write;
 
 // ---------------------------------------------------------------------------
@@ -49,17 +49,22 @@ pub fn dump_ir(module: &IrModule) -> String {
 
         match opcode {
             Opcode::OpenTag => {
-                let (tag_str_idx, attrs, new_pos) =
-                    match read_tag_with_attrs(ops, pos, strings) {
-                        Ok(v) => v,
-                        Err(e) => {
-                            writeln!(out, "{:04x}: OPEN_TAG      <error: {}>", offset, e).unwrap();
-                            break;
-                        }
-                    };
+                let (tag_str_idx, attrs, new_pos) = match read_tag_with_attrs(ops, pos, strings) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        writeln!(out, "{:04x}: OPEN_TAG      <error: {}>", offset, e).unwrap();
+                        break;
+                    }
+                };
                 let tag = strings.get(tag_str_idx).unwrap_or("?");
-                write!(out, "{:04x}: OPEN_TAG      \"{}\" attrs={}", offset, tag, attrs.len())
-                    .unwrap();
+                write!(
+                    out,
+                    "{:04x}: OPEN_TAG      \"{}\" attrs={}",
+                    offset,
+                    tag,
+                    attrs.len()
+                )
+                .unwrap();
                 if !attrs.is_empty() {
                     write!(out, " [").unwrap();
                     for (i, (key, val)) in attrs.iter().enumerate() {
@@ -88,17 +93,22 @@ pub fn dump_ir(module: &IrModule) -> String {
             }
 
             Opcode::VoidTag => {
-                let (tag_str_idx, attrs, new_pos) =
-                    match read_tag_with_attrs(ops, pos, strings) {
-                        Ok(v) => v,
-                        Err(e) => {
-                            writeln!(out, "{:04x}: VOID_TAG      <error: {}>", offset, e).unwrap();
-                            break;
-                        }
-                    };
+                let (tag_str_idx, attrs, new_pos) = match read_tag_with_attrs(ops, pos, strings) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        writeln!(out, "{:04x}: VOID_TAG      <error: {}>", offset, e).unwrap();
+                        break;
+                    }
+                };
                 let tag = strings.get(tag_str_idx).unwrap_or("?");
-                write!(out, "{:04x}: VOID_TAG      \"{}\" attrs={}", offset, tag, attrs.len())
-                    .unwrap();
+                write!(
+                    out,
+                    "{:04x}: VOID_TAG      \"{}\" attrs={}",
+                    offset,
+                    tag,
+                    attrs.len()
+                )
+                .unwrap();
                 if !attrs.is_empty() {
                     write!(out, " [").unwrap();
                     for (i, (key, val)) in attrs.iter().enumerate() {
@@ -325,7 +335,12 @@ pub fn dump_ir(module: &IrModule) -> String {
             Opcode::Preload => {
                 // resource_type(1) + url_str_idx(4) = 5 bytes
                 if pos >= ops.len() {
-                    writeln!(out, "{:04x}: PRELOAD       <error: buffer too short>", offset).unwrap();
+                    writeln!(
+                        out,
+                        "{:04x}: PRELOAD       <error: buffer too short>",
+                        offset
+                    )
+                    .unwrap();
                     break;
                 }
                 let resource_type = ops[pos];
@@ -399,7 +414,12 @@ pub fn dump_ir(module: &IrModule) -> String {
                 };
                 pos += 8;
                 let prop_name = strings.get(prop_idx).unwrap_or("?");
-                writeln!(out, "{:04x}: PROP slot[{}].\"{}\" -> slot[{}]", offset, src, prop_name, target).unwrap();
+                writeln!(
+                    out,
+                    "{:04x}: PROP slot[{}].\"{}\" -> slot[{}]",
+                    offset, src, prop_name, target
+                )
+                .unwrap();
             }
         }
     }
@@ -522,7 +542,10 @@ mod tests {
         let dump1 = dump_ir(&module);
         let dump2 = dump_ir(&module);
 
-        assert_eq!(dump1, dump2, "same IR dumped twice must produce identical output");
+        assert_eq!(
+            dump1, dump2,
+            "same IR dumped twice must produce identical output"
+        );
     }
 
     // -- Test 5: dump_void_tag ----------------------------------------------

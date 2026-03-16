@@ -12,9 +12,9 @@ struct ResolvedAssets {
 /// Build the common `<head>` content shared by both render paths.
 fn escape_html(s: &str) -> String {
     s.replace('&', "&amp;")
-     .replace('<', "&lt;")
-     .replace('>', "&gt;")
-     .replace('"', "&quot;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
 }
 
 fn build_head(
@@ -55,7 +55,9 @@ fn build_head(
     // Personality CSS (inline, small)
     // Escape "</style>" sequences to prevent breaking out of the style block.
     if let Some(css) = personality_css {
-        let safe_css = css.replace("</style>", "&lt;/style&gt;").replace("</STYLE>", "&lt;/STYLE&gt;");
+        let safe_css = css
+            .replace("</style>", "&lt;/style&gt;")
+            .replace("</STYLE>", "&lt;/STYLE&gt;");
         head.push_str(&format!("<style nonce=\"{nonce}\">{safe_css}</style>\n"));
     }
 
@@ -101,7 +103,12 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
 
     let page_js_tag = js_urls
         .last()
-        .map(|url| format!("<script type=\"module\" nonce=\"{nonce}\" src=\"{}\"></script>", escape_html(url)))
+        .map(|url| {
+            format!(
+                "<script type=\"module\" nonce=\"{nonce}\" src=\"{}\"></script>",
+                escape_html(url)
+            )
+        })
         .unwrap_or_default();
 
     let wasm_script = match (
@@ -508,14 +515,14 @@ mod tests {
         // Build IR with DYN_TEXT referencing slot 0
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_open_tag(0, &[])); // <span>
-        // DYN_TEXT opcode: 0x05 + slot_id(u16) + marker_id(u16)
+                                                             // DYN_TEXT opcode: 0x05 + slot_id(u16) + marker_id(u16)
         opcodes.push(0x05);
         opcodes.extend_from_slice(&0u16.to_le_bytes()); // slot_id = 0
         opcodes.extend_from_slice(&0u16.to_le_bytes()); // marker_id = 0
         opcodes.extend_from_slice(&encode_close_tag(0)); // </span>
 
         let data = build_minimal_ir(
-            &["span", "name"],           // strings
+            &["span", "name"],          // strings
             &[(0, 1, 0x01, 0x00, &[])], // slot: id=0, name_str_idx=1, type=Text, source=Server
             &opcodes,
             &[],
@@ -541,7 +548,9 @@ mod tests {
 
         assert!(page.html.contains("data-forma-ssr"));
         // DYN_TEXT wraps content in marker comments for client reconciliation
-        assert!(page.html.contains("<span><!--f:t0-->World<!--/f:t0--></span>"));
+        assert!(page
+            .html
+            .contains("<span><!--f:t0-->World<!--/f:t0--></span>"));
     }
 
     // -- Security: escape_html tests -----------------------------------------

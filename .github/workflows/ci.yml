@@ -16,7 +16,7 @@ jobs:
           targets: wasm32-unknown-unknown
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --workspace --check
+      - run: cargo fmt --all --check
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
       - run: cargo doc --workspace --no-deps

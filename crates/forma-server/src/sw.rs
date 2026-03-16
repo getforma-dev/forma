@@ -11,7 +11,10 @@ pub async fn serve_sw<A: Embed>() -> Response {
     match crate::assets::asset_bytes::<A>("sw.js") {
         Some(data) => {
             let response = Response::builder()
-                .header(header::CONTENT_TYPE, "application/javascript; charset=utf-8")
+                .header(
+                    header::CONTENT_TYPE,
+                    "application/javascript; charset=utf-8",
+                )
                 .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
                 .header("service-worker-allowed", "/")
                 .body(axum::body::Body::from(data))

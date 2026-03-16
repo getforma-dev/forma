@@ -49,8 +49,7 @@ impl StringTable {
                 });
             }
 
-            let str_len =
-                u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap()) as usize;
+            let str_len = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap()) as usize;
             offset += 2;
 
             if offset + str_len > data.len() {
@@ -132,10 +131,8 @@ impl SlotTable {
                 });
             }
 
-            let slot_id =
-                u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap());
-            let name_str_idx =
-                u32::from_le_bytes(data[offset + 2..offset + 6].try_into().unwrap());
+            let slot_id = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap());
+            let name_str_idx = u32::from_le_bytes(data[offset + 2..offset + 6].try_into().unwrap());
             let type_hint = SlotType::from_byte(data[offset + 6])?;
             let source = SlotSource::from_byte(data[offset + 7])?;
             let default_len =
@@ -223,10 +220,8 @@ impl IslandTableParsed {
             let id = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap());
             let trigger = IslandTrigger::from_byte(data[offset + 2])?;
             let props_mode = PropsMode::from_byte(data[offset + 3])?;
-            let name_str_idx =
-                u32::from_le_bytes(data[offset + 4..offset + 8].try_into().unwrap());
-            let byte_offset =
-                u32::from_le_bytes(data[offset + 8..offset + 12].try_into().unwrap());
+            let name_str_idx = u32::from_le_bytes(data[offset + 4..offset + 8].try_into().unwrap());
+            let byte_offset = u32::from_le_bytes(data[offset + 8..offset + 12].try_into().unwrap());
             let slot_count =
                 u16::from_le_bytes(data[offset + 12..offset + 14].try_into().unwrap()) as usize;
             offset += ISLAND_ENTRY_MIN_SIZE;
@@ -331,8 +326,8 @@ impl IrModule {
             .to_vec();
 
         // 7. Parse island table.
-        let island_data = &data
-            [sec_islands.offset as usize..(sec_islands.offset as usize + sec_islands.size as usize)];
+        let island_data = &data[sec_islands.offset as usize
+            ..(sec_islands.offset as usize + sec_islands.size as usize)];
         let islands = IslandTableParsed::parse(island_data)?;
 
         let module = IrModule {
@@ -645,8 +640,8 @@ pub mod test_helpers {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::test_helpers::*;
+    use super::*;
     use crate::format::{IrError, IslandTrigger, PropsMode, SlotSource, SlotType};
 
     // -- StringTable tests --------------------------------------------------
@@ -663,10 +658,7 @@ mod tests {
 
         // Out of bounds
         let err = table.get(3).unwrap_err();
-        assert_eq!(
-            err,
-            IrError::StringIndexOutOfBounds { index: 3, len: 3 }
-        );
+        assert_eq!(err, IrError::StringIndexOutOfBounds { index: 3, len: 3 });
     }
 
     #[test]
@@ -692,7 +684,7 @@ mod tests {
         data.extend_from_slice(&2u32.to_le_bytes()); // count = 2
         data.extend_from_slice(&3u16.to_le_bytes()); // first string len = 3
         data.extend_from_slice(b"div"); // first string bytes
-        // Second string is missing entirely
+                                        // Second string is missing entirely
 
         let err = StringTable::parse(&data).unwrap_err();
         match err {
@@ -706,7 +698,7 @@ mod tests {
     #[test]
     fn parse_slot_table() {
         let data = build_slot_table(&[
-            (1, 0, 0x01, 0x00, &[]),     // slot_id=1, name_str_idx=0, type=Text, source=Server, no default
+            (1, 0, 0x01, 0x00, &[]), // slot_id=1, name_str_idx=0, type=Text, source=Server, no default
             (2, 1, 0x03, 0x01, &[0x42]), // slot_id=2, name_str_idx=1, type=Number, source=Client, 1-byte default
         ]);
         let table = SlotTable::parse(&data).unwrap();
@@ -846,7 +838,10 @@ mod tests {
         let data = b"FMIR\x02\x00";
         let err = IrModule::parse(data).unwrap_err();
         match err {
-            IrError::BufferTooShort { expected: 16, actual: 6 } => {}
+            IrError::BufferTooShort {
+                expected: 16,
+                actual: 6,
+            } => {}
             other => panic!("expected BufferTooShort(16, 6), got {other:?}"),
         }
     }
@@ -881,10 +876,7 @@ mod tests {
             &[],
         );
         let err = IrModule::parse(&data).unwrap_err();
-        assert_eq!(
-            err,
-            IrError::StringIndexOutOfBounds { index: 99, len: 3 }
-        );
+        assert_eq!(err, IrError::StringIndexOutOfBounds { index: 99, len: 3 });
     }
 
     #[test]
@@ -898,9 +890,6 @@ mod tests {
             &[(1, 0x01, 0x01, 99, 0, &[])],
         );
         let err = IrModule::parse(&data).unwrap_err();
-        assert_eq!(
-            err,
-            IrError::StringIndexOutOfBounds { index: 99, len: 3 }
-        );
+        assert_eq!(err, IrError::StringIndexOutOfBounds { index: 99, len: 3 });
     }
 }

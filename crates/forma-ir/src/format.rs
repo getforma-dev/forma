@@ -107,7 +107,10 @@ impl fmt::Display for IrError {
             IrError::InvalidPropsMode(b) => write!(f, "invalid props mode: 0x{b:02x}"),
             IrError::InvalidSlotSource(b) => write!(f, "invalid slot source: 0x{b:02x}"),
             IrError::StringIndexOutOfBounds { index, len } => {
-                write!(f, "string index {index} out of bounds (table has {len} entries)")
+                write!(
+                    f,
+                    "string index {index} out of bounds (table has {len} entries)"
+                )
             }
             IrError::InvalidUtf8(msg) => write!(f, "invalid UTF-8: {msg}"),
             IrError::ListDepthExceeded { max } => {
@@ -509,10 +512,34 @@ mod tests {
             (398, 30),  // island table
         ]);
         let st = SectionTable::parse(&data).unwrap();
-        assert_eq!(st.sections[0], SectionDescriptor { offset: 48, size: 100 });
-        assert_eq!(st.sections[1], SectionDescriptor { offset: 148, size: 200 });
-        assert_eq!(st.sections[2], SectionDescriptor { offset: 348, size: 50 });
-        assert_eq!(st.sections[3], SectionDescriptor { offset: 398, size: 30 });
+        assert_eq!(
+            st.sections[0],
+            SectionDescriptor {
+                offset: 48,
+                size: 100
+            }
+        );
+        assert_eq!(
+            st.sections[1],
+            SectionDescriptor {
+                offset: 148,
+                size: 200
+            }
+        );
+        assert_eq!(
+            st.sections[2],
+            SectionDescriptor {
+                offset: 348,
+                size: 50
+            }
+        );
+        assert_eq!(
+            st.sections[3],
+            SectionDescriptor {
+                offset: 398,
+                size: 30
+            }
+        );
     }
 
     #[test]
@@ -565,9 +592,18 @@ mod tests {
 
     #[test]
     fn opcode_from_byte_invalid() {
-        assert_eq!(Opcode::from_byte(0x00).unwrap_err(), IrError::InvalidOpcode(0x00));
-        assert_eq!(Opcode::from_byte(0x13).unwrap_err(), IrError::InvalidOpcode(0x13));
-        assert_eq!(Opcode::from_byte(0xFF).unwrap_err(), IrError::InvalidOpcode(0xFF));
+        assert_eq!(
+            Opcode::from_byte(0x00).unwrap_err(),
+            IrError::InvalidOpcode(0x00)
+        );
+        assert_eq!(
+            Opcode::from_byte(0x13).unwrap_err(),
+            IrError::InvalidOpcode(0x13)
+        );
+        assert_eq!(
+            Opcode::from_byte(0xFF).unwrap_err(),
+            IrError::InvalidOpcode(0xFF)
+        );
     }
 
     #[test]
@@ -580,7 +616,11 @@ mod tests {
             (0x05, SlotType::Object),
         ];
         for (byte, st) in &expected {
-            assert_eq!(SlotType::from_byte(*byte).unwrap(), *st, "byte 0x{byte:02x}");
+            assert_eq!(
+                SlotType::from_byte(*byte).unwrap(),
+                *st,
+                "byte 0x{byte:02x}"
+            );
         }
         assert_eq!(
             SlotType::from_byte(0x00).unwrap_err(),

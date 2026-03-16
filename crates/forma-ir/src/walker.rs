@@ -94,8 +94,8 @@ pub fn walk_to_html(module: &IrModule, slots: &SlotData) -> Result<String, IrErr
 
     // Emit script tag for ScriptTag props mode islands
     if !state.script_tag_props.is_empty() {
-        let json = serde_json::to_string(&state.script_tag_props)
-            .unwrap_or_else(|_| "{}".to_string());
+        let json =
+            serde_json::to_string(&state.script_tag_props).unwrap_or_else(|_| "{}".to_string());
         out.push_str("<script id=\"__forma_islands\" type=\"application/json\">");
         out.push_str(&json.replace("</", "<\\/"));
         out.push_str("</script>");
@@ -114,11 +114,7 @@ pub fn walk_to_html(module: &IrModule, slots: &SlotData) -> Result<String, IrErr
 /// Returns all content between ISLAND_START and ISLAND_END, including the
 /// island root element. The client can use `outerHTML` or strip the wrapper
 /// as needed.
-pub fn walk_island(
-    module: &IrModule,
-    slots: &SlotData,
-    island_id: u16,
-) -> Result<String, IrError> {
+pub fn walk_island(module: &IrModule, slots: &SlotData, island_id: u16) -> Result<String, IrError> {
     // 1. Find the island entry by id
     let entry = module
         .islands
@@ -159,7 +155,16 @@ pub fn walk_island(
     let mut out = String::with_capacity(256);
     let mut state = WalkState::new();
     let mut slots_mut = slots.clone();
-    walk_range_until_island_end(module, &mut slots_mut, ops, content_start, island_id, &mut out, &mut state, 0)?;
+    walk_range_until_island_end(
+        module,
+        &mut slots_mut,
+        ops,
+        content_start,
+        island_id,
+        &mut out,
+        &mut state,
+        0,
+    )?;
 
     Ok(out)
 }
@@ -204,7 +209,16 @@ fn walk_range(
     state: &mut WalkState,
     depth: usize,
 ) -> Result<(), IrError> {
-    walk_range_impl(module, slots, ops, start, WalkMode::Range { end }, out, state, depth)
+    walk_range_impl(
+        module,
+        slots,
+        ops,
+        start,
+        WalkMode::Range { end },
+        out,
+        state,
+        depth,
+    )
 }
 
 /// Walk the opcode stream starting at `start` until we encounter an ISLAND_END
@@ -224,7 +238,16 @@ fn walk_range_until_island_end(
     state: &mut WalkState,
     depth: usize,
 ) -> Result<(), IrError> {
-    walk_range_impl(module, slots, ops, start, WalkMode::UntilIslandEnd { target_island_id }, out, state, depth)
+    walk_range_impl(
+        module,
+        slots,
+        ops,
+        start,
+        WalkMode::UntilIslandEnd { target_island_id },
+        out,
+        state,
+        depth,
+    )
 }
 
 /// Shared implementation for both `walk_range` and `walk_range_until_island_end`.
@@ -294,7 +317,6 @@ fn walk_range_impl(
 
         match opcode {
             // ----- Fully implemented opcodes -----
-
             Opcode::OpenTag => {
                 let (tag_str_idx, attrs, new_pos) = read_tag_with_attrs(ops, pos, strings)?;
                 let tag = strings.get(tag_str_idx)?;
@@ -483,14 +505,19 @@ fn walk_range_impl(
                                 None
                             } else {
                                 let props = build_island_props(module, slots, &entry.slot_ids);
-                                Some(serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string()))
+                                Some(
+                                    serde_json::to_string(&props)
+                                        .unwrap_or_else(|_| "{}".to_string()),
+                                )
                             }
                         }
                         PropsMode::ScriptTag => {
                             // Accumulate for script tag emission after walk
                             if !entry.slot_ids.is_empty() {
                                 let props = build_island_props(module, slots, &entry.slot_ids);
-                                state.script_tag_props.insert(island_id, serde_json::Value::Object(props));
+                                state
+                                    .script_tag_props
+                                    .insert(island_id, serde_json::Value::Object(props));
                             }
                             None
                         }
@@ -541,7 +568,6 @@ fn walk_range_impl(
             }
 
             // ----- Control-flow opcodes (recurse via walk_range) -----
-
             Opcode::ShowIf => {
                 // slot_id(2) + then_len(4) + else_len(4) = 10 bytes header
                 let slot_id = read_u16(ops, pos)?;
@@ -563,9 +589,27 @@ fn walk_range_impl(
                 out.push_str("-->");
 
                 if condition {
-                    walk_range(module, slots, ops, then_start, then_end, out, state, depth + 1)?;
+                    walk_range(
+                        module,
+                        slots,
+                        ops,
+                        then_start,
+                        then_end,
+                        out,
+                        state,
+                        depth + 1,
+                    )?;
                 } else {
-                    walk_range(module, slots, ops, else_start, else_end, out, state, depth + 1)?;
+                    walk_range(
+                        module,
+                        slots,
+                        ops,
+                        else_start,
+                        else_end,
+                        out,
+                        state,
+                        depth + 1,
+                    )?;
                 }
 
                 out.push_str("<!--/f:s");
@@ -603,7 +647,16 @@ fn walk_range_impl(
                 for (val_str_idx, body_len) in &cases {
                     let case_val = strings.get(*val_str_idx)?;
                     if case_val == slot_text {
-                        walk_range(module, slots, ops, body_pos, body_pos + body_len, out, state, depth + 1)?;
+                        walk_range(
+                            module,
+                            slots,
+                            ops,
+                            body_pos,
+                            body_pos + body_len,
+                            out,
+                            state,
+                            depth + 1,
+                        )?;
                     }
                     body_pos += body_len;
                 }
@@ -641,12 +694,23 @@ fn walk_range_impl(
                 if !items.is_empty() {
                     state.list_depth += 1;
                     if state.list_depth > MAX_LIST_DEPTH {
-                        return Err(IrError::ListDepthExceeded { max: MAX_LIST_DEPTH });
+                        return Err(IrError::ListDepthExceeded {
+                            max: MAX_LIST_DEPTH,
+                        });
                     }
                     for item in &items {
                         let mut shadow_slots = slots.clone();
                         shadow_slots.set(item_slot_id, item.clone());
-                        walk_range(module, &mut shadow_slots, ops, body_start, body_end, out, state, depth + 1)?;
+                        walk_range(
+                            module,
+                            &mut shadow_slots,
+                            ops,
+                            body_start,
+                            body_end,
+                            out,
+                            state,
+                            depth + 1,
+                        )?;
                     }
                     state.list_depth -= 1;
                 }
@@ -1200,8 +1264,14 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert!(html.contains("Shown"), "truthy text should render then branch");
-        assert!(!html.contains("Hidden"), "truthy text should NOT render else branch");
+        assert!(
+            html.contains("Shown"),
+            "truthy text should render then branch"
+        );
+        assert!(
+            !html.contains("Hidden"),
+            "truthy text should NOT render else branch"
+        );
     }
 
     // -- Test 16: walk_show_if_falsy_null ----------------------------------
@@ -1222,7 +1292,10 @@ mod tests {
             &slots,
         );
         assert!(html.contains("Missing"), "null should render else branch");
-        assert!(!html.contains("Present"), "null should NOT render then branch");
+        assert!(
+            !html.contains("Present"),
+            "null should NOT render then branch"
+        );
     }
 
     // -- Test 17: walk_show_if_no_else ------------------------------------
@@ -1242,7 +1315,10 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert_eq!(html, "<!--f:s0--><!--/f:s0-->", "empty else should produce only markers");
+        assert_eq!(
+            html, "<!--f:s0--><!--/f:s0-->",
+            "empty else should produce only markers"
+        );
     }
 
     // -- Test 18: walk_show_if_nested -------------------------------------
@@ -1261,24 +1337,52 @@ mod tests {
         let opcodes = encode_show_if(0, &outer_then, &outer_else);
 
         let mut slots = SlotData::new(2);
-        slots.set(0, SlotValue::Bool(true));  // outer true
+        slots.set(0, SlotValue::Bool(true)); // outer true
         slots.set(1, SlotValue::Bool(false)); // inner false
 
         let html = walk_with_slots(
-            &["outer", "inner", "outer-yes", "outer-no", "inner-yes", "inner-no"],
+            &[
+                "outer",
+                "inner",
+                "outer-yes",
+                "outer-no",
+                "inner-yes",
+                "inner-no",
+            ],
             &[(0, 0, 0x02, 0x00, &[]), (1, 1, 0x02, 0x00, &[])],
             &opcodes,
             &slots,
         );
         // Outer is true → walk inner. Inner is false → render "inner-no"
-        assert!(html.contains("inner-no"), "nested: inner false should render inner else");
-        assert!(!html.contains("inner-yes"), "nested: inner true branch should not render");
-        assert!(!html.contains("outer-no"), "nested: outer else should not render");
+        assert!(
+            html.contains("inner-no"),
+            "nested: inner false should render inner else"
+        );
+        assert!(
+            !html.contains("inner-yes"),
+            "nested: inner true branch should not render"
+        );
+        assert!(
+            !html.contains("outer-no"),
+            "nested: outer else should not render"
+        );
         // Verify correct nesting of markers
-        assert!(html.contains("<!--f:s0-->"), "should have outer opening marker");
-        assert!(html.contains("<!--/f:s0-->"), "should have outer closing marker");
-        assert!(html.contains("<!--f:s1-->"), "should have inner opening marker");
-        assert!(html.contains("<!--/f:s1-->"), "should have inner closing marker");
+        assert!(
+            html.contains("<!--f:s0-->"),
+            "should have outer opening marker"
+        );
+        assert!(
+            html.contains("<!--/f:s0-->"),
+            "should have outer closing marker"
+        );
+        assert!(
+            html.contains("<!--f:s1-->"),
+            "should have inner opening marker"
+        );
+        assert!(
+            html.contains("<!--/f:s1-->"),
+            "should have inner closing marker"
+        );
     }
 
     // -- Test 19: walk_show_if_with_elements ------------------------------
@@ -1305,8 +1409,7 @@ mod tests {
             &slots,
         );
         assert_eq!(
-            html,
-            "<!--f:s0--><span>Hello</span><!--/f:s0-->",
+            html, "<!--f:s0--><span>Hello</span><!--/f:s0-->",
             "then branch should produce full HTML element"
         );
     }
@@ -1338,8 +1441,14 @@ mod tests {
         );
         assert!(html.contains("Alice"), "should contain first item");
         assert!(html.contains("Bob"), "should contain second item");
-        assert!(html.starts_with("<!--f:l0-->"), "should start with list open marker");
-        assert!(html.ends_with("<!--/f:l0-->"), "should end with list close marker");
+        assert!(
+            html.starts_with("<!--f:l0-->"),
+            "should start with list open marker"
+        );
+        assert!(
+            html.ends_with("<!--/f:l0-->"),
+            "should end with list close marker"
+        );
     }
 
     // -- Test 21: walk_list_empty_array ------------------------------------
@@ -1360,7 +1469,10 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert_eq!(html, "<!--f:l0--><!--/f:l0-->", "empty array should produce only markers");
+        assert_eq!(
+            html, "<!--f:l0--><!--/f:l0-->",
+            "empty array should produce only markers"
+        );
     }
 
     // -- Test 22: walk_list_with_elements ----------------------------------
@@ -1415,7 +1527,10 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert_eq!(html, "<!--f:l0--><!--/f:l0-->", "null slot should produce only markers");
+        assert_eq!(
+            html, "<!--f:l0--><!--/f:l0-->",
+            "null slot should produce only markers"
+        );
     }
 
     // -- Test 24: walk_list_nested -----------------------------------------
@@ -1438,15 +1553,17 @@ mod tests {
                     SlotValue::Text("a".to_string()),
                     SlotValue::Text("b".to_string()),
                 ]),
-                SlotValue::Array(vec![
-                    SlotValue::Text("c".to_string()),
-                ]),
+                SlotValue::Array(vec![SlotValue::Text("c".to_string())]),
             ]),
         );
 
         let html = walk_with_slots(
             &["outer", "inner", "item"],
-            &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x04, 0x00, &[]), (2, 2, 0x01, 0x00, &[])],
+            &[
+                (0, 0, 0x04, 0x00, &[]),
+                (1, 1, 0x04, 0x00, &[]),
+                (2, 2, 0x01, 0x00, &[]),
+            ],
             &opcodes,
             &slots,
         );
@@ -1455,11 +1572,23 @@ mod tests {
         assert!(html.contains("b"), "should contain nested item 'b'");
         assert!(html.contains("c"), "should contain nested item 'c'");
         // Verify outer list markers
-        assert!(html.starts_with("<!--f:l0-->"), "should have outer list open marker");
-        assert!(html.ends_with("<!--/f:l0-->"), "should have outer list close marker");
+        assert!(
+            html.starts_with("<!--f:l0-->"),
+            "should have outer list open marker"
+        );
+        assert!(
+            html.ends_with("<!--/f:l0-->"),
+            "should have outer list close marker"
+        );
         // Verify inner list markers present
-        assert!(html.contains("<!--f:l1-->"), "should have inner list open marker");
-        assert!(html.contains("<!--/f:l1-->"), "should have inner list close marker");
+        assert!(
+            html.contains("<!--f:l1-->"),
+            "should have inner list open marker"
+        );
+        assert!(
+            html.contains("<!--/f:l1-->"),
+            "should have inner list close marker"
+        );
     }
 
     // -- Test 25: walk_list_depth_exceeded ---------------------------------
@@ -1479,18 +1608,25 @@ mod tests {
 
         let mut slots = SlotData::new(6);
         // Each level needs an array with at least one item to trigger iteration
-        slots.set(0, SlotValue::Array(vec![SlotValue::Array(vec![
-            SlotValue::Array(vec![SlotValue::Array(vec![
-                SlotValue::Array(vec![SlotValue::Text("deep".to_string())]),
-            ])]),
-        ])]));
+        slots.set(
+            0,
+            SlotValue::Array(vec![SlotValue::Array(vec![SlotValue::Array(vec![
+                SlotValue::Array(vec![SlotValue::Array(vec![SlotValue::Text(
+                    "deep".to_string(),
+                )])]),
+            ])])]),
+        );
         // Inner slots get shadowed during iteration
 
         let data = build_minimal_ir(
             &["s0", "s1", "s2", "s3", "s4", "s5"],
             &[
-                (0, 0, 0x04, 0x00, &[]), (1, 1, 0x04, 0x00, &[]), (2, 2, 0x04, 0x00, &[]),
-                (3, 3, 0x04, 0x00, &[]), (4, 4, 0x04, 0x00, &[]), (5, 5, 0x01, 0x00, &[]),
+                (0, 0, 0x04, 0x00, &[]),
+                (1, 1, 0x04, 0x00, &[]),
+                (2, 2, 0x04, 0x00, &[]),
+                (3, 3, 0x04, 0x00, &[]),
+                (4, 4, 0x04, 0x00, &[]),
+                (5, 5, 0x01, 0x00, &[]),
             ],
             &level1,
             &[],
@@ -1525,7 +1661,10 @@ mod tests {
             &slots,
         );
         assert!(html.contains("About"), "should contain matching case text");
-        assert!(!html.contains("Home"), "should NOT contain non-matching case text");
+        assert!(
+            !html.contains("Home"),
+            "should NOT contain non-matching case text"
+        );
     }
 
     // -- Test 27: walk_switch_no_match ------------------------------------
@@ -1548,7 +1687,10 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert!(html.is_empty(), "no match should produce empty output, got: {html}");
+        assert!(
+            html.is_empty(),
+            "no match should produce empty output, got: {html}"
+        );
     }
 
     // -- Test 28: walk_switch_first_case ----------------------------------
@@ -1571,7 +1713,10 @@ mod tests {
             &slots,
         );
         assert!(html.contains("Home"), "should contain first case text");
-        assert!(!html.contains("About"), "should NOT contain second case text");
+        assert!(
+            !html.contains("About"),
+            "should NOT contain second case text"
+        );
     }
 
     // -- Test 29: walk_switch_with_elements -------------------------------
@@ -1597,7 +1742,10 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert_eq!(html, "<span>Active</span>", "should produce full HTML element from matching case");
+        assert_eq!(
+            html, "<span>Active</span>",
+            "should produce full HTML element from matching case"
+        );
     }
 
     // -- Test 30: walk_try_renders_main -----------------------------------
@@ -1612,7 +1760,10 @@ mod tests {
 
         let html = walk_static(&["Main", "Fallback"], &opcodes);
         assert!(html.contains("Main"), "should contain main body text");
-        assert!(!html.contains("Fallback"), "should NOT contain fallback text");
+        assert!(
+            !html.contains("Fallback"),
+            "should NOT contain fallback text"
+        );
     }
 
     // -- Test 31: walk_preload_font ---------------------------------------
@@ -1668,23 +1819,23 @@ mod tests {
         //          5="charset", 6="utf-8", 7="title", 8="Test",
         //          9="body", 10="div", 11="id", 12="app"
         let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_open_tag(0, &[(1, 2)]));           // <html lang="en">
-        opcodes.extend_from_slice(&encode_open_tag(3, &[]));                 // <head>
-        opcodes.extend_from_slice(&encode_void_tag(4, &[(5, 6)]));           // <meta charset="utf-8">
-        opcodes.extend_from_slice(&encode_open_tag(7, &[]));                 // <title>
-        opcodes.extend_from_slice(&encode_text(8));                          // Test
-        opcodes.extend_from_slice(&encode_close_tag(7));                     // </title>
-        opcodes.extend_from_slice(&encode_close_tag(3));                     // </head>
-        opcodes.extend_from_slice(&encode_open_tag(9, &[]));                 // <body>
-        opcodes.extend_from_slice(&encode_open_tag(10, &[(11, 12)]));        // <div id="app">
-        opcodes.extend_from_slice(&encode_close_tag(10));                    // </div>
-        opcodes.extend_from_slice(&encode_close_tag(9));                     // </body>
-        opcodes.extend_from_slice(&encode_close_tag(0));                     // </html>
+        opcodes.extend_from_slice(&encode_open_tag(0, &[(1, 2)])); // <html lang="en">
+        opcodes.extend_from_slice(&encode_open_tag(3, &[])); // <head>
+        opcodes.extend_from_slice(&encode_void_tag(4, &[(5, 6)])); // <meta charset="utf-8">
+        opcodes.extend_from_slice(&encode_open_tag(7, &[])); // <title>
+        opcodes.extend_from_slice(&encode_text(8)); // Test
+        opcodes.extend_from_slice(&encode_close_tag(7)); // </title>
+        opcodes.extend_from_slice(&encode_close_tag(3)); // </head>
+        opcodes.extend_from_slice(&encode_open_tag(9, &[])); // <body>
+        opcodes.extend_from_slice(&encode_open_tag(10, &[(11, 12)])); // <div id="app">
+        opcodes.extend_from_slice(&encode_close_tag(10)); // </div>
+        opcodes.extend_from_slice(&encode_close_tag(9)); // </body>
+        opcodes.extend_from_slice(&encode_close_tag(0)); // </html>
 
         let ir = build_minimal_ir(
             &[
-                "html", "lang", "en", "head", "meta", "charset", "utf-8",
-                "title", "Test", "body", "div", "id", "app",
+                "html", "lang", "en", "head", "meta", "charset", "utf-8", "title", "Test", "body",
+                "div", "id", "app",
             ],
             &[],
             &opcodes,
@@ -1710,8 +1861,8 @@ mod tests {
         // slot decl: slot_id=0, name_str_idx=3 ("content"), type=Text
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_open_tag(0, &[(1, 2)])); // <div class="greeting">
-        opcodes.extend_from_slice(&encode_dyn_text(0, 0));         // DYN_TEXT slot=0 marker=0
-        opcodes.extend_from_slice(&encode_close_tag(0));           // </div>
+        opcodes.extend_from_slice(&encode_dyn_text(0, 0)); // DYN_TEXT slot=0 marker=0
+        opcodes.extend_from_slice(&encode_close_tag(0)); // </div>
 
         let ir = build_minimal_ir(
             &["div", "class", "greeting", "content"],
@@ -1793,9 +1944,9 @@ mod tests {
         // strings: 0="items", 1="item", 2="li"
         // slot decls: slot 0=Array, slot 1=Text (item)
         let mut body = Vec::new();
-        body.extend_from_slice(&encode_open_tag(2, &[]));    // <li>
-        body.extend_from_slice(&encode_dyn_text(1, 0));      // DYN_TEXT slot=1 marker=0
-        body.extend_from_slice(&encode_close_tag(2));        // </li>
+        body.extend_from_slice(&encode_open_tag(2, &[])); // <li>
+        body.extend_from_slice(&encode_dyn_text(1, 0)); // DYN_TEXT slot=1 marker=0
+        body.extend_from_slice(&encode_close_tag(2)); // </li>
 
         let opcodes = encode_list(0, 1, &body);
 
@@ -1901,16 +2052,15 @@ mod tests {
         // Full opcode stream
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_open_tag(0, &[(1, 2)])); // <nav class="main-nav">
-        opcodes.extend_from_slice(&show_if_ops);                    // SHOW_IF auth
-        opcodes.extend_from_slice(&encode_open_tag(8, &[]));       // <ul>
-        opcodes.extend_from_slice(&list_ops);                       // LIST items
-        opcodes.extend_from_slice(&encode_close_tag(8));           // </ul>
-        opcodes.extend_from_slice(&encode_close_tag(0));           // </nav>
+        opcodes.extend_from_slice(&show_if_ops); // SHOW_IF auth
+        opcodes.extend_from_slice(&encode_open_tag(8, &[])); // <ul>
+        opcodes.extend_from_slice(&list_ops); // LIST items
+        opcodes.extend_from_slice(&encode_close_tag(8)); // </ul>
+        opcodes.extend_from_slice(&encode_close_tag(0)); // </nav>
 
         let ir = build_minimal_ir(
             &[
-                "nav", "class", "main-nav", "auth", "span", "Welcome",
-                "items", "item", "ul", "li",
+                "nav", "class", "main-nav", "auth", "span", "Welcome", "items", "item", "ul", "li",
             ],
             &[
                 (0, 3, 0x02, 0x00, &[]), // slot 0 = Bool (auth)
@@ -2096,10 +2246,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(0));
 
         let html = walk_static(&["li", "user-123", "item"], &opcodes);
-        assert_eq!(
-            html,
-            r#"<li data-forma-key="user-123">item</li>"#
-        );
+        assert_eq!(html, r#"<li data-forma-key="user-123">item</li>"#);
     }
 
     // -- Test 38: walk_list_item_key_on_void_tag -----------------------------
@@ -2113,10 +2260,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_void_tag(0, &[]));
 
         let html = walk_static(&["hr", "key-42"], &opcodes);
-        assert_eq!(
-            html,
-            r#"<hr data-forma-key="key-42">"#
-        );
+        assert_eq!(html, r#"<hr data-forma-key="key-42">"#);
     }
 
     // -- Test 39: walk_list_item_key_with_attrs ------------------------------
@@ -2132,10 +2276,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(0));
 
         let html = walk_static(&["li", "class", "item", "k1", "content"], &opcodes);
-        assert_eq!(
-            html,
-            r#"<li class="item" data-forma-key="k1">content</li>"#
-        );
+        assert_eq!(html, r#"<li class="item" data-forma-key="k1">content</li>"#);
     }
 
     // -- Test 40: walk_script_tag_props_mode ---------------------------------
@@ -2179,8 +2320,8 @@ mod tests {
         );
         assert!(html.contains("</script>"), "should close script tag");
         // Parse the JSON from the script tag
-        let script_start = html.find(r#"type="application/json">"#).unwrap()
-            + r#"type="application/json">"#.len();
+        let script_start =
+            html.find(r#"type="application/json">"#).unwrap() + r#"type="application/json">"#.len();
         let script_end = html[script_start..].find("</script>").unwrap() + script_start;
         let json: serde_json::Value =
             serde_json::from_str(&html[script_start..script_end]).unwrap();
@@ -2252,10 +2393,7 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert_eq!(
-            html,
-            "<!--f:i5--><div>Hello</div><!--/f:i5-->"
-        );
+        assert_eq!(html, "<!--f:i5--><div>Hello</div><!--/f:i5-->");
     }
 
     // -- Test 43: walk_inline_props_empty_slots ------------------------------
@@ -2357,8 +2495,8 @@ mod tests {
             &slots,
         );
         // Parse the script tag JSON
-        let script_start = html.find(r#"type="application/json">"#).unwrap()
-            + r#"type="application/json">"#.len();
+        let script_start =
+            html.find(r#"type="application/json">"#).unwrap() + r#"type="application/json">"#.len();
         let script_end = html[script_start..].find("</script>").unwrap() + script_start;
         let json: serde_json::Value =
             serde_json::from_str(&html[script_start..script_end]).unwrap();
@@ -2382,10 +2520,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(0));
 
         let html = walk_static(&["li", "span", "abc", "text"], &opcodes);
-        assert_eq!(
-            html,
-            r#"<li data-forma-key="abc"><span>text</span></li>"#
-        );
+        assert_eq!(html, r#"<li data-forma-key="abc"><span>text</span></li>"#);
     }
 
     // -- Test 47: walk_slot_value_to_json -----------------------------------
@@ -2398,24 +2533,30 @@ mod tests {
             SlotValue::Text("hello".to_string()).to_json(),
             serde_json::Value::String("hello".to_string())
         );
-        assert_eq!(SlotValue::Bool(true).to_json(), serde_json::Value::Bool(true));
-        assert_eq!(SlotValue::Bool(false).to_json(), serde_json::Value::Bool(false));
         assert_eq!(
-            SlotValue::Number(42.0).to_json(),
-            serde_json::json!(42)
+            SlotValue::Bool(true).to_json(),
+            serde_json::Value::Bool(true)
         );
         assert_eq!(
-            SlotValue::Number(3.15).to_json(),
-            serde_json::json!(3.15)
+            SlotValue::Bool(false).to_json(),
+            serde_json::Value::Bool(false)
         );
+        assert_eq!(SlotValue::Number(42.0).to_json(), serde_json::json!(42));
+        assert_eq!(SlotValue::Number(3.15).to_json(), serde_json::json!(3.15));
         assert_eq!(
-            SlotValue::Array(vec![SlotValue::Text("a".to_string()), SlotValue::Number(1.0)]).to_json(),
+            SlotValue::Array(vec![
+                SlotValue::Text("a".to_string()),
+                SlotValue::Number(1.0)
+            ])
+            .to_json(),
             serde_json::json!(["a", 1])
         );
         assert_eq!(
-            SlotValue::Object(vec![
-                ("key".to_string(), SlotValue::Text("val".to_string())),
-            ]).to_json(),
+            SlotValue::Object(vec![(
+                "key".to_string(),
+                SlotValue::Text("val".to_string())
+            ),])
+            .to_json(),
             serde_json::json!({"key": "val"})
         );
     }
@@ -2485,10 +2626,7 @@ mod tests {
 
         let html = walk_with_slots(
             &["input", "type", "class", "slot_type", "slot_class"],
-            &[
-                (0, 3, 0x01, 0x01, b"text"),
-                (1, 4, 0x01, 0x01, b""),
-            ],
+            &[(0, 3, 0x01, 0x01, b"text"), (1, 4, 0x01, 0x01, b"")],
             &opcodes,
             &slots,
         );
@@ -2671,8 +2809,14 @@ mod tests {
         slots.set(
             0,
             SlotValue::Array(vec![
-                SlotValue::Object(vec![("name".to_string(), SlotValue::Text("Alice".to_string()))]),
-                SlotValue::Object(vec![("name".to_string(), SlotValue::Text("Bob".to_string()))]),
+                SlotValue::Object(vec![(
+                    "name".to_string(),
+                    SlotValue::Text("Alice".to_string()),
+                )]),
+                SlotValue::Object(vec![(
+                    "name".to_string(),
+                    SlotValue::Text("Bob".to_string()),
+                )]),
             ]),
         );
 
@@ -2705,12 +2849,12 @@ mod tests {
         body.extend_from_slice(&encode_prop(1, 3, 3)); // PROP(1, "email", 3)
         body.extend_from_slice(&encode_open_tag(4, &[])); // <tr>
         body.extend_from_slice(&encode_open_tag(5, &[])); // <td>
-        body.extend_from_slice(&encode_dyn_text(2, 0));   // name
-        body.extend_from_slice(&encode_close_tag(5));      // </td>
+        body.extend_from_slice(&encode_dyn_text(2, 0)); // name
+        body.extend_from_slice(&encode_close_tag(5)); // </td>
         body.extend_from_slice(&encode_open_tag(5, &[])); // <td>
-        body.extend_from_slice(&encode_dyn_text(3, 1));   // email
-        body.extend_from_slice(&encode_close_tag(5));      // </td>
-        body.extend_from_slice(&encode_close_tag(4));      // </tr>
+        body.extend_from_slice(&encode_dyn_text(3, 1)); // email
+        body.extend_from_slice(&encode_close_tag(5)); // </td>
+        body.extend_from_slice(&encode_close_tag(4)); // </tr>
         let opcodes = encode_list(0, 1, &body);
 
         let mut slots = SlotData::new(4);
@@ -2719,11 +2863,17 @@ mod tests {
             SlotValue::Array(vec![
                 SlotValue::Object(vec![
                     ("name".to_string(), SlotValue::Text("Alice".to_string())),
-                    ("email".to_string(), SlotValue::Text("alice@test.com".to_string())),
+                    (
+                        "email".to_string(),
+                        SlotValue::Text("alice@test.com".to_string()),
+                    ),
                 ]),
                 SlotValue::Object(vec![
                     ("name".to_string(), SlotValue::Text("Bob".to_string())),
-                    ("email".to_string(), SlotValue::Text("bob@test.com".to_string())),
+                    (
+                        "email".to_string(),
+                        SlotValue::Text("bob@test.com".to_string()),
+                    ),
                 ]),
             ]),
         );
@@ -2739,10 +2889,22 @@ mod tests {
             &opcodes,
             &slots,
         );
-        assert!(html.contains("<td><!--f:t0-->Alice<!--/f:t0--></td>"), "should contain Alice td, got: {html}");
-        assert!(html.contains("<td><!--f:t1-->alice@test.com<!--/f:t1--></td>"), "should contain alice email, got: {html}");
-        assert!(html.contains("<td><!--f:t0-->Bob<!--/f:t0--></td>"), "should contain Bob td, got: {html}");
-        assert!(html.contains("<td><!--f:t1-->bob@test.com<!--/f:t1--></td>"), "should contain bob email, got: {html}");
+        assert!(
+            html.contains("<td><!--f:t0-->Alice<!--/f:t0--></td>"),
+            "should contain Alice td, got: {html}"
+        );
+        assert!(
+            html.contains("<td><!--f:t1-->alice@test.com<!--/f:t1--></td>"),
+            "should contain alice email, got: {html}"
+        );
+        assert!(
+            html.contains("<td><!--f:t0-->Bob<!--/f:t0--></td>"),
+            "should contain Bob td, got: {html}"
+        );
+        assert!(
+            html.contains("<td><!--f:t1-->bob@test.com<!--/f:t1--></td>"),
+            "should contain bob email, got: {html}"
+        );
     }
 
     // -- Test: PROP on non-Object returns Null (empty string for DYN_TEXT) ----
@@ -2760,15 +2922,15 @@ mod tests {
 
         let html = walk_with_slots(
             &["src", "name"],
-            &[
-                (0, 0, 0x01, 0x00, &[]),
-                (1, 1, 0x01, 0x00, &[]),
-            ],
+            &[(0, 0, 0x01, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
             &opcodes,
             &slots,
         );
         // PROP on non-Object produces Null → DYN_TEXT renders zero-width space (U+200B)
-        assert!(html.contains("<!--f:t0-->\u{200B}<!--/f:t0-->"), "non-object PROP should produce empty text, got: {html}");
+        assert!(
+            html.contains("<!--f:t0-->\u{200B}<!--/f:t0-->"),
+            "non-object PROP should produce empty text, got: {html}"
+        );
     }
 
     // -- Test: PROP with missing property returns Null -----------------------
@@ -2784,19 +2946,22 @@ mod tests {
         let mut slots = SlotData::new(2);
         slots.set(
             0,
-            SlotValue::Object(vec![("name".to_string(), SlotValue::Text("Alice".to_string()))]),
+            SlotValue::Object(vec![(
+                "name".to_string(),
+                SlotValue::Text("Alice".to_string()),
+            )]),
         );
 
         let html = walk_with_slots(
             &["src", "target", "missing"],
-            &[
-                (0, 0, 0x05, 0x00, &[]),
-                (1, 1, 0x01, 0x00, &[]),
-            ],
+            &[(0, 0, 0x05, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
             &opcodes,
             &slots,
         );
-        assert!(html.contains("<!--f:t0-->\u{200B}<!--/f:t0-->"), "missing property should produce empty text, got: {html}");
+        assert!(
+            html.contains("<!--f:t0-->\u{200B}<!--/f:t0-->"),
+            "missing property should produce empty text, got: {html}"
+        );
     }
 
     // -- Recursion depth limit tests ----------------------------------------
@@ -2874,8 +3039,7 @@ mod tests {
     #[ignore = "requires admin/dist IR files — run in monorepo or after `npm run build`"]
     fn walk_real_benchmark_ir() {
         // Find the benchmark IR file dynamically (hash changes on rebuild)
-        let dist_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../admin/dist");
+        let dist_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../admin/dist");
         let ir_path = std::fs::read_dir(&dist_dir)
             .expect("admin/dist must exist")
             .filter_map(|e| e.ok())
@@ -2896,20 +3060,38 @@ mod tests {
         // Verify island markers exist
         assert!(html.contains("<!--f:i0-->"), "missing island 0 start");
         assert!(html.contains("<!--/f:i0-->"), "missing island 0 end");
-        assert!(html.contains("data-forma-island=\"0\""), "missing island 0 attr");
+        assert!(
+            html.contains("data-forma-island=\"0\""),
+            "missing island 0 attr"
+        );
 
         // The key assertion: island content must include FilterBar's children
         // (not just an empty shell div)
-        assert!(html.contains("Search"), "FilterBar must contain 'Search' label text in SSR");
-        assert!(html.contains("filter-group"), "FilterBar must contain filter-group divs in SSR");
-        assert!(html.contains("Sort by"), "FilterBar must contain 'Sort by' label text in SSR");
+        assert!(
+            html.contains("Search"),
+            "FilterBar must contain 'Search' label text in SSR"
+        );
+        assert!(
+            html.contains("filter-group"),
+            "FilterBar must contain filter-group divs in SSR"
+        );
+        assert!(
+            html.contains("Sort by"),
+            "FilterBar must contain 'Sort by' label text in SSR"
+        );
 
         // PerfPanel content
-        assert!(html.contains("Performance"), "PerfPanel must contain 'Performance' heading in SSR");
+        assert!(
+            html.contains("Performance"),
+            "PerfPanel must contain 'Performance' heading in SSR"
+        );
 
         // BenchmarkDataTable — SHOW_IF may pick either branch depending on slot defaults
         // Just check the structure exists
-        assert!(html.contains("benchmark-data-table"), "BenchmarkDataTable root class must exist");
+        assert!(
+            html.contains("benchmark-data-table"),
+            "BenchmarkDataTable root class must exist"
+        );
 
         // Print a section for manual inspection
         if let Some(start) = html.find("<!--f:i0-->") {

@@ -25,10 +25,7 @@ pub fn load_manifest<A: Embed>() -> crate::AssetManifest {
 /// Axum handler: serve a static asset with content negotiation (brotli, gzip).
 ///
 /// Mount at `/_assets/{filename}` in your router.
-pub async fn serve_asset<A: Embed>(
-    Path(filename): Path<String>,
-    headers: HeaderMap,
-) -> Response {
+pub async fn serve_asset<A: Embed>(Path(filename): Path<String>, headers: HeaderMap) -> Response {
     let accept = headers
         .get(header::ACCEPT_ENCODING)
         .and_then(|v| v.to_str().ok())

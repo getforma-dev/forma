@@ -1,5 +1,5 @@
-use forma_ir::IR_VERSION;
 use forma_ir::parser::IrModule;
+use forma_ir::IR_VERSION;
 use rust_embed::Embed;
 use std::collections::HashMap;
 

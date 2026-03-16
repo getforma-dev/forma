@@ -89,9 +89,7 @@ impl SlotValue {
             SlotValue::Bool(b) => serde_json::Value::Bool(*b),
             SlotValue::Number(n) => {
                 if n.fract() == 0.0 && n.is_finite() {
-                    serde_json::Value::Number(
-                        serde_json::Number::from(*n as i64),
-                    )
+                    serde_json::Value::Number(serde_json::Number::from(*n as i64))
                 } else {
                     serde_json::Number::from_f64(*n)
                         .map(serde_json::Value::Number)
@@ -162,8 +160,8 @@ impl SlotData {
     /// Unknown JSON keys (not in the slot table) are silently ignored.
     /// Starts from slot table defaults so missing keys retain their defaults.
     pub fn from_json(json_str: &str, module: &IrModule) -> Result<Self, IrError> {
-        let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| IrError::JsonParseError(e.to_string()))?;
+        let parsed: serde_json::Value =
+            serde_json::from_str(json_str).map_err(|e| IrError::JsonParseError(e.to_string()))?;
 
         let obj = match parsed {
             serde_json::Value::Object(map) => map,
@@ -257,19 +255,15 @@ pub fn json_to_slot_value(value: &serde_json::Value) -> SlotValue {
         serde_json::Value::Null => SlotValue::Null,
         serde_json::Value::String(s) => SlotValue::Text(s.clone()),
         serde_json::Value::Bool(b) => SlotValue::Bool(*b),
-        serde_json::Value::Number(n) => {
-            SlotValue::Number(n.as_f64().unwrap_or(0.0))
-        }
+        serde_json::Value::Number(n) => SlotValue::Number(n.as_f64().unwrap_or(0.0)),
         serde_json::Value::Array(arr) => {
             SlotValue::Array(arr.iter().map(json_to_slot_value).collect())
         }
-        serde_json::Value::Object(map) => {
-            SlotValue::Object(
-                map.iter()
-                    .map(|(k, v)| (k.clone(), json_to_slot_value(v)))
-                    .collect(),
-            )
-        }
+        serde_json::Value::Object(map) => SlotValue::Object(
+            map.iter()
+                .map(|(k, v)| (k.clone(), json_to_slot_value(v)))
+                .collect(),
+        ),
     }
 }
 
@@ -521,10 +515,7 @@ mod tests {
 
     #[test]
     fn from_json_null_value() {
-        let module = build_module_for_json(
-            &["name"],
-            &[(0, 0, 0x01, 0x00, &[])],
-        );
+        let module = build_module_for_json(&["name"], &[(0, 0, 0x01, 0x00, &[])]);
 
         let data = SlotData::from_json(r#"{"name": null}"#, &module).unwrap();
         assert!(matches!(data.get(0), SlotValue::Null));
@@ -584,22 +575,17 @@ mod tests {
 
     #[test]
     fn from_json_unknown_key_ignored() {
-        let module = build_module_for_json(
-            &["title"],
-            &[(0, 0, 0x01, 0x00, &[])],
-        );
+        let module = build_module_for_json(&["title"], &[(0, 0, 0x01, 0x00, &[])]);
 
         // "extra_key" is not in the slot table — should be silently ignored
-        let data = SlotData::from_json(r#"{"title": "Hi", "extra_key": "ignored"}"#, &module).unwrap();
+        let data =
+            SlotData::from_json(r#"{"title": "Hi", "extra_key": "ignored"}"#, &module).unwrap();
         assert_eq!(data.get(0).to_text(), "Hi");
     }
 
     #[test]
     fn from_json_invalid_json() {
-        let module = build_module_for_json(
-            &["x"],
-            &[(0, 0, 0x01, 0x00, &[])],
-        );
+        let module = build_module_for_json(&["x"], &[(0, 0, 0x01, 0x00, &[])]);
 
         let result = SlotData::from_json(r#"not valid json"#, &module);
         assert!(result.is_err());
