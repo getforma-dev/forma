@@ -6,6 +6,10 @@ on:
       - 'ir-v*'
       - 'server-v*'
 
+permissions:
+  contents: read
+  id-token: write  # Required for crates.io trusted publishing (OIDC)
+
 jobs:
   publish-ir:
     if: startsWith(github.ref_name, 'ir-v')
@@ -24,10 +28,10 @@ jobs:
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
+      # Trusted publishing: uses OIDC, no API token needed.
+      # Configure at: crates.io/crates/forma-ir/settings/new-trusted-publisher
       - name: Publish forma-ir
         run: cargo publish -p forma-ir
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   publish-server:
     if: startsWith(github.ref_name, 'server-v')
@@ -46,7 +50,7 @@ jobs:
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
+      # Trusted publishing: uses OIDC, no API token needed.
+      # Configure at: crates.io/crates/forma-server/settings/new-trusted-publisher
       - name: Publish forma-server
         run: cargo publish -p forma-server
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
