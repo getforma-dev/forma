@@ -68,6 +68,9 @@ pub enum IrError {
     JsonParseError(String),
     /// A section descriptor has invalid values (e.g. integer overflow).
     InvalidSection,
+    /// Recursive opcode nesting (SHOW_IF, LIST, SWITCH, etc.) exceeded the
+    /// maximum allowed depth.
+    RecursionLimitExceeded,
 }
 
 impl fmt::Display for IrError {
@@ -118,6 +121,9 @@ impl fmt::Display for IrError {
             }
             IrError::InvalidSection => {
                 write!(f, "invalid section descriptor (integer overflow)")
+            }
+            IrError::RecursionLimitExceeded => {
+                write!(f, "recursion limit exceeded (maximum depth: 64)")
             }
         }
     }

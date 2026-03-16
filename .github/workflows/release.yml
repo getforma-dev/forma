@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'ir-v*'
+      - 'server-v*'
+
+jobs:
+  publish-ir:
+    if: startsWith(github.ref_name, 'ir-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+      - run: cargo clippy --workspace -- -D warnings
+      - name: Verify version matches tag
+        run: |
+          PKG_VERSION=$(grep '^version' crates/forma-ir/Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          TAG_VERSION="${GITHUB_REF_NAME#ir-v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+      - name: Publish forma-ir
+        run: cargo publish -p forma-ir
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  publish-server:
+    if: startsWith(github.ref_name, 'server-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+      - run: cargo clippy --workspace -- -D warnings
+      - name: Verify version matches tag
+        run: |
+          PKG_VERSION=$(grep '^version' crates/forma-server/Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          TAG_VERSION="${GITHUB_REF_NAME#server-v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+      - name: Publish forma-server
+        run: cargo publish -p forma-server
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

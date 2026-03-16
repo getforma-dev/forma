@@ -12,6 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --workspace --check
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
       - run: cargo doc --workspace --no-deps
+      - name: Verify WASM build
+        run: cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features

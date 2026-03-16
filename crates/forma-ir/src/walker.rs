@@ -90,7 +90,7 @@ pub fn walk_to_html(module: &IrModule, slots: &SlotData) -> Result<String, IrErr
     let mut out = String::with_capacity(len * 4); // rough estimate
     let mut state = WalkState::new();
     let mut slots_mut = slots.clone();
-    walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state)?;
+    walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
 
     // Emit script tag for ScriptTag props mode islands
     if !state.script_tag_props.is_empty() {
@@ -159,7 +159,7 @@ pub fn walk_island(
     let mut out = String::with_capacity(256);
     let mut state = WalkState::new();
     let mut slots_mut = slots.clone();
-    walk_range_until_island_end(module, &mut slots_mut, ops, content_start, island_id, &mut out, &mut state)?;
+    walk_range_until_island_end(module, &mut slots_mut, ops, content_start, island_id, &mut out, &mut state, 0)?;
 
     Ok(out)
 }
@@ -172,12 +172,17 @@ pub fn walk_island(
 /// deeply nested or malicious input.
 const MAX_LIST_DEPTH: u8 = 4;
 
+/// Maximum recursion depth for control-flow opcodes (SHOW_IF, SWITCH, LIST,
+/// TRY/FALLBACK). Prevents stack overflow from deeply nested or malicious IR.
+const MAX_RECURSION_DEPTH: usize = 64;
+
 /// Walk a sub-range of the opcode stream `ops[start..end]`, appending HTML to `out`.
 ///
 /// This is structured as a sub-range function so that control-flow opcodes
 /// (ShowIf, List, Switch) can recurse into their body ranges.
 ///
 /// `state` carries mutable walker context (list depth, fallback stack, etc.).
+#[allow(clippy::too_many_arguments)]
 fn walk_range(
     module: &IrModule,
     slots: &mut SlotData,
@@ -186,7 +191,12 @@ fn walk_range(
     end: usize,
     out: &mut String,
     state: &mut WalkState,
+    depth: usize,
 ) -> Result<(), IrError> {
+    if depth > MAX_RECURSION_DEPTH {
+        return Err(IrError::RecursionLimitExceeded);
+    }
+
     let strings = &module.strings;
     let mut pos = start;
 
@@ -464,9 +474,9 @@ fn walk_range(
                 out.push_str("-->");
 
                 if condition {
-                    walk_range(module, slots, ops, then_start, then_end, out, state)?;
+                    walk_range(module, slots, ops, then_start, then_end, out, state, depth + 1)?;
                 } else {
-                    walk_range(module, slots, ops, else_start, else_end, out, state)?;
+                    walk_range(module, slots, ops, else_start, else_end, out, state, depth + 1)?;
                 }
 
                 out.push_str("<!--/f:s");
@@ -504,7 +514,7 @@ fn walk_range(
                 for (val_str_idx, body_len) in &cases {
                     let case_val = strings.get(*val_str_idx)?;
                     if case_val == slot_text {
-                        walk_range(module, slots, ops, body_pos, body_pos + body_len, out, state)?;
+                        walk_range(module, slots, ops, body_pos, body_pos + body_len, out, state, depth + 1)?;
                     }
                     body_pos += body_len;
                 }
@@ -547,7 +557,7 @@ fn walk_range(
                     for item in &items {
                         let mut shadow_slots = slots.clone();
                         shadow_slots.set(item_slot_id, item.clone());
-                        walk_range(module, &mut shadow_slots, ops, body_start, body_end, out, state)?;
+                        walk_range(module, &mut shadow_slots, ops, body_start, body_end, out, state, depth + 1)?;
                     }
                     state.list_depth -= 1;
                 }
@@ -643,6 +653,7 @@ fn walk_range(
 /// This is used by `walk_island()` to render just one island's content.
 /// It shares the same opcode interpretation as `walk_range` but has a different
 /// termination condition: it stops at ISLAND_END instead of a fixed end position.
+#[allow(clippy::too_many_arguments)]
 fn walk_range_until_island_end(
     module: &IrModule,
     slots: &mut SlotData,
@@ -651,7 +662,12 @@ fn walk_range_until_island_end(
     target_island_id: u16,
     out: &mut String,
     state: &mut WalkState,
+    depth: usize,
 ) -> Result<(), IrError> {
+    if depth > MAX_RECURSION_DEPTH {
+        return Err(IrError::RecursionLimitExceeded);
+    }
+
     let strings = &module.strings;
     let mut pos = start;
 
@@ -901,9 +917,9 @@ fn walk_range_until_island_end(
                 out.push_str("-->");
 
                 if condition {
-                    walk_range(module, slots, ops, then_start, then_end, out, state)?;
+                    walk_range(module, slots, ops, then_start, then_end, out, state, depth + 1)?;
                 } else {
-                    walk_range(module, slots, ops, else_start, else_end, out, state)?;
+                    walk_range(module, slots, ops, else_start, else_end, out, state, depth + 1)?;
                 }
 
                 out.push_str("<!--/f:s");
@@ -936,7 +952,7 @@ fn walk_range_until_island_end(
                 for (val_str_idx, body_len) in &cases {
                     let case_val = strings.get(*val_str_idx)?;
                     if case_val == slot_text {
-                        walk_range(module, slots, ops, body_pos, body_pos + body_len, out, state)?;
+                        walk_range(module, slots, ops, body_pos, body_pos + body_len, out, state, depth + 1)?;
                     }
                     body_pos += body_len;
                 }
@@ -974,7 +990,7 @@ fn walk_range_until_island_end(
                     for item in &items {
                         let mut shadow_slots = slots.clone();
                         shadow_slots.set(item_slot_id, item.clone());
-                        walk_range(module, &mut shadow_slots, ops, body_start, body_end, out, state)?;
+                        walk_range(module, &mut shadow_slots, ops, body_start, body_end, out, state, depth + 1)?;
                     }
                     state.list_depth -= 1;
                 }
@@ -3103,6 +3119,77 @@ mod tests {
             &slots,
         );
         assert!(html.contains("<!--f:t0-->\u{200B}<!--/f:t0-->"), "missing property should produce empty text, got: {html}");
+    }
+
+    // -- Recursion depth limit tests ----------------------------------------
+
+    #[test]
+    fn walk_nested_show_if_within_limit() {
+        // 5 levels of nested SHOW_IF — well within the 64-level limit.
+        // Each level wraps the next; innermost renders TEXT "deep".
+        // strings: 0..=4 = "s0".."s4", 5 = "deep"
+        let inner = encode_text(5);
+        let level4 = encode_show_if(4, &inner, &[]);
+        let level3 = encode_show_if(3, &level4, &[]);
+        let level2 = encode_show_if(2, &level3, &[]);
+        let level1 = encode_show_if(1, &level2, &[]);
+        let level0 = encode_show_if(0, &level1, &[]);
+
+        let mut slots = SlotData::new(5);
+        for i in 0..5 {
+            slots.set(i, SlotValue::Bool(true));
+        }
+
+        let html = walk_with_slots(
+            &["s0", "s1", "s2", "s3", "s4", "deep"],
+            &[
+                (0, 0, 0x02, 0x00, &[]),
+                (1, 1, 0x02, 0x00, &[]),
+                (2, 2, 0x02, 0x00, &[]),
+                (3, 3, 0x02, 0x00, &[]),
+                (4, 4, 0x02, 0x00, &[]),
+            ],
+            &level0,
+            &slots,
+        );
+        assert!(
+            html.contains("deep"),
+            "5 levels of nesting should succeed, got: {html}"
+        );
+    }
+
+    #[test]
+    fn walk_script_tag_props_escapes_close_script() {
+        // Script tag JSON containing "</" should be escaped to "<\/"
+        // to prevent premature close of the <script> tag.
+        // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
+        // Island with ScriptTag mode, slot value contains "</script>"
+        // strings: 0="div", 1="Comp", 2="payload"
+        let mut opcodes = Vec::new();
+        opcodes.extend_from_slice(&encode_island_start(0));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(0));
+
+        let mut slots = SlotData::new(1);
+        slots.set(0, SlotValue::Text("</script>alert(1)".to_string()));
+
+        let html = walk_with_islands(
+            &["div", "Comp", "payload"],
+            &[(0, 2, 0x01, 0x00, &[])],
+            &[(0, 0x01, 0x02, 1, 0, &[0])],
+            &opcodes,
+            &slots,
+        );
+        // The JSON inside the script tag must not contain a literal "</script>"
+        assert!(
+            !html.contains("</script>alert"),
+            "script tag content must escape </script>, got: {html}"
+        );
+        assert!(
+            html.contains("<\\/script>"),
+            "should replace </ with <\\/ in script JSON, got: {html}"
+        );
     }
 
     #[test]

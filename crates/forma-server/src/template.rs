@@ -31,23 +31,32 @@ fn build_head(
     // Font preloads
     for font in &assets.fonts {
         head.push_str(&format!(
-            "<link rel=\"preload\" href=\"{font}\" as=\"font\" type=\"font/woff2\" crossorigin>\n"
+            "<link rel=\"preload\" href=\"{}\" as=\"font\" type=\"font/woff2\" crossorigin>\n",
+            escape_html(font)
         ));
     }
 
     // CSS stylesheets
     for css in &assets.css_urls {
-        head.push_str(&format!("<link rel=\"stylesheet\" href=\"{css}\">\n"));
+        head.push_str(&format!(
+            "<link rel=\"stylesheet\" href=\"{}\">\n",
+            escape_html(css)
+        ));
     }
 
     // JS modulepreloads
     for js in &assets.js_urls {
-        head.push_str(&format!("<link rel=\"modulepreload\" href=\"{js}\">\n"));
+        head.push_str(&format!(
+            "<link rel=\"modulepreload\" href=\"{}\">\n",
+            escape_html(js)
+        ));
     }
 
     // Personality CSS (inline, small)
+    // Escape "</style>" sequences to prevent breaking out of the style block.
     if let Some(css) = personality_css {
-        head.push_str(&format!("<style nonce=\"{nonce}\">{css}</style>\n"));
+        let safe_css = css.replace("</style>", "&lt;/style&gt;").replace("</STYLE>", "&lt;/STYLE&gt;");
+        head.push_str(&format!("<style nonce=\"{nonce}\">{safe_css}</style>\n"));
     }
 
     head
@@ -82,7 +91,7 @@ struct BodyParts {
 fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> BodyParts {
     let body_class_attr = config
         .body_class
-        .map(|c| format!(" class=\"{c}\""))
+        .map(|c| format!(" class=\"{}\"", escape_html(c)))
         .unwrap_or_default();
     let body_prefix = config.body_prefix.unwrap_or("").to_string();
     let config_script_tag = config
@@ -92,7 +101,7 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
 
     let page_js_tag = js_urls
         .last()
-        .map(|url| format!("<script type=\"module\" nonce=\"{nonce}\" src=\"{url}\"></script>"))
+        .map(|url| format!("<script type=\"module\" nonce=\"{nonce}\" src=\"{}\"></script>", escape_html(url)))
         .unwrap_or_default();
 
     let wasm_script = match (
@@ -102,7 +111,7 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         (Some(wasm), Some(route)) => match route.ir.as_ref() {
             Some(ir_name) => format!(
                 "<script nonce=\"{nonce}\">window.__FORMA_WASM__={{loader:\"/_assets/{}\",binary:\"/_assets/{}\",ir:\"/_assets/{}\"}};</script>\n",
-                wasm.loader, wasm.binary, ir_name
+                escape_html(&wasm.loader), escape_html(&wasm.binary), escape_html(ir_name)
             ),
             None => String::new(),
         },
@@ -533,5 +542,117 @@ mod tests {
         assert!(page.html.contains("data-forma-ssr"));
         // DYN_TEXT wraps content in marker comments for client reconciliation
         assert!(page.html.contains("<span><!--f:t0-->World<!--/f:t0--></span>"));
+    }
+
+    // -- Security: escape_html tests -----------------------------------------
+
+    #[test]
+    fn escape_html_basic_entities() {
+        assert_eq!(escape_html("<script>"), "&lt;script&gt;");
+        assert_eq!(escape_html("\"quotes\""), "&quot;quotes&quot;");
+        assert_eq!(escape_html("a&b"), "a&amp;b");
+        assert_eq!(escape_html("clean"), "clean");
+    }
+
+    #[test]
+    fn asset_filename_xss_is_escaped() {
+        // If a manifest somehow contained a malicious filename, it must be escaped
+        // in the HTML output rather than injected raw.
+        let mut routes = HashMap::new();
+        routes.insert(
+            "/test".to_string(),
+            RouteAssets {
+                js: vec!["\"><script>alert(1)</script>".to_string()],
+                css: vec!["\"><script>alert(2)</script>".to_string()],
+                fonts: vec!["\"><script>alert(3)</script>".to_string()],
+                total_size_br: 0,
+                budget_warn_threshold: 204800,
+                ir: None,
+            },
+        );
+        let manifest = AssetManifest {
+            version: 1,
+            build_hash: "test".to_string(),
+            assets: HashMap::new(),
+            routes,
+            wasm: None,
+        };
+
+        let page = render_page(&PageConfig {
+            title: "XSS Test",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+
+        // The raw "<script>" must not appear unescaped in the output
+        assert!(
+            !page.html.contains("<script>alert("),
+            "asset filenames must be HTML-escaped, got: {}",
+            page.html
+        );
+        assert!(
+            page.html.contains("&lt;script&gt;"),
+            "escaped <script> should be present"
+        );
+    }
+
+    #[test]
+    fn body_class_with_quotes_is_escaped() {
+        let manifest = empty_manifest();
+        let page = render_page(&PageConfig {
+            title: "Body Class Test",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: None,
+            body_class: Some("dark\" onload=\"alert(1)"),
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+
+        // The double quote in body_class must be escaped so the attacker
+        // cannot break out of the class="..." attribute.
+        // Raw: class="dark" onload="alert(1)"  (attribute injection)
+        // Safe: class="dark&quot; onload=&quot;alert(1)"  (single quoted attr value)
+        assert!(
+            page.html.contains("&quot;"),
+            "body_class double quote must be escaped"
+        );
+        assert!(
+            !page.html.contains(r#"class="dark" onload="#),
+            "body_class must not allow attribute breakout via unescaped double quote"
+        );
+    }
+
+    #[test]
+    fn personality_css_style_breakout_prevented() {
+        let manifest = empty_manifest();
+        let page = render_page(&PageConfig {
+            title: "CSS Test",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: None,
+            body_class: None,
+            personality_css: Some("body{color:red}</style><script>alert(1)</script>"),
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+
+        // The raw </style> breakout must be neutralized
+        assert!(
+            !page.html.contains("</style><script>alert"),
+            "personality_css must not allow </style> breakout"
+        );
     }
 }
