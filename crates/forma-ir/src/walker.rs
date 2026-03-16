@@ -176,6 +176,17 @@ const MAX_LIST_DEPTH: u8 = 4;
 /// TRY/FALLBACK). Prevents stack overflow from deeply nested or malicious IR.
 const MAX_RECURSION_DEPTH: usize = 64;
 
+/// Controls how the walker decides when to stop processing opcodes.
+enum WalkMode {
+    /// Walk a fixed byte range `ops[start..end]`.  Used for the top-level
+    /// full-page walk **and** for all recursive sub-range calls inside
+    /// control-flow opcodes (ShowIf, Switch, List).
+    Range { end: usize },
+    /// Walk until we encounter an ISLAND_END opcode whose `island_id` matches
+    /// `target_island_id`.  Used by `walk_island()` for fragment rendering.
+    UntilIslandEnd { target_island_id: u16 },
+}
+
 /// Walk a sub-range of the opcode stream `ops[start..end]`, appending HTML to `out`.
 ///
 /// This is structured as a sub-range function so that control-flow opcodes
@@ -193,6 +204,54 @@ fn walk_range(
     state: &mut WalkState,
     depth: usize,
 ) -> Result<(), IrError> {
+    walk_range_impl(module, slots, ops, start, WalkMode::Range { end }, out, state, depth)
+}
+
+/// Walk the opcode stream starting at `start` until we encounter an ISLAND_END
+/// with the matching `target_island_id`. Appends HTML output to `out`.
+///
+/// This is used by `walk_island()` to render just one island's content.
+/// It shares the same opcode interpretation as `walk_range` but has a different
+/// termination condition: it stops at ISLAND_END instead of a fixed end position.
+#[allow(clippy::too_many_arguments)]
+fn walk_range_until_island_end(
+    module: &IrModule,
+    slots: &mut SlotData,
+    ops: &[u8],
+    start: usize,
+    target_island_id: u16,
+    out: &mut String,
+    state: &mut WalkState,
+    depth: usize,
+) -> Result<(), IrError> {
+    walk_range_impl(module, slots, ops, start, WalkMode::UntilIslandEnd { target_island_id }, out, state, depth)
+}
+
+/// Shared implementation for both `walk_range` and `walk_range_until_island_end`.
+///
+/// The `mode` parameter controls the termination condition:
+/// - `WalkMode::Range { end }` — stop when `pos >= end` (with bounds check)
+/// - `WalkMode::UntilIslandEnd { target_island_id }` — stop when we hit an
+///   ISLAND_END opcode matching the target id
+///
+/// All opcode handling is identical regardless of mode. The only differences
+/// are:
+/// 1. The loop termination condition
+/// 2. How ISLAND_END is handled (in Range mode it emits the comment marker
+///    and continues; in UntilIslandEnd mode a match causes an early return)
+/// 3. What happens when the loop ends without an explicit stop (Range returns
+///    Ok, UntilIslandEnd returns an error)
+#[allow(clippy::too_many_arguments)]
+fn walk_range_impl(
+    module: &IrModule,
+    slots: &mut SlotData,
+    ops: &[u8],
+    start: usize,
+    mode: WalkMode,
+    out: &mut String,
+    state: &mut WalkState,
+    depth: usize,
+) -> Result<(), IrError> {
     if depth > MAX_RECURSION_DEPTH {
         return Err(IrError::RecursionLimitExceeded);
     }
@@ -200,12 +259,27 @@ fn walk_range(
     let strings = &module.strings;
     let mut pos = start;
 
-    while pos < end {
+    // The loop bound depends on the mode:
+    // - Range: stop at `end`, but also guard against `pos >= ops.len()`
+    // - UntilIslandEnd: stop at `ops.len()` (or earlier via ISLAND_END match)
+    let loop_bound = match mode {
+        WalkMode::Range { end } => end,
+        WalkMode::UntilIslandEnd { .. } => usize::MAX, // guarded by ops.len() check below
+    };
+
+    while pos < loop_bound {
+        // In Range mode, `end` could exceed ops.len()` for a malformed stream.
+        // In UntilIslandEnd mode, loop_bound is MAX so we always need this check.
         if pos >= ops.len() {
-            return Err(IrError::BufferTooShort {
-                expected: pos + 1,
-                actual: ops.len(),
-            });
+            match mode {
+                WalkMode::Range { .. } => {
+                    return Err(IrError::BufferTooShort {
+                        expected: pos + 1,
+                        actual: ops.len(),
+                    });
+                }
+                WalkMode::UntilIslandEnd { .. } => break, // fall through to IslandNotFound error
+            }
         }
 
         let opcode = Opcode::from_byte(ops[pos])?;
@@ -436,6 +510,21 @@ fn walk_range(
                 // island_id(u16)
                 let island_id = read_u16(ops, pos)?;
                 pos += 2;
+
+                // In UntilIslandEnd mode, a matching island_id means we are done.
+                if let WalkMode::UntilIslandEnd { target_island_id } = mode {
+                    if island_id == target_island_id {
+                        // Flush any pending tag close before returning.
+                        if state.pending_tag_close {
+                            out.push('>');
+                            state.pending_tag_close = false;
+                        }
+                        return Ok(());
+                    }
+                }
+
+                // Either Range mode, or a nested (non-matching) island end —
+                // emit the closing marker comment and continue.
                 out.push_str("<!--/f:i");
                 out.push_str(&island_id.to_string());
                 out.push_str("-->");
@@ -451,7 +540,7 @@ fn walk_range(
                 out.push_str("-->");
             }
 
-            // ----- Stub opcodes (skip header, bodies walked as normal) -----
+            // ----- Control-flow opcodes (recurse via walk_range) -----
 
             Opcode::ShowIf => {
                 // slot_id(2) + then_len(4) + else_len(4) = 10 bytes header
@@ -638,433 +727,22 @@ fn walk_range(
         }
     }
 
-    // Flush any pending tag close at the end of the opcode range.
-    if state.pending_tag_close {
-        out.push('>');
-        state.pending_tag_close = false;
-    }
-
-    Ok(())
-}
-
-/// Walk the opcode stream starting at `start` until we encounter an ISLAND_END
-/// with the matching `target_island_id`. Appends HTML output to `out`.
-///
-/// This is used by `walk_island()` to render just one island's content.
-/// It shares the same opcode interpretation as `walk_range` but has a different
-/// termination condition: it stops at ISLAND_END instead of a fixed end position.
-#[allow(clippy::too_many_arguments)]
-fn walk_range_until_island_end(
-    module: &IrModule,
-    slots: &mut SlotData,
-    ops: &[u8],
-    start: usize,
-    target_island_id: u16,
-    out: &mut String,
-    state: &mut WalkState,
-    depth: usize,
-) -> Result<(), IrError> {
-    if depth > MAX_RECURSION_DEPTH {
-        return Err(IrError::RecursionLimitExceeded);
-    }
-
-    let strings = &module.strings;
-    let mut pos = start;
-
-    while pos < ops.len() {
-        let opcode = Opcode::from_byte(ops[pos])?;
-        pos += 1;
-
-        // Flush pending tag close before any opcode that is NOT DYN_ATTR.
-        if state.pending_tag_close && opcode != Opcode::DynAttr {
-            out.push('>');
-            state.pending_tag_close = false;
-        }
-
-        match opcode {
-            Opcode::IslandEnd => {
-                let island_id = read_u16(ops, pos)?;
-                pos += 2;
-                if island_id == target_island_id {
-                    // We've reached the end of our target island — stop.
-                    // Flush any pending tag close first.
-                    if state.pending_tag_close {
-                        out.push('>');
-                        state.pending_tag_close = false;
-                    }
-                    return Ok(());
-                }
-                // Nested island end — emit the marker comment and continue
-                out.push_str("<!--/f:i");
-                out.push_str(&island_id.to_string());
-                out.push_str("-->");
-            }
-
-            // All other opcodes are handled identically to walk_range.
-            // We delegate to the shared walk_one_opcode helper.
-
-            Opcode::OpenTag => {
-                let (tag_str_idx, attrs, new_pos) = read_tag_with_attrs(ops, pos, strings)?;
-                let tag = strings.get(tag_str_idx)?;
-                out.push('<');
-                out.push_str(tag);
-                for (key, val) in &attrs {
-                    if val.is_empty() {
-                        out.push(' ');
-                        out.push_str(key);
-                    } else {
-                        out.push(' ');
-                        out.push_str(key);
-                        out.push_str("=\"");
-                        push_escaped_attr(out, val);
-                        out.push('"');
-                    }
-                }
-                if let Some(island) = state.pending_island.take() {
-                    out.push_str(" data-forma-island=\"");
-                    out.push_str(&island.id.to_string());
-                    out.push_str("\" data-forma-component=\"");
-                    push_escaped_attr(out, &island.component_name);
-                    out.push_str("\" data-forma-status=\"pending\"");
-                    let trigger_str = match island.trigger {
-                        IslandTrigger::Load => "load",
-                        IslandTrigger::Visible => "visible",
-                        IslandTrigger::Interaction => "interaction",
-                        IslandTrigger::Idle => "idle",
-                    };
-                    out.push_str(" data-forma-hydrate=\"");
-                    out.push_str(trigger_str);
-                    out.push('"');
-                    if let Some(ref props_json) = island.inline_props {
-                        out.push_str(" data-forma-props=\"");
-                        push_escaped_attr(out, props_json);
-                        out.push('"');
-                    }
-                }
-                if let Some(key) = state.pending_list_key.take() {
-                    out.push_str(" data-forma-key=\"");
-                    push_escaped_attr(out, &key);
-                    out.push('"');
-                }
-                state.pending_tag_close = true;
-                pos = new_pos;
-            }
-
-            Opcode::CloseTag => {
-                let str_idx = read_u32(ops, pos)?;
-                pos += 4;
-                let tag = strings.get(str_idx)?;
-                out.push_str("</");
-                out.push_str(tag);
+    // Post-loop handling depends on the mode:
+    match mode {
+        WalkMode::Range { .. } => {
+            // Flush any pending tag close at the end of the opcode range.
+            if state.pending_tag_close {
                 out.push('>');
+                state.pending_tag_close = false;
             }
-
-            Opcode::VoidTag => {
-                let (tag_str_idx, attrs, new_pos) = read_tag_with_attrs(ops, pos, strings)?;
-                let tag = strings.get(tag_str_idx)?;
-                out.push('<');
-                out.push_str(tag);
-                for (key, val) in &attrs {
-                    if val.is_empty() {
-                        out.push(' ');
-                        out.push_str(key);
-                    } else {
-                        out.push(' ');
-                        out.push_str(key);
-                        out.push_str("=\"");
-                        push_escaped_attr(out, val);
-                        out.push('"');
-                    }
-                }
-                if let Some(island) = state.pending_island.take() {
-                    out.push_str(" data-forma-island=\"");
-                    out.push_str(&island.id.to_string());
-                    out.push_str("\" data-forma-component=\"");
-                    push_escaped_attr(out, &island.component_name);
-                    out.push_str("\" data-forma-status=\"pending\"");
-                    let trigger_str = match island.trigger {
-                        IslandTrigger::Load => "load",
-                        IslandTrigger::Visible => "visible",
-                        IslandTrigger::Interaction => "interaction",
-                        IslandTrigger::Idle => "idle",
-                    };
-                    out.push_str(" data-forma-hydrate=\"");
-                    out.push_str(trigger_str);
-                    out.push('"');
-                    if let Some(ref props_json) = island.inline_props {
-                        out.push_str(" data-forma-props=\"");
-                        push_escaped_attr(out, props_json);
-                        out.push('"');
-                    }
-                }
-                if let Some(key) = state.pending_list_key.take() {
-                    out.push_str(" data-forma-key=\"");
-                    push_escaped_attr(out, &key);
-                    out.push('"');
-                }
-                state.pending_tag_close = true;
-                pos = new_pos;
-            }
-
-            Opcode::Text => {
-                let str_idx = read_u32(ops, pos)?;
-                pos += 4;
-                let text = strings.get(str_idx)?;
-                push_escaped_html(out, text);
-            }
-
-            Opcode::DynText => {
-                let slot_id = read_u16(ops, pos)?;
-                pos += 2;
-                let marker_id = read_u16(ops, pos)?;
-                pos += 2;
-
-                check_slot_source(module, slot_id, slots.get(slot_id));
-                let value = slots.get(slot_id).to_text();
-
-                out.push_str("<!--f:t");
-                out.push_str(&marker_id.to_string());
-                out.push_str("-->");
-                if value.is_empty() {
-                    out.push('\u{200B}');
-                } else {
-                    push_escaped_html(out, &value);
-                }
-                out.push_str("<!--/f:t");
-                out.push_str(&marker_id.to_string());
-                out.push_str("-->");
-            }
-
-            Opcode::DynAttr => {
-                let attr_str_idx = read_u32(ops, pos)?;
-                let slot_id = read_u16(ops, pos + 4)?;
-                pos += 6;
-                check_slot_source(module, slot_id, slots.get(slot_id));
-
-                if state.pending_tag_close {
-                    let attr_name = strings.get(attr_str_idx)?;
-                    let value = slots.get(slot_id).to_text();
-                    if !value.is_empty() {
-                        out.push(' ');
-                        out.push_str(attr_name);
-                        out.push_str("=\"");
-                        push_escaped_attr(out, &value);
-                        out.push('"');
-                    }
-                }
-            }
-
-            Opcode::IslandStart => {
-                let island_id = read_u16(ops, pos)?;
-                pos += 2;
-                out.push_str("<!--f:i");
-                out.push_str(&island_id.to_string());
-                out.push_str("-->");
-
-                if let Some(entry) = module.islands.entries().iter().find(|e| e.id == island_id) {
-                    let component_name = strings.get(entry.name_str_idx)?.to_string();
-                    let inline_props = match entry.props_mode {
-                        PropsMode::Inline => {
-                            if entry.slot_ids.is_empty() {
-                                None
-                            } else {
-                                let props = build_island_props(module, slots, &entry.slot_ids);
-                                Some(serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string()))
-                            }
-                        }
-                        PropsMode::ScriptTag => {
-                            if !entry.slot_ids.is_empty() {
-                                let props = build_island_props(module, slots, &entry.slot_ids);
-                                state.script_tag_props.insert(island_id, serde_json::Value::Object(props));
-                            }
-                            None
-                        }
-                        PropsMode::Deferred => None,
-                    };
-                    state.pending_island = Some(IslandPending {
-                        id: island_id,
-                        component_name,
-                        inline_props,
-                        trigger: entry.trigger,
-                    });
-                }
-            }
-
-            Opcode::Comment => {
-                let str_idx = read_u32(ops, pos)?;
-                pos += 4;
-                let text = strings.get(str_idx)?;
-                out.push_str("<!--");
-                out.push_str(&text.replace("--", "&#45;&#45;"));
-                out.push_str("-->");
-            }
-
-            Opcode::ShowIf => {
-                let slot_id = read_u16(ops, pos)?;
-                let then_len = read_u32(ops, pos + 2)? as usize;
-                let else_len = read_u32(ops, pos + 6)? as usize;
-                pos += 10;
-
-                check_slot_source(module, slot_id, slots.get(slot_id));
-                let condition = slots.get(slot_id).as_bool();
-                let then_start = pos;
-                let then_end = pos + then_len;
-                let else_start = then_end + 1;
-                let else_end = else_start + else_len;
-
-                out.push_str("<!--f:s");
-                out.push_str(&slot_id.to_string());
-                out.push_str("-->");
-
-                if condition {
-                    walk_range(module, slots, ops, then_start, then_end, out, state, depth + 1)?;
-                } else {
-                    walk_range(module, slots, ops, else_start, else_end, out, state, depth + 1)?;
-                }
-
-                out.push_str("<!--/f:s");
-                out.push_str(&slot_id.to_string());
-                out.push_str("-->");
-
-                pos = else_end;
-            }
-
-            Opcode::ShowElse => {
-                // Should not be reached during normal walking
-            }
-
-            Opcode::Switch => {
-                let slot_id = read_u16(ops, pos)?;
-                let case_count = read_u16(ops, pos + 2)? as usize;
-                pos += 4;
-
-                let mut cases = Vec::with_capacity(case_count);
-                for _ in 0..case_count {
-                    let val_str_idx = read_u32(ops, pos)?;
-                    let body_len = read_u32(ops, pos + 4)? as usize;
-                    cases.push((val_str_idx, body_len));
-                    pos += 8;
-                }
-
-                let slot_text = slots.get(slot_id).to_text();
-                let mut body_pos = pos;
-
-                for (val_str_idx, body_len) in &cases {
-                    let case_val = strings.get(*val_str_idx)?;
-                    if case_val == slot_text {
-                        walk_range(module, slots, ops, body_pos, body_pos + body_len, out, state, depth + 1)?;
-                    }
-                    body_pos += body_len;
-                }
-
-                pos = body_pos;
-            }
-
-            Opcode::List => {
-                let slot_id = read_u16(ops, pos)?;
-                let item_slot_id = read_u16(ops, pos + 2)?;
-                let body_len = read_u32(ops, pos + 4)? as usize;
-                pos += 8;
-
-                check_slot_source(module, slot_id, slots.get(slot_id));
-
-                let body_start = pos;
-                let body_end = pos + body_len;
-
-                let list_marker_id = slot_id;
-                out.push_str("<!--f:l");
-                out.push_str(&list_marker_id.to_string());
-                out.push_str("-->");
-
-                let items: Vec<SlotValue> = slots
-                    .get(slot_id)
-                    .as_array()
-                    .map(|a| a.to_vec())
-                    .unwrap_or_default();
-
-                if !items.is_empty() {
-                    state.list_depth += 1;
-                    if state.list_depth > MAX_LIST_DEPTH {
-                        return Err(IrError::ListDepthExceeded { max: MAX_LIST_DEPTH });
-                    }
-                    for item in &items {
-                        let mut shadow_slots = slots.clone();
-                        shadow_slots.set(item_slot_id, item.clone());
-                        walk_range(module, &mut shadow_slots, ops, body_start, body_end, out, state, depth + 1)?;
-                    }
-                    state.list_depth -= 1;
-                }
-
-                out.push_str("<!--/f:l");
-                out.push_str(&list_marker_id.to_string());
-                out.push_str("-->");
-
-                pos = body_end;
-            }
-
-            Opcode::TryStart => {
-                let fallback_len = read_u32(ops, pos)? as usize;
-                pos += 4;
-                state.fallback_stack.push(fallback_len);
-            }
-
-            Opcode::Fallback => {
-                if let Some(skip) = state.fallback_stack.pop() {
-                    pos += skip;
-                }
-            }
-
-            Opcode::Preload => {
-                if pos >= ops.len() {
-                    return Err(IrError::BufferTooShort {
-                        expected: pos + 1,
-                        actual: ops.len(),
-                    });
-                }
-                let resource_type = ops[pos];
-                let url_str_idx = read_u32(ops, pos + 1)?;
-                let url = strings.get(url_str_idx)?;
-                pos += 5;
-
-                let (as_val, type_attr) = match resource_type {
-                    1 => ("font", " type=\"font/woff2\" crossorigin"),
-                    2 => ("style", ""),
-                    3 => ("script", ""),
-                    4 => ("image", ""),
-                    _ => ("fetch", ""),
-                };
-                out.push_str("<link rel=\"preload\" href=\"");
-                push_escaped_attr(out, url);
-                out.push_str("\" as=\"");
-                out.push_str(as_val);
-                out.push('"');
-                out.push_str(type_attr);
-                out.push_str(">\n");
-            }
-
-            Opcode::ListItemKey => {
-                let key_str_idx = read_u32(ops, pos)?;
-                pos += 4;
-                let key_val = strings.get(key_str_idx)?;
-                state.pending_list_key = Some(key_val.to_string());
-            }
-
-            Opcode::Prop => {
-                let src_slot_id = read_u16(ops, pos)?;
-                let prop_str_idx = read_u32(ops, pos + 2)?;
-                let target_slot_id = read_u16(ops, pos + 6)?;
-                pos += 8;
-
-                let prop_name = strings.get(prop_str_idx)?;
-                let value = slots.get(src_slot_id).get_property(prop_name);
-                slots.set(target_slot_id, value);
-            }
+            Ok(())
+        }
+        WalkMode::UntilIslandEnd { target_island_id } => {
+            // If we reach the end of the opcode stream without finding ISLAND_END,
+            // that means the IR is malformed. Return an error.
+            Err(IrError::IslandNotFound(target_island_id))
         }
     }
-
-    // If we reach the end of the opcode stream without finding ISLAND_END,
-    // that means the IR is malformed. Return an error.
-    Err(IrError::IslandNotFound(target_island_id))
 }
 
 // ---------------------------------------------------------------------------
