@@ -10,7 +10,7 @@ await build({
     '/': { js: ['dashboard'], css: ['dashboard'] },
   },
   cssEntries: [
-    { type: 'concat', inputs: ['src/styles/dashboard.css'], output: 'dashboard.css' },
+    { input: 'src/styles/dashboard.css', outfile: 'dashboard.css' },
   ],
   outputDir: 'dist',
   ...(isWatch ? { watch: true } : {}),
