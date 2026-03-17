@@ -99,9 +99,9 @@ describe('template files contain expected structure', () => {
       }
 
       if (template === 'dashboard') {
-        it('has admin/src/app.tsx with activateIslands', () => {
+        it('has admin/src/app.tsx with mount', () => {
           const app = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'src', 'app.tsx'), 'utf8');
-          expect(app).toContain('activateIslands');
+          expect(app).toContain('mount');
         });
 
         it('has admin/src/islands/DataTable.tsx with JSX syntax', () => {
@@ -194,12 +194,12 @@ describe('dashboard template specifics', () => {
     expect(build).toContain("outfile: 'dashboard.js'");
   });
 
-  it('app.tsx uses activateIslands with all islands', () => {
+  it('app.tsx uses mount with all islands', () => {
     const app = fs.readFileSync(
       path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'app.tsx'),
       'utf8',
     );
-    expect(app).toContain('activateIslands');
+    expect(app).toContain('mount');
     expect(app).toContain('StatsCards');
     expect(app).toContain('Sidebar');
     expect(app).toContain('ActivityFeed');

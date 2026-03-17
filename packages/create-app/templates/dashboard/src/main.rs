@@ -6,7 +6,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use forma_server::{assets, csp, load_ir_modules, render_page, sw, PageConfig, RenderMode};
+use forma_server::{assets, load_ir_modules, render_page, sw, PageConfig, RenderMode};
 use rust_embed::Embed;
 use std::collections::HashMap;
 
