@@ -46,20 +46,24 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Browser                                                          │
-│                                                                  │
-│  ┌─────────┐  createFetch('/api/...')   ┌──────────────────┐    │
-│  │ FormaJS │ ──────────────────────────→│ Rust/Axum Server │    │
-│  │ Signals │ ←──────────────────────────│ (forma-server)   │    │
-│  │ + JSX   │        JSON response       │                  │    │
-│  └─────────┘                            │ 8 API endpoints  │    │
-│       │                                 │ SPA catch-all    │    │
-│       ▼                                 │ Asset serving     │    │
-│  Real DOM (no virtual DOM)              │ CSP headers      │    │
-│                                         └──────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph LR
+  subgraph Browser
+    JSX["FormaJS<br/>Signals + JSX"]
+    DOM["Real DOM<br/>(no virtual DOM)"]
+    JSX --> DOM
+  end
+
+  subgraph Server["Rust / Axum Server"]
+    API["8 JSON API<br/>endpoints"]
+    SSR["forma-server<br/>SSR + CSP"]
+    Assets["rust-embed<br/>hashed assets"]
+  end
+
+  JSX -- "createFetch('/api/...')" --> API
+  API -- "JSON response" --> JSX
+  Browser -- "GET /" --> SSR
+  SSR -- "HTML + JS + CSS" --> Browser
 ```
 
 ### Frontend (TypeScript + JSX)
@@ -110,7 +114,7 @@ src/
 
 ## FormaJS Patterns Used
 
-This template is a comprehensive showcase of every FormaJS reactive primitive. Here's how each one is used:
+This template showcases FormaJS's core reactive primitives in a real application. Here's how each one is used:
 
 ### JSX via `h()`
 
@@ -323,54 +327,94 @@ Sidebar buttons call `setCurrentPage('deployments')`. No library, no dependency,
 
 ## Phase 1 vs Phase 2: The SSR Upgrade Path
 
-This template ships as **Phase 1** (client-side rendering). Here's what that means and how to upgrade to server-side rendering.
+This template ships as **Phase 1** (client-side rendering). Here's what that means and what it takes to upgrade.
 
 ### Phase 1: Client-Side Mount (Current)
 
-```
-Request → Server sends HTML shell → JS loads → mount() renders everything
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant S as Rust Server
+  B->>S: GET /
+  S->>B: HTML shell (empty #app)
+  B->>B: JS loads, mount() renders UI
+  B->>S: createFetch('/api/deployments')
+  S->>B: JSON data
+  B->>B: Signals update, DOM fills in
 ```
 
-The server returns `<div id="app"></div>` with a script tag. JavaScript does all the rendering. A `personality_css` rule sets `background: #282828` immediately so there's no white flash.
+The server returns `<div id="app"></div>` with a script tag. JavaScript renders everything. A `personality_css` rule sets `background: #282828` immediately so there's no white flash, but the layout only appears after JS executes (~200ms).
 
 ### Phase 2: Server-Side Rendering + Hydration
 
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant S as Rust Server
+  B->>S: GET /
+  S->>B: Full HTML (sidebar, layout, skeletons)
+  B->>B: User sees layout immediately
+  B->>B: JS loads, hydrates (attaches events)
+  B->>S: createFetch('/api/deployments')
+  S->>B: JSON data
+  B->>B: Signals update, data fills in
 ```
-Request → Server renders full HTML → Browser paints instantly → JS hydrates (attaches events)
-```
-
-The server returns the complete dashboard HTML — sidebar, stat cards, tables, everything. The user sees content immediately. FormaJS hydrates by walking the existing DOM and attaching signal subscriptions without re-rendering.
 
 ### How SSR Works Under the Hood
 
-1. **Build time:** The FMIR compiler reads your JSX and emits `.ir` files — a binary intermediate representation of your component tree.
+1. **Build time:** The FMIR compiler reads your JSX and emits `.ir` files — a binary intermediate representation of your component tree's static structure.
 
 2. **Request time:** The Rust server's `forma-server` crate loads `.ir` files and walks them to generate HTML. This is a Rust-native renderer — no JavaScript on the server.
 
-3. **Browser:** FormaJS detects `data-forma-ssr` on `#app` and enters hydration mode. It walks the existing DOM and attaches reactive bindings in place — no DOM creation, no re-rendering.
+3. **Browser:** FormaJS detects `data-forma-ssr` on `#app` and enters hydration mode. It walks the existing DOM and attaches reactive bindings (event listeners, signal subscriptions) in place — no DOM re-creation.
 
-4. **Service Worker:** Precaches all assets. On repeat visits, the SW serves cached HTML instantly — the dashboard works fully offline.
+4. **Service Worker:** Precaches all assets. On repeat visits, the SW serves cached HTML instantly — works offline.
+
+### What Phase 2 Can and Cannot Render
+
+The FMIR compiler generates `.ir` from your JSX's **static structure** — the layout, component tree, and initial DOM shape. It does not execute JavaScript, so:
+
+**Server renders (instant):**
+- Sidebar navigation with all icons and labels
+- TopBar with page title and command palette hint
+- Card grid layout and loading skeleton placeholders
+- Table headers, structural elements, static text
+
+**Client fills in after hydration:**
+- Data from `createFetch` (stat card values, table rows, chart data)
+- Interactive state (`createSignal`, `createComputed`)
+- Imperative DOM (the SVG chart tooltip, `document.createElement` patterns)
+- History API integration
+
+In practice, Phase 2 gives you **instant layout + loading skeletons** on first paint, then JS hydrates and `createFetch` fills in the real data. The user sees a complete page structure immediately instead of a blank screen — but the actual data still requires client-side fetching.
+
+For fully server-rendered data (stat card values baked into HTML), you'd pass server-side data through the `slots` mechanism in `render_page()`. This is a more advanced pattern demonstrated in the GateWASM reference implementation.
 
 ### Upgrading to Phase 2
 
-Two steps. Zero code changes.
+The build pipeline is already configured — just pass the SSR flag:
 
 ```bash
-# Step 1: Build with SSR flag
+# Build with SSR (generates .ir files alongside JS/CSS)
 cd admin && npm run build:ssr
 
-# Step 2: That's it. Restart the server.
+# Restart the server — it auto-detects .ir files
 cd .. && cargo run
 ```
 
-The Rust server automatically detects `.ir` files and switches from Phase 1 to Phase 2. The `load_ir_modules()` call in `main.rs` handles this — no changes needed.
+The `load_ir_modules()` call in `main.rs` detects `.ir` files and switches `render_mode` from `Phase1ClientMount` to `Phase2SsrReconcile` automatically.
+
+**What may need adjustment for your components:**
+- Components using `document.createElement` or other imperative DOM APIs will render as empty server-side — the client fills them in during hydration. Structure your components so the layout is declarative JSX (SSR-able) and interactivity is layered on top.
+- `createFetch` calls fire client-side after hydration. If you need data baked into the initial HTML, use `slots` to pass server-side data into `render_page()`.
 
 | Aspect | Phase 1 | Phase 2 |
 |--------|---------|---------|
-| First paint | ~200ms (JS must execute) | Instant (full HTML) |
-| Page source | `<div id="app"></div>` | Complete rendered dashboard |
-| Offline | No | Yes (Service Worker) |
-| SEO | No | Yes (server-rendered HTML) |
+| First paint | ~200ms (JS must execute) | Instant (layout + skeletons) |
+| Page source | `<div id="app"></div>` | Full layout HTML |
+| Data rendering | After JS + fetch | After JS + fetch (same) |
+| Offline | No | Yes (Service Worker caches HTML) |
+| SEO | No (empty div) | Partial (layout, not data) |
 | Build output | `.js` + `.css` | `.js` + `.css` + `.ir` |
 
 ---
