@@ -1,17 +1,18 @@
 [package]
 name = "forma-server"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 license = "MIT"
 authors = ["Forma <victor@getforma.dev>"]
 description = "Axum middleware for Forma SSR: page rendering, asset serving, CSP, service worker"
 repository = "https://github.com/getforma-dev/forma"
 homepage = "https://getforma.dev"
+readme = "README.md"
 keywords = ["ssr", "axum", "web-framework", "islands"]
 categories = ["web-programming::http-server"]
 
 [dependencies]
-forma-ir = "0.1.2"
+forma-ir = "0.1.3"
 axum = "0.8"
 rust-embed = "8"
 serde = { version = "1", features = ["derive"] }
