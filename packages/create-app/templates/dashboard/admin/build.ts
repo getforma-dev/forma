@@ -12,6 +12,6 @@ await build({
   cssEntries: [
     { type: 'concat', inputs: ['src/styles/dashboard.css'], output: 'dashboard.css' },
   ],
-  outputDir: '../dist',
+  outputDir: 'dist',
   ...(isWatch ? { watch: true } : {}),
 });

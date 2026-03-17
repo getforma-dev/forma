@@ -32,8 +32,8 @@ npx @getforma/create-app --version
 
 | Template | Description |
 |----------|-------------|
-| `minimal` | Counter with signals and JSX — simplest starting point |
-| `dashboard` | Sortable data table with `createList` — demonstrates list rendering |
+| `dashboard` | Live dashboard with 4 islands, Rust API routes, dark theme — full-stack showcase |
+| `minimal` | Clean slate — Rust server + JSX frontend, ready to build on |
 
 ## What You Get
 

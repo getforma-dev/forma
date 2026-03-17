@@ -23,7 +23,6 @@ struct AppState {
 }
 
 async fn page(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let nonce = csp::generate_nonce();
 
     // Use Phase 2 SSR if an IR module was compiled for this route, otherwise Phase 1
     let route = "/";
