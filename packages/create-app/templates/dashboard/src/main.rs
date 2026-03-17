@@ -1,20 +1,65 @@
-use axum::{extract::State, http::StatusCode, response::{Html, IntoResponse, Response}, routing::get, Router};
-use forma_server::{assets, render_page, sw, PageConfig, RenderMode};
-use rust_embed::Embed;
 use std::sync::Arc;
+use axum::{
+    extract::State,
+    http::header,
+    response::{Html, IntoResponse},
+    routing::get,
+    Json, Router,
+};
+use forma_server::{assets, csp, render_page, sw, PageConfig, RenderMode};
+use rust_embed::Embed;
+
+mod data;
 
 #[derive(Embed)]
 #[folder = "admin/dist/"]
 struct Assets;
 
 struct AppState {
-    manifest: forma_server::AssetManifest,
+    manifest: forma_server::types::AssetManifest,
+}
+
+async fn page(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let nonce = csp::generate_nonce();
+    let page = render_page(&PageConfig {
+        title: "Dashboard",
+        route_pattern: "/",
+        manifest: &state.manifest,
+        render_mode: RenderMode::Phase1ClientMount,
+        ir_module: None,
+        slots: None,
+        config_script: None,
+        body_class: None,
+        personality_css: None,
+        body_prefix: None,
+    });
+
+    (
+        [
+            (header::CACHE_CONTROL, "no-store".to_string()),
+            (
+                header::HeaderName::from_static("content-security-policy"),
+                page.csp,
+            ),
+        ],
+        Html(page.html),
+    )
+}
+
+async fn api_stats() -> Json<data::Stats> {
+    Json(data::get_stats())
+}
+
+async fn api_activity() -> Json<Vec<data::Activity>> {
+    Json(data::get_activity())
+}
+
+async fn api_users() -> Json<Vec<data::User>> {
+    Json(data::get_users())
 }
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
-
     // Check if frontend has been built
     if Assets::get("manifest.json").is_none() {
         eprintln!("\n  Error: Frontend not built yet.\n");
@@ -26,38 +71,24 @@ async fn main() {
     }
 
     let manifest = assets::load_manifest::<Assets>();
+
     let state = Arc::new(AppState { manifest });
 
     let app = Router::new()
-        .route("/", get(home))
-        // Add your API routes here:
-        // .route("/api/data", get(api_data_handler))
-        .route("/favicon.ico", get(favicon))
+        .route("/", get(page))
+        .route("/api/stats", get(api_stats))
+        .route("/api/activity", get(api_activity))
+        .route("/api/users", get(api_users))
         .route("/sw.js", get(sw::serve_sw::<Assets>))
-        .route("/_assets/{*filename}", get(assets::serve_asset::<Assets>))
+        .route("/_assets/{*path}", get(assets::serve_asset::<Assets>))
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
-    tracing::info!("Listening on http://127.0.0.1:3000");
-    axum::serve(listener, app).await.unwrap();
-}
+    println!("\n  Dashboard running at http://localhost:3000\n");
 
-async fn home(State(state): State<Arc<AppState>>) -> Response {
-    let page = render_page(&PageConfig {
-        title: "Dashboard",
-        route_pattern: "/",
-        manifest: &state.manifest,
-        config_script: None,
-        body_class: None,
-        personality_css: None,
-        body_prefix: None,
-        render_mode: RenderMode::Phase1ClientMount,
-        ir_module: None,
-        slots: None,
-    });
-    Html(page.html).into_response()
-}
-
-async fn favicon() -> StatusCode {
-    StatusCode::NO_CONTENT
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+        .await
+        .expect("Failed to bind to port 3000");
+    axum::serve(listener, app)
+        .await
+        .expect("Server error");
 }

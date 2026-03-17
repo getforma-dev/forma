@@ -35,7 +35,11 @@ describe('template files contain expected structure', () => {
     describe(template, () => {
       it('has Cargo.toml with placeholder', () => {
         const cargo = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'Cargo.toml'), 'utf8');
-        expect(cargo).toContain('{{PROJECT_NAME}}');
+        if (template === 'dashboard') {
+          expect(cargo).toContain('{{project-name}}');
+        } else {
+          expect(cargo).toContain('{{PROJECT_NAME}}');
+        }
         expect(cargo).toContain('forma-ir');
         expect(cargo).toContain('forma-server');
       });
@@ -44,10 +48,16 @@ describe('template files contain expected structure', () => {
         const main = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8');
         expect(main).toContain('forma_server');
         expect(main).toContain('render_page');
-        expect(main).toContain('tracing_subscriber::fmt::init()');
-        expect(main).toContain('route("/favicon.ico"');
-        expect(main).toContain('route("/sw.js"');
         expect(main).toContain('serve_asset::<Assets>');
+        if (template === 'minimal') {
+          expect(main).toContain('tracing_subscriber::fmt::init()');
+          expect(main).toContain('route("/favicon.ico"');
+        }
+        if (template === 'dashboard') {
+          expect(main).toContain('api_stats');
+          expect(main).toContain('/api/stats');
+        }
+        expect(main).toContain('route("/sw.js"');
       });
 
       it('has admin/package.json with @getforma/core', () => {
@@ -60,26 +70,53 @@ describe('template files contain expected structure', () => {
       it('has admin/build.ts', () => {
         const build = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'build.ts'), 'utf8');
         expect(build).toContain('@getforma/build');
-        expect(build).toContain("outfile: 'home.js'");
+        if (template === 'dashboard') {
+          expect(build).toContain("outfile: 'dashboard.js'");
+          expect(build).toContain("entry: 'src/app.tsx'");
+        } else {
+          expect(build).toContain("outfile: 'home.js'");
+        }
       });
 
-      it('has admin/src/home/app.tsx with mount render function', () => {
-        const app = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'app.tsx'), 'utf8');
-        expect(app).toContain("mount(() => HomeIsland(), '#app')");
-      });
+      if (template === 'minimal') {
+        it('has admin/src/home/app.tsx with mount render function', () => {
+          const app = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'app.tsx'), 'utf8');
+          expect(app).toContain("mount(() => HomeIsland(), '#app')");
+        });
 
-      it('has admin/src/home/HomeIsland.tsx with JSX syntax', () => {
-        const island = fs.readFileSync(
-          path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'HomeIsland.tsx'),
-          'utf8',
-        );
-        expect(island).toContain('@getforma/core');
-        expect(island).toContain('<div');
-        expect(island).toContain('onClick');
-        // Ensure no virtual DOM patterns
-        expect(island).not.toContain('createElement');
-        expect(island).not.toContain('render(');
-      });
+        it('has admin/src/home/HomeIsland.tsx with JSX syntax', () => {
+          const island = fs.readFileSync(
+            path.join(TEMPLATES_DIR, template, 'admin', 'src', 'home', 'HomeIsland.tsx'),
+            'utf8',
+          );
+          expect(island).toContain('@getforma/core');
+          expect(island).toContain('<div');
+          expect(island).toContain('onClick');
+          // Ensure no virtual DOM patterns
+          expect(island).not.toContain('createElement');
+          expect(island).not.toContain('render(');
+        });
+      }
+
+      if (template === 'dashboard') {
+        it('has admin/src/app.tsx with activateIslands', () => {
+          const app = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', 'src', 'app.tsx'), 'utf8');
+          expect(app).toContain('activateIslands');
+        });
+
+        it('has admin/src/islands/DataTable.tsx with JSX syntax', () => {
+          const island = fs.readFileSync(
+            path.join(TEMPLATES_DIR, template, 'admin', 'src', 'islands', 'DataTable.tsx'),
+            'utf8',
+          );
+          expect(island).toContain('@getforma/core');
+          expect(island).toContain('<div');
+          expect(island).toContain('onClick');
+          // Ensure no virtual DOM patterns
+          expect(island).not.toContain('createElement');
+          expect(island).not.toContain('render(');
+        });
+      }
 
       it('has admin/tsconfig.json with JSX settings', () => {
         const tsconfig = JSON.parse(
@@ -92,8 +129,13 @@ describe('template files contain expected structure', () => {
 
       it('has README.md with placeholder', () => {
         const readme = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'README.md'), 'utf8');
-        expect(readme).toContain('{{PROJECT_NAME}}');
-        expect(readme).toContain('getforma.dev');
+        if (template === 'dashboard') {
+          expect(readme).toContain('{{project-name}}');
+          expect(readme).toContain('@getforma/core');
+        } else {
+          expect(readme).toContain('{{PROJECT_NAME}}');
+          expect(readme).toContain('getforma.dev');
+        }
       });
 
       it('has _gitignore (renamed for npm pack compatibility)', () => {
@@ -106,18 +148,61 @@ describe('template files contain expected structure', () => {
 });
 
 describe('dashboard template specifics', () => {
-  it('uses createList with plain T items (not signal getters)', () => {
-    const island = fs.readFileSync(
-      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'home', 'HomeIsland.tsx'),
+  it('uses createList in islands', () => {
+    const dataTable = fs.readFileSync(
+      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'islands', 'DataTable.tsx'),
       'utf8',
     );
-    expect(island).toContain('createList');
-    expect(island).toContain('createSignal');
+    expect(dataTable).toContain('createList');
+    expect(dataTable).toContain('createSignal');
     // createList renderFn should receive plain item, not () => T
-    // The pattern: (r) => (...) where r is used directly (r.id, r.name)
-    expect(island).toContain('r.id');
-    expect(island).toContain('r.name');
-    expect(island).toContain('r.value');
+    // The pattern: (user) => (...) where user is used directly (user.name, user.email)
+    expect(dataTable).toContain('user.name');
+    expect(dataTable).toContain('user.email');
+    expect(dataTable).toContain('user.role');
+  });
+
+  it('uses createList in ActivityFeed', () => {
+    const feed = fs.readFileSync(
+      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'islands', 'ActivityFeed.tsx'),
+      'utf8',
+    );
+    expect(feed).toContain('createList');
+    expect(feed).toContain('createSignal');
+    expect(feed).toContain('item.id');
+    expect(feed).toContain('item.message');
+  });
+
+  it('has API routes in main.rs', () => {
+    const main = fs.readFileSync(
+      path.join(TEMPLATES_DIR, 'dashboard', 'src', 'main.rs'),
+      'utf8',
+    );
+    expect(main).toContain('api_stats');
+    expect(main).toContain('/api/stats');
+    expect(main).toContain('/api/activity');
+    expect(main).toContain('/api/users');
+  });
+
+  it('build.ts references src/app.tsx entry point with dashboard.js output', () => {
+    const build = fs.readFileSync(
+      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'build.ts'),
+      'utf8',
+    );
+    expect(build).toContain("entry: 'src/app.tsx'");
+    expect(build).toContain("outfile: 'dashboard.js'");
+  });
+
+  it('app.tsx uses activateIslands with all islands', () => {
+    const app = fs.readFileSync(
+      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'app.tsx'),
+      'utf8',
+    );
+    expect(app).toContain('activateIslands');
+    expect(app).toContain('StatsCards');
+    expect(app).toContain('Sidebar');
+    expect(app).toContain('ActivityFeed');
+    expect(app).toContain('DataTable');
   });
 });
 

@@ -1,13 +1,17 @@
 import { build } from '@getforma/build';
 
+const isWatch = process.argv.includes('--watch');
+
 await build({
   entryPoints: [
-    { entry: 'src/home/app.tsx', outfile: 'home.js' },
+    { entry: 'src/app.tsx', outfile: 'dashboard.js' },
   ],
   routes: {
-    '/': { js: ['home'], css: [] },
+    '/': { js: ['dashboard'], css: ['dashboard'] },
   },
-  outputDir: 'dist',
-  ssr: process.argv.includes('--ssr'),
-  watch: process.argv.includes('--watch'),
+  cssEntries: [
+    { type: 'concat', inputs: ['src/styles/dashboard.css'], output: 'dashboard.css' },
+  ],
+  outputDir: '../dist',
+  ...(isWatch ? { watch: true } : {}),
 });
