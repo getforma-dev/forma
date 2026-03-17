@@ -189,7 +189,32 @@ export function OverviewPage() {
 
   return (
     <div class="space-y-6">
-      {/* Stat Cards */}
+      {/* Stat Cards — loading skeleton */}
+      {createShow(
+        () => metrics.loading() && !metrics.data(),
+        () => (
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {[0,1,2,3].map(i => (
+              <div class="bg-gruvbox-bg-soft border border-gruvbox-border rounded-lg p-5 space-y-3">
+                <div class="h-3 w-20 bg-gruvbox-border rounded animate-pulse-slow" />
+                <div class="h-8 w-24 bg-gruvbox-border rounded animate-pulse-slow" />
+              </div>
+            ))}
+          </div>
+        ),
+      )}
+
+      {/* Stat Cards — error */}
+      {createShow(
+        () => !!metrics.error(),
+        () => (
+          <div class="bg-gruvbox-bg-soft border border-gruvbox-border rounded-lg p-5 text-sm text-gruvbox-red">
+            Failed to load metrics: {() => metrics.error()?.message || 'Unknown error'}
+          </div>
+        ),
+      )}
+
+      {/* Stat Cards — data */}
       {createShow(
         () => !!metrics.data(),
         () => (
@@ -222,6 +247,10 @@ export function OverviewPage() {
           {createShow(
             () => volume.loading() && !volume.data(),
             () => <div class="h-48 bg-gruvbox-border/20 rounded animate-pulse-slow" />,
+          )}
+          {createShow(
+            () => !!volume.error(),
+            () => <div class="h-48 flex items-center justify-center text-sm text-gruvbox-red">Failed to load chart data</div>,
           )}
         </div>
 
