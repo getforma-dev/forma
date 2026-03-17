@@ -38,8 +38,8 @@ Options:
   --dry-run          Preview without creating files
 
 Templates:
-  minimal    Counter with signals and JSX
-  dashboard  Sortable data table with createList
+  minimal    Counter with signals and JSX (learning/prototyping)
+  dashboard  Live dashboard with islands, API routes, dark theme (full-stack showcase)
 `);
     process.exit(0);
   }
@@ -82,7 +82,10 @@ Templates:
         type: 'select',
         name: 'template',
         message: 'Template?',
-        choices: TEMPLATES.map((t) => ({ title: t, value: t })),
+        choices: [
+          { title: 'dashboard', description: 'Live dashboard with islands, API routes, dark theme', value: 'dashboard' },
+          { title: 'minimal', description: 'Counter with signals and JSX (learning)', value: 'minimal' },
+        ],
       })).template;
 
   if (!template) {
