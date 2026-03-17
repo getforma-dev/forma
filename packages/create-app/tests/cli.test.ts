@@ -54,8 +54,8 @@ describe('template files contain expected structure', () => {
           expect(main).toContain('route("/favicon.ico"');
         }
         if (template === 'dashboard') {
-          expect(main).toContain('api_stats');
-          expect(main).toContain('/api/stats');
+          expect(main).toContain('api_deployments');
+          expect(main).toContain('/api/deployments');
         }
         expect(main).toContain('route("/sw.js"');
       });
@@ -104,17 +104,17 @@ describe('template files contain expected structure', () => {
           expect(app).toContain('mount');
         });
 
-        it('has admin/src/islands/DataTable.tsx with JSX syntax', () => {
-          const island = fs.readFileSync(
-            path.join(TEMPLATES_DIR, template, 'admin', 'src', 'islands', 'DataTable.tsx'),
+        it('has admin/src/pages/DeploymentsPage.tsx with JSX syntax', () => {
+          const page = fs.readFileSync(
+            path.join(TEMPLATES_DIR, template, 'admin', 'src', 'pages', 'DeploymentsPage.tsx'),
             'utf8',
           );
-          expect(island).toContain('@getforma/core');
-          expect(island).toContain('<div');
-          expect(island).toContain('onClick');
+          expect(page).toContain('@getforma/core');
+          expect(page).toContain('<div');
+          expect(page).toContain('createFetch');
           // Ensure no virtual DOM patterns
-          expect(island).not.toContain('createElement');
-          expect(island).not.toContain('render(');
+          expect(page).not.toContain('createElement');
+          expect(page).not.toContain('render(');
         });
       }
 
@@ -148,30 +148,28 @@ describe('template files contain expected structure', () => {
 });
 
 describe('dashboard template specifics', () => {
-  it('uses createList in islands', () => {
-    const dataTable = fs.readFileSync(
-      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'islands', 'DataTable.tsx'),
+  it('uses createList in DeploymentsPage', () => {
+    const page = fs.readFileSync(
+      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'pages', 'DeploymentsPage.tsx'),
       'utf8',
     );
-    expect(dataTable).toContain('createList');
-    expect(dataTable).toContain('createFetch');
-    expect(dataTable).toContain('createStore');
-    // createList renderFn should receive plain item, not () => T
-    // The pattern: (user) => (...) where user is used directly (user.name, user.email)
-    expect(dataTable).toContain('user.name');
-    expect(dataTable).toContain('user.email');
-    expect(dataTable).toContain('user.role');
+    expect(page).toContain('createList');
+    expect(page).toContain('createFetch');
+    expect(page).toContain('dep.service');
+    expect(page).toContain('dep.version');
+    expect(page).toContain('dep.status');
   });
 
-  it('uses createList in ActivityFeed', () => {
-    const feed = fs.readFileSync(
-      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'islands', 'ActivityFeed.tsx'),
+  it('uses createList in ServersPage', () => {
+    const page = fs.readFileSync(
+      path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'pages', 'ServersPage.tsx'),
       'utf8',
     );
-    expect(feed).toContain('createList');
-    expect(feed).toContain('createFetch');
-    expect(feed).toContain('item.id');
-    expect(feed).toContain('item.message');
+    expect(page).toContain('createList');
+    expect(page).toContain('createFetch');
+    expect(page).toContain('createComputed');
+    expect(page).toContain('server.name');
+    expect(page).toContain('server.cpu_percent');
   });
 
   it('has API routes in main.rs', () => {
@@ -179,31 +177,34 @@ describe('dashboard template specifics', () => {
       path.join(TEMPLATES_DIR, 'dashboard', 'src', 'main.rs'),
       'utf8',
     );
-    expect(main).toContain('api_stats');
-    expect(main).toContain('/api/stats');
-    expect(main).toContain('/api/activity');
-    expect(main).toContain('/api/users');
+    expect(main).toContain('api_deployments');
+    expect(main).toContain('/api/deployments');
+    expect(main).toContain('/api/servers');
+    expect(main).toContain('/api/metrics');
+    expect(main).toContain('/api/incidents');
   });
 
-  it('build.ts references src/app.tsx entry point with dashboard.js output', () => {
+  it('build.ts references src/app.tsx entry point with dashboard.js output and tailwind', () => {
     const build = fs.readFileSync(
       path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'build.ts'),
       'utf8',
     );
     expect(build).toContain("entry: 'src/app.tsx'");
     expect(build).toContain("outfile: 'dashboard.js'");
+    expect(build).toContain('tailwind: true');
   });
 
-  it('app.tsx uses mount with all islands', () => {
+  it('app.tsx uses mount with page components and createShow routing', () => {
     const app = fs.readFileSync(
       path.join(TEMPLATES_DIR, 'dashboard', 'admin', 'src', 'app.tsx'),
       'utf8',
     );
     expect(app).toContain('mount');
-    expect(app).toContain('StatsCards');
+    expect(app).toContain('createShow');
+    expect(app).toContain('DeploymentsPage');
+    expect(app).toContain('OverviewPage');
+    expect(app).toContain('ServersPage');
     expect(app).toContain('Sidebar');
-    expect(app).toContain('ActivityFeed');
-    expect(app).toContain('DataTable');
   });
 });
 
