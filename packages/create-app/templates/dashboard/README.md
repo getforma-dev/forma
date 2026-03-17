@@ -420,17 +420,14 @@ cd admin && npm run build:ssr
 cd .. && cargo run
 ```
 
-**Current status:** The SSR build runs and produces `.ir` files, but the FMIR compiler currently generates a placeholder IR for this dashboard because the component tree uses dynamic patterns (`createShow` routing, `createEffect`, imperative DOM) that the compiler can't statically analyze yet. The Rust server loads the `.ir` file and falls back to Phase 1 gracefully — nothing breaks.
+The compiler analyzes your JSX, extracts the static layout structure, and emits a 1,956-byte IR file with 7 islands. The Rust server renders the layout (sidebar frame, topbar, content area, command palette shell) as HTML. Dynamic content (nav items, stat cards, table rows) hydrates client-side via islands.
 
-**What's needed for full Phase 2:** The FMIR compiler needs to handle `createShow` as hydration boundaries — rendering the static layout (sidebar, topbar, card grid structure) server-side while marking dynamic branches for client-only hydration. This is active work on the compiler. When it lands, this template will produce real SSR output with the same `build:ssr` command — no template changes needed.
-
-**For a working Phase 2 example today**, see the GateWASM admin dashboard, which uses simpler component patterns that the compiler can fully analyze.
-
-**Structuring components for SSR readiness:**
-- Keep layout structure as declarative JSX (sidebar, topbar, page shells) — these are SSR-able
-- Use `createShow` for dynamic content regions — these become hydration boundaries
-- `createFetch` calls fire client-side after hydration. For server-rendered data, use `slots` to pass data into `render_page()`
-- Avoid `document.createElement` for layout — use it only for interactive overlays (tooltips, modals) that don't need SSR
+**Structuring components for SSR:**
+- Declarative JSX layout (sidebar, topbar, page shells) → server-rendered
+- `createShow` branches → become hydration boundaries (show markers in HTML)
+- `createFetch` → fires client-side after hydration
+- Local closures (`navItem`, `sectionTitle`) → become islands, hydrated client-side
+- `createEffect`, `addEventListener` → skipped during static analysis (client-only)
 
 | Aspect | Phase 1 | Phase 2 |
 |--------|---------|---------|
