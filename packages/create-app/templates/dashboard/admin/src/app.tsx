@@ -134,7 +134,7 @@ function Sidebar() {
             () => !collapsed(),
             () => (
               <div class="min-w-0">
-                <div class="text-sm font-medium text-gruvbox-fg truncate">Admin User.</div>
+                <div class="text-sm font-medium text-gruvbox-fg truncate">Admin User</div>
                 <div class="text-[11px] text-gruvbox-gray truncate">Admin</div>
               </div>
             ),

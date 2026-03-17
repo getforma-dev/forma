@@ -20,7 +20,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## What's Inside
 
-### Three Pages
+### Pages
 
 | Page | URL | What It Shows |
 |------|-----|---------------|
@@ -84,15 +84,13 @@ admin/src/
 │   └── SettingsPage.tsx       Placeholder
 ├── components/
 │   ├── Icon.tsx               SVG icon wrapper (multi-path support)
-│   ├── icons.ts               Lucide SVG path constants (30 icons)
+│   ├── icons.ts               Lucide SVG path constants (25 icons)
 │   ├── StatCard.tsx           Metric card with trend arrow
 │   ├── StatusBadge.tsx        Color-mapped status badge (20 status types)
 │   ├── ProgressBar.tsx        Threshold-colored bar (green/yellow/red)
 │   └── UserAvatar.tsx         Initials avatar circle
-├── styles/
-│   └── dashboard.css          Tailwind v4 @theme + custom animations
-└── lib/
-    └── format.ts              Number/currency/percent formatting
+└── styles/
+    └── dashboard.css          Tailwind v4 @theme + custom animations
 ```
 
 ### Backend (Rust)

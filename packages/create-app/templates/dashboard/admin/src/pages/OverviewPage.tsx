@@ -135,7 +135,7 @@ function RequestVolumeChart({ data }: { data: RequestVolumePoint[] }) {
 
   return (
     <div class="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} class={() => `w-full h-auto`} onMousemove={onMouseMove} onMouseleave={onMouseLeave}>
+      <svg viewBox={`0 0 ${W} ${H}`} class="w-full h-auto" onMousemove={onMouseMove} onMouseleave={onMouseLeave}>
         {/* Grid lines */}
         {yLabels.map(({ y }) => (
           <line x1={PAD} y1={y} x2={W - PAD} y2={y} stroke="#3c3836" stroke-width="0.5" />

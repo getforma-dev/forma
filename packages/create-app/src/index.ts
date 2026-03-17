@@ -226,11 +226,10 @@ ${bold('Examples:')}
 
   if (template === 'dashboard') {
     console.log(dim('  This dashboard demonstrates:'));
-    console.log(dim('  • 4 islands with different hydration triggers (load, visible, idle, interaction)'));
-    console.log(dim('  • Rust API routes (/api/stats, /api/activity, /api/users)'));
-    console.log(dim('  • createFetch, createStore, createShow, createComputed, $dispatch'));
-    console.log(dim('  • SSR Phase 2 (automatic when IR modules are compiled)'));
-    console.log(dim('  • CSP headers, content-hashed assets, dark theme'));
+    console.log(dim('  • 3 pages with createShow routing + History API (no router library)'));
+    console.log(dim('  • Rust API routes (/api/metrics, /api/deployments, /api/servers, +5 more)'));
+    console.log(dim('  • createFetch, createSignal, createShow, createComputed, createList, createEffect'));
+    console.log(dim('  • Hand-rolled SVG chart, command palette (Cmd+K), Tailwind CSS v4'));
     console.log();
   }
 }
