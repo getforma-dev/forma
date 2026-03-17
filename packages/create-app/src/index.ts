@@ -2,13 +2,29 @@
 import prompts from 'prompts';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-export const TEMPLATES = ['minimal', 'dashboard'];
+// ── Constants ──────────────────────────────────────────────────────────
+
+export const TEMPLATES = ['dashboard', 'minimal'];
+
+const TEMPLATE_INFO: Record<string, { title: string; description: string }> = {
+  dashboard: {
+    title: 'dashboard',
+    description: 'Live dashboard with islands, API routes, dark theme — full showcase',
+  },
+  minimal: {
+    title: 'minimal',
+    description: 'Clean slate — Rust server + JSX frontend, ready to build on',
+  },
+};
+
+// ── Placeholder replacement ────────────────────────────────────────────
+
+const TEXT_EXTS = new Set(['.toml', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
 
 export function replacePlaceholders(dir: string, replacements: Record<string, string>) {
-  const TEXT_EXTS = new Set(['.toml', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html']);
-
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -23,23 +39,51 @@ export function replacePlaceholders(dir: string, replacements: Record<string, st
   }
 }
 
+// ── Colored output helpers ─────────────────────────────────────────────
+
+const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
+const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
+const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`;
+const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
+const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
+
+// ── Detect package manager ─────────────────────────────────────────────
+
+function detectPackageManager(): string {
+  const ua = process.env.npm_config_user_agent ?? '';
+  if (ua.startsWith('pnpm')) return 'pnpm';
+  if (ua.startsWith('yarn')) return 'yarn';
+  if (ua.startsWith('bun')) return 'bun';
+  return 'npm';
+}
+
+// ── Main ───────────────────────────────────────────────────────────────
+
 async function main() {
   const args = process.argv.slice(2);
 
   // --help / -h
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
-Usage: create-forma-app [project-name] [options]
+${bold('create-forma-app')} — Scaffold a full-stack Forma application
 
-Options:
-  --template <name>  Template to use (minimal, dashboard)
+${bold('Usage:')}
+  npx @getforma/create-app ${cyan('[project-name]')} ${dim('[options]')}
+
+${bold('Options:')}
+  --template ${cyan('<name>')}  Template to use (${TEMPLATES.join(', ')})
   --help, -h         Show this help message
   --version, -v      Show version
   --dry-run          Preview without creating files
 
-Templates:
-  minimal    Counter with signals and JSX (learning/prototyping)
-  dashboard  Live dashboard with islands, API routes, dark theme (full-stack showcase)
+${bold('Templates:')}
+  ${cyan('dashboard')}  Live dashboard with islands, API routes, dark theme ${dim('(full showcase)')}
+  ${cyan('minimal')}    Clean slate — Rust server + JSX frontend ${dim('(build your own)')}
+
+${bold('Examples:')}
+  npx @getforma/create-app my-app
+  npx @getforma/create-app my-app --template dashboard
+  npx @getforma/create-app my-app --template minimal
 `);
     process.exit(0);
   }
@@ -58,9 +102,15 @@ Templates:
   const templateArg = templateArgIdx !== -1 ? args[templateArgIdx + 1] : null;
 
   if (templateArg && !TEMPLATES.includes(templateArg)) {
-    console.error(`Invalid template "${templateArg}". Available templates: ${TEMPLATES.join(', ')}`);
+    console.error(`Invalid template "${templateArg}". Available: ${TEMPLATES.join(', ')}`);
     process.exit(1);
   }
+
+  // ── Project name ──
+
+  console.log();
+  console.log(bold('  Forma') + dim(' — Create a new full-stack application'));
+  console.log();
 
   const projectName =
     args.find((a) => !a.startsWith('--') && a !== templateArg) ||
@@ -70,11 +120,12 @@ Templates:
     process.exit(1);
   }
 
-  // Validate project name (must be a valid directory + Cargo package name)
   if (!/^[a-z0-9][a-z0-9_-]*$/.test(projectName)) {
-    console.error('Project name must be lowercase alphanumeric with hyphens/underscores. Cannot start with - or _.');
+    console.error('Project name must be lowercase alphanumeric with hyphens/underscores.');
     process.exit(1);
   }
+
+  // ── Template selection ──
 
   const template = templateArg
     ? templateArg
@@ -82,10 +133,11 @@ Templates:
         type: 'select',
         name: 'template',
         message: 'Template?',
-        choices: [
-          { title: 'dashboard', description: 'Live dashboard with islands, API routes, dark theme', value: 'dashboard' },
-          { title: 'minimal', description: 'Counter with signals and JSX (learning)', value: 'minimal' },
-        ],
+        choices: TEMPLATES.map((t) => ({
+          title: TEMPLATE_INFO[t]!.title,
+          description: TEMPLATE_INFO[t]!.description,
+          value: t,
+        })),
       })).template;
 
   if (!template) {
@@ -93,18 +145,21 @@ Templates:
     process.exit(1);
   }
 
+  // ── Validate destination ──
+
   const dest = path.resolve(projectName);
   if (fs.existsSync(dest)) {
-    console.error(`${dest} already exists.`);
+    console.error(`\n  ${dest} already exists.\n`);
     process.exit(1);
   }
 
   if (isDryRun) {
-    console.log(`[dry-run] Would create ${dest} with template: ${template}`);
+    console.log(`${dim('[dry-run]')} Would create ${cyan(projectName)} with template: ${cyan(template)}`);
     return;
   }
 
-  // Resolve templates/ relative to this file
+  // ── Scaffold ──
+
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const templateDir = path.join(__dirname, '..', 'templates', template);
 
@@ -112,6 +167,9 @@ Templates:
     console.error(`Template "${template}" not found at ${templateDir}`);
     process.exit(1);
   }
+
+  console.log();
+  console.log(dim('  Scaffolding project...'));
 
   fs.cpSync(templateDir, dest, { recursive: true });
 
@@ -126,15 +184,55 @@ Templates:
     }
   }
 
-  // Replace placeholders in all text files
-  replacePlaceholders(dest, { '{{PROJECT_NAME}}': projectName });
+  // Replace ALL placeholder variants
+  replacePlaceholders(dest, {
+    '{{PROJECT_NAME}}': projectName,
+    '{{project-name}}': projectName,
+  });
 
-  console.log(`\nCreated ${projectName} with the ${template} template.\n`);
-  console.log('Next steps:');
-  console.log(`  cd ${projectName}`);
-  console.log('  cd admin && npm install && npm run build && cd ..');
-  console.log('  cargo run');
-  console.log('  # Open http://127.0.0.1:3000');
+  // ── Git init ──
+
+  try {
+    execSync('git init', { cwd: dest, stdio: 'ignore' });
+    execSync('git add -A', { cwd: dest, stdio: 'ignore' });
+    execSync('git commit -m "Initial commit from create-forma-app"', { cwd: dest, stdio: 'ignore' });
+  } catch {
+    // git not available — skip silently
+  }
+
+  // ── Success output ──
+
+  const pm = detectPackageManager();
+  const runCmd = pm === 'npm' ? 'npm run' : pm;
+
+  console.log();
+  console.log(green('  ✓') + bold(` Created ${projectName}`));
+  console.log();
+  console.log(dim('  Next steps:'));
+  console.log();
+  console.log(`  ${cyan('cd')} ${projectName}`);
+  console.log();
+  console.log(dim('  # Build the frontend'));
+  console.log(`  ${cyan('cd')} admin`);
+  console.log(`  ${cyan(pm)} install`);
+  console.log(`  ${cyan(runCmd)} build`);
+  console.log(`  ${cyan('cd')} ..`);
+  console.log();
+  console.log(dim('  # Start the Rust server'));
+  console.log(`  ${cyan('cargo')} run`);
+  console.log();
+  console.log(dim(`  Open ${cyan('http://localhost:3000')}`));
+  console.log();
+
+  if (template === 'dashboard') {
+    console.log(dim('  This dashboard demonstrates:'));
+    console.log(dim('  • 4 islands with different hydration triggers (load, visible, idle, interaction)'));
+    console.log(dim('  • Rust API routes (/api/stats, /api/activity, /api/users)'));
+    console.log(dim('  • createFetch, createStore, createShow, createComputed, $dispatch'));
+    console.log(dim('  • SSR Phase 2 (automatic when IR modules are compiled)'));
+    console.log(dim('  • CSP headers, content-hashed assets, dark theme'));
+    console.log();
+  }
 }
 
 main().catch((err) => {

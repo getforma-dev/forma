@@ -16,7 +16,7 @@ function rmrf(dir: string) {
 
 describe('TEMPLATES constant', () => {
   it('lists minimal and dashboard', () => {
-    expect(TEMPLATES).toEqual(['minimal', 'dashboard']);
+    expect(TEMPLATES).toEqual(['dashboard', 'minimal']);
   });
 });
 
