@@ -1,4 +1,4 @@
-import { h, createSignal, createEffect, onMount } from '@getforma/core';
+import { h, createEffect } from '@getforma/core';
 import { createFetch } from '@getforma/core/http';
 import { formatNumber, formatCurrency, formatPercent } from '../lib/format';
 
@@ -10,15 +10,16 @@ interface Stats {
 }
 
 export function StatsCards(el: HTMLElement, props: Record<string, unknown> | null) {
-  const [stats, setStats] = createSignal<Stats | null>(null);
-  const [loading, setLoading] = createSignal(true);
-  const [error, setError] = createSignal<string | null>(null);
+  const { data: stats, loading, error } = createFetch<Stats>('/api/stats');
 
-  onMount(() => {
-    fetch('/api/stats')
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(data => { setStats(data); setLoading(false); })
-      .catch(err => { setError(err.message); setLoading(false); });
+  // Fix 2: Dispatch custom event when stats load so other islands can react
+  createEffect(() => {
+    const s = stats();
+    if (s) {
+      el.dispatchEvent(new CustomEvent('stats-loaded', {
+        bubbles: true, composed: true, detail: s,
+      }));
+    }
   });
 
   const statCard = (label: string, valueFn: () => string, colorClass?: string) =>
@@ -33,7 +34,7 @@ export function StatsCards(el: HTMLElement, props: Record<string, unknown> | nul
       {statCard('Uptime', () => loading() ? '...' : formatPercent(stats()?.uptime ?? 0), 'text-success')}
       {statCard('Revenue', () => loading() ? '...' : formatCurrency(stats()?.revenue ?? 0))}
       {statCard('Sessions', () => loading() ? '...' : String(stats()?.active_sessions ?? 0))}
-      {() => error() ? <p class="error">Failed to load stats: {error()}</p> : null}
+      {() => error() ? <p class="error">Failed to load stats: {() => error()?.message}</p> : null}
     </div>
   );
 }

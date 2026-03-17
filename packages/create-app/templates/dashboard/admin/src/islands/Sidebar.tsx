@@ -1,4 +1,4 @@
-import { h, createSignal } from '@getforma/core';
+import { h, createSignal, createShow } from '@getforma/core';
 
 export function Sidebar(el: HTMLElement, props: Record<string, unknown> | null) {
   const [active, setActive] = createSignal('overview');
@@ -10,7 +10,10 @@ export function Sidebar(el: HTMLElement, props: Record<string, unknown> | null) 
       onClick={() => setActive(id)}
     >
       <span class="nav-icon">{icon}</span>
-      {() => collapsed() ? null : <span class="nav-label">{label}</span>}
+      {createShow(
+        () => !collapsed(),
+        () => <span class="nav-label">{label}</span>,
+      )}
     </a>
   );
 

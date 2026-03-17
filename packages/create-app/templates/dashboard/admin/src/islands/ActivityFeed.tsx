@@ -1,4 +1,5 @@
-import { h, createSignal, createList, onMount } from '@getforma/core';
+import { h, createList, onCleanup } from '@getforma/core';
+import { createFetch } from '@getforma/core/http';
 
 interface Activity {
   id: number;
@@ -12,30 +13,19 @@ const KIND_ICONS: Record<string, string> = {
 };
 
 export function ActivityFeed(el: HTMLElement, props: Record<string, unknown> | null) {
-  const [items, setItems] = createSignal<Activity[]>([]);
-  const [loading, setLoading] = createSignal(true);
-  const [error, setError] = createSignal<string | null>(null);
+  const { data: items, loading, error, refetch } = createFetch<Activity[]>('/api/activity');
 
-  const loadData = () => {
-    fetch('/api/activity')
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(data => { setItems(data); setLoading(false); setError(null); })
-      .catch(err => { setError(err.message); setLoading(false); });
-  };
-
-  onMount(() => {
-    loadData();
-    const id = setInterval(loadData, 30_000);
-    return () => clearInterval(id);
-  });
+  // Auto-refresh every 30 seconds using refetch from createFetch
+  const intervalId = setInterval(refetch, 30_000);
+  onCleanup(() => clearInterval(intervalId));
 
   return (
     <div class="activity-feed">
       <h3 class="section-title">Recent Activity</h3>
-      {() => loading() && items().length === 0 ? <p class="loading">Loading...</p> : null}
-      {() => error() ? <p class="error">{error()}</p> : null}
+      {() => loading() && !items() ? <p class="loading">Loading...</p> : null}
+      {() => error() ? <p class="error">{() => error()?.message}</p> : null}
       {createList(
-        items,
+        () => items() ?? [],
         (item) => item.id,
         (item) => (
           <div class="activity-item">

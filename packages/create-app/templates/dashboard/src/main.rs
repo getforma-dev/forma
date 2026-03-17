@@ -6,8 +6,9 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use forma_server::{assets, csp, render_page, sw, PageConfig, RenderMode};
+use forma_server::{assets, csp, load_ir_modules, render_page, sw, PageConfig, RenderMode};
 use rust_embed::Embed;
+use std::collections::HashMap;
 
 mod data;
 
@@ -17,16 +18,27 @@ struct Assets;
 
 struct AppState {
     manifest: forma_server::types::AssetManifest,
+    render_modes: HashMap<String, RenderMode>,
+    ir_modules: HashMap<String, forma_ir::parser::IrModule>,
 }
 
 async fn page(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let nonce = csp::generate_nonce();
+
+    // Use Phase 2 SSR if an IR module was compiled for this route, otherwise Phase 1
+    let route = "/";
+    let render_mode = state.render_modes
+        .get(route)
+        .copied()
+        .unwrap_or(RenderMode::Phase1ClientMount);
+    let ir_module = state.ir_modules.get(route);
+
     let page = render_page(&PageConfig {
         title: "Dashboard",
-        route_pattern: "/",
+        route_pattern: route,
         manifest: &state.manifest,
-        render_mode: RenderMode::Phase1ClientMount,
-        ir_module: None,
+        render_mode,
+        ir_module,
         slots: None,
         config_script: None,
         body_class: None,
@@ -72,7 +84,10 @@ async fn main() {
 
     let manifest = assets::load_manifest::<Assets>();
 
-    let state = Arc::new(AppState { manifest });
+    // Load IR modules for Phase 2 SSR (falls back to Phase 1 if none compiled)
+    let (render_modes, ir_modules) = load_ir_modules::<Assets>(&manifest);
+
+    let state = Arc::new(AppState { manifest, render_modes, ir_modules });
 
     let app = Router::new()
         .route("/", get(page))

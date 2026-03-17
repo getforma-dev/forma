@@ -154,7 +154,8 @@ describe('dashboard template specifics', () => {
       'utf8',
     );
     expect(dataTable).toContain('createList');
-    expect(dataTable).toContain('createSignal');
+    expect(dataTable).toContain('createFetch');
+    expect(dataTable).toContain('createStore');
     // createList renderFn should receive plain item, not () => T
     // The pattern: (user) => (...) where user is used directly (user.name, user.email)
     expect(dataTable).toContain('user.name');
@@ -168,7 +169,7 @@ describe('dashboard template specifics', () => {
       'utf8',
     );
     expect(feed).toContain('createList');
-    expect(feed).toContain('createSignal');
+    expect(feed).toContain('createFetch');
     expect(feed).toContain('item.id');
     expect(feed).toContain('item.message');
   });
