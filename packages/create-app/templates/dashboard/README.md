@@ -47,23 +47,29 @@ Open [http://localhost:3000](http://localhost:3000)
 ## Architecture
 
 ```mermaid
-graph LR
-  subgraph Browser
-    JSX["FormaJS<br/>Signals + JSX"]
-    DOM["Real DOM<br/>(no virtual DOM)"]
-    JSX --> DOM
+flowchart TB
+  subgraph client["Browser"]
+    direction TB
+    mount["mount('#app')"]
+    signals["Signals & Effects<br/><i>createSignal · createShow · createList<br/>createComputed · createEffect · onCleanup</i>"]
+    jsx["JSX → h() → Real DOM"]
+    mount --> signals --> jsx
   end
 
-  subgraph Server["Rust / Axum Server"]
-    API["8 JSON API<br/>endpoints"]
-    SSR["forma-server<br/>SSR + CSP"]
-    Assets["rust-embed<br/>hashed assets"]
+  subgraph server["Rust Server · Axum"]
+    direction TB
+    pages["Page Routes<br/><i>/ · /deployments · /servers</i>"]
+    api["JSON API<br/><i>/api/metrics · /api/deployments<br/>/api/servers · /api/incidents · +4 more</i>"]
+    assets["Static Assets<br/><i>rust-embed · content hashing<br/>Service Worker · CSP headers</i>"]
   end
 
-  JSX -- "createFetch('/api/...')" --> API
-  API -- "JSON response" --> JSX
-  Browser -- "GET /" --> SSR
-  SSR -- "HTML + JS + CSS" --> Browser
+  client -- "createFetch( '/api/…' )" --> api
+  api -- "JSON" --> client
+  pages -- "HTML shell + JS + CSS" --> client
+  assets -- "/_assets/*" --> client
+
+  style client fill:#32302f,stroke:#3c3836,color:#ebdbb2
+  style server fill:#1d2021,stroke:#3c3836,color:#ebdbb2
 ```
 
 ### Frontend (TypeScript + JSX)
@@ -333,14 +339,20 @@ This template ships as **Phase 1** (client-side rendering). Here's what that mea
 
 ```mermaid
 sequenceDiagram
+  actor User
   participant B as Browser
   participant S as Rust Server
-  B->>S: GET /
-  S->>B: HTML shell (empty #app)
-  B->>B: JS loads, mount() renders UI
+
+  User->>S: GET /deployments
+  S-->>B: HTML shell · empty ‹div id=app›
+  Note over B: ~200ms blank screen
+  B->>B: JS loads → mount() renders layout
+  Note over User: User sees sidebar + skeletons
+  B->>S: createFetch('/api/deployment-stats')
   B->>S: createFetch('/api/deployments')
-  S->>B: JSON data
-  B->>B: Signals update, DOM fills in
+  S-->>B: JSON (stats + 12 deployments)
+  B->>B: Signals update → table fills in
+  Note over User: User sees full page
 ```
 
 The server returns `<div id="app"></div>` with a script tag. JavaScript renders everything. A `personality_css` rule sets `background: #282828` immediately so there's no white flash, but the layout only appears after JS executes (~200ms).
@@ -349,15 +361,21 @@ The server returns `<div id="app"></div>` with a script tag. JavaScript renders 
 
 ```mermaid
 sequenceDiagram
+  actor User
   participant B as Browser
   participant S as Rust Server
-  B->>S: GET /
-  S->>B: Full HTML (sidebar, layout, skeletons)
-  B->>B: User sees layout immediately
-  B->>B: JS loads, hydrates (attaches events)
+
+  User->>S: GET /deployments
+  S->>S: Load .ir → walk → generate HTML
+  S-->>B: Full HTML (sidebar + layout + skeletons)
+  Note over User: User sees layout instantly
+  B->>B: JS loads → hydrate (attach events)
+  Note over User: Page is now interactive
+  B->>S: createFetch('/api/deployment-stats')
   B->>S: createFetch('/api/deployments')
-  S->>B: JSON data
-  B->>B: Signals update, data fills in
+  S-->>B: JSON (stats + 12 deployments)
+  B->>B: Signals update → data fills in
+  Note over User: User sees full page
 ```
 
 ### How SSR Works Under the Hood
