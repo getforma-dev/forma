@@ -410,21 +410,27 @@ For fully server-rendered data (stat card values baked into HTML), you'd pass se
 
 ### Upgrading to Phase 2
 
-The build pipeline is already configured — just pass the SSR flag:
+The build pipeline is configured to pass the SSR flag:
 
 ```bash
-# Build with SSR (generates .ir files alongside JS/CSS)
+# Build with SSR flag
 cd admin && npm run build:ssr
 
-# Restart the server — it auto-detects .ir files
+# Restart the server
 cd .. && cargo run
 ```
 
-The `load_ir_modules()` call in `main.rs` detects `.ir` files and switches `render_mode` from `Phase1ClientMount` to `Phase2SsrReconcile` automatically.
+**Current status:** The SSR build runs and produces `.ir` files, but the FMIR compiler currently generates a placeholder IR for this dashboard because the component tree uses dynamic patterns (`createShow` routing, `createEffect`, imperative DOM) that the compiler can't statically analyze yet. The Rust server loads the `.ir` file and falls back to Phase 1 gracefully — nothing breaks.
 
-**What may need adjustment for your components:**
-- Components using `document.createElement` or other imperative DOM APIs will render as empty server-side — the client fills them in during hydration. Structure your components so the layout is declarative JSX (SSR-able) and interactivity is layered on top.
-- `createFetch` calls fire client-side after hydration. If you need data baked into the initial HTML, use `slots` to pass server-side data into `render_page()`.
+**What's needed for full Phase 2:** The FMIR compiler needs to handle `createShow` as hydration boundaries — rendering the static layout (sidebar, topbar, card grid structure) server-side while marking dynamic branches for client-only hydration. This is active work on the compiler. When it lands, this template will produce real SSR output with the same `build:ssr` command — no template changes needed.
+
+**For a working Phase 2 example today**, see the GateWASM admin dashboard, which uses simpler component patterns that the compiler can fully analyze.
+
+**Structuring components for SSR readiness:**
+- Keep layout structure as declarative JSX (sidebar, topbar, page shells) — these are SSR-able
+- Use `createShow` for dynamic content regions — these become hydration boundaries
+- `createFetch` calls fire client-side after hydration. For server-rendered data, use `slots` to pass data into `render_page()`
+- Avoid `document.createElement` for layout — use it only for interactive overlays (tooltips, modals) that don't need SSR
 
 | Aspect | Phase 1 | Phase 2 |
 |--------|---------|---------|
