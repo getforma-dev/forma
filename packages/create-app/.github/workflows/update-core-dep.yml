@@ -27,6 +27,10 @@ jobs:
             sed -i 's|"@getforma/core": "[^"]*"|"@getforma/core": "'$VERSION'"|g' {} +
           echo "Updated to $VERSION:"
           grep -r "@getforma/core" templates/ --include="package.json"
+          # Note: @getforma/compiler and @getforma/build use ^0.1.0 which covers
+          # all 0.1.x releases via semver. No automation needed until a 0.2.0
+          # major-minor bump. At that point, extend this workflow (or create a
+          # separate one) to update those packages as well.
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7

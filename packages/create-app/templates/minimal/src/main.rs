@@ -14,6 +14,17 @@ struct AppState {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
+
+    // Check if frontend has been built
+    if Assets::get("manifest.json").is_none() {
+        eprintln!("\n  Error: Frontend not built yet.\n");
+        eprintln!("  Run these commands first:");
+        eprintln!("    cd admin");
+        eprintln!("    npm install");
+        eprintln!("    npm run build\n");
+        std::process::exit(1);
+    }
+
     let manifest = assets::load_manifest::<Assets>();
     let state = Arc::new(AppState { manifest });
 

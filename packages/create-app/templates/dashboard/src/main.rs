@@ -14,11 +14,24 @@ struct AppState {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
+
+    // Check if frontend has been built
+    if Assets::get("manifest.json").is_none() {
+        eprintln!("\n  Error: Frontend not built yet.\n");
+        eprintln!("  Run these commands first:");
+        eprintln!("    cd admin");
+        eprintln!("    npm install");
+        eprintln!("    npm run build\n");
+        std::process::exit(1);
+    }
+
     let manifest = assets::load_manifest::<Assets>();
     let state = Arc::new(AppState { manifest });
 
     let app = Router::new()
         .route("/", get(home))
+        // Add your API routes here:
+        // .route("/api/data", get(api_data_handler))
         .route("/favicon.ico", get(favicon))
         .route("/sw.js", get(sw::serve_sw::<Assets>))
         .route("/_assets/{*filename}", get(assets::serve_asset::<Assets>))
@@ -31,7 +44,7 @@ async fn main() {
 
 async fn home(State(state): State<Arc<AppState>>) -> Response {
     let page = render_page(&PageConfig {
-        title: "Home",
+        title: "Dashboard",
         route_pattern: "/",
         manifest: &state.manifest,
         config_script: None,

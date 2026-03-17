@@ -13,6 +13,7 @@
     "@getforma/compiler": "^0.1.0",
     "@getforma/build": "^0.1.0",
     "esbuild": "^0.25.0",
-    "tsx": "^4.0.0"
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
   }
 }

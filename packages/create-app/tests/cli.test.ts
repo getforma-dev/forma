@@ -96,8 +96,8 @@ describe('template files contain expected structure', () => {
         expect(readme).toContain('getforma.dev');
       });
 
-      it('has .gitignore', () => {
-        const gi = fs.readFileSync(path.join(TEMPLATES_DIR, template, '.gitignore'), 'utf8');
+      it('has _gitignore (renamed for npm pack compatibility)', () => {
+        const gi = fs.readFileSync(path.join(TEMPLATES_DIR, template, '_gitignore'), 'utf8');
         expect(gi).toContain('target/');
         expect(gi).toContain('node_modules/');
       });

@@ -25,10 +25,45 @@ export function replacePlaceholders(dir: string, replacements: Record<string, st
 
 async function main() {
   const args = process.argv.slice(2);
+
+  // --help / -h
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`
+Usage: create-forma-app [project-name] [options]
+
+Options:
+  --template <name>  Template to use (minimal, dashboard)
+  --help, -h         Show this help message
+  --version, -v      Show version
+  --dry-run          Preview without creating files
+
+Templates:
+  minimal    Counter with signals and JSX
+  dashboard  Sortable data table with createList
+`);
+    process.exit(0);
+  }
+
+  // --version / -v
+  if (args.includes('--version') || args.includes('-v')) {
+    const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+    console.log(pkg.version);
+    process.exit(0);
+  }
+
   const isDryRun = args.includes('--dry-run');
 
+  // Parse --template flag
+  const templateArgIdx = args.indexOf('--template');
+  const templateArg = templateArgIdx !== -1 ? args[templateArgIdx + 1] : null;
+
+  if (templateArg && !TEMPLATES.includes(templateArg)) {
+    console.error(`Invalid template "${templateArg}". Available templates: ${TEMPLATES.join(', ')}`);
+    process.exit(1);
+  }
+
   const projectName =
-    args.find((a) => !a.startsWith('--')) ||
+    args.find((a) => !a.startsWith('--') && a !== templateArg) ||
     (await prompts({ type: 'text', name: 'value', message: 'Project name?' })).value;
   if (!projectName) {
     console.error('Project name required.');
@@ -41,12 +76,14 @@ async function main() {
     process.exit(1);
   }
 
-  const { template } = await prompts({
-    type: 'select',
-    name: 'template',
-    message: 'Template?',
-    choices: TEMPLATES.map((t) => ({ title: t, value: t })),
-  });
+  const template = templateArg
+    ? templateArg
+    : (await prompts({
+        type: 'select',
+        name: 'template',
+        message: 'Template?',
+        choices: TEMPLATES.map((t) => ({ title: t, value: t })),
+      })).template;
 
   if (!template) {
     console.error('Template selection required.');
@@ -75,6 +112,17 @@ async function main() {
 
   fs.cpSync(templateDir, dest, { recursive: true });
 
+  // Rename _gitignore to .gitignore (npm pack renames .gitignore to .npmignore)
+  const possibleGitignores = [
+    path.join(dest, '_gitignore'),
+    path.join(dest, 'admin', '_gitignore'),
+  ];
+  for (const gi of possibleGitignores) {
+    if (fs.existsSync(gi)) {
+      fs.renameSync(gi, gi.replace('_gitignore', '.gitignore'));
+    }
+  }
+
   // Replace placeholders in all text files
   replacePlaceholders(dest, { '{{PROJECT_NAME}}': projectName });
 
@@ -86,4 +134,7 @@ async function main() {
   console.log('  # Open http://127.0.0.1:3000');
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
