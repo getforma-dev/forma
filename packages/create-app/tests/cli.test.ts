@@ -127,13 +127,14 @@ describe('template files contain expected structure', () => {
         expect(tsconfig.compilerOptions.jsxFragmentFactory).toBe('Fragment');
       });
 
-      it('has README.md with placeholder', () => {
+      it('has README.md with Forma references', () => {
         const readme = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'README.md'), 'utf8');
         if (template === 'dashboard') {
-          expect(readme).toContain('{{project-name}}');
+          expect(readme).toContain('FormaOps');
           expect(readme).toContain('@getforma/core');
+          expect(readme).toContain('Phase 2');
         } else {
-          expect(readme).toContain('{{PROJECT_NAME}}');
+          expect(readme).toContain('Forma');
           expect(readme).toContain('getforma.dev');
         }
       });
