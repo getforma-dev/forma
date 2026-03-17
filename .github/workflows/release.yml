@@ -28,14 +28,13 @@ jobs:
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
-      # Trusted publishing: OIDC token exchange via crates-io-auth-action
-      # Configure at: crates.io/crates/forma-ir/settings → Trusted Publishers
       - name: Authenticate with crates.io
+        id: auth
         uses: rust-lang/crates-io-auth-action@v1
-        with:
-          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       - name: Publish forma-ir
         run: cargo publish -p forma-ir
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
   publish-server:
     if: startsWith(github.ref_name, 'server-v')
@@ -54,11 +53,10 @@ jobs:
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
-      # Trusted publishing: OIDC token exchange via crates-io-auth-action
-      # Configure at: crates.io/crates/forma-server/settings → Trusted Publishers
       - name: Authenticate with crates.io
+        id: auth
         uses: rust-lang/crates-io-auth-action@v1
-        with:
-          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       - name: Publish forma-server
         run: cargo publish -p forma-server
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
