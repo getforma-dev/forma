@@ -1,5 +1,9 @@
 # @getforma/create-app
 
+[![npm version](https://img.shields.io/npm/v/@getforma/create-app.svg)](https://www.npmjs.com/package/@getforma/create-app)
+[![CI](https://github.com/getforma-dev/create-forma-app/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/create-forma-app/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeScript frontend, fully wired.
 
 ## Usage
@@ -32,7 +36,7 @@ npx @getforma/create-app --version
 
 | Template | Description |
 |----------|-------------|
-| `dashboard` | Live dashboard with 4 islands, Rust API routes, dark theme — full-stack showcase |
+| `dashboard` | DevOps admin panel — 3 pages, 8 API routes, SVG charts, Tailwind CSS, Gruvbox theme |
 | `minimal` | Clean slate — Rust server + JSX frontend, ready to build on |
 
 ## What You Get
