@@ -8,7 +8,9 @@ description = "Axum middleware for Forma SSR: page rendering, asset serving, CSP
 repository = "https://github.com/getforma-dev/forma"
 homepage = "https://getforma.dev"
 readme = "README.md"
-keywords = ["ssr", "axum", "web-framework", "islands"]
+rust-version = "1.70"
+documentation = "https://docs.rs/forma-server"
+keywords = ["ssr", "axum", "web-framework", "islands", "forma"]
 categories = ["web-programming::http-server"]
 
 [dependencies]
