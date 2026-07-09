@@ -171,7 +171,18 @@ ${bold('Examples:')}
   console.log();
   console.log(dim('  Scaffolding project...'));
 
-  fs.cpSync(templateDir, dest, { recursive: true });
+  // Never copy an installed dependency tree or a lockfile into the scaffolded
+  // project: a stale template lockfile would pin the new app to whatever
+  // versions were resolved when the template was authored (e.g. an old
+  // @getforma/core), defeating the `^` ranges in package.json. The new project
+  // should generate its own lockfile from a fresh `npm install`.
+  fs.cpSync(templateDir, dest, {
+    recursive: true,
+    filter: (src) => {
+      const base = path.basename(src);
+      return base !== 'node_modules' && base !== 'package-lock.json';
+    },
+  });
 
   // Rename _gitignore to .gitignore (npm pack renames .gitignore to .npmignore)
   const possibleGitignores = [

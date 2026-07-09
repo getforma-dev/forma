@@ -9,11 +9,11 @@
     "test:headed": "npx playwright test --headed"
   },
   "dependencies": {
-    "@getforma/core": "^1.0.0"
+    "@getforma/core": "^1.5.0"
   },
   "devDependencies": {
-    "@getforma/build": "^0.1.0",
-    "@getforma/compiler": "^0.1.0",
+    "@getforma/build": "^0.1.8",
+    "@getforma/compiler": "^0.1.8",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/cli": "^4.1.0",
     "esbuild": "^0.25.0",
