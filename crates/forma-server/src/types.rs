@@ -11,9 +11,14 @@ pub enum RenderMode {
 }
 
 /// Configuration for rendering an HTML page with external assets.
+#[derive(Debug)]
 pub struct PageConfig<'a> {
+    /// Text for the page's `<title>`, HTML-escaped on the way out.
     pub title: &'a str,
+    /// The route this page was matched by, used to look up its assets in the
+    /// manifest (e.g. `/users/:id`).
     pub route_pattern: &'a str,
+    /// Build manifest naming the content-hashed JS/CSS/font/IR files.
     pub manifest: &'a AssetManifest,
     /// Optional inline `<script>` content (e.g. `window.__CONFIG__ = {...}`).
     ///
@@ -32,6 +37,7 @@ pub struct PageConfig<'a> {
     /// every `<` escaped, which cannot be misused no matter what the data
     /// contains. Prefer it over [`PageConfig::config_script`].
     pub config_json: Option<&'a serde_json::Value>,
+    /// Optional `class` attribute for `<body>`, HTML-escaped.
     pub body_class: Option<&'a str>,
     /// Optional inline `<style>` for personality/theme overrides.
     ///
@@ -46,6 +52,7 @@ pub struct PageConfig<'a> {
     /// hand-rendered `__forma_islands` block). Never build it from untrusted
     /// data.
     pub body_prefix: Option<&'a str>,
+    /// Whether to server-render the body or ship an empty `#app` shell.
     pub render_mode: RenderMode,
     /// Pre-parsed IR module for Phase 2 SSR
     pub ir_module: Option<&'a forma_ir::parser::IrModule>,
@@ -63,8 +70,11 @@ pub struct PageConfig<'a> {
 /// one static, publicly-known nonce to every user, which defeats nonce-based
 /// CSP entirely.
 #[non_exhaustive]
+#[derive(Debug)]
 pub struct PageOutput {
+    /// The complete HTML document.
     pub html: String,
+    /// The `Content-Security-Policy` header value that blesses it.
     pub csp: String,
     /// The nonce embedded in `html` and blessed by `csp`.
     ///
@@ -171,10 +181,15 @@ pub fn asset_security_headers() -> &'static [(axum::http::HeaderName, axum::http
 /// Asset manifest loaded from `manifest.json` in the embedded dist directory.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AssetManifest {
+    /// Manifest schema version.
     pub version: u32,
+    /// Identifier for the build that produced these assets.
     pub build_hash: String,
+    /// Logical asset name → content-hashed filename.
     pub assets: HashMap<String, String>,
+    /// Route pattern → the assets that route needs.
     pub routes: HashMap<String, RouteAssets>,
+    /// The WASM walker, when the build ships one.
     #[serde(default)]
     pub wasm: Option<WasmAssets>,
 }
@@ -182,11 +197,17 @@ pub struct AssetManifest {
 /// Per-route asset references.
 #[derive(Debug, Clone, Deserialize)]
 pub struct RouteAssets {
+    /// JS modules for this route, in load order.
     pub js: Vec<String>,
+    /// Stylesheets for this route.
     pub css: Vec<String>,
+    /// Fonts to preload for this route.
     pub fonts: Vec<String>,
+    /// Total brotli-compressed size of the route's assets, in bytes.
     pub total_size_br: u64,
+    /// Size above which the build warns about this route's payload.
     pub budget_warn_threshold: u64,
+    /// The route's compiled `.fmir` module, when it has one (Phase 2).
     #[serde(default)]
     pub ir: Option<String>,
 }
@@ -194,7 +215,9 @@ pub struct RouteAssets {
 /// WASM asset references.
 #[derive(Debug, Clone, Deserialize)]
 pub struct WasmAssets {
+    /// The JS glue module wasm-bindgen emits.
     pub loader: String,
+    /// The `.wasm` binary itself.
     pub binary: String,
 }
 

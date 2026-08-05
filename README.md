@@ -101,8 +101,35 @@ See [SECURITY.md](SECURITY.md) for the full list and the threat model — in par
 - **Resource limits:** Recursion depth 64, list nesting 4, plus a per-render output cap and LIST-iteration budget (both configurable) so a small module cannot force a multi-gigabyte allocation
 - **Comment escaping:** `--` in HTML comments replaced with `&#45;&#45;`, and a comment cannot self-close
 - **Island props:** the `__forma_islands` JSON block is escaped so it cannot terminate or re-open its `<script>` element; read it with `JSON.parse`
-- **No unsafe code:** Zero `unsafe` blocks across both crates
+- **Load-time validation:** cross-table references, control-flow tiling, duplicate slot/island ids, and islands the tables do not declare are all rejected at parse time, so a compiler bug fails loudly at startup instead of rendering a quietly wrong page on some later request
+- **No unsafe code:** both library crates carry `#![forbid(unsafe_code)]`, so "zero `unsafe`" is compiler-enforced rather than asserted
 - XSS payload verification and malformed-input handling are covered by the test suite (`cargo test --workspace`)
+
+## Performance
+
+Lists are the SSR workload the whole design rests on, so the cost of one is a
+tested property, not a hope. Rendering a 3-column table page
+(`cargo run --release -p forma-ir --example list_scaling`):
+
+| rows | µs | µs/row |
+|-----:|---:|-------:|
+| 1 | 0.6 | 0.56 |
+| 10 | 3.8 | 0.38 |
+| 100 | 36.2 | 0.36 |
+| 400 | 147.0 | 0.37 |
+
+Flat per-row cost, ~6 allocations per row. `crates/forma-ir/tests/list_scaling.rs`
+fails the build if that stops being true — it asserts both wall-clock time and
+allocation count grow under 6x for a 4x increase in rows, where linear is ~4x
+and quadratic is ~16x.
+
+## The binary format
+
+[`docs/FMIR-FORMAT.md`](docs/FMIR-FORMAT.md) documents the on-disk layout and,
+more importantly, the **stability contract**: which bytes are frozen across all
+future versions (magic at 0, u16 LE version at 4), what v2 guarantees, and what
+a version bump would require of consumers. If you byte-guard an embedded `.fmir`
+in your own test suite, that document is what you are guarding against.
 
 ## Part of the Forma Stack
 
@@ -132,12 +159,20 @@ See [SECURITY.md](SECURITY.md) for the full list and the threat model — in par
 ```bash
 git clone https://github.com/getforma-dev/forma.git
 cd forma
-cargo test --workspace     # full suite
-cargo clippy --workspace   # lint
-cargo fmt --all --check    # format check
+cargo test --workspace                                    # full suite
+cargo clippy --workspace --all-targets --all-features     # lint (CI adds -D warnings)
+cargo fmt --all --check                                   # format check
 
 # Offset arithmetic differs where usize is 32 bits (as on wasm32):
 cargo test --workspace --target i686-unknown-linux-gnu
+
+# MSRVs differ per crate and CI builds at exactly these versions:
+cargo +1.71 check -p forma-ir --all-targets
+cargo +1.85 check -p forma-server --all-targets
+
+# Measurement harnesses (not gates — see tests/list_scaling.rs for those):
+cargo run --release -p forma-ir --example list_scaling   # timing/alloc table
+cargo run --release -p forma-ir --example list_corpus    # byte-identity corpus
 ```
 
 ## License

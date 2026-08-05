@@ -15,8 +15,16 @@ use std::fmt::Write;
 
 /// Produce a deterministic text dump of an IR module for debugging and diffing.
 ///
+/// Prints the header, the full slot and island tables, then the opcode stream.
+/// The tables are there because the drift this tool exists to diagnose lives in
+/// them: which slot a name resolves to, and which `slot_ids` an island claims
+/// as its props. Printing only counts (which is all it used to do) meant
+/// diagnosing a props mismatch required writing a throwaway Rust program.
+///
 /// Dev-only diagnostic: names are printed raw and the per-byte "UNKNOWN 0x.."
 /// fallback is a large text amplifier, so do not point this at hostile input.
+///
+/// Verified by: crates/forma-ir/src/dump.rs > "dump_shows_slot_and_island_tables"
 pub fn dump_ir(module: &IrModule) -> String {
     // Cap the pre-reservation. `saturating_mul` matters only on wasm32 (where
     // `usize` is 32 bits and the multiply can overflow); the `.min` is the
@@ -36,7 +44,41 @@ pub fn dump_ir(module: &IrModule) -> String {
     )
     .unwrap();
 
-    // Walk opcodes — must advance pos by the same amounts as walker.rs
+    // Slot table: id, name, type, source, default.
+    for entry in module.slots.entries() {
+        let name = module
+            .strings
+            .get(entry.name_str_idx)
+            .unwrap_or("<bad-idx>");
+        let default = std::str::from_utf8(&entry.default_bytes).unwrap_or("<non-utf8>");
+        writeln!(
+            out,
+            "SLOT  {:>5}  {:<28}  {:?}/{:?}  default={:?}",
+            entry.slot_id, name, entry.type_hint, entry.source, default,
+        )
+        .unwrap();
+    }
+
+    // Island table: id, name, trigger, props mode, byte offset, prop slots.
+    for entry in module.islands.entries() {
+        let name = module
+            .strings
+            .get(entry.name_str_idx)
+            .unwrap_or("<bad-idx>");
+        writeln!(
+            out,
+            "ISLE  {:>5}  {:<28}  {:?}/{:?}  at=0x{:04x}  slot_ids={:?}",
+            entry.id, name, entry.trigger, entry.props_mode, entry.byte_offset, entry.slot_ids,
+        )
+        .unwrap();
+    }
+
+    // Walk opcodes — this is a SECOND decoder of the same operand widths, and
+    // it must advance `pos` by exactly the amounts walker.rs does. The two are
+    // cross-checked by `dump_agrees_with_the_walker_on_operand_widths`, which
+    // asserts that a stream the walker renders successfully leaves no UNKNOWN
+    // line here: an operand-width disagreement desynchronises this loop and
+    // makes it decode an operand byte as an opcode.
     let ops = &module.opcodes;
     let strings = &module.strings;
     let len = ops.len();
@@ -442,7 +484,8 @@ pub fn dump_ir(module: &IrModule) -> String {
 mod tests {
     use super::*;
     use crate::parser::test_helpers::{
-        build_minimal_ir, encode_close_tag, encode_open_tag, encode_text, encode_void_tag,
+        build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_preload,
+        encode_show_if, encode_switch, encode_text, encode_try, encode_void_tag,
     };
 
     // -- Encoding helpers local to dump tests --------------------------------
@@ -568,5 +611,150 @@ mod tests {
         assert!(output.contains("\"input\""), "should contain tag name");
         assert!(output.contains("\"type\""), "should contain attr key");
         assert!(output.contains("\"email\""), "should contain attr val");
+    }
+
+    // -- Test 6: slot and island tables --------------------------------------
+
+    #[test]
+    fn dump_shows_slot_and_island_tables() {
+        // The drift this tool exists to diagnose — which slot a name resolves
+        // to, and which slots an island claims as props — used to be invisible
+        // here: the dump printed `slots=2 islands=1` and nothing else.
+        let mut opcodes = encode_island_start(0);
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(0));
+
+        let data = build_minimal_ir(
+            &["div", "Counter", "list:items:array", "text:0"],
+            &[(7, 2, 0x04, 0x00, b"[]"), (9, 3, 0x01, 0x01, b"hello")],
+            &opcodes,
+            &[(0, 0x02, 0x01, 1, 0, &[7, 9])],
+        );
+        let module = IrModule::parse(&data).unwrap();
+        let output = dump_ir(&module);
+
+        assert!(
+            output.contains(
+                r#"SLOT      7  list:items:array              Array/Server  default="[]""#
+            ),
+            "slot table missing or mis-rendered:\n{output}"
+        );
+        assert!(
+            output.contains(
+                r#"SLOT      9  text:0                        Text/Client  default="hello""#
+            ),
+            "client slot with default missing:\n{output}"
+        );
+        assert!(
+            output.contains("ISLE      0  Counter                       Visible/Inline  at=0x0000  slot_ids=[7, 9]"),
+            "island table missing its trigger/props_mode/slot_ids:\n{output}"
+        );
+    }
+
+    // -- Test 7: cross-check against the walker's decoder ---------------------
+
+    #[test]
+    fn dump_agrees_with_the_walker_on_operand_widths() {
+        // dump.rs re-implements the whole operand-width table independently of
+        // walker.rs. Nothing used to check that they agree, so a new opcode or
+        // a changed operand could desynchronise this loop into decoding an
+        // operand byte as an opcode — and the tool you reach for when the IR
+        // looks wrong would itself be lying.
+        //
+        // A stream the walker renders end to end is by construction correctly
+        // tiled, so an UNKNOWN line here can only mean the two decoders differ.
+        let mut opcodes = Vec::new();
+        opcodes.extend_from_slice(&encode_open_tag(0, &[(1, 2)]));
+        opcodes.extend_from_slice(&encode_text(3));
+        opcodes.extend_from_slice(&encode_dyn_text(0, 0));
+        opcodes.extend_from_slice(&encode_dyn_attr(1, 1));
+        opcodes.extend_from_slice(&encode_comment(3));
+        opcodes.extend_from_slice(&encode_show_if(1, &encode_text(3), &encode_text(0)));
+        opcodes.extend_from_slice(&encode_switch(0, &[(3, &encode_text(3))]));
+        opcodes.extend_from_slice(&encode_list_item_key(3));
+        opcodes.extend_from_slice(&encode_prop(2, 3, 0));
+        opcodes.extend_from_slice(&encode_list(2, 0, &encode_dyn_text(0, 1)));
+        opcodes.extend_from_slice(&encode_try(&encode_text(3), &encode_text(0)));
+        opcodes.extend_from_slice(&encode_preload(1, 3));
+        opcodes.extend_from_slice(&encode_void_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_island_start(0));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(0));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+
+        let island_offset = (opcodes.len()
+            - encode_island_start(0).len()
+            - encode_open_tag(0, &[]).len()
+            - encode_close_tag(0).len()
+            - encode_island_end(0).len()
+            - encode_close_tag(0).len()) as u32;
+
+        let data = build_minimal_ir(
+            &["div", "class", "container", "Hello"],
+            &[
+                (0, 3, 0x01, 0x00, b""),
+                (1, 3, 0x02, 0x00, b"true"),
+                (2, 3, 0x04, 0x00, b"[]"),
+            ],
+            &opcodes,
+            &[(0, 0x01, 0x01, 0, island_offset, &[0])],
+        );
+        let module = IrModule::parse(&data).unwrap();
+
+        // The walker accepts it...
+        let slots = crate::slot::SlotData::new_from_defaults(&module.slots);
+        crate::walker::walk_to_html(&module, &slots).expect("walker must render this stream");
+
+        // ...so the dump must decode every byte of it.
+        let output = dump_ir(&module);
+        assert!(
+            !output.contains("UNKNOWN"),
+            "dump.rs and walker.rs disagree on an operand width:\n{output}"
+        );
+        assert!(
+            !output.contains("<error:"),
+            "dump.rs failed to decode a stream the walker rendered:\n{output}"
+        );
+    }
+
+    fn encode_comment(str_idx: u32) -> Vec<u8> {
+        let mut b = vec![0x10];
+        b.extend_from_slice(&str_idx.to_le_bytes());
+        b
+    }
+
+    fn encode_dyn_attr(attr_str_idx: u32, slot_id: u16) -> Vec<u8> {
+        let mut b = vec![0x06];
+        b.extend_from_slice(&attr_str_idx.to_le_bytes());
+        b.extend_from_slice(&slot_id.to_le_bytes());
+        b
+    }
+
+    fn encode_list_item_key(key_str_idx: u32) -> Vec<u8> {
+        let mut b = vec![0x11];
+        b.extend_from_slice(&key_str_idx.to_le_bytes());
+        b
+    }
+
+    fn encode_prop(src: u16, prop_str_idx: u32, target: u16) -> Vec<u8> {
+        let mut b = vec![0x12];
+        b.extend_from_slice(&src.to_le_bytes());
+        b.extend_from_slice(&prop_str_idx.to_le_bytes());
+        b.extend_from_slice(&target.to_le_bytes());
+        b
+    }
+
+    fn encode_island_start(island_id: u16) -> Vec<u8> {
+        let mut b = vec![0x0B];
+        b.extend_from_slice(&island_id.to_le_bytes());
+        b
+    }
+
+    fn encode_island_end(island_id: u16) -> Vec<u8> {
+        let mut b = vec![0x0C];
+        b.extend_from_slice(&island_id.to_le_bytes());
+        b
     }
 }

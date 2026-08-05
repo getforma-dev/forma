@@ -2,6 +2,102 @@
 
 ## [0.1.5] - unreleased
 
+### Performance
+- **A list now renders in O(rows). It was O(rows²).** `walk_to_html` cloned the
+  entire `SlotData` inside the per-row loop, and because `SlotValue::Array`
+  owned its payload, every row deep-copied the whole N-element array. A
+  3-column table page cost 4x more for every doubling of rows: 1.6 µs at 1 row,
+  2,106 µs at 100, 31,486 µs at 400 — 400 rows took 1,134,414 allocations and
+  42 MB to emit 61 KB of HTML, which made the Rust walker slower than the
+  JavaScript `renderToString` it exists to replace.
+
+  The per-row clone is gone. `SlotValue::Array`/`Object` are `Arc`-backed, and
+  the row's item binding (plus any PROP the body extracts from it) is now
+  swapped in and journalled, then unwound at the end of the row — same scoping
+  guarantee, no copying of state the row does not own. Marker ids are also
+  written without allocating.
+
+  | rows | before | after | |
+  |-----:|-------:|------:|-|
+  | 100 | 2,106 µs | 36 µs | 58x |
+  | 400 | 31,486 µs | 147 µs | 214x |
+  | 400 (allocations) | 1,134,414 | 2,412 | 470x |
+
+  **Output is byte-identical** across the whole list corpus in
+  `examples/list_corpus.rs` (21 cases covering PROP restore, sibling lists,
+  nested lists, per-row islands, item/list slot aliasing). `tests/list_scaling.rs`
+  is the regression gate: it fails the build if either time or allocation count
+  grows more than 6x for a 4x increase in rows.
+
+### Changed — cross-stack parity (may change emitted bytes)
+- **DYN_ATTR boolean values follow `renderAttr`.** `true` now emits the bare
+  attribute name and `false`/null omit it entirely. The walker used to write
+  `disabled="false"` — and an HTML boolean attribute is ON whenever it is
+  present, so SSR shipped a disabled/hidden/checked control that only un-broke
+  itself after hydration, and never at all for a `visible`/`idle`/`interaction`
+  island the user had not reached, or with JS off.
+- **DYN_ATTR treats an empty string as a value.** `value=""` / `alt=""` now
+  render as `attr=""` instead of being dropped, matching what the client's
+  `setAttribute` produces for the same slot.
+- **`SlotValue::as_bool` follows ECMAScript `ToBoolean`.** An empty array is
+  now truthy (`!![]` is `true` in JS). A SHOW_IF bound straight to a list slot
+  used to hide its block server-side and un-hide it the instant the client
+  evaluated the same condition — a guaranteed visible flip on the empty-list
+  case, which is the state a fresh page starts in. NaN is falsy.
+- **`SlotValue::to_text` follows `String(value)` for containers.** Arrays join
+  with `,` (nesting flattens, null/undefined become empty) and objects render
+  `[object Object]`, replacing the invented `[Array]`/`[Object]`.
+- **SWITCH stops at the first matching case.** Two cases carrying the same
+  value used to render both bodies concatenated. (SWITCH still emits no
+  hydration marker — the wire contract has no switch marker — and still has no
+  default case; both are now documented at the opcode.)
+
+### Fixed
+- **Nested islands with no root element are an error, not a silent loss.** An
+  ISLAND_START while another island is still waiting for its root element now
+  returns `IrError::NestedIslandRoot`. Only one element can carry a
+  `data-forma-island` set, so the outer island's identity was being dropped —
+  it never hydrated, never disposed, and `activateIslands` could not find it.
+- **An ISLAND_START naming an island the table does not declare is rejected at
+  load** (`IrError::UnknownIslandId`). It used to render its markers with no
+  `data-forma-*` attributes: an island that silently never hydrates.
+- **A stray FALLBACK, and a TRY_START with no FALLBACK, are rejected at load**
+  (`IrError::MalformedControlFlow`). A FALLBACK with no open TRY_START in its
+  range made the walker render the *fallback* body as though it were main
+  content.
+- **Duplicate slot names resolve the same way everywhere.** Slot names are not
+  unique (the compiler derives some per-element), and the three consumers
+  disagreed: `slot_id_by_name` took the first, `SlotData::from_json` the last,
+  and island props the last in ascending slot-id order. Setting a value by name
+  filled one slot and left its twin blank while the island's props reported a
+  third answer. **First in slot-table order wins**, in all three.
+- **Inline island props above 1 KiB spill to the shared `__forma_islands`
+  block.** `INLINE_PROPS_MAX_BYTES` existed and documented this behaviour but
+  was never wired to anything, so an Inline island produced an unbounded
+  attribute-escaped `data-forma-props`. Exactly one channel is used per island,
+  so the client's inline-wins precedence never has two answers. A *fragment*
+  render never spills — it cannot legally emit a second block.
+
+### Added
+- **`docs/FMIR-FORMAT.md`** — the published binary layout and stability
+  contract: what is frozen across all versions (magic at 0, u16 LE version at
+  4), what v2 guarantees, and what a version bump requires. `tests/fmir_contract.rs`
+  asserts every frozen claim from the consumer's side, reading raw bytes.
+- **`SlotData::replace`** — set a slot and get the previous value back. This is
+  the primitive the LIST loop's scoped binding is built on.
+- **`dump_ir` prints the slot and island tables** — id, name, type, source,
+  default; and trigger, props mode, byte offset, `slot_ids`. It printed only
+  counts, so diagnosing the props/slot-name drift it exists for required
+  writing a throwaway program.
+- **`test-helpers` feature.** The byte-exact FMIR encoders are no longer
+  compiled into consumers' release builds, and their length casts now panic
+  instead of silently truncating a >65,535-entry table into a corrupt file.
+- **MSRV is real and tested.** `rust-version` is 1.71 (verified in CI at
+  exactly 1.71); `wasm-bindgen` raises it to 1.77 with the `wasm` feature.
+- **`#![forbid(unsafe_code)]`** — the README's "zero unsafe" is now a compile
+  error rather than a claim. Every public item is documented
+  (`#![warn(missing_docs)]` via the workspace lint table).
+
 ### Security
 - **Island props JSON escaping is now total.** The `__forma_islands` block only
   escaped `</`. A props value containing `<!--` followed later by `<script`

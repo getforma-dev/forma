@@ -70,7 +70,7 @@ let headers = page.headers();
 - **Serve HTML and CSP together**: the HTML embeds a per-request nonce, so it must be sent `Cache-Control: no-store` and never cached across requests — `PageOutput::headers()` does this, and `PageOutput::nonce` is exposed so you never have to parse the policy string
 - **Asset serving**: `rust-embed` prevents path traversal, and requested names are checked for exact membership in the embedded list so debug and release builds behave identically; `manifest.json` and direct `.br`/`.gz` requests are refused
 - **Template escaping**: Interpolated values (URLs, class names, CSS, title) are HTML-escaped. Two fields are documented raw sinks: `config_script` (raw JS, terminator-neutralised but trusted) and `body_prefix` (raw HTML). Use `config_json` for user-derived data
-- **No unsafe code**: Zero `unsafe` blocks
+- **No unsafe code**: `#![forbid(unsafe_code)]` on the crate root — compiler-enforced, not asserted
 
 ## When You Need This
 

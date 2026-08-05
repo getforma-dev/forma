@@ -2,6 +2,18 @@
 
 ## [0.1.5] - unreleased
 
+### Fixed
+- **`rust-version` was a fiction.** The manifest declared 1.70; this crate has
+  never been able to build below 1.85 (rust-embed 8 pulls sha2 0.11). Corrected
+  and pinned by a CI job that builds at exactly the declared version. Note it
+  is deliberately *not* the same as forma-ir's 1.71.
+
+### Added
+- **`#![forbid(unsafe_code)]`** — the README's "zero unsafe" is compiler-
+  enforced now. Every public item is documented.
+- Faster page renders for any route with a list: see forma-ir 0.1.5, which
+  takes a 400-row table from 31.5 ms to 0.15 ms.
+
 ### Security
 - **`personality_css` `</style>` breakout actually prevented.** The 0.1.3 guard
   was a literal two-case string replace (`</style>` and `</STYLE>`), but HTML

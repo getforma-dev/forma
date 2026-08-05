@@ -3,13 +3,26 @@
 //! This crate provides the core IR types and parsing logic that can be compiled
 //! to both native Rust and WebAssembly targets.
 
+// README.md and SECURITY.md both promise "Zero `unsafe` blocks". This is what
+// makes that a compiler-enforced property of the shipped library rather than a
+// claim. It is crate-root rather than a `[lints]` entry because `[lints]`
+// covers every target in the package, and the allocation-counting harness in
+// `tests/list_scaling.rs` must implement `GlobalAlloc` — a separate crate, not
+// code that ships.
+#![forbid(unsafe_code)]
 #![allow(clippy::type_complexity)]
 
+/// On-disk FMIR layout: header, section table, opcodes, and the table entry
+/// types. See `docs/FMIR-FORMAT.md` for the stability contract.
 pub mod format;
+/// Bounds-checked parsing and one-shot structural validation of an FMIR file.
 pub mod parser;
+/// Runtime slot values and the dense `SlotData` a page handler populates.
 pub mod slot;
+/// The SSR walker: opcode stream plus slot values in, HTML out.
 pub mod walker;
 
+/// Human-readable text dump of a module, for debugging and diffing.
 #[cfg(feature = "dump")]
 pub mod dump;
 

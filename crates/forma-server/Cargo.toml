@@ -1,27 +1,36 @@
 [package]
 name = "forma-server"
-version = "0.1.5"
-edition = "2021"
-license = "MIT"
-authors = ["Forma <victor@getforma.dev>"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
 description = "Axum middleware for Forma SSR: page rendering, asset serving, CSP, service worker"
-repository = "https://github.com/getforma-dev/forma"
-homepage = "https://getforma.dev"
 readme = "README.md"
-rust-version = "1.70"
+# Verified by CI (`msrv` job): `cargo +1.85 check -p forma-server --all-targets`.
+# This is NOT forma-ir's 1.71 — rust-embed 8 pulls sha2 0.11, which declares
+# 1.85. The manifest used to claim 1.70, which no version of this crate has
+# ever been able to build on.
+rust-version = "1.85"
 documentation = "https://docs.rs/forma-server"
 keywords = ["ssr", "axum", "web-framework", "islands", "forma"]
 categories = ["web-programming::http-server"]
 
 [dependencies]
-forma-ir = "0.1.5"
+forma-ir = { version = "0.1.5", path = "../forma-ir" }
 axum = "0.8"
 rust-embed = "8"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json.workspace = true
 base64 = "0.22"
 ring = "0.17"
-tracing = "0.1"
+tracing.workspace = true
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }
+# Fixture encoders for the server's own tests; not part of the shipped build.
+forma-ir = { version = "0.1.5", path = "../forma-ir", features = ["test-helpers"] }
+
+[lints]
+workspace = true

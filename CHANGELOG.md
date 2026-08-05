@@ -9,6 +9,26 @@ itemised list, including the breaking changes and the one removed API
 (`check_ir_compatibility`).
 
 Highlights:
+- **A list renders in O(rows), not O(rows²).** The walker deep-cloned the whole
+  `SlotData` — including the list's own array — once per row, so a 400-row
+  table took 31.5 ms and 1.1 M allocations to emit 61 KB of HTML. It now takes
+  0.15 ms and 2,412 allocations, byte-identically, with a committed regression
+  gate (`crates/forma-ir/tests/list_scaling.rs`) that fails the build if the
+  cost stops being linear
+- **The FMIR binary layout and its stability contract are published**
+  ([docs/FMIR-FORMAT.md](docs/FMIR-FORMAT.md)) — consumers were already
+  byte-guarding a format that was documented nowhere
+- Cross-stack parity fixes that change emitted bytes on purpose: boolean
+  DYN_ATTR values (`disabled="false"` meant *disabled*), empty-string
+  attributes, ECMAScript truthiness for empty arrays, `String(value)` for
+  array/object slots, and first-match-wins SWITCH
+- More load-time validation: islands the table does not declare, stray
+  FALLBACK, unterminated TRY_START, and one consistent duplicate-slot-name rule
+  across all three resolvers
+- MSRV corrected (forma-server claimed 1.70 and has never built below 1.85) and
+  pinned in CI; `#![forbid(unsafe_code)]`, `missing_docs`, a Windows runner, a
+  cargo-deny job, and a guard that `[patch.crates-io]` has not silently
+  fallen back to the published crate
 - Island props JSON escaping made total (`<!--<script` breakout), tag/attribute
   names validated, URL attributes scheme-checked, `on*` handlers dropped
 - Per-render output and LIST-iteration budgets so malformed or hostile input

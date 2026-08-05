@@ -6,9 +6,18 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # ksx Studio — the production consumer — is a Windows app, so Windows
+        # is a first-class runner here, not an afterthought.
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -17,8 +26,11 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
+      # --all-targets so the tests, examples and the linearity gate are linted
+      # too; --all-features so the wasm exports and the fixture encoders are
+      # not silently excluded from the lint that claims to cover the workspace.
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - run: cargo test --workspace
-      - run: cargo clippy --workspace -- -D warnings
       - run: cargo doc --workspace --no-deps
       - name: Verify WASM build
         run: cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
@@ -38,3 +50,50 @@ jobs:
       - name: Install 32-bit toolchain
         run: sudo apt-get update && sudo apt-get install -y gcc-multilib
       - run: cargo test --workspace --target i686-unknown-linux-gnu
+
+  # The two crates publish different `rust-version` values and both are
+  # load-bearing on crates.io/docs.rs, so both are built at exactly the
+  # declared version. Without this the numbers are decoration — the manifest
+  # claimed 1.70 for a crate that has never been able to build below 1.85.
+  msrv:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crate: forma-ir
+            rust: "1.71"
+          - crate: forma-server
+            rust: "1.85"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check -p ${{ matrix.crate }} --all-targets
+
+  # deny.toml ships in the repo; running it is what makes it a policy rather
+  # than a file.
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+
+  # `[patch.crates-io]` silently falls back to the PUBLISHED forma-ir if the
+  # local version stops satisfying forma-server's requirement, which would
+  # mean CI green-lights a workspace it never actually tested.
+  patch-is-live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: forma-server must resolve forma-ir from this workspace
+        run: |
+          cargo tree -p forma-server -i forma-ir | tee /tmp/tree.txt
+          grep -q "crates/forma-ir" /tmp/tree.txt \
+            || { echo "forma-server is building against the PUBLISHED forma-ir, not this tree"; exit 1; }

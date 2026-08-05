@@ -17,11 +17,21 @@
 //! `Cache-Control: no-store` (see [`PageOutput::headers`]) and never cache the
 //! HTML across requests.
 
+// Makes README.md's and SECURITY.md's "Zero `unsafe` blocks" a property the
+// compiler enforces rather than a claim.
+#![forbid(unsafe_code)]
+
+/// Serving content-hashed files out of the embedded `dist` directory.
 pub mod assets;
+/// Content-Security-Policy construction and nonce generation.
 pub mod csp;
+/// Loading and version-checking the per-route `.ir` modules at startup.
 pub mod ir_compat;
+/// The service-worker response and its headers.
 pub mod sw;
+/// The HTML page template and the SSR render entry points.
 pub mod template;
+/// Request/response types: page config, manifest, render mode.
 pub mod types;
 
 /// Re-exported because it appears in [`assets::asset_bytes`]'s signature.

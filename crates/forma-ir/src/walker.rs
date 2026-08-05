@@ -32,9 +32,17 @@ struct IslandPending {
 /// wire because every `"` becomes `&quot;`, so the attribute this bounds is
 /// closer to 2 KiB in the worst case.
 ///
-/// The spill needs no client change: `loadIslandProps` reads
-/// `data-forma-props` first and falls back to the shared block, and the walker
-/// emits exactly one channel per island so precedence never bites.
+/// The spill needs no client change: `loadIslandProps`
+/// (`@getforma/core`, src/dom/activate.ts) reads `data-forma-props` first and
+/// falls back to the shared block, and the walker emits exactly one channel
+/// per island so that precedence never has two answers to choose between.
+///
+/// A *fragment* render ([`walk_island`]) never spills — it cannot legally emit
+/// a second `__forma_islands` block — so an over-size fragment keeps its props
+/// inline.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "inline_props_over_the_ceiling_spill_to_the_shared_block"
+/// Verified by: crates/forma-ir/src/walker.rs > "island_fragment_keeps_over_size_props_inline"
 pub const INLINE_PROPS_MAX_BYTES: usize = 1024;
 
 /// Default cap on the HTML a single walk may produce.
@@ -102,6 +110,20 @@ struct WalkState {
     list_iterations: usize,
     /// Cap for `list_iterations`.
     max_list_iterations: usize,
+    /// Undo log for slot writes made inside a LIST body.
+    ///
+    /// A list row must render from its own scope: the item binding and any
+    /// PROP the body extracts from it are visible to that row and to nothing
+    /// else. The loop used to buy that by deep-cloning the whole `SlotData`
+    /// per row, which costs O(rows x slots) — the walk was measurably
+    /// quadratic in row count. Instead each write swaps the new value in and
+    /// pushes the displaced one here; the row's `Drop`-equivalent pops back to
+    /// the mark it took on entry, restoring exactly the state the caller had.
+    ///
+    /// Entries are strictly LIFO across nesting: an inner list unwinds its own
+    /// entries before its enclosing row unwinds. The `Vec` keeps its capacity
+    /// between rows, so steady-state pushes do not allocate.
+    slot_journal: Vec<(u16, SlotValue)>,
     /// When true, `PropsMode::ScriptTag` islands inline their props on the
     /// root instead of accumulating into the shared `__forma_islands` block.
     /// Set for fragment renders, where a shared block would be dropped on
@@ -121,7 +143,29 @@ impl WalkState {
             max_output_bytes: limits.max_output_bytes,
             list_iterations: 0,
             max_list_iterations: limits.max_list_iterations,
+            slot_journal: Vec::new(),
             force_inline_props: false,
+        }
+    }
+
+    /// Record a slot write so the enclosing LIST row can undo it.
+    ///
+    /// Outside a list there is nothing to undo — a PROP at depth 0 writes to
+    /// the walk's own `SlotData` copy for the rest of the page, which is what
+    /// the clone-per-row implementation did too.
+    fn journal_write(&mut self, slot_id: u16, previous: SlotValue) {
+        if self.list_depth > 0 {
+            self.slot_journal.push((slot_id, previous));
+        }
+    }
+
+    /// Undo every journalled write back to `mark`, restoring `slots`.
+    fn unwind_slot_journal(&mut self, slots: &mut SlotData, mark: usize) {
+        while self.slot_journal.len() > mark {
+            // `len() > mark >= 0`, so the pop cannot be None.
+            if let Some((slot_id, previous)) = self.slot_journal.pop() {
+                slots.set(slot_id, previous);
+            }
         }
     }
 }
@@ -564,7 +608,7 @@ fn walk_range_impl(
                 let value = slots.get(slot_id).to_text();
 
                 push_checked(out, "<!--f:t", limit)?;
-                push_checked(out, &marker_id.to_string(), limit)?;
+                push_u16(out, marker_id, limit)?;
                 push_checked(out, "-->", limit)?;
                 if value.is_empty() {
                     // Always emit at least a zero-width space so the browser
@@ -577,7 +621,7 @@ fn walk_range_impl(
                     push_escaped_html(out, &value, limit)?;
                 }
                 push_checked(out, "<!--/f:t", limit)?;
-                push_checked(out, &marker_id.to_string(), limit)?;
+                push_u16(out, marker_id, limit)?;
                 push_checked(out, "-->", limit)?;
             }
 
@@ -590,13 +634,32 @@ fn walk_range_impl(
 
                 if state.pending_tag_close {
                     let attr_name = strings.get(attr_str_idx)?;
-                    let value = slots.get(slot_id).to_text();
-                    if !value.is_empty() {
+                    // `text` outlives the borrow only for the Valued case; it
+                    // is declared here so the &str can point into it.
+                    let text;
+                    let value = match slots.get(slot_id) {
+                        // An HTML boolean attribute is ON whenever it is
+                        // present, so the old `disabled="false"` meant
+                        // DISABLED. Absent for false/null, bare for true —
+                        // byte-for-byte what `renderAttr` in @getforma/core
+                        // produces for the same value.
+                        SlotValue::Bool(false) | SlotValue::Null => None,
+                        SlotValue::Bool(true) => Some(AttrValue::Bare),
+                        other => {
+                            text = other.to_text();
+                            // An empty string is a value, not an absence:
+                            // `renderAttr` emits `value=""`, and dropping the
+                            // attribute instead is a hydration mismatch on the
+                            // common `value=""` / `alt=""` case.
+                            Some(AttrValue::Valued(text.as_str()))
+                        }
+                    };
+                    if let Some(value) = value {
                         // `pending_tag_name` is the element this attribute is
                         // being written to — it decides whether a
                         // data:image/svg+xml value is in an image context.
                         let tag = std::mem::take(&mut state.pending_tag_name);
-                        emit_attr(out, &tag, attr_name, &value, limit)?;
+                        emit_attr(out, &tag, attr_name, value, limit)?;
                         state.pending_tag_name = tag;
                     }
                 }
@@ -607,11 +670,29 @@ fn walk_range_impl(
                 // island_id(u16)
                 let island_id = read_u16(ops, pos)?;
                 pos += 2;
+
+                // Only one element can carry a `data-forma-island` set. If an
+                // island's body starts another island before opening a tag of
+                // its own, the outer island's attributes are silently
+                // discarded and it never hydrates, never disposes, and cannot
+                // be found by `activateIslands`. Fail the render instead: the
+                // compiler owes every island a shell element.
+                if let Some(outer) = &state.pending_island {
+                    return Err(IrError::NestedIslandRoot {
+                        outer: outer.id,
+                        inner: island_id,
+                    });
+                }
+
                 push_checked(out, "<!--f:i", limit)?;
-                push_checked(out, &island_id.to_string(), limit)?;
+                push_u16(out, island_id, limit)?;
                 push_checked(out, "-->", limit)?;
 
-                // Look up island entry from the island table (O(1) index)
+                // Look up island entry from the island table (O(1) index).
+                // `IrModule::validate` rejects an ISLAND_START naming an
+                // island the table does not declare, so the `else` below is
+                // reachable only for a module that skipped validation.
+                // Verified by: crates/forma-ir/src/parser.rs > "validate_rejects_island_start_missing_from_table"
                 if let Some(entry) = module.island_entry(island_id) {
                     let component_name = strings.get(entry.name_str_idx)?.to_string();
 
@@ -622,10 +703,22 @@ fn walk_range_impl(
                                 None
                             } else {
                                 let props = build_island_props(module, slots, &entry.slot_ids);
-                                Some(
-                                    serde_json::to_string(&props)
-                                        .unwrap_or_else(|_| "{}".to_string()),
-                                )
+                                let json = serde_json::to_string(&props)
+                                    .unwrap_or_else(|_| "{}".to_string());
+                                if json.len() > INLINE_PROPS_MAX_BYTES && !state.force_inline_props
+                                {
+                                    // Spill: the payload goes into the shared
+                                    // block instead of a multi-kilobyte
+                                    // attribute. Exactly one channel is used,
+                                    // so the client's inline-wins precedence
+                                    // never has two answers to choose between.
+                                    state
+                                        .script_tag_props
+                                        .insert(island_id, serde_json::Value::Object(props));
+                                    None
+                                } else {
+                                    Some(json)
+                                }
                             }
                         }
                         PropsMode::ScriptTag if state.force_inline_props => {
@@ -661,6 +754,14 @@ fn walk_range_impl(
                         inline_props,
                         trigger: entry.trigger,
                     });
+                } else {
+                    #[cfg(feature = "tracing")]
+                    tracing::warn!(
+                        island_id = island_id,
+                        "ISLAND_START names an island that is not in the island table — \
+                         markers emitted but no data-forma-* attributes, so it will not hydrate \
+                         (module was not validated)"
+                    );
                 }
             }
 
@@ -698,7 +799,7 @@ fn walk_range_impl(
                 // Either Range mode, or a nested (non-matching) island end —
                 // emit the closing marker comment and continue.
                 push_checked(out, "<!--/f:i", limit)?;
-                push_checked(out, &island_id.to_string(), limit)?;
+                push_u16(out, island_id, limit)?;
                 push_checked(out, "-->", limit)?;
             }
 
@@ -746,7 +847,7 @@ fn walk_range_impl(
 
                 // Emit conditional marker
                 push_checked(out, "<!--f:s", limit)?;
-                push_checked(out, &slot_id.to_string(), limit)?;
+                push_u16(out, slot_id, limit)?;
                 push_checked(out, "-->", limit)?;
 
                 if condition {
@@ -774,7 +875,7 @@ fn walk_range_impl(
                 }
 
                 push_checked(out, "<!--/f:s", limit)?;
-                push_checked(out, &slot_id.to_string(), limit)?;
+                push_u16(out, slot_id, limit)?;
                 push_checked(out, "-->", limit)?;
 
                 // Advance pos past both branches + SHOW_ELSE marker byte
@@ -787,6 +888,16 @@ fn walk_range_impl(
                 // stream is malformed, but we tolerate it gracefully by doing nothing.
             }
 
+            // LIMITATION, not an oversight: SWITCH emits no `<!--f:…-->`
+            // marker pair, because the hydration wire contract has no switch
+            // marker — it defines exactly `f:tN` (text), `f:sN` (conditional),
+            // `f:lN` (list) and `f:iN` (island), and those bytes are shared
+            // with @getforma/core and ksx Studio. A switched region is
+            // therefore server-rendered only: the client cannot locate it to
+            // re-render when the slot changes. Adding one is a coordinated
+            // change to both renderers and the client walker, not a
+            // walker-local fix. SWITCH also has no default case in the opcode
+            // layout; a non-matching value renders nothing.
             Opcode::Switch => {
                 let slot_id = read_u16(ops, pos)?;
                 let case_count = read_u16(ops, pos + 2)? as usize;
@@ -805,8 +916,13 @@ fn walk_range_impl(
                 }
 
                 // Now pos points to start of first case body
+                check_slot_source(module, slot_id, slots.get(slot_id));
                 let slot_text = slots.get(slot_id).to_text();
                 let mut body_pos = pos;
+                // SWITCH is first-match-wins, like the `switch` it compiles
+                // from. Without this, a module with two cases carrying the
+                // same value rendered BOTH bodies concatenated.
+                let mut matched = false;
 
                 for (val_str_idx, body_len) in &cases {
                     // Hoisted above the match test so a non-matching case is
@@ -814,7 +930,8 @@ fn walk_range_impl(
                     // case still corrupts `body_pos` for its siblings.
                     let case_end = bounded_offset(body_pos, *body_len, region_limit)?;
                     let case_val = strings.get(*val_str_idx)?;
-                    if case_val == slot_text {
+                    if !matched && case_val == slot_text {
+                        matched = true;
                         walk_range(
                             module,
                             slots,
@@ -847,12 +964,14 @@ fn walk_range_impl(
                 // Emit list markers
                 let list_marker_id = slot_id;
                 push_checked(out, "<!--f:l", limit)?;
-                push_checked(out, &list_marker_id.to_string(), limit)?;
+                push_u16(out, list_marker_id, limit)?;
                 push_checked(out, "-->", limit)?;
 
                 // Take a cheap handle on the array to release the borrow on
-                // `slots` before creating the per-item shadow copies. The
-                // payload is Arc-backed, so this is a refcount bump.
+                // `slots` before the loop mutates it. The payload is
+                // Arc-backed, so this is a refcount bump — and holding it
+                // means a body that writes to the list's own slot cannot
+                // change what we are iterating.
                 let items = match slots.get(slot_id) {
                     SlotValue::Array(a) => Some(a.clone()),
                     _ => None,
@@ -875,18 +994,30 @@ fn walk_range_impl(
                                 max: state.max_list_iterations,
                             });
                         }
-                        let mut shadow_slots = slots.clone();
-                        shadow_slots.set(item_slot_id, item.clone());
-                        walk_range(
+                        // Scoped binding instead of a per-row `SlotData`
+                        // clone: swap the item in, walk, swap back. Same
+                        // isolation between rows, without copying every other
+                        // slot on the page once per row.
+                        let mark = state.slot_journal.len();
+                        let previous = slots.replace(item_slot_id, item.clone());
+                        state.slot_journal.push((item_slot_id, previous));
+
+                        let walked = walk_range(
                             module,
-                            &mut shadow_slots,
+                            slots,
                             ops,
                             body_start,
                             body_end,
                             out,
                             state,
                             depth + 1,
-                        )?;
+                        );
+                        // Unwind before propagating: an aborted walk must
+                        // still hand `slots` back exactly as it was, because
+                        // an enclosing row is about to unwind on top of it.
+                        state.unwind_slot_journal(slots, mark);
+                        walked?;
+
                         // A LIST_ITEM_KEY that never met an element belongs to
                         // this item only — do not let it leak onto whatever
                         // element the next item (or the code after the list)
@@ -898,7 +1029,7 @@ fn walk_range_impl(
                 state.pending_list_key = None;
 
                 push_checked(out, "<!--/f:l", limit)?;
-                push_checked(out, &list_marker_id.to_string(), limit)?;
+                push_u16(out, list_marker_id, limit)?;
                 push_checked(out, "-->", limit)?;
 
                 pos = body_end;
@@ -973,9 +1104,12 @@ fn walk_range_impl(
 
                 let prop_name = strings.get(prop_str_idx)?;
                 let value = slots.get(src_slot_id).get_property(prop_name);
-                // Mutate slots directly — safe because PROP is used inside LIST
-                // bodies where slots is already a shadow copy (cloned per iteration).
-                slots.set(target_slot_id, value);
+                // Mutate `slots` directly and journal the displaced value, so
+                // the enclosing LIST row restores it when the row ends. A PROP
+                // outside any list writes for the rest of the page, which is
+                // what it did when each row got its own clone.
+                let previous = slots.replace(target_slot_id, value);
+                state.journal_write(target_slot_id, previous);
             }
         }
     }
@@ -1012,6 +1146,15 @@ fn walk_range_impl(
 
 /// Build a JSON object from the island's slot_ids, looking up names from
 /// the slot table and values from the current SlotData.
+///
+/// DUPLICATE-NAME RULE: two of the island's slots can carry the same name (the
+/// compiler derives some names per-element, not per-module). The first one in
+/// `slot_ids` order wins, matching [`IrModule::slot_id_by_name`] and
+/// [`SlotData::from_json`]; a plain `insert` made the LAST one win here, so the
+/// island's props disagreed with every other name lookup in the crate and one
+/// of the two values vanished with no diagnostic.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "island_props_keep_the_first_slot_for_a_duplicated_name"
 fn build_island_props(
     module: &IrModule,
     slots: &SlotData,
@@ -1022,6 +1165,16 @@ fn build_island_props(
         // Look up slot name from the slot table (O(1) index)
         if let Some(entry) = module.slot_entry(slot_id) {
             if let Ok(name) = module.strings.get(entry.name_str_idx) {
+                if map.contains_key(name) {
+                    #[cfg(feature = "tracing")]
+                    tracing::warn!(
+                        slot_id = slot_id,
+                        name = name,
+                        "Island declares two slots with the same name — keeping the first, \
+                         the later value is not reachable from the props object"
+                    );
+                    continue;
+                }
                 let value = slots.get(slot_id).to_json();
                 map.insert(name.to_string(), value);
             }
@@ -1149,6 +1302,20 @@ fn is_dangerous_url(value: &str, tag: &str) -> bool {
     false
 }
 
+/// How an attribute's value is written out.
+///
+/// The distinction exists because `key` and `key=""` are the same DOM but
+/// `key` and `key="false"` are not: an HTML boolean attribute is ON whenever
+/// it is present, whatever its value, so `disabled="false"` disables the
+/// control. See [`AttrValue::from_slot`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AttrValue<'a> {
+    /// Write the bare name, no `="…"`.
+    Bare,
+    /// Write `key="escaped"`, including when `value` is empty.
+    Valued(&'a str),
+}
+
 /// Emit one attribute, dropping it entirely if it is unsafe.
 ///
 /// Dropping (rather than emitting an empty value) is what the client does:
@@ -1159,7 +1326,7 @@ fn emit_attr(
     out: &mut String,
     tag: &str,
     key: &str,
-    val: &str,
+    val: AttrValue<'_>,
     limit: usize,
 ) -> Result<(), IrError> {
     if !is_valid_name(key) {
@@ -1175,17 +1342,19 @@ fn emit_attr(
         tracing::warn!(attr = key, "Dropping event-handler attribute from IR");
         return Ok(());
     }
-    if is_url_attr(key) && is_dangerous_url(val, tag) {
-        #[cfg(feature = "tracing")]
-        tracing::warn!(attr = key, "Dropping URL attribute with a dangerous scheme");
-        return Ok(());
+    if let AttrValue::Valued(v) = val {
+        if is_url_attr(key) && is_dangerous_url(v, tag) {
+            #[cfg(feature = "tracing")]
+            tracing::warn!(attr = key, "Dropping URL attribute with a dangerous scheme");
+            return Ok(());
+        }
     }
 
     push_checked(out, " ", limit)?;
     push_checked(out, key, limit)?;
-    if !val.is_empty() {
+    if let AttrValue::Valued(v) = val {
         push_checked(out, "=\"", limit)?;
-        push_escaped_attr(out, val, limit)?;
+        push_escaped_attr(out, v, limit)?;
         push_checked(out, "\"", limit)?;
     }
     Ok(())
@@ -1210,13 +1379,21 @@ fn emit_open_tag(
     push_checked(out, tag, limit)?;
 
     for (key, val) in attrs {
-        emit_attr(out, tag, key, val, limit)?;
+        // A static attribute is authored text, never a boolean. An empty value
+        // stays the bare name: `key` and `key=""` parse to the same DOM, and
+        // keeping the shorthand leaves already-compiled modules byte-stable.
+        let value = if val.is_empty() {
+            AttrValue::Bare
+        } else {
+            AttrValue::Valued(val)
+        };
+        emit_attr(out, tag, key, value, limit)?;
     }
 
     // Inject pending island attributes
     if let Some(island) = state.pending_island.take() {
         push_checked(out, " data-forma-island=\"", limit)?;
-        push_checked(out, &island.id.to_string(), limit)?;
+        push_u16(out, island.id, limit)?;
         push_checked(out, "\" data-forma-component=\"", limit)?;
         push_escaped_attr(out, &island.component_name, limit)?;
         push_checked(out, "\" data-forma-status=\"pending\"", limit)?;
@@ -1325,6 +1502,28 @@ fn push_checked(out: &mut String, s: &str, limit: usize) -> Result<(), IrError> 
     }
     out.push_str(s);
     Ok(())
+}
+
+/// Append a `u16` in decimal, within the output budget, without allocating.
+///
+/// Marker ids are the hottest thing the walker writes — every DYN_TEXT emits
+/// its id twice, every SHOW_IF and LIST likewise, and a list body repeats all
+/// of that once per row. `to_string()` heap-allocated for each one.
+fn push_u16(out: &mut String, value: u16, limit: usize) -> Result<(), IrError> {
+    // u16::MAX is 65535: five digits, never more.
+    let mut buf = [0u8; 5];
+    let mut remaining = value;
+    let mut start = buf.len();
+    loop {
+        start -= 1;
+        buf[start] = b'0' + (remaining % 10) as u8;
+        remaining /= 10;
+        if remaining == 0 {
+            break;
+        }
+    }
+    let digits = core::str::from_utf8(&buf[start..]).expect("ASCII digits are valid UTF-8");
+    push_checked(out, digits, limit)
 }
 
 /// Escape text for HTML content (`& < >`), within the output budget.
@@ -1625,13 +1824,22 @@ mod tests {
 
     #[test]
     fn walk_island_markers() {
-        // ISLAND_START(0) + TEXT content + ISLAND_END(0)
+        // ISLAND_START(0) + TEXT content + ISLAND_END(0). The island body
+        // opens no element, so the island contributes markers only — its
+        // attributes are dropped at ISLAND_END with a warning.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_text(0));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let html = walk_static(&["Hello"], &opcodes);
+        let slots = SlotData::new(0);
+        let html = walk_with_islands(
+            &["Hello"],
+            &[],
+            &[(0, 0x01, 0x01, 0, 0, &[])],
+            &opcodes,
+            &slots,
+        );
         assert_eq!(html, "<!--f:i0-->Hello<!--/f:i0-->");
     }
 
@@ -1655,6 +1863,68 @@ mod tests {
 
         let html = walk_static(&["input", "disabled", ""], &opcodes);
         assert_eq!(html, "<input disabled>");
+    }
+
+    // -- DYN_ATTR value semantics (W2 / F15) --------------------------------
+
+    /// Helper: `<input DYN_ATTR(disabled, slot 0)>` with slot 0 set to `value`.
+    fn walk_dyn_attr_with(value: SlotValue) -> String {
+        let mut opcodes = encode_void_tag(0, &[]);
+        opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
+        let mut slots = SlotData::new(1);
+        slots.set(0, value);
+        walk_with_slots(
+            &["input", "disabled"],
+            &[(0, 1, 0x02, 0x00, &[])],
+            &opcodes,
+            &slots,
+        )
+    }
+
+    #[test]
+    fn dyn_attr_bool_matches_the_client_renderer() {
+        // An HTML boolean attribute is ON whenever it is PRESENT, whatever its
+        // value — `disabled="false"` disables the control. The walker used to
+        // emit exactly that, so SSR shipped a disabled/hidden/checked control
+        // that only un-broke itself after hydration, and never at all for a
+        // visible/idle/interaction island the user had not reached, or with JS
+        // off. These are byte-for-byte what `renderAttr` in @getforma/core
+        // produces for the same values.
+        assert_eq!(
+            walk_dyn_attr_with(SlotValue::Bool(true)),
+            "<input disabled>",
+            "true must render the bare attribute"
+        );
+        assert_eq!(
+            walk_dyn_attr_with(SlotValue::Bool(false)),
+            "<input>",
+            "false must omit the attribute, not write disabled=\"false\""
+        );
+        assert_eq!(
+            walk_dyn_attr_with(SlotValue::Null),
+            "<input>",
+            "null must omit the attribute"
+        );
+    }
+
+    #[test]
+    fn dyn_attr_empty_string_is_a_value_not_an_absence() {
+        // `renderAttr(key, "")` emits `key=""`, and the client hydrating the
+        // same slot calls setAttribute(key, "") — dropping the attribute here
+        // is a real DOM difference on the common `value=""` / `alt=""` case.
+        assert_eq!(
+            walk_dyn_attr_with(SlotValue::Text(String::new())),
+            "<input disabled=\"\">"
+        );
+        assert_eq!(
+            walk_dyn_attr_with(SlotValue::Text("yes".into())),
+            "<input disabled=\"yes\">"
+        );
+        // Numbers stringify, they do not vanish: 0 is a value.
+        assert_eq!(
+            walk_dyn_attr_with(SlotValue::Number(0.0)),
+            "<input disabled=\"0\">"
+        );
     }
 
     // -- Test 12: walk_multiple_attrs --------------------------------------
@@ -2199,6 +2469,24 @@ mod tests {
             !html.contains("About"),
             "should NOT contain second case text"
         );
+    }
+
+    #[test]
+    fn walk_switch_stops_at_the_first_match() {
+        // Two cases carrying the SAME value. Without a break the walker
+        // rendered both bodies concatenated — a `switch` statement does not.
+        let opcodes = encode_switch(0, &[(1, &encode_text(2)), (1, &encode_text(3))]);
+
+        let mut slots = SlotData::new(1);
+        slots.set(0, SlotValue::Text("home".to_string()));
+
+        let html = walk_with_slots(
+            &["page", "home", "FIRST", "SECOND"],
+            &[(0, 0, 0x01, 0x00, &[])],
+            &opcodes,
+            &slots,
+        );
+        assert_eq!(html, "FIRST");
     }
 
     // -- Test 29: walk_switch_with_elements -------------------------------
@@ -2857,9 +3145,10 @@ mod tests {
 
     #[test]
     fn walk_island_no_entry_in_table() {
-        // ISLAND_START(5) with no matching entry in island table
-        // Should still emit comment markers but no data-forma attrs
-        // strings: 0="div", 1="Hello"
+        // An ISLAND_START whose id is absent from the island table used to
+        // render happily: markers, but no `data-forma-*` attributes, so the
+        // client could never hydrate that island and nothing said why. It is
+        // now a load-time error instead of an invisible one at runtime.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(5));
         opcodes.extend_from_slice(&encode_open_tag(0, &[]));
@@ -2867,15 +3156,67 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(0));
         opcodes.extend_from_slice(&encode_island_end(5));
 
+        let data = build_minimal_ir(&["div", "Hello"], &[], &opcodes, &[]);
+        assert_eq!(
+            IrModule::parse(&data).unwrap_err(),
+            IrError::UnknownIslandId(5)
+        );
+    }
+
+    #[test]
+    fn walk_nested_island_start_before_a_root_element_is_an_error() {
+        // Only one element can carry a data-forma-island set, so an island
+        // that opens another island before its own root element would have
+        // silently lost its identity — never hydrated, never disposed.
+        let mut opcodes = Vec::new();
+        opcodes.extend_from_slice(&encode_island_start(0));
+        opcodes.extend_from_slice(&encode_island_start(1));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(1));
+        opcodes.extend_from_slice(&encode_island_end(0));
+
         let slots = SlotData::new(0);
-        let html = walk_with_islands(
-            &["div", "Hello"],
+        let data = build_minimal_ir(
+            &["div", "Outer", "Inner"],
             &[],
-            &[], // no islands in table
+            &opcodes,
+            &[(0, 0x01, 0x01, 1, 0, &[]), (1, 0x01, 0x01, 2, 3, &[])],
+        );
+        let module = IrModule::parse(&data).unwrap();
+        assert_eq!(
+            walk_to_html(&module, &slots).unwrap_err(),
+            IrError::NestedIslandRoot { outer: 0, inner: 1 }
+        );
+    }
+
+    #[test]
+    fn walk_island_nested_inside_another_islands_root_is_fine() {
+        // The legal shape: each island opens its own element first.
+        let mut opcodes = Vec::new();
+        opcodes.extend_from_slice(&encode_island_start(0));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_island_start(1));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(1));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(0));
+
+        let slots = SlotData::new(0);
+        let inner_offset = (encode_island_start(0).len() + encode_open_tag(0, &[]).len()) as u32;
+        let html = walk_with_islands(
+            &["div", "Outer", "Inner"],
+            &[],
+            &[
+                (0, 0x01, 0x01, 1, 0, &[]),
+                (1, 0x01, 0x01, 2, inner_offset, &[]),
+            ],
             &opcodes,
             &slots,
         );
-        assert_eq!(html, "<!--f:i5--><div>Hello</div><!--/f:i5-->");
+        assert!(html.contains(r#"data-forma-component="Outer""#));
+        assert!(html.contains(r#"data-forma-component="Inner""#));
     }
 
     // -- Test 43: walk_inline_props_empty_slots ------------------------------
@@ -2906,6 +3247,110 @@ mod tests {
             html.contains(r#"data-forma-island="0""#),
             "should contain island id"
         );
+    }
+
+    // -- Inline props size ceiling (F8) --------------------------------------
+
+    /// Build a one-island page whose single prop slot holds `payload`.
+    fn walk_island_with_prop_payload(payload: &str) -> String {
+        let mut opcodes = Vec::new();
+        opcodes.extend_from_slice(&encode_island_start(0));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(0));
+
+        let mut slots = SlotData::new(1);
+        slots.set(0, SlotValue::Text(payload.to_string()));
+        walk_with_islands(
+            &["div", "Big", "blob"],
+            &[(0, 2, 0x01, 0x00, &[])],
+            &[(0, 0x01, 0x01, 1, 0, &[0])],
+            &opcodes,
+            &slots,
+        )
+    }
+
+    #[test]
+    fn island_props_keep_the_first_slot_for_a_duplicated_name() {
+        // Slots 0 and 1 are both named "dup". The three name-resolving paths
+        // in this crate used to pick differently (first / last / last by
+        // ascending id); they all keep the first now.
+        let mut opcodes = Vec::new();
+        opcodes.extend_from_slice(&encode_island_start(0));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(0));
+
+        let mut slots = SlotData::new(2);
+        slots.set(0, SlotValue::Text("first".into()));
+        slots.set(1, SlotValue::Text("second".into()));
+
+        let html = walk_with_islands(
+            &["div", "Comp", "dup"],
+            &[(0, 2, 0x01, 0x00, &[]), (1, 2, 0x01, 0x00, &[])],
+            &[(0, 0x01, 0x01, 1, 0, &[0, 1])],
+            &opcodes,
+            &slots,
+        );
+        assert!(
+            html.contains(r#"data-forma-props="{&quot;dup&quot;:&quot;first&quot;}""#),
+            "expected the first slot to win, got: {html}"
+        );
+    }
+
+    #[test]
+    fn inline_props_under_the_ceiling_stay_inline() {
+        let html = walk_island_with_prop_payload("small");
+        assert!(html.contains(r#"data-forma-props="{&quot;blob&quot;:&quot;small&quot;}""#));
+        assert!(!html.contains("__forma_islands"));
+    }
+
+    #[test]
+    fn inline_props_over_the_ceiling_spill_to_the_shared_block() {
+        // An unbounded `data-forma-props` is a multi-kilobyte attribute
+        // repeated on every island root. Above the ceiling the payload moves
+        // to the shared block — and to EXACTLY one of the two channels, since
+        // the client reads the inline attribute first and would never look at
+        // the block if both were present.
+        let payload = "x".repeat(INLINE_PROPS_MAX_BYTES + 1);
+        let html = walk_island_with_prop_payload(&payload);
+        assert!(
+            !html.contains("data-forma-props"),
+            "over-size props must not stay in the attribute"
+        );
+        assert!(
+            html.contains(r#"<script id="__forma_islands" type="application/json">"#),
+            "over-size props must land in the shared block, got: {}",
+            &html[..html.len().min(200)]
+        );
+        assert!(html.contains(&payload), "the payload itself must survive");
+    }
+
+    #[test]
+    fn island_fragment_keeps_over_size_props_inline() {
+        // A fragment cannot emit a second `__forma_islands` block: it would
+        // duplicate a DOM id and, being earlier in document order after the
+        // swap, shadow the page's own block for every other island.
+        let mut opcodes = Vec::new();
+        opcodes.extend_from_slice(&encode_island_start(0));
+        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
+        opcodes.extend_from_slice(&encode_close_tag(0));
+        opcodes.extend_from_slice(&encode_island_end(0));
+
+        let payload = "x".repeat(INLINE_PROPS_MAX_BYTES + 1);
+        let mut slots = SlotData::new(1);
+        slots.set(0, SlotValue::Text(payload));
+
+        let data = build_minimal_ir(
+            &["div", "Big", "blob"],
+            &[(0, 2, 0x01, 0x00, &[])],
+            &opcodes,
+            &[(0, 0x01, 0x01, 1, 0, &[0])],
+        );
+        let module = IrModule::parse(&data).unwrap();
+        let fragment = walk_island(&module, &slots, 0).unwrap();
+        assert!(fragment.contains("data-forma-props"));
+        assert!(!fragment.contains("__forma_islands"));
     }
 
     // -- Test 44: walk_island_and_list_key_combined --------------------------
@@ -3751,12 +4196,16 @@ mod tests {
             "BenchmarkDataTable root class must exist"
         );
 
-        // Print a section for manual inspection
-        if let Some(start) = html.find("<!--f:i0-->") {
-            let end = html.find("<!--/f:i0-->").unwrap_or(start + 200) + 12;
-            eprintln!("\n=== FilterBar island HTML ===");
-            eprintln!("{}", &html[start..end.min(html.len())]);
-        }
+        // The FilterBar island must be a real, closed region, not just a
+        // stray opening marker. (This replaced a pair of `eprintln!`s that
+        // printed the region "for manual inspection" and asserted nothing.)
+        let start = html
+            .find("<!--f:i0-->")
+            .expect("FilterBar island start marker");
+        let end = html
+            .find("<!--/f:i0-->")
+            .expect("FilterBar island end marker");
+        assert!(end > start, "island end marker must follow its start");
     }
 
     // -- Output budget (F-02) -----------------------------------------------
@@ -3947,30 +4396,44 @@ mod tests {
     // -- TRY/FALLBACK scoping (F-10) ----------------------------------------
 
     #[test]
-    fn walk_fallback_inside_show_if_does_not_consume_outer_try_skip() {
-        // A stray FALLBACK in a nested range must not pop the entry pushed by
-        // an outer TRY_START and skip that many bytes of the wrong region.
+    fn walk_stray_fallback_in_a_nested_range_is_rejected_at_load() {
         // Layout: TRY_START [ SHOW_IF(then = FALLBACK) TEXT("main") ] FALLBACK TEXT("fb")
-        let mut then_ops = vec![0x0E]; // stray FALLBACK inside the then-branch
-        then_ops.extend_from_slice(&[]);
+        //
+        // The FALLBACK inside the then-branch belongs to no TRY_START in its
+        // own range. The walker's `fallback_stack` is range-local so it cannot
+        // pop the outer entry and skip the wrong region — but it would still
+        // fall through and walk the fallback body as if it were main content,
+        // which is a silently wrong page. Validation rejects the module first.
+        let then_ops = vec![0x0E]; // stray FALLBACK inside the then-branch
         let mut main_ops = encode_show_if(0, &then_ops, &[]);
         main_ops.extend_from_slice(&encode_text(1));
         let opcodes = encode_try(&main_ops, &encode_text(2));
 
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Bool(true));
-
-        let html = walk_with_slots(
+        let data = build_minimal_ir(
             &["flag", "main", "fb"],
             &[(0, 0, 0x02, 0x00, &[])],
             &opcodes,
-            &slots,
+            &[],
         );
-        assert!(html.contains("main"), "main body must render, got: {html}");
-        assert!(
-            !html.contains("fb"),
-            "fallback body must stay skipped, got: {html}"
-        );
+        assert!(matches!(
+            IrModule::parse(&data).unwrap_err(),
+            IrError::MalformedControlFlow { .. }
+        ));
+    }
+
+    #[test]
+    fn walk_try_without_a_fallback_is_rejected_at_load() {
+        // A TRY_START whose FALLBACK never arrives ships a page with no
+        // fallback and no diagnostic.
+        let mut opcodes = vec![0x0D]; // TRY_START
+        opcodes.extend_from_slice(&4u32.to_le_bytes()); // fallback_len
+        opcodes.extend_from_slice(&encode_text(0));
+
+        let data = build_minimal_ir(&["main"], &[], &opcodes, &[]);
+        assert!(matches!(
+            IrModule::parse(&data).unwrap_err(),
+            IrError::MalformedControlFlow { .. }
+        ));
     }
 
     // -- Pending island / list-key scoping (F-11) ---------------------------

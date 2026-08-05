@@ -1,0 +1,10 @@
+# FMIR fixtures are byte-exact output of the TypeScript compiler. Git's text
+# heuristic plus core.autocrlf would rewrite any 0x0D 0x0A pair inside them on
+# checkout, and the cross-implementation contract test would then be reading a
+# corrupted binary rather than what the compiler emitted.
+*.ir binary
+
+# The goldens next to them are compared after newline normalization, but
+# pinning LF keeps the committed bytes — and therefore every diff — identical
+# on Windows and Linux.
+crates/forma-ir/tests/fixtures/js-emitter/*.html text eol=lf

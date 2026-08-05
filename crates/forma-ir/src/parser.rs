@@ -322,11 +322,15 @@ const NO_INDEX: u32 = u32::MAX;
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct IrModule {
+    /// Parsed 16-byte file header.
     pub header: IrHeader,
+    /// The module's string table — every name, literal and attribute value.
     pub strings: StringTable,
+    /// The module's slot declarations, including their defaults.
     pub slots: SlotTable,
     /// Raw opcode stream; the walker interprets it on the fly.
     pub opcodes: Vec<u8>,
+    /// The module's island declarations.
     pub islands: IslandTableParsed,
     /// Dense `slot_id` → index into `slots.entries()`, `NO_INDEX` if absent.
     /// Replaces a linear scan per DYN_TEXT/DYN_ATTR/SHOW_IF/LIST opcode.
@@ -540,7 +544,18 @@ impl IrModule {
                     self.check_slot(read_u16_at(ops, pos + 4, end)?)?;
                     pos = bounded(pos, 6, end, op_start)?;
                 }
-                Opcode::IslandStart | Opcode::IslandEnd => {
+                Opcode::IslandStart => {
+                    // An ISLAND_START whose id is absent from the island table
+                    // renders its `<!--f:iN-->` markers but no
+                    // `data-forma-*` attributes, so the client never hydrates
+                    // it and nothing anywhere reports why. Reject at load.
+                    let island_id = read_u16_at(ops, pos, end)?;
+                    if self.island_entry(island_id).is_none() {
+                        return Err(IrError::UnknownIslandId(island_id));
+                    }
+                    pos = bounded(pos, 2, end, op_start)?;
+                }
+                Opcode::IslandEnd => {
                     pos = bounded(pos, 2, end, op_start)?;
                 }
                 Opcode::ShowElse => {
@@ -609,11 +624,25 @@ impl IrModule {
                     // The fallback body is skipped, exactly as the walker
                     // skips it — Phase 2 always renders the main body, so
                     // those bytes are never executed and are not scanned.
-                    if let Some(skip) = fallback_stack.pop() {
-                        pos = bounded(pos, skip, end, op_start)?;
+                    //
+                    // A FALLBACK with no open TRY_START is rejected rather
+                    // than tolerated: the walker would leave `pos` where it
+                    // is and walk the fallback body as though it were main
+                    // content, which is a wrong page rendered silently.
+                    match fallback_stack.pop() {
+                        Some(skip) => pos = bounded(pos, skip, end, op_start)?,
+                        None => return Err(IrError::MalformedControlFlow { pos: op_start }),
                     }
                 }
             }
+        }
+
+        // A TRY_START whose FALLBACK never arrives leaves the region's main
+        // body unbounded: the walker renders it, but nothing marks where the
+        // try block ended, so a compiler that truncated the block ships a page
+        // missing its fallback with no diagnostic.
+        if let Some(_unmatched) = fallback_stack.pop() {
+            return Err(IrError::MalformedControlFlow { pos: end });
         }
 
         Ok(())
@@ -631,6 +660,18 @@ impl IrModule {
     }
 
     /// Look up a slot ID by its name. Returns `None` if no slot with that name exists.
+    ///
+    /// DUPLICATE-NAME RULE: slot *names* are not required to be unique — the
+    /// compiler derives some of them per-element (`text:<index>`, `attr:class`)
+    /// rather than per-module — so a name can address more than one slot. The
+    /// whole crate resolves that collision the same way: **the first entry in
+    /// slot-table order wins**, here, in [`crate::slot::SlotData::from_json`], and in the
+    /// walker's island-props builder. They used to disagree three ways (first,
+    /// last, and last-by-ascending-slot-id), so setting a value by name filled
+    /// one slot and left its twin blank while the island's props reported a
+    /// third answer.
+    ///
+    /// Verified by: crates/forma-ir/src/parser.rs > "duplicate_slot_names_resolve_first_wins_everywhere"
     pub fn slot_id_by_name(&self, name: &str) -> Option<u16> {
         for slot in self.slots.entries() {
             if let Ok(slot_name) = self.strings.get(slot.name_str_idx) {
@@ -699,19 +740,43 @@ fn read_u32_at(ops: &[u8], pos: usize, end: usize) -> Result<u32, IrError> {
 
 /// Binary encoding helpers for building FMIR test data.
 ///
-/// These are always compiled (not behind `#[cfg(test)]`) so that other crates
-/// (e.g., `forma-server`) can use them in their own tests
-/// via `forma_ir::parser::test_helpers::build_minimal_ir`.
+/// Behind the `test-helpers` feature, not `#[cfg(test)]`: other crates
+/// (`forma-server`, and anyone writing a fixture) need them from their own
+/// test targets, which `#[cfg(test)]` cannot reach. The feature keeps them out
+/// of consumers' *release* builds, where a byte-exact FMIR encoder is
+/// unwanted API surface.
+///
+/// This crate's own tests get it from a self dev-dependency in Cargo.toml.
+#[cfg(any(test, feature = "test-helpers"))]
 pub mod test_helpers {
     use crate::format::{HEADER_SIZE, SECTION_TABLE_SIZE};
+
+    /// Narrow to `u16`, panicking rather than silently truncating.
+    ///
+    /// These encoders write the on-disk widths, so a plain `as` cast turns a
+    /// module with more than 65,535 strings/attrs/slots into a corrupt file
+    /// with no error at all — the exact failure the parser exists to catch,
+    /// manufactured by the test fixture that was supposed to prove it.
+    fn to_u16(n: usize) -> [u8; 2] {
+        u16::try_from(n)
+            .unwrap_or_else(|_| panic!("{n} does not fit the u16 field this encoder writes"))
+            .to_le_bytes()
+    }
+
+    /// Narrow to `u32`, panicking rather than silently truncating.
+    fn to_u32(n: usize) -> [u8; 4] {
+        u32::try_from(n)
+            .unwrap_or_else(|_| panic!("{n} does not fit the u32 field this encoder writes"))
+            .to_le_bytes()
+    }
 
     /// Build valid string table binary data from a slice of strings.
     pub fn build_string_table(strings: &[&str]) -> Vec<u8> {
         let mut buf = Vec::new();
-        buf.extend_from_slice(&(strings.len() as u32).to_le_bytes());
+        buf.extend_from_slice(&to_u32(strings.len()));
         for s in strings {
             let bytes = s.as_bytes();
-            buf.extend_from_slice(&(bytes.len() as u16).to_le_bytes());
+            buf.extend_from_slice(&to_u16(bytes.len()));
             buf.extend_from_slice(bytes);
         }
         buf
@@ -721,13 +786,13 @@ pub mod test_helpers {
     /// (slot_id, name_str_idx, type_hint_byte, source_byte, default_bytes).
     pub fn build_slot_table(entries: &[(u16, u32, u8, u8, &[u8])]) -> Vec<u8> {
         let mut buf = Vec::new();
-        buf.extend_from_slice(&(entries.len() as u16).to_le_bytes());
+        buf.extend_from_slice(&to_u16(entries.len()));
         for &(slot_id, name_str_idx, type_hint, source, default_bytes) in entries {
             buf.extend_from_slice(&slot_id.to_le_bytes());
             buf.extend_from_slice(&name_str_idx.to_le_bytes());
             buf.push(type_hint);
             buf.push(source);
-            buf.extend_from_slice(&(default_bytes.len() as u16).to_le_bytes());
+            buf.extend_from_slice(&to_u16(default_bytes.len()));
             buf.extend_from_slice(default_bytes);
         }
         buf
@@ -738,14 +803,14 @@ pub mod test_helpers {
     /// Tuple: `(id, trigger, props_mode, name_str_idx, byte_offset, slot_ids)`
     pub fn build_island_table(entries: &[(u16, u8, u8, u32, u32, &[u16])]) -> Vec<u8> {
         let mut buf = Vec::new();
-        buf.extend_from_slice(&(entries.len() as u16).to_le_bytes());
+        buf.extend_from_slice(&to_u16(entries.len()));
         for &(id, trigger, props_mode, name_str_idx, byte_offset, slot_ids) in entries {
             buf.extend_from_slice(&id.to_le_bytes());
             buf.push(trigger);
             buf.push(props_mode);
             buf.extend_from_slice(&name_str_idx.to_le_bytes());
             buf.extend_from_slice(&byte_offset.to_le_bytes());
-            buf.extend_from_slice(&(slot_ids.len() as u16).to_le_bytes());
+            buf.extend_from_slice(&to_u16(slot_ids.len()));
             for &slot_id in slot_ids.iter() {
                 buf.extend_from_slice(&slot_id.to_le_bytes());
             }
@@ -760,7 +825,7 @@ pub mod test_helpers {
         let mut buf = Vec::new();
         buf.push(0x01); // Opcode::OpenTag
         buf.extend_from_slice(&str_idx.to_le_bytes());
-        buf.extend_from_slice(&(attrs.len() as u16).to_le_bytes());
+        buf.extend_from_slice(&to_u16(attrs.len()));
         for &(key_idx, val_idx) in attrs {
             buf.extend_from_slice(&key_idx.to_le_bytes());
             buf.extend_from_slice(&val_idx.to_le_bytes());
@@ -781,7 +846,7 @@ pub mod test_helpers {
         let mut buf = Vec::new();
         buf.push(0x03); // Opcode::VoidTag
         buf.extend_from_slice(&str_idx.to_le_bytes());
-        buf.extend_from_slice(&(attrs.len() as u16).to_le_bytes());
+        buf.extend_from_slice(&to_u16(attrs.len()));
         for &(key_idx, val_idx) in attrs {
             buf.extend_from_slice(&key_idx.to_le_bytes());
             buf.extend_from_slice(&val_idx.to_le_bytes());
@@ -808,8 +873,8 @@ pub mod test_helpers {
         let mut buf = Vec::new();
         buf.push(0x07); // Opcode::ShowIf
         buf.extend_from_slice(&slot_id.to_le_bytes());
-        buf.extend_from_slice(&(then_ops.len() as u32).to_le_bytes());
-        buf.extend_from_slice(&(else_ops.len() as u32).to_le_bytes());
+        buf.extend_from_slice(&to_u32(then_ops.len()));
+        buf.extend_from_slice(&to_u32(else_ops.len()));
         buf.extend_from_slice(then_ops); // then branch body
         buf.push(0x08); // SHOW_ELSE marker
         buf.extend_from_slice(else_ops); // else branch body
@@ -822,7 +887,7 @@ pub mod test_helpers {
         buf.push(0x0A); // Opcode::List
         buf.extend_from_slice(&slot_id.to_le_bytes());
         buf.extend_from_slice(&item_slot_id.to_le_bytes());
-        buf.extend_from_slice(&(body_ops.len() as u32).to_le_bytes());
+        buf.extend_from_slice(&to_u32(body_ops.len()));
         buf.extend_from_slice(body_ops);
         buf
     }
@@ -841,11 +906,11 @@ pub mod test_helpers {
         let mut buf = Vec::new();
         buf.push(0x09); // Opcode::Switch
         buf.extend_from_slice(&slot_id.to_le_bytes());
-        buf.extend_from_slice(&(cases.len() as u16).to_le_bytes());
+        buf.extend_from_slice(&to_u16(cases.len()));
         // Case headers
         for (val_str_idx, body) in cases {
             buf.extend_from_slice(&val_str_idx.to_le_bytes());
-            buf.extend_from_slice(&(body.len() as u32).to_le_bytes());
+            buf.extend_from_slice(&to_u32(body.len()));
         }
         // Case bodies
         for (_, body) in cases {
@@ -866,7 +931,7 @@ pub mod test_helpers {
     pub fn encode_try(main_ops: &[u8], fallback_ops: &[u8]) -> Vec<u8> {
         let mut buf = Vec::new();
         buf.push(0x0D); // Opcode::TryStart
-        buf.extend_from_slice(&(fallback_ops.len() as u32).to_le_bytes());
+        buf.extend_from_slice(&to_u32(fallback_ops.len()));
         buf.extend_from_slice(main_ops);
         buf.push(0x0E); // Opcode::Fallback
         buf.extend_from_slice(fallback_ops);
@@ -924,14 +989,14 @@ pub mod test_helpers {
         buf.extend_from_slice(&0u64.to_le_bytes()); // source_hash
 
         // Build section table (4 sections: bytecode, strings, slots, islands)
-        buf.extend_from_slice(&(bytecode_offset as u32).to_le_bytes());
-        buf.extend_from_slice(&(bytecode_size as u32).to_le_bytes());
-        buf.extend_from_slice(&(string_offset as u32).to_le_bytes());
-        buf.extend_from_slice(&(string_size as u32).to_le_bytes());
-        buf.extend_from_slice(&(slot_offset as u32).to_le_bytes());
-        buf.extend_from_slice(&(slot_size as u32).to_le_bytes());
-        buf.extend_from_slice(&(island_offset as u32).to_le_bytes());
-        buf.extend_from_slice(&(island_size as u32).to_le_bytes());
+        buf.extend_from_slice(&to_u32(bytecode_offset));
+        buf.extend_from_slice(&to_u32(bytecode_size));
+        buf.extend_from_slice(&to_u32(string_offset));
+        buf.extend_from_slice(&to_u32(string_size));
+        buf.extend_from_slice(&to_u32(slot_offset));
+        buf.extend_from_slice(&to_u32(slot_size));
+        buf.extend_from_slice(&to_u32(island_offset));
+        buf.extend_from_slice(&to_u32(island_size));
 
         // Append section data
         buf.extend_from_slice(opcodes);
@@ -1212,6 +1277,65 @@ mod tests {
         );
         let err = IrModule::parse(&data).unwrap_err();
         assert_eq!(err, IrError::StringIndexOutOfBounds { index: 99, len: 3 });
+    }
+
+    #[test]
+    fn duplicate_slot_names_resolve_first_wins_everywhere() {
+        // The compiler derives some slot names per-element, so a name can name
+        // two slots. `slot_id_by_name` returned the first while
+        // `SlotData::from_json` (a HashMap insert) took the last — so setting
+        // "dup" by name filled slot 1 while every lookup resolved slot 0.
+        let opcodes = encode_text(0);
+        let data = build_minimal_ir(
+            &["dup"],
+            &[(0, 0, 0x01, 0x00, &[]), (1, 0, 0x01, 0x00, &[])],
+            &opcodes,
+            &[],
+        );
+        let module = IrModule::parse(&data).unwrap();
+
+        assert_eq!(module.slot_id_by_name("dup"), Some(0));
+
+        let slots = crate::slot::SlotData::from_json(r#"{"dup":"x"}"#, &module).unwrap();
+        assert_eq!(slots.get(0).to_text(), "x", "the first slot must be filled");
+        assert_eq!(slots.get(1).to_text(), "", "the second must stay untouched");
+    }
+
+    #[test]
+    fn validate_rejects_list_item_slot_not_in_table() {
+        // A LIST whose item_slot_id is not declared used to bind every row's
+        // item into nowhere, so every row rendered identically with no error.
+        // The slot table declares only slot 0; the LIST binds items to slot 7.
+        let body = {
+            let mut b = vec![0x05]; // DYN_TEXT
+            b.extend_from_slice(&7u16.to_le_bytes());
+            b.extend_from_slice(&0u16.to_le_bytes());
+            b
+        };
+        let opcodes = encode_list(0, 7, &body);
+        let data = build_minimal_ir(&["items"], &[(0, 0, 0x04, 0x00, &[])], &opcodes, &[]);
+        assert_eq!(
+            IrModule::parse(&data).unwrap_err(),
+            IrError::UnknownSlotId(7)
+        );
+    }
+
+    #[test]
+    fn validate_rejects_island_start_missing_from_table() {
+        // An ISLAND_START with no island-table entry renders its markers but
+        // no data-forma-* attributes, so the client silently never hydrates
+        // it. Rejected at load instead.
+        let mut opcodes = vec![0x0B]; // ISLAND_START
+        opcodes.extend_from_slice(&3u16.to_le_bytes());
+        opcodes.extend_from_slice(&encode_text(0));
+        opcodes.push(0x0C); // ISLAND_END
+        opcodes.extend_from_slice(&3u16.to_le_bytes());
+
+        let data = build_minimal_ir(&["hi"], &[], &opcodes, &[]);
+        assert_eq!(
+            IrModule::parse(&data).unwrap_err(),
+            IrError::UnknownIslandId(3)
+        );
     }
 
     // -- Allocation guards (F-03 / F-13) ------------------------------------

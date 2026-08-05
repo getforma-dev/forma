@@ -20,6 +20,10 @@ forma-ir = "0.1"
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
 - Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, etc.) for [FormaJS](https://github.com/getforma-dev/formajs) client-side hydration
 - Compiles to WASM for client-side island re-renders
+- Renders a list in O(rows), with a committed regression gate that fails the build if that changes (`tests/list_scaling.rs`)
+
+The on-disk layout and its stability contract are documented in
+[`docs/FMIR-FORMAT.md`](https://github.com/getforma-dev/forma/blob/main/docs/FMIR-FORMAT.md).
 
 ## Quick Start
 
@@ -55,7 +59,7 @@ If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server
 - Parser rejects declared table counts the section cannot hold, and structurally validates the opcode stream once at load
 - Comment content escaped (`--` → `&#45;&#45;`); a comment cannot self-close
 - Island props JSON is escaped so it cannot terminate or re-open its `<script>` element — read it with `JSON.parse`, never by string-matching
-- Zero `unsafe` blocks
+- `#![forbid(unsafe_code)]` on the crate root — zero `unsafe` is compiler-enforced, not asserted
 - XSS payload verification and malformed-input handling covered by the test suite
 
 ## Part of the Forma Stack

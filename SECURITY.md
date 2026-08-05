@@ -22,7 +22,7 @@ Given that boundary:
 - Reserved header `flags` must be zero — unknown future extensions fail closed rather than being mis-parsed
 - Recursion depth limited to 64; list nesting limited to 4 levels
 - Rendered output capped (default 8 MiB) and total LIST iterations capped (default 50,000) per render, both configurable via `WalkLimits`
-- Zero `unsafe` blocks
+- Zero `unsafe` blocks — enforced by `#![forbid(unsafe_code)]` on both library crate roots, so this is a compile error rather than a claim. (The allocation-counting harness in `crates/forma-ir/tests/list_scaling.rs` implements `GlobalAlloc` and is necessarily `unsafe`; it is a test target and ships in nothing.)
 
 Known residual: an *under*-long control-flow length whose orphaned bytes still decode as a legal sibling sequence is structurally indistinguishable from a legitimate module, so no length check can reject it. Closing that class needs module integrity (the FMIR header reserves `source_hash` for it; the compiler currently writes zero).
 
