@@ -94,10 +94,33 @@ async fn main() {
         .route("/_assets/{*path}", get(assets::serve_asset::<Assets>))
         .with_state(state);
 
-    println!("\n  FormaOps Dashboard running at http://localhost:3000\n");
+    // Binds to loopback by default. Set FORMA_HOST to expose the server (e.g. on your LAN).
+    // An empty or whitespace-only FORMA_HOST is treated as unset.
+    let host = std::env::var("FORMA_HOST")
+        .ok()
+        .map(|h| h.trim().to_string())
+        .filter(|h| !h.is_empty())
+        .unwrap_or_else(|| "127.0.0.1".to_string());
+    let addr = format!("{host}:3000");
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+    // Loopback (127.x.x.x, ::1, optionally bracketed) is quiet; anything else warns.
+    let bare_host = host.trim_start_matches('[').trim_end_matches(']');
+    let is_loopback = bare_host
+        .parse::<std::net::IpAddr>()
+        .map(|ip| ip.is_loopback())
+        .unwrap_or(bare_host == "localhost");
+
+    if is_loopback {
+        println!("\n  FormaOps Dashboard running at http://localhost:3000\n");
+    } else {
+        eprintln!("\n  WARNING: FORMA_HOST={host} — the dashboard is reachable from your network.");
+        eprintln!("  The /api/* routes have no authentication; anyone who can reach this");
+        eprintln!("  machine can read them. Unset FORMA_HOST to serve on localhost only.\n");
+        println!("\n  FormaOps Dashboard running at http://{host}:3000\n");
+    }
+
+    let listener = tokio::net::TcpListener::bind(&addr)
         .await
-        .expect("Failed to bind to port 3000");
+        .unwrap_or_else(|e| panic!("Failed to bind to {addr}: {e}"));
     axum::serve(listener, app).await.expect("Server error");
 }

@@ -49,13 +49,23 @@ describe('template files contain expected structure', () => {
         expect(main).toContain('forma_server');
         expect(main).toContain('render_page');
         expect(main).toContain('serve_asset::<Assets>');
+        // Security defaults: loopback bind, never a bare LAN-wide bind
+        expect(main).toContain('127.0.0.1');
+        expect(main).not.toContain('0.0.0.0');
         if (template === 'minimal') {
           expect(main).toContain('tracing_subscriber::fmt::init()');
           expect(main).toContain('route("/favicon.ico"');
+          expect(main).toContain('content-security-policy');
+          expect(main).toContain('page.csp');
         }
         if (template === 'dashboard') {
           expect(main).toContain('api_deployments');
           expect(main).toContain('/api/deployments');
+          expect(main).toContain('FORMA_HOST');
+          expect(main).toContain('no authentication');
+          // Empty/whitespace FORMA_HOST falls back to loopback
+          expect(main).toContain('trim');
+          expect(main).toContain('is_empty');
         }
         expect(main).toContain('route("/sw.js"');
       });

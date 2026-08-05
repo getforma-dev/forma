@@ -16,6 +16,14 @@ cargo run
 
 Open [http://localhost:3000](http://localhost:3000)
 
+The server binds to `127.0.0.1` (localhost only) by default. To expose it on your network, opt in with the `FORMA_HOST` environment variable:
+
+```bash
+FORMA_HOST=0.0.0.0 cargo run
+```
+
+**Warning:** the `/api/*` routes have no authentication — anyone who can reach the machine can read them. Only set `FORMA_HOST` on networks you trust, and add auth before exposing real data.
+
 ---
 
 ## What's Inside

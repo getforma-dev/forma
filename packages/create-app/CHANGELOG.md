@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- **Security:** dashboard template now binds to `127.0.0.1:3000` by default instead of `0.0.0.0:3000`. Set the `FORMA_HOST` environment variable (e.g. `FORMA_HOST=0.0.0.0 cargo run`) to expose the server; a warning is printed when binding to a non-loopback host since the `/api/*` routes have no authentication. **Migration:** if you relied on the previous implicit LAN exposure, you must now set `FORMA_HOST=0.0.0.0` explicitly.
+
+### Fixed
+- Minimal template now sends the `content-security-policy` header from `render_page`'s `page.csp` (the per-request nonce was generated but never enforced by the browser)
+
 ## [0.5.0] - 2026-03-17
 
 ### Changed
