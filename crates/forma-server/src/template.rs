@@ -1,4 +1,4 @@
-use crate::csp;
+use crate::csp::{self, CspNonce};
 use crate::types::{AssetManifest, PageConfig, PageOutput, RenderMode};
 use forma_ir as ir;
 
@@ -15,6 +15,43 @@ fn escape_html(s: &str) -> String {
         .replace('<', "&lt;")
         .replace('>', "&gt;")
         .replace('"', "&quot;")
+}
+
+/// Neutralize the only two sequences that can end an inline `<script>` element
+/// or start a comment-driven double-escape inside one.
+///
+/// `</script` → `<\/script` and `<!--` → `<\!--`. Both are identity escapes in
+/// a JS string, template literal or regex, so the *value* is preserved — which
+/// is why `<!--` becomes `<\!--` and not `<--` (the latter changes the string's
+/// contents and parses as `< --` in code position).
+///
+/// The match is case-insensitive because HTML tag names are: `</ScRiPt >`
+/// closes the element just as well as `</script>`. Matching bare `</script`
+/// (rather than `</script` plus a tag-name terminator, which is what the
+/// tokenizer requires) is slightly over-broad, and that is fine here because
+/// the transform is value-preserving.
+///
+/// This makes the value unable to escape its element. It does NOT make an
+/// untrusted value safe — see the doc comment on `PageConfig::config_script`.
+fn neutralize_script_terminators(s: &str) -> String {
+    let lower = s.to_ascii_lowercase();
+    let mut out = String::with_capacity(s.len() + 8);
+    let mut i = 0;
+    while i < s.len() {
+        if lower[i..].starts_with("</script") {
+            out.push_str("<\\/script");
+            i += "</script".len();
+        } else if lower[i..].starts_with("<!--") {
+            out.push_str("<\\!--");
+            i += "<!--".len();
+        } else {
+            // Walk by char so multi-byte UTF-8 is never split.
+            let ch = s[i..].chars().next().expect("in-bounds index");
+            out.push(ch);
+            i += ch.len_utf8();
+        }
+    }
+    out
 }
 
 fn build_head(
@@ -44,20 +81,38 @@ fn build_head(
         ));
     }
 
-    // JS modulepreloads
+    // JS modulepreloads. Nonced because under `script-src 'strict-dynamic'` an
+    // un-nonced script-destination preload hint is dropped. Losing it is a
+    // degradation, not a breakage — the real module tag is nonced and its
+    // static imports inherit that nonce, so the chunk still loads; you lose a
+    // warm-cache round trip and gain a console violation.
     for js in &assets.js_urls {
         head.push_str(&format!(
-            "<link rel=\"modulepreload\" href=\"{}\">\n",
+            "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\">\n",
+            escape_html(nonce),
             escape_html(js)
         ));
     }
 
-    // Personality CSS (inline, small)
-    // Escape "</style>" sequences to prevent breaking out of the style block.
+    // Personality CSS (inline, small).
+    //
+    // Neutralize `</`, not `</style>`. A literal two-case string replace was
+    // never sufficient: HTML tag names are case-insensitive and the tokenizer
+    // accepts whitespace and `/` before `>`, so `</StYlE>`, `</style >`,
+    // `</style\t>` and `</style/>` all escaped the element. The ONLY way out
+    // of a RAWTEXT element is `</` followed by a tag name — character
+    // references are not decoded and comments are not recognised there — so if
+    // no `</` survives, no end tag can be produced.
+    //
+    // `\/` is a valid CSS escape for `/`, valid inside strings, `url()` tokens
+    // and idents, and it consumes no following whitespace, so real CSS
+    // round-trips byte-identically (`content:"</div>"` still computes to
+    // `</div>`). Escaping `<` instead would be secure but silently breaks
+    // modern CSS: `\00003c` is an ident-start escape, not the `<` delim token
+    // that the Media Queries Level 4 range grammar needs, so
+    // `@media (width < 600px)` would parse and then never match.
     if let Some(css) = personality_css {
-        let safe_css = css
-            .replace("</style>", "&lt;/style&gt;")
-            .replace("</STYLE>", "&lt;/STYLE&gt;");
+        let safe_css = css.replace("</", "<\\/");
         head.push_str(&format!("<style nonce=\"{nonce}\">{safe_css}</style>\n"));
     }
 
@@ -95,11 +150,37 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         .body_class
         .map(|c| format!(" class=\"{}\"", escape_html(c)))
         .unwrap_or_default();
+    // Raw, trusted HTML by contract — see PageConfig::body_prefix.
     let body_prefix = config.body_prefix.unwrap_or("").to_string();
+
+    // `config_json` is the safe path: serde_json output with every `<`
+    // escaped, which simultaneously kills `</script`, `<!--` and `<script`
+    // and is value-preserving in JSON (`<` is a valid string escape, so
+    // JSON.parse yields byte-identical values).
+    let config_json_tag = config
+        .config_json
+        .map(|value| {
+            let json = serde_json::to_string(value).unwrap_or_else(|_| "null".to_string());
+            format!(
+                "<script nonce=\"{nonce}\">window.__FORMA_CONFIG__={};</script>\n",
+                json.replace('<', "\\u003c")
+            )
+        })
+        .unwrap_or_default();
+
+    // `config_script` is the raw escape hatch. Neutralizing the terminators
+    // stops it breaking out of its own element; it does not make untrusted
+    // content safe inside it.
     let config_script_tag = config
         .config_script
-        .map(|s| format!("<script nonce=\"{nonce}\">{s}</script>\n"))
+        .map(|s| {
+            format!(
+                "<script nonce=\"{nonce}\">{}</script>\n",
+                neutralize_script_terminators(s)
+            )
+        })
         .unwrap_or_default();
+    let config_script_tag = format!("{config_json_tag}{config_script_tag}");
 
     let page_js_tag = js_urls
         .last()
@@ -139,19 +220,42 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
     }
 }
 
+/// Render a page, generating a fresh CSP nonce for it.
+///
+/// The returned HTML and CSP header are ONE UNIT: the HTML embeds the nonce
+/// that only this policy blesses. Serve them together with
+/// `Cache-Control: no-store` and never cache the HTML across requests —
+/// [`PageOutput::headers`] does that for you. Caching the HTML while
+/// regenerating the CSP kills every script on the page; caching both ships one
+/// static, publicly-known nonce to all users and defeats nonce-based CSP.
+///
+/// A cache-aware caller should use [`render_page_with_nonce`] instead and
+/// re-stamp the shell per request.
 pub fn render_page(config: &PageConfig) -> PageOutput {
+    render_page_with_nonce(config, &csp::generate_csp_nonce())
+}
+
+/// [`render_page`] with a caller-supplied per-request nonce.
+///
+/// Takes a validated [`CspNonce`] rather than a `&str`: the value is
+/// interpolated unescaped into five HTML attributes and into the CSP header,
+/// so an arbitrary string would be an attribute- and directive-injection sink.
+pub fn render_page_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     match config.render_mode {
-        RenderMode::Phase1ClientMount => render_page_phase1(config),
-        RenderMode::Phase2SsrReconcile => render_page_phase2(config),
+        RenderMode::Phase1ClientMount => render_page_phase1(config, nonce),
+        RenderMode::Phase2SsrReconcile => render_page_phase2(config, nonce),
     }
 }
 
 /// Phase 1: empty `<div id="app"></div>` — client JS mounts from scratch.
-fn render_page_phase1(config: &PageConfig) -> PageOutput {
-    let nonce = csp::generate_csp_nonce();
+fn render_page_phase1(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
+    // Defence in depth: CspNonce already rejects anything attribute- or
+    // directive-significant, so this never changes a real nonce.
+    let nonce_attr = escape_html(nonce.as_str());
+    let nonce = nonce.clone();
     let assets = resolve_assets(config.manifest, config.route_pattern);
-    let head = build_head(config.title, &nonce, &assets, config.personality_css);
-    let parts = build_body_parts(&nonce, config, &assets.js_urls);
+    let head = build_head(config.title, &nonce_attr, &assets, config.personality_css);
+    let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
 
     let html = format!(
         "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n{head}</head>\n<body{bc}>\n{bp}<div id=\"app\"></div>\n{cs}{pj}\n{wasm}{sw}</body>\n</html>",
@@ -166,12 +270,13 @@ fn render_page_phase1(config: &PageConfig) -> PageOutput {
     PageOutput {
         html,
         csp: csp::build_csp_header(&nonce),
+        nonce,
     }
 }
 
 /// Phase 2: server-render the IR module into `<div id="app" data-forma-ssr>`.
 /// Falls back to Phase 1 on any error (missing IR module, walk failure, etc.).
-fn render_page_phase2(config: &PageConfig) -> PageOutput {
+fn render_page_phase2(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     // Both ir_module and slots must be present for SSR
     let (ir_module, slots) = match (config.ir_module, config.slots) {
         (Some(m), Some(s)) => (m, s),
@@ -180,11 +285,13 @@ fn render_page_phase2(config: &PageConfig) -> PageOutput {
                 route = config.route_pattern,
                 "Phase 2 SSR: missing IR module or slots, falling back to Phase 1"
             );
-            return render_page_phase1(config);
+            return render_page_phase1(config, nonce);
         }
     };
 
-    // Attempt IR walk
+    // Attempt IR walk. This is also where the walker's resource budgets
+    // surface — an over-limit or malformed module degrades to Phase 1 rather
+    // than aborting the process.
     let ssr_body = match ir::walker::walk_to_html(ir_module, slots) {
         Ok(html) => html,
         Err(err) => {
@@ -193,15 +300,16 @@ fn render_page_phase2(config: &PageConfig) -> PageOutput {
                 error = %err,
                 "Phase 2 SSR: IR walk failed, falling back to Phase 1"
             );
-            return render_page_phase1(config);
+            return render_page_phase1(config, nonce);
         }
     };
 
     // SSR succeeded — build the full page with SSR content
-    let nonce = csp::generate_csp_nonce();
+    let nonce_attr = escape_html(nonce.as_str());
+    let nonce = nonce.clone();
     let assets = resolve_assets(config.manifest, config.route_pattern);
-    let head = build_head(config.title, &nonce, &assets, config.personality_css);
-    let parts = build_body_parts(&nonce, config, &assets.js_urls);
+    let head = build_head(config.title, &nonce_attr, &assets, config.personality_css);
+    let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
 
     let html = format!(
         "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n{head}</head>\n<body{bc}>\n{bp}<div id=\"app\" data-forma-ssr>{ssr}</div>\n{cs}{pj}\n{wasm}{sw}</body>\n</html>",
@@ -217,6 +325,7 @@ fn render_page_phase2(config: &PageConfig) -> PageOutput {
     PageOutput {
         html,
         csp: csp::build_csp_header(&nonce),
+        nonce,
     }
 }
 
@@ -262,6 +371,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -286,6 +396,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -308,6 +419,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -331,6 +443,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -346,13 +459,14 @@ mod tests {
     #[test]
     fn phase2_falls_back_on_ir_walk_error() {
         let manifest = empty_manifest();
-        // Build an IR module with deliberately corrupt opcodes
-        let data = forma_ir::parser::test_helpers::build_minimal_ir(
-            &["x"],
-            &[],
-            &[0xFF], // invalid opcode byte
-            &[],
-        );
+        // A TEXT opcode referencing string index 99 with only one string in
+        // the table. This parses (IrModule::parse validates structure and
+        // cross-table ids, not every string index) and fails during the walk —
+        // an invalid *opcode* byte no longer works for this test because the
+        // structural pass now rejects it at load time.
+        let mut opcodes = vec![0x04]; // TEXT
+        opcodes.extend_from_slice(&99u32.to_le_bytes());
+        let data = forma_ir::parser::test_helpers::build_minimal_ir(&["x"], &[], &opcodes, &[]);
         let ir = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
 
@@ -361,6 +475,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -385,6 +500,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: Some("window.__TEST__=true;"),
+            config_json: None,
             body_class: Some("dark"),
             personality_css: Some(":root{--c:red}"),
             body_prefix: Some("<nav>nav</nav>"),
@@ -433,6 +549,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -455,6 +572,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -497,6 +615,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -538,6 +657,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -592,6 +712,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
@@ -620,6 +741,7 @@ mod tests {
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: Some("dark\" onload=\"alert(1)"),
             personality_css: None,
             body_prefix: None,
@@ -644,24 +766,295 @@ mod tests {
 
     #[test]
     fn personality_css_style_breakout_prevented() {
+        // Table-driven, because the old two-case literal replace passed a test
+        // that only checked the adjacent-literal shape. HTML tag names are
+        // case-insensitive and the tokenizer accepts whitespace and `/` before
+        // `>`, so every one of these used to escape the <style> element.
+        for css in [
+            "body{color:red}</style><script>alert(1)</script>",
+            "body{color:red}</StYlE><script>alert(1)</script>",
+            "body{color:red}</style ><script>alert(1)</script>",
+            "body{color:red}</style\t><script>alert(1)</script>",
+            "body{color:red}</style/><script>alert(1)</script>",
+            "body{color:red}</style\n><script>alert(1)</script>",
+            "body{color:red}</style\x0c><script>alert(1)</script>",
+            "body{color:red}<</style><script>alert(1)</script>",
+            "body{color:red}</sty</style><script>alert(1)</script>",
+        ] {
+            let manifest = empty_manifest();
+            let page = render_page(&PageConfig {
+                title: "CSS Test",
+                route_pattern: "/test",
+                manifest: &manifest,
+                config_script: None,
+                config_json: None,
+                body_class: None,
+                personality_css: Some(css),
+                body_prefix: None,
+                render_mode: RenderMode::Phase1ClientMount,
+                ir_module: None,
+                slots: None,
+            });
+
+            // Assert the real invariant, not one literal shape: the rendered
+            // <style> region must contain no `</` other than the closing tag
+            // the template itself appends. `</` is the ONLY way out of a
+            // RAWTEXT element, so if none survives, no end tag can be formed.
+            let start = page.html.find("<style").expect("style element");
+            let body_start = page.html[start..].find('>').expect("style open") + start + 1;
+            let end = page.html[body_start..]
+                .find("</style>")
+                .expect("style close")
+                + body_start;
+            let body = &page.html[body_start..end];
+            assert!(
+                !body.contains("</"),
+                "style body must contain no `</` for input {css:?}, got: {body}"
+            );
+        }
+    }
+
+    #[test]
+    fn personality_css_round_trips_legitimate_values() {
+        // `\/` is a valid CSS escape for `/`, so real CSS is unchanged in
+        // meaning. Range media queries in particular must survive: escaping
+        // `<` instead (the obvious alternative) turns `@media (width < 600px)`
+        // into an ident token that parses but never matches.
         let manifest = empty_manifest();
+        let css = "@media (width < 600px){#t{color:rgb(1,2,3)}}\
+                   .a::after{content:\"</div>\"}\
+                   .b{font:12px/1.4 sans-serif;aspect-ratio:16/9}";
         let page = render_page(&PageConfig {
             title: "CSS Test",
             route_pattern: "/test",
             manifest: &manifest,
             config_script: None,
+            config_json: None,
             body_class: None,
-            personality_css: Some("body{color:red}</style><script>alert(1)</script>"),
+            personality_css: Some(css),
             body_prefix: None,
             render_mode: RenderMode::Phase1ClientMount,
             ir_module: None,
             slots: None,
         });
 
-        // The raw </style> breakout must be neutralized
+        // Untouched: no `<` before a `/`.
+        assert!(page.html.contains("@media (width < 600px)"));
+        assert!(page.html.contains("font:12px/1.4 sans-serif"));
+        assert!(page.html.contains("aspect-ratio:16/9"));
+        // Escaped but value-preserving: `content:"<\/div>"` computes to
+        // `</div>`.
+        assert!(page.html.contains("content:\"<\\/div>\""));
+    }
+
+    // -- config_script / config_json (S3) -----------------------------------
+
+    /// Render a page with the given config_script and return the HTML.
+    fn page_with_config_script(script: &str) -> String {
+        let manifest = empty_manifest();
+        render_page(&PageConfig {
+            title: "Config Test",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: Some(script),
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        })
+        .html
+    }
+
+    #[test]
+    fn config_script_terminators_are_neutralized() {
+        // </script closes the tag and turns the remainder into live markup...
+        let html = page_with_config_script("window.x=\"</script><img src=x onerror=alert(1)>\";");
+        assert!(!html.contains("</script><img"));
+        assert!(html.contains("<\\/script>"));
+
+        // ...and the match must be case-insensitive, because the tokenizer is.
+        let html = page_with_config_script("window.x=\"</ScRiPt ><img src=x>\";");
+        assert!(!html.to_ascii_lowercase().contains("</script ><img"));
+
+        // <!--<script drives the script-data-double-escaped state, where the
+        // element's own closing tag stops ending it.
+        let html = page_with_config_script("window.x=\"<!--<script>PAYLOAD\";");
+        assert!(!html.contains("<!--<script"));
+        // `\!` is an identity escape in a JS string, so the value survives.
+        assert!(html.contains("<\\!--"));
+    }
+
+    #[test]
+    fn config_json_emits_no_raw_angle_brackets() {
+        let manifest = empty_manifest();
+        let value = serde_json::json!({
+            "user": "</script><img src=x onerror=alert(1)>",
+            "note": "<!--<script>",
+        });
+        let page = render_page(&PageConfig {
+            title: "Config Test",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: None,
+            config_json: Some(&value),
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+
+        let start = page
+            .html
+            .find("window.__FORMA_CONFIG__=")
+            .expect("config json script")
+            + "window.__FORMA_CONFIG__=".len();
+        let end = page.html[start..].find("</script>").expect("close") + start;
+        let json = &page.html[start..end];
         assert!(
-            !page.html.contains("</style><script>alert"),
-            "personality_css must not allow </style> breakout"
+            !json.contains('<'),
+            "config_json output must contain no raw '<', got: {json}"
+        );
+        // ...and it is value-preserving: < is a valid JSON escape.
+        let parsed: serde_json::Value = serde_json::from_str(json.trim_end_matches(';')).unwrap();
+        assert_eq!(parsed, value);
+    }
+
+    // -- Nonce plumbing (S11) -----------------------------------------------
+
+    #[test]
+    fn page_output_exposes_the_nonce_it_embedded() {
+        let manifest = empty_manifest();
+        let page = render_page(&PageConfig {
+            title: "Nonce Test",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: Some("window.x=1;"),
+            config_json: None,
+            body_class: None,
+            personality_css: Some("body{color:red}"),
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+
+        // No string-parsing the CSP to recover it.
+        assert!(page.csp.contains(&format!("'nonce-{}'", page.nonce)));
+        assert!(page
+            .html
+            .contains(&format!("<script nonce=\"{}\">", page.nonce)));
+        assert!(page
+            .html
+            .contains(&format!("<style nonce=\"{}\">", page.nonce)));
+    }
+
+    #[test]
+    fn render_page_with_nonce_uses_the_supplied_nonce() {
+        // The cache-aware path: a caller re-stamping a shell per request must
+        // get the same nonce in the HTML and the header.
+        let manifest = empty_manifest();
+        let nonce = crate::csp::CspNonce::generate();
+        let page = render_page_with_nonce(
+            &PageConfig {
+                title: "Nonce Test",
+                route_pattern: "/test",
+                manifest: &manifest,
+                config_script: None,
+                config_json: None,
+                body_class: None,
+                personality_css: None,
+                body_prefix: None,
+                render_mode: RenderMode::Phase1ClientMount,
+                ir_module: None,
+                slots: None,
+            },
+            &nonce,
+        );
+        assert_eq!(page.nonce, nonce);
+        assert!(page.csp.contains(&format!("'nonce-{nonce}'")));
+    }
+
+    #[test]
+    fn page_output_headers_are_no_store() {
+        // The HTML embeds a per-request nonce, so it must never be cached.
+        let manifest = empty_manifest();
+        let page = render_page(&PageConfig {
+            title: "Header Test",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: None,
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+
+        let headers = page.headers();
+        let get = |name: &str| {
+            headers
+                .iter()
+                .find(|(n, _)| n.as_str() == name)
+                .map(|(_, v)| v.to_str().unwrap().to_string())
+        };
+        assert_eq!(get("cache-control").as_deref(), Some("no-store"));
+        assert_eq!(get("x-content-type-options").as_deref(), Some("nosniff"));
+        assert!(get("content-security-policy").is_some());
+        assert!(get("referrer-policy").is_some());
+    }
+
+    // -- CSP / walker interlock (S4) ----------------------------------------
+
+    #[test]
+    fn style_attributes_rendered_by_the_walker_are_permitted_by_the_csp() {
+        // A DYN_ATTR bound to `style` renders a style ATTRIBUTE, so the header
+        // this crate ships must permit attribute styles — otherwise the
+        // framework's default CSP breaks the framework's own output.
+        let mut opcodes = forma_ir::parser::test_helpers::encode_open_tag(0, &[]);
+        opcodes.push(0x06); // DYN_ATTR
+        opcodes.extend_from_slice(&1u32.to_le_bytes()); // "style"
+        opcodes.extend_from_slice(&0u16.to_le_bytes()); // slot 0
+        let data = forma_ir::parser::test_helpers::build_minimal_ir(
+            &["div", "style", "css"],
+            &[(0, 2, 0x01, 0x00, &[])],
+            &opcodes,
+            &[],
+        );
+        let ir = IrModule::parse(&data).unwrap();
+        let mut slots = SlotData::new(1);
+        slots.set(0, SlotValue::Text("color:red".into()));
+
+        let manifest = empty_manifest();
+        let page = render_page(&PageConfig {
+            title: "Style Attr",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_script: None,
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase2SsrReconcile,
+            ir_module: Some(&ir),
+            slots: Some(&slots),
+        });
+
+        assert!(
+            page.html.contains("style=\"color:red\""),
+            "walker must emit the style attribute: {}",
+            page.html
+        );
+        assert!(
+            page.csp.contains("style-src-attr 'unsafe-inline'"),
+            "CSP must permit the attribute style the walker just emitted: {}",
+            page.csp
         );
     }
 }

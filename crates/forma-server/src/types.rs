@@ -15,12 +15,36 @@ pub struct PageConfig<'a> {
     pub title: &'a str,
     pub route_pattern: &'a str,
     pub manifest: &'a AssetManifest,
-    /// Optional inline `<script>` content (e.g. window.__CONFIG__ = {...})
+    /// Optional inline `<script>` content (e.g. `window.__CONFIG__ = {...}`).
+    ///
+    /// **RAW, TRUSTED ESCAPE HATCH.** The content is emitted into an inline
+    /// `<script>` with no JavaScript escaping. `</script` and `<!--` are
+    /// neutralized so the value cannot break out of the element, but that is
+    /// not the same as making it safe: a `"` or `\` arriving from untrusted
+    /// data still yields nonce-blessed script execution inside your own page.
+    ///
+    /// Use [`PageConfig::config_json`] for anything derived from user input.
     pub config_script: Option<&'a str>,
+    /// Optional server data to expose to the client as
+    /// `window.__FORMA_CONFIG__`.
+    ///
+    /// This is the safe path: the value is serialized by `serde_json` with
+    /// every `<` escaped, which cannot be misused no matter what the data
+    /// contains. Prefer it over [`PageConfig::config_script`].
+    pub config_json: Option<&'a serde_json::Value>,
     pub body_class: Option<&'a str>,
-    /// Optional inline `<style>` for personality/theme overrides
+    /// Optional inline `<style>` for personality/theme overrides.
+    ///
+    /// Emitted inside a `<style>` element. `</` is neutralized (as a CSS
+    /// escape, losslessly) so the value cannot break out; everything else is
+    /// passed through as CSS.
     pub personality_css: Option<&'a str>,
-    /// Optional extra HTML before `<div id="app">`
+    /// Optional extra HTML before `<div id="app">`.
+    ///
+    /// **RAW, TRUSTED HTML.** Interpolated verbatim with no escaping — that is
+    /// the point of the field (callers use it to emit their own markup, e.g. a
+    /// hand-rendered `__forma_islands` block). Never build it from untrusted
+    /// data.
     pub body_prefix: Option<&'a str>,
     pub render_mode: RenderMode,
     /// Pre-parsed IR module for Phase 2 SSR
@@ -29,10 +53,119 @@ pub struct PageConfig<'a> {
     pub slots: Option<&'a forma_ir::slot::SlotData>,
 }
 
-/// Output from render_page: HTML body + CSP header value.
+/// Output from render_page: HTML body + CSP header value + the nonce binding
+/// them together.
+///
+/// The HTML and the CSP header are a single unit — the HTML embeds a
+/// per-request nonce that only this policy blesses. Serve them together with
+/// `Cache-Control: no-store` and never cache the HTML across requests: a
+/// cached body with a fresh policy kills every script, and caching both ships
+/// one static, publicly-known nonce to every user, which defeats nonce-based
+/// CSP entirely.
+#[non_exhaustive]
 pub struct PageOutput {
     pub html: String,
     pub csp: String,
+    /// The nonce embedded in `html` and blessed by `csp`.
+    ///
+    /// Exposed so a caller can add its own nonced `<script>`/`<style>`, or
+    /// re-stamp a cached shell, without string-parsing the CSP.
+    pub nonce: crate::csp::CspNonce,
+}
+
+impl PageOutput {
+    /// Response headers for this page: content type, `no-store`, and the CSP.
+    ///
+    /// Reads the (public, mutable) `csp` field, so a caller that must rewrite
+    /// a directive can do so in place first and still use this helper.
+    pub fn headers(&self) -> Vec<(axum::http::HeaderName, axum::http::HeaderValue)> {
+        let mut headers = vec![
+            (
+                axum::http::header::CONTENT_TYPE,
+                axum::http::HeaderValue::from_static("text/html; charset=utf-8"),
+            ),
+            (
+                axum::http::header::CACHE_CONTROL,
+                axum::http::HeaderValue::from_static("no-store"),
+            ),
+        ];
+        if let Ok(value) = axum::http::HeaderValue::from_str(&self.csp) {
+            headers.push((axum::http::header::CONTENT_SECURITY_POLICY, value));
+        }
+        headers.extend_from_slice(document_security_headers());
+        headers
+    }
+}
+
+/// `X-Content-Type-Options: nosniff` — belongs on every response, not just
+/// documents.
+pub const NOSNIFF: (&str, &str) = ("x-content-type-options", "nosniff");
+
+/// Security headers that only make sense on an HTML **document** response.
+///
+/// Deliberately not one flat set applied as a blanket layer: a browser ignores
+/// `Cross-Origin-Opener-Policy`, `Referrer-Policy` and `Permissions-Policy` on
+/// a JSON/CSS/JS response, so a global layer would put ~150 dead bytes on
+/// every asset and every API poll. Use [`asset_security_headers`] there.
+///
+/// HSTS is deliberately absent: it is the TLS terminator's responsibility, not
+/// the application's.
+///
+/// Caveat on `Cross-Origin-Opener-Policy: same-origin` — it applies only to
+/// top-level documents in a secure context (a no-op over plain HTTP on a
+/// non-localhost host) and it severs `window.opener`, which breaks popup-based
+/// OAuth flows.
+pub fn document_security_headers() -> &'static [(axum::http::HeaderName, axum::http::HeaderValue)] {
+    use axum::http::{HeaderName, HeaderValue};
+    static HEADERS: std::sync::OnceLock<Vec<(HeaderName, HeaderValue)>> =
+        std::sync::OnceLock::new();
+    HEADERS.get_or_init(|| {
+        vec![
+            (
+                HeaderName::from_static("x-content-type-options"),
+                HeaderValue::from_static("nosniff"),
+            ),
+            (
+                HeaderName::from_static("referrer-policy"),
+                HeaderValue::from_static("strict-origin-when-cross-origin"),
+            ),
+            (
+                // `interest-cohort=()` is deliberately omitted: FLoC was
+                // withdrawn in 2022 and the token is not a registered feature,
+                // so Chrome logs an "Unrecognized feature" warning for it on
+                // every page load.
+                HeaderName::from_static("permissions-policy"),
+                HeaderValue::from_static("geolocation=(), camera=(), microphone=()"),
+            ),
+            (
+                HeaderName::from_static("cross-origin-opener-policy"),
+                HeaderValue::from_static("same-origin"),
+            ),
+        ]
+    })
+}
+
+/// Security headers for subresource responses (`/_assets/*`, `/sw.js`).
+///
+/// `Cross-Origin-Resource-Policy` belongs here rather than on the document.
+/// `same-origin` is correct while assets are served from the app's own origin;
+/// an app that fronts `/_assets` with a separate CDN origin must relax it.
+pub fn asset_security_headers() -> &'static [(axum::http::HeaderName, axum::http::HeaderValue)] {
+    use axum::http::{HeaderName, HeaderValue};
+    static HEADERS: std::sync::OnceLock<Vec<(HeaderName, HeaderValue)>> =
+        std::sync::OnceLock::new();
+    HEADERS.get_or_init(|| {
+        vec![
+            (
+                HeaderName::from_static("x-content-type-options"),
+                HeaderValue::from_static("nosniff"),
+            ),
+            (
+                HeaderName::from_static("cross-origin-resource-policy"),
+                HeaderValue::from_static("same-origin"),
+            ),
+        ]
+    })
 }
 
 /// Asset manifest loaded from `manifest.json` in the embedded dist directory.

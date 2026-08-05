@@ -14,8 +14,15 @@ use std::fmt::Write;
 // ---------------------------------------------------------------------------
 
 /// Produce a deterministic text dump of an IR module for debugging and diffing.
+///
+/// Dev-only diagnostic: names are printed raw and the per-byte "UNKNOWN 0x.."
+/// fallback is a large text amplifier, so do not point this at hostile input.
 pub fn dump_ir(module: &IrModule) -> String {
-    let mut out = String::with_capacity(module.opcodes.len() * 8);
+    // Cap the pre-reservation. `saturating_mul` matters only on wasm32 (where
+    // `usize` is 32 bits and the multiply can overflow); the `.min` is the
+    // part that actually bounds the allocation on 64-bit. 1 MiB keeps the
+    // exact estimate for any bytecode section under 128 KiB — every real page.
+    let mut out = String::with_capacity(module.opcodes.len().saturating_mul(8).min(1 << 20));
 
     // Header line
     writeln!(

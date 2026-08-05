@@ -46,13 +46,17 @@ If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server
 
 ## Security
 
-- All dynamic text and attributes are HTML-escaped
-- Recursion depth limited to 64 (prevents stack overflow from malicious IR)
-- List nesting limited to 4 levels
-- Comment content escaped (`--` → `&#45;&#45;`)
-- Script tag props escaped (`</script>` → `<\/script>`)
+**FMIR is a trusted input.** This crate validates structure and bounds so that malformed IR cannot read out of bounds, panic, or abort the process — but it does not sanitise the IR's *content*. An `.ir` file chooses what markup your page contains. Only run IR produced by a compiler you trust.
+
+- All dynamic text and attribute values are HTML-escaped; tag and attribute names are validated against `[A-Za-z_:][-A-Za-z0-9_:.]*`
+- URL-bearing attributes are scheme-checked and `on*` handlers dropped, matching `@getforma/core` so SSR and CSR agree
+- Recursion depth limited to 64; list nesting limited to 4 levels
+- Per-render output cap (default 8 MiB) and LIST iteration budget (default 50,000), both configurable via `WalkLimits` — a small module plus a large request array cannot force a multi-gigabyte allocation
+- Parser rejects declared table counts the section cannot hold, and structurally validates the opcode stream once at load
+- Comment content escaped (`--` → `&#45;&#45;`); a comment cannot self-close
+- Island props JSON is escaped so it cannot terminate or re-open its `<script>` element — read it with `JSON.parse`, never by string-matching
 - Zero `unsafe` blocks
-- 126 tests including XSS payload verification
+- XSS payload verification and malformed-input handling covered by the test suite
 
 ## Part of the Forma Stack
 

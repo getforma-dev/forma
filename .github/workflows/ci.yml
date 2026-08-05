@@ -22,3 +22,19 @@ jobs:
       - run: cargo doc --workspace --no-deps
       - name: Verify WASM build
         run: cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
+
+  # Run the suite where `usize` is 32 bits, as it is on wasm32 — the target
+  # this crate actually ships a build for. Offset arithmetic that cannot wrap
+  # on 64-bit can wrap there, and a debug build turns that into a panic, so
+  # building for wasm32 is not enough: the tests have to RUN at 32 bits.
+  test-32bit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: i686-unknown-linux-gnu
+      - uses: Swatinem/rust-cache@v2
+      - name: Install 32-bit toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+      - run: cargo test --workspace --target i686-unknown-linux-gnu

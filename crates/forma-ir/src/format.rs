@@ -31,7 +31,12 @@ pub const IR_VERSION: u16 = 2;
 // ---------------------------------------------------------------------------
 
 /// Errors that can occur when parsing FMIR binary data.
+///
+/// Marked `#[non_exhaustive]`: new failure modes are added as the parser is
+/// hardened, and downstream crates must not break when that happens. Match
+/// with a `_ =>` arm (or just use `Display`).
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum IrError {
     /// Input buffer is too short to contain the expected structure.
     BufferTooShort { expected: usize, actual: usize },
@@ -67,10 +72,36 @@ pub enum IrError {
     /// Failed to parse JSON input.
     JsonParseError(String),
     /// A section descriptor has invalid values (e.g. integer overflow).
+    ///
+    /// Also returned for opcode-stream offsets that overflow or point outside
+    /// the region they were read from (branch/body lengths in SHOW_IF, SWITCH,
+    /// LIST and TRY_START/FALLBACK).
     InvalidSection,
     /// Recursive opcode nesting (SHOW_IF, LIST, SWITCH, etc.) exceeded the
     /// maximum allowed depth.
     RecursionLimitExceeded,
+    /// The rendered HTML exceeded the walker's configured output budget.
+    OutputLimitExceeded { limit: usize },
+    /// Total LIST item iterations exceeded the walker's per-render budget.
+    /// Distinct from [`IrError::ListDepthExceeded`], which bounds *nesting*.
+    ListBudgetExceeded { max: usize },
+    /// The header's reserved `flags` field carried an unknown non-zero bit.
+    UnsupportedFlags(u16),
+    /// A tag or attribute name from the string table is not a legal HTML name.
+    InvalidName(String),
+    /// The slot table declares the same `slot_id` more than once.
+    DuplicateSlotId(u16),
+    /// The island table declares the same island `id` more than once.
+    DuplicateIslandId(u16),
+    /// An island's `byte_offset` does not point at an ISLAND_START opcode
+    /// carrying that island's own id.
+    IslandOffsetMismatch { island_id: u16, byte_offset: u32 },
+    /// A slot id referenced by an island entry or an opcode is not declared
+    /// in the slot table.
+    UnknownSlotId(u16),
+    /// The opcode stream's control-flow regions do not tile exactly: a
+    /// branch/body length does not line up with the opcodes it contains.
+    MalformedControlFlow { pos: usize },
 }
 
 impl fmt::Display for IrError {
@@ -123,10 +154,46 @@ impl fmt::Display for IrError {
                 write!(f, "JSON parse error: {msg}")
             }
             IrError::InvalidSection => {
-                write!(f, "invalid section descriptor (integer overflow)")
+                write!(f, "invalid section or opcode offset (out of range)")
             }
             IrError::RecursionLimitExceeded => {
                 write!(f, "recursion limit exceeded (maximum depth: 64)")
+            }
+            IrError::OutputLimitExceeded { limit } => {
+                write!(f, "rendered output exceeded the limit of {limit} bytes")
+            }
+            IrError::ListBudgetExceeded { max } => {
+                write!(f, "total LIST iterations exceeded the budget of {max}")
+            }
+            IrError::UnsupportedFlags(flags) => {
+                write!(f, "unsupported header flags: 0x{flags:04x} (must be 0)")
+            }
+            IrError::InvalidName(name) => {
+                write!(f, "invalid tag or attribute name: {name:?}")
+            }
+            IrError::DuplicateSlotId(id) => {
+                write!(f, "duplicate slot id {id} in slot table")
+            }
+            IrError::DuplicateIslandId(id) => {
+                write!(f, "duplicate island id {id} in island table")
+            }
+            IrError::IslandOffsetMismatch {
+                island_id,
+                byte_offset,
+            } => {
+                write!(
+                    f,
+                    "island {island_id} byte_offset {byte_offset} does not point at its ISLAND_START opcode"
+                )
+            }
+            IrError::UnknownSlotId(id) => {
+                write!(f, "slot id {id} is not declared in the slot table")
+            }
+            IrError::MalformedControlFlow { pos } => {
+                write!(
+                    f,
+                    "malformed control flow: region lengths do not tile at byte {pos}"
+                )
             }
         }
     }
@@ -144,8 +211,13 @@ impl std::error::Error for IrError {}
 /// ```text
 /// [0..4)   magic        – b"FMIR"
 /// [4..6)   version      – u16
-/// [6..8)   flags        – u16 (reserved, must be 0)
-/// [8..16)  source_hash  – u64 (hash of original source)
+/// [6..8)   flags        – u16 (reserved; MUST be 0 — any non-zero bit is a
+///                        hard parse error, so unknown future extensions fail
+///                        closed instead of being silently mis-parsed. A new
+///                        flag bit therefore requires a coordinated forma-ir
+///                        release before the compiler may emit it.)
+/// [8..16)  source_hash  – u64 (hash of original source; currently written as
+///                        0 by the JS compiler and not verified here)
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IrHeader {
@@ -174,7 +246,14 @@ impl IrHeader {
             return Err(IrError::UnsupportedVersion(version));
         }
 
+        // `flags` is reserved. Reject any non-zero bit so that a future
+        // extension (compression, extended section table, ...) fails closed on
+        // an old reader instead of being silently ignored and mis-parsed.
         let flags = u16::from_le_bytes(data[6..8].try_into().unwrap());
+        if flags != 0 {
+            return Err(IrError::UnsupportedFlags(flags));
+        }
+
         let source_hash = u64::from_le_bytes(data[8..16].try_into().unwrap());
 
         Ok(IrHeader {
@@ -371,8 +450,19 @@ impl IslandTrigger {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum PropsMode {
+    /// Props serialized into a `data-forma-props` attribute on the island root.
     Inline = 0x01,
+    /// Props accumulated into a shared `<script id="__forma_islands">` JSON
+    /// block at the end of the page.
+    ///
+    /// NOT YET EMITTED BY THE COMPILER — `@getforma/compiler` hardcodes
+    /// `Inline` at every `addIsland` call site, so nothing in the toolchain
+    /// produces this value today. The walker supports it because `forma-ir`
+    /// accepts FMIR from any producer, but treat it as a dormant branch rather
+    /// than a shipping feature until the compiler opts into it (the intended
+    /// trigger being props too large for an attribute).
     ScriptTag = 0x02,
+    /// Props fetched by the client after hydration; nothing is emitted here.
     Deferred = 0x03,
 }
 
@@ -491,6 +581,19 @@ mod tests {
         let data = make_header(99, 0, 0);
         let err = IrHeader::parse(&data).unwrap_err();
         assert_eq!(err, IrError::UnsupportedVersion(99));
+    }
+
+    #[test]
+    fn reject_nonzero_flags() {
+        // `flags` is reserved and must be 0 — a future extension bit must fail
+        // closed on this reader rather than being silently ignored.
+        let data = make_header(2, 1, 0);
+        let err = IrHeader::parse(&data).unwrap_err();
+        assert_eq!(err, IrError::UnsupportedFlags(1));
+
+        let data = make_header(2, 0x8000, 0);
+        let err = IrHeader::parse(&data).unwrap_err();
+        assert_eq!(err, IrError::UnsupportedFlags(0x8000));
     }
 
     /// Build a 32-byte section table from four (offset, size) pairs.

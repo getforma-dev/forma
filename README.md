@@ -46,10 +46,10 @@ forma-server = "0.1"
 
 **What it does:**
 - `render_page(config)` — generates a full HTML page from an IR module + slot data
-- `load_ir_modules(manifest)` — loads `.ir` files from embedded assets at startup
-- `serve_asset(filename)` — serves content-hashed assets with Brotli/gzip negotiation and `Cache-Control: immutable`
-- `generate_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG)
-- `build_csp_header(nonce)` — strict CSP: no `unsafe-inline`, no `unsafe-eval`, nonce-based scripts/styles
+- `load_ir_modules(manifest)` — loads `.ir` files from embedded assets at startup (`load_ir_modules_strict` returns the failures so you can fail startup on a build/embed skew)
+- `serve_asset(filename)` — serves assets with Brotli/gzip negotiation, `Cache-Control: immutable` for content-hashed names and revalidation + ETag for the rest
+- `generate_csp_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
+- `build_csp_header(nonce)` — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`
 
 **Two rendering modes:**
 
@@ -93,13 +93,16 @@ TypeScript/JSX components
 
 ## Security
 
-- **HTML escaping:** All dynamic text and attributes are escaped (`&`, `<`, `>`, `"`)
-- **CSP headers:** Strict policy with cryptographic nonces — no `unsafe-inline`, no `unsafe-eval`
-- **Recursion limits:** Walker enforces `MAX_RECURSION_DEPTH = 64` and `MAX_LIST_DEPTH = 4` to prevent stack overflow from malicious IR
-- **Comment escaping:** `--` in HTML comments replaced with `&#45;&#45;` to prevent injection
-- **Script tag escaping:** `</script>` in props replaced with `<\/script>`
+See [SECURITY.md](SECURITY.md) for the full list and the threat model — in particular, **FMIR is a trusted input**: run only IR produced by a compiler you trust.
+
+- **HTML escaping:** All dynamic text and attribute values are escaped (`&`, `<`, `>`, `"`); tag and attribute names are validated against an HTML name charset
+- **Attribute safety:** URL-bearing attributes are scheme-checked and `on*` handlers are dropped, matching the client renderer so SSR and CSR agree
+- **CSP headers:** Strict policy with cryptographic nonces — `'strict-dynamic'` scripts, nonce-locked style *elements*, no `unsafe-eval`. Style *attributes* are allowed via `style-src-attr` because compiled `style:` bindings emit them
+- **Resource limits:** Recursion depth 64, list nesting 4, plus a per-render output cap and LIST-iteration budget (both configurable) so a small module cannot force a multi-gigabyte allocation
+- **Comment escaping:** `--` in HTML comments replaced with `&#45;&#45;`, and a comment cannot self-close
+- **Island props:** the `__forma_islands` JSON block is escaped so it cannot terminate or re-open its `<script>` element; read it with `JSON.parse`
 - **No unsafe code:** Zero `unsafe` blocks across both crates
-- **145 tests** including XSS payload verification and malformed input handling
+- XSS payload verification and malformed-input handling are covered by the test suite (`cargo test --workspace`)
 
 ## Part of the Forma Stack
 
@@ -129,9 +132,12 @@ TypeScript/JSX components
 ```bash
 git clone https://github.com/getforma-dev/forma.git
 cd forma
-cargo test --workspace     # 145 tests
+cargo test --workspace     # full suite
 cargo clippy --workspace   # lint
 cargo fmt --all --check    # format check
+
+# Offset arithmetic differs where usize is 32 bits (as on wasm32):
+cargo test --workspace --target i686-unknown-linux-gnu
 ```
 
 ## License
