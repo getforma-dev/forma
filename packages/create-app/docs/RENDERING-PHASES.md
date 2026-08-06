@@ -40,9 +40,13 @@ server-side* in
 
 Two consequences for a template author:
 
-1. **A page built out of component tags and JSX-returning helpers may compile
-   to almost nothing.** If the compiler cannot follow the call, there is no
-   markup to send.
+1. **A page whose content depends on data fetched at runtime may compile to
+   almost nothing.** Following a component *call* is the easy half, and the
+   unreleased compiler does it well (see the re-measurement below). What no
+   compiler here can do is evaluate `servers.map(s => <ServerCard s={s}/>)`
+   before the fetch that fills `servers` has happened, or inline
+   `<StatCard value={m.value}/>` when `m` does not exist until runtime. Those
+   are islands, and a page made of them has no markup to send.
 2. **Serving empty shells as Phase 2 is worse than Phase 1**, because the
    client then tries to *adopt* them: it walks its component tree against
    placeholder `<div>`s, cannot reconcile, and the page can end up rendering
@@ -59,9 +63,13 @@ data; `render_page` falls straight back to Phase 1 unless both are present.
 - Verified by: `tests/templates.test.ts` > "loads IR modules and passes slots, so Phase 2 is reachable"
 - Verified by: `tests/scaffold.test.ts` (scaffold E2E) — the built server must serve real server-rendered markup after `build:ssr`
 
-**`dashboard` is Phase 1, deliberately.** It is built out of components and
-helpers, which is the point of it as a showcase — and that is exactly the shape
-the compiler cannot prove. Its `main.rs` asks for `Phase1ClientMount`
+**`dashboard` is Phase 1, deliberately.** Every one of its pages renders data
+fetched at runtime from its own `/api/*` routes — `.map()` over a fetched
+array, components handed a non-literal prop — and that is the shape no
+source-walking compiler can prove. (It is *not* simply "it uses components":
+component resolution is fixed in the unreleased compiler and the dashboard is
+still 2/16 under Phase 2. The measurement is below.) Its `main.rs` asks for
+`Phase1ClientMount`
 explicitly, its `build.ts` has no `ssr` flag, and there is no `build:ssr`
 script to reach for by mistake. It still installs a `tracing` subscriber, so if
 you wire SSR up yourself, `forma-server`'s "falling back to Phase 1" warnings
@@ -84,13 +92,59 @@ The templates install **published** versions
 project gets is whatever npm has — not whatever is in the `forma-tools`
 working tree.
 
-That matters right now, because the compiler's treatment of component tags is
-changing. Under 0.2.0, `h(Card, …)` — what JSX `<Card/>` compiles to — produces
-an **anonymous** island that the client registry can never hydrate. Under the
-changes currently in `forma-tools`' `[Unreleased]`, a component tag is
-*inlined* when the compiler can resolve and follow it, and becomes an island
-under its **real name** when it cannot, with call-site literal props
-substituted into the inlined body.
+That matters right now, because a large batch of resolver fixes sits in
+`forma-tools`' `[Unreleased]` and **is not on npm**. Until it publishes, a
+scaffolded app behaves as described above.
+
+What changes when it does publish:
+
+- `h(Card, …)` — what JSX `<Card/>` compiles to — was an **anonymous** island
+  the client registry could never hydrate. It is now *inlined* when the
+  compiler can resolve and follow it, and an island under its **real name**
+  when it cannot, with call-site literal props substituted into the inlined
+  body.
+- The compiler could not resolve a component out of a `.tsx` file **at all**.
+  esbuild rewrites every `export function Card()` into `export { Card }`, and
+  the analyzer read only declaration exports — so an SSR root page written in
+  JSX produced *placeholder* IR (an empty `<div id="app">`) and every `.tsx`
+  island silently lost its named signal slots and their SSR defaults. Export
+  specifiers, aliases, `export default` and `index.ts` barrels now all resolve;
+  the forms that still do not warn with the file, the construct, and the
+  consequence.
+- A component imported by a **page** file rather than by the entry point was
+  invisible, because one import map was built from the entry and never rebased.
+- An inline-mount entry (`mount(() => { … })`) got **zero** named signal slots,
+  so nothing on such a page could be injected by name.
+
+### Re-measured on the dashboard against the fixed compiler — 2026-08-06
+
+Fixing all of that is necessary for Phase 2 and **not sufficient**, which is the
+point worth carrying away. Scaffolded fresh, pointed at the local fixed
+compiler via `file:` dependencies, built with `ssr: true`, and run against the
+template's own 16 Playwright tests:
+
+| | Before the fix (forma-tools HEAD) | After the fix |
+|---|---|---|
+| IR emitted | 12868 B | 14856 B |
+| Slots named after a signal | 0 of 63 | 3 of 90 |
+| Islands | 48 | 64 |
+| …carrying a real component name | few | 27 (`Icon` ×15, `StatCard` ×4, `ProgressBar` ×3, `StatusBadge` ×2, `UserAvatar`, `RequestVolumeChart`, `formatDuration`) |
+| …still anonymous `island_<n>` | most | 37 |
+| Playwright, Phase 2 | 2 of 16 pass | **2 of 16 pass** |
+| Playwright, Phase 1 | 16 of 16 pass | 16 of 16 pass |
+
+The server-rendered chrome is real now — sidebar, top bar, buttons, layout all
+arrive as markup instead of an empty div. The page *content* does not, and that
+is not a resolver problem: this dashboard's every page body is a `.map()` over
+data fetched at runtime from `/api/*`, or a component handed a non-literal prop
+(`<StatCard value={m.value}/>`, `<StatusBadge status={d.status}/>`,
+`<Icon d={ICON_SEARCH}/>`). The compiler walks source and cannot execute it, so
+those stay islands — 37 of them anonymous, from `.map()` calls, bare `&&`
+children, unwrapped identifier children and dynamic tags. The client cannot
+adopt a DOM whose content is missing, so 14 tests still fail exactly as before.
+
+**The dashboard therefore stays Phase 1.** An honest Phase 1 beats a Phase 2
+that claims SSR it does not do.
 
 So: when a new compiler publishes, re-measure before you re-tell this story.
 The mechanism above (walks source, cannot execute it) is stable; the *set* of

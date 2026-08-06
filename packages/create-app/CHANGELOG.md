@@ -28,6 +28,22 @@ compiled or ran anything.
   16 failing** — the app does not render at all. The README now documents this
   and points at the `minimal` template for a working Phase 2 setup.
 
+  **Re-measured 2026-08-06 against the fixed compiler, and the decision stands.**
+  `forma-tools`' `[Unreleased]` fixes the resolver defects behind most of that
+  605-byte number: `.tsx` pages no longer compile to placeholder IR, components
+  imported by a page file resolve, islands carry real component names, inline
+  mounts get named signal slots. Scaffolded fresh against the local fixed
+  compiler (`file:` dependencies on `packages/compiler` and `packages/build`),
+  built with `ssr: true` and a `main.rs` wired for Phase 2 with slot data, the
+  dashboard emits **14856 bytes** of IR with **64 islands, 27 of them named**,
+  and genuinely server-renders its sidebar, top bar and layout. Its Playwright
+  result is **still 2 of 16**, against 16 of 16 in Phase 1. The remaining 37
+  islands are anonymous for reasons no source-walking compiler can fix: every
+  page body is a `.map()` over data fetched at runtime from `/api/*`, or a
+  component handed a non-literal prop. The measurement table is in
+  `templates/dashboard/README.md`; the mechanism is in
+  `docs/RENDERING-PHASES.md`. **No template file changed.**
+
 - **The minimal template's page is a single file again.** `HomeIsland.tsx` is
   gone and its markup moved inline into the `mount()` callback in
   `admin/src/home/app.tsx`, which is what makes the SSR path work at all —
@@ -36,6 +52,14 @@ compiled or ran anything.
   `export const` declarations, so an imported `.tsx` component could never be
   resolved. The build said so, quietly: `IR: could not find return h() tree in
   HomeIsland` followed by a 121-byte placeholder.
+
+  That compiler defect is **fixed in `forma-tools`' `[Unreleased]`** — export
+  specifiers, aliases, `export default` and `index.ts` barrels all resolve now,
+  and the forms that still do not warn with the file, the construct and the
+  consequence. It is **not published**, and this template pins
+  `@getforma/compiler ^0.2.0`, so the single-file page is still what a
+  scaffolded app needs today. Once the compiler releases, an imported `.tsx`
+  component is a supported shape here again.
 
 - **Template dependency pins moved forward**: `@getforma/core` `^1.0.0` →
   `^1.5.0`, `@getforma/build` `^0.1.0` → `^0.1.9`, `@getforma/compiler`

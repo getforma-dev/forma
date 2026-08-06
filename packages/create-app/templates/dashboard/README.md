@@ -124,18 +124,32 @@ Turning SSR on here makes the page worse, and it is worth understanding why,
 because the same rule decides how *your* pages will behave:
 
 - The FMIR compiler walks source, it does not run it. It can translate literal
-  JSX; it cannot translate a component tag, a local helper that returns JSX, or
-  a dynamic tag. Anything it cannot translate becomes an anonymous island
-  placeholder — an empty `<div data-forma-island="…">` with no content and no
-  registry entry, so nothing can hydrate it.
-- This dashboard is built out of components and helpers on purpose. Compile its
-  entry with `ssr: true` and the emitted IR renders — measured on this template
-  as shipped — to 605 bytes of empty island shells and empty `createShow`
-  markers: no sidebar, no top bar, no skeletons.
-- Serve that as Phase 2 and FormaJS tries to adopt it. Measured on this
-  template: **14 of the 16 Playwright tests fail**, against 16/16 passing in
-  Phase 1. The client cannot reconcile its component tree with placeholder
-  `<div>`s, so the app does not render at all.
+  JSX and a component call it can follow and prove; it cannot translate a
+  `.map()` over data that does not exist yet, a component handed a value only
+  the running program knows, or a dynamic tag. Anything it cannot translate
+  becomes an island placeholder — an empty `<div data-forma-island="…">` with
+  no content, which for the anonymous ones (`island_7`) has no registry entry
+  either, so nothing can hydrate it.
+- This dashboard renders data fetched at runtime from its own `/api/*` routes,
+  on every page: `.map()` over a fetched array, `<StatCard value={m.value}/>`,
+  `<StatusBadge status={d.status}/>`. That is the shape that cannot be proven.
+- Serve it as Phase 2 and FormaJS tries to adopt a DOM whose content is
+  missing. Measured on this template: **14 of the 16 Playwright tests fail**,
+  against 16/16 passing in Phase 1.
+
+**Measurements, dated — the numbers move with the compiler, the rule does not.**
+
+| Measured | Compiler | IR emitted | Named signal slots | Islands | Playwright, Phase 2 |
+|---|---|---|---|---|---|
+| earlier | published `@getforma/compiler` 0.2.0 (what this template pins) | 605 B of empty shells | — | all anonymous | 2 of 16 |
+| 2026-08-06 | `forma-tools` `[Unreleased]` — the resolver fixes, **not on npm** | 14856 B | 3 of 90 | 64, of which **27 named** (`Icon` ×15, `StatCard` ×4, `ProgressBar` ×3, `StatusBadge` ×2, `UserAvatar`, `RequestVolumeChart`, `formatDuration`) and 37 anonymous | 2 of 16 |
+
+The second row is the interesting one. The unreleased compiler fixes real
+defects — `.tsx` pages no longer compile to a placeholder, components imported
+by a page file resolve, islands carry their real names — and the sidebar, top
+bar and layout genuinely arrive as server-rendered markup. The page *content*
+still does not, because it is not knowable at compile time, and the Playwright
+number does not move. Fixing resolution was necessary and is not sufficient.
 
 So `main.rs` asks for `RenderMode::Phase1ClientMount` explicitly, `build.ts` has
 no `ssr` flag, and there is no `build:ssr` script to reach for by mistake. The
