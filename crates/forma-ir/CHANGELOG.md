@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.5] - unreleased
+## [0.2.0] - 2026-08-06
 
 ### Performance
 - **A list now renders in O(rows). It was O(rows²).** `walk_to_html` cloned the

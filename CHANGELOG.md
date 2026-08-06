@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.5] - unreleased
+## [0.2.0] - 2026-08-06
 
 Security and robustness hardening pass across both crates. See
 [crates/forma-ir/CHANGELOG.md](crates/forma-ir/CHANGELOG.md) and

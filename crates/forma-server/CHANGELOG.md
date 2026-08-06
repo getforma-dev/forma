@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.5] - unreleased
+## [0.2.0] - 2026-08-06
 
 ### Fixed
 - **`rust-version` was a fiction.** The manifest declared 1.70; this crate has
@@ -11,7 +11,7 @@
 ### Added
 - **`#![forbid(unsafe_code)]`** — the README's "zero unsafe" is compiler-
   enforced now. Every public item is documented.
-- Faster page renders for any route with a list: see forma-ir 0.1.5, which
+- Faster page renders for any route with a list: see forma-ir 0.2.0, which
   takes a 400-row table from 31.5 ms to 0.15 ms.
 
 ### Security
@@ -96,7 +96,7 @@
 ### Security
 - Template interpolations escaped: asset URLs, body_class, personality_css
 - `</style>` breakout prevention in personality CSS
-  — **this claim was not true**; see the 0.1.5 entry for the real fix
+  — **this claim was not true**; see the 0.2.0 entry for the real fix
 
 ### Added
 - README for crates.io with full documentation

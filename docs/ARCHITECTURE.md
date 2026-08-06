@@ -94,7 +94,7 @@ possible:
 
 **The payoff, and the price.** The payoff is a page that arrives complete, ships
 kilobytes of JS instead of hundreds, and costs a Rust `String` push per node to
-render (a 400-row table renders in 0.15 ms — `forma-ir` CHANGELOG 0.1.5). The
+render (a 400-row table renders in 0.15 ms — `forma-ir` CHANGELOG 0.2.0). The
 price is that a *compile-time* artifact — the FMIR binary and the marker grammar
 in the HTML — is now a wire protocol between three codebases in two languages
 that ship separately. §3 is the list of promises that protocol makes. Almost
@@ -355,11 +355,11 @@ props reported a third answer (`parser.rs:slot_id_by_name`, `slot.rs:from_json`,
 
 > ⚠️ **Cross-repo drift, unresolved.** The forma-tools CHANGELOG (Unreleased)
 > describes the Rust name→id map as "last-insert-wins", which was true of
-> `forma-ir` before 0.1.5 and is not true now. Both repos agree duplicates are a
+> `forma-ir` before 0.2.0 and is not true now. Both repos agree duplicates are a
 > defect; they disagree in prose about which duplicate survives. The
 > compiler-side migration note ("server code that injected a duplicated key was
 > addressing the LAST occurrence") is therefore only correct against a
-> pre-0.1.5 `forma-ir`. Worth reconciling. Tracked here; not fixed by this doc.
+> pre-0.2.0 `forma-ir`. Worth reconciling. Tracked here; not fixed by this doc.
 
 ### 3.3 The hydration marker grammar
 
@@ -440,7 +440,7 @@ makes a second `activateIslands()` call (HMR, SPA re-mount) safe.
 would have its attributes leak onto whatever element came next. The walker now
 errors (`NestedIslandRoot`) when a second island starts before the first has a
 root, and drops-with-warning at `ISLAND_END` (`walker.rs`; forma-ir CHANGELOG
-0.1.5). *Only one element can carry the set* — that is why the compiler owes
+0.2.0). *Only one element can carry the set* — that is why the compiler owes
 every island a shell element (`ir-walk.ts:emitIsland`).
 
 ### 3.5 The `__forma_islands` props protocol
@@ -472,7 +472,7 @@ escape was insufficient: a props value containing `<!--` followed later by
 state, where the walker's own `</script>` is consumed as text and the entire
 rest of the page — config script, module tag, WASM bootstrap, `</body>` — is
 swallowed. The page renders completely inert, driven purely by user-controlled
-slot data (`walker.rs:push_json_script_body`; forma-ir CHANGELOG 0.1.5,
+slot data (`walker.rs:push_json_script_body`; forma-ir CHANGELOG 0.2.0,
 Security). The parsed *values* are unchanged, so this was not a coordinated
 change.
 
@@ -573,7 +573,7 @@ part can be located in O(1).
   hot path per request and would not carry slot typing or island structure.
 
 **Cost.** Debuggability — hence `forma_ir::dump::dump_ir` behind a feature flag,
-which since 0.1.5 prints the slot and island tables (before that it printed only
+which since 0.2.0 prints the slot and island tables (before that it printed only
 counts, so diagnosing the very drift it exists for required writing a throwaway
 program). And the cost documented all through §3: the format is now a wire
 contract between separately-shipped codebases.
@@ -607,7 +607,7 @@ took 31.5 ms and 1.1 M allocations to emit 61 KB of HTML. Fixed by making
 instead of cloning: 400 rows now 0.147 ms, 2,412 allocations, **byte-identical
 output** across a 21-case corpus, with `tests/list_scaling.rs` as a committed
 gate that fails the build if the cost stops being linear (forma-ir CHANGELOG
-0.1.5). The lesson worth keeping: this decision only pays off if someone
+0.2.0). The lesson worth keeping: this decision only pays off if someone
 measures it.
 
 ### D4 — Islands, not whole-page hydration
@@ -820,7 +820,7 @@ skew rather than quietly shipping without SSR), and why the manifest-declares-
 but-not-embedded case was promoted from a silent fall-through to a logged error
 with an explicit `Phase1ClientMount` entry — it used to be literally
 indistinguishable from a route that never had IR (`ir_compat.rs`; forma-server
-CHANGELOG 0.1.5).
+CHANGELOG 0.2.0).
 
 **[INFERENCE]** the reason to prefer degradation over a hard failure: this is a
 *rendering* stack, and a slow-but-correct page beats a 500. The code never says
@@ -857,7 +857,7 @@ Known sharp edges. Each is real today unless marked otherwise.
 | B3 | `SWITCH` emits no hydration marker. | A switched region is server-rendered only; the client cannot re-render it. Also no default case — a non-matching value renders nothing. | Documented at `walker.rs`, Switch handler |
 | B4 | Literal-source lists still fall back to document-order positional names. | Reordering the page silently renames the slot; injection misses, no warning. | dogfood #3 (MOSTLY RESOLVED / residual ask) |
 | B5 | `SlotData::from_json` **silently ignores unknown keys**. | Every slot-name change fails soft. A stale injection key just stops working. | `slot.rs:from_json`; migration notes in forma-tools CHANGELOG |
-| B6 | Cross-repo prose drift on duplicate-name resolution (first-wins in `forma-ir` 0.1.5; forma-tools CHANGELOG still says last-insert-wins). | A reader following the compiler CHANGELOG's migration advice against a current `forma-ir` gets the wrong slot. | §3.2 of this document; **not yet fixed in either repo** |
+| B6 | Cross-repo prose drift on duplicate-name resolution (first-wins in `forma-ir` 0.2.0; forma-tools CHANGELOG still says last-insert-wins). | A reader following the compiler CHANGELOG's migration advice against a current `forma-ir` gets the wrong slot. | §3.2 of this document; **not yet fixed in either repo** |
 | B7 | `PRELOAD` emits a `<link rel=preload>` with **no CSP nonce**. | Under `script-src 'strict-dynamic'` an `as="script"` preload hint is dropped. Degradation, not breakage; latent because the compiler never emits `PRELOAD`. | NOTE at `walker.rs`, Preload handler |
 | B8 | `source_hash` in the FMIR header is written as `0` and never verified. | No integrity or staleness check on the module. | `format.rs:IrHeader`; `FMIR-FORMAT.md` §2.1 |
 | B9 | Stale internal comment: `format.rs` §"Opcode enum (16 opcodes, 0x01–0x10)" — there are 18, through `0x12`. | Cosmetic, but this repo's own convention is that a comment asserting a fact must be true. | Found while writing this doc; **not fixed here** (code untouched by design) |
@@ -879,7 +879,7 @@ Known sharp edges. Each is real today unless marked otherwise.
 |---|---|---|---|
 | B16 | `PageConfig::config_script` and `body_prefix` are **raw, trusted escape hatches**. `</script`/`<!--` are neutralised so the value cannot break *out*, but that is not the same as safe: a `"` or `\` from untrusted data still yields nonce-blessed script execution in your own page. | Use `config_json` (serde-escaped, `window.__FORMA_CONFIG__`) for anything derived from user input. | `types.rs:PageConfig` doc comments |
 | B17 | `PageOutput`'s HTML and CSP are one unit — the HTML embeds a per-request nonce. Caching the HTML across requests either kills every script (fresh policy, stale body) or ships one static publicly-known nonce to every user. | Serve with `no-store`, or use `render_page_with_nonce` to re-stamp. | `types.rs:PageOutput`; `csp.rs:CspNonce` |
-| B18 | MSRV differs per crate: `forma-ir` 1.71, `forma-server` 1.85 (rust-embed 8 → sha2 0.11). Deliberately not unified. | A workspace-wide MSRV assumption is wrong. | forma-server CHANGELOG 0.1.5; CI pins both |
+| B18 | MSRV differs per crate: `forma-ir` 1.71, `forma-server` 1.85 (rust-embed 8 → sha2 0.11). Deliberately not unified. | A workspace-wide MSRV assumption is wrong. | forma-server CHANGELOG 0.2.0; CI pins both |
 | B19 | ksx runs a local `relax_style_src` rewrite of the CSP header. | May now be unnecessary — `style-src-attr 'unsafe-inline'` landed upstream (D7). | dogfood #13a; **confirm and retire the workaround** |
 
 ### Process
@@ -925,7 +925,7 @@ Known sharp edges. Each is real today unless marked otherwise.
 
 The Rust walker and the JS renderer must produce the **same bytes** for the same
 value, or hydration reconciles a difference that is not really there. The rules
-that took work to get right (all in forma-ir 0.1.5, all "may change emitted
+that took work to get right (all in forma-ir 0.2.0, all "may change emitted
 bytes on purpose"):
 
 - **Numbers** follow ECMAScript `Number::toString` exactly, including the

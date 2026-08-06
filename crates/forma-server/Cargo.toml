@@ -18,7 +18,7 @@ keywords = ["ssr", "axum", "web-framework", "islands", "forma"]
 categories = ["web-programming::http-server"]
 
 [dependencies]
-forma-ir = { version = "0.1.5", path = "../forma-ir" }
+forma-ir = { version = "0.2.0", path = "../forma-ir" }
 axum = "0.8"
 rust-embed = "8"
 serde = { version = "1", features = ["derive"] }
@@ -30,7 +30,7 @@ tracing.workspace = true
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }
 # Fixture encoders for the server's own tests; not part of the shipped build.
-forma-ir = { version = "0.1.5", path = "../forma-ir", features = ["test-helpers"] }
+forma-ir = { version = "0.2.0", path = "../forma-ir", features = ["test-helpers"] }
 
 [lints]
 workspace = true
