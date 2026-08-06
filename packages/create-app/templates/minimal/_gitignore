@@ -1,3 +1,19 @@
+# Build output
 target/
 node_modules/
 dist/
+
+# Secrets — never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs and OS cruft
+*.log
+.DS_Store
+Thumbs.db
+
+# Cargo.lock is deliberately NOT ignored: this is an application, so the
+# lockfile belongs in version control.

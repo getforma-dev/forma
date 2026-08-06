@@ -1,50 +1,93 @@
-# My Forma App
+# {{PROJECT_NAME}}
 
-Built with [Forma Stack](https://getforma.dev) — Rust + FormaJS.
+Built with the [Forma Stack](https://getforma.dev) — an Axum server in Rust, a
+TypeScript frontend, and (once you run `build:ssr`) a Rust renderer that turns
+your JSX into HTML before the browser gets it.
 
 ## Quick Start
 
 ```bash
-# Build the frontend
+# Build the frontend (Phase 1 — client mount)
 cd admin && npm install && npm run build && cd ..
 
 # Start the Rust server
 cargo run
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000). The server binds to
+`127.0.0.1` only.
+
+## Server-side rendering
+
+```bash
+cd admin && npm run build:ssr && cd ..
+cargo run
+```
+
+That is the whole upgrade. `build:ssr` emits `admin/dist/home.ir` alongside the
+JS; `main.rs` already calls `load_ir_modules`, so the route switches itself to
+Phase 2 and the server logs which mode it picked:
+
+```
+INFO forma_server::ir_compat: Loaded IR module for SSR route=/ ir_file=home.<hash>.ir
+INFO {{PROJECT_NAME}}: / is Phase 2 (server-rendered from IR)
+```
+
+View source and you will find the markup — `<h1>`, the paragraphs, the buttons
+— already in the response, inside `<div id="app" data-forma-ssr>`. FormaJS then
+adopts that DOM instead of rebuilding it. Run `npm run build` again to go back
+to Phase 1; the server follows.
+
+### What the compiler can and cannot server-render
+
+The FMIR compiler walks the tree your `mount()` callback returns. It reads
+source; it does not execute it. In practice:
+
+| Written as | Rendered by |
+|---|---|
+| Literal JSX elements, static attributes, static text | the Rust server |
+| `{() => signal()}` text bindings | server (empty), then the client fills it in |
+| A component tag (`<Card />`), a helper call that returns JSX, a dynamic tag | the client only — it becomes an island placeholder in the HTML |
+
+That last row is why this template keeps its page shell as literal JSX in
+`admin/src/home/app.tsx` instead of splitting it into components. Splitting it
+is fine — you just get less server-rendered HTML, and the parts that become
+islands need a registry (`activateIslands`) to hydrate.
+
+The build prints what it emitted, and the byte count tells you which happened:
+
+```
+IR emitted (real): home.ir (~450 bytes, 0 islands)    ← walked your tree
+IR emitted (placeholder): home.ir (121 bytes)         ← fell back, nothing server-rendered
+```
+
+`0 islands` is the number to watch: each island is a subtree the compiler gave
+up on, and an anonymous `island_N` has no registry entry, so nothing hydrates it.
 
 ## Project Structure
 
 ```
-├── src/                    Rust server (Axum)
-│   └── main.rs             Routes, SSR, static assets
-├── admin/                  TypeScript frontend
+├── src/
+│   └── main.rs             Axum routes, SSR, static assets, CSP
+├── admin/
 │   ├── src/
-│   │   └── home/
-│   │       ├── app.tsx     Mount point
-│   │       └── HomeIsland.tsx  Interactive component
+│   │   ├── home/app.tsx    mount() — the SSR root and the browser entry
+│   │   └── styles/app.css  Plain CSS, hashed by the build
 │   ├── build.ts            Build pipeline (@getforma/build)
 │   └── tsconfig.json       JSX → h() configuration
-└── Cargo.toml              Rust dependencies
+└── Cargo.toml
 ```
 
-## Upgrading to SSR (Phase 2)
+## Styling and CSP
 
-This template starts with Phase 1 (client-side rendering). To enable server-side rendering:
-
-1. Enable SSR in `admin/build.ts`:
-   ```ts
-   ssr: true,
-   ssrEntryPoints: { '/': 'src/home/app.tsx' },
-   ```
-
-2. Rebuild: `cd admin && npm run build:ssr`
-
-3. The `.ir` files are automatically loaded by the Rust server. Phase 2 SSR is now active — the server renders full HTML, FormaJS hydrates on the client. No other code changes needed.
+`main.rs` sends the Content-Security-Policy that `render_page` generates, and it
+has no `unsafe-inline` for styles. A `style="..."` attribute that arrives in the
+server-rendered HTML is therefore blocked by the browser. Put styling in
+`admin/src/styles/app.css` (or add another entry to `cssEntries` in
+`admin/build.ts`).
 
 ## Learn More
 
-- [FormaJS Documentation](https://getforma.dev/docs)
+- [FormaJS documentation](https://getforma.dev/docs)
 - [@getforma/core on npm](https://www.npmjs.com/package/@getforma/core)
 - [forma-server on crates.io](https://crates.io/crates/forma-server)

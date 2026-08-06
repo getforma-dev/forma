@@ -1,7 +1,7 @@
 node_modules/
 dist/
-test-output/
-test-results/
-target/
 *.bak
+
+# Left behind by building or cargo-checking a template in place.
+target/
 Cargo.lock

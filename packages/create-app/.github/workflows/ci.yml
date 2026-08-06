@@ -22,3 +22,27 @@ jobs:
       - run: npm run build
       - run: npx tsc --noEmit
       - run: npm test
+
+  # The gate that a string-matching suite cannot give you: scaffold each
+  # template for real, install its dependencies, build the frontend and
+  # compile the Rust. Runs on Windows too, because that is where the
+  # dashboard's Tailwind step used to fail outright.
+  scaffold:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      - run: npm run build
+      - run: npx vitest run
+        env:
+          FORMA_SCAFFOLD_E2E: '1'
