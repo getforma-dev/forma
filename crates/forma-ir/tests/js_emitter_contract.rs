@@ -79,6 +79,7 @@ const EXPECTED_CASES: &[&str] = &[
     "create-show",
     "dynamic-attrs",
     "dynamic-text",
+    "eager-concat",
     "jsx-page",
     "list-same-source",
     "nested-islands",

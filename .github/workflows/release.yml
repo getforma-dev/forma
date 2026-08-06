@@ -10,14 +10,35 @@ permissions:
   contents: read
   id-token: write  # Required for crates.io trusted publishing (OIDC)
 
+# A publish is never superseded, so cancel-in-progress is FALSE: killing
+# `cargo publish` between the upload and the index update is how a version gets
+# half-created. Keyed on the tag, so ir-v* and server-v* never block each other.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+
 jobs:
   publish-ir:
     if: startsWith(github.ref_name, 'ir-v')
     runs-on: ubuntu-latest
+    # `cargo publish` runs its own clean verification build in a temp dir on
+    # top of the workspace test + clippy above it, so this is roughly two full
+    # builds. MEASURED locally warm: test 10s, clippy 4s; in CI cold-with-cache
+    # the equivalent CI job measured 2.1m for test alone. 30 is ~3x a ~10m
+    # cold run and bounds the case where crates.io is slow to respond.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-ir
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
       - name: Verify version matches tag
@@ -36,13 +57,33 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
+      # On 2026-08-06 this job died in "Set up job" with "Service Unavailable"
+      # and the run page said only "failure". Whatever fails next time, say
+      # which of the two very different causes it was.
+      - name: Explain a publish failure
+        if: failure()
+        run: |
+          echo "::error title=forma-ir publish failed::Distinguish the two causes before retrying."
+          echo "AUTH/OIDC: crates-io-auth-action mints a token from the Actions OIDC provider."
+          echo "  A 5xx or timeout there is an Actions/crates.io incident — re-run this run,"
+          echo "  do NOT re-tag. Check https://www.githubstatus.com and https://status.crates.io."
+          echo "ALREADY PUBLISHED: 'crate version X is already uploaded' means the version"
+          echo "  shipped and only a later step failed. Bump the version; never force a re-publish."
+          echo "TRUSTED PUBLISHING NOT CONFIGURED: '403' or 'authentication required' means"
+          echo "  crates.io has no Trusted Publisher for forma-ir pointing at"
+          echo "  getforma-dev/forma + .github/workflows/release.yml. Configure it at"
+          echo "  https://crates.io/crates/forma-ir/settings — this is a human step, no re-run fixes it."
+
   publish-server:
     if: startsWith(github.ref_name, 'server-v')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-server
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
       - name: Verify version matches tag
@@ -53,6 +94,23 @@ jobs:
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
+
+      # forma-server resolves forma-ir through `[patch.crates-io]` in this
+      # workspace, but crates.io resolves the PUBLISHED forma-ir. Print both so
+      # a "no matching package named forma-ir" failure below is self-explaining
+      # rather than a surprise. This is diagnostic only — `cargo publish` is
+      # the authority on whether the dependency resolves, and it is not
+      # weakened by anything printed here.
+      - name: Report the forma-ir version crates.io can see
+        continue-on-error: true
+        run: |
+          echo "forma-server's forma-ir requirement in this tree:"
+          grep -A2 'forma-ir' crates/forma-server/Cargo.toml | head -5
+          echo "crates.io currently serves forma-ir:"
+          curl -sS -H 'User-Agent: getforma-release-ci' \
+            https://crates.io/api/v1/crates/forma-ir \
+            | grep -o '"max_version":"[^"]*"' || echo "  (could not reach crates.io)"
+
       - name: Authenticate with crates.io
         id: auth
         uses: rust-lang/crates-io-auth-action@v1
@@ -60,3 +118,13 @@ jobs:
         run: cargo publish -p forma-server
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Explain a publish failure
+        if: failure()
+        run: |
+          echo "::error title=forma-server publish failed::Distinguish the causes before retrying."
+          echo "UNPUBLISHED DEPENDENCY: 'no matching package named forma-ir' means the ir-v* tag"
+          echo "  has not shipped yet. Publish forma-ir first, then re-run this run."
+          echo "AUTH/OIDC 5xx or timeout: an Actions/crates.io incident — re-run, do NOT re-tag."
+          echo "403 / authentication required: no Trusted Publisher on crates.io for forma-server."
+          echo "  Configure at https://crates.io/crates/forma-server/settings (human step)."

@@ -3,11 +3,35 @@ name: CI
 on:
   push:
     branches: [main]
+    # Doc-only pushes to main do not need seven runners. Deliberately NOT
+    # applied to `pull_request`: if any of these jobs is a required status
+    # check, a skipped workflow leaves the check permanently pending and the
+    # PR can never merge. Extend this to pull_request only after confirming
+    # branch protection does not require these checks.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
   pull_request:
     branches: [main]
 
+# One run per ref. A second push to the same branch cancels the first, which is
+# the single largest reduction in runner demand available: on 2026-08-06 four
+# repos pushed at once and asked for ~44 concurrent jobs against a 20-job
+# limit, producing 20-58 minute runner waits that looked exactly like hangs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
+  # Incremental artifacts are pure overhead on an ephemeral runner and bloat
+  # the rust-cache payload.
+  CARGO_INCREMENTAL: 0
+  # crates.io and static.rust-lang.org both returned 5xx during the 2026-08-06
+  # Actions incident. Retrying is free; a failed release over a blip is not.
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
 
 jobs:
   test:
@@ -18,6 +42,11 @@ jobs:
         # is a first-class runner here, not an afterthought.
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    # MEASURED: 2.1m on ubuntu and 6.5m on windows, from the healthy-runner
+    # jobs of run #16; 10s warm locally. 20 is ~3x the Windows number, which is
+    # the slow leg, and still fails ~2.5x faster than the runner waits that
+    # masqueraded as hangs.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -25,6 +54,10 @@ jobs:
           targets: wasm32-unknown-unknown
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+        with:
+          # Distinct keys per OS so the Windows leg never restores a Linux
+          # target dir and rebuilds the world.
+          key: ${{ matrix.os }}
       - run: cargo fmt --all --check
       # --all-targets so the tests, examples and the linearity gate are linted
       # too; --all-features so the wasm exports and the fixture encoders are
@@ -39,14 +72,25 @@ jobs:
   # this crate actually ships a build for. Offset arithmetic that cannot wrap
   # on 64-bit can wrap there, and a debug build turns that into a panic, so
   # building for wasm32 is not enough: the tests have to RUN at 32 bits.
+  #
+  # `needs: test` is a runner-demand fix, not a correctness one. This job
+  # rebuilds the whole workspace for a second target and installs gcc-multilib;
+  # gating it behind `test` means the cheap tier has released its runners
+  # before the expensive tier asks for any. Peak concurrent demand for this
+  # workflow drops from 7 jobs to 4.
   test-32bit:
     runs-on: ubuntu-latest
+    needs: test
+    # MEASURED: 5.3m in CI (run #16, healthy runner). 20 is ~4x.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: i686-unknown-linux-gnu
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: i686
       - name: Install 32-bit toolchain
         run: sudo apt-get update && sudo apt-get install -y gcc-multilib
       - run: cargo test --workspace --target i686-unknown-linux-gnu
@@ -57,6 +101,9 @@ jobs:
   # claimed 1.70 for a crate that has never been able to build below 1.85.
   msrv:
     runs-on: ubuntu-latest
+    needs: test
+    # MEASURED: 3.5m in CI for `msrv (forma-server)` (run #16). 15 is ~4x.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -71,12 +118,19 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@v2
+        with:
+          # An MSRV toolchain produces incompatible artifacts; keying by crate
+          # AND version stops the two legs evicting each other's cache.
+          key: msrv-${{ matrix.crate }}-${{ matrix.rust }}
       - run: cargo check -p ${{ matrix.crate }} --all-targets
 
   # deny.toml ships in the repo; running it is what makes it a policy rather
-  # than a file.
+  # than a file. Cheap and independent, so it stays in the first tier.
   deny:
     runs-on: ubuntu-latest
+    # The action fetches the RustSec advisory DB over the network; everything
+    # else is local. 10 is ~5x a typical 2m run.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: EmbarkStudios/cargo-deny-action@v2
@@ -88,12 +142,17 @@ jobs:
   # mean CI green-lights a workspace it never actually tested.
   patch-is-live:
     runs-on: ubuntu-latest
+    # `cargo tree` resolves the graph without building it. MEASURED: <5s warm
+    # locally; cold it is dominated by the registry index fetch.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: patch-is-live
       - name: forma-server must resolve forma-ir from this workspace
         run: |
           cargo tree -p forma-server -i forma-ir | tee /tmp/tree.txt
           grep -q "crates/forma-ir" /tmp/tree.txt \
-            || { echo "forma-server is building against the PUBLISHED forma-ir, not this tree"; exit 1; }
+            || { echo "::error::forma-server is building against the PUBLISHED forma-ir, not this tree"; exit 1; }
