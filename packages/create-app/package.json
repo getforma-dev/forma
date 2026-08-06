@@ -1,6 +1,6 @@
 {
   "name": "@getforma/create-app",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "author": "Forma <victor@getforma.dev>",
   "homepage": "https://getforma.dev",
@@ -19,6 +19,7 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm",
+    "pretest": "npm run build",
     "test": "vitest run"
   },
   "dependencies": {
@@ -31,7 +32,7 @@
     "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   },
   "license": "MIT"
 }

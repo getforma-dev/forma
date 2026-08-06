@@ -27,10 +27,6 @@ jobs:
             sed -i 's|"@getforma/core": "[^"]*"|"@getforma/core": "'$VERSION'"|g' {} +
           echo "Updated to $VERSION:"
           grep -r "@getforma/core" templates/ --include="package.json"
-          # Note: @getforma/compiler and @getforma/build use ^0.1.0 which covers
-          # all 0.1.x releases via semver. No automation needed until a 0.2.0
-          # major-minor bump. At that point, extend this workflow (or create a
-          # separate one) to update those packages as well.
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
@@ -42,5 +38,13 @@ jobs:
             Automated dependency update triggered by [@getforma/core ${{ steps.version.outputs.version }}](https://www.npmjs.com/package/@getforma/core/v/${{ steps.version.outputs.version }}) release.
 
             Updates `@getforma/core` in all template `package.json` files.
+
+            `tests/templates.test.ts` asserts the exact pinned range, so this PR
+            will fail CI until that expectation is updated too — deliberately,
+            because the pin exists to guarantee a specific fix is present.
+
+            `@getforma/build` and `@getforma/compiler` are pinned independently
+            (a caret range on a 0.x version does not cross minor bumps) and are
+            not touched here.
           branch: update-core-${{ steps.version.outputs.version }}
           base: main

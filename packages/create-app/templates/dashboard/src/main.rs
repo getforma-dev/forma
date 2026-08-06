@@ -6,9 +6,8 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use forma_server::{assets, load_ir_modules, render_page, sw, PageConfig, RenderMode};
+use forma_server::{assets, render_page, sw, PageConfig, RenderMode};
 use rust_embed::Embed;
-use std::collections::HashMap;
 
 mod data;
 
@@ -18,24 +17,24 @@ struct Assets;
 
 struct AppState {
     manifest: forma_server::types::AssetManifest,
-    render_modes: HashMap<String, RenderMode>,
-    ir_modules: HashMap<String, forma_ir::parser::IrModule>,
 }
 
 async fn page_dashboard(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let route = "/";
-    let render_mode = state.render_modes.get(route).copied().unwrap_or(RenderMode::Phase1ClientMount);
-    let ir_module = state.ir_modules.get(route);
-
-    // personality_css sets dark background immediately via a nonce'd <style> tag.
-    // This prevents the white flash during Phase 1 (before JS mounts).
-    // Full skeleton with layout structure requires Phase 2 SSR.
+    // Phase 1: the server sends an empty `<div id="app">` and the client
+    // mounts into it. This is deliberate for this template — the page is a
+    // tree of components, and the FMIR compiler can only walk literal JSX, so
+    // an SSR build of THIS app produces island placeholders rather than
+    // markup (see README > "Phase 1 by design"). The `minimal` template
+    // demonstrates a working Phase 2 setup.
+    //
+    // personality_css sets the dark background immediately via a nonce'd
+    // <style> tag, so there is no white flash before the JS mounts.
     let page = render_page(&PageConfig {
         title: "FormaOps Dashboard",
-        route_pattern: route,
+        route_pattern: "/",
         manifest: &state.manifest,
-        render_mode,
-        ir_module,
+        render_mode: RenderMode::Phase1ClientMount,
+        ir_module: None,
         slots: None,
         config_script: None,
         body_class: None,
@@ -63,6 +62,10 @@ async fn api_incidents() -> Json<Vec<data::Incident>> { Json(data::get_incidents
 
 #[tokio::main]
 async fn main() {
+    // Without a subscriber, forma-server's warnings (asset lookups, render
+    // fallbacks) go nowhere and a misconfigured build looks like a working one.
+    tracing_subscriber::fmt::init();
+
     if Assets::get("manifest.json").is_none() {
         eprintln!("\n  Error: Frontend not built yet.\n");
         eprintln!("  Run these commands first:");
@@ -73,8 +76,7 @@ async fn main() {
     }
 
     let manifest = assets::load_manifest::<Assets>();
-    let (render_modes, ir_modules) = load_ir_modules::<Assets>(&manifest);
-    let state = Arc::new(AppState { manifest, render_modes, ir_modules });
+    let state = Arc::new(AppState { manifest });
 
     let app = Router::new()
         .route("/", get(page_dashboard))
@@ -82,6 +84,8 @@ async fn main() {
         .route("/deployments", get(page_dashboard))
         .route("/servers", get(page_dashboard))
         .route("/settings", get(page_dashboard))
+        // These routes are UNAUTHENTICATED. They serve the mock data in
+        // data.rs; before you put real data behind them, put auth in front.
         .route("/api/metrics", get(api_metrics))
         .route("/api/deployment-stats", get(api_deployment_stats))
         .route("/api/deployments", get(api_deployments))
@@ -94,10 +98,33 @@ async fn main() {
         .route("/_assets/{*path}", get(assets::serve_asset::<Assets>))
         .with_state(state);
 
-    println!("\n  FormaOps Dashboard running at http://localhost:3000\n");
+    // Binds to loopback by default. Set FORMA_HOST to expose the server (e.g. on your LAN).
+    // An empty or whitespace-only FORMA_HOST is treated as unset.
+    let host = std::env::var("FORMA_HOST")
+        .ok()
+        .map(|h| h.trim().to_string())
+        .filter(|h| !h.is_empty())
+        .unwrap_or_else(|| "127.0.0.1".to_string());
+    let addr = format!("{host}:3000");
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+    // Loopback (127.x.x.x, ::1, optionally bracketed) is quiet; anything else warns.
+    let bare_host = host.trim_start_matches('[').trim_end_matches(']');
+    let is_loopback = bare_host
+        .parse::<std::net::IpAddr>()
+        .map(|ip| ip.is_loopback())
+        .unwrap_or(bare_host == "localhost");
+
+    if is_loopback {
+        println!("\n  FormaOps Dashboard running at http://localhost:3000\n");
+    } else {
+        eprintln!("\n  WARNING: FORMA_HOST={host} — the dashboard is reachable from your network.");
+        eprintln!("  The /api/* routes have no authentication; anyone who can reach this");
+        eprintln!("  machine can read them. Unset FORMA_HOST to serve on localhost only.\n");
+        println!("\n  FormaOps Dashboard running at http://{host}:3000\n");
+    }
+
+    let listener = tokio::net::TcpListener::bind(&addr)
         .await
-        .expect("Failed to bind to port 3000");
+        .unwrap_or_else(|e| panic!("Failed to bind to {addr}: {e}"));
     axum::serve(listener, app).await.expect("Server error");
 }

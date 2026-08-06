@@ -4,40 +4,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-
-// ── Constants ──────────────────────────────────────────────────────────
-
-export const TEMPLATES = ['dashboard', 'minimal'];
-
-const TEMPLATE_INFO: Record<string, { title: string; description: string }> = {
-  dashboard: {
-    title: 'dashboard',
-    description: 'Live dashboard with islands, API routes, dark theme — full showcase',
-  },
-  minimal: {
-    title: 'minimal',
-    description: 'Clean slate — Rust server + JSX frontend, ready to build on',
-  },
-};
-
-// ── Placeholder replacement ────────────────────────────────────────────
-
-const TEXT_EXTS = new Set(['.toml', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
-
-export function replacePlaceholders(dir: string, replacements: Record<string, string>) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      replacePlaceholders(fullPath, replacements);
-    } else if (TEXT_EXTS.has(path.extname(entry.name))) {
-      let content = fs.readFileSync(fullPath, 'utf8');
-      for (const [placeholder, value] of Object.entries(replacements)) {
-        content = content.replaceAll(placeholder, value);
-      }
-      fs.writeFileSync(fullPath, content);
-    }
-  }
-}
+import {
+  NEVER_COPY,
+  TEMPLATE_INFO,
+  TEMPLATES,
+  replacePlaceholders,
+  restoreGitignores,
+  validateProjectName,
+} from './scaffold';
 
 // ── Colored output helpers ─────────────────────────────────────────────
 
@@ -45,7 +19,6 @@ const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
 const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
-const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 
 // ── Detect package manager ─────────────────────────────────────────────
 
@@ -77,8 +50,7 @@ ${bold('Options:')}
   --dry-run          Preview without creating files
 
 ${bold('Templates:')}
-  ${cyan('dashboard')}  Live dashboard with islands, API routes, dark theme ${dim('(full showcase)')}
-  ${cyan('minimal')}    Clean slate — Rust server + JSX frontend ${dim('(build your own)')}
+${TEMPLATES.map((t) => `  ${cyan(t.padEnd(9))}  ${TEMPLATE_INFO[t]!.description}`).join('\n')}
 
 ${bold('Examples:')}
   npx @getforma/create-app my-app
@@ -97,13 +69,22 @@ ${bold('Examples:')}
 
   const isDryRun = args.includes('--dry-run');
 
-  // Parse --template flag
+  // Parse --template flag. The value is consumed by index so that a project
+  // name equal to the template name (`create-app minimal --template minimal`)
+  // is still recognised as the project name.
   const templateArgIdx = args.indexOf('--template');
-  const templateArg = templateArgIdx !== -1 ? args[templateArgIdx + 1] : null;
-
-  if (templateArg && !TEMPLATES.includes(templateArg)) {
-    console.error(`Invalid template "${templateArg}". Available: ${TEMPLATES.join(', ')}`);
-    process.exit(1);
+  let templateArg: string | null = null;
+  if (templateArgIdx !== -1) {
+    const value = args[templateArgIdx + 1];
+    if (value === undefined || value.startsWith('--')) {
+      console.error(`--template needs a value. Available: ${TEMPLATES.join(', ')}`);
+      process.exit(1);
+    }
+    if (!TEMPLATES.includes(value)) {
+      console.error(`Invalid template "${value}". Available: ${TEMPLATES.join(', ')}`);
+      process.exit(1);
+    }
+    templateArg = value;
   }
 
   // ── Project name ──
@@ -112,16 +93,17 @@ ${bold('Examples:')}
   console.log(bold('  Forma') + dim(' — Create a new full-stack application'));
   console.log();
 
+  const templateValueIdx = templateArgIdx === -1 ? -1 : templateArgIdx + 1;
+  const positional = args.filter(
+    (a, i) => !a.startsWith('--') && i !== templateValueIdx,
+  );
   const projectName =
-    args.find((a) => !a.startsWith('--') && a !== templateArg) ||
+    positional[0] ||
     (await prompts({ type: 'text', name: 'value', message: 'Project name?' })).value;
-  if (!projectName) {
-    console.error('Project name required.');
-    process.exit(1);
-  }
 
-  if (!/^[a-z0-9][a-z0-9_-]*$/.test(projectName)) {
-    console.error('Project name must be lowercase alphanumeric with hyphens/underscores.');
+  const nameError = validateProjectName(projectName ?? '');
+  if (nameError) {
+    console.error(nameError);
     process.exit(1);
   }
 
@@ -140,7 +122,7 @@ ${bold('Examples:')}
         })),
       })).template;
 
-  if (!template) {
+  if (!template || !TEMPLATES.includes(template)) {
     console.error('Template selection required.');
     process.exit(1);
   }
@@ -148,9 +130,15 @@ ${bold('Examples:')}
   // ── Validate destination ──
 
   const dest = path.resolve(projectName);
-  if (fs.existsSync(dest)) {
+  // lstat, not existsSync: existsSync follows symlinks and so reports false
+  // for a dangling one, which would then make cpSync write through the link.
+  // Verified by: tests/scaffold.test.ts > "refuses to scaffold onto a dangling symlink"
+  try {
+    fs.lstatSync(dest);
     console.error(`\n  ${dest} already exists.\n`);
     process.exit(1);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
   }
 
   if (isDryRun) {
@@ -171,24 +159,28 @@ ${bold('Examples:')}
   console.log();
   console.log(dim('  Scaffolding project...'));
 
-  fs.cpSync(templateDir, dest, { recursive: true });
+  try {
+    fs.cpSync(templateDir, dest, {
+      recursive: true,
+      errorOnExist: true,
+      force: false,
+      dereference: false,
+      filter: (src) => !NEVER_COPY.has(path.basename(src)),
+    });
 
-  // Rename _gitignore to .gitignore (npm pack renames .gitignore to .npmignore)
-  const possibleGitignores = [
-    path.join(dest, '_gitignore'),
-    path.join(dest, 'admin', '_gitignore'),
-  ];
-  for (const gi of possibleGitignores) {
-    if (fs.existsSync(gi)) {
-      fs.renameSync(gi, gi.replace('_gitignore', '.gitignore'));
-    }
+    restoreGitignores(dest);
+
+    // Replace ALL placeholder variants
+    replacePlaceholders(dest, {
+      '{{PROJECT_NAME}}': projectName,
+      '{{project-name}}': projectName,
+    });
+  } catch (err) {
+    // Never leave a half-written project behind: the next run would refuse to
+    // start because the directory now exists.
+    fs.rmSync(dest, { recursive: true, force: true });
+    throw err;
   }
-
-  // Replace ALL placeholder variants
-  replacePlaceholders(dest, {
-    '{{PROJECT_NAME}}': projectName,
-    '{{project-name}}': projectName,
-  });
 
   // ── Git init ──
 
@@ -197,7 +189,8 @@ ${bold('Examples:')}
     execSync('git add -A', { cwd: dest, stdio: 'ignore' });
     execSync('git commit -m "Initial commit from create-forma-app"', { cwd: dest, stdio: 'ignore' });
   } catch {
-    // git not available — skip silently
+    // git missing, or no commit identity configured — the project is complete
+    // either way, so this is not worth failing the scaffold over.
   }
 
   // ── Success output ──
@@ -226,10 +219,14 @@ ${bold('Examples:')}
 
   if (template === 'dashboard') {
     console.log(dim('  This dashboard demonstrates:'));
-    console.log(dim('  • 3 pages with createShow routing + History API (no router library)'));
-    console.log(dim('  • Rust API routes (/api/metrics, /api/deployments, /api/servers, +5 more)'));
+    console.log(dim('  • 4 pages with createShow routing + History API (no router library)'));
+    console.log(dim('  • 8 Rust JSON API routes — unauthenticated, localhost-only by default'));
     console.log(dim('  • createFetch, createSignal, createShow, createComputed, createList, createEffect'));
     console.log(dim('  • Hand-rolled SVG chart, command palette (Cmd+K), Tailwind CSS v4'));
+    console.log();
+  } else {
+    console.log(dim('  Server-side rendering:'));
+    console.log(dim(`  • ${runCmd} build:ssr  in admin/ — the server then renders the page from IR`));
     console.log();
   }
 }

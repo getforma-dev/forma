@@ -1,8 +1,9 @@
 import { build } from '@getforma/build';
 
-const isWatch = process.argv.includes('--watch');
-const isSsr = process.argv.includes('--ssr');
-
+// This dashboard ships Phase 1 (client mount) on purpose — see the
+// "Phase 1 by design" section of the README for the measurement behind that.
+// There is deliberately no `ssr: true` here: enabling it emits an IR file
+// whose SSR tree is island placeholders the client cannot adopt.
 await build({
   entryPoints: [
     { entry: 'src/app.tsx', outfile: 'dashboard.js' },
@@ -14,7 +15,5 @@ await build({
     { input: 'src/styles/dashboard.css', outfile: 'dashboard.css', tailwind: true },
   ],
   outputDir: 'dist',
-  ssr: isSsr,
-  ...(isSsr ? { ssrEntryPoints: { '/': 'src/app.tsx' } } : {}),
-  ...(isWatch ? { watch: true } : {}),
+  ...(process.argv.includes('--watch') ? { watch: true } : {}),
 });
