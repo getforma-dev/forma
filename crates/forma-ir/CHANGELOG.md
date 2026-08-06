@@ -1,5 +1,28 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- **Cross-implementation corpus refreshed for the compiler's signal-scope fix**
+  (`@getforma/compiler`, unreleased). No code in this crate changed; the
+  `.ir` inputs and their goldens did, because the emitter now resolves signals
+  in every scope its walk inlines. Six goldens moved, and every changed byte is
+  the emitter finding something it previously lost:
+
+  | Case | What moved |
+  |---|---|
+  | `dynamic-text` | four anonymous `text:*` slots became `headline`/`subhead`/`count`/`badge`; the `@page defaults` render went from four zero-width spaces to the real text, including a numeric `0` |
+  | `dynamic-attrs` | `busy`/`tone`/`query` appear, `attr:value` disappears (that binding reuses `query`), and `@page defaults` gains `class="row"` / `class="calm row"` where both divs previously had no class at all |
+  | `create-show` | the two condition signals prepend, shifting `SHOW_IF` slot ids; `@page defaults` renders the branches the CLIENT renders instead of ELSE everywhere |
+  | `ternary-asymmetric` | same shape: ids shift, and the `compact` ternary now renders its THEN branch under defaults |
+  | `nested-islands` | slot IDS only — `badgeLabel` is minted when the walk enters `inner-badge.ts` rather than up front. Names, types and defaults are unchanged |
+  | `sub-component-scopes` | **new case**: signals in the four scopes the compiler's old extractors did not read, the same-name collision rule, and a `createShow` whose condition defaults to `true` |
+
+  Slot ids reordering is safe for the wire contract and always was: the client
+  matches hydration markers positionally and `DYN_TEXT` carries an independent
+  `marker_id`. Slot NAMES are the injection contract, and the ones that changed
+  are listed above.
+
 ## [0.2.0] - 2026-08-06
 
 ### Performance

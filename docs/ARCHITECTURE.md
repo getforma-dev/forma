@@ -116,10 +116,12 @@ every hard bug in this stack's history has been two halves of it disagreeing.
    │                      └─► @getforma/compiler                      │
    │                            ComponentAnalyzer  (find mount(), the │
    │                            │                   entry component,  │
-   │                            │                   signal defaults)  │
+   │                            │                   module constants) │
    │                            ▼                                     │
    │                            ir-walk.ts  (12 pattern rules, AST →  │
-   │                            │            opcodes + slots + isles) │
+   │                            │            opcodes + slots + isles; │
+   │                            │            pushes a signal-scope    │
+   │                            │            frame per inlined scope) │
    │                            ▼                                     │
    │                            ir-emit.ts (IrEmitContext.toBinary)   │
    │                            │                                     │
@@ -292,7 +294,7 @@ source (`Server` or `Client`), and default bytes. The server fills slots by
 `slot_id_by_name`.
 
 The compiler mints names in five families, all through one page-wide occurrence
-registry (`ir-walk.ts`, `uniqueName`):
+scheme (`utils.ts`, `uniqueName`), each family over its own registry:
 
 | Family | Base derivation | Example |
 |---|---|---|
@@ -315,6 +317,19 @@ with that copy and a later sibling mints a duplicate
 emitted two slots both named `attr:id`, and two sibling `<span>`s each with one
 dynamic text child emitted two `text:0`. Both families now run the same
 page-wide registry (forma-tools CHANGELOG, Unreleased; task N in the work log).
+Signals joined the scheme later still, once the compiler started resolving them
+per lexical scope: two components can each declare `count`, they are different
+signals, and they get `count` / `count#2` — with a build warning, because the
+renamed one is invisible in the source and a server injecting `count` would
+fill only the first.
+
+**Which signals get a slot** is decided by the WALK, not by a separate pass:
+the walk pushes a lexical frame each time it enters a scope it is inlining (a
+component's file, then that component's body), so a signal has a named slot
+exactly when the code declaring it was inlined into the page
+(`forma-tools/packages/compiler/src/signal-scope.ts`). Before that, signal
+defaults came from a pre-pass that enumerated scopes by hand and silently
+missed every scope nobody had written a method for.
 
 **Why names and not positions.** Positional addressing is what the stack had
 before, and its cost is measured, not theoretical:

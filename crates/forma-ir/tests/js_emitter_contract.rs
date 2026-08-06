@@ -19,6 +19,12 @@
 //! | `DYN_ATTR` off-by-one on the slot id | `dynamic-attrs` |
 //! | `SHOW_IF` branch-length swap | `ternary-asymmetric` |
 //!
+//! `sub-component-scopes` was added later, for a defect on the emitter side
+//! that only a RENDER can see: a signal the compiler failed to resolve loses
+//! its default, which is a perfectly well-formed slot table and a blank (or the
+//! wrong `SHOW_IF` branch) on the page. Its `@page defaults` section is the
+//! assertion — that render is what a server sends before it injects anything.
+//!
 //! The compiler lane has since added a slot-table assertion that also kills
 //! the first row, by pinning the literal `0x04` the emitter writes. That is a
 //! different claim from this one: it says the emitter wrote what its test
@@ -77,6 +83,7 @@ const EXPECTED_CASES: &[&str] = &[
     "list-same-source",
     "nested-islands",
     "static-page",
+    "sub-component-scopes",
     "ternary-asymmetric",
     "unicode-emoji",
 ];
