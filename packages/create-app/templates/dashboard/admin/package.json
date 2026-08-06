@@ -8,10 +8,10 @@
     "test:headed": "playwright test --headed"
   },
   "dependencies": {
-    "@getforma/core": "^1.5.0"
+    "@getforma/core": "^2.0.0"
   },
   "devDependencies": {
-    "@getforma/build": "^0.1.9",
+    "@getforma/build": "^0.2.0",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/cli": "^4.1.0",
     "esbuild": "^0.25.0",

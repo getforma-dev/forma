@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.6.0] - 2026-08-06
 
 An audit pass across the scaffolder, both templates, their pinned dependencies,
 the test suite and the docs. The headline is that neither template's

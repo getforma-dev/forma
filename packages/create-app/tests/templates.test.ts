@@ -197,12 +197,14 @@ describe.each(TEMPLATES)('%s template', (template) => {
   it('pins frontend dependencies at or above the versions whose fixes it needs', () => {
     const pkg = readJson(template, 'admin', 'package.json');
     const all = { ...pkg.dependencies, ...pkg.devDependencies };
-    // core 1.5.0: CSP-safe-by-default runtime, case-insensitive on* prop drop,
-    // dangerous-scheme URL filtering on the client.
-    expect(all['@getforma/core']).toBe('^1.5.0');
-    // build 0.1.9: the Tailwind step spawns npx via execFileSync, which cannot
-    // work on Windows — the dashboard could not be built there below this.
-    expect(all['@getforma/build']).toBe('^0.1.9');
+    // core 2.0.0: the new Function fallback is deleted, so the runtime is
+    // CSP-safe with nothing left to misconfigure; expressions evaluate through
+    // an allowlist AST interpreter that cannot reach a global.
+    expect(all['@getforma/core']).toBe('^2.0.0');
+    // build 0.2.0: below this the Tailwind step spawned npx via execFileSync,
+    // which cannot work on Windows, and every build emitted an island registry
+    // that resolved from nowhere and had to be deleted by hand.
+    expect(all['@getforma/build']).toBe('^0.2.0');
     expect(pkg.engines?.node).toBe('>=20.19.0');
   });
 
@@ -252,9 +254,11 @@ describe('minimal template', () => {
 
   it('pins @getforma/compiler, which is what emits the IR', () => {
     const pkg = readJson('minimal', 'admin', 'package.json');
-    // 0.2.0 gives each createList its own slot names; below it every list on a
-    // page collapsed onto one name in the Rust name->slot map.
-    expect(pkg.devDependencies['@getforma/compiler']).toBe('^0.2.0');
+    // 0.3.0 resolves components exported the way esbuild emits them, so a .tsx
+    // page no longer compiles to an empty div; it also gives every slot family
+    // a page-unique name and gives show branches and dynamic text their SSR
+    // defaults, so the server stops rendering the wrong branch.
+    expect(pkg.devDependencies['@getforma/compiler']).toBe('^0.3.0');
   });
 
   it('loads IR modules and passes slots, so Phase 2 is reachable', () => {
