@@ -80,6 +80,7 @@ const EXPECTED_CASES: &[&str] = &[
     "dynamic-attrs",
     "dynamic-text",
     "eager-concat",
+    "imported-const-table",
     "jsx-page",
     "list-same-source",
     "nested-islands",
@@ -95,11 +96,16 @@ const EXPECTED_CASES: &[&str] = &[
 /// `jsx-page` is written entirely in .tsx and `barrel-exports` reaches every
 /// component through an `index.ts` re-export. Both used to compile to
 /// placeholder IR — `<div id="app"></div>`, no slots, no islands — while the
-/// build exited 0. Pinning the render alone would not catch a relapse: a
-/// degraded emit still produces a valid, walkable, self-consistent module, and
-/// `UPDATE_GOLDEN` would happily bless the empty div. These assert the thing
-/// the golden cannot: the islands are real components carrying real slots.
-const RESOLUTION_CASES: &[&str] = &["barrel-exports", "jsx-page"];
+/// build exited 0. `imported-const-table` spreads static vocabulary tables
+/// that are DECLARED one module away, which used to make every such spread an
+/// anonymous `island_<n>` shell — 34 of them on ksx's map route alone.
+///
+/// Pinning the render alone would not catch a relapse: a degraded emit still
+/// produces a valid, walkable, self-consistent module, and `UPDATE_GOLDEN`
+/// would happily bless the empty div. These assert the thing the golden
+/// cannot: every island is a real component carrying real slots, and none of
+/// them is the compiler's give-up name.
+const RESOLUTION_CASES: &[&str] = &["barrel-exports", "imported-const-table", "jsx-page"];
 
 /// Rows handed to every LIST. More than one, because a single row cannot tell
 /// "iterated the array" from "rendered the body once".
