@@ -33,13 +33,25 @@ export const TEMPLATE_INFO: Record<string, { title: string; description: string 
 };
 
 /**
- * Directories that must never be copied out of a template, even if a
- * developer left them behind by building a template in place. Copying
- * `node_modules` into a scaffolded project would ship whatever versions
- * happened to be on the maintainer's disk instead of resolving the ranges in
- * the template's package.json.
+ * Names that must never be copied out of a template, even if a developer left
+ * them behind by building a template in place. Copying `node_modules` into a
+ * scaffolded project would ship whatever versions happened to be on the
+ * maintainer's disk instead of resolving the ranges in the template's
+ * package.json, and a lockfile does the same thing more quietly: npm honours
+ * it over those ranges, so a template lockfile committed once pins every app
+ * scaffolded afterwards to the versions that resolved the day it was authored.
+ * That is not hypothetical — a March lockfile in the dashboard template held
+ * new projects on @getforma/core 1.0.6 and a compiler that could not find
+ * mount(), which is why the templates ship no lockfile at all.
+ * Verified by: tests/scaffold-lib.test.ts > "never copies a lockfile or a build directory out of a template"
  */
-export const NEVER_COPY = new Set(['node_modules', 'dist', 'target', '.git']);
+export const NEVER_COPY = new Set([
+  'node_modules',
+  'dist',
+  'target',
+  '.git',
+  'package-lock.json',
+]);
 
 /**
  * Names that are safe as (a) a directory name on every platform, (b) a Cargo

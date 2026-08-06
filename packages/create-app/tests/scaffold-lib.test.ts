@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  NEVER_COPY,
   replacePlaceholders,
   restoreGitignores,
   validateProjectName,
@@ -138,5 +139,46 @@ describe('restoreGitignores', () => {
     }
     expect(fs.existsSync(path.join(dir, '_gitignore'))).toBe(false);
     expect(fs.existsSync(path.join(dir, 'admin', '_gitignore'))).toBe(false);
+  });
+});
+
+describe('NEVER_COPY', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkTmpDir('forma-nevercopy-');
+  });
+
+  afterEach(() => {
+    rmrf(dir);
+  });
+
+  // Drives the real cpSync through the same filter the scaffolder uses, rather
+  // than asserting the set's contents, so this fails if either the set or the
+  // wiring in src/index.ts regresses.
+  it('never copies a lockfile or a build directory out of a template', () => {
+    const src = path.join(dir, 'template');
+    const dest = path.join(dir, 'app');
+    fs.mkdirSync(path.join(src, 'admin', 'node_modules', 'left-behind'), { recursive: true });
+    fs.mkdirSync(path.join(src, 'admin', 'dist'), { recursive: true });
+    fs.mkdirSync(path.join(src, 'target'), { recursive: true });
+    fs.writeFileSync(path.join(src, 'admin', 'package.json'), '{}\n');
+    fs.writeFileSync(path.join(src, 'admin', 'package-lock.json'), '{"lockfileVersion":3}\n');
+    fs.writeFileSync(path.join(src, 'admin', 'node_modules', 'left-behind', 'index.js'), '');
+    fs.writeFileSync(path.join(src, 'admin', 'dist', 'app.js'), '');
+
+    fs.cpSync(src, dest, {
+      recursive: true,
+      filter: (s) => !NEVER_COPY.has(path.basename(s)),
+    });
+
+    // The lockfile is the quiet one: npm honours it over the ranges in
+    // package.json, so one committed template lockfile pins every app
+    // scaffolded after it to the versions that resolved that day.
+    expect(fs.existsSync(path.join(dest, 'admin', 'package-lock.json'))).toBe(false);
+    expect(fs.existsSync(path.join(dest, 'admin', 'node_modules'))).toBe(false);
+    expect(fs.existsSync(path.join(dest, 'admin', 'dist'))).toBe(false);
+    expect(fs.existsSync(path.join(dest, 'target'))).toBe(false);
+    expect(fs.existsSync(path.join(dest, 'admin', 'package.json'))).toBe(true);
   });
 });
