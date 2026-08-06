@@ -3,13 +3,26 @@
 //! This crate provides the core IR types and parsing logic that can be compiled
 //! to both native Rust and WebAssembly targets.
 
+// README.md and SECURITY.md both promise "Zero `unsafe` blocks". This is what
+// makes that a compiler-enforced property of the shipped library rather than a
+// claim. It is crate-root rather than a `[lints]` entry because `[lints]`
+// covers every target in the package, and the allocation-counting harness in
+// `tests/list_scaling.rs` must implement `GlobalAlloc` — a separate crate, not
+// code that ships.
+#![forbid(unsafe_code)]
 #![allow(clippy::type_complexity)]
 
+/// On-disk FMIR layout: header, section table, opcodes, and the table entry
+/// types. See `docs/FMIR-FORMAT.md` for the stability contract.
 pub mod format;
+/// Bounds-checked parsing and one-shot structural validation of an FMIR file.
 pub mod parser;
+/// Runtime slot values and the dense `SlotData` a page handler populates.
 pub mod slot;
+/// The SSR walker: opcode stream plus slot values in, HTML out.
 pub mod walker;
 
+/// Human-readable text dump of a module, for debugging and diffing.
 #[cfg(feature = "dump")]
 pub mod dump;
 
@@ -21,13 +34,23 @@ pub use format::{
 };
 pub use parser::{IrModule, IslandTableParsed, SlotTable, StringTable};
 pub use slot::{json_to_slot_value, SlotData, SlotValue};
-pub use walker::{walk_island, walk_to_html};
+pub use walker::{
+    walk_island, walk_island_with_limits, walk_to_html, walk_to_html_with_limits, WalkLimits,
+    DEFAULT_MAX_LIST_ITERATIONS, DEFAULT_MAX_OUTPUT_BYTES,
+};
 
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
 /// Full page render: parse IR bytes + JSON slots → HTML string.
-/// Panics on error (throws JS exception in WASM — client loader catches and falls back).
+///
+/// Panics on error (throws a JS exception in WASM — the client loader catches
+/// it and falls back to Phase 1). That set of errors now includes the walker's
+/// resource budgets ([`WalkLimits`]): an over-limit render throws here rather
+/// than aborting the wasm instance, and malformed control-flow lengths that
+/// used to render garbage now throw too. The client loader must have a
+/// rejection handler on this call — that is pre-existing behavior for parse
+/// errors, but the set of inputs that reach it is wider.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
@@ -37,8 +60,13 @@ pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
     walker::walk_to_html(&module, &slots).unwrap_or_else(|e| panic!("walk: {e}"))
 }
 
-/// Fragment render: parse IR bytes + JSON slots → island inner HTML.
-/// Panics on error (throws JS exception in WASM — client loader catches and falls back).
+/// Fragment render: parse IR bytes + JSON slots → the island's ROOT element,
+/// carrying its full `data-forma-*` attribute set (including `data-forma-props`
+/// when the island has props). Swap it in with `replaceWith`/`outerHTML`, never
+/// `innerHTML` — that would discard the attributes the runtime selects on.
+///
+/// Panics on error (throws a JS exception in WASM — client loader catches and
+/// falls back). See [`render`] for the widened error set.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn render_island(ir_bytes: &[u8], slots_json: &str, island_id: u16) -> String {

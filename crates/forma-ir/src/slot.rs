@@ -1,51 +1,191 @@
 use crate::format::{IrError, SlotType};
 use crate::parser::{IrModule, SlotTable};
+use std::sync::Arc;
 
 /// Runtime values populated by page handlers before IR walking.
+///
+/// `Array` and `Object` payloads are `Arc`-backed so that handing one item of a
+/// list to the walker is a refcount bump rather than a deep copy of the whole
+/// tree. `Arc` rather than `Rc` because `SlotData` is borrowed into page
+/// configs inside async handlers and must stay `Send + Sync`.
 #[derive(Debug, Clone)]
 pub enum SlotValue {
+    /// No value. Renders as empty text and is falsy, like JS `null`.
     Null,
+    /// A string, emitted HTML-escaped.
     Text(String),
+    /// A boolean. As a DYN_ATTR value, `true` emits the bare attribute name
+    /// and `false` omits the attribute entirely.
     Bool(bool),
+    /// A double, rendered exactly as ECMAScript's `Number::toString` would.
     Number(f64),
-    Array(Vec<SlotValue>),
-    Object(Vec<(String, SlotValue)>),
+    /// An array. The only value a LIST can iterate; `Arc` so binding one item
+    /// per row is a refcount bump, not a deep copy.
+    Array(Arc<[SlotValue]>),
+    /// A key/value object. The only value PROP can read a property from.
+    Object(Arc<[(String, SlotValue)]>),
 }
 
 /// A static Null reference returned for out-of-bounds slot lookups.
 static NULL_SLOT: SlotValue = SlotValue::Null;
 
+/// Largest integer f64 that ECMAScript renders without exponent games —
+/// `Number.MAX_SAFE_INTEGER + 1` (2^53).
+const JS_SAFE_INTEGER_LIMIT: f64 = 9007199254740992.0;
+
+/// Format an `f64` exactly the way ECMAScript's `Number::toString` does.
+///
+/// The SSR text node has to agree byte-for-byte with what `@getforma/core`
+/// renders client-side for the same value, otherwise hydration reconciles a
+/// difference that is not really there. Rust's `Display` for f64 never uses
+/// exponential notation (`format!("{}", 1e300)` is a 301-character integer),
+/// so the general path is built from `LowerExp` — also shortest-round-trip —
+/// and re-assembled using the spec's exponent rule.
+fn format_js_number(n: f64) -> String {
+    if n.is_nan() {
+        // Rust and JS agree here already.
+        return "NaN".to_string();
+    }
+    if n.is_infinite() {
+        return if n > 0.0 { "Infinity" } else { "-Infinity" }.to_string();
+    }
+
+    // Fast path: integers inside the JS safe range. This also deliberately
+    // keeps -0.0 → "0" (matching `String(-0)`); routing it through the general
+    // path would print "-0".
+    if n.fract() == 0.0 && n.abs() < JS_SAFE_INTEGER_LIMIT {
+        return format!("{}", n as i64);
+    }
+
+    // `{:e}` yields "1e300", "1.5e-7", "1.2345678901234568e20", ...
+    let exp_form = format!("{:e}", n);
+    let (mantissa, exp_str) = match exp_form.split_once('e') {
+        Some(parts) => parts,
+        None => return exp_form, // unreachable for finite f64
+    };
+    let exp: i32 = match exp_str.parse() {
+        Ok(e) => e,
+        Err(_) => return exp_form, // unreachable
+    };
+
+    let negative = mantissa.starts_with('-');
+    let digits: String = mantissa
+        .trim_start_matches('-')
+        .chars()
+        .filter(|c| *c != '.')
+        .collect();
+    let k = digits.len() as i32; // significant digits
+    let pos = exp + 1; // the spec's `n`: value = 0.<digits> x 10^pos
+
+    let mut out = String::with_capacity(digits.len() + 8);
+    if negative {
+        out.push('-');
+    }
+
+    if k <= pos && pos <= 21 {
+        // Integer with trailing zeros: 1e16 -> "10000000000000000"
+        out.push_str(&digits);
+        for _ in 0..(pos - k) {
+            out.push('0');
+        }
+    } else if 0 < pos && pos <= 21 {
+        // Decimal point inside the digits: 123.456
+        out.push_str(&digits[..pos as usize]);
+        out.push('.');
+        out.push_str(&digits[pos as usize..]);
+    } else if -6 < pos && pos <= 0 {
+        // Leading zeros: 1e-6 -> "0.000001"
+        out.push_str("0.");
+        for _ in 0..(-pos) {
+            out.push('0');
+        }
+        out.push_str(&digits);
+    } else {
+        // Exponential. JS writes an explicit '+' on positive exponents;
+        // Rust's `{:e}` does not, so insert it.
+        if k == 1 {
+            out.push_str(&digits);
+        } else {
+            out.push_str(&digits[..1]);
+            out.push('.');
+            out.push_str(&digits[1..]);
+        }
+        out.push('e');
+        let e = pos - 1;
+        if e >= 0 {
+            out.push('+');
+        }
+        out.push_str(&e.to_string());
+    }
+
+    out
+}
+
 impl SlotValue {
     /// Render to string for DYN_TEXT output.
+    ///
+    /// Numbers follow ECMAScript `Number::toString` so the SSR text node
+    /// matches the client renderer exactly. Note this also drives SWITCH case
+    /// comparison, whose case strings are authored on the JS side.
     pub fn to_text(&self) -> String {
         match self {
             SlotValue::Null => String::new(),
             SlotValue::Text(s) => s.clone(),
             SlotValue::Bool(true) => "true".to_string(),
             SlotValue::Bool(false) => "false".to_string(),
-            SlotValue::Number(n) => {
-                if n.fract() == 0.0 && n.is_finite() {
-                    format!("{}", *n as i64)
-                } else {
-                    // Format with enough precision, then trim trailing zeros
-                    let s = format!("{}", n);
-                    s
+            SlotValue::Number(n) => format_js_number(*n),
+            // `String(["a","b"])` is "a,b", not "[Array]" — the client
+            // renderer produces the join, so anything else is a visible
+            // SSR→hydration flip on the text node. Nesting flattens because
+            // `Array.prototype.join` calls `toString` on each element, which
+            // for an array is `join` again; `null`/`undefined` become "".
+            SlotValue::Array(items) => {
+                let mut out = String::new();
+                for (i, item) in items.iter().enumerate() {
+                    if i > 0 {
+                        out.push(',');
+                    }
+                    out.push_str(&item.to_text());
                 }
+                out
             }
-            SlotValue::Array(_) => "[Array]".to_string(),
-            SlotValue::Object(_) => "[Object]".to_string(),
+            // `String({})` — every plain object, whatever its keys.
+            SlotValue::Object(_) => "[object Object]".to_string(),
         }
     }
 
-    /// Truthiness for SHOW_IF evaluation.
+    /// Build an `Array` value from a `Vec`.
+    ///
+    /// Convenience constructor for the `Arc`-backed payload — prefer it over
+    /// naming the variant so call sites do not have to spell the conversion.
+    pub fn array(items: Vec<SlotValue>) -> Self {
+        SlotValue::Array(items.into())
+    }
+
+    /// Build an `Object` value from a `Vec` of key/value pairs.
+    pub fn object(pairs: Vec<(String, SlotValue)>) -> Self {
+        SlotValue::Object(pairs.into())
+    }
+
+    /// Truthiness for SHOW_IF evaluation, following ECMAScript `ToBoolean`.
+    ///
+    /// Every object is truthy in JS, empty arrays included (`!![]` is `true`).
+    /// The server used to call an empty array falsy, so a SHOW_IF bound
+    /// straight to a list slot hid its block during SSR and then un-hid it the
+    /// moment the client evaluated the same condition — a guaranteed visible
+    /// flip on the empty-list case, which is exactly the state a fresh page
+    /// starts in.
+    ///
+    /// NaN is falsy (`n != 0.0` is true for NaN), matching `ToBoolean`.
+    ///
+    /// Verified by: crates/forma-ir/src/slot.rs > "as_bool_matches_javascript_tobool"
     pub fn as_bool(&self) -> bool {
         match self {
             SlotValue::Null => false,
             SlotValue::Bool(b) => *b,
             SlotValue::Text(s) => !s.is_empty(),
-            SlotValue::Number(n) => *n != 0.0,
-            SlotValue::Array(a) => !a.is_empty(),
-            SlotValue::Object(_) => true,
+            SlotValue::Number(n) => *n != 0.0 && !n.is_nan(),
+            SlotValue::Array(_) | SlotValue::Object(_) => true,
         }
     }
 
@@ -53,7 +193,7 @@ impl SlotValue {
     pub fn get_property(&self, name: &str) -> SlotValue {
         match self {
             SlotValue::Object(pairs) => {
-                for (k, v) in pairs {
+                for (k, v) in pairs.iter() {
                     if k == name {
                         return v.clone();
                     }
@@ -82,13 +222,25 @@ impl SlotValue {
     }
 
     /// Convert to a serde_json::Value for props serialization.
+    ///
+    /// Non-finite numbers become `null`, which is not a defect but exact
+    /// parity: `JSON.stringify(Infinity)` is `null` in JS too, so a props
+    /// payload matches what a formajs SSR render would produce even though
+    /// [`SlotValue::to_text`] says `"Infinity"` for the same value.
+    ///
+    /// The serialized *text* is not byte-identical to `JSON.stringify` (serde
+    /// emits `1e16` where JS emits `10000000000000000`); the parsed values are.
+    /// Props are always consumed via `JSON.parse`, never string-compared.
     pub fn to_json(&self) -> serde_json::Value {
         match self {
             SlotValue::Null => serde_json::Value::Null,
             SlotValue::Text(s) => serde_json::Value::String(s.clone()),
             SlotValue::Bool(b) => serde_json::Value::Bool(*b),
             SlotValue::Number(n) => {
-                if n.fract() == 0.0 && n.is_finite() {
+                // Only take the integer shortcut inside the JS safe range —
+                // `*n as i64` saturates above 2^63 and would silently corrupt
+                // the value.
+                if n.fract() == 0.0 && n.abs() < JS_SAFE_INTEGER_LIMIT {
                     serde_json::Value::Number(serde_json::Number::from(*n as i64))
                 } else {
                     serde_json::Number::from_f64(*n)
@@ -121,18 +273,55 @@ pub struct SlotData {
 
 impl SlotData {
     /// Create a new SlotData with `capacity` Null-initialized slots.
+    ///
+    /// This is the only constructor that can be undersized relative to a
+    /// module's slot table. Prefer [`SlotData::new_from_defaults`] or
+    /// [`SlotData::from_json`], which size themselves from the module; `new`
+    /// is for tests and for callers that know their own slot count.
     pub fn new(capacity: usize) -> Self {
         let mut slots = Vec::with_capacity(capacity);
         slots.resize_with(capacity, || SlotValue::Null);
         Self { slots }
     }
 
-    /// Set a slot value. No-op if slot_id is out of bounds.
+    /// Set a slot value, growing the backing storage if `slot_id` is past the
+    /// end (new entries are `Null`).
+    ///
+    /// This used to be a silent no-op when out of bounds, which made a LIST
+    /// whose `item_slot_id` exceeded the SlotData length render every row
+    /// identically with no error at all. Growing is cheap, and a write outside
+    /// the module's declared slot table cannot reach here from a parsed module
+    /// — `IrModule::validate` rejects an opcode naming an undeclared slot at
+    /// parse time — so the branch only catches a caller that sized its own
+    /// `SlotData` too small, and warns under the `tracing` feature.
+    ///
+    /// Verified by: crates/forma-ir/src/slot.rs > "set_grows_instead_of_silently_dropping"
+    /// Verified by: crates/forma-ir/src/parser.rs > "validate_rejects_list_item_slot_not_in_table"
     pub fn set(&mut self, slot_id: u16, value: SlotValue) {
+        self.replace(slot_id, value);
+    }
+
+    /// Set a slot value and return the previous one.
+    ///
+    /// This is the primitive the walker's LIST loop is built on: it binds the
+    /// row's item (and any PROP the body extracts from it) by swapping values
+    /// in, then swaps the saved originals back when the row ends. That keeps
+    /// per-row scoping without the deep `SlotData` clone the loop used to take,
+    /// which made a list cost O(rows x slots) instead of O(rows).
+    ///
+    /// Verified by: crates/forma-ir/tests/list_scaling.rs > "list_walk_allocations_are_linear_in_row_count"
+    pub fn replace(&mut self, slot_id: u16, value: SlotValue) -> SlotValue {
         let idx = slot_id as usize;
-        if idx < self.slots.len() {
-            self.slots[idx] = value;
+        if idx >= self.slots.len() {
+            #[cfg(feature = "tracing")]
+            tracing::warn!(
+                slot_id = slot_id,
+                len = self.slots.len(),
+                "Slot write past the end of SlotData — growing (SlotData sized smaller than the module's slot table)"
+            );
+            self.slots.resize_with(idx + 1, || SlotValue::Null);
         }
+        std::mem::replace(&mut self.slots[idx], value)
     }
 
     /// Get a reference to a slot value. Returns &Null if out of bounds.
@@ -168,12 +357,18 @@ impl SlotData {
             _ => return Err(IrError::JsonParseError("expected JSON object".to_string())),
         };
 
-        // Build name → slot_id map from the slot table + string table
-        let mut name_to_slot: std::collections::HashMap<String, u16> =
+        // Build name → slot_id map from the slot table + string table.
+        //
+        // Slot names are not unique (see `IrModule::slot_id_by_name`), and the
+        // first entry in table order wins — `insert` alone would have made the
+        // LAST one win here while `slot_id_by_name` returned the first, so a
+        // handler setting a value by name filled a different slot than a
+        // lookup by the same name resolved to.
+        let mut name_to_slot: std::collections::HashMap<&str, u16> =
             std::collections::HashMap::new();
         for entry in module.slots.entries() {
             if let Ok(name) = module.strings.get(entry.name_str_idx) {
-                name_to_slot.insert(name.to_string(), entry.slot_id);
+                name_to_slot.entry(name).or_insert(entry.slot_id);
             }
         }
 
@@ -182,7 +377,7 @@ impl SlotData {
 
         // Override with JSON values
         for (key, value) in &obj {
-            if let Some(&slot_id) = name_to_slot.get(key) {
+            if let Some(&slot_id) = name_to_slot.get(key.as_str()) {
                 data.set(slot_id, json_to_slot_value(value));
             }
             // Unknown keys silently ignored
@@ -227,7 +422,7 @@ impl SlotData {
                     .unwrap_or(SlotValue::Null),
                 SlotType::Array => {
                     if default_str == "[]" {
-                        SlotValue::Array(vec![])
+                        SlotValue::array(vec![])
                     } else {
                         SlotValue::Null
                     }
@@ -315,26 +510,69 @@ mod tests {
     }
 
     #[test]
-    fn slot_value_as_bool_truthy() {
+    fn as_bool_matches_javascript_tobool() {
+        // Each row is (value, exactly what `Boolean(value)` gives in JS). The
+        // SSR condition has to agree with the client's, or the block flips
+        // visible/hidden the moment hydration runs.
         assert!(SlotValue::Text("x".to_string()).as_bool());
         assert!(SlotValue::Number(1.0).as_bool());
+        assert!(SlotValue::Number(-1.0).as_bool());
         assert!(SlotValue::Bool(true).as_bool());
-        assert!(SlotValue::Array(vec![SlotValue::Null]).as_bool());
-        assert!(SlotValue::Object(vec![]).as_bool());
-    }
+        assert!(SlotValue::array(vec![SlotValue::Null]).as_bool());
+        assert!(SlotValue::object(vec![]).as_bool());
+        // `!![]` is true. This is the row the old `!a.is_empty()` got wrong,
+        // and an empty list is the state a fresh page starts in.
+        assert!(SlotValue::array(vec![]).as_bool());
 
-    #[test]
-    fn slot_value_as_bool_falsy() {
         assert!(!SlotValue::Null.as_bool());
         assert!(!SlotValue::Text("".to_string()).as_bool());
         assert!(!SlotValue::Number(0.0).as_bool());
+        assert!(!SlotValue::Number(-0.0).as_bool());
+        assert!(!SlotValue::Number(f64::NAN).as_bool());
         assert!(!SlotValue::Bool(false).as_bool());
-        assert!(!SlotValue::Array(vec![]).as_bool());
+    }
+
+    #[test]
+    fn to_text_matches_javascript_string_for_containers() {
+        // `String(value)` in JS, for the container variants.
+        assert_eq!(SlotValue::array(vec![]).to_text(), "");
+        assert_eq!(
+            SlotValue::array(vec![
+                SlotValue::Text("a".into()),
+                SlotValue::Text("b".into())
+            ])
+            .to_text(),
+            "a,b"
+        );
+        // null and undefined join as empty strings, not as "null".
+        assert_eq!(
+            SlotValue::array(vec![
+                SlotValue::Null,
+                SlotValue::Number(1.0),
+                SlotValue::Null
+            ])
+            .to_text(),
+            ",1,"
+        );
+        // Nested arrays flatten, because join calls toString on each element.
+        assert_eq!(
+            SlotValue::array(vec![
+                SlotValue::array(vec![SlotValue::Number(1.0), SlotValue::Number(2.0)]),
+                SlotValue::array(vec![SlotValue::Number(3.0)]),
+            ])
+            .to_text(),
+            "1,2,3"
+        );
+        assert_eq!(SlotValue::object(vec![]).to_text(), "[object Object]");
+        assert_eq!(
+            SlotValue::array(vec![SlotValue::object(vec![])]).to_text(),
+            "[object Object]"
+        );
     }
 
     #[test]
     fn slot_value_as_array() {
-        let arr = SlotValue::Array(vec![SlotValue::Text("a".to_string())]);
+        let arr = SlotValue::array(vec![SlotValue::Text("a".to_string())]);
         assert!(arr.as_array().is_some());
         assert_eq!(arr.as_array().unwrap().len(), 1);
 
@@ -342,7 +580,7 @@ mod tests {
         assert!(SlotValue::Text("x".to_string()).as_array().is_none());
         assert!(SlotValue::Number(1.0).as_array().is_none());
         assert!(SlotValue::Bool(true).as_array().is_none());
-        assert!(SlotValue::Object(vec![]).as_array().is_none());
+        assert!(SlotValue::object(vec![]).as_array().is_none());
     }
 
     #[test]
@@ -593,5 +831,97 @@ mod tests {
             crate::format::IrError::JsonParseError(_) => {} // expected
             other => panic!("expected JsonParseError, got {other:?}"),
         }
+    }
+
+    // -- ECMAScript number parity (F-05) ------------------------------------
+
+    #[test]
+    fn number_to_text_matches_javascript_string() {
+        // Each row is (value, exactly what `String(value)` produces in JS).
+        // The SSR text node must agree with the client renderer byte for byte.
+        let cases: &[(f64, &str)] = &[
+            (0.0, "0"),
+            // -0.0 stays on the integer fast path: String(-0) is "0", but
+            // Rust's Display for -0.0 is "-0", so routing it through the
+            // general path would silently regress it.
+            (-0.0, "0"),
+            (1.0, "1"),
+            (-42.0, "-42"),
+            (1.5, "1.5"),
+            (123.456, "123.456"),
+            (0.1, "0.1"),
+            // Above 2^53 the fast path does not apply, but the general path
+            // must still expand: this is the row that catches a naive
+            // "above 2^53 means exponential" implementation.
+            (1e16, "10000000000000000"),
+            (1e20, "100000000000000000000"),
+            // ...and 1e21 is where ECMAScript switches to exponent notation,
+            // with an explicit '+' that Rust's {:e} does not write.
+            (1e21, "1e+21"),
+            (1e300, "1e+300"),
+            (9007199254740992.0, "9007199254740992"), // 2^53
+            (9007199254740994.0, "9007199254740994"), // beyond MAX_SAFE_INTEGER
+            (1e-6, "0.000001"),
+            (1e-7, "1e-7"),
+            (1.5e-7, "1.5e-7"),
+            (-1.5e-7, "-1.5e-7"),
+            (f64::MAX, "1.7976931348623157e+308"),
+            // Only ±Infinity change here; Rust already prints "NaN".
+            (f64::INFINITY, "Infinity"),
+            (f64::NEG_INFINITY, "-Infinity"),
+            (f64::NAN, "NaN"),
+        ];
+        for (value, expected) in cases {
+            assert_eq!(
+                SlotValue::Number(*value).to_text(),
+                *expected,
+                "String({value:?})"
+            );
+        }
+    }
+
+    #[test]
+    fn number_to_text_never_saturates_above_i64() {
+        // `*n as i64` saturates at 2^63, which silently corrupted every value
+        // above it into 9223372036854775807.
+        let huge = 1e19_f64; // > i64::MAX, integral
+        assert_eq!(SlotValue::Number(huge).to_text(), "10000000000000000000");
+        assert!(!SlotValue::Number(huge)
+            .to_text()
+            .contains("9223372036854775807"));
+    }
+
+    #[test]
+    fn number_to_json_round_trips_by_value_not_by_text() {
+        // serde emits `1e16` where JS emits `10000000000000000` — different
+        // bytes, identical parsed f64. Props are consumed with JSON.parse and
+        // never string-compared, so assert on the parsed value.
+        for value in [0.0_f64, -0.0, 1.5, 1e16, 1e21, 1e300, -1e19] {
+            let json = SlotValue::Number(value).to_json();
+            let parsed: f64 = json.as_f64().unwrap_or_else(|| panic!("{value} -> {json}"));
+            assert_eq!(parsed, value, "value {value} did not round-trip");
+        }
+    }
+
+    #[test]
+    fn number_to_json_non_finite_is_null_matching_js() {
+        // NOT a residual defect: JSON.stringify(Infinity) is null in JS too,
+        // so `null` here while to_text says "Infinity" is exactly ES-faithful.
+        for value in [f64::INFINITY, f64::NEG_INFINITY, f64::NAN] {
+            assert_eq!(SlotValue::Number(value).to_json(), serde_json::Value::Null);
+        }
+    }
+
+    // -- Slot writes past the end (F-16) ------------------------------------
+
+    #[test]
+    fn set_grows_instead_of_silently_dropping() {
+        // A LIST whose item_slot_id exceeded the SlotData length used to make
+        // every row render identically, with no error anywhere.
+        let mut data = SlotData::new(1);
+        data.set(5, SlotValue::Text("late".into()));
+        assert_eq!(data.get(5).to_text(), "late");
+        // Intervening slots are Null, not garbage.
+        assert!(matches!(data.get(3), SlotValue::Null));
     }
 }

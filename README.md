@@ -6,6 +6,34 @@
 
 Rust backend for the [Forma Stack](https://getforma.dev) — server-side rendering without Node.js. The `@getforma/compiler` compiles TypeScript components to a binary IR (FMIR). These Rust crates parse that binary and generate HTML, so your server never needs a JavaScript runtime.
 
+> **Where this sits.** One product, four repos:
+>
+> ```
+> TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
+>          forma-tools                          THIS REPO                 formajs
+> ```
+>
+> **You are here:** the server half — the FMIR parser, the HTML walker, and the
+> Axum middleware. New to the stack? Read
+> **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** first; it explains the whole
+> pipeline and why each piece is shaped the way it is.
+> Neighbours: [formajs](https://github.com/getforma-dev/formajs) (client
+> runtime) · [forma-tools](https://github.com/getforma-dev/forma-tools)
+> (compiler + build) ·
+> [create-forma-app](https://github.com/getforma-dev/create-forma-app)
+> (scaffolder).
+
+## Documentation
+
+| Document | What it is |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | The stack, end to end, and the reasoning behind every load-bearing decision. **Start here.** |
+| [docs/FMIR-FORMAT.md](docs/FMIR-FORMAT.md) | The binary layout and the stability contract: which bytes are frozen, what a version bump would cost consumers |
+| [docs/TESTING.md](docs/TESTING.md) | The testing policy for all four repos, and the `Verified by:` citation contract |
+| [docs/README.md](docs/README.md) | Index of the stack's documentation, including the other repos' |
+| [SECURITY.md](SECURITY.md) | Threat model and the guarantees these crates do and do not make |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, the gates, and what a reviewer will ask you |
+
 ## Crates
 
 ### `forma-ir` — The IR Engine
@@ -46,10 +74,10 @@ forma-server = "0.1"
 
 **What it does:**
 - `render_page(config)` — generates a full HTML page from an IR module + slot data
-- `load_ir_modules(manifest)` — loads `.ir` files from embedded assets at startup
-- `serve_asset(filename)` — serves content-hashed assets with Brotli/gzip negotiation and `Cache-Control: immutable`
-- `generate_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG)
-- `build_csp_header(nonce)` — strict CSP: no `unsafe-inline`, no `unsafe-eval`, nonce-based scripts/styles
+- `load_ir_modules(manifest)` — loads `.ir` files from embedded assets at startup (`load_ir_modules_strict` returns the failures so you can fail startup on a build/embed skew)
+- `serve_asset(filename)` — serves assets with Brotli/gzip negotiation, `Cache-Control: immutable` for content-hashed names and revalidation + ETag for the rest
+- `generate_csp_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
+- `build_csp_header(nonce)` — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`
 
 **Two rendering modes:**
 
@@ -91,15 +119,52 @@ TypeScript/JSX components
   @getforma/core (FormaJS)  → hydrates using marker comments, attaches reactivity
 ```
 
+What crosses each of those arrows — the slot-name contract, the hydration
+marker grammar, the `data-forma-*` attributes and the island props protocol —
+is specified in [docs/ARCHITECTURE.md §3](docs/ARCHITECTURE.md), which is the
+part to keep open while you work. Those four contracts are shared byte-for-byte
+with the TypeScript side and with the first production consumer, so changing
+one is a cross-repo change.
+
 ## Security
 
-- **HTML escaping:** All dynamic text and attributes are escaped (`&`, `<`, `>`, `"`)
-- **CSP headers:** Strict policy with cryptographic nonces — no `unsafe-inline`, no `unsafe-eval`
-- **Recursion limits:** Walker enforces `MAX_RECURSION_DEPTH = 64` and `MAX_LIST_DEPTH = 4` to prevent stack overflow from malicious IR
-- **Comment escaping:** `--` in HTML comments replaced with `&#45;&#45;` to prevent injection
-- **Script tag escaping:** `</script>` in props replaced with `<\/script>`
-- **No unsafe code:** Zero `unsafe` blocks across both crates
-- **145 tests** including XSS payload verification and malformed input handling
+See [SECURITY.md](SECURITY.md) for the full list and the threat model — in particular, **FMIR is a trusted input**: run only IR produced by a compiler you trust.
+
+- **HTML escaping:** All dynamic text and attribute values are escaped (`&`, `<`, `>`, `"`); tag and attribute names are validated against an HTML name charset
+- **Attribute safety:** URL-bearing attributes are scheme-checked and `on*` handlers are dropped, matching the client renderer so SSR and CSR agree
+- **CSP headers:** Strict policy with cryptographic nonces — `'strict-dynamic'` scripts, nonce-locked style *elements*, no `unsafe-eval`. Style *attributes* are allowed via `style-src-attr` because compiled `style:` bindings emit them
+- **Resource limits:** Recursion depth 64, list nesting 4, plus a per-render output cap and LIST-iteration budget (both configurable) so a small module cannot force a multi-gigabyte allocation
+- **Comment escaping:** `--` in HTML comments replaced with `&#45;&#45;`, and a comment cannot self-close
+- **Island props:** the `__forma_islands` JSON block is escaped so it cannot terminate or re-open its `<script>` element; read it with `JSON.parse`
+- **Load-time validation:** cross-table references, control-flow tiling, duplicate slot/island ids, and islands the tables do not declare are all rejected at parse time, so a compiler bug fails loudly at startup instead of rendering a quietly wrong page on some later request
+- **No unsafe code:** both library crates carry `#![forbid(unsafe_code)]`, so "zero `unsafe`" is compiler-enforced rather than asserted
+- XSS payload verification and malformed-input handling are covered by the test suite (`cargo test --workspace`)
+
+## Performance
+
+Lists are the SSR workload the whole design rests on, so the cost of one is a
+tested property, not a hope. Rendering a 3-column table page
+(`cargo run --release -p forma-ir --example list_scaling`):
+
+| rows | µs | µs/row |
+|-----:|---:|-------:|
+| 1 | 0.6 | 0.56 |
+| 10 | 3.8 | 0.38 |
+| 100 | 36.2 | 0.36 |
+| 400 | 147.0 | 0.37 |
+
+Flat per-row cost, ~6 allocations per row. `crates/forma-ir/tests/list_scaling.rs`
+fails the build if that stops being true — it asserts both wall-clock time and
+allocation count grow under 6x for a 4x increase in rows, where linear is ~4x
+and quadratic is ~16x.
+
+## The binary format
+
+[`docs/FMIR-FORMAT.md`](docs/FMIR-FORMAT.md) documents the on-disk layout and,
+more importantly, the **stability contract**: which bytes are frozen across all
+future versions (magic at 0, u16 LE version at 4), what v2 guarantees, and what
+a version bump would require of consumers. If you byte-guard an embedded `.fmir`
+in your own test suite, that document is what you are guarding against.
 
 ## Part of the Forma Stack
 
@@ -129,10 +194,25 @@ TypeScript/JSX components
 ```bash
 git clone https://github.com/getforma-dev/forma.git
 cd forma
-cargo test --workspace     # 145 tests
-cargo clippy --workspace   # lint
-cargo fmt --all --check    # format check
+cargo test --workspace                                    # full suite
+cargo clippy --workspace --all-targets --all-features     # lint (CI adds -D warnings)
+cargo fmt --all --check                                   # format check
+
+# Offset arithmetic differs where usize is 32 bits (as on wasm32):
+cargo test --workspace --target i686-unknown-linux-gnu
+
+# MSRVs differ per crate and CI builds at exactly these versions:
+cargo +1.71 check -p forma-ir --all-targets
+cargo +1.85 check -p forma-server --all-targets
+
+# Measurement harnesses (not gates — see tests/list_scaling.rs for those):
+cargo run --release -p forma-ir --example list_scaling   # timing/alloc table
+cargo run --release -p forma-ir --example list_corpus    # byte-identity corpus
 ```
+
+Before you open a PR, read [CONTRIBUTING.md](CONTRIBUTING.md) — and if the PR
+adds or changes a test, [docs/TESTING.md](docs/TESTING.md), which is what a
+reviewer will hold it to.
 
 ## License
 

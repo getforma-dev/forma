@@ -3,10 +3,64 @@ members = ["crates/forma-ir", "crates/forma-server"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.4"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
+authors = ["Forma <victor@getforma.dev>"]
+repository = "https://github.com/getforma-dev/forma"
+homepage = "https://getforma.dev"
 
-# Local dev overrides — forma-server resolves forma-ir from this workspace
+# Shared so the two crates cannot drift to different majors of the same dep.
+# `rust-version` is deliberately NOT shared: the crates have genuinely
+# different floors (forma-ir 1.71, forma-server 1.85 because rust-embed pulls
+# sha2 0.11), and one number here would either overstate forma-ir's or
+# understate forma-server's. Both are pinned by a CI job that builds at exactly
+# the declared version.
+[workspace.dependencies]
+serde_json = "1"
+tracing = "0.1"
+
+# Applied to both crates via `[lints] workspace = true`.
+#
+# `unsafe_code` is NOT here: it is `#![forbid(unsafe_code)]` on each library
+# root instead, because `[lints]` covers every target in the package and the
+# allocation-counting harness in `tests/list_scaling.rs` has to implement
+# `GlobalAlloc`. Forbidding at the library root is the claim that matters —
+# it is the code that ships.
+[workspace.lints.rust]
+missing_docs = "warn"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+# Correctness-adjacent lints that the walker's offset arithmetic depends on.
+# `-D warnings` in CI makes these hard gates.
+todo = "warn"
+unimplemented = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+# The parser reads attacker-controlled u32 lengths into usize; an unchecked
+# cast or slice index there is the whole bug class this crate was audited for.
+indexing_slicing = "allow" # too noisy for the test modules; audited by hand
+undocumented_unsafe_blocks = "warn"
+
+# SSR latency is the product claim, so the release profile is tuned rather than
+# left at defaults. `lto = "thin"` and one codegen unit are what let the walker
+# inline `push_checked` into the opcode loop; `panic = "abort"` is deliberately
+# NOT set, because forma-server runs inside an axum worker and a panicking
+# handler must unwind rather than take the process down.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+# Local dev overrides — forma-server resolves forma-ir from this workspace.
+#
+# FOOTGUN: if the local forma-ir version stops satisfying forma-server's
+# `forma-ir = "…"` requirement, cargo emits a soft warning and quietly builds
+# and tests against the PUBLISHED crate instead of this working tree. The
+# versions are inherited from `[workspace.package]` above so they move
+# together, and CI runs `cargo tree -p forma-server -i forma-ir` to assert the
+# path source is the one in use.
 [patch.crates-io]
 forma-ir = { path = "crates/forma-ir" }
