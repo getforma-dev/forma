@@ -3,13 +3,123 @@ name: CI
 on:
   push:
     branches: [main]
+    # Doc-only pushes to main do not need five runners. Deliberately NOT on
+    # `pull_request`: a skipped workflow leaves a required status check
+    # permanently pending and the PR can never merge. Extend to pull_request
+    # only after confirming branch protection allows it.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
   pull_request:
     branches: [main]
 
+# One run per ref; a new push cancels the run it supersedes. On 2026-08-06 the
+# four Forma repos pushed together and asked for ~44 concurrent jobs against a
+# 20-job limit; jobs then sat 20-58 minutes waiting for a runner and were read
+# as hangs. They were queue time, and nothing here cancelled a superseded run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # WHY THIS JOB EXISTS.
+  #
+  # `scaffold` below installs the templates' real dependencies from npm. Those
+  # templates pin @getforma/core ^2.0.0, @getforma/build ^0.2.0 and
+  # @getforma/compiler ^0.3.0. As of 2026-08-06 npm serves 1.5.0, 0.1.9 and
+  # 0.2.0 — the three releases that failed to publish during the Actions
+  # outage. So `npm install` inside every scaffolded project exits 1 with
+  # E404/ETARGET and `scaffold` is RED ON EVERY RUN, on both operating
+  # systems, until those versions ship.
+  #
+  # REPRODUCED LOCALLY: `FORMA_SCAFFOLD_E2E=1 npx vitest run` -> 4 failed,
+  # 90 passed, in 11.8s. The visible symptom is an opaque
+  # `AssertionError: expected 1 to be +0` at tests/scaffold.test.ts:247,
+  # which names neither npm nor the version that is missing.
+  #
+  # A job that fails forever is worse than no job: it trains everyone to
+  # ignore a red X, which is how every silent defect this week survived. So
+  # this preflight resolves each pin against the registry first and decides:
+  #   - all resolvable  -> `scaffold` runs, full gate, nothing weakened
+  #   - any unresolvable -> `scaffold` is SKIPPED and this job prints a
+  #     ::warning:: naming the exact pins and what is not being verified
+  #
+  # On the RELEASE path the same check is a hard failure — see release.yml.
+  # Publishing a scaffolder whose templates cannot install is the exact defect
+  # this repo shipped for months, and that gate is not softened here.
+  preflight:
+    runs-on: ubuntu-latest
+    # MEASURED locally: enumerating the pins takes milliseconds and each
+    # `npm view` is a single registry round trip (3 pins today). 5 is many
+    # times a ~20s run and bounds an unresponsive registry.
+    timeout-minutes: 5
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+      missing: ${{ steps.check.outputs.missing }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Every @getforma pin in templates/ must resolve on npm
+        id: check
+        run: |
+          set -uo pipefail
+          PINS=$(node -e '
+            const fs = require("fs"), path = require("path");
+            const out = new Set();
+            (function walk(dir) {
+              for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) { if (e.name !== "node_modules") walk(p); }
+                else if (e.name === "package.json") {
+                  const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+                  for (const field of ["dependencies", "devDependencies"]) {
+                    for (const [name, range] of Object.entries(pkg[field] || {})) {
+                      if (name.startsWith("@getforma/")) out.add(name + "@" + range);
+                    }
+                  }
+                }
+              }
+            })("templates");
+            console.log([...out].sort().join("\n"));
+          ')
+          echo "Template pins on the @getforma scope:"
+          MISSING=""
+          for pin in $PINS; do
+            if RESOLVED=$(npm view "$pin" version 2>/dev/null) && [ -n "$RESOLVED" ]; then
+              echo "  OK          $pin -> $RESOLVED"
+            else
+              echo "  UNPUBLISHED $pin"
+              MISSING="${MISSING:+$MISSING }$pin"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "missing=$MISSING" >> "$GITHUB_OUTPUT"
+            echo "::warning title=scaffold gate skipped::These template pins are not on npm yet: $MISSING"
+            echo "::warning::The scaffold job installs the templates for real, so it CANNOT pass until"
+            echo "::warning::those versions publish. It is skipped rather than left permanently red."
+            echo "::warning::NOT VERIFIED in this run: templates install, the frontend builds, cargo compiles."
+            echo "::warning::Publish the missing versions, then re-run. release.yml treats this as a HARD FAILURE."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "missing=" >> "$GITHUB_OUTPUT"
+            echo "All template pins resolve; the scaffold gate will run."
+          fi
+
   test:
     runs-on: ubuntu-latest
+    # MEASURED locally: `npm test` = 3s wall, 90 passed / 4 skipped, 4 files.
+    # Plus `npm ci` (2s locally, 20-40s on a runner), `npm run build` (tsup)
+    # and `tsc --noEmit`. Realistic worst case ~2m; 10 is 5x. Nothing here
+    # touches the network after install and nothing spawns a server.
+    timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
         node-version: [20, 22, 24]
     steps:
@@ -26,13 +136,33 @@ jobs:
   # The gate that a string-matching suite cannot give you: scaffold each
   # template for real, install its dependencies, build the frontend and
   # compile the Rust. Runs on Windows too, because that is where the
-  # dashboard's Tailwind step used to fail outright.
+  # dashboard's Tailwind step used to fail outright — the first field-reported
+  # bug in this toolchain was a Windows-only ENOENT that shipped precisely
+  # because nothing ran on Windows. WINDOWS COVERAGE IS NOT CUT.
+  #
+  # What IS cut: this job no longer starts until `test` is green and
+  # `preflight` says the templates can install. It is by far the most
+  # expensive thing either repo runs, and there is nothing to learn from it
+  # when the unit suite is already failing or when npm cannot serve the pins.
+  # That takes this workflow's peak concurrent demand from 5 jobs to 4, and to
+  # 2 in the current state where the pins are unpublished.
   scaffold:
+    needs: [preflight, test]
+    if: needs.preflight.outputs.ready == 'true'
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    # The genuinely expensive job: 2 templates x (npm install + frontend build
+    # + cargo build) x 2 operating systems. It is also the best-defended
+    # against hangs in the fleet — tests/helpers.ts puts `timeout: 900_000` on
+    # EVERY spawnSync, passes `input: ''` so a future prompt gives up instead
+    # of blocking, and bounds withServer() startup polling at 100 x 200ms.
+    # Typical 12-15m on ubuntu, ~20m on windows. 45 is ~3x the ubuntu number
+    # and >2x the windows one, and still fails 5-15 minutes sooner than the
+    # runner waits that were mistaken for hangs.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,9 +170,29 @@ jobs:
           node-version: 22
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+
+      # NOT Swatinem/rust-cache: this repo has no root Cargo.toml and the
+      # templates ship no Cargo.lock, so rust-cache has no workspace to key on
+      # and no target dir to save. The build that matters happens in a fresh
+      # temp directory, so its target/ is unreachable anyway — the win here is
+      # the shared crate registry, which is cached explicitly.
+      - name: Cache the cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('templates/**/Cargo.toml') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
+
       - run: npm ci
       - run: npm run build
       - run: npx vitest run
         env:
           FORMA_SCAFFOLD_E2E: '1'
+          # Retry transient registry/index 5xx rather than failing a 15-minute
+          # job over a blip — the exact failure mode of the 2026-08-06 outage.
+          CARGO_NET_RETRY: '10'
+          CARGO_INCREMENTAL: '0'

@@ -4,9 +4,23 @@ on:
   push:
     tags: ['v*']
 
+# cancel-in-progress is deliberately FALSE. A publish is never superseded, and
+# cancelling `npm publish` between the tarball upload and the registry commit
+# is how a version ends up half-created and unrecoverable without a bump.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # This job runs the full scaffold gate (npm install + frontend build +
+    # cargo build for both templates) before publishing, so it inherits that
+    # job's cost: typical 12-15m on ubuntu. Every subprocess inside it is
+    # already capped at 900_000ms by tests/helpers.ts. 45 is ~3x the typical
+    # run and bounds the case where npm or crates.io is slow, without ever
+    # cutting the publish itself short.
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write  # Required for npm trusted publishing (OIDC)
@@ -14,20 +28,88 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
+          # npm >= 11.5.1 is required for OIDC trusted publishing; Node 24
+          # ships it. Do not lower this.
           node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
       - uses: dtolnay/rust-toolchain@stable
+
+      # Same explicit registry cache as CI: no root Cargo.toml, no template
+      # Cargo.lock, and the build that matters happens in a temp dir, so
+      # Swatinem/rust-cache has nothing to key on. The shared crate registry is
+      # the only cacheable part and it is the expensive one.
+      - name: Cache the cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('templates/**/Cargo.toml') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
+
+      # HARD GATE — this is the release path, so an unpublished template pin is
+      # a failure, not a skip. CI (ci.yml) skips the scaffold job with a
+      # warning when a pin is unresolvable, because a permanently red X trains
+      # people to ignore CI. Publishing under the same condition would ship a
+      # scaffolder whose templates cannot install — the exact defect this repo
+      # shipped for months. Different consequence, different policy.
+      #
+      # As of 2026-08-06 this WOULD fail: templates pin @getforma/core ^2.0.0,
+      # @getforma/build ^0.2.0 and @getforma/compiler ^0.3.0, and npm serves
+      # 1.5.0, 0.1.9 and 0.2.0. Publish those three first.
+      - name: Every @getforma pin in templates/ must resolve on npm
+        run: |
+          set -uo pipefail
+          PINS=$(node -e '
+            const fs = require("fs"), path = require("path");
+            const out = new Set();
+            (function walk(dir) {
+              for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) { if (e.name !== "node_modules") walk(p); }
+                else if (e.name === "package.json") {
+                  const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+                  for (const field of ["dependencies", "devDependencies"]) {
+                    for (const [name, range] of Object.entries(pkg[field] || {})) {
+                      if (name.startsWith("@getforma/")) out.add(name + "@" + range);
+                    }
+                  }
+                }
+              }
+            })("templates");
+            console.log([...out].sort().join("\n"));
+          ')
+          MISSING=""
+          for pin in $PINS; do
+            if RESOLVED=$(npm view "$pin" version 2>/dev/null) && [ -n "$RESOLVED" ]; then
+              echo "  OK          $pin -> $RESOLVED"
+            else
+              echo "  UNPUBLISHED $pin"
+              MISSING="${MISSING:+$MISSING }$pin"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error title=Cannot publish the scaffolder::These template pins are not on npm: $MISSING"
+            echo "::error::Anyone running 'npm create @getforma/app' would get an install failure."
+            echo "::error::Publish those versions first, then RE-RUN this run — the tag stays valid."
+            exit 1
+          fi
 
       - run: npm ci
       - run: npm run build
 
       # Publishing a template that cannot be scaffolded and compiled is the
       # failure mode this repo shipped for months, so the gate runs here too,
-      # not only on pull requests.
+      # not only on pull requests. NOT weakened by anything above: the preflight
+      # only decides whether this can possibly succeed, it does not replace it.
       - run: npx vitest run
         env:
           FORMA_SCAFFOLD_E2E: '1'
+          CARGO_NET_RETRY: '10'
+          CARGO_INCREMENTAL: '0'
 
       - name: Verify version matches tag
         run: |
@@ -38,6 +120,23 @@ jobs:
             exit 1
           fi
 
+      - name: Record toolchain
+        run: |
+          echo "node $(node -v) / npm $(npm -v) — OIDC trusted publishing needs npm >= 11.5.1"
+
       # Trusted publishing: uses OIDC for auth, no npm token needed.
       # Configure at: npmjs.com/package/@getforma/create-app → Settings → Trusted Publisher
       - run: npm publish --access public
+
+      - name: Explain a publish failure
+        if: failure()
+        run: |
+          echo "::error title=@getforma/create-app publish failed::Read the error above, then match it here."
+          echo "'These template pins are not on npm' -> publish @getforma/core, /build and /compiler"
+          echo "  first, then RE-RUN this run. The tag is fine."
+          echo "5xx / ETIMEDOUT / 'Unable to get OIDC token' / 'Service Unavailable'"
+          echo "  -> GitHub Actions or npm incident. RE-RUN THIS RUN; do not re-tag."
+          echo "ENEEDAUTH / E403 -> no Trusted Publisher for @getforma/create-app on npmjs.com."
+          echo "  Set repository getforma-dev/create-forma-app, workflow .github/workflows/release.yml,"
+          echo "  environment EMPTY (this job declares none). Human step; re-running will not fix it."
+          echo "E409 -> version already published. Bump and re-tag."

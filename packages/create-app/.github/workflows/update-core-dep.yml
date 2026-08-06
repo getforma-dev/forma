@@ -4,9 +4,19 @@ on:
   repository_dispatch:
     types: [core-release]
 
+# Two core releases in quick succession should leave one open PR for the newer
+# version, not two racing branches. Keyed on the event type rather than the ref
+# because every dispatch arrives on the default branch.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    # A checkout, a sed over five package.json files and one PR API call.
+    # Seconds of work; 10 bounds a slow GitHub API without hiding a stall.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
