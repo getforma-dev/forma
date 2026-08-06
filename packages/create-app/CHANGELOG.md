@@ -73,10 +73,9 @@ compiled or ran anything.
   joins `NEVER_COPY`, so even if one is committed to a template again it is
   filtered out of the copy rather than pinning every app scaffolded afterwards.
   Deleting the stale lockfiles (below) fixed the instance; this closes the
-  class. Verified by `tests/scaffold-lib.test.ts` > "never copies a lockfile or
-  a build directory out of a template", which drives the real `cpSync` through
-  the scaffolder's own filter so it fails if either the set or the wiring
-  regresses.
+  class. The test drives the real `cpSync` through the scaffolder's own filter,
+  so it fails if either the set or the wiring regresses.
+  Verified by `tests/scaffold-lib.test.ts` > "never copies a lockfile or a build directory out of a template"
 - **The dashboard template could not be built on Windows.** It shipped a
   committed `admin/package-lock.json` from March pinning `@getforma/build`
   0.1.6, `@getforma/compiler` 0.1.6 and `@getforma/core` 1.0.6; `npm install`
