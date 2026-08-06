@@ -18,6 +18,13 @@ Highlights:
 - **The FMIR binary layout and its stability contract are published**
   ([docs/FMIR-FORMAT.md](docs/FMIR-FORMAT.md)) — consumers were already
   byte-guarding a format that was documented nowhere
+- **This repo is now the documentation hub for the stack.**
+  [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the entry point every repo
+  links to, [docs/TESTING.md](docs/TESTING.md) is the testing policy and
+  `Verified by:` citation contract all four repos are held to (derived from the
+  mutation-probe audit, not from generic advice), [docs/README.md](docs/README.md)
+  indexes the whole doc set, and [docs/archive/](docs/archive/) records what has
+  been retired and why. `CONTRIBUTING.md` was rewritten to point at them
 - Cross-stack parity fixes that change emitted bytes on purpose: boolean
   DYN_ATTR values (`disabled="false"` meant *disabled*), empty-string
   attributes, ECMAScript truthiness for empty arrays, `String(value)` for

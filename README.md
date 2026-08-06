@@ -6,6 +6,34 @@
 
 Rust backend for the [Forma Stack](https://getforma.dev) — server-side rendering without Node.js. The `@getforma/compiler` compiles TypeScript components to a binary IR (FMIR). These Rust crates parse that binary and generate HTML, so your server never needs a JavaScript runtime.
 
+> **Where this sits.** One product, four repos:
+>
+> ```
+> TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
+>          forma-tools                          THIS REPO                 formajs
+> ```
+>
+> **You are here:** the server half — the FMIR parser, the HTML walker, and the
+> Axum middleware. New to the stack? Read
+> **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** first; it explains the whole
+> pipeline and why each piece is shaped the way it is.
+> Neighbours: [formajs](https://github.com/getforma-dev/formajs) (client
+> runtime) · [forma-tools](https://github.com/getforma-dev/forma-tools)
+> (compiler + build) ·
+> [create-forma-app](https://github.com/getforma-dev/create-forma-app)
+> (scaffolder).
+
+## Documentation
+
+| Document | What it is |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | The stack, end to end, and the reasoning behind every load-bearing decision. **Start here.** |
+| [docs/FMIR-FORMAT.md](docs/FMIR-FORMAT.md) | The binary layout and the stability contract: which bytes are frozen, what a version bump would cost consumers |
+| [docs/TESTING.md](docs/TESTING.md) | The testing policy for all four repos, and the `Verified by:` citation contract |
+| [docs/README.md](docs/README.md) | Index of the stack's documentation, including the other repos' |
+| [SECURITY.md](SECURITY.md) | Threat model and the guarantees these crates do and do not make |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, the gates, and what a reviewer will ask you |
+
 ## Crates
 
 ### `forma-ir` — The IR Engine
@@ -91,6 +119,13 @@ TypeScript/JSX components
   @getforma/core (FormaJS)  → hydrates using marker comments, attaches reactivity
 ```
 
+What crosses each of those arrows — the slot-name contract, the hydration
+marker grammar, the `data-forma-*` attributes and the island props protocol —
+is specified in [docs/ARCHITECTURE.md §3](docs/ARCHITECTURE.md), which is the
+part to keep open while you work. Those four contracts are shared byte-for-byte
+with the TypeScript side and with the first production consumer, so changing
+one is a cross-repo change.
+
 ## Security
 
 See [SECURITY.md](SECURITY.md) for the full list and the threat model — in particular, **FMIR is a trusted input**: run only IR produced by a compiler you trust.
@@ -174,6 +209,10 @@ cargo +1.85 check -p forma-server --all-targets
 cargo run --release -p forma-ir --example list_scaling   # timing/alloc table
 cargo run --release -p forma-ir --example list_corpus    # byte-identity corpus
 ```
+
+Before you open a PR, read [CONTRIBUTING.md](CONTRIBUTING.md) — and if the PR
+adds or changes a test, [docs/TESTING.md](docs/TESTING.md), which is what a
+reviewer will hold it to.
 
 ## License
 
