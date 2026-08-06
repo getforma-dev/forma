@@ -69,15 +69,29 @@ use forma_ir::{
 /// silently dropped one — fails here instead of shrinking the contract to
 /// whatever happens to be on disk.
 const EXPECTED_CASES: &[&str] = &[
+    "barrel-exports",
     "create-show",
     "dynamic-attrs",
     "dynamic-text",
+    "jsx-page",
     "list-same-source",
     "nested-islands",
     "static-page",
     "ternary-asymmetric",
     "unicode-emoji",
 ];
+
+/// Cases whose whole point is that the compiler RESOLVED the component instead
+/// of giving up on it.
+///
+/// `jsx-page` is written entirely in .tsx and `barrel-exports` reaches every
+/// component through an `index.ts` re-export. Both used to compile to
+/// placeholder IR — `<div id="app"></div>`, no slots, no islands — while the
+/// build exited 0. Pinning the render alone would not catch a relapse: a
+/// degraded emit still produces a valid, walkable, self-consistent module, and
+/// `UPDATE_GOLDEN` would happily bless the empty div. These assert the thing
+/// the golden cannot: the islands are real components carrying real slots.
+const RESOLUTION_CASES: &[&str] = &["barrel-exports", "jsx-page"];
 
 /// Rows handed to every LIST. More than one, because a single row cannot tell
 /// "iterated the array" from "rendered the body once".
@@ -422,6 +436,76 @@ fn every_island_entry_walks_as_a_fragment() {
         islands_seen >= 3,
         "the corpus must keep exercising islands (nested-islands alone declares 3), saw {islands_seen}"
     );
+}
+
+#[test]
+fn resolution_cases_ship_named_islands_over_named_slots() {
+    for name in RESOLUTION_CASES {
+        let module = parse_case(name);
+
+        // A page that fell back to placeholder IR has no islands at all, and a
+        // component the walker could not follow is registered under a minted
+        // `island_<n>` rather than its own name — an empty shell that renders
+        // nothing server-side. Either one means this case stopped testing what
+        // it was written for.
+        assert!(
+            !module.islands.entries().is_empty(),
+            "{name}: no islands — the page compiled to placeholder IR, so nothing here is server-rendered"
+        );
+
+        for entry in module.islands.entries() {
+            let island = string_at(&module, entry.name_str_idx);
+            assert!(
+                !island.starts_with("island_") && island != "createList",
+                "{name}: island {} is named '{island}', the compiler's give-up name — it renders \
+                 nothing server-side and only appears once the client bundle hydrates",
+                entry.id
+            );
+            assert!(
+                !entry.slot_ids.is_empty(),
+                "{name}: island '{island}' carries no slot ids, so the walker emits no \
+                 data-forma-props and the client hydrates it with nothing"
+            );
+        }
+
+        // Slot NAMES are the addressing scheme server-side injection uses. A
+        // page whose signals were not resolved still gets slots — anonymous
+        // `text:0`/`attr:class` ones no handler can write to by name. At least
+        // one slot must be named after something in the source.
+        let anonymous = |n: &str| {
+            n.starts_with("text:")
+                || n.starts_with("attr:")
+                || n.starts_with("show:")
+                || n.starts_with("list:")
+        };
+        let named: Vec<&str> = module
+            .slots
+            .entries()
+            .iter()
+            .map(|e| string_at(&module, e.name_str_idx))
+            .filter(|n| !anonymous(n))
+            .collect();
+        assert!(
+            !named.is_empty(),
+            "{name}: every slot is anonymous — the compiler never read the component's \
+             createSignal defaults, so nothing on this page can be injected by name"
+        );
+
+        // And those names must carry their SSR defaults, or the server renders
+        // a blank where the signal's initial value belongs.
+        let with_defaults = module
+            .slots
+            .entries()
+            .iter()
+            .filter(|e| !anonymous(string_at(&module, e.name_str_idx)))
+            .filter(|e| !e.default_bytes.is_empty())
+            .count();
+        assert!(
+            with_defaults > 0,
+            "{name}: named slots {named:?} all have empty default_bytes — the signal defaults \
+             were dropped somewhere between the source and the slot table"
+        );
+    }
 }
 
 #[test]
