@@ -43,7 +43,11 @@ jobs:
       - run: cargo clippy --workspace -- -D warnings
       - name: Verify version matches tag
         run: |
-          PKG_VERSION=$(grep '^version' crates/forma-ir/Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          # Read through workspace inheritance: the crate manifest says
+          # `version.workspace = true`, so grepping it yields that literal
+          # rather than a version. cargo metadata resolves it.
+          PKG_VERSION=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name=="forma-ir") | .version')
           TAG_VERSION="${GITHUB_REF_NAME#ir-v}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
@@ -88,7 +92,9 @@ jobs:
       - run: cargo clippy --workspace -- -D warnings
       - name: Verify version matches tag
         run: |
-          PKG_VERSION=$(grep '^version' crates/forma-server/Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          # Read through workspace inheritance — see the forma-ir job above.
+          PKG_VERSION=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name=="forma-server") | .version')
           TAG_VERSION="${GITHUB_REF_NAME#server-v}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
