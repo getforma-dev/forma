@@ -81,6 +81,7 @@ const EXPECTED_CASES: &[&str] = &[
     "dynamic-text",
     "eager-concat",
     "imported-const-table",
+    "imported-signal-defaults",
     "jsx-page",
     "list-same-source",
     "nested-islands",
@@ -99,13 +100,22 @@ const EXPECTED_CASES: &[&str] = &[
 /// build exited 0. `imported-const-table` spreads static vocabulary tables
 /// that are DECLARED one module away, which used to make every such spread an
 /// anonymous `island_<n>` shell — 34 of them on ksx's map route alone.
+/// `imported-signal-defaults` reads signals declared one module away (the
+/// store.ts architecture), which used to leave every such binding without a
+/// named slot or an SSR default — 158 degradations across gatewasm, one of
+/// them a login page whose onboarding link had no href with JavaScript off.
 ///
 /// Pinning the render alone would not catch a relapse: a degraded emit still
 /// produces a valid, walkable, self-consistent module, and `UPDATE_GOLDEN`
 /// would happily bless the empty div. These assert the thing the golden
 /// cannot: every island is a real component carrying real slots, and none of
 /// them is the compiler's give-up name.
-const RESOLUTION_CASES: &[&str] = &["barrel-exports", "imported-const-table", "jsx-page"];
+const RESOLUTION_CASES: &[&str] = &[
+    "barrel-exports",
+    "imported-const-table",
+    "imported-signal-defaults",
+    "jsx-page",
+];
 
 /// Rows handed to every LIST. More than one, because a single row cannot tell
 /// "iterated the array" from "rendered the body once".

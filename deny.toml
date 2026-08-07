@@ -1,9 +1,12 @@
 # cargo-deny configuration — license and vulnerability auditing
 # Run: cargo deny check
 
+# cargo-deny 0.16+ config: vulnerabilities are always denied (the old
+# `vulnerability = "deny"` key is gone), and `unmaintained` selects a scope
+# rather than a severity — "workspace" reports unmaintained crates our own
+# manifests name, without failing on what transitive deps drag in.
 [advisories]
-vulnerability = "deny"
-unmaintained = "warn"
+unmaintained = "workspace"
 
 [licenses]
 allow = [
