@@ -91,6 +91,9 @@ async fn home(State(state): State<Arc<AppState>>) -> Response {
         route_pattern: route,
         manifest: &state.manifest,
         config_script: None,
+        // Prefer config_json over config_script for anything derived from user
+        // input: serde_json escapes every < , so it cannot break out of the script.
+        config_json: None,
         body_class: None,
         personality_css: None,
         body_prefix: None,

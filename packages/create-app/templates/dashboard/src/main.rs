@@ -37,6 +37,9 @@ async fn page_dashboard(State(state): State<Arc<AppState>>) -> impl IntoResponse
         ir_module: None,
         slots: None,
         config_script: None,
+        // Prefer config_json over config_script for anything derived from user
+        // input: serde_json escapes every < , so it cannot break out of the script.
+        config_json: None,
         body_class: None,
         personality_css: Some("body{background:#282828;color:#ebdbb2;margin:0}"),
         body_prefix: None,
