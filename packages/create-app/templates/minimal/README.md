@@ -80,11 +80,12 @@ up on, and an anonymous `island_N` has no registry entry, so nothing hydrates it
 
 ## Styling and CSP
 
-`main.rs` sends the Content-Security-Policy that `render_page` generates, and it
-has no `unsafe-inline` for styles. A `style="..."` attribute that arrives in the
-server-rendered HTML is therefore blocked by the browser. Put styling in
-`admin/src/styles/app.css` (or add another entry to `cssEntries` in
-`admin/build.ts`).
+`main.rs` sends the Content-Security-Policy that `render_page` generates. Its
+`style-src` carries a nonce and no `unsafe-inline`, so inline `<style>` blocks
+and third-party stylesheets are refused; a separate `style-src-attr
+'unsafe-inline'` permits `style="..."` attributes. Prefer a stylesheet anyway —
+put styling in `admin/src/styles/app.css` (or add another entry to `cssEntries`
+in `admin/build.ts`) so it is cached, hashed and served from `/_assets`.
 
 ## Learn More
 

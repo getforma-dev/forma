@@ -202,10 +202,12 @@ has no `tailwind.config.js`), which is what gives you `bg-gruvbox-bg-soft`,
 `text-forma-green` and friends. Custom CSS is limited to the neon glow,
 `@keyframes`, and scrollbar styling.
 
-Note that the CSP the server sends has no `unsafe-inline` for styles. The
-`style={...}` props in this template work because `h()` applies them through the
-CSSOM at runtime, which CSP does not cover — a `style` attribute that arrived in
-server-rendered HTML would be blocked.
+Note how the CSP the server sends treats styles. `style-src` carries a nonce
+and no `unsafe-inline`, so inline `<style>` blocks and third-party stylesheets
+are refused. A separate `style-src-attr 'unsafe-inline'` permits `style="..."`
+attributes specifically, which is what lets server-rendered style attributes
+through. The `style={...}` props in this template do not rely on that: `h()`
+applies them through the CSSOM at runtime, which CSP does not cover at all.
 
 ---
 

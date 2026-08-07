@@ -271,8 +271,9 @@ describe('minimal template', () => {
   });
 
   it('styles through a CSS entry rather than style attributes', () => {
-    // The CSP has no unsafe-inline for styles, so a style attribute in
-    // server-rendered HTML is dropped by the browser.
+    // Not a CSP requirement — `style-src-attr 'unsafe-inline'` permits style
+    // attributes. A stylesheet is preferred because it is cached, hashed and
+    // served from /_assets instead of repeating in every response.
     const app = fs.readFileSync(
       path.join(TEMPLATES_DIR, 'minimal', 'admin', 'src', 'home', 'app.tsx'),
       'utf8',

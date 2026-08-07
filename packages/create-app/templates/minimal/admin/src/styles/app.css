@@ -1,12 +1,12 @@
 /* Plain CSS, concatenated and hashed by @getforma/build.
    Served from /_assets and linked by the Rust server.
 
-   Put styling here rather than in `style="..."` attributes: the CSP that
-   forma-server sends has no `unsafe-inline` for styles, so a style attribute
-   that arrives in the server-rendered HTML is blocked and dropped. (Styles
-   that `h()` applies at runtime go through the CSSOM, which CSP does not
-   cover — so a client-only app can get away with it and a server-rendered
-   one cannot.) */
+   Put styling here rather than in `style="..."` attributes. The CSP that
+   forma-server sends refuses inline <style> blocks and third-party
+   stylesheets (`style-src` is nonce-only), and permits style attributes
+   through a separate `style-src-attr 'unsafe-inline'` — so an attribute
+   works, but a stylesheet is cached, hashed and served from /_assets
+   instead of repeating in every response. */
 
 :root {
   color-scheme: light dark;

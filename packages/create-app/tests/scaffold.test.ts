@@ -256,7 +256,17 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       const csp = res.headers.get('content-security-policy') ?? '';
       const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
       expect(nonce, `no nonce in CSP: ${csp}`).toBeTruthy();
-      expect(csp).not.toContain('unsafe-inline');
+      // Assert per-directive, not with a substring sweep over the whole
+      // header. forma-server 0.2.0 carries `style-src-attr 'unsafe-inline'`
+      // deliberately — that directive governs `style=""` ATTRIBUTES only, so
+      // it lets server-rendered style attributes through while `style-src`
+      // still refuses inline <style> blocks. A blanket not-toContain cannot
+      // tell those apart and fails on a header that got stricter, not looser.
+      const directive = (name: string) =>
+        csp.split(';').map((d) => d.trim()).find((d) => d.startsWith(`${name} `)) ?? '';
+      expect(directive('script-src'), `script-src: ${csp}`).not.toContain('unsafe-inline');
+      expect(directive('style-src'), `style-src: ${csp}`).not.toContain('unsafe-inline');
+      expect(directive('default-src')).toContain("'none'");
       expect(body).toContain(`nonce="${nonce}"`);
     });
   }, 900_000);
