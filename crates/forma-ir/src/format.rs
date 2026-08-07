@@ -392,7 +392,14 @@ impl SectionTable {
 }
 
 // ---------------------------------------------------------------------------
-// Opcode enum (16 opcodes, 0x01–0x10)
+// Opcode enum (18 opcodes, 0x01–0x12)
+//
+// Six are decoded and walked but never emitted by @getforma/compiler today:
+// Switch, TryStart, Fallback, Preload, Comment, ListItemKey. They are reserved
+// wire space, not dead code — see docs/ARCHITECTURE.md §B1. ListItemKey in
+// particular cannot be emitted usefully as specified: its operand is a static
+// string index, so every row would carry the same key. Per-item keys need an
+// FMIR version bump.
 // ---------------------------------------------------------------------------
 
 /// Bytecode opcodes for the FMIR instruction stream.
