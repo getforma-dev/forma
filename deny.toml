@@ -5,6 +5,15 @@
 # `vulnerability = "deny"` key is gone), and `unmaintained` selects a scope
 # rather than a severity — "workspace" reports unmaintained crates our own
 # manifests name, without failing on what transitive deps drag in.
+#
+# DELIBERATE semantics change from the pre-0.16 config, in both directions:
+# the old `unmaintained = "warn"` never failed the build and covered every
+# dependency; this DOES fail CI when a direct dependency is advisoried as
+# unmaintained (an event outside this repo — e.g. the 2025 `paste` advisory
+# broke thousands of builds overnight), and it stays silent for transitive
+# ones. If a red deny job blocks urgent work, add the advisory id to
+# `[advisories].ignore` with a comment and a follow-up issue rather than
+# widening this scope.
 [advisories]
 unmaintained = "workspace"
 
