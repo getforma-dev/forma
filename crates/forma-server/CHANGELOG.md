@@ -48,6 +48,81 @@ deprecated and go in 3.0.0.
   'none'` and never reached the server, `window.origin` was `"null"` and
   `document.cookie` threw; served without the header in the same `iframe`,
   `window.origin` was still `"null"`.
+- **Trusted Types in Report-Only** (DR-20, SR15; FORMA-127, the
+  forma-server half). Every page that carries the enforced policy also
+  carries `Content-Security-Policy-Report-Only: require-trusted-types-for
+  'script'; trusted-types forma forma-runtime`: a string written to a
+  script-carrying DOM sink, or a Trusted Types policy other than core's
+  `forma` and `forma-runtime`, is reported and not blocked, for this release;
+  3.0.0 enforces it (FORMA-109). Written by `PageResponse` (`try_render`,
+  `render_browser_shell` and the `into_page_response` bridge) and by the
+  deprecated `PageOutput::headers()`; the enforced policy, `build_csp_header`
+  and `PageOutput::csp` are byte-identical to 0.2.1, so the 0.2.1 goldens
+  (document and enforced policy) do not move. A page whose application sets
+  its headers from `PageOutput::csp` by hand gets no Report-Only header.
+  Tests: `tests/trusted_types_report_only.rs` >
+  `every_page_carries_trusted_types_in_report_only_and_the_enforced_policy_is_unchanged`;
+  `csp::tests::csp_is_strict` (both directives, Forma's two policies, no
+  `'allow-duplicates'`, and SR39: `style-src-attr 'unsafe-inline'` the
+  policy's only `'unsafe-inline'`, with every extension too); the 2,000-case
+  property in `tests/page_response.rs` asserts SR39 and the Report-Only
+  policy on every accepted extension set, and now names reporting
+  endpoints too (valid, loopback and the review's hostile ones).
+
+  **Not quite behaviour-neutral:** with `require-trusted-types-for 'script'`
+  in any policy, Report-Only included, a browser runs the page's own
+  Trusted Types `default` policy, if it registered one, on every string
+  written to a script-carrying sink and uses what it returns; under 0.2.1
+  nothing ran. An application with a `default` policy is already Trusted
+  Types-aware; it should check that policy before upgrading (review
+  5517672933, measured in Chrome for Testing 156).
+- **`PolicyExtensions::report_to(endpoint)` and `report_uri(endpoint)`**, the reporting endpoint the
+  application names (DR-20, SR8, L-38): a path on its own origin, an
+  `https://` URL, or `http://` on a loopback host. It is written into both
+  policies as `report-to forma-csp` with `Reporting-Endpoints:
+  forma-csp="<endpoint>"` (the Reporting API: Chrome and Edge, Safari 16.4+,
+  Firefox 149+ for CSP) and `report-uri <endpoint>` (Firefox before 149;
+  ignored where `report-to` is supported), per MDN's compatibility data at
+  `4d6aed6`. The endpoint therefore takes both `application/reports+json`
+  and `application/csp-report` bodies. Its obligations, documented on the
+  method, are the application's: store report URLs without query strings,
+  bound each report's size and the request rate, alert per route and
+  directive above a baseline, deduplicated. An endpoint carrying `;`, `,`, a
+  quote, a backslash, whitespace or a fragment, starting with `//`, or using
+  another scheme fails the page (`PolicyError` for `report-to`). Without an
+  endpoint nothing changes. **Over plain HTTP, `http://localhost`
+  included, `report_uri(endpoint)`** instead: Chrome and Firefox take
+  `Reporting-Endpoints` only from an HTTPS page and, once a policy names
+  `report-to`, ignore `report-uri`, so an HTTP page with both reports
+  nothing, on `localhost` too, although it is a secure context;
+  `report_uri` writes `report-uri` alone, which every current engine sends
+  from HTTP. Checked in Chrome 155 with this branch, and in Chrome 156 and
+  Firefox Nightly 155 by its review: `report_to` over HTTPS delivered one
+  `application/reports+json` report for a string written to `innerHTML`, and
+  the page rendered; the same over HTTP, on `localhost` or another host,
+  delivered none; `report_uri` over HTTP delivered one
+  `application/csp-report`. An absolute endpoint's authority is a host and
+  an optional port, never userinfo (a credential there would go to every
+  visitor), and a loopback `http://` endpoint is accepted in development
+  builds only: in a release build it would send each visitor's reports to
+  their own machine, so it fails the page like any invalid endpoint. Tests:
+  `tests/trusted_types_report_only.rs` >
+  `a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints`,
+  `an_invalid_endpoint_fails_the_page_on_every_path`;
+  `csp::tests::endpoints_accept_a_path_https_or_loopback_http_and_refuse_the_rest`.
+- **`PolicyExtensions::relax_trusted_types(reason)`**, the named per-route
+  relaxation (DR-20's bridge; one of SR8's allowlisted exits, so the lint
+  finds it by name). In 0.2.x it changes no header, since Trusted Types are
+  Report-Only everywhere; from 3.0.0 the route keeps them Report-Only while
+  the others enforce. Its violations are still reported. Each relaxed route
+  is logged, once per route and reason per process, as a `tracing` warning
+  with the route and `reason`; the log allocates nothing after a pair's
+  first render and names at most 1,024 pairs, then says once that
+  `route_pattern` must be a pattern, not a request path; an empty `reason` fails the page (`PolicyError` for
+  `trusted-types`). Test: `tests/trusted_types_report_only.rs` >
+  `a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason`;
+  `tests/relaxation_log_bound.rs` >
+  `the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once`.
 - **`PageResponse`**, a page that cannot be sent without its headers (DR-17,
   FORMA-124). As axum's `IntoResponse` it always writes `Cache-Control:
   no-store`, the strict policy for the nonce its HTML carries,
@@ -172,9 +247,10 @@ deprecated and go in 3.0.0.
   (in the crate's sources the `html` field is initialised only in
   `trusted`, whatever type name or `Self` precedes it; the trait impls, the
   inherent functions and the functions returning a `RawHtml`, however the
-  type is path-qualified, are exact lists; and ten second constructors,
-  the review's two among them, each written into a copy of the sources,
-  are found), `the_documented_body_prefix_form_compiles_on_the_msrv_and_renders`
+  type is path-qualified, are exact lists; no other name for the type (a
+  `type` alias, a `use .. as` rename) and no `r#html`; and sixteen second
+  constructors, the two reviews' seven among them, each written into a copy
+  of the sources, are found), `the_documented_body_prefix_form_compiles_on_the_msrv_and_renders`
   (the bound form, compiled by the 1.85 MSRV job),
   `a_raw_html_body_prefix_is_written_exactly_as_the_same_string_on_every_path`
   (`render_page`, `render_page_with_nonce`, `try_render`,

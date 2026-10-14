@@ -10,6 +10,14 @@
   (`PreviewFrame::load`; a missing runtime is a coded error). The host's
   side is documented in forma-server's `frame` module.
 
+- **Trusted Types, reported (FORMA-127, DR-20).** forma-server sends
+  `require-trusted-types-for 'script'; trusted-types forma forma-runtime` in
+  `Content-Security-Policy-Report-Only` beside the unchanged enforced policy,
+  on every page that carries it; 3.0.0 enforces it. `PolicyExtensions` gains
+  `report_to` (an endpoint the application runs, written into both policies;
+  `report_uri` for pages served over plain HTTP)
+  and `relax_trusted_types` (a named, logged per-route relaxation).
+
 - **One named raw-HTML type, and typed homes for the rest (FORMA-126,
   DR-19).** forma-server's `RawHtml::trusted(..)` is the one way to say a
   string is markup to write unescaped; `body_prefix` takes it bound first,

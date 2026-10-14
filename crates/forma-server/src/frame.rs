@@ -229,6 +229,18 @@ fn frame_with(
                 "the frame policy is not a valid header value".into(),
             )
         })?,
+        // Trusted Types reported, as on every page carrying the enforced
+        // policy (FORMA-127); no reporting endpoint.
+        report_only: axum::http::HeaderValue::from_str(&csp::report_only_policy()).map_err(
+            |_| {
+                FrameError::new(
+                    "FRAME-104",
+                    "the Report-Only policy is not a valid header value".into(),
+                )
+            },
+        )?,
+        reporting_endpoints: None,
+        relaxed: None,
         opener: axum::http::HeaderValue::from_static("same-origin"),
     };
     let html = document(&nonce, &preview.runtime);

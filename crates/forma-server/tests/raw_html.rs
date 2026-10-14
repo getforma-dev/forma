@@ -91,6 +91,11 @@ fn block(text: &str, open: usize) -> &str {
 /// Every way the crate's sources could make a `RawHtml` other than
 /// `RawHtml::trusted`, as findings; none means the search for that one name
 /// finds every raw entry (DR-19). `files` are (path under `src/`, text).
+///
+/// A heuristic over the source text, a guard against accidents and not a
+/// proof: a macro can still spell the type or the field where no check looks
+/// (`macro_rules! ty { () => { RawHtml } }`), and review stays the check for
+/// that.
 fn second_constructors(files: &[(String, String)]) -> Vec<String> {
     let files: Vec<(String, String)> = files
         .iter()
@@ -196,13 +201,31 @@ fn second_constructors(files: &[(String, String)]) -> Vec<String> {
     {
         findings.push("a derive in raw.rs".to_string());
     }
+
+    // 6. No other name for it, and no raw identifier for its field: a type
+    //    alias (`type Markup = RawHtml;`) or a renaming import
+    //    (`use crate::RawHtml as Markup;`) hides the type from every check
+    //    above and from the search, and `r#html` hides the field.
+    for (path, text) in &files {
+        for (at, _) in text.match_indices("= RawHtml") {
+            if !text[at + "= RawHtml".len()..].starts_with("::") {
+                findings.push(format!("{path}: a type alias for RawHtml"));
+            }
+        }
+        if text.contains("RawHtml as ") {
+            findings.push(format!("{path}: RawHtml imported under another name"));
+        }
+        if text.contains("r#html") {
+            findings.push(format!("{path}: the field as a raw identifier"));
+        }
+    }
     findings
 }
 
 /// Second constructors the check must catch, each added to a copy of the
 /// crate's real sources, never to the crate: (what, file, code appended).
 /// The first two are the review's (5516933079).
-const SECOND_CONSTRUCTORS: [(&str, &str, &str); 9] = [
+const SECOND_CONSTRUCTORS: [(&str, &str, &str); 14] = [
     (
         "an inherent fn building Self",
         "raw.rs",
@@ -248,17 +271,52 @@ const SECOND_CONSTRUCTORS: [(&str, &str, &str); 9] = [
         "raw.rs",
         "#[derive(Default)] struct Shadow;",
     ),
+    // The second review's five (FORMA-126 follow-up): another name for the
+    // type, or a raw identifier for the field.
+    (
+        "a macro behind a type alias",
+        "raw.rs",
+        "macro_rules! build_raw { ($t:ident, $f:ident, $v:expr) => { $t { $f: $v } }; }\ntype Markup = RawHtml;\nimpl Markup { pub fn via_macro(h: Box<str>) -> Self { build_raw!(Self, html, h) } }",
+    ),
+    (
+        "a wrapper under a renaming import",
+        "template.rs",
+        "use crate::raw::RawHtml as Markup;\nimpl Markup { pub fn wrap(s: String) -> Self { Self::trusted(s) } }",
+    ),
+    (
+        "a trait impl through an alias",
+        "raw.rs",
+        "type R = RawHtml;\nimpl From<Box<str>> for R { fn from(h: Box<str>) -> Self { Self::trusted(h) } }",
+    ),
+    (
+        "a raw identifier through an alias",
+        "raw.rs",
+        "type R = RawHtml;\nimpl R { pub fn r_ident(h: Box<str>) -> Self { Self { r#html: h } } }",
+    ),
+    (
+        "a free function returning an alias",
+        "render.rs",
+        "pub type Markup = crate::RawHtml;\npub fn markup(s: &str) -> Markup { Markup::trusted(s) }",
+    ),
 ];
 
 /// A second constructor made by changing a line, not adding one: (what, file,
 /// text, replaced by). The clone writing the field itself is found only by
-/// counting initialisers.
-const CHANGED_CONSTRUCTORS: [(&str, &str, &str, &str); 1] = [(
-    "Clone writing the field",
-    "raw.rs",
-    "RawHtml::trusted(&*self.html)",
-    "Self { html: self.html.clone() }",
-)];
+/// counting initialisers, and writing it as `r#html` only by check 6.
+const CHANGED_CONSTRUCTORS: [(&str, &str, &str, &str); 2] = [
+    (
+        "Clone writing the field",
+        "raw.rs",
+        "RawHtml::trusted(&*self.html)",
+        "Self { html: self.html.clone() }",
+    ),
+    (
+        "Clone writing the field as a raw identifier",
+        "raw.rs",
+        "RawHtml::trusted(&*self.html)",
+        "Self { r#html: self.html.clone() }",
+    ),
+];
 
 #[test]
 fn a_search_finds_one_raw_constructor() {
