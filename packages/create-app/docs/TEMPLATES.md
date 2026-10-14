@@ -11,9 +11,10 @@ The scaffolder copies it, rewrites a few placeholders, and gets out of the way
 
 | Step | Rule | Where |
 |---|---|---|
-| Copy | Everything under `templates/<name>/`, except `node_modules`, `dist`, `target` and `.git` | `NEVER_COPY`, `src/scaffold.ts` |
-| Substitute | `{{PROJECT_NAME}}` and `{{project-name}}` → the project name, in text files only (`.toml .rs .ts .tsx .json .md .css .html .yml`) | `replacePlaceholders`, `src/scaffold.ts` |
+| Copy | Everything under `templates/<name>/`, lockfiles included, except `node_modules`, `dist`, `target` and `.git` | `NEVER_COPY`, `src/scaffold.ts` |
+| Substitute | `{{PROJECT_NAME}}` and `{{project-name}}` → the project name, in text files only (`.toml .lock .rs .ts .tsx .json .md .css .html .yml`) | `replacePlaceholders`, `src/scaffold.ts` |
 | Rename | every `_gitignore` → `.gitignore`, at any depth | `restoreGitignores`, `src/scaffold.ts` |
+| Re-sort | the crate's own `Cargo.lock` entry, renamed above, moves to where cargo sorts it, and references to a crate that shares the project's name take the form cargo then writes (`"tracing 0.1.44"`) | `placeCargoLockRoot`, `src/scaffold.ts` |
 
 Three consequences worth knowing before you edit a template:
 
@@ -21,11 +22,17 @@ Three consequences worth knowing before you edit a template:
   to `.npmignore`, which would both lose the file and change what the published
   tarball contains.
   Verified by: `tests/templates.test.ts` > "uses no real .gitignore, which npm pack would rename to .npmignore"
-- **No lockfile, no build output.** A committed `admin/package-lock.json` is
-  how this repo once shipped five-month-old pins that could not build on
-  Windows: `npm install` honours the lockfile and ignores the ranges in
-  `package.json`.
-  Verified by: `tests/templates.test.ts` > "ships no lockfile, no installed dependencies and no build output"
+- **Lockfiles, and no build output.** Each template ships
+  `admin/package-lock.json` and `Cargo.lock`, the set the scaffold gate
+  installs with `npm ci` and `cargo --locked`, so a new project gets the
+  versions this repo tested (decision DR-32). A lockfile is also how this repo
+  once shipped five-month-old pins that could not build on Windows, because
+  npm honours it over the ranges in `package.json`; so a lockfile that
+  disagrees with its manifest, or locks a version outside a declared range,
+  fails `npm test`. Change a dependency, regenerate the lockfile (below).
+  Verified by: `tests/templates.test.ts` > "ships an npm lockfile that agrees with package.json and resolves only from the npm registry"
+  Verified by: `tests/templates.test.ts` > "ships a Cargo.lock that locks its crates from crates.io under its placeholder name"
+  Verified by: `tests/templates.test.ts` > "ships no installed dependencies and no build output"
 - **Symlinks are neither followed nor rewritten**, so a link planted in a
   template cannot make the substitution walk write outside the destination.
   Verified by: `tests/scaffold-lib.test.ts` > "does not write through a symlink that points outside the tree"
@@ -35,11 +42,13 @@ Three consequences worth knowing before you edit a template:
 ```
 templates/<name>/
 ├── Cargo.toml          crate named {{project-name}}
+├── Cargo.lock          locked crates; the crate's own entry carries the placeholder
 ├── src/
 │   ├── main.rs         Axum server: page routes, asset serving, CSP header
 │   └── …               anything else the server needs (the dashboard has data.rs)
 ├── admin/
-│   ├── package.json    frontend deps — ranges, no lockfile
+│   ├── package.json    frontend deps — ranges
+│   ├── package-lock.json  the versions those ranges resolved to, tested
 │   ├── build.ts        @getforma/build pipeline
 │   ├── tsconfig.json   jsx: react, jsxFactory: h, jsxFragmentFactory: Fragment
 │   └── src/            the app
@@ -56,11 +65,13 @@ appears.
 | Requirement | Why |
 |---|---|
 | Bind `127.0.0.1`, never `0.0.0.0` | A scaffolded server with unauthenticated routes must not be reachable off-box by default. Widening is opt-in via `FORMA_HOST`, and warns. |
-| Send the CSP that `render_page` generated (`page.csp`) | The nonce is per-request and only matches the HTML from that same call; a header built anywhere else cannot match. |
+| Send every page through `PageOutput::headers()` | The nonce is per request and only matches the HTML from that same `render_page` call, and a cached page replays one nonce to every visitor. `headers()` sends the policy with `Cache-Control: no-store` and the document headers; a page that assembles its own is how the minimal template came to send no `no-store` (DR-17). |
 | Install a `tracing` subscriber | `render_page` degrades Phase 2 → Phase 1 through `tracing::warn!`. With no subscriber that warning is discarded, and a broken SSR build is indistinguishable from a working client-rendered one. |
 | Declare exactly the crates its Rust sources use | An unused dependency is a slower build and a wider supply chain for nothing. This is what caught `forma-ir` surviving the dashboard's SSR removal. |
 | Pin frontend deps at or above the version whose fix it needs | `@getforma/core ^1.5.0` (CSP-safe-by-default runtime, `on*` prop dropping, URL-scheme filtering), `@getforma/build ^0.1.9` (the Tailwind step could not run on Windows below it). |
 | JSX-to-`h()` tsconfig | `jsx: "react"`, `jsxFactory: "h"`, `jsxFragmentFactory: "Fragment"`. |
+| Declare `rust-version = "1.85"`, forma-server 0.2.0's floor, with `resolver = "3"` | A committed lockfile must not raise the Rust a new project needs, and neither may the user's own `cargo update`. Resolver 3 is cargo's MSRV-aware resolver. Cargo.lock does not record each crate's `rust-version`, so the scaffold gate reads the locked crates' manifests, before and after an update, and fails on any above the template's. |
+| Document `npm ci` as the install step | A plain `npm install` may rewrite the shipped lockfile; `npm ci` never writes it. |
 | A `_gitignore` covering `target/ node_modules/ dist/ .env .env.* *.pem *.key`, and **not** `Cargo.lock` | `Cargo.lock` belongs in an application's history. |
 
 ## Adding a template
@@ -80,7 +91,35 @@ appears.
    is, how to run it, what is unsafe about deploying it as-is, and how to
    replace the mock data. Keep contributor-facing rationale in this `docs/`
    directory instead; the template README ships to users.
-5. Run `npm test`, then the real gate:
+5. Commit its lockfiles (below).
+6. Run `npm test`, then the real gate:
    `FORMA_SCAFFOLD_E2E=1 npx vitest run` — it scaffolds each template into a
-   temp directory, installs, builds the frontend, runs `cargo check`, starts
-   the compiled server and reads its response.
+   temp directory, installs with `npm ci`, builds the frontend, runs
+   `cargo check --locked`, starts the compiled server and reads its responses.
+
+## Regenerating a template's lockfiles
+
+Whenever a template's `package.json` or `Cargo.toml` changes, and at each
+release, which re-pins the set it tested. Generate them from a scaffolded copy,
+not inside `templates/`, so nothing installed lands in the template:
+
+```bash
+npm run build
+node dist/index.js lockgen --template minimal       # in a scratch directory
+(cd lockgen/admin && npm install --package-lock-only)
+(cd lockgen && cargo generate-lockfile)
+cp lockgen/admin/package-lock.json <repo>/templates/minimal/admin/
+cp lockgen/Cargo.lock              <repo>/templates/minimal/
+```
+
+The template's `resolver = "3"` makes cargo pick, for each crate, the newest
+version that still builds on its `rust-version` (1.85, forma-server 0.2.0's
+floor) instead of the newest outright; without it the lockfile can raise the
+Rust a new project needs (it once locked `sha2` 0.11.1, which needs 1.88).
+Then, in the template's `Cargo.lock`, rename the `lockgen` entry back to the
+template's placeholder (`{{PROJECT_NAME}}` for minimal, `{{project-name}}` for
+dashboard) and move that entry to the end of the file, where cargo sorts a
+name beginning with `{`. The npm lockfile records every platform's optional
+packages (esbuild's, Tailwind's), so the one file installs on Linux, macOS and
+Windows. `npm test` then checks each lockfile against its manifest, and the
+scaffold gate installs from it on Linux and Windows.

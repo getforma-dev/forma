@@ -87,10 +87,10 @@ treat it as a dated measurement, not a constant.
 
 ## This rule is version-bound. Check it before you repeat it.
 
-The templates install **published** versions
-(`@getforma/compiler ^0.2.0`, `@getforma/build ^0.1.9`), so what a scaffolded
-project gets is whatever npm has — not whatever is in the `forma-tools`
-working tree.
+The templates install **published** versions, the ones each template's
+lockfile names (`@getforma/compiler` 0.3.5 and `@getforma/build` 0.2.0 as of
+2026-10-14), so what a scaffolded project gets is what was published and
+locked — not whatever is in the `forma-tools` working tree.
 
 That matters right now, because a large batch of resolver fixes sits in
 `forma-tools`' `[Unreleased]` and **is not on npm**. Until it publishes, a

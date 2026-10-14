@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use axum::{
     extract::State,
-    http::header,
+    http::HeaderMap,
     response::{Html, IntoResponse},
     routing::get,
     Json, Router,
@@ -45,13 +45,10 @@ async fn page_dashboard(State(state): State<Arc<AppState>>) -> impl IntoResponse
         body_prefix: None,
     });
 
-    (
-        [
-            (header::CACHE_CONTROL, "no-store".to_string()),
-            (header::HeaderName::from_static("content-security-policy"), page.csp),
-        ],
-        Html(page.html),
-    )
+    // The policy, `Cache-Control: no-store` and the document security headers,
+    // from the same render_page call that produced the HTML and its nonce.
+    let headers: HeaderMap = page.headers().into_iter().collect();
+    (headers, Html(page.html))
 }
 
 async fn api_metrics() -> Json<Vec<data::Metric>> { Json(data::get_metrics()) }
@@ -73,7 +70,7 @@ async fn main() {
         eprintln!("\n  Error: Frontend not built yet.\n");
         eprintln!("  Run these commands first:");
         eprintln!("    cd admin");
-        eprintln!("    npm install");
+        eprintln!("    npm ci");
         eprintln!("    npm run build\n");
         std::process::exit(1);
     }

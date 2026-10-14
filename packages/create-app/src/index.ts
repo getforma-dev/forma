@@ -8,6 +8,7 @@ import {
   NEVER_COPY,
   TEMPLATE_INFO,
   TEMPLATES,
+  placeCargoLockRoot,
   replacePlaceholders,
   restoreGitignores,
   validateProjectName,
@@ -175,6 +176,10 @@ ${bold('Examples:')}
       '{{PROJECT_NAME}}': projectName,
       '{{project-name}}': projectName,
     });
+
+    // The crate's own Cargo.lock entry was just renamed; put it back where
+    // cargo sorts it, so the first `cargo run` leaves the lockfile untouched.
+    placeCargoLockRoot(path.join(dest, 'Cargo.lock'), projectName);
   } catch (err) {
     // Never leave a half-written project behind: the next run would refuse to
     // start because the directory now exists.
@@ -207,7 +212,16 @@ ${bold('Examples:')}
   console.log();
   console.log(dim('  # Build the frontend'));
   console.log(`  ${cyan('cd')} admin`);
-  console.log(`  ${cyan(pm)} install`);
+  // `npm ci` installs exactly admin/package-lock.json and never writes it; a
+  // plain `npm install` may rewrite the shipped lockfile (npm 10 and 11 both
+  // rewrite the dashboard's), leaving an untouched project modified.
+  // Verified by: tests/scaffold.test.ts > "tells an npm user to install with npm ci, which leaves the shipped lockfile as it is"
+  if (pm === 'npm') {
+    console.log(`  ${cyan('npm')} ci`);
+  } else {
+    console.log(dim(`  # ${pm} does not read package-lock.json; \`npm ci\` installs the tested versions`));
+    console.log(`  ${cyan(pm)} install`);
+  }
   console.log(`  ${cyan(runCmd)} build`);
   console.log(`  ${cyan('cd')} ..`);
   console.log();

@@ -9,13 +9,20 @@ the real DOM. No React, no virtual DOM.
 
 ```bash
 # Build the frontend
-cd admin && npm install && npm run build && cd ..
+cd admin && npm ci && npm run build && cd ..
 
 # Start the Rust server
 cargo run
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+`admin/package-lock.json` and `Cargo.lock` pin the versions this template was
+built and tested with. `npm ci` installs exactly those and never rewrites the
+lockfile; pnpm, yarn and bun do not read `package-lock.json` and resolve the
+ranges in `package.json` afresh. `Cargo.toml` declares `rust-version = "1.85"`
+with `resolver = "3"`, so a later `cargo update` only picks crates that still
+build on Rust 1.85. Commit both lockfiles.
 
 ## Security before you deploy this
 

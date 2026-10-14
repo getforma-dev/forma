@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEMPLATES, TEMPLATE_INFO } from '../src/scaffold';
-import { TEMPLATES_DIR, listFiles } from './helpers';
+import { REPO_ROOT, TEMPLATES_DIR, listFiles, run } from './helpers';
 
 /**
  * Structural assertions about the template sources.
@@ -40,6 +40,82 @@ function cargoDeps(template: string): string[] {
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith('#') && !l.startsWith('['))
     .map((l) => l.split('=')[0]!.trim());
+}
+
+/** forma-server 0.2.0's declared rust-version, which the templates hold to. */
+const RUST_FLOOR = '1.85';
+
+/** The `[[package]]` entries of a Cargo.lock, as name/version/source/checksum/dependencies. */
+function cargoLockPackages(template: string) {
+  // A Windows checkout may carry CRLF, which `$` in a multiline regex does not match.
+  const lock = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'Cargo.lock'), 'utf8').replace(/\r\n/g, '\n');
+  return lock
+    .split(/^\[\[package\]\]$/m)
+    .slice(1)
+    .map((block) => {
+      const field = (key: string) => new RegExp(`^${key} = "([^"]*)"$`, 'm').exec(block)?.[1];
+      const deps = /^dependencies = \[([\s\S]*?)^\]/m.exec(block)?.[1] ?? '';
+      // A dependency is written `"name"`, or `"name version"` when two
+      // versions of it are in the graph.
+      const refs = [...deps.matchAll(/"([^"]+)"/g)].map((m) => m[1]!);
+      return {
+        name: field('name'),
+        version: field('version'),
+        source: field('source'),
+        checksum: field('checksum'),
+        refs,
+        dependencies: refs.map((r) => r.split(' ')[0]!),
+      };
+    });
+}
+
+/**
+ * Each `[dependencies]` entry of a template's Cargo.toml and its version
+ * requirement, from `name = "req"` or `name = { version = "req", ... }`.
+ */
+function cargoRequirements(template: string): Record<string, string> {
+  const toml = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'Cargo.toml'), 'utf8');
+  const section = toml.split('[dependencies]')[1] ?? '';
+  const out: Record<string, string> = {};
+  for (const line of section.split('\n').map((l) => l.trim())) {
+    const m = /^([\w-]+)\s*=\s*(?:"([^"]+)"|\{.*\bversion\s*=\s*"([^"]+)")/.exec(line);
+    if (m) out[m[1]!] = m[2] ?? m[3]!;
+  }
+  return out;
+}
+
+/**
+ * A Cargo requirement as the caret range it means: a bare `0.2` is `^0.2.0`,
+ * `1` is `^1.0.0`. Any other operator fails loudly rather than half-understood.
+ */
+function cargoCaret(requirement: string): string {
+  const bare = requirement.replace(/^\^/, '');
+  if (!/^\d+(\.\d+){0,2}$/.test(bare)) throw new Error(`unsupported Cargo requirement: ${requirement}`);
+  const [major, minor = '0', patch = '0'] = bare.split('.');
+  return `^${major}.${minor}.${patch}`;
+}
+
+/**
+ * Whether `version` satisfies a caret range such as `^0.2.0` or `^2.0.0`.
+ * Every range the templates declare is a caret range; anything else fails
+ * loudly here rather than being half-understood.
+ */
+function satisfiesCaret(version: string, range: string): boolean {
+  const m = /^\^(\d+)\.(\d+)\.(\d+)$/.exec(range);
+  if (!m) throw new Error(`not a caret range: ${range}`);
+  const want = m.slice(1).map(Number) as [number, number, number];
+  const have = version.split('-')[0]!.split('.').map(Number) as [number, number, number];
+  if (version.includes('-')) return false; // a prerelease never satisfies a plain caret range
+  const atLeast =
+    have[0] !== want[0] ? have[0] > want[0]
+    : have[1] !== want[1] ? have[1] > want[1]
+    : have[2] >= want[2];
+  // ^1.2.3 holds the major; ^0.2.3 holds the minor too; ^0.0.3 holds the patch.
+  const sameLine =
+    want[0] > 0 ? have[0] === want[0]
+    : want[1] > 0 ? have[0] === 0 && have[1] === want[1]
+    : have[0] === 0 && have[1] === 0 && have[2] === want[2];
+  return atLeast && sameLine;
 }
 
 /**
@@ -134,12 +210,88 @@ describe.each(TEMPLATES)('%s template description', (template) => {
 describe.each(TEMPLATES)('%s template', (template) => {
   const files = listFiles(path.join(TEMPLATES_DIR, template));
 
-  it('ships no lockfile, no installed dependencies and no build output', () => {
-    // A committed admin/package-lock.json is how this template shipped
-    // five-month-old pins that could not build on Windows: `npm install`
-    // honours the lockfile and ignores the ranges in package.json.
-    expect(files.filter((f) => f.endsWith('package-lock.json'))).toEqual([]);
+  it('ships no installed dependencies and no build output', () => {
     expect(files.filter((f) => /(^|\/)(node_modules|dist|target)\//.test(f))).toEqual([]);
+  });
+
+  it('ships an npm lockfile that agrees with package.json and resolves only from the npm registry', () => {
+    // The templates ship their lockfiles (DR-32): a new project installs the
+    // set the scaffold gate installed, not whatever resolves on the day. The
+    // risk that once kept them out is staleness: a March lockfile once held
+    // new projects on @getforma/core 1.0.6 while package.json asked for more.
+    // So the lockfile has to agree with package.json here, in `npm test`, and
+    // not only in the scaffold gate's `npm ci`.
+    expect(files).toContain('admin/package-lock.json');
+    const pkg = readJson(template, 'admin', 'package.json');
+    const lock = readJson(template, 'admin', 'package-lock.json');
+    expect(lock.lockfileVersion).toBe(3);
+
+    const root = lock.packages[''];
+    expect(root.dependencies ?? {}, 'regenerate admin/package-lock.json').toEqual(pkg.dependencies ?? {});
+    expect(root.devDependencies ?? {}, 'regenerate admin/package-lock.json').toEqual(pkg.devDependencies ?? {});
+
+    // Each direct dependency is locked at a version its declared range admits.
+    const direct = { ...pkg.dependencies, ...pkg.devDependencies } as Record<string, string>;
+    for (const [name, range] of Object.entries(direct)) {
+      const locked = lock.packages[`node_modules/${name}`]?.version;
+      expect(locked, `${name} is not in the lockfile`).toBeTruthy();
+      expect(satisfiesCaret(locked, range), `${name}@${locked} is outside ${range}`).toBe(true);
+    }
+
+    // Every downloaded package comes from the public registry with a sha512
+    // integrity hash. Bundled packages ship inside their parent's tarball and
+    // carry neither.
+    for (const [key, entry] of Object.entries<any>(lock.packages)) {
+      if (key === '' || entry.inBundle) continue;
+      expect(entry.link, `${key} is a link`).toBeUndefined();
+      expect(entry.resolved, `${key} resolves elsewhere`).toMatch(/^https:\/\/registry\.npmjs\.org\//);
+      expect(entry.integrity, `${key} has no sha512 integrity`).toMatch(/^sha512-/);
+    }
+  });
+
+  it('ships a Cargo.lock that locks its crates from crates.io under its placeholder name', () => {
+    // The Rust half of the same rule. The crate's own entry carries the
+    // placeholder, which the scaffolder rewrites and re-sorts.
+    expect(files).toContain('Cargo.lock');
+    // The template declares forma-server 0.2.0's toolchain floor, and its
+    // lockfile is resolved MSRV-aware against it, so a committed lockfile
+    // never raises the Rust a new project needs (FORMA-015). Cargo.lock does
+    // not record each crate's rust-version; the scaffold gate checks those
+    // against the registry ("no locked crate needs a newer Rust than the
+    // template declares").
+    expect(cargoField(template, 'rust-version')).toBe(RUST_FLOOR);
+    // ...and holds it through the user's own `cargo update` too: resolver 3
+    // is cargo's MSRV-aware resolver, available from Cargo 1.84, below the floor.
+    expect(cargoField(template, 'resolver')).toBe('3');
+    const packages = cargoLockPackages(template);
+    const roots = packages.filter((p) => p.source === undefined);
+    expect(roots.map((p) => p.name)).toEqual([cargoField(template, 'name')]);
+    expect(roots[0]!.version).toBe(cargoField(template, 'version'));
+    // The crate's direct dependencies in the lockfile are the ones Cargo.toml declares.
+    expect([...roots[0]!.dependencies].sort(), 'regenerate Cargo.lock').toEqual([...cargoDeps(template)].sort());
+    // Each direct crate is locked at a version its requirement admits, so a
+    // requirement moved without regenerating the lockfile fails here.
+    for (const [crate, requirement] of Object.entries(cargoRequirements(template))) {
+      const ref = roots[0]!.refs.find((r) => r.split(' ')[0] === crate);
+      const locked = ref?.split(' ')[1] ?? packages.find((p) => p.name === crate && p.source)?.version;
+      expect(locked, `${crate} is not locked`).toBeTruthy();
+      expect(satisfiesCaret(locked!, cargoCaret(requirement)), `${crate}@${locked} is outside "${requirement}"`).toBe(true);
+    }
+    for (const p of packages.filter((q) => q.source !== undefined)) {
+      expect(p.source, `${p.name} comes from elsewhere`).toBe('registry+https://github.com/rust-lang/crates.io-index');
+      expect(p.checksum, `${p.name} has no checksum`).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+
+  it('documents npm ci, never npm install, as the install step', () => {
+    // A plain `npm install` may rewrite the shipped lockfile (npm 10 and 11
+    // both rewrite the dashboard's), so a project nobody has touched would be
+    // modified by its first documented step. `npm ci` never writes it.
+    for (const rel of ['README.md', 'src/main.rs']) {
+      const text = fs.readFileSync(path.join(TEMPLATES_DIR, template, rel), 'utf8');
+      expect(text, `${template}/${rel}`).not.toMatch(/\bnpm install\b/);
+      expect(text, `${template}/${rel}`).toContain('npm ci');
+    }
   });
 
   it('names the crate after the project-name placeholder', () => {
@@ -178,12 +330,22 @@ describe.each(TEMPLATES)('%s template', (template) => {
     expect(code).not.toContain('0.0.0.0');
   });
 
-  it('sends the Content-Security-Policy that render_page generated', () => {
-    const main = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8');
-    // The nonce in page.csp is per-request and only matches the HTML from the
-    // same render_page call, so the header has to come from page.csp itself.
-    expect(main).toContain('content-security-policy');
-    expect(main).toContain('page.csp');
+  it('sends every rendered page through PageOutput::headers(), so no-store travels with the nonce', () => {
+    // The nonce in a page's policy is per request and only matches the HTML
+    // from the same render_page call, and a cached copy would replay one
+    // nonce to every visitor. forma-server's PageOutput::headers() sends the
+    // policy with `Cache-Control: no-store` and the document headers; a page
+    // that assembles its own headers is how the minimal template came to
+    // send no `no-store` at all (DR-17).
+    const main = stripComments(
+      fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8'),
+    );
+    const renders = main.match(/render_page\(/g)?.length ?? 0;
+    expect(renders).toBeGreaterThan(0);
+    expect(main.match(/page\.headers\(\)/g)?.length ?? 0).toBe(renders);
+    // ...and no page builds the policy or the cache header by hand.
+    expect(main).not.toContain('page.csp');
+    expect(main).not.toMatch(/content-security-policy|CONTENT_SECURITY_POLICY|CACHE_CONTROL/i);
   });
 
   it('installs a tracing subscriber so forma-server fallbacks are visible', () => {
@@ -233,6 +395,21 @@ describe.each(TEMPLATES)('%s template', (template) => {
   });
 });
 
+describe('the published package', () => {
+  it("carries every template's lockfiles in the npm tarball", () => {
+    // The E2E gate scaffolds from this repository's tree, so it would not
+    // notice a lockfile missing from the tarball users install; the
+    // scaffolder would then quietly ship a project without it.
+    const pack = run('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], REPO_ROOT, 120_000);
+    expect(pack.status, pack.stderr).toBe(0);
+    const files: string[] = JSON.parse(pack.stdout)[0].files.map((f: { path: string }) => f.path);
+    for (const template of TEMPLATES) {
+      expect(files).toContain(`templates/${template}/Cargo.lock`);
+      expect(files).toContain(`templates/${template}/admin/package-lock.json`);
+    }
+  });
+});
+
 describe('minimal template', () => {
   it('keeps its SSR root as literal JSX inside the mount callback', () => {
     // The FMIR compiler walks source; a component tag or a JSX-returning
@@ -247,9 +424,30 @@ describe('minimal template', () => {
     expect(app).not.toMatch(/<[A-Z]/);
   });
 
-  it('configures an SSR entry point for /', () => {
-    const build = fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal', 'admin', 'build.ts'), 'utf8');
-    expect(build).toContain("ssrEntryPoints: { '/': 'src/home/app.tsx' }");
+  it('keys its SSR entry points by page name, as @getforma/build reads them', () => {
+    // @getforma/build 0.2.0 looks an SSR entry up as
+    // `ssrEntryPoints[basename(outfile, '.js')]`, the page name, and falls back
+    // to the browser entry when the key is missing. The template keyed it by
+    // route ('/'), which the build never read; it worked only because the
+    // fallback happened to be the same file. The scaffold gate proves the key
+    // is read ("minimal: build:ssr reads ssrEntryPoints by page name").
+    const build = stripComments(
+      fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal', 'admin', 'build.ts'), 'utf8'),
+    );
+    const entries = /entryPoints:\s*\[([\s\S]*?)\]/.exec(build)?.[1] ?? '';
+    const pages = [...entries.matchAll(/outfile:\s*'([^']+)\.js'/g)].map((m) => m[1]);
+    expect(pages).toEqual(['home']);
+
+    const ssr = /ssrEntryPoints:\s*\{([^}]*)\}/.exec(build)?.[1] ?? '';
+    const keyed = [...ssr.matchAll(/(?:'([^']+)'|"([^"]+)"|([\w$]+))\s*:\s*'([^']+)'/g)].map((m) => ({
+      key: m[1] ?? m[2] ?? m[3],
+      file: m[4]!,
+    }));
+    expect(keyed.length, `no ssrEntryPoints found in build.ts`).toBeGreaterThan(0);
+    for (const { key, file } of keyed) {
+      expect(pages, `ssrEntryPoints key '${key}' is not a page name`).toContain(key);
+      expect(fs.existsSync(path.join(TEMPLATES_DIR, 'minimal', 'admin', file)), `${file} does not exist`).toBe(true);
+    }
   });
 
   it('pins @getforma/compiler, which is what emits the IR', () => {

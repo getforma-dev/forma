@@ -2,6 +2,11 @@
 name = "{{PROJECT_NAME}}"
 version = "0.1.0"
 edition = "2021"
+# forma-server 0.2.0's floor. Resolver 3 is cargo's MSRV-aware resolver (Cargo
+# 1.84+): Cargo.lock and every later `cargo update` pick crate versions that
+# still build on this Rust.
+rust-version = "1.85"
+resolver = "3"
 
 [dependencies]
 forma-ir = "0.2"

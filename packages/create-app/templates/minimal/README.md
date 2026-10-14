@@ -8,7 +8,7 @@ your JSX into HTML before the browser gets it.
 
 ```bash
 # Build the frontend (Phase 1 — client mount)
-cd admin && npm install && npm run build && cd ..
+cd admin && npm ci && npm run build && cd ..
 
 # Start the Rust server
 cargo run
@@ -16,6 +16,13 @@ cargo run
 
 Open [http://localhost:3000](http://localhost:3000). The server binds to
 `127.0.0.1` only.
+
+`admin/package-lock.json` and `Cargo.lock` pin the versions this template was
+built and tested with. `npm ci` installs exactly those and never rewrites the
+lockfile; pnpm, yarn and bun do not read `package-lock.json` and resolve the
+ranges in `package.json` afresh. `Cargo.toml` declares `rust-version = "1.85"`
+with `resolver = "3"`, so a later `cargo update` only picks crates that still
+build on Rust 1.85. Commit both lockfiles.
 
 ## Server-side rendering
 
@@ -80,10 +87,14 @@ up on, and an anonymous `island_N` has no registry entry, so nothing hydrates it
 
 ## Styling and CSP
 
-`main.rs` sends the Content-Security-Policy that `render_page` generates. Its
-`style-src` carries a nonce and no `unsafe-inline`, so inline `<style>` blocks
-and third-party stylesheets are refused; a separate `style-src-attr
-'unsafe-inline'` permits `style="..."` attributes. Prefer a stylesheet anyway —
+`main.rs` sends each page through `PageOutput::headers()`: the
+Content-Security-Policy that `render_page` generated, with
+`Cache-Control: no-store`, because the policy's nonce is fresh on every request
+and a cached page would replay one nonce to every visitor. Keep that line when
+you add pages. The policy's `style-src` carries a nonce and no
+`unsafe-inline`, so inline `<style>` blocks and third-party stylesheets are
+refused; a separate `style-src-attr 'unsafe-inline'` permits `style="..."`
+attributes. Prefer a stylesheet anyway —
 put styling in `admin/src/styles/app.css` (or add another entry to `cssEntries`
 in `admin/build.ts`) so it is cached, hashed and served from `/_assets`.
 

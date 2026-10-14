@@ -13,7 +13,7 @@ is a claim about the whole stack.
 ```bash
 git clone https://github.com/getforma-dev/create-forma-app.git
 cd create-forma-app
-npm install
+npm ci
 npm test        # `pretest` builds the CLI first — the tests run dist/index.js
 npx tsc --noEmit
 ```
@@ -30,11 +30,16 @@ The real gate is opt-in, because it needs a network and a Rust toolchain:
 FORMA_SCAFFOLD_E2E=1 npx vitest run
 ```
 
-That scaffolds each template into a temp directory, runs `npm install`, builds
-the frontend, runs `cargo check`, then starts each compiled server and reads
-its response: the minimal template must serve real server-rendered markup after
-`build:ssr`, and the dashboard must serve a Phase 1 shell whose CSP nonce
-matches its script tag. CI runs it on Linux and Windows, and again before
+That scaffolds each template into a temp directory, installs from the
+template's lockfile with `npm ci`, builds the frontend, runs
+`cargo check --locked`, then starts each compiled server and reads its
+responses: the minimal template must serve real server-rendered markup after
+`build:ssr`, the dashboard must serve a Phase 1 shell whose CSP nonce matches
+its script tag, and every page of both must answer `Cache-Control: no-store`
+with a fresh nonce on each fetch. If you change a template's dependencies,
+regenerate its lockfiles as
+[`docs/TEMPLATES.md`](docs/TEMPLATES.md#regenerating-a-templates-lockfiles)
+describes. CI runs it on Linux and Windows, and again before
 `npm publish`. It is a separate job on purpose — see the "no self-skipping
 tests" rule in the [testing
 policy](https://github.com/getforma-dev/forma/blob/main/docs/TESTING.md).

@@ -5,3 +5,5 @@ dist/
 # Left behind by building or cargo-checking a template in place.
 target/
 Cargo.lock
+# ...except each template's own, which ships to scaffolded apps (DR-32).
+!templates/*/Cargo.lock

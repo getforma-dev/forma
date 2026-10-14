@@ -1,5 +1,86 @@
 # Changelog
 
+## [Unreleased]
+
+Template fixes from the Forma Stack decision brief's defects list, DR-17 and
+DR-32 (ticket FORMA-008). The lockfiles pin the versions published today
+(`@getforma/core` 2.0.1, `@getforma/build` 0.2.0, `@getforma/compiler` 0.3.5,
+`forma-server` and `forma-ir` 0.2.0); moving them to release A's new versions
+belongs to the release that publishes those.
+
+### Changed
+
+- **Both templates ship their lockfiles, and the scaffolder copies them.**
+  Each template now carries `admin/package-lock.json` and `Cargo.lock`, so a
+  new project installs the set this repo's scaffold gate installed, not
+  whatever resolves on the day (DR-32). This reverses 0.6.0's "no lockfile"
+  rule: `package-lock.json` leaves `NEVER_COPY`. The staleness that rule
+  guarded against is now a test failure instead. `npm test` fails when an npm
+  lockfile's declared ranges differ from `package.json`'s, when a direct
+  dependency is locked outside its range, or when a package resolves from
+  anywhere but registry.npmjs.org. It also fails when a `Cargo.lock` names
+  different direct crates from `Cargo.toml`, when a direct crate is locked
+  outside its requirement, or when a crate comes from anywhere but crates.io.
+  It checks too that `npm pack` puts all four lockfiles in the tarball. The
+  scaffold gate installs with `npm ci` and builds with `cargo --locked`.
+  Verified by `tests/templates.test.ts` > "ships an npm lockfile that agrees with package.json and resolves only from the npm registry"
+  Verified by `tests/templates.test.ts` > "ships a Cargo.lock that locks its crates from crates.io under its placeholder name"
+  Verified by `tests/templates.test.ts` > "carries every template's lockfiles in the npm tarball"
+  Verified by `tests/scaffold-lib.test.ts` > "copies a template's lockfiles, never its installed dependencies or build output"
+- **The lockfiles hold forma-server's Rust floor, 1.85, and so do a user's
+  updates.** Each template declares `rust-version = "1.85"` and
+  `resolver = "3"`, cargo's MSRV-aware resolver (Cargo 1.84+). Its
+  `Cargo.lock`, and any later `cargo update`, therefore picks crates that still
+  build on 1.85: an unaware resolve locked `sha2` 0.11.1, which needs 1.88; it
+  is 0.11.0. The scaffold gate fails on any locked crate whose `rust-version`
+  is above the template's, before and after a `cargo update`.
+  Verified by `tests/scaffold.test.ts` > "%s: no locked crate needs a newer Rust than the template declares"
+  Verified by `tests/scaffold.test.ts` > "%s: a user's own cargo update keeps every crate within the template's rust-version"
+- **A scaffolded `Cargo.lock` reads exactly as cargo would write it.** The
+  crate's own entry ships under the name placeholder. The scaffolder renames
+  it, moves it to where cargo sorts it, and, when the project is named after a
+  crate in its own graph (`tracing`, `serde`, `axum`, about a hundred names),
+  rewrites references to that crate as cargo then writes them,
+  `"tracing 0.1.44"`. Without that, `cargo --locked` refuses such a project
+  and a plain `cargo run` rewrites its lockfile before anyone has changed it.
+  Verified by `tests/scaffold-lib.test.ts` > "matches cargo's own lockfile for a project named %s, a crate in its graph, and is then a no-op"
+  Verified by `tests/scaffold-lib.test.ts` > "matches cargo's own lockfile when the project ties a locked crate's name and version"
+  Verified by `tests/scaffold-lib.test.ts` > "moves the renamed entry to where cargo sorts it and changes nothing else"
+  Verified by `tests/scaffold.test.ts` > "puts the project's own Cargo.lock entry where cargo sorts it"
+  Verified by `tests/scaffold.test.ts` > "%s scaffolded as %s, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it"
+- **The install step is `npm ci`**, in the CLI's next steps, both templates'
+  "frontend not built" messages and their READMEs. A plain `npm install` may
+  rewrite the shipped lockfile (npm 10 and 11 both rewrite the dashboard's),
+  so a project's first documented step would modify it. When the CLI detects
+  pnpm, yarn or bun it still prints that tool's `install`, with a note that it
+  does not read `package-lock.json`.
+  Verified by `tests/scaffold.test.ts` > "tells an npm user to install with npm ci, which leaves the shipped lockfile as it is"
+  Verified by `tests/templates.test.ts` > "documents npm ci, never npm install, as the install step"
+
+### Fixed
+
+- **The minimal template's `ssrEntryPoints` key was never read.** It was keyed
+  by route (`'/'`); `@getforma/build` 0.2.0 looks an SSR entry up by page name,
+  the entry's outfile without `.js`, and silently falls back to the browser
+  entry when the key is missing. The template worked only because that
+  fallback was the same file. It is now keyed `home`. The scaffold gate points
+  the template's own key at a different file and checks that the IR came from
+  it.
+  Verified by `tests/templates.test.ts` > "keys its SSR entry points by page name, as @getforma/build reads them"
+  Verified by `tests/scaffold.test.ts` > "minimal: build:ssr reads ssrEntryPoints by page name"
+- **The minimal template sent its page without `Cache-Control: no-store`.** A
+  cached page replays one CSP nonce to every visitor. Both templates now send
+  every page through forma-server's `PageOutput::headers()`, which writes the
+  policy, `no-store`, the content type and the document security headers
+  (`nosniff`, `Referrer-Policy`, `Permissions-Policy`,
+  `Cross-Origin-Opener-Policy`) from the same render that produced the HTML
+  (DR-17). The dashboard already set `no-store` by hand and now gains the
+  document headers. The scaffold gate fetches every page route of each
+  template twice and requires `no-store` on each response and a different
+  nonce on every fetch, each matching its own HTML.
+  Verified by `tests/templates.test.ts` > "sends every rendered page through PageOutput::headers(), so no-store travels with the nonce"
+  Verified by `tests/scaffold.test.ts` > "%s: every page response carries Cache-Control: no-store and a fresh nonce per fetch"
+
 ## [0.6.0] - 2026-08-06
 
 An audit pass across the scaffolder, both templates, their pinned dependencies,
@@ -75,7 +156,8 @@ compiled or ran anything.
   Deleting the stale lockfiles (below) fixed the instance; this closes the
   class. The test drives the real `cpSync` through the scaffolder's own filter,
   so it fails if either the set or the wiring regresses.
-  Verified by `tests/scaffold-lib.test.ts` > "never copies a lockfile or a build directory out of a template"
+  (Reversed in [Unreleased]: the templates now ship lockfiles on purpose, and
+  this entry's test was replaced by one that requires they are copied.)
 - **The dashboard template could not be built on Windows.** It shipped a
   committed `admin/package-lock.json` from March pinning `@getforma/build`
   0.1.6, `@getforma/compiler` 0.1.6 and `@getforma/core` 1.0.6; `npm install`
