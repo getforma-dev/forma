@@ -394,6 +394,100 @@ pub(crate) fn page_policy(
     Ok(PagePolicy { csp, opener })
 }
 
+// ---------------------------------------------------------------------------
+// The preview frame's policy (DR-14 tier (c), L-17, L-27)
+// ---------------------------------------------------------------------------
+
+/// The preview frame document's policy for `nonce`: the strict policy with
+/// exactly four directives written in its place, the one exception to SR5's
+/// rule against rewriting the policy (L-17, L-27, SR32):
+///
+/// - `sandbox allow-scripts`, without `allow-same-origin`: the document gets
+///   an opaque origin, so it reaches none of the application's cookies,
+///   storage or same-origin windows; scripts may run, nothing else the
+///   sandbox gates (forms, popups, top navigation) may;
+/// - `frame-ancestors <app_origin>`: only the application's own pages may
+///   frame it;
+/// - `connect-src 'none'`: no `fetch`, XHR, WebSocket or beacon, which is
+///   what the frame's residual risk rests on (L-27);
+/// - `script-src 'nonce-N'`: only the inline runtime forma-server writes
+///   runs; no `'strict-dynamic'` (nothing it loads is trusted) and no
+///   `'self'`.
+///
+/// Every other directive is the strict policy's, unchanged. The header must
+/// be the enforced one: `sandbox` is ignored in Report-Only and in `meta`.
+/// `app_origin` is checked by [`check_origin`] first.
+///
+/// Verified by: crates/forma-server/tests/preview_frame.rs > "the_frame_policy_replaces_exactly_its_four_directives"
+pub(crate) fn frame_policy(nonce: &CspNonce, app_origin: &str) -> String {
+    let nonce_source = format!("'nonce-{}'", nonce.as_str());
+    let mut directives: Vec<(&str, Vec<String>)> =
+        strict_directives(nonce.as_str()).into_iter().collect();
+    for (name, sources) in directives.iter_mut() {
+        match *name {
+            "script-src" => *sources = vec![nonce_source.clone()],
+            "connect-src" => *sources = vec!["'none'".to_string()],
+            "frame-ancestors" => *sources = vec![app_origin.to_string()],
+            _ => {}
+        }
+    }
+    directives.push(("sandbox", vec!["allow-scripts".to_string()]));
+    write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice())))
+}
+
+/// Accept the application's own origin for the frame's `frame-ancestors`, or
+/// say why not: `https://host[:port]`, or `http://` on `localhost`,
+/// `127.0.0.1` or `[::1]` for development. An origin has no path, query,
+/// userinfo or wildcard, and its host is ASCII letters, digits, `-` and `.`
+/// (an IPv6 host only as `[::1]`). Returned in lower case.
+pub(crate) fn check_origin(origin: &str) -> Result<String, &'static str> {
+    let lower = origin.to_ascii_lowercase();
+    let (secure, authority) = if let Some(rest) = lower.strip_prefix("https://") {
+        (true, rest)
+    } else if let Some(rest) = lower.strip_prefix("http://") {
+        (false, rest)
+    } else {
+        return Err("an origin is https://host[:port], or http:// on a loopback host");
+    };
+    let (host, port) = if authority.starts_with('[') {
+        match authority.split_once(']') {
+            Some((v6, rest)) => {
+                if !rest.is_empty() && !rest.starts_with(':') {
+                    return Err("an origin is a scheme, a host and an optional port, nothing more");
+                }
+                (format!("{v6}]"), rest.strip_prefix(':'))
+            }
+            None => return Err("an unclosed IPv6 host"),
+        }
+    } else {
+        match authority.split_once(':') {
+            Some((host, port)) => (host.to_string(), Some(port)),
+            None => (authority.to_string(), None),
+        }
+    };
+    let host_ok = host == "[::1]"
+        || (!host.is_empty()
+            && host.split('.').all(|label| {
+                !label.is_empty()
+                    && label
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+            }));
+    let port_ok = match port {
+        None => true,
+        Some(p) => !p.is_empty() && p.len() <= 5 && p.bytes().all(|b| b.is_ascii_digit()),
+    };
+    if !host_ok || !port_ok {
+        return Err("an origin is a scheme, a host and an optional port, nothing more");
+    }
+    if !secure && !matches!(host.as_str(), "localhost" | "127.0.0.1" | "[::1]") {
+        return Err(
+            "http:// only on localhost, 127.0.0.1 or [::1]; serve the application over https",
+        );
+    }
+    Ok(lower)
+}
+
 /// Accept one CSP source expression a handler may add, or say why not.
 ///
 /// CSP3's `source-expression` narrowed to what an extension may add:

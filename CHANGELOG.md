@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+- **The preview frame (FORMA-125, DR-14 tier (c)).** forma-server's
+  `PageResponse::frame` writes the document for content nobody reviewed: an
+  opaque origin (`sandbox allow-scripts`), no network (`connect-src 'none'`),
+  framed only by the application's origin, and core's runtime inline under a
+  nonce, read at start from the build's `forma-runtime.js`
+  (`PreviewFrame::load`; a missing runtime is a coded error). The host's
+  side is documented in forma-server's `frame` module.
+
 - **One named raw-HTML type, and typed homes for the rest (FORMA-126,
   DR-19).** forma-server's `RawHtml::trusted(..)` is the one way to say a
   string is markup to write unescaped; `body_prefix` takes it bound first,

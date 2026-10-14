@@ -8,6 +8,46 @@ application turns it on (FORMA-130, under Changed). The old forms warn as
 deprecated and go in 3.0.0.
 
 ### Added
+- **`PageResponse::frame`, the preview frame's document** (DR-14 tier (c);
+  L-12, L-17, L-27, L-33, L-44 (b); SR32; FORMA-125, the forma-server half).
+  For content nobody reviewed: a document with an opaque origin and no
+  network, the zero-build runtime inline.
+  - Its enforced `Content-Security-Policy` is the strict policy with exactly
+    four directives written in their place, the one exception to SR5's
+    no-rewrite rule: `sandbox allow-scripts` (never `allow-same-origin`),
+    `frame-ancestors` the application's origin, `connect-src 'none'`, and
+    `script-src` the nonce alone. In the enforced header only, since
+    browsers ignore `sandbox` in Report-Only and `meta`.
+  - The document is one root, `<div id="forma-frame">`, and the runtime as
+    one nonced inline script; it names no URL, so loading it fetches
+    nothing.
+  - The runtime comes from the application's own build: the manifest's
+    `assets` entry `forma-runtime.js` (`FRAME_RUNTIME_ASSET`), read from the
+    embedded `dist` once at start by `PreviewFrame::load::<A>(&manifest,
+    app_origin)`. A missing or unusable runtime is a coded `FrameError` at
+    start, never a frame without it: `FRAME-101` (no entry), `FRAME-102`
+    (named, not embedded), `FRAME-103` (empty, not UTF-8, or containing
+    `</script` or `<!--`: inlined as it is, never rewritten), `FRAME-104`
+    (the application's origin is not `https://host[:port]` or loopback
+    `http://`); per request, `FRAME-201` (no nonce).
+  - The host's side (the application's `iframe sandbox="allow-scripts"`, one
+    `MessageChannel` port handed on the first load, only `ready`, `resize`
+    and `error` accepted and schema-checked, teardown on any later load) is
+    documented in the `frame` module.
+  - Needs, from the other repositories: core's frame runtime as a classic,
+    self-contained script (FORMA-128), and `@getforma/build` writing it into
+    `dist` under the logical name `forma-runtime.js`.
+  Tests: `tests/preview_frame.rs` >
+  `the_frame_policy_replaces_exactly_its_four_directives`,
+  `the_frame_document_inlines_the_runtime_under_its_nonce_and_names_nothing_to_fetch`,
+  `a_frame_without_its_runtime_is_a_coded_error_at_start`,
+  `page_response_frame_is_the_only_response_that_rewrites_the_policy`;
+  `frame::tests::frame_201_a_failed_nonce_draw_is_no_frame`. Checked in
+  Chrome 155 (SR32): framed as documented, the frame made one request (its
+  document), its `fetch` of the studio's API was refused by `connect-src
+  'none'` and never reached the server, `window.origin` was `"null"` and
+  `document.cookie` threw; served without the header in the same `iframe`,
+  `window.origin` was still `"null"`.
 - **`PageResponse`**, a page that cannot be sent without its headers (DR-17,
   FORMA-124). As axum's `IntoResponse` it always writes `Cache-Control:
   no-store`, the strict policy for the nonce its HTML carries,

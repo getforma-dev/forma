@@ -1,0 +1,8 @@
+{
+ "version": 1,
+ "build_hash": "fixture",
+ "assets": {
+  "app.js": "app.11111111.js"
+ },
+ "routes": {}
+}
