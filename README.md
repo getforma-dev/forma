@@ -201,8 +201,11 @@ cargo fmt --all --check                                   # format check
 # Offset arithmetic differs where usize is 32 bits (as on wasm32):
 cargo test --workspace --target i686-unknown-linux-gnu
 
-# MSRVs differ per crate and CI builds at exactly these versions:
+# MSRVs differ per crate and CI builds at exactly these versions. The 1.85
+# check locks with the MSRV-aware resolver first; CONTRIBUTING.md says why,
+# and what consumers on Rust 1.85 to 1.87 need:
 cargo +1.71 check -p forma-ir --all-targets
+CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo +1.85 generate-lockfile
 cargo +1.85 check -p forma-server --all-targets
 
 # Measurement harnesses (not gates — see tests/list_scaling.rs for those):
