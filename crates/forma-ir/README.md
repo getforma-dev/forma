@@ -41,6 +41,12 @@ let slots = SlotData::from_json(r#"{"count": 42}"#, &module)?;
 let html = walker::walk_to_html(&module, &slots)?;
 ```
 
+`walk_to_html_counted(&module, &slots, limits)` writes the same HTML and also
+returns what it wrote (`WalkCounts`: nodes, bytes, list rows); on failure it
+returns a `WalkFailure` with the counts reached and the component path, the
+islands open where the walk stopped. It catches a panic inside the walk as
+`IrError::Panicked`, while the application unwinds on panic.
+
 ## When You Need This
 
 - **Building your own server** (not Axum) — parse IR and generate HTML yourself

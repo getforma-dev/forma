@@ -46,7 +46,44 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   `frame_and_form_targets_refuse_data_and_filesystem`; `tests/page_response.rs`
   > `into_page_response_refuses_a_policy_edited_as_text`.
 
+- **`try_render(config, ctx) -> Result<PageResponse, RenderError>`**, beside
+  `render_page` (DR-11, DR-12, L-3; FORMA-120). It never serves an empty shell
+  in place of a failure: a missing module or slots, a walk the module or data
+  fails, an exceeded budget (with the counts reached, SR22), an invalid policy
+  extension, a failed nonce draw and a panic each return a `RenderError` with a
+  stable code (`RENDER-101` to `RENDER-399`, by family), the route and the
+  component path; Forma logs none of them. A panic in the render is caught
+  (`catch_unwind`) as `RenderError::Fault`, so the handler answers 500 and the
+  next request renders, while the application unwinds on panic (SA8). The
+  page's `RenderCounts` gain `nodes` and `list_iterations`. `RenderCtx` carries
+  the policy extensions and the walk's `WalkLimits` (re-exported), never a
+  nonce. Its documentation gives the `spawn_blocking` recipe for pages past
+  about 12,500 nodes. Tests: `tests/try_render.rs` >
+  `a_panicking_component_returns_fault_the_handler_answers_500_and_the_next_request_renders`
+  (SR44), `a_component_failing_on_one_tenants_branding_fails_that_request_alone`
+  (S2), one test per code (`render_101_…` to `render_399_…`, and
+  `render::tests::render_202_a_failed_nonce_draw`),
+  `try_render_writes_render_page_s_document_and_counts_the_walk`,
+  `try_render_never_serves_a_shell_in_place_of_a_failure`;
+  `render::tests::a_panic_outside_the_walk_is_still_a_fault`,
+  `an_invalid_extension_fails_before_the_walk`.
+- **`render_browser_shell(config, ctx)`**: the bundle and the same headers
+  around an empty root, for a route the build declares `ssr: false`; never in
+  place of a failure. Test: `tests/try_render.rs` >
+  `render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers`.
+- `CspNonce::try_generate` and `NonceError`: the nonce draw that returns an
+  error instead of panicking (DR-12).
+- `tests/page_response.rs`'s policy property and invalid-extension tests now
+  run over every path that makes a `PageResponse`: the bridge, `try_render`
+  and `render_browser_shell`.
+
 ### Deprecated
+- `render_page`: it serves the empty Phase 1 shell with a 200 on any failure.
+  Use `try_render` (DR-11). It keeps its fallback until 3.0.0, and in debug
+  builds logs its deprecation once per process (`tests/render_page_deprecation.rs`
+  > `render_page_logs_its_deprecation_once_per_process_in_debug_builds`).
+- `assets::load_manifest`, which panics on a missing or malformed manifest:
+  use `try_load_manifest` (L-13).
 - `PageOutput`'s public fields `html`, `csp` and `nonce`, and
   `PageOutput::headers()`, which drops an invalid policy silently: send a
   `PageResponse` (DR-17). The fields go private in 3.0.0.
@@ -64,6 +101,12 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   document and policy against goldens written by 0.2.1 itself.
 
 ### Changed
+- **No `unwrap`, `expect` or `panic!` in the shipped code** (DR-12, SR44):
+  Clippy denies them outside tests. `serve_asset` and `serve_sw` answer 500
+  rather than panic if a response fails to build (it cannot with today's
+  headers). `CspNonce::generate`, `assets::asset` and the deprecated
+  `assets::load_manifest` keep their documented 0.2.1 panics under a scoped
+  `allow`, each beside its fallible twin; none is on the render path.
 - `build_csp_header` writes from the directive table the extensions share; its
   output is byte-identical to 0.2.1 (`csp::tests` >
   `build_csp_header_is_byte_identical_to_0_2_1`).

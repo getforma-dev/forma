@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
+
+### Added
+- **`walk_to_html_counted`**: the same HTML as `walk_to_html_with_limits`,
+  byte for byte, plus what the walk wrote (`WalkOutput { html, counts }`,
+  `WalkCounts { nodes, bytes, list_iterations }`). On failure it returns a
+  `WalkFailure` with the error, the counts reached (SR22) and the component
+  path: the islands open where the walk stopped, outermost first. It catches a
+  panic inside the walk and returns it as the new `IrError::Panicked`, with the
+  same path and counts (DR-12); under `panic = "abort"` there is nothing to
+  catch. Tests: `walker::tests` >
+  `counted_walk_writes_what_walk_to_html_writes_and_counts_it`,
+  `counted_walk_returns_the_counts_reached_when_a_budget_stops_it`,
+  `counted_walk_names_no_component_for_a_failure_outside_every_island`,
+  `counted_walk_names_every_island_around_a_failure_outermost_first`,
+  `counted_walk_catches_a_panic_and_names_its_island`.
+- `test_helpers::FAULT_TRIGGER` (`test-helpers` feature only): a DYN_TEXT
+  value that makes the walk panic, the stand-in for a component that panics
+  (SR44). No shipped build has it.
+
+### Changed
+- **No `unwrap`, `expect` or `panic!` in the shipped code** (DR-12, SR44):
+  Clippy denies them outside tests (`#![cfg_attr(not(test), deny(...))]`).
+  The parser's fixed-width reads index the bounds-checked slice instead of
+  `try_into().unwrap()`; `dump_ir` writes through `fmt::Result`; the walker's
+  marker-id write has no `expect`. Behaviour is unchanged. The `wasm` exports
+  keep their panic, which wasm-bindgen turns into the JS exception the client
+  loader catches, under a scoped `allow`; `test_helpers` likewise.
+- `ListBudgetExceeded` is now raised before the over-budget row is counted, so
+  the count reported with it is the rows actually walked. The same input fails
+  at the same row with the same error.
+
 ### Fixed (documentation only)
 - `IrHeader`'s doc comment calls the module a `.ir` file, the name the
   compiler writes, not `.fmir` (FORMA-009).

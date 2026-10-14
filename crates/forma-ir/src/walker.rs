@@ -9,6 +9,7 @@ use crate::format::SlotSource;
 use crate::format::{IrError, IslandTrigger, Opcode, PropsMode};
 use crate::parser::IrModule;
 use crate::slot::{SlotData, SlotValue};
+use std::fmt;
 
 // ---------------------------------------------------------------------------
 // Walk state
@@ -141,6 +142,11 @@ struct WalkState {
     /// An `option` of a bound select with no `value` attribute: its value is
     /// its text, which is known only when the option ends.
     option_by_text: Option<OptionByText>,
+    /// Elements and text nodes written so far ([`WalkCounts::nodes`]).
+    nodes: usize,
+    /// The islands open at this point of the walk, outermost first: the
+    /// component path a failure reports ([`WalkFailure::component_path`]).
+    islands: Vec<u16>,
 }
 
 impl WalkState {
@@ -161,6 +167,8 @@ impl WalkState {
             pending_control: PendingControl::None,
             select: None,
             option_by_text: None,
+            nodes: 0,
+            islands: Vec::new(),
         }
     }
 
@@ -238,30 +246,169 @@ pub fn walk_to_html_with_limits(
 ) -> Result<String, IrError> {
     let ops = &module.opcodes;
     let len = ops.len();
-    // Cap the pre-reservation: `len * 4` is a fine estimate for a real page
-    // (measured modules are tens of bytes to low KiB) but a 4x reservation on
-    // an attacker-sized section is a free amplifier, and `len * 4` can itself
-    // overflow on wasm32 where `usize` is 32 bits. Beyond the cap, String's
-    // amortized doubling costs O(log n) reallocs.
-    let mut out = String::with_capacity(len.saturating_mul(4).min(1 << 20));
+    let mut out = String::with_capacity(initial_capacity(len));
     let mut state = WalkState::new(limits);
     let mut slots_mut = slots.clone();
     walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
+    finish_page(&mut out, &state)?;
+    Ok(out)
+}
 
-    // Emit script tag for ScriptTag props mode islands
+/// The output buffer's first reservation for a module's opcode stream.
+///
+/// Capped: `len * 4` is a fine estimate for a real page (measured modules are
+/// tens of bytes to low KiB) but a 4x reservation on an attacker-sized section
+/// is a free amplifier, and `len * 4` can itself overflow on wasm32 where
+/// `usize` is 32 bits. Beyond the cap, String's amortized doubling costs
+/// O(log n) reallocs.
+fn initial_capacity(opcodes_len: usize) -> usize {
+    opcodes_len.saturating_mul(4).min(1 << 20)
+}
+
+/// After a whole-page walk: the `__forma_islands` block for ScriptTag props.
+fn finish_page(out: &mut String, state: &WalkState) -> Result<(), IrError> {
     if !state.script_tag_props.is_empty() {
         let json =
             serde_json::to_string(&state.script_tag_props).unwrap_or_else(|_| "{}".to_string());
         push_checked(
-            &mut out,
+            out,
             "<script id=\"__forma_islands\" type=\"application/json\">",
             state.max_output_bytes,
         )?;
-        push_json_script_body(&mut out, &json, state.max_output_bytes)?;
-        push_checked(&mut out, "</script>", state.max_output_bytes)?;
+        push_json_script_body(out, &json, state.max_output_bytes)?;
+        push_checked(out, "</script>", state.max_output_bytes)?;
     }
+    Ok(())
+}
 
-    Ok(out)
+/// What a walk wrote, or what it had reached when it stopped.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct WalkCounts {
+    /// Elements and text nodes written from the module's opcodes. Hydration
+    /// markers, comments and the `__forma_islands` data block are not nodes.
+    pub nodes: usize,
+    /// Bytes of HTML written: what [`WalkLimits::max_output_bytes`] bounds.
+    pub bytes: usize,
+    /// LIST rows walked, across every nesting depth: what
+    /// [`WalkLimits::max_list_iterations`] bounds.
+    pub list_iterations: usize,
+}
+
+/// A whole page's HTML and what writing it took.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct WalkOutput {
+    /// The page's HTML, as [`walk_to_html_with_limits`] writes it.
+    pub html: String,
+    /// What the walk wrote.
+    pub counts: WalkCounts,
+}
+
+/// A walk that stopped: why, where, and how far it had got.
+///
+/// The partial HTML is dropped: nothing a failed walk wrote leaves it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct WalkFailure {
+    /// Why it stopped.
+    pub error: IrError,
+    /// The component names of the islands open where it stopped, outermost
+    /// first; empty when it stopped outside every island. FMIR v2 carries no
+    /// source positions, so a component the compiler inlined into its parent
+    /// has no name here; the source-position table of FMIR v3 adds it (L-7).
+    pub component_path: Vec<String>,
+    /// What it had written by then.
+    pub counts: WalkCounts,
+}
+
+impl fmt::Display for WalkFailure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.error)?;
+        if !self.component_path.is_empty() {
+            write!(f, " (in {})", self.component_path.join(" > "))?;
+        }
+        Ok(())
+    }
+}
+
+impl std::error::Error for WalkFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.error)
+    }
+}
+
+/// [`walk_to_html_with_limits`], reporting what the walk wrote, and on
+/// failure where it stopped and how far it had got.
+///
+/// The same HTML, byte for byte, and the same errors, with two additions: the
+/// counts (nodes, bytes, list rows), returned on success and on failure alike
+/// so an over-budget page reports how far it got (SR22); and the component
+/// path, the islands open at the failure. A panic inside the walk is caught
+/// and returned as [`IrError::Panicked`] with the same path and counts, so
+/// one bad page cannot take its request's connection down with it (DR-12).
+/// That holds only while the application unwinds on panic: under
+/// `panic = "abort"` the process ends instead (SA8).
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "counted_walk_returns_the_counts_reached_when_a_budget_stops_it"
+/// Verified by: crates/forma-ir/src/walker.rs > "counted_walk_catches_a_panic_and_names_its_island"
+pub fn walk_to_html_counted(
+    module: &IrModule,
+    slots: &SlotData,
+    limits: WalkLimits,
+) -> Result<WalkOutput, WalkFailure> {
+    let ops = &module.opcodes;
+    let len = ops.len();
+    let mut out = String::with_capacity(initial_capacity(len));
+    let mut state = WalkState::new(limits);
+    let mut slots_mut = slots.clone();
+
+    // The closure only borrows: after an unwind, `state` and `out` still say
+    // where the walk was and how much it had written. Nothing they hold is
+    // used again except to read those counts.
+    let walked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
+        finish_page(&mut out, &state)
+    }));
+    let counts = WalkCounts {
+        nodes: state.nodes,
+        bytes: out.len(),
+        list_iterations: state.list_iterations,
+    };
+    let error = match walked {
+        Ok(Ok(())) => return Ok(WalkOutput { html: out, counts }),
+        Ok(Err(error)) => error,
+        Err(payload) => IrError::Panicked {
+            message: panic_message(payload.as_ref()),
+        },
+    };
+    let component_path = state
+        .islands
+        .iter()
+        .map(|&id| {
+            module
+                .island_entry(id)
+                .and_then(|entry| module.strings.get(entry.name_str_idx).ok())
+                .map_or_else(|| format!("island {id}"), str::to_string)
+        })
+        .collect();
+    Err(WalkFailure {
+        error,
+        component_path,
+        counts,
+    })
+}
+
+/// A panic payload's message: `panic!` with a literal gives a `&str`, with
+/// formatting a `String`.
+fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
+    if let Some(message) = payload.downcast_ref::<&str>() {
+        (*message).to_string()
+    } else if let Some(message) = payload.downcast_ref::<String>() {
+        message.clone()
+    } else {
+        "a panic with no message".to_string()
+    }
 }
 
 /// Append a JSON document as the body of a `<script type="application/json">`
@@ -589,6 +736,7 @@ fn walk_range_impl(
                 let tag = strings.get(tag_str_idx)?;
                 let has_content = opcode == Opcode::OpenTag;
                 emit_open_tag(out, tag, &attrs, has_content, state, limit)?;
+                state.nodes += 1;
                 pos = new_pos;
             }
 
@@ -621,6 +769,7 @@ fn walk_range_impl(
                         option.text.push_str(text);
                     }
                 }
+                state.nodes += 1;
             }
 
             Opcode::DynText => {
@@ -632,6 +781,14 @@ fn walk_range_impl(
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
                 let value = slots.get(slot_id).to_text();
+
+                // SR44's stand-in for a component that panics; test builds and
+                // the `test-helpers` feature only (see `FAULT_TRIGGER`).
+                #[cfg(any(test, feature = "test-helpers"))]
+                #[allow(clippy::panic)]
+                if value == crate::parser::test_helpers::FAULT_TRIGGER {
+                    panic!("stand-in component panicked (FAULT_TRIGGER)");
+                }
 
                 if let Some(parent) = state.text_only.as_mut() {
                     // Inside a text-only element a marker comment is literal
@@ -661,6 +818,7 @@ fn walk_range_impl(
                         option.text.push_str(written);
                     }
                 }
+                state.nodes += 1;
             }
 
             Opcode::DynAttr => {
@@ -726,6 +884,7 @@ fn walk_range_impl(
                         inner: island_id,
                     });
                 }
+                state.islands.push(island_id);
 
                 // No marker inside a text-only element, where it is text.
                 if state.text_only.is_none() {
@@ -815,6 +974,9 @@ fn walk_range_impl(
                 // island_id(u16)
                 let island_id = read_u16(ops, pos)?;
                 pos += 2;
+                if state.islands.last() == Some(&island_id) {
+                    state.islands.pop();
+                }
 
                 // The island is over: anything still pending belongs to no
                 // element inside it. Without this, an ISLAND_START not
@@ -1046,12 +1208,15 @@ fn walk_range_impl(
                         // Total across all depths, never decremented: depth
                         // alone does not bound volume, and four nested LISTs
                         // over the same array give n^4 body walks.
-                        state.list_iterations += 1;
-                        if state.list_iterations > state.max_list_iterations {
+                        //
+                        // Checked before counting, so at the error the count
+                        // is the rows actually walked (`WalkCounts`).
+                        if state.list_iterations >= state.max_list_iterations {
                             return Err(IrError::ListBudgetExceeded {
                                 max: state.max_list_iterations,
                             });
                         }
+                        state.list_iterations += 1;
                         // Scoped binding instead of a per-row `SlotData`
                         // clone: swap the item in, walk, swap back. Same
                         // isolation between rows, without copying every other
@@ -1920,7 +2085,7 @@ pub(crate) fn read_u16(data: &[u8], pos: usize) -> Result<u16, IrError> {
             actual: data.len(),
         });
     }
-    Ok(u16::from_le_bytes(data[pos..pos + 2].try_into().unwrap()))
+    Ok(u16::from_le_bytes([data[pos], data[pos + 1]]))
 }
 
 /// Read a little-endian u32 from `data` at `pos`.
@@ -1931,7 +2096,12 @@ pub(crate) fn read_u32(data: &[u8], pos: usize) -> Result<u32, IrError> {
             actual: data.len(),
         });
     }
-    Ok(u32::from_le_bytes(data[pos..pos + 4].try_into().unwrap()))
+    Ok(u32::from_le_bytes([
+        data[pos],
+        data[pos + 1],
+        data[pos + 2],
+        data[pos + 3],
+    ]))
 }
 
 /// Read an OPEN_TAG or VOID_TAG operand block:
@@ -2003,8 +2173,12 @@ fn push_u16(out: &mut String, value: u16, limit: usize) -> Result<(), IrError> {
             break;
         }
     }
-    let digits = core::str::from_utf8(&buf[start..]).expect("ASCII digits are valid UTF-8");
-    push_checked(out, digits, limit)
+    // ASCII digits are always UTF-8; the error arm is unreachable and costs
+    // nothing, where `expect` would put a panic on the hottest write.
+    match core::str::from_utf8(&buf[start..]) {
+        Ok(digits) => push_checked(out, digits, limit),
+        Err(e) => Err(IrError::InvalidUtf8(e.to_string())),
+    }
 }
 
 /// Escape text for HTML content (`& < >`), within the output budget.
@@ -6148,5 +6322,175 @@ mod tests {
             full.starts_with("<!--f:i0--><form data-forma-island=\"0\""),
             "{full}"
         );
+    }
+
+    // -- Counted walk (FORMA-120) -------------------------------------------
+
+    /// A "Branding" island: `<div>` + the tenant's name + one `<i>` per colour.
+    ///
+    /// Strings: 0 div, 1 Branding, 2 i, 3 name, 4 colors, 5 color.
+    /// Slots: 0 name (text), 1 colors (array), 2 color (the row's item).
+    fn branding_module() -> IrModule {
+        let mut row = encode_open_tag(2, &[]);
+        row.extend_from_slice(&encode_dyn_text(2, 1));
+        row.extend_from_slice(&encode_close_tag(2));
+        let mut ops = encode_island_start(0);
+        ops.extend_from_slice(&encode_open_tag(0, &[]));
+        ops.extend_from_slice(&encode_dyn_text(0, 0));
+        ops.extend_from_slice(&encode_list(1, 2, &row));
+        ops.extend_from_slice(&encode_close_tag(0));
+        ops.extend_from_slice(&encode_island_end(0));
+        let data = build_minimal_ir(
+            &["div", "Branding", "i", "name", "colors", "color"],
+            &[
+                (0, 3, 0x01, 0x00, &[]),
+                (1, 4, 0x04, 0x00, &[]),
+                (2, 5, 0x01, 0x00, &[]),
+            ],
+            &ops,
+            &[(0, 0x01, 0x01, 1, 0, &[])],
+        );
+        IrModule::parse(&data).unwrap()
+    }
+
+    fn branding(name: &str, colors: usize) -> SlotData {
+        let mut slots = SlotData::new(3);
+        slots.set(0, SlotValue::Text(name.to_string()));
+        slots.set(
+            1,
+            SlotValue::array(
+                (0..colors)
+                    .map(|i| SlotValue::Text(format!("c{i}")))
+                    .collect(),
+            ),
+        );
+        slots
+    }
+
+    #[test]
+    fn counted_walk_writes_what_walk_to_html_writes_and_counts_it() {
+        let module = branding_module();
+        let slots = branding("Acme", 3);
+        let out = walk_to_html_counted(&module, &slots, WalkLimits::default()).unwrap();
+
+        assert_eq!(out.html, walk_to_html(&module, &slots).unwrap());
+        assert_eq!(out.counts.bytes, out.html.len());
+        // div + the name's text + 3 x (i + its text) = 8 nodes; markers and
+        // comments are not nodes.
+        assert_eq!(out.counts.nodes, 8);
+        assert_eq!(out.counts.list_iterations, 3);
+    }
+
+    #[test]
+    fn counted_walk_returns_the_counts_reached_when_a_budget_stops_it() {
+        let module = branding_module();
+
+        // The list budget: 5 rows allowed, 9 asked for. Five rows were walked.
+        let limits = WalkLimits {
+            max_list_iterations: 5,
+            ..WalkLimits::default()
+        };
+        let failure = walk_to_html_counted(&module, &branding("Acme", 9), limits).unwrap_err();
+        assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 5 });
+        assert_eq!(failure.counts.list_iterations, 5);
+        assert_eq!(failure.counts.nodes, 2 + 5 * 2);
+        assert_eq!(failure.component_path, vec!["Branding".to_string()]);
+        assert!(failure.counts.bytes > 0);
+
+        // The output budget, set to stop the walk part-way down the list: it
+        // stops inside the limit, never past it, and says how far it got.
+        let limits = WalkLimits {
+            max_output_bytes: 400,
+            ..WalkLimits::default()
+        };
+        let failure = walk_to_html_counted(&module, &branding("Acme", 50), limits).unwrap_err();
+        assert_eq!(failure.error, IrError::OutputLimitExceeded { limit: 400 });
+        let counts = failure.counts;
+        assert!(counts.bytes <= 400 && counts.bytes > 300, "{counts:?}");
+        assert!(
+            counts.list_iterations > 1 && counts.list_iterations < 50,
+            "{counts:?}"
+        );
+        assert!(
+            counts.nodes >= 2 + 2 * (counts.list_iterations - 1),
+            "{counts:?}"
+        );
+        assert_eq!(failure.component_path, vec!["Branding".to_string()]);
+    }
+
+    #[test]
+    fn counted_walk_names_no_component_for_a_failure_outside_every_island() {
+        // A TEXT naming string 99 parses and fails in the walk, at page level.
+        let mut ops = encode_open_tag(0, &[]);
+        ops.extend_from_slice(&encode_text(99));
+        let data = build_minimal_ir(&["p"], &[], &ops, &[]);
+        let module = IrModule::parse(&data).unwrap();
+        let failure =
+            walk_to_html_counted(&module, &SlotData::new(0), WalkLimits::default()).unwrap_err();
+        assert_eq!(
+            failure.error,
+            IrError::StringIndexOutOfBounds { index: 99, len: 1 }
+        );
+        assert!(failure.component_path.is_empty());
+        assert_eq!(failure.counts.nodes, 1);
+    }
+
+    #[test]
+    fn counted_walk_names_every_island_around_a_failure_outermost_first() {
+        // Outer "Shell" > inner "Card", the failure inside "Card", and a
+        // closed sibling island before it that must not appear in the path.
+        // Strings: 0 div, 1 Shell, 2 Card, 3 Done, 4 x.
+        let mut ops = encode_island_start(0); // Shell, at byte 0
+        ops.extend_from_slice(&encode_open_tag(0, &[]));
+        let done_at = ops.len() as u32;
+        ops.extend_from_slice(&encode_island_start(2)); // Done
+        ops.extend_from_slice(&encode_open_tag(0, &[]));
+        ops.extend_from_slice(&encode_close_tag(0));
+        ops.extend_from_slice(&encode_island_end(2));
+        let card_at = ops.len() as u32;
+        ops.extend_from_slice(&encode_island_start(1)); // Card
+        ops.extend_from_slice(&encode_open_tag(0, &[]));
+        ops.extend_from_slice(&encode_text(99)); // fails here
+        ops.extend_from_slice(&encode_close_tag(0));
+        ops.extend_from_slice(&encode_island_end(1));
+        ops.extend_from_slice(&encode_close_tag(0));
+        ops.extend_from_slice(&encode_island_end(0));
+        let data = build_minimal_ir(
+            &["div", "Shell", "Card", "Done", "x"],
+            &[],
+            &ops,
+            &[
+                (0, 0x01, 0x01, 1, 0, &[]),
+                (1, 0x01, 0x01, 2, card_at, &[]),
+                (2, 0x01, 0x01, 3, done_at, &[]),
+            ],
+        );
+        let module = IrModule::parse(&data).unwrap();
+        let failure =
+            walk_to_html_counted(&module, &SlotData::new(0), WalkLimits::default()).unwrap_err();
+        assert_eq!(
+            failure.component_path,
+            vec!["Shell".to_string(), "Card".to_string()]
+        );
+    }
+
+    #[test]
+    fn counted_walk_catches_a_panic_and_names_its_island() {
+        // SR44's stand-in: a component that panics on one tenant's data. The
+        // trigger exists only in test builds and under `test-helpers`.
+        let module = branding_module();
+        let slots = branding(crate::parser::test_helpers::FAULT_TRIGGER, 2);
+        let failure = walk_to_html_counted(&module, &slots, WalkLimits::default()).unwrap_err();
+        match &failure.error {
+            IrError::Panicked { message } => {
+                assert!(message.contains("stand-in"), "{message}")
+            }
+            other => panic!("expected Panicked, got {other:?}"),
+        }
+        assert_eq!(failure.component_path, vec!["Branding".to_string()]);
+        // ...and the next walk, on the same module, renders.
+        let out =
+            walk_to_html_counted(&module, &branding("Acme", 2), WalkLimits::default()).unwrap();
+        assert!(out.html.contains("Acme"));
     }
 }

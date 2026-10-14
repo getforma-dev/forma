@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+- **A render that returns its failure (FORMA-120, DR-11, DR-12).**
+  forma-server's `try_render` returns `Result<PageResponse, RenderError>`: the
+  page with its counts, or a coded error naming route and component, a caught
+  panic included; `render_browser_shell` serves a route declared
+  `ssr: false`. `render_page` (and its Phase 1 fallback) and
+  `assets::load_manifest` are deprecated. forma-ir adds
+  `walk_to_html_counted`. Both crates deny `unwrap`, `expect` and `panic!`
+  outside tests.
+
 - **A page response that carries its own headers (FORMA-124, DR-17).**
   forma-server's `PageResponse` always writes `no-store`, the strict policy and
   the document headers; handlers extend the policy through typed

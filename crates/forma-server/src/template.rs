@@ -47,8 +47,11 @@ fn neutralize_script_terminators(s: &str) -> String {
             out.push_str("<\\!--");
             i += "<!--".len();
         } else {
-            // Walk by char so multi-byte UTF-8 is never split.
-            let ch = s[i..].chars().next().expect("in-bounds index");
+            // Walk by char so multi-byte UTF-8 is never split. `i < s.len()`
+            // and `i` is always on a char boundary, so there is a next char.
+            let Some(ch) = s[i..].chars().next() else {
+                break;
+            };
             out.push(ch);
             i += ch.len_utf8();
         }
@@ -233,8 +236,42 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
 /// Caching the HTML while regenerating the CSP kills every script on the
 /// page; caching both ships one static, publicly-known nonce to all users and
 /// defeats nonce-based CSP.
+///
+/// Deprecated (DR-11): any load or walk failure here serves the empty Phase 1
+/// shell with a 200 and a log line the handler never sees. Use
+/// [`crate::try_render`], which returns the failure as a coded
+/// [`crate::RenderError`], and [`crate::render_browser_shell`] for a route
+/// declared browser-rendered. This function keeps its fallback until 3.0.0
+/// removes it, and in debug builds logs its deprecation once per process.
+#[deprecated(
+    since = "0.2.2",
+    note = "serves an empty shell with a 200 on any failure; use `try_render`, which returns \
+            the failure as a `RenderError`, and `render_browser_shell` for a route declared \
+            `ssr: false`. Removed in 3.0.0 (DR-11)"
+)]
 pub fn render_page(config: &PageConfig) -> PageOutput {
+    log_deprecation_once();
     render_with_nonce(config, &csp::generate_csp_nonce())
+}
+
+/// The runtime half of `render_page`'s deprecation: one `tracing` warning
+/// per process, in debug builds only, so development sees it and production
+/// logs do not fill with it.
+///
+/// Verified by: crates/forma-server/tests/render_page_deprecation.rs > "render_page_logs_its_deprecation_once_per_process_in_debug_builds"
+fn log_deprecation_once() {
+    #[cfg(debug_assertions)]
+    {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static LOGGED: AtomicBool = AtomicBool::new(false);
+        if !LOGGED.swap(true, Ordering::Relaxed) {
+            tracing::warn!(
+                "forma_server::render_page is deprecated: it serves an empty shell with a 200 \
+                 when a render fails; use try_render, which returns the failure (DR-11). \
+                 Logged once per process, in debug builds."
+            );
+        }
+    }
 }
 
 /// [`render_page`] with a caller-supplied per-request nonce.
@@ -248,8 +285,8 @@ pub fn render_page(config: &PageConfig) -> PageOutput {
 /// nonce of the caller's choosing.
 #[deprecated(
     since = "0.2.2",
-    note = "the render draws the nonce: use `render_page` and send the page as a \
-            `PageResponse`. Removed in 3.0.0 (L-14)"
+    note = "the render draws the nonce: use `try_render`, which returns a `PageResponse`. \
+            Removed in 3.0.0 (L-14)"
 )]
 pub fn render_page_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     render_with_nonce(config, nonce)
@@ -265,7 +302,11 @@ fn render_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
 
 /// The document around the page's root: empty for a client-mounted page,
 /// or holding the walk's HTML.
-fn write_document(config: &PageConfig, nonce: &CspNonce, ssr_body: Option<&str>) -> String {
+pub(crate) fn write_document(
+    config: &PageConfig,
+    nonce: &CspNonce,
+    ssr_body: Option<&str>,
+) -> String {
     // Defence in depth: CspNonce already rejects anything attribute- or
     // directive-significant, so this never changes a real nonce.
     let nonce_attr = escape_html(nonce.as_str());
@@ -357,6 +398,7 @@ fn render_page_phase2(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     let counts = RenderCounts {
         bytes: ssr_body.len(),
         walk_time,
+        ..RenderCounts::default()
     };
     page_output(
         write_document(config, nonce, Some(&ssr_body)),

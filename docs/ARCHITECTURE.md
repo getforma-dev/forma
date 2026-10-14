@@ -210,7 +210,12 @@ policy and the document headers whenever it is sent; a handler extends the
 policy with typed `PolicyExtensions` and reaches the HTML apart from its
 headers only through `into_parts_unchecked()` (DR-17). Two modes: **Phase 2** (SSR) when a
 route has a parsed IR module and slots, **Phase 1** (empty `<div id="app">`,
-client mounts from scratch) otherwise or on any walk failure.
+client mounts from scratch) otherwise or on any walk failure. From 0.2.2 that
+fallback is deprecated with `render_page`: `try_render` returns
+`Result<PageResponse, RenderError>`, the page with its counts or a coded
+error naming route and component, and catches a panic in the walk as
+`RenderError::Fault`; `render_browser_shell` serves a route declared
+`ssr: false` (DR-11, DR-12; D10 below).
 
 **`@getforma/core` adoption.** `activateIslands` → `hydrateIslandRoot` →
 `hydrateIsland` → `adoptNode`. During hydration `h()` returns *descriptors*, not
@@ -874,6 +879,11 @@ is shipping pages that are quietly wrong.
 inventory).
 
 ### D10 — Phase 1 is always available as a floor
+
+**Being reversed (DR-11, from 0.2.2).** `try_render` returns every failure
+below as a coded `RenderError` the handler answers, and `render_page`, which
+keeps this floor, is deprecated and goes in 3.0.0. The section records the
+0.2.x decision as it was made.
 
 **Decision.** Every route can render as Phase 1 — an empty `<div id="app">` that
 the client mounts from scratch. Phase 2 (SSR) is attempted when a route has a

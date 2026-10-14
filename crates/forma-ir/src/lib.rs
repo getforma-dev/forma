@@ -11,6 +11,13 @@
 // code that ships.
 #![forbid(unsafe_code)]
 #![allow(clippy::type_complexity)]
+// No `unwrap`, `expect` or `panic!` in the code that ships (DR-12, SR44): a
+// walk returns its failure, it does not take the request down. Tests may.
+// The wasm exports below are the documented exception.
+#![cfg_attr(
+    not(test),
+    deny(clippy::unwrap_used, clippy::expect_used, clippy::panic)
+)]
 
 /// On-disk FMIR layout: header, section table, opcodes, and the table entry
 /// types. See `docs/FMIR-FORMAT.md` for the stability contract.
@@ -35,7 +42,8 @@ pub use format::{
 pub use parser::{IrModule, IslandTableParsed, SlotTable, StringTable};
 pub use slot::{json_to_slot_value, SlotData, SlotValue};
 pub use walker::{
-    walk_island, walk_island_with_limits, walk_to_html, walk_to_html_with_limits, WalkLimits,
+    walk_island, walk_island_with_limits, walk_to_html, walk_to_html_counted,
+    walk_to_html_with_limits, WalkCounts, WalkFailure, WalkLimits, WalkOutput,
     DEFAULT_MAX_LIST_ITERATIONS, DEFAULT_MAX_OUTPUT_BYTES,
 };
 
@@ -53,6 +61,10 @@ use wasm_bindgen::prelude::*;
 /// errors, but the set of inputs that reach it is wider.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
+// The panic is this export's contract: wasm-bindgen turns it into the JS
+// exception the client loader catches. The `wasm` feature goes in 3.0.0
+// (DR-23); until then it is the one place this crate panics by design.
+#[allow(clippy::panic)]
 pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
     let module = parser::IrModule::parse(ir_bytes).unwrap_or_else(|e| panic!("IR parse: {e}"));
     let slots =
@@ -69,6 +81,7 @@ pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
 /// falls back). See [`render`] for the widened error set.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
+#[allow(clippy::panic)] // as `render`: the panic is the JS exception
 pub fn render_island(ir_bytes: &[u8], slots_json: &str, island_id: u16) -> String {
     let module = parser::IrModule::parse(ir_bytes).unwrap_or_else(|e| panic!("IR parse: {e}"));
     let slots =

@@ -31,7 +31,14 @@ pub fn dump_ir(module: &IrModule) -> String {
     // part that actually bounds the allocation on 64-bit. 1 MiB keeps the
     // exact estimate for any bytecode section under 128 KiB — every real page.
     let mut out = String::with_capacity(module.opcodes.len().saturating_mul(8).min(1 << 20));
+    // `fmt::Write` for `String` never fails, so there is no error to report;
+    // the `?`s in `write_dump` keep `unwrap` out of the crate (DR-12).
+    let _ = write_dump(module, &mut out);
+    out
+}
 
+/// The body of [`dump_ir`], writing into `out`.
+fn write_dump(module: &IrModule, out: &mut String) -> std::fmt::Result {
     // Header line
     writeln!(
         out,
@@ -41,8 +48,7 @@ pub fn dump_ir(module: &IrModule) -> String {
         module.strings.len(),
         module.slots.len(),
         module.islands.len(),
-    )
-    .unwrap();
+    )?;
 
     // Slot table: id, name, type, source, default.
     for entry in module.slots.entries() {
@@ -55,8 +61,7 @@ pub fn dump_ir(module: &IrModule) -> String {
             out,
             "SLOT  {:>5}  {:<28}  {:?}/{:?}  default={:?}",
             entry.slot_id, name, entry.type_hint, entry.source, default,
-        )
-        .unwrap();
+        )?;
     }
 
     // Island table: id, name, trigger, props mode, byte offset, prop slots.
@@ -69,8 +74,7 @@ pub fn dump_ir(module: &IrModule) -> String {
             out,
             "ISLE  {:>5}  {:<28}  {:?}/{:?}  at=0x{:04x}  slot_ids={:?}",
             entry.id, name, entry.trigger, entry.props_mode, entry.byte_offset, entry.slot_ids,
-        )
-        .unwrap();
+        )?;
     }
 
     // Walk opcodes — this is a SECOND decoder of the same operand widths, and
@@ -89,7 +93,7 @@ pub fn dump_ir(module: &IrModule) -> String {
         let opcode = match Opcode::from_byte(ops[pos]) {
             Ok(op) => op,
             Err(_) => {
-                writeln!(out, "{:04x}: UNKNOWN       0x{:02x}", offset, ops[pos]).unwrap();
+                writeln!(out, "{:04x}: UNKNOWN       0x{:02x}", offset, ops[pos])?;
                 pos += 1;
                 continue;
             }
@@ -101,7 +105,7 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let (tag_str_idx, attrs, new_pos) = match read_tag_with_attrs(ops, pos, strings) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: OPEN_TAG      <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: OPEN_TAG      <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -112,19 +116,18 @@ pub fn dump_ir(module: &IrModule) -> String {
                     offset,
                     tag,
                     attrs.len()
-                )
-                .unwrap();
+                )?;
                 if !attrs.is_empty() {
-                    write!(out, " [").unwrap();
+                    write!(out, " [")?;
                     for (i, (key, val)) in attrs.iter().enumerate() {
                         if i > 0 {
-                            write!(out, ", ").unwrap();
+                            write!(out, ", ")?;
                         }
-                        write!(out, "(\"{}\",\"{}\")", key, val).unwrap();
+                        write!(out, "(\"{}\",\"{}\")", key, val)?;
                     }
-                    write!(out, "]").unwrap();
+                    write!(out, "]")?;
                 }
-                writeln!(out).unwrap();
+                writeln!(out)?;
                 pos = new_pos;
             }
 
@@ -132,20 +135,20 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let str_idx = match read_u32(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: CLOSE_TAG     <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: CLOSE_TAG     <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 pos += 4;
                 let tag = strings.get(str_idx).unwrap_or("?");
-                writeln!(out, "{:04x}: CLOSE_TAG     \"{}\"", offset, tag).unwrap();
+                writeln!(out, "{:04x}: CLOSE_TAG     \"{}\"", offset, tag)?;
             }
 
             Opcode::VoidTag => {
                 let (tag_str_idx, attrs, new_pos) = match read_tag_with_attrs(ops, pos, strings) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: VOID_TAG      <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: VOID_TAG      <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -156,19 +159,18 @@ pub fn dump_ir(module: &IrModule) -> String {
                     offset,
                     tag,
                     attrs.len()
-                )
-                .unwrap();
+                )?;
                 if !attrs.is_empty() {
-                    write!(out, " [").unwrap();
+                    write!(out, " [")?;
                     for (i, (key, val)) in attrs.iter().enumerate() {
                         if i > 0 {
-                            write!(out, ", ").unwrap();
+                            write!(out, ", ")?;
                         }
-                        write!(out, "(\"{}\",\"{}\")", key, val).unwrap();
+                        write!(out, "(\"{}\",\"{}\")", key, val)?;
                     }
-                    write!(out, "]").unwrap();
+                    write!(out, "]")?;
                 }
-                writeln!(out).unwrap();
+                writeln!(out)?;
                 pos = new_pos;
             }
 
@@ -176,13 +178,13 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let str_idx = match read_u32(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: TEXT          <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: TEXT          <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 pos += 4;
                 let text = strings.get(str_idx).unwrap_or("?");
-                writeln!(out, "{:04x}: TEXT          \"{}\"", offset, text).unwrap();
+                writeln!(out, "{:04x}: TEXT          \"{}\"", offset, text)?;
             }
 
             Opcode::DynText => {
@@ -190,14 +192,14 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let slot_id = match read_u16(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: DYN_TEXT      <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: DYN_TEXT      <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let marker_id = match read_u16(ops, pos + 2) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: DYN_TEXT      <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: DYN_TEXT      <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -206,8 +208,7 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: DYN_TEXT      slot={} marker=t{}",
                     offset, slot_id, marker_id
-                )
-                .unwrap();
+                )?;
             }
 
             Opcode::DynAttr => {
@@ -215,14 +216,14 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let attr_str_idx = match read_u32(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: DYN_ATTR      <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: DYN_ATTR      <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let slot_id = match read_u16(ops, pos + 4) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: DYN_ATTR      <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: DYN_ATTR      <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -232,8 +233,7 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: DYN_ATTR      \"{}\" slot={}",
                     offset, attr_name, slot_id
-                )
-                .unwrap();
+                )?;
             }
 
             Opcode::ShowIf => {
@@ -241,21 +241,21 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let slot_id = match read_u16(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: SHOW_IF       <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: SHOW_IF       <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let then_len = match read_u32(ops, pos + 2) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: SHOW_IF       <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: SHOW_IF       <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let else_len = match read_u32(ops, pos + 6) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: SHOW_IF       <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: SHOW_IF       <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -264,13 +264,12 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: SHOW_IF       slot={} then_len={} else_len={}",
                     offset, slot_id, then_len, else_len
-                )
-                .unwrap();
+                )?;
             }
 
             Opcode::ShowElse => {
                 // No operands
-                writeln!(out, "{:04x}: SHOW_ELSE", offset).unwrap();
+                writeln!(out, "{:04x}: SHOW_ELSE", offset)?;
             }
 
             Opcode::Switch => {
@@ -278,14 +277,14 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let slot_id = match read_u16(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: SWITCH        <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: SWITCH        <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let case_count = match read_u16(ops, pos + 2) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: SWITCH        <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: SWITCH        <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -296,8 +295,7 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: SWITCH        slot={} cases={}",
                     offset, slot_id, case_count
-                )
-                .unwrap();
+                )?;
             }
 
             Opcode::List => {
@@ -305,21 +303,21 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let slot_id = match read_u16(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: LIST          <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: LIST          <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let item_slot_id = match read_u16(ops, pos + 2) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: LIST          <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: LIST          <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let body_len = match read_u32(ops, pos + 4) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: LIST          <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: LIST          <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -328,8 +326,7 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: LIST          slot={} item_slot={} body_len={}",
                     offset, slot_id, item_slot_id, body_len
-                )
-                .unwrap();
+                )?;
             }
 
             Opcode::IslandStart => {
@@ -337,12 +334,12 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let island_id = match read_u16(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: ISLAND_START  <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: ISLAND_START  <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 pos += 2;
-                writeln!(out, "{:04x}: ISLAND_START  id={}", offset, island_id).unwrap();
+                writeln!(out, "{:04x}: ISLAND_START  id={}", offset, island_id)?;
             }
 
             Opcode::IslandEnd => {
@@ -350,12 +347,12 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let island_id = match read_u16(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: ISLAND_END    <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: ISLAND_END    <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 pos += 2;
-                writeln!(out, "{:04x}: ISLAND_END    id={}", offset, island_id).unwrap();
+                writeln!(out, "{:04x}: ISLAND_END    id={}", offset, island_id)?;
             }
 
             Opcode::TryStart => {
@@ -363,7 +360,7 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let fallback_len = match read_u32(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: TRY_START     <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: TRY_START     <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -372,13 +369,12 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: TRY_START     fallback_len={}",
                     offset, fallback_len
-                )
-                .unwrap();
+                )?;
             }
 
             Opcode::Fallback => {
                 // No operands
-                writeln!(out, "{:04x}: FALLBACK", offset).unwrap();
+                writeln!(out, "{:04x}: FALLBACK", offset)?;
             }
 
             Opcode::Preload => {
@@ -388,15 +384,14 @@ pub fn dump_ir(module: &IrModule) -> String {
                         out,
                         "{:04x}: PRELOAD       <error: buffer too short>",
                         offset
-                    )
-                    .unwrap();
+                    )?;
                     break;
                 }
                 let resource_type = ops[pos];
                 let url_str_idx = match read_u32(ops, pos + 1) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: PRELOAD       <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: PRELOAD       <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -406,8 +401,7 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: PRELOAD       type={} url=\"{}\"",
                     offset, resource_type, url
-                )
-                .unwrap();
+                )?;
             }
 
             Opcode::Comment => {
@@ -415,13 +409,13 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let str_idx = match read_u32(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: COMMENT       <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: COMMENT       <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 pos += 4;
                 let text = strings.get(str_idx).unwrap_or("?");
-                writeln!(out, "{:04x}: COMMENT       \"{}\"", offset, text).unwrap();
+                writeln!(out, "{:04x}: COMMENT       \"{}\"", offset, text)?;
             }
 
             Opcode::ListItemKey => {
@@ -429,13 +423,13 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let str_idx = match read_u32(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: LIST_ITEM_KEY <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: LIST_ITEM_KEY <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 pos += 4;
                 let key = strings.get(str_idx).unwrap_or("?");
-                writeln!(out, "{:04x}: LIST_ITEM_KEY \"{}\"", offset, key).unwrap();
+                writeln!(out, "{:04x}: LIST_ITEM_KEY \"{}\"", offset, key)?;
             }
 
             Opcode::Prop => {
@@ -443,21 +437,21 @@ pub fn dump_ir(module: &IrModule) -> String {
                 let src = match read_u16(ops, pos) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: PROP <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: PROP <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let prop_idx = match read_u32(ops, pos + 2) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: PROP <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: PROP <error: {}>", offset, e)?;
                         break;
                     }
                 };
                 let target = match read_u16(ops, pos + 6) {
                     Ok(v) => v,
                     Err(e) => {
-                        writeln!(out, "{:04x}: PROP <error: {}>", offset, e).unwrap();
+                        writeln!(out, "{:04x}: PROP <error: {}>", offset, e)?;
                         break;
                     }
                 };
@@ -467,13 +461,12 @@ pub fn dump_ir(module: &IrModule) -> String {
                     out,
                     "{:04x}: PROP slot[{}].\"{}\" -> slot[{}]",
                     offset, src, prop_name, target
-                )
-                .unwrap();
+                )?;
             }
         }
     }
 
-    out
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
