@@ -96,6 +96,10 @@ async fn by_default_sw_js_is_the_retiring_worker_even_with_a_built_worker_embedd
         !body.contains("addEventListener('fetch'"),
         "it serves nothing: {body}"
     );
+    assert!(
+        !body.contains("onfetch"),
+        "nor through self.onfetch: {body}"
+    );
     // Unnamed: no application's own caches to delete, only v1's names.
     assert!(body.contains("const OWN = null;"), "{body}");
 

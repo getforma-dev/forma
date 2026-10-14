@@ -108,7 +108,10 @@ deprecated and go in 3.0.0.
   `sw::tests::application_names_are_what_a_cache_name_can_carry`;
   `sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s`,
   which runs the worker in Node over `tests/js/retiring_worker.mjs`, whose
-  table of cache names is the contract's shared vectors. `cargo test` now
+  table of cache names is the contract's shared vectors (anchored, separator
+  and prefix near misses included; the script reports its own pass count, so
+  the check holds under any Node test reporter, and a `self.onfetch`
+  assignment counts as answering requests). `cargo test` now
   needs Node 18 or later on `PATH` (CONTRIBUTING).
 
 ### Deprecated
@@ -169,6 +172,16 @@ deprecated and go in 3.0.0.
   differs from 0.2.1's by exactly that one registration line:
   `tests/compat_0_2_1.rs` > `render_page_writes_the_0_2_1_document_byte_for_byte`
   takes it out of 0.2.1's goldens, once, and checks every other byte.
+
+  **Migration: delete any code that strips or asserts the registration
+  script.** 0.2.2 writes none by default, so code that looks for it now finds
+  nothing. GateWASM's `render_page` wrapper `debug_assert!`s the line before
+  stripping it, so every debug-build render panics on 0.2.2 until the wrapper
+  changes (FORMA-150), and its `forma-server = "0.2.0"` requirement lets a
+  plain `cargo update` bring 0.2.2 in: FORMA-150 ships before or with 0.2.2.
+  An application that enables its worker with no `sw.js` embedded is warned
+  once, at the first `/sw.js` request (`tests/service_worker_on.rs` >
+  `an_enabled_application_with_no_built_worker_is_told_once`).
 - `load_ir_modules_strict` no longer logs "Phase 1 fallback" for the failures
   it returns: it takes no fallback, and the caller holds every failure. The
   lenient loader still logs each one. Each failure's `reason` now starts with

@@ -51,7 +51,20 @@
 //!   tab.
 //! - **The retiring worker** deletes v1's names and, for a named application,
 //!   `forma:X:` caches; then unregisters. It answers no request. It does call
-//!   `skipWaiting()`, since it serves nothing a waiting tab could lose.
+//!   `skipWaiting()`, as a kill switch must: an open tab of the old build is
+//!   handed to it at once and loses the old worker's cache, so its requests go
+//!   to the network (and to the skew path if its build's assets are gone).
+//!   That is the trade TH19 asks for: a planted entry stops being served from
+//!   the navigation after the browser's update check, not when the last old
+//!   tab closes.
+//!
+//! # One origin, one setting
+//!
+//! `/sw.js` and its scope `/` belong to the origin, so every process serving
+//! one origin must agree on the setting: during a rolling deploy from 0.2.1 a
+//! browser can alternate between registering and retiring until every
+//! instance runs the new release; and of two applications behind one proxy on
+//! one origin, only one can enable the worker, under its own name.
 //!
 //! `tests/js/retiring_worker.mjs` holds the contract's vectors as a table;
 //! the build's tests are to share them.
@@ -249,6 +262,25 @@ self.addEventListener('activate', (event) => {{
     )
 }
 
+/// The worker is on, but the build embedded no `sw.js`: pages register a
+/// worker that cannot install, and a browser keeps any worker it already had
+/// (as at 0.2.1). Said once per process, at the first such `/sw.js` request,
+/// the first point at which the embedded set is known.
+///
+/// Verified by: crates/forma-server/tests/service_worker_on.rs > "an_enabled_application_with_no_built_worker_is_told_once"
+fn warn_enabled_without_worker_once() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static WARNED: AtomicBool = AtomicBool::new(false);
+    if !WARNED.swap(true, Ordering::Relaxed) {
+        tracing::warn!(
+            "the service worker is enabled (forma_server::sw::configure) but the build \
+             embedded no sw.js: /sw.js answers 404 and pages register a worker that cannot \
+             install. Build with @getforma/build's `app` (0.3.1) and a `serviceWorker` mode, \
+             or turn the worker off."
+        );
+    }
+}
+
 /// Axum handler: serve `/sw.js` with no-cache headers.
 ///
 /// Mount at `/sw.js` in your router. With the worker [enabled](ServiceWorker::enabled)
@@ -263,7 +295,10 @@ pub async fn serve_sw<A: Embed>() -> Response {
     let body = if setting.is_enabled() {
         match crate::assets::asset_bytes::<A>("sw.js") {
             Some(data) => axum::body::Body::from(data),
-            None => return axum::http::StatusCode::NOT_FOUND.into_response(),
+            None => {
+                warn_enabled_without_worker_once();
+                return axum::http::StatusCode::NOT_FOUND.into_response();
+            }
         }
     } else {
         axum::body::Body::from(retiring_worker(setting.app()))
@@ -353,11 +388,20 @@ mod tests {
         // scope over the contract's cache-name vectors. Node (18 or later) is
         // required: a missing `node` fails this test, it does not skip it.
         let script = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/js/retiring_worker.mjs");
+        // The script writes how many tests passed here, so this check does not
+        // read Node's reporter output (which NODE_OPTIONS can change).
+        let count_file = std::env::temp_dir().join(format!(
+            "forma-retiring-worker-{}-{:?}.txt",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_file(&count_file);
         let output = std::process::Command::new("node")
             .arg("--test")
             .arg(script)
             .env("FORMA_RETIRING_UNNAMED", retiring_worker(None))
             .env("FORMA_RETIRING_LEDGER", retiring_worker(Some("ledger")))
+            .env("FORMA_RETIRING_REPORT", &count_file)
             .output()
             .unwrap_or_else(|e| panic!("this test runs the worker in Node 18+, not found: {e}"));
         let report = format!(
@@ -366,8 +410,10 @@ mod tests {
             String::from_utf8_lossy(&output.stderr)
         );
         assert!(output.status.success(), "{report}");
-        // node --test reports its own count; all of them ran and passed.
-        assert!(report.contains("# pass 7"), "{report}");
-        assert!(report.contains("# fail 0"), "{report}");
+        let passed = std::fs::read_to_string(&count_file)
+            .unwrap_or_else(|e| panic!("the script reported no count ({e}):\n{report}"));
+        let _ = std::fs::remove_file(&count_file);
+        // One hand-over check, then three checks for each of the two sources.
+        assert_eq!(passed, "7", "{report}");
     }
 }

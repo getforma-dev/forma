@@ -9,9 +9,17 @@
 // The build's production worker (forma-tools, the build half of FORMA-130)
 // follows the same table for its own activation.
 
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { writeFileSync } from 'node:fs';
 import vm from 'node:vm';
+
+// How many tests passed, written for the Rust driver at the end, so its check
+// does not depend on which reporter Node prints with.
+let passed = 0;
+after(() => {
+  if (process.env.FORMA_RETIRING_REPORT) writeFileSync(process.env.FORMA_RETIRING_REPORT, String(passed));
+});
 
 const UNNAMED = process.env.FORMA_RETIRING_UNNAMED;
 const LEDGER = process.env.FORMA_RETIRING_LEDGER;
@@ -29,7 +37,13 @@ export const CACHE_VECTORS = [
   ['forma:other:0123456789ab', false, false],
   ['forma:ledgers:0123456789ab', false, false], // a prefix of the name is not the name
   ['forma:ledger', false, false], // no build segment: not a cache this contract writes
+  ['x-forma:ledger:0123456789ab', false, false], // the prefix starts the name
   // near misses of the v1 shape: not Forma's v1 names.
+  ['x-forma-dev', false, false], // anchored at the start
+  ['my-forma-0123456789ab', false, false],
+  ['forma_dev', false, false], // the separator is a hyphen, nothing else
+  ['forma.0123456789ab', false, false],
+  ['forma:dev', false, false], // neither a v1 name nor an application's cache
   ['forma-0123456789AB', false, false],
   ['forma-0123456789abc', false, false],
   ['forma-0123456789a', false, false],
@@ -45,8 +59,13 @@ export const CACHE_VECTORS = [
 function load(source, cacheNames, { keysThrow = false } = {}) {
   const listeners = {};
   const names = new Set(cacheNames);
-  const log = { skipWaiting: 0, unregister: 0, claim: 0, deleted: [] };
+  const log = { skipWaiting: 0, unregister: 0, claim: 0, deleted: [], onfetch: false };
   const scope = {
+    // A handler assigned as `self.onfetch = ...` answers requests as surely as
+    // one added with addEventListener; record either.
+    set onfetch(handler) {
+      log.onfetch = true;
+    },
     addEventListener(type, listener) {
       (listeners[type] ??= []).push(listener);
     },
@@ -92,6 +111,7 @@ async function fire(worker, type) {
 test('both sources were handed over', () => {
   assert.ok(UNNAMED && UNNAMED.length > 100, 'FORMA_RETIRING_UNNAMED');
   assert.ok(LEDGER && LEDGER.length > 100, 'FORMA_RETIRING_LEDGER');
+  passed += 1;
 });
 
 for (const [label, source, column] of [
@@ -111,12 +131,15 @@ for (const [label, source, column] of [
     assert.deepEqual([...worker.names].sort(), [...kept].sort());
     assert.equal(worker.log.unregister, 1);
     assert.equal(worker.log.claim, 0, 'it claims no tab');
+    passed += 1;
   });
 
   test(`${label}: it answers no request, so pages load from the network`, () => {
     const worker = load(source, []);
     assert.equal(worker.listeners.fetch, undefined);
+    assert.equal(worker.log.onfetch, false, 'no self.onfetch either');
     assert.deepEqual(Object.keys(worker.listeners).sort(), ['activate', 'install']);
+    passed += 1;
   });
 
   test(`${label}: with storage unavailable it still unregisters`, async () => {
@@ -124,5 +147,6 @@ for (const [label, source, column] of [
     await fire(worker, 'activate');
     assert.equal(worker.log.unregister, 1);
     assert.deepEqual(worker.log.deleted, []);
+    passed += 1;
   });
 }
