@@ -207,7 +207,8 @@ pub struct RouteAssets {
     pub total_size_br: u64,
     /// Size above which the build warns about this route's payload.
     pub budget_warn_threshold: u64,
-    /// The route's compiled `.fmir` module, when it has one (Phase 2).
+    /// The route's compiled FMIR module, as its hashed `.ir` file name, when it
+    /// has one (Phase 2).
     #[serde(default)]
     pub ir: Option<String>,
 }

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed (documentation only)
+- `IrHeader`'s doc comment calls the module a `.ir` file, the name the
+  compiler writes, not `.fmir` (FORMA-009).
+
 ## [0.2.1] - 2026-10-14
 
 ### Fixed — server HTML in its parsing context (changes emitted bytes on purpose)

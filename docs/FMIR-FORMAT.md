@@ -1,8 +1,9 @@
 # The FMIR binary format — layout and stability contract
 
-`.fmir` is the compiled form of a Forma page: a binary module that
-`@getforma/compiler` emits and that a Rust server (`forma-ir`) or the WASM
-walker reads to produce HTML without running any JavaScript.
+FMIR is the compiled form of a Forma page: a binary module, written to disk as
+a `.ir` file, that `@getforma/compiler` emits and that a Rust server
+(`forma-ir`) or the WASM walker reads to produce HTML without running any
+JavaScript.
 
 This document is the **contract**. It exists because consumers already
 byte-guard this layout — ksx Studio asserts `bytes[0..6] == b"FMIR\x02\x00"`

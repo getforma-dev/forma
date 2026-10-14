@@ -260,7 +260,7 @@ impl std::error::Error for IrError {}
 // Header (16 bytes)
 // ---------------------------------------------------------------------------
 
-/// FMIR file header — the first 16 bytes of every `.fmir` file.
+/// FMIR file header — the first 16 bytes of every FMIR module (a `.ir` file).
 ///
 /// Layout (little-endian):
 /// ```text

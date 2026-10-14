@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+- **Documentation matches the code (FORMA-009; no code changed).** The
+  compiler writes FMIR modules as `.ir` files, so `docs/FMIR-FORMAT.md`,
+  `docs/ARCHITECTURE.md`, `docs/README.md`, the README and two doc comments no
+  longer call them `.fmir`. `SECURITY.md` supports 0.2.x, not 0.1.x.
+  `docs/TESTING.md` no longer claims coverage in all four repositories: only
+  `formajs` collects it. ksx Studio is the first consumer planned for release,
+  not a production one (`ci.yml`, the README, `docs/ARCHITECTURE.md`).
+  `docs/ARCHITECTURE.md` marks B6, the compiler's last-insert-wins wording,
+  reconciled with forma-tools#13.
+
 ## [0.2.1] - 2026-10-14
 
 A patch release of both crates. See

@@ -124,8 +124,8 @@ What crosses each of those arrows — the slot-name contract, the hydration
 marker grammar, the `data-forma-*` attributes and the island props protocol —
 is specified in [docs/ARCHITECTURE.md §3](docs/ARCHITECTURE.md), which is the
 part to keep open while you work. Those four contracts are shared byte-for-byte
-with the TypeScript side and with the first production consumer, so changing
-one is a cross-repo change.
+with the TypeScript side and with the applications built on the stack, so
+changing one is a cross-repo change.
 
 ## Security
 
@@ -164,8 +164,8 @@ and quadratic is ~16x.
 [`docs/FMIR-FORMAT.md`](docs/FMIR-FORMAT.md) documents the on-disk layout and,
 more importantly, the **stability contract**: which bytes are frozen across all
 future versions (magic at 0, u16 LE version at 4), what v2 guarantees, and what
-a version bump would require of consumers. If you byte-guard an embedded `.fmir`
-in your own test suite, that document is what you are guarding against.
+a version bump would require of consumers. If you byte-guard an embedded `.ir`
+module in your own test suite, that document is what you are guarding against.
 
 ## Part of the Forma Stack
 
