@@ -136,7 +136,7 @@ See [SECURITY.md](SECURITY.md) for the full list and the threat model — in par
 
 - **HTML escaping:** All dynamic text and attribute values are escaped (`&`, `<`, `>`, `"`); tag and attribute names are validated against an HTML name charset
 - **Attribute safety:** URL-bearing attributes are scheme-checked and `on*` handlers are dropped, matching the client renderer so SSR and CSR agree
-- **CSP headers:** Strict policy with cryptographic nonces — `'strict-dynamic'` scripts, nonce-locked style *elements*, no `unsafe-eval`. Style *attributes* are allowed via `style-src-attr` because compiled `style:` bindings emit them. From 0.2.2 Trusted Types are reported (`Content-Security-Policy-Report-Only`) to an endpoint the application may name, and enforced in 3.0.0
+- **CSP headers:** Strict policy with cryptographic nonces — `'strict-dynamic'` scripts, nonce-locked style *elements*, no `unsafe-eval`. Style *attributes* are allowed via `style-src-attr` because compiled `style:` bindings emit them. From 0.2.2 Trusted Types are reported (`Content-Security-Policy-Report-Only`) to an endpoint the application may name (with none, in development builds only), and enforced in 3.0.0
 - **Resource limits:** Recursion depth 64, list nesting 4, plus a per-render output cap and LIST-iteration budget (both configurable) so a small module cannot force a multi-gigabyte allocation
 - **Comment escaping:** `--` in HTML comments replaced with `&#45;&#45;`, and a comment cannot self-close
 - **Island props:** the `__forma_islands` JSON block is escaped so it cannot terminate or re-open its `<script>` element; read it with `JSON.parse`

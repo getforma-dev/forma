@@ -137,14 +137,17 @@ fn one(headers: &HeaderMap, name: &str) -> Option<String> {
 }
 
 #[tokio::test]
-async fn every_page_carries_trusted_types_in_report_only_and_the_enforced_policy_is_unchanged() {
+async fn trusted_types_go_out_in_report_only_with_an_endpoint_or_in_a_debug_build_and_the_enforced_policy_is_unchanged(
+) {
     let manifest = manifest();
     for path in PATHS {
         let page = make(path, &manifest, "/", &PolicyExtensions::new()).expect("renders");
         let (headers, nonce) = sent(page).await;
-        // The enforced policy is 0.2.1's, byte for byte; Trusted Types sit
-        // beside it, reported and not enforced; no endpoint, no reporting
-        // header.
+        // The enforced policy is 0.2.1's, byte for byte. With no endpoint,
+        // Trusted Types sit beside it, reported and not enforced, in a
+        // development build only: released, a Report-Only policy with no
+        // endpoint reports to nobody and makes WebKit log an error on every
+        // page. No endpoint, no reporting header.
         assert_eq!(
             one(&headers, "content-security-policy").as_deref(),
             Some(build_csp_header(&nonce).as_str()),
@@ -152,14 +155,29 @@ async fn every_page_carries_trusted_types_in_report_only_and_the_enforced_policy
         );
         assert_eq!(
             one(&headers, "content-security-policy-report-only").as_deref(),
-            Some(TRUSTED_TYPES),
+            cfg!(debug_assertions).then_some(TRUSTED_TYPES),
             "{path:?}"
         );
         assert_eq!(one(&headers, "reporting-endpoints"), None, "{path:?}");
+        // Name an endpoint and every build sends it.
+        let page = make(
+            path,
+            &manifest,
+            "/",
+            &PolicyExtensions::new().report_uri("/csp-reports"),
+        )
+        .expect("renders");
+        let (headers, _) = sent(page).await;
+        assert_eq!(
+            one(&headers, "content-security-policy-report-only").as_deref(),
+            Some(format!("{TRUSTED_TYPES}; report-uri /csp-reports").as_str()),
+            "{path:?}"
+        );
         assert_eq!(one(&headers, "cache-control").as_deref(), Some("no-store"));
     }
 
-    // The deprecated `PageOutput::headers()` carries it too.
+    // The deprecated `PageOutput::headers()`, which names no endpoint,
+    // follows the same rule.
     let page = render_page(&PageConfig {
         title: "Old",
         route_pattern: "/",
@@ -185,7 +203,12 @@ async fn every_page_carries_trusted_types_in_report_only_and_the_enforced_policy
         get("content-security-policy"),
         std::slice::from_ref(&page.csp)
     );
-    assert_eq!(get("content-security-policy-report-only"), [TRUSTED_TYPES]);
+    let expected: &[&str] = if cfg!(debug_assertions) {
+        &[TRUSTED_TYPES]
+    } else {
+        &[]
+    };
+    assert_eq!(get("content-security-policy-report-only"), expected);
     assert_eq!(
         page.csp,
         build_csp_header(&page.nonce),
