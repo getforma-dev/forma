@@ -116,7 +116,6 @@ describe('scaffolding', () => {
       ['fn', 'Rust keyword', 'cargo refuses a Rust keyword as a package name'],
       ['build', "cargo's build directory", 'cargo refuses one of its build directory names'],
       ['test', "Rust's test library", 'cargo refuses "test" as a package name'],
-      ['http', 'Node.js core module', 'npm refuses a Node.js core module name'],
       ['con', 'Windows device name', 'Windows refuses a device name'],
       ['x'.repeat(65), 'over-long name', 'crates.io refuses a package name longer than 64 characters'],
     ])('refuses %s (%s) before writing anything, naming the rule', (bad, _why, rule) => {

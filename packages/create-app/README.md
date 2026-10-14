@@ -55,8 +55,7 @@ Project names must start with a lowercase letter and use only lowercase
 letters, digits, hyphens and underscores, at most 64 characters. The name
 becomes the crate's name, so the CLI also refuses what cargo refuses for a new
 package (a Rust keyword such as `fn`, `test`, a build directory name such as
-`build`), what npm refuses (a Node.js core module name such as `http`), and a
-Windows device name (`con`, `nul`); its message names the rule. It checks the
+`build`) and a Windows device name (`con`, `nul`); its message names the rule. It checks the
 name before writing anything, and refuses to write into a path that already
 exists.
 

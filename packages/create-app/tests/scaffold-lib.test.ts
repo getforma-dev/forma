@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { createRequire } from 'node:module';
+import { builtinModules, createRequire } from 'node:module';
 import {
   NEVER_COPY,
   placeCargoLockRoot,
@@ -33,7 +33,7 @@ const validateNpmName = createRequire(import.meta.url)('validate-npm-package-nam
 ) => { validForNewPackages: boolean };
 
 describe('validateProjectName', () => {
-  it.each(['app', 'my-app', 'my_app', 'a', 'x9', 'app0', 'a-0', 'std', 'x'.repeat(64)])(
+  it.each(['app', 'my-app', 'my_app', 'a', 'x9', 'app0', 'a-0', 'std', 'events', 'http', 'node_modules', 'x'.repeat(64)])(
     'accepts %s',
     (name) => {
       expect(validateProjectName(name)).toBeNull();
@@ -43,7 +43,6 @@ describe('validateProjectName', () => {
   const CHARSET = 'use only lowercase letters, digits, "-" and "_"';
   const KEYWORD = 'cargo refuses a Rust keyword as a package name';
   const BUILD_DIR = 'cargo refuses one of its build directory names';
-  const NODE_CORE = 'npm refuses a Node.js core module name for a new package';
   const WINDOWS = 'Windows refuses a device name';
 
   it.each([
@@ -71,9 +70,6 @@ describe('validateProjectName', () => {
     ['examples', BUILD_DIR],
     ['incremental', BUILD_DIR],
     ['test', 'cargo refuses "test" as a package name'],
-    ['node_modules', 'npm refuses "node_modules" as a package name'],
-    ['http', NODE_CORE],
-    ['fs', NODE_CORE],
     ['con', WINDOWS],
     ['lpt1', WINDOWS],
   ])('refuses %j, naming the rule: %s', (name, rule) => {
@@ -83,11 +79,16 @@ describe('validateProjectName', () => {
     if (name) expect(reason).toContain(`"${name}"`);
   });
 
-  it("agrees with npm's own validator: npm accepts every name it accepts, and refuses every name it says npm refuses", () => {
+  // The project name never becomes an npm package name (admin/package.json
+  // carries none), so a Node.js core module name and `node_modules`, which npm
+  // refuses only for a new package, scaffold and build, and are accepted.
+  const NPM_ONLY = new Set([...builtinModules, 'node_modules']);
+
+  it("agrees with npm's own validator: npm accepts every name it accepts but the core module names, and refuses every name it says npm refuses", () => {
     const disagreements = PROJECT_NAMES.flatMap((name) => {
       const reason = validateProjectName(name);
       const npmAccepts = validateNpmName(name).validForNewPackages;
-      if (reason === null && !npmAccepts) return [`${name}: accepted here, npm refuses it`];
+      if (reason === null && !npmAccepts && !NPM_ONLY.has(name)) return [`${name}: accepted here, npm refuses it`];
       if (reason?.includes('npm refuses') && npmAccepts) return [`${name}: "${reason}", npm accepts it`];
       return [];
     });

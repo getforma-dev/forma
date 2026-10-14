@@ -42,6 +42,8 @@ export const PROJECT_NAMES = [
   // accepted
   'app', 'my-app', 'my_app', 'a', 'x9', 'app0', 'a-0', 'web_app-2', 'app-',
   'minimal', 'tracing', 'axum', 'std', 'core', 'alloc', 'proc_macro', 'proc-macro',
+  // npm refuses these for a new package; the project name never becomes one
+  'node_modules', 'http', 'fs', 'path', 'events',
   'x'.repeat(64),
   // refused
   '', 'x'.repeat(65), 'My-App', 'C:tricky', '..', '../escape', 'a/b', 'a\\b', '/abs',
@@ -49,7 +51,6 @@ export const PROJECT_NAMES = [
   '0app', '9', '1-app', '-leading', '_leading',
   'fn', 'self', 'type', 'async', 'match',
   'build', 'deps', 'examples', 'incremental', 'test',
-  'node_modules', 'http', 'fs', 'path', 'events',
   'con', 'nul', 'lpt1', 'com9',
 ];
 
