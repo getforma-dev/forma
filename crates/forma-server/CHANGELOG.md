@@ -26,9 +26,13 @@ deprecated and go in 3.0.0.
     Report-Only, with no reporting endpoint.
   - **Residuals (documented in the `frame` module, SECURITY.md):** WebRTC
     (a script can send STUN packets and DNS lookups to any host; no CSP
-    directive closes it in Chrome 155), the frame navigating itself (closed
-    only by the host's `frame-src` naming the frame's exact URL; a wider one
-    lets a navigation out, with `SameSite=None` cookies on the
+    directive closes it in Chrome 155), the frame navigating itself (the
+    host's `frame-src` naming the frame's exact URL refuses every other URL,
+    save the frame's own path with another query, since CSP's path matching
+    ignores the query: that reaches the frame route, which ignores its
+    query, with the application's `SameSite=None` cookies before the
+    teardown, so its data lands in the application's access log; a wider
+    `frame-src` lets a navigation out, with those cookies on the
     application's origin), and whatever the module shows the user inside
     the frame.
   - The document is one root, `<div id="forma-frame">`, and the runtime as

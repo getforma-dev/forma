@@ -39,10 +39,16 @@
 //! - **The frame navigating itself.** Neither the policy nor the sandbox
 //!   stops a frame navigating its own document (by script, or by markup
 //!   alone through `<meta http-equiv="refresh">`). The host's `frame-src` is
-//!   the control: with the frame's exact path, every other navigation is
-//!   refused; with anything wider, a navigation it admits reaches that URL,
-//!   data in its query, and on the application's origin carries the
-//!   application's `SameSite=None` cookies. Name the exact path (below).
+//!   the control: with the frame's exact path, every navigation to another
+//!   URL is refused, save the frame's own path with another query (CSP's
+//!   path matching ignores the query), which reaches the frame route, with
+//!   the application's `SameSite=None` cookies, before the host's teardown.
+//!   The frame route ignores its query, so what that carries lands in the
+//!   application's access log and nowhere else. With anything wider than
+//!   the exact path, a navigation it admits reaches that URL, data in its
+//!   query, and on the application's origin carries those cookies. Name the
+//!   exact path (below), and keep the frame route's query out of anything
+//!   but the access log.
 //! - **What the module shows.** It can show the user who previews it
 //!   anything, inside the frame.
 //!
@@ -95,7 +101,8 @@
 //!    `frame-src`**: `PolicyExtensions::new().frame_src("https://studio.example/preview-frame")`,
 //!    never `'self'` or a wider source. It is the only control on where the
 //!    frame may navigate itself, and the host's teardown on a later load
-//!    (5) comes after that request has left.
+//!    (5) comes after that request has left. It still admits the frame's
+//!    own path with another query, the residual above.
 //! 3. **One `MessageChannel` port, handed once, on the frame's first load,**
 //!    with `iframe.contentWindow.postMessage(null, "*", [channel.port2])`:
 //!    the message carries nothing but the port; `"*"` because the frame's
@@ -120,10 +127,14 @@
 //! const frame = document.createElement("iframe");
 //! frame.setAttribute("sandbox", "allow-scripts"); // before src, before insertion
 //! frame.src = "/preview-frame";
+//! const channel = new MessageChannel();
 //! let loads = 0;
 //! frame.addEventListener("load", () => {
-//!   if (++loads > 1) { frame.remove(); return; } // it navigated: tear it down
-//!   const channel = new MessageChannel();
+//!   if (++loads > 1) { // it navigated: tear it down
+//!     channel.port1.close();
+//!     frame.remove();
+//!     return;
+//!   }
 //!   channel.port1.onmessage = (event) => { /* only ready, resize, error, schema-checked */ };
 //!   frame.contentWindow.postMessage(null, "*", [channel.port2]); // only the port
 //! });
