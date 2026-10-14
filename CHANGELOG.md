@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+- **One named raw-HTML type, and typed homes for the rest (FORMA-126,
+  DR-19).** forma-server's `RawHtml::trusted(..)` is the one way to say a
+  string is markup to write unescaped; `body_prefix` takes it as
+  `Some(&raw)`, and a plain string there still works and warns once per
+  process in debug builds (`RAW-101`). What applications put in `body_prefix`
+  that is not their own markup gets a typed home through `RenderCtx`: the
+  route's `modulepreload` links, read from the build's manifest and nonced by
+  forma-server (`with_module_preloads`), and head links (`with_head_link`);
+  data keeps `config_json`. `render_page` writes 0.2.1's document.
+
 - **The service worker is opt-in (FORMA-130, DR-25).** forma-server registers
   `/sw.js` only for an application that turns it on
   (`sw::configure(ServiceWorker::for_app(..)?.enabled())`); elsewhere `/sw.js`

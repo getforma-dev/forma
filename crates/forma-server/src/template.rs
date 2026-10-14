@@ -1,4 +1,6 @@
 use crate::csp::{self, CspNonce};
+use crate::head::HeadLink;
+use crate::render::RenderCtx;
 use crate::response::RenderCounts;
 use crate::types::{AssetManifest, PageConfig, PageOutput, RenderMode};
 use forma_ir as ir;
@@ -11,8 +13,8 @@ struct ResolvedAssets {
     js_urls: Vec<String>,
 }
 
-/// Build the common `<head>` content shared by both render paths.
-fn escape_html(s: &str) -> String {
+/// Escape text for an HTML attribute value or text content.
+pub(crate) fn escape_html(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
@@ -59,11 +61,18 @@ fn neutralize_script_terminators(s: &str) -> String {
     out
 }
 
+/// Build the common `<head>` content shared by both render paths.
+///
+/// `preloads` and `links` are the typed homes a [`RenderCtx`] carries (DR-19);
+/// a render without one passes neither, and its head is byte-identical to
+/// 0.2.1's.
 fn build_head(
     title: &str,
     nonce: &str,
     assets: &ResolvedAssets,
     personality_css: Option<&str>,
+    preloads: &[String],
+    links: &[HeadLink],
 ) -> String {
     let mut head = String::with_capacity(2048);
     head.push_str("<meta charset=\"utf-8\">\n");
@@ -97,6 +106,23 @@ fn build_head(
             escape_html(nonce),
             escape_html(js)
         ));
+    }
+
+    // The route's static dependencies from the build's manifest (DR-19), in
+    // the same form and for the same reason: the typed home for Ledger's
+    // preloads in `body_prefix`. The table leaves out the route's own
+    // modules and repeats (`ModulePreloads`).
+    for file in preloads {
+        head.push_str(&format!(
+            "<link rel=\"modulepreload\" nonce=\"{}\" href=\"/_assets/{}\">\n",
+            escape_html(nonce),
+            escape_html(file)
+        ));
+    }
+
+    // Head links (icons, a web app manifest), every value escaped (DR-19).
+    for link in links {
+        link.write(&mut head);
     }
 
     // Personality CSS (inline, small).
@@ -155,8 +181,12 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         .body_class
         .map(|c| format!(" class=\"{}\"", escape_html(c)))
         .unwrap_or_default();
-    // Raw, trusted HTML by contract — see PageConfig::body_prefix.
-    let body_prefix = config.body_prefix.unwrap_or("").to_string();
+    // Raw, trusted HTML by contract — see PageConfig::body_prefix. Written
+    // as it is; a plain string, not a RawHtml, logs RAW-101 once in debug
+    // builds (DR-19).
+    let body_prefix = config.body_prefix.unwrap_or("");
+    crate::raw::check_body_prefix(body_prefix, config.route_pattern);
+    let body_prefix = body_prefix.to_string();
 
     // `config_json` is the safe path: serde_json output with every `<`
     // escaped, which simultaneously kills `</script`, `<!--` and `<script`
@@ -302,17 +332,26 @@ fn render_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
 }
 
 /// The document around the page's root: empty for a client-mounted page,
-/// or holding the walk's HTML.
+/// or holding the walk's HTML. `ctx` carries the typed homes; the deprecated
+/// renders pass an empty one and write 0.2.1's document.
 pub(crate) fn write_document(
     config: &PageConfig,
     nonce: &CspNonce,
     ssr_body: Option<&str>,
+    ctx: &RenderCtx,
 ) -> String {
     // Defence in depth: CspNonce already rejects anything attribute- or
     // directive-significant, so this never changes a real nonce.
     let nonce_attr = escape_html(nonce.as_str());
     let assets = resolve_assets(config.manifest, config.route_pattern);
-    let head = build_head(config.title, &nonce_attr, &assets, config.personality_css);
+    let head = build_head(
+        config.title,
+        &nonce_attr,
+        &assets,
+        config.personality_css,
+        ctx.module_preloads(config.route_pattern),
+        ctx.head_links(),
+    );
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
 
     // Pushed rather than `format!`ed, so the walk's HTML (up to the 8 MiB
@@ -357,7 +396,7 @@ fn page_output(html: String, nonce: &CspNonce, counts: RenderCounts) -> PageOutp
 /// Phase 1: empty `<div id="app"></div>` — client JS mounts from scratch.
 fn render_page_phase1(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     page_output(
-        write_document(config, nonce, None),
+        write_document(config, nonce, None, &RenderCtx::default()),
         nonce,
         RenderCounts::default(),
     )
@@ -402,7 +441,7 @@ fn render_page_phase2(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
         ..RenderCounts::default()
     };
     page_output(
-        write_document(config, nonce, Some(&ssr_body)),
+        write_document(config, nonce, Some(&ssr_body), &RenderCtx::default()),
         nonce,
         counts,
     )

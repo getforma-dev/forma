@@ -34,6 +34,12 @@
 //! }
 //! ```
 //!
+//! Markup the page carries unescaped is a [`RawHtml`], made only by
+//! [`RawHtml::trusted`], so a search for that name finds every raw entry
+//! (DR-19). The route's `modulepreload` links come from the build's manifest
+//! and head links have a typed field, both through [`RenderCtx`]; data goes
+//! through `config_json`.
+//!
 //! A route the build declares `ssr: false` is served by
 //! [`render_browser_shell`]. At start, [`load_ir_modules_strict`] is the
 //! module loader: stop on its errors, before the port binds. Deprecated in
@@ -61,8 +67,12 @@ pub mod csp;
 /// Doctests pinning each deprecation; built only by `cargo test --doc`.
 #[cfg(doctest)]
 mod deprecations;
+/// Typed homes for the page's head: manifest preloads and head links.
+pub mod head;
 /// Loading and version-checking the per-route `.ir` modules at startup.
 pub mod ir_compat;
+/// Raw HTML: the one named type for markup written unescaped.
+pub mod raw;
 /// The render that returns its failure: `try_render`, `render_browser_shell`.
 pub mod render;
 /// The page response: HTML that never leaves without its policy.
@@ -83,8 +93,10 @@ pub use csp::{
 };
 /// Re-exported: [`RenderCtx::with_limits`] takes it.
 pub use forma_ir::WalkLimits;
+pub use head::{HeadLink, HeadLinkError, ModulePreloads};
 #[allow(deprecated)]
 pub use ir_compat::{load_ir_modules, load_ir_modules_strict, IrLoadError};
+pub use raw::RawHtml;
 pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};
 #[allow(deprecated)]

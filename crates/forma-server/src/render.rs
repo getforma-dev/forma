@@ -7,6 +7,7 @@
 //! deprecated `render_page`, which keeps its Phase 1 fallback.
 
 use crate::csp::{self, CspNonce, NonceError, PolicyError, PolicyExtensions};
+use crate::head::{HeadLink, ModulePreloads};
 use crate::response::{PageResponse, RenderCounts};
 use crate::types::PageConfig;
 use forma_ir::{IrError, WalkLimits};
@@ -14,21 +15,28 @@ use std::fmt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::time::Instant;
 
-/// Request-scoped inputs to a render: the policy's typed extensions and the
-/// walk's budgets. Never a nonce: the render draws one per response (L-14).
+/// What a render takes beyond [`PageConfig`]: the policy's typed extensions,
+/// the walk's budgets, and the typed homes for what applications used to put
+/// in `body_prefix` (DR-19): the route's `modulepreload` links from the
+/// build's manifest, and head links. Never a nonce: the render draws one per
+/// response (L-14). Data goes through [`PageConfig::config_json`].
 ///
 /// ```
-/// use forma_server::{PolicyExtensions, RenderCtx, WalkLimits};
+/// use forma_server::{HeadLink, PolicyExtensions, RenderCtx, WalkLimits};
 ///
 /// let ctx = RenderCtx::new()
 ///     .with_policy(PolicyExtensions::new().img_src("https:"))
-///     .with_limits(WalkLimits { max_list_iterations: 100_000, ..WalkLimits::default() });
+///     .with_limits(WalkLimits { max_list_iterations: 100_000, ..WalkLimits::default() })
+///     .with_head_link(HeadLink::new("icon", "/favicon.svg")?);
 /// # let _ = ctx;
+/// # Ok::<(), forma_server::HeadLinkError>(())
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct RenderCtx {
     policy: PolicyExtensions,
     limits: WalkLimits,
+    module_preloads: Option<ModulePreloads>,
+    head_links: Vec<HeadLink>,
 }
 
 impl RenderCtx {
@@ -50,6 +58,57 @@ impl RenderCtx {
     pub fn with_limits(mut self, limits: WalkLimits) -> Self {
         self.limits = limits;
         self
+    }
+
+    /// Write the route's `modulepreload` links from the build's manifest,
+    /// each with the page's nonce, after the route's own modules (DR-19). The
+    /// typed home for a preload workaround in `body_prefix`, such as
+    /// Ledger's. The table covers every route; the render takes
+    /// `config.route_pattern`'s list. Like every typed home, each call site
+    /// belongs on SR8's raw-entry allowlist (L-37).
+    ///
+    /// ```no_run
+    /// use forma_server::{assets, ModulePreloads, RenderCtx};
+    ///
+    /// // At start, beside the manifest; refuse to start on its error.
+    /// fn start<Assets: rust_embed::Embed>() -> Result<ModulePreloads, String> {
+    ///     assets::try_load_module_preloads::<Assets>()
+    /// }
+    ///
+    /// // Per request.
+    /// fn ctx(preloads: &ModulePreloads) -> RenderCtx {
+    ///     RenderCtx::new().with_module_preloads(preloads)
+    /// }
+    /// ```
+    ///
+    /// Verified by: crates/forma-server/tests/typed_homes.rs > "try_render_writes_the_routes_manifest_modulepreload_links_nonced"
+    #[must_use]
+    pub fn with_module_preloads(mut self, preloads: &ModulePreloads) -> Self {
+        self.module_preloads = Some(preloads.clone());
+        self
+    }
+
+    /// Add a `<link>` to the page's head (see [`HeadLink`]), after any added
+    /// before it. The typed home for links spliced in before `</head>`; each
+    /// call site belongs on SR8's raw-entry allowlist (L-37).
+    ///
+    /// Verified by: crates/forma-server/tests/typed_homes.rs > "head_links_are_written_escaped_in_the_head_in_the_order_added"
+    #[must_use]
+    pub fn with_head_link(mut self, link: HeadLink) -> Self {
+        self.head_links.push(link);
+        self
+    }
+
+    /// The route's manifest preloads, empty without a table.
+    pub(crate) fn module_preloads(&self, route_pattern: &str) -> &[String] {
+        self.module_preloads
+            .as_ref()
+            .map_or(&[], |table| table.route(route_pattern))
+    }
+
+    /// The head links, in the order added.
+    pub(crate) fn head_links(&self) -> &[HeadLink] {
+        &self.head_links
     }
 }
 
@@ -432,7 +491,7 @@ fn render(
         }
     };
 
-    let html = crate::template::write_document(config, &nonce, ssr_body.as_deref());
+    let html = crate::template::write_document(config, &nonce, ssr_body.as_deref(), ctx);
     Ok(PageResponse::with_policy(html, nonce, policy, counts))
 }
 
