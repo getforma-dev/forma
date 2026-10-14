@@ -2,6 +2,65 @@
 
 ## [Unreleased]
 
+Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
+
+### Added
+- **`walk_to_html_counted`**: the same HTML as `walk_to_html_with_limits`,
+  byte for byte, plus what the walk wrote (`WalkOutput { html, counts }`,
+  `WalkCounts { nodes, bytes, list_iterations }`). On failure it returns a
+  `WalkFailure` with the error, the counts reached (SR22) and the component
+  path: the islands open where the walk stopped, outermost first. It catches a
+  panic inside the walk and returns it as the new `IrError::Panicked`, with the
+  same path and counts (DR-12); under `panic = "abort"` there is nothing to
+  catch. Tests: `walker::tests` >
+  `counted_walk_writes_what_walk_to_html_writes_and_counts_it`,
+  `counted_walk_returns_the_counts_reached_when_a_budget_stops_it`,
+  `counted_walk_names_no_component_for_a_failure_outside_every_island`,
+  `counted_walk_names_every_island_around_a_failure_outermost_first`,
+  `counted_walk_catches_a_panic_and_names_its_island`.
+- `fault_injection::FAULT_TRIGGER`, behind a new internal feature,
+  `__fault-injection` (`#[doc(hidden)]`, outside the semver promise): a
+  DYN_TEXT value that makes the walk panic, the stand-in for a component that
+  panics (SR44). Only `walk_to_html_counted`, which catches it, ever arms it;
+  `walk_to_html` renders the value as text. Only the two crates' own
+  dev-dependencies enable the feature, and `test-helpers` does not imply it,
+  so no 0.2.1 user can have it on (review of FORMA-120). Tests:
+  `walker::tests::the_fault_trigger_is_armed_only_by_the_counted_walk`;
+  `tests/feature_isolation.rs` >
+  `test_helpers_alone_does_not_compile_the_fault_trigger_in` (a scratch
+  edition-2018 consumer with `test-helpers` on fails to compile a reference
+  to the trigger, and compiles one to the encoders).
+
+### Changed
+- **A list longer than the remaining iteration budget fails before its first
+  row** (FORMA-122; DR-13, SR38). The walker compares the list's length with
+  what is left of `max_list_iterations` and returns `ListBudgetExceeded` at
+  once, instead of walking up to the budget first: a hostile 60,000-row list
+  under the default 50,000 costs one comparison, not 50,000 rows (at 0.2.1,
+  23.6 to 24.9 ms to the error in a release build). Whether an input fails is
+  unchanged, but which error it reports can change: a list past the budget now
+  reports `ListBudgetExceeded` before any error its rows would have raised
+  first (`OutputLimitExceeded`, or a malformed row's `StringIndexOutOfBounds`),
+  so a malformed module behind an over-budget list shows as RENDER-302 until
+  the list fits. The per-row check stays for rows that nested lists spend
+  after a list was let in. Defaults unchanged. Tests:
+  `walker::tests` > `a_list_longer_than_the_remaining_budget_fails_before_its_first_row`,
+  `a_list_exactly_at_the_remaining_budget_still_renders`,
+  `a_nested_list_is_checked_against_what_its_parents_left`,
+  `the_per_row_check_still_stops_a_list_whose_nested_rows_spend_the_budget`.
+  `examples/list_corpus` output is byte-identical, and `examples/list_scaling`
+  is unchanged at 400 rows.
+- **No `unwrap`, `expect` or `panic!` in the shipped code** (DR-12, SR44):
+  Clippy denies them outside tests (`#![cfg_attr(not(test), deny(...))]`).
+  The parser's fixed-width reads index the bounds-checked slice instead of
+  `try_into().unwrap()`; `dump_ir` writes through `fmt::Result`; the walker's
+  marker-id write has no `expect`. Behaviour is unchanged. The `wasm` exports
+  keep their panic, which wasm-bindgen turns into the JS exception the client
+  loader catches, under a scoped `allow`; `test_helpers` likewise.
+- `ListBudgetExceeded` is now raised before the over-budget row is counted, so
+  the count reported with it is the rows actually walked. The same input fails
+  at the same row with the same error.
+
 ### Fixed (documentation only)
 - `IrHeader`'s doc comment calls the module a `.ir` file, the name the
   compiler writes, not `.fmir` (FORMA-009).

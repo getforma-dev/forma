@@ -134,7 +134,7 @@ every hard bug in this stack's history has been two halves of it disagreeing.
                                   │  dist/ is embedded into the Rust binary
                                   ▼
    ┌──────────────────────── REQUEST TIME (Rust) ─────────────────────┐
-   │  startup: load_ir_modules::<Assets>(&manifest)                   │
+   │  startup: load_ir_modules_strict::<Assets>(&manifest)            │
    │           → IrModule::parse (validates EVERYTHING, once)         │
    │           → RenderMode per route                                 │
    │                                                                  │
@@ -204,9 +204,18 @@ the WASM build for client-side re-render).
 
 **`forma-server`.** `render_page` builds the document around the walker's output
 and returns `PageOutput { html, csp, nonce }` — the three are one unit, because
-the HTML embeds the nonce the CSP blesses. Two modes: **Phase 2** (SSR) when a
+the HTML embeds the nonce the CSP blesses. From 0.2.2 a page is sent as a
+`PageResponse` (`PageOutput::into_page_response`), which writes `no-store`, the
+policy and the document headers whenever it is sent; a handler extends the
+policy with typed `PolicyExtensions` and reaches the HTML apart from its
+headers only through `into_parts_unchecked()` (DR-17). Two modes: **Phase 2** (SSR) when a
 route has a parsed IR module and slots, **Phase 1** (empty `<div id="app">`,
-client mounts from scratch) otherwise or on any walk failure.
+client mounts from scratch) otherwise or on any walk failure. From 0.2.2 that
+fallback is deprecated with `render_page`: `try_render` returns
+`Result<PageResponse, RenderError>`, the page with its counts or a coded
+error naming route and component, and catches a panic in the walk as
+`RenderError::Fault`; `render_browser_shell` serves a route declared
+`ssr: false` (DR-11, DR-12; D10 below).
 
 **`@getforma/core` adoption.** `activateIslands` → `hydrateIslandRoot` →
 `hydrateIsland` → `adoptNode`. During hydration `h()` returns *descriptors*, not
@@ -275,8 +284,10 @@ it (`format.rs:288-323`).
 whose test suite byte-asserts `bytes[0..6] == b"FMIR\x02\x00"` on every IR regen
 (dogfood #7 / `forma-spike-1-fmir-compat.md`).
 
-**What breaks if it moves:** a version bump is detectable and non-fatal —
-`load_ir_modules` logs and degrades that route to Phase 1 (`ir_compat.rs`). A
+**What breaks if it moves:** a version bump is detectable — the default loader,
+`load_ir_modules_strict`, returns it as `LOAD-102` and the server refuses to
+start; the deprecated lenient `load_ir_modules` logs and degrades that route to
+Phase 1 (`ir_compat.rs`). A
 *silent* layout change inside v2 is the dangerous one: it is mis-parsed, not
 rejected, and produces wrong HTML. This is exactly why the parser validates
 structurally at load rather than lazily during the walk.
@@ -871,6 +882,13 @@ inventory).
 
 ### D10 — Phase 1 is always available as a floor
 
+**Being reversed (DR-11, from 0.2.2).** `try_render` returns every failure
+below as a coded `RenderError` the handler answers, and `render_page`, which
+keeps this floor, is deprecated and goes in 3.0.0. At start, the strict loader
+is the default and the lenient `load_ir_modules` is deprecated: a bad module
+for a server-rendered route stops the server before its port binds. The
+section records the 0.2.x decision as it was made.
+
 **Decision.** Every route can render as Phase 1 — an empty `<div id="app">` that
 the client mounts from scratch. Phase 2 (SSR) is attempted when a route has a
 parsed IR module and slots, and **any** failure falls back: missing module,
@@ -942,7 +960,7 @@ Known sharp edges. Each is real today unless marked otherwise.
 | # | Sharp edge | Consequence | Tracked |
 |---|---|---|---|
 | B16 | `PageConfig::config_script` and `body_prefix` are **raw, trusted escape hatches**. `</script`/`<!--` are neutralised so the value cannot break *out*, but that is not the same as safe: a `"` or `\` from untrusted data still yields nonce-blessed script execution in your own page. | Use `config_json` (serde-escaped, `window.__FORMA_CONFIG__`) for anything derived from user input. | `types.rs:PageConfig` doc comments |
-| B17 | `PageOutput`'s HTML and CSP are one unit — the HTML embeds a per-request nonce. Caching the HTML across requests either kills every script (fresh policy, stale body) or ships one static publicly-known nonce to every user. | Serve with `no-store`, or use `render_page_with_nonce` to re-stamp. | `types.rs:PageOutput`; `csp.rs:CspNonce` |
+| B17 | `PageOutput`'s HTML and CSP are one unit — the HTML embeds a per-request nonce. Caching the HTML across requests either kills every script (fresh policy, stale body) or ships one static publicly-known nonce to every user. | Send it as a `PageResponse`, which writes `no-store` itself. (`render_page_with_nonce`, the re-stamping path, is deprecated in 0.2.2: from 3.0.0 the render draws every nonce.) | `types.rs:PageOutput`; `response.rs:PageResponse`; `csp.rs:CspNonce` |
 | B18 | MSRV differs per crate: `forma-ir` 1.71, `forma-server` 1.85 (rust-embed 8 → sha2 0.11). Deliberately not unified. | A workspace-wide MSRV assumption is wrong. | forma-server CHANGELOG 0.2.0; CI pins both |
 | B19 | ksx runs a local `relax_style_src` rewrite of the CSP header. | May now be unnecessary — `style-src-attr 'unsafe-inline'` landed upstream (D7). | dogfood #13a; **confirm and retire the workaround** |
 

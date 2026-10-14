@@ -1,6 +1,8 @@
 use crate::csp::{self, CspNonce};
+use crate::response::RenderCounts;
 use crate::types::{AssetManifest, PageConfig, PageOutput, RenderMode};
 use forma_ir as ir;
+use std::time::Instant;
 
 /// Resolved asset URLs for a route — shared between Phase 1 and Phase 2 paths.
 struct ResolvedAssets {
@@ -45,8 +47,11 @@ fn neutralize_script_terminators(s: &str) -> String {
             out.push_str("<\\!--");
             i += "<!--".len();
         } else {
-            // Walk by char so multi-byte UTF-8 is never split.
-            let ch = s[i..].chars().next().expect("in-bounds index");
+            // Walk by char so multi-byte UTF-8 is never split. `i < s.len()`
+            // and `i` is always on a char boundary, so there is a next char.
+            let Some(ch) = s[i..].chars().next() else {
+                break;
+            };
             out.push(ch);
             i += ch.len_utf8();
         }
@@ -170,9 +175,11 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
 
     // `config_script` is the raw escape hatch. Neutralizing the terminators
     // stops it breaking out of its own element; it does not make untrusted
-    // content safe inside it.
-    let config_script_tag = config
-        .config_script
+    // content safe inside it. Deprecated (DR-18), and still written exactly
+    // as at 0.2.1 until 3.0.0 removes it.
+    #[allow(deprecated)]
+    let config_script = config.config_script;
+    let config_script_tag = config_script
         .map(|s| {
             format!(
                 "<script nonce=\"{nonce}\">{}</script>\n",
@@ -223,16 +230,48 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
 /// Render a page, generating a fresh CSP nonce for it.
 ///
 /// The returned HTML and CSP header are ONE UNIT: the HTML embeds the nonce
-/// that only this policy blesses. Serve them together with
-/// `Cache-Control: no-store` and never cache the HTML across requests —
-/// [`PageOutput::headers`] does that for you. Caching the HTML while
-/// regenerating the CSP kills every script on the page; caching both ships one
-/// static, publicly-known nonce to all users and defeats nonce-based CSP.
+/// that only this policy blesses. Send the page with
+/// [`PageOutput::into_page_response`], which writes `Cache-Control: no-store`,
+/// the policy and the document headers whenever the response is sent.
+/// Caching the HTML while regenerating the CSP kills every script on the
+/// page; caching both ships one static, publicly-known nonce to all users and
+/// defeats nonce-based CSP.
 ///
-/// A cache-aware caller should use [`render_page_with_nonce`] instead and
-/// re-stamp the shell per request.
+/// Deprecated (DR-11): any load or walk failure here serves the empty Phase 1
+/// shell with a 200 and a log line the handler never sees. Use
+/// [`crate::try_render`], which returns the failure as a coded
+/// [`crate::RenderError`], and [`crate::render_browser_shell`] for a route
+/// declared browser-rendered. This function keeps its fallback until 3.0.0
+/// removes it, and in debug builds logs its deprecation once per process.
+#[deprecated(
+    since = "0.2.2",
+    note = "serves an empty shell with a 200 on any failure; use `try_render`, which returns \
+            the failure as a `RenderError`, and `render_browser_shell` for a route declared \
+            `ssr: false`. Removed in 3.0.0 (DR-11)"
+)]
 pub fn render_page(config: &PageConfig) -> PageOutput {
-    render_page_with_nonce(config, &csp::generate_csp_nonce())
+    log_deprecation_once();
+    render_with_nonce(config, &csp::generate_csp_nonce())
+}
+
+/// The runtime half of `render_page`'s deprecation: one `tracing` warning
+/// per process, in debug builds only, so development sees it and production
+/// logs do not fill with it.
+///
+/// Verified by: crates/forma-server/tests/render_page_deprecation.rs > "render_page_logs_its_deprecation_once_per_process_in_debug_builds"
+fn log_deprecation_once() {
+    #[cfg(debug_assertions)]
+    {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static LOGGED: AtomicBool = AtomicBool::new(false);
+        if !LOGGED.swap(true, Ordering::Relaxed) {
+            tracing::warn!(
+                "forma_server::render_page is deprecated: it serves an empty shell with a 200 \
+                 when a render fails; use try_render, which returns the failure (DR-11). \
+                 Logged once per process, in debug builds."
+            );
+        }
+    }
 }
 
 /// [`render_page`] with a caller-supplied per-request nonce.
@@ -240,38 +279,87 @@ pub fn render_page(config: &PageConfig) -> PageOutput {
 /// Takes a validated [`CspNonce`] rather than a `&str`: the value is
 /// interpolated unescaped into five HTML attributes and into the CSP header,
 /// so an arbitrary string would be an attribute- and directive-injection sink.
+///
+/// Deprecated (L-14): from 3.0.0 the render draws every response's nonce and
+/// no caller supplies one, so a cached shell cannot be re-stamped with a
+/// nonce of the caller's choosing.
+#[deprecated(
+    since = "0.2.2",
+    note = "the render draws the nonce: use `try_render`, which returns a `PageResponse`. \
+            Removed in 3.0.0 (L-14)"
+)]
 pub fn render_page_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
+    render_with_nonce(config, nonce)
+}
+
+/// The one render behind [`render_page`] and [`render_page_with_nonce`].
+fn render_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     match config.render_mode {
         RenderMode::Phase1ClientMount => render_page_phase1(config, nonce),
         RenderMode::Phase2SsrReconcile => render_page_phase2(config, nonce),
     }
 }
 
-/// Phase 1: empty `<div id="app"></div>` — client JS mounts from scratch.
-fn render_page_phase1(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
+/// The document around the page's root: empty for a client-mounted page,
+/// or holding the walk's HTML.
+pub(crate) fn write_document(
+    config: &PageConfig,
+    nonce: &CspNonce,
+    ssr_body: Option<&str>,
+) -> String {
     // Defence in depth: CspNonce already rejects anything attribute- or
     // directive-significant, so this never changes a real nonce.
     let nonce_attr = escape_html(nonce.as_str());
-    let nonce = nonce.clone();
     let assets = resolve_assets(config.manifest, config.route_pattern);
     let head = build_head(config.title, &nonce_attr, &assets, config.personality_css);
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
 
-    let html = format!(
-        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n{head}</head>\n<body{bc}>\n{bp}<div id=\"app\"></div>\n{cs}{pj}\n{wasm}{sw}</body>\n</html>",
-        bc = parts.body_class_attr,
-        bp = parts.body_prefix,
-        cs = parts.config_script_tag,
-        pj = parts.page_js_tag,
-        wasm = parts.wasm_script,
-        sw = parts.sw_script,
-    );
+    // Pushed rather than `format!`ed, so the walk's HTML (up to the 8 MiB
+    // budget) is copied once, into the document, and not first into a root.
+    let ssr_len = ssr_body.map_or(0, str::len);
+    let mut html = String::with_capacity(head.len() + ssr_len + 1024);
+    html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
+    html.push_str(&head);
+    html.push_str("</head>\n<body");
+    html.push_str(&parts.body_class_attr);
+    html.push_str(">\n");
+    html.push_str(&parts.body_prefix);
+    match ssr_body {
+        Some(ssr) => {
+            html.push_str("<div id=\"app\" data-forma-ssr>");
+            html.push_str(ssr);
+            html.push_str("</div>");
+        }
+        None => html.push_str("<div id=\"app\"></div>"),
+    }
+    html.push('\n');
+    html.push_str(&parts.config_script_tag);
+    html.push_str(&parts.page_js_tag);
+    html.push('\n');
+    html.push_str(&parts.wasm_script);
+    html.push_str(&parts.sw_script);
+    html.push_str("</body>\n</html>");
+    html
+}
 
+/// A [`PageOutput`] with the strict policy for its nonce.
+#[allow(deprecated)] // the fields are deprecated for callers, not for us
+fn page_output(html: String, nonce: &CspNonce, counts: RenderCounts) -> PageOutput {
     PageOutput {
         html,
-        csp: csp::build_csp_header(&nonce),
-        nonce,
+        csp: csp::build_csp_header(nonce),
+        nonce: nonce.clone(),
+        counts,
     }
+}
+
+/// Phase 1: empty `<div id="app"></div>` — client JS mounts from scratch.
+fn render_page_phase1(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
+    page_output(
+        write_document(config, nonce, None),
+        nonce,
+        RenderCounts::default(),
+    )
 }
 
 /// Phase 2: server-render the IR module into `<div id="app" data-forma-ssr>`.
@@ -292,7 +380,10 @@ fn render_page_phase2(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     // Attempt IR walk. This is also where the walker's resource budgets
     // surface — an over-limit or malformed module degrades to Phase 1 rather
     // than aborting the process.
-    let ssr_body = match ir::walker::walk_to_html(ir_module, slots) {
+    let started = Instant::now();
+    let walked = ir::walker::walk_to_html(ir_module, slots);
+    let walk_time = started.elapsed();
+    let ssr_body = match walked {
         Ok(html) => html,
         Err(err) => {
             tracing::warn!(
@@ -304,32 +395,22 @@ fn render_page_phase2(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
         }
     };
 
-    // SSR succeeded — build the full page with SSR content
-    let nonce_attr = escape_html(nonce.as_str());
-    let nonce = nonce.clone();
-    let assets = resolve_assets(config.manifest, config.route_pattern);
-    let head = build_head(config.title, &nonce_attr, &assets, config.personality_css);
-    let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
-
-    let html = format!(
-        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n{head}</head>\n<body{bc}>\n{bp}<div id=\"app\" data-forma-ssr>{ssr}</div>\n{cs}{pj}\n{wasm}{sw}</body>\n</html>",
-        bc = parts.body_class_attr,
-        bp = parts.body_prefix,
-        ssr = ssr_body,
-        cs = parts.config_script_tag,
-        pj = parts.page_js_tag,
-        wasm = parts.wasm_script,
-        sw = parts.sw_script,
-    );
-
-    PageOutput {
-        html,
-        csp: csp::build_csp_header(&nonce),
+    let counts = RenderCounts {
+        bytes: ssr_body.len(),
+        walk_time,
+        ..RenderCounts::default()
+    };
+    page_output(
+        write_document(config, nonce, Some(&ssr_body)),
         nonce,
-    }
+        counts,
+    )
 }
 
 #[cfg(test)]
+// The 0.2.1 API these tests pin is deprecated, not changed: they keep
+// calling it to prove `render_page`'s output is what it was.
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use crate::types::{RouteAssets, WasmAssets};

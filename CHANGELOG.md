@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+- **The strict module loader is the default (FORMA-121, DR-11).** Call
+  `load_ir_modules_strict` at start and refuse to start on its errors, each
+  naming route, file and a `LOAD-1xx` code; the lenient `load_ir_modules`,
+  which serves a corrupt module's route as an empty shell, is deprecated.
+- **A list over budget fails before its first row (FORMA-122, DR-13).**
+  forma-ir compares a list's length with the remaining iteration budget before
+  walking it: a 60,000-row list under the default 50,000 fails in a
+  comparison, not after 50,000 rows.
+- **A render that returns its failure (FORMA-120, DR-11, DR-12).**
+  forma-server's `try_render` returns `Result<PageResponse, RenderError>`: the
+  page with its counts, or a coded error naming route and component, a caught
+  panic included; `render_browser_shell` serves a route declared
+  `ssr: false`. `render_page` (and its Phase 1 fallback) and
+  `assets::load_manifest` are deprecated. forma-ir adds
+  `walk_to_html_counted`. Both crates deny `unwrap`, `expect` and `panic!`
+  outside tests.
+
+- **A page response that carries its own headers (FORMA-124, DR-17).**
+  forma-server's `PageResponse` always writes `no-store`, the strict policy and
+  the document headers; handlers extend the policy through typed
+  `PolicyExtensions`, never as text. `PageOutput`'s public fields and
+  `headers()`, `PageConfig::config_script` and `render_page_with_nonce` are
+  deprecated (removed in 3.0.0). Additive: every 0.2.1 call still compiles.
 - **CI: actions pinned to commits, every job declares its token (DR-32,
   SR21, FORMA-010; no crate changed).** Each `uses:` names the commit its tag
   or branch pointed to on 2026-10-14, with the ref in a comment, so moving a

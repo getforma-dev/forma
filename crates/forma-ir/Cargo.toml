@@ -32,6 +32,13 @@ dump = []
 # consumer's release build does not carry them; forma-server's tests and this
 # crate's own test targets turn it on.
 test-helpers = []
+# INTERNAL; never for a build that ships. Compiles in `fault_injection`, the
+# stand-in component that panics (SR44's tests of `walk_to_html_counted`).
+# Enabled only by this crate's and forma-server's own dev-dependencies, and
+# never by `test-helpers`, so no 0.2.1 user can have it on; the `__` name puts
+# it outside the semver promise.
+# Verified by: crates/forma-ir/tests/feature_isolation.rs > "test_helpers_alone_does_not_compile_the_fault_trigger_in"
+__fault-injection = []
 
 [lib]
 crate-type = ["rlib"]
@@ -39,7 +46,7 @@ crate-type = ["rlib"]
 # Self dev-dependency: the only way to enable a feature for this crate's own
 # integration tests and examples without also enabling it for consumers.
 [dev-dependencies]
-forma-ir = { path = ".", features = ["test-helpers"] }
+forma-ir = { path = ".", features = ["test-helpers", "__fault-injection"] }
 
 [lints]
 workspace = true
