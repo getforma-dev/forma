@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- **CI: actions pinned to commits, every job declares its token (DR-32,
+  SR21, FORMA-010; no crate changed).** Each `uses:` names the commit its tag
+  or branch pointed to on 2026-10-14, with the ref in a comment, so moving a
+  tag no longer changes what runs. Every job in `ci.yml` declares
+  `contents: read`; `release.yml` keeps its workflow-level `contents: read`
+  and `id-token: write`.
 - **Documentation matches the code (FORMA-009; no code changed).** The
   compiler writes FMIR modules as `.ir` files, so `docs/FMIR-FORMAT.md`,
   `docs/ARCHITECTURE.md`, `docs/README.md`, the README and two doc comments no
