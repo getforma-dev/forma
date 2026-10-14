@@ -1,14 +1,12 @@
 name: Release
 
+# The release tags are the only trigger (SR43, FORMA-134): no branch push, pull
+# request or dispatch starts this workflow, so none of them reaches `publish`.
 on:
   push:
     tags:
       - 'ir-v*'
       - 'server-v*'
-
-permissions:
-  contents: read
-  id-token: write  # Required for crates.io trusted publishing (OIDC)
 
 # A publish is never superseded, so cancel-in-progress is FALSE: killing
 # `cargo publish` between the upload and the index update is how a version gets
@@ -23,91 +21,120 @@ env:
   CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
 
+# How a tag becomes a release (SR43; decision brief L-34, L-42; FORMA-134).
+# An `ir-v*` tag releases forma-ir, a `server-v*` tag forma-server. Only
+# `publish` holds `id-token: write`, the permission that lets a job mint the
+# OIDC token crates.io exchanges for a publish token. Everything that compiles,
+# and so runs build scripts and proc macros, runs in a job without it:
+#   check    the workspace's tests and clippy
+#   pack     checks the version against the tag, locks the dependency graph and
+#            packages the crate with `cargo package --no-verify` (which compiles
+#            nothing); writes the .crate, its file list and the Cargo.lock with
+#            their SHA-256 record; restores no cache
+#   verify   checks the artefact against the record and builds the packaged
+#            crate from the .crate itself, as `cargo publish` would have
+#   publish  restores no cache and compiles nothing. Cargo cannot upload a
+#            prebuilt .crate, so it checks the artefact against the record,
+#            re-packages the crate from the tagged source with the recorded
+#            Cargo.lock, and publishes only if the .crate and its file list are
+#            byte-identical to the recorded ones; `cargo publish --no-verify`.
+#            Afterwards it compares crates.io's checksum with the record.
+# Push `server-v*` only after the `ir-v*` run has published (CONTRIBUTING.md,
+# "Releasing"): forma-server's packaged crate resolves forma-ir from crates.io.
+# CI's `release-workflow` job runs scripts/check-release-workflow.rb, which
+# fails if this shape is lost, and seeds each violation to prove it can fail.
+# Verified by: scripts/check-release-workflow.rb > "id-token: write on the pack job"
+# A file altered after `pack`, by any job of this run, fails publish's check
+# before `cargo publish` runs, so nothing ships; so does a re-packaged crate
+# that differs from the packed one.
+# Verified by: scripts/test-release-artifacts.sh > "a tarball altered by one byte fails"
+# Verified by: scripts/test-release-artifacts.sh > "a replaced tarball with a rewritten record fails"
+# Verified by: scripts/test-release-artifacts.sh > "a rebuilt file that differs fails"
 jobs:
-  publish-ir:
-    if: startsWith(github.ref_name, 'ir-v')
+  check:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
-    # `cargo publish` runs its own clean verification build in a temp dir on
-    # top of the workspace test + clippy above it, so this is roughly two full
-    # builds. MEASURED locally warm: test 10s, clippy 4s; in CI cold-with-cache
-    # the equivalent CI job measured 2.1m for test alone. 30 is ~3x a ~10m
-    # cold run and bounds the case where crates.io is slow to respond.
+    # MEASURED locally warm: test 10s, clippy 4s; in CI the test job measured
+    # 2.1m with its cache. 30 bounds a cold build on a slow runner.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          components: clippy
+      # A cache is allowed here: this job produces nothing that publishes.
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
-          key: release-ir
+          key: release-check
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
-      - name: Verify version matches tag
+
+  pack:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # `cargo package --no-verify` compiles nothing: the index fetch dominates.
+    # MEASURED locally: under 10s for either crate. 10 bounds a slow index.
+    timeout-minutes: 10
+    outputs:
+      crate: ${{ steps.crate.outputs.crate }}
+      version: ${{ steps.crate.outputs.version }}
+      toolchain: ${{ steps.toolchain.outputs.toolchain }}
+      record-sha256: ${{ steps.record.outputs.record-sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      # No cache in this job: a poisoned cache restored here could change the
+      # bytes that publish.
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+
+      # `verify` and `publish` install exactly this toolchain, so the crate they
+      # build and re-package comes from the same cargo.
+      - name: Record the toolchain
+        id: toolchain
         run: |
+          TOOLCHAIN=$(rustc --version | cut -d' ' -f2)
+          if [[ ! "$TOOLCHAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::unexpected rustc version: $(rustc --version)"
+            exit 1
+          fi
+          cargo --version
+          echo "toolchain=$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+
+      - name: Name the crate the tag releases, and check its version
+        id: crate
+        run: |
+          case "$GITHUB_REF_NAME" in
+            ir-v*) CRATE=forma-ir; TAG_VERSION="${GITHUB_REF_NAME#ir-v}" ;;
+            server-v*) CRATE=forma-server; TAG_VERSION="${GITHUB_REF_NAME#server-v}" ;;
+            *) echo "::error::$GITHUB_REF_NAME is not a release tag"; exit 1 ;;
+          esac
           # Read through workspace inheritance: the crate manifest says
           # `version.workspace = true`, so grepping it yields that literal
           # rather than a version. cargo metadata resolves it.
           PKG_VERSION=$(cargo metadata --no-deps --format-version 1 \
-            | jq -r '.packages[] | select(.name=="forma-ir") | .version')
-          TAG_VERSION="${GITHUB_REF_NAME#ir-v}"
+            | jq -r --arg crate "$CRATE" '.packages[] | select(.name==$crate) | .version')
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
-      - name: Authenticate with crates.io
-        id: auth
-        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1
-      - name: Publish forma-ir
-        run: cargo publish -p forma-ir
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-
-      # On 2026-08-06 this job died in "Set up job" with "Service Unavailable"
-      # and the run page said only "failure". Whatever fails next time, say
-      # which of the two very different causes it was.
-      - name: Explain a publish failure
-        if: failure()
-        run: |
-          echo "::error title=forma-ir publish failed::Distinguish the two causes before retrying."
-          echo "AUTH/OIDC: crates-io-auth-action mints a token from the Actions OIDC provider."
-          echo "  A 5xx or timeout there is an Actions/crates.io incident — re-run this run,"
-          echo "  do NOT re-tag. Check https://www.githubstatus.com and https://status.crates.io."
-          echo "ALREADY PUBLISHED: 'crate version X is already uploaded' means the version"
-          echo "  shipped and only a later step failed. Bump the version; never force a re-publish."
-          echo "TRUSTED PUBLISHING NOT CONFIGURED: '403' or 'authentication required' means"
-          echo "  crates.io has no Trusted Publisher for forma-ir pointing at"
-          echo "  getforma-dev/forma + .github/workflows/release.yml. Configure it at"
-          echo "  https://crates.io/crates/forma-ir/settings — this is a human step, no re-run fixes it."
-
-  publish-server:
-    if: startsWith(github.ref_name, 'server-v')
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          key: release-server
-      - run: cargo test --workspace
-      - run: cargo clippy --workspace -- -D warnings
-      - name: Verify version matches tag
-        run: |
-          # Read through workspace inheritance — see the forma-ir job above.
-          PKG_VERSION=$(cargo metadata --no-deps --format-version 1 \
-            | jq -r '.packages[] | select(.name=="forma-server") | .version')
-          TAG_VERSION="${GITHUB_REF_NAME#server-v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::Cargo.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+          if [[ ! "$PKG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::unexpected version: $PKG_VERSION"
             exit 1
           fi
+          { echo "crate=$CRATE"; echo "version=$PKG_VERSION"; } >> "$GITHUB_OUTPUT"
 
       # forma-server resolves forma-ir through `[patch.crates-io]` in this
-      # workspace, but crates.io resolves the PUBLISHED forma-ir. Print both so
-      # a "no matching package named forma-ir" failure below is self-explaining
-      # rather than a surprise. This is diagnostic only — `cargo publish` is
-      # the authority on whether the dependency resolves, and it is not
-      # weakened by anything printed here.
+      # workspace, but its packaged crate resolves the PUBLISHED forma-ir, so
+      # `cargo package` below fails with "no matching package named forma-ir"
+      # until the ir-v* tag has shipped. Diagnostic only: `cargo package` is the
+      # authority on whether the dependency resolves.
       - name: Report the forma-ir version crates.io can see
+        if: steps.crate.outputs.crate == 'forma-server'
         continue-on-error: true
         run: |
           echo "forma-server's forma-ir requirement in this tree:"
@@ -117,20 +144,191 @@ jobs:
             https://crates.io/api/v1/crates/forma-ir \
             | grep -o '"max_version":"[^"]*"' || echo "  (could not reach crates.io)"
 
+      # Cargo.lock is not committed, so the graph is locked here and the lock
+      # travels in the artefact: `verify` builds against it and `publish`
+      # re-packages with it. The packaged crate carries a Cargo.lock of its own,
+      # derived from this one, so the same lock gives the same .crate bytes.
+      - name: Package the crate (compiles nothing)
+        env:
+          CRATE: ${{ steps.crate.outputs.crate }}
+          VERSION: ${{ steps.crate.outputs.version }}
+        run: |
+          cargo generate-lockfile
+          cargo package -p "$CRATE" --no-verify --locked
+          mkdir "$RUNNER_TEMP/release"
+          cargo package -p "$CRATE" --list --locked > "$RUNNER_TEMP/release/$CRATE-$VERSION.list"
+          cp "target/package/$CRATE-$VERSION.crate" Cargo.lock "$RUNNER_TEMP/release/"
+          ls -l "$RUNNER_TEMP/release"
+
+      - name: Record the SHA-256 of each packed file
+        id: record
+        run: |
+          RECORD_SHA256=$(bash scripts/release-artifacts.sh record "$RUNNER_TEMP/release")
+          cat "$RUNNER_TEMP/release/SHA256SUMS"
+          echo "record-sha256=$RECORD_SHA256" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-packed
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+
+      - name: Explain a pack failure
+        if: failure()
+        run: |
+          echo "::error title=$GITHUB_REF_NAME did not pack::Read the error above, then match it here."
+          echo "UNPUBLISHED DEPENDENCY: 'no matching package named forma-ir' or 'failed to select"
+          echo "  a version for \`forma-ir\`' means the forma-ir this forma-server needs (a version,"
+          echo "  or a feature such as __fault-injection) is not on crates.io yet. Release forma-ir"
+          echo "  first (ir-v*), wait for that run to publish, then re-run all jobs of this run."
+          echo "VERSION: 'does not match tag' means Cargo.toml and the tag disagree. Fix and re-tag."
+
+  # What `cargo publish` verifies by default, done here from the packed bytes,
+  # without the publish credential: the .crate unpacked and built with its own
+  # Cargo.lock.
+  verify:
+    needs: pack
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # A cold build of one crate and its dependencies, no cache: forma-server
+    # pulls axum and tokio. Well under 10 minutes; 20 bounds a slow runner.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/release-artifacts.sh
+          sparse-checkout-cone-mode: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        with:
+          toolchain: ${{ needs.pack.outputs.toolchain }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-packed
+          path: ${{ runner.temp }}/release
+          digest-mismatch: error
+      - name: Check every packed file against pack's record
+        env:
+          RECORD_SHA256: ${{ needs.pack.outputs.record-sha256 }}
+        run: bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"
+      - name: Build the packaged crate from the .crate
+        env:
+          CRATE: ${{ needs.pack.outputs.crate }}
+          VERSION: ${{ needs.pack.outputs.version }}
+        run: |
+          mkdir "$RUNNER_TEMP/unpacked"
+          tar -xzf "$RUNNER_TEMP/release/$CRATE-$VERSION.crate" -C "$RUNNER_TEMP/unpacked"
+          cargo build --locked --manifest-path "$RUNNER_TEMP/unpacked/$CRATE-$VERSION/Cargo.toml"
+
+  publish:
+    needs: [check, pack, verify]
+    # The trigger already admits only the two tag patterns; this repeats it
+    # where the credential is, so a trigger added by mistake cannot publish.
+    if: startsWith(github.ref, 'refs/tags/ir-v') || startsWith(github.ref, 'refs/tags/server-v')
+    runs-on: ubuntu-latest
+    # A checkout, a toolchain install, two `cargo package --no-verify` runs and
+    # one upload: a few minutes, nothing compiled; then up to 15 minutes waiting
+    # for crates.io to show the version. 30 bounds both.
+    timeout-minutes: 30
+    # No `environment:` yet: the crates.io trusted-publisher entries name none,
+    # and a job that names an environment GitHub does not have creates it
+    # unprotected. Once the environment exists, limited to the release tags,
+    # the entries and this job name it together.
+    permissions:
+      contents: read
+      id-token: write  # crates.io trusted publishing (OIDC); this job only
+    env:
+      CRATE: ${{ needs.pack.outputs.crate }}
+      VERSION: ${{ needs.pack.outputs.version }}
+    steps:
+      # The tagged source, to re-package from; nothing in it is compiled or run.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        with:
+          toolchain: ${{ needs.pack.outputs.toolchain }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-packed
+          path: ${{ runner.temp }}/release
+          digest-mismatch: error
+
+      # The record's hash comes from `pack`'s job output, not from the
+      # artefact, so a crate replaced together with its record fails too.
+      - name: Check every packed file against pack's record
+        env:
+          RECORD_SHA256: ${{ needs.pack.outputs.record-sha256 }}
+        run: bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"
+
+      # `cargo publish` packages from source; it cannot upload a prebuilt
+      # .crate. So the crate is re-packaged here from the tagged source with the
+      # recorded Cargo.lock, and nothing publishes unless the .crate and its file
+      # list are byte-identical to the ones `verify` built.
+      - name: Re-package from the tag and match the recorded crate
+        run: |
+          case "$CRATE" in
+            forma-ir|forma-server) ;;
+            *) echo "::error::unexpected crate: $CRATE"; exit 1 ;;
+          esac
+          cp "$RUNNER_TEMP/release/Cargo.lock" Cargo.lock
+          cargo package -p "$CRATE" --no-verify --locked
+          mkdir "$RUNNER_TEMP/rebuilt"
+          cargo package -p "$CRATE" --list --locked > "$RUNNER_TEMP/rebuilt/$CRATE-$VERSION.list"
+          bash scripts/release-artifacts.sh match "$RUNNER_TEMP/release" "$RUNNER_TEMP/rebuilt/$CRATE-$VERSION.list"
+          bash scripts/release-artifacts.sh match "$RUNNER_TEMP/release" "target/package/$CRATE-$VERSION.crate"
+
       - name: Authenticate with crates.io
         id: auth
         uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1
-      - name: Publish forma-server
-        run: cargo publish -p forma-server
+
+      # --no-verify: the build ran in `verify`, without the credential; here
+      # cargo only packages (as matched above) and uploads.
+      - name: Publish the crate
+        run: cargo publish -p "$CRATE" --no-verify --locked
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
+      # cargo re-packaged once more inside `cargo publish`; crates.io's checksum
+      # of the uploaded .crate says whether those bytes were the recorded ones.
+      # The script reads crates.io's API (its database; the index CDN may cache
+      # for 600 s) for up to 15 minutes. A version not visible by then only
+      # warns, to be compared by hand; a different checksum fails, and the
+      # version must be yanked on crates.io's web page (the trusted-publishing
+      # token cannot yank, and the account keeps no API token).
+      # Verified by: scripts/test-check-published-crate.sh > "a checksum that differs from the record fails"
+      # Verified by: scripts/test-check-published-crate.sh > "a version not visible after the last poll only warns"
+      - name: Check crates.io serves the recorded crate
+        run: |
+          WANT=$(awk -v f="$CRATE-$VERSION.crate" '$2 == f { print $1 }' "$RUNNER_TEMP/release/SHA256SUMS")
+          bash scripts/check-published-crate.sh "$CRATE" "$VERSION" "$WANT"
+
+      # On 2026-08-06 the old job died in "Set up job" with "Service Unavailable"
+      # and the run page said only "failure". Whatever fails next time, say
+      # which of the very different causes it was.
       - name: Explain a publish failure
         if: failure()
         run: |
-          echo "::error title=forma-server publish failed::Distinguish the causes before retrying."
-          echo "UNPUBLISHED DEPENDENCY: 'no matching package named forma-ir' means the ir-v* tag"
-          echo "  has not shipped yet. Publish forma-ir first, then re-run this run."
-          echo "AUTH/OIDC 5xx or timeout: an Actions/crates.io incident — re-run, do NOT re-tag."
-          echo "403 / authentication required: no Trusted Publisher on crates.io for forma-server."
-          echo "  Configure at https://crates.io/crates/forma-server/settings (human step)."
+          echo "::error title=$CRATE publish failed::Distinguish the causes before retrying."
+          echo "'differs from the packed file' / 'is not the record the pack job wrote' / 'is not in the record'"
+          echo "  -> The packed artefact changed between pack and publish. NOTHING WAS PUBLISHED."
+          echo "     Do not re-run until you know what wrote to this run's artefacts."
+          echo "'rebuilt here differs from the packed one'"
+          echo "  -> The crate re-packaged from the tag is not the one pack recorded and verify"
+          echo "     built. NOTHING WAS PUBLISHED. A changed toolchain or a forma-ir release"
+          echo "     between the jobs can cause it: re-run ALL jobs, not only the failed ones."
+          echo "AUTH/OIDC: crates-io-auth-action mints a token from the Actions OIDC provider."
+          echo "  A 5xx or timeout there is an Actions/crates.io incident — re-run the failed"
+          echo "  jobs, do NOT re-tag. Check https://www.githubstatus.com and https://status.crates.io."
+          echo "ALREADY PUBLISHED: 'crate version X is already uploaded' means the version"
+          echo "  shipped and only a later step failed. Bump the version; never force a re-publish."
+          echo "TRUSTED PUBLISHING NOT CONFIGURED: '403' or 'authentication required' means"
+          echo "  crates.io has no Trusted Publisher for $CRATE pointing at"
+          echo "  getforma-dev/forma + .github/workflows/release.yml. Configure it at"
+          echo "  https://crates.io/crates/$CRATE/settings — this is a human step, no re-run fixes it."
+          echo "'differs from the recorded crate' after publishing: the version shipped with"
+          echo "  other bytes than the record. Yank it on https://crates.io/crates/$CRATE/versions,"
+          echo "  signed in as the owner (the trusted-publishing token cannot yank and the account"
+          echo "  keeps no API token), then release a new version. 'not visible yet' is a warning,"
+          echo "  not this: compare the checksum by hand later, as the warning says."

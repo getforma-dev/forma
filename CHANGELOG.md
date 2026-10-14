@@ -38,6 +38,35 @@
   tag no longer changes what runs. Every job in `ci.yml` declares
   `contents: read`; `release.yml` keeps its workflow-level `contents: read`
   and `id-token: write`.
+- **CI: only the release's publish job can mint the publish token (SR43,
+  L-34, L-42, FORMA-134; no crate changed).** `release.yml` splits into
+  `check`, `pack`, `verify` and `publish`, and the workflow-level
+  `id-token: write` is gone. `pack` restores no cache and compiles nothing:
+  it locks the graph, runs `cargo package --no-verify` and records the
+  `.crate`, its file list and the `Cargo.lock` with their SHA-256. `verify`
+  builds the crate unpacked from that `.crate`. `publish`, the only job
+  holding `id-token: write`, restores no cache and compiles nothing: cargo
+  cannot upload a prebuilt `.crate`, so it checks the artefact against the
+  record (whose own hash travels as a job output), re-packages from the
+  tagged source with the recorded lock, publishes with
+  `cargo publish --no-verify --locked` only if the `.crate` and its file list
+  are byte-identical to the recorded ones, and then compares crates.io's
+  checksum with the record. The tags stay the only trigger. CI's new
+  `release-workflow` job runs actionlint (binary checked against a pinned
+  SHA-256), `scripts/check-release-workflow.rb --self-test` and
+  `scripts/test-release-artifacts.sh`.
+  The lint also refuses a publish job that could go on after a failed check
+  (`continue-on-error`, an `if:` on a step up to the publish, `always()`,
+  `failure()` or `cancelled()` in the job's `if`, a check line that can
+  swallow its failure, a shell without errexit), `container:` or `services:`
+  on the publish or pack job, and a checkout of another repository or ref;
+  every rule has a seed in `--self-test`, which fails if one does not. The
+  artefact test flips a byte instead of writing one that may already be there.
+  After the upload, `scripts/check-published-crate.sh` reads the version's
+  checksum from crates.io's API for up to 15 minutes: a checksum that differs
+  from the record fails and points to crates.io's web page to yank it; a
+  version not visible yet only warns. CONTRIBUTING's new "Releasing" section
+  says to push `server-v*` only after the `ir-v*` run has published.
 - **Documentation matches the code (FORMA-009; no code changed).** The
   compiler writes FMIR modules as `.ir` files, so `docs/FMIR-FORMAT.md`,
   `docs/ARCHITECTURE.md`, `docs/README.md`, the README and two doc comments no
