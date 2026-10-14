@@ -12,7 +12,7 @@ import { E2E, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, withServer 
  * template that cannot compile from a passing test into a failing one.
  */
 
-const TEXT_EXTS = new Set(['.toml', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
+const TEXT_EXTS = new Set(['.toml', '.lock', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
 
 function textFilesWithPlaceholders(dir: string): string[] {
   return listFiles(dir).filter((rel) => {
@@ -60,6 +60,17 @@ describe('scaffolding', () => {
     it('names the crate after the project', () => {
       const toml = fs.readFileSync(path.join(dest, 'Cargo.toml'), 'utf8');
       expect(toml).toContain(`name = "${name}"`);
+    });
+
+    it("puts the project's own Cargo.lock entry where cargo sorts it", () => {
+      // The template's entry carries the placeholder, which sorts last; once
+      // renamed it must move, or the first plain `cargo run` rewrites the
+      // lockfile of a project nobody has touched yet. Cargo sorts by name,
+      // bytewise.
+      const lock = fs.readFileSync(path.join(dest, 'Cargo.lock'), 'utf8').replace(/\r\n/g, '\n');
+      const names = [...lock.matchAll(/^name = "([^"]+)"$/gm)].map((m) => m[1]!);
+      expect(names).toContain(name);
+      expect(names).toEqual([...names].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
     });
 
     it('writes a .gitignore and no _gitignore', () => {
@@ -174,14 +185,18 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     rmrf(tmp);
   });
 
-  it.each(TEMPLATES)('%s: npm install, frontend build, cargo check', (template) => {
+  it.each(TEMPLATES)('%s: npm ci, frontend build, cargo check --locked', (template) => {
     const name = `e2e-${template}`;
     const scaffold = runCli([name, '--template', template], tmp);
     expect(scaffold.status, scaffold.stderr).toBe(0);
     const dest = path.join(tmp, name);
     const admin = path.join(dest, 'admin');
+    const npmLock = fs.readFileSync(path.join(admin, 'package-lock.json'));
+    const cargoLock = fs.readFileSync(path.join(dest, 'Cargo.lock'));
 
-    const install = run('npm', ['install', '--no-audit', '--no-fund'], admin);
+    // `npm ci` and `--locked` install exactly the template's lockfiles and
+    // fail if either disagrees with its manifest (DR-32).
+    const install = run('npm', ['ci', '--no-audit', '--no-fund'], admin);
     expect(install.status, install.stderr).toBe(0);
 
     const build = run('npm', ['run', 'build'], admin);
@@ -191,8 +206,15 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     // build above is what creates.
     expect(fs.existsSync(path.join(admin, 'dist', 'manifest.json'))).toBe(true);
 
-    const check = run('cargo', ['check'], dest);
+    const check = run('cargo', ['check', '--locked'], dest);
     expect(check.status, check.stderr).toBe(0);
+
+    // A plain cargo command, as a user's first `cargo run`, rewrites a
+    // lockfile it would have written differently, even only in its order.
+    const tree = run('cargo', ['tree', '--offline', '--depth', '1'], dest);
+    expect(tree.status, tree.stderr).toBe(0);
+    expect(fs.readFileSync(path.join(dest, 'Cargo.lock')).equals(cargoLock), 'cargo rewrote Cargo.lock').toBe(true);
+    expect(fs.readFileSync(path.join(admin, 'package-lock.json')).equals(npmLock), 'npm rewrote package-lock.json').toBe(true);
   }, 900_000);
 
   it('minimal: build:ssr emits real IR, not a placeholder', async () => {
@@ -201,7 +223,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const dest = path.join(tmp, name);
     const admin = path.join(dest, 'admin');
 
-    expect(run('npm', ['install', '--no-audit', '--no-fund'], admin).status).toBe(0);
+    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
     const build = run('npm', ['run', 'build:ssr'], admin);
     const out = build.stdout + build.stderr;
@@ -229,7 +251,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     // claim is that the HTML contains the page. render_page silently falls
     // back to Phase 1 whenever `ir_module` or `slots` is None, which is the
     // shape the dashboard was stuck in, so this has to be checked over HTTP.
-    expect(run('cargo', ['build'], dest).status).toBe(0);
+    expect(run('cargo', ['build', '--locked'], dest).status).toBe(0);
     await withServer(dest, name, (body) => {
       expect(body).toContain('data-forma-ssr');
       expect(body).toContain(`<h1>${name}</h1>`);
@@ -244,9 +266,9 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const dest = path.join(tmp, name);
     const admin = path.join(dest, 'admin');
 
-    expect(run('npm', ['install', '--no-audit', '--no-fund'], admin).status).toBe(0);
+    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
     expect(run('npm', ['run', 'build'], admin).status).toBe(0);
-    expect(run('cargo', ['build'], dest).status).toBe(0);
+    expect(run('cargo', ['build', '--locked'], dest).status).toBe(0);
 
     await withServer(dest, name, (body, res) => {
       expect(body).toContain('<div id="app"></div>');
@@ -270,4 +292,85 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(body).toContain(`nonce="${nonce}"`);
     });
   }, 900_000);
+  it('minimal: build:ssr reads ssrEntryPoints by page name', () => {
+    // @getforma/build looks an SSR entry up by page name and silently falls
+    // back to the browser entry when the key does not match, so a template
+    // whose SSR entry IS its browser entry cannot tell a read key from an
+    // ignored one. Point the template's own key at a different file and check
+    // that the IR came from that file.
+    const name = 'e2e-ssr-key';
+    expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
+    const admin = path.join(tmp, name, 'admin');
+    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+
+    const app = fs.readFileSync(path.join(admin, 'src', 'home', 'app.tsx'), 'utf8');
+    const probe = app.replace(`<h1>${name}</h1>`, '<h1>ssr-entry-probe</h1>');
+    expect(probe).not.toBe(app);
+    fs.writeFileSync(path.join(admin, 'src', 'home', 'ssr-probe.tsx'), probe);
+
+    const buildTs = path.join(admin, 'build.ts');
+    const config = fs.readFileSync(buildTs, 'utf8');
+    const repointed = config.replace(
+      /(ssrEntryPoints:\s*\{[^}]*?)'src\/home\/app\.tsx'/,
+      "$1'src/home/ssr-probe.tsx'",
+    );
+    expect(repointed, 'build.ts has no ssrEntryPoints entry for src/home/app.tsx').not.toBe(config);
+    fs.writeFileSync(buildTs, repointed);
+
+    const build = run('npm', ['run', 'build:ssr'], admin);
+    expect(build.status, build.stdout + build.stderr).toBe(0);
+    const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist', 'manifest.json'), 'utf8'));
+    const ir = fs.readFileSync(path.join(admin, 'dist', manifest.routes['/'].ir));
+    expect(ir.includes('ssr-entry-probe'), 'the IR was not built from the ssrEntryPoints file').toBe(true);
+    expect(ir.includes(name), 'the IR was built from the browser entry').toBe(false);
+  }, 900_000);
+
+  it.each(TEMPLATES)(
+    '%s: every page response carries Cache-Control: no-store and a fresh nonce per fetch',
+    async (template) => {
+      // A page's nonce is drawn per request and is only secret while no two
+      // responses share it: a cached page replays one nonce to every visitor.
+      // So every page route answers `no-store`, and two fetches of the same
+      // page carry two nonces, each matching its own HTML (DR-17).
+      const name = `e2e-headers-${template}`;
+      expect(runCli([name, '--template', template], tmp).status).toBe(0);
+      const dest = path.join(tmp, name);
+      const admin = path.join(dest, 'admin');
+      expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+      expect(run('npm', ['run', 'build'], admin).status).toBe(0);
+      const cargo = run('cargo', ['build', '--locked'], dest);
+      expect(cargo.status, cargo.stderr).toBe(0);
+
+      // The page routes are the ones whose handler renders a page, read from
+      // main.rs, so a page added to a template is covered without editing this.
+      const main = fs.readFileSync(path.join(dest, 'src', 'main.rs'), 'utf8');
+      const rendersPage = (handler: string) =>
+        new RegExp(`async fn ${handler}\\b[\\s\\S]*?\\n}`).exec(main)?.[0].includes('render_page(') ?? false;
+      const pages = [...main.matchAll(/\.route\("([^"]+)",\s*get\((\w+)\)\)/g)]
+        .filter((m) => rendersPage(m[2]!))
+        .map((m) => m[1]!);
+      expect(pages.length, 'no page route found in main.rs').toBeGreaterThan(0);
+      if (template === 'dashboard') expect(pages).toHaveLength(5);
+
+      await withServer(dest, name, async (_body, _res, get) => {
+        const nonces: string[] = [];
+        for (const route of pages) {
+          for (let fetchNo = 1; fetchNo <= 2; fetchNo++) {
+            const res = await get(route);
+            const where = `${route}, fetch ${fetchNo}`;
+            expect(res.status, where).toBe(200);
+            expect(res.headers.get('cache-control'), where).toBe('no-store');
+            expect(res.headers.get('content-type'), where).toMatch(/^text\/html/);
+            const csp = res.headers.get('content-security-policy') ?? '';
+            const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
+            expect(nonce, `${where}: no nonce in CSP: ${csp}`).toBeTruthy();
+            expect(await res.text(), `${where}: the HTML does not carry its own nonce`).toContain(`nonce="${nonce}"`);
+            nonces.push(nonce!);
+          }
+        }
+        expect(new Set(nonces).size, `a nonce repeated across fetches: ${nonces.join(' ')}`).toBe(nonces.length);
+      });
+    },
+    900_000,
+  );
 });

@@ -36,21 +36,24 @@ export const TEMPLATE_INFO: Record<string, { title: string; description: string 
  * Names that must never be copied out of a template, even if a developer left
  * them behind by building a template in place. Copying `node_modules` into a
  * scaffolded project would ship whatever versions happened to be on the
- * maintainer's disk instead of resolving the ranges in the template's
- * package.json, and a lockfile does the same thing more quietly: npm honours
- * it over those ranges, so a template lockfile committed once pins every app
- * scaffolded afterwards to the versions that resolved the day it was authored.
- * That is not hypothetical — a March lockfile in the dashboard template held
- * new projects on @getforma/core 1.0.6 and a compiler that could not find
- * mount(), which is why the templates ship no lockfile at all.
- * Verified by: tests/scaffold-lib.test.ts > "never copies a lockfile or a build directory out of a template"
+ * maintainer's disk, and build output would ship whatever that disk built.
+ *
+ * Lockfiles are NOT in this set. Each template ships `admin/package-lock.json`
+ * and `Cargo.lock`, the set the scaffold gate installs with `npm ci` and
+ * `cargo --locked`, so a new project gets the versions this repo tested rather
+ * than whatever resolves on the day (decision DR-32). The risk that once kept
+ * them out, a stale lockfile (a March one held new projects on
+ * @getforma/core 1.0.6), is closed by tests instead: a lockfile that disagrees
+ * with its manifest fails `npm test`, and one that cannot install or build
+ * fails the scaffold gate.
+ * Verified by: tests/scaffold-lib.test.ts > "copies a template's lockfiles, never its installed dependencies or build output"
+ * Verified by: tests/templates.test.ts > "ships an npm lockfile that agrees with package.json and resolves only from the npm registry"
  */
 export const NEVER_COPY = new Set([
   'node_modules',
   'dist',
   'target',
   '.git',
-  'package-lock.json',
 ]);
 
 /**
@@ -81,7 +84,8 @@ export function validateProjectName(name: string): string | null {
   return null;
 }
 
-const TEXT_EXTS = new Set(['.toml', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
+// `.lock` because a template's Cargo.lock names the crate by its placeholder.
+const TEXT_EXTS = new Set(['.toml', '.lock', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
 
 export function replacePlaceholders(dir: string, replacements: Record<string, string>) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -121,4 +125,72 @@ export function restoreGitignores(dir: string) {
       fs.renameSync(fullPath, path.join(dir, '.gitignore'));
     }
   }
+}
+
+/**
+ * Move the project's own `[[package]]` entry in a scaffolded Cargo.lock to the
+ * place cargo sorts it.
+ *
+ * A template's Cargo.lock names the crate by its placeholder, and
+ * `replacePlaceholders` rewrites that to the project name; but cargo orders
+ * entries by name, so the renamed entry is now out of place. `cargo --locked`
+ * compares lockfiles by content and accepts it, while a plain `cargo run`
+ * rewrites the file to re-sort it, so the project would start with a modified
+ * Cargo.lock before its author had changed anything. Cargo's order is the
+ * package name compared bytewise, then the version; every other entry and the
+ * file's line endings are left exactly as they were.
+ *
+ * Verified by: tests/scaffold-lib.test.ts > "moves the renamed entry to where cargo sorts it and changes nothing else"
+ * Verified by: tests/scaffold.test.ts > "puts the project's own Cargo.lock entry where cargo sorts it"
+ */
+export function placeCargoLockRoot(lockPath: string, crateName: string) {
+  if (!fs.existsSync(lockPath)) return;
+  const text = fs.readFileSync(lockPath, 'utf8');
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const lines = text.split(/\r?\n/);
+  // Cargo ends the file with a newline, which leaves a final '' here. Supply
+  // one if it is missing, so that every block below ends with its blank line.
+  const finalNewline = lines[lines.length - 1] === '';
+  if (!finalNewline) lines.push('');
+
+  const starts = lines.flatMap((line, i) => (line === '[[package]]' ? [i] : []));
+  if (starts.length === 0) return;
+  // Each block runs from its `[[package]]` line to the next one, so it carries
+  // its own trailing blank line and moving it keeps the layout.
+  const head = lines.slice(0, starts[0]);
+  const blocks = starts.map((start, k) => lines.slice(start, starts[k + 1] ?? lines.length));
+  const field = (block: string[], key: string) =>
+    block.find((l) => l.startsWith(`${key} = "`))?.slice(key.length + 4, -1) ?? '';
+
+  // The root is the entry with the crate's name and no `source`; a registry
+  // crate that happens to share the name always has one.
+  const rootIdx = blocks.findIndex(
+    (b) => field(b, 'name') === crateName && !b.some((l) => l.startsWith('source = ')),
+  );
+  if (rootIdx === -1) return;
+  const root = blocks.splice(rootIdx, 1)[0]!;
+  const rootVersion = field(root, 'version');
+
+  const sortsAfterRoot = (b: string[]) => {
+    const name = field(b, 'name');
+    if (name !== crateName) return name > crateName;
+    return compareVersions(field(b, 'version'), rootVersion) > 0;
+  };
+  const at = blocks.findIndex(sortsAfterRoot);
+  blocks.splice(at === -1 ? blocks.length : at, 0, root);
+
+  let next = [...head, ...blocks.flat()].join(eol);
+  if (!finalNewline) next = next.slice(0, -eol.length);
+  if (next !== text) fs.writeFileSync(lockPath, next);
+}
+
+/** Compares dotted numeric versions such as `0.1.0`: enough for a crate's own version. */
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(/[.+-]/).map(Number);
+  const pb = b.split(/[.+-]/).map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d;
+  }
+  return 0;
 }

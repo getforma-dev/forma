@@ -77,6 +77,7 @@ whoever writes the next template.
 - **TypeScript frontend** (`admin/src/`) — FormaJS with JSX, signals, components
 - **Build pipeline** (`admin/build.ts`) — `@getforma/build`: bundling, content hashing, Brotli/gzip, manifest, service worker
 - **A `.gitignore`** that covers build output, secrets and (for the dashboard) Playwright artifacts — and deliberately does not ignore `Cargo.lock`
+- **Lockfiles** (`admin/package-lock.json` and `Cargo.lock`) holding the exact versions this repo's scaffold gate built and served, so a new project starts from a tested set rather than whatever resolves that day
 
 ## Development
 
@@ -91,11 +92,13 @@ The real gate is opt-in because it needs a network and a Rust toolchain:
 FORMA_SCAFFOLD_E2E=1 npx vitest run
 ```
 
-That scaffolds each template into a temp directory, runs `npm install`, builds
-the frontend, runs `cargo check`, then starts each compiled server and reads
-its response: the minimal template must serve real server-rendered markup after
-`build:ssr`, and the dashboard must serve a Phase 1 shell whose CSP nonce
-matches the script tag. CI runs it on Linux and Windows, and again before
+That scaffolds each template into a temp directory, installs from the
+template's lockfile with `npm ci`, builds the frontend, runs
+`cargo check --locked`, then starts each compiled server and reads its
+responses: the minimal template must serve real server-rendered markup after
+`build:ssr`, the dashboard must serve a Phase 1 shell whose CSP nonce matches
+the script tag, and every page of both must answer `Cache-Control: no-store`
+with a fresh nonce on each fetch. CI runs it on Linux and Windows, and again before
 `npm publish`.
 
 | Document | What it is |

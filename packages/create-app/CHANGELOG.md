@@ -1,5 +1,57 @@
 # Changelog
 
+## [Unreleased]
+
+Template fixes from the Forma Stack decision brief's defects list, DR-17 and
+DR-32 (ticket FORMA-008). The lockfiles pin the versions published today
+(`@getforma/core` 2.0.1, `@getforma/build` 0.2.0, `@getforma/compiler` 0.3.5,
+`forma-server` and `forma-ir` 0.2.0); moving them to release A's new versions
+belongs to the release that publishes those.
+
+### Changed
+
+- **Both templates ship their lockfiles, and the scaffolder copies them.**
+  Each template now carries `admin/package-lock.json` and `Cargo.lock`, so a
+  new project installs the set this repo's scaffold gate installed, not
+  whatever resolves on the day (DR-32). This reverses 0.6.0's "no lockfile"
+  rule: `package-lock.json` leaves `NEVER_COPY`. The staleness that rule
+  guarded against is now a test failure instead: `npm test` fails when a
+  template's lockfile disagrees with its `package.json` or `Cargo.toml`, locks a
+  version outside a declared range, or resolves from anywhere but the public
+  registries, and the scaffold gate installs with `npm ci` and builds with
+  `cargo --locked`. The crate's own `Cargo.lock` entry carries the name
+  placeholder; the scaffolder renames it and moves it to where cargo sorts it,
+  so a project's first `cargo run` leaves the lockfile untouched.
+  Verified by `tests/templates.test.ts` > "ships an npm lockfile that agrees with package.json and resolves only from the npm registry"
+  Verified by `tests/templates.test.ts` > "ships a Cargo.lock that locks its crates from crates.io under its placeholder name"
+  Verified by `tests/scaffold-lib.test.ts` > "copies a template's lockfiles, never its installed dependencies or build output"
+  Verified by `tests/scaffold-lib.test.ts` > "moves the renamed entry to where cargo sorts it and changes nothing else"
+  Verified by `tests/scaffold.test.ts` > "puts the project's own Cargo.lock entry where cargo sorts it"
+
+### Fixed
+
+- **The minimal template's `ssrEntryPoints` key was never read.** It was keyed
+  by route (`'/'`); `@getforma/build` 0.2.0 looks an SSR entry up by page name,
+  the entry's outfile without `.js`, and silently falls back to the browser
+  entry when the key is missing. The template worked only because that
+  fallback was the same file. It is now keyed `home`. The scaffold gate points
+  the template's own key at a different file and checks that the IR came from
+  it.
+  Verified by `tests/templates.test.ts` > "keys its SSR entry points by page name, as @getforma/build reads them"
+  Verified by `tests/scaffold.test.ts` > "minimal: build:ssr reads ssrEntryPoints by page name"
+- **The minimal template sent its page without `Cache-Control: no-store`.** A
+  cached page replays one CSP nonce to every visitor. Both templates now send
+  every page through forma-server's `PageOutput::headers()`, which writes the
+  policy, `no-store`, the content type and the document security headers
+  (`nosniff`, `Referrer-Policy`, `Permissions-Policy`,
+  `Cross-Origin-Opener-Policy`) from the same render that produced the HTML
+  (DR-17). The dashboard already set `no-store` by hand and now gains the
+  document headers. The scaffold gate fetches every page route of each
+  template twice and requires `no-store` on each response and a different
+  nonce on every fetch, each matching its own HTML.
+  Verified by `tests/templates.test.ts` > "sends every rendered page through PageOutput::headers(), so no-store travels with the nonce"
+  Verified by `tests/scaffold.test.ts` > "%s: every page response carries Cache-Control: no-store and a fresh nonce per fetch"
+
 ## [0.6.0] - 2026-08-06
 
 An audit pass across the scaffolder, both templates, their pinned dependencies,
@@ -75,7 +127,8 @@ compiled or ran anything.
   Deleting the stale lockfiles (below) fixed the instance; this closes the
   class. The test drives the real `cpSync` through the scaffolder's own filter,
   so it fails if either the set or the wiring regresses.
-  Verified by `tests/scaffold-lib.test.ts` > "never copies a lockfile or a build directory out of a template"
+  (Reversed in [Unreleased]: the templates now ship lockfiles on purpose, and
+  this entry's test was replaced by one that requires they are copied.)
 - **The dashboard template could not be built on Windows.** It shipped a
   committed `admin/package-lock.json` from March pinning `@getforma/build`
   0.1.6, `@getforma/compiler` 0.1.6 and `@getforma/core` 1.0.6; `npm install`

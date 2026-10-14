@@ -66,13 +66,14 @@ export function run(cmd: string, args: string[], cwd: string, timeout = 900_000)
 
 /**
  * Start a scaffolded project's compiled server, hand its first response body
- * to `visit`, and shut it down again. Both templates hard-code
- * `127.0.0.1:3000`, so this is serial by construction.
+ * to `visit`, and shut it down again. `get` fetches any further path from the
+ * same server. Both templates hard-code `127.0.0.1:3000`, so this is serial by
+ * construction.
  */
 export async function withServer<T>(
   projectDir: string,
   binaryName: string,
-  visit: (body: string, res: Response) => T | Promise<T>,
+  visit: (body: string, res: Response, get: (path: string) => Promise<Response>) => T | Promise<T>,
 ): Promise<T> {
   const exe = path.join(
     projectDir,
@@ -94,7 +95,8 @@ export async function withServer<T>(
       }
     }
     if (!res) throw new Error('server never accepted a connection on 127.0.0.1:3000');
-    return await visit(await res.text(), res);
+    const get = (route: string) => fetch(`http://127.0.0.1:3000${route}`);
+    return await visit(await res.text(), res, get);
   } finally {
     child.kill();
   }

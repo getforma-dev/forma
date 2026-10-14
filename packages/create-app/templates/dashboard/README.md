@@ -17,6 +17,9 @@ cargo run
 
 Open [http://localhost:3000](http://localhost:3000).
 
+`admin/package-lock.json` and `Cargo.lock` pin the versions this template was
+built and tested with; `npm ci` installs exactly those. Commit both.
+
 ## Security before you deploy this
 
 The server binds to `127.0.0.1` (localhost only). To expose it, opt in:

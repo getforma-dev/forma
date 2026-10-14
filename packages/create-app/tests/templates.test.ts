@@ -42,6 +42,51 @@ function cargoDeps(template: string): string[] {
     .map((l) => l.split('=')[0]!.trim());
 }
 
+/** The `[[package]]` entries of a Cargo.lock, as name/version/source/checksum/dependencies. */
+function cargoLockPackages(template: string) {
+  // A Windows checkout may carry CRLF, which `$` in a multiline regex does not match.
+  const lock = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'Cargo.lock'), 'utf8').replace(/\r\n/g, '\n');
+  return lock
+    .split(/^\[\[package\]\]$/m)
+    .slice(1)
+    .map((block) => {
+      const field = (key: string) => new RegExp(`^${key} = "([^"]*)"$`, 'm').exec(block)?.[1];
+      const deps = /^dependencies = \[([\s\S]*?)^\]/m.exec(block)?.[1] ?? '';
+      return {
+        name: field('name'),
+        version: field('version'),
+        source: field('source'),
+        checksum: field('checksum'),
+        // A dependency is written `"name"`, or `"name version"` when two
+        // versions of it are in the graph.
+        dependencies: [...deps.matchAll(/"([^" ]+)[^"]*"/g)].map((m) => m[1]!),
+      };
+    });
+}
+
+/**
+ * Whether `version` satisfies a caret range such as `^0.2.0` or `^2.0.0`.
+ * Every range the templates declare is a caret range; anything else fails
+ * loudly here rather than being half-understood.
+ */
+function satisfiesCaret(version: string, range: string): boolean {
+  const m = /^\^(\d+)\.(\d+)\.(\d+)$/.exec(range);
+  if (!m) throw new Error(`not a caret range: ${range}`);
+  const want = m.slice(1).map(Number) as [number, number, number];
+  const have = version.split('-')[0]!.split('.').map(Number) as [number, number, number];
+  if (version.includes('-')) return false; // a prerelease never satisfies a plain caret range
+  const atLeast =
+    have[0] !== want[0] ? have[0] > want[0]
+    : have[1] !== want[1] ? have[1] > want[1]
+    : have[2] >= want[2];
+  // ^1.2.3 holds the major; ^0.2.3 holds the minor too; ^0.0.3 holds the patch.
+  const sameLine =
+    want[0] > 0 ? have[0] === want[0]
+    : want[1] > 0 ? have[0] === 0 && have[1] === want[1]
+    : have[0] === 0 && have[1] === 0 && have[2] === want[2];
+  return atLeast && sameLine;
+}
+
 /**
  * Every text source in a template, comments stripped, README excluded.
  *
@@ -134,12 +179,59 @@ describe.each(TEMPLATES)('%s template description', (template) => {
 describe.each(TEMPLATES)('%s template', (template) => {
   const files = listFiles(path.join(TEMPLATES_DIR, template));
 
-  it('ships no lockfile, no installed dependencies and no build output', () => {
-    // A committed admin/package-lock.json is how this template shipped
-    // five-month-old pins that could not build on Windows: `npm install`
-    // honours the lockfile and ignores the ranges in package.json.
-    expect(files.filter((f) => f.endsWith('package-lock.json'))).toEqual([]);
+  it('ships no installed dependencies and no build output', () => {
     expect(files.filter((f) => /(^|\/)(node_modules|dist|target)\//.test(f))).toEqual([]);
+  });
+
+  it('ships an npm lockfile that agrees with package.json and resolves only from the npm registry', () => {
+    // The templates ship their lockfiles (DR-32): a new project installs the
+    // set the scaffold gate installed, not whatever resolves on the day. The
+    // risk that once kept them out is staleness: a March lockfile once held
+    // new projects on @getforma/core 1.0.6 while package.json asked for more.
+    // So the lockfile has to agree with package.json here, in `npm test`, and
+    // not only in the scaffold gate's `npm ci`.
+    expect(files).toContain('admin/package-lock.json');
+    const pkg = readJson(template, 'admin', 'package.json');
+    const lock = readJson(template, 'admin', 'package-lock.json');
+    expect(lock.lockfileVersion).toBe(3);
+
+    const root = lock.packages[''];
+    expect(root.dependencies ?? {}, 'regenerate admin/package-lock.json').toEqual(pkg.dependencies ?? {});
+    expect(root.devDependencies ?? {}, 'regenerate admin/package-lock.json').toEqual(pkg.devDependencies ?? {});
+
+    // Each direct dependency is locked at a version its declared range admits.
+    const direct = { ...pkg.dependencies, ...pkg.devDependencies } as Record<string, string>;
+    for (const [name, range] of Object.entries(direct)) {
+      const locked = lock.packages[`node_modules/${name}`]?.version;
+      expect(locked, `${name} is not in the lockfile`).toBeTruthy();
+      expect(satisfiesCaret(locked, range), `${name}@${locked} is outside ${range}`).toBe(true);
+    }
+
+    // Every downloaded package comes from the public registry with a sha512
+    // integrity hash. Bundled packages ship inside their parent's tarball and
+    // carry neither.
+    for (const [key, entry] of Object.entries<any>(lock.packages)) {
+      if (key === '' || entry.inBundle) continue;
+      expect(entry.link, `${key} is a link`).toBeUndefined();
+      expect(entry.resolved, `${key} resolves elsewhere`).toMatch(/^https:\/\/registry\.npmjs\.org\//);
+      expect(entry.integrity, `${key} has no sha512 integrity`).toMatch(/^sha512-/);
+    }
+  });
+
+  it('ships a Cargo.lock that locks its crates from crates.io under its placeholder name', () => {
+    // The Rust half of the same rule. The crate's own entry carries the
+    // placeholder, which the scaffolder rewrites and re-sorts.
+    expect(files).toContain('Cargo.lock');
+    const packages = cargoLockPackages(template);
+    const roots = packages.filter((p) => p.source === undefined);
+    expect(roots.map((p) => p.name)).toEqual([cargoField(template, 'name')]);
+    expect(roots[0]!.version).toBe(cargoField(template, 'version'));
+    // The crate's direct dependencies in the lockfile are the ones Cargo.toml declares.
+    expect([...roots[0]!.dependencies].sort(), 'regenerate Cargo.lock').toEqual([...cargoDeps(template)].sort());
+    for (const p of packages.filter((q) => q.source !== undefined)) {
+      expect(p.source, `${p.name} comes from elsewhere`).toBe('registry+https://github.com/rust-lang/crates.io-index');
+      expect(p.checksum, `${p.name} has no checksum`).toMatch(/^[0-9a-f]{64}$/);
+    }
   });
 
   it('names the crate after the project-name placeholder', () => {
@@ -178,12 +270,22 @@ describe.each(TEMPLATES)('%s template', (template) => {
     expect(code).not.toContain('0.0.0.0');
   });
 
-  it('sends the Content-Security-Policy that render_page generated', () => {
-    const main = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8');
-    // The nonce in page.csp is per-request and only matches the HTML from the
-    // same render_page call, so the header has to come from page.csp itself.
-    expect(main).toContain('content-security-policy');
-    expect(main).toContain('page.csp');
+  it('sends every rendered page through PageOutput::headers(), so no-store travels with the nonce', () => {
+    // The nonce in a page's policy is per request and only matches the HTML
+    // from the same render_page call, and a cached copy would replay one
+    // nonce to every visitor. forma-server's PageOutput::headers() sends the
+    // policy with `Cache-Control: no-store` and the document headers; a page
+    // that assembles its own headers is how the minimal template came to
+    // send no `no-store` at all (DR-17).
+    const main = stripComments(
+      fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8'),
+    );
+    const renders = main.match(/render_page\(/g)?.length ?? 0;
+    expect(renders).toBeGreaterThan(0);
+    expect(main.match(/page\.headers\(\)/g)?.length ?? 0).toBe(renders);
+    // ...and no page builds the policy or the cache header by hand.
+    expect(main).not.toContain('page.csp');
+    expect(main).not.toMatch(/content-security-policy|CONTENT_SECURITY_POLICY|CACHE_CONTROL/i);
   });
 
   it('installs a tracing subscriber so forma-server fallbacks are visible', () => {
@@ -247,9 +349,30 @@ describe('minimal template', () => {
     expect(app).not.toMatch(/<[A-Z]/);
   });
 
-  it('configures an SSR entry point for /', () => {
-    const build = fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal', 'admin', 'build.ts'), 'utf8');
-    expect(build).toContain("ssrEntryPoints: { '/': 'src/home/app.tsx' }");
+  it('keys its SSR entry points by page name, as @getforma/build reads them', () => {
+    // @getforma/build 0.2.0 looks an SSR entry up as
+    // `ssrEntryPoints[basename(outfile, '.js')]`, the page name, and falls back
+    // to the browser entry when the key is missing. The template keyed it by
+    // route ('/'), which the build never read; it worked only because the
+    // fallback happened to be the same file. The scaffold gate proves the key
+    // is read ("minimal: build:ssr reads ssrEntryPoints by page name").
+    const build = stripComments(
+      fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal', 'admin', 'build.ts'), 'utf8'),
+    );
+    const entries = /entryPoints:\s*\[([\s\S]*?)\]/.exec(build)?.[1] ?? '';
+    const pages = [...entries.matchAll(/outfile:\s*'([^']+)\.js'/g)].map((m) => m[1]);
+    expect(pages).toEqual(['home']);
+
+    const ssr = /ssrEntryPoints:\s*\{([^}]*)\}/.exec(build)?.[1] ?? '';
+    const keyed = [...ssr.matchAll(/(?:'([^']+)'|"([^"]+)"|([\w$]+))\s*:\s*'([^']+)'/g)].map((m) => ({
+      key: m[1] ?? m[2] ?? m[3],
+      file: m[4]!,
+    }));
+    expect(keyed.length, `no ssrEntryPoints found in build.ts`).toBeGreaterThan(0);
+    for (const { key, file } of keyed) {
+      expect(pages, `ssrEntryPoints key '${key}' is not a page name`).toContain(key);
+      expect(fs.existsSync(path.join(TEMPLATES_DIR, 'minimal', 'admin', file)), `${file} does not exist`).toBe(true);
+    }
   });
 
   it('pins @getforma/compiler, which is what emits the IR', () => {

@@ -8,6 +8,7 @@ import {
   NEVER_COPY,
   TEMPLATE_INFO,
   TEMPLATES,
+  placeCargoLockRoot,
   replacePlaceholders,
   restoreGitignores,
   validateProjectName,
@@ -175,6 +176,10 @@ ${bold('Examples:')}
       '{{PROJECT_NAME}}': projectName,
       '{{project-name}}': projectName,
     });
+
+    // The crate's own Cargo.lock entry was just renamed; put it back where
+    // cargo sorts it, so the first `cargo run` leaves the lockfile untouched.
+    placeCargoLockRoot(path.join(dest, 'Cargo.lock'), projectName);
   } catch (err) {
     // Never leave a half-written project behind: the next run would refuse to
     // start because the directory now exists.
