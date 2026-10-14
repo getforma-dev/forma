@@ -23,7 +23,8 @@ deprecated and go in 3.0.0.
     markup alone would otherwise send it requests with its `SameSite=None`
     cookies (L-52). In the enforced header only, since browsers ignore
     `sandbox` in Report-Only and `meta`. It carries Trusted Types in
-    Report-Only, with no reporting endpoint.
+    Report-Only with no reporting endpoint, so, like any page without one,
+    in development builds only.
   - **Residuals (documented in the `frame` module, SECURITY.md):** WebRTC
     (a script can send STUN packets and DNS lookups to any host; no CSP
     directive closes it in Chrome 155), the frame navigating itself (the
@@ -76,9 +77,17 @@ deprecated and go in 3.0.0.
   created were refused; `fetch` was refused by `connect-src 'none'`;
   `window.origin` was `"null"`, with or without the header.
 - **Trusted Types in Report-Only** (DR-20, SR15; FORMA-127, the
-  forma-server half). Every page that carries the enforced policy also
-  carries `Content-Security-Policy-Report-Only: require-trusted-types-for
-  'script'; trusted-types forma forma-runtime`: a string written to a
+  forma-server half). A page carries
+  `Content-Security-Policy-Report-Only: require-trusted-types-for
+  'script'; trusted-types forma forma-runtime` beside its enforced policy
+  when the application names a reporting endpoint (`report_to`,
+  `report_uri`), in every build, and with no endpoint in development builds
+  (`cfg(debug_assertions)`) only, where Chromium and Firefox show its
+  violations in the console. A release build with no endpoint sends no
+  Report-Only header: it would report to nobody, and WebKit logs a console
+  error on every page whose Report-Only policy names no `report-to` ("the
+  policy will have no effect", found by FORMA-138's packed-set run). With
+  the header, a string written to a
   script-carrying DOM sink, or a Trusted Types policy other than core's
   `forma` and `forma-runtime`, is reported and not blocked, for this release;
   3.0.0 enforces it (FORMA-109). Written by `PageResponse` (`try_render`,
@@ -88,7 +97,8 @@ deprecated and go in 3.0.0.
   (document and enforced policy) do not move. A page whose application sets
   its headers from `PageOutput::csp` by hand gets no Report-Only header.
   Tests: `tests/trusted_types_report_only.rs` >
-  `every_page_carries_trusted_types_in_report_only_and_the_enforced_policy_is_unchanged`;
+  `trusted_types_go_out_in_report_only_with_an_endpoint_or_in_a_debug_build_and_the_enforced_policy_is_unchanged`
+  (on both profiles, as are the frame and property tests);
   `csp::tests::csp_is_strict` (both directives, Forma's two policies, no
   `'allow-duplicates'`, and SR39: `style-src-attr 'unsafe-inline'` the
   policy's only `'unsafe-inline'`, with every extension too); the 2,000-case

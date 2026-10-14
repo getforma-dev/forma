@@ -168,11 +168,16 @@ async fn the_frame_policy_replaces_exactly_its_nine_directives() {
         "the nonce only in style-src"
     );
 
-    // Trusted Types reported, as on every page, with no endpoint (N6).
-    assert_eq!(
-        one(&headers, "content-security-policy-report-only"),
-        "require-trusted-types-for 'script'; trusted-types forma forma-runtime"
-    );
+    // Trusted Types reported with no endpoint (L-52), so, as on any page
+    // without one, in development builds only (FORMA-127, WebKit).
+    if cfg!(debug_assertions) {
+        assert_eq!(
+            one(&headers, "content-security-policy-report-only"),
+            "require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+        );
+    } else {
+        assert!(headers.get("content-security-policy-report-only").is_none());
+    }
     assert!(headers.get("reporting-endpoints").is_none());
     // The rest of a page's headers.
     assert_eq!(one(&headers, "cache-control"), "no-store");

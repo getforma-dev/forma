@@ -640,13 +640,22 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
             Some(vec!["'unsafe-inline'"]),
             "case {case}"
         );
-        assert_eq!(
-            one(&headers, "content-security-policy-report-only"),
-            format!(
-                "require-trusted-types-for 'script'; trusted-types forma forma-runtime{suffix}"
-            ),
-            "case {case}"
-        );
+        // Trusted Types in Report-Only: with an endpoint in every build, and
+        // with none in development builds only (FORMA-127, WebKit).
+        if reporting.is_none() && !cfg!(debug_assertions) {
+            assert!(
+                headers.get("content-security-policy-report-only").is_none(),
+                "case {case}: a release page with no endpoint sends no Report-Only"
+            );
+        } else {
+            assert_eq!(
+                one(&headers, "content-security-policy-report-only"),
+                format!(
+                    "require-trusted-types-for 'script'; trusted-types forma forma-runtime{suffix}"
+                ),
+                "case {case}"
+            );
+        }
         // No script scheme in any form, and no data: or filesystem: target
         // for a frame or a form.
         for name in &names {
