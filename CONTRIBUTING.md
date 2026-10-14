@@ -32,6 +32,11 @@ cargo fmt --all --check
 # Offset arithmetic differs where usize is 32 bits, as on wasm32:
 cargo test --workspace --target i686-unknown-linux-gnu
 
+# forma-server has release-only code (cfg(not(debug_assertions))) that the
+# commands above never compile:
+cargo clippy -p forma-server --all-targets --all-features --release -- -D warnings
+cargo test -p forma-server --release
+
 # MSRVs differ per crate, and CI builds at exactly these versions:
 cargo +1.71 check -p forma-ir --all-targets
 cargo +1.85 check -p forma-server --all-targets

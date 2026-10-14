@@ -114,8 +114,16 @@ fn parse_accept_encoding(header: &str) -> Vec<Encoding<'_>> {
 
 /// Axum handler: serve a static asset with content negotiation (brotli, gzip).
 ///
-/// Mount at `/_assets/{filename}` in your router.
-pub async fn serve_asset<A: Embed>(Path(filename): Path<String>, headers: HeaderMap) -> Response {
+/// Mount at `/_assets/{filename}` in your router. One binary may mount it for
+/// several `Embed` types; each serves exactly its own files.
+///
+/// `A` is `'static` because release builds cache each type's file list under
+/// its [`TypeId`](std::any::TypeId). Every `#[derive(Embed)]` type is, and
+/// mounting the handler on an axum route already required it.
+pub async fn serve_asset<A: Embed + 'static>(
+    Path(filename): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     if is_denied(&filename) {
         return StatusCode::NOT_FOUND.into_response();
     }
@@ -176,17 +184,16 @@ pub async fn serve_asset<A: Embed>(Path(filename): Path<String>, headers: Header
     }
 }
 
-/// True if `name` is exactly an embedded file name.
-fn is_embedded<A: Embed>(name: &str) -> bool {
+/// True if `name` is exactly one of `A`'s embedded file names.
+fn is_embedded<A: Embed + 'static>(name: &str) -> bool {
     #[cfg(not(debug_assertions))]
     {
-        // Release: the list is compiled in and immutable, so cache it.
-        use std::collections::HashSet;
-        use std::sync::OnceLock;
-        static NAMES: OnceLock<HashSet<String>> = OnceLock::new();
-        return NAMES
-            .get_or_init(|| A::iter().map(|f| f.to_string()).collect())
-            .contains(name);
+        // Release: the list is compiled in and immutable, so cache it, per type.
+        match cached_names::<A>() {
+            Some(names) => names.contains(name),
+            // Verified by: crates/forma-server/src/assets.rs > "more_embed_types_than_cache_slots_each_serve_their_own_assets"
+            None => A::iter().any(|f| f == name),
+        }
     }
     #[cfg(debug_assertions)]
     {
@@ -194,6 +201,50 @@ fn is_embedded<A: Embed>(name: &str) -> bool {
         // asset must be servable without restarting the dev server.
         A::iter().any(|f| f == name)
     }
+}
+
+/// One `Embed` type's file names, borrowed from its compiled-in list.
+#[cfg(not(debug_assertions))]
+type NameSet = std::collections::HashSet<std::borrow::Cow<'static, str>>;
+
+/// How many `Embed` types get a cached name set. An application serves one;
+/// asset retention would serve two (this build's and the previous one's). A
+/// type beyond the last slot is checked by scanning its list: slower, never
+/// wrong.
+#[cfg(not(debug_assertions))]
+const NAME_CACHE_SLOTS: usize = 4;
+
+/// One cached name set per `Embed` type, each slot claimed by the first request
+/// its type serves and never written again.
+///
+/// The cache carries its own `TypeId` key because a `static` cannot be per
+/// type: one declared inside a generic function is a single static shared by
+/// every instantiation. 0.2.0's cache was such a static, so the first type
+/// served filled it and every other type's valid assets answered 404.
+///
+/// Slots rather than a locked map: reading a filled `OnceLock` is one atomic
+/// load, where every `RwLock` read writes a shared counter that all the cores
+/// serving assets would contend on.
+#[cfg(not(debug_assertions))]
+static NAME_CACHE: [std::sync::OnceLock<(std::any::TypeId, NameSet)>; NAME_CACHE_SLOTS] =
+    [const { std::sync::OnceLock::new() }; NAME_CACHE_SLOTS];
+
+/// `A`'s cached name set, or `None` if every slot belongs to another type.
+#[cfg(not(debug_assertions))]
+fn cached_names<A: Embed + 'static>() -> Option<&'static NameSet> {
+    let key = std::any::TypeId::of::<A>();
+    for slot in &NAME_CACHE {
+        // Slots fill in order and are written once, so a type absent from
+        // every earlier slot cannot be in a later one: the first empty slot is
+        // this type's to claim. A concurrent claim on the same slot blocks
+        // until the winner has filled it, then reads the winner's key.
+        let (owner, names) = slot.get_or_init(|| (key, A::iter().collect()));
+        // Verified by: crates/forma-server/tests/asset_sets.rs > "two_embed_types_each_serve_their_own_assets"
+        if *owner == key {
+            return Some(names);
+        }
+    }
+    None
 }
 
 /// True if the filename carries a content hash, i.e. its bytes can never
@@ -609,5 +660,111 @@ mod tests {
     #[tokio::test]
     async fn missing_asset_is_404() {
         assert_eq!(get("nope.js", None).await.status(), StatusCode::NOT_FOUND);
+    }
+
+    // -- One binary, more Embed types than the release name cache holds ------
+
+    #[derive(Embed)]
+    #[folder = "tests/fixtures/asset-sets/a/"]
+    struct SetA;
+
+    #[derive(Embed)]
+    #[folder = "tests/fixtures/asset-sets/b/"]
+    struct SetB;
+
+    #[derive(Embed)]
+    #[folder = "tests/fixtures/asset-sets/c/"]
+    struct SetC;
+
+    #[derive(Embed)]
+    #[folder = "tests/fixtures/asset-sets/d/"]
+    struct SetD;
+
+    #[derive(Embed)]
+    #[folder = "tests/fixtures/asset-sets/e/"]
+    struct SetE;
+
+    /// Serve `name` from `A`; return status and body.
+    async fn fetch<A: Embed + 'static>(name: &str) -> (StatusCode, Vec<u8>) {
+        let response = serve_asset::<A>(Path(name.to_string()), HeaderMap::new()).await;
+        let status = response.status();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("an asset body is in memory and cannot fail to collect");
+        (status, body.to_vec())
+    }
+
+    /// `A` serves its own hashed file and its own `shared.css` byte for byte,
+    /// and refuses `foreign`, another set's file.
+    async fn assert_serves_its_own<A: Embed + 'static>(
+        own: &str,
+        own_js: &[u8],
+        own_css: &[u8],
+        foreign: &str,
+    ) {
+        assert_eq!(
+            fetch::<A>(own).await,
+            (StatusCode::OK, own_js.to_vec()),
+            "{own} from its own set"
+        );
+        assert_eq!(
+            fetch::<A>("shared.css").await,
+            (StatusCode::OK, own_css.to_vec()),
+            "shared.css from the set holding {own}"
+        );
+        assert_eq!(
+            fetch::<A>(foreign).await.0,
+            StatusCode::NOT_FOUND,
+            "{foreign} from the set holding {own}"
+        );
+    }
+
+    #[tokio::test]
+    async fn more_embed_types_than_cache_slots_each_serve_their_own_assets() {
+        // Five types against the cache's slots, so in release at least one of
+        // them is checked by the uncached scan, whichever order this binary's
+        // tests reach the cache in (`Fixtures` may hold a slot too).
+        #[cfg(not(debug_assertions))]
+        const _: () = assert!(5 > NAME_CACHE_SLOTS, "serve more types than slots");
+
+        // Twice, so every type is served again after all five have claimed or
+        // missed a slot.
+        for _ in 0..2 {
+            assert_serves_its_own::<SetA>(
+                "a.aaaaaaaa.js",
+                b"export default \"a\";\n",
+                b".a{}\n",
+                "b.bbbbbbbb.js",
+            )
+            .await;
+            assert_serves_its_own::<SetB>(
+                "b.bbbbbbbb.js",
+                b"export default \"bb\";\n",
+                b".bb{}\n",
+                "c.cccccccc.js",
+            )
+            .await;
+            assert_serves_its_own::<SetC>(
+                "c.cccccccc.js",
+                b"export default \"ccc\";\n",
+                b".ccc{}\n",
+                "d.dddddddd.js",
+            )
+            .await;
+            assert_serves_its_own::<SetD>(
+                "d.dddddddd.js",
+                b"export default \"dddd\";\n",
+                b".dddd{}\n",
+                "e.eeeeeeee.js",
+            )
+            .await;
+            assert_serves_its_own::<SetE>(
+                "e.eeeeeeee.js",
+                b"export default \"eeeee\";\n",
+                b".eeeee{}\n",
+                "a.aaaaaaaa.js",
+            )
+            .await;
+        }
     }
 }

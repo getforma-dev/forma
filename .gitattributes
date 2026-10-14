@@ -8,3 +8,7 @@
 # pinning LF keeps the committed bytes — and therefore every diff — identical
 # on Windows and Linux.
 crates/forma-ir/tests/fixtures/js-emitter/*.html text eol=lf
+
+# forma-server's asset-set fixtures are compared byte-for-byte against the
+# response body, so checkout must never rewrite their line endings.
+crates/forma-server/tests/fixtures/asset-sets/** -text

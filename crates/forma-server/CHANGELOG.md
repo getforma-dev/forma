@@ -1,5 +1,24 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- **A second `Embed` type's assets no longer answer 404 in release builds.**
+  `is_embedded` cached the release file list in a `static` declared inside the
+  generic function, and Rust shares such a static across every instantiation,
+  so the first type `serve_asset` served filled it and every other type's valid
+  assets were refused. Debug builds never cached, so only release builds
+  failed. The cache is now keyed by `TypeId`: one write-once slot per type, read
+  without a lock, and a type beyond the four slots is checked by scanning its
+  list. Tests: `tests/asset_sets.rs` > `two_embed_types_each_serve_their_own_assets`
+  and `assets::tests::more_embed_types_than_cache_slots_each_serve_their_own_assets`;
+  CI now runs this crate's suite with the release profile (`test-release`).
+
+### Changed
+- `serve_asset::<A>` now states the `A: 'static` bound the `TypeId` key needs.
+  Mounting the handler on an axum route already required it, and every
+  `#[derive(Embed)]` type meets it.
+
 ## [0.2.0] - 2026-08-06
 
 ### Fixed
