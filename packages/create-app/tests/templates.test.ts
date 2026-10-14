@@ -42,6 +42,9 @@ function cargoDeps(template: string): string[] {
     .map((l) => l.split('=')[0]!.trim());
 }
 
+/** forma-server 0.2.0's declared rust-version, which the templates hold to. */
+const RUST_FLOOR = '1.85';
+
 /** The `[[package]]` entries of a Cargo.lock, as name/version/source/checksum/dependencies. */
 function cargoLockPackages(template: string) {
   // A Windows checkout may carry CRLF, which `$` in a multiline regex does not match.
@@ -222,6 +225,13 @@ describe.each(TEMPLATES)('%s template', (template) => {
     // The Rust half of the same rule. The crate's own entry carries the
     // placeholder, which the scaffolder rewrites and re-sorts.
     expect(files).toContain('Cargo.lock');
+    // The template declares forma-server 0.2.0's toolchain floor, and its
+    // lockfile is resolved MSRV-aware against it, so a committed lockfile
+    // never raises the Rust a new project needs (FORMA-015). Cargo.lock does
+    // not record each crate's rust-version; the scaffold gate checks those
+    // against the registry ("no locked crate needs a newer Rust than the
+    // template declares").
+    expect(cargoField(template, 'rust-version')).toBe(RUST_FLOOR);
     const packages = cargoLockPackages(template);
     const roots = packages.filter((p) => p.source === undefined);
     expect(roots.map((p) => p.name)).toEqual([cargoField(template, 'name')]);

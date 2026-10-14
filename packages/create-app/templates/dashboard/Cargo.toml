@@ -2,6 +2,9 @@
 name = "{{project-name}}"
 version = "0.1.0"
 edition = "2021"
+# forma-server 0.2.0's floor. Cargo.lock is resolved MSRV-aware against it, so the
+# locked crates build on this Rust too.
+rust-version = "1.85"
 
 [dependencies]
 forma-server = "0.2"

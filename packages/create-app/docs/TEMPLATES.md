@@ -70,6 +70,7 @@ appears.
 | Declare exactly the crates its Rust sources use | An unused dependency is a slower build and a wider supply chain for nothing. This is what caught `forma-ir` surviving the dashboard's SSR removal. |
 | Pin frontend deps at or above the version whose fix it needs | `@getforma/core ^1.5.0` (CSP-safe-by-default runtime, `on*` prop dropping, URL-scheme filtering), `@getforma/build ^0.1.9` (the Tailwind step could not run on Windows below it). |
 | JSX-to-`h()` tsconfig | `jsx: "react"`, `jsxFactory: "h"`, `jsxFragmentFactory: "Fragment"`. |
+| Declare `rust-version = "1.85"`, forma-server 0.2.0's floor, and resolve `Cargo.lock` against it | A committed lockfile must not raise the Rust a new project needs. Cargo.lock does not record each crate's `rust-version`, so the scaffold gate reads the locked crates' manifests and fails on any above the template's. |
 | A `_gitignore` covering `target/ node_modules/ dist/ .env .env.* *.pem *.key`, and **not** `Cargo.lock` | `Cargo.lock` belongs in an application's history. |
 
 ## Adding a template
@@ -105,11 +106,15 @@ not inside `templates/`, so nothing installed lands in the template:
 npm run build
 node dist/index.js lockgen --template minimal       # in a scratch directory
 (cd lockgen/admin && npm install --package-lock-only)
-(cd lockgen && cargo generate-lockfile)
+(cd lockgen && CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo generate-lockfile)
 cp lockgen/admin/package-lock.json <repo>/templates/minimal/admin/
 cp lockgen/Cargo.lock              <repo>/templates/minimal/
 ```
 
+The resolver setting makes cargo pick, for each crate, the newest version that
+still builds on the template's `rust-version` (1.85, forma-server 0.2.0's
+floor) instead of the newest outright; without it the lockfile can raise the
+Rust a new project needs (it once locked `sha2` 0.11.1, which needs 1.88).
 Then, in the template's `Cargo.lock`, rename the `lockgen` entry back to the
 template's placeholder (`{{PROJECT_NAME}}` for minimal, `{{project-name}}` for
 dashboard) and move that entry to the end of the file, where cargo sorts a

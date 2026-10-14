@@ -59,6 +59,9 @@ export function run(cmd: string, args: string[], cwd: string, timeout = 900_000)
     cwd,
     encoding: 'utf8',
     timeout,
+    // `cargo metadata` prints about half a megabyte; the default 1 MiB would
+    // kill a larger graph mid-output.
+    maxBuffer: 64 * 1024 * 1024,
     shell: process.platform === 'win32',
     env: { ...process.env, FORCE_COLOR: '0' },
   });

@@ -292,6 +292,36 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(body).toContain(`nonce="${nonce}"`);
     });
   }, 900_000);
+  it.each(TEMPLATES)('%s: no locked crate needs a newer Rust than the template declares', (template) => {
+    // Cargo.lock pins versions but does not record what Rust each needs; the
+    // crates' own manifests do. A lockfile resolved without the MSRV-aware
+    // resolver silently raised the floor to 1.88 (sha2 0.11.1), above the
+    // 1.85 that forma-server declares (FORMA-015).
+    const name = `e2e-msrv-${template}`;
+    expect(runCli([name, '--template', template], tmp).status).toBe(0);
+    const dest = path.join(tmp, name);
+    const toml = fs.readFileSync(path.join(dest, 'Cargo.toml'), 'utf8');
+    const floor = /^rust-version = "([^"]+)"/m.exec(toml.replace(/\r\n/g, '\n'))?.[1];
+    expect(floor, 'the template declares no rust-version').toBeTruthy();
+
+    const meta = run('cargo', ['metadata', '--locked', '--format-version', '1'], dest);
+    expect(meta.status, meta.stderr).toBe(0);
+    const parts = (v: string) => v.split('.').map(Number);
+    const above = (v: string, floorV: string) => {
+      const [a, b] = [parts(v), parts(floorV)];
+      for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
+      }
+      return false;
+    };
+    const packages: Array<{ name: string; version: string; rust_version: string | null }> =
+      JSON.parse(meta.stdout).packages;
+    const offenders = packages
+      .filter((p) => p.rust_version && above(p.rust_version, floor!))
+      .map((p) => `${p.name}@${p.version} needs ${p.rust_version}`);
+    expect(offenders, `locked above the template's rust-version ${floor}`).toEqual([]);
+  }, 900_000);
+
   it('minimal: build:ssr reads ssrEntryPoints by page name', () => {
     // @getforma/build looks an SSR entry up by page name and silently falls
     // back to the browser entry when the key does not match, so a template

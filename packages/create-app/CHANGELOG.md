@@ -19,14 +19,20 @@ belongs to the release that publishes those.
   template's lockfile disagrees with its `package.json` or `Cargo.toml`, locks a
   version outside a declared range, or resolves from anywhere but the public
   registries, and the scaffold gate installs with `npm ci` and builds with
-  `cargo --locked`. The crate's own `Cargo.lock` entry carries the name
-  placeholder; the scaffolder renames it and moves it to where cargo sorts it,
+  `cargo --locked`. Each template declares `rust-version = "1.85"`,
+  forma-server 0.2.0's floor, and its `Cargo.lock` is resolved MSRV-aware
+  against it (`CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback`), so the
+  lockfile does not raise the Rust a new project needs: an unaware resolve
+  locked `sha2` 0.11.1, which needs 1.88; it is now 0.11.0. The scaffold gate
+  fails on any locked crate whose `rust-version` is above the template's. The
+  crate's own `Cargo.lock` entry carries the name placeholder; the scaffolder renames it and moves it to where cargo sorts it,
   so a project's first `cargo run` leaves the lockfile untouched.
   Verified by `tests/templates.test.ts` > "ships an npm lockfile that agrees with package.json and resolves only from the npm registry"
   Verified by `tests/templates.test.ts` > "ships a Cargo.lock that locks its crates from crates.io under its placeholder name"
   Verified by `tests/scaffold-lib.test.ts` > "copies a template's lockfiles, never its installed dependencies or build output"
   Verified by `tests/scaffold-lib.test.ts` > "moves the renamed entry to where cargo sorts it and changes nothing else"
   Verified by `tests/scaffold.test.ts` > "puts the project's own Cargo.lock entry where cargo sorts it"
+  Verified by `tests/scaffold.test.ts` > "%s: no locked crate needs a newer Rust than the template declares"
 
 ### Fixed
 
