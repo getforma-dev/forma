@@ -116,3 +116,20 @@ pub(crate) struct RenderPage;
 /// }
 /// ```
 pub(crate) struct LoadManifest;
+
+/// `load_ir_modules`, the lenient loader (DR-11; FORMA-121).
+///
+/// ```
+/// #![allow(deprecated)]
+/// fn load<A: rust_embed::Embed>(manifest: &forma_server::AssetManifest) -> usize {
+///     forma_server::load_ir_modules::<A>(manifest).1.len()
+/// }
+/// ```
+///
+/// ```compile_fail
+/// #![deny(deprecated)]
+/// fn load<A: rust_embed::Embed>(manifest: &forma_server::AssetManifest) -> usize {
+///     forma_server::load_ir_modules::<A>(manifest).1.len()
+/// }
+/// ```
+pub(crate) struct LoadIrModules;
