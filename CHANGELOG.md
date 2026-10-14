@@ -8,6 +8,23 @@
   tag no longer changes what runs. Every job in `ci.yml` declares
   `contents: read`; `release.yml` keeps its workflow-level `contents: read`
   and `id-token: write`.
+- **CI: only the release's publish job can mint the publish token (SR43,
+  L-34, L-42, FORMA-134; no crate changed).** `release.yml` splits into
+  `check`, `pack`, `verify` and `publish`, and the workflow-level
+  `id-token: write` is gone. `pack` restores no cache and compiles nothing:
+  it locks the graph, runs `cargo package --no-verify` and records the
+  `.crate`, its file list and the `Cargo.lock` with their SHA-256. `verify`
+  builds the crate unpacked from that `.crate`. `publish`, the only job
+  holding `id-token: write`, restores no cache and compiles nothing: cargo
+  cannot upload a prebuilt `.crate`, so it checks the artefact against the
+  record (whose own hash travels as a job output), re-packages from the
+  tagged source with the recorded lock, publishes with
+  `cargo publish --no-verify --locked` only if the `.crate` and its file list
+  are byte-identical to the recorded ones, and then compares crates.io's
+  checksum with the record. The tags stay the only trigger. CI's new
+  `release-workflow` job runs actionlint (binary checked against a pinned
+  SHA-256), `scripts/check-release-workflow.rb --self-test` and
+  `scripts/test-release-artifacts.sh`.
 - **Documentation matches the code (FORMA-009; no code changed).** The
   compiler writes FMIR modules as `.ir` files, so `docs/FMIR-FORMAT.md`,
   `docs/ARCHITECTURE.md`, `docs/README.md`, the README and two doc comments no

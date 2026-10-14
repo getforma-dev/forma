@@ -43,6 +43,14 @@ CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo +1.85 generate-lockfile
 cargo +1.85 check -p forma-server --all-targets
 ```
 
+The release workflow has its own check, which CI's `release-workflow` job
+runs after actionlint (Ruby and bash come with the runner and with macOS):
+
+```bash
+ruby scripts/check-release-workflow.rb --self-test   # SR43: only the publish job holds id-token: write
+bash scripts/test-release-artifacts.sh               # a packed file altered between jobs is refused
+```
+
 **forma-server on Rust 1.85 to 1.87.** sha2 0.11.1 and later declare Rust
 1.88, and a resolve that ignores `rust-version` takes them, so the 1.85 check
 fails before it compiles any forma-server code. The `generate-lockfile` line
