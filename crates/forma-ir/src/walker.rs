@@ -129,6 +129,18 @@ struct WalkState {
     /// Set for fragment renders, where a shared block would be dropped on
     /// return (or, if emitted, would duplicate the page's own block).
     force_inline_props: bool,
+    /// The text-only element (`textarea`, `title`, `style`, `script`) the
+    /// walk is inside, if any. Inside one, no hydration marker is written; see
+    /// [`TextOnlyTag`].
+    text_only: Option<TextOnlyParent>,
+    /// Form-control state gathered from the attributes of the start tag that
+    /// is still open, resolved when its `>` is written ([`close_start_tag`]).
+    pending_control: PendingControl,
+    /// The bound `select` the walk is inside, if any.
+    select: Option<SelectBinding>,
+    /// An `option` of a bound select with no `value` attribute: its value is
+    /// its text, which is known only when the option ends.
+    option_by_text: Option<OptionByText>,
 }
 
 impl WalkState {
@@ -145,6 +157,10 @@ impl WalkState {
             max_list_iterations: limits.max_list_iterations,
             slot_journal: Vec::new(),
             force_inline_props: false,
+            text_only: None,
+            pending_control: PendingControl::None,
+            select: None,
+            option_by_text: None,
         }
     }
 
@@ -563,8 +579,7 @@ fn walk_range_impl(
         // Flush pending tag close before any opcode that is NOT DYN_ATTR.
         // DYN_ATTR needs the tag still open so it can append attributes.
         if state.pending_tag_close && opcode != Opcode::DynAttr {
-            push_checked(out, ">", limit)?;
-            state.pending_tag_close = false;
+            close_start_tag(out, state, limit)?;
         }
 
         match opcode {
@@ -572,7 +587,8 @@ fn walk_range_impl(
             Opcode::OpenTag | Opcode::VoidTag => {
                 let (tag_str_idx, attrs, new_pos) = read_tag_with_attrs(ops, pos, strings)?;
                 let tag = strings.get(tag_str_idx)?;
-                emit_open_tag(out, tag, &attrs, state, limit)?;
+                let has_content = opcode == Opcode::OpenTag;
+                emit_open_tag(out, tag, &attrs, has_content, state, limit)?;
                 pos = new_pos;
             }
 
@@ -585,6 +601,7 @@ fn walk_range_impl(
                 if !is_valid_name(tag) {
                     return Err(IrError::InvalidName(tag.to_string()));
                 }
+                leave_element(out, tag, state, limit)?;
                 push_checked(out, "</", limit)?;
                 push_checked(out, tag, limit)?;
                 push_checked(out, ">", limit)?;
@@ -594,7 +611,16 @@ fn walk_range_impl(
                 let str_idx = read_u32(ops, pos)?;
                 pos += 4;
                 let text = strings.get(str_idx)?;
-                push_escaped_html(out, text, limit)?;
+                if let Some(parent) = state.text_only.as_mut() {
+                    if !parent.value_bound {
+                        write_text_only(out, parent, text, limit)?;
+                    }
+                } else {
+                    push_escaped_html(out, text, limit)?;
+                    if let Some(option) = state.option_by_text.as_mut() {
+                        option.text.push_str(text);
+                    }
+                }
             }
 
             Opcode::DynText => {
@@ -607,22 +633,34 @@ fn walk_range_impl(
                 check_slot_source(module, slot_id, slots.get(slot_id));
                 let value = slots.get(slot_id).to_text();
 
-                push_checked(out, "<!--f:t", limit)?;
-                push_u16(out, marker_id, limit)?;
-                push_checked(out, "-->", limit)?;
-                if value.is_empty() {
+                if let Some(parent) = state.text_only.as_mut() {
+                    // Inside a text-only element a marker comment is literal
+                    // text, so the value is written on its own (TextOnlyTag).
+                    if !parent.value_bound {
+                        write_text_only(out, parent, &value, limit)?;
+                    }
+                } else {
+                    push_checked(out, "<!--f:t", limit)?;
+                    push_u16(out, marker_id, limit)?;
+                    push_checked(out, "-->", limit)?;
                     // Always emit at least a zero-width space so the browser
                     // creates a Text node between the markers. Without this,
                     // <!--f:t0--><!--/f:t0--> produces no Text node in the DOM
-                    // and the hydration walker has nothing to bind the reactive
-                    // effect to.
-                    push_checked(out, "\u{200B}", limit)?;
-                } else {
-                    push_escaped_html(out, &value, limit)?;
+                    // and the hydration walker has nothing to bind the
+                    // reactive effect to.
+                    let written = if value.is_empty() {
+                        "\u{200B}"
+                    } else {
+                        value.as_str()
+                    };
+                    push_escaped_html(out, written, limit)?;
+                    push_checked(out, "<!--/f:t", limit)?;
+                    push_u16(out, marker_id, limit)?;
+                    push_checked(out, "-->", limit)?;
+                    if let Some(option) = state.option_by_text.as_mut() {
+                        option.text.push_str(written);
+                    }
                 }
-                push_checked(out, "<!--/f:t", limit)?;
-                push_u16(out, marker_id, limit)?;
-                push_checked(out, "-->", limit)?;
             }
 
             Opcode::DynAttr => {
@@ -634,6 +672,11 @@ fn walk_range_impl(
 
                 if state.pending_tag_close {
                     let attr_name = strings.get(attr_str_idx)?;
+                    // `value` on a textarea or select, and `selected` on an
+                    // option of a bound select, are written another way.
+                    if consume_control_attr(state, attr_name, Prop::Slot(slots.get(slot_id))) {
+                        continue;
+                    }
                     // `text` outlives the borrow only for the Valued case; it
                     // is declared here so the &str can point into it.
                     let text;
@@ -684,9 +727,12 @@ fn walk_range_impl(
                     });
                 }
 
-                push_checked(out, "<!--f:i", limit)?;
-                push_u16(out, island_id, limit)?;
-                push_checked(out, "-->", limit)?;
+                // No marker inside a text-only element, where it is text.
+                if state.text_only.is_none() {
+                    push_checked(out, "<!--f:i", limit)?;
+                    push_u16(out, island_id, limit)?;
+                    push_checked(out, "-->", limit)?;
+                }
 
                 // Look up island entry from the island table (O(1) index).
                 // `IrModule::validate` rejects an ISLAND_START naming an
@@ -789,18 +835,20 @@ fn walk_range_impl(
                     if island_id == target_island_id {
                         // Flush any pending tag close before returning.
                         if state.pending_tag_close {
-                            push_checked(out, ">", limit)?;
-                            state.pending_tag_close = false;
+                            close_start_tag(out, state, limit)?;
                         }
                         return Ok(());
                     }
                 }
 
                 // Either Range mode, or a nested (non-matching) island end —
-                // emit the closing marker comment and continue.
-                push_checked(out, "<!--/f:i", limit)?;
-                push_u16(out, island_id, limit)?;
-                push_checked(out, "-->", limit)?;
+                // emit the closing marker comment and continue (no marker
+                // inside a text-only element, where it is text).
+                if state.text_only.is_none() {
+                    push_checked(out, "<!--/f:i", limit)?;
+                    push_u16(out, island_id, limit)?;
+                    push_checked(out, "-->", limit)?;
+                }
             }
 
             Opcode::Comment => {
@@ -845,10 +893,14 @@ fn walk_range_impl(
                 let else_start = then_end + 1; // skip SHOW_ELSE byte
                 let else_end = bounded_offset(else_start, else_len, region_limit)?;
 
-                // Emit conditional marker
-                push_checked(out, "<!--f:s", limit)?;
-                push_u16(out, slot_id, limit)?;
-                push_checked(out, "-->", limit)?;
+                // Emit conditional marker — none inside a text-only element,
+                // where it is text. Decided once, so the pair always matches.
+                let markers = state.text_only.is_none();
+                if markers {
+                    push_checked(out, "<!--f:s", limit)?;
+                    push_u16(out, slot_id, limit)?;
+                    push_checked(out, "-->", limit)?;
+                }
 
                 if condition {
                     walk_range(
@@ -874,9 +926,11 @@ fn walk_range_impl(
                     )?;
                 }
 
-                push_checked(out, "<!--/f:s", limit)?;
-                push_u16(out, slot_id, limit)?;
-                push_checked(out, "-->", limit)?;
+                if markers {
+                    push_checked(out, "<!--/f:s", limit)?;
+                    push_u16(out, slot_id, limit)?;
+                    push_checked(out, "-->", limit)?;
+                }
 
                 // Advance pos past both branches + SHOW_ELSE marker byte
                 pos = else_end;
@@ -961,11 +1015,15 @@ fn walk_range_impl(
                 let body_start = pos;
                 let body_end = bounded_offset(pos, body_len, region_limit)?;
 
-                // Emit list markers
+                // Emit list markers — none inside a text-only element, where
+                // they are text. Decided once, so the pair always matches.
                 let list_marker_id = slot_id;
-                push_checked(out, "<!--f:l", limit)?;
-                push_u16(out, list_marker_id, limit)?;
-                push_checked(out, "-->", limit)?;
+                let markers = state.text_only.is_none();
+                if markers {
+                    push_checked(out, "<!--f:l", limit)?;
+                    push_u16(out, list_marker_id, limit)?;
+                    push_checked(out, "-->", limit)?;
+                }
 
                 // Take a cheap handle on the array to release the borrow on
                 // `slots` before the loop mutates it. The payload is
@@ -1028,9 +1086,11 @@ fn walk_range_impl(
                 }
                 state.pending_list_key = None;
 
-                push_checked(out, "<!--/f:l", limit)?;
-                push_u16(out, list_marker_id, limit)?;
-                push_checked(out, "-->", limit)?;
+                if markers {
+                    push_checked(out, "<!--/f:l", limit)?;
+                    push_u16(out, list_marker_id, limit)?;
+                    push_checked(out, "-->", limit)?;
+                }
 
                 pos = body_end;
             }
@@ -1127,8 +1187,7 @@ fn walk_range_impl(
             // silently never hydrate). They are cleared at their owning
             // boundaries instead: ISLAND_END and the LIST item loop.
             if state.pending_tag_close {
-                push_checked(out, ">", limit)?;
-                state.pending_tag_close = false;
+                close_start_tag(out, state, limit)?;
             }
             Ok(())
         }
@@ -1363,22 +1422,31 @@ fn emit_attr(
 /// Emit `<tag ...attrs`, plus any pending island / list-item attributes.
 ///
 /// Shared by OPEN_TAG and VOID_TAG, which differ only in whether a matching
-/// CLOSE_TAG follows. The `>` is deliberately not written yet: DYN_ATTR
-/// opcodes may still append attributes.
+/// CLOSE_TAG follows (`has_content`). The `>` is deliberately not written yet:
+/// DYN_ATTR opcodes may still append attributes.
 fn emit_open_tag(
     out: &mut String,
     tag: &str,
     attrs: &[(&str, &str)],
+    has_content: bool,
     state: &mut WalkState,
     limit: usize,
 ) -> Result<(), IrError> {
     if !is_valid_name(tag) {
         return Err(IrError::InvalidName(tag.to_string()));
     }
+    if has_content {
+        enter_element(out, tag, state, limit)?;
+    }
     push_checked(out, "<", limit)?;
     push_checked(out, tag, limit)?;
 
     for (key, val) in attrs {
+        // `value` on a textarea or select, and `selected` on an option of a
+        // bound select, are written another way.
+        if consume_control_attr(state, key, Prop::Static(val)) {
+            continue;
+        }
         // A static attribute is authored text, never a boolean. An empty value
         // stays the bare name: `key` and `key=""` parse to the same DOM, and
         // keeping the shorthand leaves already-compiled modules byte-stable.
@@ -1425,6 +1493,419 @@ fn emit_open_tag(
     state.pending_tag_name.clear();
     state.pending_tag_name.push_str(tag);
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Parsing context: text-only parents and form controls
+// ---------------------------------------------------------------------------
+
+/// An element whose content the HTML tokenizer reads as text, not markup.
+///
+/// `textarea` and `title` are RCDATA: character references are decoded, but
+/// a comment is not a comment. `style` (RAWTEXT) and `script` (script data)
+/// decode nothing. A hydration marker inside any of them is literal text:
+/// before JavaScript it is the control's value, what a form submits, and the
+/// title the reader sees. So inside these four the walker writes no `f:`
+/// marker of any kind (text, conditional, list or island) and no zero-width
+/// space: the content is the element's static and dynamic text, in order.
+///
+/// The client adopts `textarea` and `title` text as a whole, by the element
+/// (formajs, FORMA-003). A reactive child of `style` or `script` is not
+/// supported for adoption in 0.2.x: its text is right before JavaScript, but
+/// adoption may rewrite it. DR-7 makes it a build error in 3.0.0.
+///
+/// Dynamic text is still HTML-escaped. In RCDATA the parser decodes it back,
+/// so the text is exact. In `style` and `script` nothing is decoded, so a
+/// value holding `&`, `<` or `>` reads as the entity until the client writes
+/// the element; that is the price of a hole that can neither close its
+/// element (`</style>`) nor, in a script, swallow the rest of the page. A
+/// hole there is still a code sink: the escaping does not make the value safe
+/// as JavaScript or CSS.
+///
+/// Matched ASCII case-insensitively and in any namespace. An SVG `title` has
+/// ordinary content, but its text written without markers is equally right,
+/// and a single rule is one the client can match exactly.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "dyn_text_in_a_text_only_parent_is_written_without_markers"
+/// Verified by: crates/forma-ir/src/walker.rs > "no_marker_kind_is_written_inside_a_text_only_parent"
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TextOnlyTag {
+    Textarea,
+    Title,
+    Style,
+    Script,
+}
+
+impl TextOnlyTag {
+    fn from_tag(tag: &str) -> Option<Self> {
+        [Self::Textarea, Self::Title, Self::Style, Self::Script]
+            .into_iter()
+            .find(|t| tag.eq_ignore_ascii_case(t.name()))
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            TextOnlyTag::Textarea => "textarea",
+            TextOnlyTag::Title => "title",
+            TextOnlyTag::Style => "style",
+            TextOnlyTag::Script => "script",
+        }
+    }
+}
+
+/// The text-only element the walk is inside.
+#[derive(Debug)]
+struct TextOnlyParent {
+    tag: TextOnlyTag,
+    /// Whether any content has been written: the leading-LF rule looks at the
+    /// first byte only.
+    started: bool,
+    /// A `textarea` whose `value` is bound: the value is its whole content,
+    /// as it is on the live control, so its children are not written.
+    value_bound: bool,
+}
+
+/// Write text into a text-only parent: escaped, with no marker and no
+/// zero-width space, under the textarea's leading-LF rule.
+///
+/// The parser drops one line feed straight after `<textarea>` (a CR or CRLF is
+/// a line feed by then). A marker used to stand between the tag and the first
+/// line; without one, content that starts with a line break gets one more, so
+/// the parsed value is the value written.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "a_textarea_doubles_a_leading_line_feed"
+fn write_text_only(
+    out: &mut String,
+    parent: &mut TextOnlyParent,
+    text: &str,
+    limit: usize,
+) -> Result<(), IrError> {
+    if text.is_empty() {
+        return Ok(());
+    }
+    if parent.tag == TextOnlyTag::Textarea
+        && !parent.started
+        && (text.starts_with('\n') || text.starts_with('\r'))
+    {
+        push_checked(out, "\n", limit)?;
+    }
+    parent.started = true;
+    push_escaped_html(out, text, limit)
+}
+
+/// Form-control state gathered from a start tag that is still open.
+///
+/// A `value` on a `textarea` or a `select` is a property: HTML never reads it
+/// as an attribute, so the server shipped an empty textarea and a select
+/// showing its first option, and a form submitted those before JavaScript.
+/// The client's writer (`writeFormControlProperty` in `@getforma/core`) sets
+/// `value == null ? '' : String(value)`; the walker writes the HTML that
+/// parses to the same control, and no `value` attribute.
+#[derive(Debug, Default)]
+enum PendingControl {
+    #[default]
+    None,
+    /// A `textarea`; `value` is the text its bound value stands for.
+    Textarea { value: Option<String> },
+    /// A `select`; `multiple` records whether that attribute is written.
+    Select {
+        value: Option<SlotValue>,
+        multiple: bool,
+    },
+    /// An `option` of a bound select; `value` is its `value` attribute as
+    /// written, `None` when it has none.
+    OptionTag { value: Option<String> },
+}
+
+/// What a bound `select` selects.
+///
+/// Mirrors the client's writer. A `multiple` select given an array selects
+/// every option whose value is in it (`value.map(String)`). Anything else is
+/// `select.value = String(value)`, which selects the FIRST option with that
+/// value; a second `selected` in the HTML would win instead, since the parser
+/// keeps the last. An option's value is its `value` attribute or, without
+/// one, its text, stripped and collapsed. A value no option has selects
+/// nothing, and the browser then shows the first option: HTML cannot write
+/// the client's `selectedIndex = -1`.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "a_select_value_binding_selects_the_matching_option"
+/// Verified by: crates/forma-ir/src/walker.rs > "a_single_select_selects_only_the_first_matching_option"
+/// Verified by: crates/forma-ir/src/walker.rs > "a_multiple_select_selects_every_option_in_an_array_value"
+#[derive(Debug)]
+struct SelectBinding {
+    wanted: SelectWanted,
+    /// A single select has selected its option.
+    matched: bool,
+}
+
+#[derive(Debug)]
+enum SelectWanted {
+    One(String),
+    Any(Vec<String>),
+}
+
+impl SelectBinding {
+    fn new(value: &SlotValue, multiple: bool) -> Self {
+        let wanted = match value {
+            SlotValue::Array(items) if multiple => {
+                SelectWanted::Any(items.iter().map(js_string).collect())
+            }
+            // `value == null ? '' : String(value)` is exactly `to_text`.
+            other => SelectWanted::One(other.to_text()),
+        };
+        SelectBinding {
+            wanted,
+            matched: false,
+        }
+    }
+
+    /// Whether the option valued `option_value` is selected.
+    fn selects(&mut self, option_value: &str) -> bool {
+        match &self.wanted {
+            SelectWanted::Any(values) => values.iter().any(|v| v == option_value),
+            SelectWanted::One(value) => {
+                let hit = !self.matched && value == option_value;
+                self.matched |= hit;
+                hit
+            }
+        }
+    }
+}
+
+/// `String(value)` for one member of an array: unlike a text hole, `null` is
+/// `"null"`.
+fn js_string(value: &SlotValue) -> String {
+    match value {
+        SlotValue::Null => "null".to_string(),
+        other => other.to_text(),
+    }
+}
+
+/// An option of a bound select with no `value` attribute. Its value is its
+/// text, known only when the option ends, so ` selected` is inserted then.
+#[derive(Debug)]
+struct OptionByText {
+    /// Byte offset of the `>` that ends the option's start tag. The walker
+    /// only ever appends to its output, so the offset stays valid.
+    insert_at: usize,
+    /// The option's text as the parser will read it.
+    text: String,
+}
+
+/// An attribute value as the IR gives it: authored text, or a slot.
+#[derive(Clone, Copy)]
+enum Prop<'a> {
+    Static(&'a str),
+    Slot(&'a SlotValue),
+}
+
+impl Prop<'_> {
+    /// The client's control text: `value == null ? '' : String(value)`.
+    fn control_text(self) -> String {
+        match self {
+            Prop::Static(s) => s.to_string(),
+            Prop::Slot(v) => v.to_text(),
+        }
+    }
+
+    /// Whether the generic path writes the attribute at all (DYN_ATTR's
+    /// boolean rule: `false` and `null` omit it).
+    fn is_written(self) -> bool {
+        !matches!(
+            self,
+            Prop::Slot(SlotValue::Null) | Prop::Slot(SlotValue::Bool(false))
+        )
+    }
+
+    /// The value the attribute is written with: `None` when omitted, `""`
+    /// when bare.
+    fn written(self) -> Option<String> {
+        match self {
+            _ if !self.is_written() => None,
+            Prop::Slot(SlotValue::Bool(true)) => Some(String::new()),
+            other => Some(other.control_text()),
+        }
+    }
+
+    fn to_slot(self) -> SlotValue {
+        match self {
+            Prop::Static(s) => SlotValue::Text(s.to_string()),
+            Prop::Slot(v) => v.clone(),
+        }
+    }
+}
+
+/// Apply the form-control rules to one attribute of the open start tag.
+/// Returns true when the attribute is consumed and must not be written.
+///
+/// Keys match exactly, as the client's `isFormControlProperty` does.
+fn consume_control_attr(state: &mut WalkState, key: &str, prop: Prop<'_>) -> bool {
+    match &mut state.pending_control {
+        PendingControl::None => false,
+        PendingControl::Textarea { value } => {
+            if key != "value" {
+                return false;
+            }
+            *value = Some(prop.control_text());
+            true
+        }
+        PendingControl::Select { value, multiple } => match key {
+            "value" => {
+                *value = Some(prop.to_slot());
+                true
+            }
+            "multiple" => {
+                *multiple |= prop.is_written();
+                false
+            }
+            _ => false,
+        },
+        PendingControl::OptionTag { value } => match key {
+            // The binding decides, as on the client, where the select's
+            // value is written after its options.
+            "selected" => true,
+            "value" => {
+                // The parser keeps the first of two same-named attributes.
+                if value.is_none() {
+                    *value = prop.written();
+                }
+                false
+            }
+            _ => false,
+        },
+    }
+}
+
+/// Set up the parsing context for an element whose start tag (OPEN_TAG) is
+/// about to be written.
+fn enter_element(
+    out: &mut String,
+    tag: &str,
+    state: &mut WalkState,
+    limit: usize,
+) -> Result<(), IrError> {
+    let is = |name: &str| tag.eq_ignore_ascii_case(name);
+    // A new option or optgroup ends the open option: `</option>` is optional.
+    if is("option") || is("optgroup") {
+        finish_option_by_text(out, state, limit)?;
+    }
+    state.pending_control = if is("textarea") {
+        PendingControl::Textarea { value: None }
+    } else if is("select") {
+        PendingControl::Select {
+            value: None,
+            multiple: false,
+        }
+    } else if is("option") && state.select.is_some() {
+        PendingControl::OptionTag { value: None }
+    } else {
+        PendingControl::None
+    };
+    if state.text_only.is_none() {
+        state.text_only = TextOnlyTag::from_tag(tag).map(|tag| TextOnlyParent {
+            tag,
+            started: false,
+            value_bound: false,
+        });
+    }
+    Ok(())
+}
+
+/// Tear down the parsing context at a CLOSE_TAG, before `</tag>` is written.
+fn leave_element(
+    out: &mut String,
+    tag: &str,
+    state: &mut WalkState,
+    limit: usize,
+) -> Result<(), IrError> {
+    let is = |name: &str| tag.eq_ignore_ascii_case(name);
+    if is("option") || is("optgroup") || is("select") {
+        finish_option_by_text(out, state, limit)?;
+    }
+    if is("select") {
+        state.select = None;
+    }
+    if state
+        .text_only
+        .as_ref()
+        .is_some_and(|parent| is(parent.tag.name()))
+    {
+        state.text_only = None;
+    }
+    Ok(())
+}
+
+/// Write the `>` that ends the open start tag, resolving the form-control
+/// state gathered from its attributes.
+///
+/// Every place that used to write a bare `>` for `pending_tag_close` calls
+/// this instead, so a control is resolved whichever opcode ends its tag.
+fn close_start_tag(out: &mut String, state: &mut WalkState, limit: usize) -> Result<(), IrError> {
+    state.pending_tag_close = false;
+    match std::mem::take(&mut state.pending_control) {
+        PendingControl::None => {}
+        PendingControl::Textarea { value } => {
+            push_checked(out, ">", limit)?;
+            if let (Some(value), Some(parent)) = (value, state.text_only.as_mut()) {
+                if parent.tag == TextOnlyTag::Textarea {
+                    parent.value_bound = true;
+                    write_text_only(out, parent, &value, limit)?;
+                }
+            }
+            return Ok(());
+        }
+        PendingControl::Select { value, multiple } => {
+            state.select = value.map(|value| SelectBinding::new(&value, multiple));
+        }
+        PendingControl::OptionTag { value: Some(value) } => {
+            if state.select.as_mut().is_some_and(|s| s.selects(&value)) {
+                push_checked(out, " selected", limit)?;
+            }
+        }
+        PendingControl::OptionTag { value: None } => {
+            state.option_by_text = Some(OptionByText {
+                insert_at: out.len(),
+                text: String::new(),
+            });
+        }
+    }
+    push_checked(out, ">", limit)
+}
+
+/// End an option whose value is its text, selecting it now if the text
+/// matches. Runs at `</option>` and wherever the parser ends one implicitly.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "a_select_value_binding_matches_an_option_without_a_value_by_its_text"
+fn finish_option_by_text(
+    out: &mut String,
+    state: &mut WalkState,
+    limit: usize,
+) -> Result<(), IrError> {
+    let Some(option) = state.option_by_text.take() else {
+        return Ok(());
+    };
+    let value = strip_and_collapse_ascii_whitespace(&option.text);
+    if state.select.as_mut().is_some_and(|s| s.selects(&value)) {
+        const SELECTED: &str = " selected";
+        if out.len().saturating_add(SELECTED.len()) > limit {
+            return Err(IrError::OutputLimitExceeded { limit });
+        }
+        out.insert_str(option.insert_at, SELECTED);
+    }
+    Ok(())
+}
+
+/// HTML's "strip and collapse ASCII whitespace", which turns an option's text
+/// into its value.
+fn strip_and_collapse_ascii_whitespace(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for word in text.split_ascii_whitespace() {
+        if !out.is_empty() {
+            out.push(' ');
+        }
+        out.push_str(word);
+    }
+    out
 }
 
 // ---------------------------------------------------------------------------
@@ -4765,5 +5246,907 @@ mod tests {
         let mut slots = SlotData::new(1);
         slots.set(0, SlotValue::Number(1000.0));
         assert!(walk_to_html(&module, &slots).unwrap().contains("small"));
+    }
+
+    // -- Parsing context: text-only parents and form controls (FORMA-002) ---
+    //
+    // The tokenizer reads the content of `textarea` and `title` (RCDATA) and
+    // of `style` and `script` (RAWTEXT, script data) as text, so a marker
+    // comment there is literal text: it becomes the control's value and what a
+    // form submits before JavaScript. A bound `value` on a `select` or a
+    // `textarea` is a property HTML never reads as an attribute. Each test
+    // asserts exact bytes for the affected element AND for a sibling in normal
+    // content, so a rule cannot pass by dropping markers everywhere (P3).
+
+    /// A small opcode assembler with an interning string table, so these
+    /// tests read as markup rather than as string indices.
+    struct Page {
+        strings: Vec<String>,
+        ops: Vec<u8>,
+        slots: Vec<(u8, SlotValue)>,
+        islands: Vec<(u16, u32, u32)>,
+    }
+
+    impl Page {
+        fn new() -> Self {
+            Page {
+                strings: Vec::new(),
+                ops: Vec::new(),
+                slots: Vec::new(),
+                islands: Vec::new(),
+            }
+        }
+
+        fn intern(&mut self, s: &str) -> u32 {
+            let index = match self.strings.iter().position(|x| x == s) {
+                Some(i) => i,
+                None => {
+                    self.strings.push(s.to_string());
+                    self.strings.len() - 1
+                }
+            };
+            u32::try_from(index).unwrap()
+        }
+
+        /// Declare the next slot holding `value`; ids are assigned in order.
+        fn slot(&mut self, value: SlotValue) -> u16 {
+            let type_byte = match &value {
+                SlotValue::Null | SlotValue::Text(_) => 0x01,
+                SlotValue::Bool(_) => 0x02,
+                SlotValue::Number(_) => 0x03,
+                SlotValue::Array(_) => 0x04,
+                SlotValue::Object(_) => 0x05,
+            };
+            self.slots.push((type_byte, value));
+            u16::try_from(self.slots.len() - 1).unwrap()
+        }
+
+        fn open(&mut self, tag: &str, attrs: &[(&str, &str)]) -> &mut Self {
+            let tag = self.intern(tag);
+            let attrs: Vec<(u32, u32)> = attrs
+                .iter()
+                .map(|(k, v)| (self.intern(k), self.intern(v)))
+                .collect();
+            self.ops.extend_from_slice(&encode_open_tag(tag, &attrs));
+            self
+        }
+
+        fn close(&mut self, tag: &str) -> &mut Self {
+            let tag = self.intern(tag);
+            self.ops.extend_from_slice(&encode_close_tag(tag));
+            self
+        }
+
+        fn text(&mut self, text: &str) -> &mut Self {
+            let text = self.intern(text);
+            self.ops.extend_from_slice(&encode_text(text));
+            self
+        }
+
+        /// DYN_TEXT whose marker id is its slot id, so ids stay distinct.
+        fn dyn_text(&mut self, slot: u16) -> &mut Self {
+            self.ops.extend_from_slice(&encode_dyn_text(slot, slot));
+            self
+        }
+
+        fn dyn_attr(&mut self, name: &str, slot: u16) -> &mut Self {
+            let name = self.intern(name);
+            self.ops.extend_from_slice(&encode_dyn_attr(name, slot));
+            self
+        }
+
+        /// PROP: `target = source[name]`.
+        fn prop(&mut self, source: u16, name: &str, target: u16) -> &mut Self {
+            let name = self.intern(name);
+            self.ops
+                .extend_from_slice(&encode_prop(source, name, target));
+            self
+        }
+
+        /// Assemble `f`'s opcodes on their own, sharing the string table.
+        fn body(&mut self, f: impl FnOnce(&mut Self)) -> Vec<u8> {
+            let outer = std::mem::take(&mut self.ops);
+            f(self);
+            std::mem::replace(&mut self.ops, outer)
+        }
+
+        fn show_if(
+            &mut self,
+            slot: u16,
+            then_ops: impl FnOnce(&mut Self),
+            else_ops: impl FnOnce(&mut Self),
+        ) -> &mut Self {
+            let then_ops = self.body(then_ops);
+            let else_ops = self.body(else_ops);
+            self.ops
+                .extend_from_slice(&encode_show_if(slot, &then_ops, &else_ops));
+            self
+        }
+
+        fn list(&mut self, slot: u16, item: u16, body: impl FnOnce(&mut Self)) -> &mut Self {
+            let body = self.body(body);
+            self.ops.extend_from_slice(&encode_list(slot, item, &body));
+            self
+        }
+
+        /// An island at the top level (its table offset is taken here, so it
+        /// must not be nested inside a `body`).
+        fn island(&mut self, id: u16, body: impl FnOnce(&mut Self)) -> &mut Self {
+            let name = self.intern(&format!("Island{id}"));
+            let offset = u32::try_from(self.ops.len()).unwrap();
+            self.islands.push((id, name, offset));
+            self.ops.extend_from_slice(&encode_island_start(id));
+            body(self);
+            self.ops.extend_from_slice(&encode_island_end(id));
+            self
+        }
+
+        fn module_and_slots(&self) -> (IrModule, SlotData) {
+            let mut strings = self.strings.clone();
+            let mut decls = Vec::new();
+            for (id, (type_byte, _)) in self.slots.iter().enumerate() {
+                strings.push(format!("slot{id}"));
+                let name = u32::try_from(strings.len() - 1).unwrap();
+                decls.push((u16::try_from(id).unwrap(), name, *type_byte, 0x00, &[][..]));
+            }
+            let islands: Vec<(u16, u8, u8, u32, u32, &[u16])> = self
+                .islands
+                .iter()
+                .map(|&(id, name, offset)| (id, 0x01, 0x01, name, offset, &[][..]))
+                .collect();
+            let strings: Vec<&str> = strings.iter().map(String::as_str).collect();
+            let data = build_minimal_ir(&strings, &decls, &self.ops, &islands);
+            let module = IrModule::parse(&data).unwrap();
+            let mut slots = SlotData::new(self.slots.len());
+            for (id, (_, value)) in self.slots.iter().enumerate() {
+                slots.set(u16::try_from(id).unwrap(), value.clone());
+            }
+            (module, slots)
+        }
+
+        fn render(&self) -> String {
+            let (module, slots) = self.module_and_slots();
+            walk_to_html(&module, &slots).unwrap()
+        }
+
+        fn render_island(&self, id: u16) -> String {
+            let (module, slots) = self.module_and_slots();
+            walk_island(&module, &slots, id).unwrap()
+        }
+    }
+
+    fn text(s: &str) -> SlotValue {
+        SlotValue::Text(s.to_string())
+    }
+
+    #[test]
+    fn dyn_text_in_a_text_only_parent_is_written_without_markers() {
+        // One table over every text-only parent (P2), plus an upper-case tag:
+        // HTML tag names are case-insensitive. The value is still escaped:
+        // RCDATA decodes the references back, and in RAWTEXT the escaping is
+        // what stops a value from closing the element.
+        for parent in ["textarea", "title", "style", "script", "TEXTAREA"] {
+            let mut page = Page::new();
+            let inside = page.slot(text("a<b&c"));
+            let outside = page.slot(text("world"));
+            page.open("div", &[])
+                .open(parent, &[])
+                .dyn_text(inside)
+                .close(parent)
+                .open("p", &[])
+                .dyn_text(outside)
+                .close("p")
+                .close("div");
+            assert_eq!(
+                page.render(),
+                format!(
+                    "<div><{parent}>a&lt;b&amp;c</{parent}>\
+                     <p><!--f:t1-->world<!--/f:t1--></p></div>"
+                ),
+                "inside <{parent}>"
+            );
+        }
+    }
+
+    #[test]
+    fn dyn_text_outside_the_text_only_parents_keeps_its_markers() {
+        // Negative space (P5): the rule is four exact names, not a prefix or
+        // substring match, and not every element with special parsing.
+        for parent in ["pre", "option", "span", "titles", "xtextarea", "noscript"] {
+            let mut page = Page::new();
+            let value = page.slot(text("hello"));
+            page.open(parent, &[]).dyn_text(value).close(parent);
+            assert_eq!(
+                page.render(),
+                format!("<{parent}><!--f:t0-->hello<!--/f:t0--></{parent}>"),
+                "inside <{parent}>"
+            );
+        }
+    }
+
+    #[test]
+    fn an_empty_value_in_a_text_only_parent_writes_nothing() {
+        // The zero-width space exists so a marker pair encloses a Text node.
+        // With no markers it would only become part of the control's value.
+        let mut page = Page::new();
+        let inside = page.slot(text(""));
+        let outside = page.slot(text(""));
+        page.open("textarea", &[])
+            .dyn_text(inside)
+            .close("textarea")
+            .open("p", &[])
+            .dyn_text(outside)
+            .close("p");
+        assert_eq!(
+            page.render(),
+            "<textarea></textarea><p><!--f:t1-->\u{200B}<!--/f:t1--></p>"
+        );
+    }
+
+    #[test]
+    fn a_textarea_doubles_a_leading_line_feed() {
+        // The parser drops one LF straight after `<textarea>` (CR and CRLF are
+        // LF by then). The marker used to shield it; without one, the first
+        // line of the value would be lost before JavaScript runs.
+        fn textarea(build: impl FnOnce(&mut Page)) -> String {
+            let mut page = Page::new();
+            page.open("textarea", &[]);
+            build(&mut page);
+            page.close("textarea");
+            page.render()
+        }
+        let cases: [(&str, String, &str); 5] = [
+            (
+                "a dynamic value",
+                textarea(|p| {
+                    let v = p.slot(text("\nhello"));
+                    p.dyn_text(v);
+                }),
+                "<textarea>\n\nhello</textarea>",
+            ),
+            (
+                "a CRLF value",
+                textarea(|p| {
+                    let v = p.slot(text("\r\nhello"));
+                    p.dyn_text(v);
+                }),
+                "<textarea>\n\r\nhello</textarea>",
+            ),
+            (
+                "an empty value first: the first written byte decides",
+                textarea(|p| {
+                    let empty = p.slot(text(""));
+                    let v = p.slot(text("\nx"));
+                    p.dyn_text(empty).dyn_text(v);
+                }),
+                "<textarea>\n\nx</textarea>",
+            ),
+            (
+                "an LF after other content is kept as is",
+                textarea(|p| {
+                    let v = p.slot(text("\nb"));
+                    p.text("a").dyn_text(v);
+                }),
+                "<textarea>a\nb</textarea>",
+            ),
+            (
+                "static text",
+                textarea(|p| {
+                    p.text("\nstatic");
+                }),
+                "<textarea>\n\nstatic</textarea>",
+            ),
+        ];
+        for (case, html, expected) in cases {
+            assert_eq!(html, expected, "{case}");
+        }
+
+        // The rule is the textarea's alone: the parser drops no LF in a title.
+        let mut page = Page::new();
+        let v = page.slot(text("\nhello"));
+        page.open("title", &[]).dyn_text(v).close("title");
+        assert_eq!(page.render(), "<title>\nhello</title>");
+    }
+
+    #[test]
+    fn no_marker_kind_is_written_inside_a_text_only_parent() {
+        // SHOW_IF still chooses its branch and LIST still repeats its body;
+        // only their markers go. The same SHOW_IF in a `p` keeps them.
+        let mut page = Page::new();
+        let loading = page.slot(SlotValue::Bool(false));
+        let name = page.slot(text("Ada"));
+        let tags = page.slot(SlotValue::array(vec![text("x"), text("y")]));
+        let tag = page.slot(SlotValue::Null);
+        page.open("title", &[])
+            .show_if(
+                loading,
+                |p| {
+                    p.text("Loading");
+                },
+                |p| {
+                    p.dyn_text(name);
+                },
+            )
+            .text(" | ")
+            .list(tags, tag, |p| {
+                p.dyn_text(tag).text(";");
+            })
+            .close("title")
+            .open("p", &[])
+            .show_if(
+                loading,
+                |p| {
+                    p.text("Loading");
+                },
+                |p| {
+                    p.dyn_text(name);
+                },
+            )
+            .close("p");
+        assert_eq!(
+            page.render(),
+            "<title>Ada | x;y;</title>\
+             <p><!--f:s0--><!--f:t1-->Ada<!--/f:t1--><!--/f:s0--></p>"
+        );
+
+        // An island marker would be text too.
+        let mut page = Page::new();
+        page.open("textarea", &[])
+            .island(0, |p| {
+                p.text("x");
+            })
+            .close("textarea")
+            .island(1, |p| {
+                p.open("div", &[]).close("div");
+            });
+        assert_eq!(
+            page.render(),
+            "<textarea>x</textarea><!--f:i1--><div data-forma-island=\"1\" \
+             data-forma-component=\"Island1\" data-forma-status=\"pending\" \
+             data-forma-hydrate=\"load\"></div><!--/f:i1-->"
+        );
+    }
+
+    #[test]
+    fn a_textarea_value_binding_is_written_as_its_text() {
+        // `<textarea value>` is a property: HTML ignores the attribute, so the
+        // server shipped an empty control. The client writes
+        // `value == null ? '' : String(value)`, and so does the walker.
+        let cases = [
+            (text("hello"), "hello"),
+            (
+                text("</textarea><script>x</script>"),
+                "&lt;/textarea&gt;&lt;script&gt;x&lt;/script&gt;",
+            ),
+            (text("\nhello"), "\n\nhello"),
+            (SlotValue::Null, ""),
+            (SlotValue::Number(0.0), "0"),
+            (SlotValue::Bool(false), "false"),
+        ];
+        for (value, inner) in cases {
+            let mut page = Page::new();
+            let v = page.slot(value.clone());
+            let note = page.slot(text("note"));
+            page.open("textarea", &[("name", "t")])
+                .dyn_attr("value", v)
+                .close("textarea")
+                .open("p", &[])
+                .dyn_text(note)
+                .close("p");
+            assert_eq!(
+                page.render(),
+                format!(
+                    "<textarea name=\"t\">{inner}</textarea><p><!--f:t1-->note<!--/f:t1--></p>"
+                ),
+                "value {value:?}"
+            );
+        }
+
+        // The static form, `<textarea value="hello">`, is the same property.
+        let mut page = Page::new();
+        page.open("textarea", &[("name", "t"), ("value", "hello")])
+            .close("textarea");
+        assert_eq!(page.render(), "<textarea name=\"t\">hello</textarea>");
+    }
+
+    #[test]
+    fn a_textarea_value_binding_wins_over_its_children() {
+        // The live control shows the bound value whatever its children say,
+        // so the server writes the value and not the children.
+        let mut page = Page::new();
+        let v = page.slot(text("bound"));
+        let child = page.slot(text("child"));
+        page.open("textarea", &[])
+            .dyn_attr("value", v)
+            .dyn_text(child)
+            .text(" default")
+            .close("textarea")
+            .open("p", &[])
+            .dyn_text(child)
+            .close("p");
+        assert_eq!(
+            page.render(),
+            "<textarea>bound</textarea><p><!--f:t1-->child<!--/f:t1--></p>"
+        );
+    }
+
+    /// `<select name="c" value={value}>` over options a, b and c, each label
+    /// distinct from its value so a match on the wrong one shows.
+    fn select_page(value: SlotValue) -> String {
+        let mut page = Page::new();
+        let v = page.slot(value);
+        page.open("select", &[("name", "c")]).dyn_attr("value", v);
+        for (value, label) in [("a", "Apple"), ("b", "Banana"), ("c", "Cherry")] {
+            page.open("option", &[("value", value)])
+                .text(label)
+                .close("option");
+        }
+        page.close("select");
+        page.render()
+    }
+
+    fn option(value: &str, label: &str, selected: bool) -> String {
+        let selected = if selected { " selected" } else { "" };
+        format!("<option value=\"{value}\"{selected}>{label}</option>")
+    }
+
+    #[test]
+    fn a_select_value_binding_selects_the_matching_option() {
+        // HTML ignores `value` on a select, so the server used to ship the
+        // first option selected, and a form submitted it before JavaScript.
+        for (value, chosen) in [("a", "a"), ("b", "b"), ("c", "c"), ("z", "")] {
+            let expected = format!(
+                "<select name=\"c\">{}{}{}</select>",
+                option("a", "Apple", chosen == "a"),
+                option("b", "Banana", chosen == "b"),
+                option("c", "Cherry", chosen == "c"),
+            );
+            assert_eq!(select_page(text(value)), expected, "value {value}");
+        }
+    }
+
+    #[test]
+    fn a_select_value_binding_compares_as_the_client_string() {
+        // `String(2)` is "2"; `null` is '' (the placeholder option).
+        for (value, chosen) in [(SlotValue::Number(2.0), "2"), (SlotValue::Null, "")] {
+            let mut page = Page::new();
+            let v = page.slot(value.clone());
+            page.open("select", &[]).dyn_attr("value", v);
+            for (value, label) in [("", "Choose"), ("1", "One"), ("2", "Two")] {
+                page.open("option", &[("value", value)])
+                    .text(label)
+                    .close("option");
+            }
+            page.close("select");
+            // An empty static attribute is written bare (`emit_open_tag`).
+            let placeholder = if chosen.is_empty() {
+                "<option value selected>Choose</option>"
+            } else {
+                "<option value>Choose</option>"
+            };
+            let expected = format!(
+                "<select>{placeholder}{}{}</select>",
+                option("1", "One", chosen == "1"),
+                option("2", "Two", chosen == "2"),
+            );
+            assert_eq!(page.render(), expected, "value {value:?}");
+        }
+    }
+
+    #[test]
+    fn a_select_value_binding_matches_an_option_without_a_value_by_its_text() {
+        // An option without `value` is valued by its text, stripped and
+        // collapsed: `<option> Dark \n green </option>` is "Dark green".
+        let render = |value: &str| {
+            let mut page = Page::new();
+            let v = page.slot(text(value));
+            let label = page.slot(text("Blue"));
+            page.open("select", &[])
+                .dyn_attr("value", v)
+                .open("option", &[])
+                .text("Red")
+                .close("option")
+                .open("option", &[])
+                .text(" Dark \n  green ")
+                .close("option")
+                .open("option", &[])
+                .dyn_text(label)
+                .close("option")
+                .close("select");
+            page.render()
+        };
+        assert_eq!(
+            render("Dark green"),
+            "<select><option>Red</option><option selected> Dark \n  green </option>\
+             <option><!--f:t1-->Blue<!--/f:t1--></option></select>"
+        );
+        assert_eq!(
+            render("Blue"),
+            "<select><option>Red</option><option> Dark \n  green </option>\
+             <option selected><!--f:t1-->Blue<!--/f:t1--></option></select>"
+        );
+    }
+
+    #[test]
+    fn a_select_value_binding_reaches_options_rendered_by_a_list() {
+        // A combination (P2): list rows, PROP, a dynamic attribute and the
+        // select. Labels differ from values, so an option that lost its
+        // `value` and fell back to its text would match nothing. Three rows,
+        // then 45 with the match past row 32 (TESTING.md P4's depth floor).
+        let short: Vec<(String, String)> = [("a", "Apple"), ("b", "Banana"), ("c", "Cherry")]
+            .iter()
+            .map(|(id, label)| (id.to_string(), label.to_string()))
+            .collect();
+        let long: Vec<(String, String)> = (0..45)
+            .map(|i| (format!("r{i}"), format!("Row {i}")))
+            .collect();
+        let cases: [(&[(String, String)], &str, usize); 4] = [
+            (&short, "a", 0),
+            (&short, "c", 2),
+            (&long, "r40", 40),
+            (&long, "r44", 44),
+        ];
+        for (rows_in, value, chosen) in cases {
+            let mut page = Page::new();
+            let v = page.slot(text(value));
+            let rows = rows_in
+                .iter()
+                .map(|(id, label)| {
+                    SlotValue::object(vec![
+                        ("id".to_string(), text(id)),
+                        ("label".to_string(), text(label)),
+                    ])
+                })
+                .collect();
+            let items = page.slot(SlotValue::array(rows));
+            let item = page.slot(SlotValue::Null);
+            let id = page.slot(SlotValue::Null);
+            let label = page.slot(SlotValue::Null);
+            page.open("select", &[])
+                .dyn_attr("value", v)
+                .list(items, item, |p| {
+                    p.prop(item, "id", id)
+                        .prop(item, "label", label)
+                        .open("option", &[])
+                        .dyn_attr("value", id)
+                        .dyn_text(label)
+                        .close("option");
+                })
+                .close("select");
+            let expected: String = rows_in
+                .iter()
+                .enumerate()
+                .map(|(i, (id, label))| {
+                    let selected = if i == chosen { " selected" } else { "" };
+                    format!(
+                        "<option value=\"{id}\"{selected}><!--f:t4-->{label}<!--/f:t4--></option>"
+                    )
+                })
+                .collect();
+            assert_eq!(
+                page.render(),
+                format!("<select><!--f:l1-->{expected}<!--/f:l1--></select>"),
+                "value {value}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_select_binding_ends_with_its_select() {
+        // A `datalist` option after a bound select is a suggestion, not a
+        // choice: the binding must not reach it. The select has no option
+        // valued "b", so its single match is still unspent when the datalist
+        // opens; only ending the binding at `</select>` keeps it off.
+        let mut page = Page::new();
+        let v = page.slot(text("b"));
+        page.open("select", &[])
+            .dyn_attr("value", v)
+            .open("option", &[("value", "a")])
+            .text("A")
+            .close("option")
+            .close("select")
+            .open("datalist", &[])
+            .open("option", &[("value", "b")])
+            .text("B")
+            .close("option")
+            .close("datalist");
+        assert_eq!(
+            page.render(),
+            format!(
+                "<select>{}</select><datalist>{}</datalist>",
+                option("a", "A", false),
+                option("b", "B", false)
+            )
+        );
+    }
+
+    #[test]
+    fn an_options_first_value_attribute_is_its_value() {
+        // `<option value="a" value="b">`: the parser keeps the first of two
+        // same-named attributes, so the option's value is "a".
+        for (bound, selected) in [("a", " selected"), ("b", "")] {
+            let mut page = Page::new();
+            let v = page.slot(text(bound));
+            let second = page.slot(text("b"));
+            page.open("select", &[])
+                .dyn_attr("value", v)
+                .open("option", &[("value", "a")])
+                .dyn_attr("value", second)
+                .text("Only")
+                .close("option")
+                .close("select");
+            assert_eq!(
+                page.render(),
+                format!("<select><option value=\"a\" value=\"b\"{selected}>Only</option></select>"),
+                "bound to {bound}"
+            );
+        }
+    }
+
+    #[test]
+    fn multiple_counts_only_when_the_attribute_is_written() {
+        // A `DYN_ATTR multiple` that is false writes no attribute, so the
+        // select is single and an array value is `String(array)`, "a,c",
+        // which matches none of these options. True writes it, and the
+        // array then selects each member.
+        for (multiple, attr, chosen) in [(false, "", false), (true, " multiple", true)] {
+            let mut page = Page::new();
+            let flag = page.slot(SlotValue::Bool(multiple));
+            let v = page.slot(SlotValue::array(vec![text("a"), text("c")]));
+            page.open("select", &[])
+                .dyn_attr("multiple", flag)
+                .dyn_attr("value", v);
+            for (value, label) in [("a", "Apple"), ("b", "Banana"), ("c", "Cherry")] {
+                page.open("option", &[("value", value)])
+                    .text(label)
+                    .close("option");
+            }
+            page.close("select");
+            assert_eq!(
+                page.render(),
+                format!(
+                    "<select{attr}>{}{}{}</select>",
+                    option("a", "Apple", chosen),
+                    option("b", "Banana", false),
+                    option("c", "Cherry", chosen)
+                ),
+                "multiple {multiple}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_null_member_of_a_multiple_value_compares_as_null() {
+        // The client builds its set with `value.map(String)`, and
+        // `String(null)` is "null", not '' as it is for a text hole.
+        let mut page = Page::new();
+        let v = page.slot(SlotValue::array(vec![SlotValue::Null, text("b")]));
+        page.open("select", &[("multiple", "")])
+            .dyn_attr("value", v);
+        for (value, label) in [("null", "Null"), ("x", "Empty"), ("b", "Banana")] {
+            page.open("option", &[("value", value)])
+                .text(label)
+                .close("option");
+        }
+        page.close("select");
+        // The middle option's static value cannot be empty (it would be
+        // written bare), so it is `x`; the empty-string case is the
+        // placeholder in `a_select_value_binding_compares_as_the_client_string`.
+        assert_eq!(
+            page.render(),
+            format!(
+                "<select multiple>{}{}{}</select>",
+                option("null", "Null", true),
+                option("x", "Empty", false),
+                option("b", "Banana", true)
+            )
+        );
+    }
+
+    #[test]
+    fn an_option_ends_at_the_next_option_or_optgroup() {
+        // `</option>` is optional: the parser ends an option at the next
+        // `<option>` or `<optgroup>`, and an option valued by its text is
+        // valued by the text up to there.
+        let mut page = Page::new();
+        let v = page.slot(text("A"));
+        page.open("select", &[])
+            .dyn_attr("value", v)
+            .open("option", &[])
+            .text("A")
+            .open("option", &[])
+            .text("B")
+            .close("select");
+        assert_eq!(
+            page.render(),
+            "<select><option selected>A<option>B</select>",
+            "ended by <option>"
+        );
+
+        let mut page = Page::new();
+        let v = page.slot(text("A"));
+        page.open("select", &[])
+            .dyn_attr("value", v)
+            .open("option", &[])
+            .text("A")
+            .open("optgroup", &[("label", "g")])
+            .open("option", &[("value", "x")])
+            .text("X")
+            .close("option")
+            .close("optgroup")
+            .close("select");
+        assert_eq!(
+            page.render(),
+            "<select><option selected>A<optgroup label=\"g\">\
+             <option value=\"x\">X</option></optgroup></select>",
+            "ended by <optgroup>"
+        );
+    }
+
+    #[test]
+    fn a_single_select_selects_only_the_first_matching_option() {
+        // `select.value = v` selects the first option with that value. Two
+        // `selected` options would let the parser keep the last instead.
+        let mut page = Page::new();
+        let v = page.slot(text("b"));
+        page.open("select", &[])
+            .dyn_attr("value", v)
+            .open("option", &[("value", "b")])
+            .text("First")
+            .close("option")
+            .open("option", &[("value", "b")])
+            .text("Second")
+            .close("option")
+            .close("select");
+        assert_eq!(
+            page.render(),
+            format!(
+                "<select>{}{}</select>",
+                option("b", "First", true),
+                option("b", "Second", false)
+            )
+        );
+    }
+
+    #[test]
+    fn a_multiple_select_selects_every_option_in_an_array_value() {
+        // The client selects each option whose value is in the array, for a
+        // `multiple` select only. A single select takes `String(array)`,
+        // "a,c", which matches none of these options.
+        let render = |attrs: &[(&str, &str)]| {
+            let mut page = Page::new();
+            let v = page.slot(SlotValue::array(vec![text("a"), text("c")]));
+            page.open("select", attrs).dyn_attr("value", v);
+            for (value, label) in [("a", "Apple"), ("b", "Banana"), ("c", "Cherry")] {
+                page.open("option", &[("value", value)])
+                    .text(label)
+                    .close("option");
+            }
+            page.close("select");
+            page.render()
+        };
+        assert_eq!(
+            render(&[("multiple", "")]),
+            format!(
+                "<select multiple>{}{}{}</select>",
+                option("a", "Apple", true),
+                option("b", "Banana", false),
+                option("c", "Cherry", true)
+            )
+        );
+        assert_eq!(
+            render(&[]),
+            format!(
+                "<select>{}{}{}</select>",
+                option("a", "Apple", false),
+                option("b", "Banana", false),
+                option("c", "Cherry", false)
+            )
+        );
+    }
+
+    #[test]
+    fn a_bound_select_overrides_authored_selected_on_its_options() {
+        // The binding decides, as it does on the client. An unbound select
+        // keeps what the author wrote, static and dynamic.
+        let render = |bound: bool| {
+            let mut page = Page::new();
+            let v = page.slot(text("a"));
+            let on = page.slot(SlotValue::Bool(true));
+            page.open("select", &[]);
+            if bound {
+                page.dyn_attr("value", v);
+            }
+            page.open("option", &[("value", "a")])
+                .text("A")
+                .close("option")
+                .open("option", &[("value", "b"), ("selected", "")])
+                .text("B")
+                .close("option")
+                .open("option", &[("value", "c")])
+                .dyn_attr("selected", on)
+                .text("C")
+                .close("option")
+                .close("select");
+            page.render()
+        };
+        assert_eq!(
+            render(true),
+            format!(
+                "<select>{}{}{}</select>",
+                option("a", "A", true),
+                option("b", "B", false),
+                option("c", "C", false)
+            )
+        );
+        assert_eq!(
+            render(false),
+            format!(
+                "<select>{}{}{}</select>",
+                option("a", "A", false),
+                option("b", "B", true),
+                option("c", "C", true)
+            )
+        );
+    }
+
+    #[test]
+    fn a_static_select_value_attribute_selects_its_option() {
+        let mut page = Page::new();
+        page.open("select", &[("value", "b")])
+            .open("option", &[("value", "a")])
+            .text("A")
+            .close("option")
+            .open("option", &[("value", "b")])
+            .text("B")
+            .close("option")
+            .close("select");
+        assert_eq!(
+            page.render(),
+            format!(
+                "<select>{}{}</select>",
+                option("a", "A", false),
+                option("b", "B", true)
+            )
+        );
+    }
+
+    #[test]
+    fn the_context_rules_hold_in_an_island_fragment() {
+        // `walk_island` is the WASM re-render path; it must write what the
+        // full page writes for the same island (P2).
+        let mut page = Page::new();
+        let body = page.slot(text("hello"));
+        let choice = page.slot(text("b"));
+        page.island(0, |p| {
+            p.open("form", &[])
+                .open("textarea", &[])
+                .dyn_text(body)
+                .close("textarea")
+                .open("select", &[])
+                .dyn_attr("value", choice)
+                .open("option", &[("value", "a")])
+                .text("A")
+                .close("option")
+                .open("option", &[("value", "b")])
+                .text("B")
+                .close("option")
+                .close("select")
+                .close("form");
+        });
+        let inner = format!(
+            "<textarea>hello</textarea><select>{}{}</select>",
+            option("a", "A", false),
+            option("b", "B", true)
+        );
+        let full = page.render();
+        let fragment = page.render_island(0);
+        for (path, html) in [("walk_to_html", &full), ("walk_island", &fragment)] {
+            assert!(html.contains(&inner), "{path}: {html}");
+        }
+        assert!(
+            full.starts_with("<!--f:i0--><form data-forma-island=\"0\""),
+            "{full}"
+        );
     }
 }

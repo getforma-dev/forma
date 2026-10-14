@@ -400,6 +400,56 @@ adoption cursor for the rest of its parent (HARDENING-AUDIT
 (U+200B) between its markers. Without it, `<!--f:t0--><!--/f:t0-->` produces *no
 Text node* in the DOM, and the hydration walker has nothing to bind an effect to
 (`walker.rs`, DynText handler). This is a real contract, not a cosmetic choice.
+It applies wherever markers are written, so not inside the elements of the
+context rule below.
+
+**The context rule.** Inside an element whose tag name is, ASCII
+case-insensitively, `textarea`, `title`, `style` or `script`, the walker writes
+no marker of any kind (`f:t`, `f:s`, `f:l` or `f:i`). The tokenizer reads those
+elements' content as text (RCDATA for `textarea` and `title`, RAWTEXT for
+`style`, script data for `script`), so a comment there is not a comment: the
+walker used to write `<textarea><!--f:t0-->hello<!--/f:t0--></textarea>`, whose
+value before JavaScript, and what a form submitted, was the marker text. Inside
+these four:
+
+- `DYN_TEXT` writes its value HTML-escaped (`&`, `<`, `>`), with no markers and
+  no zero-width space; an empty value writes nothing. In `style` and `script`
+  the parser decodes no references, so a value holding those characters reads as
+  the entity until the client writes the element; the escaping is what stops the
+  hole closing its element. A hole inside `script` or `style` is still a code
+  sink: HTML escaping stops it closing its element but does not make the value
+  safe as JavaScript or CSS (and the old leading `<!--` marker, which in a
+  classic script happened to comment out an unquoted hole to the end of its
+  line, is gone).
+- `SHOW_IF` still chooses its branch and `LIST` still repeats its body; neither
+  writes markers. The element's content is its `TEXT` and `DYN_TEXT` values, in
+  IR order. Marker ids are compiler-assigned and unchanged; the id of a
+  `DYN_TEXT` inside one of these elements simply never appears in the HTML.
+- In a `textarea`, content whose first byte is a line feed or carriage return
+  gets one more line feed in front, because the parser drops one straight after
+  `<textarea>`. Without the marker that used to stand there, the first line of
+  the value would be lost.
+
+The walker writes no markers in all four elements, but the client adopts by
+the element, as a whole, only `textarea` and `title` text (formajs, ticket
+FORMA-003). A reactive child of `style` or `script` is not supported for
+adoption in 0.2.x: its text is right before JavaScript, but adoption may rewrite
+it. A lone hole binds to the element's one text node. Mixed static and dynamic
+content gains a second text node at adoption, so `#x{color:red}` becomes
+`#x{color:red}red`, and updates write to that node, not to the rule (measured
+in Chrome against formajs PR #11). DR-7 makes it a build error in 3.0.0.
+Verified by:
+`crates/forma-ir/src/walker.rs > "dyn_text_in_a_text_only_parent_is_written_without_markers"`,
+`"no_marker_kind_is_written_inside_a_text_only_parent"` and
+`"a_textarea_doubles_a_leading_line_feed"`.
+
+The rule covers these four and no other element. The other elements whose
+content the parser treats specially either render nothing a reader sees and
+hold nothing to hydrate (`iframe`, `noembed`, `noframes`, and `noscript` with
+scripting on), parse their content as ordinary markup (`noscript` with
+scripting off), or are obsolete (`xmp`, `plaintext`). `pre` keeps its markers:
+its content is ordinary markup, so they are real comments, and the leading one
+shields a leading line feed from the parser.
 
 **Who depends on it:** the Rust walker emits it; `@getforma/core`'s
 `collectMarkers`/`adoptNode` consumes it; ksx renders through the walker and so
@@ -962,6 +1012,33 @@ bytes on purpose"):
   `IMAGE_CONTEXT_TAGS`, same control-character normalisation before scheme
   testing, same `[A-Za-z_:][-A-Za-z0-9_:.]*` name charset. Making the Rust side
   *stricter* than the JS side is itself a hydration divergence.
+- **Form-control values are written as HTML reads them.** HTML ignores a `value`
+  attribute on a `textarea` and on a `select`, so the walker writes neither: a
+  textarea's `value` (static or `DYN_ATTR`) becomes its text content, under the
+  leading line-feed rule of 3.3, and wins over any children; a select's `value`
+  becomes a bare `selected` on the matching option. Matching follows the
+  client's `writeFormControlProperty` (`@getforma/core`, checkpoint `042e353`):
+  `null` is `''` and anything else is `String(value)`; a single select takes the
+  *first* option with that value (a second `selected` would win in the parser);
+  a select with a written `multiple` attribute (a `DYN_ATTR multiple` that is
+  `false` writes none) and an array value takes every option whose value is in
+  `value.map(String)`, so a `null` member is `"null"`. An option's value is its
+  first `value` attribute, as the parser keeps it, or its text stripped and
+  collapsed when it has none; that text ends at `</option>` or, when that is
+  left out, at the next `<option>` or `<optgroup>`. Inside a bound select, an
+  authored `selected` on an option is dropped, because the binding decides. A
+  value no option has selects nothing; the browser then shows the first option,
+  since HTML cannot write `selectedIndex = -1`. Verified by
+  `crates/forma-ir/src/walker.rs > "a_select_value_binding_selects_the_matching_option"`
+  and `"a_textarea_value_binding_is_written_as_its_text"`.
+- **No markers inside `textarea`, `title`, `style` or `script`** (3.3, the
+  context rule).
+
+> ⚠️ **Parity gap, not closed by the walker change.** The JS renderer
+> (`renderToString`, `formajs/src/ssr/render.ts`) still writes `value=` on a
+> textarea and a select, as the walker used to. It writes no hydration markers at
+> all, so the context rule does not apply to it, but the form-control rule does.
+> Tracked here; it is a formajs change.
 
 ### 6.3 Glossary
 

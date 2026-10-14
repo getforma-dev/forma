@@ -146,7 +146,9 @@ For as long as a file declares version 2:
    (`<!--f:tN-->`, `<!--f:sN-->`, `<!--f:lN-->`, `<!--f:iN-->`), the
    `data-forma-*` attribute set and the `__forma_islands` JSON block are shared
    byte-for-byte with `@getforma/core`. They are part of this contract even
-   though they are not in the binary.
+   though they are not in the binary. So is where markers are *not* written:
+   inside `textarea`, `title`, `style` and `script`, whose content HTML reads as
+   text (ARCHITECTURE.md 3.3, the context rule).
 5. **Validation may get stricter.** A future patch release may *reject* a file
    that an earlier one accepted, when accepting it produced silently wrong
    output (an `ISLAND_START` with no island-table entry, control-flow lengths
