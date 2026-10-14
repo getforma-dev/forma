@@ -150,14 +150,23 @@ jobs:
       # derived from this one, so the same lock gives the same .crate bytes.
       #
       # The lock is made with Cargo's MSRV-aware resolver (A2 audit F7,
-      # FORMA-180): a plain resolve on stable takes the newest semver-compatible
+      # FORMA-180). A plain resolve on stable takes the newest semver-compatible
       # version even when it declares a newer Rust than the crate's
       # `rust-version`, so the packed forma-server's own Cargo.lock held sha2
       # 0.11.1 (Rust 1.88) against its declared 1.85, and `cargo build --locked`
       # on the .crate failed on 1.85 to 1.87. With `fallback` the resolver
-      # prefers the versions that fit the member's declared `rust-version`, as
-      # CI's `msrv (forma-server, 1.85)` leg locks. The setting changes which
-      # versions the lock names, nothing in the file list.
+      # honours the LOWEST `rust-version` among the workspace members, forma-ir's
+      # 1.71, for the whole graph (the same lock CI's `msrv (forma-server, 1.85)`
+      # leg makes): measured on 2026-10-14 against the plain resolve, the
+      # workspace lock also moves bumpalo 3.20.3 to 3.14.0, hyper-util 0.1.21 to
+      # 0.1.20, rust-embed 8.13.0 to 8.11.0 and wasm-bindgen 0.2.129 to 0.2.117,
+      # and each packed crate's Cargo.lock carries the part of it the crate
+      # uses. That lock matters only to a `--locked` build of the .crate itself
+      # (`verify` here, or a consumer building the .crate as such): a dependent
+      # resolves its own graph from the manifest's requirements and never reads
+      # it. The setting changes which versions the lock names, nothing in the
+      # file list. The shipped lock is not advisory-checked today (cargo-deny
+      # runs on CI's fresh resolve); that is a follow-up, not this workflow.
       # Verified by: scripts/check-release-workflow.rb > "the pack job locking without the MSRV-aware resolver"
       - name: Package the crate (compiles nothing)
         env:
