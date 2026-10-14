@@ -332,7 +332,7 @@ impl std::error::Error for RenderError {
 /// # Threads and panics
 ///
 /// The walk is synchronous work on the caller's thread, and forma-server
-/// starts nothing and depends on no async runtime (R4). At the measured 12.5
+/// starts nothing and depends on no async runtime. At the measured 12.5
 /// million nodes a second, a page past about 12,500 nodes holds the thread
 /// past a millisecond; [`RenderCounts`] reports each page's nodes and walk
 /// time, so a handler whose counts show that can move the render into tokio's

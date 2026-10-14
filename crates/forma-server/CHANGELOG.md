@@ -483,9 +483,13 @@ Each still compiles and behaves as at 0.2.1, warns, and goes in 3.0.0:
   unchanged. Every `AssetManifest` literal names the field, so `wasm: None`
   warns too. Doctest pairs: `ManifestWasm`, `ManifestWasmLiteral`,
   `WasmAssetsType`.
-- Each deprecation is pinned by a doctest pair in `src/deprecations.rs` (the
-  0.2.1 call compiles under `allow(deprecated)` and fails under
-  `deny(deprecated)`), and `tests/compat_0_2_1.rs` calls the whole 0.2.1 page
+- Each `#[deprecated]` item (seven rows of the table above, eleven
+  attributes) is pinned by a doctest pair in `src/deprecations.rs` (the 0.2.1
+  call compiles under `allow(deprecated)` and fails under
+  `deny(deprecated)`). The eighth row, a plain string in
+  `PageConfig::body_prefix`, carries no `#[deprecated]` (the field's type is
+  unchanged) and warns only at run time in debug builds, pinned by
+  `tests/body_prefix_string_warning.rs`. And `tests/compat_0_2_1.rs` calls the whole 0.2.1 page
   API as an application does; its
   `render_page_writes_the_0_2_1_document_byte_for_byte` compares the
   document and policy against goldens written by 0.2.1 itself.

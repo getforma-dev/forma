@@ -2,12 +2,13 @@
 //! reviewed.
 //!
 //! A generated module rendered in the application's own page runs with the
-//! page's origin: its cookies, its storage, its API. Tier (c) renders it in
-//! a frame instead, whose document [`PageResponse::frame`] writes. The
+//! page's origin: its cookies, its storage, its API. Content nobody reviewed
+//! (`@getforma/core`'s `mountMarkup` with `tier: 'unreviewed'`) renders in a
+//! frame instead, whose document [`PageResponse::frame`] writes. The
 //! document is one root, `<div id="forma-frame">`, and core's zero-build
 //! runtime as one inline script; it names no URL, so loading it fetches
-//! nothing. The runtime then renders, in tier (c), the module the host
-//! sends it (`@getforma/core`'s frame runtime) into that root.
+//! nothing. The runtime (`@getforma/core`'s frame runtime) then mounts the
+//! module the host sends it into that root, with `tier: 'unreviewed'`.
 //!
 //! # What the frame's policy closes, and what it does not
 //!

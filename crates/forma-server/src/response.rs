@@ -54,7 +54,7 @@ pub struct PageResponse {
     counts: RenderCounts,
 }
 
-/// What one render did, for the application's own logs and metrics (R14).
+/// What one render did, for the application's own logs and metrics.
 ///
 /// On a [`crate::RenderError`] for a budget or a fault, the same counts say
 /// how far the walk got. For a page served without a walk (a browser
