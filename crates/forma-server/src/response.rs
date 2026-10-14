@@ -15,6 +15,12 @@ use std::time::Duration;
 /// - `Content-Security-Policy`, the strict policy for that nonce
 ///   ([`csp::build_csp_header`]) with only the handler's typed
 ///   [`PolicyExtensions`] added (INV2);
+/// - `Content-Security-Policy-Report-Only`: Trusted Types,
+///   `require-trusted-types-for 'script'; trusted-types forma forma-runtime`,
+///   reported, not enforced, for 0.2.2's release (DR-20); and, when the
+///   extensions name a reporting endpoint
+///   ([`PolicyExtensions::report_to`]), `report-to` and `report-uri` in both
+///   policies and a `Reporting-Endpoints` header;
 /// - `Cross-Origin-Opener-Policy: same-origin` (or `same-origin-allow-popups`
 ///   when the extensions ask for it), `X-Content-Type-Options`,
 ///   `Referrer-Policy` and `Permissions-Policy`;
@@ -111,6 +117,9 @@ impl PageResponse {
         counts: RenderCounts,
     ) -> Result<Self, PolicyError> {
         let policy = csp::page_policy(&nonce, extensions)?;
+        if let Some(reason) = &policy.relaxed {
+            csp::log_relaxation(None, reason);
+        }
         Ok(Self::with_policy(html, nonce, policy, counts))
     }
 
@@ -153,13 +162,23 @@ impl PageResponse {
 
     /// The headers this response writes, in order.
     fn headers(&self) -> Vec<(HeaderName, HeaderValue)> {
-        let mut headers = Vec::with_capacity(7);
+        let mut headers = Vec::with_capacity(9);
         headers.push((
             header::CONTENT_TYPE,
             HeaderValue::from_static("text/html; charset=utf-8"),
         ));
         headers.push((header::CACHE_CONTROL, HeaderValue::from_static("no-store")));
         headers.push((header::CONTENT_SECURITY_POLICY, self.policy.csp.clone()));
+        headers.push((
+            header::CONTENT_SECURITY_POLICY_REPORT_ONLY,
+            self.policy.report_only.clone(),
+        ));
+        if let Some(endpoints) = &self.policy.reporting_endpoints {
+            headers.push((
+                HeaderName::from_static("reporting-endpoints"),
+                endpoints.clone(),
+            ));
+        }
         for (name, value) in crate::types::document_security_headers() {
             // The opener policy is the page's own: the extensions may ask for
             // `same-origin-allow-popups`, and a second COOP header would leave

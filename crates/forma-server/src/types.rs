@@ -129,7 +129,8 @@ pub struct PageOutput {
 
 #[allow(deprecated)] // this impl is the bridge from the deprecated fields
 impl PageOutput {
-    /// Response headers for this page: content type, `no-store`, and the CSP.
+    /// Response headers for this page: content type, `no-store`, the CSP, and
+    /// (from 0.2.2) Trusted Types in `Content-Security-Policy-Report-Only`.
     ///
     /// Reads the (public, mutable) `csp` field, so a caller that must rewrite
     /// a directive can do so in place first and still use this helper. An
@@ -153,6 +154,15 @@ impl PageOutput {
         ];
         if let Ok(value) = axum::http::HeaderValue::from_str(&self.csp) {
             headers.push((axum::http::header::CONTENT_SECURITY_POLICY, value));
+        }
+        // Trusted Types, reported and not enforced (DR-20), as every page
+        // carrying the enforced policy does; no reporting endpoint here, so
+        // violations reach the browser's console only.
+        if let Ok(value) = axum::http::HeaderValue::from_str(&crate::csp::report_only_policy()) {
+            headers.push((
+                axum::http::header::CONTENT_SECURITY_POLICY_REPORT_ONLY,
+                value,
+            ));
         }
         headers.extend_from_slice(document_security_headers());
         headers
