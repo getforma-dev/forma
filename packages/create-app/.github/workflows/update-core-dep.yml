@@ -13,11 +13,12 @@ concurrency:
 
 jobs:
   update:
-    # The job pushes its branch and opens a pull request; it needs nothing else
-    # (FORMA-010).
+    # Read-only on purpose (FORMA-010): with this token the job cannot push its
+    # branch or open its pull request, so the workflow stays inert until DR-32
+    # deletes the dispatch at the repository merge. A write token on a workflow
+    # that has never run would only widen what a hostile payload could do.
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     runs-on: ubuntu-latest
     # A checkout, a sed over two template package.json files and one PR API call.
     # Seconds of work; 10 bounds a slow GitHub API without hiding a stall.

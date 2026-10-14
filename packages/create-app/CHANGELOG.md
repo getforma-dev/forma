@@ -7,8 +7,9 @@
   unchanged).** Each `uses:` names the commit its tag or branch pointed to on
   2026-10-14, with the ref in a comment. Every job in `ci.yml` declares
   `contents: read`; `release.yml` already declared its permissions and keeps
-  them. `update-core-dep.yml` declares `contents: write` and
-  `pull-requests: write`, the two its pull request needs, and reads the
+  them. `update-core-dep.yml` declares `contents: read` only, so it stays
+  inert (it cannot push its branch or open its pull request) until DR-32
+  deletes the dispatch at the repository merge, and it reads the
   `core-release` payload's version only from an environment variable: a value
   that is not a release version (`v1.2.3` or `v1.2.3-rc.1`, the `v` optional)
   fails the run before anything is changed. Before, the payload was pasted
