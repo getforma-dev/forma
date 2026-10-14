@@ -106,11 +106,18 @@ not inside `templates/`, so nothing installed lands in the template:
 ```bash
 npm run build
 node dist/index.js lockgen --template minimal       # in a scratch directory
+rm lockgen/admin/package-lock.json                  # the copy of the shipped one
 (cd lockgen/admin && npm install --package-lock-only)
 (cd lockgen && cargo generate-lockfile)
 cp lockgen/admin/package-lock.json <repo>/templates/minimal/admin/
 cp lockgen/Cargo.lock              <repo>/templates/minimal/
 ```
+
+The scaffolder copies the shipped `package-lock.json`, so delete it first and
+let npm resolve from the ranges. Over the old file npm keeps the pins it can
+and rewrites the rest its own way (npm 11.6 drops the two `@emnapi` entries
+bundled in Tailwind's wasm fallback, which a fresh resolve keeps).
+`cargo generate-lockfile` resolves afresh by itself.
 
 The template's `resolver = "3"` makes cargo pick, for each crate, the newest
 version that still builds on its `rust-version` (1.85, forma-server 0.2.0's
@@ -121,5 +128,9 @@ template's placeholder (`{{PROJECT_NAME}}` for minimal, `{{project-name}}` for
 dashboard) and move that entry to the end of the file, where cargo sorts a
 name beginning with `{`. The npm lockfile records every platform's optional
 packages (esbuild's, Tailwind's), so the one file installs on Linux, macOS and
-Windows. `npm test` then checks each lockfile against its manifest, and the
-scaffold gate installs from it on Linux and Windows.
+Windows. `npm test` then checks each lockfile against its manifest, and that
+it locks one copy of each direct dependency: a template range that excludes
+the version one of its dependencies requires makes npm nest a second copy
+(`esbuild ^0.25.0` beside `@getforma/build`'s `^0.28.1` installed three
+esbuilds). The scaffold gate installs from it on Linux and Windows.
+Verified by: `tests/templates.test.ts` > "locks one copy of each direct npm dependency, the one its own dependencies also use"

@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **The templates require `esbuild ^0.28.1`, the range `@getforma/build`
+  0.3.0 requires, so a scaffolded app installs one esbuild** (FORMA-165). With
+  the templates on `^0.25.0` beside build's `^0.28.1` and tsx's `~0.28.0`, npm
+  installed three copies, 0.25.12 and 0.28.2 twice, each with its platform
+  binary. Both `admin/package-lock.json` files are regenerated and now lock
+  esbuild 0.28.2 once; every other pin is unchanged, and the files shrink
+  (minimal 56 KB to 26 KB, 107 entries to 53; dashboard 87 KB to 57 KB, 163
+  entries to 109). Each
+  `Cargo.lock` was regenerated too, with the MSRV-aware resolver, and came out
+  identical. `npm test` fails when a template locks a direct dependency more
+  than once, and the scaffold gate counts the esbuild copies `npm ci`
+  installs. `docs/TEMPLATES.md`'s regeneration steps now delete the copied
+  `package-lock.json` before resolving.
+  Verified by `tests/templates.test.ts` > "locks one copy of each direct npm dependency, the one its own dependencies also use"
+  Verified by `tests/scaffold.test.ts` > "%s: npm ci, frontend build, cargo check --locked"
+
 ## [0.6.1] - 2026-10-14
 
 Template fixes from the Forma Stack decision brief's defects list, DR-17 and

@@ -214,6 +214,16 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const install = run('npm', ['ci', '--no-audit', '--no-fund'], admin);
     expect(install.status, install.stderr).toBe(0);
 
+    // One esbuild in the installed tree, shared by the template, @getforma/build
+    // and tsx. `npm query` lists every physical copy (FORMA-165).
+    const esbuild = run('npm', ['query', '#esbuild'], admin);
+    expect(esbuild.status, esbuild.stderr).toBe(0);
+    const esbuildCopies = (JSON.parse(esbuild.stdout) as Array<{ location: string; version: string }>).map(
+      (node) => `${node.location.replace(/\\/g, '/')}@${node.version}`,
+    );
+    expect(esbuildCopies, 'npm installed more than one esbuild').toHaveLength(1);
+    expect(esbuildCopies[0]).toMatch(/^node_modules\/esbuild@/);
+
     const build = run('npm', ['run', 'build'], admin);
     expect(build.status, build.stdout + build.stderr).toBe(0);
 
