@@ -17,10 +17,11 @@ use std::time::Duration;
 ///   [`PolicyExtensions`] added;
 /// - `Content-Security-Policy-Report-Only`: Trusted Types,
 ///   `require-trusted-types-for 'script'; trusted-types forma forma-runtime`,
-///   reported, not enforced, in 0.2.x; and, when the
-///   extensions name a reporting endpoint
-///   ([`PolicyExtensions::report_to`]), `report-to` and `report-uri` in both
-///   policies and a `Reporting-Endpoints` header;
+///   reported, not enforced, in 0.2.x, when the
+///   extensions name a reporting endpoint ([`PolicyExtensions::report_to`],
+///   [`PolicyExtensions::report_uri`]), with the reporting directives in both
+///   policies (and, for `report_to`, a `Reporting-Endpoints` header), or, with
+///   no endpoint, in a development build only;
 /// - `Cross-Origin-Opener-Policy: same-origin` (or `same-origin-allow-popups`
 ///   when the extensions ask for it), `X-Content-Type-Options`,
 ///   `Referrer-Policy` and `Permissions-Policy`;
@@ -170,10 +171,12 @@ impl PageResponse {
         ));
         headers.push((header::CACHE_CONTROL, HeaderValue::from_static("no-store")));
         headers.push((header::CONTENT_SECURITY_POLICY, self.policy.csp().clone()));
-        headers.push((
-            header::CONTENT_SECURITY_POLICY_REPORT_ONLY,
-            self.policy.report_only().clone(),
-        ));
+        if let Some(report_only) = self.policy.report_only() {
+            headers.push((
+                header::CONTENT_SECURITY_POLICY_REPORT_ONLY,
+                report_only.clone(),
+            ));
+        }
         if let Some(endpoints) = self.policy.reporting_endpoints() {
             headers.push((
                 HeaderName::from_static("reporting-endpoints"),
