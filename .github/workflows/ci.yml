@@ -106,9 +106,9 @@ jobs:
   test-release:
     runs-on: ubuntu-latest
     needs: test
-    # MEASURED: 26s locally from a cold release target (clippy 13.5s, test
-    # 12.6s). 20 matches the other tier-two jobs and is far above any
-    # plausible CI multiple of that.
+    # MEASURED: 34s in CI (run 38507258797, first run of this cache key, so
+    # nothing restored); 26s locally from a cold release target. 20 matches
+    # the other tier-two jobs and leaves room for a slow runner.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
