@@ -11,7 +11,7 @@
 //! good ones.
 
 use forma_server::assets::try_load_manifest;
-use forma_server::{load_ir_modules_strict, IrLoadError, RenderMode};
+use forma_server::{load_ir_modules_strict, IrLoadError, IrModules, RenderMode};
 use rust_embed::Embed;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -228,6 +228,33 @@ fn a_route_declared_ssr_false_needs_no_module() {
     // `/app` has no `ir`: nothing to load, nothing to refuse.
     assert_eq!(modes.get("/app"), None);
     assert!(!modules.contains_key("/app"));
+}
+
+#[test]
+fn ir_modules_load_refuses_exactly_what_the_strict_loader_refuses() {
+    // `IrModules::load` (FORMA-166) is the strict loader with a development
+    // reload on top: the same modules load, and the same failures, with the
+    // same codes, refuse the start.
+    fn sorted(mut errors: Vec<IrLoadError>) -> Vec<IrLoadError> {
+        errors.sort_by(|a, b| a.route.cmp(&b.route));
+        errors
+    }
+    let flipped = try_load_manifest::<Flipped>().expect("manifest");
+    assert_eq!(
+        sorted(IrModules::<Flipped>::load(&flipped).expect_err("refused")),
+        sorted(load_ir_modules_strict::<Flipped>(&flipped).expect_err("refused"))
+    );
+    let truncated = try_load_manifest::<Truncated>().expect("manifest");
+    assert_eq!(
+        sorted(IrModules::<Truncated>::load(&truncated).expect_err("refused")),
+        sorted(load_ir_modules_strict::<Truncated>(&truncated).expect_err("refused"))
+    );
+    let good = try_load_manifest::<Good>().expect("manifest");
+    let modules = IrModules::<Good>::load(&good).expect("loads");
+    let (_, strict) = load_ir_modules_strict::<Good>(&good).expect("loads");
+    let page = modules.get("/").expect("the good page");
+    assert_eq!(page.opcodes, strict["/"].opcodes);
+    assert!(modules.get("/app").is_none(), "ssr: false has no module");
 }
 
 #[test]

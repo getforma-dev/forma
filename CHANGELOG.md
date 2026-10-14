@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- **A page edited under watch mode is served without a restart (FORMA-166,
+  L-31, N7).** forma-server's `IrModules` loads through the strict loader
+  and, in debug builds only, rereads a page's module on the next request
+  after `forma-build --watch` rewrites it; a module that fails to load keeps
+  the previous one and logs its `LOAD-1xx` code. Release builds read nothing
+  after start.
+
 - **forma-ir's `wasm` feature is deprecated (FORMA-131, DR-23).** Its exports,
   `render` and `render_island`, the browser's WASM walker, are
   `#[deprecated]` and are removed in 3.0.0 with the feature; islands
