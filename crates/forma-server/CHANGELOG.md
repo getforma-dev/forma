@@ -78,11 +78,32 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   The manifest still says `forma-ir = "0.2.0"` until the A2 release raises it
   with the version (FORMA-138): until then a lockfile holding forma-ir 0.2.1
   would not build this crate.
+- `IrLoadError::code()`: the failure's stable code, `LOAD-101` (declared but
+  not embedded), `LOAD-102` (magic, version or flags: not a module this reader
+  accepts) or `LOAD-103` (corrupt or truncated: sections, tables, opcodes,
+  names), read from the start of `reason`, which now begins with it (FORMA-121).
 - `tests/page_response.rs`'s policy property and invalid-extension tests now
   run over every path that makes a `PageResponse`: the bridge, `try_render`
   and `render_browser_shell`.
 
 ### Deprecated
+- `load_ir_modules`, the lenient loader: it serves a corrupt module's route as
+  an empty shell for the life of the process. `load_ir_modules_strict` is the
+  default loader (DR-11, Q13; FORMA-121): call it at start and refuse to start
+  on its errors, before the port binds. The lenient loader behaves exactly as
+  at 0.2.1, and in debug builds logs its deprecation once per process. Tests:
+  `tests/strict_loader.rs` >
+  `a_flipped_byte_fails_the_default_loader_naming_route_file_and_code`,
+  `a_truncated_module_fails_the_default_loader_naming_route_file_and_code`,
+  `with_a_bad_module_the_fixture_server_binds_no_port` (and its other side,
+  `the_same_server_binds_and_serves_with_good_modules_or_the_lenient_loader`),
+  `a_route_declared_ssr_false_needs_no_module`,
+  `the_deprecated_lenient_loader_behaves_as_at_0_2_1`;
+  `tests/load_ir_modules_deprecation.rs`. The fixtures are written by code in
+  the test file and pinned to it (`module_fixtures_are_what_their_generator_writes`).
+  FMIR v2 has no checksum: a flipped byte that no structure check reaches (in
+  the source hash, or inside a text string) still loads, as the fixtures
+  record; FMIR v3's CRC-32 closes that (DR-28, FORMA-114).
 - `render_page`: it serves the empty Phase 1 shell with a 200 on any failure.
   Use `try_render` (DR-11). It keeps its fallback until 3.0.0, and in debug
   builds logs its deprecation once per process (`tests/render_page_deprecation.rs`
@@ -106,6 +127,10 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   document and policy against goldens written by 0.2.1 itself.
 
 ### Changed
+- `load_ir_modules_strict` no longer logs "Phase 1 fallback" for the failures
+  it returns: it takes no fallback, and the caller holds every failure. The
+  lenient loader still logs each one. Each failure's `reason` now starts with
+  its code (`LOAD-101` to `LOAD-103`), so `Display` names route, file and code.
 - **No `unwrap`, `expect` or `panic!` in the shipped code** (DR-12, SR44):
   Clippy denies them outside tests. `serve_asset` and `serve_sw` answer 500
   rather than panic if a response fails to build (it cannot with today's

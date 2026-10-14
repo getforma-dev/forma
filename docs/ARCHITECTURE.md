@@ -134,7 +134,7 @@ every hard bug in this stack's history has been two halves of it disagreeing.
                                   │  dist/ is embedded into the Rust binary
                                   ▼
    ┌──────────────────────── REQUEST TIME (Rust) ─────────────────────┐
-   │  startup: load_ir_modules::<Assets>(&manifest)                   │
+   │  startup: load_ir_modules_strict::<Assets>(&manifest)            │
    │           → IrModule::parse (validates EVERYTHING, once)         │
    │           → RenderMode per route                                 │
    │                                                                  │
@@ -284,8 +284,10 @@ it (`format.rs:288-323`).
 whose test suite byte-asserts `bytes[0..6] == b"FMIR\x02\x00"` on every IR regen
 (dogfood #7 / `forma-spike-1-fmir-compat.md`).
 
-**What breaks if it moves:** a version bump is detectable and non-fatal —
-`load_ir_modules` logs and degrades that route to Phase 1 (`ir_compat.rs`). A
+**What breaks if it moves:** a version bump is detectable — the default loader,
+`load_ir_modules_strict`, returns it as `LOAD-102` and the server refuses to
+start; the deprecated lenient `load_ir_modules` logs and degrades that route to
+Phase 1 (`ir_compat.rs`). A
 *silent* layout change inside v2 is the dangerous one: it is mis-parsed, not
 rejected, and produces wrong HTML. This is exactly why the parser validates
 structurally at load rather than lazily during the walk.
@@ -882,8 +884,10 @@ inventory).
 
 **Being reversed (DR-11, from 0.2.2).** `try_render` returns every failure
 below as a coded `RenderError` the handler answers, and `render_page`, which
-keeps this floor, is deprecated and goes in 3.0.0. The section records the
-0.2.x decision as it was made.
+keeps this floor, is deprecated and goes in 3.0.0. At start, the strict loader
+is the default and the lenient `load_ir_modules` is deprecated: a bad module
+for a server-rendered route stops the server before its port binds. The
+section records the 0.2.x decision as it was made.
 
 **Decision.** Every route can render as Phase 1 — an empty `<div id="app">` that
 the client mounts from scratch. Phase 2 (SSR) is attempted when a route has a

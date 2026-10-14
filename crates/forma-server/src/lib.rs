@@ -35,10 +35,11 @@
 //! ```
 //!
 //! A route the build declares `ssr: false` is served by
-//! [`render_browser_shell`]. Deprecated in 0.2.2, removed in 3.0.0:
-//! `render_page` and its Phase 1 fallback, `render_page_with_nonce`,
-//! [`PageOutput`]'s public fields and `headers()`, and
-//! `PageConfig::config_script`.
+//! [`render_browser_shell`]. At start, [`load_ir_modules_strict`] is the
+//! module loader: stop on its errors, before the port binds. Deprecated in
+//! 0.2.2, removed in 3.0.0: `render_page` and its Phase 1 fallback,
+//! `render_page_with_nonce`, the lenient `load_ir_modules`, [`PageOutput`]'s
+//! public fields and `headers()`, and `PageConfig::config_script`.
 
 // Makes README.md's and SECURITY.md's "Zero `unsafe` blocks" a property the
 // compiler enforces rather than a claim.
@@ -81,6 +82,7 @@ pub use csp::{
 };
 /// Re-exported: [`RenderCtx::with_limits`] takes it.
 pub use forma_ir::WalkLimits;
+#[allow(deprecated)]
 pub use ir_compat::{load_ir_modules, load_ir_modules_strict, IrLoadError};
 pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};

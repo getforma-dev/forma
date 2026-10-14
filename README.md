@@ -75,7 +75,7 @@ forma-server = "0.1"
 
 **What it does:**
 - `try_render(config, ctx)` — renders a page from an IR module + slot data, returning the page with its counts or a coded `RenderError` the handler answers (`render_page`, which falls back to an empty shell on any failure, is deprecated in 0.2.2)
-- `load_ir_modules(manifest)` — loads `.ir` files from embedded assets at startup (`load_ir_modules_strict` returns the failures so you can fail startup on a build/embed skew)
+- `load_ir_modules_strict(manifest)` — the module loader: loads `.ir` files from embedded assets at startup and returns every failure (route, file, code) so the server refuses to start on a bad module (the lenient `load_ir_modules` is deprecated in 0.2.2)
 - `serve_asset(filename)` — serves assets with Brotli/gzip negotiation, `Cache-Control: immutable` for content-hashed names and revalidation + ETag for the rest
 - `generate_csp_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
 - `build_csp_header(nonce)` — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`
@@ -92,16 +92,18 @@ forma-server = "0.1"
 ## Quick Start
 
 ```rust
-use forma_server::{assets, render_page, PageConfig, RenderMode, load_ir_modules};
+use forma_server::{assets, load_ir_modules_strict};
 use rust_embed::Embed;
 
 #[derive(Embed)]
 #[folder = "dist/"]
 struct Assets;
 
-// At startup: load manifest and IR modules
-let manifest = assets::load_manifest::<Assets>();
-let (render_modes, ir_modules) = load_ir_modules::<Assets>(&manifest);
+// At startup, before the port binds: a bad manifest or module stops the server.
+let manifest = assets::try_load_manifest::<Assets>()?;
+let (render_modes, ir_modules) = load_ir_modules_strict::<Assets>(&manifest)
+    .map_err(|errors| format!("{errors:?}"))?;
+// Per request: forma_server::try_render(&config, &ctx), see crates/forma-server.
 ```
 
 ## Architecture

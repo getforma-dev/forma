@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- **The strict module loader is the default (FORMA-121, DR-11).** Call
+  `load_ir_modules_strict` at start and refuse to start on its errors, each
+  naming route, file and a `LOAD-1xx` code; the lenient `load_ir_modules`,
+  which serves a corrupt module's route as an empty shell, is deprecated.
+
 - **A render that returns its failure (FORMA-120, DR-11, DR-12).**
   forma-server's `try_render` returns `Result<PageResponse, RenderError>`: the
   page with its counts, or a coded error naming route and component, a caught
