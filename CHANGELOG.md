@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-14
+
+A patch release of both crates. See
+[crates/forma-ir/CHANGELOG.md](crates/forma-ir/CHANGELOG.md) and
+[crates/forma-server/CHANGELOG.md](crates/forma-server/CHANGELOG.md) for the
+itemised lists.
+
 - **forma-server on Rust 1.85 to 1.87: lock with the MSRV-aware resolver.**
   sha2 0.11.1 (2026-10-12) declares Rust 1.88, and a resolve that ignores
   `rust-version` takes it, so a fresh build of forma-server on 1.85 to 1.87

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-14
+
 ### Fixed — server HTML in its parsing context (changes emitted bytes on purpose)
 - **No hydration markers inside `textarea`, `title`, `style` or `script`.**
   The tokenizer reads their content as text, so a marker comment there was
