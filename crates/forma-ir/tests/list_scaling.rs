@@ -15,8 +15,8 @@
 //!   on a loaded machine and it pins the actual mechanism (per-row copying).
 //! * `list_walk_time_is_linear_in_row_count` is the end-to-end claim in the
 //!   units a user feels, measured so that a loaded machine cannot fail it
-//!   (FORMA-167): 100 and 1,600 rows, where linear is 16x and quadratic about
-//!   256x, judged at 32x on the median of paired rounds, so only a real
+//!   (FORMA-167): 100 and 3,200 rows, where linear is 32x and quadratic about
+//!   1,024x, judged at 64x on the median of paired rounds, so only a real
 //!   asymptotic regression trips it.
 
 use std::alloc::{GlobalAlloc, Layout, System};
@@ -246,28 +246,35 @@ fn list_walk_allocations_are_linear_in_row_count() {
 /// and 400 rows, bounded at 6x, measured 11.8x under a load average of 80, and
 /// failed CI once). Three choices make it robust:
 ///
-/// * The sizes are 16x apart, 100 and 1,600 rows: linear is about 16x and the
-///   quadratic walker this gate replaced about 256x. The bound, 32x, is twice
-///   linear and an eighth of quadratic.
+/// * The sizes are 32x apart, 100 and 3,200 rows: linear is about 32x and the
+///   quadratic walker this gate replaced about 1,024x. The bound, 64x, is
+///   twice linear and a sixteenth of quadratic. (They were 16x apart, 100 and
+///   1,600, bounded at 32x, until FORMA-180: a walker that only scans the
+///   list once per row measured 35x there, too close to the bound; doubling
+///   the large size doubles that excess over linear, so the margin widens.)
 /// * Each round times the two sizes back to back, as batches of equal work
-///   (sixteen 100-row walks, then one 1,600-row walk, or the other way round
-///   in alternate rounds), so the pair shares one core, clock and load.
+///   (thirty-two 100-row walks, then one 3,200-row walk, or the other way
+///   round in alternate rounds), so the pair shares one core, clock and load.
 /// * The verdict is the median of the rounds' ratios. A round the scheduler
 ///   disturbs moves its own ratio, up or down; the median of 41 moves only if
 ///   most rounds are disturbed the same way. Measured here at load averages
 ///   of 109 and 210, single rounds ranged from 0.8x to 507x and the median
-///   from 16.0x to 17.1x.
+///   from 16.0x to 17.1x at the old sizes.
 ///
 /// Two-sided: a walker that deep-copies the list for every row, the defect
-/// this gate replaced, fails it (medians 213x to 226x) and the allocation gate
-/// too; one that only scans the list for every row, allocating nothing, fails
-/// this gate alone (medians 49x to 88x over ten runs).
+/// this gate replaced, fails it (medians 213x to 226x at the old sizes) and
+/// the allocation gate too; one that only scans the list for every row,
+/// allocating nothing, fails this gate alone (a `for other in items.iter()`
+/// loop over `black_box(other)` inside the row loop in `walker.rs`: medians
+/// 34.9x against the old 32x bound, and 110x to 125x against this 64x bound
+/// over six runs, three of them at a load average of 22 to 34, where the
+/// unmutated walker's medians were 32.1x to 32.3x; FORMA-180).
 #[test]
 fn list_walk_time_is_linear_in_row_count() {
     const SMALL: usize = 100;
-    const LARGE: usize = 1_600;
+    const LARGE: usize = 3_200;
     const ROUNDS: usize = 41;
-    const BOUND: f64 = 32.0;
+    const BOUND: f64 = 64.0;
 
     let _guard = MEASURE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let module = build_table_module();
@@ -290,7 +297,7 @@ fn list_walk_time_is_linear_in_row_count() {
 
     // The median of ROUNDS ratios is under BOUND exactly when more than half
     // of them are, so the rounds stop once one side has a majority: a
-    // quadratic walker fails in half the rounds, which at 1,600 rows matters.
+    // quadratic walker fails in half the rounds, which at 3,200 rows matters.
     let majority = ROUNDS / 2 + 1;
     let mut ratios = Vec::with_capacity(ROUNDS);
     let mut best_small = f64::MAX;

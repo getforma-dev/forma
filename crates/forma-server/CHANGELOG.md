@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Changed
+- **Nothing in the crate.** The release workflow now locks the packed
+  crate's `Cargo.lock` with the MSRV-aware resolver, so the next published
+  `.crate` builds `--locked` on Rust 1.85 (A2 audit F7, FORMA-180); 0.2.2's
+  holds sha2 0.11.1 (Rust 1.88), which only a `cargo build --locked` on the
+  `.crate`'s own lock meets, never a consumer's. CI checks that the
+  `forma-ir` requirement, normal and dev, equals forma-ir's version (audit
+  F8).
+
 ## [0.2.2] - 2026-10-14
 
 Release A2's bridge (0.2.2): additive. Every 0.2.1 call compiles and behaves

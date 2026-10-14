@@ -217,6 +217,16 @@ jobs:
           cargo tree -p forma-server -i forma-ir | tee /tmp/tree.txt
           grep -q "crates/forma-ir" /tmp/tree.txt \
             || { echo "::error::forma-server is building against the PUBLISHED forma-ir, not this tree"; exit 1; }
+      # The patch above also masks a requirement looser than the tree's
+      # forma-ir (0.2.2 carried `"0.2.0"` until FORMA-138): the workspace and
+      # the release workflow's `verify` job both build green while a consumer's
+      # lock may hold a forma-ir that lacks what forma-server calls. The
+      # requirement, normal and dev, must equal forma-ir's version (A2 audit
+      # F8, FORMA-180); FORMA-112 replaces this with the one-version rule.
+      - name: forma-server's forma-ir requirement equals forma-ir's version
+        run: |
+          bash scripts/test-check-forma-ir-requirement.sh
+          bash scripts/check-forma-ir-requirement.sh
 
   # SR43 (FORMA-134): release.yml keeps `id-token: write` on its publish job
   # alone, with no cache and no dependency code beside it. actionlint checks

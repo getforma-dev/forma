@@ -13,9 +13,13 @@
 # code and no third-party action beyond the ones it needs, waits for every other
 # job, downloads only this run's packed artefact, checks it against the pack
 # job's record before it publishes, and cannot go on to publish after a failed
-# step or job; and unless the pack job uploads that artefact with
-# `overwrite: true`, so re-running all jobs after a failure replaces it. Ruby's standard library parses the YAML, so the check adds nothing
-# to the supply chain it guards. The repository-specific part is CONFIG.
+# step or job; unless the pack job uploads that artefact with
+# `overwrite: true`, so re-running all jobs after a failure replaces it; and,
+# for a crate, unless the pack job locks the graph with the MSRV-aware resolver
+# (`CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback`), so the Cargo.lock the
+# .crate carries builds on the Rust the crate declares. Ruby's standard library
+# parses the YAML, so the check adds nothing to the supply chain it guards. The
+# repository-specific part is CONFIG.
 require 'yaml'
 
 CONFIG = {
@@ -383,6 +387,33 @@ def check_pack_job(doc, config, out)
   unless [true, 'true'].include?(with_of(upload)['overwrite'])
     out << "K4 the pack job's upload of #{config[:artifact].inspect} must set `overwrite: true`, so re-running all jobs replaces the earlier attempt's artefact instead of failing on its name"
   end
+  check_msrv_aware_lock(doc, pack, config, out) if config[:registry] == :crates
+end
+
+# The lock the pack job makes travels into the .crate as its own Cargo.lock.
+# Made by a plain resolve on stable, it names the newest semver-compatible
+# versions even where one declares a newer Rust than the crate's
+# `rust-version`, so `cargo build --locked` on the published .crate fails on
+# the Rust the crate claims to support (A2 audit F7, FORMA-180: sha2 0.11.1,
+# Rust 1.88, in forma-server 0.2.2's lock against its declared 1.85). Every
+# `cargo generate-lockfile` in the pack job must run with
+# `CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback`, set on the step, the
+# job or the workflow.
+def check_msrv_aware_lock(doc, pack, config, out)
+  setting = 'CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS'
+  workflow_env = doc['env'].is_a?(Hash) ? doc['env'] : {}
+  job_env = pack['env'].is_a?(Hash) ? pack['env'] : {}
+  lock_steps = pack['steps'].each_index.select { |i| run_of(pack['steps'][i]) =~ /\bcargo\s+generate-lockfile\b/ }
+  if lock_steps.empty?
+    out << "K5 the pack job must lock the graph with `cargo generate-lockfile`, so the packed crate carries a Cargo.lock made here"
+    return
+  end
+  lock_steps.each do |i|
+    value = [env_of(pack['steps'][i]), job_env, workflow_env].map { |e| e[setting] }.compact.first
+    next if value.to_s == 'fallback'
+
+    out << "K5 the #{config[:pack_job]} job's step #{i + 1} runs `cargo generate-lockfile` with `#{setting}` #{value.nil? ? 'unset' : "set to #{value.inspect}"}; it must be `fallback`, so the lock names versions that fit the crate's `rust-version`"
+  end
 end
 
 def violations(doc, config = CONFIG)
@@ -528,8 +559,18 @@ NPM_SEEDS = [
   end],
 ].freeze
 
+def lock_step(doc)
+  pack_job(doc)['steps'].find { |s| run_of(s) =~ /\bcargo\s+generate-lockfile\b/ }
+end
+
 CRATES_SEEDS = [
   ['no re-packaged crate matched before publishing', 'A3', ->(d) { publish_steps(d).reject! { |s| run_of(s) =~ /release-artifacts\.sh match/ } }],
+  ['the pack job locking without the MSRV-aware resolver', 'K5', ->(d) { lock_step(d)['env'].delete('CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS') }],
+  ['the pack job locking with the resolver setting at `allow`', 'K5', ->(d) { lock_step(d)['env']['CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS'] = 'allow' }],
+  ['the pack job with no `cargo generate-lockfile`', 'K5', lambda do |d|
+    step = lock_step(d)
+    step['run'] = step['run'].lines.reject { |l| l =~ /cargo generate-lockfile/ }.join
+  end],
   ['continue-on-error on the re-package and match step', 'E1', ->(d) { check_step(d, 'match')['continue-on-error'] = true }],
   ['`|| true` after a match', 'E4', ->(d) { append_to_check(d, ' || true', 'match') }],
 ].freeze
@@ -559,7 +600,7 @@ def self_test(doc)
       puts "not ok - #{rule} misses #{label}: #{found.inspect}"
     end
   end
-  applicable = rule_ids - (crates ? [] : ['A3'])
+  applicable = rule_ids - (crates ? [] : %w[A3 K5])
   unseeded = applicable - seeds.map { |_, rule, _| rule }
   if unseeded.empty?
     puts "ok - every rule has a seed (#{applicable.join(' ')})"

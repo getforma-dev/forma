@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+- **The list-walk time gate (`tests/list_scaling.rs`) compares 100 and 3,200
+  rows, bounded at 64x** (A2 audit F17b, FORMA-180): it compared 100 and
+  1,600 at 32x, where a walker that only scans the list once per row sat at
+  34.9x. Linear is 32x; the same walker measures 110x to 125x, and the
+  unmutated one 32.1x to 32.3x under load. Tests only; the walker is
+  unchanged.
+
 ## [0.2.2] - 2026-10-14
 
 Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
