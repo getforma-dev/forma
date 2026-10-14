@@ -11,7 +11,7 @@ export const TEMPLATES_DIR = path.join(REPO_ROOT, 'templates');
 export const CLI = path.join(REPO_ROOT, 'dist', 'index.js');
 
 /**
- * The heavy gate — npm install, frontend build, `cargo check` — is opt-in
+ * The heavy gate — npm ci, frontend build, `cargo check --locked` — is opt-in
  * because it needs a network, a Rust toolchain and a few minutes. CI turns it
  * on in a dedicated job; `npm test` on a laptop runs the structural half only.
  */
@@ -39,8 +39,12 @@ export function rmrf(dir: string) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
-/** Run the built CLI. Never inherits stdio, so a prompt cannot hang the suite. */
-export function runCli(args: string[], cwd: string): SpawnSyncReturns<string> {
+/**
+ * Run the built CLI. Never inherits stdio, so a prompt cannot hang the suite.
+ * `env` overrides variables, e.g. the user agent the CLI reads to pick a
+ * package manager.
+ */
+export function runCli(args: string[], cwd: string, env: Record<string, string> = {}): SpawnSyncReturns<string> {
   if (!fs.existsSync(CLI)) {
     throw new Error(`${CLI} is missing — run \`npm run build\` first (the "pretest" script does this).`);
   }
@@ -50,7 +54,7 @@ export function runCli(args: string[], cwd: string): SpawnSyncReturns<string> {
     // An empty stdin makes `prompts` give up instead of waiting forever if a
     // future change ever makes one of these paths interactive.
     input: '',
-    env: { ...process.env, FORCE_COLOR: '0' },
+    env: { ...process.env, FORCE_COLOR: '0', ...env },
   });
 }
 

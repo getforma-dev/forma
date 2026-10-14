@@ -14,7 +14,7 @@ The scaffolder copies it, rewrites a few placeholders, and gets out of the way
 | Copy | Everything under `templates/<name>/`, lockfiles included, except `node_modules`, `dist`, `target` and `.git` | `NEVER_COPY`, `src/scaffold.ts` |
 | Substitute | `{{PROJECT_NAME}}` and `{{project-name}}` → the project name, in text files only (`.toml .lock .rs .ts .tsx .json .md .css .html .yml`) | `replacePlaceholders`, `src/scaffold.ts` |
 | Rename | every `_gitignore` → `.gitignore`, at any depth | `restoreGitignores`, `src/scaffold.ts` |
-| Re-sort | the crate's own `Cargo.lock` entry, renamed above, moves to where cargo sorts it | `placeCargoLockRoot`, `src/scaffold.ts` |
+| Re-sort | the crate's own `Cargo.lock` entry, renamed above, moves to where cargo sorts it, and references to a crate that shares the project's name take the form cargo then writes (`"tracing 0.1.44"`) | `placeCargoLockRoot`, `src/scaffold.ts` |
 
 Three consequences worth knowing before you edit a template:
 
@@ -70,7 +70,8 @@ appears.
 | Declare exactly the crates its Rust sources use | An unused dependency is a slower build and a wider supply chain for nothing. This is what caught `forma-ir` surviving the dashboard's SSR removal. |
 | Pin frontend deps at or above the version whose fix it needs | `@getforma/core ^1.5.0` (CSP-safe-by-default runtime, `on*` prop dropping, URL-scheme filtering), `@getforma/build ^0.1.9` (the Tailwind step could not run on Windows below it). |
 | JSX-to-`h()` tsconfig | `jsx: "react"`, `jsxFactory: "h"`, `jsxFragmentFactory: "Fragment"`. |
-| Declare `rust-version = "1.85"`, forma-server 0.2.0's floor, and resolve `Cargo.lock` against it | A committed lockfile must not raise the Rust a new project needs. Cargo.lock does not record each crate's `rust-version`, so the scaffold gate reads the locked crates' manifests and fails on any above the template's. |
+| Declare `rust-version = "1.85"`, forma-server 0.2.0's floor, with `resolver = "3"` | A committed lockfile must not raise the Rust a new project needs, and neither may the user's own `cargo update`. Resolver 3 is cargo's MSRV-aware resolver. Cargo.lock does not record each crate's `rust-version`, so the scaffold gate reads the locked crates' manifests, before and after an update, and fails on any above the template's. |
+| Document `npm ci` as the install step | A plain `npm install` may rewrite the shipped lockfile; `npm ci` never writes it. |
 | A `_gitignore` covering `target/ node_modules/ dist/ .env .env.* *.pem *.key`, and **not** `Cargo.lock` | `Cargo.lock` belongs in an application's history. |
 
 ## Adding a template
@@ -106,13 +107,13 @@ not inside `templates/`, so nothing installed lands in the template:
 npm run build
 node dist/index.js lockgen --template minimal       # in a scratch directory
 (cd lockgen/admin && npm install --package-lock-only)
-(cd lockgen && CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo generate-lockfile)
+(cd lockgen && cargo generate-lockfile)
 cp lockgen/admin/package-lock.json <repo>/templates/minimal/admin/
 cp lockgen/Cargo.lock              <repo>/templates/minimal/
 ```
 
-The resolver setting makes cargo pick, for each crate, the newest version that
-still builds on the template's `rust-version` (1.85, forma-server 0.2.0's
+The template's `resolver = "3"` makes cargo pick, for each crate, the newest
+version that still builds on its `rust-version` (1.85, forma-server 0.2.0's
 floor) instead of the newest outright; without it the lockfile can raise the
 Rust a new project needs (it once locked `sha2` 0.11.1, which needs 1.88).
 Then, in the template's `Cargo.lock`, rename the `lockgen` entry back to the

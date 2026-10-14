@@ -70,7 +70,7 @@ async fn main() {
         eprintln!("\n  Error: Frontend not built yet.\n");
         eprintln!("  Run these commands first:");
         eprintln!("    cd admin");
-        eprintln!("    npm install");
+        eprintln!("    npm ci");
         eprintln!("    npm run build\n");
         std::process::exit(1);
     }

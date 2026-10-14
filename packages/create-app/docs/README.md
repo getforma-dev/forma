@@ -16,7 +16,7 @@ its templates.
 ## What this repo ships
 
 `npx @getforma/create-app my-app` copies a template, substitutes the project
-name, and leaves a project that builds with `npm install && npm run build` in
+name, and leaves a project that builds with `npm ci && npm run build` in
 `admin/` and runs with `cargo run`. That is the whole product surface: a CLI of
 about 240 lines, a side-effect-free library half that the tests can import
 without starting a prompt, and two templates.

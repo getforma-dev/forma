@@ -7,7 +7,7 @@ import { E2E, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, withServer 
 /**
  * Runs the real CLI against a real temp directory.
  *
- * The structural half always runs. The build half — npm install, the frontend
+ * The structural half always runs. The build half — npm ci, the frontend
  * build, `cargo check` — runs when FORMA_SCAFFOLD_E2E=1, which is what turns a
  * template that cannot compile from a passing test into a failing one.
  */
@@ -71,6 +71,21 @@ describe('scaffolding', () => {
       const names = [...lock.matchAll(/^name = "([^"]+)"$/gm)].map((m) => m[1]!);
       expect(names).toContain(name);
       expect(names).toEqual([...names].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+    });
+
+    it('tells an npm user to install with npm ci, which leaves the shipped lockfile as it is', () => {
+      // `npm install` may rewrite a lockfile it would have written
+      // differently: npm 10 drops `"peer": true` flags from the dashboard's,
+      // npm 11 drops two bundled entries. `npm ci` never writes it.
+      const probe = `npmci-${template}`;
+      const res = runCli([probe, '--template', template], tmp, {
+        npm_config_user_agent: 'npm/11.6.2 node/v22.21.0 linux x64 workspaces/false',
+      });
+      expect(res.status, res.stderr).toBe(0);
+      // The CLI colours each command word, which would split "npm install".
+      const out = res.stdout.replace(/\x1b\[[0-9;]*m/g, '');
+      expect(out).toMatch(/^\s*npm ci$/m);
+      expect(out).not.toMatch(/\bnpm install\b/);
     });
 
     it('writes a .gitignore and no _gitignore', () => {
@@ -292,23 +307,20 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(body).toContain(`nonce="${nonce}"`);
     });
   }, 900_000);
-  it.each(TEMPLATES)('%s: no locked crate needs a newer Rust than the template declares', (template) => {
-    // Cargo.lock pins versions but does not record what Rust each needs; the
-    // crates' own manifests do. A lockfile resolved without the MSRV-aware
-    // resolver silently raised the floor to 1.88 (sha2 0.11.1), above the
-    // 1.85 that forma-server declares (FORMA-015).
-    const name = `e2e-msrv-${template}`;
-    expect(runCli([name, '--template', template], tmp).status).toBe(0);
-    const dest = path.join(tmp, name);
-    const toml = fs.readFileSync(path.join(dest, 'Cargo.toml'), 'utf8');
-    const floor = /^rust-version = "([^"]+)"/m.exec(toml.replace(/\r\n/g, '\n'))?.[1];
+  /**
+   * The locked crates whose own `rust-version` is above the project's.
+   * Cargo.lock pins versions but does not record what Rust each needs; the
+   * crates' manifests do, and `cargo metadata` reads them.
+   */
+  function cratesAboveTheFloor(dest: string): { floor: string; offenders: string[] } {
+    const toml = fs.readFileSync(path.join(dest, 'Cargo.toml'), 'utf8').replace(/\r\n/g, '\n');
+    const floor = /^rust-version = "([^"]+)"/m.exec(toml)?.[1];
     expect(floor, 'the template declares no rust-version').toBeTruthy();
-
     const meta = run('cargo', ['metadata', '--locked', '--format-version', '1'], dest);
     expect(meta.status, meta.stderr).toBe(0);
     const parts = (v: string) => v.split('.').map(Number);
-    const above = (v: string, floorV: string) => {
-      const [a, b] = [parts(v), parts(floorV)];
+    const above = (v: string) => {
+      const [a, b] = [parts(v), parts(floor!)];
       for (let i = 0; i < Math.max(a.length, b.length); i++) {
         if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
       }
@@ -317,10 +329,54 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const packages: Array<{ name: string; version: string; rust_version: string | null }> =
       JSON.parse(meta.stdout).packages;
     const offenders = packages
-      .filter((p) => p.rust_version && above(p.rust_version, floor!))
+      .filter((p) => p.rust_version && above(p.rust_version))
       .map((p) => `${p.name}@${p.version} needs ${p.rust_version}`);
+    return { floor: floor!, offenders };
+  }
+
+  it.each(TEMPLATES)('%s: no locked crate needs a newer Rust than the template declares', (template) => {
+    // A lockfile resolved without the MSRV-aware resolver silently raised the
+    // floor to 1.88 (sha2 0.11.1), above the 1.85 that forma-server declares
+    // (FORMA-015).
+    const name = `e2e-msrv-${template}`;
+    expect(runCli([name, '--template', template], tmp).status).toBe(0);
+    const { floor, offenders } = cratesAboveTheFloor(path.join(tmp, name));
     expect(offenders, `locked above the template's rust-version ${floor}`).toEqual([]);
   }, 900_000);
+
+  it.each(TEMPLATES)("%s: a user's own cargo update keeps every crate within the template's rust-version", (template) => {
+    // The shipped lockfile holds the floor; `resolver = "3"` makes cargo
+    // hold it through the user's updates too, on any cargo from 1.84. Without
+    // it, `cargo update` moves sha2 0.11.0 -> 0.11.1, which needs Rust 1.88.
+    const name = `e2e-update-${template}`;
+    expect(runCli([name, '--template', template], tmp).status).toBe(0);
+    const dest = path.join(tmp, name);
+    const update = run('cargo', ['update'], dest);
+    expect(update.status, update.stderr).toBe(0);
+    const { floor, offenders } = cratesAboveTheFloor(dest);
+    expect(offenders, `cargo update locked above the template's rust-version ${floor}`).toEqual([]);
+  }, 900_000);
+
+  it.each([
+    ['minimal', 'tracing'],
+    ['dashboard', 'serde'],
+  ])(
+    '%s scaffolded as %s, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it',
+    (template, name) => {
+      // With two packages of one name, cargo writes every reference to the
+      // registry one as "name version", so the scaffolder has to as well.
+      expect(runCli([name, '--template', template], tmp).status).toBe(0);
+      const dest = path.join(tmp, name);
+      const shipped = fs.readFileSync(path.join(dest, 'Cargo.lock'));
+
+      const locked = run('cargo', ['metadata', '--locked', '--format-version', '1'], dest);
+      expect(locked.status, locked.stderr).toBe(0);
+      const plain = run('cargo', ['tree', '--offline', '--depth', '1'], dest);
+      expect(plain.status, plain.stderr).toBe(0);
+      expect(fs.readFileSync(path.join(dest, 'Cargo.lock')).equals(shipped), 'cargo rewrote Cargo.lock').toBe(true);
+    },
+    900_000,
+  );
 
   it('minimal: build:ssr reads ssrEntryPoints by page name', () => {
     // @getforma/build looks an SSR entry up by page name and silently falls

@@ -13,7 +13,7 @@ is a claim about the whole stack.
 ```bash
 git clone https://github.com/getforma-dev/create-forma-app.git
 cd create-forma-app
-npm install
+npm ci
 npm test        # `pretest` builds the CLI first — the tests run dist/index.js
 npx tsc --noEmit
 ```

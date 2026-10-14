@@ -15,24 +15,47 @@ belongs to the release that publishes those.
   new project installs the set this repo's scaffold gate installed, not
   whatever resolves on the day (DR-32). This reverses 0.6.0's "no lockfile"
   rule: `package-lock.json` leaves `NEVER_COPY`. The staleness that rule
-  guarded against is now a test failure instead: `npm test` fails when a
-  template's lockfile disagrees with its `package.json` or `Cargo.toml`, locks a
-  version outside a declared range, or resolves from anywhere but the public
-  registries, and the scaffold gate installs with `npm ci` and builds with
-  `cargo --locked`. Each template declares `rust-version = "1.85"`,
-  forma-server 0.2.0's floor, and its `Cargo.lock` is resolved MSRV-aware
-  against it (`CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback`), so the
-  lockfile does not raise the Rust a new project needs: an unaware resolve
-  locked `sha2` 0.11.1, which needs 1.88; it is now 0.11.0. The scaffold gate
-  fails on any locked crate whose `rust-version` is above the template's. The
-  crate's own `Cargo.lock` entry carries the name placeholder; the scaffolder renames it and moves it to where cargo sorts it,
-  so a project's first `cargo run` leaves the lockfile untouched.
+  guarded against is now a test failure instead. `npm test` fails when an npm
+  lockfile's declared ranges differ from `package.json`'s, when a direct
+  dependency is locked outside its range, or when a package resolves from
+  anywhere but registry.npmjs.org. It also fails when a `Cargo.lock` names
+  different direct crates from `Cargo.toml`, when a direct crate is locked
+  outside its requirement, or when a crate comes from anywhere but crates.io.
+  It checks too that `npm pack` puts all four lockfiles in the tarball. The
+  scaffold gate installs with `npm ci` and builds with `cargo --locked`.
   Verified by `tests/templates.test.ts` > "ships an npm lockfile that agrees with package.json and resolves only from the npm registry"
   Verified by `tests/templates.test.ts` > "ships a Cargo.lock that locks its crates from crates.io under its placeholder name"
+  Verified by `tests/templates.test.ts` > "carries every template's lockfiles in the npm tarball"
   Verified by `tests/scaffold-lib.test.ts` > "copies a template's lockfiles, never its installed dependencies or build output"
+- **The lockfiles hold forma-server's Rust floor, 1.85, and so do a user's
+  updates.** Each template declares `rust-version = "1.85"` and
+  `resolver = "3"`, cargo's MSRV-aware resolver (Cargo 1.84+). Its
+  `Cargo.lock`, and any later `cargo update`, therefore picks crates that still
+  build on 1.85: an unaware resolve locked `sha2` 0.11.1, which needs 1.88; it
+  is 0.11.0. The scaffold gate fails on any locked crate whose `rust-version`
+  is above the template's, before and after a `cargo update`.
+  Verified by `tests/scaffold.test.ts` > "%s: no locked crate needs a newer Rust than the template declares"
+  Verified by `tests/scaffold.test.ts` > "%s: a user's own cargo update keeps every crate within the template's rust-version"
+- **A scaffolded `Cargo.lock` reads exactly as cargo would write it.** The
+  crate's own entry ships under the name placeholder. The scaffolder renames
+  it, moves it to where cargo sorts it, and, when the project is named after a
+  crate in its own graph (`tracing`, `serde`, `axum`, about a hundred names),
+  rewrites references to that crate as cargo then writes them,
+  `"tracing 0.1.44"`. Without that, `cargo --locked` refuses such a project
+  and a plain `cargo run` rewrites its lockfile before anyone has changed it.
+  Verified by `tests/scaffold-lib.test.ts` > "matches cargo's own lockfile for a project named %s, a crate in its graph, and is then a no-op"
+  Verified by `tests/scaffold-lib.test.ts` > "matches cargo's own lockfile when the project ties a locked crate's name and version"
   Verified by `tests/scaffold-lib.test.ts` > "moves the renamed entry to where cargo sorts it and changes nothing else"
   Verified by `tests/scaffold.test.ts` > "puts the project's own Cargo.lock entry where cargo sorts it"
-  Verified by `tests/scaffold.test.ts` > "%s: no locked crate needs a newer Rust than the template declares"
+  Verified by `tests/scaffold.test.ts` > "%s scaffolded as %s, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it"
+- **The install step is `npm ci`**, in the CLI's next steps, both templates'
+  "frontend not built" messages and their READMEs. A plain `npm install` may
+  rewrite the shipped lockfile (npm 10 and 11 both rewrite the dashboard's),
+  so a project's first documented step would modify it. When the CLI detects
+  pnpm, yarn or bun it still prints that tool's `install`, with a note that it
+  does not read `package-lock.json`.
+  Verified by `tests/scaffold.test.ts` > "tells an npm user to install with npm ci, which leaves the shipped lockfile as it is"
+  Verified by `tests/templates.test.ts` > "documents npm ci, never npm install, as the install step"
 
 ### Fixed
 

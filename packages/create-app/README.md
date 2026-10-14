@@ -31,7 +31,7 @@ cd my-app
 Then:
 ```bash
 # Build the frontend
-cd admin && npm install && npm run build && cd ..
+cd admin && npm ci && npm run build && cd ..
 
 # Start the Rust server
 cargo run

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEMPLATES, TEMPLATE_INFO } from '../src/scaffold';
-import { TEMPLATES_DIR, listFiles } from './helpers';
+import { REPO_ROOT, TEMPLATES_DIR, listFiles, run } from './helpers';
 
 /**
  * Structural assertions about the template sources.
@@ -55,16 +55,44 @@ function cargoLockPackages(template: string) {
     .map((block) => {
       const field = (key: string) => new RegExp(`^${key} = "([^"]*)"$`, 'm').exec(block)?.[1];
       const deps = /^dependencies = \[([\s\S]*?)^\]/m.exec(block)?.[1] ?? '';
+      // A dependency is written `"name"`, or `"name version"` when two
+      // versions of it are in the graph.
+      const refs = [...deps.matchAll(/"([^"]+)"/g)].map((m) => m[1]!);
       return {
         name: field('name'),
         version: field('version'),
         source: field('source'),
         checksum: field('checksum'),
-        // A dependency is written `"name"`, or `"name version"` when two
-        // versions of it are in the graph.
-        dependencies: [...deps.matchAll(/"([^" ]+)[^"]*"/g)].map((m) => m[1]!),
+        refs,
+        dependencies: refs.map((r) => r.split(' ')[0]!),
       };
     });
+}
+
+/**
+ * Each `[dependencies]` entry of a template's Cargo.toml and its version
+ * requirement, from `name = "req"` or `name = { version = "req", ... }`.
+ */
+function cargoRequirements(template: string): Record<string, string> {
+  const toml = fs.readFileSync(path.join(TEMPLATES_DIR, template, 'Cargo.toml'), 'utf8');
+  const section = toml.split('[dependencies]')[1] ?? '';
+  const out: Record<string, string> = {};
+  for (const line of section.split('\n').map((l) => l.trim())) {
+    const m = /^([\w-]+)\s*=\s*(?:"([^"]+)"|\{.*\bversion\s*=\s*"([^"]+)")/.exec(line);
+    if (m) out[m[1]!] = m[2] ?? m[3]!;
+  }
+  return out;
+}
+
+/**
+ * A Cargo requirement as the caret range it means: a bare `0.2` is `^0.2.0`,
+ * `1` is `^1.0.0`. Any other operator fails loudly rather than half-understood.
+ */
+function cargoCaret(requirement: string): string {
+  const bare = requirement.replace(/^\^/, '');
+  if (!/^\d+(\.\d+){0,2}$/.test(bare)) throw new Error(`unsupported Cargo requirement: ${requirement}`);
+  const [major, minor = '0', patch = '0'] = bare.split('.');
+  return `^${major}.${minor}.${patch}`;
 }
 
 /**
@@ -232,15 +260,37 @@ describe.each(TEMPLATES)('%s template', (template) => {
     // against the registry ("no locked crate needs a newer Rust than the
     // template declares").
     expect(cargoField(template, 'rust-version')).toBe(RUST_FLOOR);
+    // ...and holds it through the user's own `cargo update` too: resolver 3
+    // is cargo's MSRV-aware resolver, available from Cargo 1.84, below the floor.
+    expect(cargoField(template, 'resolver')).toBe('3');
     const packages = cargoLockPackages(template);
     const roots = packages.filter((p) => p.source === undefined);
     expect(roots.map((p) => p.name)).toEqual([cargoField(template, 'name')]);
     expect(roots[0]!.version).toBe(cargoField(template, 'version'));
     // The crate's direct dependencies in the lockfile are the ones Cargo.toml declares.
     expect([...roots[0]!.dependencies].sort(), 'regenerate Cargo.lock').toEqual([...cargoDeps(template)].sort());
+    // Each direct crate is locked at a version its requirement admits, so a
+    // requirement moved without regenerating the lockfile fails here.
+    for (const [crate, requirement] of Object.entries(cargoRequirements(template))) {
+      const ref = roots[0]!.refs.find((r) => r.split(' ')[0] === crate);
+      const locked = ref?.split(' ')[1] ?? packages.find((p) => p.name === crate && p.source)?.version;
+      expect(locked, `${crate} is not locked`).toBeTruthy();
+      expect(satisfiesCaret(locked!, cargoCaret(requirement)), `${crate}@${locked} is outside "${requirement}"`).toBe(true);
+    }
     for (const p of packages.filter((q) => q.source !== undefined)) {
       expect(p.source, `${p.name} comes from elsewhere`).toBe('registry+https://github.com/rust-lang/crates.io-index');
       expect(p.checksum, `${p.name} has no checksum`).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+
+  it('documents npm ci, never npm install, as the install step', () => {
+    // A plain `npm install` may rewrite the shipped lockfile (npm 10 and 11
+    // both rewrite the dashboard's), so a project nobody has touched would be
+    // modified by its first documented step. `npm ci` never writes it.
+    for (const rel of ['README.md', 'src/main.rs']) {
+      const text = fs.readFileSync(path.join(TEMPLATES_DIR, template, rel), 'utf8');
+      expect(text, `${template}/${rel}`).not.toMatch(/\bnpm install\b/);
+      expect(text, `${template}/${rel}`).toContain('npm ci');
     }
   });
 
@@ -342,6 +392,21 @@ describe.each(TEMPLATES)('%s template', (template) => {
   it('uses no real .gitignore, which npm pack would rename to .npmignore', () => {
     expect(files).not.toContain('.gitignore');
     expect(files).toContain('_gitignore');
+  });
+});
+
+describe('the published package', () => {
+  it("carries every template's lockfiles in the npm tarball", () => {
+    // The E2E gate scaffolds from this repository's tree, so it would not
+    // notice a lockfile missing from the tarball users install; the
+    // scaffolder would then quietly ship a project without it.
+    const pack = run('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], REPO_ROOT, 120_000);
+    expect(pack.status, pack.stderr).toBe(0);
+    const files: string[] = JSON.parse(pack.stdout)[0].files.map((f: { path: string }) => f.path);
+    for (const template of TEMPLATES) {
+      expect(files).toContain(`templates/${template}/Cargo.lock`);
+      expect(files).toContain(`templates/${template}/admin/package-lock.json`);
+    }
   });
 });
 

@@ -8,7 +8,7 @@ import {
   restoreGitignores,
   validateProjectName,
 } from '../src/scaffold';
-import { mkTmpDir, rmrf } from './helpers';
+import { REPO_ROOT, mkTmpDir, rmrf } from './helpers';
 
 /** Symlink creation needs Developer Mode or elevation on Windows. */
 function canSymlink(dir: string): boolean {
@@ -222,17 +222,46 @@ describe('placeCargoLockRoot', () => {
     );
   });
 
-  it('sorts a registry crate of the same name by version, and leaves an ordered file byte-identical', () => {
+  // The cases below take their expected output from cargo itself, never from
+  // hand-written blocks. Each `*-placeholder.lock` is a lockfile cargo wrote
+  // for a project with a neutral name, with that name then replaced by the
+  // placeholder and its entry moved last, as a template ships it; each
+  // `<name>.lock` is what cargo writes for the same graph once the project is
+  // named <name>. Regenerate them with `cargo generate-lockfile` on a project
+  // depending on `tracing = "0.1"` (or `itoa = "=1.0.18"` at version 1.0.18),
+  // then rename the package and let a plain `cargo metadata` rewrite the file.
+  const FIXTURES = path.join(REPO_ROOT, 'tests', 'fixtures', 'cargo-lock');
+  const scaffoldLock = (input: string, name: string) => {
     const lock = path.join(dir, 'Cargo.lock');
-    const ordered = lockfile(registry('axum', '0.8.9'), root('tokio'), registry('tokio', '1.53.3'));
-    fs.writeFileSync(lock, lockfile(registry('axum', '0.8.9'), registry('tokio', '1.53.3'), root('tokio')));
-    placeCargoLockRoot(lock, 'tokio');
-    expect(fs.readFileSync(lock, 'utf8')).toBe(ordered);
+    const text = fs.readFileSync(path.join(FIXTURES, input), 'utf8');
+    fs.writeFileSync(lock, text.replaceAll('{{PROJECT_NAME}}', name));
+    placeCargoLockRoot(lock, name);
+    return lock;
+  };
 
-    const before = fs.statSync(lock).mtimeMs;
-    placeCargoLockRoot(lock, 'tokio');
-    expect(fs.readFileSync(lock, 'utf8')).toBe(ordered);
-    expect(fs.statSync(lock).mtimeMs).toBe(before);
+  // Cargo writes a dependency as a bare "name" only while one package has
+  // that name. A project named after a crate in its graph makes two, and
+  // every reference to the registry crate then carries its version: the
+  // project's own list (`tracing`) or another crate's (`tracing-core`).
+  it.each(['tracing', 'tracing-core'])(
+    "matches cargo's own lockfile for a project named %s, a crate in its graph, and is then a no-op",
+    (name) => {
+      const lock = scaffoldLock('placeholder.lock', name);
+      const expected = fs.readFileSync(path.join(FIXTURES, `${name}.lock`), 'utf8');
+      expect(fs.readFileSync(lock, 'utf8')).toBe(expected);
+
+      const before = fs.statSync(lock).mtimeMs;
+      placeCargoLockRoot(lock, name);
+      expect(fs.readFileSync(lock, 'utf8')).toBe(expected);
+      expect(fs.statSync(lock).mtimeMs).toBe(before);
+    },
+  );
+
+  it("matches cargo's own lockfile when the project ties a locked crate's name and version", () => {
+    // At equal name and version cargo sorts the path package first, and a
+    // reference needs the source too: "itoa 1.0.18 (registry+…)".
+    const lock = scaffoldLock('tie-placeholder.lock', 'itoa');
+    expect(fs.readFileSync(lock, 'utf8')).toBe(fs.readFileSync(path.join(FIXTURES, 'itoa.lock'), 'utf8'));
   });
 
   it('keeps CRLF line endings, as a Windows checkout of a template has them', () => {

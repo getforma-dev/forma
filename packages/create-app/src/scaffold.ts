@@ -128,20 +128,32 @@ export function restoreGitignores(dir: string) {
 }
 
 /**
- * Move the project's own `[[package]]` entry in a scaffolded Cargo.lock to the
- * place cargo sorts it.
+ * Make a scaffolded Cargo.lock read exactly as cargo would write it once the
+ * project's own `[[package]]` entry carries the project's name.
  *
  * A template's Cargo.lock names the crate by its placeholder, and
- * `replacePlaceholders` rewrites that to the project name; but cargo orders
- * entries by name, so the renamed entry is now out of place. `cargo --locked`
- * compares lockfiles by content and accepts it, while a plain `cargo run`
- * rewrites the file to re-sort it, so the project would start with a modified
- * Cargo.lock before its author had changed anything. Cargo's order is the
- * package name compared bytewise, then the version; every other entry and the
- * file's line endings are left exactly as they were.
+ * `replacePlaceholders` rewrites that to the project name. Two things cargo
+ * derives from the name then go stale:
+ *
+ * - the entry's place: cargo orders entries by name compared bytewise, then
+ *   version, and at an equal name and version a path package (the project)
+ *   comes before a registry one;
+ * - references to a registry crate that shares the project's name: cargo
+ *   writes a dependency as `"name"` while one package has that name,
+ *   `"name version"` while one has that name and version, and
+ *   `"name version (source)"` otherwise, so naming a project `tracing` turns
+ *   every `"tracing"` in the file into `"tracing 0.1.44"`.
+ *
+ * Left stale, `cargo --locked` refuses the file when a name collides, and a
+ * plain `cargo run` rewrites it either way, so the project would start with a
+ * modified Cargo.lock before its author had changed anything. Every other
+ * line and the file's line endings are left exactly as they were.
  *
  * Verified by: tests/scaffold-lib.test.ts > "moves the renamed entry to where cargo sorts it and changes nothing else"
+ * Verified by: tests/scaffold-lib.test.ts > "matches cargo's own lockfile for a project named %s, a crate in its graph, and is then a no-op"
+ * Verified by: tests/scaffold-lib.test.ts > "matches cargo's own lockfile when the project ties a locked crate's name and version"
  * Verified by: tests/scaffold.test.ts > "puts the project's own Cargo.lock entry where cargo sorts it"
+ * Verified by: tests/scaffold.test.ts > "%s scaffolded as %s, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it"
  */
 export function placeCargoLockRoot(lockPath: string, crateName: string) {
   if (!fs.existsSync(lockPath)) return;
@@ -171,15 +183,31 @@ export function placeCargoLockRoot(lockPath: string, crateName: string) {
   const root = blocks.splice(rootIdx, 1)[0]!;
   const rootVersion = field(root, 'version');
 
+  // At an equal name and version, the project (a path package) sorts first.
   const sortsAfterRoot = (b: string[]) => {
     const name = field(b, 'name');
     if (name !== crateName) return name > crateName;
-    return compareVersions(field(b, 'version'), rootVersion) > 0;
+    return compareVersions(field(b, 'version'), rootVersion) >= 0;
   };
   const at = blocks.findIndex(sortsAfterRoot);
   blocks.splice(at === -1 ? blocks.length : at, 0, root);
 
-  let next = [...head, ...blocks.flat()].join(eol);
+  // Rewrite each reference to a registry namesake from the form it had
+  // without the project to the form it needs with it.
+  const registry = blocks.filter((b) => b !== root && field(b, 'name') === crateName);
+  const reference = (b: string[], among: string[][]) => {
+    const version = field(b, 'version');
+    if (among.filter((o) => field(o, 'version') === version).length > 1) {
+      return `${crateName} ${version} (${field(b, 'source')})`;
+    }
+    return new Set(among.map((o) => field(o, 'version'))).size > 1 ? `${crateName} ${version}` : crateName;
+  };
+  const rewrites = new Map(
+    registry.map((b) => [` "${reference(b, registry)}",`, ` "${reference(b, [...registry, root])}",`]),
+  );
+  const body = blocks.flat().map((line) => rewrites.get(line) ?? line);
+
+  let next = [...head, ...body].join(eol);
   if (!finalNewline) next = next.slice(0, -eol.length);
   if (next !== text) fs.writeFileSync(lockPath, next);
 }
