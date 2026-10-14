@@ -6,7 +6,9 @@
   `render` and `render_island`, the browser's WASM walker, are
   `#[deprecated]` and are removed in 3.0.0 with the feature; islands
   re-render with `@getforma/core`'s `h()`. They still build and behave as at
-  0.2.1.
+  0.2.1. forma-server's `AssetManifest::wasm` and `WasmAssets` are deprecated
+  with them, and the `window.__FORMA_WASM__` script they add to a page goes
+  in 3.0.0.
 
 - **The service worker is opt-in (FORMA-130, DR-25).** forma-server registers
   `/sw.js` only for an application that turns it on
