@@ -76,6 +76,7 @@ Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
   `src/deprecations.rs` (`WasmRender`, `WasmRenderIsland`; built by
   `cargo test -p forma-ir --doc --features wasm`, a new CI step): the 0.2.1
   call compiles under `allow(deprecated)` and fails under `deny(deprecated)`.
+  The public deprecation text names no decision record (FORMA-131's review).
 
 ### Fixed (documentation only)
 - `IrHeader`'s doc comment calls the module a `.ir` file, the name the

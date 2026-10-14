@@ -150,6 +150,15 @@ deprecated and go in 3.0.0.
   too; it is removed in 3.0.0.
 - `render_page_with_nonce`: from 3.0.0 the render draws every nonce and no
   caller supplies one (L-14).
+- `AssetManifest::wasm` and `WasmAssets`, the WASM walker's entry in the
+  manifest (FORMA-131, DR-23). The walker is deprecated across the stack:
+  `@getforma/core/wasm`, forma-ir's `wasm` feature and `@getforma/build`'s
+  `wasm` key all go in 3.0.0. With them goes the nonced
+  `window.__FORMA_WASM__` script a page gets when the manifest names a
+  walker and its route has an `.ir` module; until then that page is
+  unchanged. Every `AssetManifest` literal names the field, so `wasm: None`
+  warns too. Doctest pairs: `ManifestWasm`, `ManifestWasmLiteral`,
+  `WasmAssetsType`.
 - Each deprecation is pinned by a doctest pair in `src/deprecations.rs` (the
   0.2.1 call compiles under `allow(deprecated)` and fails under
   `deny(deprecated)`), and `tests/compat_0_2_1.rs` calls the whole 0.2.1 page

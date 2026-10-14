@@ -26,6 +26,7 @@ const ROUTE: &str = "/t/:tenant";
 
 // -- Fixtures ---------------------------------------------------------------
 
+#[allow(deprecated)] // `wasm` is named by every 0.2.x `AssetManifest` literal (DR-23)
 fn manifest() -> AssetManifest {
     let mut routes = HashMap::new();
     routes.insert(

@@ -199,6 +199,10 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         })
         .unwrap_or_default();
 
+    // The WASM walker's bootstrap, for a manifest that names one: deprecated
+    // with `AssetManifest::wasm`, and removed with it in 3.0.0. Until then
+    // the page is what 0.2.1 wrote.
+    #[allow(deprecated)]
     let wasm_script = match (
         &config.manifest.wasm,
         config.manifest.route(config.route_pattern),

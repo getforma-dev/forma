@@ -5,7 +5,7 @@
 //!
 //! The `wasm` feature, which exports `render` and `render_island` for the
 //! browser's WASM walker (`@getforma/core/wasm`), is deprecated since 0.2.2 and
-//! is removed in 3.0.0 (DR-23): islands re-render in the browser with
+//! is removed in 3.0.0: islands re-render in the browser with
 //! `@getforma/core`'s `h()`. Both exports still build and work through 0.2.x.
 
 // README.md and SECURITY.md both promise "Zero `unsafe` blocks". This is what
@@ -85,12 +85,12 @@ use wasm_bindgen::prelude::*;
 /// rejection handler on this call — that is pre-existing behavior for parse
 /// errors, but the set of inputs that reach it is wider.
 ///
-/// Deprecated with the `wasm` feature, which 3.0.0 removes (DR-23).
+/// Deprecated with the `wasm` feature, which 3.0.0 removes.
 #[cfg(feature = "wasm")]
 #[deprecated(
     since = "0.2.2",
     note = "the WASM walker goes with the `wasm` feature: re-render an island in the browser \
-            with @getforma/core's `h()`, as islands already do. Removed in 3.0.0 (DR-23)"
+            with @getforma/core's `h()`, as islands already do. Removed in 3.0.0"
 )]
 // wasm-bindgen's generated export calls this function; the allow keeps that
 // call quiet. A caller's own use still warns: the lint fires at the caller.
@@ -116,12 +116,12 @@ pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
 /// Panics on error (throws a JS exception in WASM — client loader catches and
 /// falls back). See [`render`] for the widened error set.
 ///
-/// Deprecated with the `wasm` feature, which 3.0.0 removes (DR-23).
+/// Deprecated with the `wasm` feature, which 3.0.0 removes.
 #[cfg(feature = "wasm")]
 #[deprecated(
     since = "0.2.2",
     note = "the WASM walker goes with the `wasm` feature: re-render an island in the browser \
-            with @getforma/core's `h()`, as islands already do. Removed in 3.0.0 (DR-23)"
+            with @getforma/core's `h()`, as islands already do. Removed in 3.0.0"
 )]
 #[allow(deprecated)] // as `render`: wasm-bindgen's generated export calls it
 #[wasm_bindgen]
