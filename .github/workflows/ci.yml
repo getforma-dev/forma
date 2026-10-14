@@ -77,7 +77,7 @@ jobs:
   # rebuilds the whole workspace for a second target and installs gcc-multilib;
   # gating it behind `test` means the cheap tier has released its runners
   # before the expensive tier asks for any. Peak concurrent demand for this
-  # workflow drops from 7 jobs to 4.
+  # workflow drops from 8 jobs to 4.
   test-32bit:
     runs-on: ubuntu-latest
     needs: test
@@ -94,6 +94,32 @@ jobs:
       - name: Install 32-bit toolchain
         run: sudo apt-get update && sudo apt-get install -y gcc-multilib
       - run: cargo test --workspace --target i686-unknown-linux-gnu
+
+  # forma-server has code that exists only in release builds
+  # (`cfg(not(debug_assertions))`): the per-type file-name cache behind
+  # `serve_asset`. Every other job builds the dev profile, so none of them
+  # compiles that code, let alone runs it. 0.2.0 shipped a release-only defect
+  # there (one cache shared by every `Embed` type, so a second type's valid
+  # assets answered 404) with all of them green. This job lints and runs
+  # forma-server's whole suite with the release profile the crate ships in.
+  # Tier two, behind `test`, for the same runner-demand reason as above.
+  test-release:
+    runs-on: ubuntu-latest
+    needs: test
+    # MEASURED: 34s in CI (run 38507258797, first run of this cache key, so
+    # nothing restored); 26s locally from a cold release target. 20 matches
+    # the other tier-two jobs and leaves room for a slow runner.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release
+      - run: cargo clippy -p forma-server --all-targets --all-features --release -- -D warnings
+      - run: cargo test -p forma-server --release
 
   # The two crates publish different `rust-version` values and both are
   # load-bearing on crates.io/docs.rs, so both are built at exactly the

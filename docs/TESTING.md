@@ -347,6 +347,7 @@ aspirational unless it says "proposed".
 | Windows *and* Linux matrix | `forma-tools`, `create-forma-app` — this toolchain's first field-reported bug was Windows-only and structural |
 | Scaffold E2E behind an explicit flag, as its own job and before publish | `create-forma-app` (`FORMA_SCAFFOLD_E2E=1`) |
 | 32-bit target job (`usize` is 32 bits on wasm32) and per-crate MSRV pins | `forma` |
+| Release-profile job: `cargo clippy -p forma-server --release` (with `-D warnings`) and `cargo test -p forma-server --release`. It is the only job that compiles forma-server's `cfg(not(debug_assertions))` code; 0.2.0 shipped a release-only 404 there while every other job was green | `forma` `test-release` (added 2026-10-14, after the date above) |
 
 **Proposed, not yet wired** (each is lint-grade and would have caught real dead
 weight the day it was written):
