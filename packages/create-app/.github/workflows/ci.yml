@@ -136,6 +136,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
+      # SR2: this repository's own install carries the npm registry's
+      # signatures. Here, in the job that always runs, rather than in
+      # `scaffold`, which preflight skips while a template pin is unpublished;
+      # each template's install is checked the same way inside the scaffold
+      # gate, after its `npm ci`. Reads the registry's public keys; needs no
+      # token and no permission beyond the job's.
+      - run: npm audit signatures
       - run: npm run build
       - run: npx tsc --noEmit
       - run: npm test

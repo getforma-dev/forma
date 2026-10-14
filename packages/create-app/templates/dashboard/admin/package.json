@@ -2,16 +2,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsx build.ts",
-    "dev": "tsx build.ts --watch",
+    "build": "tsx build.ts --strict",
+    "dev": "tsx build.ts --watch --strict",
     "test": "playwright test",
     "test:headed": "playwright test --headed"
   },
   "dependencies": {
-    "@getforma/core": "^2.0.2"
+    "@getforma/core": "^2.1.0"
   },
   "devDependencies": {
-    "@getforma/build": "^0.3.0",
+    "@getforma/build": "^0.3.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/cli": "^4.1.0",
     "esbuild": "^0.28.1",

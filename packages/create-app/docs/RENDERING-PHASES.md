@@ -6,12 +6,15 @@ that the flagship dashboard is client-rendered.
 `forma-server` has exactly two rendering modes, and a scaffolded server picks
 one per route:
 
-| Mode | What the server sends | What the client does |
-|---|---|---|
-| `RenderMode::Phase1ClientMount` | `<div id="app"></div>` plus the script and style tags | `mount()` builds the whole tree |
-| `RenderMode::Phase2SsrReconcile` | HTML rendered from the page's `.ir` module, with hydration markers | adopts the existing DOM and attaches reactivity |
+| Mode | Served by | What the server sends | What the client does |
+|---|---|---|---|
+| `RenderMode::Phase1ClientMount` | `render_browser_shell` | `<div id="app"></div>` plus the script and style tags | `mount()` builds the whole tree |
+| `RenderMode::Phase2SsrReconcile` | `try_render` | HTML rendered from the page's `.ir` module, with hydration markers | adopts the existing DOM and attaches reactivity |
 
-(`forma-server`, `crates/forma-server/src/types.rs`.)
+(`forma-server`, `crates/forma-server/src/types.rs` and `src/render.rs`. From
+forma-server 0.2.2 the mode is a declaration, never a fallback: `try_render`
+returns a coded `RenderError` where the deprecated `render_page` served the
+Phase 1 shell in place of a failed Phase 2 render.)
 
 Phase 2 is not strictly better. It is better *when the page's IR is real*, and
 whether it is real is decided by the compiler, not by the server.
@@ -42,7 +45,7 @@ Two consequences for a template author:
 
 1. **A page whose content depends on data fetched at runtime may compile to
    almost nothing.** Following a component *call* is the easy half, and the
-   unreleased compiler does it well (see the re-measurement below). What no
+   compiler does it well since 0.3.0 (see the re-measurement below). What no
    compiler here can do is evaluate `servers.map(s => <ServerCard s={s}/>)`
    before the fetch that fills `servers` has happened, or inline
    `<StatCard value={m.value}/>` when `m` does not exist until runtime. Those
@@ -56,28 +59,37 @@ Two consequences for a template author:
 
 **`minimal` is Phase 2.** Its page shell is literal JSX inside the `mount()`
 callback — no component tags — so `npm run build:ssr` emits real IR and the
-server sends real markup. Its `main.rs` loads the IR modules *and* passes slot
-data; `render_page` falls straight back to Phase 1 unless both are present.
+server sends real markup. Its `main.rs` loads the IR modules with the strict
+loader, which stops the server at start on a module that is missing or
+corrupt, *and* passes slot data to `try_render`, which returns a coded
+`RenderError` (`RENDER-101`) rather than a page when either is absent. The
+mode is read at start from what the build emitted: a route with a module is
+rendered by `try_render`, one built without (`npm run build`) by
+`render_browser_shell`. A failed render is answered as an error, never with
+the Phase 1 shell `render_page` used to substitute for it.
 
 - Verified by: `tests/templates.test.ts` > "keeps its SSR root as literal JSX inside the mount callback"
-- Verified by: `tests/templates.test.ts` > "loads IR modules and passes slots, so Phase 2 is reachable"
+- Verified by: `tests/templates.test.ts` > "loads its IR modules with the strict loader and renders a loaded route with try_render, passing slots"
 - Verified by: `tests/scaffold.test.ts` (scaffold E2E) — the built server must serve real server-rendered markup after `build:ssr`
+- Verified by: `tests/scaffold.test.ts` > "minimal: a corrupt module stops the server before it binds, and a failed render answers 500, with neither its error nor a shell"
 
 **`dashboard` is Phase 1, deliberately.** Every one of its pages renders data
 fetched at runtime from its own `/api/*` routes — `.map()` over a fetched
 array, components handed a non-literal prop — and that is the shape no
 source-walking compiler can prove. (It is *not* simply "it uses components":
-component resolution is fixed in the unreleased compiler and the dashboard is
-still 2/16 under Phase 2. The measurement is below.) Its `main.rs` asks for
-`Phase1ClientMount`
-explicitly, its `build.ts` has no `ssr` flag, and there is no `build:ssr`
-script to reach for by mistake. It still installs a `tracing` subscriber, so if
-you wire SSR up yourself, `forma-server`'s "falling back to Phase 1" warnings
-reach your terminal instead of disappearing.
+component resolution is fixed in the compiler since 0.3.0 and the dashboard is
+still 2/16 under Phase 2. The measurement is below.) Phase 1 is declared on
+both sides (L-13): its `build.ts` declares the entry `ssr: false`, its
+`main.rs` serves every page through `render_browser_shell`, and there is no
+`build:ssr` script to reach for by mistake. It still installs a `tracing`
+subscriber and logs each `RenderError` through it, so if you wire SSR up
+yourself with `try_render`, a failed render reaches your terminal instead of
+disappearing.
 
-- Verified by: `tests/templates.test.ts` > "does not configure SSR, and offers no build:ssr script to reach for"
-- Verified by: `tests/templates.test.ts` > "asks for Phase 1 explicitly instead of computing a mode it discards"
-- Verified by: `tests/templates.test.ts` > "installs a tracing subscriber so forma-server fallbacks are visible"
+- Verified by: `tests/templates.test.ts` > "declares its entry browser-rendered (ssr: false), turns no SSR on, and offers no build:ssr script"
+- Verified by: `tests/templates.test.ts` > "serves every page through render_browser_shell, by declaration, and loads no IR"
+- Verified by: `tests/templates.test.ts` > "installs a tracing subscriber and logs each render error through it"
+- Verified by: `tests/scaffold.test.ts` > "dashboard: serves each page as its browser shell, by declaration (ssr: false)"
 
 The measured consequence of turning SSR on for the dashboard — how many bytes
 of IR it emits and how many of its Playwright tests then fail — is recorded in
@@ -88,13 +100,14 @@ treat it as a dated measurement, not a constant.
 ## This rule is version-bound. Check it before you repeat it.
 
 The templates install **published** versions, the ones each template's
-lockfile names (`@getforma/compiler` 0.3.6 and `@getforma/build` 0.3.0 as of
-2026-10-14, release A1), so what a scaffolded project gets is what was published and
+lockfile names (`@getforma/compiler` 0.3.7 and `@getforma/build` 0.3.1 as of
+2026-10-14, release A2), so what a scaffolded project gets is what was published and
 locked — not whatever is in the `forma-tools` working tree.
 
-That matters right now, because a large batch of resolver fixes sits in
-`forma-tools`' `[Unreleased]` and **is not on npm**. Until it publishes, a
-scaffolded app behaves as described above.
+The resolver fixes this page measured from `forma-tools`' `[Unreleased]` on
+2026-08-06 were published that day as `@getforma/compiler` 0.3.0, and every
+lockfile the templates have shipped since release A1 holds a compiler with
+them; a scaffolded app behaves as described above.
 
 What changes when it does publish:
 
@@ -154,8 +167,9 @@ constructs it can prove is not.
 
 1. Keep the page shell provable — literal JSX in the entry, components inlined
    from relative imports with literal props — and take Phase 2.
-2. Or accept Phase 1, say so in the template's README, and ask for it
-   explicitly in `main.rs` rather than computing a mode you discard.
+2. Or accept Phase 1, say so in the template's README, and declare it on both
+   sides: `ssr: false` on the entry in `build.ts`, and `render_browser_shell`
+   in `main.rs`, rather than computing a mode you discard.
 3. Never ship a template whose server claims Phase 2 while its build emits
    island shells. Build it, look at the emitted `.ir`, and read the compiler's
    warnings before you decide.

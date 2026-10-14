@@ -2,6 +2,9 @@
 target/
 node_modules/
 dist/
+# @getforma/build's staging and previous output, left beside dist/ by a
+# build that was killed part way (the next build removes or restores them)
+.dist.forma-*
 
 # Secrets — never commit these
 .env

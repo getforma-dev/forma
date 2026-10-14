@@ -81,7 +81,8 @@ export function runCli(args: string[], cwd: string, env: Record<string, string> 
   });
 }
 
-export function run(cmd: string, args: string[], cwd: string, timeout = 900_000) {
+/** Run a command; `env` overrides variables, e.g. `FORMA_STRICT` for a build. */
+export function run(cmd: string, args: string[], cwd: string, timeout = 900_000, env: Record<string, string> = {}) {
   return spawnSync(cmd, args, {
     cwd,
     encoding: 'utf8',
@@ -90,21 +91,12 @@ export function run(cmd: string, args: string[], cwd: string, timeout = 900_000)
     // kill a larger graph mid-output.
     maxBuffer: 64 * 1024 * 1024,
     shell: process.platform === 'win32',
-    env: { ...process.env, FORCE_COLOR: '0' },
+    env: { ...process.env, FORCE_COLOR: '0', ...env },
   });
 }
 
-/**
- * Start a scaffolded project's compiled server, hand its first response body
- * to `visit`, and shut it down again. `get` fetches any further path from the
- * same server. Both templates hard-code `127.0.0.1:3000`, so this is serial by
- * construction.
- */
-export async function withServer<T>(
-  projectDir: string,
-  binaryName: string,
-  visit: (body: string, res: Response, get: (path: string) => Promise<Response>) => T | Promise<T>,
-): Promise<T> {
+/** A scaffolded project's compiled server, or a thrown error naming the missing path. */
+function serverBinary(projectDir: string, binaryName: string): string {
   const exe = path.join(
     projectDir,
     'target',
@@ -112,8 +104,45 @@ export async function withServer<T>(
     process.platform === 'win32' ? `${binaryName}.exe` : binaryName,
   );
   if (!fs.existsSync(exe)) throw new Error(`server binary missing: ${exe}`);
+  return exe;
+}
 
-  const child = spawn(exe, [], { cwd: projectDir, stdio: 'ignore' });
+/**
+ * Start a server with its stdout and stderr captured. `output()` is what it
+ * has written so far, without terminal colour codes (tracing's formatter
+ * writes them even into a pipe).
+ */
+function startServer(exe: string, cwd: string) {
+  const child = spawn(exe, [], { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+  let written = '';
+  const collect = (chunk: Buffer) => {
+    written += chunk.toString('utf8');
+  };
+  child.stdout!.on('data', collect);
+  child.stderr!.on('data', collect);
+  const output = () => written.replace(/\x1b\[[0-9;]*m/g, '');
+  return { child, output };
+}
+
+/**
+ * Start a scaffolded project's compiled server, hand its first response body
+ * to `visit`, and shut it down again. `get` fetches any further path from the
+ * same server; `output()` is what the server has logged so far. Both
+ * templates hard-code `127.0.0.1:3000`, so this is serial by construction,
+ * and it waits for the server to exit, so the next one finds the port free.
+ */
+export async function withServer<T>(
+  projectDir: string,
+  binaryName: string,
+  visit: (
+    body: string,
+    res: Response,
+    get: (path: string) => Promise<Response>,
+    output: () => string,
+  ) => T | Promise<T>,
+): Promise<T> {
+  const { child, output } = startServer(serverBinary(projectDir, binaryName), projectDir);
+  const exited = new Promise((resolve) => child.once('exit', resolve));
   try {
     let res: Response | undefined;
     for (let attempt = 0; attempt < 100; attempt++) {
@@ -124,10 +153,49 @@ export async function withServer<T>(
         await new Promise((r) => setTimeout(r, 200));
       }
     }
-    if (!res) throw new Error('server never accepted a connection on 127.0.0.1:3000');
+    if (!res) throw new Error(`server never accepted a connection on 127.0.0.1:3000; it wrote:\n${output()}`);
     const get = (route: string) => fetch(`http://127.0.0.1:3000${route}`);
-    return await visit(await res.text(), res, get);
+    return await visit(await res.text(), res, get, output);
   } finally {
     child.kill();
+    await exited;
   }
+}
+
+/**
+ * Start a server that must refuse to start, and watch it for at most `ms`:
+ * until it exits, or until anything accepts a connection on 127.0.0.1:3000,
+ * which is polled the whole time. `code` is its exit code, or null when it was
+ * still running and had to be killed; `accepted` says whether the port
+ * answered meanwhile.
+ */
+export async function runRefusingServer(
+  projectDir: string,
+  binaryName: string,
+  ms = 30_000,
+): Promise<{ code: number | null; output: string; accepted: boolean }> {
+  const { child, output } = startServer(serverBinary(projectDir, binaryName), projectDir);
+  let code: number | null | undefined;
+  // 'close' fires once the process has exited and its output is drained.
+  const closed = new Promise<void>((resolve) =>
+    child.once('close', (exitCode) => {
+      code = exitCode;
+      resolve();
+    }),
+  );
+  let accepted = false;
+  const deadline = Date.now() + ms;
+  while (code === undefined && !accepted && Date.now() < deadline) {
+    try {
+      await fetch('http://127.0.0.1:3000/', { signal: AbortSignal.timeout(1_000) });
+      accepted = true;
+    } catch {
+      // Nothing is listening, which is what a refused start looks like.
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  const running = code === undefined;
+  if (running) child.kill();
+  await closed;
+  return { code: running ? null : (code ?? null), output: output(), accepted };
 }

@@ -1,12 +1,12 @@
 use std::sync::Arc;
 use axum::{
     extract::State,
-    http::HeaderMap,
-    response::{Html, IntoResponse},
+    http::{header, StatusCode},
+    response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
-use forma_server::{assets, render_page, sw, PageConfig, RenderMode};
+use forma_server::{assets, render_browser_shell, sw, PageConfig, RenderCtx, RenderMode};
 use rust_embed::Embed;
 
 mod data;
@@ -19,17 +19,23 @@ struct AppState {
     manifest: forma_server::types::AssetManifest,
 }
 
-async fn page_dashboard(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // Phase 1: the server sends an empty `<div id="app">` and the client
-    // mounts into it. This is deliberate for this template — the page is a
-    // tree of components, and the FMIR compiler can only walk literal JSX, so
-    // an SSR build of THIS app produces island placeholders rather than
-    // markup (see README > "Phase 1 by design"). The `minimal` template
-    // demonstrates a working Phase 2 setup.
+async fn page_dashboard(State(state): State<Arc<AppState>>) -> Response {
+    // Phase 1, by declaration: `admin/build.ts` declares the dashboard's entry
+    // `ssr: false`, and every page is served by `render_browser_shell`, an
+    // empty `<div id="app">` the client mounts into. This is deliberate for
+    // this template — the page is a tree of components over data fetched at
+    // run time, which the FMIR compiler cannot render on the server, so an SSR
+    // build of THIS app produces island placeholders rather than markup (see
+    // README > "Phase 1 by design"). The `minimal` template demonstrates a
+    // working Phase 2 setup.
     //
     // personality_css sets the dark background immediately via a nonce'd
     // <style> tag, so there is no white flash before the JS mounts.
-    let page = render_page(&PageConfig {
+    //
+    // Every forma-server 0.2.x `PageConfig` names `config_script`, which is
+    // deprecated and removed in 3.0.0; it stays `None`.
+    #[allow(deprecated)]
+    let config = PageConfig {
         title: "FormaOps Dashboard",
         route_pattern: "/",
         manifest: &state.manifest,
@@ -37,18 +43,32 @@ async fn page_dashboard(State(state): State<Arc<AppState>>) -> impl IntoResponse
         ir_module: None,
         slots: None,
         config_script: None,
-        // Prefer config_json over config_script for anything derived from user
-        // input: serde_json escapes every < , so it cannot break out of the script.
+        // Server data reaches the page here, as JSON: serde_json escapes every
+        // <, so data derived from user input cannot break out of the script.
         config_json: None,
         body_class: None,
         personality_css: Some("body{background:#282828;color:#ebdbb2;margin:0}"),
         body_prefix: None,
-    });
+    };
 
-    // The policy, `Cache-Control: no-store` and the document security headers,
-    // from the same render_page call that produced the HTML and its nonce.
-    let headers: HeaderMap = page.headers().into_iter().collect();
-    (headers, Html(page.html))
+    match render_browser_shell(&config, &RenderCtx::new()) {
+        // A `PageResponse` sends the HTML with the policy for its nonce,
+        // `Cache-Control: no-store` (the nonce is this response's alone) and
+        // the document security headers.
+        Ok(page) => page.into_response(),
+        // Forma logs nothing: count failures by code and route here, and
+        // answer with your own error page. The error stays in the log, never
+        // in the response, and no empty shell takes the page's place.
+        Err(error) => {
+            tracing::error!(code = error.code(), route = error.route(), "{error}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(header::CACHE_CONTROL, "no-store"), (header::X_CONTENT_TYPE_OPTIONS, "nosniff")],
+                "Internal Server Error",
+            )
+                .into_response()
+        }
+    }
 }
 
 async fn api_metrics() -> Json<Vec<data::Metric>> { Json(data::get_metrics()) }
@@ -62,8 +82,10 @@ async fn api_incidents() -> Json<Vec<data::Incident>> { Json(data::get_incidents
 
 #[tokio::main]
 async fn main() {
-    // Without a subscriber, forma-server's warnings (asset lookups, render
-    // fallbacks) go nowhere and a misconfigured build looks like a working one.
+    // A render that fails comes back to `page_dashboard` as a coded error,
+    // which it logs through `tracing`; forma-server's own warnings (asset
+    // lookups, security events) go there too. Without a subscriber those
+    // lines go nowhere and a misconfigured build looks like a working one.
     tracing_subscriber::fmt::init();
 
     if Assets::get("manifest.json").is_none() {
@@ -75,7 +97,17 @@ async fn main() {
         std::process::exit(1);
     }
 
-    let manifest = assets::load_manifest::<Assets>();
+    let manifest = assets::try_load_manifest::<Assets>().unwrap_or_else(|error| {
+        eprintln!("\n  Error: admin/dist/manifest.json: {error}\n");
+        std::process::exit(1);
+    });
+
+    // No service worker: no page registers one, and /sw.js serves
+    // forma-server's retiring worker, which deletes the caches an earlier
+    // Forma worker left on this origin and unregisters itself. To turn a
+    // worker on, see `forma_server::sw`.
+    sw::configure(sw::ServiceWorker::off()).expect("configured once, before the first page");
+
     let state = Arc::new(AppState { manifest });
 
     let app = Router::new()

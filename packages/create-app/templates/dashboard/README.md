@@ -38,6 +38,24 @@ data in `src/data.rs`, so exposure costs you nothing — the moment you point th
 at a real database, put authentication in front of them. The server prints a
 warning at startup whenever `FORMA_HOST` is set to a non-loopback address.
 
+**No service worker.** `main.rs` configures forma-server's worker setting off
+(`sw::ServiceWorker::off()`), so no page registers one, and `/sw.js` serves
+forma-server's retiring worker: a browser that installed a Forma worker on this
+origin before deletes its caches and unregisters it on its next visit. The
+worker is opt-in, per application; see `forma_server::sw` before turning it on.
+
+**WebKit (Safari) logs one console error per page in a debug build:** "The
+Content Security Policy 'require-trusted-types-for 'script'; trusted-types
+forma forma-runtime' was delivered in report-only mode, but does not specify a
+'report-to'". forma-server 0.2.2 sends Trusted Types in
+`Content-Security-Policy-Report-Only` in development builds, and this template
+names no reporting endpoint. It blocks nothing, and a release build sends no
+Report-Only policy without an endpoint. The Playwright suite runs Chromium,
+which logs nothing for it; a WebKit project that fails on console errors meets
+it until the server names an endpoint it answers, for example
+`PolicyExtensions::new().report_uri("/csp-reports")` on the `RenderCtx`
+(`with_policy`) and a route that accepts the POST.
+
 ---
 
 ## What's Inside
@@ -106,7 +124,7 @@ flowchart TB
     direction TB
     pages["Page Routes<br/><i>/ · /deployments · /servers · /settings</i>"]
     api["JSON API<br/><i>8 endpoints, unauthenticated</i>"]
-    assets["Static Assets<br/><i>rust-embed · content hashing<br/>Service Worker · CSP headers</i>"]
+    assets["Static Assets<br/><i>rust-embed · content hashing<br/>CSP headers · no service worker</i>"]
   end
 
   client -- "createFetch( '/api/…' )" --> api
@@ -148,21 +166,29 @@ because the same rule decides how *your* pages will behave:
 
 | Measured | Compiler | IR emitted | Named signal slots | Islands | Playwright, Phase 2 |
 |---|---|---|---|---|---|
-| earlier | published `@getforma/compiler` 0.2.0 (what this template pins) | 605 B of empty shells | — | all anonymous | 2 of 16 |
-| 2026-08-06 | `forma-tools` `[Unreleased]` — the resolver fixes, **not on npm** | 14856 B | 3 of 90 | 64, of which **27 named** (`Icon` ×15, `StatCard` ×4, `ProgressBar` ×3, `StatusBadge` ×2, `UserAvatar`, `RequestVolumeChart`, `formatDuration`) and 37 anonymous | 2 of 16 |
+| earlier | published `@getforma/compiler` 0.2.0 (what this template pinned then; it pins no compiler since its pages are browser-rendered by declaration) | 605 B of empty shells | — | all anonymous | 2 of 16 |
+| 2026-08-06 | `forma-tools` `[Unreleased]` — the resolver fixes, published that day as `@getforma/compiler` 0.3.0 | 14856 B | 3 of 90 | 64, of which **27 named** (`Icon` ×15, `StatCard` ×4, `ProgressBar` ×3, `StatusBadge` ×2, `UserAvatar`, `RequestVolumeChart`, `formatDuration`) and 37 anonymous | 2 of 16 |
 
-The second row is the interesting one. The unreleased compiler fixes real
+The second row is the interesting one. Those compiler fixes are real
 defects — `.tsx` pages no longer compile to a placeholder, components imported
 by a page file resolve, islands carry their real names — and the sidebar, top
 bar and layout genuinely arrive as server-rendered markup. The page *content*
 still does not, because it is not knowable at compile time, and the Playwright
 number does not move. Fixing resolution was necessary and is not sufficient.
 
-So `main.rs` asks for `RenderMode::Phase1ClientMount` explicitly, `build.ts` has
-no `ssr` flag, and there is no `build:ssr` script to reach for by mistake. The
-server does initialise `tracing_subscriber`, so if you do wire SSR up yourself,
-forma-server's "falling back to Phase 1" warnings will actually reach your
-terminal instead of disappearing.
+So the browser route is a declaration on both sides: `build.ts` declares the
+dashboard's entry `ssr: false`, `main.rs` serves every page through
+`render_browser_shell`, and there is no `build:ssr` script to reach for by
+mistake. The server never walks a module here, so no failed server render can
+quietly become a client-mounted page. If you do wire SSR up yourself for a
+page, render it with `try_render`: a failure comes back to the handler as a
+coded `RenderError`, which it logs through the `tracing` subscriber `main.rs`
+installs and answers with an error page.
+
+The build scripts pass `--strict`, which `build.ts` maps to `@getforma/build`'s
+`strict: true`. It changes nothing while no page is server-rendered; once one
+is, a construct the compiler cannot render on the server fails the build with
+its code, file and line instead of becoming an empty island.
 
 **Want to see Phase 2 working?** Scaffold the `minimal` template
 (`npx @getforma/create-app my-app --template minimal`). It keeps its page shell

@@ -77,9 +77,9 @@ whoever writes the next template.
 
 ## What You Get
 
-- **Rust server** (`src/main.rs`) — Axum + `forma-server`: page rendering, asset serving from `rust-embed`, a per-request CSP nonce, and a `tracing` subscriber so render fallbacks are visible
+- **Rust server** (`src/main.rs`) — Axum + `forma-server`: page rendering with `try_render` (or `render_browser_shell` for a declared browser route), each page a `PageResponse` carrying its per-request CSP nonce and `Cache-Control: no-store`, asset serving from `rust-embed`, no service worker, and a `tracing` subscriber that logs every render error by code and route
 - **TypeScript frontend** (`admin/src/`) — FormaJS with JSX, signals, components
-- **Build pipeline** (`admin/build.ts`) — `@getforma/build`: bundling, content hashing, Brotli/gzip, manifest, service worker
+- **Build pipeline** (`admin/build.ts`) — `@getforma/build`: bundling, content hashing, Brotli/gzip, manifest, in strict mode, so a construct the server cannot render fails the build with its code and line
 - **A `.gitignore`** that covers build output, secrets and (for the dashboard) Playwright artifacts — and deliberately does not ignore `Cargo.lock`
 - **Lockfiles** (`admin/package-lock.json` and `Cargo.lock`) holding the exact versions this repo's scaffold gate built and served, so a new project starts from a tested set rather than whatever resolves that day
 
@@ -100,9 +100,16 @@ That scaffolds each template into a temp directory, installs from the
 template's lockfile with `npm ci`, builds the frontend, runs
 `cargo check --locked`, then starts each compiled server and reads its
 responses: the minimal template must serve real server-rendered markup after
-`build:ssr`, the dashboard must serve a Phase 1 shell whose CSP nonce matches
-the script tag, and every page of both must answer `Cache-Control: no-store`
-with a fresh nonce on each fetch. CI runs it on Linux and Windows, and again before
+`build:ssr`, the dashboard must serve each page as its declared browser shell
+whose CSP nonce matches the script tag, and every page of both must answer
+`Cache-Control: no-store` with a fresh nonce on each fetch, register no service
+worker, and leave `/sw.js` to forma-server's retiring worker. It also runs
+`npm audit signatures` over each template's install, fails on any
+`use of deprecated` warning from the template's Rust, checks that a
+construct the server cannot render fails the minimal template's strict build,
+and that the minimal server refuses to start on a truncated module and
+answers a failed render with its own 500, carrying neither the error nor an
+empty shell. CI runs it on Linux and Windows, and again before
 `npm publish`.
 
 | Document | What it is |

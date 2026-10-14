@@ -19,5 +19,10 @@ await build({
   // never read. Same file as the browser entry: the compiler walks the tree
   // returned by its `mount()` callback into `home.ir`.
   ...(isSsr ? { ssrEntryPoints: { home: 'src/home/app.tsx' } } : {}),
+  // Strict mode, which the npm scripts ask for: a construct the compiler
+  // cannot render on the server fails the build, naming its code, file and
+  // line, instead of leaving an empty island in the page. Without the flag,
+  // FORMA_STRICT=1 turns it on.
+  ...(process.argv.includes('--strict') ? { strict: true } : {}),
   ...(process.argv.includes('--watch') ? { watch: true } : {}),
 });
