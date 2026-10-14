@@ -36,7 +36,9 @@
 //!
 //! A route the build declares `ssr: false` is served by
 //! [`render_browser_shell`]. At start, [`load_ir_modules_strict`] is the
-//! module loader: stop on its errors, before the port binds. Deprecated in
+//! module loader: stop on its errors, before the port binds. [`IrModules`]
+//! loads the same way and, in a debug build, rereads a page's module when the
+//! build's watch mode rewrites it. Deprecated in
 //! 0.2.2, removed in 3.0.0: `render_page` and its Phase 1 fallback,
 //! `render_page_with_nonce`, the lenient `load_ir_modules`, [`PageOutput`]'s
 //! public fields and `headers()`, and `PageConfig::config_script`.
@@ -84,7 +86,7 @@ pub use csp::{
 /// Re-exported: [`RenderCtx::with_limits`] takes it.
 pub use forma_ir::WalkLimits;
 #[allow(deprecated)]
-pub use ir_compat::{load_ir_modules, load_ir_modules_strict, IrLoadError};
+pub use ir_compat::{load_ir_modules, load_ir_modules_strict, IrLoadError, IrModules};
 pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};
 #[allow(deprecated)]

@@ -117,6 +117,32 @@ deprecated and go in 3.0.0.
   assignment counts as answering requests). `cargo test` now
   needs Node 18 or later on `PATH` (CONTRIBUTING).
 
+- **`IrModules<A>`: in development, a page's module is reread when the
+  build's watch mode rewrites it** (FORMA-166; L-31, N7; FORMA-022 is the
+  build's half). `IrModules::<Assets>::load(&manifest)` is the strict loader
+  (the same check, the same `LOAD-1xx` errors, refuse to start on them), and
+  `get(route)` returns the route's module as an `Arc<IrModule>`. In a debug
+  build (`cfg(debug_assertions)`, the switch rust-embed itself uses to read
+  files from disk) each `get` rereads the manifest's entry and the module's
+  file, and loads a changed module through the same check: the next request
+  serves the edit with no restart. A module that fails to load keeps the
+  previous one and logs its coded error as a `tracing` warning, once per
+  distinct write; a route the manifest starts naming is loaded on its first
+  `get`. A release build does no file watching and no per-request check:
+  `get` is a map lookup over the modules loaded at start. No watcher thread
+  and no new dependency. Opt-in: `load_ir_modules_strict` is unchanged.
+  Tests: `tests/dev_reload.rs` >
+  `an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page`
+  (real rust-embed over files published by rename, debug builds);
+  `ir_compat::reload_tests` >
+  `a_release_build_reads_nothing_per_request_and_a_debug_build_rereads` (on
+  the release profile: no read after start, the start's module served),
+  `the_reload_loads_through_the_strict_loader_at_start`,
+  `development::a_module_that_fails_to_load_keeps_the_previous_one_and_is_logged_once_with_its_code`,
+  `development::the_manifest_can_rename_a_module_or_name_a_new_one_and_a_bad_one_changes_nothing`;
+  `tests/strict_loader.rs` >
+  `ir_modules_load_refuses_exactly_what_the_strict_loader_refuses`.
+
 ### Deprecated
 - `load_ir_modules`, the lenient loader: it serves a corrupt module's route as
   an empty shell for the life of the process. `load_ir_modules_strict` is the

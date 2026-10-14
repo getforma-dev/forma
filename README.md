@@ -76,6 +76,7 @@ forma-server = "0.1"
 **What it does:**
 - `try_render(config, ctx)` — renders a page from an IR module + slot data, returning the page with its counts or a coded `RenderError` the handler answers (`render_page`, which falls back to an empty shell on any failure, is deprecated in 0.2.2)
 - `load_ir_modules_strict(manifest)` — the module loader: loads `.ir` files from embedded assets at startup and returns every failure (route, file, code) so the server refuses to start on a bad module (the lenient `load_ir_modules` is deprecated in 0.2.2)
+- `IrModules::<Assets>::load(manifest)` — the same loading, holding the modules; in debug builds `get(route)` rereads a page's module when `forma-build --watch` rewrites it, so an edited page is served without a restart
 - `serve_asset(filename)` — serves assets with Brotli/gzip negotiation, `Cache-Control: immutable` for content-hashed names and revalidation + ETag for the rest
 - `generate_csp_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
 - `build_csp_header(nonce)` — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`
