@@ -6,11 +6,27 @@
   DR-19).** forma-server's `RawHtml::trusted(..)` is the one way to say a
   string is markup to write unescaped; `body_prefix` takes it bound first,
   `let raw = RawHtml::trusted(..);` then `Some(&raw)`, and a plain string
-  there still works and warns once per process in debug builds (`RAW-101`). What applications put in `body_prefix`
-  that is not their own markup gets a typed home through `RenderCtx`: the
+  there still works and warns once per process in debug builds
+  (`RAW-101`). What applications put in `body_prefix` that is not their own
+  markup gets a typed home through `RenderCtx`: the
   route's `modulepreload` links, read from the build's manifest and nonced by
   forma-server (`with_module_preloads`), and head links (`with_head_link`);
   data keeps `config_json`. `render_page` writes 0.2.1's document.
+
+- **A page edited under watch mode is served without a restart (FORMA-166,
+  L-31, N7).** forma-server's `IrModules` loads through the strict loader
+  and, in debug builds only, rereads a page's module on the next request
+  after `forma-build --watch` rewrites it; a module that fails to load keeps
+  the previous one and logs its `LOAD-1xx` code. Release builds read nothing
+  after start.
+
+- **forma-ir's `wasm` feature is deprecated (FORMA-131, DR-23).** Its exports,
+  `render` and `render_island`, the browser's WASM walker, are
+  `#[deprecated]` and are removed in 3.0.0 with the feature; islands
+  re-render with `@getforma/core`'s `h()`. They still build and behave as at
+  0.2.1. forma-server's `AssetManifest::wasm` and `WasmAssets` are deprecated
+  with them, and the `window.__FORMA_WASM__` script they add to a page goes
+  in 3.0.0.
 
 - **The service worker is opt-in (FORMA-130, DR-25).** forma-server registers
   `/sw.js` only for an application that turns it on
@@ -48,6 +64,35 @@
   tag no longer changes what runs. Every job in `ci.yml` declares
   `contents: read`; `release.yml` keeps its workflow-level `contents: read`
   and `id-token: write`.
+- **CI: only the release's publish job can mint the publish token (SR43,
+  L-34, L-42, FORMA-134; no crate changed).** `release.yml` splits into
+  `check`, `pack`, `verify` and `publish`, and the workflow-level
+  `id-token: write` is gone. `pack` restores no cache and compiles nothing:
+  it locks the graph, runs `cargo package --no-verify` and records the
+  `.crate`, its file list and the `Cargo.lock` with their SHA-256. `verify`
+  builds the crate unpacked from that `.crate`. `publish`, the only job
+  holding `id-token: write`, restores no cache and compiles nothing: cargo
+  cannot upload a prebuilt `.crate`, so it checks the artefact against the
+  record (whose own hash travels as a job output), re-packages from the
+  tagged source with the recorded lock, publishes with
+  `cargo publish --no-verify --locked` only if the `.crate` and its file list
+  are byte-identical to the recorded ones, and then compares crates.io's
+  checksum with the record. The tags stay the only trigger. CI's new
+  `release-workflow` job runs actionlint (binary checked against a pinned
+  SHA-256), `scripts/check-release-workflow.rb --self-test` and
+  `scripts/test-release-artifacts.sh`.
+  The lint also refuses a publish job that could go on after a failed check
+  (`continue-on-error`, an `if:` on a step up to the publish, `always()`,
+  `failure()` or `cancelled()` in the job's `if`, a check line that can
+  swallow its failure, a shell without errexit), `container:` or `services:`
+  on the publish or pack job, and a checkout of another repository or ref;
+  every rule has a seed in `--self-test`, which fails if one does not. The
+  artefact test flips a byte instead of writing one that may already be there.
+  After the upload, `scripts/check-published-crate.sh` reads the version's
+  checksum from crates.io's API for up to 15 minutes: a checksum that differs
+  from the record fails and points to crates.io's web page to yank it; a
+  version not visible yet only warns. CONTRIBUTING's new "Releasing" section
+  says to push `server-v*` only after the `ir-v*` run has published.
 - **Documentation matches the code (FORMA-009; no code changed).** The
   compiler writes FMIR modules as `.ir` files, so `docs/FMIR-FORMAT.md`,
   `docs/ARCHITECTURE.md`, `docs/README.md`, the README and two doc comments no

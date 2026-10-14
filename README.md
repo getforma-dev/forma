@@ -53,11 +53,11 @@ forma-ir = "0.1"
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
 - Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, `<!--f:l0-->`, `<!--f:i0-->`) that FormaJS uses for client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
 - Writes a `textarea`'s `value` as its text and a `select`'s as `selected` on the matching option, since HTML ignores both as attributes
-- Compiles to WASM for client-side re-renders in the browser
+- Compiles to WASM for client-side re-renders in the browser (the `wasm` feature: deprecated in 0.2.2, removed in 3.0.0)
 
 **Use it when:**
 - You're building your own server (not Axum) and want Forma SSR
-- You need the WASM build for client-side island re-rendering
+- You need the WASM build for client-side island re-rendering (deprecated: islands re-render with `@getforma/core`'s `h()`, and the `wasm` feature is removed in 3.0.0)
 - You're building tools that inspect, transform, or generate IR files
 
 **You don't need it directly if:** You're using `forma-server` — it wraps `forma-ir` for you.
@@ -76,6 +76,7 @@ forma-server = "0.1"
 **What it does:**
 - `try_render(config, ctx)` — renders a page from an IR module + slot data, returning the page with its counts or a coded `RenderError` the handler answers (`render_page`, which falls back to an empty shell on any failure, is deprecated in 0.2.2)
 - `load_ir_modules_strict(manifest)` — the module loader: loads `.ir` files from embedded assets at startup and returns every failure (route, file, code) so the server refuses to start on a bad module (the lenient `load_ir_modules` is deprecated in 0.2.2)
+- `IrModules::<Assets>::load(manifest)` — the same loading, holding the modules; in debug builds `get(route)` rereads a page's module when `forma-build --watch` rewrites it, so an edited page is served without a restart
 - `serve_asset(filename)` — serves assets with Brotli/gzip negotiation, `Cache-Control: immutable` for content-hashed names and revalidation + ETag for the rest
 - `generate_csp_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
 - `build_csp_header(nonce)` — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`
