@@ -44,6 +44,14 @@ describes. CI runs it on Linux and Windows, and again before
 tests" rule in the [testing
 policy](https://github.com/getforma-dev/forma/blob/main/docs/TESTING.md).
 
+The release workflow has its own check, which CI's `release-workflow` job
+runs after actionlint:
+
+```bash
+ruby scripts/check-release-workflow.rb --self-test   # SR43: only the publish job holds id-token: write
+bash scripts/test-release-artifacts.sh               # a packed file altered between jobs is refused
+```
+
 ## Tests
 
 The standard is that

@@ -55,6 +55,18 @@
   that is not a release version (`v1.2.3` or `v1.2.3-rc.1`, the `v` optional)
   fails the run before anything is changed. Before, the payload was pasted
   into the shell script, so a dispatch could run commands (TH15).
+- **CI: only the release's publish job can mint the publish credential (SR43,
+  L-34, L-42, FORMA-134; the package is unchanged).** `release.yml` splits into
+  `scaffold`, `pack` and `publish`. The scaffold gate and the build run in jobs
+  without `id-token: write`; `pack` restores no cache, packs the tarball with
+  `npm pack --ignore-scripts` and records its SHA-256; `publish`, the only job
+  holding `id-token: write`, restores no cache and installs nothing, checks the
+  downloaded tarball against that record (whose own hash travels as a job
+  output) and runs `npm publish <tarball> --provenance --access public
+  --ignore-scripts`. The `v*` tag stays the only trigger. CI's new
+  `release-workflow` job runs actionlint (binary checked against a pinned
+  SHA-256), `scripts/check-release-workflow.rb --self-test` and
+  `scripts/test-release-artifacts.sh`.
 
 ## [0.6.1] - 2026-10-14
 
