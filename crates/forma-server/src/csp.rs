@@ -1,4 +1,5 @@
-//! CSP nonce generation and policy construction.
+//! CSP nonce generation and policy construction: the enforced policy, its
+//! typed extensions, and Trusted Types in Report-Only (DR-17, DR-20).
 
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use ring::rand::{SecureRandom, SystemRandom};
@@ -197,6 +198,80 @@ pub fn build_csp_header(nonce: &CspNonce) -> String {
 }
 
 // ---------------------------------------------------------------------------
+// Trusted Types, Report-Only (DR-20) and the reporting endpoint
+// ---------------------------------------------------------------------------
+
+/// The Trusted Types directives (DR-20): every write to a script-carrying
+/// DOM sink must pass a Trusted Type, and only Forma's two policies may make
+/// one: `forma` (`trustedHtml`, the raw entry, DR-19) and `forma-runtime` (the
+/// zero-build runtime's parser). No `'allow-duplicates'`: a second copy of
+/// core creating `forma` is itself a violation (TH18).
+///
+/// In 0.2.2 they are sent in `Content-Security-Policy-Report-Only`, beside
+/// the unchanged enforced policy, for one release; 3.0.0 enforces them.
+const TRUSTED_TYPES: [(&str, &[&str]); 2] = [
+    ("require-trusted-types-for", &["'script'"]),
+    ("trusted-types", &["forma", "forma-runtime"]),
+];
+
+/// The reporting group a named endpoint gets in `Reporting-Endpoints`, and
+/// the `report-to` directive's value.
+pub(crate) const REPORTING_GROUP: &str = "forma-csp";
+
+/// Where a page's violations go, and how they are asked for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Reporting {
+    /// `report-to` with `Reporting-Endpoints`, and `report-uri`
+    /// ([`PolicyExtensions::report_to`]).
+    Both(String),
+    /// `report-uri` alone ([`PolicyExtensions::report_uri`]).
+    UriOnly(String),
+}
+
+impl Reporting {
+    fn endpoint(&self) -> &str {
+        match self {
+            Reporting::Both(endpoint) | Reporting::UriOnly(endpoint) => endpoint,
+        }
+    }
+
+    /// The method that named it, for a refusal.
+    fn method(&self) -> &'static str {
+        match self {
+            Reporting::Both(_) => "report-to",
+            Reporting::UriOnly(_) => "report-uri",
+        }
+    }
+
+    /// The reporting directives each policy carries.
+    fn directives(&self) -> Vec<(&'static str, Vec<String>)> {
+        let uri = ("report-uri", vec![self.endpoint().to_string()]);
+        match self {
+            Reporting::Both(_) => vec![("report-to", vec![REPORTING_GROUP.to_string()]), uri],
+            Reporting::UriOnly(_) => vec![uri],
+        }
+    }
+}
+
+/// The Report-Only policy: the Trusted Types directives, then the reporting
+/// directives when an endpoint is named.
+fn report_only_text(reporting: Option<&Reporting>) -> String {
+    let mut directives: Vec<(&str, Vec<String>)> = TRUSTED_TYPES
+        .iter()
+        .map(|(name, sources)| (*name, sources.iter().map(|s| s.to_string()).collect()))
+        .collect();
+    if let Some(reporting) = reporting {
+        directives.extend(reporting.directives());
+    }
+    write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice())))
+}
+
+/// The Report-Only policy a page without a reporting endpoint carries.
+pub(crate) fn report_only_policy() -> String {
+    report_only_text(None)
+}
+
+// ---------------------------------------------------------------------------
 // Typed extensions (DR-17, L-38)
 // ---------------------------------------------------------------------------
 
@@ -205,7 +280,9 @@ pub fn build_csp_header(nonce: &CspNonce) -> String {
 /// The strict policy ([`build_csp_header`]) is the floor. A page that needs
 /// another image or frame source, a form target, or a login popup adds it
 /// here; it cannot remove a directive, loosen `script-src` or `style-src`,
-/// or write the policy as text. A [`crate::PageResponse`] applies the
+/// or write the policy as text. The same builder names the application's
+/// reporting endpoint ([`PolicyExtensions::report_to`]) and relaxes Trusted
+/// Types on a route ([`PolicyExtensions::relax_trusted_types`], DR-20). A [`crate::PageResponse`] applies the
 /// extensions when it is made, and an invalid one fails the page with a
 /// [`PolicyError`] instead of reaching a header (DR-17, SR5).
 ///
@@ -237,6 +314,8 @@ pub struct PolicyExtensions {
     frame_src: Vec<String>,
     form_action: Vec<String>,
     allow_popups: bool,
+    reporting: Option<Reporting>,
+    relax_trusted_types: Option<String>,
 }
 
 impl PolicyExtensions {
@@ -276,6 +355,131 @@ impl PolicyExtensions {
     #[must_use]
     pub fn allow_popups(mut self) -> Self {
         self.allow_popups = true;
+        self
+    }
+
+    /// Send this page's policy violations to `endpoint`, an endpoint the
+    /// application runs (DR-20, SR8), for pages served over HTTPS. Name it
+    /// once, on the `PolicyExtensions` every route starts from, so no page
+    /// leaves without it.
+    ///
+    /// `endpoint` is a path on the application's own origin (`/csp-reports`,
+    /// the usual choice), an `https://` URL, or an `http://` URL on
+    /// `localhost`, `127.0.0.1` or `[::1]`. It is written into both policies,
+    /// the enforced one and the Trusted Types Report-Only one, twice over:
+    ///
+    /// - `report-to forma-csp`, with a `Reporting-Endpoints: forma-csp="<endpoint>"`
+    ///   header: the Reporting API (Chrome and Edge 96+, Safari 16.4+, Firefox
+    ///   149+ for CSP), which POSTs `application/reports+json` batches, an
+    ///   array of `{"type": "csp-violation", "body": {..}}`;
+    /// - `report-uri <endpoint>`, for engines without `report-to` for CSP
+    ///   (Firefox before 149), which POST one `application/csp-report`
+    ///   document per violation. An engine with `report-to` ignores it.
+    ///
+    /// So the endpoint accepts both bodies. A cross-origin endpoint must also
+    /// answer CORS preflights; a same-origin path needs none. Browsers send
+    /// reports outside the page, so the policy's `connect-src` does not apply.
+    ///
+    /// **Over plain HTTP use [`PolicyExtensions::report_uri`].** Chrome takes
+    /// `Reporting-Endpoints` only from an HTTPS page, and once a policy names
+    /// `report-to` it ignores `report-uri`, so a page served over plain HTTP
+    /// with both (a development server on `http://localhost`, a CI run)
+    /// reports nothing to Chrome's endpoint. Measured with Chrome 155: the same
+    /// page and endpoint over HTTP sent no report in 90 seconds; over HTTPS it
+    /// sent one `application/reports+json` report and no `report-uri` copy.
+    ///
+    /// **The endpoint's obligations are the application's (SR8, L-38):**
+    ///
+    /// - Store each report's URLs (`documentURL` / `document-uri`,
+    ///   `blockedURL` / `blocked-uri`, `referrer`, `sourceFile`) **without
+    ///   their query strings or fragments**: they can carry tokens and
+    ///   personal data. A Trusted Types report's `sample` / `script-sample`
+    ///   holds the first characters of the value written to the sink, so
+    ///   treat it as personal data too.
+    /// - Bound each report's size (refuse a body over, say, 64 KiB) and the
+    ///   rate it accepts (per client and in total): anyone can POST to it.
+    /// - Alert **per route and directive above a baseline**, deduplicated:
+    ///   never a ticket per report. One page in a loop sends thousands.
+    ///
+    /// Without an endpoint, a violation of either policy is reported only in
+    /// the browser's console, as in 0.2.1, and the enforced policy is
+    /// byte-identical to 0.2.1's. An endpoint that is empty, carries `;`,
+    /// `,`, a quote, a backslash, whitespace, a fragment or a non-ASCII byte,
+    /// starts with `//`, or uses another scheme fails the page with a
+    /// [`PolicyError`] for `report-to`. The last of `report_to` and
+    /// `report_uri` called is the one written.
+    ///
+    /// ```
+    /// use forma_server::PolicyExtensions;
+    ///
+    /// // At start: every route's policy starts from this one.
+    /// let base = PolicyExtensions::new().report_to("/csp-reports");
+    /// // A route that also needs a frame source.
+    /// let preview = base.clone().frame_src("'self'");
+    /// # let _ = preview;
+    /// ```
+    ///
+    /// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints"
+    #[must_use]
+    pub fn report_to(mut self, endpoint: impl Into<String>) -> Self {
+        self.reporting = Some(Reporting::Both(endpoint.into()));
+        self
+    }
+
+    /// Send this page's policy violations to `endpoint` through `report-uri`
+    /// alone, for pages served over plain HTTP: a development server on
+    /// `http://localhost`, a CI run. Every current engine sends a
+    /// `report-uri` report from an HTTP page (one `application/csp-report`
+    /// POST per violation), where Chrome would send none for
+    /// [`PolicyExtensions::report_to`]'s pair. The same endpoint rules and
+    /// obligations apply; a refusal is a [`PolicyError`] for `report-uri`.
+    ///
+    /// ```
+    /// use forma_server::PolicyExtensions;
+    ///
+    /// let served_over_https = false; // the application's own setting
+    /// let base = if served_over_https {
+    ///     PolicyExtensions::new().report_to("/csp-reports")
+    /// } else {
+    ///     PolicyExtensions::new().report_uri("/csp-reports")
+    /// };
+    /// # let _ = base;
+    /// ```
+    ///
+    /// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints"
+    #[must_use]
+    pub fn report_uri(mut self, endpoint: impl Into<String>) -> Self {
+        self.reporting = Some(Reporting::UriOnly(endpoint.into()));
+        self
+    }
+
+    /// Relax Trusted Types on this route, for a page whose string sinks have
+    /// not moved to `trustedHtml` yet (DR-20's bridge). One of SR8's
+    /// allowlisted exits: each call belongs on the application's allowlist
+    /// with an owner and an end date, and `reason` should name them.
+    ///
+    /// What it does: in 0.2.x Trusted Types are Report-Only on every route,
+    /// so the headers do not change; from 3.0.0, when the other routes
+    /// enforce Trusted Types, this route keeps them Report-Only. Either way
+    /// its violations are still reported, so the sinks left to move stay
+    /// visible. Every render of a relaxed route is logged, once per route per
+    /// process, as a `tracing` warning naming the route and `reason`. An
+    /// empty `reason` fails the page with a [`PolicyError`] for
+    /// `trusted-types`.
+    ///
+    /// ```
+    /// use forma_server::PolicyExtensions;
+    ///
+    /// let studio = PolicyExtensions::new()
+    ///     .report_to("/csp-reports")
+    ///     .relax_trusted_types("app.ts writes innerHTML in four places; owner: studio, until 2027-01-31");
+    /// # let _ = studio;
+    /// ```
+    ///
+    /// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_relaxed_route_keeps_reporting_and_is_logged_once_per_route"
+    #[must_use]
+    pub fn relax_trusted_types(mut self, reason: impl Into<String>) -> Self {
+        self.relax_trusted_types = Some(reason.into());
         self
     }
 }
@@ -335,6 +539,12 @@ impl std::error::Error for PolicyError {}
 pub(crate) struct PagePolicy {
     /// `Content-Security-Policy`.
     pub(crate) csp: axum::http::HeaderValue,
+    /// `Content-Security-Policy-Report-Only`: Trusted Types (DR-20).
+    pub(crate) report_only: axum::http::HeaderValue,
+    /// `Reporting-Endpoints`, when the extensions name an endpoint.
+    pub(crate) reporting_endpoints: Option<axum::http::HeaderValue>,
+    /// Why Trusted Types are relaxed on this route, when they are.
+    pub(crate) relaxed: Option<String>,
     /// `Cross-Origin-Opener-Policy`.
     pub(crate) opener: axum::http::HeaderValue,
 }
@@ -353,6 +563,18 @@ pub(crate) fn page_policy(
     for (directive, sources) in added {
         for source in sources {
             check_source(directive, source)?;
+        }
+    }
+    if let Some(reporting) = &extensions.reporting {
+        check_endpoint(reporting.method(), reporting.endpoint())?;
+    }
+    if let Some(reason) = &extensions.relax_trusted_types {
+        if reason.trim().is_empty() {
+            return Err(PolicyError {
+                directive: "trusted-types",
+                source: reason.clone(),
+                reason: "a relaxation names why, and on the allowlist its owner and end date",
+            });
         }
     }
 
@@ -378,20 +600,158 @@ pub(crate) fn page_policy(
         }
     }
 
-    let text = write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice())));
-    let csp = axum::http::HeaderValue::from_str(&text).map_err(|_| PolicyError {
-        // Unreachable for sources `check_source` accepted, which are visible
-        // ASCII; kept as an error so that no path drops the header.
-        directive: "content-security-policy",
-        source: text.clone(),
-        reason: "not a valid header value",
-    })?;
+    let reporting = extensions.reporting.as_ref();
+    if let Some(reporting) = reporting {
+        directives.extend(reporting.directives());
+    }
+
+    // Unreachable for sources and an endpoint the checks accepted, which are
+    // visible ASCII; kept as an error so that no path drops a header.
+    let header = |directive: &'static str, text: String| {
+        axum::http::HeaderValue::from_str(&text).map_err(|_| PolicyError {
+            directive,
+            source: text,
+            reason: "not a valid header value",
+        })
+    };
+    let csp = header(
+        "content-security-policy",
+        write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice()))),
+    )?;
+    let report_only = header(
+        "content-security-policy-report-only",
+        report_only_text(reporting),
+    )?;
+    let reporting_endpoints = match reporting {
+        Some(Reporting::Both(endpoint)) => Some(header(
+            "report-to",
+            format!("{REPORTING_GROUP}=\"{endpoint}\""),
+        )?),
+        Some(Reporting::UriOnly(_)) | None => None,
+    };
     let opener = axum::http::HeaderValue::from_static(if extensions.allow_popups {
         "same-origin-allow-popups"
     } else {
         "same-origin"
     });
-    Ok(PagePolicy { csp, opener })
+    Ok(PagePolicy {
+        csp,
+        report_only,
+        reporting_endpoints,
+        relaxed: extensions.relax_trusted_types.clone(),
+        opener,
+    })
+}
+
+/// Log a render of a route whose Trusted Types are relaxed: once per route
+/// per process, so a busy route does not flood the log. `route` is `None`
+/// for a page made by `PageOutput::into_page_response`, which does not know
+/// its route.
+///
+/// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_relaxed_route_keeps_reporting_and_is_logged_once_per_route"
+pub(crate) fn log_relaxation(route: Option<&str>, reason: &str) {
+    use std::collections::BTreeSet;
+    use std::sync::Mutex;
+    static LOGGED: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
+    let route = route.unwrap_or("(a page made by PageOutput::into_page_response)");
+    // Nothing panics while holding the lock; a poisoned set is still a set.
+    let first = LOGGED
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .insert(route.to_string());
+    if first {
+        tracing::warn!(
+            route,
+            reason,
+            "Trusted Types relaxed on route {route}: {reason}. An SR8 allowlist exit: in 0.2.x \
+             every route reports them (Report-Only); from 3.0.0 this route keeps reporting while \
+             the others enforce (DR-20). Logged once per route per process."
+        );
+    }
+}
+
+/// Accept a reporting endpoint, or say why not: a path on the page's own
+/// origin, an `https://` URL, or `http://` on a loopback host for
+/// development; written as visible ASCII that cannot end a directive (`;`),
+/// split a header list (`,`), close the `Reporting-Endpoints` string (`"`,
+/// `\`), or add a source (whitespace, `'`).
+fn check_endpoint(directive: &'static str, endpoint: &str) -> Result<(), PolicyError> {
+    let refuse = |reason| {
+        Err(PolicyError {
+            directive,
+            source: endpoint.to_string(),
+            reason,
+        })
+    };
+    if endpoint.is_empty() {
+        return refuse("empty endpoint");
+    }
+    if endpoint.len() > 2048 {
+        return refuse("longer than 2048 bytes");
+    }
+    // RFC 3986 characters, less `;`, `,` and `'` (and so no quote,
+    // backslash, whitespace, control or non-ASCII byte), and no fragment.
+    let chars_ok = endpoint.bytes().all(|b| {
+        b.is_ascii_alphanumeric()
+            || matches!(
+                b,
+                b'-' | b'.'
+                    | b'_'
+                    | b'~'
+                    | b':'
+                    | b'/'
+                    | b'?'
+                    | b'['
+                    | b']'
+                    | b'@'
+                    | b'!'
+                    | b'$'
+                    | b'&'
+                    | b'('
+                    | b')'
+                    | b'*'
+                    | b'+'
+                    | b'='
+                    | b'%'
+            )
+    });
+    if !chars_ok {
+        return refuse(
+            "an endpoint is visible ASCII URL characters, without ';', ',', quotes, a fragment \
+             or whitespace",
+        );
+    }
+    if endpoint.starts_with("//") {
+        return refuse("a scheme-relative endpoint; write https:// or a path");
+    }
+    if endpoint.starts_with('/') {
+        return Ok(());
+    }
+    let lower = endpoint.to_ascii_lowercase();
+    let host = |rest: &str| -> String {
+        let authority = rest.split(['/', '?']).next().unwrap_or("");
+        let authority = authority.rsplit_once('@').map_or(authority, |(_, h)| h);
+        if let Some(v6) = authority.strip_prefix('[') {
+            return format!("[{}", v6.split(']').next().unwrap_or(""));
+        }
+        authority.split(':').next().unwrap_or("").to_string()
+    };
+    if let Some(rest) = lower.strip_prefix("https://") {
+        if host(rest).is_empty() {
+            return refuse("an https endpoint names a host");
+        }
+        return Ok(());
+    }
+    if let Some(rest) = lower.strip_prefix("http://") {
+        if matches!(host(rest).as_str(), "localhost" | "127.0.0.1" | "[::1") {
+            return Ok(());
+        }
+        return refuse(
+            "http:// only on localhost, 127.0.0.1 or [::1]: browsers send reports only to a \
+             secure endpoint",
+        );
+    }
+    refuse("an endpoint is a path on the page's origin (/csp-reports) or an https:// URL")
 }
 
 /// Accept one CSP source expression a handler may add, or say why not.
@@ -764,5 +1124,109 @@ mod tests {
         // strict-dynamic does not cover workers, so this must be explicit.
         assert_eq!(directive(&csp, "worker-src"), Some("'self'"));
         assert_eq!(directive(&csp, "object-src"), Some("'none'"));
+
+        // SR39: that attribute allowance is the policy's only
+        // 'unsafe-inline', in the strict policy and in one extended every way
+        // a handler can, reporting endpoint included.
+        let nonce = CspNonce::parse("test-nonce-value-0123456789").unwrap();
+        let extended = page_policy(
+            &nonce,
+            &PolicyExtensions::new()
+                .img_src("https:")
+                .frame_src("'self'")
+                .form_action("https://idp.example.com")
+                .allow_popups()
+                .report_to("/csp-reports")
+                .relax_trusted_types("a page not moved yet"),
+        )
+        .unwrap();
+        let extended_csp = extended.csp.to_str().unwrap();
+        for policy in [csp.as_str(), extended_csp] {
+            assert_eq!(policy.matches("'unsafe-inline'").count(), 1, "{policy}");
+            assert_eq!(directive(policy, "style-src-attr"), Some("'unsafe-inline'"));
+            assert!(!policy.contains("unsafe-eval") && !policy.contains("unsafe-hashes"));
+        }
+
+        // Trusted Types (DR-20), in Report-Only for 0.2.2: both directives,
+        // with Forma's two policies and no 'allow-duplicates' (TH18), and no
+        // 'unsafe-*' at all. The enforced policy names neither.
+        let report_only = report_only_policy();
+        assert_eq!(
+            report_only,
+            "require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+        );
+        assert_eq!(
+            directive(&report_only, "require-trusted-types-for"),
+            Some("'script'")
+        );
+        assert_eq!(
+            directive(&report_only, "trusted-types"),
+            Some("forma forma-runtime")
+        );
+        assert!(!report_only.contains("unsafe") && !report_only.contains("allow-duplicates"));
+        let extended_report_only = extended.report_only.to_str().unwrap();
+        assert!(
+            extended_report_only.starts_with(&report_only),
+            "{extended_report_only}"
+        );
+        assert!(!extended_report_only.contains("unsafe"));
+        for policy in [csp.as_str(), extended_csp] {
+            assert_eq!(directive(policy, "require-trusted-types-for"), None);
+            assert_eq!(directive(policy, "trusted-types"), None);
+        }
+    }
+
+    #[test]
+    fn endpoints_accept_a_path_https_or_loopback_http_and_refuse_the_rest() {
+        for endpoint in [
+            "/csp-reports",
+            "/r?app=studio&v=1",
+            "/a-b_c.d~e/%20f",
+            "https://reports.example.com/csp",
+            "HTTPS://Reports.Example.com/x",
+            "https://reports.example.com:8443/csp?x=1",
+            "http://localhost:3000/csp",
+            "http://127.0.0.1/csp",
+            "http://[::1]:8080/csp",
+        ] {
+            assert_eq!(
+                check_endpoint("report-to", endpoint),
+                Ok(()),
+                "{endpoint:?}"
+            );
+        }
+        for endpoint in [
+            "",
+            "csp-reports",
+            "//evil.example/x",
+            "http://evil.example/x",
+            "http://localhost.evil.example/x",
+            "http://localhost@evil.example/x",
+            "http://127.0.0.1.evil.example/x",
+            "https://",
+            "https:///x",
+            "javascript:alert(1)",
+            "JavaScript:alert(1)",
+            "data:,x",
+            "ftp://reports.example.com/x",
+            "/a;script-src *",
+            "/a; script-src *",
+            "/a,b",
+            "/a b",
+            "/a\tb",
+            "/a\nb",
+            "/a\"b",
+            "/a'b",
+            "/a\\b",
+            "/a#frag",
+            "/ü",
+            "/a<b>",
+        ] {
+            let error = check_endpoint("report-to", endpoint).expect_err(endpoint);
+            assert_eq!(error.directive(), "report-to", "{endpoint:?}");
+            assert_eq!(error.source_expression(), endpoint);
+        }
+        let long = format!("/{}", "a".repeat(2048));
+        assert!(check_endpoint("report-uri", &long).is_err());
     }
 }

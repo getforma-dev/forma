@@ -531,6 +531,24 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
             }
         }
         assert!(!csp.contains('\n') && !csp.contains(','), "case {case}");
+        // SR39: `style-src-attr`'s is the policy's only `'unsafe-inline'`,
+        // and the Report-Only policy is Trusted Types alone, whatever a
+        // handler added (DR-20).
+        assert_eq!(
+            csp.matches("'unsafe-inline'").count(),
+            1,
+            "case {case}: {csp}"
+        );
+        assert_eq!(
+            directive(csp, "style-src-attr"),
+            Some(vec!["'unsafe-inline'"]),
+            "case {case}"
+        );
+        assert_eq!(
+            one(&headers, "content-security-policy-report-only"),
+            "require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+            "case {case}"
+        );
         // No script scheme in any form, and no data: or filesystem: target
         // for a frame or a form.
         for name in &names {
