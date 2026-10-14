@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- **The service worker is opt-in (FORMA-130, DR-25).** forma-server registers
+  `/sw.js` only for an application that turns it on
+  (`sw::configure(ServiceWorker::for_app(..)?.enabled())`); elsewhere `/sw.js`
+  is a retiring worker that deletes Forma's v1 caches and the application's
+  own, never another application's, and unregisters. `cargo test` now needs
+  Node 18+ for the retiring worker's test.
+
 - **The strict module loader is the default (FORMA-121, DR-11).** Call
   `load_ir_modules_strict` at start and refuse to start on its errors, each
   naming route, file and a `LOAD-1xx` code; the lenient `load_ir_modules`,

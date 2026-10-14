@@ -22,6 +22,7 @@ This pulls in `forma-ir` automatically.
 - **`render_page(config)`** — deprecated in 0.2.2: serves the empty Phase 1 shell with a 200 on any failure
 - **`PageResponse`** — the page as axum's `IntoResponse`: always `Cache-Control: no-store`, the strict policy for the page's nonce, and the document headers; a handler extends the policy with typed `PolicyExtensions`, never as text
 - **`load_ir_modules_strict(manifest)`** — the module loader: loads and checks every `.ir` file the manifest declares at startup, or returns every failure (route, file and a `LOAD-1xx` code) so the server refuses to start before its port binds; a route declared `ssr: false` needs no module. The lenient `load_ir_modules`, which serves a corrupt module's route as an empty shell, is deprecated in 0.2.2
+- **`sw::serve_sw` and `sw::configure`**: the service worker is opt-in (0.2.2). By default no page registers one and `/sw.js` serves a retiring worker that clears Forma's v1 caches and unregisters; an application that wants its worker calls `sw::configure(ServiceWorker::for_app("name")?.enabled())` once at start
 - **`serve_asset(filename)`** — serves assets with Brotli/gzip negotiation; `Cache-Control: immutable` for content-hashed names, revalidation + ETag for the rest
 - **`generate_csp_nonce()`** — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
 - **`build_csp_header(nonce)`** — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`

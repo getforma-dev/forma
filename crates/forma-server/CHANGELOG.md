@@ -3,7 +3,9 @@
 ## [Unreleased]
 
 Release A2's bridge (0.2.2): additive. Every 0.2.1 call compiles and behaves
-as before; the old forms warn as deprecated and go in 3.0.0.
+as before, except one default: the service worker is off unless the
+application turns it on (FORMA-130, under Changed). The old forms warn as
+deprecated and go in 3.0.0.
 
 ### Added
 - **`PageResponse`**, a page that cannot be sent without its headers (DR-17,
@@ -92,6 +94,25 @@ as before; the old forms warn as deprecated and go in 3.0.0.
 - `tests/page_response.rs`'s policy property and invalid-extension tests now
   run over every path that makes a `PageResponse`: the bridge, `try_render`
   and `render_browser_shell`.
+- `sw::ServiceWorker` (`off`, `for_app`, `enabled`, `is_enabled`, `app`),
+  `sw::configure`, `sw::configured`, `sw::AppNameError`,
+  `sw::AlreadyConfigured`: the setting, fixed once per process before the
+  first page or `/sw.js`. `sw`'s module docs state the per-application cache
+  name contract the build follows (`forma:<app>:<build>`; FORMA-130's build
+  half). Tests: `tests/service_worker_off.rs` >
+  `by_default_no_page_registers_a_worker`,
+  `by_default_sw_js_is_the_retiring_worker_even_with_a_built_worker_embedded`,
+  `configuring_after_the_first_use_is_refused`;
+  `tests/service_worker_named_off.rs`; `tests/service_worker_on.rs` (pages
+  register, the embedded worker is served, configured once);
+  `sw::tests::application_names_are_what_a_cache_name_can_carry`;
+  `sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s`,
+  which runs the worker in Node over `tests/js/retiring_worker.mjs`, whose
+  table of cache names is the contract's shared vectors (anchored, separator
+  and prefix near misses included; the script reports its own pass count, so
+  the check holds under any Node test reporter, and a `self.onfetch`
+  assignment counts as answering requests). `cargo test` now
+  needs Node 18 or later on `PATH` (CONTRIBUTING).
 
 ### Deprecated
 - `load_ir_modules`, the lenient loader: it serves a corrupt module's route as
@@ -134,6 +155,33 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   document and policy against goldens written by 0.2.1 itself.
 
 ### Changed
+- **The service worker is opt-in, and retired everywhere else** (FORMA-130;
+  DR-25, Q15, M25). By default no page registers `/sw.js` any more, and
+  `serve_sw` answers `/sw.js` with forma-server's *retiring worker* instead of
+  the `sw.js` the build embedded: a browser that installed a worker from an
+  earlier release receives it on its next visits, and it deletes Forma's v1
+  cache names (`forma-dev`, `forma-` + 12 hex, either with `-on-demand-v1`),
+  keeps every other cache, unregisters, and answers no request, so pages and
+  assets load from the network. An application that wants its worker (today
+  Ledger, Q15) turns it on once at start:
+  `forma_server::sw::configure(ServiceWorker::for_app("ledger")?.enabled())`;
+  its pages then register `/sw.js` as at 0.2.1 and `serve_sw` serves the
+  embedded worker. Naming the application with the worker off (a rollback)
+  makes the retiring worker delete that application's own caches too. The
+  retiring worker is served through 3.x. `render_page`'s document therefore
+  differs from 0.2.1's by exactly that one registration line:
+  `tests/compat_0_2_1.rs` > `render_page_writes_the_0_2_1_document_byte_for_byte`
+  takes it out of 0.2.1's goldens, once, and checks every other byte.
+
+  **Migration: delete any code that strips or asserts the registration
+  script.** 0.2.2 writes none by default, so code that looks for it now finds
+  nothing. GateWASM's `render_page` wrapper `debug_assert!`s the line before
+  stripping it, so every debug-build render panics on 0.2.2 until the wrapper
+  changes (FORMA-150), and its `forma-server = "0.2.0"` requirement lets a
+  plain `cargo update` bring 0.2.2 in: FORMA-150 ships before or with 0.2.2.
+  An application that enables its worker with no `sw.js` embedded is warned
+  once, at the first `/sw.js` request (`tests/service_worker_on.rs` >
+  `an_enabled_application_with_no_built_worker_is_told_once`).
 - `load_ir_modules_strict` no longer logs "Phase 1 fallback" for the failures
   it returns: it takes no fallback, and the caller holds every failure. The
   lenient loader still logs each one. Each failure's `reason` now starts with

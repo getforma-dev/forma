@@ -191,7 +191,9 @@ compiler parses it, because the IR walker only understands `h()` call trees
 header, 32-byte section table, then `[bytecode][strings][slots][islands]`.
 
 **`@getforma/build`.** Runs esbuild, calls the SSR plugin per entry, writes the
-island registry, hashes and compresses assets, generates `sw.js`, and emits
+island registry, hashes and compresses assets, generates `sw.js` (served only
+for an application that turns its worker on, from forma-server 0.2.2;
+elsewhere `/sw.js` is forma-server's retiring worker, DR-25), and emits
 `manifest.json` — the route → assets map that `forma-server` deserializes with
 serde, byte-for-byte (`forma-spike-1-fmir-compat.md`).
 

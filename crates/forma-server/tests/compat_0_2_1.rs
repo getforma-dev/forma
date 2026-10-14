@@ -79,7 +79,10 @@ fn the_0_2_1_page_api_still_compiles_and_renders_as_it_did() {
     let nonce = CspNonce::generate();
     let page = render_page_with_nonce(&config(&manifest, None), &nonce);
     assert_eq!(page.nonce, nonce);
-    assert!(page.html.contains(&format!("nonce=\"{nonce}\"")));
+    // The caller's nonce is the one the policy blesses. (0.2.1's page also
+    // carried it on the worker registration script, which 0.2.2 writes only
+    // for an application that enables its worker, FORMA-130.)
+    assert!(page.csp.contains(&format!("'nonce-{nonce}'")));
 }
 
 /// The documents 0.2.1 wrote for one fully-populated config, in each mode.
@@ -153,6 +156,12 @@ fn documents() -> Vec<(&'static str, String)> {
     out
 }
 
+/// The one line 0.2.2 writes differently on purpose: 0.2.1 registered the
+/// service worker on every page; 0.2.2 registers it only for an application
+/// that enables its worker (FORMA-130, DR-25), and this process does not.
+const REGISTRATION: &str = "<script nonce=\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\">\
+    if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>\n";
+
 #[test]
 fn render_page_writes_the_0_2_1_document_byte_for_byte() {
     for (name, document) in documents() {
@@ -161,6 +170,17 @@ fn render_page_writes_the_0_2_1_document_byte_for_byte() {
             env!("CARGO_MANIFEST_DIR")
         );
         let golden = std::fs::read_to_string(&path).expect("golden present in the repo");
-        assert_eq!(document, golden, "{name} differs from 0.2.1's document");
+        // The goldens stay what 0.2.1 wrote; the registration line is taken
+        // out here, and only that line, once: anything else that moved fails.
+        assert_eq!(
+            golden.matches(REGISTRATION).count(),
+            1,
+            "{name}: 0.2.1's golden carries the registration exactly once"
+        );
+        let expected = golden.replacen(REGISTRATION, "", 1);
+        assert_eq!(
+            document, expected,
+            "{name} differs from 0.2.1's document beyond the worker registration"
+        );
     }
 }

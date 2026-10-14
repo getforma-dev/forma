@@ -26,6 +26,8 @@ CI runs all of these; run them locally before you push.
 
 ```bash
 cargo test --workspace                                  # unit + integration + doctests
+                                                        # (needs Node 18+ on PATH: the retiring
+                                                        # service worker runs under node --test)
 cargo clippy --workspace --all-targets --all-features   # CI adds -D warnings
 cargo fmt --all --check
 
