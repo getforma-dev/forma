@@ -44,7 +44,7 @@ struct NotUtf8;
 #[folder = "tests/fixtures/frame/cr/"]
 struct CarriageReturn;
 #[derive(Embed)]
-#[folder = "tests/fixtures/frame/nul/"]
+#[folder = "tests/fixtures/frame/nul-byte/"]
 struct Nul;
 
 const ORIGIN: &str = "https://studio.example";
