@@ -424,4 +424,59 @@ async fn page_response_frame_is_the_only_response_that_rewrites_the_policy() {
         ["csp.rs", "csp.rs"],
         "a PagePolicy is written only by page_policy and frame_policy"
     );
+
+    // Inside csp.rs, privacy does not stop a third writer: pin the functions
+    // whose return type names a PagePolicy, and any assignment to one of its
+    // fields anywhere (review 5518552921, n1).
+    let code = |text: &str| -> String {
+        let lines: Vec<&str> = text
+            .lines()
+            .filter(|line| !line.trim_start().starts_with("//"))
+            .collect();
+        lines
+            .join(" ")
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let csp = code(&files.iter().find(|(n, _)| n == "csp.rs").expect("csp.rs").1);
+    let mut returning = Vec::new();
+    for (at, _) in csp.match_indices(" -> ") {
+        let rest = &csp[at + 4..];
+        let end = rest.find(" {").unwrap_or(rest.len());
+        if rest[..end].contains("PagePolicy") {
+            let name: String = csp[..at]
+                .rfind(" fn ")
+                .map(|f| &csp[f + 4..])
+                .unwrap_or("")
+                .chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .collect();
+            returning.push(name);
+        }
+    }
+    returning.sort();
+    assert_eq!(
+        returning,
+        ["frame_policy", "page_policy"],
+        "only page_policy and frame_policy return a PagePolicy"
+    );
+    for (name, text) in &files {
+        let text = code(text);
+        for field in [
+            "csp",
+            "report_only",
+            "reporting_endpoints",
+            "relaxed",
+            "opener",
+        ] {
+            for assignment in [format!(".{field} ="), format!(".{field}=")] {
+                // `==` is a comparison, not an assignment.
+                let found = text
+                    .match_indices(assignment.as_str())
+                    .any(|(at, m)| !text[at + m.len()..].starts_with('='));
+                assert!(!found, "{name}: assigns a policy's {field} ({assignment})");
+            }
+        }
+    }
 }
