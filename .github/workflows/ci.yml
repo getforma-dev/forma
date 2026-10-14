@@ -72,6 +72,11 @@ jobs:
       - run: cargo doc --workspace --no-deps
       - name: Verify WASM build
         run: cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
+      # The `wasm` exports are deprecated (DR-23). Their doctest pairs in
+      # crates/forma-ir/src/deprecations.rs compile only with the feature on,
+      # which `cargo test --workspace` above leaves off.
+      - name: The wasm exports' deprecation reaches a caller
+        run: cargo test -p forma-ir --doc --features wasm
 
   # Run the suite where `usize` is 32 bits, as it is on wasm32 — the target
   # this crate actually ships a build for. Offset arithmetic that cannot wrap
