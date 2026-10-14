@@ -165,7 +165,10 @@ deprecated and go in 3.0.0.
   its pages then register `/sw.js` as at 0.2.1 and `serve_sw` serves the
   embedded worker. Naming the application with the worker off (a rollback)
   makes the retiring worker delete that application's own caches too. The
-  retiring worker is served through 3.x.
+  retiring worker is served through 3.x. `render_page`'s document therefore
+  differs from 0.2.1's by exactly that one registration line:
+  `tests/compat_0_2_1.rs` > `render_page_writes_the_0_2_1_document_byte_for_byte`
+  takes it out of 0.2.1's goldens, once, and checks every other byte.
 - `load_ir_modules_strict` no longer logs "Phase 1 fallback" for the failures
   it returns: it takes no fallback, and the caller holds every failure. The
   lenient loader still logs each one. Each failure's `reason` now starts with
