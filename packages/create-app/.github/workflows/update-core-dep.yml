@@ -13,33 +13,49 @@ concurrency:
 
 jobs:
   update:
+    # The job pushes its branch and opens a pull request; it needs nothing else
+    # (FORMA-010).
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     # A checkout, a sed over two template package.json files and one PR API call.
     # Seconds of work; 10 bounds a slow GitHub API without hiding a stall.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      # The payload is whatever the dispatching token sent. It reaches the shell
+      # only as an environment variable, never pasted into the script as an
+      # expression, and nothing uses it unless it is a release version: v1.2.3
+      # or v1.2.3-rc.1, the "v" optional (TH15, SR21; FORMA-010).
       - name: Extract version from dispatch
         id: version
+        env:
+          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
         run: |
+          release='^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
+          if [[ ! "$PAYLOAD_VERSION" =~ $release ]]; then
+            echo "::error::client_payload.version is not a release version (v1.2.3 or v1.2.3-rc.1); nothing was changed."
+            exit 1
+          fi
           # Strip leading "v" from tag name (v1.0.0 → 1.0.0)
-          VERSION="${{ github.event.client_payload.version }}"
-          VERSION="${VERSION#v}"
+          VERSION="${PAYLOAD_VERSION#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Updating @getforma/core to ^$VERSION"
 
       - name: Update template dependencies
+        env:
+          VERSION: "^${{ steps.version.outputs.version }}"
         run: |
-          VERSION="^${{ steps.version.outputs.version }}"
           # Update all template package.json files
           find templates -name "package.json" -exec \
-            sed -i 's|"@getforma/core": "[^"]*"|"@getforma/core": "'$VERSION'"|g' {} +
+            sed -i 's|"@getforma/core": "[^"]*"|"@getforma/core": "'"$VERSION"'"|g' {} +
           echo "Updated to $VERSION:"
           grep -r "@getforma/core" templates/ --include="package.json"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update @getforma/core to ^${{ steps.version.outputs.version }}"
