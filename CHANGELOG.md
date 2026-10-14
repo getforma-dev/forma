@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- **A page response that carries its own headers (FORMA-124, DR-17).**
+  forma-server's `PageResponse` always writes `no-store`, the strict policy and
+  the document headers; handlers extend the policy through typed
+  `PolicyExtensions`, never as text. `PageOutput`'s public fields and
+  `headers()`, `PageConfig::config_script` and `render_page_with_nonce` are
+  deprecated (removed in 3.0.0). Additive: every 0.2.1 call still compiles.
 - **CI: actions pinned to commits, every job declares its token (DR-32,
   SR21, FORMA-010; no crate changed).** Each `uses:` names the commit its tag
   or branch pointed to on 2026-10-14, with the ref in a comment, so moving a

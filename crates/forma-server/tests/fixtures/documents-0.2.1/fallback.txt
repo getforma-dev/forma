@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T&lt;i&gt;</title>
+<link rel="preload" href="/_assets/f.4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_assets/s.3.css">
+<link rel="modulepreload" nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" href="/_assets/vendor.1.js">
+<link rel="modulepreload" nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" href="/_assets/app.2.js">
+<style nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=">:root{--c:red}</style>
+</head>
+<body class="dark">
+<nav>n</nav><div id="app"></div>
+<script nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=">window.__FORMA_CONFIG__={"a":"\u003c/script>"};</script>
+<script nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=">window.x=1;</script>
+<script type="module" nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" src="/_assets/app.2.js"></script>
+<script nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=">window.__FORMA_WASM__={loader:"/_assets/l.js",binary:"/_assets/b.wasm",ir:"/_assets/p.5.ir"};</script>
+<script nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=">if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>
+--CSP--
+default-src 'none'; script-src 'nonce-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' 'strict-dynamic' 'self'; style-src 'nonce-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
