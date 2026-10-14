@@ -33,8 +33,13 @@ env:
   CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
 
+# Every job declares its token (FORMA-010): each one only reads this
+# repository. The cache steps authenticate with the runner's own service
+# token, which `permissions:` does not govern.
 jobs:
   test:
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -48,12 +53,12 @@ jobs:
     # masqueraded as hangs.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           targets: wasm32-unknown-unknown
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           # Distinct keys per OS so the Windows leg never restores a Linux
           # target dir and rebuilds the world.
@@ -79,16 +84,18 @@ jobs:
   # before the expensive tier asks for any. Peak concurrent demand for this
   # workflow drops from 8 jobs to 4.
   test-32bit:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: test
     # MEASURED: 5.3m in CI (run #16, healthy runner). 20 is ~4x.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           targets: i686-unknown-linux-gnu
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: i686
       - name: Install 32-bit toolchain
@@ -104,6 +111,8 @@ jobs:
   # forma-server's whole suite with the release profile the crate ships in.
   # Tier two, behind `test`, for the same runner-demand reason as above.
   test-release:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: test
     # MEASURED: 34s in CI (run 38507258797, first run of this cache key, so
@@ -111,11 +120,11 @@ jobs:
     # the other tier-two jobs and leaves room for a slow runner.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: release
       - run: cargo clippy -p forma-server --all-targets --all-features --release -- -D warnings
@@ -126,6 +135,8 @@ jobs:
   # declared version. Without this the numbers are decoration — the manifest
   # claimed 1.70 for a crate that has never been able to build below 1.85.
   msrv:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs: test
     # MEASURED: 3.5m in CI for `msrv (forma-server)` (run #16). 15 is ~4x.
@@ -139,11 +150,11 @@ jobs:
           - crate: forma-server
             rust: "1.85"
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           # An MSRV toolchain produces incompatible artifacts; keying by crate
           # AND version stops the two legs evicting each other's cache.
@@ -168,13 +179,15 @@ jobs:
   # deny.toml ships in the repo; running it is what makes it a policy rather
   # than a file. Cheap and independent, so it stays in the first tier.
   deny:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     # The action fetches the RustSec advisory DB over the network; everything
     # else is local. 10 is ~5x a typical 2m run.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2
         with:
           command: check
 
@@ -182,14 +195,16 @@ jobs:
   # local version stops satisfying forma-server's requirement, which would
   # mean CI green-lights a workspace it never actually tested.
   patch-is-live:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     # `cargo tree` resolves the graph without building it. MEASURED: <5s warm
     # locally; cold it is dominated by the registry index fetch.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: patch-is-live
       - name: forma-server must resolve forma-ir from this workspace
