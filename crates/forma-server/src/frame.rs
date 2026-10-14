@@ -54,10 +54,28 @@
 //! - **What the module shows.** It can show the user who previews it
 //!   anything, inside the frame.
 //!
+//! **Closed by the runtime, not by the policy: link hints and `srcdoc`.** No
+//! CSP directive governs `<link rel="preconnect">` and its kin, and in WebKit
+//! a module's `<link rel="preconnect" href="…">`, its `href` written or bound,
+//! opened a connection to the host it named from inside this frame, with
+//! `connect-src 'none'` and the sandbox in place; an `<iframe srcdoc>` holding
+//! such a `<link>` did too. `@getforma/core` 2.1.0's frame runtime mounts the
+//! module with `tier: 'unreviewed'`, which parses it once in place, removes
+//! every `<link>` and every `srcdoc` attribute (and refuses
+//! `data-bind:srcdoc`), checks the live subtree after each write, and refuses
+//! the render if one reaches the document (`FORMA_E_UNREVIEWED_LINK`,
+//! `FORMA_E_UNREVIEWED_SRCDOC`). Only core 2.1.0 and later ship the frame
+//! runtime, so every frame has it.
+//!
 //! Checked in Chrome 155 (forma#22 and its review): markup alone (`<img>`, a
 //! stylesheet, a `url()` in a `style` attribute, a font) reached neither the
 //! application nor another origin; the runtime ran; `import()` and scripts
-//! it created were refused; `fetch` was refused by `connect-src`.
+//! it created were refused; `fetch` was refused by `connect-src`. Checked in
+//! Chromium 151, Firefox 153 and WebKit 26.5 with core 2.1.0's runtime (its
+//! `e2e/frame.spec.ts`): a module's `<link>`
+//! (preconnect, dns-prefetch, prefetch, preload, a bound `href`, or one
+//! re-created by foreign content or foster parenting) and an `<iframe
+//! srcdoc>` opened no connection in any of the three.
 //!
 //! # Where the runtime comes from
 //!

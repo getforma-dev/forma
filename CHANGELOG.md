@@ -35,7 +35,9 @@ may meet, and its "Deprecated" names each deprecation's 3.0.0 replacement.
   origin, the runtime inline and allowed by its hash, and its requests
   closed (`connect-src`, `img-src`, `style-src`, `font-src`, `worker-src`,
   `form-action`), save the residuals its docs name: WebRTC, and navigations
-  the host's own `frame-src` admits. The runtime is read and hashed at start
+  the host's own `frame-src` admits. Link hints and `srcdoc`, which no CSP
+  directive governs and which connected in WebKit, are closed by core 2.1.0's
+  frame runtime (its unreviewed mount removes them; formajs#35). The runtime is read and hashed at start
   from the build's `forma-runtime.js` (`PreviewFrame::load`; a missing
   runtime is a coded error). The host's side is documented in
   forma-server's `frame` module.

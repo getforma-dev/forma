@@ -93,7 +93,15 @@ listed first.
     teardown, so its data lands in the application's access log; a wider
     `frame-src` lets a navigation out, with those cookies on the
     application's origin), and whatever the module shows the user inside
-    the frame.
+    the frame. **Link hints and `srcdoc` are closed in core, not by the
+    policy:** no CSP directive governs `<link rel="preconnect">`, and in
+    WebKit a module's preconnect (its `href` written or bound) or an
+    `<iframe srcdoc>` holding one connected to the host it named, from inside
+    the frame (the A2 audit's S1). `@getforma/core` 2.1.0's frame runtime
+    mounts the module with `tier: 'unreviewed'`, which removes every `<link>`
+    and `srcdoc` before the markup reaches the document, re-checks the live
+    subtree, and refuses the render if one appears (formajs#35); the frame
+    route's self-navigation residual above is unchanged.
   - The document is one root, `<div id="forma-frame">`, and the runtime as
     one inline script; it names no URL, so loading it fetches nothing.
   - The runtime comes from the application's own build: the manifest's
@@ -133,7 +141,11 @@ listed first.
   stylesheet, `url()` in a `style` attribute, a font) reached neither the
   application nor another origin; the runtime ran; `import()` and scripts it
   created were refused; `fetch` was refused by `connect-src 'none'`;
-  `window.origin` was `"null"`, with or without the header.
+  `window.origin` was `"null"`, with or without the header. With core
+  2.1.0's runtime, a module's `<link>` (preconnect, dns-prefetch, prefetch,
+  preload, a bound `href`, one re-created by foreign content) and an
+  `<iframe srcdoc>` open no connection in Chromium 151, Firefox 153 or
+  WebKit 26.5 (formajs's `e2e/frame.spec.ts`).
 - **Trusted Types in Report-Only** (DR-20, SR15; FORMA-127, the
   forma-server half). A page carries
   `Content-Security-Policy-Report-Only: require-trusted-types-for
