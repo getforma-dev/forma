@@ -38,8 +38,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ksx Studio — the production consumer — is a Windows app, so Windows
-        # is a first-class runner here, not an afterthought.
+        # ksx Studio, the first consumer planned for release, is a Windows app,
+        # so Windows is a first-class runner here, not an afterthought.
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     # MEASURED: 2.1m on ubuntu and 6.5m on windows, from the healthy-runner

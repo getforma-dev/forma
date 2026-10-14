@@ -66,8 +66,9 @@ binder — and URL-scheme blocking was asserted on exactly one of them, so
 green suite. The same shape was live in the compiler: slot-name uniqueness was
 asserted only inside the `list:` / `show:` describes, so a page with two
 dynamic attributes of the same key minted duplicate slot names, the real Rust
-consumer collapsed them last-insert-wins, and all 239 compiler tests stayed
-green.
+consumer of the time (`forma-ir` 0.1.x, which kept the last; 0.2.0 keeps the
+first, see ARCHITECTURE.md §3.2) collapsed them, and all 239 compiler tests
+stayed green.
 
 ```ts
 // GOOD — one vector table, run against ALL sinks
@@ -339,7 +340,8 @@ aspirational unless it says "proposed".
 
 | Gate | Where |
 |---|---|
-| Full unit suite + coverage on every push and PR | all four repos |
+| Full unit suite on every push and PR | all four repos |
+| Coverage report (text and lcov, no threshold) | `formajs` only, `npm run test:coverage`; `forma`, `forma-tools` and `create-forma-app` collect none |
 | Cross-implementation FMIR contract: the real compiler emits `.ir` files, the real Rust parser reads them and diffs against committed goldens | `forma-tools` `npm run emit:corpus` → `forma` `crates/forma-ir/tests/js_emitter_contract.rs`; CI fails with regeneration instructions |
 | Linear-cost regression gate on the SSR list walk (wall time *and* allocation count) | `forma` `crates/forma-ir/tests/list_scaling.rs` |
 | Bundle-size ceilings on the real ESM import graph | `formajs` `npm run check:size` |

@@ -35,7 +35,7 @@ mixed silently.
 | `forma-tools` | `C:\Projects\forma-tools` | `@getforma/compiler`, `@getforma/build` — TS/JSX → FMIR, the build pipeline | TypeScript |
 | `forma` | `C:\Projects\forma` | `forma-ir`, `forma-server` — FMIR parser, SSR walker, Axum middleware | Rust |
 | `create-forma-app` | `C:\Projects\create-forma-app` | `@getforma/create-app` — scaffolder + templates | TypeScript |
-| *(consumer)* ksx Studio | `C:\Projects\KeyboardSplitterXboxPro` | the first and only production consumer | Rust + TS |
+| *(consumer)* ksx Studio | `C:\Projects\KeyboardSplitterXboxPro` | the first consumer planned for release; none is in production yet (2026-10-14) | Rust + TS |
 
 ksx Studio matters architecturally, not just commercially: it is the only thing
 that has ever exercised this stack under real load, and its findings ledger
@@ -56,11 +56,11 @@ spends the first seconds of the page's life proving the two agree. Forma
 refuses each of those three costs in turn.
 
 **1. The component tree is compiled, not shipped.** `@getforma/compiler` walks
-the `h()` call tree of a page at build time and emits `.fmir`: a self-contained
-binary module with an opcode stream, an interned string table, a slot table and
-an island table. Everything static about the page — tags, attributes, literal
-text, structure — is *already decided* and encoded. Everything dynamic is a
-numbered **slot**.
+the `h()` call tree of a page at build time and emits FMIR, written as
+`<page>.ir`: a self-contained binary module with an opcode stream, an interned
+string table, a slot table and an island table. Everything static about the
+page — tags, attributes, literal text, structure — is *already decided* and
+encoded. Everything dynamic is a numbered **slot**.
 
 **2. The server needs no JavaScript.** `forma-ir` is a Rust crate that walks
 that opcode stream, fills the slots from `SlotData` the request handler
@@ -260,7 +260,7 @@ section data starting at offset 48.
 
 *The version rule:* `IrHeader::parse` rejects any version but `IR_VERSION`.
 There is no compatibility window in either direction. A bump to 3 means every
-`.fmir` is recompiled and the compiler, `forma-ir`, `forma-server`, the WASM
+`.ir` module is recompiled and the compiler, `forma-ir`, `forma-server`, the WASM
 walker and every embedded module in every consumer ship **together**. A bump is
 reserved for changes that cannot be additive. Adding an opcode byte, an enum
 value, or a fifth section *appended after* the existing four are all additive and
@@ -368,13 +368,12 @@ props reported a third answer (`parser.rs:slot_id_by_name`, `slot.rs:from_json`,
 `walker.rs:build_island_props`; verified by
 `crates/forma-ir/src/parser.rs > "duplicate_slot_names_resolve_first_wins_everywhere"`).
 
-> ⚠️ **Cross-repo drift, unresolved.** The forma-tools CHANGELOG (Unreleased)
-> describes the Rust name→id map as "last-insert-wins", which was true of
-> `forma-ir` before 0.2.0 and is not true now. Both repos agree duplicates are a
-> defect; they disagree in prose about which duplicate survives. The
-> compiler-side migration note ("server code that injected a duplicated key was
-> addressing the LAST occurrence") is therefore only correct against a
-> pre-0.2.0 `forma-ir`. Worth reconciling. Tracked here; not fixed by this doc.
+> **Cross-repo drift, reconciled (FORMA-009, 2026-10-14).** The compiler's
+> CHANGELOG (its 0.3.0 entries), README and comments described the Rust
+> name→id map as "last-insert-wins", which was true of `forma-ir` before 0.2.0
+> only. They now state the rule above, first wins, and point to
+> `IrModule::slot_id_by_name`, where `forma-ir` states it once
+> ([forma-tools#13](https://github.com/getforma-dev/forma-tools/pull/13)).
 
 ### 3.3 The hydration marker grammar
 
@@ -922,7 +921,7 @@ Known sharp edges. Each is real today unless marked otherwise.
 | B3 | `SWITCH` emits no hydration marker. | A switched region is server-rendered only; the client cannot re-render it. Also no default case — a non-matching value renders nothing. | Documented at `walker.rs`, Switch handler |
 | B4 | Literal-source lists still fall back to document-order positional names. | Reordering the page silently renames the slot; injection misses, no warning. | dogfood #3 (MOSTLY RESOLVED / residual ask) |
 | B5 | `SlotData::from_json` **silently ignores unknown keys**. | Every slot-name change fails soft. A stale injection key just stops working. | `slot.rs:from_json`; migration notes in forma-tools CHANGELOG |
-| B6 | Cross-repo prose drift on duplicate-name resolution (first-wins in `forma-ir` 0.2.0; forma-tools CHANGELOG still says last-insert-wins). | A reader following the compiler CHANGELOG's migration advice against a current `forma-ir` gets the wrong slot. | §3.2 of this document; **not yet fixed in either repo** |
+| B6 | Cross-repo prose drift on duplicate-name resolution (first-wins in `forma-ir` 0.2.0; forma-tools CHANGELOG said last-insert-wins). | A reader following the compiler CHANGELOG's migration advice against a current `forma-ir` got the wrong slot. | §3.2 of this document; **fixed in FORMA-009**: the compiler's prose now states first-wins ([forma-tools#13](https://github.com/getforma-dev/forma-tools/pull/13)) |
 | B7 | `PRELOAD` emits a `<link rel=preload>` with **no CSP nonce**. | Under `script-src 'strict-dynamic'` an `as="script"` preload hint is dropped. Degradation, not breakage; latent because the compiler never emits `PRELOAD`. | NOTE at `walker.rs`, Preload handler |
 | B8 | `source_hash` in the FMIR header is written as `0` and never verified. | No integrity or staleness check on the module. | `format.rs:IrHeader`; `FMIR-FORMAT.md` §2.1 |
 | B9 | Stale internal comment: `format.rs` §"Opcode enum (16 opcodes, 0x01–0x10)" — there are 18, through `0x12`. | Cosmetic, but this repo's own convention is that a comment asserting a fact must be true. | Found while writing this doc; **not fixed here** (code untouched by design) |
@@ -1073,7 +1072,8 @@ bytes on purpose"):
 Listed so they get answered rather than absorbed:
 
 1. **B6** — which repo's prose about duplicate-name resolution should change?
-   `forma-ir` is first-wins today; the compiler CHANGELOG says last-wins.
+   *Answered (FORMA-009):* the compiler's. `forma-ir`'s first-wins is the rule;
+   the compiler CHANGELOG, README and comments now say so.
 2. **D2's rejected alternatives** are my reconstruction. Were JSON and template
    strings actually considered, and were the reasons the ones I list?
 3. **D5's rejected alternative** — was "adopt DOM state as initial signal values"

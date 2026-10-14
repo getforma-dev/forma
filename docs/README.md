@@ -10,7 +10,7 @@ so there is one copy of each and every repo links to it.
 |---|---|---|---|
 | 1 | [ARCHITECTURE.md](ARCHITECTURE.md) | What the stack is, how the pipeline fits together, and *why* each design decision was made | First. Before your first PR in any of the four repos |
 | 2 | [TESTING.md](TESTING.md) | The eight rules a test must satisfy here, the `Verified by:` citation contract, and the reviewer's checklist | Before you write or review a test |
-| 3 | [FMIR-FORMAT.md](FMIR-FORMAT.md) | The binary layout and the stability contract — which bytes are frozen forever | When you touch the emitter, the parser, or anything that byte-guards a `.fmir` |
+| 3 | [FMIR-FORMAT.md](FMIR-FORMAT.md) | The binary layout and the stability contract — which bytes are frozen forever | When you touch the emitter, the parser, or anything that byte-guards an `.ir` module |
 | 4 | [archive/](archive/) | Material that has been retired, with what it was, when it went, and why | When something in a doc contradicts the code and you want to know what happened |
 
 `ARCHITECTURE.md` is deliberately the long one. It separates **evidenced**

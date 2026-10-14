@@ -41,6 +41,9 @@ Known residual: an *under*-long control-flow length whose orphaned bytes still d
 
 ## Supported Versions
 
+Both crates, `forma-ir` and `forma-server`, take the workspace version.
+
 | Version | Supported |
 |---------|-----------|
-| 0.1.x | Yes |
+| 0.2.x | Yes: fixes ship as 0.2 patch releases; run the latest one |
+| 0.1.x and earlier | No: upgrade to 0.2 ([CHANGELOG.md](CHANGELOG.md) lists its breaking changes) |

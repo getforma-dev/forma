@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed (documentation only)
+- `RouteAssets::ir`'s doc comment names its value as the build writes it, the
+  hashed `.ir` file name, not a `.fmir` module (FORMA-009).
+
 ## [0.2.1] - 2026-10-14
 
 ### Fixed
