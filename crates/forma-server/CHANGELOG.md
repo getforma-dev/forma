@@ -17,7 +17,9 @@
 ### Changed
 - `serve_asset::<A>` now states the `A: 'static` bound the `TypeId` key needs.
   Mounting the handler on an axum route already required it, and every
-  `#[derive(Embed)]` type meets it.
+  `#[derive(Embed)]` type meets it. One pattern breaks: a generic function
+  that calls `serve_asset::<A>` with only `A: Embed` compiled on 0.2.0 and now
+  fails with E0310. It must now state `A: Embed + 'static`.
 
 ## [0.2.0] - 2026-08-06
 
