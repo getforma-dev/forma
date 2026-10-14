@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-14
+
 ### Fixed
 - **A second `Embed` type's assets no longer answer 404 in release builds.**
   `is_embedded` cached the release file list in a `static` declared inside the
