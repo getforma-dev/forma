@@ -1,5 +1,4 @@
-//! The service worker: opt-in, per application, and retired everywhere else
-//! (DR-25, Q15, M25).
+//! The service worker: opt-in, per application, and retired everywhere else.
 //!
 //! # The setting
 //!
@@ -20,7 +19,7 @@
 //! release checks `/sw.js` for an update on its next visits, receives the
 //! retiring worker, which deletes Forma's caches and unregisters, and from then
 //! on loads every page and asset from the network. This is the kill switch
-//! that keeps DR-25's door two-way; it is served through 3.x.
+//! that keeps turning the worker on a two-way door; it is served through 3.x.
 //!
 //! Rolling back an application's worker is turning `.enabled()` off and
 //! keeping the name: its retiring worker then deletes that application's own
@@ -54,7 +53,7 @@
 //!   `skipWaiting()`, as a kill switch must: an open tab of the old build is
 //!   handed to it at once and loses the old worker's cache, so its requests go
 //!   to the network (and to the skew path if its build's assets are gone).
-//!   That is the trade TH19 asks for: a planted entry stops being served from
+//!   That is the trade made on purpose: a planted entry stops being served from
 //!   the navigation after the browser's update check, not when the last old
 //!   tab closes.
 //!
@@ -234,7 +233,7 @@ pub(crate) fn retiring_worker(app: Option<&str>) -> String {
         None => "null".to_string(),
     };
     format!(
-        r#"// forma-server: the retiring service worker (DR-25, M25).
+        r#"// forma-server: the retiring service worker.
 // It deletes Forma's v1 caches and this application's own, never another
 // application's, then unregisters. It answers no request, so every page and
 // asset loads from the network.

@@ -10,7 +10,7 @@ Axum middleware for the [Forma Stack](https://getforma.dev) — server-side rend
 
 ```toml
 [dependencies]
-forma-server = "0.1"
+forma-server = "0.2.2"
 ```
 
 This pulls in `forma-ir` automatically.

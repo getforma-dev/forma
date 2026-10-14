@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-14
+
+Release A2, the bridge to 3.0.0: additive, with deprecations. See
+[crates/forma-ir/CHANGELOG.md](crates/forma-ir/CHANGELOG.md) and
+[crates/forma-server/CHANGELOG.md](crates/forma-server/CHANGELOG.md) for the
+itemised lists: each crate's "Upgrading from 0.2.1" names what an application
+may meet, and its "Deprecated" names each deprecation's 3.0.0 replacement.
+
+- **forma-server 0.2.2 requires forma-ir 0.2.2** (`forma-ir = "0.2.2"`,
+  normal and dev; FORMA-138). forma-server calls `walk_to_html_counted`,
+  `WalkCounts` and `IrError::Panicked`, which forma-ir 0.2.1 lacks, so the
+  0.2.0 requirement it carried while both were unreleased would have let a
+  lockfile holding forma-ir 0.2.1 fail to build it (E0425, E0599). Publish
+  order: `ir-v0.2.2`, then `server-v0.2.2` once that run has published
+  (CONTRIBUTING, "Releasing").
+- **Public text names no internal decision records (FORMA-138, after
+  FORMA-131).** forma-server's and forma-ir's rustdoc, `#[deprecated]` notes,
+  development-build log lines, the retiring service worker's comment and
+  `SECURITY.md` no longer cite decision-record, requirement or threat ids
+  (`DR-`, `L-`, `SR`, `TH` and the like), which mean nothing to a reader of
+  docs.rs; the allowlist they cited is named as `forma-raw-lint`'s. Internal
+  `//` comments, private items' docs, tests and the CHANGELOGs keep them.
+  Wording only: no item, signature or behaviour changed.
+- **The install snippets name 0.2.2** (README and both crate READMEs, shown
+  on crates.io): they said `"0.1"`, which resolves to 0.1.x and none of
+  0.2's API.
+
 - **The preview frame (FORMA-125, DR-14 tier (c), L-52).** forma-server's
   `PageResponse::frame` writes the document for content nobody reviewed: an
   opaque origin (`sandbox allow-scripts`), framed only by the application's

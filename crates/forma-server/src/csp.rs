@@ -1,5 +1,5 @@
 //! CSP nonce generation and policy construction: the enforced policy, its
-//! typed extensions, and Trusted Types in Report-Only (DR-17, DR-20).
+//! typed extensions, and Trusted Types in Report-Only.
 
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use ring::rand::{SecureRandom, SystemRandom};
@@ -39,7 +39,7 @@ impl fmt::Display for InvalidNonce {
 impl std::error::Error for InvalidNonce {}
 
 /// Returned by [`CspNonce::try_generate`] when the operating system's random
-/// source fails: there is no nonce, so there is no page (DR-12).
+/// source fails: there is no nonce, so there is no page.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct NonceError;
@@ -201,11 +201,11 @@ pub fn build_csp_header(nonce: &CspNonce) -> String {
 // Trusted Types, Report-Only (DR-20) and the reporting endpoint
 // ---------------------------------------------------------------------------
 
-/// The Trusted Types directives (DR-20): every write to a script-carrying
+/// The Trusted Types directives: every write to a script-carrying
 /// DOM sink must pass a Trusted Type, and only Forma's two policies may make
-/// one: `forma` (`trustedHtml`, the raw entry, DR-19) and `forma-runtime` (the
+/// one: `forma` (`trustedHtml`, the raw entry) and `forma-runtime` (the
 /// zero-build runtime's parser). No `'allow-duplicates'`: a second copy of
-/// core creating `forma` is itself a violation (TH18).
+/// core creating `forma` is itself a violation.
 ///
 /// In 0.2.2 they are sent in `Content-Security-Policy-Report-Only`, beside
 /// the unchanged enforced policy, for one release; 3.0.0 enforces them.
@@ -282,9 +282,9 @@ pub(crate) fn report_only_policy() -> String {
 /// here; it cannot remove a directive, loosen `script-src` or `style-src`,
 /// or write the policy as text. The same builder names the application's
 /// reporting endpoint ([`PolicyExtensions::report_to`]) and relaxes Trusted
-/// Types on a route ([`PolicyExtensions::relax_trusted_types`], DR-20). A [`crate::PageResponse`] applies the
+/// Types on a route ([`PolicyExtensions::relax_trusted_types`]). A [`crate::PageResponse`] applies the
 /// extensions when it is made, and an invalid one fails the page with a
-/// [`PolicyError`] instead of reaching a header (DR-17, SR5).
+/// [`PolicyError`] instead of reaching a header.
 ///
 /// Each source must be one CSP source expression: `'self'`, a scheme
 /// (`https:`, `blob:`, `data:`, `wss:`), or a host (`cdn.example.com`,
@@ -359,7 +359,7 @@ impl PolicyExtensions {
     }
 
     /// Send this page's policy violations to `endpoint`, an endpoint the
-    /// application runs (DR-20, SR8), for pages served over HTTPS. Name it
+    /// application runs, for pages served over HTTPS. Name it
     /// once, on the `PolicyExtensions` every route starts from, so no page
     /// leaves without it.
     ///
@@ -398,7 +398,7 @@ impl PolicyExtensions {
     /// report; over HTTPS each sent one `application/reports+json` report and
     /// no `report-uri` copy.
     ///
-    /// **The endpoint's obligations are the application's (SR8, L-38):**
+    /// **The endpoint's obligations are the application's:**
     ///
     /// - Store each report's URLs (`documentURL` / `document-uri`,
     ///   `blockedURL` / `blocked-uri`, `referrer`, `sourceFile`) **without
@@ -465,9 +465,10 @@ impl PolicyExtensions {
     }
 
     /// Relax Trusted Types on this route, for a page whose string sinks have
-    /// not moved to `trustedHtml` yet (DR-20's bridge). One of SR8's
-    /// allowlisted exits: each call belongs on the application's allowlist
-    /// with an owner and an end date, and `reason` should name them.
+    /// not moved to `trustedHtml` yet (the bridge to 3.0.0's enforcement). An
+    /// allowlisted exit: each call belongs on the application's raw-entry
+    /// allowlist (`forma-raw-lint`) with an owner and an end date, and
+    /// `reason` should name them.
     ///
     /// What it does: in 0.2.x Trusted Types are Report-Only on every route,
     /// so the headers do not change; from 3.0.0, when the other routes
@@ -557,7 +558,7 @@ impl std::error::Error for PolicyError {}
 pub(crate) struct PagePolicy {
     /// `Content-Security-Policy`.
     csp: axum::http::HeaderValue,
-    /// `Content-Security-Policy-Report-Only`: Trusted Types (DR-20).
+    /// `Content-Security-Policy-Report-Only`: Trusted Types.
     report_only: axum::http::HeaderValue,
     /// `Reporting-Endpoints`, when the extensions name an endpoint.
     reporting_endpoints: Option<axum::http::HeaderValue>,
@@ -735,7 +736,7 @@ pub(crate) fn log_relaxation(route: Option<&str>, reason: &str) {
         tracing::warn!(
             "Trusted Types relaxed on more than {RELAXATIONS_LOGGED} (route, reason) pairs; \
              further ones are not logged. route_pattern is a route's pattern (/users/:id), \
-             not a request's path (DR-20)."
+             not a request's path."
         );
         return;
     }
@@ -748,9 +749,9 @@ pub(crate) fn log_relaxation(route: Option<&str>, reason: &str) {
     tracing::warn!(
         route,
         reason,
-        "Trusted Types relaxed on route {route}: {reason}. An SR8 allowlist exit: in 0.2.x every \
+        "Trusted Types relaxed on route {route}: {reason}. An allowlisted exit: in 0.2.x every \
          route reports them (Report-Only); from 3.0.0 this route keeps reporting while the \
-         others enforce (DR-20). Logged once per route and reason per process."
+         others enforce. Logged once per route and reason per process."
     );
 }
 
@@ -911,8 +912,8 @@ fn is_port(port: &str) -> bool {
 // ---------------------------------------------------------------------------
 
 /// The preview frame document's policy: the strict policy with exactly
-/// nine directives written in their place, the one exception to SR5's rule
-/// against rewriting the policy (L-17, L-27, L-52, SR32):
+/// nine directives written in their place, the one exception to the rule
+/// that a page's policy is never rewritten:
 ///
 /// - `sandbox allow-scripts`, without `allow-same-origin`: the document gets
 ///   an opaque origin, so it reaches none of the application's cookies,
@@ -929,7 +930,7 @@ fn is_port(port: &str) -> bool {
 ///   document CSP's `'self'` still names the application's origin, so the
 ///   strict policy's `'self'` sources would let markup alone (an `<img>`, a
 ///   stylesheet, a `url()` in a `style` attribute, a font) send requests to
-///   the application, with its `SameSite=None` cookies (L-52).
+///   the application, with its `SameSite=None` cookies.
 ///
 /// The rest are the strict policy's, unchanged: `default-src`, `object-src`
 /// and `base-uri 'none'`, and `style-src-attr 'unsafe-inline'` (inline

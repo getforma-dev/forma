@@ -28,13 +28,13 @@ pub struct PageConfig<'a> {
     /// not the same as making it safe: a `"` or `\` arriving from untrusted
     /// data still yields nonce-blessed script execution inside your own page.
     ///
-    /// Deprecated (DR-18): data goes through [`PageConfig::config_json`] as
+    /// Deprecated: data goes through [`PageConfig::config_json`] as
     /// escaped JSON, and code goes into the page's bundle, reading a flag from
     /// that data. Set this to `None`; 3.0.0 removes the field.
     #[deprecated(
         since = "0.2.2",
-        note = "writes handler text into a nonced script (TH4); pass data through \
-                `config_json` and move code into the bundle. Removed in 3.0.0 (DR-18)"
+        note = "writes handler text into a nonced script; pass data through \
+                `config_json` and move code into the bundle. Removed in 3.0.0"
     )]
     pub config_script: Option<&'a str>,
     /// Optional server data to expose to the client as
@@ -61,7 +61,7 @@ pub struct PageConfig<'a> {
     /// Pass a [`RawHtml`](crate::RawHtml), the one named raw-HTML type, bound
     /// first and borrowed: `let logo = RawHtml::trusted(..);` then
     /// `body_prefix: Some(&logo)`, so review and CI find every raw entry by
-    /// its constructor (DR-19, SR8); the line compiles in 3.0.0 too, where the
+    /// its constructor; the line compiles in 3.0.0 too, where the
     /// field takes only a `RawHtml`. A plain string still works and is written
     /// exactly as before; in debug builds the first one a process renders
     /// logs `RAW-101` once.
@@ -91,7 +91,7 @@ pub struct PageConfig<'a> {
 /// CSP entirely.
 ///
 /// Superseded by [`PageResponse`](crate::PageResponse), which writes those
-/// headers itself and cannot be sent without them (DR-17). Turn a
+/// headers itself and cannot be sent without them. Turn a
 /// `PageOutput` into one with [`PageOutput::into_page_response`]; the public
 /// fields and [`PageOutput::headers`] are deprecated and go private in 3.0.0.
 #[non_exhaustive]
@@ -101,14 +101,14 @@ pub struct PageOutput {
     #[deprecated(
         since = "0.2.2",
         note = "send the page as a `PageResponse` (`into_page_response`), which carries \
-                `no-store` and the policy with it (DR-17). Private in 3.0.0"
+                `no-store` and the policy with it. Private in 3.0.0"
     )]
     pub html: String,
     /// The `Content-Security-Policy` header value that blesses it.
     #[deprecated(
         since = "0.2.2",
         note = "the policy is typed now: extend it with `PolicyExtensions` and send a \
-                `PageResponse` rather than editing this text (DR-17). Private in 3.0.0"
+                `PageResponse` rather than editing this text. Private in 3.0.0"
     )]
     pub csp: String,
     /// The nonce embedded in `html` and blessed by `csp`.
@@ -120,7 +120,7 @@ pub struct PageOutput {
         note = "render with `try_render` (0.2.2), which draws the nonce and writes it into \
                 the page and its policy; a handler that must read it takes \
                 `PageResponse::into_parts_unchecked().nonce`. Private in 3.0.0, which gives \
-                no caller a nonce (L-14)"
+                no caller a nonce"
     )]
     pub nonce: crate::csp::CspNonce,
     /// What the render did, carried into [`PageOutput::into_page_response`].
@@ -139,7 +139,7 @@ impl PageOutput {
     #[deprecated(
         since = "0.2.2",
         note = "use `into_page_response`: a `PageResponse` writes these headers itself and \
-                fails rather than dropping an invalid policy (DR-17). Removed in 3.0.0"
+                fails rather than dropping an invalid policy. Removed in 3.0.0"
     )]
     pub fn headers(&self) -> Vec<(axum::http::HeaderName, axum::http::HeaderValue)> {
         let mut headers = vec![

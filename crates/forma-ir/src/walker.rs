@@ -323,7 +323,7 @@ pub struct WalkFailure {
     /// The component names of the islands open where it stopped, outermost
     /// first; empty when it stopped outside every island. FMIR v2 carries no
     /// source positions, so a component the compiler inlined into its parent
-    /// has no name here; the source-position table of FMIR v3 adds it (L-7).
+    /// has no name here; the source-position table of FMIR v3 adds it.
     pub component_path: Vec<String>,
     /// What it had written by then.
     pub counts: WalkCounts,
@@ -350,12 +350,12 @@ impl std::error::Error for WalkFailure {
 ///
 /// The same HTML, byte for byte, and the same errors, with two additions: the
 /// counts (nodes, bytes, list rows), returned on success and on failure alike
-/// so an over-budget page reports how far it got (SR22); and the component
+/// so an over-budget page reports how far it got; and the component
 /// path, the islands open at the failure. A panic inside the walk is caught
 /// and returned as [`IrError::Panicked`] with the same path and counts, so
-/// one bad page cannot take its request's connection down with it (DR-12).
+/// one bad page cannot take its request's connection down with it.
 /// That holds only while the application unwinds on panic: under
-/// `panic = "abort"` the process ends instead (SA8).
+/// `panic = "abort"` the process ends instead.
 ///
 /// Verified by: crates/forma-ir/src/walker.rs > "counted_walk_returns_the_counts_reached_when_a_budget_stops_it"
 /// Verified by: crates/forma-ir/src/walker.rs > "counted_walk_catches_a_panic_and_names_its_island"
