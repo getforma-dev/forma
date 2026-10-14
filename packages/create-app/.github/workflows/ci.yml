@@ -204,6 +204,10 @@ jobs:
             cargo-registry-${{ runner.os }}-
 
       - run: npm ci
+      # SR2 (FORMA-180, the A2 audit's F11): the install this job builds from
+      # carries the npm registry's signatures. Reads the registry's public keys;
+      # needs no token and no permission beyond the job's.
+      - run: npm audit signatures
       - run: npm run build
       - run: npx vitest run
         env:

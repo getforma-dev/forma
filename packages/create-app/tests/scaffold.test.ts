@@ -219,9 +219,14 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     tmp = mkTmpDir('forma-e2e-');
   });
 
+  // Removing two scaffolded projects, each with its node_modules and cargo
+  // target, is not reliably under vitest's 10 s hook default on a Windows
+  // runner: run 38645807340 passed all 155 tests and then failed here
+  // (FORMA-180). The budget is the hook's own, so a slow delete is not a red
+  // run and a stuck one still ends.
   afterAll(() => {
     rmrf(tmp);
-  });
+  }, 120_000);
 
   it.each(TEMPLATES)('%s: npm ci, frontend build, cargo check --locked', (template) => {
     const name = `e2e-${template}`;

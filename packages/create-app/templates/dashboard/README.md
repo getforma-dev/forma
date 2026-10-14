@@ -24,6 +24,22 @@ ranges in `package.json` afresh. `Cargo.toml` declares `rust-version = "1.85"`
 with `resolver = "3"`, so a later `cargo update` only picks crates that still
 build on Rust 1.85. Commit both lockfiles.
 
+**`npm ci` reports 4 high advisories, all one chain, and there is nothing to
+fix yet.** As of 2026-10-14, `admin/package-lock.json` resolves
+`@tailwindcss/cli` 4.3.3 → `@parcel/watcher` 2.5.1 → `micromatch` 4.0.8 →
+`braces` 3.0.3, and `braces` 3.0.3, the latest release (May 2024), is inside
+[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+(`<=3.0.3`: a stack-exhaustion denial of service through deeply nested brace
+patterns; no fixed version on npm). `@parcel/watcher` is the file watcher
+behind `@tailwindcss/cli --watch`, loaded only in that mode, which
+`@getforma/build` never uses: it runs the Tailwind CLI once per build, so the
+watcher never runs here, and nothing of it is in the built assets or the
+server. `npm audit fix` changes nothing, because
+`@tailwindcss/cli` 4.3.1 and later pin `@parcel/watcher` to exactly 2.5.1. The
+chain clears when `@tailwindcss/cli` moves to `@parcel/watcher` 2.6.0, which
+replaced `micromatch` with `picomatch`, or when `braces` publishes a fix;
+`npm update @tailwindcss/cli` in `admin/` then picks it up.
+
 ## Security before you deploy this
 
 The server binds to `127.0.0.1` (localhost only). To expose it, opt in:

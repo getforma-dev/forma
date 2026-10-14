@@ -676,4 +676,35 @@ describe('dashboard template', () => {
     expect(readme).toContain(`${count} Playwright E2E tests`);
     expect(readme).toContain(`${count} tests.`);
   });
+
+  // FORMA-180 (the A2 audit's F18): a scaffolded dashboard's first `npm ci`
+  // reports 4 high advisories, one chain, @tailwindcss/cli -> @parcel/watcher
+  // 2.5.1 -> micromatch -> braces 3.0.3 (GHSA-vfj7-8cjw-p6xm, no fixed braces
+  // on npm). The README explains it while it is true. The lockfile decides
+  // whether it is true: @parcel/watcher 2.6.0 dropped micromatch, so once a
+  // regenerated lockfile locks a watcher without it, the paragraph is stale
+  // and this test demands its removal rather than letting it outlive the fact.
+  it('tells the user about the braces advisory while its locked watcher still carries it', () => {
+    const lock = readJson('dashboard', 'admin', 'package-lock.json');
+    const watcher = lock.packages['node_modules/@parcel/watcher'];
+    // Prose is wrapped at 80 columns; compare it unwrapped.
+    const readme = fs
+      .readFileSync(path.join(TEMPLATES_DIR, 'dashboard', 'README.md'), 'utf8')
+      .replace(/\s+/g, ' ');
+    const advisory = 'GHSA-vfj7-8cjw-p6xm';
+    if (watcher && 'micromatch' in (watcher.dependencies ?? {})) {
+      const cli = lock.packages['node_modules/@tailwindcss/cli'];
+      const micromatch = lock.packages['node_modules/micromatch'];
+      const braces = lock.packages['node_modules/braces'];
+      expect(cli?.dependencies?.['@parcel/watcher'], 'the CLI is what pulls the watcher in').toBeDefined();
+      expect(readme).toContain(advisory);
+      // The chain as the lockfile resolves it, with the versions, in order.
+      expect(readme).toContain(
+        `\`@tailwindcss/cli\` ${cli.version} → \`@parcel/watcher\` ${watcher.version} → ` +
+          `\`micromatch\` ${micromatch.version} → \`braces\` ${braces.version}`,
+      );
+    } else {
+      expect(readme, 'the watcher no longer carries braces; drop the README paragraph').not.toContain(advisory);
+    }
+  });
 });

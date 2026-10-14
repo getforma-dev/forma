@@ -2,6 +2,57 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **The dashboard README says what its `npm ci` reports and why nothing fixes
+  it yet** (FORMA-180, the A2 audit's F18): 4 high advisories, all one chain,
+  `@tailwindcss/cli` 4.3.3 → `@parcel/watcher` 2.5.1 → `micromatch` 4.0.8 →
+  `braces` 3.0.3 (GHSA-vfj7-8cjw-p6xm, `<=3.0.3`, no fixed version on npm; the
+  latest `braces` is 3.0.3 of May 2024). It is the file watcher behind the
+  Tailwind CLI's `--watch`, a development-time tool; `npm audit fix` changes
+  nothing because `@tailwindcss/cli` 4.3.1 and later pin the watcher to
+  exactly 2.5.1, and the chain clears when the CLI moves to `@parcel/watcher`
+  2.6.0, which replaced `micromatch` with `picomatch`. The template's lockfile
+  is unchanged. A test reads the lockfile and requires the paragraph while the
+  locked watcher still depends on `micromatch`, and forbids it once it does
+  not, so the paragraph leaves with the advisory.
+  Verified by `tests/templates.test.ts` > "tells the user about the braces advisory while its locked watcher still carries it"
+- **This repository's own devDependencies updated within their ranges**
+  (FORMA-180, F19): `npm update` moves the root lockfile to vitest 4.1.11,
+  vite 8.3.4, esbuild 0.27.7, postcss 8.5.30, nanoid 3.3.20, picomatch 4.0.7
+  and source-map-js 1.2.2, among others; `package.json` is untouched, the
+  shipped `dependencies` remain `prompts` alone, and `npm pack --dry-run`
+  lists the same 38 files. `npm audit --package-lock-only` goes from 8
+  advisories (1 low, 2 moderate, 5 high) to 1 low, GHSA-g7r4-m6w7-qqqr
+  (esbuild's development server on Windows, which this repository never
+  runs): its fix is esbuild 0.28.1, outside tsup 8.5.1's `^0.27.0`, and
+  tsup 9.0.0 (esbuild `^0.28.2`) was published on 2026-10-14, a major bump
+  left for its own change.
+- **Every `npm ci` in the workflows is followed by `npm audit signatures`**
+  (FORMA-180, the A2 audit's F11 for this repository): `release.yml`'s
+  `scaffold` and `pack` jobs and `ci.yml`'s `scaffold` job installed the tree
+  without the registry's signature check that `ci.yml`'s `test` job already
+  ran, and `pack` installs the tree that builds the published tarball. The
+  step reads the registry's public keys and needs no token; `publish` is
+  untouched, and the packed tarball's SHA-256 is the same before and after.
+  `scripts/check-release-workflow.rb` gains rule S1, the text every
+  repository's lint shares: the step after every `npm ci` is its own
+  `run: npm audit signatures`, and the audit appears nowhere else; eight
+  seeded violations (the audit missing, before the install, after the
+  build, swallowed by `|| true` or `; true`, combined with the install, added
+  to `publish`, and a new job that installs without it) each fail the
+  self-test's copy, 66 of 66 checks.
+
+### Tests
+
+- **The scaffold E2E suite's `afterAll` has its own 120 s budget**
+  (FORMA-180): removing two scaffolded projects, each with its
+  `node_modules` and cargo `target`, is not reliably under vitest's 10 s hook
+  default on a Windows runner. Run 38645807340 passed all 155 tests on
+  `windows-latest` and then failed in that hook (`tests/scaffold.test.ts`,
+  `rmrf(tmp)`), which this PR's vitest 4.1.0 → 4.1.11 move made visible; a
+  slow delete is no longer a red run, and a stuck one still ends.
+
 ## [0.6.2] - 2026-10-14
 
 The templates move onto release A2, the bridge to 3.0.0 (published
