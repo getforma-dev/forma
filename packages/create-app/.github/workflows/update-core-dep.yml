@@ -14,7 +14,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    # A checkout, a sed over five package.json files and one PR API call.
+    # A checkout, a sed over two template package.json files and one PR API call.
     # Seconds of work; 10 bounds a slow GitHub API without hiding a stall.
     timeout-minutes: 10
     steps:
