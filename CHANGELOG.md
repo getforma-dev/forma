@@ -15,8 +15,10 @@
 
 - **Trusted Types, reported (FORMA-127, DR-20).** forma-server sends
   `require-trusted-types-for 'script'; trusted-types forma forma-runtime` in
-  `Content-Security-Policy-Report-Only` beside the unchanged enforced policy,
-  on every page that carries it; 3.0.0 enforces it. `PolicyExtensions` gains
+  `Content-Security-Policy-Report-Only` beside the unchanged enforced policy
+  when the application names a reporting endpoint, and with no endpoint in
+  development builds only (released, it would report to nobody and WebKit
+  logs an error for it on every page); 3.0.0 enforces it. `PolicyExtensions` gains
   `report_to` (an endpoint the application runs, written into both policies;
   `report_uri` for pages served over plain HTTP)
   and `relax_trusted_types` (a named, logged per-route relaxation).

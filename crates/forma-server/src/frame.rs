@@ -26,8 +26,9 @@
 //!
 //! The strict policy's `default-src 'none'` closes nested frames, media and
 //! prefetches, and `object-src` and `base-uri 'none'` stay. Trusted Types are
-//! reported, not enforced, as on every page in 0.2.2, and to no endpoint: an
-//! unreviewed document's violations are not the application's reports.
+//! reported, not enforced, to no endpoint (an unreviewed document's
+//! violations are not the application's reports), so, as on any page
+//! without one, in development builds only.
 //!
 //! **What stays open, the residuals (TH22):**
 //!
@@ -286,9 +287,9 @@ impl PageResponse {
     /// policy is rewritten, and only in its nine directives (L-27, L-52).
     ///
     /// As every `PageResponse`, it writes `Cache-Control: no-store`, the
-    /// document headers and Trusted Types in Report-Only (no endpoint) with
-    /// it; its HTML is reachable apart from them only through
-    /// `into_parts_unchecked()`.
+    /// document headers, and in a development build Trusted Types in
+    /// Report-Only (no endpoint), with it; its HTML is reachable apart from
+    /// them only through `into_parts_unchecked()`.
     ///
     /// # Errors
     ///

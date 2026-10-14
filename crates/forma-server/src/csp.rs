@@ -208,7 +208,9 @@ pub fn build_csp_header(nonce: &CspNonce) -> String {
 /// core creating `forma` is itself a violation (TH18).
 ///
 /// In 0.2.2 they are sent in `Content-Security-Policy-Report-Only`, beside
-/// the unchanged enforced policy, for one release; 3.0.0 enforces them.
+/// the unchanged enforced policy, for one release; 3.0.0 enforces them. A
+/// release build sends that header only when the application names a
+/// reporting endpoint ([`report_only_policy`]).
 const TRUSTED_TYPES: [(&str, &[&str]); 2] = [
     ("require-trusted-types-for", &["'script'"]),
     ("trusted-types", &["forma", "forma-runtime"]),
@@ -266,9 +268,18 @@ fn report_only_text(reporting: Option<&Reporting>) -> String {
     write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice())))
 }
 
-/// The Report-Only policy a page without a reporting endpoint carries.
-pub(crate) fn report_only_policy() -> String {
-    report_only_text(None)
+/// The Report-Only policy a page without a reporting endpoint carries: in a
+/// development build (`cfg(debug_assertions)`) the Trusted Types directives,
+/// whose violations Chromium and Firefox show in the console, which is what
+/// moving the sinks needs; in a release build none. Released, it would
+/// report to nobody, and WebKit logs a console error on every page whose
+/// Report-Only policy names no `report-to` ("the policy will have no
+/// effect"), which a test failing on console errors in WebKit then meets
+/// (FORMA-138's packed-set run).
+///
+/// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "trusted_types_go_out_in_report_only_with_an_endpoint_or_in_a_debug_build_and_the_enforced_policy_is_unchanged"
+pub(crate) fn report_only_policy() -> Option<String> {
+    cfg!(debug_assertions).then(|| report_only_text(None))
 }
 
 // ---------------------------------------------------------------------------
@@ -411,9 +422,12 @@ impl PolicyExtensions {
     /// - Alert **per route and directive above a baseline**, deduplicated:
     ///   never a ticket per report. One page in a loop sends thousands.
     ///
-    /// Without an endpoint, a violation of either policy is reported only in
-    /// the browser's console, as in 0.2.1, and the enforced policy is
-    /// byte-identical to 0.2.1's. An endpoint that is empty, carries `;`,
+    /// Without an endpoint, the enforced policy is byte-identical to
+    /// 0.2.1's and its violations reach only the browser's console; the
+    /// Trusted Types Report-Only header goes out in development builds only
+    /// (a released Report-Only policy with no endpoint reports to nobody, and
+    /// WebKit logs an error for it on every page). Naming an endpoint sends
+    /// it in every build. An endpoint that is empty, carries `;`,
     /// `,`, a quote, a backslash, whitespace, a fragment or a non-ASCII byte,
     /// starts with `//`, or uses another scheme fails the page with a
     /// [`PolicyError`] for `report-to`. The last of `report_to` and
@@ -557,8 +571,9 @@ impl std::error::Error for PolicyError {}
 pub(crate) struct PagePolicy {
     /// `Content-Security-Policy`.
     csp: axum::http::HeaderValue,
-    /// `Content-Security-Policy-Report-Only`: Trusted Types (DR-20).
-    report_only: axum::http::HeaderValue,
+    /// `Content-Security-Policy-Report-Only`: Trusted Types (DR-20), when
+    /// an endpoint is named or the build is a development one.
+    report_only: Option<axum::http::HeaderValue>,
     /// `Reporting-Endpoints`, when the extensions name an endpoint.
     reporting_endpoints: Option<axum::http::HeaderValue>,
     /// Why Trusted Types are relaxed on this route, when they are.
@@ -573,9 +588,9 @@ impl PagePolicy {
         &self.csp
     }
 
-    /// `Content-Security-Policy-Report-Only`.
-    pub(crate) fn report_only(&self) -> &axum::http::HeaderValue {
-        &self.report_only
+    /// `Content-Security-Policy-Report-Only`, when the page sends one.
+    pub(crate) fn report_only(&self) -> Option<&axum::http::HeaderValue> {
+        self.report_only.as_ref()
     }
 
     /// `Reporting-Endpoints`, when an endpoint is named.
@@ -663,10 +678,12 @@ pub(crate) fn page_policy(
         "content-security-policy",
         write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice()))),
     )?;
-    let report_only = header(
-        "content-security-policy-report-only",
-        report_only_text(reporting),
-    )?;
+    let report_only = match reporting {
+        Some(reporting) => Some(report_only_text(Some(reporting))),
+        None => report_only_policy(),
+    }
+    .map(|text| header("content-security-policy-report-only", text))
+    .transpose()?;
     let reporting_endpoints = match reporting {
         Some(Reporting::Both(endpoint)) => Some(header(
             "report-to",
@@ -934,8 +951,9 @@ fn is_port(port: &str) -> bool {
 /// The rest are the strict policy's, unchanged: `default-src`, `object-src`
 /// and `base-uri 'none'`, and `style-src-attr 'unsafe-inline'` (inline
 /// `style` attributes, whose `url()`s `img-src` and `font-src` now confine).
-/// Trusted Types are reported as on every page, with no reporting endpoint:
-/// an unreviewed document's violations are not the application's reports.
+/// Trusted Types are reported with no reporting endpoint (an unreviewed
+/// document's violations are not the application's reports), so, as on any
+/// page without one, in development builds only ([`report_only_policy`]).
 /// The header must be the enforced one: `sandbox` is ignored in Report-Only
 /// and in `meta`. `app_origin` is checked by [`check_origin`] first, and
 /// `runtime_sha256` is base64; `None` only if a header value could not be
@@ -964,7 +982,10 @@ pub(crate) fn frame_policy(
     let csp = write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice())));
     Some(PagePolicy {
         csp: axum::http::HeaderValue::from_str(&csp).ok()?,
-        report_only: axum::http::HeaderValue::from_str(&report_only_policy()).ok()?,
+        report_only: match report_only_policy() {
+            Some(text) => Some(axum::http::HeaderValue::from_str(&text).ok()?),
+            None => None,
+        },
         reporting_endpoints: None,
         relaxed: None,
         opener: axum::http::HeaderValue::from_static("same-origin"),
@@ -1410,7 +1431,7 @@ mod tests {
         // Trusted Types (DR-20), in Report-Only for 0.2.2: both directives,
         // with Forma's two policies and no 'allow-duplicates' (TH18), and no
         // 'unsafe-*' at all. The enforced policy names neither.
-        let report_only = report_only_policy();
+        let report_only = report_only_text(None);
         assert_eq!(
             report_only,
             "require-trusted-types-for 'script'; trusted-types forma forma-runtime"
@@ -1424,7 +1445,8 @@ mod tests {
             Some("forma forma-runtime")
         );
         assert!(!report_only.contains("unsafe") && !report_only.contains("allow-duplicates"));
-        let extended_report_only = extended.report_only.to_str().unwrap();
+        // Named an endpoint, every build sends it.
+        let extended_report_only = extended.report_only.as_ref().unwrap().to_str().unwrap();
         assert!(
             extended_report_only.starts_with(&report_only),
             "{extended_report_only}"
