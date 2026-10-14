@@ -28,7 +28,14 @@ pub struct PageConfig<'a> {
     /// not the same as making it safe: a `"` or `\` arriving from untrusted
     /// data still yields nonce-blessed script execution inside your own page.
     ///
-    /// Use [`PageConfig::config_json`] for anything derived from user input.
+    /// Deprecated (DR-18): data goes through [`PageConfig::config_json`] as
+    /// escaped JSON, and code goes into the page's bundle, reading a flag from
+    /// that data. Set this to `None`; 3.0.0 removes the field.
+    #[deprecated(
+        since = "0.2.2",
+        note = "writes handler text into a nonced script (TH4); pass data through \
+                `config_json` and move code into the bundle. Removed in 3.0.0 (DR-18)"
+    )]
     pub config_script: Option<&'a str>,
     /// Optional server data to expose to the client as
     /// `window.__FORMA_CONFIG__`.
@@ -69,25 +76,57 @@ pub struct PageConfig<'a> {
 /// cached body with a fresh policy kills every script, and caching both ships
 /// one static, publicly-known nonce to every user, which defeats nonce-based
 /// CSP entirely.
+///
+/// Superseded by [`PageResponse`](crate::PageResponse), which writes those
+/// headers itself and cannot be sent without them (DR-17). Turn a
+/// `PageOutput` into one with [`PageOutput::into_page_response`]; the public
+/// fields and [`PageOutput::headers`] are deprecated and go private in 3.0.0.
 #[non_exhaustive]
 #[derive(Debug)]
 pub struct PageOutput {
     /// The complete HTML document.
+    #[deprecated(
+        since = "0.2.2",
+        note = "send the page as a `PageResponse` (`into_page_response`), which carries \
+                `no-store` and the policy with it (DR-17). Private in 3.0.0"
+    )]
     pub html: String,
     /// The `Content-Security-Policy` header value that blesses it.
+    #[deprecated(
+        since = "0.2.2",
+        note = "the policy is typed now: extend it with `PolicyExtensions` and send a \
+                `PageResponse` rather than editing this text (DR-17). Private in 3.0.0"
+    )]
     pub csp: String,
     /// The nonce embedded in `html` and blessed by `csp`.
     ///
     /// Exposed so a caller can add its own nonced `<script>`/`<style>`, or
     /// re-stamp a cached shell, without string-parsing the CSP.
+    #[deprecated(
+        since = "0.2.2",
+        note = "render with `try_render` (0.2.2), which draws the nonce and writes it into \
+                the page and its policy; a handler that must read it takes \
+                `PageResponse::into_parts_unchecked().nonce`. Private in 3.0.0, which gives \
+                no caller a nonce (L-14)"
+    )]
     pub nonce: crate::csp::CspNonce,
+    /// What the render did, carried into [`PageOutput::into_page_response`].
+    pub(crate) counts: crate::response::RenderCounts,
 }
 
+#[allow(deprecated)] // this impl is the bridge from the deprecated fields
 impl PageOutput {
     /// Response headers for this page: content type, `no-store`, and the CSP.
     ///
     /// Reads the (public, mutable) `csp` field, so a caller that must rewrite
-    /// a directive can do so in place first and still use this helper.
+    /// a directive can do so in place first and still use this helper. An
+    /// invalid `csp` is left out rather than reported; that silent drop is
+    /// one of the reasons this is deprecated.
+    #[deprecated(
+        since = "0.2.2",
+        note = "use `into_page_response`: a `PageResponse` writes these headers itself and \
+                fails rather than dropping an invalid policy (DR-17). Removed in 3.0.0"
+    )]
     pub fn headers(&self) -> Vec<(axum::http::HeaderName, axum::http::HeaderValue)> {
         let mut headers = vec![
             (
@@ -104,6 +143,50 @@ impl PageOutput {
         }
         headers.extend_from_slice(document_security_headers());
         headers
+    }
+
+    /// This page as a [`PageResponse`](crate::PageResponse): `no-store`, the
+    /// strict policy for the page's nonce with `extensions` added, and the
+    /// document headers, written whenever it is sent.
+    ///
+    /// The policy is rebuilt from the nonce the HTML embeds, so a `csp` edited
+    /// as text would not carry over: it is refused instead, wherever the edit
+    /// went (a widening one would fail in the browser, a tightening one would
+    /// be lost). Express the edit as an extension:
+    ///
+    /// ```no_run
+    /// # #![allow(deprecated)]
+    /// # use forma_server::{render_page, PageConfig, PolicyExtensions};
+    /// # fn config() -> PageConfig<'static> { unimplemented!() }
+    /// // Was: page.csp.replace("img-src 'self' data:", "img-src 'self' data: https:")
+    /// let page = render_page(&config())
+    ///     .into_page_response(&PolicyExtensions::new().img_src("https:"))?;
+    /// # Ok::<(), forma_server::PolicyError>(())
+    /// ```
+    ///
+    /// The bridge trusts the deprecated public `nonce` and `html` as they
+    /// are: a nonce the caller chose (through `render_page_with_nonce`, or by
+    /// assigning the field) carries into the `PageResponse`. A fresh nonce
+    /// per response is guaranteed only when the render draws it, as
+    /// `render_page` and `try_render` do.
+    ///
+    /// # Errors
+    ///
+    /// A [`PolicyError`](crate::PolicyError) naming the first extension that
+    /// is not a source a page may add, or, for directive
+    /// `content-security-policy`, a `csp` that is not the one forma-server
+    /// wrote for this page's nonce. There is then no response to send:
+    /// answer with an error page rather than this one without its policy.
+    ///
+    /// Verified by: crates/forma-server/tests/page_response.rs > "into_page_response_refuses_a_policy_edited_as_text"
+    pub fn into_page_response(
+        self,
+        extensions: &crate::csp::PolicyExtensions,
+    ) -> Result<crate::PageResponse, crate::PolicyError> {
+        if self.csp != crate::csp::build_csp_header(&self.nonce) {
+            return Err(crate::csp::PolicyError::edited_as_text(self.csp));
+        }
+        crate::PageResponse::new(self.html, self.nonce, extensions, self.counts)
     }
 }
 

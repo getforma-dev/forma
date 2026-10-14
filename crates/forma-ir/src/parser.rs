@@ -4,8 +4,8 @@
 //! and returns a typed, indexed collection.
 
 use crate::format::{
-    IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, PropsMode, SectionTable, SlotEntry,
-    SlotSource, SlotType, HEADER_SIZE, SECTION_TABLE_SIZE,
+    le_u16, le_u32, IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, PropsMode, SectionTable,
+    SlotEntry, SlotSource, SlotType, HEADER_SIZE, SECTION_TABLE_SIZE,
 };
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ impl StringTable {
             });
         }
 
-        let count = u32::from_le_bytes(data[0..4].try_into().unwrap()) as usize;
+        let count = le_u32(&data[0..4]) as usize;
         // Guard against a declared count that the section cannot possibly
         // hold. The old `count > data.len()` guard compared entries against
         // *bytes*: a string costs 2 bytes on disk (an empty string's u16
@@ -67,7 +67,7 @@ impl StringTable {
                 });
             }
 
-            let str_len = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap()) as usize;
+            let str_len = le_u16(&data[offset..offset + 2]) as usize;
             offset += 2;
 
             if offset + str_len > data.len() {
@@ -136,7 +136,7 @@ impl SlotTable {
             });
         }
 
-        let count = u16::from_le_bytes(data[0..2].try_into().unwrap()) as usize;
+        let count = le_u16(&data[0..2]) as usize;
         // Same reasoning as StringTable::parse: a SlotEntry is 10 bytes on
         // disk but ~32 bytes in memory, so an unchecked count reserves far
         // more than the section could ever contain. `data.len() >= 2` above.
@@ -159,12 +159,11 @@ impl SlotTable {
                 });
             }
 
-            let slot_id = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap());
-            let name_str_idx = u32::from_le_bytes(data[offset + 2..offset + 6].try_into().unwrap());
+            let slot_id = le_u16(&data[offset..offset + 2]);
+            let name_str_idx = le_u32(&data[offset + 2..offset + 6]);
             let type_hint = SlotType::from_byte(data[offset + 6])?;
             let source = SlotSource::from_byte(data[offset + 7])?;
-            let default_len =
-                u16::from_le_bytes(data[offset + 8..offset + 10].try_into().unwrap()) as usize;
+            let default_len = le_u16(&data[offset + 8..offset + 10]) as usize;
             offset += SLOT_ENTRY_MIN_SIZE;
 
             // Read default bytes
@@ -232,7 +231,7 @@ impl IslandTableParsed {
             });
         }
 
-        let count = u16::from_le_bytes(data[0..2].try_into().unwrap()) as usize;
+        let count = le_u16(&data[0..2]) as usize;
         // See StringTable::parse — an IslandEntry is 14 bytes on disk but
         // ~40 bytes in memory. `data.len() >= 2` guaranteed above.
         let max_entries = (data.len() - 2) / ISLAND_ENTRY_MIN_SIZE;
@@ -254,13 +253,12 @@ impl IslandTableParsed {
                 });
             }
 
-            let id = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap());
+            let id = le_u16(&data[offset..offset + 2]);
             let trigger = IslandTrigger::from_byte(data[offset + 2])?;
             let props_mode = PropsMode::from_byte(data[offset + 3])?;
-            let name_str_idx = u32::from_le_bytes(data[offset + 4..offset + 8].try_into().unwrap());
-            let byte_offset = u32::from_le_bytes(data[offset + 8..offset + 12].try_into().unwrap());
-            let slot_count =
-                u16::from_le_bytes(data[offset + 12..offset + 14].try_into().unwrap()) as usize;
+            let name_str_idx = le_u32(&data[offset + 4..offset + 8]);
+            let byte_offset = le_u32(&data[offset + 8..offset + 12]);
+            let slot_count = le_u16(&data[offset + 12..offset + 14]) as usize;
             offset += ISLAND_ENTRY_MIN_SIZE;
 
             // Read slot_ids
@@ -273,9 +271,7 @@ impl IslandTableParsed {
             }
             let mut slot_ids = Vec::with_capacity(slot_count);
             for _ in 0..slot_count {
-                slot_ids.push(u16::from_le_bytes(
-                    data[offset..offset + 2].try_into().unwrap(),
-                ));
+                slot_ids.push(le_u16(&data[offset..offset + 2]));
                 offset += 2;
             }
 
@@ -748,6 +744,9 @@ fn read_u32_at(ops: &[u8], pos: usize, end: usize) -> Result<u32, IrError> {
 ///
 /// This crate's own tests get it from a self dev-dependency in Cargo.toml.
 #[cfg(any(test, feature = "test-helpers"))]
+// Fixture encoders: a fixture that cannot be encoded is a broken test, and
+// panicking says so at the line that built it. Never in a consumer's build.
+#[allow(clippy::panic, clippy::unwrap_used, clippy::expect_used)]
 pub mod test_helpers {
     use crate::format::{HEADER_SIZE, SECTION_TABLE_SIZE};
 

@@ -17,8 +17,11 @@ This pulls in `forma-ir` automatically.
 
 ## What It Does
 
-- **`render_page(config)`** — generates a full HTML page from an IR module + slot data
-- **`load_ir_modules(manifest)`** — loads `.ir` files from embedded assets at startup (`load_ir_modules_strict` returns the failures instead of swallowing them)
+- **`try_render(config, ctx)`** — renders a page from an IR module + slot data and returns `Result<PageResponse, RenderError>`: the page with its counts (nodes, bytes, list rows, walk time), or a coded error naming the route and component; never an empty shell in place of a failure, and a panic in the render comes back as `RenderError::Fault`
+- **`render_browser_shell(config, ctx)`** — the bundle and the same headers around an empty root, for a route the build declares `ssr: false`
+- **`render_page(config)`** — deprecated in 0.2.2: serves the empty Phase 1 shell with a 200 on any failure
+- **`PageResponse`** — the page as axum's `IntoResponse`: always `Cache-Control: no-store`, the strict policy for the page's nonce, and the document headers; a handler extends the policy with typed `PolicyExtensions`, never as text
+- **`load_ir_modules_strict(manifest)`** — the module loader: loads and checks every `.ir` file the manifest declares at startup, or returns every failure (route, file and a `LOAD-1xx` code) so the server refuses to start before its port binds; a route declared `ssr: false` needs no module. The lenient `load_ir_modules`, which serves a corrupt module's route as an empty shell, is deprecated in 0.2.2
 - **`sw::serve_sw` and `sw::configure`**: the service worker is opt-in (0.2.2). By default no page registers one and `/sw.js` serves a retiring worker that clears Forma's v1 caches and unregisters; an application that wants its worker calls `sw::configure(ServiceWorker::for_app("name")?.enabled())` once at start
 - **`serve_asset(filename)`** — serves assets with Brotli/gzip negotiation; `Cache-Control: immutable` for content-hashed names, revalidation + ETag for the rest
 - **`generate_csp_nonce()`** — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
@@ -27,35 +30,47 @@ This pulls in `forma-ir` automatically.
 ## Quick Start
 
 ```rust,no_run
-use forma_server::{assets, render_page, PageConfig, RenderMode, load_ir_modules};
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use forma_server::{assets, load_ir_modules_strict, try_render, PageConfig, RenderCtx, RenderMode};
 use rust_embed::Embed;
 
 #[derive(Embed)]
 #[folder = "dist/"]
 struct Assets;
 
-// At startup: load manifest and IR modules
-let manifest = assets::load_manifest::<Assets>();
-let (render_modes, ir_modules) = load_ir_modules::<Assets>(&manifest);
+// At startup, before the port binds: a bad manifest or module stops the server.
+let manifest = assets::try_load_manifest::<Assets>()?;
+let (render_modes, ir_modules) = load_ir_modules_strict::<Assets>(&manifest)
+    .map_err(|errors| format!("{errors:?}"))?;
 
-// Render a page. PageConfig has no Default impl — every field is explicit.
-let page = render_page(&PageConfig {
-    title: "Home",
-    route_pattern: "/",
-    manifest: &manifest,
-    config_script: None,
-    config_json: None,
-    body_class: None,
-    personality_css: None,
-    body_prefix: None,
-    render_mode: RenderMode::Phase2SsrReconcile,
-    ir_module: ir_modules.get("/"),
-    slots: None,
-});
-
-// The HTML and the CSP header are one unit — serve them together, no-store.
-let headers = page.headers();
+// Per request. PageConfig has no Default impl — every field is explicit.
+let page = try_render(
+    &PageConfig {
+        title: "Home",
+        route_pattern: "/",
+        manifest: &manifest,
+        config_script: None, // deprecated in 0.2.2: pass data through config_json
+        config_json: None,
+        body_class: None,
+        personality_css: None,
+        body_prefix: None,
+        render_mode: RenderMode::Phase2SsrReconcile,
+        ir_module: ir_modules.get("/"),
+        slots: Some(&forma_ir::SlotData::new(0)),
+    },
+    &RenderCtx::new(),
+);
+let response: Response = match page {
+    // A PageResponse writes no-store, the policy and the document headers.
+    Ok(page) => page.into_response(),
+    // The handler chooses: log `error` (its code, route and component), then
+    // serve the application's own error page.
+    Err(error) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+};
 ```
+
+A page whose counts show more than about 12,500 nodes holds its thread past a millisecond (at the measured 12.5 million nodes a second); move that route's `try_render` into `tokio::task::spawn_blocking` (the recipe is in `try_render`'s documentation). forma-server itself starts no threads and depends on no async runtime.
 
 ## Two Rendering Modes
 
@@ -68,9 +83,10 @@ let headers = page.headers();
 
 - **CSP headers**: Strict policy with cryptographic nonces — `'strict-dynamic'` scripts, nonce-locked style *elements*, no `unsafe-eval`. Style *attributes* are permitted via `style-src-attr 'unsafe-inline'`, because compiled `style:` bindings emit them and a nonce cannot be attached to an attribute
 - **Nonce generation**: 256-bit entropy via ring CSPRNG, wrapped in a validating `CspNonce`
-- **Serve HTML and CSP together**: the HTML embeds a per-request nonce, so it must be sent `Cache-Control: no-store` and never cached across requests — `PageOutput::headers()` does this, and `PageOutput::nonce` is exposed so you never have to parse the policy string
+- **Serve HTML and CSP together**: the HTML embeds a per-request nonce, so it must be sent `Cache-Control: no-store` and never cached across requests. `PageResponse` writes both, with `Cross-Origin-Opener-Policy` and the other document headers, every time it is sent; its HTML is reachable apart from them only through `into_parts_unchecked()`. A page needing another image or frame source, a form target or a login popup adds a typed `PolicyExtensions` entry; an invalid one fails the page rather than reaching a header. `PageOutput`'s public fields, `PageOutput::headers()` and `render_page_with_nonce` are deprecated in 0.2.2
 - **Asset serving**: `rust-embed` prevents path traversal, and requested names are checked for exact membership in the embedded list so debug and release builds behave identically; `manifest.json` and direct `.br`/`.gz` requests are refused
-- **Template escaping**: Interpolated values (URLs, class names, CSS, title) are HTML-escaped. Two fields are documented raw sinks: `config_script` (raw JS, terminator-neutralised but trusted) and `body_prefix` (raw HTML). Use `config_json` for user-derived data
+- **Template escaping**: Interpolated values (URLs, class names, CSS, title) are HTML-escaped. Two fields are documented raw sinks: `config_script` (raw JS, terminator-neutralised but trusted; deprecated in 0.2.2 and removed in 3.0.0) and `body_prefix` (raw HTML). Use `config_json` for data
+- **Render failures are values**: `try_render` returns every failure as a `RenderError` with a stable code (RENDER-101 to RENDER-399), and catches a panic in the render as `RenderError::Fault`, so one bad page answers one request with the application's error page and the process carries on. That needs the application to unwind on panic, as both templates do: under `panic = "abort"` a fault still ends the process. Both crates deny `unwrap`, `expect` and `panic!` outside tests
 - **No unsafe code**: `#![forbid(unsafe_code)]` on the crate root — compiler-enforced, not asserted
 
 ## When You Need This

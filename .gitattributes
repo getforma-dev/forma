@@ -12,3 +12,11 @@ crates/forma-ir/tests/fixtures/js-emitter/*.html text eol=lf
 # forma-server's asset-set fixtures are compared byte-for-byte against the
 # response body, so checkout must never rewrite their line endings.
 crates/forma-server/tests/fixtures/asset-sets/** -text
+
+# forma-server's 0.2.1 document goldens are compared byte-for-byte against
+# `render_page`'s output, so checkout must never rewrite their line endings.
+crates/forma-server/tests/fixtures/documents-0.2.1/** -text
+
+# forma-server's module-loader fixtures are pinned byte-for-byte to the code
+# that writes them (tests/strict_loader.rs), manifests included.
+crates/forma-server/tests/fixtures/modules/** -text

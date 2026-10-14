@@ -10,6 +10,12 @@ use rust_embed::Embed;
 ///
 /// STARTUP ONLY. This panics on a missing or non-UTF8 file, so it must never
 /// be reached from a request path — use [`try_asset`] there.
+///
+/// # Panics
+///
+/// On a missing or non-UTF-8 file; the 0.2.1 signature has no room for the
+/// error, which [`try_asset`] returns.
+#[allow(clippy::panic)] // the 0.2.1 signature; `try_asset` is the fallible one
 pub fn asset<A: Embed>(name: &str) -> String {
     try_asset::<A>(name).unwrap_or_else(|e| panic!("{e}"))
 }
@@ -50,6 +56,20 @@ pub fn asset_bytes<A: Embed>(name: &str) -> Option<Bytes> {
 /// Load and parse the asset manifest from embedded assets.
 ///
 /// STARTUP ONLY — panics if the manifest is missing or malformed.
+///
+/// Deprecated (L-13): a server should refuse to start with a message, not a
+/// panic. [`try_load_manifest`] returns the error; in 3.0.0 `load_manifest`
+/// itself returns it.
+///
+/// # Panics
+///
+/// If `manifest.json` is missing or does not parse.
+#[deprecated(
+    since = "0.2.2",
+    note = "panics on a missing or malformed manifest; use `try_load_manifest`, which \
+            returns the error (L-13). In 3.0.0 `load_manifest` returns a `Result`"
+)]
+#[allow(clippy::panic)] // the 0.2.1 signature; `try_load_manifest` is the fallible one
 pub fn load_manifest<A: Embed>() -> crate::AssetManifest {
     try_load_manifest::<A>().unwrap_or_else(|e| panic!("{e}"))
 }
@@ -291,14 +311,14 @@ fn asset_response(
 
     // Answer a conditional request without re-sending the body.
     if if_none_match.map(|v| v.split(',').any(|c| c.trim() == etag)) == Some(true) {
-        return Response::builder()
-            .status(StatusCode::NOT_MODIFIED)
-            .header(header::CACHE_CONTROL, cache_control)
-            .header(header::ETAG, &etag)
-            .header("vary", "accept-encoding")
-            .body(Body::empty())
-            .unwrap()
-            .into_response();
+        return built(
+            Response::builder()
+                .status(StatusCode::NOT_MODIFIED)
+                .header(header::CACHE_CONTROL, cache_control)
+                .header(header::ETAG, &etag)
+                .header("vary", "accept-encoding")
+                .body(Body::empty()),
+        );
     }
 
     let mut builder = Response::builder()
@@ -324,7 +344,19 @@ fn asset_response(
         builder = builder.header(header::CONTENT_ENCODING, enc);
     }
 
-    builder.body(body_of(file)).unwrap().into_response()
+    built(builder.body(body_of(file)))
+}
+
+/// A response from a builder, or a bare 500 if a header failed to parse.
+///
+/// Every header above is a static string or an ETag of hex digits, so the
+/// builder cannot fail today; this keeps a future header that can from
+/// panicking the request (DR-12) and sends no body without its headers.
+fn built(response: Result<Response<Body>, axum::http::Error>) -> Response {
+    match response {
+        Ok(response) => response.into_response(),
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
 }
 
 /// First 8 bytes of a hash, hex-encoded.
