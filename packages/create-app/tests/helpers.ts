@@ -31,6 +31,29 @@ export function listFiles(dir: string, base = dir): string[] {
   return out.sort();
 }
 
+/**
+ * Project names that `validateProjectName` is held against the tools it cites:
+ * npm's own validator in tests/scaffold-lib.test.ts, and `cargo new` itself in
+ * the E2E gate in tests/scaffold.test.ts. Every rule has a name here that
+ * breaks it, and the accepted names include ones cargo only warns about
+ * (`std`, `core`) and crates in the templates' own graph (`tracing`, `axum`).
+ */
+export const PROJECT_NAMES = [
+  // accepted
+  'app', 'my-app', 'my_app', 'a', 'x9', 'app0', 'a-0', 'web_app-2', 'app-',
+  'minimal', 'tracing', 'axum', 'std', 'core', 'alloc', 'proc_macro', 'proc-macro',
+  // npm refuses these for a new package; the project name never becomes one
+  'node_modules', 'http', 'fs', 'path', 'events',
+  'x'.repeat(64),
+  // refused
+  '', 'x'.repeat(65), 'My-App', 'C:tricky', '..', '../escape', 'a/b', 'a\\b', '/abs',
+  '.hidden', 'has space', 'a.b', 'a::b', 'app!', 'café',
+  '0app', '9', '1-app', '-leading', '_leading',
+  'fn', 'self', 'type', 'async', 'match',
+  'build', 'deps', 'examples', 'incremental', 'test',
+  'con', 'nul', 'lpt1', 'com9',
+];
+
 export function mkTmpDir(prefix = 'forma-scaffold-'): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }

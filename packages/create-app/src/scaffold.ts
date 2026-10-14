@@ -57,12 +57,29 @@ export const NEVER_COPY = new Set([
 ]);
 
 /**
- * Names that are safe as (a) a directory name on every platform, (b) a Cargo
- * package name, and (c) an npm-ish identifier. Anything with a path separator,
- * a drive letter, a leading dot or an upper-case letter is rejected, which is
- * also what keeps `path.resolve(projectName)` inside the working directory.
+ * The characters a project name may use: the only ones both cargo and npm
+ * accept in a new package name (cargo refuses `.` and other punctuation; npm
+ * refuses capital letters and anything that is not URL-safe). With no path
+ * separator, drive letter or dot, this is also what keeps
+ * `path.resolve(projectName)` inside the working directory.
  */
-const NAME_RE = /^[a-z0-9][a-z0-9_-]*$/;
+const NAME_CHARS = /^[a-z0-9_-]+$/;
+
+/**
+ * cargo's rules for a new package with a binary, which every template is, as
+ * Cargo 1.93 applies them (`restricted_names.rs`, and `check_name` in
+ * `cargo_new.rs`): a digit-first name fails the manifest itself, a build
+ * directory name fails every build of a binary, and `cargo new` refuses a
+ * Rust keyword and `test`.
+ */
+const RUST_KEYWORDS = new Set([
+  'Self', 'abstract', 'as', 'async', 'await', 'become', 'box', 'break', 'const', 'continue',
+  'crate', 'do', 'dyn', 'else', 'enum', 'extern', 'false', 'final', 'fn', 'for', 'if',
+  'impl', 'in', 'let', 'loop', 'macro', 'match', 'mod', 'move', 'mut', 'override', 'priv',
+  'pub', 'ref', 'return', 'self', 'static', 'struct', 'super', 'trait', 'true', 'try',
+  'type', 'typeof', 'unsafe', 'unsized', 'use', 'virtual', 'where', 'while', 'yield',
+]);
+const CARGO_BUILD_DIRS = ['build', 'deps', 'examples', 'incremental'];
 
 /** Windows refuses to create a directory with any of these names. */
 const WINDOWS_RESERVED = new Set([
@@ -71,15 +88,47 @@ const WINDOWS_RESERVED = new Set([
   'lpt1', 'lpt2', 'lpt3', 'lpt4', 'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9',
 ]);
 
-/** Returns null when `name` is usable, otherwise the reason it is not. */
+/**
+ * Returns null when `name` is usable, otherwise the reason it is not: the rule
+ * it breaks and whose rule that is. Runs before anything is written.
+ *
+ * The project name becomes the crate's name, so cargo's rules apply, and the
+ * project's directory name, so the platforms' rules do. It never becomes an npm
+ * package name (`admin/package.json` carries none), so npm's rules for a new
+ * package apply only where they agree with cargo's: the character set and a
+ * leading `_`. A Node.js core module name such as `events`, or `node_modules`,
+ * scaffolds and builds, and is accepted. A name such as `0app` passed the old
+ * pattern and then failed the scaffolded project's first build (FORMA-024).
+ *
+ * Verified by: tests/scaffold-lib.test.ts > "refuses %j, naming the rule: %s"
+ * Verified by: tests/scaffold-lib.test.ts > "agrees with npm's own validator: npm accepts every name it accepts but the core module names, and refuses every name it says npm refuses"
+ * Verified by: tests/scaffold.test.ts > "cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses"
+ * Verified by: tests/scaffold.test.ts > "refuses %s (%s) before writing anything, naming the rule"
+ */
 export function validateProjectName(name: string): string | null {
   if (!name) return 'Project name required.';
-  if (name.length > 64) return 'Project name must be 64 characters or fewer.';
-  if (!NAME_RE.test(name)) {
-    return 'Project name must be lowercase alphanumeric with hyphens/underscores, starting with a letter or digit.';
+  const refuse = (rule: string) => `Project name "${name}": ${rule}.`;
+
+  if (name.length > 64) return refuse('crates.io refuses a package name longer than 64 characters');
+  if (!NAME_CHARS.test(name)) {
+    return refuse(
+      'use only lowercase letters, digits, "-" and "_", the only characters both cargo and npm accept in a new package name',
+    );
+  }
+  if (/^[0-9]/.test(name)) return refuse('cargo refuses a package name that starts with a digit');
+  if (name.startsWith('-')) return refuse('cargo refuses a package name that starts with "-"');
+  if (name.startsWith('_')) return refuse('npm refuses a package name that starts with "_"');
+  if (RUST_KEYWORDS.has(name)) return refuse('cargo refuses a Rust keyword as a package name');
+  if (CARGO_BUILD_DIRS.includes(name)) {
+    return refuse(
+      `cargo refuses one of its build directory names (${CARGO_BUILD_DIRS.join(', ')}) for a package with a binary`,
+    );
+  }
+  if (name === 'test') {
+    return refuse(`cargo refuses "test" as a package name, as it conflicts with Rust's built-in test library`);
   }
   if (WINDOWS_RESERVED.has(name)) {
-    return `"${name}" is a reserved device name on Windows — pick another.`;
+    return refuse('Windows refuses a device name (con, prn, aux, nul, com1-com9, lpt1-lpt9) as a directory name');
   }
   return null;
 }

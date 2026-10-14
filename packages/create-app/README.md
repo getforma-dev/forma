@@ -51,9 +51,13 @@ npx @getforma/create-app --help
 npx @getforma/create-app --version
 ```
 
-Project names must be lowercase alphanumeric with hyphens or underscores, at
-most 64 characters, and must not be a Windows device name. The CLI refuses to
-write into a path that already exists.
+Project names must start with a lowercase letter and use only lowercase
+letters, digits, hyphens and underscores, at most 64 characters. The name
+becomes the crate's name, so the CLI also refuses what cargo refuses for a new
+package (a Rust keyword such as `fn`, `test`, a build directory name such as
+`build`) and a Windows device name (`con`, `nul`); its message names the rule. It checks the
+name before writing anything, and refuses to write into a path that already
+exists.
 
 ## Templates
 
