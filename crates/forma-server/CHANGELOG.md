@@ -105,7 +105,10 @@ deprecated and go in 3.0.0.
   `configuring_after_the_first_use_is_refused`;
   `tests/service_worker_named_off.rs`; `tests/service_worker_on.rs` (pages
   register, the embedded worker is served, configured once);
-  `sw::tests::application_names_are_what_a_cache_name_can_carry`;
+  `sw::tests::application_names_are_what_a_cache_name_can_carry`, over
+  `tests/js/app_name_vectors.json`, the accepted and refused names shared with
+  `@getforma/build`'s `app` (the trailing-hyphen, one-character and
+  double-hyphen edges included, and the hostile names);
   `sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s`,
   which runs the worker in Node over `tests/js/retiring_worker.mjs`, whose
   table of cache names is the contract's shared vectors (anchored, separator

@@ -356,30 +356,36 @@ mod tests {
 
     #[test]
     fn application_names_are_what_a_cache_name_can_carry() {
-        for name in ["ledger", "ksx-studio", "app2", "9lives", &"a".repeat(63)] {
-            let worker = ServiceWorker::for_app(name).unwrap();
-            assert_eq!(worker.app(), Some(name));
+        // The grammar as data, shared with @getforma/build's `app` (copied into
+        // forma-tools' `packages/build/tests/helpers/app-name-vectors.ts`): the
+        // two must accept exactly the same names, edges included.
+        let table: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/js/app_name_vectors.json"))
+                .expect("the shared table is JSON");
+        let names = |key: &str| -> Vec<String> {
+            table[key]
+                .as_array()
+                .expect("a list")
+                .iter()
+                .map(|v| v.as_str().expect("a name").to_string())
+                .collect()
+        };
+        let (accepted, refused) = (names("accepted"), names("refused"));
+        // The edges the review found unpinned are in the table.
+        for edge in ["ledger-", "a", "0", "123", "a--b"] {
+            assert!(accepted.iter().any(|n| n == edge), "{edge}");
+        }
+        for name in &accepted {
+            let worker = ServiceWorker::for_app(name).unwrap_or_else(|e| panic!("{e}"));
+            assert_eq!(worker.app(), Some(name.as_str()));
             assert!(!worker.is_enabled(), "naming does not turn it on");
             assert!(worker.enabled().is_enabled());
         }
-        for name in [
-            "",
-            "Ledger",
-            "-ledger",
-            "led ger",
-            "led:ger",
-            "led\"ger",
-            "led'ger",
-            "led\\ger",
-            "ledger\n",
-            "lédger",
-            "led_ger",
-            "led.ger",
-            &"a".repeat(64),
-        ] {
+        for name in &refused {
             let error = ServiceWorker::for_app(name).expect_err(name);
             assert!(error.to_string().contains(&format!("{name:?}")), "{error}");
         }
+        assert!(refused.len() >= 29, "the hostile names are all there");
     }
 
     #[test]
