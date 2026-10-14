@@ -131,6 +131,13 @@
   equal work, and judges the median of up to 41 such rounds against 32x. The
   allocation gate beside it is unchanged. CONTRIBUTING says which skipped CI
   jobs are by design.
+- **The release's artefact upload can be re-run (A2 audit S7, FORMA-179; no
+  code changed).** The release's `pack` job uploads `release-packed` with
+  `overwrite: true`, so re-running all jobs after a failure replaces the
+  earlier attempt's artefact instead of failing on its name (A2 audit S7);
+  `publish` still checks every file against the record whose hash `pack`
+  passes as a job output. The SR43 lint's new rule K4 requires it, with two
+  seeds in `--self-test`.
 
 ## [0.2.1] - 2026-10-14
 
