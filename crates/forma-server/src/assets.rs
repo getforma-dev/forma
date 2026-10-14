@@ -80,6 +80,20 @@ pub fn try_load_manifest<A: Embed>() -> Result<crate::AssetManifest, String> {
     serde_json::from_str(&data).map_err(|e| format!("Failed to parse manifest.json: {e}"))
 }
 
+/// Each route's `modulepreload` list from the embedded `manifest.json`, for
+/// [`RenderCtx::with_module_preloads`](crate::RenderCtx::with_module_preloads)
+/// (DR-19). Call it at start, beside [`try_load_manifest`].
+///
+/// # Errors
+///
+/// A missing or malformed manifest, or a preload that names a file the
+/// manifest does not list among the build's `assets`; refuse to start on it,
+/// as on a bad module.
+pub fn try_load_module_preloads<A: Embed>() -> Result<crate::ModulePreloads, String> {
+    let data = try_asset::<A>("manifest.json")?;
+    crate::head::ModulePreloads::from_manifest_json(&data)
+}
+
 /// Files that must never be served through the asset route.
 ///
 /// `manifest.json` exposes the full route table, asset graph and per-route

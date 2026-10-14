@@ -55,9 +55,22 @@ pub struct PageConfig<'a> {
     /// Optional extra HTML before `<div id="app">`.
     ///
     /// **RAW, TRUSTED HTML.** Interpolated verbatim with no escaping — that is
-    /// the point of the field (callers use it to emit their own markup, e.g. a
-    /// hand-rendered `__forma_islands` block). Never build it from untrusted
-    /// data.
+    /// the point of the field (callers use it to emit their own markup, such
+    /// as a hand-written shell or a logo). Never build it from untrusted data.
+    ///
+    /// Pass a [`RawHtml`](crate::RawHtml), the one named raw-HTML type, bound
+    /// first and borrowed: `let logo = RawHtml::trusted(..);` then
+    /// `body_prefix: Some(&logo)`, so review and CI find every raw entry by
+    /// its constructor (DR-19, SR8); the line compiles in 3.0.0 too, where the
+    /// field takes only a `RawHtml`. A plain string still works and is written
+    /// exactly as before; in debug builds the first one a process renders
+    /// logs `RAW-101` once.
+    ///
+    /// What is not the application's own markup has a typed home instead:
+    /// `modulepreload` links come from the build's manifest
+    /// ([`RenderCtx::with_module_preloads`](crate::RenderCtx::with_module_preloads)),
+    /// head links from [`RenderCtx::with_head_link`](crate::RenderCtx::with_head_link),
+    /// and data from [`PageConfig::config_json`].
     pub body_prefix: Option<&'a str>,
     /// Whether to server-render the body or ship an empty `#app` shell.
     pub render_mode: RenderMode,

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- **One named raw-HTML type, and typed homes for the rest (FORMA-126,
+  DR-19).** forma-server's `RawHtml::trusted(..)` is the one way to say a
+  string is markup to write unescaped; `body_prefix` takes it bound first,
+  `let raw = RawHtml::trusted(..);` then `Some(&raw)`, and a plain string
+  there still works and warns once per process in debug builds
+  (`RAW-101`). What applications put in `body_prefix` that is not their own
+  markup gets a typed home through `RenderCtx`: the
+  route's `modulepreload` links, read from the build's manifest and nonced by
+  forma-server (`with_module_preloads`), and head links (`with_head_link`);
+  data keeps `config_json`. `render_page` writes 0.2.1's document.
+
 - **A page edited under watch mode is served without a restart (FORMA-166,
   L-31, N7).** forma-server's `IrModules` loads through the strict loader
   and, in debug builds only, rereads a page's module on the next request

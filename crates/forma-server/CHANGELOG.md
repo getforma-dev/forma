@@ -117,6 +117,71 @@ deprecated and go in 3.0.0.
   assignment counts as answering requests). `cargo test` now
   needs Node 18 or later on `PATH` (CONTRIBUTING).
 
+- **`RawHtml::trusted(..)`, the one named raw-HTML type** (DR-19, SR15, TH8;
+  FORMA-126). Markup a handler vouches for, written into the page unescaped;
+  made only by `RawHtml::trusted` (no `From`, `Default`, `FromStr` or public
+  field), so a search for that name finds every raw entry, which is what
+  SR8's allowlist lint will look for. `body_prefix` takes it bound first and
+  borrowed, `let logo = RawHtml::trusted(..);` then `body_prefix:
+  Some(&logo)`: it dereferences to the markup, so the 0.2.x field
+  (`Option<&str>`) accepts it and the same line compiles in 3.0.0, where the
+  field takes only a `RawHtml`. (Written inline,
+  `Some(&RawHtml::trusted(..))` borrows a temporary that Rust 1.85, the
+  MSRV, drops at the end of the statement: E0716 there.) Written exactly as
+  the same text passed as a string. Tests: `tests/raw_html.rs` > `a_search_finds_one_raw_constructor`
+  (in the crate's sources the `html` field is initialised only in
+  `trusted`, whatever type name or `Self` precedes it; the trait impls, the
+  inherent functions and the functions returning a `RawHtml`, however the
+  type is path-qualified, are exact lists; and ten second constructors,
+  the review's two among them, each written into a copy of the sources,
+  are found), `the_documented_body_prefix_form_compiles_on_the_msrv_and_renders`
+  (the bound form, compiled by the 1.85 MSRV job),
+  `a_raw_html_body_prefix_is_written_exactly_as_the_same_string_on_every_path`
+  (`render_page`, `render_page_with_nonce`, `try_render`,
+  `render_browser_shell`); the `compile_fail` doctests on `RawHtml`
+  (`From<String>`, `From<&str>`, `parse`, `default`, a struct literal).
+- **Typed homes for what applications put in `body_prefix` that is not their
+  own markup** (DR-19; FORMA-126), written only by `try_render` and
+  `render_browser_shell`, through `RenderCtx`:
+  - `RenderCtx::with_module_preloads(&ModulePreloads)`: forma-server writes
+    the route's `modulepreload` links from the build's manifest (the
+    `modulepreload` list `@getforma/build` writes with `codeSplitting`), each
+    with the page's nonce, after the route's own modules: the home for
+    Ledger's preload workaround. `assets::try_load_module_preloads::<A>()`
+    reads the table at start and refuses a manifest whose preload names a
+    file that is not one of the build's `assets` (another origin, a path,
+    markup); the route's own modules and repeats are left out. Tests:
+    `tests/typed_homes.rs` >
+    `try_render_writes_the_routes_manifest_modulepreload_links_nonced` (three
+    routes, both renders, the nonce the policy blesses),
+    `a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table`;
+    `head::tests::a_preload_must_be_one_of_the_builds_files`.
+  - `RenderCtx::with_head_link(HeadLink)`: a `<link>` in the head (an icon, a
+    canonical URL, a feed), every value escaped, written after the
+    stylesheets and preloads in the order added: the home for ksx Studio's
+    `</head>` splice. `HeadLink::new(rel, href)` takes a closed list of link
+    types, none of which loads style or script: `icon`, `apple-touch-icon`,
+    `mask-icon` (images, under `img-src`), `manifest`, `canonical`,
+    `alternate`, `author`, `license` (metadata), `preconnect`, `dns-prefetch`
+    (connection hints), matched without regard to case. It refuses, with a
+    `HeadLinkError` and its `code()`: `HEAD-101` for `stylesheet`,
+    `modulepreload`, `preload`, `prefetch`, `prerender` and `import` (a
+    page's stylesheets and module preloads come from the build's manifest);
+    `HEAD-102` for any other word; `HEAD-103` for a `javascript:` or
+    `vbscript:` href, in any case and with the tabs, newlines and leading
+    controls a browser strips; `HEAD-104` for an empty href. `with_type`,
+    `with_sizes` add attributes. A `manifest` link needs `manifest-src`,
+    which the default policy (`default-src 'none'`) does not grant and
+    `PolicyExtensions` cannot add, so it is refused by the browser today
+    (documented on `HeadLink`). Tests: `tests/typed_homes.rs` >
+    `head_links_are_written_escaped_in_the_head_in_the_order_added`,
+    `a_head_link_carries_only_the_listed_link_types` (every kept type, every
+    loading type, and every other link type the HTML standard defines),
+    `a_head_link_refuses_a_script_url_and_keeps_every_other`;
+    `head::tests::script_urls_are_recognised_as_a_browser_reads_them`.
+  - Data: `PageConfig::config_json`, as before (and in 3.0.0 the state block).
+  The deprecated `render_page` takes no `RenderCtx` and writes the document
+  0.2.1 wrote (`tests/compat_0_2_1.rs`).
 - **`IrModules<A>`: in development, a page's module is reread when the
   build's watch mode rewrites it** (FORMA-166; L-31, N7; FORMA-022 is the
   build's half). `IrModules::<Assets>::load(&manifest)` is the strict loader
@@ -176,6 +241,15 @@ deprecated and go in 3.0.0.
   too; it is removed in 3.0.0.
 - `render_page_with_nonce`: from 3.0.0 the render draws every nonce and no
   caller supplies one (L-14).
+- A plain string in `PageConfig::body_prefix` (DR-19; FORMA-126): it is
+  written exactly as before, and in debug builds the first one a process
+  renders logs a warning, code `RAW-101`, naming the route; a `RawHtml` never
+  does, and release builds keep no record and check nothing. 3.0.0 accepts
+  only a `RawHtml`. To tell the two apart a debug build remembers the address
+  and length of every live `RawHtml`'s markup (`raw::provenance`). Tests:
+  `tests/body_prefix_string_warning.rs` >
+  `a_string_body_prefix_warns_once_per_process_in_debug_builds_and_a_raw_html_never_does`
+  (debug and release); `raw::provenance::tests`.
 - `AssetManifest::wasm` and `WasmAssets`, the WASM walker's entry in the
   manifest (FORMA-131, DR-23). The walker is deprecated across the stack:
   `@getforma/core/wasm`, forma-ir's `wasm` feature and `@getforma/build`'s
