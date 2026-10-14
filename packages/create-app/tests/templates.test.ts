@@ -361,12 +361,17 @@ describe.each(TEMPLATES)('%s template', (template) => {
     const all = { ...pkg.dependencies, ...pkg.devDependencies };
     // core 2.0.0: the new Function fallback is deleted, so the runtime is
     // CSP-safe with nothing left to misconfigure; expressions evaluate through
-    // an allowlist AST interpreter that cannot reach a global.
-    expect(all['@getforma/core']).toBe('^2.0.0');
+    // an allowlist AST interpreter that cannot reach a global. core 2.0.2
+    // (release A1): adoption keeps what the user entered before activation,
+    // adopts Fragments and inline SVG, and binds textarea and title text by
+    // the element, which forma-server 0.2.1's server HTML (forma-ir 0.2.1)
+    // writes without markers.
+    expect(all['@getforma/core']).toBe('^2.0.2');
     // build 0.2.0: below this the Tailwind step spawned npx via execFileSync,
     // which cannot work on Windows, and every build emitted an island registry
-    // that resolved from nowhere and had to be deleted by hand.
-    expect(all['@getforma/build']).toBe('^0.2.0');
+    // that resolved from nowhere and had to be deleted by hand. build 0.3.0
+    // (release A1): a caret on 0.2.0 holds the minor, so it never reaches 0.3.x.
+    expect(all['@getforma/build']).toBe('^0.3.0');
     expect(pkg.engines?.node).toBe('>=20.19.0');
   });
 
@@ -455,8 +460,10 @@ describe('minimal template', () => {
     // 0.3.0 resolves components exported the way esbuild emits them, so a .tsx
     // page no longer compiles to an empty div; it also gives every slot family
     // a page-unique name and gives show branches and dynamic text their SSR
-    // defaults, so the server stops rendering the wrong branch.
-    expect(pkg.devDependencies['@getforma/compiler']).toBe('^0.3.0');
+    // defaults, so the server stops rendering the wrong branch. 0.3.6 (release
+    // A1) is the version the lockfile holds and the scaffold gate builds with,
+    // released with the core and build this template requires.
+    expect(pkg.devDependencies['@getforma/compiler']).toBe('^0.3.6');
   });
 
   it('loads IR modules and passes slots, so Phase 2 is reachable', () => {

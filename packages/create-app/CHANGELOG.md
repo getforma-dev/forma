@@ -2,11 +2,14 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-14
+
 Template fixes from the Forma Stack decision brief's defects list, DR-17 and
-DR-32 (ticket FORMA-008). The lockfiles pin the versions published today
-(`@getforma/core` 2.0.1, `@getforma/build` 0.2.0, `@getforma/compiler` 0.3.5,
-`forma-server` and `forma-ir` 0.2.0); moving them to release A's new versions
-belongs to the release that publishes those.
+DR-32 (ticket FORMA-008), and release A1's versions (FORMA-011). The templates
+require and lock `@getforma/core` 2.0.2, `@getforma/build` 0.3.0 and
+`forma-server` 0.2.1; the minimal template also `@getforma/compiler` 0.3.6 and
+`forma-ir` 0.2.1.
+Verified by `tests/templates.test.ts` > "pins frontend dependencies at or above the versions whose fixes it needs"
 
 ### Changed
 
