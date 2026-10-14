@@ -9,6 +9,12 @@
   the previous one and logs its `LOAD-1xx` code. Release builds read nothing
   after start.
 
+- **forma-ir's `wasm` feature is deprecated (FORMA-131, DR-23).** Its exports,
+  `render` and `render_island`, the browser's WASM walker, are
+  `#[deprecated]` and are removed in 3.0.0 with the feature; islands
+  re-render with `@getforma/core`'s `h()`. They still build and behave as at
+  0.2.1.
+
 - **The service worker is opt-in (FORMA-130, DR-25).** forma-server registers
   `/sw.js` only for an application that turns it on
   (`sw::configure(ServiceWorker::for_app(..)?.enabled())`); elsewhere `/sw.js`
