@@ -2,7 +2,22 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-14
+
 Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
+
+### Upgrading from 0.2.1: what an application may meet
+- **The same HTML.** Every walk writes 0.2.1's bytes; `walk_to_html_counted`
+  is new beside the existing functions.
+- **A list past the iteration budget fails before its first row,** with
+  `ListBudgetExceeded`, ahead of any error its rows would have raised first
+  (under Changed). Whether an input fails is unchanged.
+- **The `wasm` feature warns.** A build that turns it on and calls `render`
+  or `render_island` gets deprecation warnings, and fails under
+  `-D warnings` until it moves to `@getforma/core`'s `h()` or allows
+  `deprecated` at the call.
+- **forma-server 0.2.2 requires this version;** forma-ir 0.2.2 itself
+  requires nothing new.
 
 ### Added
 - **`walk_to_html_counted`**: the same HTML as `walk_to_html_with_limits`,
@@ -62,6 +77,11 @@ Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
   at the same row with the same error.
 
 ### Deprecated
+
+| Deprecated in 0.2.2 | Use instead (3.0.0's form) |
+|---|---|
+| the `wasm` feature, `render`, `render_island` (the browser's WASM walker) | none in forma-ir: islands re-render in the browser with `@getforma/core`'s `h()` |
+
 - **The `wasm` feature and its exports, `render` and `render_island`, are
   deprecated and are removed in 3.0.0** (FORMA-131; DR-23). They are the
   browser's WASM walker, loaded by `@getforma/core/wasm`, which core 2.1.0

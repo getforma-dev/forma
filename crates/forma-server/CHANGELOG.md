@@ -2,10 +2,68 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-14
+
 Release A2's bridge (0.2.2): additive. Every 0.2.1 call compiles and behaves
 as before, except one default: the service worker is off unless the
 application turns it on (FORMA-130, under Changed). The old forms warn as
-deprecated and go in 3.0.0.
+deprecated and go in 3.0.0. Everything else an application may notice is
+listed first.
+
+### Upgrading from 0.2.1: what an application may meet
+- **No service worker by default.** No page writes the registration line, and
+  `/sw.js` serves the retiring worker, which clears Forma's v1 caches and
+  unregisters, until the application calls `sw::configure(..enabled())`
+  (under Changed). Code that looks for the registration line finds none:
+  fAuth's `render_page` wrapper `debug_assert!`s it, so its debug-build
+  renders panic on 0.2.2 until the wrapper changes (FORMA-150). Its
+  `forma-server = "0.2.0"` requirement lets a plain `cargo update` take
+  0.2.2: pin `=0.2.1` until the wrapper changes.
+- **Deprecation warnings at compile time.** Every `PageConfig` literal names
+  `config_script`, so every application warns at least once, even for
+  `config_script: None`; an `AssetManifest` literal warns for `wasm`. A build
+  under `-D warnings` (`RUSTFLAGS`, `#![deny(warnings)]`,
+  `cargo clippy -- -D warnings`) fails until each call moves to the
+  replacement listed under Deprecated or carries `#[allow(deprecated)]`, as
+  create-app 0.6.2's templates do on their one `PageConfig` literal.
+- **Trusted Types, reported: a second policy header where it can be read.**
+  `Content-Security-Policy-Report-Only` with Trusted Types (under Added) goes
+  out on a page when the application names a reporting endpoint
+  (`PolicyExtensions::report_to` or `report_uri`), in every build, and with no
+  endpoint in development builds only, where Chromium and Firefox show its
+  violations in the console. A release build with no endpoint sends no
+  Report-Only header, so it adds no header to 0.2.1's page. It would report
+  to nobody, and WebKit (Safari) logs a console error on every page whose
+  Report-Only policy names no `report-to` ("… was delivered in report-only
+  mode, but does not specify a 'report-to'; the policy will have no
+  effect"), which FORMA-138's packed-set run found. With the header, nothing
+  is blocked; a page that registers its own Trusted Types `default` policy
+  has it run on string writes. The enforced policy is 0.2.1's, byte for
+  byte.
+  - **A development build with no endpoint still makes WebKit log that error
+    on every page,** so an application's own WebKit test that fails on
+    console errors, run against a development server, meets it.
+    `report_uri("/csp-reports")` silences it in development too.
+  - **A check that Trusted Types raise zero reports or violations must name an
+    endpoint (`report_uri` is enough) or run against a debug build.** A
+    release build with no endpoint sends no Report-Only policy, so such a
+    check passes without testing anything.
+  - "Development build" is forma-server's own `debug_assertions`, the switch
+    its loopback-endpoint rule uses: a release profile with debug assertions
+    on, or a `[profile.release.package.forma-server] debug-assertions = true`
+    override, gets the development behaviour.
+- **`render_page`'s document is 0.2.1's,** byte for byte, except the worker
+  registration line above.
+- **Development-build log lines, once per process:** `render_page` and
+  `load_ir_modules` log their deprecation, and a plain string in
+  `body_prefix` logs `RAW-101`. Release builds log nothing new.
+- **Requires forma-ir 0.2.2** (`cargo update -p forma-server` brings it).
+  Its HTML is 0.2.1's; a list longer than the remaining iteration budget
+  now fails before its first row, so `try_render` reports `RENDER-302`
+  ahead of an error the list's rows would have raised first.
+- **`load_ir_modules_strict`'s failures** each begin with their code
+  (`LOAD-101` to `LOAD-103`), and it no longer logs "Phase 1 fallback" for
+  them.
 
 ### Added
 - **`PageResponse::frame`, the preview frame's document** (DR-14 tier (c);
@@ -35,7 +93,15 @@ deprecated and go in 3.0.0.
     teardown, so its data lands in the application's access log; a wider
     `frame-src` lets a navigation out, with those cookies on the
     application's origin), and whatever the module shows the user inside
-    the frame.
+    the frame. **Link hints and `srcdoc` are closed in core, not by the
+    policy:** no CSP directive governs `<link rel="preconnect">`, and in
+    WebKit a module's preconnect (its `href` written or bound) or an
+    `<iframe srcdoc>` holding one connected to the host it named, from inside
+    the frame (the A2 audit's S1). `@getforma/core` 2.1.0's frame runtime
+    mounts the module with `tier: 'unreviewed'`, which removes every `<link>`
+    and `srcdoc` before the markup reaches the document, re-checks the live
+    subtree, and refuses the render if one appears (formajs#35); the frame
+    route's self-navigation residual above is unchanged.
   - The document is one root, `<div id="forma-frame">`, and the runtime as
     one inline script; it names no URL, so loading it fetches nothing.
   - The runtime comes from the application's own build: the manifest's
@@ -75,7 +141,11 @@ deprecated and go in 3.0.0.
   stylesheet, `url()` in a `style` attribute, a font) reached neither the
   application nor another origin; the runtime ran; `import()` and scripts it
   created were refused; `fetch` was refused by `connect-src 'none'`;
-  `window.origin` was `"null"`, with or without the header.
+  `window.origin` was `"null"`, with or without the header. With core
+  2.1.0's runtime, a module's `<link>` (preconnect, dns-prefetch, prefetch,
+  preload, a bound `href`, one re-created by foreign content) and an
+  `<iframe srcdoc>` open no connection in Chromium 151, Firefox 153 or
+  WebKit 26.5 (formajs's `e2e/frame.spec.ts`).
 - **Trusted Types in Report-Only** (DR-20, SR15; FORMA-127, the
   forma-server half). A page carries
   `Content-Security-Policy-Report-Only: require-trusted-types-for
@@ -235,10 +305,9 @@ deprecated and go in 3.0.0.
   `render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers`.
 - `CspNonce::try_generate` and `NonceError` (`#[non_exhaustive]`): the nonce
   draw that returns an error instead of panicking (DR-12).
-- **Requires forma-ir 0.2.2** (`walk_to_html_counted`, `IrError::Panicked`).
-  The manifest still says `forma-ir = "0.2.0"` until the A2 release raises it
-  with the version (FORMA-138): until then a lockfile holding forma-ir 0.2.1
-  would not build this crate.
+- **Requires forma-ir 0.2.2** (`forma-ir = "0.2.2"`, FORMA-138): it calls
+  `walk_to_html_counted`, `WalkCounts` and `IrError::Panicked`, which 0.2.1
+  lacks, so a lockfile holding forma-ir 0.2.1 cannot build it.
 - `IrLoadError::code()`: the failure's stable code, `LOAD-101` (declared but
   not embedded), `LOAD-102` (magic, version or flags: not a module this reader
   accepts) or `LOAD-103` (corrupt or truncated: sections, tables, opcodes,
@@ -362,6 +431,20 @@ deprecated and go in 3.0.0.
   `ir_modules_load_refuses_exactly_what_the_strict_loader_refuses`.
 
 ### Deprecated
+
+Each still compiles and behaves as at 0.2.1, warns, and goes in 3.0.0:
+
+| Deprecated in 0.2.2 | Use instead (3.0.0's form) |
+|---|---|
+| `render_page(config)` | `try_render(config, &RenderCtx::new())`, which returns `Result<PageResponse, RenderError>`; `render_browser_shell` for a route the build declares `ssr: false` |
+| `render_page_with_nonce(config, nonce)` | `try_render`: the render draws the nonce, and 3.0.0 takes none from a caller |
+| `load_ir_modules(manifest)`, the lenient loader | `load_ir_modules_strict(manifest)` at start, refusing to start on its errors (or `IrModules`, which loads the same way) |
+| `assets::load_manifest()` | `assets::try_load_manifest()`; in 3.0.0 `load_manifest` itself returns the `Result` |
+| `PageOutput`'s public `html`, `csp` and `nonce` fields, and `PageOutput::headers()` | a `PageResponse`: from `try_render`, or `PageOutput::into_page_response` for 0.2.1 code; extend the policy with `PolicyExtensions`, never as text. The fields go private in 3.0.0 |
+| `PageConfig::config_script` | `PageConfig::config_json` for data, and the page's bundle for code; set it to `None` until 3.0.0 removes it |
+| a plain string in `PageConfig::body_prefix` | `RawHtml::trusted(..)`, bound first and passed as `Some(&raw)`; the route's preloads through `RenderCtx::with_module_preloads`, head links through `RenderCtx::with_head_link`, data through `config_json` |
+| `AssetManifest::wasm` and `WasmAssets` (and the `window.__FORMA_WASM__` script) | none in forma-server: islands re-render with `@getforma/core`'s `h()` |
+
 - `load_ir_modules`, the lenient loader: it serves a corrupt module's route as
   an empty shell for the life of the process. `load_ir_modules_strict` is the
   default loader (DR-11, Q13; FORMA-121): call it at start and refuse to start
@@ -393,7 +476,7 @@ deprecated and go in 3.0.0.
   Every `PageConfig` literal names the field, so `config_script: None` warns
   too; it is removed in 3.0.0.
 - `render_page_with_nonce`: from 3.0.0 the render draws every nonce and no
-  caller supplies one (L-14).
+  caller supplies one (L-14). Use `try_render`.
 - A plain string in `PageConfig::body_prefix` (DR-19; FORMA-126): it is
   written exactly as before, and in debug builds the first one a process
   renders logs a warning, code `RAW-101`, naming the route; a `RawHtml` never
@@ -412,9 +495,13 @@ deprecated and go in 3.0.0.
   unchanged. Every `AssetManifest` literal names the field, so `wasm: None`
   warns too. Doctest pairs: `ManifestWasm`, `ManifestWasmLiteral`,
   `WasmAssetsType`.
-- Each deprecation is pinned by a doctest pair in `src/deprecations.rs` (the
-  0.2.1 call compiles under `allow(deprecated)` and fails under
-  `deny(deprecated)`), and `tests/compat_0_2_1.rs` calls the whole 0.2.1 page
+- Each `#[deprecated]` item (seven rows of the table above, eleven
+  attributes) is pinned by a doctest pair in `src/deprecations.rs` (the 0.2.1
+  call compiles under `allow(deprecated)` and fails under
+  `deny(deprecated)`). The eighth row, a plain string in
+  `PageConfig::body_prefix`, carries no `#[deprecated]` (the field's type is
+  unchanged) and warns only at run time in debug builds, pinned by
+  `tests/body_prefix_string_warning.rs`. And `tests/compat_0_2_1.rs` calls the whole 0.2.1 page
   API as an application does; its
   `render_page_writes_the_0_2_1_document_byte_for_byte` compares the
   document and policy against goldens written by 0.2.1 itself.
@@ -440,10 +527,12 @@ deprecated and go in 3.0.0.
 
   **Migration: delete any code that strips or asserts the registration
   script.** 0.2.2 writes none by default, so code that looks for it now finds
-  nothing. GateWASM's `render_page` wrapper `debug_assert!`s the line before
-  stripping it, so every debug-build render panics on 0.2.2 until the wrapper
-  changes (FORMA-150), and its `forma-server = "0.2.0"` requirement lets a
-  plain `cargo update` bring 0.2.2 in: FORMA-150 ships before or with 0.2.2.
+  nothing. fAuth's (formerly GateWASM) `render_page` wrapper `debug_assert!`s
+  the line before stripping it, so every debug-build render panics on 0.2.2
+  until the wrapper changes (FORMA-150), and its `forma-server = "0.2.0"`
+  requirement lets a plain `cargo update` bring 0.2.2 in. No application
+  gates this release (L-53): fAuth is fixed forward when it migrates, and
+  pins `=0.2.1` until then.
   An application that enables its worker with no `sw.js` embedded is warned
   once, at the first `/sw.js` request (`tests/service_worker_on.rs` >
   `an_enabled_application_with_no_built_worker_is_told_once`).

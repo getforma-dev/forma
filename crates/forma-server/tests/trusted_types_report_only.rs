@@ -420,7 +420,9 @@ async fn a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason
         "{logged:?}"
     );
     for (_, message) in &logged {
-        assert!(message.contains("SR8"), "{message}");
+        // The log names the relaxation as an allowlisted exit, in words a
+        // reader of the log knows (no decision-record id, FORMA-138).
+        assert!(message.contains("An allowlisted exit"), "{message}");
     }
 
     // A relaxation names why.

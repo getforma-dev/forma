@@ -1,11 +1,10 @@
-//! Raw HTML: markup forma-server writes into the page exactly as it is given
-//! (DR-19, TH8, SR15).
+//! Raw HTML: markup forma-server writes into the page exactly as it is given.
 //!
 //! Every other value a page carries is escaped for its context. The one place
 //! a handler's own markup reaches the page unescaped is
 //! [`PageConfig::body_prefix`](crate::PageConfig::body_prefix), and the one
 //! way to say that a string is such markup is [`RawHtml::trusted`]. The name
-//! is the control: a reviewer, or a consumer's CI (SR8's allowlist), finds
+//! is the control: a reviewer, or a consumer's CI (`forma-raw-lint`), finds
 //! every raw entry in an application by searching for `RawHtml::trusted`, and
 //! nothing else in this crate makes a `RawHtml`.
 //!
@@ -108,8 +107,8 @@ impl RawHtml {
     /// Whatever reaches the markup is trusted. Escape any value from a
     /// request, a database or a tenant before it goes in, or render it
     /// through a component instead, where the walker escapes it for you.
-    /// Each call belongs on the application's raw-entry allowlist with an
-    /// owner (SR8).
+    /// Each call belongs on the application's raw-entry allowlist
+    /// (`forma-raw-lint`) with an owner.
     pub fn trusted(html: impl Into<String>) -> RawHtml {
         let html = html.into().into_boxed_str();
         provenance::remember(&html);
@@ -180,7 +179,7 @@ pub(crate) fn check_body_prefix(body_prefix: &str, route: &str) {
                 "RAW-101 PageConfig::body_prefix was given a plain string on route {route}: \
                  bind the markup as a RawHtml first (let markup = RawHtml::trusted(..);) and \
                  pass body_prefix: Some(&markup), so review and CI can find it; 3.0.0 accepts \
-                 only a RawHtml (DR-19). Logged once per process, in debug builds."
+                 only a RawHtml. Logged once per process, in debug builds."
             );
         }
     }

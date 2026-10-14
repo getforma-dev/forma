@@ -63,7 +63,7 @@ fn neutralize_script_terminators(s: &str) -> String {
 
 /// Build the common `<head>` content shared by both render paths.
 ///
-/// `preloads` and `links` are the typed homes a [`RenderCtx`] carries (DR-19);
+/// `preloads` and `links` are the typed homes a [`RenderCtx`] carries;
 /// a render without one passes neither, and its head is byte-identical to
 /// 0.2.1's.
 fn build_head(
@@ -272,7 +272,7 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
 /// page; caching both ships one static, publicly-known nonce to all users and
 /// defeats nonce-based CSP.
 ///
-/// Deprecated (DR-11): any load or walk failure here serves the empty Phase 1
+/// Deprecated: any load or walk failure here serves the empty Phase 1
 /// shell with a 200 and a log line the handler never sees. Use
 /// [`crate::try_render`], which returns the failure as a coded
 /// [`crate::RenderError`], and [`crate::render_browser_shell`] for a route
@@ -282,7 +282,7 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
     since = "0.2.2",
     note = "serves an empty shell with a 200 on any failure; use `try_render`, which returns \
             the failure as a `RenderError`, and `render_browser_shell` for a route declared \
-            `ssr: false`. Removed in 3.0.0 (DR-11)"
+            `ssr: false`. Removed in 3.0.0"
 )]
 pub fn render_page(config: &PageConfig) -> PageOutput {
     log_deprecation_once();
@@ -302,7 +302,7 @@ fn log_deprecation_once() {
         if !LOGGED.swap(true, Ordering::Relaxed) {
             tracing::warn!(
                 "forma_server::render_page is deprecated: it serves an empty shell with a 200 \
-                 when a render fails; use try_render, which returns the failure (DR-11). \
+                 when a render fails; use try_render, which returns the failure. \
                  Logged once per process, in debug builds."
             );
         }
@@ -315,13 +315,13 @@ fn log_deprecation_once() {
 /// interpolated unescaped into five HTML attributes and into the CSP header,
 /// so an arbitrary string would be an attribute- and directive-injection sink.
 ///
-/// Deprecated (L-14): from 3.0.0 the render draws every response's nonce and
+/// Deprecated: from 3.0.0 the render draws every response's nonce and
 /// no caller supplies one, so a cached shell cannot be re-stamped with a
 /// nonce of the caller's choosing.
 #[deprecated(
     since = "0.2.2",
     note = "the render draws the nonce: use `try_render`, which returns a `PageResponse`. \
-            Removed in 3.0.0 (L-14)"
+            Removed in 3.0.0"
 )]
 pub fn render_page_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
     render_with_nonce(config, nonce)

@@ -44,7 +44,7 @@ Parses FMIR binary files and generates HTML from them. This is the core — ever
 
 ```toml
 [dependencies]
-forma-ir = "0.1"
+forma-ir = "0.2.2"
 ```
 
 **What it does:**
@@ -70,7 +70,7 @@ Full SSR middleware for [Axum](https://github.com/tokio-rs/axum). Renders pages,
 
 ```toml
 [dependencies]
-forma-server = "0.1"
+forma-server = "0.2.2"
 ```
 
 **What it does:**

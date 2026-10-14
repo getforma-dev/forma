@@ -20,7 +20,7 @@ use crate::{AssetManifest, RenderMode};
 ///
 /// FMIR v2 carries no checksum, so a flipped byte the structure checks do not
 /// reach (inside the source hash, or inside a text string) is not refused;
-/// FMIR v3's CRC-32 closes that (DR-28).
+/// FMIR v3's CRC-32 closes that.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IrLoadError {
     /// The route pattern that failed.
@@ -221,14 +221,14 @@ fn embedded<A: Embed>(name: &str) -> Option<Cow<'static, [u8]>> {
 /// Routes with no `.ir` field in the manifest are not included in the returned
 /// map — callers should treat absent routes as `Phase1ClientMount`.
 ///
-/// Deprecated (DR-11): [`load_ir_modules_strict`] is the default loader from
+/// Deprecated: [`load_ir_modules_strict`] is the default loader from
 /// 0.2.2, and 3.0.0 removes this one. It behaves exactly as at 0.2.1, and in
 /// debug builds logs its deprecation once per process.
 #[deprecated(
     since = "0.2.2",
     note = "serves a corrupt module's route as an empty shell for the life of the process; \
             use `load_ir_modules_strict`, the default loader, and refuse to start on its \
-            errors. Removed in 3.0.0 (DR-11)"
+            errors. Removed in 3.0.0"
 )]
 pub fn load_ir_modules<A: Embed>(
     manifest: &AssetManifest,
@@ -250,21 +250,21 @@ fn log_deprecation_once() {
         if !LOGGED.swap(true, Ordering::Relaxed) {
             tracing::warn!(
                 "forma_server::load_ir_modules is deprecated: it serves a corrupt module's route \
-                 as an empty shell; use load_ir_modules_strict and refuse to start on its errors \
-                 (DR-11). Logged once per process, in debug builds."
+                 as an empty shell; use load_ir_modules_strict and refuse to start on its errors. \
+                 Logged once per process, in debug builds."
             );
         }
     }
 }
 
 /// The module loader: every module the manifest declares, parsed and
-/// checked, or every failure, so the server can refuse to start (DR-11).
+/// checked, or every failure, so the server can refuse to start.
 ///
 /// The default from 0.2.2. Call it at start, before the port binds, and stop
 /// on `Err`: a module that is missing, corrupt, truncated or from another
 /// format version for a server-rendered route is a failed deploy, and CI and
-/// staging are where it should surface (Q13: one bad module refuses start,
-/// for every route; RK7). Each [`IrLoadError`] names the route, the file and
+/// staging are where it should surface: one bad module refuses start,
+/// for every route. Each [`IrLoadError`] names the route, the file and
 /// a code. A route the build declares `ssr: false` carries no `ir` in the
 /// manifest and needs no module: it is not an error, and not in the maps.
 ///
@@ -301,8 +301,7 @@ pub fn load_ir_modules_strict<A: Embed>(
 }
 
 /// The page modules, loaded at start by the strict loader, and in a debug
-/// build reread when the build's watch mode rewrites one (FORMA-166; L-31,
-/// N7).
+/// build reread when the build's watch mode rewrites one.
 ///
 /// [`load_ir_modules_strict`] hands the application its modules once, so a
 /// page edited under `forma-build --watch` showed its change only after a

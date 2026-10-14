@@ -1,20 +1,21 @@
 //! The preview frame: a document with an opaque origin, for content nobody
-//! reviewed (DR-14 tier (c); L-12, L-17, L-27, L-33, L-44, L-52; SR32).
+//! reviewed.
 //!
 //! A generated module rendered in the application's own page runs with the
-//! page's origin: its cookies, its storage, its API. Tier (c) renders it in
-//! a frame instead, whose document [`PageResponse::frame`] writes. The
+//! page's origin: its cookies, its storage, its API. Content nobody reviewed
+//! (`@getforma/core`'s `mountMarkup` with `tier: 'unreviewed'`) renders in a
+//! frame instead, whose document [`PageResponse::frame`] writes. The
 //! document is one root, `<div id="forma-frame">`, and core's zero-build
 //! runtime as one inline script; it names no URL, so loading it fetches
-//! nothing. The runtime then renders, in tier (c), the module the host
-//! sends it (core, FORMA-128) into that root.
+//! nothing. The runtime (`@getforma/core`'s frame runtime) then mounts the
+//! module the host sends it into that root, with `tier: 'unreviewed'`.
 //!
 //! # What the frame's policy closes, and what it does not
 //!
 //! Its enforced `Content-Security-Policy` is the strict policy with nine
-//! directives written in their place (L-27, L-52; the one exception to
-//! SR5's rule against rewriting the policy), in the enforced header because
-//! a browser ignores `sandbox` in Report-Only and in `meta` (L-17):
+//! directives written in their place (the one exception to the rule that a
+//! page's policy is never rewritten), in the enforced header because
+//! a browser ignores `sandbox` in Report-Only and in `meta`:
 //!
 //! | Directive | What it closes |
 //! |---|---|
@@ -30,7 +31,7 @@
 //! violations are not the application's reports), so, as on any page
 //! without one, in development builds only.
 //!
-//! **What stays open, the residuals (TH22):**
+//! **What stays open, the residuals:**
 //!
 //! - **WebRTC.** A script in the frame can open an `RTCPeerConnection` whose
 //!   STUN or TURN servers are any host: UDP packets and DNS lookups leave the
@@ -53,10 +54,28 @@
 //! - **What the module shows.** It can show the user who previews it
 //!   anything, inside the frame.
 //!
+//! **Closed by the runtime, not by the policy: link hints and `srcdoc`.** No
+//! CSP directive governs `<link rel="preconnect">` and its kin, and in WebKit
+//! a module's `<link rel="preconnect" href="…">`, its `href` written or bound,
+//! opened a connection to the host it named from inside this frame, with
+//! `connect-src 'none'` and the sandbox in place; an `<iframe srcdoc>` holding
+//! such a `<link>` did too. `@getforma/core` 2.1.0's frame runtime mounts the
+//! module with `tier: 'unreviewed'`, which parses it once in place, removes
+//! every `<link>` and every `srcdoc` attribute (and refuses
+//! `data-bind:srcdoc`), checks the live subtree after each write, and refuses
+//! the render if one reaches the document (`FORMA_E_UNREVIEWED_LINK`,
+//! `FORMA_E_UNREVIEWED_SRCDOC`). Only core 2.1.0 and later ship the frame
+//! runtime, so every frame has it.
+//!
 //! Checked in Chrome 155 (forma#22 and its review): markup alone (`<img>`, a
 //! stylesheet, a `url()` in a `style` attribute, a font) reached neither the
 //! application nor another origin; the runtime ran; `import()` and scripts
-//! it created were refused; `fetch` was refused by `connect-src`.
+//! it created were refused; `fetch` was refused by `connect-src`. Checked in
+//! Chromium 151, Firefox 153 and WebKit 26.5 with core 2.1.0's runtime (its
+//! `e2e/frame.spec.ts`): a module's `<link>`
+//! (preconnect, dns-prefetch, prefetch, preload, a bound `href`, or one
+//! re-created by foreign content or foster parenting) and an `<iframe
+//! srcdoc>` opened no connection in any of the three.
 //!
 //! # Where the runtime comes from
 //!
@@ -65,7 +84,7 @@
 //! and the file is read from the application's embedded `dist`, once, at
 //! start ([`PreviewFrame::load`]), which also computes its SHA-256 for
 //! `script-src`. That keeps the runtime the one the application built with,
-//! the same core version as its bundles (DR-26), in the binary it ships, and
+//! the same core version as its bundles, in the binary it ships, and
 //! found the way every other asset is found, with no path for the
 //! application to keep in step. It must be a classic, self-contained script
 //! (no `import`), and it is inlined as it is, never rewritten: so it may not
@@ -86,7 +105,7 @@
 //! | FRAME-201 | [`PageResponse::frame`] | The system random source failed to draw a nonce |
 //! | FRAME-202 | [`PageResponse::frame`] | The frame's policy is not a valid header value (ruled out by the checks at start) |
 //!
-//! # The host's side, which is the application's (L-12, L-33)
+//! # The host's side, which is the application's
 //!
 //! forma-server writes the frame's document; the application ships the page
 //! that frames it and the bridge that talks to it. The frame is only as
@@ -113,7 +132,7 @@
 //!    listener on the host page trusts a message from origin `"null"`: the
 //!    frame can `parent.postMessage` too, and it arrives with that origin.
 //!    The frame's runtime takes the port only from `event.source === parent`
-//!    (core's side, FORMA-128).
+//!    (core's side).
 //! 4. **The frame may send only `ready`, `resize` and `error`,** and the
 //!    host checks each against its schema (the type, and for `resize` a
 //!    bounded number) before acting on it. None acts in the studio's
@@ -284,7 +303,7 @@ impl PageResponse {
     /// runtime inline and allowed by its hash, and the requests the
     /// [`frame` module docs](crate::frame) list closed, with their residuals
     /// (the docs also set out the host's side). The only response whose
-    /// policy is rewritten, and only in its nine directives (L-27, L-52).
+    /// policy is rewritten, and only in its nine directives.
     ///
     /// As every `PageResponse`, it writes `Cache-Control: no-store`, the
     /// document headers, and in a development build Trusted Types in

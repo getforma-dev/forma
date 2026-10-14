@@ -1,4 +1,4 @@
-//! The page response: HTML that never leaves without its policy (DR-17).
+//! The page response: HTML that never leaves without its policy.
 
 use crate::csp::{self, CspNonce, PagePolicy, PolicyError, PolicyExtensions};
 use axum::http::{header, HeaderName, HeaderValue};
@@ -11,17 +11,20 @@ use std::time::Duration;
 ///
 /// - `Cache-Control: no-store`, because the HTML embeds a nonce minted for
 ///   this one response; a cached copy would hand that nonce to every later
-///   reader, and another user's page with it (INV3, TH3);
+///   reader, and another user's page with it;
 /// - `Content-Security-Policy`, the strict policy for that nonce
 ///   ([`csp::build_csp_header`]) with only the handler's typed
-///   [`PolicyExtensions`] added (INV2);
+///   [`PolicyExtensions`] added;
 /// - `Content-Security-Policy-Report-Only`: Trusted Types,
 ///   `require-trusted-types-for 'script'; trusted-types forma forma-runtime`,
-///   reported, not enforced, for 0.2.2's release (DR-20), when the
+///   reported, not enforced, in 0.2.x, when the
 ///   extensions name a reporting endpoint ([`PolicyExtensions::report_to`],
 ///   [`PolicyExtensions::report_uri`]), with the reporting directives in both
 ///   policies (and, for `report_to`, a `Reporting-Endpoints` header), or, with
-///   no endpoint, in a development build only;
+///   no endpoint, in a development build only (forma-server's own
+///   `debug_assertions`: a release profile or package override with debug
+///   assertions on counts as one), so a check that Trusted Types raise no
+///   violation must name an endpoint or run a debug build;
 /// - `Cross-Origin-Opener-Policy: same-origin` (or `same-origin-allow-popups`
 ///   when the extensions ask for it), `X-Content-Type-Options`,
 ///   `Referrer-Policy` and `Permissions-Policy`;
@@ -29,7 +32,7 @@ use std::time::Duration;
 ///
 /// A handler cannot take the HTML out and send it some other way except
 /// through [`PageResponse::into_parts_unchecked`], the one named exit, which
-/// a consumer's CI can search for (SR5, SR8):
+/// a consumer's CI can search for:
 ///
 /// ```compile_fail,E0616
 /// # fn page() -> forma_server::PageResponse { unimplemented!() }
@@ -51,10 +54,10 @@ pub struct PageResponse {
     counts: RenderCounts,
 }
 
-/// What one render did, for the application's own logs and metrics (R14).
+/// What one render did, for the application's own logs and metrics.
 ///
 /// On a [`crate::RenderError`] for a budget or a fault, the same counts say
-/// how far the walk got (SR22). For a page served without a walk (a browser
+/// how far the walk got. For a page served without a walk (a browser
 /// shell, or the deprecated `render_page`'s fallback) every count is zero.
 /// `nodes` and `list_iterations` are counted by [`crate::try_render`]; a page
 /// from the deprecated `render_page` reports them as zero.
@@ -150,7 +153,8 @@ impl PageResponse {
     /// The one way to reach the HTML without sending it as this response. It
     /// exists for the rare handler that must assemble its own response (a
     /// streaming body, a framework other than axum); each call site belongs
-    /// on the application's raw-sink allowlist with an owner (SR8).
+    /// on the application's raw-entry allowlist (`forma-raw-lint`) with an
+    /// owner.
     pub fn into_parts_unchecked(self) -> PageParts {
         let headers = self.headers();
         PageParts {

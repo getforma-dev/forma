@@ -13,11 +13,11 @@
 //! # Serving a page
 //!
 //! [`try_render`] returns the page or a coded [`RenderError`]; the handler
-//! chooses the response (DR-11). A page's HTML embeds a per-request nonce
+//! chooses the response. A page's HTML embeds a per-request nonce
 //! that only its policy blesses, so the HTML, the policy and
 //! `Cache-Control: no-store` travel together: a [`PageResponse`], as axum's
-//! `IntoResponse`, writes all of them and cannot be sent without them
-//! (DR-17). A handler that needs a looser policy adds typed
+//! `IntoResponse`, writes all of them and cannot be sent without them.
+//! A handler that needs a looser policy adds typed
 //! [`PolicyExtensions`] through its [`RenderCtx`]; it never edits the
 //! policy's text.
 //!
@@ -35,8 +35,8 @@
 //! ```
 //!
 //! Markup the page carries unescaped is a [`RawHtml`], made only by
-//! [`RawHtml::trusted`], so a search for that name finds every raw entry
-//! (DR-19). The route's `modulepreload` links come from the build's manifest
+//! [`RawHtml::trusted`], so a search for that name finds every raw entry.
+//! The route's `modulepreload` links come from the build's manifest
 //! and head links have a typed field, both through [`RenderCtx`]; data goes
 //! through `config_json`.
 //!

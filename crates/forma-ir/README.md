@@ -10,7 +10,7 @@ FMIR binary format parser, walker, and HTML generator for the [Forma Stack](http
 
 ```toml
 [dependencies]
-forma-ir = "0.1"
+forma-ir = "0.2.2"
 ```
 
 ## What It Does

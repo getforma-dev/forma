@@ -1,10 +1,10 @@
 //! Typed homes for what applications put in `body_prefix` that is not their
-//! own markup (DR-19): the route's `modulepreload` links, read from the
+//! own markup: the route's `modulepreload` links, read from the
 //! build's manifest and nonced here, and the page's head links.
 //!
 //! The third, data, already has its home: [`PageConfig::config_json`]
 //! (`window.__FORMA_CONFIG__`, every `<` escaped), and in 3.0.0 the state
-//! block (DR-4).
+//! block.
 //!
 //! Each reaches the page through [`RenderCtx`](crate::RenderCtx), so only
 //! [`try_render`](crate::try_render) and
@@ -101,7 +101,7 @@ impl ModulePreloads {
 }
 
 /// A `<link>` for the page's head that is not an asset of the build: an icon,
-/// a canonical URL, a feed (DR-19). The typed home for what ksx Studio
+/// a canonical URL, a feed. The typed home for what ksx Studio
 /// splices before `</head>`.
 ///
 /// Its `rel` is one or more of a closed list of link types, none of which
@@ -129,8 +129,8 @@ impl ModulePreloads {
 /// fetches a web app manifest under `manifest-src`, which falls back to the
 /// strict policy's `default-src 'none'`, so the default policy blocks it.
 /// [`PolicyExtensions`](crate::PolicyExtensions) has no manifest source
-/// (DR-17 and L-38 name image and frame sources, a form target and the
-/// opener policy), so a page that links a manifest today sees it refused,
+/// (it names image and frame sources, a form target and the opener
+/// policy), so a page that links a manifest today sees it refused,
 /// with a policy violation in the console.
 ///
 /// ```

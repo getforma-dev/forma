@@ -57,7 +57,7 @@ pub fn asset_bytes<A: Embed>(name: &str) -> Option<Bytes> {
 ///
 /// STARTUP ONLY — panics if the manifest is missing or malformed.
 ///
-/// Deprecated (L-13): a server should refuse to start with a message, not a
+/// Deprecated: a server should refuse to start with a message, not a
 /// panic. [`try_load_manifest`] returns the error; in 3.0.0 `load_manifest`
 /// itself returns it.
 ///
@@ -67,7 +67,7 @@ pub fn asset_bytes<A: Embed>(name: &str) -> Option<Bytes> {
 #[deprecated(
     since = "0.2.2",
     note = "panics on a missing or malformed manifest; use `try_load_manifest`, which \
-            returns the error (L-13). In 3.0.0 `load_manifest` returns a `Result`"
+            returns the error. In 3.0.0 `load_manifest` returns a `Result`"
 )]
 #[allow(clippy::panic)] // the 0.2.1 signature; `try_load_manifest` is the fallible one
 pub fn load_manifest<A: Embed>() -> crate::AssetManifest {
@@ -82,7 +82,7 @@ pub fn try_load_manifest<A: Embed>() -> Result<crate::AssetManifest, String> {
 
 /// Each route's `modulepreload` list from the embedded `manifest.json`, for
 /// [`RenderCtx::with_module_preloads`](crate::RenderCtx::with_module_preloads)
-/// (DR-19). Call it at start, beside [`try_load_manifest`].
+/// Call it at start, beside [`try_load_manifest`].
 ///
 /// # Errors
 ///

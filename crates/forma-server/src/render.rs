@@ -1,8 +1,8 @@
-//! The A2 render: a page with its counts, or a coded error the handler
-//! answers (DR-11, DR-12, L-3).
+//! The 0.2.2 render: a page with its counts, or a coded error the handler
+//! answers.
 //!
-//! [`try_render`] is the bridge to 3.0.0's `render` on a bound page handle
-//! (L-28): it takes today's [`PageConfig`] and returns what that `render`
+//! [`try_render`] is the bridge to 3.0.0's `render` on a bound page handle:
+//! it takes today's [`PageConfig`] and returns what that `render`
 //! will return, `Result<PageResponse, RenderError>`. It sits beside the
 //! deprecated `render_page`, which keeps its Phase 1 fallback.
 
@@ -17,9 +17,9 @@ use std::time::Instant;
 
 /// What a render takes beyond [`PageConfig`]: the policy's typed extensions,
 /// the walk's budgets, and the typed homes for what applications used to put
-/// in `body_prefix` (DR-19): the route's `modulepreload` links from the
+/// in `body_prefix`: the route's `modulepreload` links from the
 /// build's manifest, and head links. Never a nonce: the render draws one per
-/// response (L-14). Data goes through [`PageConfig::config_json`].
+/// response. Data goes through [`PageConfig::config_json`].
 ///
 /// ```
 /// use forma_server::{HeadLink, PolicyExtensions, RenderCtx, WalkLimits};
@@ -61,11 +61,11 @@ impl RenderCtx {
     }
 
     /// Write the route's `modulepreload` links from the build's manifest,
-    /// each with the page's nonce, after the route's own modules (DR-19). The
+    /// each with the page's nonce, after the route's own modules. The
     /// typed home for a preload workaround in `body_prefix`, such as
     /// Ledger's. The table covers every route; the render takes
     /// `config.route_pattern`'s list. Like every typed home, each call site
-    /// belongs on SR8's raw-entry allowlist (L-37).
+    /// belongs on the application's raw-entry allowlist (`forma-raw-lint`).
     ///
     /// ```no_run
     /// use forma_server::{assets, ModulePreloads, RenderCtx};
@@ -90,7 +90,8 @@ impl RenderCtx {
 
     /// Add a `<link>` to the page's head (see [`HeadLink`]), after any added
     /// before it. The typed home for links spliced in before `</head>`; each
-    /// call site belongs on SR8's raw-entry allowlist (L-37).
+    /// call site belongs on the application's raw-entry allowlist
+    /// (`forma-raw-lint`).
     ///
     /// Verified by: crates/forma-server/tests/typed_homes.rs > "head_links_are_written_escaped_in_the_head_in_the_order_added"
     #[must_use]
@@ -118,7 +119,7 @@ impl RenderCtx {
 /// Every error has a stable [`code`](RenderError::code), the
 /// [`route`](RenderError::route) it was rendering, and the
 /// [`component_path`](RenderError::component_path) where it stopped (empty
-/// when the failure is not inside a component). The codes, by family (L-3):
+/// when the failure is not inside a component). The codes, by family:
 ///
 /// | Code | Variant | Cause |
 /// |---|---|---|
@@ -173,7 +174,7 @@ pub enum RenderError {
         cause: NonceError,
     },
     /// RENDER-301, RENDER-302, RENDER-303: the walk reached one of its
-    /// budgets, and stopped there instead of running on (SR22).
+    /// budgets, and stopped there instead of running on.
     #[non_exhaustive]
     Budget {
         /// The route being rendered.
@@ -185,9 +186,9 @@ pub enum RenderError {
         /// The budget the walker reports.
         cause: IrError,
     },
-    /// RENDER-399: the render panicked and the panic was caught (DR-12). The
+    /// RENDER-399: the render panicked and the panic was caught. The
     /// process and every other request carry on, while the application
-    /// unwinds on panic; under `panic = "abort"` the process ends (SA8).
+    /// unwinds on panic; under `panic = "abort"` the process ends.
     #[non_exhaustive]
     Fault {
         /// The route being rendered.
@@ -233,7 +234,7 @@ impl RenderError {
     /// The component names of the islands open where the render stopped,
     /// outermost first; empty when it stopped outside every island or before
     /// the walk. A component the compiler inlined into its parent has no name
-    /// until FMIR v3's source positions (L-7).
+    /// until FMIR v3's source positions.
     pub fn component_path(&self) -> &[String] {
         match self {
             RenderError::Walk { component_path, .. }
@@ -296,7 +297,7 @@ impl std::error::Error for RenderError {
 
 /// Render a page on the server: the page with its counts, or why not.
 ///
-/// The bridge to 3.0.0's `render` (DR-11, L-3). Unlike the deprecated
+/// The bridge to 3.0.0's `render`. Unlike the deprecated
 /// `render_page`, it never substitutes an empty shell for a failure: a
 /// missing module, a walk the module or data fails, an exceeded budget, an
 /// invalid policy extension, a failed nonce draw and a panic each come back
@@ -331,7 +332,7 @@ impl std::error::Error for RenderError {
 /// # Threads and panics
 ///
 /// The walk is synchronous work on the caller's thread, and forma-server
-/// starts nothing and depends on no async runtime (R4). At the measured 12.5
+/// starts nothing and depends on no async runtime. At the measured 12.5
 /// million nodes a second, a page past about 12,500 nodes holds the thread
 /// past a millisecond; [`RenderCounts`] reports each page's nodes and walk
 /// time, so a handler whose counts show that can move the render into tokio's
@@ -370,9 +371,9 @@ impl std::error::Error for RenderError {
 /// ```
 ///
 /// A panic inside the render is caught and returned as
-/// [`RenderError::Fault`] (DR-12), which holds only while the application
+/// [`RenderError::Fault`], which holds only while the application
 /// unwinds on panic, as both templates leave it. Under `panic = "abort"` a
-/// fault still ends the process with every request in flight (SA8).
+/// fault still ends the process with every request in flight.
 ///
 /// Verified by: crates/forma-server/tests/try_render.rs > "a_panicking_component_returns_fault_the_handler_answers_500_and_the_next_request_renders"
 pub fn try_render(config: &PageConfig, ctx: &RenderCtx) -> Result<PageResponse, RenderError> {
@@ -382,7 +383,7 @@ pub fn try_render(config: &PageConfig, ctx: &RenderCtx) -> Result<PageResponse, 
 /// Serve a route the build declares browser-rendered (`ssr: false`): the
 /// nonced bundle and the same headers as any page, around an empty root.
 ///
-/// By declaration, never in place of a failure (DR-11): it does not walk,
+/// By declaration, never in place of a failure: it does not walk,
 /// even when the config carries a module. Fails only as a page fails before
 /// its walk: an invalid policy extension, a failed nonce draw, or a fault.
 ///
