@@ -21,7 +21,10 @@ use std::time::Duration;
 ///   extensions name a reporting endpoint ([`PolicyExtensions::report_to`],
 ///   [`PolicyExtensions::report_uri`]), with the reporting directives in both
 ///   policies (and, for `report_to`, a `Reporting-Endpoints` header), or, with
-///   no endpoint, in a development build only;
+///   no endpoint, in a development build only (forma-server's own
+///   `debug_assertions`: a release profile or package override with debug
+///   assertions on counts as one), so a check that Trusted Types raise no
+///   violation must name an endpoint or run a debug build;
 /// - `Cross-Origin-Opener-Policy: same-origin` (or `same-origin-allow-popups`
 ///   when the extensions ask for it), `X-Content-Type-Options`,
 ///   `Referrer-Policy` and `Permissions-Policy`;

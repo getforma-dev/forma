@@ -26,21 +26,32 @@ listed first.
   `cargo clippy -- -D warnings`) fails until each call moves to the
   replacement listed under Deprecated or carries `#[allow(deprecated)]`, as
   create-app 0.6.2's templates do on their one `PageConfig` literal.
-- **A second policy header on every page:**
-  `Content-Security-Policy-Report-Only` with Trusted Types (under Added). It
-  blocks nothing; a browser reports, in its console and to an endpoint the
-  application names, each string written to a script-carrying DOM sink. A
-  page that registers its own Trusted Types `default` policy has it run on
-  those writes from 0.2.2. The enforced policy is 0.2.1's, byte for byte.
-  **WebKit (Safari) logs a console error on every page** whose Report-Only
-  policy names no reporting endpoint, which is the default: "The Content
-  Security Policy 'require-trusted-types-for 'script'; trusted-types forma
-  forma-runtime' was delivered in report-only mode, but does not specify a
-  'report-to'; the policy will have no effect." Chromium and Firefox log
-  nothing. Naming an endpoint, `PolicyExtensions::report_uri` or
-  `report_to`, silences it (measured in Playwright's WebKit 26.5, Chromium
-  151 and Firefox 153, FORMA-138); a test that fails on console errors in
-  WebKit fails on it until then.
+- **Trusted Types, reported: a second policy header where it can be read.**
+  `Content-Security-Policy-Report-Only` with Trusted Types (under Added) goes
+  out on a page when the application names a reporting endpoint
+  (`PolicyExtensions::report_to` or `report_uri`), in every build, and with no
+  endpoint in development builds only, where Chromium and Firefox show its
+  violations in the console. A release build with no endpoint sends no
+  Report-Only header, so it adds no header to 0.2.1's page. It would report
+  to nobody, and WebKit (Safari) logs a console error on every page whose
+  Report-Only policy names no `report-to` ("… was delivered in report-only
+  mode, but does not specify a 'report-to'; the policy will have no
+  effect"), which FORMA-138's packed-set run found. With the header, nothing
+  is blocked; a page that registers its own Trusted Types `default` policy
+  has it run on string writes. The enforced policy is 0.2.1's, byte for
+  byte.
+  - **A development build with no endpoint still makes WebKit log that error
+    on every page,** so an application's own WebKit test that fails on
+    console errors, run against a development server, meets it.
+    `report_uri("/csp-reports")` silences it in development too.
+  - **A check that Trusted Types raise zero reports or violations must name an
+    endpoint (`report_uri` is enough) or run against a debug build.** A
+    release build with no endpoint sends no Report-Only policy, so such a
+    check passes without testing anything.
+  - "Development build" is forma-server's own `debug_assertions`, the switch
+    its loopback-endpoint rule uses: a release profile with debug assertions
+    on, or a `[profile.release.package.forma-server] debug-assertions = true`
+    override, gets the development behaviour.
 - **`render_page`'s document is 0.2.1's,** byte for byte, except the worker
   registration line above.
 - **Development-build log lines, once per process:** `render_page` and
