@@ -41,6 +41,21 @@
   Verified by `tests/scaffold-lib.test.ts` > "agrees with npm's own validator: npm accepts every name it accepts but the core module names, and refuses every name it says npm refuses"
   Verified by `tests/scaffold.test.ts` > "cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses"
 
+### Security
+
+- **CI: actions pinned to commits, every job declares its token, and the
+  dispatch payload is checked (DR-32, SR21, FORMA-010; the package is
+  unchanged).** Each `uses:` names the commit its tag or branch pointed to on
+  2026-10-14, with the ref in a comment. Every job in `ci.yml` declares
+  `contents: read`; `release.yml` already declared its permissions and keeps
+  them. `update-core-dep.yml` declares `contents: read` only, so it stays
+  inert (it cannot push its branch or open its pull request) until DR-32
+  deletes the dispatch at the repository merge, and it reads the
+  `core-release` payload's version only from an environment variable: a value
+  that is not a release version (`v1.2.3` or `v1.2.3-rc.1`, the `v` optional)
+  fails the run before anything is changed. Before, the payload was pasted
+  into the shell script, so a dispatch could run commands (TH15).
+
 ## [0.6.1] - 2026-10-14
 
 Template fixes from the Forma Stack decision brief's defects list, DR-17 and

@@ -22,6 +22,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job declares its token (FORMA-010): each one only reads this
+# repository. The cache steps authenticate with the runner's own service
+# token, which `permissions:` does not govern.
 jobs:
   # WHY THIS JOB EXISTS.
   #
@@ -49,6 +52,8 @@ jobs:
   # Publishing a scaffolder whose templates cannot install is the exact defect
   # this repo shipped for months, and that gate is not softened here.
   preflight:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     # MEASURED locally: enumerating the pins takes milliseconds and each
     # `npm view` is a single registry round trip (3 pins today). 5 is many
@@ -58,8 +63,8 @@ jobs:
       ready: ${{ steps.check.outputs.ready }}
       missing: ${{ steps.check.outputs.missing }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -112,6 +117,8 @@ jobs:
           fi
 
   test:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     # MEASURED locally: `npm test` = 3s wall, 90 passed / 4 skipped, 4 files.
     # Plus `npm ci` (2s locally, 20-40s on a runner), `npm run build` (tsup)
@@ -123,8 +130,8 @@ jobs:
       matrix:
         node-version: [20, 22, 24]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -147,6 +154,8 @@ jobs:
   # That takes this workflow's peak concurrent demand from 5 jobs to 4, and to
   # 2 in the current state where the pins are unpublished.
   scaffold:
+    permissions:
+      contents: read
     needs: [preflight, test]
     if: needs.preflight.outputs.ready == 'true'
     strategy:
@@ -164,12 +173,12 @@ jobs:
     # runner waits that were mistaken for hangs.
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
 
       # NOT Swatinem/rust-cache: this repo has no root Cargo.toml and the
       # templates ship no Cargo.lock, so rust-cache has no workspace to key on
@@ -177,7 +186,7 @@ jobs:
       # temp directory, so its target/ is unreachable anyway — the win here is
       # the shared crate registry, which is cached explicitly.
       - name: Cache the cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.cargo/registry/index
