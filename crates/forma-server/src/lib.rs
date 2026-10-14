@@ -40,6 +40,9 @@
 //! and head links have a typed field, both through [`RenderCtx`]; data goes
 //! through `config_json`.
 //!
+//! Content nobody reviewed renders in the preview frame, whose document
+//! [`PageResponse::frame`] writes ([`frame`]).
+//!
 //! A route the build declares `ssr: false` is served by
 //! [`render_browser_shell`]. At start, [`load_ir_modules_strict`] is the
 //! module loader: stop on its errors, before the port binds. [`IrModules`]
@@ -69,6 +72,8 @@ pub mod csp;
 /// Doctests pinning each deprecation; built only by `cargo test --doc`.
 #[cfg(doctest)]
 mod deprecations;
+// Documented by its own `//!` docs (the preview frame, DR-14 tier (c)).
+pub mod frame;
 /// Typed homes for the page's head: manifest preloads and head links.
 pub mod head;
 /// Loading and version-checking the per-route `.ir` modules at startup.
@@ -95,6 +100,7 @@ pub use csp::{
 };
 /// Re-exported: [`RenderCtx::with_limits`] takes it.
 pub use forma_ir::WalkLimits;
+pub use frame::{FrameError, PreviewFrame, FRAME_RUNTIME_ASSET};
 pub use head::{HeadLink, HeadLinkError, ModulePreloads};
 #[allow(deprecated)]
 pub use ir_compat::{load_ir_modules, load_ir_modules_strict, IrLoadError, IrModules};

@@ -8,6 +8,69 @@ application turns it on (FORMA-130, under Changed). The old forms warn as
 deprecated and go in 3.0.0.
 
 ### Added
+- **`PageResponse::frame`, the preview frame's document** (DR-14 tier (c);
+  L-12, L-17, L-27, L-33, L-44 (b), L-52; SR32; FORMA-125, the forma-server
+  half). For content nobody reviewed: a document with an opaque origin, its
+  requests closed but for the residuals below, the zero-build runtime inline.
+  - Its enforced `Content-Security-Policy` is the strict policy with nine
+    directives written in their place, the one exception to SR5's no-rewrite
+    rule: `sandbox allow-scripts` (never `allow-same-origin`),
+    `frame-ancestors` the application's origin, `script-src` the runtime's
+    SHA-256 (no nonce, so no script it creates or imports runs),
+    `connect-src 'none'`, and `img-src data:`, `style-src 'nonce-N'` alone,
+    `font-src 'none'`, `worker-src 'none'`, `form-action 'none'`: in an
+    opaque-origin document CSP's `'self'` still names the application, so
+    markup alone would otherwise send it requests with its `SameSite=None`
+    cookies (L-52). In the enforced header only, since browsers ignore
+    `sandbox` in Report-Only and `meta`. It carries Trusted Types in
+    Report-Only, with no reporting endpoint.
+  - **Residuals (documented in the `frame` module, SECURITY.md):** WebRTC
+    (a script can send STUN packets and DNS lookups to any host; no CSP
+    directive closes it in Chrome 155), the frame navigating itself (closed
+    only by the host's `frame-src` naming the frame's exact URL; a wider one
+    lets a navigation out, with `SameSite=None` cookies on the
+    application's origin), and whatever the module shows the user inside
+    the frame.
+  - The document is one root, `<div id="forma-frame">`, and the runtime as
+    one inline script; it names no URL, so loading it fetches nothing.
+  - The runtime comes from the application's own build: the manifest's
+    `assets` entry `forma-runtime.js` (`FRAME_RUNTIME_ASSET`), read from the
+    embedded `dist` and hashed once at start by `PreviewFrame::load::<A>(&manifest,
+    app_origin)`. A missing or unusable runtime is a coded `FrameError` at
+    start, never a frame without it: `FRAME-101` (no entry), `FRAME-102`
+    (named, not embedded), `FRAME-103` (empty, not UTF-8, or containing
+    `</script`, `<!--`, a carriage return or a NUL: inlined and hashed as it
+    is, never rewritten, and the parser rewrites CR and NUL), `FRAME-104`
+    (the application's origin is not `https://host[:port]` or loopback
+    `http://`, with a port of 1 to 65535 and no leading zero); per request,
+    `FRAME-201` (no nonce for `style-src`) and `FRAME-202` (no header value,
+    ruled out at start).
+  - The host's side is documented in the `frame` module: the `iframe`'s
+    `sandbox="allow-scripts"` set with `src` before insertion; the host
+    page's `frame-src` naming the frame's exact URL, the only control on
+    where the frame may navigate; one `MessageChannel` port on the first
+    load, carrying nothing else; no listener trusting origin `"null"`; only
+    `ready`, `resize` and `error`, schema-checked; teardown on any later
+    load.
+  - `PagePolicy`'s fields are private to `csp.rs`, so only `page_policy` and
+    `frame_policy` write a policy, and `frame_policy`'s one caller is
+    `PageResponse::frame`.
+  - Needs, from the other repositories: core's frame runtime as a classic,
+    self-contained script with LF line endings and no source-map comment
+    (FORMA-128), taking the port only from `event.source === parent`; and
+    `@getforma/build` writing it into `dist` as `forma-runtime.js`.
+  Tests: `tests/preview_frame.rs` >
+  `the_frame_policy_replaces_exactly_its_nine_directives`,
+  `the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch`,
+  `a_frame_without_its_runtime_is_a_coded_error_at_start`,
+  `page_response_frame_is_the_only_response_that_rewrites_the_policy`;
+  `frame::tests::frame_201_a_failed_nonce_draw_is_no_frame`,
+  `frame_202_a_policy_that_is_no_header_value_is_no_frame`. Checked in Chrome
+  155 (forma#22 and its review's harness): markup alone (`<img>`, a
+  stylesheet, `url()` in a `style` attribute, a font) reached neither the
+  application nor another origin; the runtime ran; `import()` and scripts it
+  created were refused; `fetch` was refused by `connect-src 'none'`;
+  `window.origin` was `"null"`, with or without the header.
 - **Trusted Types in Report-Only** (DR-20, SR15; FORMA-127, the
   forma-server half). Every page that carries the enforced policy also
   carries `Content-Security-Policy-Report-Only: require-trusted-types-for

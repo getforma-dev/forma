@@ -1,0 +1,8 @@
+{
+ "version": 1,
+ "build_hash": "fixture",
+ "assets": {
+  "forma-runtime.js": "forma-runtime.0a1b2c3d.js"
+ },
+ "routes": {}
+}

@@ -492,7 +492,7 @@ fn render(
     };
 
     let html = crate::template::write_document(config, &nonce, ssr_body.as_deref(), ctx);
-    if let Some(reason) = &policy.relaxed {
+    if let Some(reason) = policy.relaxed() {
         csp::log_relaxation(Some(config.route_pattern), reason);
     }
     Ok(PageResponse::with_policy(html, nonce, policy, counts))

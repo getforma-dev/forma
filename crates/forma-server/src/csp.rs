@@ -549,17 +549,49 @@ impl std::error::Error for PolicyError {}
 /// A page's policy after its extensions: the two header values a page
 /// response writes from it.
 #[derive(Debug, Clone)]
+///
+/// Its fields are private to this module, so a policy is made only here, by
+/// [`page_policy`] (the strict policy, extended) or [`frame_policy`] (the
+/// preview frame's): no other code can write one, which is what makes
+/// `PageResponse::frame` the only response whose policy is rewritten.
 pub(crate) struct PagePolicy {
     /// `Content-Security-Policy`.
-    pub(crate) csp: axum::http::HeaderValue,
+    csp: axum::http::HeaderValue,
     /// `Content-Security-Policy-Report-Only`: Trusted Types (DR-20).
-    pub(crate) report_only: axum::http::HeaderValue,
+    report_only: axum::http::HeaderValue,
     /// `Reporting-Endpoints`, when the extensions name an endpoint.
-    pub(crate) reporting_endpoints: Option<axum::http::HeaderValue>,
+    reporting_endpoints: Option<axum::http::HeaderValue>,
     /// Why Trusted Types are relaxed on this route, when they are.
-    pub(crate) relaxed: Option<String>,
+    relaxed: Option<String>,
     /// `Cross-Origin-Opener-Policy`.
-    pub(crate) opener: axum::http::HeaderValue,
+    opener: axum::http::HeaderValue,
+}
+
+impl PagePolicy {
+    /// `Content-Security-Policy`.
+    pub(crate) fn csp(&self) -> &axum::http::HeaderValue {
+        &self.csp
+    }
+
+    /// `Content-Security-Policy-Report-Only`.
+    pub(crate) fn report_only(&self) -> &axum::http::HeaderValue {
+        &self.report_only
+    }
+
+    /// `Reporting-Endpoints`, when an endpoint is named.
+    pub(crate) fn reporting_endpoints(&self) -> Option<&axum::http::HeaderValue> {
+        self.reporting_endpoints.as_ref()
+    }
+
+    /// Why Trusted Types are relaxed, when they are.
+    pub(crate) fn relaxed(&self) -> Option<&str> {
+        self.relaxed.as_deref()
+    }
+
+    /// `Cross-Origin-Opener-Policy`.
+    pub(crate) fn opener(&self) -> &axum::http::HeaderValue {
+        &self.opener
+    }
 }
 
 /// The strict policy for `nonce` with `extensions` applied, or the first
@@ -831,12 +863,7 @@ fn endpoint_host(rest: &str) -> Option<&str> {
         let close = authority.find(']')?;
         let (host, after) = authority.split_at(close + 1);
         let literal = &host[1..host.len() - 1];
-        let literal_ok = !literal.is_empty()
-            && literal.contains(':')
-            && literal
-                .bytes()
-                .all(|b| b.is_ascii_hexdigit() || b == b':' || b == b'.');
-        if !literal_ok {
+        if literal.parse::<std::net::Ipv6Addr>().is_err() {
             return None;
         }
         match after {
@@ -849,17 +876,142 @@ fn endpoint_host(rest: &str) -> Option<&str> {
             None => (authority, None),
         }
     };
-    let host_ok = host.starts_with('[')
-        || (!host.is_empty()
-            && host.split('.').all(|label| {
-                !label.is_empty()
-                    && label
-                        .bytes()
-                        .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
-            }));
-    let port_ok =
-        port.is_none_or(|p| !p.is_empty() && p.len() <= 5 && p.bytes().all(|b| b.is_ascii_digit()));
+    let host_ok = host.starts_with('[') || is_reg_name(host);
+    let port_ok = port.is_none_or(is_port);
     (host_ok && port_ok).then_some(host)
+}
+
+/// A host name as an endpoint or origin may write it, already lower-cased:
+/// dot-separated labels of `[a-z0-9-]`, none empty and none starting or
+/// ending with `-`.
+fn is_reg_name(host: &str) -> bool {
+    !host.is_empty()
+        && host.split('.').all(|label| {
+            !label.is_empty()
+                && !label.starts_with('-')
+                && !label.ends_with('-')
+                && label
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+        })
+}
+
+/// A port as an endpoint or origin may write it: digits only (`u16`'s
+/// parser would take a `+`), no leading zero (which also refuses 0), and a
+/// `u16`.
+fn is_port(port: &str) -> bool {
+    !port.is_empty()
+        && port.bytes().all(|b| b.is_ascii_digit())
+        && !port.starts_with('0')
+        && port.parse::<u16>().is_ok()
+}
+
+// ---------------------------------------------------------------------------
+// The preview frame's policy (DR-14 tier (c), L-17, L-27)
+// ---------------------------------------------------------------------------
+
+/// The preview frame document's policy: the strict policy with exactly
+/// nine directives written in their place, the one exception to SR5's rule
+/// against rewriting the policy (L-17, L-27, L-52, SR32):
+///
+/// - `sandbox allow-scripts`, without `allow-same-origin`: the document gets
+///   an opaque origin, so it reaches none of the application's cookies,
+///   storage or same-origin windows; scripts may run, and nothing else the
+///   sandbox gates (forms, popups, top navigation, downloads);
+/// - `frame-ancestors <app_origin>`: only the application's own pages may
+///   frame it;
+/// - `script-src 'sha256-<runtime>'`: the inline runtime runs, by its hash,
+///   and no other script, not one it creates or imports, which a nonce would
+///   have let through (a dynamic `import()` inherits its importer's nonce);
+/// - `connect-src 'none'`: no `fetch`, XHR, WebSocket, EventSource or beacon;
+/// - `img-src data:`, `style-src 'nonce-N'` alone, `font-src 'none'`,
+///   `worker-src 'none'` and `form-action 'none'`: in an opaque-origin
+///   document CSP's `'self'` still names the application's origin, so the
+///   strict policy's `'self'` sources would let markup alone (an `<img>`, a
+///   stylesheet, a `url()` in a `style` attribute, a font) send requests to
+///   the application, with its `SameSite=None` cookies (L-52).
+///
+/// The rest are the strict policy's, unchanged: `default-src`, `object-src`
+/// and `base-uri 'none'`, and `style-src-attr 'unsafe-inline'` (inline
+/// `style` attributes, whose `url()`s `img-src` and `font-src` now confine).
+/// Trusted Types are reported as on every page, with no reporting endpoint:
+/// an unreviewed document's violations are not the application's reports.
+/// The header must be the enforced one: `sandbox` is ignored in Report-Only
+/// and in `meta`. `app_origin` is checked by [`check_origin`] first, and
+/// `runtime_sha256` is base64; `None` only if a header value could not be
+/// made, which those rule out.
+///
+/// Verified by: crates/forma-server/tests/preview_frame.rs > "the_frame_policy_replaces_exactly_its_nine_directives"
+pub(crate) fn frame_policy(
+    nonce: &CspNonce,
+    runtime_sha256: &str,
+    app_origin: &str,
+) -> Option<PagePolicy> {
+    let mut directives: Vec<(&str, Vec<String>)> =
+        strict_directives(nonce.as_str()).into_iter().collect();
+    let none = || vec!["'none'".to_string()];
+    for (name, sources) in directives.iter_mut() {
+        match *name {
+            "script-src" => *sources = vec![format!("'sha256-{runtime_sha256}'")],
+            "style-src" => *sources = vec![format!("'nonce-{}'", nonce.as_str())],
+            "worker-src" | "connect-src" | "font-src" | "form-action" => *sources = none(),
+            "img-src" => *sources = vec!["data:".to_string()],
+            "frame-ancestors" => *sources = vec![app_origin.to_string()],
+            _ => {}
+        }
+    }
+    directives.push(("sandbox", vec!["allow-scripts".to_string()]));
+    let csp = write_policy(directives.iter().map(|(n, s)| (*n, s.as_slice())));
+    Some(PagePolicy {
+        csp: axum::http::HeaderValue::from_str(&csp).ok()?,
+        report_only: axum::http::HeaderValue::from_str(&report_only_policy()).ok()?,
+        reporting_endpoints: None,
+        relaxed: None,
+        opener: axum::http::HeaderValue::from_static("same-origin"),
+    })
+}
+
+/// Accept the application's own origin for the frame's `frame-ancestors`, or
+/// say why not: `https://host[:port]`, or `http://` on `localhost`,
+/// `127.0.0.1` or `[::1]` for development. An origin has no path, query,
+/// userinfo or wildcard, and its host is ASCII letters, digits, `-` and `.`
+/// (an IPv6 host only as `[::1]`). Returned in lower case.
+pub(crate) fn check_origin(origin: &str) -> Result<String, &'static str> {
+    let lower = origin.to_ascii_lowercase();
+    let (secure, authority) = if let Some(rest) = lower.strip_prefix("https://") {
+        (true, rest)
+    } else if let Some(rest) = lower.strip_prefix("http://") {
+        (false, rest)
+    } else {
+        return Err("an origin is https://host[:port], or http:// on a loopback host");
+    };
+    let (host, port) = if authority.starts_with('[') {
+        match authority.split_once(']') {
+            Some((v6, rest)) => {
+                if !rest.is_empty() && !rest.starts_with(':') {
+                    return Err("an origin is a scheme, a host and an optional port, nothing more");
+                }
+                (format!("{v6}]"), rest.strip_prefix(':'))
+            }
+            None => return Err("an unclosed IPv6 host"),
+        }
+    } else {
+        match authority.split_once(':') {
+            Some((host, port)) => (host.to_string(), Some(port)),
+            None => (authority.to_string(), None),
+        }
+    };
+    let host_ok = host == "[::1]" || is_reg_name(&host);
+    let port_ok = port.is_none_or(is_port);
+    if !host_ok || !port_ok {
+        return Err("an origin is a scheme, a host and an optional port, nothing more");
+    }
+    if !secure && !matches!(host.as_str(), "localhost" | "127.0.0.1" | "[::1]") {
+        return Err(
+            "http:// only on localhost, 127.0.0.1 or [::1]; serve the application over https",
+        );
+    }
+    Ok(lower)
 }
 
 /// Accept one CSP source expression a handler may add, or say why not.
@@ -1296,6 +1448,8 @@ mod tests {
             "https://reports.example.com?app=studio",
             "https://127.0.0.1:8443/csp",
             "https://[2001:db8::1]:8443/csp",
+            "https://[::ffff:192.0.2.1]/csp",
+            "https://reports.example:65535/csp",
         ] {
             assert_eq!(
                 check_endpoint("report-to", endpoint),
@@ -1368,6 +1522,16 @@ mod tests {
             "https://reports_example/csp",
             "https://*.example/csp",
             "https://reports.example:8443:1/csp",
+            // Ports as a u16 (no 0, none above 65535, no leading zero) and a
+            // bracketed address that `Ipv6Addr` parses.
+            "https://reports.example:0/csp",
+            "https://reports.example:65536/csp",
+            "https://reports.example:00443/csp",
+            "https://[::1::2]/csp",
+            "https://[12345::1]/csp",
+            "https://[::1%25eth0]/csp",
+            "https://-/csp",
+            "https://-reports.example/csp",
         ] {
             let error = check_endpoint("report-to", endpoint).expect_err(endpoint);
             assert_eq!(error.directive(), "report-to", "{endpoint:?}");

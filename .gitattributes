@@ -20,3 +20,8 @@ crates/forma-server/tests/fixtures/documents-0.2.1/** -text
 # forma-server's module-loader fixtures are pinned byte-for-byte to the code
 # that writes them (tests/strict_loader.rs), manifests included.
 crates/forma-server/tests/fixtures/modules/** -text
+
+# forma-server's preview-frame fixtures are inlined and hashed byte-for-byte,
+# and one of them holds a carriage return on purpose (FRAME-103), so checkout
+# must never rewrite their line endings.
+crates/forma-server/tests/fixtures/frame/** -text
