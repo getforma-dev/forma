@@ -158,9 +158,10 @@ tested property, not a hope. Rendering a 3-column table page
 | 400 | 147.0 | 0.37 |
 
 Flat per-row cost, ~6 allocations per row. `crates/forma-ir/tests/list_scaling.rs`
-fails the build if that stops being true — it asserts both wall-clock time and
-allocation count grow under 6x for a 4x increase in rows, where linear is ~4x
-and quadratic is ~16x.
+fails the build if that stops being true — it asserts the allocation count
+grows under 6x for a 4x increase in rows (linear is ~4x, quadratic ~16x) and
+wall-clock time under 64x for a 32x increase (linear ~32x, quadratic ~1,024x),
+judged on the median of paired rounds so a loaded machine cannot fail it.
 
 ## The binary format
 

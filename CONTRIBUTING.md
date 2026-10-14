@@ -52,7 +52,15 @@ runs after actionlint (Ruby and bash come with the runner and with macOS):
 ruby scripts/check-release-workflow.rb --self-test   # SR43: only the publish job holds id-token: write
 bash scripts/test-release-artifacts.sh               # a packed file altered between jobs is refused
 bash scripts/test-check-published-crate.sh           # after a publish: "differs" fails, "not visible yet" warns
+bash scripts/check-forma-ir-requirement.sh           # forma-server requires exactly forma-ir's version
 ```
+
+`check-forma-ir-requirement.sh` (CI's `patch-is-live` job) fails unless
+forma-server's `forma-ir` requirement, normal and dev, equals forma-ir's
+version: `[patch.crates-io]` resolves forma-ir from this tree whatever the
+requirement says, so a looser one (0.2.2 carried `"0.2.0"` until FORMA-138)
+builds green here and in the release workflow's `verify` job while a
+consumer's lock may hold a forma-ir that lacks what forma-server calls.
 
 **forma-server on Rust 1.85 to 1.87.** sha2 0.11.1 and later declare Rust
 1.88, and a resolve that ignores `rust-version` takes them, so the 1.85 check
@@ -60,9 +68,12 @@ fails before it compiles any forma-server code. The `generate-lockfile` line
 re-locks with Cargo's MSRV-aware resolver (Cargo 1.84+), which prefers the
 versions that fit the members' declared `rust-version` and so holds sha2 at
 0.11.0. CI's `msrv (forma-server, 1.85)` leg locks the same way and prints the
-sha2 version it built. `Cargo.lock` is not committed: run `cargo
-generate-lockfile` again afterwards to put the other gates back on the newest
-versions, as CI's stable jobs are.
+sha2 version it built, and the release workflow's `pack` job locks the same
+way too, so the `Cargo.lock` inside the published `.crate` builds with
+`--locked` on the Rust the crate declares (the SR43 lint's rule K5 keeps the
+setting there; A2 audit F7, FORMA-180). `Cargo.lock` is not committed: run
+`cargo generate-lockfile` again afterwards to put the other gates back on the
+newest versions, as CI's stable jobs are.
 
 Consumers of forma-server on Rust 1.85 to 1.87 need the same, one of:
 
@@ -79,8 +90,8 @@ Two gates are worth understanding rather than just running:
   list stops being linear in row count — it asserts wall-clock time *and*
   allocation count. A list is the SSR workload the whole design rests on, so
   its cost is a tested property rather than a hope. The time half compares
-  sizes 16x apart in back-to-back rounds and judges the median, so a loaded
-  machine does not fail it (FORMA-167).
+  sizes 32x apart in back-to-back rounds and judges the median, so a loaded
+  machine does not fail it (FORMA-167; 16x apart until FORMA-180).
 - **`crates/forma-ir/tests/js_emitter_contract.rs`** parses `.ir` files emitted
   by the real TypeScript compiler and diffs the rendered HTML against committed
   goldens. If it fails, the two implementations have diverged; the failure

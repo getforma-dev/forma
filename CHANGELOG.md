@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+A2 whole-release audit follow-ups (FORMA-180, PR group 2). Tests, scripts and
+workflows only: no crate code, no version.
+
+- **The published `.crate` builds `--locked` on the Rust it declares (audit
+  F7).** The release workflow's `pack` job locks with Cargo's MSRV-aware
+  resolver (`CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback`), as CI's
+  `msrv (forma-server, 1.85)` leg does, so the `Cargo.lock` inside the packed
+  forma-server holds sha2 0.11.0 (Rust 1.85), not 0.11.1 (1.88); 0.2.2's
+  packed lock failed `cargo build --locked` on 1.85 to 1.87, which no
+  consumer's own lock does. The SR43 lint (`scripts/check-release-workflow.rb`)
+  gains rule K5 for the setting, with three seeded violations (self-test 60 to
+  63). The crates' file lists are unchanged.
+- **forma-server's `forma-ir` requirement must equal forma-ir's version
+  (audit F8).** `scripts/check-forma-ir-requirement.sh`, run by CI's
+  `patch-is-live` job with its tests (`scripts/test-check-forma-ir-requirement.sh`),
+  fails unless the requirement, normal and dev, is forma-ir's version:
+  `[patch.crates-io]` and the release `verify` job both built green while
+  0.2.2 carried `"0.2.0"` (fixed by FORMA-138). FORMA-112 replaces it with
+  the one-version rule.
+- **The list-walk time gate measures 100 against 3,200 rows, bounded at 64x
+  (audit F17b).** `crates/forma-ir/tests/list_scaling.rs` compared 100 and
+  1,600 rows at 32x; a walker that only scans the list once per row measured
+  34.9x there, too close to the bound. Linear is now 32x; the same walker
+  measures 110x to 125x, and the unmutated one 32.1x to 32.3x under a load
+  average of 22 to 34.
+
 ## [0.2.2] - 2026-10-14
 
 Release A2, the bridge to 3.0.0: additive, with deprecations. See

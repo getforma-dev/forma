@@ -148,10 +148,22 @@ jobs:
       # travels in the artefact: `verify` builds against it and `publish`
       # re-packages with it. The packaged crate carries a Cargo.lock of its own,
       # derived from this one, so the same lock gives the same .crate bytes.
+      #
+      # The lock is made with Cargo's MSRV-aware resolver (A2 audit F7,
+      # FORMA-180): a plain resolve on stable takes the newest semver-compatible
+      # version even when it declares a newer Rust than the crate's
+      # `rust-version`, so the packed forma-server's own Cargo.lock held sha2
+      # 0.11.1 (Rust 1.88) against its declared 1.85, and `cargo build --locked`
+      # on the .crate failed on 1.85 to 1.87. With `fallback` the resolver
+      # prefers the versions that fit the member's declared `rust-version`, as
+      # CI's `msrv (forma-server, 1.85)` leg locks. The setting changes which
+      # versions the lock names, nothing in the file list.
+      # Verified by: scripts/check-release-workflow.rb > "the pack job locking without the MSRV-aware resolver"
       - name: Package the crate (compiles nothing)
         env:
           CRATE: ${{ steps.crate.outputs.crate }}
           VERSION: ${{ steps.crate.outputs.version }}
+          CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
         run: |
           cargo generate-lockfile
           cargo package -p "$CRATE" --no-verify --locked
