@@ -416,7 +416,11 @@ these four:
   no zero-width space; an empty value writes nothing. In `style` and `script`
   the parser decodes no references, so a value holding those characters reads as
   the entity until the client writes the element; the escaping is what stops the
-  hole closing its element.
+  hole closing its element. A hole inside `script` or `style` is still a code
+  sink: HTML escaping stops it closing its element but does not make the value
+  safe as JavaScript or CSS (and the old leading `<!--` marker, which in a
+  classic script happened to comment out an unquoted hole to the end of its
+  line, is gone).
 - `SHOW_IF` still chooses its branch and `LIST` still repeats its body; neither
   writes markers. The element's content is its `TEXT` and `DYN_TEXT` values, in
   IR order. Marker ids are compiler-assigned and unchanged; the id of a
@@ -426,11 +430,26 @@ these four:
   `<textarea>`. Without the marker that used to stand there, the first line of
   the value would be lost.
 
-The client binds these elements' text by the element, as a whole, not by marker
-(formajs, ticket FORMA-003). Verified by:
+The walker writes no markers in all four elements, but the client adopts by
+the element, as a whole, only `textarea` and `title` text (formajs, ticket
+FORMA-003). A reactive child of `style` or `script` is not supported for
+adoption in 0.2.x: its text is right before JavaScript, but adoption may rewrite
+it. A lone hole binds to the element's one text node. Mixed static and dynamic
+content gains a second text node at adoption, so `#x{color:red}` becomes
+`#x{color:red}red`, and updates write to that node, not to the rule (measured
+in Chrome against formajs PR #11). DR-7 makes it a build error in 3.0.0.
+Verified by:
 `crates/forma-ir/src/walker.rs > "dyn_text_in_a_text_only_parent_is_written_without_markers"`,
 `"no_marker_kind_is_written_inside_a_text_only_parent"` and
 `"a_textarea_doubles_a_leading_line_feed"`.
+
+The rule covers these four and no other element. The other elements whose
+content the parser treats specially either render nothing a reader sees and
+hold nothing to hydrate (`iframe`, `noembed`, `noframes`, and `noscript` with
+scripting on), parse their content as ordinary markup (`noscript` with
+scripting off), or are obsolete (`xmp`, `plaintext`). `pre` keeps its markers:
+its content is ordinary markup, so they are real comments, and the leading one
+shields a leading line feed from the parser.
 
 **Who depends on it:** the Rust walker emits it; `@getforma/core`'s
 `collectMarkers`/`adoptNode` consumes it; ksx renders through the walker and so
@@ -1001,9 +1020,12 @@ bytes on purpose"):
   client's `writeFormControlProperty` (`@getforma/core`, checkpoint `042e353`):
   `null` is `''` and anything else is `String(value)`; a single select takes the
   *first* option with that value (a second `selected` would win in the parser);
-  a select with a written `multiple` attribute and an array value takes every
-  option whose value is a member. An option's value is its `value` attribute, or
-  its text stripped and collapsed when it has none. Inside a bound select, an
+  a select with a written `multiple` attribute (a `DYN_ATTR multiple` that is
+  `false` writes none) and an array value takes every option whose value is in
+  `value.map(String)`, so a `null` member is `"null"`. An option's value is its
+  first `value` attribute, as the parser keeps it, or its text stripped and
+  collapsed when it has none; that text ends at `</option>` or, when that is
+  left out, at the next `<option>` or `<optgroup>`. Inside a bound select, an
   authored `selected` on an option is dropped, because the binding decides. A
   value no option has selects nothing; the browser then shows the first option,
   since HTML cannot write `selectedIndex = -1`. Verified by

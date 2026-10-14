@@ -1507,14 +1507,20 @@ fn emit_open_tag(
 /// before JavaScript it is the control's value, what a form submits, and the
 /// title the reader sees. So inside these four the walker writes no `f:`
 /// marker of any kind (text, conditional, list or island) and no zero-width
-/// space: the content is the element's static and dynamic text, in order, and
-/// the client binds the element's text as a whole rather than by marker.
+/// space: the content is the element's static and dynamic text, in order.
+///
+/// The client adopts `textarea` and `title` text as a whole, by the element
+/// (formajs, FORMA-003). A reactive child of `style` or `script` is not
+/// supported for adoption in 0.2.x: its text is right before JavaScript, but
+/// adoption may rewrite it. DR-7 makes it a build error in 3.0.0.
 ///
 /// Dynamic text is still HTML-escaped. In RCDATA the parser decodes it back,
 /// so the text is exact. In `style` and `script` nothing is decoded, so a
 /// value holding `&`, `<` or `>` reads as the entity until the client writes
 /// the element; that is the price of a hole that can neither close its
-/// element (`</style>`) nor, in a script, swallow the rest of the page.
+/// element (`</style>`) nor, in a script, swallow the rest of the page. A
+/// hole there is still a code sink: the escaping does not make the value safe
+/// as JavaScript or CSS.
 ///
 /// Matched ASCII case-insensitively and in any namespace. An SVG `title` has
 /// ordinary content, but its text written without markers is equally right,
@@ -5765,12 +5771,25 @@ mod tests {
     fn a_select_value_binding_reaches_options_rendered_by_a_list() {
         // A combination (P2): list rows, PROP, a dynamic attribute and the
         // select. Labels differ from values, so an option that lost its
-        // `value` and fell back to its text would match nothing.
-        const ROWS: [(&str, &str); 3] = [("a", "Apple"), ("b", "Banana"), ("c", "Cherry")];
-        for (value, chosen) in [("a", 0), ("c", 2)] {
+        // `value` and fell back to its text would match nothing. Three rows,
+        // then 45 with the match past row 32 (TESTING.md P4's depth floor).
+        let short: Vec<(String, String)> = [("a", "Apple"), ("b", "Banana"), ("c", "Cherry")]
+            .iter()
+            .map(|(id, label)| (id.to_string(), label.to_string()))
+            .collect();
+        let long: Vec<(String, String)> = (0..45)
+            .map(|i| (format!("r{i}"), format!("Row {i}")))
+            .collect();
+        let cases: [(&[(String, String)], &str, usize); 4] = [
+            (&short, "a", 0),
+            (&short, "c", 2),
+            (&long, "r40", 40),
+            (&long, "r44", 44),
+        ];
+        for (rows_in, value, chosen) in cases {
             let mut page = Page::new();
             let v = page.slot(text(value));
-            let rows = ROWS
+            let rows = rows_in
                 .iter()
                 .map(|(id, label)| {
                     SlotValue::object(vec![
@@ -5794,7 +5813,7 @@ mod tests {
                         .close("option");
                 })
                 .close("select");
-            let expected: String = ROWS
+            let expected: String = rows_in
                 .iter()
                 .enumerate()
                 .map(|(i, (id, label))| {
@@ -5838,6 +5857,129 @@ mod tests {
                 option("a", "A", false),
                 option("b", "B", false)
             )
+        );
+    }
+
+    #[test]
+    fn an_options_first_value_attribute_is_its_value() {
+        // `<option value="a" value="b">`: the parser keeps the first of two
+        // same-named attributes, so the option's value is "a".
+        for (bound, selected) in [("a", " selected"), ("b", "")] {
+            let mut page = Page::new();
+            let v = page.slot(text(bound));
+            let second = page.slot(text("b"));
+            page.open("select", &[])
+                .dyn_attr("value", v)
+                .open("option", &[("value", "a")])
+                .dyn_attr("value", second)
+                .text("Only")
+                .close("option")
+                .close("select");
+            assert_eq!(
+                page.render(),
+                format!("<select><option value=\"a\" value=\"b\"{selected}>Only</option></select>"),
+                "bound to {bound}"
+            );
+        }
+    }
+
+    #[test]
+    fn multiple_counts_only_when_the_attribute_is_written() {
+        // A `DYN_ATTR multiple` that is false writes no attribute, so the
+        // select is single and an array value is `String(array)`, "a,c",
+        // which matches none of these options. True writes it, and the
+        // array then selects each member.
+        for (multiple, attr, chosen) in [(false, "", false), (true, " multiple", true)] {
+            let mut page = Page::new();
+            let flag = page.slot(SlotValue::Bool(multiple));
+            let v = page.slot(SlotValue::array(vec![text("a"), text("c")]));
+            page.open("select", &[])
+                .dyn_attr("multiple", flag)
+                .dyn_attr("value", v);
+            for (value, label) in [("a", "Apple"), ("b", "Banana"), ("c", "Cherry")] {
+                page.open("option", &[("value", value)])
+                    .text(label)
+                    .close("option");
+            }
+            page.close("select");
+            assert_eq!(
+                page.render(),
+                format!(
+                    "<select{attr}>{}{}{}</select>",
+                    option("a", "Apple", chosen),
+                    option("b", "Banana", false),
+                    option("c", "Cherry", chosen)
+                ),
+                "multiple {multiple}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_null_member_of_a_multiple_value_compares_as_null() {
+        // The client builds its set with `value.map(String)`, and
+        // `String(null)` is "null", not '' as it is for a text hole.
+        let mut page = Page::new();
+        let v = page.slot(SlotValue::array(vec![SlotValue::Null, text("b")]));
+        page.open("select", &[("multiple", "")])
+            .dyn_attr("value", v);
+        for (value, label) in [("null", "Null"), ("x", "Empty"), ("b", "Banana")] {
+            page.open("option", &[("value", value)])
+                .text(label)
+                .close("option");
+        }
+        page.close("select");
+        // The middle option's static value cannot be empty (it would be
+        // written bare), so it is `x`; the empty-string case is the
+        // placeholder in `a_select_value_binding_compares_as_the_client_string`.
+        assert_eq!(
+            page.render(),
+            format!(
+                "<select multiple>{}{}{}</select>",
+                option("null", "Null", true),
+                option("x", "Empty", false),
+                option("b", "Banana", true)
+            )
+        );
+    }
+
+    #[test]
+    fn an_option_ends_at_the_next_option_or_optgroup() {
+        // `</option>` is optional: the parser ends an option at the next
+        // `<option>` or `<optgroup>`, and an option valued by its text is
+        // valued by the text up to there.
+        let mut page = Page::new();
+        let v = page.slot(text("A"));
+        page.open("select", &[])
+            .dyn_attr("value", v)
+            .open("option", &[])
+            .text("A")
+            .open("option", &[])
+            .text("B")
+            .close("select");
+        assert_eq!(
+            page.render(),
+            "<select><option selected>A<option>B</select>",
+            "ended by <option>"
+        );
+
+        let mut page = Page::new();
+        let v = page.slot(text("A"));
+        page.open("select", &[])
+            .dyn_attr("value", v)
+            .open("option", &[])
+            .text("A")
+            .open("optgroup", &[("label", "g")])
+            .open("option", &[("value", "x")])
+            .text("X")
+            .close("option")
+            .close("optgroup")
+            .close("select");
+        assert_eq!(
+            page.render(),
+            "<select><option selected>A<optgroup label=\"g\">\
+             <option value=\"x\">X</option></optgroup></select>",
+            "ended by <optgroup>"
         );
     }
 

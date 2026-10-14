@@ -11,9 +11,13 @@
   `f:` marker of any kind; dynamic text is written HTML-escaped, with no
   zero-width space for an empty value, and `SHOW_IF`/`LIST` render without
   markers. A textarea whose content starts with a line break gets one more,
-  because the parser drops one after `<textarea>`. The client binds these
-  elements' text by the element (formajs, FORMA-003), so this ships with that
-  change. See ARCHITECTURE.md 3.3, "The context rule".
+  because the parser drops one after `<textarea>`. The client adopts
+  `textarea` and `title` text by the element (formajs, FORMA-003), so this
+  ships with that change. A reactive child of `style` or `script` is not
+  supported for adoption in 0.2.x (its text is right before JavaScript;
+  adoption may rewrite it) and becomes a build error in 3.0.0 (DR-7). A hole
+  there is a code sink: the escaping stops it closing its element, not running
+  as JavaScript or CSS. See ARCHITECTURE.md 3.3, "The context rule".
 - **A `textarea`'s `value` is written as its text**, not as a `value`
   attribute, which a textarea ignores: the server shipped an empty control. The
   text is `value == null ? '' : String(value)`, as the client writes it, and it
@@ -22,13 +26,16 @@
   as a `value` attribute, which a select ignores: the server shipped, and a form
   submitted, the first option. A single select selects the first option whose
   value is `String(value)`; a `multiple` select given an array selects every
-  member; an option without `value` is matched by its stripped and collapsed
-  text; an authored `selected` inside a bound select is dropped. Unbound
-  selects are unchanged.
-- Tests: 17 walker tests under "Parsing context" in `src/walker.rs`, each
-  asserting the affected element together with an unaffected sibling
-  (TESTING.md P3); each of 26 mutation probes of the new code turns at least
-  one of them red.
+  member (a `null` member is `"null"`, as `String(null)` is); `multiple` counts
+  only when the attribute is written; an option's first `value` attribute is
+  its value, and without one it is matched by its stripped and collapsed text,
+  up to the next `<option>` or `<optgroup>` when `</option>` is left out; an
+  authored `selected` inside a bound select is dropped. Unbound selects are
+  unchanged.
+- Tests: 21 walker tests under "Parsing context" in `src/walker.rs`, each
+  two-sided (TESTING.md P3): the affected element with an unaffected sibling,
+  or both outcomes of the rule; each of 30 mutation probes of the new code
+  turns at least one of them red.
 - Intended for a patch release (0.2.1): the FMIR format is unchanged.
 - Not changed: the JS renderer (`renderToString` in formajs) still writes
   `value=` on these controls; ARCHITECTURE.md 6.2 records the gap.
