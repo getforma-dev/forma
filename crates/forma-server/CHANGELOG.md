@@ -187,9 +187,10 @@ deprecated and go in 3.0.0.
   (in the crate's sources the `html` field is initialised only in
   `trusted`, whatever type name or `Self` precedes it; the trait impls, the
   inherent functions and the functions returning a `RawHtml`, however the
-  type is path-qualified, are exact lists; and ten second constructors,
-  the review's two among them, each written into a copy of the sources,
-  are found), `the_documented_body_prefix_form_compiles_on_the_msrv_and_renders`
+  type is path-qualified, are exact lists; no other name for the type (a
+  `type` alias, a `use .. as` rename) and no `r#html`; and sixteen second
+  constructors, the two reviews' seven among them, each written into a copy
+  of the sources, are found), `the_documented_body_prefix_form_compiles_on_the_msrv_and_renders`
   (the bound form, compiled by the 1.85 MSRV job),
   `a_raw_html_body_prefix_is_written_exactly_as_the_same_string_on_every_path`
   (`render_page`, `render_page_with_nonce`, `try_render`,
