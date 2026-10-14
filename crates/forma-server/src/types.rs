@@ -28,7 +28,14 @@ pub struct PageConfig<'a> {
     /// not the same as making it safe: a `"` or `\` arriving from untrusted
     /// data still yields nonce-blessed script execution inside your own page.
     ///
-    /// Use [`PageConfig::config_json`] for anything derived from user input.
+    /// Deprecated (DR-18): data goes through [`PageConfig::config_json`] as
+    /// escaped JSON, and code goes into the page's bundle, reading a flag from
+    /// that data. Set this to `None`; 3.0.0 removes the field.
+    #[deprecated(
+        since = "0.2.2",
+        note = "writes handler text into a nonced script (TH4); pass data through \
+                `config_json` and move code into the bundle. Removed in 3.0.0 (DR-18)"
+    )]
     pub config_script: Option<&'a str>,
     /// Optional server data to expose to the client as
     /// `window.__FORMA_CONFIG__`.
@@ -69,25 +76,54 @@ pub struct PageConfig<'a> {
 /// cached body with a fresh policy kills every script, and caching both ships
 /// one static, publicly-known nonce to every user, which defeats nonce-based
 /// CSP entirely.
+///
+/// Superseded by [`PageResponse`](crate::PageResponse), which writes those
+/// headers itself and cannot be sent without them (DR-17). Turn a
+/// `PageOutput` into one with [`PageOutput::into_page_response`]; the public
+/// fields and [`PageOutput::headers`] are deprecated and go private in 3.0.0.
 #[non_exhaustive]
 #[derive(Debug)]
 pub struct PageOutput {
     /// The complete HTML document.
+    #[deprecated(
+        since = "0.2.2",
+        note = "send the page as a `PageResponse` (`into_page_response`), which carries \
+                `no-store` and the policy with it (DR-17)"
+    )]
     pub html: String,
     /// The `Content-Security-Policy` header value that blesses it.
+    #[deprecated(
+        since = "0.2.2",
+        note = "the policy is typed now: extend it with `PolicyExtensions` and send a \
+                `PageResponse` rather than editing this text (DR-17)"
+    )]
     pub csp: String,
     /// The nonce embedded in `html` and blessed by `csp`.
     ///
     /// Exposed so a caller can add its own nonced `<script>`/`<style>`, or
     /// re-stamp a cached shell, without string-parsing the CSP.
+    #[deprecated(
+        since = "0.2.2",
+        note = "3.0.0 draws the nonce inside the render and gives no caller one (L-14)"
+    )]
     pub nonce: crate::csp::CspNonce,
+    /// What the render did, carried into [`PageOutput::into_page_response`].
+    pub(crate) counts: crate::response::RenderCounts,
 }
 
+#[allow(deprecated)] // this impl is the bridge from the deprecated fields
 impl PageOutput {
     /// Response headers for this page: content type, `no-store`, and the CSP.
     ///
     /// Reads the (public, mutable) `csp` field, so a caller that must rewrite
-    /// a directive can do so in place first and still use this helper.
+    /// a directive can do so in place first and still use this helper. An
+    /// invalid `csp` is left out rather than reported; that silent drop is
+    /// one of the reasons this is deprecated.
+    #[deprecated(
+        since = "0.2.2",
+        note = "use `into_page_response`: a `PageResponse` writes these headers itself and \
+                fails rather than dropping an invalid policy (DR-17)"
+    )]
     pub fn headers(&self) -> Vec<(axum::http::HeaderName, axum::http::HeaderValue)> {
         let mut headers = vec![
             (
@@ -104,6 +140,36 @@ impl PageOutput {
         }
         headers.extend_from_slice(document_security_headers());
         headers
+    }
+
+    /// This page as a [`PageResponse`](crate::PageResponse): `no-store`, the
+    /// strict policy for the page's nonce with `extensions` added, and the
+    /// document headers, written whenever it is sent.
+    ///
+    /// The policy is rebuilt from the nonce the HTML embeds; the `csp` field
+    /// is not read, so a policy rewritten as text does not carry over. Express
+    /// the rewrite as an extension instead:
+    ///
+    /// ```no_run
+    /// # #![allow(deprecated)]
+    /// # use forma_server::{render_page, PageConfig, PolicyExtensions};
+    /// # fn config() -> PageConfig<'static> { unimplemented!() }
+    /// // Was: page.csp.replace("img-src 'self' data:", "img-src 'self' data: https:")
+    /// let page = render_page(&config())
+    ///     .into_page_response(&PolicyExtensions::new().img_src("https:"))?;
+    /// # Ok::<(), forma_server::PolicyError>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// A [`PolicyError`](crate::PolicyError) naming the first extension that
+    /// is not a source a page may add. There is then no response to send:
+    /// answer with an error page rather than this one without its policy.
+    pub fn into_page_response(
+        self,
+        extensions: &crate::csp::PolicyExtensions,
+    ) -> Result<crate::PageResponse, crate::PolicyError> {
+        crate::PageResponse::new(self.html, self.nonce, extensions, self.counts)
     }
 }
 

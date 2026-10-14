@@ -34,8 +34,8 @@ Known residual: an *under*-long control-flow length whose orphaned bytes still d
 - `worker-src 'self'` is explicit because `'strict-dynamic'` does not cover workers
 - Asset serving via `rust-embed` prevents path traversal; requested filenames are additionally checked for exact membership in the embedded file list, so debug (filesystem) and release (compiled-in) builds agree and Windows filename aliases do not resolve
 - `manifest.json` and direct `.br`/`.gz` requests are refused on the asset route
-- Template interpolations are HTML-escaped, **except** two documented raw sinks: `PageConfig::config_script` (raw JS — `</script`/`<!--` are neutralised so it cannot escape its element, but its *contents* are trusted) and `PageConfig::body_prefix` (raw HTML). Use `PageConfig::config_json` for anything derived from user input — it is serialised with every `<` escaped
-- Rendered HTML embeds a per-request nonce, so it must be served `Cache-Control: no-store` and never cached across requests. `PageOutput::headers()` does this
+- Template interpolations are HTML-escaped, **except** two documented raw sinks: `PageConfig::config_script` (raw JS — `</script`/`<!--` are neutralised so it cannot escape its element, but its *contents* are trusted; deprecated in 0.2.2, removed in 3.0.0) and `PageConfig::body_prefix` (raw HTML). Use `PageConfig::config_json` for anything derived from user input — it is serialised with every `<` escaped
+- Rendered HTML embeds a per-request nonce, so it must be served `Cache-Control: no-store` and never cached across requests. `PageResponse` writes `no-store`, the policy and the document headers whenever it is sent, and an invalid policy extension fails the page instead of dropping the header. (`PageOutput::headers()`, deprecated in 0.2.2, does the first part and silently drops an invalid policy)
 - HSTS is deliberately not set here — it is the TLS terminator's responsibility
 - Graceful fallback from Phase 2 SSR to Phase 1 on any error
 

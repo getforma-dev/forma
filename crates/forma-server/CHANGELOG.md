@@ -2,6 +2,63 @@
 
 ## [Unreleased]
 
+Release A2's bridge (0.2.2): additive. Every 0.2.1 call compiles and behaves
+as before; the old forms warn as deprecated and go in 3.0.0.
+
+### Added
+- **`PageResponse`**, a page that cannot be sent without its headers (DR-17,
+  FORMA-124). As axum's `IntoResponse` it always writes `Cache-Control:
+  no-store`, the strict policy for the nonce its HTML carries,
+  `Cross-Origin-Opener-Policy`, `X-Content-Type-Options`, `Referrer-Policy`,
+  `Permissions-Policy` and the HTML content type. Its HTML is reachable apart
+  from those headers only through `into_parts_unchecked()`, one named,
+  searchable exit returning `PageParts`; `counts()` returns the walk's bytes
+  and time (`RenderCounts`). Get one from today's render with
+  `PageOutput::into_page_response`. Tests: `tests/page_response.rs` >
+  `page_response_writes_no_store_the_policy_and_the_document_headers`,
+  `two_fetches_get_no_store_and_two_different_nonces`,
+  `into_parts_unchecked_returns_exactly_what_the_response_writes`,
+  `a_page_response_counts_its_walk`; the `compile_fail` doctest on
+  `PageResponse` (the HTML is private).
+- **`PolicyExtensions`**, the typed way to loosen a page's policy (L-38):
+  `img_src`, `frame_src`, `form_action` add one CSP source expression each
+  (`'self'`, a scheme such as `https:` or `blob:`, or a host), and
+  `allow_popups` sends `Cross-Origin-Opener-Policy: same-origin-allow-popups`
+  for a login popup. Nothing else can be added, nothing can be removed, and a
+  source carrying `;`, `,`, a quote, whitespace, a keyword other than
+  `'self'`, a nonce, a hash or a bare `*` fails the page with a `PolicyError`
+  naming the directive and the source, instead of reaching a header. This
+  replaces rewriting `PageOutput::csp` as text (GateWASM's console,
+  Generative UI's `frame-src blob:`). Tests: `tests/page_response.rs` >
+  `no_policy_extension_yields_a_response_without_the_policy` (2,000 generated
+  extension sets, valid and hostile: every accepted one carries the whole
+  strict policy), `an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy`,
+  `extensions_add_sources_to_their_own_directive_only`; `csp::tests` >
+  `extension_sources_accept_what_consumers_add`,
+  `extension_sources_refuse_injection_and_loosening`.
+
+### Deprecated
+- `PageOutput`'s public fields `html`, `csp` and `nonce`, and
+  `PageOutput::headers()`, which drops an invalid policy silently: send a
+  `PageResponse` (DR-17). The fields go private in 3.0.0.
+- `PageConfig::config_script`, which writes handler text into a nonced script
+  (TH4): pass data through `config_json`, move code into the bundle (DR-18).
+  Every `PageConfig` literal names the field, so `config_script: None` warns
+  too; it is removed in 3.0.0.
+- `render_page_with_nonce`: from 3.0.0 the render draws every nonce and no
+  caller supplies one (L-14).
+- Each deprecation is pinned by a doctest pair in `src/deprecations.rs` (the
+  0.2.1 call compiles under `allow(deprecated)` and fails under
+  `deny(deprecated)`), and `tests/compat_0_2_1.rs` calls the whole 0.2.1 page
+  API as an application does; its
+  `render_page_writes_the_0_2_1_document_byte_for_byte` compares the
+  document and policy against goldens written by 0.2.1 itself.
+
+### Changed
+- `build_csp_header` writes from the directive table the extensions share; its
+  output is byte-identical to 0.2.1 (`csp::tests` >
+  `build_csp_header_is_byte_identical_to_0_2_1`).
+
 ### Fixed (documentation only)
 - `RouteAssets::ir`'s doc comment names its value as the build writes it, the
   hashed `.ir` file name, not a `.fmir` module (FORMA-009).
