@@ -77,6 +77,21 @@
   `pack`'s setup-node sets `package-manager-cache: false`, so a move to
   setup-node v5 keeps its cache off.
 
+### Tests
+
+- **"tells an npm user to install with npm ci" has its own timeout** (FORMA-179;
+  the package is unchanged). It scaffolds a second project, which took up to
+  2,297 ms on the Windows scaffold leg, against vitest's 5 s default; it now
+  has 7 s, about 3x. Every other test that has run over 1.7 s in CI already
+  had one. CONTRIBUTING says which skipped checks are by design.
+- **The release's artefact upload can be re-run** (A2 audit S7, FORMA-179;
+  the package is unchanged). The release's `pack` job uploads `release-packed`
+  with `overwrite: true`, so re-running all jobs after a failure
+  replaces the earlier attempt's artefact instead of failing on its name (A2
+  audit S7); `publish` still checks every file against the record whose hash
+  `pack` passes as a job output. The SR43 lint's new rule K4 requires it,
+  with two seeds in `--self-test`.
+
 ## [0.6.1] - 2026-10-14
 
 Template fixes from the Forma Stack decision brief's defects list, DR-17 and

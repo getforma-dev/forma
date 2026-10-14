@@ -52,6 +52,16 @@ ruby scripts/check-release-workflow.rb --self-test   # SR43: only the publish jo
 bash scripts/test-release-artifacts.sh               # a packed file altered between jobs is refused
 ```
 
+**Skipped checks that are by design.** On a pull request or a push, `scaffold`
+is the one CI job that can show "skipped", and only two ways: it needs `test`,
+so a red `test` skips it; and it needs `preflight` to find every `@getforma`
+pin in `templates/` on npm, so a change whose pins name versions not yet
+published skips it, with a warning naming each missing pin and what was not
+verified. That is a release in progress, packages first; re-run CI once they
+publish. `release.yml`, which runs only for a release tag, makes the same check
+a hard failure; `update-core-dep.yml` runs only on a `core-release` dispatch. A
+job skipped for any other reason is a defect in the workflow (FORMA-179).
+
 ## Tests
 
 The standard is that
