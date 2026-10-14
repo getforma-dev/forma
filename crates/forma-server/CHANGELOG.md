@@ -26,7 +26,16 @@ deprecated and go in 3.0.0.
   `'allow-duplicates'`, and SR39: `style-src-attr 'unsafe-inline'` the
   policy's only `'unsafe-inline'`, with every extension too); the 2,000-case
   property in `tests/page_response.rs` asserts SR39 and the Report-Only
-  policy on every accepted extension set.
+  policy on every accepted extension set, and now names reporting
+  endpoints too (valid, loopback and the review's hostile ones).
+
+  **Not quite behaviour-neutral:** with `require-trusted-types-for 'script'`
+  in any policy, Report-Only included, a browser runs the page's own
+  Trusted Types `default` policy, if it registered one, on every string
+  written to a script-carrying sink and uses what it returns; under 0.2.1
+  nothing ran. An application with a `default` policy is already Trusted
+  Types-aware; it should check that policy before upgrading (review
+  5517672933, measured in Chrome for Testing 156).
 - **`PolicyExtensions::report_to(endpoint)` and `report_uri(endpoint)`**, the reporting endpoint the
   application names (DR-20, SR8, L-38): a path on its own origin, an
   `https://` URL, or `http://` on a loopback host. It is written into both
@@ -41,15 +50,22 @@ deprecated and go in 3.0.0.
   directive above a baseline, deduplicated. An endpoint carrying `;`, `,`, a
   quote, a backslash, whitespace or a fragment, starting with `//`, or using
   another scheme fails the page (`PolicyError` for `report-to`). Without an
-  endpoint nothing changes. **Over plain HTTP, `report_uri(endpoint)`**
-  instead: Chrome takes `Reporting-Endpoints` only from an HTTPS page and,
-  once a policy names `report-to`, ignores `report-uri`, so an HTTP page with
-  both reports nothing to Chrome's endpoint; `report_uri` writes
-  `report-uri` alone, which every current engine sends from HTTP. Checked in
-  Chrome 155 with this branch: `report_to` over HTTPS delivered one
+  endpoint nothing changes. **Over plain HTTP, `http://localhost`
+  included, `report_uri(endpoint)`** instead: Chrome and Firefox take
+  `Reporting-Endpoints` only from an HTTPS page and, once a policy names
+  `report-to`, ignore `report-uri`, so an HTTP page with both reports
+  nothing, on `localhost` too, although it is a secure context;
+  `report_uri` writes `report-uri` alone, which every current engine sends
+  from HTTP. Checked in Chrome 155 with this branch, and in Chrome 156 and
+  Firefox Nightly 155 by its review: `report_to` over HTTPS delivered one
   `application/reports+json` report for a string written to `innerHTML`, and
-  the page rendered; the same over HTTP delivered none in 90 seconds;
-  `report_uri` over HTTP delivered one `application/csp-report`. Tests:
+  the page rendered; the same over HTTP, on `localhost` or another host,
+  delivered none; `report_uri` over HTTP delivered one
+  `application/csp-report`. An absolute endpoint's authority is a host and
+  an optional port, never userinfo (a credential there would go to every
+  visitor), and a loopback `http://` endpoint is accepted in development
+  builds only: in a release build it would send each visitor's reports to
+  their own machine, so it fails the page like any invalid endpoint. Tests:
   `tests/trusted_types_report_only.rs` >
   `a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints`,
   `an_invalid_endpoint_fails_the_page_on_every_path`;
@@ -59,10 +75,14 @@ deprecated and go in 3.0.0.
   finds it by name). In 0.2.x it changes no header, since Trusted Types are
   Report-Only everywhere; from 3.0.0 the route keeps them Report-Only while
   the others enforce. Its violations are still reported. Each relaxed route
-  is logged, once per route per process, as a `tracing` warning with the
-  route and `reason`; an empty `reason` fails the page (`PolicyError` for
+  is logged, once per route and reason per process, as a `tracing` warning
+  with the route and `reason`; the log allocates nothing after a pair's
+  first render and names at most 1,024 pairs, then says once that
+  `route_pattern` must be a pattern, not a request path; an empty `reason` fails the page (`PolicyError` for
   `trusted-types`). Test: `tests/trusted_types_report_only.rs` >
-  `a_relaxed_route_keeps_reporting_and_is_logged_once_per_route`.
+  `a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason`;
+  `tests/relaxation_log_bound.rs` >
+  `the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once`.
 - **`PageResponse`**, a page that cannot be sent without its headers (DR-17,
   FORMA-124). As axum's `IntoResponse` it always writes `Cache-Control:
   no-store`, the strict policy for the nonce its HTML carries,

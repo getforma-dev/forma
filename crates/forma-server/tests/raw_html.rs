@@ -91,6 +91,11 @@ fn block(text: &str, open: usize) -> &str {
 /// Every way the crate's sources could make a `RawHtml` other than
 /// `RawHtml::trusted`, as findings; none means the search for that one name
 /// finds every raw entry (DR-19). `files` are (path under `src/`, text).
+///
+/// A heuristic over the source text, a guard against accidents and not a
+/// proof: a macro can still spell the type or the field where no check looks
+/// (`macro_rules! ty { () => { RawHtml } }`), and review stays the check for
+/// that.
 fn second_constructors(files: &[(String, String)]) -> Vec<String> {
     let files: Vec<(String, String)> = files
         .iter()

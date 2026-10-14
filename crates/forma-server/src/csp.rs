@@ -364,8 +364,14 @@ impl PolicyExtensions {
     /// leaves without it.
     ///
     /// `endpoint` is a path on the application's own origin (`/csp-reports`,
-    /// the usual choice), an `https://` URL, or an `http://` URL on
-    /// `localhost`, `127.0.0.1` or `[::1]`. It is written into both policies,
+    /// the usual choice), an `https://` URL, or, in a development build only
+    /// (`cfg(debug_assertions)`), an `http://` URL on `localhost`,
+    /// `127.0.0.1` or `[::1]`: deployed, a loopback endpoint would send each
+    /// visitor's reports to the visitor's own machine, so a release build
+    /// refuses it like any invalid endpoint. An absolute URL's authority is
+    /// a host (letters, digits, `.` and `-`, or a bracketed IPv6 address) and
+    /// an optional port of digits, never userinfo: a credential written there
+    /// would go to every visitor. It is written into both policies,
     /// the enforced one and the Trusted Types Report-Only one, twice over:
     ///
     /// - `report-to forma-csp`, with a `Reporting-Endpoints: forma-csp="<endpoint>"`
@@ -380,13 +386,17 @@ impl PolicyExtensions {
     /// answer CORS preflights; a same-origin path needs none. Browsers send
     /// reports outside the page, so the policy's `connect-src` does not apply.
     ///
-    /// **Over plain HTTP use [`PolicyExtensions::report_uri`].** Chrome takes
+    /// **Over plain HTTP, `http://localhost` included, use
+    /// [`PolicyExtensions::report_uri`].** Chrome and Firefox take
     /// `Reporting-Endpoints` only from an HTTPS page, and once a policy names
-    /// `report-to` it ignores `report-uri`, so a page served over plain HTTP
-    /// with both (a development server on `http://localhost`, a CI run)
-    /// reports nothing to Chrome's endpoint. Measured with Chrome 155: the same
-    /// page and endpoint over HTTP sent no report in 90 seconds; over HTTPS it
-    /// sent one `application/reports+json` report and no `report-uri` copy.
+    /// `report-to` they ignore `report-uri`, so a page served over plain HTTP
+    /// with both reports nothing to the endpoint. That holds on
+    /// `http://localhost` too, although it is a secure context, so in
+    /// development name the endpoint with `report_uri`. Measured with Chrome
+    /// 155 and 156 and Firefox Nightly 155 (this PR and its review): the same
+    /// page and endpoint over HTTP, on `localhost` or another host, sent no
+    /// report; over HTTPS each sent one `application/reports+json` report and
+    /// no `report-uri` copy.
     ///
     /// **The endpoint's obligations are the application's (SR8, L-38):**
     ///
@@ -430,9 +440,10 @@ impl PolicyExtensions {
     /// alone, for pages served over plain HTTP: a development server on
     /// `http://localhost`, a CI run. Every current engine sends a
     /// `report-uri` report from an HTTP page (one `application/csp-report`
-    /// POST per violation), where Chrome would send none for
-    /// [`PolicyExtensions::report_to`]'s pair. The same endpoint rules and
-    /// obligations apply; a refusal is a [`PolicyError`] for `report-uri`.
+    /// POST per violation), where Chrome and Firefox send none for
+    /// [`PolicyExtensions::report_to`]'s pair, on `http://localhost` too. The
+    /// same endpoint rules and obligations apply; a refusal is a
+    /// [`PolicyError`] for `report-uri`.
     ///
     /// ```
     /// use forma_server::PolicyExtensions;
@@ -462,8 +473,10 @@ impl PolicyExtensions {
     /// so the headers do not change; from 3.0.0, when the other routes
     /// enforce Trusted Types, this route keeps them Report-Only. Either way
     /// its violations are still reported, so the sinks left to move stay
-    /// visible. Every render of a relaxed route is logged, once per route per
-    /// process, as a `tracing` warning naming the route and `reason`. An
+    /// visible. A relaxed route is logged, once per route and reason per
+    /// process, as a `tracing` warning naming the route and `reason`;
+    /// `route_pattern` must be the route's pattern (`/users/:id`), not a
+    /// request's path, and the log stops naming new pairs past 1,024. An
     /// empty `reason` fails the page with a [`PolicyError`] for
     /// `trusted-types`.
     ///
@@ -476,7 +489,7 @@ impl PolicyExtensions {
     /// # let _ = studio;
     /// ```
     ///
-    /// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_relaxed_route_keeps_reporting_and_is_logged_once_per_route"
+    /// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason"
     #[must_use]
     pub fn relax_trusted_types(mut self, reason: impl Into<String>) -> Self {
         self.relax_trusted_types = Some(reason.into());
@@ -643,31 +656,70 @@ pub(crate) fn page_policy(
     })
 }
 
+/// How many distinct (route, reason) relaxations are logged before the log
+/// stops naming new ones: a bound on the set the log keeps.
+const RELAXATIONS_LOGGED: usize = 1024;
+
 /// Log a render of a route whose Trusted Types are relaxed: once per route
-/// per process, so a busy route does not flood the log. `route` is `None`
-/// for a page made by `PageOutput::into_page_response`, which does not know
-/// its route.
+/// and reason per process, so a busy route does not flood the log. `route`
+/// is `None` for a page made by `PageOutput::into_page_response`, which does
+/// not know its route; its relaxations are told apart by their reasons.
 ///
-/// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_relaxed_route_keeps_reporting_and_is_logged_once_per_route"
+/// After a pair's first render this takes the lock, finds the pair and
+/// allocates nothing. The set is bounded: past [`RELAXATIONS_LOGGED`] pairs
+/// (an application passing request paths, not route patterns, as
+/// `route_pattern` would get there) one warning says so and later new pairs
+/// are not logged.
+///
+/// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason"
 pub(crate) fn log_relaxation(route: Option<&str>, reason: &str) {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
     use std::sync::Mutex;
-    static LOGGED: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
+    struct Logged {
+        pairs: BTreeMap<String, BTreeSet<String>>,
+        count: usize,
+    }
+    static LOGGED: Mutex<Logged> = Mutex::new(Logged {
+        pairs: BTreeMap::new(),
+        count: 0,
+    });
     let route = route.unwrap_or("(a page made by PageOutput::into_page_response)");
     // Nothing panics while holding the lock; a poisoned set is still a set.
-    let first = LOGGED
+    let mut logged = LOGGED
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-        .insert(route.to_string());
-    if first {
-        tracing::warn!(
-            route,
-            reason,
-            "Trusted Types relaxed on route {route}: {reason}. An SR8 allowlist exit: in 0.2.x \
-             every route reports them (Report-Only); from 3.0.0 this route keeps reporting while \
-             the others enforce (DR-20). Logged once per route per process."
-        );
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if logged
+        .pairs
+        .get(route)
+        .is_some_and(|reasons| reasons.contains(reason))
+    {
+        return;
     }
+    if logged.count > RELAXATIONS_LOGGED {
+        return;
+    }
+    logged.count += 1;
+    if logged.count > RELAXATIONS_LOGGED {
+        tracing::warn!(
+            "Trusted Types relaxed on more than {RELAXATIONS_LOGGED} (route, reason) pairs; \
+             further ones are not logged. route_pattern is a route's pattern (/users/:id), \
+             not a request's path (DR-20)."
+        );
+        return;
+    }
+    logged
+        .pairs
+        .entry(route.to_string())
+        .or_default()
+        .insert(reason.to_string());
+    drop(logged);
+    tracing::warn!(
+        route,
+        reason,
+        "Trusted Types relaxed on route {route}: {reason}. An SR8 allowlist exit: in 0.2.x every \
+         route reports them (Report-Only); from 3.0.0 this route keeps reporting while the \
+         others enforce (DR-20). Logged once per route and reason per process."
+    );
 }
 
 /// Accept a reporting endpoint, or say why not: a path on the page's own
@@ -728,30 +780,86 @@ fn check_endpoint(directive: &'static str, endpoint: &str) -> Result<(), PolicyE
         return Ok(());
     }
     let lower = endpoint.to_ascii_lowercase();
-    let host = |rest: &str| -> String {
-        let authority = rest.split(['/', '?']).next().unwrap_or("");
-        let authority = authority.rsplit_once('@').map_or(authority, |(_, h)| h);
-        if let Some(v6) = authority.strip_prefix('[') {
-            return format!("[{}", v6.split(']').next().unwrap_or(""));
-        }
-        authority.split(':').next().unwrap_or("").to_string()
+    let (secure, rest) = if let Some(rest) = lower.strip_prefix("https://") {
+        (true, rest)
+    } else if let Some(rest) = lower.strip_prefix("http://") {
+        (false, rest)
+    } else {
+        return refuse(
+            "an endpoint is a path on the page's origin (/csp-reports) or an https:// URL",
+        );
     };
-    if let Some(rest) = lower.strip_prefix("https://") {
-        if host(rest).is_empty() {
-            return refuse("an https endpoint names a host");
-        }
+    let Some(host) = endpoint_host(rest) else {
+        return refuse(
+            "an endpoint's authority is a host (letters, digits, '.' and '-', or a bracketed \
+             IPv6 address) and an optional port of digits: no userinfo ('@'), nothing else",
+        );
+    };
+    if secure {
         return Ok(());
     }
-    if let Some(rest) = lower.strip_prefix("http://") {
-        if matches!(host(rest).as_str(), "localhost" | "127.0.0.1" | "[::1") {
-            return Ok(());
-        }
+    if !matches!(host, "localhost" | "127.0.0.1" | "[::1]") {
         return refuse(
             "http:// only on localhost, 127.0.0.1 or [::1]: browsers send reports only to a \
              secure endpoint",
         );
     }
-    refuse("an endpoint is a path on the page's origin (/csp-reports) or an https:// URL")
+    // A loopback endpoint on a deployed page sends every visitor's reports
+    // to the visitor's own machine: allowed in development builds only.
+    // Verified by: crates/forma-server/src/csp.rs > "endpoints_accept_a_path_https_or_loopback_http_and_refuse_the_rest"
+    if cfg!(debug_assertions) {
+        Ok(())
+    } else {
+        refuse(
+            "a loopback http:// endpoint in a release build would send each visitor's reports to \
+             their own machine; name a path on the page's origin (/csp-reports) or an https:// URL",
+        )
+    }
+}
+
+/// The host of an absolute endpoint's authority (the text after `scheme://`
+/// up to the first `/` or `?`), or `None` when the authority is not a host
+/// and an optional port: a reg-name of `[a-z0-9.-]` with no empty label, or
+/// a bracketed IPv6 literal with nothing after `]` but a port; a port of one
+/// to five digits; never userinfo. `rest` is lower-cased.
+fn endpoint_host(rest: &str) -> Option<&str> {
+    let authority = rest.split(['/', '?']).next().unwrap_or("");
+    if authority.contains('@') {
+        return None;
+    }
+    let (host, port) = if authority.starts_with('[') {
+        let close = authority.find(']')?;
+        let (host, after) = authority.split_at(close + 1);
+        let literal = &host[1..host.len() - 1];
+        let literal_ok = !literal.is_empty()
+            && literal.contains(':')
+            && literal
+                .bytes()
+                .all(|b| b.is_ascii_hexdigit() || b == b':' || b == b'.');
+        if !literal_ok {
+            return None;
+        }
+        match after {
+            "" => (host, None),
+            _ => (host, Some(after.strip_prefix(':')?)),
+        }
+    } else {
+        match authority.split_once(':') {
+            Some((host, port)) => (host, Some(port)),
+            None => (authority, None),
+        }
+    };
+    let host_ok = host.starts_with('[')
+        || (!host.is_empty()
+            && host.split('.').all(|label| {
+                !label.is_empty()
+                    && label
+                        .bytes()
+                        .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+            }));
+    let port_ok =
+        port.is_none_or(|p| !p.is_empty() && p.len() <= 5 && p.bytes().all(|b| b.is_ascii_digit()));
+    (host_ok && port_ok).then_some(host)
 }
 
 /// Accept one CSP source expression a handler may add, or say why not.
@@ -1185,15 +1293,31 @@ mod tests {
             "https://reports.example.com/csp",
             "HTTPS://Reports.Example.com/x",
             "https://reports.example.com:8443/csp?x=1",
-            "http://localhost:3000/csp",
-            "http://127.0.0.1/csp",
-            "http://[::1]:8080/csp",
+            "https://reports.example.com?app=studio",
+            "https://127.0.0.1:8443/csp",
+            "https://[2001:db8::1]:8443/csp",
         ] {
             assert_eq!(
                 check_endpoint("report-to", endpoint),
                 Ok(()),
                 "{endpoint:?}"
             );
+        }
+        // Loopback http:// in development builds only: deployed, it would
+        // send each visitor's reports to the visitor's own machine (N5).
+        for endpoint in [
+            "http://localhost:3000/csp",
+            "http://127.0.0.1/csp",
+            "http://[::1]:8080/csp",
+            "HTTP://LOCALHOST/csp",
+        ] {
+            let checked = check_endpoint("report-uri", endpoint);
+            if cfg!(debug_assertions) {
+                assert_eq!(checked, Ok(()), "{endpoint:?}");
+            } else {
+                let error = checked.expect_err(endpoint);
+                assert!(error.reason().contains("release build"), "{error}");
+            }
         }
         for endpoint in [
             "",
@@ -1221,6 +1345,29 @@ mod tests {
             "/a#frag",
             "/ü",
             "/a<b>",
+            // Userinfo would publish a credential to every visitor, and
+            // authorities a URL parser refuses would send reports nowhere
+            // (review 5517672933, S1).
+            "https://user:pw@reports.example/csp",
+            "https://user@reports.example",
+            "https://@reports.example/csp",
+            "http://evil.com@localhost/csp",
+            "http://[::1]evil.com",
+            "http://[::1",
+            "http://localhost:3000]",
+            "https://reports.example:8443x",
+            "https://reports.example:",
+            "https://reports.example:123456",
+            "https://%0d%0a",
+            "https://]",
+            "https://[]",
+            "https://[zz::1]",
+            "https://[::1]x:80",
+            "https://reports..example/csp",
+            "https://.example/csp",
+            "https://reports_example/csp",
+            "https://*.example/csp",
+            "https://reports.example:8443:1/csp",
         ] {
             let error = check_endpoint("report-to", endpoint).expect_err(endpoint);
             assert_eq!(error.directive(), "report-to", "{endpoint:?}");

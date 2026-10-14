@@ -318,7 +318,7 @@ impl Subscriber for Warnings {
 }
 
 #[tokio::test]
-async fn a_relaxed_route_keeps_reporting_and_is_logged_once_per_route() {
+async fn a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason() {
     let manifest = manifest();
     let base = PolicyExtensions::new().report_to("/csp-reports");
     let studio = base
@@ -354,26 +354,49 @@ async fn a_relaxed_route_keeps_reporting_and_is_logged_once_per_route() {
         make(Path::TryRender, &manifest, "/studio", &studio).expect("renders");
     }
     make(Path::Shell, &manifest, "/vector", &studio).expect("renders");
+    // Another reason, on a route already logged and through the bridge
+    // (whose pages share no route): each is its own entry.
+    let canvas = base
+        .clone()
+        .relax_trusted_types("canvas reconcile; owner canvas; until 2027-02-28");
+    for _ in 0..2 {
+        make(Path::TryRender, &manifest, "/studio", &canvas).expect("renders");
+        make(Path::Bridge, &manifest, "/", &canvas).expect("renders");
+    }
     drop(guard);
 
-    // Logged once per route: /studio (whichever path rendered it first),
-    // /vector, and the bridge, which has no route.
+    // Logged once per route and reason: /studio (whichever path rendered it
+    // first), /vector, the bridge, which has no route, and the second reason
+    // on /studio and on the bridge.
     let logged = warnings.0.lock().expect("lock").clone();
-    let routes: Vec<&str> = logged.iter().map(|(r, _)| r.as_str()).collect();
+    let first = "app.ts sinks; owner studio; until 2027-01-31";
+    let second = "canvas reconcile; owner canvas; until 2027-02-28";
+    let seen: Vec<(&str, &str)> = logged
+        .iter()
+        .map(|(route, message)| {
+            let reason = if message.contains(first) {
+                first
+            } else if message.contains(second) {
+                second
+            } else {
+                panic!("a relaxation without its reason: {message}")
+            };
+            (route.as_str(), reason)
+        })
+        .collect();
+    let bridge = "(a page made by PageOutput::into_page_response)";
     assert_eq!(
-        routes,
+        seen,
         [
-            "(a page made by PageOutput::into_page_response)",
-            "/studio",
-            "/vector"
+            (bridge, first),
+            ("/studio", first),
+            ("/vector", first),
+            ("/studio", second),
+            (bridge, second),
         ],
         "{logged:?}"
     );
     for (_, message) in &logged {
-        assert!(
-            message.contains("app.ts sinks; owner studio; until 2027-01-31"),
-            "{message}"
-        );
         assert!(message.contains("SR8"), "{message}");
     }
 

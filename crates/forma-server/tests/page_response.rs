@@ -392,6 +392,47 @@ impl Rng {
     }
 }
 
+/// Whether an endpoint may be named.
+#[derive(Debug, Clone, Copy)]
+enum Endpoint {
+    /// Anywhere.
+    Valid,
+    /// Loopback `http://`: in development builds only.
+    Loopback,
+    /// Never.
+    Hostile,
+}
+
+/// Reporting endpoints for the property: the shapes applications name, and
+/// the hostile and malformed ones review 5517672933 found (FORMA-127).
+const ENDPOINTS: &[(&str, Endpoint)] = &[
+    ("/csp-reports", Endpoint::Valid),
+    ("/r?app=studio&v=1", Endpoint::Valid),
+    ("https://reports.example/csp", Endpoint::Valid),
+    ("https://reports.example:8443/csp?x=1", Endpoint::Valid),
+    ("https://[2001:db8::1]:8443/csp", Endpoint::Valid),
+    ("http://localhost:3000/csp", Endpoint::Loopback),
+    ("http://127.0.0.1/csp", Endpoint::Loopback),
+    ("http://[::1]:8080/csp", Endpoint::Loopback),
+    ("https://user:pw@reports.example/csp", Endpoint::Hostile),
+    ("https://user@reports.example", Endpoint::Hostile),
+    ("http://evil.com@localhost/csp", Endpoint::Hostile),
+    ("http://[::1]evil.com", Endpoint::Hostile),
+    ("http://[::1", Endpoint::Hostile),
+    ("http://localhost:3000]", Endpoint::Hostile),
+    ("https://reports.example:8443x", Endpoint::Hostile),
+    ("https://%0d%0a", Endpoint::Hostile),
+    ("https://]", Endpoint::Hostile),
+    ("http://evil.example/csp", Endpoint::Hostile),
+    ("//evil.example/csp", Endpoint::Hostile),
+    ("/a; script-src *", Endpoint::Hostile),
+    ("/a, default-src *", Endpoint::Hostile),
+    ("/a\" b", Endpoint::Hostile),
+    ("/a#x", Endpoint::Hostile),
+    ("javascript:alert(1)", Endpoint::Hostile),
+    ("", Endpoint::Hostile),
+];
+
 #[tokio::test]
 async fn no_policy_extension_yields_a_response_without_the_policy() {
     // SR5, the property half: whatever a handler adds, a response either
@@ -441,6 +482,7 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
     let manifest = manifest();
     let mut rng = Rng(0x5EED_F0E1_A2B3_C4D5);
     let (mut accepted, mut refused) = (0, 0);
+    let (mut endpoints_accepted, mut endpoints_refused) = (0, 0);
 
     for case in 0..2_000 {
         let mut extensions = PolicyExtensions::new();
@@ -473,13 +515,47 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
         if rng.next() % 4 == 0 {
             extensions = extensions.allow_popups();
         }
+        // A reporting endpoint, valid or hostile, through either method,
+        // named up to twice: the last one named is the one written
+        // (FORMA-127).
+        let mut reporting: Option<(bool, &str, Endpoint)> = None;
+        for _ in 0..(rng.next() % 3) {
+            let (endpoint, kind) = ENDPOINTS[(rng.next() as usize) % ENDPOINTS.len()];
+            let both = rng.next() % 2 == 0;
+            extensions = if both {
+                extensions.report_to(endpoint)
+            } else {
+                extensions.report_uri(endpoint)
+            };
+            reporting = Some((both, endpoint, kind));
+        }
+        let endpoint_ok = reporting.is_none_or(|(_, _, kind)| match kind {
+            Endpoint::Valid => true,
+            Endpoint::Loopback => cfg!(debug_assertions),
+            Endpoint::Hostile => false,
+        });
 
         let path = PATHS[case % PATHS.len()];
-        let Ok(page) = make(path, &manifest, &extensions) else {
-            refused += 1;
-            continue;
+        let page = match make(path, &manifest, &extensions) {
+            Ok(page) => page,
+            Err(error) => {
+                refused += 1;
+                if endpoint_ok {
+                    assert!(
+                        !matches!(error.directive(), "report-to" | "report-uri"),
+                        "case {case}: a valid endpoint refused: {error}"
+                    );
+                } else {
+                    endpoints_refused += 1;
+                }
+                continue;
+            }
         };
+        assert!(endpoint_ok, "case {case}: accepted {reporting:?}");
         accepted += 1;
+        if reporting.is_some() {
+            endpoints_accepted += 1;
+        }
 
         let (_, headers, html) = fetch(page.into_response()).await;
         assert_eq!(one(&headers, "cache-control"), "no-store", "case {case}");
@@ -488,7 +564,27 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
             opener == "same-origin" || opener == "same-origin-allow-popups",
             "case {case}: {opener}"
         );
-        let csp = one(&headers, "content-security-policy");
+        // The reporting directives close both policies, exactly; the rest of
+        // the enforced policy is checked below without them.
+        let suffix = match reporting {
+            Some((true, endpoint, _)) => format!("; report-to forma-csp; report-uri {endpoint}"),
+            Some((false, endpoint, _)) => format!("; report-uri {endpoint}"),
+            None => String::new(),
+        };
+        let reported = one(&headers, "content-security-policy");
+        let csp = reported
+            .strip_suffix(suffix.as_str())
+            .unwrap_or_else(|| panic!("case {case}: {reported} does not end {suffix:?}"));
+        assert!(!csp.contains("report-"), "case {case}: {reported}");
+        let endpoints_header: Vec<_> = headers.get_all("reporting-endpoints").iter().collect();
+        match reporting {
+            Some((true, endpoint, _)) => assert_eq!(
+                endpoints_header,
+                [&format!("forma-csp=\"{endpoint}\"")],
+                "case {case}"
+            ),
+            _ => assert!(endpoints_header.is_empty(), "case {case}"),
+        }
         let nonce = CspNonce::parse(&html_nonce(&html)).expect("nonce");
         let strict = build_csp_header(&nonce);
 
@@ -546,7 +642,9 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
         );
         assert_eq!(
             one(&headers, "content-security-policy-report-only"),
-            "require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+            format!(
+                "require-trusted-types-for 'script'; trusted-types forma forma-runtime{suffix}"
+            ),
             "case {case}"
         );
         // No script scheme in any form, and no data: or filesystem: target
@@ -575,6 +673,10 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
     assert!(
         accepted > 200 && refused > 200,
         "{accepted} accepted, {refused} refused"
+    );
+    assert!(
+        endpoints_accepted > 50 && endpoints_refused > 50,
+        "{endpoints_accepted} endpoints accepted, {endpoints_refused} refused"
     );
 }
 
