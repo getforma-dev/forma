@@ -117,7 +117,7 @@ impl PageResponse {
         counts: RenderCounts,
     ) -> Result<Self, PolicyError> {
         let policy = csp::page_policy(&nonce, extensions)?;
-        if let Some(reason) = &policy.relaxed {
+        if let Some(reason) = policy.relaxed() {
             csp::log_relaxation(None, reason);
         }
         Ok(Self::with_policy(html, nonce, policy, counts))
@@ -168,12 +168,12 @@ impl PageResponse {
             HeaderValue::from_static("text/html; charset=utf-8"),
         ));
         headers.push((header::CACHE_CONTROL, HeaderValue::from_static("no-store")));
-        headers.push((header::CONTENT_SECURITY_POLICY, self.policy.csp.clone()));
+        headers.push((header::CONTENT_SECURITY_POLICY, self.policy.csp().clone()));
         headers.push((
             header::CONTENT_SECURITY_POLICY_REPORT_ONLY,
-            self.policy.report_only.clone(),
+            self.policy.report_only().clone(),
         ));
-        if let Some(endpoints) = &self.policy.reporting_endpoints {
+        if let Some(endpoints) = self.policy.reporting_endpoints() {
             headers.push((
                 HeaderName::from_static("reporting-endpoints"),
                 endpoints.clone(),
@@ -189,7 +189,7 @@ impl PageResponse {
         }
         headers.push((
             HeaderName::from_static("cross-origin-opener-policy"),
-            self.policy.opener.clone(),
+            self.policy.opener().clone(),
         ));
         headers
     }

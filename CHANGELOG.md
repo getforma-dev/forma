@@ -2,13 +2,16 @@
 
 ## [Unreleased]
 
-- **The preview frame (FORMA-125, DR-14 tier (c)).** forma-server's
+- **The preview frame (FORMA-125, DR-14 tier (c), L-52).** forma-server's
   `PageResponse::frame` writes the document for content nobody reviewed: an
-  opaque origin (`sandbox allow-scripts`), no network (`connect-src 'none'`),
-  framed only by the application's origin, and core's runtime inline under a
-  nonce, read at start from the build's `forma-runtime.js`
-  (`PreviewFrame::load`; a missing runtime is a coded error). The host's
-  side is documented in forma-server's `frame` module.
+  opaque origin (`sandbox allow-scripts`), framed only by the application's
+  origin, the runtime inline and allowed by its hash, and its requests
+  closed (`connect-src`, `img-src`, `style-src`, `font-src`, `worker-src`,
+  `form-action`), save the residuals its docs name: WebRTC, and navigations
+  the host's own `frame-src` admits. The runtime is read and hashed at start
+  from the build's `forma-runtime.js` (`PreviewFrame::load`; a missing
+  runtime is a coded error). The host's side is documented in
+  forma-server's `frame` module.
 
 - **Trusted Types, reported (FORMA-127, DR-20).** forma-server sends
   `require-trusted-types-for 'script'; trusted-types forma forma-runtime` in

@@ -1,6 +1,7 @@
 //! `PageResponse::frame`: the preview frame's document, with an opaque
-//! origin, no network, and the runtime inline (DR-14 tier (c); L-17, L-27,
-//! L-44; SR32; FORMA-125).
+//! origin, its requests closed but for the documented residuals, and the
+//! runtime inline by its hash (DR-14 tier (c); L-17, L-27, L-44, L-52; SR32;
+//! FORMA-125).
 // `config_script` and `AssetManifest::wasm` are fields every 0.2.x literal
 // names, and the bridge from `render_page` is one of the page paths.
 #![allow(deprecated)]
@@ -39,6 +40,12 @@ struct Empty;
 #[derive(Embed)]
 #[folder = "tests/fixtures/frame/not-utf8/"]
 struct NotUtf8;
+#[derive(Embed)]
+#[folder = "tests/fixtures/frame/cr/"]
+struct CarriageReturn;
+#[derive(Embed)]
+#[folder = "tests/fixtures/frame/nul/"]
+struct Nul;
 
 const ORIGIN: &str = "https://studio.example";
 
@@ -75,88 +82,133 @@ fn directives(policy: &str) -> Vec<(String, Vec<String>)> {
         .collect()
 }
 
-/// The nonce of the document's one script.
-fn script_nonce(html: &str) -> CspNonce {
-    let start = html.find("<script nonce=\"").expect("a script") + "<script nonce=\"".len();
-    let end = html[start..].find('"').expect("nonce end") + start;
-    CspNonce::parse(&html[start..end]).expect("a nonce")
-}
-
-#[tokio::test]
-async fn the_frame_policy_replaces_exactly_its_four_directives() {
-    let preview = preview();
-    let (headers, html) = sent(PageResponse::frame(&preview).expect("a frame")).await;
-    let nonce = script_nonce(&html);
-    let frame = directives(&one(&headers, "content-security-policy"));
-    let strict = directives(&build_csp_header(&nonce));
-
-    // Every directive of the strict policy is still there, in its place; the
-    // four written in place of the strict ones are exactly these; nothing
-    // else was added, removed or changed.
-    let expected_frame: Vec<(String, Vec<String>)> = strict
-        .iter()
-        .map(|(name, sources)| {
-            let sources = match name.as_str() {
-                "script-src" => vec![format!("'nonce-{nonce}'")],
-                "connect-src" => vec!["'none'".to_string()],
-                "frame-ancestors" => vec![ORIGIN.to_string()],
-                _ => sources.clone(),
-            };
-            (name.clone(), sources)
-        })
-        .chain([("sandbox".to_string(), vec!["allow-scripts".to_string()])])
-        .collect();
-    assert_eq!(frame, expected_frame);
-
-    // In the words of SR32: no `allow-same-origin`, no `'strict-dynamic'` or
-    // `'self'` for scripts, and `style-src-attr`'s still the only
-    // `'unsafe-inline'` (SR39).
-    let policy = one(&headers, "content-security-policy");
-    assert!(!policy.contains("allow-same-origin"), "{policy}");
-    assert!(!policy.contains("strict-dynamic"), "{policy}");
-    assert_eq!(policy.matches("'unsafe-inline'").count(), 1, "{policy}");
-    // The enforced header, never Report-Only: `sandbox` is ignored there.
-    assert!(headers
-        .get_all("content-security-policy-report-only")
-        .iter()
-        .all(|v| !v.to_str().expect("ascii").contains("sandbox")));
-    // The rest of a page's headers.
-    assert_eq!(one(&headers, "cache-control"), "no-store");
-    assert_eq!(one(&headers, "content-type"), "text/html; charset=utf-8");
-    assert_eq!(one(&headers, "x-content-type-options"), "nosniff");
-
-    // Each frame draws its own nonce.
-    let (_, again) = sent(PageResponse::frame(&preview).expect("a frame")).await;
-    assert_ne!(script_nonce(&again), nonce);
-}
-
-#[tokio::test]
-async fn the_frame_document_inlines_the_runtime_under_its_nonce_and_names_nothing_to_fetch() {
-    let preview = preview();
-    let (headers, html) = sent(PageResponse::frame(&preview).expect("a frame")).await;
-    let nonce = script_nonce(&html);
-    let runtime = String::from_utf8(
+/// The good fixture's runtime, as embedded.
+fn runtime() -> String {
+    String::from_utf8(
         Good::get("forma-runtime.0a1b2c3d.js")
             .expect("fixture")
             .data
             .to_vec(),
     )
-    .expect("utf-8");
+    .expect("utf-8")
+}
 
-    // The whole document: one root, the runtime inline under the nonce the
-    // policy blesses, and no URL anywhere, so it fetches nothing.
+/// The base64 SHA-256 a browser computes over an inline script's text.
+fn sha256(text: &str) -> String {
+    use base64::Engine as _;
+    base64::engine::general_purpose::STANDARD
+        .encode(ring::digest::digest(&ring::digest::SHA256, text.as_bytes()).as_ref())
+}
+
+/// The response's nonce: the frame's style-src carries it.
+fn style_nonce(policy: &str) -> CspNonce {
+    let start = policy.find("style-src 'nonce-").expect("style-src") + "style-src 'nonce-".len();
+    let end = policy[start..].find('\'').expect("nonce end") + start;
+    CspNonce::parse(&policy[start..end]).expect("a nonce")
+}
+
+#[tokio::test]
+async fn the_frame_policy_replaces_exactly_its_nine_directives() {
+    let preview = preview();
+    let (headers, _) = sent(PageResponse::frame(&preview).expect("a frame")).await;
+    let policy = one(&headers, "content-security-policy");
+    let nonce = style_nonce(&policy);
+    let frame = directives(&policy);
+    let strict = directives(&build_csp_header(&nonce));
+
+    // Every directive of the strict policy is still there, in its place; the
+    // nine written in place of the strict ones are exactly these (L-27,
+    // L-52); nothing else was added, removed or changed.
+    let words = |w: &[&str]| w.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    let expected_frame: Vec<(String, Vec<String>)> = strict
+        .iter()
+        .map(|(name, sources)| {
+            let sources = match name.as_str() {
+                "script-src" => vec![format!("'sha256-{}'", sha256(&runtime()))],
+                "style-src" => vec![format!("'nonce-{nonce}'")],
+                "worker-src" | "connect-src" | "font-src" | "form-action" => words(&["'none'"]),
+                "img-src" => words(&["data:"]),
+                "frame-ancestors" => vec![ORIGIN.to_string()],
+                _ => sources.clone(),
+            };
+            (name.clone(), sources)
+        })
+        .chain([("sandbox".to_string(), words(&["allow-scripts"]))])
+        .collect();
+    assert_eq!(frame, expected_frame);
+    // What stays the strict policy's, named, so a change to the strict
+    // policy that loosens the frame shows here too.
+    for (name, value) in [
+        ("default-src", "'none'"),
+        ("object-src", "'none'"),
+        ("base-uri", "'none'"),
+        ("style-src-attr", "'unsafe-inline'"),
+    ] {
+        assert!(
+            frame.iter().any(|(n, s)| n == name && s.join(" ") == value),
+            "{name} {value}: {policy}"
+        );
+    }
+
+    // In SR32's and L-52's words: no `allow-same-origin`; no nonce, no
+    // `'strict-dynamic'` and no `'self'` for scripts; no `'self'` anywhere,
+    // since in this document it names the application; `style-src-attr`'s
+    // still the only `'unsafe-inline'` (SR39).
+    assert!(!policy.contains("allow-same-origin"), "{policy}");
+    assert!(!policy.contains("strict-dynamic"), "{policy}");
+    assert!(!policy.contains("'self'"), "{policy}");
+    assert!(
+        !policy.contains("report-"),
+        "no reporting endpoint: {policy}"
+    );
+    assert_eq!(policy.matches("'unsafe-inline'").count(), 1, "{policy}");
+    assert_eq!(
+        policy.matches("'nonce-").count(),
+        1,
+        "the nonce only in style-src"
+    );
+
+    // Trusted Types reported, as on every page, with no endpoint (N6).
+    assert_eq!(
+        one(&headers, "content-security-policy-report-only"),
+        "require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+    );
+    assert!(headers.get("reporting-endpoints").is_none());
+    // The rest of a page's headers.
+    assert_eq!(one(&headers, "cache-control"), "no-store");
+    assert_eq!(one(&headers, "content-type"), "text/html; charset=utf-8");
+    assert_eq!(one(&headers, "x-content-type-options"), "nosniff");
+
+    // Each frame draws its own nonce; the script's hash is the runtime's.
+    let (again, _) = sent(PageResponse::frame(&preview).expect("a frame")).await;
+    assert_ne!(style_nonce(&one(&again, "content-security-policy")), nonce);
+}
+
+#[tokio::test]
+async fn the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch() {
+    let preview = preview();
+    let (headers, html) = sent(PageResponse::frame(&preview).expect("a frame")).await;
+    let runtime = runtime();
+
+    // The whole document: one root, the runtime inline with no nonce (the
+    // policy allows it by hash), and no URL anywhere, so it fetches nothing.
     assert_eq!(
         html,
         format!(
             "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n\
              <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\
              <title>Preview</title>\n</head>\n<body>\n<div id=\"forma-frame\"></div>\n\
-             <script nonce=\"{nonce}\">{runtime}</script>\n</body>\n</html>"
+             <script>{runtime}</script>\n</body>\n</html>"
         )
     );
-    assert!(
-        one(&headers, "content-security-policy").contains(&format!("script-src 'nonce-{nonce}';"))
-    );
+    // The hash is over exactly the text between the tags, as a browser
+    // computes it.
+    let start = html.find("<script>").expect("script") + "<script>".len();
+    let end = html.find("</script>").expect("end");
+    assert!(one(&headers, "content-security-policy").contains(&format!(
+        "script-src 'sha256-{}';",
+        sha256(&html[start..end])
+    )));
     for absent in [
         "src=",
         "href=",
@@ -164,6 +216,7 @@ async fn the_frame_document_inlines_the_runtime_under_its_nonce_and_names_nothin
         "url(",
         "@import",
         "type=\"module\"",
+        "nonce=",
         "app.11111111.js",
     ] {
         assert!(!html.contains(absent), "{absent} in the frame document");
@@ -190,6 +243,10 @@ fn a_frame_without_its_runtime_is_a_coded_error_at_start() {
     assert_eq!(code::<Comment>(ORIGIN), "FRAME-103");
     assert_eq!(code::<Empty>(ORIGIN), "FRAME-103");
     assert_eq!(code::<NotUtf8>(ORIGIN), "FRAME-103");
+    // The parser rewrites CR and NUL before the script runs, so its hash
+    // would not match (S1).
+    assert_eq!(code::<CarriageReturn>(ORIGIN), "FRAME-103");
+    assert_eq!(code::<Nul>(ORIGIN), "FRAME-103");
 
     // The application's origin: exactly a scheme, a host and a port.
     for origin in [
@@ -212,6 +269,16 @@ fn a_frame_without_its_runtime_is_a_coded_error_at_start() {
         "http://localhost.evil.example",
         "javascript:alert(1)",
         "data:",
+        // Ports a URL parser refuses or that never serve, and hosts no name
+        // can be (review 5517929761, N1).
+        "https://studio.example:0",
+        "https://studio.example:+443",
+        "https://studio.example:65536",
+        "https://studio.example:99999",
+        "https://studio.example:00443",
+        "https://-",
+        "https://-studio.example",
+        "https://studio-.example",
     ] {
         assert_eq!(code::<Good>(origin), "FRAME-104", "{origin:?}");
     }
@@ -222,6 +289,11 @@ fn a_frame_without_its_runtime_is_a_coded_error_at_start() {
         ("http://localhost:3000", "http://localhost:3000"),
         ("http://127.0.0.1", "http://127.0.0.1"),
         ("http://[::1]:8080", "http://[::1]:8080"),
+        (
+            "https://studio.example:65535",
+            "https://studio.example:65535",
+        ),
+        ("https://studio-1.example", "https://studio-1.example"),
     ] {
         let frame = PreviewFrame::load::<Good>(&manifest, origin).expect(origin);
         assert_eq!(frame.app_origin(), written);
@@ -298,28 +370,58 @@ async fn page_response_frame_is_the_only_response_that_rewrites_the_policy() {
         assert!(!policy.contains("sandbox"));
     }
 
-    // And in the sources, the frame's policy is built in one place and used
-    // in one: `PageResponse::frame`'s.
-    let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-    let mut uses = Vec::new();
-    for entry in std::fs::read_dir(&src).expect("src") {
-        let path = entry.expect("entry").path();
-        let text = std::fs::read_to_string(&path).expect("utf-8");
-        for (number, line) in text.lines().enumerate() {
-            let code = line.trim_start();
-            if !code.starts_with("//") && code.contains("frame_policy(") {
-                uses.push(format!(
-                    "{}:{}",
-                    path.file_name().expect("name").to_string_lossy(),
-                    number + 1
-                ));
+    // And by construction: `PagePolicy`'s fields are private to `csp.rs`, so
+    // a policy is written only there, by `page_policy` or `frame_policy`, and
+    // `frame_policy` has one caller, `PageResponse::frame`. A second check
+    // pins both in the sources (every `.rs` under `src/`, recursively).
+    fn sources(dir: &Path, out: &mut Vec<(String, String)>) {
+        for entry in std::fs::read_dir(dir).expect("src") {
+            let path = entry.expect("entry").path();
+            if path.is_dir() {
+                sources(&path, out);
+            } else if path.extension().is_some_and(|e| e == "rs") {
+                let name = path
+                    .file_name()
+                    .expect("name")
+                    .to_string_lossy()
+                    .into_owned();
+                out.push((name, std::fs::read_to_string(&path).expect("utf-8 source")));
             }
         }
     }
-    let mut files: Vec<&str> = uses
-        .iter()
-        .map(|u| u.split(':').next().expect("file"))
-        .collect();
-    files.sort_unstable();
-    assert_eq!(files, ["csp.rs", "frame.rs"], "{uses:?}");
+    let mut files = Vec::new();
+    sources(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("src"),
+        &mut files,
+    );
+    let mut frame_policy = Vec::new();
+    let mut literals = Vec::new();
+    for (name, text) in &files {
+        for line in text.lines().map(str::trim_start) {
+            if line.starts_with("//") {
+                continue;
+            }
+            // Any mention, a call or an import under another name.
+            if line.contains("frame_policy") {
+                frame_policy.push(name.clone());
+            }
+            if line.contains("PagePolicy {")
+                && !line.contains("struct PagePolicy")
+                && !line.contains("impl PagePolicy")
+            {
+                literals.push(name.clone());
+            }
+        }
+    }
+    frame_policy.sort();
+    assert_eq!(
+        frame_policy,
+        ["csp.rs", "frame.rs"],
+        "frame_policy is defined in csp.rs and named once, in frame.rs's call"
+    );
+    assert_eq!(
+        literals,
+        ["csp.rs", "csp.rs"],
+        "a PagePolicy is written only by page_policy and frame_policy"
+    );
 }
