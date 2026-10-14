@@ -2,6 +2,37 @@
 
 ## [Unreleased]
 
+### Fixed — server HTML in its parsing context (changes emitted bytes on purpose)
+- **No hydration markers inside `textarea`, `title`, `style` or `script`.**
+  The tokenizer reads their content as text, so a marker comment there was
+  literal text: a reactive textarea's value before JavaScript, and what a form
+  submitted, was `<!--f:t0-->hello<!--/f:t0-->`, and a title showed the same.
+  Inside these four (tag matched case-insensitively) the walker now writes no
+  `f:` marker of any kind; dynamic text is written HTML-escaped, with no
+  zero-width space for an empty value, and `SHOW_IF`/`LIST` render without
+  markers. A textarea whose content starts with a line break gets one more,
+  because the parser drops one after `<textarea>`. The client binds these
+  elements' text by the element (formajs, FORMA-003), so this ships with that
+  change. See ARCHITECTURE.md 3.3, "The context rule".
+- **A `textarea`'s `value` is written as its text**, not as a `value`
+  attribute, which a textarea ignores: the server shipped an empty control. The
+  text is `value == null ? '' : String(value)`, as the client writes it, and it
+  wins over any children.
+- **A `select`'s `value` is written as `selected` on the matching option**, not
+  as a `value` attribute, which a select ignores: the server shipped, and a form
+  submitted, the first option. A single select selects the first option whose
+  value is `String(value)`; a `multiple` select given an array selects every
+  member; an option without `value` is matched by its stripped and collapsed
+  text; an authored `selected` inside a bound select is dropped. Unbound
+  selects are unchanged.
+- Tests: 17 walker tests under "Parsing context" in `src/walker.rs`, each
+  asserting the affected element together with an unaffected sibling
+  (TESTING.md P3); each of 26 mutation probes of the new code turns at least
+  one of them red.
+- Intended for a patch release (0.2.1): the FMIR format is unchanged.
+- Not changed: the JS renderer (`renderToString` in formajs) still writes
+  `value=` on these controls; ARCHITECTURE.md 6.2 records the gap.
+
 ### Changed
 - **Cross-implementation corpus refreshed for the compiler's signal-scope fix**
   (`@getforma/compiler`, unreleased). No code in this crate changed; the

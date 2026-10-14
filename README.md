@@ -51,7 +51,8 @@ forma-ir = "0.1"
 - Parses `.ir` binary files into a validated `IrModule` (header, opcodes, string table, slot table, island table)
 - Walks the opcode stream and generates HTML with proper escaping
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
-- Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, `<!--f:l0-->`, `<!--f:i0-->`) that FormaJS uses for client-side hydration
+- Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, `<!--f:l0-->`, `<!--f:i0-->`) that FormaJS uses for client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
+- Writes a `textarea`'s `value` as its text and a `select`'s as `selected` on the matching option, since HTML ignores both as attributes
 - Compiles to WASM for client-side re-renders in the browser
 
 **Use it when:**
