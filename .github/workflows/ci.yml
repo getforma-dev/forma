@@ -256,3 +256,5 @@ jobs:
           ruby scripts/check-release-workflow.rb --self-test
       - name: A packed file altered between jobs fails the publish job's check
         run: bash scripts/test-release-artifacts.sh
+      - name: After a publish, a different checksum fails and a late version warns
+        run: bash scripts/test-check-published-crate.sh

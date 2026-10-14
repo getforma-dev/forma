@@ -49,6 +49,7 @@ runs after actionlint (Ruby and bash come with the runner and with macOS):
 ```bash
 ruby scripts/check-release-workflow.rb --self-test   # SR43: only the publish job holds id-token: write
 bash scripts/test-release-artifacts.sh               # a packed file altered between jobs is refused
+bash scripts/test-check-published-crate.sh           # after a publish: "differs" fails, "not visible yet" warns
 ```
 
 **forma-server on Rust 1.85 to 1.87.** sha2 0.11.1 and later declare Rust
@@ -117,6 +118,30 @@ comment stops the next reader checking.
 
 Each crate has its own README (published to crates.io) and its own CHANGELOG.
 The workspace CHANGELOG summarises a release and links to both.
+
+## Releasing
+
+A tag starts `.github/workflows/release.yml`: `ir-v<version>` releases
+forma-ir, `server-v<version>` releases forma-server. The comment at the top of
+the workflow says what each job does; only `publish` holds the credential, and
+it publishes only bytes the run packed, recorded and built.
+
+**Push `server-v*` only after the `ir-v*` run has published.** forma-server's
+packaged crate resolves forma-ir from crates.io, not from this workspace. A
+server tag pushed before forma-ir is on crates.io fails at `pack` ("no matching
+package named forma-ir"). A forma-ir release landing while a server run is
+between `pack` and `publish` makes the re-packaged crate differ from the
+recorded one, so nothing publishes; landing in the seconds inside
+`cargo publish`, it changes the uploaded crate's `Cargo.lock`, which only the
+checksum check after the upload reports. Waiting for the `ir-v*` run avoids
+all three.
+
+After `cargo publish`, the workflow compares crates.io's checksum of the
+version with the recorded one. "not visible yet" is a warning: compare by hand
+later, as it says. "differs from the recorded crate" means the version shipped
+with other bytes than the ones verified: yank it on crates.io's web page for
+the crate's versions, signed in as the owner (the trusted-publishing token
+cannot yank, and the account keeps no API token), and release a new version.
 
 ## Pull requests
 

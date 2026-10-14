@@ -39,6 +39,8 @@ env:
 #            Cargo.lock, and publishes only if the .crate and its file list are
 #            byte-identical to the recorded ones; `cargo publish --no-verify`.
 #            Afterwards it compares crates.io's checksum with the record.
+# Push `server-v*` only after the `ir-v*` run has published (CONTRIBUTING.md,
+# "Releasing"): forma-server's packaged crate resolves forma-ir from crates.io.
 # CI's `release-workflow` job runs scripts/check-release-workflow.rb, which
 # fails if this shape is lost, and seeds each violation to prove it can fail.
 # Verified by: scripts/check-release-workflow.rb > "id-token: write on the pack job"
@@ -225,8 +227,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/ir-v') || startsWith(github.ref, 'refs/tags/server-v')
     runs-on: ubuntu-latest
     # A checkout, a toolchain install, two `cargo package --no-verify` runs and
-    # one upload: a few minutes, nothing compiled. 15 bounds a slow crates.io.
-    timeout-minutes: 15
+    # one upload: a few minutes, nothing compiled; then up to 15 minutes waiting
+    # for crates.io to show the version. 30 bounds both.
+    timeout-minutes: 30
     # No `environment:` yet: the crates.io trusted-publisher entries name none,
     # and a job that names an environment GitHub does not have creates it
     # unprotected. Once the environment exists, limited to the release tags,
@@ -286,26 +289,19 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
-      # cargo re-packaged once more inside `cargo publish`; the index's checksum
+      # cargo re-packaged once more inside `cargo publish`; crates.io's checksum
       # of the uploaded .crate says whether those bytes were the recorded ones.
-      # A mismatch cannot be undone (crates.io keeps every version), only yanked.
+      # The script reads crates.io's API (its database; the index CDN may cache
+      # for 600 s) for up to 15 minutes. A version not visible by then only
+      # warns, to be compared by hand; a different checksum fails, and the
+      # version must be yanked on crates.io's web page (the trusted-publishing
+      # token cannot yank, and the account keeps no API token).
+      # Verified by: scripts/test-check-published-crate.sh > "a checksum that differs from the record fails"
+      # Verified by: scripts/test-check-published-crate.sh > "a version not visible after the last poll only warns"
       - name: Check crates.io serves the recorded crate
         run: |
           WANT=$(awk -v f="$CRATE-$VERSION.crate" '$2 == f { print $1 }' "$RUNNER_TEMP/release/SHA256SUMS")
-          INDEX="https://index.crates.io/${CRATE:0:2}/${CRATE:2:2}/$CRATE"
-          GOT=""
-          for attempt in 1 2 3 4 5 6; do
-            GOT=$(curl -fsS -H 'User-Agent: getforma-release-ci' "$INDEX" \
-              | jq -r --arg v "$VERSION" 'select(.vers == $v) | .cksum' || true)
-            [ -n "$GOT" ] && break
-            echo "attempt $attempt: $CRATE $VERSION not in the index yet"
-            sleep 10
-          done
-          if [ "$GOT" != "$WANT" ]; then
-            echo "::error title=$CRATE $VERSION on crates.io differs from the recorded crate::index cksum '$GOT', record $WANT. Yank it: cargo yank --version $VERSION $CRATE"
-            exit 1
-          fi
-          echo "crates.io serves $CRATE $VERSION with the recorded sha256 $WANT"
+          bash scripts/check-published-crate.sh "$CRATE" "$VERSION" "$WANT"
 
       # On 2026-08-06 the old job died in "Set up job" with "Service Unavailable"
       # and the run page said only "failure". Whatever fails next time, say
@@ -331,4 +327,7 @@ jobs:
           echo "  getforma-dev/forma + .github/workflows/release.yml. Configure it at"
           echo "  https://crates.io/crates/$CRATE/settings — this is a human step, no re-run fixes it."
           echo "'differs from the recorded crate' after publishing: the version shipped with"
-          echo "  other bytes than the record; yank it and release a new version."
+          echo "  other bytes than the record. Yank it on https://crates.io/crates/$CRATE/versions,"
+          echo "  signed in as the owner (the trusted-publishing token cannot yank and the account"
+          echo "  keeps no API token), then release a new version. 'not visible yet' is a warning,"
+          echo "  not this: compare the checksum by hand later, as the warning says."

@@ -48,6 +48,18 @@
   `release-workflow` job runs actionlint (binary checked against a pinned
   SHA-256), `scripts/check-release-workflow.rb --self-test` and
   `scripts/test-release-artifacts.sh`.
+  The lint also refuses a publish job that could go on after a failed check
+  (`continue-on-error`, an `if:` on a step up to the publish, `always()`,
+  `failure()` or `cancelled()` in the job's `if`, a check line that can
+  swallow its failure, a shell without errexit), `container:` or `services:`
+  on the publish or pack job, and a checkout of another repository or ref;
+  every rule has a seed in `--self-test`, which fails if one does not. The
+  artefact test flips a byte instead of writing one that may already be there.
+  After the upload, `scripts/check-published-crate.sh` reads the version's
+  checksum from crates.io's API for up to 15 minutes: a checksum that differs
+  from the record fails and points to crates.io's web page to yank it; a
+  version not visible yet only warns. CONTRIBUTING's new "Releasing" section
+  says to push `server-v*` only after the `ir-v*` run has published.
 - **Documentation matches the code (FORMA-009; no code changed).** The
   compiler writes FMIR modules as `.ir` files, so `docs/FMIR-FORMAT.md`,
   `docs/ARCHITECTURE.md`, `docs/README.md`, the README and two doc comments no
