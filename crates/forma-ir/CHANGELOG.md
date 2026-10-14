@@ -37,9 +37,13 @@ Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
   what is left of `max_list_iterations` and returns `ListBudgetExceeded` at
   once, instead of walking up to the budget first: a hostile 60,000-row list
   under the default 50,000 costs one comparison, not 50,000 rows (at 0.2.1,
-  23.6 to 24.9 ms to the error in a release build). The same inputs fail, with
-  the same error, only sooner; the per-row check stays for rows that nested
-  lists spend after a list was let in. Defaults unchanged. Tests:
+  23.6 to 24.9 ms to the error in a release build). Whether an input fails is
+  unchanged, but which error it reports can change: a list past the budget now
+  reports `ListBudgetExceeded` before any error its rows would have raised
+  first (`OutputLimitExceeded`, or a malformed row's `StringIndexOutOfBounds`),
+  so a malformed module behind an over-budget list shows as RENDER-302 until
+  the list fits. The per-row check stays for rows that nested lists spend
+  after a list was let in. Defaults unchanged. Tests:
   `walker::tests` > `a_list_longer_than_the_remaining_budget_fails_before_its_first_row`,
   `a_list_exactly_at_the_remaining_budget_still_renders`,
   `a_nested_list_is_checked_against_what_its_parents_left`,

@@ -6,7 +6,6 @@
   `load_ir_modules_strict` at start and refuse to start on its errors, each
   naming route, file and a `LOAD-1xx` code; the lenient `load_ir_modules`,
   which serves a corrupt module's route as an empty shell, is deprecated.
-
 - **A list over budget fails before its first row (FORMA-122, DR-13).**
   forma-ir compares a list's length with the remaining iteration budget before
   walking it: a 60,000-row list under the default 50,000 fails in a

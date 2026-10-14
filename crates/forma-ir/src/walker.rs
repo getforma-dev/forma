@@ -1221,8 +1221,10 @@ fn walk_range_impl(
                     // the budget and failing there (DR-13, SR38): a hostile
                     // 60,000-row list costs a comparison, not 50,000 rows.
                     // It fails exactly when the per-row check below would
-                    // have, only sooner. That check stays: rows of nested
-                    // lists can spend the budget after this list was let in.
+                    // have, sooner, and before any error the rows would have
+                    // raised first (an output budget, a malformed row). That
+                    // check stays: rows of nested lists can spend the budget
+                    // after this list was let in.
                     //
                     // Verified by: crates/forma-ir/src/walker.rs > "a_list_longer_than_the_remaining_budget_fails_before_its_first_row"
                     // Verified by: crates/forma-ir/src/walker.rs > "a_list_exactly_at_the_remaining_budget_still_renders"
