@@ -55,6 +55,27 @@
   that is not a release version (`v1.2.3` or `v1.2.3-rc.1`, the `v` optional)
   fails the run before anything is changed. Before, the payload was pasted
   into the shell script, so a dispatch could run commands (TH15).
+- **CI: only the release's publish job can mint the publish credential (SR43,
+  L-34, L-42, FORMA-134; the package is unchanged).** `release.yml` splits into
+  `scaffold`, `pack` and `publish`. The scaffold gate and the build run in jobs
+  without `id-token: write`; `pack` restores no cache, packs the tarball with
+  `npm pack --ignore-scripts` and records its SHA-256; `publish`, the only job
+  holding `id-token: write`, restores no cache and installs nothing, checks the
+  downloaded tarball against that record (whose own hash travels as a job
+  output) and runs `npm publish <tarball> --provenance --access public
+  --ignore-scripts`. The `v*` tag stays the only trigger. CI's new
+  `release-workflow` job runs actionlint (binary checked against a pinned
+  SHA-256), `scripts/check-release-workflow.rb --self-test` and
+  `scripts/test-release-artifacts.sh`.
+  The lint also refuses a publish job that could go on after a failed check
+  (`continue-on-error`, an `if:` on a step up to the publish, `always()`,
+  `failure()` or `cancelled()` in the job's `if`, a check line that can
+  swallow its failure, a shell without errexit), `container:` or `services:`
+  on the publish or pack job, and a checkout of another repository or ref;
+  every rule has a seed in `--self-test`, which fails if one does not. The
+  artefact test flips a byte instead of writing one that may already be there.
+  `pack`'s setup-node sets `package-manager-cache: false`, so a move to
+  setup-node v5 keeps its cache off.
 
 ## [0.6.1] - 2026-10-14
 

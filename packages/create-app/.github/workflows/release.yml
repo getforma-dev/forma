@@ -1,5 +1,7 @@
 name: Release
 
+# The release tag is the only trigger (SR43, FORMA-134): no branch push, pull
+# request or dispatch starts this workflow, so none of them reaches `publish`.
 on:
   push:
     tags: ['v*']
@@ -11,34 +13,51 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# How a tag becomes a release (SR43; decision brief L-34, L-42; FORMA-134).
+# Only `publish` holds `id-token: write`, the permission that lets a job mint
+# the OIDC token npm exchanges for a publish credential. Everything that runs
+# the dependency tree runs in a job without it:
+#   scaffold  the hard gate: every template pin resolves on npm, then each
+#             template is scaffolded, installed, built and compiled for real
+#   pack      checks the version against the tag, builds, packs the tarball and
+#             writes its SHA-256 record; restores no cache, since the bytes it
+#             packs are the bytes that publish
+#   publish   restores no cache and installs nothing; downloads this run's
+#             packed artefact, checks every file against the record whose own
+#             hash `pack` passed as a job output, and publishes that tarball
+#             with --ignore-scripts, so it runs no package script either
+# CI's `release-workflow` job runs scripts/check-release-workflow.rb, which
+# fails if this shape is lost, and seeds each violation to prove it can fail.
+# Verified by: scripts/check-release-workflow.rb > "id-token: write on the pack job"
+# A file altered after `pack`, by any job of this run, fails publish's check
+# before `npm publish` runs, so nothing ships.
+# Verified by: scripts/test-release-artifacts.sh > "a tarball altered by one byte fails"
+# Verified by: scripts/test-release-artifacts.sh > "a replaced tarball with a rewritten record fails"
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    # This job runs the full scaffold gate (npm install + frontend build +
-    # cargo build for both templates) before publishing, so it inherits that
-    # job's cost: typical 12-15m on ubuntu. Every subprocess inside it is
-    # already capped at 900_000ms by tests/helpers.ts. 45 is ~3x the typical
-    # run and bounds the case where npm or crates.io is slow, without ever
-    # cutting the publish itself short.
-    timeout-minutes: 45
+  scaffold:
     permissions:
       contents: read
-      id-token: write  # Required for npm trusted publishing (OIDC)
+    runs-on: ubuntu-latest
+    # This job runs the full scaffold gate (npm install + frontend build +
+    # cargo build for both templates), so it inherits that job's cost: typical
+    # 12-15m on ubuntu. Every subprocess inside it is already capped at
+    # 900_000ms by tests/helpers.ts. 45 is ~3x the typical run.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          # npm >= 11.5.1 is required for OIDC trusted publishing; Node 24
-          # ships it. Do not lower this.
           node-version: 24
           cache: npm
-          registry-url: https://registry.npmjs.org
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
 
       # Same explicit registry cache as CI: no root Cargo.toml, no template
       # Cargo.lock, and the build that matters happens in a temp dir, so
       # Swatinem/rust-cache has nothing to key on. The shared crate registry is
-      # the only cacheable part and it is the expensive one.
+      # the only cacheable part and it is the expensive one. This job produces
+      # nothing that publishes, so a cache here cannot change the package.
       - name: Cache the cargo registry
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -111,6 +130,30 @@ jobs:
           CARGO_NET_RETRY: '10'
           CARGO_INCREMENTAL: '0'
 
+  pack:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # MEASURED locally: `npm run build` (tsup) 1s, npm pack 1s; `npm ci`
+    # without a cache well under a minute on a runner. 10 is many times that.
+    timeout-minutes: 10
+    outputs:
+      record-sha256: ${{ steps.record.outputs.record-sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      # No cache in this job: a poisoned cache restored here could change the
+      # bytes that publish. setup-node v4 caches only when `cache:` is set and
+      # has no `package-manager-cache` input (it warns "Unexpected input"); the
+      # line is there so that a move to v5, which caches on its own when
+      # package.json names a packageManager, keeps the cache off. The lint
+      # requires it.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          package-manager-cache: false
+
       - name: Verify version matches tag
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
@@ -120,22 +163,100 @@ jobs:
             exit 1
           fi
 
+      - run: npm ci
+      - run: npm run build
+
+      # --ignore-scripts: no prepack or prepare script runs, so the tarball
+      # holds dist/ as built above and templates/ as committed.
+      - name: Pack the tarball
+        run: |
+          mkdir release
+          npm pack --ignore-scripts --pack-destination release
+          ls -l release
+
+      - name: Record the SHA-256 of each packed file
+        id: record
+        run: |
+          RECORD_SHA256=$(bash scripts/release-artifacts.sh record release)
+          cat release/SHA256SUMS
+          echo "record-sha256=$RECORD_SHA256" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-packed
+          path: release/
+          if-no-files-found: error
+
+  publish:
+    needs: [scaffold, pack]
+    # The trigger already admits only `v*` tags; this repeats it where the
+    # credential is, so a trigger added by mistake still cannot publish.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    # A download, a hash check and one `npm publish`: about a minute. 10 bounds
+    # a slow registry without cutting a publish short.
+    timeout-minutes: 10
+    # No `environment:` yet: the npm trusted-publisher entry names none, and a
+    # job that names an environment GitHub does not have creates it unprotected.
+    # Once the environment exists, limited to the release tags, the entry and
+    # this job name it together.
+    permissions:
+      contents: read
+      id-token: write  # npm trusted publishing (OIDC) and provenance; this job only
+    steps:
+      # Only the verifier, from the tagged commit: no package.json, no lockfile,
+      # nothing to install, so no dependency code reaches this job.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/release-artifacts.sh
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          # npm >= 11.5.1 is required for OIDC trusted publishing; Node 24
+          # ships it. Do not lower this.
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-packed
+          path: release
+          digest-mismatch: error
+
+      # The record's hash comes from `pack`'s job output, not from the
+      # artefact, so a tarball replaced together with its record fails too.
+      - name: Check every packed file against pack's record
+        env:
+          RECORD_SHA256: ${{ needs.pack.outputs.record-sha256 }}
+        run: bash scripts/release-artifacts.sh verify release "$RECORD_SHA256"
+
       - name: Record toolchain
         run: |
           echo "node $(node -v) / npm $(npm -v) — OIDC trusted publishing needs npm >= 11.5.1"
 
-      # Trusted publishing: uses OIDC for auth, no npm token needed.
+      # Trusted publishing: OIDC for auth, no npm token; --provenance signs the
+      # statement linking the tarball to this run.
       # Configure at: npmjs.com/package/@getforma/create-app → Settings → Trusted Publisher
-      - run: npm publish --access public
+      # The tarball is the one `pack` built and the checked record lists; npm
+      # uploads a tarball as it is, and --ignore-scripts runs none of its scripts.
+      - name: Publish the verified tarball
+        run: |
+          TARBALLS=$(awk '$2 ~ /\.tgz$/ { print $2 }' release/SHA256SUMS)
+          if [ "$(printf '%s\n' "$TARBALLS" | grep -c .)" != 1 ]; then
+            echo "::error::the record must list exactly one tarball, found: $TARBALLS"
+            exit 1
+          fi
+          npm publish "./release/$TARBALLS" --provenance --access public --ignore-scripts
 
       - name: Explain a publish failure
         if: failure()
         run: |
           echo "::error title=@getforma/create-app publish failed::Read the error above, then match it here."
-          echo "'These template pins are not on npm' -> publish @getforma/core, /build and /compiler"
-          echo "  first, then RE-RUN this run. The tag is fine."
+          echo "'differs from the packed file' / 'is not the record the pack job wrote' / 'is not in the record'"
+          echo "  -> The packed artefact changed between pack and publish. NOTHING WAS PUBLISHED."
+          echo "     Do not re-run until you know what wrote to this run's artefacts."
           echo "5xx / ETIMEDOUT / 'Unable to get OIDC token' / 'Service Unavailable'"
-          echo "  -> GitHub Actions or npm incident. RE-RUN THIS RUN; do not re-tag."
+          echo "  -> GitHub Actions or npm incident. RE-RUN THE FAILED JOBS; do not re-tag."
           echo "ENEEDAUTH / E403 -> no Trusted Publisher for @getforma/create-app on npmjs.com."
           echo "  Set repository getforma-dev/create-forma-app, workflow .github/workflows/release.yml,"
           echo "  environment EMPTY (this job declares none). Human step; re-running will not fix it."
