@@ -244,7 +244,9 @@ impl std::error::Error for RenderError {
 /// as a [`RenderError`] with a stable code, the route and the component
 /// path. The page is written into its own buffer and returned whole, or not
 /// at all, so no partial page leaves. Forma logs none of these: the handler
-/// chooses the response.
+/// chooses the response. (A caught panic still runs the process's panic hook
+/// first: the default hook prints it to stderr, and a reporting hook, such as
+/// an error tracker's, records it.)
 ///
 /// It always renders on the server: `config.render_mode` steers only the
 /// deprecated `render_page`. A route the build declares `ssr: false` is

@@ -40,6 +40,7 @@ impl std::error::Error for InvalidNonce {}
 /// Returned by [`CspNonce::try_generate`] when the operating system's random
 /// source fails: there is no nonce, so there is no page (DR-12).
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct NonceError;
 
 impl fmt::Display for NonceError {

@@ -29,6 +29,21 @@ pub mod slot;
 /// The SSR walker: opcode stream plus slot values in, HTML out.
 pub mod walker;
 
+/// INTERNAL, behind the `__fault-injection` feature: the stand-in component
+/// that panics, for SR44's tests. Never in a build that ships.
+#[cfg(any(test, feature = "__fault-injection"))]
+#[doc(hidden)]
+pub mod fault_injection {
+    /// A DYN_TEXT value equal to this makes the walk panic, but only inside
+    /// [`crate::walker::walk_to_html_counted`], which catches it: the
+    /// uncaught `walk_to_html` path never arms the trigger. It lets a test
+    /// show that a panic inside the walk becomes an error naming its island,
+    /// and that the next render works. Compiled only for this crate's tests
+    /// and under the internal `__fault-injection` feature, which only the two
+    /// crates' own dev-dependencies enable; `test-helpers` does not.
+    pub const FAULT_TRIGGER: &str = "\u{0}forma-test-fault\u{0}";
+}
+
 /// Human-readable text dump of a module, for debugging and diffing.
 #[cfg(feature = "dump")]
 pub mod dump;

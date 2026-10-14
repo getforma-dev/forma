@@ -30,8 +30,9 @@ tracing.workspace = true
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }
-# Fixture encoders for the server's own tests; not part of the shipped build.
-forma-ir = { version = "0.2.0", path = "../forma-ir", features = ["test-helpers"] }
+# Fixture encoders and the stand-in panicking component, for the server's own
+# tests only (dev-dependency features never reach a consumer's build).
+forma-ir = { version = "0.2.0", path = "../forma-ir", features = ["test-helpers", "__fault-injection"] }
 
 [lints]
 workspace = true

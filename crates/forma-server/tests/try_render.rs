@@ -11,8 +11,9 @@
 use axum::body::to_bytes;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use forma_ir::fault_injection::FAULT_TRIGGER;
 use forma_ir::parser::test_helpers::{
-    build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_text, FAULT_TRIGGER,
+    build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_text,
 };
 use forma_ir::{IrModule, SlotData, SlotValue, WalkLimits};
 use forma_server::{

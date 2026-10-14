@@ -52,7 +52,8 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   fails, an exceeded budget (with the counts reached, SR22), an invalid policy
   extension, a failed nonce draw and a panic each return a `RenderError` with a
   stable code (`RENDER-101` to `RENDER-399`, by family), the route and the
-  component path; Forma logs none of them. A panic in the render is caught
+  component path; Forma logs none of them (a caught panic still runs the
+  process's panic hook, which by default prints it). A panic in the render is caught
   (`catch_unwind`) as `RenderError::Fault`, so the handler answers 500 and the
   next request renders, while the application unwinds on panic (SA8). The
   page's `RenderCounts` gain `nodes` and `list_iterations`. `RenderCtx` carries
@@ -71,8 +72,12 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   around an empty root, for a route the build declares `ssr: false`; never in
   place of a failure. Test: `tests/try_render.rs` >
   `render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers`.
-- `CspNonce::try_generate` and `NonceError`: the nonce draw that returns an
-  error instead of panicking (DR-12).
+- `CspNonce::try_generate` and `NonceError` (`#[non_exhaustive]`): the nonce
+  draw that returns an error instead of panicking (DR-12).
+- **Requires forma-ir 0.2.2** (`walk_to_html_counted`, `IrError::Panicked`).
+  The manifest still says `forma-ir = "0.2.0"` until the A2 release raises it
+  with the version (FORMA-138): until then a lockfile holding forma-ir 0.2.1
+  would not build this crate.
 - `tests/page_response.rs`'s policy property and invalid-extension tests now
   run over every path that makes a `PageResponse`: the bridge, `try_render`
   and `render_browser_shell`.

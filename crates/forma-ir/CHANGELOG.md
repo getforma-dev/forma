@@ -18,9 +18,18 @@ Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
   `counted_walk_names_no_component_for_a_failure_outside_every_island`,
   `counted_walk_names_every_island_around_a_failure_outermost_first`,
   `counted_walk_catches_a_panic_and_names_its_island`.
-- `test_helpers::FAULT_TRIGGER` (`test-helpers` feature only): a DYN_TEXT
-  value that makes the walk panic, the stand-in for a component that panics
-  (SR44). No shipped build has it.
+- `fault_injection::FAULT_TRIGGER`, behind a new internal feature,
+  `__fault-injection` (`#[doc(hidden)]`, outside the semver promise): a
+  DYN_TEXT value that makes the walk panic, the stand-in for a component that
+  panics (SR44). Only `walk_to_html_counted`, which catches it, ever arms it;
+  `walk_to_html` renders the value as text. Only the two crates' own
+  dev-dependencies enable the feature, and `test-helpers` does not imply it,
+  so no 0.2.1 user can have it on (review of FORMA-120). Tests:
+  `walker::tests::the_fault_trigger_is_armed_only_by_the_counted_walk`;
+  `tests/feature_isolation.rs` >
+  `test_helpers_alone_does_not_compile_the_fault_trigger_in` (a scratch
+  edition-2018 consumer with `test-helpers` on fails to compile a reference
+  to the trigger, and compiles one to the encoders).
 
 ### Changed
 - **No `unwrap`, `expect` or `panic!` in the shipped code** (DR-12, SR44):

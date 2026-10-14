@@ -147,6 +147,11 @@ struct WalkState {
     /// The islands open at this point of the walk, outermost first: the
     /// component path a failure reports ([`WalkFailure::component_path`]).
     islands: Vec<u16>,
+    /// Whether `fault_injection::FAULT_TRIGGER` may fire: set only by
+    /// [`walk_to_html_counted`], which catches the panic, so the uncaught
+    /// `walk_to_html` path can never take it.
+    #[cfg(any(test, feature = "__fault-injection"))]
+    fault_armed: bool,
 }
 
 impl WalkState {
@@ -169,6 +174,8 @@ impl WalkState {
             option_by_text: None,
             nodes: 0,
             islands: Vec::new(),
+            #[cfg(any(test, feature = "__fault-injection"))]
+            fault_armed: false,
         }
     }
 
@@ -361,6 +368,10 @@ pub fn walk_to_html_counted(
     let len = ops.len();
     let mut out = String::with_capacity(initial_capacity(len));
     let mut state = WalkState::new(limits);
+    #[cfg(any(test, feature = "__fault-injection"))]
+    {
+        state.fault_armed = true;
+    }
     let mut slots_mut = slots.clone();
 
     // The closure only borrows: after an unwind, `state` and `out` still say
@@ -782,11 +793,12 @@ fn walk_range_impl(
                 check_slot_source(module, slot_id, slots.get(slot_id));
                 let value = slots.get(slot_id).to_text();
 
-                // SR44's stand-in for a component that panics; test builds and
-                // the `test-helpers` feature only (see `FAULT_TRIGGER`).
-                #[cfg(any(test, feature = "test-helpers"))]
+                // SR44's stand-in for a component that panics: this crate's
+                // tests and the internal `__fault-injection` feature only, and
+                // armed only inside `walk_to_html_counted`, which catches it.
+                #[cfg(any(test, feature = "__fault-injection"))]
                 #[allow(clippy::panic)]
-                if value == crate::parser::test_helpers::FAULT_TRIGGER {
+                if state.fault_armed && value == crate::fault_injection::FAULT_TRIGGER {
                     panic!("stand-in component panicked (FAULT_TRIGGER)");
                 }
 
@@ -6475,11 +6487,25 @@ mod tests {
     }
 
     #[test]
+    fn the_fault_trigger_is_armed_only_by_the_counted_walk() {
+        // With the trigger compiled in (this crate's tests), the uncaught
+        // 0.2.1 path renders the value as text; only the counted walk, which
+        // catches the panic, ever takes it.
+        let module = branding_module();
+        let slots = branding(crate::fault_injection::FAULT_TRIGGER, 1);
+        let html = walk_to_html(&module, &slots).expect("walk_to_html never arms it");
+        assert!(html.contains("forma-test-fault"), "{html}");
+        let failure = walk_to_html_counted(&module, &slots, WalkLimits::default()).unwrap_err();
+        assert!(matches!(failure.error, IrError::Panicked { .. }));
+    }
+
+    #[test]
     fn counted_walk_catches_a_panic_and_names_its_island() {
         // SR44's stand-in: a component that panics on one tenant's data. The
-        // trigger exists only in test builds and under `test-helpers`.
+        // trigger exists only in test builds and under the internal
+        // `__fault-injection` feature.
         let module = branding_module();
-        let slots = branding(crate::parser::test_helpers::FAULT_TRIGGER, 2);
+        let slots = branding(crate::fault_injection::FAULT_TRIGGER, 2);
         let failure = walk_to_html_counted(&module, &slots, WalkLimits::default()).unwrap_err();
         match &failure.error {
             IrError::Panicked { message } => {

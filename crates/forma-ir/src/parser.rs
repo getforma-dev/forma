@@ -750,14 +750,6 @@ fn read_u32_at(ops: &[u8], pos: usize, end: usize) -> Result<u32, IrError> {
 pub mod test_helpers {
     use crate::format::{HEADER_SIZE, SECTION_TABLE_SIZE};
 
-    /// A DYN_TEXT value equal to this makes the walk panic.
-    ///
-    /// The stand-in for a component that panics (SR44): it lets a test show
-    /// that a panic inside the walk becomes an error naming its island, and
-    /// that the next render works. It exists only in this crate's own tests
-    /// and under the `test-helpers` feature; no shipped build has it.
-    pub const FAULT_TRIGGER: &str = "\u{0}forma-test-fault\u{0}";
-
     /// Narrow to `u16`, panicking rather than silently truncating.
     ///
     /// These encoders write the on-disk widths, so a plain `as` cast turns a
