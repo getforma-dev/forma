@@ -20,7 +20,7 @@ forma-ir = "0.1"
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
 - Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, etc.) for [FormaJS](https://github.com/getforma-dev/formajs) client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
 - Writes form-control values as HTML reads them: a `textarea`'s `value` as its text, a `select`'s as `selected` on the matching option
-- Compiles to WASM for client-side island re-renders
+- Compiles to WASM for client-side island re-renders, behind the `wasm` feature, which is deprecated and is removed in 3.0.0 (see below)
 - Renders a list in O(rows), with a committed regression gate that fails the build if that changes (`tests/list_scaling.rs`)
 
 The on-disk layout and its stability contract are documented in
@@ -50,7 +50,7 @@ islands open where the walk stopped. It catches a panic inside the walk as
 ## When You Need This
 
 - **Building your own server** (not Axum) — parse IR and generate HTML yourself
-- **Client-side WASM** — re-render islands in the browser without a server round-trip
+- **Client-side WASM** — re-render islands in the browser without a server round-trip. Deprecated: the `wasm` feature and its `render` and `render_island` exports are removed in 3.0.0, and islands re-render with `@getforma/core`'s `h()` instead
 - **Build tools** — inspect, transform, or generate IR files
 
 If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server) instead — it wraps `forma-ir` with page rendering, asset serving, and CSP headers.

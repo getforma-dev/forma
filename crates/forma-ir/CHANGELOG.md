@@ -61,6 +61,22 @@ Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
   the count reported with it is the rows actually walked. The same input fails
   at the same row with the same error.
 
+### Deprecated
+- **The `wasm` feature and its exports, `render` and `render_island`, are
+  deprecated and are removed in 3.0.0** (FORMA-131; DR-23). They are the
+  browser's WASM walker, loaded by `@getforma/core/wasm`, which core 2.1.0
+  deprecates with them; islands re-render with `@getforma/core`'s `h()`. Both
+  exports carry `#[deprecated(since = "0.2.2")]`, so a caller's build warns,
+  and still build and behave as at 0.2.1: CI's wasm32 build of the feature is
+  unchanged. Each export also carries `#[allow(deprecated)]` so that
+  wasm-bindgen's generated call to it stays quiet; it does not reach a caller.
+  The crate docs, the README and the feature's line in `Cargo.toml` say the
+  feature is deprecated. Deprecation is not a breaking change:
+  `cargo semver-checks` against 0.2.1 passes. Tests: the doctest pairs in
+  `src/deprecations.rs` (`WasmRender`, `WasmRenderIsland`; built by
+  `cargo test -p forma-ir --doc --features wasm`, a new CI step): the 0.2.1
+  call compiles under `allow(deprecated)` and fails under `deny(deprecated)`.
+
 ### Fixed (documentation only)
 - `IrHeader`'s doc comment calls the module a `.ir` file, the name the
   compiler writes, not `.fmir` (FORMA-009).

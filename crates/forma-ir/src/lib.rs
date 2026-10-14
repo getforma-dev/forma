@@ -2,6 +2,11 @@
 //!
 //! This crate provides the core IR types and parsing logic that can be compiled
 //! to both native Rust and WebAssembly targets.
+//!
+//! The `wasm` feature, which exports `render` and `render_island` for the
+//! browser's WASM walker (`@getforma/core/wasm`), is deprecated since 0.2.2 and
+//! is removed in 3.0.0 (DR-23): islands re-render in the browser with
+//! `@getforma/core`'s `h()`. Both exports still build and work through 0.2.x.
 
 // README.md and SECURITY.md both promise "Zero `unsafe` blocks". This is what
 // makes that a compiler-enforced property of the shipped library rather than a
@@ -48,6 +53,11 @@ pub mod fault_injection {
 #[cfg(feature = "dump")]
 pub mod dump;
 
+/// Doctests pinning the `wasm` exports' deprecation; built only by
+/// `cargo test --doc --features wasm`.
+#[cfg(all(doctest, feature = "wasm"))]
+mod deprecations;
+
 // Re-exports for convenience
 pub use format::{
     IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, PropsMode, SectionDescriptor,
@@ -74,7 +84,18 @@ use wasm_bindgen::prelude::*;
 /// used to render garbage now throw too. The client loader must have a
 /// rejection handler on this call — that is pre-existing behavior for parse
 /// errors, but the set of inputs that reach it is wider.
+///
+/// Deprecated with the `wasm` feature, which 3.0.0 removes (DR-23).
 #[cfg(feature = "wasm")]
+#[deprecated(
+    since = "0.2.2",
+    note = "the WASM walker goes with the `wasm` feature: re-render an island in the browser \
+            with @getforma/core's `h()`, as islands already do. Removed in 3.0.0 (DR-23)"
+)]
+// wasm-bindgen's generated export calls this function; the allow keeps that
+// call quiet. A caller's own use still warns: the lint fires at the caller.
+// Verified by: crates/forma-ir/src/deprecations.rs > "WasmRender"
+#[allow(deprecated)]
 #[wasm_bindgen]
 // The panic is this export's contract: wasm-bindgen turns it into the JS
 // exception the client loader catches. The `wasm` feature goes in 3.0.0
@@ -94,7 +115,15 @@ pub fn render(ir_bytes: &[u8], slots_json: &str) -> String {
 ///
 /// Panics on error (throws a JS exception in WASM — client loader catches and
 /// falls back). See [`render`] for the widened error set.
+///
+/// Deprecated with the `wasm` feature, which 3.0.0 removes (DR-23).
 #[cfg(feature = "wasm")]
+#[deprecated(
+    since = "0.2.2",
+    note = "the WASM walker goes with the `wasm` feature: re-render an island in the browser \
+            with @getforma/core's `h()`, as islands already do. Removed in 3.0.0 (DR-23)"
+)]
+#[allow(deprecated)] // as `render`: wasm-bindgen's generated export calls it
 #[wasm_bindgen]
 #[allow(clippy::panic)] // as `render`: the panic is the JS exception
 pub fn render_island(ir_bytes: &[u8], slots_json: &str, island_id: u16) -> String {

@@ -26,6 +26,10 @@ wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
 default = ["tracing", "dump"]
+# DEPRECATED since 0.2.2, removed in 3.0.0 (DR-23). Exports `render` and
+# `render_island` to wasm-bindgen for the browser's WASM walker
+# (`@getforma/core/wasm`, deprecated with it). Both are `#[deprecated]`; the
+# feature still builds for wasm32 (CI's "Verify WASM build" step).
 wasm = ["wasm-bindgen"]
 dump = []
 # Byte-exact FMIR encoders for building test fixtures. Off by default so a
