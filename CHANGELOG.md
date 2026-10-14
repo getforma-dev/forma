@@ -7,6 +7,10 @@
   naming route, file and a `LOAD-1xx` code; the lenient `load_ir_modules`,
   which serves a corrupt module's route as an empty shell, is deprecated.
 
+- **A list over budget fails before its first row (FORMA-122, DR-13).**
+  forma-ir compares a list's length with the remaining iteration budget before
+  walking it: a 60,000-row list under the default 50,000 fails in a
+  comparison, not after 50,000 rows.
 - **A render that returns its failure (FORMA-120, DR-11, DR-12).**
   forma-server's `try_render` returns `Result<PageResponse, RenderError>`: the
   page with its counts, or a coded error naming route and component, a caught

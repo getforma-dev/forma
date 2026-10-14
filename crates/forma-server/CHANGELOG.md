@@ -68,6 +68,13 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   `try_render_never_serves_a_shell_in_place_of_a_failure`;
   `render::tests::a_panic_outside_the_walk_is_still_a_fault`,
   `an_invalid_extension_fails_before_the_walk`.
+- **RENDER-302 before the first row** (FORMA-122, SR38): through forma-ir's
+  list pre-check, `try_render` refuses a list longer than the remaining
+  iteration budget before walking any of it, its counts saying so
+  (`list_iterations` 0). Test: `tests/try_render.rs` >
+  `render_302_a_60_000_row_list_fails_before_its_first_row_in_under_a_millisecond`
+  (and a list of exactly 50,000 rows renders). The deprecated `render_page`
+  falls back to its shell sooner on the same input.
 - **`render_browser_shell(config, ctx)`**: the bundle and the same headers
   around an empty root, for a route the build declares `ssr: false`; never in
   place of a failure. Test: `tests/try_render.rs` >

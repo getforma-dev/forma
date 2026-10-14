@@ -1216,6 +1216,24 @@ fn walk_range_impl(
                             max: MAX_LIST_DEPTH,
                         });
                     }
+                    // A list longer than what is left of the budget fails
+                    // here, before its first row, instead of walking up to
+                    // the budget and failing there (DR-13, SR38): a hostile
+                    // 60,000-row list costs a comparison, not 50,000 rows.
+                    // It fails exactly when the per-row check below would
+                    // have, only sooner. That check stays: rows of nested
+                    // lists can spend the budget after this list was let in.
+                    //
+                    // Verified by: crates/forma-ir/src/walker.rs > "a_list_longer_than_the_remaining_budget_fails_before_its_first_row"
+                    // Verified by: crates/forma-ir/src/walker.rs > "a_list_exactly_at_the_remaining_budget_still_renders"
+                    let remaining = state
+                        .max_list_iterations
+                        .saturating_sub(state.list_iterations);
+                    if items.len() > remaining {
+                        return Err(IrError::ListBudgetExceeded {
+                            max: state.max_list_iterations,
+                        });
+                    }
                     for item in items.iter() {
                         // Total across all depths, never decremented: depth
                         // alone does not bound volume, and four nested LISTs
@@ -6397,15 +6415,16 @@ mod tests {
     fn counted_walk_returns_the_counts_reached_when_a_budget_stops_it() {
         let module = branding_module();
 
-        // The list budget: 5 rows allowed, 9 asked for. Five rows were walked.
+        // The list budget: 5 rows allowed, 9 asked for. The list is refused
+        // before its first row (FORMA-122): the div and the name were written.
         let limits = WalkLimits {
             max_list_iterations: 5,
             ..WalkLimits::default()
         };
         let failure = walk_to_html_counted(&module, &branding("Acme", 9), limits).unwrap_err();
         assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 5 });
-        assert_eq!(failure.counts.list_iterations, 5);
-        assert_eq!(failure.counts.nodes, 2 + 5 * 2);
+        assert_eq!(failure.counts.list_iterations, 0);
+        assert_eq!(failure.counts.nodes, 2);
         assert_eq!(failure.component_path, vec!["Branding".to_string()]);
         assert!(failure.counts.bytes > 0);
 
@@ -6518,5 +6537,120 @@ mod tests {
         let out =
             walk_to_html_counted(&module, &branding("Acme", 2), WalkLimits::default()).unwrap();
         assert!(out.html.contains("Acme"));
+    }
+
+    // -- A list's length checked before its first row (FORMA-122, DR-13) ------
+
+    /// `<div>` around one LIST per entry of `lists`, each over its own slot
+    /// (slot 2k, item slot 2k+1) and writing `<i>` + the item per row; a list
+    /// may nest an inner LIST over the item slot's array.
+    fn lists_module(lists: usize, nested: bool) -> IrModule {
+        let mut ops = encode_open_tag(0, &[]);
+        let mut slots: Vec<(u16, u32, u8, u8, &[u8])> = Vec::new();
+        for k in 0..lists as u16 {
+            let (list_slot, item_slot) = (2 * k, 2 * k + 1);
+            let mut row = encode_open_tag(1, &[]);
+            if nested {
+                // the inner list iterates the row's item, itself an array,
+                // binding its rows to slot 2*lists (shared, rebound per row)
+                let inner_item = 2 * lists as u16;
+                let mut inner_row = encode_open_tag(1, &[]);
+                inner_row.extend_from_slice(&encode_close_tag(1));
+                row.extend_from_slice(&encode_list(item_slot, inner_item, &inner_row));
+            }
+            row.extend_from_slice(&encode_close_tag(1));
+            ops.extend_from_slice(&encode_list(list_slot, item_slot, &row));
+            slots.push((list_slot, 2, 0x04, 0x00, &[]));
+            slots.push((item_slot, 3, if nested { 0x04 } else { 0x01 }, 0x00, &[]));
+        }
+        if nested {
+            slots.push((2 * lists as u16, 3, 0x01, 0x00, &[]));
+        }
+        ops.extend_from_slice(&encode_close_tag(0));
+        let data = build_minimal_ir(&["div", "i", "items", "item"], &slots, &ops, &[]);
+        IrModule::parse(&data).unwrap()
+    }
+
+    fn rows(n: usize) -> SlotValue {
+        SlotValue::array((0..n).map(|_| SlotValue::Text("x".into())).collect())
+    }
+
+    fn limits(max_list_iterations: usize) -> WalkLimits {
+        WalkLimits {
+            max_list_iterations,
+            ..WalkLimits::default()
+        }
+    }
+
+    #[test]
+    fn a_list_longer_than_the_remaining_budget_fails_before_its_first_row() {
+        // SR38: one row too many, and not one row is walked.
+        let module = lists_module(1, false);
+        let mut slots = SlotData::new(2);
+        slots.set(0, rows(51));
+        let failure = walk_to_html_counted(&module, &slots, limits(50)).unwrap_err();
+        assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 50 });
+        assert_eq!(failure.counts.list_iterations, 0);
+        assert_eq!(failure.counts.nodes, 1, "only the wrapping div was written");
+
+        // The negative space: exactly the budget renders, every row.
+        slots.set(0, rows(50));
+        let out = walk_to_html_counted(&module, &slots, limits(50)).unwrap();
+        assert_eq!(out.counts.list_iterations, 50);
+        assert_eq!(out.html.matches("<i>").count(), 50);
+    }
+
+    #[test]
+    fn a_list_exactly_at_the_remaining_budget_still_renders() {
+        // The budget is per render: a first list spends 20 of 50 rows, so a
+        // second of exactly 30 renders and one of 31 fails before its first.
+        let module = lists_module(2, false);
+        let mut slots = SlotData::new(4);
+        slots.set(0, rows(20));
+        slots.set(2, rows(30));
+        let out = walk_to_html_counted(&module, &slots, limits(50)).unwrap();
+        assert_eq!(out.counts.list_iterations, 50);
+        assert_eq!(out.html.matches("<i>").count(), 50);
+
+        slots.set(2, rows(31));
+        let failure = walk_to_html_counted(&module, &slots, limits(50)).unwrap_err();
+        assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 50 });
+        assert_eq!(
+            failure.counts.list_iterations, 20,
+            "the first list, and no more"
+        );
+        assert_eq!(failure.counts.nodes, 1 + 20);
+    }
+
+    #[test]
+    fn a_nested_list_is_checked_against_what_its_parents_left() {
+        // 3 outer rows of 20 inner rows each, under 59: the outer list fits
+        // (3 <= 59); rows and inner rows spend 1 + 20 + 1 + 20 + 1 = 43; the
+        // third inner list (20 > 16 left) fails at its entry. At 0.2.1 the
+        // walk ran 16 of its rows first.
+        let module = lists_module(1, true);
+        let mut slots = SlotData::new(3);
+        slots.set(0, SlotValue::array((0..3).map(|_| rows(20)).collect()));
+        let failure = walk_to_html_counted(&module, &slots, limits(59)).unwrap_err();
+        assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 59 });
+        assert_eq!(failure.counts.list_iterations, 43);
+
+        // In all, 3 outer and 60 inner rows: a budget of 63 renders, 62 does not.
+        let out = walk_to_html_counted(&module, &slots, limits(63)).unwrap();
+        assert_eq!(out.counts.list_iterations, 63);
+        assert!(walk_to_html_counted(&module, &slots, limits(62)).is_err());
+    }
+
+    #[test]
+    fn the_per_row_check_still_stops_a_list_whose_nested_rows_spend_the_budget() {
+        // 3 outer rows of 11 inner rows under 24: every list fits on entry
+        // (3 <= 24, 11 <= 23, 11 <= 11), and the inner rows spend the rest, so
+        // the outer list's third row is the one refused, by the per-row check.
+        let module = lists_module(1, true);
+        let mut slots = SlotData::new(3);
+        slots.set(0, SlotValue::array((0..3).map(|_| rows(11)).collect()));
+        let failure = walk_to_html_counted(&module, &slots, limits(24)).unwrap_err();
+        assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 24 });
+        assert_eq!(failure.counts.list_iterations, 24);
     }
 }
