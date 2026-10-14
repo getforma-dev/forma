@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+- **forma-server on Rust 1.85 to 1.87: lock with the MSRV-aware resolver.**
+  sha2 0.11.1 (2026-10-12) declares Rust 1.88, and a resolve that ignores
+  `rust-version` takes it, so a fresh build of forma-server on 1.85 to 1.87
+  fails before compiling any of its code. The declared floor stays 1.85.
+  Consumers on those toolchains lock with Cargo's MSRV-aware resolver
+  (`resolver = "3"`, or `incompatible-rust-versions = "fallback"`) or run
+  `cargo update -p sha2 --precise 0.11.0`; [CONTRIBUTING.md](CONTRIBUTING.md)
+  has the details. CI's `msrv (forma-server, 1.85)` leg now locks that way and
+  prints the sha2 version it built. No crate code changed.
+
 ## [0.2.0] - 2026-08-06
 
 Security and robustness hardening pass across both crates. See

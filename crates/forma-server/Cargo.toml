@@ -9,9 +9,10 @@ homepage.workspace = true
 description = "Axum middleware for Forma SSR: page rendering, asset serving, CSP, service worker"
 readme = "README.md"
 # Verified by CI (`msrv` job): `cargo +1.85 check -p forma-server --all-targets`.
-# This is NOT forma-ir's 1.71 — rust-embed 8 pulls sha2 0.11, which declares
-# 1.85. The manifest used to claim 1.70, which no version of this crate has
-# ever been able to build on.
+# This is NOT forma-ir's 1.71 — rust-embed 8 pulls sha2 0.11, whose 0.11.0
+# declares 1.85 (0.11.1 declares 1.88; the job locks with the MSRV-aware
+# resolver, which holds 0.11.0). The manifest used to claim 1.70, which no
+# version of this crate has ever been able to build on.
 rust-version = "1.85"
 documentation = "https://docs.rs/forma-server"
 keywords = ["ssr", "axum", "web-framework", "islands", "forma"]

@@ -148,6 +148,21 @@ jobs:
           # An MSRV toolchain produces incompatible artifacts; keying by crate
           # AND version stops the two legs evicting each other's cache.
           key: msrv-${{ matrix.crate }}-${{ matrix.rust }}
+      # A plain fresh resolve takes the newest semver-compatible version even
+      # when it declares a newer Rust: sha2 0.11.1 (2026-10-12) needs 1.88, so
+      # this leg failed before compiling any forma-server code. A 1.85 consumer
+      # locks with Cargo's MSRV-aware resolver (Cargo 1.84+), which prefers
+      # versions that fit the members' declared rust-version; this step locks
+      # the graph the same way and the check below builds that lock.
+      # Not on forma-ir's leg: Cargo 1.71 predates the setting. The tree line
+      # prints the sha2 version this leg built.
+      - name: Lock with the MSRV-aware resolver
+        if: matrix.crate == 'forma-server'
+        env:
+          CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+        run: |
+          cargo generate-lockfile
+          cargo tree -p forma-server -i sha2 --depth 0
       - run: cargo check -p ${{ matrix.crate }} --all-targets
 
   # deny.toml ships in the repo; running it is what makes it a policy rather

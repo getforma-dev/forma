@@ -39,8 +39,28 @@ cargo test -p forma-server --release
 
 # MSRVs differ per crate, and CI builds at exactly these versions:
 cargo +1.71 check -p forma-ir --all-targets
+CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo +1.85 generate-lockfile
 cargo +1.85 check -p forma-server --all-targets
 ```
+
+**forma-server on Rust 1.85 to 1.87.** sha2 0.11.1 and later declare Rust
+1.88, and a resolve that ignores `rust-version` takes them, so the 1.85 check
+fails before it compiles any forma-server code. The `generate-lockfile` line
+re-locks with Cargo's MSRV-aware resolver (Cargo 1.84+), which prefers the
+versions that fit the members' declared `rust-version` and so holds sha2 at
+0.11.0. CI's `msrv (forma-server, 1.85)` leg locks the same way and prints the
+sha2 version it built. `Cargo.lock` is not committed: run `cargo
+generate-lockfile` again afterwards to put the other gates back on the newest
+versions, as CI's stable jobs are.
+
+Consumers of forma-server on Rust 1.85 to 1.87 need the same, one of:
+
+- the MSRV-aware resolver: `resolver = "3"` (the default for edition 2024),
+  `incompatible-rust-versions = "fallback"` under `[resolver]` in
+  `.cargo/config.toml`, or `CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback`
+  in the environment; it applies when the lock is made, so run `cargo update`
+  to re-resolve an existing one;
+- or `cargo update -p sha2 --precise 0.11.0`.
 
 Two gates are worth understanding rather than just running:
 
