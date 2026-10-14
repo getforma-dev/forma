@@ -78,13 +78,22 @@ Two gates are worth understanding rather than just running:
 - **`crates/forma-ir/tests/list_scaling.rs`** fails the build if rendering a
   list stops being linear in row count — it asserts wall-clock time *and*
   allocation count. A list is the SSR workload the whole design rests on, so
-  its cost is a tested property rather than a hope.
+  its cost is a tested property rather than a hope. The time half compares
+  sizes 16x apart in back-to-back rounds and judges the median, so a loaded
+  machine does not fail it (FORMA-167).
 - **`crates/forma-ir/tests/js_emitter_contract.rs`** parses `.ir` files emitted
   by the real TypeScript compiler and diffs the rendered HTML against committed
   goldens. If it fails, the two implementations have diverged; the failure
   message tells you how to regenerate the goldens and reminds you to open the
   paired PR in `forma-tools`. Do not regenerate a golden to make a test pass
   without understanding which side changed.
+
+**Skipped checks that are by design.** On a pull request or a push, a CI job
+shows "skipped" only when a job it needs has failed: `test-32bit`,
+`test-release` and `msrv` need `test`, so a red `test` skips them, and they run
+once it is green. `release.yml` runs only for a release tag (`ir-v*`,
+`server-v*`), never on a pull request. A job skipped for any other reason is a
+defect in the workflow (FORMA-179).
 
 ## Tests
 
