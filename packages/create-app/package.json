@@ -29,6 +29,7 @@
     "@types/prompts": "^2.4.9",
     "tsup": "^8.5.1",
     "typescript": "^5.7.3",
+    "validate-npm-package-name": "^7.0.2",
     "vitest": "^4.0.18"
   },
   "engines": {

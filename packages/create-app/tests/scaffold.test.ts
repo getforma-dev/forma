@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { TEMPLATES } from '../src/scaffold';
-import { E2E, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, withServer } from './helpers';
+import { TEMPLATES, validateProjectName } from '../src/scaffold';
+import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, withServer } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -101,24 +101,31 @@ describe('scaffolding', () => {
   });
 
   describe('input validation', () => {
+    const CHARSET = 'use only lowercase letters, digits, "-" and "_"';
     it.each([
-      ['../escape', 'path traversal'],
-      ['..', 'parent directory'],
-      ['a/b', 'forward slash'],
-      ['a\\b', 'backslash'],
-      ['/abs', 'absolute path'],
-      ['C:tricky', 'drive-relative path'],
-      ['My-App', 'upper case'],
-      ['-leading', 'leading hyphen'],
-      ['con', 'Windows device name'],
-      ['x'.repeat(65), 'over-long name'],
-    ])('rejects %s (%s)', (bad) => {
+      ['../escape', 'path traversal', CHARSET],
+      ['..', 'parent directory', CHARSET],
+      ['a/b', 'forward slash', CHARSET],
+      ['a\\b', 'backslash', CHARSET],
+      ['/abs', 'absolute path', CHARSET],
+      ['C:tricky', 'drive-relative path', CHARSET],
+      ['My-App', 'upper case', CHARSET],
+      ['0app', 'leading digit', 'cargo refuses a package name that starts with a digit'],
+      ['-leading', 'leading hyphen', 'cargo refuses a package name that starts with "-"'],
+      ['_leading', 'leading underscore', 'npm refuses a package name that starts with "_"'],
+      ['fn', 'Rust keyword', 'cargo refuses a Rust keyword as a package name'],
+      ['build', "cargo's build directory", 'cargo refuses one of its build directory names'],
+      ['test', "Rust's test library", 'cargo refuses "test" as a package name'],
+      ['con', 'Windows device name', 'Windows refuses a device name'],
+      ['x'.repeat(65), 'over-long name', 'crates.io refuses a package name longer than 64 characters'],
+    ])('refuses %s (%s) before writing anything, naming the rule', (bad, _why, rule) => {
       // Checking the resolved destination is not enough for `..`, whose
       // resolved path exists no matter what the CLI does — assert that the
       // whole working directory is untouched instead.
       const before = listFiles(tmp);
       const res = runCli([bad, '--template', 'minimal'], tmp);
       expect(res.status).toBe(1);
+      expect(res.stderr).toContain(rule);
       expect(listFiles(tmp)).toEqual(before);
     });
 
@@ -213,6 +220,16 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     // fail if either disagrees with its manifest (DR-32).
     const install = run('npm', ['ci', '--no-audit', '--no-fund'], admin);
     expect(install.status, install.stderr).toBe(0);
+
+    // One esbuild in the installed tree, shared by the template, @getforma/build
+    // and tsx. `npm query` lists every physical copy (FORMA-165).
+    const esbuild = run('npm', ['query', '#esbuild'], admin);
+    expect(esbuild.status, esbuild.stderr).toBe(0);
+    const esbuildCopies = (JSON.parse(esbuild.stdout) as Array<{ location: string; version: string }>).map(
+      (node) => `${node.location.replace(/\\/g, '/')}@${node.version}`,
+    );
+    expect(esbuildCopies, 'npm installed more than one esbuild').toHaveLength(1);
+    expect(esbuildCopies[0]).toMatch(/^node_modules\/esbuild@/);
 
     const build = run('npm', ['run', 'build'], admin);
     expect(build.status, build.stdout + build.stderr).toBe(0);
@@ -459,4 +476,29 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     },
     900_000,
   );
+
+  it('cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses', () => {
+    // validateProjectName restates cargo's package-name rules; this holds the
+    // restatement to cargo itself. `cargo new` applies them all (the manifest's
+    // and its own, for a package with a binary) and needs no network.
+    const dir = path.join(tmp, 'cargo-names');
+    fs.mkdirSync(dir);
+    let asked = 0;
+    let askedRefused = 0;
+    const disagreements = PROJECT_NAMES.flatMap((name, i) => {
+      const reason = validateProjectName(name);
+      if (reason !== null && !reason.includes('cargo refuses')) return [];
+      asked++;
+      if (reason !== null) askedRefused++;
+      const res = run('cargo', ['new', '--vcs', 'none', '--bin', `--name=${name}`, `p${i}`], dir);
+      const cargoError = /^error: .*$/m.exec(res.stderr)?.[0] ?? res.stderr.trim();
+      if (reason === null && res.status !== 0) return [`${name}: accepted here, cargo new refuses it: ${cargoError}`];
+      if (reason !== null && res.status === 0) return [`${name}: "${reason}", cargo new accepts it`];
+      return [];
+    });
+    expect(disagreements).toEqual([]);
+    // Both halves were put to cargo.
+    expect(askedRefused).toBeGreaterThan(0);
+    expect(asked - askedRefused).toBeGreaterThan(0);
+  }, 300_000);
 });

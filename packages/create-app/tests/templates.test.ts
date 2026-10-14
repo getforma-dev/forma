@@ -249,6 +249,25 @@ describe.each(TEMPLATES)('%s template', (template) => {
     }
   });
 
+  it('locks one copy of each direct npm dependency, the one its own dependencies also use', () => {
+    // A template range that excludes the version a dependency of the template
+    // requires makes npm nest a second copy under that dependency. With
+    // `esbuild ^0.25.0` beside @getforma/build 0.3.0's `^0.28.1` and tsx's
+    // `~0.28.0`, a scaffolded app installed three esbuild copies, 0.25.12 and
+    // 0.28.2 twice, each with its platform binary: most of each lockfile's
+    // growth (FORMA-165).
+    const pkg = readJson(template, 'admin', 'package.json');
+    const lock = readJson(template, 'admin', 'package-lock.json');
+    const direct = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
+    const copies = (name: string) =>
+      Object.keys(lock.packages).filter((key) => key === `node_modules/${name}` || key.endsWith(`/node_modules/${name}`));
+    expect(direct.length).toBeGreaterThan(0);
+    expect(
+      direct.filter((name) => copies(name).length !== 1).map((name) => `${name}: ${copies(name).join(', ')}`),
+      'a direct dependency is locked more than once: align its range with what its dependents require',
+    ).toEqual([]);
+  });
+
   it('ships a Cargo.lock that locks its crates from crates.io under its placeholder name', () => {
     // The Rust half of the same rule. The crate's own entry carries the
     // placeholder, which the scaffolder rewrites and re-sorts.
