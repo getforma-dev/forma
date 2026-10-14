@@ -32,6 +32,24 @@ Release A2's bridge (0.2.2): additive (FORMA-120; DR-11, DR-12).
   to the trigger, and compiles one to the encoders).
 
 ### Changed
+- **A list longer than the remaining iteration budget fails before its first
+  row** (FORMA-122; DR-13, SR38). The walker compares the list's length with
+  what is left of `max_list_iterations` and returns `ListBudgetExceeded` at
+  once, instead of walking up to the budget first: a hostile 60,000-row list
+  under the default 50,000 costs one comparison, not 50,000 rows (at 0.2.1,
+  23.6 to 24.9 ms to the error in a release build). Whether an input fails is
+  unchanged, but which error it reports can change: a list past the budget now
+  reports `ListBudgetExceeded` before any error its rows would have raised
+  first (`OutputLimitExceeded`, or a malformed row's `StringIndexOutOfBounds`),
+  so a malformed module behind an over-budget list shows as RENDER-302 until
+  the list fits. The per-row check stays for rows that nested lists spend
+  after a list was let in. Defaults unchanged. Tests:
+  `walker::tests` > `a_list_longer_than_the_remaining_budget_fails_before_its_first_row`,
+  `a_list_exactly_at_the_remaining_budget_still_renders`,
+  `a_nested_list_is_checked_against_what_its_parents_left`,
+  `the_per_row_check_still_stops_a_list_whose_nested_rows_spend_the_budget`.
+  `examples/list_corpus` output is byte-identical, and `examples/list_scaling`
+  is unchanged at 400 rows.
 - **No `unwrap`, `expect` or `panic!` in the shipped code** (DR-12, SR44):
   Clippy denies them outside tests (`#![cfg_attr(not(test), deny(...))]`).
   The parser's fixed-width reads index the bounds-checked slice instead of

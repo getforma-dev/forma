@@ -323,12 +323,48 @@ fn render_302_the_list_budget_with_the_counts_reached() {
     assert_eq!(error.route(), ROUTE);
     assert_eq!(error.component_path(), ["Branding"]);
     let counts = error.counts().expect("counts");
-    assert_eq!(counts.list_iterations, 50, "the rows actually walked");
-    assert_eq!(
-        counts.nodes,
-        2 + 50 * 2,
-        "div, name, then (i, colour) per row"
+    // Refused before its first row (FORMA-122): 60 rows against 50 left.
+    assert_eq!(counts.list_iterations, 0, "no row was walked");
+    assert_eq!(counts.nodes, 2, "the div and the name, then the refusal");
+}
+
+#[test]
+fn render_302_a_60_000_row_list_fails_before_its_first_row_in_under_a_millisecond() {
+    // SR38's first half (DR-13). At 0.2.1 this walked 50,000 rows first:
+    // 23.6 to 24.9 ms to the error in a release build (TH17, AR1).
+    let manifest = manifest();
+    let module = branding_module();
+    let slots = branding("Acme", 60_000);
+    let mut fastest = std::time::Duration::MAX;
+    for _ in 0..5 {
+        let error = err(
+            &config(&manifest, Some(&module), Some(&slots)),
+            &RenderCtx::new(),
+        );
+        assert_eq!(error.code(), "RENDER-302");
+        assert_eq!(error.route(), ROUTE);
+        assert_eq!(error.component_path(), ["Branding"]);
+        let counts = error.counts().expect("counts");
+        // The deterministic half: not one of the 60,000 rows was walked.
+        assert_eq!(counts.list_iterations, 0);
+        assert_eq!(counts.nodes, 2);
+        fastest = fastest.min(counts.walk_time);
+    }
+    // The timed half, as the walk measured itself; the best of five, so one
+    // preempted slice on a loaded runner does not decide it.
+    assert!(
+        fastest < std::time::Duration::from_millis(1),
+        "the refusal took {fastest:?}"
     );
+
+    // A list exactly at the default budget still renders.
+    let slots = branding("Acme", forma_ir::DEFAULT_MAX_LIST_ITERATIONS);
+    let page = try_render(
+        &config(&manifest, Some(&module), Some(&slots)),
+        &RenderCtx::new(),
+    )
+    .expect("50,000 rows is within the default budget");
+    assert_eq!(page.counts().list_iterations, 50_000);
 }
 
 #[test]
