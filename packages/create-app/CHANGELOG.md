@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **The project name is checked against cargo's and npm's package-name rules
+  before anything is written, and a refused name is told which rule it
+  breaks** (FORMA-024). A name such as `0app` passed the old pattern and
+  scaffolded a project whose first build failed, because cargo refuses a
+  package name that starts with a digit. The CLI now also refuses what
+  `cargo new` refuses for a package with a binary (a Rust keyword such as
+  `fn`; `test`; cargo's build directory names `build`, `deps`, `examples` and
+  `incremental`, which fail every build of a binary) and what npm refuses for
+  a new package (a leading `_`, `node_modules`, a Node.js core module name such
+  as `http`). Each message names the tool whose rule it is, and the tests hold
+  those claims to the tools themselves: npm's own validator in `npm test`, and
+  `cargo new` in the scaffold gate. `validate-npm-package-name` joins the
+  devDependencies as that oracle; the CLI gains no dependency.
+  Verified by `tests/scaffold.test.ts` > "refuses %s (%s) before writing anything, naming the rule"
+  Verified by `tests/scaffold-lib.test.ts` > "refuses %j, naming the rule: %s"
+  Verified by `tests/scaffold-lib.test.ts` > "agrees with npm's own validator: npm accepts every name it accepts, and refuses every name it says npm refuses"
+  Verified by `tests/scaffold.test.ts` > "cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses"
+
 ## [0.6.1] - 2026-10-14
 
 Template fixes from the Forma Stack decision brief's defects list, DR-17 and

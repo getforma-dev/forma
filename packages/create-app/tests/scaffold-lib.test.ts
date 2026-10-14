@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { createRequire } from 'node:module';
 import {
   NEVER_COPY,
   placeCargoLockRoot,
@@ -8,7 +9,7 @@ import {
   restoreGitignores,
   validateProjectName,
 } from '../src/scaffold';
-import { REPO_ROOT, mkTmpDir, rmrf } from './helpers';
+import { PROJECT_NAMES, REPO_ROOT, mkTmpDir, rmrf } from './helpers';
 
 /** Symlink creation needs Developer Mode or elevation on Windows. */
 function canSymlink(dir: string): boolean {
@@ -26,29 +27,71 @@ function canSymlink(dir: string): boolean {
   }
 }
 
+/** npm's own package-name validator: the rules `npm init` and the registry apply. */
+const validateNpmName = createRequire(import.meta.url)('validate-npm-package-name') as (
+  name: string,
+) => { validForNewPackages: boolean };
+
 describe('validateProjectName', () => {
-  it.each(['app', 'my-app', 'my_app', 'a', 'x9', 'x'.repeat(64)])('accepts %s', (name) => {
-    expect(validateProjectName(name)).toBeNull();
-  });
+  it.each(['app', 'my-app', 'my_app', 'a', 'x9', 'app0', 'a-0', 'std', 'x'.repeat(64)])(
+    'accepts %s',
+    (name) => {
+      expect(validateProjectName(name)).toBeNull();
+    },
+  );
+
+  const CHARSET = 'use only lowercase letters, digits, "-" and "_"';
+  const KEYWORD = 'cargo refuses a Rust keyword as a package name';
+  const BUILD_DIR = 'cargo refuses one of its build directory names';
+  const NODE_CORE = 'npm refuses a Node.js core module name for a new package';
+  const WINDOWS = 'Windows refuses a device name';
 
   it.each([
-    '',
-    '..',
-    '../escape',
-    'a/b',
-    'a\\b',
-    '/abs',
-    'C:tricky',
-    'My-App',
-    '-leading',
-    '_leading',
-    '.hidden',
-    'has space',
-    'con',
-    'LPT1'.toLowerCase(),
-    'x'.repeat(65),
-  ])('rejects %j', (name) => {
-    expect(validateProjectName(name)).toBeTypeOf('string');
+    ['', 'Project name required'],
+    ['x'.repeat(65), 'crates.io refuses a package name longer than 64 characters'],
+    ['My-App', CHARSET],
+    ['C:tricky', CHARSET],
+    ['..', CHARSET],
+    ['../escape', CHARSET],
+    ['a/b', CHARSET],
+    ['a\\b', CHARSET],
+    ['/abs', CHARSET],
+    ['.hidden', CHARSET],
+    ['has space', CHARSET],
+    ['café', CHARSET],
+    ['0app', 'cargo refuses a package name that starts with a digit'],
+    ['9', 'cargo refuses a package name that starts with a digit'],
+    ['-leading', 'cargo refuses a package name that starts with "-"'],
+    ['_leading', 'npm refuses a package name that starts with "_"'],
+    ['fn', KEYWORD],
+    ['self', KEYWORD],
+    ['type', KEYWORD],
+    ['build', BUILD_DIR],
+    ['deps', BUILD_DIR],
+    ['examples', BUILD_DIR],
+    ['incremental', BUILD_DIR],
+    ['test', 'cargo refuses "test" as a package name'],
+    ['node_modules', 'npm refuses "node_modules" as a package name'],
+    ['http', NODE_CORE],
+    ['fs', NODE_CORE],
+    ['con', WINDOWS],
+    ['lpt1', WINDOWS],
+  ])('refuses %j, naming the rule: %s', (name, rule) => {
+    const reason = validateProjectName(name);
+    expect(reason).toContain(rule);
+    // The message says which name it refused.
+    if (name) expect(reason).toContain(`"${name}"`);
+  });
+
+  it("agrees with npm's own validator: npm accepts every name it accepts, and refuses every name it says npm refuses", () => {
+    const disagreements = PROJECT_NAMES.flatMap((name) => {
+      const reason = validateProjectName(name);
+      const npmAccepts = validateNpmName(name).validForNewPackages;
+      if (reason === null && !npmAccepts) return [`${name}: accepted here, npm refuses it`];
+      if (reason?.includes('npm refuses') && npmAccepts) return [`${name}: "${reason}", npm accepts it`];
+      return [];
+    });
+    expect(disagreements).toEqual([]);
   });
 });
 
