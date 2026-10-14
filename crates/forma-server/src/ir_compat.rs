@@ -334,6 +334,22 @@ pub fn load_ir_modules_strict<A: Embed>(
 /// (An application that enables rust-embed's `debug-embed` feature has its
 /// files compiled into debug builds too; `get` then finds nothing changed.)
 ///
+/// "Debug build" here means forma-server compiled with debug assertions
+/// (`cfg(debug_assertions)`), not a profile's name. Cargo's default `release`
+/// profile turns them off, so a default release binary reads nothing per
+/// request. A profile that sets `debug-assertions = true`, for the whole
+/// build or for forma-server alone (`[profile.release.package.forma-server]`),
+/// compiles the check into what it calls a release binary: each `get` then
+/// rereads the files, from the build folder on disk (rust-embed reads from
+/// disk under the same switch), or, with `debug-embed`, from the embedded
+/// bytes at the cost of a lock and a comparison. Keep debug assertions off in
+/// the profile you deploy.
+///
+/// The strict loader's `render_modes` map has no counterpart here: a route is
+/// server-rendered exactly when `get(route)` returns a module, and a route
+/// without one (`ssr: false`) is served with
+/// [`render_browser_shell`](crate::render_browser_shell).
+///
 /// ```no_run
 /// use forma_server::{assets, IrModules, PageConfig};
 /// use std::sync::Arc;

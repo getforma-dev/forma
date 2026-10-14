@@ -118,8 +118,26 @@ impl Subscriber for Warnings {
     fn exit(&self, _: &Id) {}
 }
 
+/// Removes what the test wrote into the fixture folder when it ends, passed
+/// or failed, so a failed run leaves the source tree as it was.
+struct Cleanup;
+
+impl Drop for Cleanup {
+    fn drop(&mut self) {
+        for name in [
+            "manifest.json",
+            "page.ir",
+            ".manifest.json.staged",
+            ".page.ir.staged",
+        ] {
+            let _ = std::fs::remove_file(dist().join(name));
+        }
+    }
+}
+
 #[test]
 fn an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page() {
+    let _cleanup = Cleanup;
     // The build's first output, then the server's start.
     publish("manifest.json", DEV_MANIFEST.as_bytes());
     publish("page.ir", &page("first"));
@@ -155,10 +173,6 @@ fn an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_prev
         publish("page.ir", &good);
         assert!(serve(&manifest, &modules).contains("<main><p>third</p></main>"));
     });
-
-    for name in ["manifest.json", "page.ir"] {
-        let _ = std::fs::remove_file(dist().join(name));
-    }
 }
 
 // An application holds its modules in axum state, shared by every handler
