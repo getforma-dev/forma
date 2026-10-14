@@ -3,13 +3,19 @@
 //!
 //! Everything here goes through the public API a handler uses: render, turn
 //! the page into a `PageResponse`, and let axum's `IntoResponse` write it.
+//! The policy guarantees are asserted on every path that makes one (`Path`):
+//! the bridge from the deprecated `render_page`, `try_render`, and
+//! `render_browser_shell`.
+// The bridge from `render_page` (deprecated in 0.2.2) is one of the paths.
+#![allow(deprecated)]
 
 use axum::body::to_bytes;
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use forma_server::csp::{build_csp_header, PolicyExtensions};
 use forma_server::{
-    render_page, AssetManifest, CspNonce, PageConfig, PageResponse, RenderMode, RouteAssets,
+    render_browser_shell, render_page, try_render, AssetManifest, CspNonce, PageConfig,
+    PageResponse, PolicyError, RenderCtx, RenderError, RenderMode, RouteAssets,
 };
 use std::collections::HashMap;
 
@@ -55,6 +61,59 @@ fn page(manifest: &AssetManifest, extensions: &PolicyExtensions) -> PageResponse
     })
     .into_page_response(extensions)
     .expect("a page with valid extensions becomes a response")
+}
+
+/// Every public way to make a `PageResponse`.
+#[derive(Debug, Clone, Copy)]
+enum Path {
+    /// `render_page(..).into_page_response(..)`, the bridge for 0.2.1 code.
+    Bridge,
+    /// `try_render`, on a module that renders `<p>hello</p>`.
+    TryRender,
+    /// `render_browser_shell`.
+    Shell,
+}
+const PATHS: [Path; 3] = [Path::Bridge, Path::TryRender, Path::Shell];
+
+/// A page with `extensions` along `path`, or the extension it refused.
+fn make(
+    path: Path,
+    manifest: &AssetManifest,
+    extensions: &PolicyExtensions,
+) -> Result<PageResponse, PolicyError> {
+    use forma_ir::parser::test_helpers::{
+        build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
+    };
+    let mut ops = encode_open_tag(0, &[]);
+    ops.extend_from_slice(&encode_text(1));
+    ops.extend_from_slice(&encode_close_tag(0));
+    let module = forma_ir::IrModule::parse(&build_minimal_ir(&["p", "hello"], &[], &ops, &[]))
+        .expect("module");
+    let slots = forma_ir::SlotData::new(0);
+    let config = PageConfig {
+        title: "Home",
+        route_pattern: "/",
+        manifest,
+        config_script: None,
+        config_json: None,
+        body_class: None,
+        personality_css: Some("body{margin:0}"),
+        body_prefix: None,
+        render_mode: RenderMode::Phase2SsrReconcile,
+        ir_module: Some(&module),
+        slots: Some(&slots),
+    };
+    let ctx = RenderCtx::new().with_policy(extensions.clone());
+    let policy = |result: Result<PageResponse, RenderError>| match result {
+        Ok(page) => Ok(page),
+        Err(RenderError::Policy { cause, .. }) => Err(cause),
+        Err(other) => panic!("{path:?}: only the policy may fail here, got {other}"),
+    };
+    match path {
+        Path::Bridge => render_page(&config).into_page_response(extensions),
+        Path::TryRender => policy(try_render(&config, &ctx)),
+        Path::Shell => policy(render_browser_shell(&config, &ctx)),
+    }
 }
 
 /// What a client sees: status, headers and body.
@@ -243,29 +302,17 @@ fn an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy() {
         ] {
             // A valid sibling in the same builder does not rescue it.
             let extensions = extensions.img_src("https://cdn.example.com");
-            #[allow(deprecated)]
-            let output = render_page(&PageConfig {
-                title: "Home",
-                route_pattern: "/",
-                manifest: &manifest,
-                config_script: None,
-                config_json: None,
-                body_class: None,
-                personality_css: None,
-                body_prefix: None,
-                render_mode: RenderMode::Phase1ClientMount,
-                ir_module: None,
-                slots: None,
-            });
-            let error = output
-                .into_page_response(&extensions)
-                .expect_err(&format!("{directive} {source:?} must fail the page"));
-            assert_eq!(error.directive(), directive, "for {source:?}");
-            assert_eq!(error.source_expression(), source);
-            assert!(
-                error.to_string().contains(directive),
-                "the message names the directive: {error}"
-            );
+            for path in PATHS {
+                let error = make(path, &manifest, &extensions).expect_err(&format!(
+                    "{path:?}: {directive} {source:?} must fail the page"
+                ));
+                assert_eq!(error.directive(), directive, "for {source:?}");
+                assert_eq!(error.source_expression(), source);
+                assert!(
+                    error.to_string().contains(directive),
+                    "the message names the directive: {error}"
+                );
+            }
         }
     }
 
@@ -427,21 +474,8 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
             extensions = extensions.allow_popups();
         }
 
-        #[allow(deprecated)]
-        let output = render_page(&PageConfig {
-            title: "Home",
-            route_pattern: "/",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
-        });
-        let Ok(page) = output.into_page_response(&extensions) else {
+        let path = PATHS[case % PATHS.len()];
+        let Ok(page) = make(path, &manifest, &extensions) else {
             refused += 1;
             continue;
         };

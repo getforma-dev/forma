@@ -74,7 +74,7 @@ forma-server = "0.1"
 ```
 
 **What it does:**
-- `render_page(config)` — generates a full HTML page from an IR module + slot data
+- `try_render(config, ctx)` — renders a page from an IR module + slot data, returning the page with its counts or a coded `RenderError` the handler answers (`render_page`, which falls back to an empty shell on any failure, is deprecated in 0.2.2)
 - `load_ir_modules(manifest)` — loads `.ir` files from embedded assets at startup (`load_ir_modules_strict` returns the failures so you can fail startup on a build/embed skew)
 - `serve_asset(filename)` — serves assets with Brotli/gzip negotiation, `Cache-Control: immutable` for content-hashed names and revalidation + ETag for the rest
 - `generate_csp_nonce()` — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`

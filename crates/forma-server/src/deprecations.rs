@@ -86,3 +86,33 @@ pub(crate) struct PageOutputHeaders;
 /// }
 /// ```
 pub(crate) struct ConfigScript;
+
+/// `render_page` (DR-11; FORMA-120).
+///
+/// ```
+/// #![allow(deprecated)]
+/// fn render(config: &forma_server::PageConfig) { let _ = forma_server::render_page(config); }
+/// ```
+///
+/// ```compile_fail
+/// #![deny(deprecated)]
+/// fn render(config: &forma_server::PageConfig) { let _ = forma_server::render_page(config); }
+/// ```
+pub(crate) struct RenderPage;
+
+/// `assets::load_manifest` (L-13; FORMA-120).
+///
+/// ```
+/// #![allow(deprecated)]
+/// fn load<A: rust_embed::Embed>() -> forma_server::AssetManifest {
+///     forma_server::assets::load_manifest::<A>()
+/// }
+/// ```
+///
+/// ```compile_fail
+/// #![deny(deprecated)]
+/// fn load<A: rust_embed::Embed>() -> forma_server::AssetManifest {
+///     forma_server::assets::load_manifest::<A>()
+/// }
+/// ```
+pub(crate) struct LoadManifest;

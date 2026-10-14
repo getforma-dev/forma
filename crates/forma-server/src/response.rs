@@ -46,17 +46,41 @@ pub struct PageResponse {
 
 /// What one render did, for the application's own logs and metrics (R14).
 ///
-/// For a page served without a walk (a client-mounted shell, or a render
-/// that fell back to one) every count is zero.
+/// On a [`crate::RenderError`] for a budget or a fault, the same counts say
+/// how far the walk got (SR22). For a page served without a walk (a browser
+/// shell, or the deprecated `render_page`'s fallback) every count is zero.
+/// `nodes` and `list_iterations` are counted by [`crate::try_render`]; a page
+/// from the deprecated `render_page` reports them as zero.
+///
+/// The walk time is the number to watch for moving a page off an async
+/// worker: see [`crate::try_render`]'s `spawn_blocking` recipe.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct RenderCounts {
+    /// Elements and text nodes the walk wrote (hydration markers and
+    /// comments are not nodes).
+    pub nodes: usize,
     /// Bytes of HTML the walk wrote into the page's root, the quantity the
     /// walker's output budget (`WalkLimits::max_output_bytes`) bounds; the
     /// document around it is not counted.
     pub bytes: usize,
+    /// List rows the walk wrote, across every nesting depth, the quantity
+    /// `WalkLimits::max_list_iterations` bounds.
+    pub list_iterations: usize,
     /// Time spent in the walk.
     pub walk_time: Duration,
+}
+
+impl RenderCounts {
+    /// The walker's counts, with the time the walk took.
+    pub(crate) fn from_walk(counts: forma_ir::WalkCounts, walk_time: Duration) -> Self {
+        RenderCounts {
+            nodes: counts.nodes,
+            bytes: counts.bytes,
+            list_iterations: counts.list_iterations,
+            walk_time,
+        }
+    }
 }
 
 /// A page's raw parts, from [`PageResponse::into_parts_unchecked`].
@@ -87,15 +111,26 @@ impl PageResponse {
         counts: RenderCounts,
     ) -> Result<Self, PolicyError> {
         let policy = csp::page_policy(&nonce, extensions)?;
-        Ok(PageResponse {
+        Ok(Self::with_policy(html, nonce, policy, counts))
+    }
+
+    /// Wrap a rendered document whose policy was built, from the same nonce,
+    /// before the walk (so an invalid extension costs no walk).
+    pub(crate) fn with_policy(
+        html: String,
+        nonce: CspNonce,
+        policy: PagePolicy,
+        counts: RenderCounts,
+    ) -> Self {
+        PageResponse {
             html,
             nonce,
             policy,
             counts,
-        })
+        }
     }
 
-    /// What the render did: bytes walked and time spent.
+    /// What the render did: nodes, bytes and list rows walked, and time spent.
     pub fn counts(&self) -> RenderCounts {
         self.counts
     }

@@ -27,6 +27,30 @@ pub const SECTION_TABLE_SIZE: usize = 32;
 pub const IR_VERSION: u16 = 2;
 
 // ---------------------------------------------------------------------------
+// Little-endian reads
+// ---------------------------------------------------------------------------
+//
+// Each call site has already checked that its slice is in bounds and of the
+// width read; these index rather than `try_into().unwrap()` so the crate
+// carries no `unwrap` (DR-12). The indexing cannot fail where the slice could
+// be taken.
+
+/// A `u16` from the first 2 bytes of `b`.
+pub(crate) fn le_u16(b: &[u8]) -> u16 {
+    u16::from_le_bytes([b[0], b[1]])
+}
+
+/// A `u32` from the first 4 bytes of `b`.
+pub(crate) fn le_u32(b: &[u8]) -> u32 {
+    u32::from_le_bytes([b[0], b[1], b[2], b[3]])
+}
+
+/// A `u64` from the first 8 bytes of `b`.
+pub(crate) fn le_u64(b: &[u8]) -> u64 {
+    u64::from_le_bytes([b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]])
+}
+
+// ---------------------------------------------------------------------------
 // Error type
 // ---------------------------------------------------------------------------
 
@@ -147,6 +171,15 @@ pub enum IrError {
         /// The island that started before it got one.
         inner: u16,
     },
+    /// The walk panicked, and [`crate::walker::walk_to_html_counted`] caught
+    /// the unwind. No input is known to cause one (the parser and walker are
+    /// fuzzed), so this reports a defect in the walker, not in the module or
+    /// the data. Under `panic = "abort"` there is nothing to catch and the
+    /// process ends instead.
+    Panicked {
+        /// The panic's message, when it carried one.
+        message: String,
+    },
 }
 
 impl fmt::Display for IrError {
@@ -250,6 +283,7 @@ impl fmt::Display for IrError {
                      one of them could never carry its data-forma-* attributes"
                 )
             }
+            IrError::Panicked { message } => write!(f, "the walk panicked: {message}"),
         }
     }
 }
@@ -295,12 +329,12 @@ impl IrHeader {
             });
         }
 
-        let magic: [u8; 4] = data[0..4].try_into().unwrap();
+        let magic: [u8; 4] = [data[0], data[1], data[2], data[3]];
         if &magic != MAGIC {
             return Err(IrError::BadMagic(magic));
         }
 
-        let version = u16::from_le_bytes(data[4..6].try_into().unwrap());
+        let version = le_u16(&data[4..6]);
         if version != IR_VERSION {
             return Err(IrError::UnsupportedVersion(version));
         }
@@ -308,12 +342,12 @@ impl IrHeader {
         // `flags` is reserved. Reject any non-zero bit so that a future
         // extension (compression, extended section table, ...) fails closed on
         // an old reader instead of being silently ignored and mis-parsed.
-        let flags = u16::from_le_bytes(data[6..8].try_into().unwrap());
+        let flags = le_u16(&data[6..8]);
         if flags != 0 {
             return Err(IrError::UnsupportedFlags(flags));
         }
 
-        let source_hash = u64::from_le_bytes(data[8..16].try_into().unwrap());
+        let source_hash = le_u64(&data[8..16]);
 
         Ok(IrHeader {
             version,
@@ -364,8 +398,8 @@ impl SectionTable {
         let mut sections = [SectionDescriptor { offset: 0, size: 0 }; 4];
         for (i, section) in sections.iter_mut().enumerate() {
             let base = i * 8;
-            let offset = u32::from_le_bytes(data[base..base + 4].try_into().unwrap());
-            let size = u32::from_le_bytes(data[base + 4..base + 8].try_into().unwrap());
+            let offset = le_u32(&data[base..base + 4]);
+            let size = le_u32(&data[base + 4..base + 8]);
             *section = SectionDescriptor { offset, size };
         }
 

@@ -37,17 +37,47 @@ impl fmt::Display for InvalidNonce {
 
 impl std::error::Error for InvalidNonce {}
 
+/// Returned by [`CspNonce::try_generate`] when the operating system's random
+/// source fails: there is no nonce, so there is no page (DR-12).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct NonceError;
+
+impl fmt::Display for NonceError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "the system random source failed to draw a CSP nonce")
+    }
+}
+
+impl std::error::Error for NonceError {}
+
 /// Minimum accepted nonce length — 22 base64 characters is 128 bits, the
 /// floor the CSP spec recommends for unguessability.
 const MIN_NONCE_LEN: usize = 22;
 
 impl CspNonce {
-    /// Generate a cryptographically random nonce (32 bytes → 44 base64 chars).
-    pub fn generate() -> Self {
+    /// Draw a cryptographically random nonce (32 bytes → 44 base64 chars), or
+    /// say that the system random source failed. The render path uses this
+    /// one, so a failed draw is a [`crate::RenderError`], not a panic.
+    pub fn try_generate() -> Result<Self, NonceError> {
         let rng = SystemRandom::new();
         let mut bytes = [0u8; 32];
-        rng.fill(&mut bytes).expect("RNG failure");
-        CspNonce(STANDARD.encode(bytes))
+        rng.fill(&mut bytes).map_err(|_| NonceError)?;
+        Ok(CspNonce(STANDARD.encode(bytes)))
+    }
+
+    /// Generate a cryptographically random nonce (32 bytes → 44 base64 chars).
+    ///
+    /// # Panics
+    ///
+    /// If the system random source fails, as at 0.2.1; its signature has no
+    /// room for the error. [`CspNonce::try_generate`] returns it instead.
+    #[allow(clippy::panic)] // the 0.2.1 signature; `try_generate` is the fallible one
+    pub fn generate() -> Self {
+        match Self::try_generate() {
+            Ok(nonce) => nonce,
+            Err(error) => panic!("{error}"),
+        }
     }
 
     /// Validate a caller-supplied nonce.
@@ -518,6 +548,15 @@ mod tests {
         let a = generate_csp_nonce();
         let b = generate_csp_nonce();
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn try_generate_draws_distinct_44_character_nonces() {
+        let a = CspNonce::try_generate().unwrap();
+        let b = CspNonce::try_generate().unwrap();
+        assert_ne!(a, b);
+        assert_eq!(a.as_str().len(), 44);
+        assert_eq!(CspNonce::parse(a.as_str()), Ok(a));
     }
 
     #[test]

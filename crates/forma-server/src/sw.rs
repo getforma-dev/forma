@@ -19,10 +19,12 @@ pub async fn serve_sw<A: Embed>() -> Response {
             for (name, value) in crate::types::asset_security_headers() {
                 builder = builder.header(name, value);
             }
-            builder
-                .body(axum::body::Body::from(data))
-                .unwrap()
-                .into_response()
+            // Static headers cannot fail to parse; if one ever did, answer 500
+            // rather than panic or send the worker without its headers.
+            match builder.body(axum::body::Body::from(data)) {
+                Ok(response) => response.into_response(),
+                Err(_) => axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            }
         }
         None => axum::http::StatusCode::NOT_FOUND.into_response(),
     }
