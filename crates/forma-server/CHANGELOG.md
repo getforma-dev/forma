@@ -2,6 +2,40 @@
 
 ## [Unreleased]
 
+### Changed
+- **The service worker is opt-in, and retired everywhere else** (FORMA-130;
+  DR-25, Q15, M25). By default no page registers `/sw.js` any more, and
+  `serve_sw` answers `/sw.js` with forma-server's *retiring worker* instead of
+  the `sw.js` the build embedded: a browser that installed a worker from an
+  earlier release receives it on its next visits, and it deletes Forma's v1
+  cache names (`forma-dev`, `forma-` + 12 hex, either with `-on-demand-v1`),
+  keeps every other cache, unregisters, and answers no request, so pages and
+  assets load from the network. An application that wants its worker (today
+  Ledger, Q15) turns it on once at start:
+  `forma_server::sw::configure(ServiceWorker::for_app("ledger")?.enabled())`;
+  its pages then register `/sw.js` as at 0.2.1 and `serve_sw` serves the
+  embedded worker. Naming the application with the worker off (a rollback)
+  makes the retiring worker delete that application's own caches too. The
+  retiring worker is served through 3.x.
+
+### Added
+- `sw::ServiceWorker` (`off`, `for_app`, `enabled`, `is_enabled`, `app`),
+  `sw::configure`, `sw::configured`, `sw::AppNameError`,
+  `sw::AlreadyConfigured`: the setting, fixed once per process before the
+  first page or `/sw.js`. `sw`'s module docs state the per-application cache
+  name contract the build follows (`forma:<app>:<build>`; FORMA-130's build
+  half). Tests: `tests/service_worker_off.rs` >
+  `by_default_no_page_registers_a_worker`,
+  `by_default_sw_js_is_the_retiring_worker_even_with_a_built_worker_embedded`,
+  `configuring_after_the_first_use_is_refused`;
+  `tests/service_worker_named_off.rs`; `tests/service_worker_on.rs` (pages
+  register, the embedded worker is served, configured once);
+  `sw::tests::application_names_are_what_a_cache_name_can_carry`;
+  `sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s`,
+  which runs the worker in Node over `tests/js/retiring_worker.mjs`, whose
+  table of cache names is the contract's shared vectors. `cargo test` now
+  needs Node 18 or later on `PATH` (CONTRIBUTING).
+
 ### Fixed (documentation only)
 - `RouteAssets::ir`'s doc comment names its value as the build writes it, the
   hashed `.ir` file name, not a `.fmir` module (FORMA-009).

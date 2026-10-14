@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- **The service worker is opt-in (FORMA-130, DR-25).** forma-server registers
+  `/sw.js` only for an application that turns it on
+  (`sw::configure(ServiceWorker::for_app(..)?.enabled())`); elsewhere `/sw.js`
+  is a retiring worker that deletes Forma's v1 caches and the application's
+  own, never another application's, and unregisters. `cargo test` now needs
+  Node 18+ for the retiring worker's test.
+
 - **CI: actions pinned to commits, every job declares its token (DR-32,
   SR21, FORMA-010; no crate changed).** Each `uses:` names the commit its tag
   or branch pointed to on 2026-10-14, with the ref in a comment, so moving a

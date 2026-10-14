@@ -206,9 +206,10 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         _ => String::new(),
     };
 
-    let sw_script = format!(
-        "<script nonce=\"{nonce}\">if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>\n"
-    );
+    // Only for an application that enabled its worker (DR-25, Q15): the
+    // default registers nothing, and `/sw.js` retires any worker installed
+    // by an earlier release.
+    let sw_script = crate::sw::registration_script(nonce);
 
     BodyParts {
         body_class_attr,

@@ -36,6 +36,7 @@ Known residual: an *under*-long control-flow length whose orphaned bytes still d
 - `manifest.json` and direct `.br`/`.gz` requests are refused on the asset route
 - Template interpolations are HTML-escaped, **except** two documented raw sinks: `PageConfig::config_script` (raw JS — `</script`/`<!--` are neutralised so it cannot escape its element, but its *contents* are trusted) and `PageConfig::body_prefix` (raw HTML). Use `PageConfig::config_json` for anything derived from user input — it is serialised with every `<` escaped
 - Rendered HTML embeds a per-request nonce, so it must be served `Cache-Control: no-store` and never cached across requests. `PageOutput::headers()` does this
+- The service worker is opt-in: by default no page registers one, and `/sw.js` serves a retiring worker that deletes Forma's v1 cache names and unregisters, so a worker an earlier release installed cannot keep replaying cached script (TH19). An application that enables its worker gets caches named per application and build (`forma:<app>:<build>`), and no Forma worker deletes another application's caches
 - HSTS is deliberately not set here — it is the TLS terminator's responsibility
 - Graceful fallback from Phase 2 SSR to Phase 1 on any error
 

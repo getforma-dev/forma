@@ -19,6 +19,7 @@ This pulls in `forma-ir` automatically.
 
 - **`render_page(config)`** — generates a full HTML page from an IR module + slot data
 - **`load_ir_modules(manifest)`** — loads `.ir` files from embedded assets at startup (`load_ir_modules_strict` returns the failures instead of swallowing them)
+- **`sw::serve_sw` and `sw::configure`**: the service worker is opt-in (0.2.2). By default no page registers one and `/sw.js` serves a retiring worker that clears Forma's v1 caches and unregisters; an application that wants its worker calls `sw::configure(ServiceWorker::for_app("name")?.enabled())` once at start
 - **`serve_asset(filename)`** — serves assets with Brotli/gzip negotiation; `Cache-Control: immutable` for content-hashed names, revalidation + ETag for the rest
 - **`generate_csp_nonce()`** — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
 - **`build_csp_header(nonce)`** — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`

@@ -1,7 +1,7 @@
 //! Axum middleware for Forma SSR.
 //!
 //! Provides page rendering (`render_page`), content-hashed asset serving,
-//! CSP headers with cryptographic nonces, service worker handling, and
+//! CSP headers with cryptographic nonces, an opt-in service worker ([`sw`]), and
 //! the Phase 1 (client mount) / Phase 2 (SSR reconcile) rendering pipeline.
 //!
 //! # Quick Start
@@ -27,7 +27,8 @@ pub mod assets;
 pub mod csp;
 /// Loading and version-checking the per-route `.ir` modules at startup.
 pub mod ir_compat;
-/// The service-worker response and its headers.
+// Documented by its own `//!` docs: an outer `///` line here would merge with
+// them and resolve their intra-doc links from the crate root.
 pub mod sw;
 /// The HTML page template and the SSR render entry points.
 pub mod template;
