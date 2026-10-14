@@ -184,7 +184,9 @@ pub fn build_csp_header(nonce: &CspNonce) -> String {
 /// `https://*.example.com:8443/images/`). Nonces, hashes, `'none'`,
 /// `'unsafe-*'`, `'strict-dynamic'`, a bare `*`, and anything carrying `;`,
 /// `,`, a quote or whitespace are refused: each of those either loosens script
-/// execution or injects a directive.
+/// execution or injects a directive. So are the `javascript` and `vbscript`
+/// schemes in either form (`javascript:`, `javascript://host`), and `data:` and
+/// `filesystem:` as a frame or form target.
 ///
 /// ```
 /// use forma_server::PolicyExtensions;
@@ -258,12 +260,23 @@ pub struct PolicyError {
 }
 
 impl PolicyError {
-    /// The directive the source was added to, such as `img-src`.
+    /// A `PageOutput::csp` edited as text, refused by the bridge.
+    pub(crate) fn edited_as_text(csp: String) -> Self {
+        PolicyError {
+            directive: "content-security-policy",
+            source: csp,
+            reason: "the policy was edited as text; express the edit as PolicyExtensions",
+        }
+    }
+
+    /// The directive the source was added to, such as `img-src`, or
+    /// `content-security-policy` for a whole policy edited as text.
     pub fn directive(&self) -> &'static str {
         self.directive
     }
 
-    /// The source expression as the handler wrote it.
+    /// The source expression as the handler wrote it (the whole policy text,
+    /// for one edited as text).
     pub fn source_expression(&self) -> &str {
         &self.source
     }
@@ -388,18 +401,23 @@ fn check_source(directive: &'static str, source: &str) -> Result<(), PolicyError
     // Scheme source: `scheme:` and nothing after.
     if let Some(scheme) = source.strip_suffix(':') {
         if is_scheme(scheme) {
-            let scheme = scheme.to_ascii_lowercase();
-            return if scheme == "javascript" || scheme == "vbscript" {
-                refuse("a script scheme is never a source")
-            } else {
-                Ok(())
+            return match refused_scheme(directive, scheme) {
+                Some(reason) => refuse(reason),
+                None => Ok(()),
             };
         }
     }
 
-    // Host source: [scheme "://"] host [":" port] [path].
+    // Host source: [scheme "://"] host [":" port] [path]. The scheme part is
+    // held to the same rules as a scheme source: `javascript://x` is still a
+    // script scheme.
     let rest = match source.split_once("://") {
-        Some((scheme, rest)) if is_scheme(scheme) => rest,
+        Some((scheme, rest)) if is_scheme(scheme) => {
+            if let Some(reason) = refused_scheme(directive, scheme) {
+                return refuse(reason);
+            }
+            rest
+        }
         Some(_) => return refuse("not a CSP source expression"),
         None => source,
     };
@@ -453,6 +471,27 @@ fn check_source(directive: &'static str, source: &str) -> Result<(), PolicyError
     } else {
         refuse("not a CSP source expression")
     }
+}
+
+/// Why `scheme` (in either source form) may not be added to `directive`, if
+/// it may not. Schemes compare without case, as browsers do.
+///
+/// - `javascript:` and `vbscript:` are never a source.
+/// - `data:` and `filesystem:` are not a frame or form target: no consumer
+///   frames or posts to them (GateWASM adds `'self'`, Generative UI `blob:`),
+///   and each carries content the page chose instead of naming a place.
+///   Images may still use `data:`, as the strict policy's own `img-src` does.
+fn refused_scheme(directive: &str, scheme: &str) -> Option<&'static str> {
+    let scheme = scheme.to_ascii_lowercase();
+    if scheme == "javascript" || scheme == "vbscript" {
+        return Some("a script scheme is never a source");
+    }
+    if matches!(directive, "frame-src" | "form-action")
+        && (scheme == "data" || scheme == "filesystem")
+    {
+        return Some("data: and filesystem: are not a frame or form target");
+    }
+    None
 }
 
 /// CSP's `scheme-part`: a letter, then letters, digits, `+`, `-` or `.`.
@@ -582,6 +621,10 @@ mod tests {
             ("javascript:", "script scheme"),
             ("JavaScript:", "script scheme"),
             ("vbscript:", "script scheme"),
+            ("javascript://x", "script scheme"),
+            ("JAVASCRIPT://x/%0aalert(1)", "script scheme"),
+            ("vbscript://x/%0aalert(1)", "script scheme"),
+            ("VBScript://x", "script scheme"),
             ("https://a.example; script-src *", "source expression"),
             ("https://a.example;", "source expression"),
             ("https://a.example,b.example", "source expression"),
@@ -611,6 +654,44 @@ mod tests {
         // Over-long input is refused before it is parsed.
         let long = format!("https://{}.example", "a".repeat(1100));
         assert!(check_source("img-src", &long).is_err());
+    }
+
+    #[test]
+    fn frame_and_form_targets_refuse_data_and_filesystem() {
+        // No consumer frames or posts to them (GateWASM: `'self'`; Generative
+        // UI: `blob:`), and both carry content the page chose rather than a
+        // place it loads from. Images may still use `data:`, as the strict
+        // policy's own `img-src` does.
+        for directive in ["frame-src", "form-action"] {
+            for source in [
+                "data:",
+                "DATA:",
+                "data://x",
+                "filesystem:",
+                "FileSystem://x/y",
+            ] {
+                let error = check_source(directive, source).expect_err(source);
+                assert!(
+                    error.reason().contains("frame or form"),
+                    "{directive} {source:?}: {}",
+                    error.reason()
+                );
+            }
+        }
+        for (directive, source) in [
+            ("img-src", "data:"),
+            ("img-src", "blob:"),
+            ("frame-src", "blob:"),
+            ("frame-src", "'self'"),
+            ("frame-src", "https:"),
+            ("form-action", "https://idp.example.com"),
+        ] {
+            assert_eq!(
+                check_source(directive, source),
+                Ok(()),
+                "{directive} {source}"
+            );
+        }
     }
 
     #[test]

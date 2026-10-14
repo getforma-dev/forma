@@ -88,14 +88,14 @@ pub struct PageOutput {
     #[deprecated(
         since = "0.2.2",
         note = "send the page as a `PageResponse` (`into_page_response`), which carries \
-                `no-store` and the policy with it (DR-17)"
+                `no-store` and the policy with it (DR-17). Private in 3.0.0"
     )]
     pub html: String,
     /// The `Content-Security-Policy` header value that blesses it.
     #[deprecated(
         since = "0.2.2",
         note = "the policy is typed now: extend it with `PolicyExtensions` and send a \
-                `PageResponse` rather than editing this text (DR-17)"
+                `PageResponse` rather than editing this text (DR-17). Private in 3.0.0"
     )]
     pub csp: String,
     /// The nonce embedded in `html` and blessed by `csp`.
@@ -104,7 +104,10 @@ pub struct PageOutput {
     /// re-stamp a cached shell, without string-parsing the CSP.
     #[deprecated(
         since = "0.2.2",
-        note = "3.0.0 draws the nonce inside the render and gives no caller one (L-14)"
+        note = "render with `try_render` (0.2.2), which draws the nonce and writes it into \
+                the page and its policy; a handler that must read it takes \
+                `PageResponse::into_parts_unchecked().nonce`. Private in 3.0.0, which gives \
+                no caller a nonce (L-14)"
     )]
     pub nonce: crate::csp::CspNonce,
     /// What the render did, carried into [`PageOutput::into_page_response`].
@@ -122,7 +125,7 @@ impl PageOutput {
     #[deprecated(
         since = "0.2.2",
         note = "use `into_page_response`: a `PageResponse` writes these headers itself and \
-                fails rather than dropping an invalid policy (DR-17)"
+                fails rather than dropping an invalid policy (DR-17). Removed in 3.0.0"
     )]
     pub fn headers(&self) -> Vec<(axum::http::HeaderName, axum::http::HeaderValue)> {
         let mut headers = vec![
@@ -146,9 +149,10 @@ impl PageOutput {
     /// strict policy for the page's nonce with `extensions` added, and the
     /// document headers, written whenever it is sent.
     ///
-    /// The policy is rebuilt from the nonce the HTML embeds; the `csp` field
-    /// is not read, so a policy rewritten as text does not carry over. Express
-    /// the rewrite as an extension instead:
+    /// The policy is rebuilt from the nonce the HTML embeds, so a `csp` edited
+    /// as text would not carry over: it is refused instead, wherever the edit
+    /// went (a widening one would fail in the browser, a tightening one would
+    /// be lost). Express the edit as an extension:
     ///
     /// ```no_run
     /// # #![allow(deprecated)]
@@ -160,15 +164,28 @@ impl PageOutput {
     /// # Ok::<(), forma_server::PolicyError>(())
     /// ```
     ///
+    /// The bridge trusts the deprecated public `nonce` and `html` as they
+    /// are: a nonce the caller chose (through `render_page_with_nonce`, or by
+    /// assigning the field) carries into the `PageResponse`. A fresh nonce
+    /// per response is guaranteed only when the render draws it, as
+    /// `render_page` and `try_render` do.
+    ///
     /// # Errors
     ///
     /// A [`PolicyError`](crate::PolicyError) naming the first extension that
-    /// is not a source a page may add. There is then no response to send:
+    /// is not a source a page may add, or, for directive
+    /// `content-security-policy`, a `csp` that is not the one forma-server
+    /// wrote for this page's nonce. There is then no response to send:
     /// answer with an error page rather than this one without its policy.
+    ///
+    /// Verified by: crates/forma-server/tests/page_response.rs > "into_page_response_refuses_a_policy_edited_as_text"
     pub fn into_page_response(
         self,
         extensions: &crate::csp::PolicyExtensions,
     ) -> Result<crate::PageResponse, crate::PolicyError> {
+        if self.csp != crate::csp::build_csp_header(&self.nonce) {
+            return Err(crate::csp::PolicyError::edited_as_text(self.csp));
+        }
         crate::PageResponse::new(self.html, self.nonce, extensions, self.counts)
     }
 }

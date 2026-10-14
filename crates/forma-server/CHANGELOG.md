@@ -14,7 +14,11 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   from those headers only through `into_parts_unchecked()`, one named,
   searchable exit returning `PageParts`; `counts()` returns the walk's bytes
   and time (`RenderCounts`). Get one from today's render with
-  `PageOutput::into_page_response`. Tests: `tests/page_response.rs` >
+  `PageOutput::into_page_response`, which refuses (a `PolicyError` for
+  `content-security-policy`) a `csp` edited as text, since the policy is
+  rebuilt from the nonce and the edit would be lost; it trusts the deprecated
+  `nonce` and `html` as they are, so a fresh nonce per response holds only
+  when the render drew it. Tests: `tests/page_response.rs` >
   `page_response_writes_no_store_the_policy_and_the_document_headers`,
   `two_fetches_get_no_store_and_two_different_nonces`,
   `into_parts_unchecked_returns_exactly_what_the_response_writes`,
@@ -27,7 +31,10 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   for a login popup. Nothing else can be added, nothing can be removed, and a
   source carrying `;`, `,`, a quote, whitespace, a keyword other than
   `'self'`, a nonce, a hash or a bare `*` fails the page with a `PolicyError`
-  naming the directive and the source, instead of reaching a header. This
+  naming the directive and the source, instead of reaching a header; so do
+  the `javascript` and `vbscript` schemes in either form (`javascript:`,
+  `javascript://host`, any case), and `data:` or `filesystem:` as a frame or
+  form target (images keep `data:`). This
   replaces rewriting `PageOutput::csp` as text (GateWASM's console,
   Generative UI's `frame-src blob:`). Tests: `tests/page_response.rs` >
   `no_policy_extension_yields_a_response_without_the_policy` (2,000 generated
@@ -35,7 +42,9 @@ as before; the old forms warn as deprecated and go in 3.0.0.
   strict policy), `an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy`,
   `extensions_add_sources_to_their_own_directive_only`; `csp::tests` >
   `extension_sources_accept_what_consumers_add`,
-  `extension_sources_refuse_injection_and_loosening`.
+  `extension_sources_refuse_injection_and_loosening`,
+  `frame_and_form_targets_refuse_data_and_filesystem`; `tests/page_response.rs`
+  > `into_page_response_refuses_a_policy_edited_as_text`.
 
 ### Deprecated
 - `PageOutput`'s public fields `html`, `csp` and `nonce`, and

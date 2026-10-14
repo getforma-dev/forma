@@ -229,6 +229,9 @@ fn an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy() {
         "https://a.example\r\nset-cookie: x=1",
         "https://a.example script-src",
         "javascript:",
+        "javascript://x",
+        "JAVASCRIPT://x/%0aalert(1)",
+        "vbscript://x",
         "'self",
         "https://a.example/'x'",
     ];
@@ -275,6 +278,55 @@ fn an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy() {
     let page = page(&manifest, &extensions);
     let parts = page.into_parts_unchecked();
     assert!(parts.html.starts_with("<!DOCTYPE html>"));
+}
+
+#[test]
+#[allow(deprecated)] // the bridge's input is the deprecated `PageOutput`
+fn into_page_response_refuses_a_policy_edited_as_text() {
+    // The bridge rebuilds the policy from the nonce. A `csp` the caller
+    // edited would be dropped, whether the edit widened the policy (blocked
+    // in the browser, far from this call) or tightened it (lost silently), so
+    // it is refused here, naming the way to express it.
+    let manifest = manifest();
+    let render = || {
+        render_page(&PageConfig {
+            title: "Home",
+            route_pattern: "/",
+            manifest: &manifest,
+            config_script: None,
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        })
+    };
+    for edit in [
+        // GateWASM's console, widening
+        |csp: &mut String| {
+            *csp = csp.replace("img-src 'self' data:", "img-src 'self' data: https:")
+        },
+        // Generative UI, widening
+        |csp: &mut String| csp.push_str("; frame-src blob:"),
+        // tightening
+        |csp: &mut String| csp.push_str("; upgrade-insecure-requests"),
+        // whitespace alone is still an edit
+        |csp: &mut String| csp.push(' '),
+    ] {
+        let mut page = render();
+        edit(&mut page.csp);
+        let error = page
+            .into_page_response(&PolicyExtensions::new())
+            .expect_err("an edited policy is refused");
+        assert_eq!(error.directive(), "content-security-policy");
+        assert!(error.reason().contains("PolicyExtensions"), "{error}");
+    }
+    // Unedited, it converts.
+    assert!(render()
+        .into_page_response(&PolicyExtensions::new())
+        .is_ok());
 }
 
 // -- SR5's property ---------------------------------------------------------
@@ -327,6 +379,16 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
         "'nonce-x'",
         "report-uri https://evil.example",
         "https://evil.example; object-src *",
+        "javascript",
+        "vbscript",
+        "://",
+        "x",
+        "filesystem:",
+        // the script and frame forms whole, so every run meets them
+        "javascript://x",
+        "JAVASCRIPT://a.example/%0aalert(1)",
+        "vbscript://x",
+        "data://x",
         "",
     ];
     let manifest = manifest();
@@ -337,12 +399,18 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
         let mut extensions = PolicyExtensions::new();
         let mut added: Vec<(&str, String)> = Vec::new();
         for _ in 0..(rng.next() % 5) {
-            // A source is one fragment or two glued together, so injection
-            // can arrive inside an otherwise valid-looking source.
-            let source = if rng.next() % 3 == 0 {
-                format!("{}{}", rng.pick(FRAGMENTS), rng.pick(FRAGMENTS))
-            } else {
-                rng.pick(FRAGMENTS).to_string()
+            // A source is one to three fragments glued together, so
+            // injection can arrive inside an otherwise valid-looking source
+            // (`javascript` + `://` + `x` is one).
+            let source = match rng.next() % 4 {
+                0 => format!("{}{}", rng.pick(FRAGMENTS), rng.pick(FRAGMENTS)),
+                1 => format!(
+                    "{}{}{}",
+                    rng.pick(FRAGMENTS),
+                    rng.pick(FRAGMENTS),
+                    rng.pick(FRAGMENTS)
+                ),
+                _ => rng.pick(FRAGMENTS).to_string(),
             };
             let which = rng.next() % 3;
             extensions = match which {
@@ -429,6 +497,26 @@ async fn no_policy_extension_yields_a_response_without_the_policy() {
             }
         }
         assert!(!csp.contains('\n') && !csp.contains(','), "case {case}");
+        // No script scheme in any form, and no data: or filesystem: target
+        // for a frame or a form.
+        for name in &names {
+            for source in directive(csp, name).expect("listed") {
+                let scheme = source
+                    .split_once(':')
+                    .map(|(s, _)| s.to_ascii_lowercase())
+                    .unwrap_or_default();
+                assert!(
+                    scheme != "javascript" && scheme != "vbscript",
+                    "case {case}: {source} in {csp}"
+                );
+                if matches!(*name, "frame-src" | "form-action") {
+                    assert!(
+                        scheme != "data" && scheme != "filesystem",
+                        "case {case}: {source} in {name}"
+                    );
+                }
+            }
+        }
     }
 
     // The generator must exercise both sides, or the property says nothing.
