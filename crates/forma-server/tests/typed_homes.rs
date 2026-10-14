@@ -260,41 +260,20 @@ fn a_head_link_refuses_a_script_url_and_keeps_every_other() {
         "javascript://example.com/%0aalert(1)",
     ] {
         let error = HeadLink::new("icon", href).expect_err(href);
+        assert_eq!(error.code(), "HEAD-103", "{href:?}");
         assert_eq!(error.reason(), "href is a script URL", "{href:?}");
+        assert!(error.to_string().starts_with("HEAD-103 "), "{error}");
         assert!(error.to_string().contains("rel=\"icon\""), "{error}");
     }
-    for (rel, reason) in [
-        (
-            "",
-            "rel is not a list of link types separated by single spaces",
-        ),
-        (
-            "icon\"",
-            "rel is not a list of link types separated by single spaces",
-        ),
-        (
-            "icon  x",
-            "rel is not a list of link types separated by single spaces",
-        ),
-        (
-            "icon ",
-            "rel is not a list of link types separated by single spaces",
-        ),
-        (
-            "ic<on",
-            "rel is not a list of link types separated by single spaces",
-        ),
-    ] {
-        let error = HeadLink::new(rel, "/favicon.ico").expect_err(rel);
-        assert_eq!(error.reason(), reason, "{rel:?}");
-    }
+    let empty = HeadLink::new("icon", " ").expect_err("empty");
     assert_eq!(
-        HeadLink::new("icon", " ").expect_err("empty").reason(),
-        "href is empty"
+        (empty.code(), empty.reason()),
+        ("HEAD-104", "href is empty")
     );
 
-    // Negative space: what an icon, a manifest or a feed links to is kept,
-    // including a path or host that merely contains a script scheme's name.
+    // Negative space: what an icon, a feed or a canonical URL links to is
+    // kept, including a path or host that merely contains a script scheme's
+    // name.
     let manifest = styled_manifest();
     let module = module();
     let slots = SlotData::new(0);
@@ -304,8 +283,7 @@ fn a_head_link_refuses_a_script_url_and_keeps_every_other() {
             "icon",
             "data:image/svg+xml,%3Csvg%20xmlns%3D%22http://www.w3.org/2000/svg%22%2F%3E",
         ),
-        ("manifest", "/site.webmanifest"),
-        ("alternate stylesheet", "/dark.css"),
+        ("alternate", "/feed.xml"),
         ("canonical", "https://example.com/guides/javascript"),
         ("icon", "/javascript:not-a-scheme.png"),
         ("preconnect", "https://javascript.example"),
@@ -321,5 +299,118 @@ fn a_head_link_refuses_a_script_url_and_keeps_every_other() {
             head.ends_with(&format!("<link rel=\"{rel}\" href=\"{href}\">\n")),
             "{rel} {href}:\n{head}"
         );
+    }
+}
+
+/// The link types a head link carries, each written as given in lower case.
+const KEPT: [&str; 10] = [
+    "icon",
+    "apple-touch-icon",
+    "mask-icon",
+    "manifest",
+    "canonical",
+    "alternate",
+    "author",
+    "license",
+    "preconnect",
+    "dns-prefetch",
+];
+
+/// The link types that load style or script (HEAD-101).
+const LOADING: [&str; 6] = [
+    "stylesheet",
+    "modulepreload",
+    "preload",
+    "prefetch",
+    "prerender",
+    "import",
+];
+
+/// Every other link type the HTML standard and the browsers define, and the
+/// legacy ones in use (HEAD-102): none may be added without this test.
+const OTHERS: [&str; 19] = [
+    "bookmark",
+    "expect",
+    "external",
+    "help",
+    "me",
+    "next",
+    "nofollow",
+    "noopener",
+    "noreferrer",
+    "opener",
+    "pingback",
+    "prev",
+    "privacy-policy",
+    "search",
+    "tag",
+    "terms-of-service",
+    "shortcut",
+    "serviceworker",
+    "compression-dictionary",
+];
+
+#[test]
+fn a_head_link_carries_only_the_listed_link_types() {
+    let manifest = styled_manifest();
+    let module = module();
+    let slots = SlotData::new(0);
+    let head_for = |link: HeadLink| {
+        let page = try_render(
+            &config(&manifest, "/", &module, &slots, None),
+            &RenderCtx::new().with_head_link(link),
+        )
+        .expect("renders");
+        head_and_nonce(page).0
+    };
+
+    // Each kept type, in any case, alone and beside another kept type.
+    for rel in KEPT {
+        for given in [rel.to_string(), rel.to_ascii_uppercase()] {
+            let link = HeadLink::new(&given, "/x").unwrap_or_else(|e| panic!("{given}: {e}"));
+            assert!(
+                head_for(link).ends_with(&format!("<link rel=\"{rel}\" href=\"/x\">\n")),
+                "{given}"
+            );
+        }
+        let pair = HeadLink::new(&format!("alternate\t {rel}"), "/x").expect("two kept types");
+        assert!(head_for(pair).ends_with(&format!("<link rel=\"alternate {rel}\" href=\"/x\">\n")));
+    }
+
+    // A type that loads style or script, alone, in any case, or beside a
+    // kept one: HEAD-101, whatever the href.
+    for rel in LOADING {
+        for given in [
+            rel.to_string(),
+            rel.to_ascii_uppercase(),
+            format!("alternate {rel}"),
+            format!("{rel} icon"),
+        ] {
+            for href in [
+                "/same-origin.css",
+                "data:text/css,body{}",
+                "https://cdn.example/x.js",
+            ] {
+                let error = HeadLink::new(&given, href).expect_err(&given);
+                assert_eq!(error.code(), "HEAD-101", "{given} {href}");
+                assert!(error.reason().contains("build's manifest"), "{error}");
+            }
+        }
+    }
+
+    // Any other type, or no link type at all: HEAD-102.
+    for rel in OTHERS.iter().copied().chain([
+        "",
+        " ",
+        "shortcut icon",
+        "icon\"",
+        "ic<on",
+        "icon,",
+        "stylesheets",
+        "x-icon",
+    ]) {
+        let error = HeadLink::new(rel, "/x").expect_err(rel);
+        assert_eq!(error.code(), "HEAD-102", "{rel:?}");
+        assert!(error.to_string().starts_with("HEAD-102 "), "{error}");
     }
 }

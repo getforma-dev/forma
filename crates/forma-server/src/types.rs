@@ -58,8 +58,9 @@ pub struct PageConfig<'a> {
     /// the point of the field (callers use it to emit their own markup, such
     /// as a hand-written shell or a logo). Never build it from untrusted data.
     ///
-    /// Pass a [`RawHtml`](crate::RawHtml), the one named raw-HTML type, as
-    /// `Some(&RawHtml::trusted(..))`, so review and CI find every raw entry by
+    /// Pass a [`RawHtml`](crate::RawHtml), the one named raw-HTML type, bound
+    /// first and borrowed: `let logo = RawHtml::trusted(..);` then
+    /// `body_prefix: Some(&logo)`, so review and CI find every raw entry by
     /// its constructor (DR-19, SR8); the line compiles in 3.0.0 too, where the
     /// field takes only a `RawHtml`. A plain string still works and is written
     /// exactly as before; in debug builds the first one a process renders

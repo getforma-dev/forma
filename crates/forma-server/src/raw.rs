@@ -14,7 +14,12 @@
 //! In 0.2.x `body_prefix` is still an `Option<&str>`, so every 0.2.1 call keeps
 //! compiling. A `RawHtml` goes into it as `Some(&raw)`: it dereferences to the
 //! markup, so the field takes it as it is, and the same line compiles in 3.0.0,
-//! where the field takes only a `RawHtml`. A plain string still works and is
+//! where the field takes only a `RawHtml`. Bind the value first
+//! (`let raw = RawHtml::trusted(..);`): written inline,
+//! `Some(&RawHtml::trusted(..))` borrows a temporary that Rust 1.85,
+//! forma-server's MSRV, drops at the end of the `let config = PageConfig {
+//! .. };` statement, so it does not compile there (E0716); newer compilers
+//! extend the temporary, which hides the problem. A plain string still works and is
 //! written exactly as before; in a debug build the first one a process renders
 //! logs one warning, code `RAW-101`, naming the route:
 //!
@@ -173,9 +178,9 @@ pub(crate) fn check_body_prefix(body_prefix: &str, route: &str) {
                 code = "RAW-101",
                 route,
                 "RAW-101 PageConfig::body_prefix was given a plain string on route {route}: \
-                 wrap the markup in RawHtml::trusted (body_prefix: Some(&RawHtml::trusted(..))) \
-                 so review and CI can find it; 3.0.0 accepts only a RawHtml (DR-19). Logged \
-                 once per process, in debug builds."
+                 bind the markup as a RawHtml first (let markup = RawHtml::trusted(..);) and \
+                 pass body_prefix: Some(&markup), so review and CI can find it; 3.0.0 accepts \
+                 only a RawHtml (DR-19). Logged once per process, in debug builds."
             );
         }
     }

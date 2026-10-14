@@ -101,13 +101,37 @@ impl ModulePreloads {
 }
 
 /// A `<link>` for the page's head that is not an asset of the build: an icon,
-/// a web app manifest, a canonical URL (DR-19). The typed home for what ksx
-/// Studio splices before `</head>`.
+/// a canonical URL, a feed (DR-19). The typed home for what ksx Studio
+/// splices before `</head>`.
 ///
-/// Every value is escaped for its attribute, and a script URL is refused, so
-/// a head link is never markup and never runs anything. Add it to a render
-/// with [`RenderCtx::with_head_link`](crate::RenderCtx::with_head_link); it is
+/// Its `rel` is one or more of a closed list of link types, none of which
+/// loads style or script:
+///
+/// | Link types | Why they are kept |
+/// |---|---|
+/// | `icon`, `apple-touch-icon`, `mask-icon` | An image the browser shows for the page, fetched under the policy's `img-src` |
+/// | `manifest` | The web app manifest; see below |
+/// | `canonical`, `alternate`, `author`, `license` | Metadata: the browser fetches and runs nothing |
+/// | `preconnect`, `dns-prefetch` | A connection hint to an origin the page will use: nothing is fetched or run |
+///
+/// Everything else is refused, with a code: `stylesheet`, `modulepreload`,
+/// `preload`, `prefetch`, `prerender` and `import` load style or script, and
+/// a page's stylesheets and module preloads come from the build's manifest
+/// (`HEAD-101`); any other word, `shortcut` included (write `icon`), is not on
+/// the list (`HEAD-102`). Link types are matched without regard to case and
+/// written in lower case. Every value is escaped for its attribute, and a
+/// script URL is refused, so a head link is never markup and never runs
+/// anything. Add it to a render with
+/// [`RenderCtx::with_head_link`](crate::RenderCtx::with_head_link); it is
 /// written after the route's stylesheets and preloads, in the order added.
+///
+/// **`manifest` needs a policy the default does not give.** The browser
+/// fetches a web app manifest under `manifest-src`, which falls back to the
+/// strict policy's `default-src 'none'`, so the default policy blocks it.
+/// [`PolicyExtensions`](crate::PolicyExtensions) has no manifest source
+/// (DR-17 and L-38 name image and frame sources, a form target and the
+/// opener policy), so a page that links a manifest today sees it refused,
+/// with a policy violation in the console.
 ///
 /// ```
 /// use forma_server::{HeadLink, RenderCtx};
@@ -120,6 +144,7 @@ impl ModulePreloads {
 /// ```
 ///
 /// Verified by: crates/forma-server/tests/typed_homes.rs > "head_links_are_written_escaped_in_the_head_in_the_order_added"
+/// Verified by: crates/forma-server/tests/typed_homes.rs > "a_head_link_carries_only_the_listed_link_types"
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HeadLink {
     rel: String,
@@ -128,41 +153,83 @@ pub struct HeadLink {
     sizes: Option<String>,
 }
 
+/// The link types a head link may carry (see [`HeadLink`]).
+const LINK_TYPES: &[&str] = &[
+    "icon",
+    "apple-touch-icon",
+    "mask-icon",
+    "manifest",
+    "canonical",
+    "alternate",
+    "author",
+    "license",
+    "preconnect",
+    "dns-prefetch",
+];
+
+/// The link types that load style or script, refused as `HEAD-101`.
+const LOADING_TYPES: &[&str] = &[
+    "stylesheet",
+    "modulepreload",
+    "preload",
+    "prefetch",
+    "prerender",
+    "import",
+];
+
 impl HeadLink {
-    /// A link of type `rel` (one or more link types, such as `icon` or
-    /// `apple-touch-icon`, separated by single spaces) to `href`.
+    /// A link of type `rel` (one or more of [`HeadLink`]'s link types,
+    /// separated by whitespace) to `href`.
     ///
     /// # Errors
     ///
-    /// A [`HeadLinkError`] when `rel` is not a list of link types (ASCII
-    /// letters, digits and `-`), or `href` is empty or a `javascript:` or
-    /// `vbscript:` URL, in any case and with any tab, newline or leading
-    /// control character a browser would strip.
+    /// A [`HeadLinkError`] with its [`code`](HeadLinkError::code):
     ///
+    /// | Code | Cause |
+    /// |---|---|
+    /// | HEAD-101 | `rel` names a link type that loads style or script |
+    /// | HEAD-102 | `rel` names no link type, or one outside the list |
+    /// | HEAD-103 | `href` is a `javascript:` or `vbscript:` URL, in any case and with any tab, newline or leading control character a browser strips |
+    /// | HEAD-104 | `href` is empty |
+    ///
+    /// Verified by: crates/forma-server/tests/typed_homes.rs > "a_head_link_carries_only_the_listed_link_types"
     /// Verified by: crates/forma-server/tests/typed_homes.rs > "a_head_link_refuses_a_script_url_and_keeps_every_other"
     pub fn new(rel: &str, href: &str) -> Result<HeadLink, HeadLinkError> {
-        let refuse = |reason| {
+        let refuse = |code, reason| {
             Err(HeadLinkError {
                 rel: rel.to_string(),
                 href: href.to_string(),
+                code,
                 reason,
             })
         };
-        let types_ok = !rel.is_empty()
-            && rel.split(' ').all(|t| {
-                !t.is_empty() && t.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
-            });
-        if !types_ok {
-            return refuse("rel is not a list of link types separated by single spaces");
+        let types: Vec<String> = rel
+            .split_ascii_whitespace()
+            .map(str::to_ascii_lowercase)
+            .collect();
+        if types.iter().any(|t| LOADING_TYPES.contains(&t.as_str())) {
+            return refuse(
+                "HEAD-101",
+                "rel names a link type that loads style or script; a page's stylesheets and \
+                 module preloads come from the build's manifest",
+            );
         }
-        if href.trim().is_empty() {
-            return refuse("href is empty");
+        if types.is_empty() || !types.iter().all(|t| LINK_TYPES.contains(&t.as_str())) {
+            return refuse(
+                "HEAD-102",
+                "rel is not one of the link types a head link carries: icon, apple-touch-icon, \
+                 mask-icon, manifest, canonical, alternate, author, license, preconnect, \
+                 dns-prefetch",
+            );
         }
         if is_script_url(href) {
-            return refuse("href is a script URL");
+            return refuse("HEAD-103", "href is a script URL");
+        }
+        if href.trim().is_empty() {
+            return refuse("HEAD-104", "href is empty");
         }
         Ok(HeadLink {
-            rel: rel.to_string(),
+            rel: types.join(" "),
             href: href.to_string(),
             mime: None,
             sizes: None,
@@ -223,15 +290,21 @@ fn is_script_url(href: &str) -> bool {
     scheme.eq_ignore_ascii_case("javascript") || scheme.eq_ignore_ascii_case("vbscript")
 }
 
-/// A [`HeadLink`] that could not be made, and why.
+/// A [`HeadLink`] that could not be made: its code and why.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HeadLinkError {
     rel: String,
     href: String,
+    code: &'static str,
     reason: &'static str,
 }
 
 impl HeadLinkError {
+    /// The stable code, `HEAD-101` to `HEAD-104` (see [`HeadLink::new`]).
+    pub fn code(&self) -> &'static str {
+        self.code
+    }
+
     /// Why the link was refused.
     pub fn reason(&self) -> &'static str {
         self.reason
@@ -242,8 +315,8 @@ impl fmt::Display for HeadLinkError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "head link rel={:?} href={:?}: {}",
-            self.rel, self.href, self.reason
+            "{} head link rel={:?} href={:?}: {}",
+            self.code, self.rel, self.href, self.reason
         )
     }
 }

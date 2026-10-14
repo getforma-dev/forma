@@ -176,7 +176,12 @@ fn a_string_body_prefix_warns_once_per_process_in_debug_builds_and_a_raw_html_ne
         let (code, message) = &seen[0];
         assert_eq!(code, "RAW-101");
         assert!(message.starts_with("RAW-101 "), "{message}");
-        assert!(message.contains("RawHtml::trusted"), "{message}");
+        // The form it suggests binds the value first, as the MSRV needs.
+        assert!(
+            message.contains("let markup = RawHtml::trusted(..);"),
+            "{message}"
+        );
+        assert!(message.contains("body_prefix: Some(&markup)"), "{message}");
         // It names the first route that passed a string.
         assert!(message.contains("route /t/:tenant"), "{message}");
     } else {

@@ -118,13 +118,20 @@ deprecated and go in 3.0.0.
   FORMA-126). Markup a handler vouches for, written into the page unescaped;
   made only by `RawHtml::trusted` (no `From`, `Default`, `FromStr` or public
   field), so a search for that name finds every raw entry, which is what
-  SR8's allowlist lint will look for. `body_prefix` takes it as
-  `Some(&RawHtml::trusted(..))`: it dereferences to the markup, so the 0.2.x
-  field (`Option<&str>`) accepts it and the same line compiles in 3.0.0, where
-  the field takes only a `RawHtml`. Written exactly as the same text passed as
+  SR8's allowlist lint will look for. `body_prefix` takes it bound first and
+  borrowed, `let logo = RawHtml::trusted(..);` then `body_prefix:
+  Some(&logo)`: it dereferences to the markup, so the 0.2.x field
+  (`Option<&str>`) accepts it and the same line compiles in 3.0.0, where the
+  field takes only a `RawHtml`. (Written inline,
+  `Some(&RawHtml::trusted(..))` borrows a temporary that Rust 1.85, the
+  MSRV, drops at the end of the statement: E0716 there.) Written exactly as the same text passed as
   a string. Tests: `tests/raw_html.rs` > `a_search_finds_one_raw_constructor`
-  (the crate's sources hold one struct literal, in `trusted`, one function
-  returning a `RawHtml`, and an exact list of trait impls),
+  (in the crate's sources the `html` field is initialised only in
+  `trusted`, whatever type name or `Self` precedes it; the trait impls, the
+  inherent functions and the functions returning a `RawHtml`, however the
+  type is path-qualified, are exact lists; and nine second constructors,
+  the review's two among them, each added to a copy of the sources, are
+  found),
   `a_raw_html_body_prefix_is_written_exactly_as_the_same_string_on_every_path`
   (`render_page`, `render_page_with_nonce`, `try_render`,
   `render_browser_shell`); the `compile_fail` doctests on `RawHtml`
@@ -146,14 +153,26 @@ deprecated and go in 3.0.0.
     `a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table`;
     `head::tests::a_preload_must_be_one_of_the_builds_files`.
   - `RenderCtx::with_head_link(HeadLink)`: a `<link>` in the head (an icon, a
-    web app manifest, a canonical URL), every value escaped, written after the
+    canonical URL, a feed), every value escaped, written after the
     stylesheets and preloads in the order added: the home for ksx Studio's
-    `</head>` splice. `HeadLink::new(rel, href)` refuses (`HeadLinkError`) a
-    `rel` that is not a list of link types and a `javascript:` or `vbscript:`
-    href, in any case and with the tabs, newlines and leading controls a
-    browser strips; `with_type`, `with_sizes` add attributes. Tests:
-    `tests/typed_homes.rs` >
+    `</head>` splice. `HeadLink::new(rel, href)` takes a closed list of link
+    types, none of which loads style or script: `icon`, `apple-touch-icon`,
+    `mask-icon` (images, under `img-src`), `manifest`, `canonical`,
+    `alternate`, `author`, `license` (metadata), `preconnect`, `dns-prefetch`
+    (connection hints), matched without regard to case. It refuses, with a
+    `HeadLinkError` and its `code()`: `HEAD-101` for `stylesheet`,
+    `modulepreload`, `preload`, `prefetch`, `prerender` and `import` (a
+    page's stylesheets and module preloads come from the build's manifest);
+    `HEAD-102` for any other word; `HEAD-103` for a `javascript:` or
+    `vbscript:` href, in any case and with the tabs, newlines and leading
+    controls a browser strips; `HEAD-104` for an empty href. `with_type`,
+    `with_sizes` add attributes. A `manifest` link needs `manifest-src`,
+    which the default policy (`default-src 'none'`) does not grant and
+    `PolicyExtensions` cannot add, so it is refused by the browser today
+    (documented on `HeadLink`). Tests: `tests/typed_homes.rs` >
     `head_links_are_written_escaped_in_the_head_in_the_order_added`,
+    `a_head_link_carries_only_the_listed_link_types` (every kept type, every
+    loading type, and every other link type the HTML standard defines),
     `a_head_link_refuses_a_script_url_and_keeps_every_other`;
     `head::tests::script_urls_are_recognised_as_a_browser_reads_them`.
   - Data: `PageConfig::config_json`, as before (and in 3.0.0 the state block).
