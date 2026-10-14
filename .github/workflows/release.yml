@@ -178,8 +178,9 @@ jobs:
         run: |
           echo "::error title=$GITHUB_REF_NAME did not pack::Read the error above, then match it here."
           echo "UNPUBLISHED DEPENDENCY: 'no matching package named forma-ir' or 'failed to select"
-          echo "  a version for the requirement forma-ir' means the ir-v* tag has not shipped."
-          echo "  Publish forma-ir first, then re-run all jobs of this run. The tag is fine."
+          echo "  a version for \`forma-ir\`' means the forma-ir this forma-server needs (a version,"
+          echo "  or a feature such as __fault-injection) is not on crates.io yet. Release forma-ir"
+          echo "  first (ir-v*), wait for that run to publish, then re-run all jobs of this run."
           echo "VERSION: 'does not match tag' means Cargo.toml and the tag disagree. Fix and re-tag."
 
   # What `cargo publish` verifies by default, done here from the packed bytes,
