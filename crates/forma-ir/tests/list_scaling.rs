@@ -14,9 +14,10 @@
 //!   counts allocations through a wrapping global allocator, so it cannot flake
 //!   on a loaded machine and it pins the actual mechanism (per-row copying).
 //! * `list_walk_time_is_linear_in_row_count` is the end-to-end claim in the
-//!   units a user feels. It is deliberately loose (6x for a 4x row increase,
-//!   where linear is 4x and quadratic is 16x) so that only a real asymptotic
-//!   regression trips it.
+//!   units a user feels, measured so that a loaded machine cannot fail it
+//!   (FORMA-167): 100 and 1,600 rows, where linear is 16x and quadratic about
+//!   256x, judged at 32x on the median of paired rounds, so only a real
+//!   asymptotic regression trips it.
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -239,47 +240,98 @@ fn list_walk_allocations_are_linear_in_row_count() {
 
 /// Wall-clock cost must grow linearly with row count.
 ///
-/// Looser and noisier than the allocation gate, but it is the claim in the
-/// units that matter: this is the number the "native-speed SSR" thesis rests
-/// on. Measured as best-of-N to reject scheduler noise rather than average it
-/// in.
+/// Noisier than the allocation gate, but it is the claim in the units that
+/// matter: this is the number the "native-speed SSR" thesis rests on. It must
+/// not fail on a loaded machine (FORMA-167: the best of nine samples at 100
+/// and 400 rows, bounded at 6x, measured 11.8x under a load average of 80, and
+/// failed CI once). Three choices make it robust:
+///
+/// * The sizes are 16x apart, 100 and 1,600 rows: linear is about 16x and the
+///   quadratic walker this gate replaced about 256x. The bound, 32x, is twice
+///   linear and an eighth of quadratic.
+/// * Each round times the two sizes back to back, as batches of equal work
+///   (sixteen 100-row walks, then one 1,600-row walk, or the other way round
+///   in alternate rounds), so the pair shares one core, clock and load.
+/// * The verdict is the median of the rounds' ratios. A round the scheduler
+///   disturbs moves its own ratio, up or down; the median of 41 moves only if
+///   most rounds are disturbed the same way. Measured here at load averages
+///   of 109 and 210, single rounds ranged from 0.8x to 507x and the median
+///   from 16.0x to 17.1x.
+///
+/// Two-sided: a walker that deep-copies the list for every row, the defect
+/// this gate replaced, fails it (medians 213x to 226x) and the allocation gate
+/// too; one that only scans the list for every row, allocating nothing, fails
+/// this gate alone (medians 49x to 88x over ten runs).
 #[test]
 fn list_walk_time_is_linear_in_row_count() {
+    const SMALL: usize = 100;
+    const LARGE: usize = 1_600;
+    const ROUNDS: usize = 41;
+    const BOUND: f64 = 32.0;
+
     let _guard = MEASURE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let module = build_table_module();
+    let small = table_slots(&module, SMALL);
+    let large = table_slots(&module, LARGE);
+    let batch = LARGE / SMALL;
 
-    let best_micros = |rows: usize| -> f64 {
-        let slots = table_slots(&module, rows);
-        for _ in 0..5 {
-            std::hint::black_box(walk_to_html(&module, &slots).unwrap());
+    // Seconds per walk, over `walks` walks of `slots`.
+    let per_walk = |slots: &SlotData, walks: usize| -> f64 {
+        let start = Instant::now();
+        for _ in 0..walks {
+            std::hint::black_box(walk_to_html(&module, slots).unwrap());
         }
-        // Enough inner iterations that one sample is far longer than the
-        // clock's resolution, and enough outer rounds that at least one lands
-        // on an unpreempted slice.
-        let iters = 200;
-        let mut best = f64::MAX;
-        for _ in 0..9 {
-            let start = Instant::now();
-            for _ in 0..iters {
-                std::hint::black_box(walk_to_html(&module, &slots).unwrap());
-            }
-            let micros = start.elapsed().as_secs_f64() * 1e6 / iters as f64;
-            if micros < best {
-                best = micros;
-            }
-        }
-        best
+        start.elapsed().as_secs_f64() / walks as f64
     };
 
-    let t100 = best_micros(100);
-    let t400 = best_micros(400);
-    let ratio = t400 / t100;
+    // Warm up both: the first walks size the output and fault in the data.
+    per_walk(&small, batch);
+    per_walk(&large, 1);
+
+    // The median of ROUNDS ratios is under BOUND exactly when more than half
+    // of them are, so the rounds stop once one side has a majority: a
+    // quadratic walker fails in half the rounds, which at 1,600 rows matters.
+    let majority = ROUNDS / 2 + 1;
+    let mut ratios = Vec::with_capacity(ROUNDS);
+    let mut best_small = f64::MAX;
+    let mut best_large = f64::MAX;
+    for round in 0..ROUNDS {
+        let (t_small, t_large) = if round % 2 == 0 {
+            let s = per_walk(&small, batch);
+            (s, per_walk(&large, 1))
+        } else {
+            let l = per_walk(&large, 1);
+            (per_walk(&small, batch), l)
+        };
+        best_small = best_small.min(t_small);
+        best_large = best_large.min(t_large);
+        ratios.push(t_large / t_small);
+        let under = ratios.iter().filter(|r| **r < BOUND).count();
+        if under >= majority || ratios.len() - under >= majority {
+            break;
+        }
+    }
+    ratios.sort_by(|a, b| {
+        a.partial_cmp(b)
+            .expect("a ratio of two durations is a number")
+    });
+    let under = ratios.iter().filter(|r| **r < BOUND).count();
+    let median = ratios[ratios.len() / 2];
 
     assert!(
-        ratio < 6.0,
-        "LIST render time is super-linear: {t100:.1} µs at 100 rows, \
-         {t400:.1} µs at 400 rows ({ratio:.2}x for 4x the rows). \
-         Linear is ~4x; the quadratic walker this gate replaced was ~15.9x."
+        under >= majority,
+        "LIST render time is super-linear: {} of {} rounds measured {LARGE} rows at \
+         {BOUND}x or more the time of {SMALL} ({batch}x the rows; linear is ~{batch}x, the \
+         quadratic walker this gate replaced ~{}x); their median is {median:.1}x. \
+         Best walks: {:.1} µs at {SMALL} rows, {:.1} µs at {LARGE}; rounds from \
+         {:.1}x to {:.1}x.",
+        ratios.len() - under,
+        ratios.len(),
+        batch * batch,
+        best_small * 1e6,
+        best_large * 1e6,
+        ratios[0],
+        ratios[ratios.len() - 1],
     );
 }
 

@@ -152,6 +152,21 @@ may meet, and its "Deprecated" names each deprecation's 3.0.0 replacement.
   not a production one (`ci.yml`, the README, `docs/ARCHITECTURE.md`).
   `docs/ARCHITECTURE.md` marks B6, the compiler's last-insert-wins wording,
   reconciled with forma-tools#13.
+- **The list-walk timing gate holds on a loaded machine (FORMA-167,
+  FORMA-179; no code changed).** `list_walk_time_is_linear_in_row_count` took
+  the best of nine samples at 100 and 400 rows and failed above 6x; under load
+  it measured 11.8x and failed. It now times 100 and 1,600 rows (linear about
+  16x, the quadratic walker it replaced about 256x) as back-to-back batches of
+  equal work, and judges the median of up to 41 such rounds against 32x. The
+  allocation gate beside it is unchanged. CONTRIBUTING says which skipped CI
+  jobs are by design.
+- **The release's artefact upload can be re-run (A2 audit S7, FORMA-179; no
+  code changed).** The release's `pack` job uploads `release-packed` with
+  `overwrite: true`, so re-running all jobs after a failure replaces the
+  earlier attempt's artefact instead of failing on its name (A2 audit S7);
+  `publish` still checks every file against the record whose hash `pack`
+  passes as a job output. The SR43 lint's new rule K4 requires it, with two
+  seeds in `--self-test`.
 
 ## [0.2.1] - 2026-10-14
 
