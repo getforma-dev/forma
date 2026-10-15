@@ -21,3 +21,14 @@ it('does not teardown or cache a typed raw update when its owner vetoes replacem
  expect(element.firstChild).toBe(before);
  raw.write({__html:trustedHtml('<i>B</i>')});expect(element.innerHTML).toBe('<i>B</i>');
 });
+
+
+it('clears the actual template content once while preserving its fragment identity',()=>{
+ const element=document.createElement('template');element.innerHTML='<b>A</b>';
+ const content=element.content,original=content.firstChild,plan=prepareRaw(element,{__html:trustedHtml('<b>A</b>')});
+ expect(element.content).toBe(content);expect(content.firstChild).toBe(original);
+ let teardowns=0;const before=()=>{teardowns++;expect(content.firstChild).toBe(original)};
+ plan.write(false,before);plan.write(false,before);
+ expect(teardowns).toBe(1);expect(content.childNodes.length).toBe(0);expect(element.innerHTML).toBe('');
+ plan.write({__html:trustedHtml('<i>B</i>')});expect(element.innerHTML).toBe('<i>B</i>');expect(element.content).toBe(content);
+});

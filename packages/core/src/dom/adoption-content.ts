@@ -100,6 +100,10 @@ function typedMarkup(value: unknown): string {
  * text is opaque; the caller must not ask AdoptionDom to parse these children. */
 export function prepareRaw(element: Element, initial: unknown): PreparedRaw {
   const ownsContent = initial != null && initial !== false;
+  // HTML templates own their children in a stable content fragment rather
+  // than childNodes. The caller snapshots that fragment before component code.
+  const content = element.namespaceURI === 'http://www.w3.org/1999/xhtml' && element.localName === 'template'
+    ? (element as HTMLTemplateElement).content : element;
   let previous: string | null = null;
   if (ownsContent) {
     const sink = typedMarkup(initial), expected = context(element);
@@ -111,7 +115,7 @@ export function prepareRaw(element: Element, initial: unknown): PreparedRaw {
     ownsContent,
     write(next, beforeReplace) {
       if (next == null || next === false) {
-        if (element.firstChild) { beforeReplace?.(); element.replaceChildren(); }
+        if (content.firstChild) { beforeReplace?.(); content.replaceChildren(); }
         previous = null;
         return;
       }
