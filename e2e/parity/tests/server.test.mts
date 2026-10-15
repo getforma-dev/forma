@@ -90,9 +90,12 @@ test('typed: the synthesized manifest loads through the production loader, binds
 });
 
 test('typed: generated states of every declared type render, and the refusal table is refused with its code at its path', () => {
-  const schema = describeModule(propsContract).schema;
-  const generated = Array.from({ length: 10 }, (_, index) => generate(schema, 'forma-183', index, { module: 'props-contract' }));
-  const base = generate(schema, 'forma-183', 1, { module: 'props-contract' }) as Record<string, Json>;
+  const described = describeModule(propsContract);
+  const schema = described.schema;
+  const keyPaths = described.keys.map(key => key.path);
+  assert.deepEqual(described.keys.map(key => [key.slot, key.path]), [['rows', ['id']], ['rows', ['id']]], 'two keyed views of rows, by id');
+  const generated = Array.from({ length: 10 }, (_, index) => generate(schema, 'forma-183', index, { module: 'props-contract', keyPaths }));
+  const base = generate(schema, 'forma-183', 1, { module: 'props-contract', keyPaths }) as Record<string, Json>;
   assert.equal((base.rows as Json[]).length, 1, 'state 1 has one row, so rows[0] exists');
   const refusals: { state: Record<string, Json>; code: string; path: string }[] = REFUSALS.map(refusal => ({
     state: { ...base, [refusal.type === 'number' ? 'safeCount' : 'at']: refusal.value },

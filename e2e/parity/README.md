@@ -84,24 +84,33 @@ A generated state is one value assignment for a declared props schema (FORMA-102
   no clock. The seed and index are in every report line and are what `renderBoth` takes to
   reproduce one state. A golden sequence and a golden state are pinned by the tests.
 - **Edge-first, one rotation per field.** Each type has an ordered edge list, and each field a
-  rotation into it: its rank among the same-typed fields of the schema, in schema order. State `i`
-  takes edge `(i + rank) mod n`, so a field visits every edge of its type once in its first `n`
-  states, two same-typed fields never hold the same edge in those states (a value routed into
-  another prop's slot cannot pass), and the first fields meet the priority edges within ten states.
-  The rank comes from the schema, not the state, so an absent optional or a shorter array never
-  shifts another field. Past the list a coin picks an edge or a random draw. Strings (each once):
-  empty, one character, 2,048 characters, `</script>`, a marker's spelling, the escapable five,
-  NUL, CRLF, CR, a leading line feed, astral, combining, U+200B, `"null"`, `"true"`, `"0"`,
-  whitespace, then every input of the shared rule-1 vectors
+  rank among the same-typed fields of the schema, in schema order. A field takes its edge rotated
+  by its rank inside the list's priority block (its first ten edges) for the first ten states, and
+  over the rest of the list after, so every field meets every priority edge within ten states (step
+  1 runs ten), two same-typed fields never hold the same edge in the list's first `n` states (a
+  value routed into another prop's slot cannot pass), and each field visits every edge once. The
+  rank comes from the schema, not the state, so an absent optional or a shorter array never
+  shifts another field. Past the list a coin picks an edge or a random draw. Strings (each once,
+  the priority block first): empty, one character, 2,048 characters, `</script>`, a marker's
+  spelling, the escapable five, NUL, CRLF, CR, a leading line feed; then astral, combining,
+  U+200B, `"null"`, `"true"`, `"0"`, whitespace, and every input of the shared rule-1 vectors
   (`crates/forma-ir/tests/fixtures/parity/normalization.json`: a vector added there joins the
   domain without a code change); never a lone surrogate. Numbers: `0`, `±1`, `±(2^53 - 1)`,
   `2^53`, `1e21`, `1e-7`, fractions, `MAX_VALUE`, the subnormal; never NaN or an infinity (the
   server refuses them, and a refusal is not a parity case; they are in the typed path's refusal
-  table) and not `-0` (every path the harness
-  drives carries numbers as JSON, which writes `-0` as `0`). Dates: epoch `0`, `±1`, `±8.64e15`, a
-  fixed 2026 instant. Booleans alternate; enums take every variant in order; an optional is present
-  and absent on alternate states, so its inner value visits half as many edges as a plain field;
-  arrays take lengths 0, 1, 2, 3 and 32 first.
+  table) and not `-0` (every path the harness drives carries numbers as JSON, which writes `-0` as
+  `0`). Dates: epoch `0`, `±1`, `±8.64e15`, a fixed 2026 instant. Booleans alternate; enums take
+  every variant in order; arrays take lengths 0, 1, 2, 3 and 32 first.
+- **Optionals.** An optional's presence follows bit `rank` of the state index: the first optional
+  alternates every state, the second every two, so `k` optionals reach all `2^k` present/absent
+  combinations within `2^k` states (all present at state 0). Its inner value advances once per
+  presence, so the first optional's inner value visits five edges in ten states.
+- **List keys.** A keyed list (FMIR section `0x0006`, FORMA-181) refuses a row key that is not a
+  string or a safe integer, or that repeats (RENDER-503). Every generated array of objects holding
+  one of the module's key paths gets unique identities there: integers stepping by one from a base
+  (`0`, `±1`, `±(2^53 - 1)`, `42`, away from the bound), or an edge string suffixed with the row's
+  position. Unique values are valid wherever the array is keyed or not, so the rule needs no map
+  from a LIST to the declared field it iterates.
 - **Wire JSON.** An absent optional field is an omitted key, an absent optional element is `null`,
   a date is epoch milliseconds; the browser side revives dates by the schema.
 

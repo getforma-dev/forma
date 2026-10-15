@@ -6,7 +6,7 @@
 //!
 //! ```text
 //! parity_render describe <module.ir>
-//!     -> {"schema": [[{"name", "type"}]], "islands": [...], "slots": [...]}
+//!     -> {"schema": [[{"name", "type"}]], "islands": [...], "slots": [...], "keys": [...]}
 //! parity_render render <module.ir> < {"states": [ {slot name: value}, ... ]}
 //!     -> [ {"html", "state", "counts"} | {"error", "componentPath"} ]
 //! parity_render typed < {"modules": [{"name", "route", "manifest", "files", "states"}]}
@@ -139,7 +139,28 @@ fn describe(module: &IrModule) -> Result<String, Box<dyn Error>> {
             "default": String::from_utf8_lossy(&entry.default_bytes),
         }));
     }
-    Ok(json!({ "schema": objects, "islands": islands, "slots": slots }).to_string())
+    // Each keyed LIST (FMIR section 0x0006, FORMA-181) with the slot it iterates, read
+    // from the LIST opcode's operands (slot_id, u16 little-endian, after the opcode byte).
+    let mut keys = Vec::new();
+    for key in &module.key_paths {
+        let at = key.list_offset as usize + 1;
+        let slot_id = module
+            .opcodes
+            .get(at..at + 2)
+            .and_then(|bytes| <[u8; 2]>::try_from(bytes).ok())
+            .map(u16::from_le_bytes);
+        let slot =
+            match slot_id.and_then(|id| module.slots.entries().iter().find(|s| s.slot_id == id)) {
+                Some(entry) => Some(string(entry.name_str_idx)?),
+                None => None,
+            };
+        let mut path = Vec::with_capacity(key.segments.len());
+        for segment in &key.segments {
+            path.push(string(*segment)?);
+        }
+        keys.push(json!({ "listOffset": key.list_offset, "slot": slot, "path": path }));
+    }
+    Ok(json!({ "schema": objects, "islands": islands, "slots": slots, "keys": keys }).to_string())
 }
 
 fn prop_type(module: &IrModule, kind: &PropType) -> Result<Value, Box<dyn Error>> {

@@ -66,21 +66,28 @@ export function statesFor(described: Described, entry: CorpusEntry, options: Pla
   const declared = (described.schema[0] ?? []).length > 0;
   const all = declared ? Array.from({ length: options.states }, (_, i) => i) : [0];
   const indices = options.indices ? options.indices.filter(i => declared || i === 0) : all;
-  return { indices, states: indices.map(index => generate(described.schema, options.seed, index, { module: entry.name })) };
+  const keyPaths = described.keys.map(key => key.path);
+  return { indices, states: indices.map(index => generate(described.schema, options.seed, index, { module: entry.name, keyPaths })) };
 }
 
 export async function prepare(entry: CorpusEntry, options: PlanOptions): Promise<ModulePlan> {
   const ir = resolve(REPO, entry.ir);
   const described = describeModule(ir);
   const { indices, states } = statesFor(described, entry, options);
-  const twin = await bundlePage(entry.page);
   let script: string | null = null;
   let diagnostics: readonly string[] = [];
   let failure: string | undefined;
+  // A page esbuild cannot bundle is this module's error report, as every browser-side failure is.
+  let twin = '';
+  try {
+    twin = await bundlePage(entry.page);
+  } catch (error) {
+    failure = `the page did not bundle: ${(error instanceof Error ? error.message : String(error)).split('\n')[0]}`;
+  }
   try {
     const product = await bundleEntry(entry.name, entry.corpus);
     if (Buffer.compare(Buffer.from(product.ir), readFileSync(ir)) !== 0) {
-      failure = `the compiler's .ir for ${entry.corpus}/${entry.name} is not ${entry.ir}: the browser entry and the served module are not a pair (run the FMIR contract step)`;
+      failure ??= `the compiler's .ir for ${entry.corpus}/${entry.name} is not ${entry.ir}: the browser entry and the served module are not a pair (run the FMIR contract step)`;
     }
     script = product.js;
     diagnostics = product.diagnostics;
@@ -88,7 +95,7 @@ export async function prepare(entry: CorpusEntry, options: PlanOptions): Promise
       failure ??= `corpus.json says ${entry.kind}, but the production entry ${script === null ? 'ships no script' : 'ships a script'}`;
     }
   } catch (error) {
-    failure = `the production entry did not build: ${error instanceof Error ? error.message : String(error)}`;
+    failure ??= `the production entry did not build: ${error instanceof Error ? error.message : String(error)}`;
   }
   return { entry, described, indices, states, twin, script, diagnostics, ...(failure ? { failure } : {}) };
 }

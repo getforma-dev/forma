@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ARRAY_LENGTH_EDGES, DATE_EDGES, NUMBER_EDGES, STRING_EDGES, edgesOf, fieldOffsets, fnv1a, generate, sharedVectorInputs, splitmix32,
+  ARRAY_LENGTH_EDGES, DATE_EDGES, KEY_INTEGER_BASES, NUMBER_EDGES, PRIORITY, STRING_EDGES, edgeIndex, edgesOf, fieldOffsets, fnv1a, generate,
+  present, sharedVectorInputs, splitmix32,
   type Json, type Schema,
 } from '../src/generate.mts';
 
@@ -155,7 +156,7 @@ test('a field\'s rotation comes from the schema, so an absent optional or a shor
   ]];
   assert.deepEqual([...fieldOffsets(schema)], [['maybe?', 0], ['maybe', 0], ['list#length', 0], ['list[]', 1], ['title', 2]]);
   for (let index = 0; index < STRING_EDGES.length; index++) {
-    assert.equal(generate(schema, 's', index).title, STRING_EDGES[(index + 2) % STRING_EDGES.length], `state ${index}`);
+    assert.equal(generate(schema, 's', index).title, STRING_EDGES[edgeIndex(STRING_EDGES.length, index, 2)], `state ${index}`);
   }
 });
 
@@ -178,4 +179,57 @@ test('every generated string is well-formed UTF-16: no lone surrogate in the edg
     for (const value of [state.s, ...state.list]) assert.ok(!lone.test(value), `state ${index}: ${JSON.stringify(value)}`);
   }
   assert.equal(new Set(STRING_EDGES).size, STRING_EDGES.length, 'each edge once');
+});
+
+test('every string field meets the priority edges within ten states: the rotation runs inside the priority block first', () => {
+  const schema: Schema = [[0, 1, 2, 3].map(i => ({ name: `s${i}`, type: { kind: 'string' as const } }))];
+  const priority = ['', STRING_EDGES.find(s => s.length >= 2048)!, '</script>', '\0', '\r\n'];
+  for (const name of ['s0', 's1', 's2', 's3']) {
+    const seen = new Set(Array.from({ length: PRIORITY }, (_, index) => generate(schema, 'seed', index)[name]));
+    for (const edge of priority) assert.ok(seen.has(edge), `${name} meets ${JSON.stringify(edge.slice(0, 12))} by state ${PRIORITY - 1}`);
+    assert.deepEqual([...seen].sort(), [...STRING_EDGES.slice(0, PRIORITY)].sort(), `${name} sees exactly the priority block first`);
+  }
+  for (let index = 0; index < STRING_EDGES.length; index++) {
+    const state = generate(schema, 'seed', index);
+    assert.equal(new Set(Object.values(state)).size, 4, `four string fields hold four edges at state ${index}`);
+  }
+  assert.deepEqual(Array.from({ length: STRING_EDGES.length }, (_, i) => edgeIndex(STRING_EDGES.length, i, 3)).sort((a, b) => a - b),
+    Array.from({ length: STRING_EDGES.length }, (_, i) => i), 'each field still visits every edge once');
+});
+
+test('optional presence follows one bit of the index per optional, so k optionals reach all 2^k combinations within 2^k states', () => {
+  for (const k of [2, 3]) {
+    const schema: Schema = [Array.from({ length: k }, (_, i) => ({ name: `o${i}`, type: { kind: 'optional' as const, inner: { kind: 'string' as const } } }))];
+    const combos = new Set<string>();
+    for (let index = 0; index < 2 ** k; index++) {
+      const state = generate(schema, 'seed', index);
+      combos.add(Array.from({ length: k }, (_, i) => (`o${i}` in state ? 'P' : '-')).join(''));
+    }
+    assert.equal(combos.size, 2 ** k, `${k} optionals: ${[...combos].join(' ')}`);
+  }
+  assert.deepEqual([0, 1, 2, 3].map(index => [present(index, 0), present(index, 1)]), [[true, true], [false, true], [true, false], [false, false]]);
+  const one: Schema = [[{ name: 'o', type: { kind: 'optional', inner: { kind: 'string' } } }]];
+  assert.deepEqual([0, 2, 4].map(index => generate(one, 's', index).o), STRING_EDGES.slice(0, 3), 'the inner value advances once per presence');
+});
+
+test('list keys: each generated array of rows gets unique identities at the key path, safe integers or suffixed strings', () => {
+  const schema: Schema = [
+    [{ name: 'rows', type: { kind: 'array', element: { kind: 'object', object: 1 } } }, { name: 'tags', type: { kind: 'array', element: { kind: 'object', object: 2 } } }],
+    [{ name: 'id', type: { kind: 'number' } }, { name: 'label', type: { kind: 'string' } }],
+    [{ name: 'meta', type: { kind: 'object', object: 3 } }],
+    [{ name: 'slug', type: { kind: 'optional', inner: { kind: 'string' } } }],
+  ];
+  const keyPaths = [['id'], ['meta', 'slug']];
+  for (let index = 0; index < 60; index++) {
+    const state = generate(schema, 'seed', index, { keyPaths }) as { rows: { id: number }[]; tags: { meta: { slug?: string } }[] };
+    const ids = state.rows.map(row => row.id);
+    assert.ok(ids.every(id => Number.isSafeInteger(id)), `state ${index}: ${ids}`);
+    assert.equal(new Set(ids).size, ids.length, `state ${index}: unique ids`);
+    const slugs = state.tags.map(tag => tag.meta.slug);
+    assert.ok(slugs.every(slug => typeof slug === 'string'), `state ${index}: every row has a key`);
+    assert.equal(new Set(slugs).size, slugs.length, `state ${index}: unique slugs`);
+  }
+  assert.ok(KEY_INTEGER_BASES.includes(2 ** 53 - 1) && KEY_INTEGER_BASES.includes(-(2 ** 53 - 1)), 'the safe bounds are key edges');
+  const unkeyed = generate(schema, 'seed', 4) as { rows: { id: number }[] };
+  assert.ok(unkeyed.rows.some(row => !Number.isInteger(row.id)), 'without key paths the field is an ordinary number');
 });

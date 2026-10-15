@@ -13,6 +13,8 @@ export interface Described {
   readonly schema: Schema;
   readonly islands: readonly { readonly id: number; readonly name: string; readonly schemaObject: number; readonly h: string }[];
   readonly slots: readonly { readonly id: number; readonly name: string; readonly type: string; readonly source: 'server' | 'client'; readonly default: string }[];
+  /** Keyed LISTs (FMIR section 0x0006): the slot each iterates and the key's property path. */
+  readonly keys: readonly { readonly listOffset: number; readonly slot: string | null; readonly path: readonly string[] }[];
 }
 
 export interface Rendered {
