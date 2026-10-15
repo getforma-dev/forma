@@ -15,13 +15,13 @@ after(async () => { await browser?.close(); });
 const run = (module: string, index: number, alterServerHtml?: (html: string) => string) =>
   renderBoth({ module, index, seed: 'forma-183', engine: 'chromium', browser, ...(alterServerHtml ? { alterServerHtml } : {}) });
 
-test('corpus.json names the fourteen js-emitter modules, each with an .ir, its entry folder and a page export', () => {
-  const corpus = readCorpus();
+test('corpus.json names the fourteen js-emitter modules at step 0, each with an .ir, its entry and a page export', () => {
+  const corpus = readCorpus(0);
   assert.equal(corpus.length, 14);
   assert.equal(new Set(corpus.map(entry => entry.name)).size, 14);
   for (const entry of corpus) {
-    assert.match(entry.ir, new RegExp(`^crates/forma-ir/tests/fixtures/js-emitter/${entry.name}\\.ir$`));
-    assert.equal(entry.corpus, 'packages/compiler/tests/fixtures/ir-corpus');
+    assert.match(entry.ir ?? "", new RegExp(`^crates/forma-ir/tests/fixtures/js-emitter/${entry.name}\\.ir$`));
+    assert.match(entry.entry, new RegExp(`^packages/compiler/tests/fixtures/ir-corpus/${entry.name}/app\\.tsx?$`));
     assert.match(entry.page.file, new RegExp(`^packages/compiler/tests/fixtures/ir-corpus/${entry.name}/`));
     assert.ok(['none', 'named', 'destructured'].includes(entry.page.props));
   }

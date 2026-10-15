@@ -11,7 +11,10 @@
  *    production entry imported (its evaluation is `activateIslands` with the compiled
  *    registrations), records drained through a microtask and a macrotask; then the positive
  *    control: the same observer configuration must see one deliberate write.
- * 3. P1, client side: core's render of the same state (`mount(() => Page(props), host)`) in a
+ * 3. P3 (a module that names a setter): the entry's `__parityTransition` called with the next
+ *    state's props, a microtask and a macrotask, and the served root serialized again (the adopted
+ *    DOM as the islands left it), for comparison with the next state's own server render.
+ * 4. P1, client side: core's render of the same state (`mount(() => Page(props), host)`) in a
  *    fresh host, serialized.
  * Console errors, uncaught errors and policy violations are recorded with the step they happened in.
  */
@@ -75,6 +78,8 @@ console.error = (...args) => {
 window.addEventListener('error', event => logged.push({ step: step.name, text: 'uncaught: ' + event.message }));
 window.addEventListener('unhandledrejection', event => logged.push({ step: step.name, text: 'unhandled rejection: ' + String(event.reason) }));
 document.addEventListener('securitypolicyviolation', event => violations.push({ step: step.name, text: event.violatedDirective + ' ' + event.blockedURI }));
+// The name and message first, then the stack: Firefox's and WebKit's stacks do not begin with the message.
+const describeError = error => (error instanceof Error ? error.name + ': ' + error.message + '\\n' + (error.stack || '') : String(error));
 const settle = async () => { await new Promise(resolve => queueMicrotask(resolve)); await new Promise(resolve => setTimeout(resolve, 0)); };
 (async () => {
   try {
@@ -105,6 +110,19 @@ const settle = async () => { await new Promise(resolve => queueMicrotask(resolve
       const hosts = Array.from(root.querySelectorAll('[data-forma-island]'));
       p2 = { records, events, caught, hosts: hosts.length, activated: hosts.filter(host => typeof host.__formaDispose === 'function').length };
     }
+    let p3 = null;
+    if (input.next !== undefined && p2) {
+      step.name = 'P3';
+      try {
+        const entry = await import('/_parity/entry.mjs');
+        if (typeof entry.__parityTransition !== 'function') throw new Error('the production entry exports no __parityTransition');
+        entry.__parityTransition(reviveByType(input.next, { kind: 'object', object: 0 }, input.schema));
+        await settle();
+        p3 = { live: canonicalizeDom(root) };
+      } catch (error) {
+        p3 = { error: describeError(error) };
+      }
+    }
     step.name = 'P1';
     let twin = null;
     let twinError = null;
@@ -116,11 +134,11 @@ const settle = async () => { await new Promise(resolve => queueMicrotask(resolve
       mount(() => (input.props === 'none' ? Page() : Page(props)), host);
       twin = canonicalizeDom(host);
     } catch (error) {
-      twinError = String((error && error.stack) || error);
+      twinError = describeError(error);
     }
-    window.__parityResult = { served, twin, twinError, p2, logged, violations };
+    window.__parityResult = { served, twin, twinError, p2, p3, logged, violations };
   } catch (error) {
-    window.__parityResult = { error: String((error && error.stack) || error), logged, violations };
+    window.__parityResult = { error: describeError(error), logged, violations };
   }
 })();
 `;

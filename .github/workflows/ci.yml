@@ -161,22 +161,25 @@ jobs:
           retention-days: 7
 
   # The parity harness over its corpus (FORMA-183, DR-9; e2e/parity/README.md):
-  # every corpus module at its states through the server's typed path, its
+  # every module of step 1 at 100 states through the server's typed path, its
   # document parsed in Chromium against core's render of the same state (P1),
-  # and the production entry's activation over it making zero mutation records
-  # (P2), with e2e/parity/expected-divergent.json applied. It fails on an
-  # unexpected difference, refusal or error, or on an expected difference that
-  # no longer occurs. Non-blocking until step 1's expected list is empty for P1
-  # and P2; then the run joins scripts/check.sh and this job is removed. The
-  # harness's own tests already run, blocking, inside `check`.
+  # the production entry's activation over it making zero mutation records
+  # (P2), and a module's setter moving the page to the next state against that
+  # state's fresh render (P3), with e2e/parity/expected-divergent.json applied.
+  # It fails on an unexpected difference, refusal or error, or on an expected
+  # difference that no longer occurs. Non-blocking until step 1's expected
+  # list is empty for P1 and P2; then the run joins scripts/check.sh and this
+  # job is removed. The harness's own tests already run, blocking, in `check`;
+  # Firefox and WebKit run per release (e2e-engines.yml).
   parity:
     permissions:
       contents: read
     runs-on: ubuntu-latest
     continue-on-error: true
-    # MEASURED locally: step 0 (14 modules, 23 states) runs in 2 to 3 s once the
-    # builds exist; npm ci, the four builds, the Rust example and the Chromium
-    # install dominate. 20 bounds a cold cache on a slow runner.
+    # MEASURED: step 0 (14 modules, 23 states) ran in 4.3 s here (the job
+    # 1m22s); step 1 at 100 states (28 modules, 1,018 states) in about 100 s
+    # locally, about 100 ms a state in the browser. 20 bounds a cold cache on a
+    # slow runner; the figure for this shape is recorded in FORMA-183's log.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -202,7 +205,7 @@ jobs:
         timeout-minutes: 10
         run: npx playwright install --with-deps chromium
       - name: Parity over the corpus
-        run: node e2e/parity/src/run.mts --report "$RUNNER_TEMP/parity/report.jsonl"
+        run: node e2e/parity/src/run.mts --step 1 --states 100 --report "$RUNNER_TEMP/parity/report.jsonl"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

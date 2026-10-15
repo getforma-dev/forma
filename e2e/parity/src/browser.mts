@@ -54,6 +54,8 @@ export interface StateInput {
   readonly props: 'none' | 'named' | 'destructured';
   /** Whether the module has a production browser entry (P2 runs only then). */
   readonly entry: boolean;
+  /** P3: the next state's props, which the entry's `__parityTransition` moves the page to. */
+  readonly next?: Json;
 }
 
 export interface MutationRecordData {
@@ -84,6 +86,8 @@ export interface PageRun {
   readonly twin: CanonNode | null;
   readonly twinError: string | null;
   readonly p2: P2Result | null;
+  /** P3: the served root after the transition, or what the setter threw. */
+  readonly p3: { readonly live: CanonNode } | { readonly error: string } | null;
   readonly error: string | null;
   /** Console errors, uncaught errors and rejections, by the boot step they happened in. */
   readonly logged: readonly Logged[];
@@ -148,6 +152,7 @@ export class ParityPage {
       twin: result.twin ?? null,
       twinError: result.twinError ?? null,
       p2: result.p2 ?? null,
+      p3: result.p3 ?? null,
       error: result.error ?? null,
       logged: result.logged ?? [],
       violations: result.violations ?? [],

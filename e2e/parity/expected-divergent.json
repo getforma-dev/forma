@@ -47,6 +47,52 @@
       "path": "page > section:nth-child(1) > a:nth-child(4)[href]",
       "ticket": "FORMA-101: DR-1 release B, BUILD-206 a build error (F4)",
       "note": "href: () => docsHref() cannot be evaluated at compile time. In warning mode the compiler reports BUILD-206 (docs/DIAGNOSTICS.md: the attribute is omitted from the server HTML and appears only on activation), so the two trees can never agree on it: the server has no value to write. DR-1's migration makes strict the only mode in release B (3.0.0, FORMA-101), where BUILD-206 is a build error: then this page does not compile, the corpus fixture must move the attribute behind browserOnly() or drop it, and this entry fails the run as an unexpected pass. Structural, and counted by the stop rule until then."
+    },
+    {
+      "module": "nullish",
+      "index": "*",
+      "check": "P1",
+      "kind": "attribute-value",
+      "match": "^ → true$",
+      "ticket": "FORMA-182: bool-slot attributes (F2)",
+      "note": "Step 1. The island's reactive \"data-ready\": ready (a boolean signal seeded from an optional prop) on a <p>: the walker writes it bare, core writes \"true\" (F2's case)."
+    },
+    {
+      "module": "closed-nullish",
+      "index": "*",
+      "check": "P1",
+      "kind": "attribute-value",
+      "match": "^ → true$",
+      "ticket": "FORMA-182: bool-slot attributes (F2)",
+      "note": "Step 1. The same \"data-ready\" binding on the island's occurrences whose seed is true (F2's case)."
+    },
+    {
+      "module": "props-contract",
+      "index": "*",
+      "check": "P1",
+      "kind": "error",
+      "match": "TypeError: .*insertBefore",
+      "ticket": "finding F5 (no ticket yet)",
+      "note": "Step 1, found 2026-10-15 and reported to the lead. createShow(() => props.user.active, () => props.title): the branch returns a string. The walker renders the text; core's createShow inserts the branch's result as a Node and throws when it is a non-empty string (Chromium: parameter 1 is not of type 'Node'; Firefox and WebKit say the same of insertBefore), so core's render cannot be compared in those states. The compiler accepts the string branch."
+    },
+    {
+      "module": "aggregate-fallback",
+      "index": "*",
+      "check": "P2",
+      "kind": "mutation",
+      "path": "root > main[node 1] > section[node 2][data-forma-status]",
+      "match": "^pending → error$",
+      "ticket": "FORMA-181: adoption by canonical key text, checkpoint C (F6)",
+      "note": "Step 1. A keyed row whose string key holds CR or NUL: the walker writes data-forma-key as the rule-1 text (canonical_key_text: CR to LF, NUL to U+FFFD), while core's adoption compares the attribute with String(key) (adoption.ts), not canonicalKeyText, which checkpoint C wires in. Adoption refuses the island (FORMA_E_HYDRATE_STRUCTURE) and writes data-forma-status=\"error\"."
+    },
+    {
+      "module": "aggregate-fallback",
+      "index": "*",
+      "check": "P2",
+      "kind": "activation-error",
+      "match": "FORMA_E_HYDRATE_STRUCTURE",
+      "ticket": "FORMA-181: adoption by canonical key text, checkpoint C (F6)",
+      "note": "Step 1. The forma:error event and the console line of the same refusal (F6)."
     }
   ]
 }
