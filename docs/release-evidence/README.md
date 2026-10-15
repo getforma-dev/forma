@@ -1,5 +1,31 @@
 # FORMA-187 non-publishing evidence
 
+## The milestone-aware gate (first alpha preparation)
+
+Two dry runs on a Mac (Node 24.22.0, Cargo 1.93.1) after the contract file became
+milestone-aware, both from `main` at `b68a795`; nothing was tagged or published.
+
+`alpha-gate-dev-dry-run-{set,p17}.json` and `-SHA256SUMS`: the packed set of `main` as
+it is, at `3.0.0-dev`. 33 P17 checks passed in 89.6 seconds. Set and report carry
+`milestone: null`, which is what a `-dev` set records: no milestone publishes it.
+
+`alpha-gate-alpha-rehearsal-{set,p17}.json` and `-SHA256SUMS`: the same tree after
+`node scripts/release-set.mjs version 3.0.0-alpha.1` (seven manifests, three Cargo locks,
+the npm lock and the template seeds and ranges), rebuilt and packed with `--dry-run`. 33
+P17 checks passed in 69.2 seconds. Set and report carry `milestone: { name: "alpha",
+plan: "M2", ready: true, later: { beta, rc, final } }`, the shape DS11 and DS12 will carry
+on the alpha day. The version change was then reverted; `main` stays at `3.0.0-dev`.
+
+`alpha-gate-beta-refusal.log`: the negative control. With the manifests at `3.0.0-beta.1`
+and a live ref `v3.0.0-beta.1`, `release-set.mjs pack` refused before packing a single
+file, naming every open beta gate: "beta (M3) still waits for: FORMA-103 (beta) ...;
+nothing may publish". The output directory stayed empty.
+
+The contract names the alpha's gates done (FORMA-110, 185, 112, 102, 107, 109, 111, 144
+slice 1) and the beta's, rc's and final's pending; the lint's self-test rejects 32
+workflow and 11 contract seeds and ends with `milestones ready to publish: alpha`. The
+alpha day's ordered steps are in `docs/release/ALPHA-RUNBOOK.md`.
+
 The A2 report tests the exact seven previously published archives retained by
 FORMA-113 in `tmp/a2-tarballs`, `tmp/a2-crates` and the founder-published derive
 0.0.0 archive. The accompanying manifest names their hashes. `commit` identifies

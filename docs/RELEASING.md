@@ -1,11 +1,15 @@
 # Unified releases
 
 FORMA-187 prepares the merged repository for one release of seven packages.
-The checked-in contract record deliberately has `liveReleaseReady: false`.
-A2 dry runs establish the pipeline; they do not assert that FMIR v3, manifest 2,
-props, the version window, milestone templates or fixture measurements exist.
-Those ticket owners must add their failing tests and update
-`scripts/release-contracts.json` before the first `v3.0.0-alpha.1` tag.
+The checked-in contract record, `scripts/release-contracts.json`, states which
+tickets gate which milestone (alpha, beta, rc, final); a tag publishes only when
+every gate of its milestone and of the earlier milestones is done. Today the
+alpha's gates are done and the later milestones' are open, so `v3.0.0-alpha.N`
+may publish and `v3.0.0-beta.1`, `v3.0.0-rc.1` and `v3.0.0` are refused. See
+[the milestone gate](#milestone-gate) below and, for the alpha day itself,
+[docs/release/ALPHA-RUNBOOK.md](release/ALPHA-RUNBOOK.md). A2 dry runs
+establish the pipeline; they do not assert that the later milestones' contracts
+exist.
 
 ## Prepare and test
 
@@ -24,6 +28,34 @@ creates neither tags nor commits. A `3.0.0-dev` version aligns only the packages
 and workspace locks, preserving A2 template pins until FORMA-144 migrates them.
 Add a root CHANGELOG entry headed `## [3.0.0-alpha.1]`, review and commit the
 release PR, and tag the green main commit with `v3.0.0-alpha.1`.
+
+## Milestone gate
+
+A tag names its milestone: `-alpha.N`, `-beta.N`, `-rc.N`, or none for the
+final; `-dev` versions name no milestone and never publish. The contract file
+lists the four milestones in order, each with its plan milestone (`M2` to `M5`)
+and its gates, keyed by ticket (plus a slice or step when one ticket spans
+milestones, such as `FORMA-144 slice 1`), each gate `done` or `pending` with a
+one-line scope. A milestone inherits every earlier milestone's gates. The resolver
+in `scripts/release-set.mjs` (`releaseMilestone`, `assertMilestoneReady`) is
+enforced four times on a live tag, each time from the contract the pack job
+recorded into DS11: `pack` refuses before packing, P17 refuses before passing,
+both publish jobs refuse before uploading, and `record` refuses before writing
+DS12. A dry run resolves the milestone unenforced and records it (null for a
+`-dev` set). Advancing a milestone is a reviewed pull request that flips its
+gates to `done` with the evidence named in the ticket; there is no global switch,
+and the lint rejects one (`liveReleaseReady` or a top-level `pending` list).
+
+The lint (`ruby scripts/check-release-workflow.rb --self-test`) checks the
+contract's shape beside the workflow: exactly `alpha`, `beta`, `rc`, `final` in
+order (C1); each with a plan milestone and non-empty gates whose keys are tickets
+and whose entries carry a `done`/`pending` status and a scope (C2); no gate in
+two milestones (C3); no global switch (C4). Its self-test seeds eleven contract
+violations beside the thirty-two workflow ones, and its last line names the
+milestones that may publish today. The GitHub Release names the milestone, where
+it went on npm (`next` for a pre-release, `latest` for the final) and every gate
+still open before the later milestones (`releaseNotes` in
+`scripts/release-record.mjs`); DS12 carries the resolved milestone as `milestone`.
 
 Only tag pushes trigger release.yml. `check` requires the latest readable,
 successful main-push CI run for the exact commit, including the executed R17
@@ -146,7 +178,7 @@ owns their milestone migration. Packing may stage candidate checksums, but that 
 not make those source requirements compatible with v3. A current-development dry run
 is labeled `v3-development-dry-run`, and a template refusal remains a failed P17 result.
 Do not weaken its locked checks or describe that result as complete template acceptance.
-`liveReleaseReady` stays false while the remaining milestone contracts are pending.
+The later milestones' gates stay `pending` in the contract until their tickets close.
 The archived A2 dry-run evidence continues to describe the original published set.
 
 ## Local dry run
@@ -183,8 +215,8 @@ untouched; candidate packing restores both source files plus all eight manifests
 and locks on success or failure. This adapter does not migrate applications or
 claim FORMA-144 complete. The recurring restoration test and a new actual packed
 rehearsal document this stage; historical A2 and earlier P17 reports stay unchanged.
-`liveReleaseReady` remains false while the remaining milestone contracts are open.
+FORMA-144's later slices remain `pending` gates of the beta and the final.
 
 ## Finalized rendering in candidate templates
 
-The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates and FORMA-144 remain pending, and `liveReleaseReady` stays false.
+The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates' later slices (FORMA-144 slices 2 and 3) remain pending gates of the beta and the final.

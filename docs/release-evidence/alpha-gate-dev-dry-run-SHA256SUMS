@@ -1,0 +1,9 @@
+12c59bfdc15f83394a94c4bc1830eed7fb1645c3580a6e9c9080c8676cec16f1  Cargo.lock
+f429eec8e7de750cfd15e787bbb98ec6dc7bc97d48bcc63c3e48203080fa68dc  forma-ir-3.0.0-dev.crate
+65cbf8517eebd52fb2944a42aa28f5c88d6d095ca38a6373312dabc17f6dae1c  forma-ir-derive-3.0.0-dev.crate
+f6cadd6cee6b400bc6b5cdba17f06e71ab332cd9edbff1fb46e84dd8a5399395  forma-server-3.0.0-dev.crate
+d61963ec1ff435e67310d918ac7b2722a69cdd53a9f2f7353df1514a5505772c  getforma-build-3.0.0-dev.tgz
+291736e4dbf17b10b51a9a854f1f9989bab3a8541ab9414dca96ceff689320bc  getforma-compiler-3.0.0-dev.tgz
+7c472492835f67ba319c49f317fef80bb05d52906c4d4b19264187d701f60867  getforma-core-3.0.0-dev.tgz
+772c5ffe818474956bf29f56cb5ed7b9d19185423d659e910db64fe4ca3f4a8b  getforma-create-app-3.0.0-dev.tgz
+0acc1b277a866b3678f2b17b56bbb9161bbd2689360af609401c5dfa63c9e0c3  release-set.json

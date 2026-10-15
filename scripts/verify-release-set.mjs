@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
-import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
+import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
 import { withOwnedServer } from './owned-server.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
@@ -236,7 +236,7 @@ export async function verify(dir, reportPath) {
   const scratch = join(ROOT, `.release-verify-${process.pid}`);
   mkdirSync(scratch);
   const cli = mkdtempSync(join(tmpdir(), 'forma-packed-cli-'));
-  const report = { schema: 1, commit: set.commit, passed: false, tests: [], pending: set.contracts.pending, signatures: 'registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256', templates: [] };
+  const report = { schema: 1, commit: set.commit, passed: false, tests: [], milestone: set.milestone ?? null, signatures: 'registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256', templates: [] };
   const test = async (name, fn) => { console.log(`P17: ${name}`); const at = Date.now(); await fn(); report.tests.push({ name, passed: true, seconds: (Date.now() - at) / 1000 }); };
   try {
     for (const p of set.packages) {
@@ -525,9 +525,12 @@ export async function verify(dir, reportPath) {
         });
       }
     } finally { await browser.close(); }
-    // New contracts must provide their tests before the milestone enables live publication.
-    // A2 dry runs deliberately exercise the existing contracts without claiming future coverage.
-    if (!set.dryRun) assert.equal(set.contracts.liveReleaseReady, true, 'new milestone contract tests are still pending; nothing may publish');
+    // A live set publishes only for the milestone its tag names, and only when every gate of
+    // that milestone and the earlier ones is done. Dry runs exercise the contracts unenforced.
+    if (!set.dryRun) {
+      const milestone = assertMilestoneReady(set.contracts, set.tag.slice(1));
+      assert.equal(set.milestone?.name, milestone.name, 'packed set names another milestone');
+    }
     report.passed = true;
     report.elapsedSeconds = (Date.now() - started) / 1000;
     save(reportPath, report);

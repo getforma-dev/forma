@@ -4,8 +4,59 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, copyFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { selectRun, checkJobs } from './check-release-ci.mjs';
-import { registryStatus, waitForPackage } from './release-publish.mjs';
-import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, digest, run, json, packCargoWorkspace } from './release-set.mjs';
+import { registryStatus, waitForPackage, npmPublishArgs, cargoPublishArgs } from './release-publish.mjs';
+import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, digest, run, json, packCargoWorkspace, milestoneOf, releaseMilestone, assertMilestoneReady, MILESTONES } from './release-set.mjs';
+
+const contracts = () => json(join(ROOT, 'scripts/release-contracts.json'));
+const seededContract = mutate => { const c = contracts(); mutate(c); return c; };
+test('milestone gate: the checked-in contract lets the alpha publish; beta, rc and final still wait', () => {
+  const alpha = assertMilestoneReady(contracts(), '3.0.0-alpha.1');
+  assert.equal(alpha.name, 'alpha'); assert.equal(alpha.plan, 'M2'); assert.equal(alpha.ready, true); assert.deepEqual(alpha.blocking, []);
+  for (const ticket of ['FORMA-110', 'FORMA-185', 'FORMA-112', 'FORMA-102', 'FORMA-107', 'FORMA-109', 'FORMA-111', 'FORMA-144 slice 1']) assert.equal(contracts().milestones.alpha.gates[ticket].status, 'done', ticket);
+  assert.deepEqual(Object.keys(alpha.later), ['beta', 'rc', 'final']);
+  assert(alpha.later.beta.some(gate => gate.startsWith('FORMA-188 fixture applications:')));
+  assert(alpha.later.final.some(gate => gate.startsWith('FORMA-191:')));
+  for (const version of ['3.0.0-beta.1', '3.0.0-rc.1', '3.0.0']) assert.throws(() => assertMilestoneReady(contracts(), version), /still waits for: .*nothing may publish/);
+  const beta = releaseMilestone(contracts(), '3.0.0-beta.1');
+  assert.equal(beta.ready, false);
+  assert(beta.blocking.every(gate => gate.includes('(beta)')), 'the beta is blocked by its own gates only');
+  assert.deepEqual(Object.keys(beta.later), ['rc', 'final']);
+  assert.throws(() => releaseMilestone(contracts(), '3.0.0-dev'), /development version/);
+  assert.equal(milestoneOf('3.0.0-dev'), null); assert.equal(milestoneOf('3.0.0-alpha.1'), 'alpha'); assert.equal(milestoneOf('3.0.0-rc.2'), 'rc'); assert.equal(milestoneOf('3.1.0'), 'final');
+  assert.deepEqual(MILESTONES, ['alpha', 'beta', 'rc', 'final']);
+});
+test('milestone gate: an open gate in the milestone or any earlier one refuses; a malformed contract refuses every milestone', () => {
+  assert.throws(() => assertMilestoneReady(seededContract(c => { c.milestones.alpha.gates['FORMA-185'].status = 'pending'; }), '3.0.0-alpha.1'), /FORMA-185 \(alpha\)/);
+  const betaDone = c => { for (const gate of Object.values(c.milestones.beta.gates)) gate.status = 'done'; };
+  assert.throws(() => assertMilestoneReady(seededContract(c => { betaDone(c); c.milestones.alpha.gates['FORMA-110'].status = 'pending'; }), '3.0.0-beta.1'), /FORMA-110 \(alpha\)/);
+  const beta = releaseMilestone(seededContract(betaDone), '3.0.0-beta.1');
+  assert.equal(beta.ready, true); assert.deepEqual(Object.keys(beta.later), ['rc', 'final']);
+  assert.equal(releaseMilestone(seededContract(betaDone), '3.0.0-rc.1').ready, false);
+  const everyGate = c => { for (const m of Object.values(c.milestones)) for (const gate of Object.values(m.gates)) gate.status = 'done'; };
+  const final = releaseMilestone(seededContract(everyGate), '3.0.0');
+  assert.equal(final.ready, true); assert.deepEqual(final.later, {});
+  for (const [pattern, mutate] of [
+    [/global publish switch/, c => { c.liveReleaseReady = true; }],
+    [/global publish switch/, c => { c.pending = {}; }],
+    [/names no milestones/, c => { delete c.milestones; }],
+    [/no gates for rc/, c => { delete c.milestones.rc; }],
+    [/no gates for final/, c => { c.milestones.final.gates = {}; }],
+    [/no plan milestone/, c => { delete c.milestones.beta.plan; }],
+    [/not a ticket gate/, c => { c.milestones.alpha.gates['founder says so'] = { status: 'done', scope: 'x' }; }],
+    [/gates more than one milestone/, c => { c.milestones.beta.gates['FORMA-110'] = { status: 'done', scope: 'again' }; }],
+    [/status and a scope/, c => { c.milestones.alpha.gates['FORMA-110'].status = 'skipped'; }],
+    [/status and a scope/, c => { c.milestones.rc.gates['FORMA-101'].scope = ' '; }],
+  ]) assert.throws(() => releaseMilestone(seededContract(mutate), '3.0.0-alpha.1'), pattern);
+});
+test('npm pre-releases publish on next and finals on latest; Cargo publishes the pre-release version itself', () => {
+  assert.deepEqual(npmPublishArgs({ name: '@getforma/core', version: '3.0.0-alpha.1' }, '/x/core.tgz'), ['publish', '/x/core.tgz', '--ignore-scripts', '--provenance', '--access', 'public', '--tag', 'next']);
+  for (const version of ['3.0.0-beta.2', '3.0.0-rc.1']) assert.equal(npmPublishArgs({ name: 'x', version }, 'f').at(-1), 'next');
+  assert.equal(npmPublishArgs({ name: 'x', version: '3.0.0' }, 'f').at(-1), 'latest');
+  assert.throws(() => npmPublishArgs({ name: 'x', version: '3.0.0-dev' }, 'f'));
+  assert.throws(() => npmPublishArgs({ name: 'x', version: '3.0.0-next' }, 'f'));
+  assert.deepEqual(cargoPublishArgs([{ name: 'forma-ir', version: '3.0.0-alpha.1' }, { name: 'forma-server', version: '3.0.0-alpha.1' }]), ['publish', '-p', 'forma-ir', '-p', 'forma-server', '--no-verify', '--locked']);
+  assert.throws(() => cargoPublishArgs([{ name: 'forma-ir', version: '3.0.0-dev' }]));
+});
 
 const sha = 'a'.repeat(40), repo = 'getforma-dev/forma';
 const goodRun = { id: 100, head_sha: sha, head_branch: 'main', event: 'push', path: '.github/workflows/ci.yml', repository: { full_name: repo }, status: 'completed', conclusion: 'success', run_number: 7, run_attempt: 1 };
@@ -45,6 +96,8 @@ test('version preparation changes seven manifests, exact internal requirements a
     assert.equal(p.repository.url, 'git+https://github.com/getforma-dev/forma.git');
   }
   assert.match(files.get('Cargo.toml'), /version = "3.0.0-alpha.1"/);
+  // forma-ir and forma-server inherit the workspace version; forma-ir-derive declares its own.
+  for (const crate of ['forma-ir', 'forma-ir-derive', 'forma-server']) assert.match(files.get(`crates/${crate}/Cargo.toml`), /^version(?: = "3\.0\.0-alpha\.1"|\.workspace = true)$/m, `${crate}: Cargo pre-release version`);
   assert.match(files.get('crates/forma-ir-derive/Cargo.toml'), /version = "3.0.0-alpha.1"/);
   assert.match(files.get('crates/forma-server/Cargo.toml'), /version = "=3.0.0-alpha.1"/);
   assert.match(files.get('packages/create-app/templates/minimal/Cargo.toml'), /forma-ir = "=3.0.0-alpha.1"/);

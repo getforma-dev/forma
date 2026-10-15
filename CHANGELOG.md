@@ -28,6 +28,14 @@ loader-before-bind checks, stable fuzz replay and a pinned nightly fuzz workflow
   gate, packed template/corpus verification, two minimal publishing jobs and
   compatibility record. A2 dry runs remain non-publishing; milestone contract
   hooks must be completed before the first `v3.0.0-alpha.1` release.
+- FORMA-187 (first alpha): the live gate is milestone-aware. `scripts/release-contracts.json`
+  states which tickets gate the alpha, beta, rc and final; a tag publishes only when every
+  gate of its milestone and the earlier ones is done, checked in pack, P17, both publish jobs
+  and the record. The alpha's gates (110, 185, 112, 102, 107, 109, 111, 144 slice 1) are done;
+  the later milestones' are pending. The GitHub Release names the milestone and the pending
+  list. The SR43 lint checks the contract's shape with eleven seeded violations. Pre-releases
+  publish on npm `next` and as Cargo pre-release versions (`npmPublishArgs`, `cargoPublishArgs`,
+  tested). `docs/release/ALPHA-RUNBOOK.md` is the alpha day's ordered runbook.
 
 ### The repository merge (FORMA-113)
 
