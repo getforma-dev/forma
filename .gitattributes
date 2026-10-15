@@ -41,3 +41,6 @@ crates/forma-ir/src/fmir_constants.rs text eol=lf
 packages/create-app/templates/*/src/main.rs text eol=lf
 # Original source/doc bytes are authenticated by the migration archive index.
 docs/archive/2026-10-15-template-slice1/** -text
+# FORMA-181: archived originals and frozen keyed-list sources are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-keyed-rows/** -text
+packages/compiler/tests/fixtures/keyed-lists/** -text
