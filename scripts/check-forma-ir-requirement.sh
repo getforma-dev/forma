@@ -48,12 +48,12 @@ failed=0
 for pair in "normal:$normal_req" "dev:$dev_req"; do
   kind=${pair%%:*}
   req=${pair#*:}
-  if [ "$req" != "^$ir_version" ]; then
-    echo "::error::forma-server's $kind forma-ir requirement is ${req:-missing}, not ^$ir_version (forma-ir's version); set \`forma-ir = { version = \"$ir_version\", ... }\` in crates/forma-server/Cargo.toml, normal and dev" >&2
+  if [ "$req" != "^$ir_version" ] && [ "$req" != "=$ir_version" ]; then
+    echo "::error::forma-server's $kind forma-ir requirement is ${req:-missing}, not ^$ir_version or =$ir_version (forma-ir's version); set \`forma-ir = { version = \"=$ir_version\", ... }\` in crates/forma-server/Cargo.toml, normal and dev" >&2
     failed=1
   fi
 done
 if [ "$failed" -eq 0 ]; then
-  echo "ok: forma-server requires forma-ir ^$ir_version, normal and dev, which is forma-ir's version"
+  echo "ok: forma-server's normal and dev requirements start at forma-ir's version $ir_version (caret or exact)"
 fi
 exit "$failed"

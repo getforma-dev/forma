@@ -36,6 +36,8 @@ dump = []
 # consumer's release build does not carry them; forma-server's tests and this
 # crate's own test targets turn it on.
 test-helpers = []
+# Shared libFuzzer/stable replay adapter, never enabled by ordinary consumers.
+__fuzzing = ["dump"]
 # INTERNAL; never for a build that ships. Compiles in `fault_injection`, the
 # stand-in component that panics (SR44's tests of `walk_to_html_counted`).
 # Enabled only by this crate's and forma-server's own dev-dependencies, and
@@ -50,7 +52,7 @@ crate-type = ["rlib"]
 # Self dev-dependency: the only way to enable a feature for this crate's own
 # integration tests and examples without also enabling it for consumers.
 [dev-dependencies]
-forma-ir = { path = ".", features = ["test-helpers", "__fault-injection"] }
+forma-ir = { path = ".", features = ["test-helpers", "__fault-injection", "__fuzzing"] }
 
 [lints]
 workspace = true

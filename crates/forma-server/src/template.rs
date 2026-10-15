@@ -584,14 +584,11 @@ mod tests {
     #[test]
     fn phase2_falls_back_on_ir_walk_error() {
         let manifest = empty_manifest();
-        // A TEXT opcode referencing string index 99 with only one string in
-        // the table. This parses (IrModule::parse validates structure and
-        // cross-table ids, not every string index) and fails during the walk —
-        // an invalid *opcode* byte no longer works for this test because the
-        // structural pass now rejects it at load time.
-        let mut opcodes = vec![0x04]; // TEXT
-        opcodes.extend_from_slice(&99u32.to_le_bytes());
-        let data = forma_ir::parser::test_helpers::build_minimal_ir(&["x"], &[], &opcodes, &[]);
+        // FMIR v3 validates string references at load. An existing string that
+        // is not a valid HTML tag reaches the walk's semantic refusal instead.
+        let opcodes = forma_ir::parser::test_helpers::encode_open_tag(0, &[]);
+        let data =
+            forma_ir::parser::test_helpers::build_minimal_ir(&["bad tag"], &[], &opcodes, &[]);
         let ir = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
 

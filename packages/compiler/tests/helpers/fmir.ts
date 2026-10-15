@@ -15,18 +15,9 @@ import { expect } from 'vitest';
 // Opcodes (must match src/ir-walk.ts)
 // ---------------------------------------------------------------------------
 
-export const OP_OPEN_TAG     = 0x01;
-export const OP_CLOSE_TAG    = 0x02;
-export const OP_VOID_TAG     = 0x03;
-export const OP_TEXT         = 0x04;
-export const OP_DYN_TEXT     = 0x05;
-export const OP_DYN_ATTR     = 0x06;
-export const OP_SHOW_IF      = 0x07;
-export const OP_SHOW_ELSE    = 0x08;
-export const OP_LIST         = 0x0a;
-export const OP_ISLAND_START = 0x0b;
-export const OP_ISLAND_END   = 0x0c;
-export const OP_PROP         = 0x12;
+import { OP_OPEN_TAG, OP_CLOSE_TAG, OP_VOID_TAG, OP_TEXT, OP_DYN_TEXT, OP_DYN_ATTR, OP_SHOW_IF, OP_SHOW_ELSE, OP_LIST, OP_ISLAND_START, OP_ISLAND_END, OP_PROP } from '../../src/fmir-constants';
+export { OP_OPEN_TAG, OP_CLOSE_TAG, OP_VOID_TAG, OP_TEXT, OP_DYN_TEXT, OP_DYN_ATTR, OP_SHOW_IF, OP_SHOW_ELSE, OP_LIST, OP_ISLAND_START, OP_ISLAND_END, OP_PROP } from '../../src/fmir-constants';
+import { readFmirContainer } from '../../src/fmir';
 
 // ---------------------------------------------------------------------------
 // Primitive readers
@@ -45,17 +36,16 @@ export function readU32LE(data: Uint8Array, offset: number): number {
   ) >>> 0;
 }
 
-/** Section table layout: 0=Bytecode(@16), 1=Strings(@24), 2=Slots(@32), 3=Islands(@40). */
+/** Named offsets resolved from v3 descriptors; never a v2 fixed-offset reader. */
 export function readSections(data: Uint8Array) {
+  const container = readFmirContainer(data);
+  const section = (id: number) => container.sections.find(s => s.id === id)!;
   return {
-    opcodeOffset: readU32LE(data, 16),
-    opcodeSize: readU32LE(data, 20),
-    stringTableOffset: readU32LE(data, 24),
-    stringTableSize: readU32LE(data, 28),
-    slotTableOffset: readU32LE(data, 32),
-    slotTableSize: readU32LE(data, 36),
-    islandTableOffset: readU32LE(data, 40),
-    islandTableSize: readU32LE(data, 44),
+    opcodeOffset: section(1).offset, opcodeSize: section(1).length,
+    stringTableOffset: section(2).offset, stringTableSize: section(2).length,
+    slotTableOffset: section(3).offset, slotTableSize: section(3).length,
+    islandTableOffset: section(4).offset, islandTableSize: section(4).length,
+    schemaOffset: section(5).offset, schemaSize: section(5).length,
   };
 }
 
@@ -124,15 +114,14 @@ export interface Island {
   /** String-table index the name is stored under. */
   nameIdx: number;
   trigger: number;
-  propsMode: number;
+  schemaObject: number;
   byteOffset: number;
   slotIds: number[];
 }
 
 /**
  * Decode the island table.
- * Entry layout: id(u16) + trigger(u8) + props_mode(u8) + name_str_idx(u32) +
- * byte_offset(u32) + slot_count(u16) + slot_id(u16) * slot_count.
+ * V3 entries are length-prefixed, with reserved, schema and digest fields.
  */
 export function getIslands(binary: Uint8Array): Island[] {
   const sections = readSections(binary);
@@ -142,18 +131,23 @@ export function getIslands(binary: Uint8Array): Island[] {
   const count = readU16LE(binary, pos);
   pos += 2;
   for (let i = 0; i < count; i++) {
+    const entryLength = readU16LE(binary, pos); pos += 2;
+    const end = pos + entryLength;
     const id = readU16LE(binary, pos); pos += 2;
-    const trigger = binary[pos]!; pos += 1;
-    const propsMode = binary[pos]!; pos += 1;
+    const trigger = binary[pos]!; pos += 2; // reserved byte is zero
+
     const nameIdx = readU32LE(binary, pos); pos += 4;
     const byteOffset = readU32LE(binary, pos); pos += 4;
+    const schemaObject = readU16LE(binary, pos); pos += 2;
+    const digestLength = binary[pos++]!; pos += digestLength;
     const slotCount = readU16LE(binary, pos); pos += 2;
     const slotIds: number[] = [];
     for (let s = 0; s < slotCount; s++) {
       slotIds.push(readU16LE(binary, pos));
       pos += 2;
     }
-    islands.push({ id, name: strings[nameIdx]!, nameIdx, trigger, propsMode, byteOffset, slotIds });
+    islands.push({ id, name: strings[nameIdx]!, nameIdx, trigger, schemaObject, byteOffset, slotIds });
+    pos = end;
   }
   return islands;
 }

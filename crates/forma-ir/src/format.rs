@@ -1,9 +1,9 @@
 //! FMIR binary format definition and parsers.
 //!
 //! Defines the on-disk layout for Forma Module IR files:
-//! - 16-byte header (magic, version, flags, source hash)
-//! - 32-byte section table (4 sections x 8 bytes each)
-//! - Opcode, SlotType, IslandTrigger, PropsMode enums
+//! - 24-byte signature/version/length/CRC header
+//! - Variable section table (count + reserved + 12-byte descriptors)
+//! - Opcode, SlotType, IslandTrigger enums
 //! - SlotEntry and IslandEntry structs
 //!
 //! All multi-byte integers are little-endian.
@@ -14,17 +14,58 @@ use std::fmt;
 // Constants
 // ---------------------------------------------------------------------------
 
-/// Magic bytes identifying an FMIR file.
-pub const MAGIC: &[u8; 4] = b"FMIR";
+// Shared FMIR constants, generated from the root fmir-constants.json.
+include!("fmir_constants.rs");
 
-/// Size of the file header in bytes.
-pub const HEADER_SIZE: usize = 16;
+/// Base version of this reader, taken from Cargo package metadata.
+pub fn reader_version() -> [u16; 3] {
+    // Cargo validates these components. Invalid/out-of-u16 metadata cannot accept a module.
+    [
+        env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap_or(u16::MAX),
+        env!("CARGO_PKG_VERSION_MINOR").parse().unwrap_or(u16::MAX),
+        env!("CARGO_PKG_VERSION_PATCH").parse().unwrap_or(u16::MAX),
+    ]
+}
 
-/// Size of the section table in bytes (4 sections x 8 bytes).
-pub const SECTION_TABLE_SIZE: usize = 32;
+/// CRC-32/ISO-HDLC of a sequence of byte slices, without adding bytes at their boundaries.
+pub fn crc32(chunks: &[&[u8]]) -> u32 {
+    const fn table() -> [u32; 256] {
+        let mut out = [0; 256];
+        let mut i = 0;
+        while i < 256 {
+            let mut c = i as u32;
+            let mut bit = 0;
+            while bit < 8 {
+                c = (c >> 1) ^ if c & 1 != 0 { CRC_POLYNOMIAL } else { 0 };
+                bit += 1;
+            }
+            out[i] = c;
+            i += 1;
+        }
+        out
+    }
+    const TABLE: [u32; 256] = table();
+    let mut c = 0xffffffff;
+    for chunk in chunks {
+        for &b in *chunk {
+            c = TABLE[((c ^ u32::from(b)) & 255) as usize] ^ (c >> 8);
+        }
+    }
+    c ^ 0xffffffff
+}
 
-/// Current IR format version.
-pub const IR_VERSION: u16 = 2;
+/// Refuse an input-driven count before allocation when it exceeds its named ceiling.
+pub(crate) fn limit(name: &'static str, actual: usize, max: usize) -> Result<(), IrError> {
+    if actual > max {
+        Err(IrError::LimitExceeded(Box::new(LimitViolation {
+            limit: name,
+            max,
+            actual,
+        })))
+    } else {
+        Ok(())
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Little-endian reads
@@ -45,14 +86,20 @@ pub(crate) fn le_u32(b: &[u8]) -> u32 {
     u32::from_le_bytes([b[0], b[1], b[2], b[3]])
 }
 
-/// A `u64` from the first 8 bytes of `b`.
-pub(crate) fn le_u64(b: &[u8]) -> u64 {
-    u64::from_le_bytes([b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]])
-}
-
 // ---------------------------------------------------------------------------
 // Error type
 // ---------------------------------------------------------------------------
+
+/// Details of an input limit refusal, boxed to keep the common error enum small.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LimitViolation {
+    /// Which named limit was exceeded.
+    pub limit: &'static str,
+    /// Maximum accepted value.
+    pub max: usize,
+    /// Actual input value.
+    pub actual: usize,
+}
 
 /// Errors that can occur when parsing FMIR binary data.
 ///
@@ -69,10 +116,67 @@ pub enum IrError {
         /// Bytes actually available.
         actual: usize,
     },
-    /// Magic bytes do not match "FMIR".
-    BadMagic([u8; 4]),
-    /// IR version is not supported.
-    UnsupportedVersion(u16),
+    /// Signature is not the FMIR v3 signature.
+    BadSignature([u8; 8]),
+    /// A legacy FMIR header needs a rebuild.
+    LegacyModule {
+        /// Legacy header version.
+        version: u16,
+    },
+    /// Writer base version differs from the reader's Cargo version.
+    UnsupportedWriter {
+        /// Writer major/minor/patch.
+        writer: [u16; 3],
+        /// Reader major/minor/patch.
+        reader: [u16; 3],
+    },
+    /// Declared body length differs from the actual file.
+    LengthMismatch {
+        /// Declared body bytes.
+        declared: usize,
+        /// Actual body bytes.
+        actual: usize,
+    },
+    /// CRC-32 does not match the file excluding its CRC field.
+    ChecksumMismatch {
+        /// Stored checksum.
+        expected: u32,
+        /// Computed checksum.
+        computed: u32,
+    },
+    /// Reserved bits must be zero.
+    ReservedBits {
+        /// Field that carried the bits.
+        field: &'static str,
+    },
+    /// Section ids must be strictly ascending and unique.
+    DuplicateSection(u16),
+    /// Section offsets must cover exactly the data after the table.
+    SectionsDoNotTile,
+    /// A required section was absent.
+    MissingSection(u16),
+    /// An unknown section was marked required.
+    UnknownRequiredSection {
+        /// Section identifier.
+        id: u16,
+        /// Writer base version.
+        writer: [u16; 3],
+    },
+    /// An input-controlled size or count exceeds its ceiling.
+    LimitExceeded(Box<LimitViolation>),
+    /// Known sections must consume their complete payload.
+    TrailingBytes {
+        /// Section identifier.
+        section: u16,
+    },
+    /// Invalid props schema type or reference.
+    InvalidSchema(&'static str),
+    /// Invalid key-path entry.
+    InvalidKeyPath(&'static str),
+    /// Invalid source-position entry.
+    InvalidSourcePosition(&'static str),
+    /// A slot default does not parse for its declared type.
+    InvalidDefault(u16),
     /// A section extends beyond the file boundary.
     SectionOutOfBounds {
         /// Index of the offending section in the section table.
@@ -90,8 +194,6 @@ pub enum IrError {
     InvalidSlotType(u8),
     /// An island-trigger byte does not map to a known trigger.
     InvalidIslandTrigger(u8),
-    /// A props-mode byte does not map to a known mode.
-    InvalidPropsMode(u8),
     /// A slot-source byte does not map to a known source.
     InvalidSlotSource(u8),
     /// A string index is out of bounds.
@@ -132,8 +234,6 @@ pub enum IrError {
         /// The total-iteration budget that was exceeded.
         max: usize,
     },
-    /// The header's reserved `flags` field carried an unknown non-zero bit.
-    UnsupportedFlags(u16),
     /// A tag or attribute name from the string table is not a legal HTML name.
     InvalidName(String),
     /// The slot table declares the same `slot_id` more than once.
@@ -172,8 +272,7 @@ pub enum IrError {
         inner: u16,
     },
     /// The walk panicked, and [`crate::walker::walk_to_html_counted`] caught
-    /// the unwind. No input is known to cause one (the parser and walker are
-    /// fuzzed), so this reports a defect in the walker, not in the module or
+    /// the unwind. This reports a defect in the walker, not in the module or
     /// the data. Under `panic = "abort"` there is nothing to catch and the
     /// process ends instead.
     Panicked {
@@ -191,11 +290,46 @@ impl fmt::Display for IrError {
                     "buffer too short: expected at least {expected} bytes, got {actual}"
                 )
             }
-            IrError::BadMagic(got) => {
-                write!(f, "bad magic: expected FMIR, got {:?}", got)
+            IrError::BadSignature(got) => write!(f, "bad signature: {got:02x?}"),
+            IrError::LegacyModule { version } => write!(
+                f,
+                "an FMIR module before v3 (header version {version}): rebuild with a 3.x compiler"
+            ),
+            IrError::UnsupportedWriter { writer, reader } => write!(
+                f,
+                "writer {}.{}.{} differs from reader {}.{}.{}",
+                writer[0], writer[1], writer[2], reader[0], reader[1], reader[2]
+            ),
+            IrError::LengthMismatch { declared, actual } => write!(
+                f,
+                "length mismatch: declared body {declared}, actual {actual}"
+            ),
+            IrError::ChecksumMismatch { expected, computed } => write!(
+                f,
+                "checksum mismatch: expected {expected:08x}, computed {computed:08x}"
+            ),
+            IrError::ReservedBits { field } => write!(f, "reserved bits in {field}"),
+            IrError::DuplicateSection(id) => write!(f, "duplicate or unordered section 0x{id:04x}"),
+            IrError::SectionsDoNotTile => write!(f, "sections do not tile the file"),
+            IrError::MissingSection(id) => write!(f, "missing required section 0x{id:04x}"),
+            IrError::UnknownRequiredSection { id, writer } => {
+                let reader = reader_version();
+                write!(f, "unknown required section 0x{id:04x} written by {}.{}.{}; this reader is {}.{}.{}",writer[0],writer[1],writer[2],reader[0],reader[1],reader[2])
             }
-            IrError::UnsupportedVersion(v) => {
-                write!(f, "unsupported IR version: {v} (expected {IR_VERSION})")
+            IrError::LimitExceeded(details) => {
+                let LimitViolation { limit, max, actual } = details.as_ref();
+                write!(f, "{limit} exceeds limit {max}: {actual}")
+            }
+            IrError::TrailingBytes { section } => {
+                write!(f, "trailing bytes in section 0x{section:04x}")
+            }
+            IrError::InvalidSchema(reason) => write!(f, "invalid props schema: {reason}"),
+            IrError::InvalidKeyPath(reason) => write!(f, "invalid key path: {reason}"),
+            IrError::InvalidSourcePosition(reason) => {
+                write!(f, "invalid source position: {reason}")
+            }
+            IrError::InvalidDefault(id) => {
+                write!(f, "default for slot {id} does not parse for its type")
             }
             IrError::SectionOutOfBounds {
                 section,
@@ -213,7 +347,6 @@ impl fmt::Display for IrError {
             IrError::InvalidIslandTrigger(b) => {
                 write!(f, "invalid island trigger: 0x{b:02x}")
             }
-            IrError::InvalidPropsMode(b) => write!(f, "invalid props mode: 0x{b:02x}"),
             IrError::InvalidSlotSource(b) => write!(f, "invalid slot source: 0x{b:02x}"),
             IrError::StringIndexOutOfBounds { index, len } => {
                 write!(
@@ -242,9 +375,6 @@ impl fmt::Display for IrError {
             }
             IrError::ListBudgetExceeded { max } => {
                 write!(f, "total LIST iterations exceeded the budget of {max}")
-            }
-            IrError::UnsupportedFlags(flags) => {
-                write!(f, "unsupported header flags: 0x{flags:04x} (must be 0)")
             }
             IrError::InvalidName(name) => {
                 write!(f, "invalid tag or attribute name: {name:?}")
@@ -288,152 +418,186 @@ impl fmt::Display for IrError {
     }
 }
 
+impl IrError {
+    /// Stable loader diagnostic code, shared with forma-server.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::BadSignature(_) | Self::LegacyModule { .. } => LOAD_102,
+            Self::LengthMismatch { .. } | Self::ChecksumMismatch { .. } => LOAD_104,
+            Self::MissingSection(_) => LOAD_105,
+            Self::UnknownRequiredSection { .. } => LOAD_106,
+            Self::LimitExceeded(_) => LOAD_107,
+            Self::UnsupportedWriter { .. } => LOAD_108,
+            _ => LOAD_103,
+        }
+    }
+}
 impl std::error::Error for IrError {}
 
-// ---------------------------------------------------------------------------
-// Header (16 bytes)
-// ---------------------------------------------------------------------------
-
-/// FMIR file header — the first 16 bytes of every FMIR module (a `.ir` file).
-///
-/// Layout (little-endian):
-/// ```text
-/// [0..4)   magic        – b"FMIR"
-/// [4..6)   version      – u16
-/// [6..8)   flags        – u16 (reserved; MUST be 0 — any non-zero bit is a
-///                        hard parse error, so unknown future extensions fail
-///                        closed instead of being silently mis-parsed. A new
-///                        flag bit therefore requires a coordinated forma-ir
-///                        release before the compiler may emit it.)
-/// [8..16)  source_hash  – u64 (hash of original source; currently written as
-///                        0 by the JS compiler and not verified here)
-/// ```
+/// Validated FMIR v3 header (24 bytes).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IrHeader {
-    /// FMIR format version. Always [`IR_VERSION`] for a header that parsed.
-    pub version: u16,
-    /// Reserved bit field, validated to be zero (see the layout above).
-    pub flags: u16,
-    /// Hash of the original source module. Written as 0 by the JS compiler
-    /// today and not verified here.
-    pub source_hash: u64,
+    /// Writer's base semantic version.
+    pub writer: [u16; 3],
+    /// Bytes after the header.
+    pub body_len: u32,
+    /// CRC-32 of the file excluding bytes 18 through 21.
+    pub crc: u32,
 }
 
 impl IrHeader {
-    /// Parse an `IrHeader` from the first 16 bytes of `data`.
+    /// Validate a complete file's header, including exact length and CRC, before section parsing.
     pub fn parse(data: &[u8]) -> Result<Self, IrError> {
+        limit("module bytes", data.len(), MAX_MODULE_SIZE)?;
         if data.len() < HEADER_SIZE {
             return Err(IrError::BufferTooShort {
                 expected: HEADER_SIZE,
                 actual: data.len(),
             });
         }
-
-        let magic: [u8; 4] = [data[0], data[1], data[2], data[3]];
-        if &magic != MAGIC {
-            return Err(IrError::BadMagic(magic));
+        if data[..8] != SIGNATURE {
+            if data[..4] == *b"FMIR" {
+                return Err(IrError::LegacyModule {
+                    version: le_u16(&data[4..6]),
+                });
+            }
+            let mut got = [0; 8];
+            got.copy_from_slice(&data[..8]);
+            return Err(IrError::BadSignature(got));
         }
-
-        let version = le_u16(&data[4..6]);
-        if version != IR_VERSION {
-            return Err(IrError::UnsupportedVersion(version));
+        let writer = [
+            le_u16(&data[8..10]),
+            le_u16(&data[10..12]),
+            le_u16(&data[12..14]),
+        ];
+        let reader = reader_version();
+        if writer != reader {
+            return Err(IrError::UnsupportedWriter { writer, reader });
         }
-
-        // `flags` is reserved. Reject any non-zero bit so that a future
-        // extension (compression, extended section table, ...) fails closed on
-        // an old reader instead of being silently ignored and mis-parsed.
-        let flags = le_u16(&data[6..8]);
-        if flags != 0 {
-            return Err(IrError::UnsupportedFlags(flags));
+        let body_len = le_u32(&data[14..18]);
+        let actual = data.len() - HEADER_SIZE;
+        if body_len as usize != actual {
+            return Err(IrError::LengthMismatch {
+                declared: body_len as usize,
+                actual,
+            });
         }
-
-        let source_hash = le_u64(&data[8..16]);
-
-        Ok(IrHeader {
-            version,
-            flags,
-            source_hash,
+        let crc = le_u32(&data[18..22]);
+        let computed = crc32(&[&data[..18], &data[22..]]);
+        if computed != crc {
+            return Err(IrError::ChecksumMismatch {
+                expected: crc,
+                computed,
+            });
+        }
+        if data[22..24] != [0, 0] {
+            return Err(IrError::ReservedBits { field: "header" });
+        }
+        Ok(Self {
+            writer,
+            body_len,
+            crc,
         })
     }
 }
 
-// ---------------------------------------------------------------------------
-// Section table (32 bytes)
-// ---------------------------------------------------------------------------
-
-/// A single section descriptor: offset + size (both u32, little-endian).
+/// A 12-byte section descriptor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SectionDescriptor {
-    /// Byte offset of the section from the start of the file.
+    /// Section kind, unique and ascending.
+    pub id: u16,
+    /// Bit 0: required; all other bits reserved.
+    pub flags: u16,
+    /// Absolute file offset.
     pub offset: u32,
-    /// Length of the section in bytes.
+    /// Payload length.
     pub size: u32,
 }
 
-/// Section table — four section descriptors immediately following the header.
-///
-/// Sections (in order):
-/// 0. Bytecode
-/// 1. String table
-/// 2. Slot table
-/// 3. Island table
-///
-/// Layout: 4 x (offset u32 + size u32) = 32 bytes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Validated variable-length section table following the header.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SectionTable {
-    /// Bytecode, string table, slot table, island table — in that order.
-    pub sections: [SectionDescriptor; 4],
+    /// Descriptors in file order.
+    pub sections: Vec<SectionDescriptor>,
 }
-
 impl SectionTable {
-    /// Parse a `SectionTable` from `data` (must be at least 32 bytes).
+    /// Parse the body prefix; the caller has already checked header integrity.
     pub fn parse(data: &[u8]) -> Result<Self, IrError> {
-        if data.len() < SECTION_TABLE_SIZE {
+        if data.len() < TABLE_PREFIX_SIZE {
             return Err(IrError::BufferTooShort {
-                expected: SECTION_TABLE_SIZE,
+                expected: TABLE_PREFIX_SIZE,
                 actual: data.len(),
             });
         }
-
-        let mut sections = [SectionDescriptor { offset: 0, size: 0 }; 4];
-        for (i, section) in sections.iter_mut().enumerate() {
-            let base = i * 8;
-            let offset = le_u32(&data[base..base + 4]);
-            let size = le_u32(&data[base + 4..base + 8]);
-            *section = SectionDescriptor { offset, size };
+        let count = le_u16(data) as usize;
+        limit("sections", count, MAX_SECTIONS)?;
+        let end = TABLE_PREFIX_SIZE + count * SECTION_ENTRY_SIZE;
+        if end > data.len() {
+            return Err(IrError::BufferTooShort {
+                expected: end,
+                actual: data.len(),
+            });
         }
-
-        Ok(SectionTable { sections })
-    }
-
-    /// Validate that every section falls within `file_len` bytes.
-    pub fn validate(&self, file_len: usize) -> Result<(), IrError> {
-        for (i, sec) in self.sections.iter().enumerate() {
-            let end = (sec.offset as usize)
-                .checked_add(sec.size as usize)
-                .ok_or(IrError::InvalidSection)?;
-            if end > file_len {
-                return Err(IrError::SectionOutOfBounds {
-                    section: i,
-                    offset: sec.offset,
-                    size: sec.size,
-                    file_len,
+        if le_u16(&data[2..4]) != 0 {
+            return Err(IrError::ReservedBits {
+                field: "section table",
+            });
+        }
+        let mut sections = Vec::with_capacity(count);
+        let mut previous = None;
+        for entry in data[TABLE_PREFIX_SIZE..end].chunks_exact(SECTION_ENTRY_SIZE) {
+            let id = le_u16(entry);
+            let flags = le_u16(&entry[2..]);
+            if previous.is_some_and(|p| id <= p) {
+                return Err(IrError::DuplicateSection(id));
+            }
+            if flags & !SECTION_REQUIRED != 0 {
+                return Err(IrError::ReservedBits {
+                    field: "section flags",
                 });
             }
+            sections.push(SectionDescriptor {
+                id,
+                flags,
+                offset: le_u32(&entry[4..]),
+                size: le_u32(&entry[8..]),
+            });
+            previous = Some(id);
+        }
+        Ok(Self { sections })
+    }
+    /// Require exact tiling, including unknown optional payloads.
+    pub fn validate(&self, file_len: usize) -> Result<(), IrError> {
+        let mut expected =
+            HEADER_SIZE + TABLE_PREFIX_SIZE + self.sections.len() * SECTION_ENTRY_SIZE;
+        for section in &self.sections {
+            if section.offset as usize != expected {
+                return Err(IrError::SectionsDoNotTile);
+            }
+            expected = expected
+                .checked_add(section.size as usize)
+                .ok_or(IrError::InvalidSection)?;
+            if expected > file_len {
+                return Err(IrError::SectionsDoNotTile);
+            }
+        }
+        if expected != file_len {
+            return Err(IrError::SectionsDoNotTile);
         }
         Ok(())
+    }
+    /// Find a descriptor by id.
+    pub fn get(&self, id: u16) -> Option<&SectionDescriptor> {
+        self.sections.iter().find(|s| s.id == id)
     }
 }
 
 // ---------------------------------------------------------------------------
-// Opcode enum (18 opcodes, 0x01–0x12)
+// Opcode enum (12 active opcodes; six reserved v2 values)
 //
-// Six are decoded and walked but never emitted by @getforma/compiler today:
-// Switch, TryStart, Fallback, Preload, Comment, ListItemKey. They are reserved
-// wire space, not dead code — see docs/ARCHITECTURE.md §B1. ListItemKey in
-// particular cannot be emitted usefully as specified: its operand is a static
-// string index, so every row would carry the same key. Per-item keys need an
-// FMIR version bump.
+// Six unused v2 values remain reserved forever: Switch, TryStart, Fallback,
+// Preload, Comment and ListItemKey. From v3 they are refused at load and have
+// no walker arms. Key paths use a separate typed section (FORMA-181).
 // ---------------------------------------------------------------------------
 
 /// Bytecode opcodes for the FMIR instruction stream.
@@ -441,79 +605,53 @@ impl SectionTable {
 #[repr(u8)]
 pub enum Opcode {
     /// Open an element. `str_idx(u32) + attr_count(u16) + [(key u32, val u32)]`
-    OpenTag = 0x01,
+    OpenTag = OP_OPEN_TAG,
     /// Close the named element. `str_idx(u32)`
-    CloseTag = 0x02,
+    CloseTag = OP_CLOSE_TAG,
     /// A void element, which takes no CLOSE_TAG. Same operands as OPEN_TAG.
-    VoidTag = 0x03,
+    VoidTag = OP_VOID_TAG,
     /// Static text from the string table. `str_idx(u32)`
-    Text = 0x04,
+    Text = OP_TEXT,
     /// Slot-bound text wrapped in `<!--f:tN-->` markers.
     /// `slot_id(u16) + marker_id(u16)`
-    DynText = 0x05,
+    DynText = OP_DYN_TEXT,
     /// Slot-bound attribute on the tag currently being opened.
     /// `attr_str_idx(u32) + slot_id(u16)`
-    DynAttr = 0x06,
+    DynAttr = OP_DYN_ATTR,
     /// Conditional region wrapped in `<!--f:sN-->` markers.
     /// `slot_id(u16) + then_len(u32) + else_len(u32)`, then the two bodies
     /// separated by a [`Opcode::ShowElse`] byte.
-    ShowIf = 0x07,
+    ShowIf = OP_SHOW_IF,
     /// Separator byte between a SHOW_IF's then- and else-bodies.
-    ShowElse = 0x08,
-    /// First-match-wins multi-way branch on a slot's text.
-    /// `slot_id(u16) + case_count(u16)`, then one
-    /// `(val_str_idx u32, body_len u32)` header per case, then the bodies.
-    Switch = 0x09,
+    ShowElse = OP_SHOW_ELSE,
     /// Repeat a body once per element of an array slot, wrapped in
     /// `<!--f:lN-->` markers. `slot_id(u16) + item_slot_id(u16) + body_len(u32)`
-    List = 0x0A,
+    List = OP_LIST,
     /// Begin an island region. `island_id(u16)`
-    IslandStart = 0x0B,
+    IslandStart = OP_ISLAND_START,
     /// End an island region. `island_id(u16)`
-    IslandEnd = 0x0C,
-    /// Begin a try block. `fallback_len(u32)`
-    TryStart = 0x0D,
-    /// Separator between a try block's main and fallback bodies.
-    Fallback = 0x0E,
-    /// Emit a `<link rel="preload">`. `resource_type(u8) + url_str_idx(u32)`
-    Preload = 0x0F,
-    /// An HTML comment. `str_idx(u32)`
-    Comment = 0x10,
-    /// Set `data-forma-key` on the next element opened in a LIST body.
-    /// `key_str_idx(u32)`
-    ///
-    /// LIMITATION: the operand is a *static* string-table index, so every item
-    /// in a list gets the same key. Per-item keys would need a slot-bound
-    /// operand, which is a v-bump to this opcode's layout and a coordinated
-    /// compiler change — not something the walker can work around.
-    ListItemKey = 0x11,
+    IslandEnd = OP_ISLAND_END,
     /// Extract a named property from an Object slot into a target slot.
     /// Format: src_slot_id(u16) + prop_str_idx(u32) + target_slot_id(u16)
-    Prop = 0x12,
+    Prop = OP_PROP,
 }
 
 impl Opcode {
     /// Convert a raw byte to an `Opcode`.
     pub fn from_byte(b: u8) -> Result<Self, IrError> {
         match b {
-            0x01 => Ok(Opcode::OpenTag),
-            0x02 => Ok(Opcode::CloseTag),
-            0x03 => Ok(Opcode::VoidTag),
-            0x04 => Ok(Opcode::Text),
-            0x05 => Ok(Opcode::DynText),
-            0x06 => Ok(Opcode::DynAttr),
-            0x07 => Ok(Opcode::ShowIf),
-            0x08 => Ok(Opcode::ShowElse),
-            0x09 => Ok(Opcode::Switch),
-            0x0A => Ok(Opcode::List),
-            0x0B => Ok(Opcode::IslandStart),
-            0x0C => Ok(Opcode::IslandEnd),
-            0x0D => Ok(Opcode::TryStart),
-            0x0E => Ok(Opcode::Fallback),
-            0x0F => Ok(Opcode::Preload),
-            0x10 => Ok(Opcode::Comment),
-            0x11 => Ok(Opcode::ListItemKey),
-            0x12 => Ok(Opcode::Prop),
+            OP_OPEN_TAG => Ok(Opcode::OpenTag),
+            OP_CLOSE_TAG => Ok(Opcode::CloseTag),
+            OP_VOID_TAG => Ok(Opcode::VoidTag),
+            OP_TEXT => Ok(Opcode::Text),
+            OP_DYN_TEXT => Ok(Opcode::DynText),
+            OP_DYN_ATTR => Ok(Opcode::DynAttr),
+            OP_SHOW_IF => Ok(Opcode::ShowIf),
+            OP_SHOW_ELSE => Ok(Opcode::ShowElse),
+            OP_LIST => Ok(Opcode::List),
+            OP_ISLAND_START => Ok(Opcode::IslandStart),
+            OP_ISLAND_END => Ok(Opcode::IslandEnd),
+            OP_PROP => Ok(Opcode::Prop),
             _ => Err(IrError::InvalidOpcode(b)),
         }
     }
@@ -528,26 +666,26 @@ impl Opcode {
 #[repr(u8)]
 pub enum SlotType {
     /// A string.
-    Text = 0x01,
+    Text = SLOT_TYPE_TEXT,
     /// A boolean.
-    Bool = 0x02,
+    Bool = SLOT_TYPE_BOOL,
     /// An IEEE-754 double, formatted the way ECMAScript formats it.
-    Number = 0x03,
+    Number = SLOT_TYPE_NUMBER,
     /// An array, the only type a LIST may iterate.
-    Array = 0x04,
+    Array = SLOT_TYPE_ARRAY,
     /// A key/value object, the only type PROP may read from.
-    Object = 0x05,
+    Object = SLOT_TYPE_OBJECT,
 }
 
 impl SlotType {
     /// Convert a raw byte to a `SlotType`.
     pub fn from_byte(b: u8) -> Result<Self, IrError> {
         match b {
-            0x01 => Ok(SlotType::Text),
-            0x02 => Ok(SlotType::Bool),
-            0x03 => Ok(SlotType::Number),
-            0x04 => Ok(SlotType::Array),
-            0x05 => Ok(SlotType::Object),
+            SLOT_TYPE_TEXT => Ok(SlotType::Text),
+            SLOT_TYPE_BOOL => Ok(SlotType::Bool),
+            SLOT_TYPE_NUMBER => Ok(SlotType::Number),
+            SLOT_TYPE_ARRAY => Ok(SlotType::Array),
+            SLOT_TYPE_OBJECT => Ok(SlotType::Object),
             _ => Err(IrError::InvalidSlotType(b)),
         }
     }
@@ -562,68 +700,24 @@ impl SlotType {
 #[repr(u8)]
 pub enum IslandTrigger {
     /// Hydrate as soon as the page's JS runs.
-    Load = 0x01,
+    Load = TRIGGER_LOAD,
     /// Hydrate when the island scrolls into view.
-    Visible = 0x02,
+    Visible = TRIGGER_VISIBLE,
     /// Hydrate on the first user interaction with the island.
-    Interaction = 0x03,
+    Interaction = TRIGGER_INTERACTION,
     /// Hydrate when the main thread next goes idle.
-    Idle = 0x04,
+    Idle = TRIGGER_IDLE,
 }
 
 impl IslandTrigger {
     /// Convert a raw byte to an `IslandTrigger`.
     pub fn from_byte(b: u8) -> Result<Self, IrError> {
         match b {
-            0x01 => Ok(IslandTrigger::Load),
-            0x02 => Ok(IslandTrigger::Visible),
-            0x03 => Ok(IslandTrigger::Interaction),
-            0x04 => Ok(IslandTrigger::Idle),
+            TRIGGER_LOAD => Ok(IslandTrigger::Load),
+            TRIGGER_VISIBLE => Ok(IslandTrigger::Visible),
+            TRIGGER_INTERACTION => Ok(IslandTrigger::Interaction),
+            TRIGGER_IDLE => Ok(IslandTrigger::Idle),
             _ => Err(IrError::InvalidIslandTrigger(b)),
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// PropsMode enum (3 modes)
-// ---------------------------------------------------------------------------
-
-/// How island props are delivered.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum PropsMode {
-    /// Props serialized into a `data-forma-props` attribute on the island root.
-    Inline = 0x01,
-    /// Props accumulated into a shared `<script id="__forma_islands">` JSON
-    /// block at the end of the page.
-    ///
-    /// NOT YET EMITTED BY THE COMPILER — `@getforma/compiler` hardcodes
-    /// `Inline` at every `addIsland` call site, so nothing in the toolchain
-    /// produces this value today. The walker supports it because `forma-ir`
-    /// accepts FMIR from any producer, but treat it as a dormant branch rather
-    /// than a shipping feature until the compiler opts into it (the intended
-    /// trigger being props too large for an attribute).
-    ScriptTag = 0x02,
-    /// Reserved. NOT IMPLEMENTED on either side of the stack.
-    ///
-    /// The name promises props fetched by the client after hydration, but
-    /// there is no mechanism behind it: the walker emits no props and no fetch
-    /// hint (no `data-forma-props-src`, nothing), and `@getforma/core`'s
-    /// `loadIslandProps` knows only the inline attribute and the shared block.
-    /// An island declared `Deferred` is therefore indistinguishable from an
-    /// island with no props at all. Treat it as reserved wire space, not as a
-    /// feature — the compiler never emits it.
-    Deferred = 0x03,
-}
-
-impl PropsMode {
-    /// Convert a raw byte to a `PropsMode`.
-    pub fn from_byte(b: u8) -> Result<Self, IrError> {
-        match b {
-            0x01 => Ok(PropsMode::Inline),
-            0x02 => Ok(PropsMode::ScriptTag),
-            0x03 => Ok(PropsMode::Deferred),
-            _ => Err(IrError::InvalidPropsMode(b)),
         }
     }
 }
@@ -638,18 +732,18 @@ impl PropsMode {
 pub enum SlotSource {
     /// Filled by the page handler before the walk. Still `Null` at render
     /// time means the handler probably has a bug, and the walker warns.
-    Server = 0x00,
+    Server = SLOT_SOURCE_SERVER,
     /// Owned by the client runtime; the slot table's default is what SSR
     /// renders.
-    Client = 0x01,
+    Client = SLOT_SOURCE_CLIENT,
 }
 
 impl SlotSource {
     /// Convert a raw byte to a `SlotSource`.
     pub fn from_byte(b: u8) -> Result<Self, IrError> {
         match b {
-            0x00 => Ok(SlotSource::Server),
-            0x01 => Ok(SlotSource::Client),
+            SLOT_SOURCE_SERVER => Ok(SlotSource::Server),
+            SLOT_SOURCE_CLIENT => Ok(SlotSource::Client),
             _ => Err(IrError::InvalidSlotSource(b)),
         }
     }
@@ -685,270 +779,16 @@ pub struct IslandEntry {
     pub id: u16,
     /// When this island should hydrate.
     pub trigger: IslandTrigger,
-    /// How props are delivered to the island.
-    pub props_mode: PropsMode,
+    /// Props-schema object index, or 0xffff until declared.
+    pub schema_object: u16,
+    /// Opaque digest bytes; FORMA-105 defines their use.
+    pub digest: Vec<u8>,
+    /// Unknown trailing entry fields retained for lossless dumps.
+    pub extension: Vec<u8>,
     /// Index into the string table for the island name.
     pub name_str_idx: u32,
     /// Byte offset of the ISLAND_START opcode in the bytecode stream.
     pub byte_offset: u32,
     /// Which slots belong to this island.
     pub slot_ids: Vec<u16>,
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Build a valid 16-byte FMIR header.
-    fn make_header(version: u16, flags: u16, source_hash: u64) -> Vec<u8> {
-        let mut buf = Vec::with_capacity(HEADER_SIZE);
-        buf.extend_from_slice(MAGIC);
-        buf.extend_from_slice(&version.to_le_bytes());
-        buf.extend_from_slice(&flags.to_le_bytes());
-        buf.extend_from_slice(&source_hash.to_le_bytes());
-        buf
-    }
-
-    #[test]
-    fn parse_valid_header() {
-        let data = make_header(2, 0, 0xDEAD_BEEF_CAFE_BABE);
-        let hdr = IrHeader::parse(&data).unwrap();
-        assert_eq!(hdr.version, 2);
-        assert_eq!(hdr.flags, 0);
-        assert_eq!(hdr.source_hash, 0xDEAD_BEEF_CAFE_BABE);
-    }
-
-    #[test]
-    fn reject_bad_magic() {
-        let mut data = make_header(2, 0, 0);
-        data[0..4].copy_from_slice(b"NOPE");
-        let err = IrHeader::parse(&data).unwrap_err();
-        assert_eq!(err, IrError::BadMagic(*b"NOPE"));
-    }
-
-    #[test]
-    fn reject_unsupported_version() {
-        let data = make_header(99, 0, 0);
-        let err = IrHeader::parse(&data).unwrap_err();
-        assert_eq!(err, IrError::UnsupportedVersion(99));
-    }
-
-    #[test]
-    fn reject_nonzero_flags() {
-        // `flags` is reserved and must be 0 — a future extension bit must fail
-        // closed on this reader rather than being silently ignored.
-        let data = make_header(2, 1, 0);
-        let err = IrHeader::parse(&data).unwrap_err();
-        assert_eq!(err, IrError::UnsupportedFlags(1));
-
-        let data = make_header(2, 0x8000, 0);
-        let err = IrHeader::parse(&data).unwrap_err();
-        assert_eq!(err, IrError::UnsupportedFlags(0x8000));
-    }
-
-    /// Build a 32-byte section table from four (offset, size) pairs.
-    fn make_section_table(sections: [(u32, u32); 4]) -> Vec<u8> {
-        let mut buf = Vec::with_capacity(SECTION_TABLE_SIZE);
-        for (offset, size) in &sections {
-            buf.extend_from_slice(&offset.to_le_bytes());
-            buf.extend_from_slice(&size.to_le_bytes());
-        }
-        buf
-    }
-
-    #[test]
-    fn parse_section_table() {
-        let data = make_section_table([
-            (48, 100),  // bytecode
-            (148, 200), // string table
-            (348, 50),  // slot table
-            (398, 30),  // island table
-        ]);
-        let st = SectionTable::parse(&data).unwrap();
-        assert_eq!(
-            st.sections[0],
-            SectionDescriptor {
-                offset: 48,
-                size: 100
-            }
-        );
-        assert_eq!(
-            st.sections[1],
-            SectionDescriptor {
-                offset: 148,
-                size: 200
-            }
-        );
-        assert_eq!(
-            st.sections[2],
-            SectionDescriptor {
-                offset: 348,
-                size: 50
-            }
-        );
-        assert_eq!(
-            st.sections[3],
-            SectionDescriptor {
-                offset: 398,
-                size: 30
-            }
-        );
-    }
-
-    #[test]
-    fn validate_section_bounds() {
-        let data = make_section_table([
-            (48, 100),
-            (148, 200),
-            (348, 50),
-            (398, 9999), // way past end
-        ]);
-        let st = SectionTable::parse(&data).unwrap();
-        let err = st.validate(500).unwrap_err();
-        assert_eq!(
-            err,
-            IrError::SectionOutOfBounds {
-                section: 3,
-                offset: 398,
-                size: 9999,
-                file_len: 500,
-            }
-        );
-    }
-
-    #[test]
-    fn opcode_from_byte_all_valid() {
-        let expected = [
-            (0x01, Opcode::OpenTag),
-            (0x02, Opcode::CloseTag),
-            (0x03, Opcode::VoidTag),
-            (0x04, Opcode::Text),
-            (0x05, Opcode::DynText),
-            (0x06, Opcode::DynAttr),
-            (0x07, Opcode::ShowIf),
-            (0x08, Opcode::ShowElse),
-            (0x09, Opcode::Switch),
-            (0x0A, Opcode::List),
-            (0x0B, Opcode::IslandStart),
-            (0x0C, Opcode::IslandEnd),
-            (0x0D, Opcode::TryStart),
-            (0x0E, Opcode::Fallback),
-            (0x0F, Opcode::Preload),
-            (0x10, Opcode::Comment),
-            (0x11, Opcode::ListItemKey),
-            (0x12, Opcode::Prop),
-        ];
-        for (byte, op) in &expected {
-            assert_eq!(Opcode::from_byte(*byte).unwrap(), *op, "byte 0x{byte:02x}");
-        }
-    }
-
-    #[test]
-    fn opcode_from_byte_invalid() {
-        assert_eq!(
-            Opcode::from_byte(0x00).unwrap_err(),
-            IrError::InvalidOpcode(0x00)
-        );
-        assert_eq!(
-            Opcode::from_byte(0x13).unwrap_err(),
-            IrError::InvalidOpcode(0x13)
-        );
-        assert_eq!(
-            Opcode::from_byte(0xFF).unwrap_err(),
-            IrError::InvalidOpcode(0xFF)
-        );
-    }
-
-    #[test]
-    fn slot_type_from_byte() {
-        let expected = [
-            (0x01, SlotType::Text),
-            (0x02, SlotType::Bool),
-            (0x03, SlotType::Number),
-            (0x04, SlotType::Array),
-            (0x05, SlotType::Object),
-        ];
-        for (byte, st) in &expected {
-            assert_eq!(
-                SlotType::from_byte(*byte).unwrap(),
-                *st,
-                "byte 0x{byte:02x}"
-            );
-        }
-        assert_eq!(
-            SlotType::from_byte(0x00).unwrap_err(),
-            IrError::InvalidSlotType(0x00)
-        );
-        assert_eq!(
-            SlotType::from_byte(0x06).unwrap_err(),
-            IrError::InvalidSlotType(0x06)
-        );
-    }
-
-    #[test]
-    fn island_trigger_from_byte() {
-        let expected = [
-            (0x01, IslandTrigger::Load),
-            (0x02, IslandTrigger::Visible),
-            (0x03, IslandTrigger::Interaction),
-            (0x04, IslandTrigger::Idle),
-        ];
-        for (byte, trigger) in &expected {
-            assert_eq!(
-                IslandTrigger::from_byte(*byte).unwrap(),
-                *trigger,
-                "byte 0x{byte:02x}"
-            );
-        }
-        assert_eq!(
-            IslandTrigger::from_byte(0x00).unwrap_err(),
-            IrError::InvalidIslandTrigger(0x00)
-        );
-        assert_eq!(
-            IslandTrigger::from_byte(0x05).unwrap_err(),
-            IrError::InvalidIslandTrigger(0x05)
-        );
-    }
-
-    #[test]
-    fn props_mode_from_byte() {
-        let expected = [
-            (0x01, PropsMode::Inline),
-            (0x02, PropsMode::ScriptTag),
-            (0x03, PropsMode::Deferred),
-        ];
-        for (byte, mode) in &expected {
-            assert_eq!(
-                PropsMode::from_byte(*byte).unwrap(),
-                *mode,
-                "byte 0x{byte:02x}"
-            );
-        }
-        assert_eq!(
-            PropsMode::from_byte(0x00).unwrap_err(),
-            IrError::InvalidPropsMode(0x00)
-        );
-        assert_eq!(
-            PropsMode::from_byte(0x04).unwrap_err(),
-            IrError::InvalidPropsMode(0x04)
-        );
-    }
-
-    #[test]
-    fn slot_source_from_byte() {
-        assert_eq!(SlotSource::from_byte(0x00).unwrap(), SlotSource::Server);
-        assert_eq!(SlotSource::from_byte(0x01).unwrap(), SlotSource::Client);
-        assert_eq!(
-            SlotSource::from_byte(0x02).unwrap_err(),
-            IrError::InvalidSlotSource(0x02)
-        );
-        assert_eq!(
-            SlotSource::from_byte(0xFF).unwrap_err(),
-            IrError::InvalidSlotSource(0xFF)
-        );
-    }
 }

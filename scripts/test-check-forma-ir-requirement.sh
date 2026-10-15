@@ -56,11 +56,27 @@ ir_version=$(cargo metadata --no-deps --format-version 1 --manifest-path "$root/
   | jq -r '.packages[] | select(.name == "forma-ir") | .version')
 
 run "$root/Cargo.toml"
-expect_pass "this tree's requirement equals forma-ir's version" "ok: forma-server requires forma-ir ^$ir_version, normal and dev"
+expect_pass "this tree's requirement equals forma-ir's version" "ok: forma-server's normal and dev requirements start at forma-ir's version $ir_version"
 
 fresh
 run "$work/ws/Cargo.toml"
-expect_pass "the scratch copy of this tree passes" "ok: forma-server requires forma-ir ^$ir_version"
+expect_pass "the scratch copy of this tree passes" "ok: forma-server's normal and dev requirements start at forma-ir's version $ir_version"
+
+fresh
+set_requirement 1 "=$ir_version"
+set_requirement 2 "=$ir_version"
+run "$work/ws/Cargo.toml"
+expect_pass "exact requirements at the shared version pass" "ok: forma-server's normal and dev requirements start at forma-ir's version $ir_version"
+
+fresh
+set_requirement 1 "=9.9.8"
+run "$work/ws/Cargo.toml"
+expect_fail "an exact requirement for another version fails" "normal forma-ir requirement is =9.9.8, not ^$ir_version or =$ir_version"
+
+fresh
+set_requirement 1 ">=$ir_version"
+run "$work/ws/Cargo.toml"
+expect_fail "an unbounded requirement remains rejected" "normal forma-ir requirement is >=$ir_version, not ^$ir_version or =$ir_version"
 
 fresh
 set_requirement 1 "0.2.1"
@@ -92,7 +108,7 @@ expect_fail "a requirement ahead of forma-ir's version fails" "normal forma-ir r
 fresh
 sed 's/^version = "[^"]*"/version = "9.9.9"/' "$work/ws/Cargo.toml" > "$work/ws/root.toml" && mv "$work/ws/root.toml" "$work/ws/Cargo.toml"
 run "$work/ws/Cargo.toml"
-expect_fail "a workspace version bump without the requirement fails" "not ^9.9.9 (forma-ir's version)"
+expect_fail "a workspace version bump without the requirement fails" "not ^9.9.9 or =9.9.9 (forma-ir's version)"
 
 run "$work/does-not-exist/Cargo.toml"
 if [ "$status" -eq 2 ] && [[ $out == *"is not a file"* ]]; then ok "a missing manifest is its own error"; else not_ok "a missing manifest is its own error"; fi

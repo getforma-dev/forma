@@ -90,7 +90,7 @@ describe('Island Registry', () => {
       expect(islands.length).toBe(1);
       expect(islands[0]!.id).toBe(0);
       expect(islands[0]!.trigger).toBe(1); // Load (0x01)
-      expect(islands[0]!.propsMode).toBe(1); // Inline (0x01)
+      expect(islands[0]!.schemaObject).toBe(0xffff); // no schema reference
     });
 
     it('multiple islands produce multiple entries in island table', () => {
@@ -286,7 +286,7 @@ describe('Island Registry', () => {
 
     it('returns correct metadata for manually added island', () => {
       const ctx = new IrEmitContext();
-      const id = ctx.addIsland('TestComponent', 0x01, 0x01, [], 0);
+      const id = ctx.addIsland('TestComponent', 0x01, [], 0);
 
       const islands = ctx.getIslands();
       expect(islands).toHaveLength(1);
@@ -294,7 +294,6 @@ describe('Island Registry', () => {
         id: 0,
         name: 'TestComponent',
         trigger: 1,
-        propsMode: 1,
         slotIds: [],
       });
       expect(id).toBe(0);
@@ -302,7 +301,7 @@ describe('Island Registry', () => {
 
     it('returns correct metadata for island with slot ids', () => {
       const ctx = new IrEmitContext();
-      ctx.addIsland('WithSlots', 0x01, 0x01, [1, 2, 3], 0);
+      ctx.addIsland('WithSlots', 0x01, [1, 2, 3], 0);
 
       const islands = ctx.getIslands();
       expect(islands[0]!.slotIds).toEqual([1, 2, 3]);
@@ -324,11 +323,11 @@ describe('Island Registry', () => {
       expect(ctx.peekNextIslandId()).toBe(0);
       expect(ctx.peekNextIslandId()).toBe(0); // still 0
 
-      ctx.addIsland('first', 0x01, 0x01, [], 0);
+      ctx.addIsland('first', 0x01, [], 0);
       expect(ctx.peekNextIslandId()).toBe(1);
       expect(ctx.peekNextIslandId()).toBe(1); // still 1
 
-      ctx.addIsland('second', 0x01, 0x01, [], 0);
+      ctx.addIsland('second', 0x01, [], 0);
       expect(ctx.peekNextIslandId()).toBe(2);
     });
   });
@@ -340,8 +339,10 @@ describe('Island Registry', () => {
   describe('island table binary format', () => {
     it('island table encodes correctly in FMIR binary', () => {
       const ctx = new IrEmitContext();
-      ctx.addIsland('MyIsland', 0x01, 0x01, [], 0);
+      ctx.addIsland('MyIsland', 0x01, [], 0);
 
+      // Emit a declared ISLAND_START before its body.
+      ctx.emit(0x0b); ctx.emitU16(0);
       // Emit minimal opcodes
       ctx.addString('div');
       ctx.emit(0x01);
@@ -357,7 +358,7 @@ describe('Island Registry', () => {
       expect(islands[0]!.id).toBe(0);
       expect(islands[0]!.name).toBe('MyIsland');
       expect(islands[0]!.trigger).toBe(1); // Load (0x01)
-      expect(islands[0]!.propsMode).toBe(1); // Inline (0x01)
+      expect(islands[0]!.schemaObject).toBe(0xffff); // no schema reference
       expect(islands[0]!.slotIds).toEqual([]);
     });
 
@@ -365,8 +366,10 @@ describe('Island Registry', () => {
       const ctx = new IrEmitContext();
       const slotId1 = ctx.addSlot('email', 0x01);
       const slotId2 = ctx.addSlot('password', 0x01);
-      ctx.addIsland('FormIsland', 0x01, 0x01, [slotId1, slotId2], 0);
+      ctx.addIsland('FormIsland', 0x01, [slotId1, slotId2], 0);
 
+      // Emit a declared ISLAND_START before its body.
+      ctx.emit(0x0b); ctx.emitU16(0);
       // Emit minimal opcodes
       const divIdx = ctx.addString('div');
       ctx.emit(0x01);

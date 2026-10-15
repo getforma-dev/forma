@@ -15,12 +15,12 @@ use crate::{AssetManifest, RenderMode};
 /// | Code | Cause |
 /// |---|---|
 /// | LOAD-101 | The manifest declares a module that is not embedded |
-/// | LOAD-102 | Not a module this reader accepts: magic, version or flags |
+/// | LOAD-102 | Bad signature or legacy FMIR module requiring a rebuild |
 /// | LOAD-103 | A corrupt or truncated module: sections, tables, opcodes, names |
 ///
-/// FMIR v2 carries no checksum, so a flipped byte the structure checks do not
-/// reach (inside the source hash, or inside a text string) is not refused;
-/// FMIR v3's CRC-32 closes that.
+/// FMIR v3 checks length and CRC before parsing sections (`LOAD-104`). Missing
+/// or unknown required sections use `LOAD-105`/`LOAD-106`; limits `LOAD-107`,
+/// exact writer-version mismatches `LOAD-108`. Codes come from forma-ir.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IrLoadError {
     /// The route pattern that failed.
@@ -28,12 +28,12 @@ pub struct IrLoadError {
     /// The `.ir` filename the manifest named for it.
     pub ir_file: String,
     /// The code and the human-readable cause, such as
-    /// `LOAD-102 bad magic: expected FMIR, got [71, 77, 73, 82]`.
+    /// `LOAD-102 bad signature: expected FMIR v3 signature`.
     pub reason: String,
 }
 
 impl IrLoadError {
-    /// The failure's code (`LOAD-101` to `LOAD-103`), read from the start of
+    /// The failure's code (`LOAD-101` to `LOAD-108`), read from the start of
     /// `reason`; `None` for an error built by hand without one.
     pub fn code(&self) -> Option<&str> {
         let code = self.reason.split(' ').next()?;
@@ -44,13 +44,7 @@ impl IrLoadError {
 
 /// The code for a module the parser refused.
 fn parse_failure_code(error: &forma_ir::IrError) -> &'static str {
-    use forma_ir::IrError;
-    match error {
-        IrError::BadMagic(_) | IrError::UnsupportedVersion(_) | IrError::UnsupportedFlags(_) => {
-            "LOAD-102"
-        }
-        _ => "LOAD-103",
-    }
+    error.code()
 }
 
 impl std::fmt::Display for IrLoadError {
@@ -369,7 +363,7 @@ pub fn load_ir_modules_strict<A: Embed>(
 /// ```
 ///
 /// Verified by: crates/forma-server/tests/dev_reload.rs > "an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page"
-/// Verified by: crates/forma-server/src/ir_compat.rs > "a_release_build_reads_nothing_per_request_and_a_debug_build_rereads"
+/// Verified by: crates/forma-server/src/ir.rs > "a_release_build_reads_nothing_per_request_and_a_debug_build_rereads"
 pub struct IrModules<A> {
     modules: Modules,
     assets: PhantomData<fn() -> A>,
@@ -682,16 +676,16 @@ mod tests {
         }
         // The parser's errors map to their family.
         assert_eq!(
-            parse_failure_code(&forma_ir::IrError::BadMagic(*b"GMIR")),
+            parse_failure_code(&forma_ir::IrError::BadSignature(*b"INVALID!")),
             "LOAD-102"
         );
         assert_eq!(
-            parse_failure_code(&forma_ir::IrError::UnsupportedVersion(3)),
+            parse_failure_code(&forma_ir::IrError::LegacyModule { version: 2 }),
             "LOAD-102"
         );
         assert_eq!(
-            parse_failure_code(&forma_ir::IrError::UnsupportedFlags(1)),
-            "LOAD-102"
+            parse_failure_code(&forma_ir::IrError::ReservedBits { field: "header" }),
+            "LOAD-103"
         );
         assert_eq!(
             parse_failure_code(&forma_ir::IrError::InvalidOpcode(0x81)),
@@ -920,10 +914,10 @@ mod reload_tests {
                 for _ in 0..3 {
                     assert_eq!(html(modules.get("/", &read)), "<p>first</p>");
                 }
-                assert_eq!(warnings.codes(), ["LOAD-103"]);
+                assert_eq!(warnings.codes(), ["LOAD-104"]);
                 let (_, message) = warnings.0.lock().expect("lock")[0].clone();
                 assert!(
-                    message.contains("route /: IR file page.ir: LOAD-103"),
+                    message.contains("route /: IR file page.ir: LOAD-104"),
                     "{message}"
                 );
                 assert!(message.contains("the previous module stays"), "{message}");
@@ -940,7 +934,7 @@ mod reload_tests {
                 for _ in 0..3 {
                     assert_eq!(html(modules.get("/", &read)), "<p>first</p>");
                 }
-                assert_eq!(warnings.codes(), ["LOAD-103", "LOAD-102", "LOAD-101"]);
+                assert_eq!(warnings.codes(), ["LOAD-104", "LOAD-102", "LOAD-101"]);
 
                 // The next good write is served...
                 disk.write("page.ir", page("second"));
@@ -950,7 +944,7 @@ mod reload_tests {
                 assert_eq!(html(modules.get("/", &read)), "<p>second</p>");
                 assert_eq!(
                     warnings.codes(),
-                    ["LOAD-103", "LOAD-102", "LOAD-101", "LOAD-102"]
+                    ["LOAD-104", "LOAD-102", "LOAD-101", "LOAD-102"]
                 );
                 // So is the same break after the build wrote back the module
                 // being served (an undo), which reloads nothing.
@@ -960,7 +954,7 @@ mod reload_tests {
                 assert_eq!(html(modules.get("/", &read)), "<p>second</p>");
                 assert_eq!(
                     warnings.codes(),
-                    ["LOAD-103", "LOAD-102", "LOAD-101", "LOAD-102", "LOAD-102"]
+                    ["LOAD-104", "LOAD-102", "LOAD-101", "LOAD-102", "LOAD-102"]
                 );
             });
         }

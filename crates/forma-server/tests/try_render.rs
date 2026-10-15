@@ -244,13 +244,11 @@ fn render_101_a_server_render_without_its_module() {
 
 #[test]
 fn render_102_a_module_the_walk_refuses_names_its_island() {
-    // Inside "Branding", a TEXT naming string 99: it parses, and the walk
-    // refuses it.
-    let mut body = encode_open_tag(0, &[]);
-    body.extend_from_slice(&encode_text(99));
-    body.extend_from_slice(&encode_close_tag(0));
+    // All string references are load-validated. An invalid HTML name inside
+    // "Branding" still reaches the renderer's semantic check and names its island.
+    let body = encode_open_tag(0, &[]);
     let data = build_minimal_ir(
-        &["div", "Branding"],
+        &["bad tag", "Branding"],
         &[],
         &island(0, &body, true),
         &[(0, 0x01, 0x01, 1, 0, &[])],
@@ -474,9 +472,9 @@ fn try_render_never_serves_a_shell_in_place_of_a_failure() {
     let manifest = manifest();
     let module = branding_module();
     let slots = branding(FAULT_TRIGGER, 1);
-    let mut walk_error = encode_open_tag(0, &[]);
-    walk_error.extend_from_slice(&encode_text(99));
-    let bad = IrModule::parse(&build_minimal_ir(&["div"], &[], &walk_error, &[])).expect("parses");
+    let walk_error = encode_open_tag(0, &[]);
+    let bad =
+        IrModule::parse(&build_minimal_ir(&["bad tag"], &[], &walk_error, &[])).expect("parses");
     let empty = SlotData::new(0);
 
     // The deprecated path falls back to an empty shell with a 200...

@@ -6,7 +6,7 @@
 
 #[cfg(feature = "tracing")]
 use crate::format::SlotSource;
-use crate::format::{IrError, IslandTrigger, Opcode, PropsMode};
+use crate::format::{IrError, IslandTrigger, Opcode};
 use crate::parser::IrModule;
 use crate::slot::{SlotData, SlotValue};
 use std::fmt;
@@ -23,7 +23,7 @@ struct IslandPending {
     trigger: IslandTrigger,
 }
 
-/// Serialized-JSON size above which `PropsMode::Inline` props are spilled into
+/// Serialized-JSON size above which inline island props are spilled into
 /// the shared `__forma_islands` block instead of a `data-forma-props`
 /// attribute.
 ///
@@ -125,7 +125,7 @@ struct WalkState {
     /// entries before its enclosing row unwinds. The `Vec` keeps its capacity
     /// between rows, so steady-state pushes do not allocate.
     slot_journal: Vec<(u16, SlotValue)>,
-    /// When true, `PropsMode::ScriptTag` islands inline their props on the
+    /// When true, fragment islands inline their props on the
     /// root instead of accumulating into the shared `__forma_islands` block.
     /// Set for fragment renders, where a shared block would be dropped on
     /// return (or, if emitted, would duplicate the page's own block).
@@ -321,9 +321,9 @@ pub struct WalkFailure {
     /// Why it stopped.
     pub error: IrError,
     /// The component names of the islands open where it stopped, outermost
-    /// first; empty when it stopped outside every island. FMIR v2 carries no
-    /// source positions, so a component the compiler inlined into its parent
-    /// has no name here; the source-position table of FMIR v3 adds it.
+    /// first; empty when it stopped outside every island. The decoded v3
+    /// source-position metadata is available for later diagnostic integration;
+    /// this path continues to name declared islands.
     pub component_path: Vec<String>,
     /// What it had written by then.
     pub counts: WalkCounts,
@@ -478,7 +478,7 @@ fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(
 /// swap, so re-emitting them would duplicate them.
 ///
 /// Props are always inlined on the root as `data-forma-props`, even for an
-/// island declared `PropsMode::ScriptTag`. A fragment must be self-contained:
+/// island whose props would spill to the shared block. A fragment must be self-contained:
 /// emitting a second `__forma_islands` block would duplicate a DOM id and,
 /// because the injected copy precedes the SSR one in document order, would
 /// shadow it for every other ScriptTag island on the page. The client already
@@ -537,18 +537,11 @@ pub fn walk_island_with_limits(
     let mut slots_mut = slots.clone();
 
     let component_name = module.strings.get(entry.name_str_idx)?.to_string();
-    let inline_props = match entry.props_mode {
-        // ScriptTag is deliberately treated as Inline here — see the doc
-        // comment: a fragment must carry its own props.
-        PropsMode::Inline | PropsMode::ScriptTag => {
-            if entry.slot_ids.is_empty() {
-                None
-            } else {
-                let props = build_island_props(module, &slots_mut, &entry.slot_ids);
-                Some(serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string()))
-            }
-        }
-        PropsMode::Deferred => None,
+    let inline_props = if entry.slot_ids.is_empty() {
+        None
+    } else {
+        let props = build_island_props(module, &slots_mut, &entry.slot_ids);
+        Some(serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string()))
     };
     state.pending_island = Some(IslandPending {
         id: island_id,
@@ -578,11 +571,11 @@ pub fn walk_island_with_limits(
 
 /// Maximum nesting depth for LIST opcodes. Prevents stack overflow from
 /// deeply nested or malicious input.
-const MAX_LIST_DEPTH: u8 = 4;
+const MAX_LIST_DEPTH: u8 = crate::format::MAX_LIST_DEPTH as u8;
 
 /// Maximum recursion depth for control-flow opcodes (SHOW_IF, SWITCH, LIST,
 /// TRY/FALLBACK). Prevents stack overflow from deeply nested or malicious IR.
-const MAX_RECURSION_DEPTH: usize = 64;
+const MAX_RECURSION_DEPTH: usize = crate::format::MAX_CONTROL_DEPTH;
 
 /// Controls how the walker decides when to stop processing opcodes.
 enum WalkMode {
@@ -692,7 +685,6 @@ fn walk_range_impl(
     // then finds an empty stack and is a no-op, mirroring how a stray
     // SHOW_ELSE is already tolerated. This also removes the unbounded growth
     // when a TRY_START is walked but its FALLBACK never is.
-    let mut fallback_stack: Vec<usize> = Vec::new();
 
     // The loop bound depends on the mode:
     // - Range: stop at `end`, but also guard against `pos >= ops.len()`
@@ -914,55 +906,20 @@ fn walk_range_impl(
                     let component_name = strings.get(entry.name_str_idx)?.to_string();
 
                     // Build props JSON from the island's slot_ids
-                    let inline_props = match entry.props_mode {
-                        PropsMode::Inline => {
-                            if entry.slot_ids.is_empty() {
-                                None
-                            } else {
-                                let props = build_island_props(module, slots, &entry.slot_ids);
-                                let json = serde_json::to_string(&props)
-                                    .unwrap_or_else(|_| "{}".to_string());
-                                if json.len() > INLINE_PROPS_MAX_BYTES && !state.force_inline_props
-                                {
-                                    // Spill: the payload goes into the shared
-                                    // block instead of a multi-kilobyte
-                                    // attribute. Exactly one channel is used,
-                                    // so the client's inline-wins precedence
-                                    // never has two answers to choose between.
-                                    state
-                                        .script_tag_props
-                                        .insert(island_id, serde_json::Value::Object(props));
-                                    None
-                                } else {
-                                    Some(json)
-                                }
-                            }
-                        }
-                        PropsMode::ScriptTag if state.force_inline_props => {
-                            // Fragment render: keep this island self-contained
-                            // rather than pushing into a shared block that the
-                            // fragment cannot legally emit.
-                            if entry.slot_ids.is_empty() {
-                                None
-                            } else {
-                                let props = build_island_props(module, slots, &entry.slot_ids);
-                                Some(
-                                    serde_json::to_string(&props)
-                                        .unwrap_or_else(|_| "{}".to_string()),
-                                )
-                            }
-                        }
-                        PropsMode::ScriptTag => {
-                            // Accumulate for script tag emission after walk
-                            if !entry.slot_ids.is_empty() {
-                                let props = build_island_props(module, slots, &entry.slot_ids);
-                                state
-                                    .script_tag_props
-                                    .insert(island_id, serde_json::Value::Object(props));
-                            }
+                    let inline_props = if entry.slot_ids.is_empty() {
+                        None
+                    } else {
+                        let props = build_island_props(module, slots, &entry.slot_ids);
+                        let json =
+                            serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string());
+                        if json.len() > INLINE_PROPS_MAX_BYTES && !state.force_inline_props {
+                            state
+                                .script_tag_props
+                                .insert(island_id, serde_json::Value::Object(props));
                             None
+                        } else {
+                            Some(json)
                         }
-                        PropsMode::Deferred => None,
                     };
 
                     state.pending_island = Some(IslandPending {
@@ -1025,25 +982,6 @@ fn walk_range_impl(
                 }
             }
 
-            Opcode::Comment => {
-                // str_idx(u32)
-                let str_idx = read_u32(ops, pos)?;
-                pos += 4;
-                let text = strings.get(str_idx)?;
-                push_checked(out, "<!--", limit)?;
-                // A leading ">" or "->" closes an HTML comment immediately per
-                // the tokenizer, spilling the rest of the text into the
-                // document as markup. A single leading space makes that
-                // impossible and cannot collide with the hydration markers,
-                // which are emitted directly and never through this opcode.
-                if text.starts_with('>') || text.starts_with("->") {
-                    push_checked(out, " ", limit)?;
-                }
-                push_checked(out, &text.replace("--", "&#45;&#45;"), limit)?;
-                push_checked(out, "-->", limit)?;
-            }
-
-            // ----- Control-flow opcodes (recurse via walk_range) -----
             Opcode::ShowIf => {
                 // slot_id(2) + then_len(4) + else_len(4) = 10 bytes header
                 let slot_id = read_u16(ops, pos)?;
@@ -1126,57 +1064,6 @@ fn walk_range_impl(
             // change to both renderers and the client walker, not a
             // walker-local fix. SWITCH also has no default case in the opcode
             // layout; a non-matching value renders nothing.
-            Opcode::Switch => {
-                let slot_id = read_u16(ops, pos)?;
-                let case_count = read_u16(ops, pos + 2)? as usize;
-                pos += 4;
-
-                // Read case headers: [(val_str_idx, body_len)]
-                // Bound the reservation by the bytes actually available — a
-                // valid stream still gets a single exact allocation.
-                let mut cases =
-                    Vec::with_capacity(case_count.min(ops.len().saturating_sub(pos) / 8));
-                for _ in 0..case_count {
-                    let val_str_idx = read_u32(ops, pos)?;
-                    let body_len = read_u32(ops, pos + 4)? as usize;
-                    cases.push((val_str_idx, body_len));
-                    pos += 8;
-                }
-
-                // Now pos points to start of first case body
-                check_slot_source(module, slot_id, slots.get(slot_id));
-                let slot_text = slots.get(slot_id).to_text();
-                let mut body_pos = pos;
-                // SWITCH is first-match-wins, like the `switch` it compiles
-                // from. Without this, a module with two cases carrying the
-                // same value rendered BOTH bodies concatenated.
-                let mut matched = false;
-
-                for (val_str_idx, body_len) in &cases {
-                    // Hoisted above the match test so a non-matching case is
-                    // validated too — otherwise a bad length in an unselected
-                    // case still corrupts `body_pos` for its siblings.
-                    let case_end = bounded_offset(body_pos, *body_len, region_limit)?;
-                    let case_val = strings.get(*val_str_idx)?;
-                    if !matched && case_val == slot_text {
-                        matched = true;
-                        walk_range(
-                            module,
-                            slots,
-                            ops,
-                            body_pos,
-                            case_end,
-                            out,
-                            state,
-                            depth + 1,
-                        )?;
-                    }
-                    body_pos = case_end;
-                }
-
-                pos = body_pos; // past all case bodies
-            }
-
             Opcode::List => {
                 // slot_id(2) + item_slot_id(2) + body_len(4) = 8 bytes header
                 let slot_id = read_u16(ops, pos)?;
@@ -1290,66 +1177,6 @@ fn walk_range_impl(
                 }
 
                 pos = body_end;
-            }
-
-            Opcode::TryStart => {
-                // fallback_len(4) = 4 bytes header
-                let fallback_len = read_u32(ops, pos)? as usize;
-                pos += 4;
-                // Push fallback_len so FALLBACK knows how many bytes to skip.
-                // Main body follows inline and is walked by the outer loop.
-                fallback_stack.push(fallback_len);
-            }
-
-            Opcode::Fallback => {
-                // Phase 2: always render main body, skip fallback.
-                // Pop the fallback_len pushed by the preceding TRY_START.
-                if let Some(skip) = fallback_stack.pop() {
-                    pos = bounded_offset(pos, skip, region_limit)?;
-                }
-            }
-
-            Opcode::Preload => {
-                if pos >= ops.len() {
-                    return Err(IrError::BufferTooShort {
-                        expected: pos + 1,
-                        actual: ops.len(),
-                    });
-                }
-                let resource_type = ops[pos];
-                let url_str_idx = read_u32(ops, pos + 1)?;
-                let url = strings.get(url_str_idx)?;
-                pos += 5;
-
-                let (as_val, type_attr) = match resource_type {
-                    1 => ("font", " type=\"font/woff2\" crossorigin"),
-                    2 => ("style", ""),
-                    3 => ("script", ""),
-                    4 => ("image", ""),
-                    _ => ("fetch", ""),
-                };
-                // NOTE: this tag carries no CSP nonce. Under a
-                // `script-src 'strict-dynamic'` policy an `as="script"`
-                // preload hint is dropped by the browser (a degradation, not a
-                // breakage — the real module tag is nonced). Threading a nonce
-                // in here would change shared emitted HTML and needs the
-                // matching JS-walker change; the compiler emits no PRELOAD
-                // opcode today, so it is latent.
-                push_checked(out, "<link rel=\"preload\" href=\"", limit)?;
-                push_escaped_attr(out, url, limit)?;
-                push_checked(out, "\" as=\"", limit)?;
-                push_checked(out, as_val, limit)?;
-                push_checked(out, "\"", limit)?;
-                push_checked(out, type_attr, limit)?;
-                push_checked(out, ">\n", limit)?;
-            }
-
-            Opcode::ListItemKey => {
-                // key_str_idx(u32) — 4 bytes (simplified format, no source byte)
-                let key_str_idx = read_u32(ops, pos)?;
-                pos += 4;
-                let key_val = strings.get(key_str_idx)?;
-                state.pending_list_key = Some(key_val.to_string());
             }
 
             Opcode::Prop => {
@@ -2290,8 +2117,8 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
 mod tests {
     use super::*;
     use crate::parser::test_helpers::{
-        build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_preload,
-        encode_show_if, encode_switch, encode_text, encode_try, encode_void_tag,
+        build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_show_if,
+        encode_text, encode_void_tag,
     };
     use crate::slot::{SlotData, SlotValue};
 
@@ -2317,13 +2144,6 @@ mod tests {
     fn encode_island_end(island_id: u16) -> Vec<u8> {
         let mut buf = vec![0x0C];
         buf.extend_from_slice(&island_id.to_le_bytes());
-        buf
-    }
-
-    /// Encode a COMMENT opcode: opcode(1) + str_idx(4)
-    fn encode_comment(str_idx: u32) -> Vec<u8> {
-        let mut buf = vec![0x10];
-        buf.extend_from_slice(&str_idx.to_le_bytes());
         buf
     }
 
@@ -2358,13 +2178,6 @@ mod tests {
         let data = build_minimal_ir(strings, slot_decls, opcodes, island_decls);
         let module = IrModule::parse(&data).unwrap();
         walk_to_html(&module, slots).unwrap()
-    }
-
-    /// Encode a LIST_ITEM_KEY opcode: opcode(1) + key_str_idx(4)
-    fn encode_list_item_key(key_str_idx: u32) -> Vec<u8> {
-        let mut buf = vec![0x11]; // Opcode::ListItemKey
-        buf.extend_from_slice(&key_str_idx.to_le_bytes());
-        buf
     }
 
     /// Encode a DYN_ATTR opcode: opcode(1) + attr_str_idx(4) + slot_id(2)
@@ -2531,14 +2344,6 @@ mod tests {
     }
 
     // -- Test 10: walk_comment ---------------------------------------------
-
-    #[test]
-    fn walk_comment() {
-        let opcodes = encode_comment(0);
-
-        let html = walk_static(&["This is a comment"], &opcodes);
-        assert_eq!(html, "<!--This is a comment-->");
-    }
 
     // -- Test 11: walk_boolean_attr ----------------------------------------
 
@@ -3081,181 +2886,17 @@ mod tests {
 
     // -- Test 26: walk_switch_matching_case --------------------------------
 
-    #[test]
-    fn walk_switch_matching_case() {
-        // SWITCH(slot=0): cases [("home", TEXT "Home"), ("about", TEXT "About")]
-        // slot 0 = Text("about") → render "About"
-        // strings: 0="page", 1="home", 2="Home", 3="about", 4="About"
-        let case_home_body = encode_text(2); // TEXT "Home"
-        let case_about_body = encode_text(4); // TEXT "About"
-        let opcodes = encode_switch(0, &[(1, &case_home_body), (3, &case_about_body)]);
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("about".to_string()));
-
-        let html = walk_with_slots(
-            &["page", "home", "Home", "about", "About"],
-            &[(0, 0, 0x01, 0x00, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert!(html.contains("About"), "should contain matching case text");
-        assert!(
-            !html.contains("Home"),
-            "should NOT contain non-matching case text"
-        );
-    }
-
     // -- Test 27: walk_switch_no_match ------------------------------------
-
-    #[test]
-    fn walk_switch_no_match() {
-        // SWITCH(slot=0): cases [("home", TEXT "Home"), ("about", TEXT "About")]
-        // slot 0 = Text("missing") → no match, empty output
-        // strings: 0="page", 1="home", 2="Home", 3="about", 4="About"
-        let case_home_body = encode_text(2);
-        let case_about_body = encode_text(4);
-        let opcodes = encode_switch(0, &[(1, &case_home_body), (3, &case_about_body)]);
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("missing".to_string()));
-
-        let html = walk_with_slots(
-            &["page", "home", "Home", "about", "About"],
-            &[(0, 0, 0x01, 0x00, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert!(
-            html.is_empty(),
-            "no match should produce empty output, got: {html}"
-        );
-    }
 
     // -- Test 28: walk_switch_first_case ----------------------------------
 
-    #[test]
-    fn walk_switch_first_case() {
-        // SWITCH(slot=0): cases [("home", TEXT "Home"), ("about", TEXT "About")]
-        // slot 0 = Text("home") → matches first case, render "Home"
-        let case_home_body = encode_text(2);
-        let case_about_body = encode_text(4);
-        let opcodes = encode_switch(0, &[(1, &case_home_body), (3, &case_about_body)]);
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("home".to_string()));
-
-        let html = walk_with_slots(
-            &["page", "home", "Home", "about", "About"],
-            &[(0, 0, 0x01, 0x00, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert!(html.contains("Home"), "should contain first case text");
-        assert!(
-            !html.contains("About"),
-            "should NOT contain second case text"
-        );
-    }
-
-    #[test]
-    fn walk_switch_stops_at_the_first_match() {
-        // Two cases carrying the SAME value. Without a break the walker
-        // rendered both bodies concatenated — a `switch` statement does not.
-        let opcodes = encode_switch(0, &[(1, &encode_text(2)), (1, &encode_text(3))]);
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("home".to_string()));
-
-        let html = walk_with_slots(
-            &["page", "home", "FIRST", "SECOND"],
-            &[(0, 0, 0x01, 0x00, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert_eq!(html, "FIRST");
-    }
-
     // -- Test 29: walk_switch_with_elements -------------------------------
-
-    #[test]
-    fn walk_switch_with_elements() {
-        // SWITCH(slot=0): matching case body = <span>Active</span>
-        // strings: 0="page", 1="active", 2="span", 3="Active", 4="inactive", 5="Inactive"
-        let mut active_body = Vec::new();
-        active_body.extend_from_slice(&encode_open_tag(2, &[]));
-        active_body.extend_from_slice(&encode_text(3));
-        active_body.extend_from_slice(&encode_close_tag(2));
-
-        let inactive_body = encode_text(5);
-        let opcodes = encode_switch(0, &[(1, &active_body), (4, &inactive_body)]);
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("active".to_string()));
-
-        let html = walk_with_slots(
-            &["page", "active", "span", "Active", "inactive", "Inactive"],
-            &[(0, 0, 0x01, 0x00, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert_eq!(
-            html, "<span>Active</span>",
-            "should produce full HTML element from matching case"
-        );
-    }
 
     // -- Test 30: walk_try_renders_main -----------------------------------
 
-    #[test]
-    fn walk_try_renders_main() {
-        // TRY_START with main body TEXT "Main" + FALLBACK TEXT "Fallback"
-        // strings: 0="Main", 1="Fallback"
-        let main_ops = encode_text(0);
-        let fallback_ops = encode_text(1);
-        let opcodes = encode_try(&main_ops, &fallback_ops);
-
-        let html = walk_static(&["Main", "Fallback"], &opcodes);
-        assert!(html.contains("Main"), "should contain main body text");
-        assert!(
-            !html.contains("Fallback"),
-            "should NOT contain fallback text"
-        );
-    }
-
     // -- Test 31: walk_preload_font ---------------------------------------
 
-    #[test]
-    fn walk_preload_font() {
-        // PRELOAD resource_type=1 (font), url="/_assets/dm-mono.woff2"
-        // strings: 0="/_assets/dm-mono.woff2"
-        let opcodes = encode_preload(1, 0);
-
-        let html = walk_static(&["/_assets/dm-mono.woff2"], &opcodes);
-        assert!(
-            html.contains(r#"<link rel="preload" href="/_assets/dm-mono.woff2" as="font" type="font/woff2" crossorigin>"#),
-            "should produce preload link for font, got: {html}"
-        );
-    }
-
     // -- Test 32: walk_preload_style --------------------------------------
-
-    #[test]
-    fn walk_preload_style() {
-        // PRELOAD resource_type=2 (style), url="/_assets/styles.css"
-        // strings: 0="/_assets/styles.css"
-        let opcodes = encode_preload(2, 0);
-
-        let html = walk_static(&["/_assets/styles.css"], &opcodes);
-        assert!(
-            html.contains(r#"as="style""#),
-            "should contain as=\"style\", got: {html}"
-        );
-        assert!(
-            html.contains(r#"href="/_assets/styles.css""#),
-            "should contain correct href, got: {html}"
-        );
-    }
 
     // =========================================================================
     // Hydration-roundtrip tests — verify walker produces exact expected HTML
@@ -3436,37 +3077,6 @@ mod tests {
 
     // -- Roundtrip 5: Switch view -------------------------------------------
 
-    #[test]
-    fn roundtrip_switch_view() {
-        // SWITCH slot=0, cases: "home" → <h1>Home</h1>, "about" → <h1>About</h1>
-        // slot = "about"
-        //
-        // strings: 0="page", 1="home", 2="h1", 3="Home", 4="about", 5="About"
-        let mut home_body = Vec::new();
-        home_body.extend_from_slice(&encode_open_tag(2, &[]));
-        home_body.extend_from_slice(&encode_text(3));
-        home_body.extend_from_slice(&encode_close_tag(2));
-
-        let mut about_body = Vec::new();
-        about_body.extend_from_slice(&encode_open_tag(2, &[]));
-        about_body.extend_from_slice(&encode_text(5));
-        about_body.extend_from_slice(&encode_close_tag(2));
-
-        let opcodes = encode_switch(0, &[(1, &home_body), (4, &about_body)]);
-
-        let ir = build_minimal_ir(
-            &["page", "home", "h1", "Home", "about", "About"],
-            &[(0, 0, 0x01, 0x00, &[])], // slot 0, name="page", type=Text
-            &opcodes,
-            &[],
-        );
-        let module = IrModule::parse(&ir).unwrap();
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("about".into()));
-        let html = walk_to_html(&module, &slots).unwrap();
-        assert_eq!(html, "<h1>About</h1>");
-    }
-
     // -- Roundtrip 6: Nested realistic structure ----------------------------
 
     #[test]
@@ -3634,7 +3244,7 @@ mod tests {
     #[test]
     fn walk_inline_props_attribute() {
         // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
-        // Island entry has slots [0, 1], PropsMode::Inline
+        // Island entry has slots [0, 1]; small props stay inline
         // Slot 0 = "title" (Text), Slot 1 = "count" (Number)
         // strings: 0="div", 1="MyComponent", 2="title", 3="count"
         let mut opcodes = Vec::new();
@@ -3692,141 +3302,13 @@ mod tests {
 
     // -- Test 37: walk_list_item_key_on_first_open_tag -----------------------
 
-    #[test]
-    fn walk_list_item_key_on_first_open_tag() {
-        // LIST_ITEM_KEY(key_str_idx=1) + OPEN_TAG("li") + TEXT("item") + CLOSE_TAG
-        // strings: 0="li", 1="user-123", 2="item"
-        let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_list_item_key(1));
-        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
-        opcodes.extend_from_slice(&encode_text(2));
-        opcodes.extend_from_slice(&encode_close_tag(0));
-
-        let html = walk_static(&["li", "user-123", "item"], &opcodes);
-        assert_eq!(html, r#"<li data-forma-key="user-123">item</li>"#);
-    }
-
     // -- Test 38: walk_list_item_key_on_void_tag -----------------------------
-
-    #[test]
-    fn walk_list_item_key_on_void_tag() {
-        // LIST_ITEM_KEY(key_str_idx=1) + VOID_TAG("hr")
-        // strings: 0="hr", 1="key-42"
-        let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_list_item_key(1));
-        opcodes.extend_from_slice(&encode_void_tag(0, &[]));
-
-        let html = walk_static(&["hr", "key-42"], &opcodes);
-        assert_eq!(html, r#"<hr data-forma-key="key-42">"#);
-    }
 
     // -- Test 39: walk_list_item_key_with_attrs ------------------------------
 
-    #[test]
-    fn walk_list_item_key_with_attrs() {
-        // LIST_ITEM_KEY + OPEN_TAG("li" class="item") + TEXT + CLOSE_TAG
-        // strings: 0="li", 1="class", 2="item", 3="k1", 4="content"
-        let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_list_item_key(3));
-        opcodes.extend_from_slice(&encode_open_tag(0, &[(1, 2)]));
-        opcodes.extend_from_slice(&encode_text(4));
-        opcodes.extend_from_slice(&encode_close_tag(0));
-
-        let html = walk_static(&["li", "class", "item", "k1", "content"], &opcodes);
-        assert_eq!(html, r#"<li class="item" data-forma-key="k1">content</li>"#);
-    }
-
     // -- Test 40: walk_script_tag_props_mode ---------------------------------
 
-    #[test]
-    fn walk_script_tag_props_mode() {
-        // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
-        // Island entry: PropsMode::ScriptTag with slots [0]
-        // strings: 0="div", 1="Counter", 2="label"
-        let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_island_start(0));
-        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
-        opcodes.extend_from_slice(&encode_close_tag(0));
-        opcodes.extend_from_slice(&encode_island_end(0));
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("Click me".to_string()));
-
-        let html = walk_with_islands(
-            &["div", "Counter", "label"],
-            &[(0, 2, 0x01, 0x00, &[])], // slot 0, name="label", Text, Server
-            // island: id=0, Load, ScriptTag(0x02), name_str_idx=1, byte_offset=0, slot_ids=[0]
-            &[(0, 0x01, 0x02, 1, 0, &[0])],
-            &opcodes,
-            &slots,
-        );
-        // Should NOT have inline data-forma-props
-        assert!(
-            !html.contains("data-forma-props"),
-            "ScriptTag mode should not emit inline props, got: {html}"
-        );
-        // Should have island attrs
-        assert!(
-            html.contains(r#"data-forma-island="0""#),
-            "should contain island id"
-        );
-        // Should have script tag at the end
-        assert!(
-            html.contains(r#"<script id="__forma_islands" type="application/json">"#),
-            "should contain script tag, got: {html}"
-        );
-        assert!(html.contains("</script>"), "should close script tag");
-        // Parse the JSON from the script tag
-        let script_start =
-            html.find(r#"type="application/json">"#).unwrap() + r#"type="application/json">"#.len();
-        let script_end = html[script_start..].find("</script>").unwrap() + script_start;
-        let json: serde_json::Value =
-            serde_json::from_str(&html[script_start..script_end]).unwrap();
-        assert_eq!(json["0"]["label"], "Click me");
-    }
-
     // -- Test 41: walk_deferred_props_mode -----------------------------------
-
-    #[test]
-    fn walk_deferred_props_mode() {
-        // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
-        // Island entry: PropsMode::Deferred — should not emit props at all
-        // strings: 0="div", 1="LazyWidget", 2="data"
-        let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_island_start(0));
-        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
-        opcodes.extend_from_slice(&encode_close_tag(0));
-        opcodes.extend_from_slice(&encode_island_end(0));
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Text("ignored".to_string()));
-
-        let html = walk_with_islands(
-            &["div", "LazyWidget", "data"],
-            &[(0, 2, 0x01, 0x00, &[])],
-            // island: id=0, Load, Deferred(0x03), name_str_idx=1, byte_offset=0, slot_ids=[0]
-            &[(0, 0x01, 0x03, 1, 0, &[0])],
-            &opcodes,
-            &slots,
-        );
-        assert!(
-            !html.contains("data-forma-props"),
-            "Deferred mode should not emit inline props, got: {html}"
-        );
-        assert!(
-            !html.contains("__forma_islands"),
-            "Deferred mode should not emit script tag, got: {html}"
-        );
-        // Should still have island attrs
-        assert!(
-            html.contains(r#"data-forma-island="0""#),
-            "should contain island id"
-        );
-        assert!(
-            html.contains(r#"data-forma-component="LazyWidget""#),
-            "should contain component name"
-        );
-    }
 
     // -- Test 42: walk_island_no_entry_in_table -------------------------------
 
@@ -4042,41 +3524,11 @@ mod tests {
 
     // -- Test 44: walk_island_and_list_key_combined --------------------------
 
-    #[test]
-    fn walk_island_and_list_key_combined() {
-        // ISLAND_START(0) + LIST_ITEM_KEY + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
-        // Both pending_island and pending_list_key active on same OPEN_TAG
-        // strings: 0="div", 1="Card", 2="item-1"
-        let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_island_start(0));
-        opcodes.extend_from_slice(&encode_list_item_key(2));
-        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
-        opcodes.extend_from_slice(&encode_close_tag(0));
-        opcodes.extend_from_slice(&encode_island_end(0));
-
-        let slots = SlotData::new(0);
-        let html = walk_with_islands(
-            &["div", "Card", "item-1"],
-            &[],
-            &[(0, 0x01, 0x01, 1, 0, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert!(
-            html.contains(r#"data-forma-island="0""#),
-            "should contain island attrs"
-        );
-        assert!(
-            html.contains(r#"data-forma-key="item-1""#),
-            "should contain list key attr, got: {html}"
-        );
-    }
-
     // -- Test 45: walk_multiple_islands_script_tag ---------------------------
 
     #[test]
     fn walk_multiple_islands_script_tag() {
-        // Two islands, both ScriptTag mode, should produce a single script tag
+        // Two large inline-props islands spill into a single script tag
         // with both entries
         // strings: 0="div", 1="span", 2="CompA", 3="CompB", 4="msg", 5="flag"
         let mut opcodes = Vec::new();
@@ -4092,19 +3544,21 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(1));
         opcodes.extend_from_slice(&encode_island_end(1));
 
-        let mut slots = SlotData::new(2);
+        let mut slots = SlotData::new(3);
         slots.set(0, SlotValue::Text("hello".to_string()));
         slots.set(1, SlotValue::Bool(true));
+        slots.set(2, SlotValue::Text("x".repeat(INLINE_PROPS_MAX_BYTES)));
 
         let html = walk_with_islands(
-            &["div", "span", "CompA", "CompB", "msg", "flag"],
+            &["div", "span", "CompA", "CompB", "msg", "flag", "padding"],
             &[
                 (0, 4, 0x01, 0x00, &[]), // slot 0, name="msg", Text
-                (1, 5, 0x02, 0x00, &[]), // slot 1, name="flag", Bool
+                (1, 5, 0x02, 0x00, &[]),
+                (2, 6, 0x01, 0, &[]), // slot 1, name="flag", Bool
             ],
             &[
-                (0, 0x01, 0x02, 2, 0, &[0]), // island 0, ScriptTag, name="CompA", byte_offset=0, slots=[0]
-                (1, 0x01, 0x02, 3, island1_offset, &[1]), // island 1, ScriptTag, name="CompB", slots=[1]
+                (0, 0x01, 0x02, 2, 0, &[0, 2]), // island 0, ScriptTag, name="CompA", byte_offset=0, slots=[0]
+                (1, 0x01, 0x02, 3, island1_offset, &[1, 2]), // island 1, ScriptTag, name="CompB", slots=[1]
             ],
             &opcodes,
             &slots,
@@ -4120,23 +3574,6 @@ mod tests {
     }
 
     // -- Test 46: walk_list_item_key_consumed_once --------------------------
-
-    #[test]
-    fn walk_list_item_key_consumed_once() {
-        // LIST_ITEM_KEY + OPEN_TAG("li") + OPEN_TAG("span") + TEXT + CLOSE_TAG("span") + CLOSE_TAG("li")
-        // Key should only appear on the first tag (li), not span
-        // strings: 0="li", 1="span", 2="abc", 3="text"
-        let mut opcodes = Vec::new();
-        opcodes.extend_from_slice(&encode_list_item_key(2));
-        opcodes.extend_from_slice(&encode_open_tag(0, &[]));
-        opcodes.extend_from_slice(&encode_open_tag(1, &[]));
-        opcodes.extend_from_slice(&encode_text(3));
-        opcodes.extend_from_slice(&encode_close_tag(1));
-        opcodes.extend_from_slice(&encode_close_tag(0));
-
-        let html = walk_static(&["li", "span", "abc", "text"], &opcodes);
-        assert_eq!(html, r#"<li data-forma-key="abc"><span>text</span></li>"#);
-    }
 
     // -- Test 47: walk_slot_value_to_json -----------------------------------
 
@@ -4756,7 +4193,7 @@ mod tests {
         );
     }
 
-    /// Build a one-island ScriptTag-mode page whose single prop is `payload`,
+    /// Build a one-island large-props page whose single prop is `payload`,
     /// and return (full html, the raw script-block body).
     fn script_tag_props_html(payload: &str) -> (String, String) {
         // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
@@ -4767,13 +4204,14 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(0));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let mut slots = SlotData::new(1);
+        let mut slots = SlotData::new(2);
         slots.set(0, SlotValue::Text(payload.to_string()));
+        slots.set(1, SlotValue::Text("x".repeat(INLINE_PROPS_MAX_BYTES)));
 
         let html = walk_with_islands(
-            &["div", "Comp", "payload"],
-            &[(0, 2, 0x01, 0x00, &[])],
-            &[(0, 0x01, 0x02, 1, 0, &[0])],
+            &["div", "Comp", "payload", "padding"],
+            &[(0, 2, 0x01, 0x00, &[]), (1, 3, 0x01, 0, &[])],
+            &[(0, 0x01, 0x01, 1, 0, &[0, 1])],
             &opcodes,
             &slots,
         );
@@ -5038,42 +4476,11 @@ mod tests {
     }
 
     #[test]
-    fn parse_rejects_switch_case_body_len_past_the_stream() {
-        // The over-long length is in case 0, which does NOT match the slot
-        // value at render time — a non-matching case must be validated too.
-        let mut opcodes = encode_switch(0, &[(1, &encode_text(2)), (3, &encode_text(2))]);
-        // header 0 body_len is at opcode(1)+slot(2)+count(2)+val_idx(4) = 9
-        patch_u32(&mut opcodes, 9, 0xFFFF_FF00);
-        let data = build_minimal_ir(
-            &["mode", "a", "x", "b"],
-            &[(0, 0, 0x01, 0x00, &[])],
-            &opcodes,
-            &[],
-        );
-        assert!(matches!(
-            IrModule::parse(&data),
-            Err(IrError::MalformedControlFlow { .. })
-        ));
-    }
-
-    #[test]
-    fn parse_rejects_fallback_skip_past_the_stream() {
-        // TRY_START: opcode(1) fallback_len(4)
-        let mut opcodes = encode_try(&encode_text(0), &encode_text(0));
-        patch_u32(&mut opcodes, 1, 0xFFFF_FF00);
-        let data = build_minimal_ir(&["hi"], &[], &opcodes, &[]);
-        assert!(matches!(
-            IrModule::parse(&data),
-            Err(IrError::MalformedControlFlow { .. })
-        ));
-    }
-
-    #[test]
     fn parse_accepts_zero_length_else_branch_known_residual() {
         // DOCUMENTED RESIDUAL: an under-long length whose orphaned bytes still
         // decode as a legal sibling sequence is structurally indistinguishable
         // from a legitimate module. No length check can reject it; only module
-        // integrity (a populated source_hash) would. This test exists so the
+        // integrity (a CRC that the producer did not restamp) would. This test exists so the
         // case is not later mistaken for a fixed hole.
         let opcodes = encode_show_if(0, &encode_text(1), &[]);
         let data = build_minimal_ir(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
@@ -5081,47 +4488,6 @@ mod tests {
     }
 
     // -- TRY/FALLBACK scoping (F-10) ----------------------------------------
-
-    #[test]
-    fn walk_stray_fallback_in_a_nested_range_is_rejected_at_load() {
-        // Layout: TRY_START [ SHOW_IF(then = FALLBACK) TEXT("main") ] FALLBACK TEXT("fb")
-        //
-        // The FALLBACK inside the then-branch belongs to no TRY_START in its
-        // own range. The walker's `fallback_stack` is range-local so it cannot
-        // pop the outer entry and skip the wrong region — but it would still
-        // fall through and walk the fallback body as if it were main content,
-        // which is a silently wrong page. Validation rejects the module first.
-        let then_ops = vec![0x0E]; // stray FALLBACK inside the then-branch
-        let mut main_ops = encode_show_if(0, &then_ops, &[]);
-        main_ops.extend_from_slice(&encode_text(1));
-        let opcodes = encode_try(&main_ops, &encode_text(2));
-
-        let data = build_minimal_ir(
-            &["flag", "main", "fb"],
-            &[(0, 0, 0x02, 0x00, &[])],
-            &opcodes,
-            &[],
-        );
-        assert!(matches!(
-            IrModule::parse(&data).unwrap_err(),
-            IrError::MalformedControlFlow { .. }
-        ));
-    }
-
-    #[test]
-    fn walk_try_without_a_fallback_is_rejected_at_load() {
-        // A TRY_START whose FALLBACK never arrives ships a page with no
-        // fallback and no diagnostic.
-        let mut opcodes = vec![0x0D]; // TRY_START
-        opcodes.extend_from_slice(&4u32.to_le_bytes()); // fallback_len
-        opcodes.extend_from_slice(&encode_text(0));
-
-        let data = build_minimal_ir(&["main"], &[], &opcodes, &[]);
-        assert!(matches!(
-            IrModule::parse(&data).unwrap_err(),
-            IrError::MalformedControlFlow { .. }
-        ));
-    }
 
     // -- Pending island / list-key scoping (F-11) ---------------------------
 
@@ -5152,36 +4518,6 @@ mod tests {
     }
 
     #[test]
-    fn walk_list_key_survives_an_empty_show_if_before_the_item_element() {
-        let mut body = encode_list_item_key(3);
-        body.extend_from_slice(&encode_show_if(1, &[], &[]));
-        body.extend_from_slice(&encode_open_tag(2, &[]));
-        body.extend_from_slice(&encode_close_tag(2));
-        let opcodes = encode_list(0, 1, &body);
-
-        let mut slots = SlotData::new(2);
-        slots.set(
-            0,
-            SlotValue::array(vec![
-                SlotValue::Text("a".into()),
-                SlotValue::Text("b".into()),
-            ]),
-        );
-
-        let html = walk_with_slots(
-            &["items", "item", "li", "k"],
-            &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert_eq!(
-            html.matches("data-forma-key=\"k\"").count(),
-            2,
-            "every item element must keep its key, got: {html}"
-        );
-    }
-
-    #[test]
     fn walk_island_attrs_do_not_leak_past_the_island_end() {
         // ISLAND_START with no element inside, then an element AFTER the
         // island's closing marker. The island's identity attributes must not
@@ -5202,28 +4538,6 @@ mod tests {
         assert!(
             !html.contains("data-forma-island"),
             "island attributes must not leak onto an element outside the island, got: {html}"
-        );
-    }
-
-    #[test]
-    fn walk_list_key_does_not_leak_past_the_list() {
-        let body = encode_list_item_key(2); // key, but no element to carry it
-        let mut opcodes = encode_list(0, 1, &body);
-        opcodes.extend_from_slice(&encode_open_tag(3, &[]));
-        opcodes.extend_from_slice(&encode_close_tag(3));
-
-        let mut slots = SlotData::new(2);
-        slots.set(0, SlotValue::array(vec![SlotValue::Text("a".into())]));
-
-        let html = walk_with_slots(
-            &["items", "item", "k", "div"],
-            &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
-            &opcodes,
-            &slots,
-        );
-        assert!(
-            !html.contains("data-forma-key"),
-            "list key must not leak onto an element after the list, got: {html}"
         );
     }
 
@@ -5414,45 +4728,7 @@ mod tests {
         assert_eq!(walk_to_html(&module, &SlotData::new(0)).unwrap(), "<a>");
     }
 
-    #[test]
-    fn walk_comment_cannot_self_close() {
-        // A leading ">" or "->" closes an HTML comment immediately per the
-        // tokenizer, spilling the rest into the document as markup.
-        for text in ["><img src=x onerror=alert(1)>", "-><img src=x>"] {
-            let opcodes = encode_comment(0);
-            let data = build_minimal_ir(&[text], &[], &opcodes, &[]);
-            let module = IrModule::parse(&data).unwrap();
-            let html = walk_to_html(&module, &SlotData::new(0)).unwrap();
-            assert!(
-                html.starts_with("<!-- "),
-                "comment must not start with a closing sequence, got: {html}"
-            );
-        }
-    }
-
     // -- Number rendering parity (F-05) -------------------------------------
-
-    #[test]
-    fn walk_switch_matches_on_js_number_text() {
-        // to_text also drives SWITCH case comparison, and the case strings are
-        // authored on the JS side — so branch selection follows JS semantics.
-        let opcodes = encode_switch(0, &[(1, &encode_text(2)), (3, &encode_text(4))]);
-        let data = build_minimal_ir(
-            &["n", "1e+21", "big", "1000", "small"],
-            &[(0, 0, 0x03, 0x00, &[])],
-            &opcodes,
-            &[],
-        );
-        let module = IrModule::parse(&data).unwrap();
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Number(1e21));
-        assert!(walk_to_html(&module, &slots).unwrap().contains("big"));
-
-        let mut slots = SlotData::new(1);
-        slots.set(0, SlotValue::Number(1000.0));
-        assert!(walk_to_html(&module, &slots).unwrap().contains("small"));
-    }
 
     // -- Parsing context: text-only parents and form controls (FORMA-002) ---
     //
@@ -6453,17 +5729,14 @@ mod tests {
 
     #[test]
     fn counted_walk_names_no_component_for_a_failure_outside_every_island() {
-        // A TEXT naming string 99 parses and fails in the walk, at page level.
+        // Invalid HTML names remain a render error; bad indices now fail at load.
         let mut ops = encode_open_tag(0, &[]);
-        ops.extend_from_slice(&encode_text(99));
-        let data = build_minimal_ir(&["p"], &[], &ops, &[]);
+        ops.extend_from_slice(&encode_open_tag(1, &[]));
+        let data = build_minimal_ir(&["p", "bad name"], &[], &ops, &[]);
         let module = IrModule::parse(&data).unwrap();
         let failure =
             walk_to_html_counted(&module, &SlotData::new(0), WalkLimits::default()).unwrap_err();
-        assert_eq!(
-            failure.error,
-            IrError::StringIndexOutOfBounds { index: 99, len: 1 }
-        );
+        assert_eq!(failure.error, IrError::InvalidName("bad name".into()));
         assert!(failure.component_path.is_empty());
         assert_eq!(failure.counts.nodes, 1);
     }
@@ -6483,13 +5756,13 @@ mod tests {
         let card_at = ops.len() as u32;
         ops.extend_from_slice(&encode_island_start(1)); // Card
         ops.extend_from_slice(&encode_open_tag(0, &[]));
-        ops.extend_from_slice(&encode_text(99)); // fails here
+        ops.extend_from_slice(&encode_open_tag(4, &[])); // invalid HTML name fails here
         ops.extend_from_slice(&encode_close_tag(0));
         ops.extend_from_slice(&encode_island_end(1));
         ops.extend_from_slice(&encode_close_tag(0));
         ops.extend_from_slice(&encode_island_end(0));
         let data = build_minimal_ir(
-            &["div", "Shell", "Card", "Done", "x"],
+            &["div", "Shell", "Card", "Done", "bad name"],
             &[],
             &ops,
             &[

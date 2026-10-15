@@ -83,7 +83,7 @@ fn load_ir_modules_logs_its_deprecation_once_per_process_in_debug_builds() {
     let fallbacks = count_warnings(&["Phase 1 fallback"], || {
         let _ = forma_server::load_ir_modules::<Flipped>(&manifest);
     });
-    assert_eq!(fallbacks, 4, "one per bad module");
+    assert_eq!(fallbacks, 5, "one per bad module");
 }
 
 #[test]
@@ -93,7 +93,7 @@ fn the_default_loader_logs_no_fallback_it_does_not_take() {
     let manifest = try_load_manifest::<Flipped>().expect("manifest");
     let fallbacks = count_warnings(&["Phase 1 fallback"], || {
         let errors = forma_server::load_ir_modules_strict::<Flipped>(&manifest).unwrap_err();
-        assert_eq!(errors.len(), 4);
+        assert_eq!(errors.len(), 5);
     });
     assert_eq!(fallbacks, 0);
 }

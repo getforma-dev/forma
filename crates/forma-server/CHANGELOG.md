@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### FMIR v3 loading (FORMA-185)
+
+- Load through the single v3 reader in `ir.rs`; expose `IrError` and delegate diagnostic codes
+  to its `code()` method. Invalid versions, CRCs and section/schema references refuse startup
+  before the server binds. Existing development reload retains the previous valid module.
+- Regenerate loader fixtures as v3 and check all 61 reviewed failures through the strict loader.
+  Tail truncation now reports LOAD-104 at the header length check; short headers remain LOAD-103.
+
+
 ### Changed
 - **Nothing in the crate.** The release workflow now locks the packed
   crate's `Cargo.lock` with the MSRV-aware resolver, so the next published

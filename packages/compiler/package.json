@@ -1,6 +1,6 @@
 {
   "name": "@getforma/compiler",
-  "version": "0.3.7",
+  "version": "3.0.0-dev",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -51,7 +51,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/getforma-dev/forma-tools.git",
+    "url": "https://github.com/getforma-dev/forma.git",
     "directory": "packages/compiler"
   },
   "license": "MIT",

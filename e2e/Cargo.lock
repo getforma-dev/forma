@@ -169,7 +169,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir"
-version = "0.2.2"
+version = "3.0.0-dev"
 dependencies = [
  "serde_json",
  "tracing",
@@ -177,7 +177,7 @@ dependencies = [
 
 [[package]]
 name = "forma-server"
-version = "0.2.2"
+version = "3.0.0-dev"
 dependencies = [
  "axum",
  "base64",

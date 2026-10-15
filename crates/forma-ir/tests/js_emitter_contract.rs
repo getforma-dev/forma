@@ -153,19 +153,14 @@ fn string_at(module: &IrModule, str_idx: u32) -> &str {
 /// module `parse` would reject outright, so an emitter regression produces the
 /// finding rather than a bare error enum.
 ///
-/// The offsets are the frozen ones — 16-byte header, then (offset u32,
-/// size u32) descriptors in the order bytecode, strings, slots, islands.
-/// Verified by: crates/forma-ir/tests/fmir_contract.rs > "frozen_section_order_is_bytecode_strings_slots_islands"
-/// Verified by: crates/forma-ir/tests/fmir_contract.rs > "frozen_header_and_section_table_sizes"
+/// The independently decoded descriptor table identifies sections by their stable ids.
 fn raw_tables(bytes: &[u8]) -> (StringTable, SlotTable) {
-    let descriptor = |index: usize| -> (usize, usize) {
-        let base = HEADER_SIZE + index * 8;
-        let offset = u32::from_le_bytes(bytes[base..base + 4].try_into().unwrap()) as usize;
-        let size = u32::from_le_bytes(bytes[base + 4..base + 8].try_into().unwrap()) as usize;
-        (offset, size)
-    };
-    let (str_off, str_len) = descriptor(1);
-    let (slot_off, slot_len) = descriptor(2);
+    let table = forma_ir::SectionTable::parse(&bytes[HEADER_SIZE..]).expect("section table");
+    table.validate(bytes.len()).expect("tiling");
+    let strings = table.get(2).expect("strings");
+    let slots = table.get(3).expect("slots");
+    let (str_off, str_len) = (strings.offset as usize, strings.size as usize);
+    let (slot_off, slot_len) = (slots.offset as usize, slots.size as usize);
     (
         StringTable::parse(&bytes[str_off..str_off + str_len]).expect("string table must parse"),
         SlotTable::parse(&bytes[slot_off..slot_off + slot_len]).expect("slot table must parse"),
@@ -602,4 +597,16 @@ fn rendered_html_matches_golden() {
          If the change was intentional, re-run with UPDATE_GOLDEN=1 and review the diff.\n\n{}",
         stale.join("\n\n")
     );
+}
+
+#[test]
+fn canonical_dumps_match_the_typescript_emitter() {
+    for name in EXPECTED_CASES {
+        let module = parse_case(name);
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/js-emitter")
+            .join(format!("{name}.dump"));
+        let expected = std::fs::read_to_string(path).expect("committed TypeScript canonical dump");
+        assert_eq!(forma_ir::dump::dump_ir(&module), expected, "{name}");
+    }
 }

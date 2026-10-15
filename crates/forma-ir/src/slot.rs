@@ -669,15 +669,17 @@ mod tests {
         let bytes = build_slot_table_bytes(&[
             (0, 0, 0x03, 0x00, b"42"),   // Number, Server, default "42"
             (1, 1, 0x03, 0x01, b"3.15"), // Number, Client, default "3.15"
-            (2, 2, 0x03, 0x00, b"nope"), // Number, Server, invalid default
         ]);
         let table = SlotTable::parse(&bytes).unwrap();
         let data = SlotData::new_from_defaults(&table);
 
         assert!(matches!(data.get(0), SlotValue::Number(n) if (*n - 42.0).abs() < f64::EPSILON));
         assert!(matches!(data.get(1), SlotValue::Number(n) if (*n - 3.15).abs() < f64::EPSILON));
-        // Invalid number -> Null
-        assert!(matches!(data.get(2), SlotValue::Null));
+        let bad = build_slot_table_bytes(&[(2, 2, 0x03, 0, b"nope")]);
+        assert_eq!(
+            SlotTable::parse(&bad).unwrap_err(),
+            IrError::InvalidDefault(2)
+        );
     }
 
     #[test]
@@ -692,15 +694,12 @@ mod tests {
     }
 
     #[test]
-    fn slot_data_new_from_defaults_object_ignored() {
-        // Object type always yields Null even with default bytes
-        let bytes = build_slot_table_bytes(&[
-            (0, 0, 0x05, 0x00, b"{}"), // Object, Server, default "{}"
-        ]);
-        let table = SlotTable::parse(&bytes).unwrap();
-        let data = SlotData::new_from_defaults(&table);
-
-        assert!(matches!(data.get(0), SlotValue::Null));
+    fn slot_data_nonempty_object_default_is_refused_at_load() {
+        let bytes = build_slot_table_bytes(&[(0, 0, 0x05, 0, b"{}")]);
+        assert_eq!(
+            SlotTable::parse(&bytes).unwrap_err(),
+            IrError::InvalidDefault(0)
+        );
     }
 
     // -- from_json tests ---------------------------------------------------

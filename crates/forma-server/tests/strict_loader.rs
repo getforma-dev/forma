@@ -30,6 +30,10 @@ struct Flipped;
 #[folder = "tests/fixtures/modules/truncated/"]
 struct Truncated;
 
+#[derive(Embed)]
+#[folder = "../forma-ir/tests/fixtures/fmir-v3/"]
+struct ReviewedV3;
+
 // -- The fixtures and their generator ----------------------------------------
 
 /// A valid module: island "Hello" around `<p>hello</p>`.
@@ -81,22 +85,18 @@ fn manifest_json(bad: &[(&str, &str)]) -> String {
 /// Every fixture file: (set, file name, bytes).
 fn fixture_files() -> Vec<(&'static str, &'static str, Vec<u8>)> {
     let good = good_module();
+    let mut opcode = flip(good.clone(), 91, 0x80); // second opcode, OPEN_TAG
+    forma_ir::parser::test_helpers::restamp(&mut opcode);
     let flipped = [
-        // byte 0, the magic: "FMIR" becomes "GMIR"
-        ("/magic", "magic.ir", flip(good.clone(), 0, 0x01)),
-        // byte 4, the version: 2 becomes 3
-        ("/version", "version.ir", flip(good.clone(), 4, 0x01)),
-        // byte 16, the bytecode section's offset: 48 becomes 176, past the end
-        ("/section", "section.ir", flip(good.clone(), 16, 0x80)),
-        // byte 51, the second opcode: OPEN_TAG (0x01) becomes 0x81
-        ("/opcode", "opcode.ir", flip(good.clone(), 51, 0x80)),
-        // byte 8, the source hash: FMIR v2 checks nothing here, so this one
-        // LOADS. Pinned below as the known gap that FMIR v3's CRC-32 closes
-        // (DR-28, FORMA-114); not a module this loader can refuse.
-        ("/hash", "hash.ir", flip(good.clone(), 8, 0x01)),
+        ("/magic", "magic.ir", flip(good.clone(), 0, 1)),
+        ("/version", "version.ir", flip(good.clone(), 8, 1)),
+        ("/section", "section.ir", flip(good.clone(), 32, 0x80)),
+        ("/opcode", "opcode.ir", opcode),
+        ("/hash", "hash.ir", flip(good.clone(), 18, 1)),
     ];
+
     let truncated = [
-        // inside the 16-byte header
+        // inside the 24-byte header
         ("/header", "header.ir", good[..10].to_vec()),
         // the last byte gone: the island table runs past the end
         ("/tail", "tail.ir", good[..good.len() - 1].to_vec()),
@@ -172,15 +172,16 @@ fn a_flipped_byte_fails_the_default_loader_naming_route_file_and_code() {
     let errors = load_ir_modules_strict::<Flipped>(&manifest).expect_err("bad modules refuse");
 
     for (route, file, code, cause) in [
-        ("/magic", "magic.ir", "LOAD-102", "bad magic"),
+        ("/magic", "magic.ir", "LOAD-102", "bad signature"),
         (
             "/version",
             "version.ir",
-            "LOAD-102",
-            "unsupported IR version: 3",
+            "LOAD-108",
+            "writer 2.0.0 differs from reader 3.0.0",
         ),
-        ("/section", "section.ir", "LOAD-103", "out of bounds"),
+        ("/section", "section.ir", "LOAD-104", "checksum mismatch"),
         ("/opcode", "opcode.ir", "LOAD-103", "invalid opcode: 0x81"),
+        ("/hash", "hash.ir", "LOAD-104", "checksum mismatch"),
     ] {
         let error = error_for(&errors, route);
         assert_eq!(error.ir_file, file);
@@ -192,10 +193,10 @@ fn a_flipped_byte_fails_the_default_loader_naming_route_file_and_code() {
             "the message names route, file and code: {message}"
         );
     }
-    // The good page and the `ssr: false` route are not errors, and a flip in
-    // the source hash is one FMIR v2 cannot see (FMIR v3's CRC-32, FORMA-114).
-    assert_eq!(errors.len(), 4, "{errors:?}");
-    for route in ["/", "/app", "/hash"] {
+    // Only the good page and the client-only route are free of errors.
+    // The formerly unchecked hash fixture now flips the checked CRC field.
+    assert_eq!(errors.len(), 5, "{errors:?}");
+    for route in ["/", "/app"] {
         assert!(
             errors.iter().all(|e| e.route != route),
             "{route}: {errors:?}"
@@ -208,13 +209,13 @@ fn a_truncated_module_fails_the_default_loader_naming_route_file_and_code() {
     let manifest = try_load_manifest::<Truncated>().expect("manifest");
     let errors = load_ir_modules_strict::<Truncated>(&manifest).expect_err("refuses");
     assert_eq!(errors.len(), 2, "{errors:?}");
-    for (route, file, cause) in [
-        ("/header", "header.ir", "buffer too short"),
-        ("/tail", "tail.ir", "out of bounds"),
+    for (route, file, code, cause) in [
+        ("/header", "header.ir", "LOAD-103", "buffer too short"),
+        ("/tail", "tail.ir", "LOAD-104", "length mismatch"),
     ] {
         let error = error_for(&errors, route);
         assert_eq!(error.ir_file, file);
-        assert_eq!(error.code(), Some("LOAD-103"), "{error}");
+        assert_eq!(error.code(), Some(code), "{error}");
         assert!(error.reason.contains(cause), "{error}");
     }
 }
@@ -264,7 +265,7 @@ fn the_deprecated_lenient_loader_behaves_as_at_0_2_1() {
     // 0.2.1's `load_ir_modules` returned for the same files.
     let manifest = try_load_manifest::<Flipped>().expect("manifest");
     let (modes, modules) = forma_server::load_ir_modules::<Flipped>(&manifest);
-    for route in ["/magic", "/version", "/section", "/opcode"] {
+    for route in ["/magic", "/version", "/section", "/opcode", "/hash"] {
         assert_eq!(
             modes.get(route),
             Some(&RenderMode::Phase1ClientMount),
@@ -272,7 +273,8 @@ fn the_deprecated_lenient_loader_behaves_as_at_0_2_1() {
         );
         assert!(!modules.contains_key(route), "{route}");
     }
-    for route in ["/", "/hash"] {
+    {
+        let route = "/";
         assert_eq!(
             modes.get(route),
             Some(&RenderMode::Phase2SsrReconcile),
@@ -361,7 +363,7 @@ fn with_a_bad_module_the_fixture_server_binds_no_port() {
     match started.recv_timeout(Duration::from_secs(5)) {
         Ok(Err(StartError::Modules(errors))) => {
             let routes: Vec<_> = errors.iter().map(|e| e.route.as_str()).collect();
-            assert_eq!(errors.len(), 4, "{routes:?}");
+            assert_eq!(errors.len(), 5, "{routes:?}");
         }
         other => panic!("expected a refused start, got {other:?}"),
     }
@@ -379,7 +381,7 @@ fn the_same_server_binds_and_serves_with_good_modules_or_the_lenient_loader() {
     // with the bad ones, serving their routes in Phase 1 (what DR-11 ends).
     for (set, loader, expected) in [
         ("good", Loader::Default, "1 server-rendered pages"),
-        ("flipped", Loader::Lenient, "2 server-rendered pages"),
+        ("flipped", Loader::Lenient, "1 server-rendered pages"),
     ] {
         let addr = free_addr();
         let started = match set {
@@ -395,4 +397,35 @@ fn the_same_server_binds_and_serves_with_good_modules_or_the_lenient_loader() {
             Ok(Ok(()))
         ));
     }
+}
+
+/// Every reviewed fault must retain its exact code in the real loader, and
+/// none may reach a bind. Successful fixtures are loaded in the same batch.
+#[test]
+fn every_reviewed_v3_refusal_happens_before_bind() {
+    let manifest = try_load_manifest::<ReviewedV3>().expect("reviewed manifest");
+    let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/index.tsv");
+    let errors = load_ir_modules_strict::<ReviewedV3>(&manifest).expect_err("fault fixtures");
+    let mut refused = 0;
+    for row in index.lines().skip(1) {
+        let fields: Vec<_> = row.split('\t').collect();
+        let route = format!("/{}", fields[0]);
+        if fields[1] == "PASS" {
+            assert!(errors.iter().all(|e| e.route != route), "{row}");
+        } else {
+            let error = error_for(&errors, &route);
+            assert_eq!(error.ir_file, fields[0]);
+            assert_eq!(error.code(), Some(fields[1]), "{row}: {error}");
+            refused += 1;
+        }
+    }
+    assert_eq!(refused, 61);
+    assert_eq!(errors.len(), refused);
+    let addr = free_addr();
+    let started = spawn::<ReviewedV3>(addr, Loader::Default);
+    match started.recv_timeout(Duration::from_secs(5)) {
+        Ok(Err(StartError::Modules(errors))) => assert_eq!(errors.len(), refused),
+        other => panic!("expected all reviewed refusals before binding, got {other:?}"),
+    }
+    assert!(TcpStream::connect_timeout(&addr, Duration::from_millis(200)).is_err());
 }

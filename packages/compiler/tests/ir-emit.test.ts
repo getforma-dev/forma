@@ -1,3 +1,5 @@
+import { SIGNATURE } from '../src/fmir-constants';
+import { COMPILER_WRITER_VERSION, readFmirContainer } from '../src/fmir';
 /**
  * IrEmitContext tests — the FMIR binary buffer itself.
  *
@@ -59,32 +61,29 @@ describe('IrEmitContext string interning', () => {
 });
 
 describe('IrEmitContext binary layout', () => {
-  it('emits the v2 header', () => {
+  it('emits the v3 header', () => {
     const ctx = new IrEmitContext();
     emitDiv(ctx);
     const binary = ctx.toBinary();
 
-    expect(Array.from(binary.slice(0, 4))).toEqual([0x46, 0x4d, 0x49, 0x52]); // 'FMIR'
-    expect(readU16LE(binary, 4)).toBe(2); // version
-    expect(readU16LE(binary, 6)).toBe(0); // flags
+    expect(Array.from(binary.slice(0, 8))).toEqual(Array.from(SIGNATURE));
+    expect(readFmirContainer(binary).writer).toEqual(COMPILER_WRITER_VERSION);
+    expect(readU16LE(binary, 22)).toBe(0); // reserved
   });
 
   it('writes little-endian integers and back-patches in place', () => {
     const ctx = new IrEmitContext();
-    ctx.emitU16(0x1234);
-    const patchPos = ctx.opcodeLen();
-    ctx.emitU32(0);
-    ctx.emitU32(0xdeadbeef);
-    expect(ctx.opcodeLen()).toBe(2 + 4 + 4);
-
-    ctx.patchU32(patchPos, 0x01020304);
-
+    ctx.addString('first'); ctx.addString('second');
+    const slot = ctx.addSlot('value', 1);
+    ctx.emit(0x04);
+    const patchPos = ctx.opcodeLen(); ctx.emitU32(0);
+    ctx.emit(0x05); ctx.emitU16(slot); ctx.emitU16(0x1234);
+    ctx.patchU32(patchPos, 1);
+    expect(ctx.opcodeLen()).toBe(10);
     const binary = ctx.toBinary();
     const { opcodeOffset } = readSections(binary);
     expect(Array.from(binary.slice(opcodeOffset, opcodeOffset + 10))).toEqual([
-      0x34, 0x12,
-      0x04, 0x03, 0x02, 0x01,
-      0xef, 0xbe, 0xad, 0xde,
+      0x04, 1, 0, 0, 0, 0x05, 0, 0, 0x34, 0x12,
     ]);
   });
 
@@ -94,11 +93,11 @@ describe('IrEmitContext binary layout', () => {
     expect([ctx.nextMarker(), ctx.nextMarker(), ctx.nextMarker()]).toEqual([0, 1, 2]);
 
     expect(ctx.peekNextIslandId()).toBe(0);
-    expect(ctx.addIsland('First', 0x01, 0x01, [], 0)).toBe(0);
+    expect(ctx.addIsland('First', 0x01, [], 0)).toBe(0);
     // peek must NOT consume — emitIsland relies on it for fallback naming.
     expect(ctx.peekNextIslandId()).toBe(1);
     expect(ctx.peekNextIslandId()).toBe(1);
-    expect(ctx.addIsland('Second', 0x01, 0x01, [], 3)).toBe(1);
+    expect(ctx.addIsland('Second', 0x01, [], 3)).toBe(1);
   });
 });
 
@@ -174,14 +173,14 @@ describe('IrEmitContext island slot capture', () => {
     const itemSlot = ctx.addSlot('list:rows:item', 0x05, 0x00);
     const propSlot = ctx.addSlot('list:rows:name', 0x01, 0x00);
     const attrSlot = ctx.addSlot('attr:class', 0x01);
-    const id = ctx.addIsland('RowsIsland', 0x01, 0x01, [], 0);
+    const id = ctx.addIsland('RowsIsland', 0x01, [], 0);
     emitDiv(ctx);
 
     ctx.setIslandSlotIds(id, [arraySlot, itemSlot, propSlot, attrSlot]);
 
     // `list:rows:item` holds the LAST rendered row after SSR — serializing it
     // into data-forma-props would leak that row into the page.
-    expect(getIslands(ctx.toBinary())[0]!.slotIds).toEqual([arraySlot, propSlot, attrSlot]);
+    expect(ctx.getIslands()[0]!.slotIds).toEqual([arraySlot, propSlot, attrSlot]);
   });
 
   it('drops the scratch slot of a name-deduped list too', () => {
@@ -191,27 +190,27 @@ describe('IrEmitContext island slot capture', () => {
     const ctx = new IrEmitContext();
     const arraySlot = ctx.addSlot('list:todos#2:array', 0x04, 0x00);
     const itemSlot = ctx.addSlot('list:todos#2:item', 0x05, 0x00);
-    const id = ctx.addIsland('TodosIsland', 0x01, 0x01, [], 0);
+    const id = ctx.addIsland('TodosIsland', 0x01, [], 0);
     emitDiv(ctx);
 
     ctx.setIslandSlotIds(id, [arraySlot, itemSlot]);
 
-    expect(getIslands(ctx.toBinary())[0]!.slotIds).toEqual([arraySlot]);
+    expect(ctx.getIslands()[0]!.slotIds).toEqual([arraySlot]);
   });
 
   it('ignores setIslandSlotIds for an unregistered island id', () => {
     const ctx = new IrEmitContext();
-    const id = ctx.addIsland('Only', 0x01, 0x01, [7], 0);
+    const id = ctx.addIsland('Only', 0x01, [7], 0);
     emitDiv(ctx);
 
     ctx.setIslandSlotIds(id + 1, [1, 2, 3]);
 
-    expect(getIslands(ctx.toBinary())).toMatchObject([{ id, name: 'Only', slotIds: [7] }]);
+    expect(ctx.getIslands()).toMatchObject([{ id, name: 'Only', slotIds: [7] }]);
   });
 });
 
 describe('IrEmitContext island table', () => {
-  it('encodes trigger, props mode, byte offset and slot ids', () => {
+  it('encodes trigger, schema reference, byte offset and slot ids', () => {
     const ctx = new IrEmitContext();
     ctx.emit(0x0b); // ISLAND_START
     ctx.emitU16(0);
@@ -220,7 +219,8 @@ describe('IrEmitContext island table', () => {
     ctx.emit(0x02); ctx.emitU32(divIdx);
     ctx.emit(0x0c); // ISLAND_END
     ctx.emitU16(0);
-    ctx.addIsland('FormIsland', 0x01, 0x01, [4, 9], 0);
+    for (let i = 0; i < 10; i++) ctx.addSlot(`slot${i}`, 1);
+    ctx.addIsland('FormIsland', 0x01, [4, 9], 0);
 
     const binary = ctx.toBinary();
 
@@ -229,7 +229,7 @@ describe('IrEmitContext island table', () => {
       name: 'FormIsland',
       nameIdx: 1,
       trigger: 0x01,
-      propsMode: 0x01,
+      schemaObject: 0xffff,
       byteOffset: 0,
       slotIds: [4, 9],
     }]);
@@ -243,14 +243,16 @@ describe('IrEmitContext island table', () => {
 
   it('exposes the same island metadata through getIslands() as the binary table', () => {
     const ctx = new IrEmitContext();
-    ctx.addIsland('Alpha', 0x01, 0x01, [0], 0);
-    ctx.addIsland('Beta', 0x02, 0x01, [], 7);
-    emitDiv(ctx);
+    ctx.addSlot('value', 1);
+    ctx.addIsland('Alpha', 0x01, [0], 0);
+    ctx.emit(0x0b); ctx.emitU16(0); ctx.emit(0x0c); ctx.emitU16(0);
+    ctx.addIsland('Beta', 0x02, [], 6);
+    ctx.emit(0x0b); ctx.emitU16(1); ctx.emit(0x0c); ctx.emitU16(1);
 
     const binary = ctx.toBinary();
     expect(ctx.getIslands()).toEqual(
-      getIslands(binary).map(({ id, name, trigger, propsMode, slotIds }) =>
-        ({ id, name, trigger, propsMode, slotIds })),
+      getIslands(binary).map(({ id, name, trigger, slotIds }) =>
+        ({ id, name, trigger, slotIds })),
     );
   });
 });

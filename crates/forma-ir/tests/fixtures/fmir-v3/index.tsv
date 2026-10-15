@@ -1,0 +1,68 @@
+name	expected	bytes	note
+PASS-good-a.ir	PASS	183	the worked example
+PASS-good-b.ir	PASS	492	one island, one keyed list, source positions
+LOAD-102-bad-signature.ir	LOAD-102	183	first signature byte 0x89 -> 0x09; nothing else read
+LOAD-102-v2-module.ir	LOAD-102	48	FMIR header version 2: 'an FMIR module before v3 (header version 2), rebuild it'
+LOAD-102-pre-v3-version-7.ir	LOAD-102	48	FMIR header version 7 (as FORMA-121's flipped/version.ir): the same message with N = 7
+LOAD-108-writer-3.1.0.ir	LOAD-108	183	writer 3.1.0 against reader 3.0.0 (exact comparison in FORMA-185)
+LOAD-108-writer-3.0.1.ir	LOAD-108	183	writer 3.0.1 against reader 3.0.0: patch counts in FORMA-185
+LOAD-108-writer-2.9.0.ir	LOAD-108	183	writer 2.9.0
+LOAD-104-short-by-one.ir	LOAD-104	182	last byte dropped: declared body_len 159, actual 158
+LOAD-104-long-by-one.ir	LOAD-104	184	one trailing byte: declared 159, actual 160
+LOAD-104-crc-flipped-bytecode.ir	LOAD-104	183	DYN_TEXT 0x05 -> TEXT 0x04 at the first bytecode offset 14, CRC not restamped: checksum mismatch before structure
+LOAD-104-crc-flipped-strings.ir	LOAD-104	183	'main' -> 'mAin' in the string table, CRC not restamped
+LOAD-104-crc-flipped-table.ir	LOAD-104	183	first section offset 88 -> 89 in the table, CRC not restamped
+LOAD-104-crc-field-flipped.ir	LOAD-104	183	one bit of the CRC field itself
+LOAD-103-header-pad-nonzero.ir	LOAD-103	183	reserved header bytes 22..24 not zero (covered by the CRC, so restamped: its own refusal)
+LOAD-103-table-reserved-nonzero.ir	LOAD-103	183	reserved u16 after section_count not zero
+LOAD-103-reserved-flag-bit.ir	LOAD-103	183	flags bit 1 set on the bytecode entry
+LOAD-103-duplicate-section-id.ir	LOAD-103	183	schema entry's id changed to 4: duplicate
+LOAD-103-unordered-table.ir	LOAD-103	183	strings before bytecode: ids not ascending
+LOAD-103-offset-in-header.ir	LOAD-103	183	first section offset 10: not 28 + 12n
+LOAD-103-gap-between-sections.ir	LOAD-103	183	strings offset one past the bytecode's end: sections do not tile
+LOAD-103-table-does-not-fit.ir	LOAD-103	183	section_count 60 within the 64 ceiling but 4 + 12*60 > body_len
+LOAD-103-zero-length-required-section.ir	LOAD-103	152	strings section of length 0: its count does not fit
+LOAD-103-string-not-utf8.ir	LOAD-103	183	'main' with a 0xFF byte, CRC restamped
+LOAD-103-string-past-section.ir	LOAD-103	183	first string length 200: past the section
+LOAD-103-section-trailing-bytes.ir	LOAD-103	184	one byte after the last string entry inside the strings section
+LOAD-103-slot-name-past-table.ir	LOAD-103	183	slot 0 name_str_idx 9 of 4
+LOAD-103-slot-type-unknown.ir	LOAD-103	183	slot type 7
+LOAD-103-slot-default-not-parsable.ir	LOAD-103	496	a Number slot whose default is 'seven'
+LOAD-103-reserved-opcode-0x09.ir	LOAD-103	183	SWITCH byte where DYN_TEXT was, CRC restamped
+LOAD-103-unassigned-opcode-0x13.ir	LOAD-103	183	an unassigned opcode byte
+LOAD-103-str-idx-past-table.ir	LOAD-103	183	OPEN_TAG names string 99 of 4 (B3: checked in the structural pass)
+LOAD-103-slot-id-undeclared.ir	LOAD-103	183	DYN_TEXT names slot 5, undeclared
+LOAD-103-region-does-not-tile.ir	LOAD-103	182	last CLOSE_TAG missing its final operand byte
+PASS-pass-flipped-dyn-text.ir	PASS	183	DYN_TEXT -> TEXT with the CRC restamped: well-formed and wrong, renders <h1>main</h1> (12.2)
+LOAD-103-island-entry-len-short.ir	LOAD-103	492	entry_len 10 < 15
+LOAD-103-island-fields-exceed-entry-len.ir	LOAD-103	494	15 + 0 + 2 + 2*2 = 21 > entry_len 17
+LOAD-103-island-reserved-nonzero.ir	LOAD-103	492	the former props_mode byte is 1
+LOAD-103-island-trigger-unknown.ir	LOAD-103	492	trigger 5
+LOAD-103-island-offset-not-start.ir	LOAD-103	492	byte_offset one past ISLAND_START
+LOAD-103-island-schema-object-out-of-range.ir	LOAD-103	492	schema_object 7 of 3
+LOAD-103-island-start-unknown-id.ir	LOAD-103	492	ISLAND_START names island 4, not in the table
+LOAD-103-schema-object-count-zero.ir	LOAD-103	164	object_count 0: object 0 must exist
+LOAD-103-schema-unknown-type-tag.ir	LOAD-103	183	type tag 9
+LOAD-103-schema-optional-of-optional.ir	LOAD-103	185	optional<optional<string>>
+LOAD-103-schema-object-cycle.ir	LOAD-103	185	object 0's field is object 0
+LOAD-103-schema-object-index-out-of-range.ir	LOAD-103	185	object index 3 of 1
+LOAD-103-schema-duplicate-field-name.ir	LOAD-103	200	two fields named 'title' in object 0
+LOAD-103-schema-name-past-table.ir	LOAD-103	183	field name_str_idx 9 of 4
+LOAD-107-schema-type-nesting-17.ir	LOAD-107	200	17 nested arrays: past the nesting ceiling of 16
+LOAD-103-keypath-offset-not-list.ir	LOAD-103	492	key path at offset 0, an OPEN_TAG
+LOAD-103-keypath-zero-segments.ir	LOAD-103	492	segment_count 0, with four padding bytes so the minimum bytes bound passes and the segment-count rule is reached
+LOAD-103-keypath-segment-past-table.ir	LOAD-103	492	segment_str_idx 40 of 11
+LOAD-103-keypath-duplicate-list.ir	LOAD-103	510	two entries for one LIST
+LOAD-107-keypath-count-past-lists.ir	LOAD-107	501	two entries, one LIST: the opcode-count ceiling after the structural pass
+LOAD-103-position-offset-not-boundary.ir	LOAD-103	472	opcode_offset 1 is inside OPEN_TAG's operands (an optional section is still validated whole)
+LOAD-103-position-unordered.ir	LOAD-103	492	entries not ascending
+LOAD-105-missing-schema-section.ir	LOAD-105	150	no 0x0005
+LOAD-105-missing-strings-section.ir	LOAD-105	140	no 0x0002
+LOAD-106-unknown-required-0x0100.ir	LOAD-106	200	section 0x0100 flagged required: 'written by 3.0.0; this reader is 3.0.0'
+PASS-unknown-optional-0x0100.ir	PASS	200	section 0x0100 optional: skipped, renders identically to good-a
+PASS-private-optional-0x8000.ir	PASS	235	a private-range optional section: skipped
+PASS-positions-absent.ir	PASS	436	good-b without its optional source positions: renders identically, empty component path
+LOAD-107-string-count-max.ir	LOAD-107	183	string count 4,294,967,295: past the ceiling, refused before any allocation (ceiling before bytes bound)
+LOAD-103-string-count-fits-ceiling-not-bytes.ir	LOAD-103	183	string count 1,000: under the ceiling, 2*1000 > bytes left
+LOAD-107-section-count-65.ir	LOAD-107	183	section_count 65: past the ceiling of 64, before the table is allocated
+LOAD-107-island-count-4097.ir	LOAD-107	492	island count 4,097

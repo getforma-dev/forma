@@ -1,0 +1,30 @@
+0000  89 46 4d 49 0d 0a 1a 0a               signature
+0008  03 00 00 00 00 00                     writer 3.0.0 (three u16)
+000e  9f 00 00 00                           body length 159
+0012  8c 78 39 fa                           CRC-32 excluding bytes [18,22) 0xfa39788c
+0016  00 00                                 header reserved zero
+0018  05 00                                 section count 5
+001a  00 00                                 table reserved zero
+001c  01 00 01 00 58 00 00 00 1d 00 00 00   section 0x0001 bytecode: required=1 offset=88 length=29
+0028  02 00 01 00 75 00 00 00 1f 00 00 00   section 0x0002 strings: required=1 offset=117 length=31
+0034  03 00 01 00 94 00 00 00 0c 00 00 00   section 0x0003 slots: required=1 offset=148 length=12
+0040  04 00 01 00 a0 00 00 00 02 00 00 00   section 0x0004 islands: required=1 offset=160 length=2
+004c  05 00 01 00 a2 00 00 00 15 00 00 00   section 0x0005 props schema: required=1 offset=162 length=21
+0058  01 00 00 00 00 00 00                  OPEN_TAG str 0 (main), 0 attrs
+005f  01 01 00 00 00 00 00                  OPEN_TAG str 1 (h1), 0 attrs
+0066  05 00 00 00 00                        DYN_TEXT slot 0, marker 0
+006b  02 01 00 00 00                        CLOSE_TAG str 1
+0070  02 00 00 00 00                        CLOSE_TAG str 0
+0075  04 00 00 00                           strings: count 4
+0079  04 00 6d 61 69 6e                     string "main" (len 4)
+007f  02 00 68 31                           string "h1" (len 2)
+0083  05 00 74 69 74 6c 65                  string "title" (len 5)
+008a  08 00 70 61 67 65 2e 74 73 78         string "page.tsx" (len 8)
+0094  01 00                                 slots: count 1
+0096  00 00 02 00 00 00 01 00 00 00         slot 0: name str 2, Text, Server, default_len 0
+00a0  00 00                                 islands: count 0
+00a2  01 00                                 props schema: object_count 1
+00a4  01 00                                 object 0: field_count 1
+00a6  02 00 00 00 03 00 00 00 03 00 00 00   field: name str 2, file str 3, line 3, column 23
+00b2  17 00 00 00                         
+00b6  02                                    type 0x02 string

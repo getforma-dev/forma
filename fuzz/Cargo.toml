@@ -1,0 +1,43 @@
+[package]
+name = "forma-ir-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+members = ["."]
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+forma-ir = { path = "../crates/forma-ir", default-features = false, features = ["__fuzzing"] }
+
+[[bin]]
+name = "parse_raw"
+path = "fuzz_targets/parse_raw.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parse_body"
+path = "fuzz_targets/parse_body.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parse_mutated"
+path = "fuzz_targets/parse_mutated.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "walk"
+path = "fuzz_targets/walk.rs"
+test = false
+doc = false
+bench = false

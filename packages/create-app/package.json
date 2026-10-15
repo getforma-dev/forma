@@ -1,13 +1,14 @@
 {
   "name": "@getforma/create-app",
-  "version": "0.6.2",
+  "version": "3.0.0-dev",
   "type": "module",
   "author": "Forma <victor@getforma.dev>",
   "homepage": "https://getforma.dev",
   "description": "Create a new Forma app — Rust + TypeScript SSR framework",
   "repository": {
     "type": "git",
-    "url": "https://github.com/getforma-dev/create-forma-app.git"
+    "url": "https://github.com/getforma-dev/forma.git",
+    "directory": "packages/create-app"
   },
   "bin": {
     "create-forma-app": "dist/index.js",
