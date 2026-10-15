@@ -12,7 +12,8 @@ import { AdoptionLifecycle, type PreparationOptions, type PreparedGroup } from '
 import { contentNs, SVG_NS, MATHML_NS, withNamespace } from './namespace.js';
 import { isEventHandlerAttr } from '../security/url-safety.js';
 import { prepareAttribute } from './adoption-attributes.js';
-import { isFormControlProperty } from './form-control.js';
+import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
+import { AdoptionControls, type ControlToken } from './adoption-controls.js';
 import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './hydrate.js';
 
 interface Listener { element:Element; event:string; listener:EventListener; controller?:AbortController }
@@ -43,10 +44,13 @@ function ownProps(props:Record<string,unknown>):[string,unknown][] {
  * returned object is private: no status write/event/activation occurs here. */
 export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionOptions={}):PreparedAdoption {
   const dom=new AdoptionDom(host);
-  const scopeOptions:PreparationOptions={check:()=>dom.assertUnchanged(),failure:options.failure};
+  const controls=new AdoptionControls(host);
+  const scopeOptions:PreparationOptions={check:()=>{dom.assertUnchanged();controls.check();},failure:options.failure};
   const scope=options.scope?.(scopeOptions)??new AdoptionLifecycle(scopeOptions);
   const listeners:Listener[]=[];
-  const dispose=():void=>{scope.abort();dom.release();};
+  const controlBindings=new Map<ControlToken,{read?:()=>unknown;skip?:{value:unknown}}>();
+  const release=():void=>{dom.release();controls.release();controlBindings.clear();};
+  const dispose=():void=>{scope.abort();release();};
   function construct<T>(fn:()=>T,ns:string|null):T {
     return scope.run(()=>withNamespace(ns,()=>withAdoptionDescription(fn)));
   }
@@ -55,6 +59,37 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     const initial=typeof value==='function'?scope.observe(value as ()=>unknown,next=>binding.write(next)):value;
     binding=prepareAttribute(element,key,initial);
     dom.expectAttribute(element,binding.local,binding.initial,binding.namespace);
+  }
+
+  function control(element:Element,key:'value'|'checked'|'selected'|'text',value:unknown,authority?:()=>unknown):void {
+    const read=typeof value==='function'?value as ()=>unknown:undefined;
+    const binding:{read?:()=>unknown;skip?:{value:unknown}}={read:authority??read};
+    const write=(next:unknown)=>{
+      // Seeding only suppresses this edited control's matching notification.
+      // Other dependents remain live; a later different value is never skipped,
+      // including when an enclosing user batch delays the first notification.
+      if(binding.skip){
+        const expected=binding.skip.value;binding.skip=undefined;
+        if(Object.is(next,expected)||(Array.isArray(next)&&Array.isArray(expected)&&next.length===expected.length&&next.every((item,i)=>item===expected[i])))return;
+      }
+      if(key==='text'){
+        const target=element as HTMLTextAreaElement,normalized=text(next);
+        if(target.defaultValue!==normalized)target.defaultValue=normalized;
+      }else writeFormControlProperty(element,key,next);
+    };
+    const initial=read?scope.observe(read,write):value;
+    const token=controls.add({element,key,initial,kind:read?'binding':'initial',codec:binding.read?scope.inputCodec(binding.read):undefined});
+    controlBindings.set(token,binding);
+  }
+  function textarea(element:Element,children:unknown[]):void {
+    const reads=children.filter(child=>typeof child==='function') as (()=>unknown)[];
+    const collect=()=>children.map(child=>{
+      const value=typeof child==='function'?(child as ()=>unknown)():child;
+      return value==null||typeof value==='boolean'?'':text(value);
+    }).join('');
+    // A sole original compiler wrapper retains its exact getter authority;
+    // composed text remains a reactive binding with no invented setter.
+    control(element,'text',reads.length?collect:collect(),children.length===1&&reads.length===1?reads[0]:undefined);
   }
 
   function props(element:Element,values:Record<string,unknown>|null):void {
@@ -72,7 +107,8 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         else if(value!=null&&typeof value==='object')refuse();
         dom.expectAttribute(element,key.toLowerCase(),null);continue;
       }
-      if(key==='style'||key==='dangerouslySetInnerHTML'||isFormControlProperty(element,key))refuse();
+      if(key==='style'||key==='dangerouslySetInnerHTML')refuse();
+      if(isFormControlProperty(element,key)){control(element,key as 'value'|'checked'|'selected',value);continue;}
       if(isEventHandlerAttr(key)){dom.expectAttribute(element,key.toLowerCase(),null);continue;}
       attribute(element,key,value);
     }
@@ -80,6 +116,12 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   function element(desc:HydrationDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const own=desc.tag==='svg'?SVG_NS:desc.tag==='math'?MATHML_NS:ns;
     const target=cursor.element(desc.tag,own);props(target,desc.props);
+    if(target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='textarea'){
+      // A value prop already owns the control. Children remain ordinary exact
+      // default text when supplied; duplicate ownership is rejected by kernel.
+      if(desc.children.length||!desc.props||!Object.hasOwn(desc.props,'value'))textarea(target,desc.children);
+      return;
+    }
     const nested=dom.children(target),inner=contentNs(target);
     for(const child of desc.children)walk(child,nested,inner);
     nested.finish();
@@ -295,7 +337,13 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   try{
     const cursor=dom.root();
     scope.run(()=>walk(construct(build,contentNs(host.parentNode)),cursor,contentNs(host.parentNode),true));
-    cursor.finish();scope.seal();
+    cursor.finish();
+    for(const observation of controls.finish())if(observation.kind==='binding'&&observation.edited){
+      const binding=controlBindings.get(observation.token)!;
+      if(!binding.read)refuse();
+      scope.queueEdit(binding.read,observation.value);binding.skip={value:observation.value};
+    }
+    scope.seal();
   }catch(error){dispose();throw error;}
   return {
     get phase(){return scope.phase;},dispose,
@@ -303,7 +351,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(scope.phase!=='validated')return refuse();
       try{
         // Recheck before any listener installation; seed/publish recheck again.
-        dom.assertUnchanged();
+        dom.assertUnchanged();controls.check();
         if(listeners.length){
           const Controller=host.ownerDocument.defaultView?.AbortController??AbortController;
           for(const item of listeners){
@@ -311,7 +359,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
           }
         }
         scope.seed();scope.publish();
-        listeners.length=0;dom.release();
+        listeners.length=0;release();
       }catch(error){dispose();throw error;}
     },
   };
