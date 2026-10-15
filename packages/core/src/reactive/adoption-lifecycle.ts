@@ -3,6 +3,7 @@ import { effect as rawEffect, getActiveSub } from 'alien-signals';
 import { withAdoptionSink, type AdoptionSink, type DeferredEffect, type AdoptionCodec } from './adoption-hooks.js';
 import { openBatch, closeBatchWithoutRoot } from './batch.js';
 import { createUnownedRoot, registerDisposer } from './root.js';
+import { withAdoptionEvents } from './adoption-events.js';
 import { reportError } from './dev.js';
 import { withAdoptionEffectFailure } from './effect.js';
 
@@ -86,15 +87,42 @@ export class AdoptionLifecycle implements AdoptionSink {
     let result!:T, error:unknown, failed=false, dispose!:()=>void;
     withAdoptionSink(undefined,()=>withAdoptionEffectFailure(
       cause=>this.fail(cause,'FORMA_E_HYDRATE_EFFECT'),
-      ()=>createUnownedRoot(rootDispose=>{
+      ()=>withAdoptionEvents(this.eventWrapper(owner),()=>createUnownedRoot(rootDispose=>{
         dispose=rootDispose;
         try{result=fn();}catch(cause){failed=true;error=cause;}
-      }),
+      })),
     ));
     this.own(dispose,owner);
     if(failed){this.fail(error,'FORMA_E_HYDRATE_EFFECT');throw error;}
     if(this.state==='aborted'||!owner.alive)throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
     return result;
+  }
+
+  /** A listener retains the preparing region's owner. Calls are inert until
+   * publication; each live invocation owns synchronous work and contains its
+   * failure, including work constructed after reentrant teardown. */
+  liveCallback<T>(invoke:(value:T)=>void):(value:T)=>void {
+    this.require('preparing');return this.callbackFor(this.currentGroup,invoke);
+  }
+  private eventWrapper(owner:PreparationGroup):(listener:EventListenerOrEventListenerObject)=>EventListener {
+    return listener=>this.callbackFor(owner,(event:Event)=>{
+      if(typeof listener==='function')listener.call(event.currentTarget,event);
+      else listener.handleEvent(event);
+    });
+  }
+  private callbackFor<T>(parent:PreparationGroup,invoke:(value:T)=>void):(value:T)=>void {
+    if(!parent.alive||this.state==='aborted')return ()=>{};
+    const owner=group();owner.parent=parent;parent.children.add(owner);
+    // A live effect generation may replace the element before the island dies.
+    // Its actual reactive disposer revokes this listener's callback resources.
+    registerDisposer(()=>this.disposeGroup(owner));
+    return value=>{
+      if(this.state!=='live'||!owner.alive)return;
+      const previous=this.currentGroup;this.currentGroup=owner;
+      try{this.runLive(()=>invoke(value));}
+      catch{ /* runLive reports real callback failures once; revocation is inert. */ }
+      finally{this.currentGroup=previous;}
+    };
   }
 
   group<T>(fn: () => T): PreparedGroup<T> {
@@ -200,7 +228,8 @@ export class AdoptionLifecycle implements AdoptionSink {
           catch (error) { failed = true; cause = error; }
         });
         withAdoptionSink(undefined, () => withAdoptionEffectFailure(
-          error => this.fail(error, 'FORMA_E_HYDRATE_EFFECT'), startRoot,
+          error => this.fail(error, 'FORMA_E_HYDRATE_EFFECT'),
+          () => withAdoptionEvents(this.eventWrapper(group), startRoot),
         ));
         if (failed) this.fail(cause, code);
         if (cancelled || !group.alive || this.state !== 'live') dispose?.();

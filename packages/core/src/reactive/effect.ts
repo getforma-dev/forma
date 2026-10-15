@@ -20,7 +20,10 @@ import {
 } from './root.js';
 import { setCleanupCollector } from './cleanup.js';
 import { reportError } from './dev.js';
+import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
 import { deferAdoptionEffect } from './adoption-hooks.js';
+
+declare const __FORMA_FRAME_BUILD__: boolean | undefined;
 
 // A live adopted callback's nested effects inherit its failure boundary. This
 // is dynamically scoped around execution and restored even when it throws.
@@ -115,9 +118,9 @@ function runCleanups(bag: (() => void)[] | undefined): void {
 /**
  * @internal — Lightweight effect for Forma's internal DOM bindings.
  *
- * Bypasses createEffect's cleanup infrastructure (pool, collector, engine
- * compression) since internal effects never use onCleanup() or return cleanup
- * functions.  This saves ~4 function calls per effect creation and per re-run.
+ * Ordinary CSR bindings bypass createEffect's cleanup infrastructure. A live
+ * adopted binding instead retains a generation owner and failure boundary,
+ * because its reader can construct nodes and callbacks on a later run.
  *
  * ONLY use for effects that:
  * 1. Never call onCleanup()
@@ -143,15 +146,25 @@ function runCleanups(bag: (() => void)[] | undefined): void {
  * Verified by: src/dom/__tests__/hydrate.test.ts > "a binding that throws on a shared-signal update does not freeze the other island"
  */
 export function internalEffect(fn: () => void): () => void {
+  // Adopted live readers can construct nodes, listeners and nested work. Reuse
+  // the effect generation owner/failure boundary while retaining initial throw.
+  // Verified by: src/dom/__tests__/reviewer-events-internal-generation.test.ts > "revokes removed public h function-child listeners and their callback resources on each generation"
+  // The frame has no adopted regions; keep its ordinary reader independent
+  // of the adoption-only effect owner and event context. Undefined flags keep
+  // raw-source tooling on the normal path.
+  // Verified by: src/reactive/__tests__/frame-effect.test.ts > "keeps the frame reader reactive and disposable without linking the unused adoption effect graph"
+  if (!(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) && adoptionFailure) return createEffectNow(fn, adoptionFailure, true);
+  const events = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionEvents();
+  const run = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : () => withAdoptionEvents(events, fn);
   let firstRun = true;
   const dispose = rawEffect(() => {
     if (firstRun) {
       firstRun = false;
-      fn();
+      run();
       return;
     }
     try {
-      fn();
+      run();
     } catch (e) {
       reportError(e, 'binding');
     }
@@ -166,18 +179,20 @@ export function createEffect(fn: () => void | (() => void)): () => void {
   return deferAdoptionEffect(fn, createEffectNow) ?? createEffectNow(fn, adoptionFailure);
 }
 
-function createEffectNow(fn: () => void | (() => void), failure?: (error: unknown) => void): () => void {
+function createEffectNow(fn: () => void | (() => void), failure?: (error: unknown) => void, initialThrow = false): () => void {
   // Capture the owner active at creation time so this effect's disposer is owned
   // by whatever created it — a root, or (for a nested effect) the parent effect's
   // current child-owner. This replaces a hasActiveRoot() snapshot so nested
   // effects created during a parent re-run (when no root is lexically active) are
   // still owned and disposed.
   const ownerAtCreate = getOwner();
+  const events = getAdoptionEvents();
 
   // This effect owns its nested effects/roots via a reusable child-owner: it is
   // disposed (nested cleanups run) at the top of each run and on disposal, then
   // reused for the next generation. One small allocation per createEffect; the
-  // hot DOM path uses internalEffect, which has no child-owner.
+  // ordinary CSR DOM path uses internalEffect without a child-owner. Adopted
+  // internal bindings use this owner too, since readers can construct callbacks.
   const childOwner: Owner = createChildOwner();
 
   // Most effects have zero or one cleanup. Track the single-cleanup case
@@ -187,6 +202,8 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   let nextCleanup: (() => void) | undefined;
   let nextCleanupBag: (() => void)[] | undefined;
   let disposed = false;
+  let firstRun = true;
+  let initialError: {error:unknown}|undefined;
 
   const addCleanup = (cb: () => void) => {
     if (nextCleanupBag !== undefined) {
@@ -225,6 +242,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   };
 
   const runOnce = () => {
+    const initial = firstRun; firstRun = false;
     cleanCurrentRun();
 
     nextCleanup = undefined;
@@ -242,7 +260,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     try {
       // Run the body with this effect's child-owner installed so any nested
       // effects/roots it creates are owned by this generation.
-      const result = runWithOwner(childOwner, fn);
+      const result = withAdoptionEvents(events, () => runWithOwner(childOwner, fn));
       if (typeof result === 'function') {
         addCleanup(result as () => void);
       }
@@ -259,6 +277,10 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
       } else if (nextCleanup !== undefined) {
         cleanup = nextCleanup;
       }
+      // Let the engine return its disposer even when the first reader throws.
+      // A caught construction error must not leave a subscribed failed effect.
+      // Verified by: src/dom/__tests__/reviewer-adoption-caught-construction.test.ts > "a caught initial h reader failure unsubscribes its failed binding and preserves its live owner"
+      if (initialThrow && initial) { initialError={error:e}; return false; }
       if (failure) { failure(e); return false; }
       else reportError(e, 'effect');
     } finally {
@@ -303,6 +325,8 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     // Dispose nested effects/roots this effect owns, then run its own cleanups.
     cleanCurrentRun();
   };
+
+  if(initialError){wrappedDispose();throw initialError.error;}
 
   // Register this effect's disposer with the owner active at creation (a root, or
   // a parent effect's child-owner).

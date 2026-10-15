@@ -37,6 +37,8 @@ import { createSignal, createRoot } from 'forma/reactive';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { h } from '../dom/element';
+import { prepareRaw, prepareStyle } from '../dom/adoption-content';
+import { trustedHtml } from '../dom/trusted-html';
 import { applyDynamicProps, adoptNode } from '../dom/hydrate';
 import { prepareAdoption } from '../dom/adoption';
 import { prepareAttribute } from '../dom/adoption-attributes';
@@ -374,6 +376,9 @@ describe('renderer contract: the table covers every sink', () => {
       'src/expr/interp.ts',
       'src/expr/allowlist.ts',
     ];
+    // Fixed detached parser-context attributes are not generic caller props.
+    // This module is still a real typed raw/CSS sink, exercised separately below.
+    const SPECIAL_CONTENT_SINK_FILES = ['src/dom/adoption-content.ts'];
     /** The only module that assembles an attribute into a markup STRING. */
     const MARKUP_SINK_FILES: string[] = [];
 
@@ -395,19 +400,39 @@ describe('renderer contract: the table covers every sink', () => {
     walk(resolve(ROOT, 'src'));
 
     const unaccounted = [...domWriters, ...markupWriters].filter(
-      (f) => !DOM_SINK_FILES.includes(f) && !MARKUP_SINK_FILES.includes(f) && !Object.hasOwn(NON_SINKS, f),
+      (f) => !DOM_SINK_FILES.includes(f) && !SPECIAL_CONTENT_SINK_FILES.includes(f) && !MARKUP_SINK_FILES.includes(f) && !Object.hasOwn(NON_SINKS, f),
     );
     expect(
       unaccounted,
       'a new attribute-writing module must join SINKS above (or NON_SINKS with a reason)',
     ).toEqual([]);
     // And the list may not rot: every file named above still writes attributes.
-    for (const f of [...DOM_SINK_FILES, ...Object.keys(NON_SINKS)]) {
+    for (const f of [...DOM_SINK_FILES, ...SPECIAL_CONTENT_SINK_FILES, ...Object.keys(NON_SINKS)]) {
       expect(domWriters, `${f} no longer writes attributes — remove it from the list`).toContain(f);
     }
     for (const f of MARKUP_SINK_FILES) {
       expect(markupWriters, `${f} no longer emits attribute markup`).toContain(f);
     }
+  });
+
+  it('covers the prepared typed raw sink and shared CSS writer separately from generic attributes', () => {
+    // adoption-content does not write caller-named attributes: its real raw
+    // sink is typed, and CSS delegates to element.ts's declaration writer.
+    // It is not a NON_SINK exemption. Exercise both actual later-write paths.
+    const element = host(), raw = prepareRaw(element, null);
+    expect(() => raw.write({__html: '<b>raw</b>'})).toThrow('FORMA_E_RAW_INNER_HTML');
+    raw.write({__html: trustedHtml('<b>typed</b>')});
+    expect(element.innerHTML).toBe('<b>typed</b>');
+    const style = prepareStyle(element, '');
+    style.write('color:red;font-size:14px'); style.write('font-size:16px');
+    expect(element.style.color).toBe(''); expect(element.style.fontSize).toBe('16px');
+  });
+
+  it('the prepared attribute matrix retains typed srcdoc and refuses raw strings', () => {
+    const prepared = SINKS.find(sink => sink.name === 'prepared-adopt')!;
+    expect(() => prepared.write('iframe', 'srcdoc', '<b>raw</b>')).toThrow('FORMA_E_RAW_SRCDOC');
+    const frame = prepared.write('iframe', 'srcdoc', trustedHtml('<b>typed</b>'));
+    expect(frame.getAttribute('srcdoc')).toBe('<b>typed</b>');
   });
 
   it('covers every URL-bearing attribute the security module declares', () => {

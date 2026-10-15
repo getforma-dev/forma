@@ -1,6 +1,7 @@
 /** Private descriptor walker. Activation is switched only after its remaining
  * control-flow/control/raw-HTML checkpoints and compiled product review. */
 import { AdoptionDom, AdoptionDomError, type AdoptionCursor } from './adoption-plan.js';
+import { AdoptionRow, materializeRows } from './adoption-row.js';
 import { withAdoptionDescription, type ComponentDescription } from './adoption-description.js';
 import { registerDisposer } from '../reactive/root.js';
 import { untrack } from '../reactive/untrack.js';
@@ -11,7 +12,8 @@ import { AdoptionLifecycle, type PreparationOptions, type PreparedGroup } from '
 import { contentNs, SVG_NS, MATHML_NS, withNamespace } from './namespace.js';
 import { isEventHandlerAttr } from '../security/url-safety.js';
 import { prepareAttribute } from './adoption-attributes.js';
-import { isFormControlProperty } from './form-control.js';
+import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
+import { AdoptionControls, type ControlToken } from './adoption-controls.js';
 import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './hydrate.js';
 
 interface Listener { element:Element; event:string; listener:EventListener; controller?:AbortController }
@@ -38,14 +40,28 @@ function ownProps(props:Record<string,unknown>):[string,unknown][] {
   });
 }
 
+function listenerObject(value:unknown):value is EventListenerObject {
+  if(value===null||typeof value!=='object')return false;
+  // Class methods are valid too. Do not execute an accessor before commit;
+  // native handleEvent lookup remains dynamic inside the owned live callback.
+  for(let object=value;object;object=Object.getPrototypeOf(object)){
+    const descriptor=Object.getOwnPropertyDescriptor(object,'handleEvent');
+    if(descriptor)return 'value'in descriptor?typeof descriptor.value==='function':typeof descriptor.get==='function';
+  }
+  return false;
+}
+
 /** Snapshot first, build once, then retain every prepared observation. The
  * returned object is private: no status write/event/activation occurs here. */
 export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionOptions={}):PreparedAdoption {
   const dom=new AdoptionDom(host);
-  const scopeOptions:PreparationOptions={check:()=>dom.assertUnchanged(),failure:options.failure};
+  const controls=new AdoptionControls(host);
+  const scopeOptions:PreparationOptions={check:()=>{dom.assertUnchanged();controls.check();},failure:options.failure};
   const scope=options.scope?.(scopeOptions)??new AdoptionLifecycle(scopeOptions);
   const listeners:Listener[]=[];
-  const dispose=():void=>{scope.abort();dom.release();};
+  const controlBindings=new Map<ControlToken,{read?:()=>unknown;skip?:{value:unknown}}>();
+  const release=():void=>{dom.release();controls.release();controlBindings.clear();};
+  const dispose=():void=>{scope.abort();release();};
   function construct<T>(fn:()=>T,ns:string|null):T {
     return scope.run(()=>withNamespace(ns,()=>withAdoptionDescription(fn)));
   }
@@ -56,29 +72,68 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     dom.expectAttribute(element,binding.local,binding.initial,binding.namespace);
   }
 
+  function control(element:Element,key:'value'|'checked'|'selected'|'text',value:unknown,authority?:()=>unknown):void {
+    const read=typeof value==='function'?value as ()=>unknown:undefined;
+    const binding:{read?:()=>unknown;skip?:{value:unknown}}={read:authority??read};
+    const write=(next:unknown)=>{
+      // Seeding only suppresses this edited control's matching notification.
+      // Other dependents remain live; a later different value is never skipped,
+      // including when an enclosing user batch delays the first notification.
+      if(binding.skip){
+        const expected=binding.skip.value;binding.skip=undefined;
+        if(Object.is(next,expected)||(Array.isArray(next)&&Array.isArray(expected)&&next.length===expected.length&&next.every((item,i)=>item===expected[i])))return;
+      }
+      writeFormControlProperty(element,key,next);
+    };
+    const initial=read?scope.observe(read,write):value;
+    const token=controls.add({element,key,initial,kind:read?'binding':'initial',codec:binding.read?scope.inputCodec(binding.read):undefined});
+    controlBindings.set(token,binding);
+  }
+  function textarea(element:Element,children:unknown[]):void {
+    const reads=children.filter(child=>typeof child==='function') as (()=>unknown)[];
+    const collect=()=>children.map(child=>{
+      const value=typeof child==='function'?(child as ()=>unknown)():child;
+      return value==null||typeof value==='boolean'?'':text(value);
+    }).join('');
+    // A sole original compiler wrapper retains its exact getter authority;
+    // composed text remains a reactive binding with no invented setter.
+    control(element,'text',reads.length?collect:collect(),children.length===1&&reads.length===1?reads[0]:undefined);
+  }
+
   function props(element:Element,values:Record<string,unknown>|null):void {
     if(!values)return;
     for(const [key,value]of ownProps(values)){
       if(key==='children')continue;
       if(key==='ref'){if(typeof value==='function')scope.deferRef(()=>value(element));continue;}
       if(key.startsWith('on')&&key.length>2){
-        // Listener installation has no user callback. Objects/accessor-backed
-        // handlers remain outside this private checkpoint until shared policy.
-        if(typeof value==='function'){
-          const item:Listener={element,event:key.slice(2).toLowerCase(),listener:function(event){if(scope.phase==='live')value.call(this,event);}};
+        // Preserve function receiver and native object handleEvent lookup,
+        // while keeping all callback-created work in this prepared owner.
+        if(typeof value==='function'||listenerObject(value)){
+          const listener=scope.liveCallback((event:Event)=>{
+            if(typeof value==='function')value.call(element,event);
+            else value.handleEvent(event);
+          });
+          const item:Listener={element,event:key.slice(2).toLowerCase(),listener};
           listeners.push(item);registerDisposer(()=>item.controller?.abort());
         }
-        else if(value!=null&&typeof value==='object')refuse();
         dom.expectAttribute(element,key.toLowerCase(),null);continue;
       }
-      if(key==='style'||key==='dangerouslySetInnerHTML'||isFormControlProperty(element,key))refuse();
+      if(key==='style'||key==='dangerouslySetInnerHTML')refuse();
+      if(isFormControlProperty(element,key)){control(element,key as 'value'|'checked'|'selected',value);continue;}
       if(isEventHandlerAttr(key)){dom.expectAttribute(element,key.toLowerCase(),null);continue;}
       attribute(element,key,value);
     }
   }
   function element(desc:HydrationDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const own=desc.tag==='svg'?SVG_NS:desc.tag==='math'?MATHML_NS:ns;
-    const target=cursor.element(desc.tag,own);props(target,desc.props);
+    const target=cursor.element(desc.tag,own);
+    const area=target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='textarea';
+    const valueProp=area&&desc.props&&Object.hasOwn(desc.props,'value');
+    // Static holes render nothing. A reactive child is still real ownership,
+    // even if it would read empty; never evaluate it to decide this boundary.
+    if(valueProp&&desc.children.some(child=>child!=null&&typeof child!=='boolean'&&child!==''))refuse();
+    props(target,desc.props);
+    if(area){if(!valueProp)textarea(target,desc.children);return;}
     const nested=dom.children(target),inner=contentNs(target);
     for(const child of desc.children)walk(child,nested,inner);
     nested.finish();
@@ -140,11 +195,9 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   }
   function list(desc:ListDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const range=cursor.range('l');
-    // This private checkpoint covers one element per row. Fragment/range rows
-    // retain an explicit implementation requirement before activation switches.
     type Key=string|number;
-    type Row={owner:PreparedGroup<unknown>;node:Element;item:unknown;setIndex:(value:number)=>void};
-    let cache=new Map<Key,Row>(),ordered:Row[]=[];
+    type Row={owner:PreparedGroup<unknown>;span:AdoptionRow;item:unknown;setIndex:(value:number)=>void};
+    let cache=new Map<Key,Row>(),ordered:Row[]=[],tail:Node[]=[];
     let owner:PreparedGroup<void>,keyOwner:PreparedGroup<{items:unknown[];keys:Key[]}>;
     function keys(values:unknown):{items:unknown[];keys:Key[]} {
       if(!Array.isArray(values))refuse();
@@ -168,8 +221,10 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       const initial=scope.observe(desc.items,value=>{
         const parent=range.start.parentNode;
         if(!parent||range.end.parentNode!==parent)refuse();
-        const before=contents(),oldElements=before.filter(node=>node.nodeType===1);
-        if(oldElements.length!==ordered.length||ordered.some((row,i)=>row.node!==oldElements[i]))refuse();
+        const before=contents(),covered:Node[]=[];
+        for(const row of ordered)for(const node of row.span.nodes())if(covered[covered.length-1]!==node)covered.push(node);
+        covered.push(...tail);
+        if(covered.length!==before.length||covered.some((node,i)=>node!==before[i]))refuse();
         const check=()=>{
           if(scope.phase!=='live'||range.start.parentNode!==parent||range.end.parentNode!==parent)refuse();
         };
@@ -186,9 +241,9 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
             const child=owner.child(()=>untrack(()=>withNamespace(ns,()=>withAdoptionDescription(()=>{
               const [getIndex,set]=createSignal(i);setIndex=set;
               const node=fresh(desc.renderFn(item,getIndex));
-              if(!node||node.nodeType!==1||node.parentNode)refuse();return node as Element;
+              if(node&&node.parentNode)refuse();return node;
             },false))));
-            row={owner:child,node:child.value,item,setIndex};
+            row={owner:child,span:AdoptionRow.fresh(child.value),item,setIndex};
           }
           planned.set(key,row);rows.push(row);unchanged();
         }
@@ -198,52 +253,75 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         // Complete and recheck them before any framework list mutation.
         for(const row of leaving){
           row.owner.dispose();unchanged();
-          if(row.node.hasAttribute('data-forma-island'))deactivateIsland(row.node as HTMLElement);
-          deactivateAllIslands(row.node);unchanged();
+          for(const node of row.span.nodes())if(node.nodeType===1){
+            const element=node as HTMLElement;
+            if(element.hasAttribute('data-forma-island'))deactivateIsland(element);
+            deactivateAllIslands(element);unchanged();
+          }
         }
         unchanged();
-        const oldIndex=new Map(ordered.map((row,i)=>[row,i]));
-        const reused:number[]=[],positions:number[]=[];
-        rows.forEach((row,i)=>{const index=oldIndex.get(row);if(index!==undefined){reused.push(index);positions.push(i);}});
-        const stationary=new Set(longestIncreasingSubsequence(reused).map(index=>positions[index]!));
-        for(const row of leaving){check();parent.removeChild(row.node);}
-        let anchor:Node=range.end;
-        for(let i=rows.length-1;i>=0;i--){
-          check();const row=rows[i]!;
-          if(!stationary.has(i))parent.insertBefore(row.node,anchor);
-          anchor=row.node;
+        const changed=rows.length!==ordered.length||rows.some((row,i)=>row!==ordered[i]);
+        if(changed){
+          materializeRows(ordered.map(row=>row.span),check);
+          const oldIndex=new Map(ordered.map((row,i)=>[row,i]));
+          const reused:number[]=[],positions:number[]=[];
+          rows.forEach((row,i)=>{const index=oldIndex.get(row);if(index!==undefined&&row.span.first){reused.push(index);positions.push(i);}});
+          const stationary=new Set(longestIncreasingSubsequence(reused).map(index=>positions[index]!));
+          for(const row of leaving)for(const node of row.span.nodes()){check();parent.removeChild(node);}
+          let anchor:Node=tail[0]??range.end;
+          for(let i=rows.length-1;i>=0;i--){
+            check();const row=rows[i]!,nodes=row.span.nodes();
+            if(!stationary.has(i))for(const node of nodes){check();parent.insertBefore(node,anchor);}
+            if(row.span.first)anchor=row.span.first;
+          }
         }
         check();cache=planned;ordered=rows;
         for(let i=0;i<rows.length;i++){check();rows[i]!.setIndex(i);}
       });
       keyOwner=scope.group(()=>keys(initial));
       const prepared=keyOwner.value,elements=contents().filter(node=>node.nodeType===1) as Element[];
-      if(elements.length!==prepared.items.length)throw new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT');
       const keyed=elements.filter(element=>element.hasAttribute('data-forma-key'));
-      if(keyed.length&&keyed.length!==elements.length)refuse();
+      if(keyed.length&&keyed.length!==prepared.items.length)refuse();
+      if(keyed.some((element,i)=>element.getAttribute('data-forma-key')!==String(prepared.keys[i])))refuse();
       const originalRows=new Map<string,Element>();
       for(const element of keyed){const key=element.getAttribute('data-forma-key')!;if(originalRows.has(key))refuse();originalRows.set(key,element);}
       const inside=dom.within(range);
       for(let i=0;i<prepared.items.length;i++){
-        const item=prepared.items[i],key=prepared.keys[i]!,target=inside.elementHead();
-        // Retain the key→original-row association. Until181 this private
-        // checkpoint requires order parity and never moves rows during bind.
-        if(keyed.length&&originalRows.get(String(key))!==target)refuse();
-        let setIndex!:(value:number)=>void;
+        const item=prepared.items[i],key=prepared.keys[i]!;
+        let setIndex!:(value:number)=>void,span!:AdoptionRow;
         const child=scope.group(()=>{
           const [getIndex,set]=createSignal(i);setIndex=set;
-          walk(construct(()=>desc.renderFn(item,getIndex),ns),inside,ns);
-          if(!inside.immediatelyAfter(target))refuse();
+          const empty=inside.atEnd;
+          try{
+            const captured=inside.capture(()=>walk(construct(()=>desc.renderFn(item,getIndex),ns),inside,ns));
+            span=new AdoptionRow(captured.pieces);
+          }catch(error){
+            if(empty&&error instanceof AdoptionDomError&&(error.code==='FORMA_E_HYDRATE_NODE'||error.code==='FORMA_E_HYDRATE_MARKER'))throw new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT');
+            throw error;
+          }
         });
-        const row={owner:child,node:target,item,setIndex};cache.set(key,row);ordered.push(row);
+        if(keyed.length){
+          // The key-to-original-span seam survives multiple-node rows. Initial
+          // order parity remains the explicit pre181 limitation; no bind moves.
+          const firstElement=span.nodes().find(node=>node.nodeType===1);
+          if(originalRows.get(String(key))!==firstElement)refuse();
+        }
+        cache.set(key,{owner:child,span,item,setIndex});ordered.push(cache.get(key)!);
       }
-      inside.finish();
-      registerDisposer(()=>{cache.clear();ordered=[];});
+      try{inside.finish();}catch(error){if(error instanceof AdoptionDomError&&error.code==='FORMA_E_HYDRATE_STRUCTURE')throw new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT');throw error;}
+      let last:Node|null=null;for(const row of ordered)if(row.span.last)last=row.span.last;
+      let node=last?last.nextSibling:range.start.nextSibling;
+      for(;node!==range.end;node=node?.nextSibling??null){if(!node)refuse();tail.push(node);}
+      registerDisposer(()=>{cache.clear();ordered=[];tail=[];});
     });
   }
   function walk(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
-    if(value==null||typeof value==='boolean')return;
-    if(typeof value==='string'||typeof value==='number'){cursor.text(String(value));return;}
+    if(value==null||typeof value==='boolean'){
+      if(cursor.rangeKind()==='t')cursor.textRange(text(value));return;
+    }
+    if(typeof value==='string'||typeof value==='number'){
+      if(cursor.rangeKind()==='t')cursor.textRange(String(value));else cursor.text(String(value));return;
+    }
     if(typeof value==='function'){
       let target:Text|undefined,previous:string;
       const initial=scope.observe(()=>withNamespace(ns,()=>withAdoptionDescription(value as ()=>unknown)),next=>{
@@ -271,7 +349,13 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   try{
     const cursor=dom.root();
     scope.run(()=>walk(construct(build,contentNs(host.parentNode)),cursor,contentNs(host.parentNode),true));
-    cursor.finish();scope.seal();
+    cursor.finish();
+    for(const observation of controls.finish())if(observation.kind==='binding'&&observation.edited){
+      const binding=controlBindings.get(observation.token)!;
+      if(!binding.read)refuse();
+      scope.queueEdit(binding.read,observation.value);binding.skip={value:observation.value};
+    }
+    scope.seal();
   }catch(error){dispose();throw error;}
   return {
     get phase(){return scope.phase;},dispose,
@@ -279,7 +363,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(scope.phase!=='validated')return refuse();
       try{
         // Recheck before any listener installation; seed/publish recheck again.
-        dom.assertUnchanged();
+        dom.assertUnchanged();controls.check();
         if(listeners.length){
           const Controller=host.ownerDocument.defaultView?.AbortController??AbortController;
           for(const item of listeners){
@@ -287,7 +371,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
           }
         }
         scope.seed();scope.publish();
-        listeners.length=0;dom.release();
+        listeners.length=0;release();
       }catch(error){dispose();throw error;}
     },
   };

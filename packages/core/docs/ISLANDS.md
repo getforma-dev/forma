@@ -243,10 +243,11 @@ Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "repairs an unto
 text, so a hydration marker inside one is not a comment: it shows in the text
 and, in a textarea, in the value a form submits. forma-ir 0.2.1 writes no
 markers there, and the runtime binds their reactive text by the element. A
-textarea's reactive text is its default value, as it is when client-rendered:
-the value follows it until the user types, and after that an update changes
-what a form reset restores, not the user's text. Bind the `value` prop for a
-controlled textarea. For one release the runtime also accepts the marker text
+textarea's reactive text is controlled in3.x, as it is when client-rendered:
+a later signal update changes both its live value and reset default, including
+after a user edit. Initial adoption preserves an early edit; the private104
+planner seeds its proven local getter before callbacks. The public activation
+switch to that planner remains pending in this development checkpoint. For one release the runtime also accepts the marker text
 older servers write: adoption removes it when it accounts for the whole
 difference from the client's text, and leaves text that only looks like a
 marker alone.
@@ -254,7 +255,7 @@ marker alone.
 Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "binds a marker-free textarea by the element and writes nothing when it agrees"
 Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "keeps text typed into a marker-carrying textarea before activation"
 Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "keeps server text that only looks like marker text, edited or not, without a write"
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "after the user types, a textarea's reactive text changes only its default, client-rendered and adopted alike"
+Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike"
 Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "binds a title's reactive text by the element, with or without marker text"
 
 **Inline SVG and MathML.** These are adopted like any other element: the nodes

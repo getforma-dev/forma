@@ -29,6 +29,13 @@ describe('private prepared descriptor walker',()=>{
     setCount(8);setLabel('two');expect(host.className).toBe('two');expect(host.childNodes[2]!.textContent).toBe('8');
     plan.dispose();setCount(9);setLabel('three');expect(host.className).toBe('two');expect(host.childNodes[2]!.textContent).toBe('8');observer.disconnect();
   });
+  it('consumes exact native eager scalar/null text ranges without adding reactive authority',()=>{
+    for(const [value,rendered]of [['label','label'],[7,'7'],[null,'\u200b'],['','\u200b']] as const){
+      const f=fixture(`<p><!--f:t0-->${rendered}<!--/f:t0--></p>`),original=[...f.host.childNodes];
+      const plan=prepareAdoption(f.host,()=>h('p',null,value));plan.commit();expect([...f.host.childNodes]).toEqual(original);expect(f.observer.takeRecords()).toEqual([]);plan.dispose();f.observer.disconnect();
+    }
+    const wrong=fixture('<p><!--f:t0-->wrong<!--/f:t0--></p>');expect(()=>prepareAdoption(wrong.host,()=>h('p',null,'label'))).toThrow('FORMA_E_HYDRATE_VALUE');expect(wrong.observer.takeRecords()).toEqual([]);wrong.observer.disconnect();
+  });
   it('retains the native empty text sentinel initially and uses ordinary empty text on a later update',()=>{
     const {host,observer}=fixture('<p><!--f:t0-->\u200b<!--/f:t0--></p>'),[value,setValue]=createSignal('');
     const target=host.childNodes[1],plan=prepareAdoption(host,()=>h('p',null,value));plan.commit();expect(observer.takeRecords()).toEqual([]);expect(target!.textContent).toBe('\u200b');

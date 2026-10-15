@@ -16,6 +16,14 @@ export function isFormControlProperty(el: Element, key: string): boolean {
  * may have edited it even when the next binding result equals its last result.
  */
 export function writeFormControlProperty(el: Element, key: string, value: unknown): void {
+  // Reactive textarea children are controlled in3.x. Keep their RCDATA
+  // default text and live value coherent, including after a later user edit.
+  if (key === 'text') {
+    const area = el as HTMLTextAreaElement, next = value == null ? '' : String(value);
+    if (area.defaultValue !== next) area.defaultValue = next;
+    if (area.value !== next) area.value = next;
+    return;
+  }
   if (key === 'value') {
     const control = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLOptionElement;
     if (control instanceof HTMLSelectElement && control.multiple && Array.isArray(value)) {

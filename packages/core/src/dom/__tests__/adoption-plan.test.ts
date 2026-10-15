@@ -243,3 +243,30 @@ describe('final exact DOM observation recheck', () => {
     cursor.text('leaf'); cursor.finish(); expect(() => dom.assertUnchanged()).not.toThrow();
   });
 });
+
+describe('inert template content snapshots',()=>{
+  it('retains template fragment identities without interpreting raw marker-like comments',async()=>{
+    const {host}=fixture('<template><b data-forma-island="raw">kept<!--f:s0--></b><template><i>inner</i></template></template>');
+    const template=host.firstElementChild as HTMLTemplateElement,fragment=template.content,original=[...fragment.childNodes];
+    const records:MutationRecord[]=[],observer=new MutationObserver(batch=>records.push(...batch));
+    observer.observe(fragment,{subtree:true,childList:true,characterData:true,attributes:true});
+    const dom=new AdoptionDom(host),cursor=dom.children();cursor.element('template');cursor.finish();dom.assertUnchanged();
+    await new Promise(resolve=>setTimeout(resolve,0));
+    expect(template.content).toBe(fragment);expect([...fragment.childNodes]).toEqual(original);expect(records.concat(observer.takeRecords())).toEqual([]);observer.disconnect();
+  });
+  it.each([
+    ['text',(template:HTMLTemplateElement)=>{template.content.querySelector('b')!.firstChild!.nodeValue='changed';},'FORMA_E_HYDRATE_VALUE'],
+    ['same-markup replacement',(template:HTMLTemplateElement)=>{const b=template.content.querySelector('b')!;b.replaceWith(b.cloneNode(true));},'FORMA_E_HYDRATE_STRUCTURE'],
+    ['nested template text',(template:HTMLTemplateElement)=>{(template.content.querySelector('template') as HTMLTemplateElement).content.firstChild!.firstChild!.nodeValue='changed';},'FORMA_E_HYDRATE_VALUE'],
+    ['inert island-looking descendants',(template:HTMLTemplateElement)=>{template.content.querySelector('b')!.append('changed');},'FORMA_E_HYDRATE_STRUCTURE'],
+  ] as const)('refuses changed %s captured before component execution',(_name,change,code)=>{
+    const {host}=fixture('<template><b data-forma-island="raw">kept</b><template><i>inner</i></template></template>');
+    const dom=new AdoptionDom(host);change(host.firstElementChild as HTMLTemplateElement);
+    expect(()=>dom.assertUnchanged()).toThrowError(expect.objectContaining({code}));
+  });
+  it('keeps a separately owned connected child island opaque, including its templates',()=>{
+    const {host}=fixture('<article data-forma-island="1"><template><b>kept</b></template></article>');
+    const dom=new AdoptionDom(host);(host.querySelector('template') as HTMLTemplateElement).content.firstChild!.textContent='changed';
+    expect(()=>dom.assertUnchanged()).not.toThrow();
+  });
+});

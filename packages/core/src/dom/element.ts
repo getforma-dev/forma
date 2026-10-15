@@ -9,10 +9,11 @@
  */
 
 import { internalEffect, __DEV__ } from 'forma/reactive';
+import { adoptionListener } from '../reactive/adoption-events.js';
 import { hydrating } from './hydrate.js';
 import { describingAdoption, __adoptionChild } from './adoption-description.js';
 import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
-import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
+import { isFormControlProperty, writeFormControlProperty, isReactiveTextOnly, childText } from './form-control.js';
 import {
   isDangerousUrl,
   isEventHandlerAttr,
@@ -344,7 +345,8 @@ function handleClass(el: Element, _key: string, value: unknown): void {
  * Uses camelCase keys for CSSOM assignment via Object.assign(el.style, ...).
  * This avoids el.style.cssText which is blocked by strict CSP style-src policies.
  */
-function parseCssString(css: string): Record<string, string> {
+/** @internal Source-private shared CSS grammar; not a package export. */
+export function parseCssString(css: string): Record<string, string> {
   const obj: Record<string, string> = {};
   for (const decl of css.split(';')) {
     const colon = decl.indexOf(':');
@@ -361,7 +363,8 @@ function parseCssString(css: string): Record<string, string> {
 }
 
 /** Apply a style object to an element via CSSOM (CSP-safe). */
-function applyStyleObj(el: Element, obj: Record<string, string>, prevKeys: string[]): string[] {
+/** @internal Source-private shared CSSOM writer; not a package export. */
+export function applyStyleObj(el: Element, obj: Record<string, string>, prevKeys: string[]): string[] {
   const style = (el as HTMLElement | SVGElement).style;
   const nextKeys = Object.keys(obj);
   for (const k of prevKeys) {
@@ -444,7 +447,7 @@ function handleEvent(el: Element, key: string, value: unknown): void {
   const controller = getAbortController(el);
   el.addEventListener(
     eventName(key),
-    value as EventListener,
+    adoptionListener(value as EventListenerOrEventListenerObject),
     { signal: controller.signal },
   );
 }
@@ -1108,7 +1111,9 @@ export function fillElement<E extends Element>(
   // Text node allocation + separate appendChild. el.textContent is a single
   // native C++ call that combines both operations.
   const childLen = children.length;
-  if (childLen === 1) {
+  if (el instanceof HTMLTextAreaElement && isReactiveTextOnly(children)) {
+    internalEffect(() => writeFormControlProperty(el, 'text', childText(children)));
+  } else if (childLen === 1) {
     const only = children[0];
     if (typeof only === 'string') {
       el.textContent = only;

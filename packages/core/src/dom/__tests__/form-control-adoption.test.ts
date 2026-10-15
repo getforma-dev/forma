@@ -260,7 +260,7 @@ describe('textarea and title text is bound by the element', () => {
     expect(new FormData(app.querySelector('form')!).get('ta')).toBe('updated');
     textarea.value = 'typed';
     setText('reset');
-    expect(textarea.value).toBe('typed');
+    expect(textarea.value).toBe('reset');
     expect(textarea.defaultValue).toBe('reset');
   });
 
@@ -296,7 +296,7 @@ describe('textarea and title text is bound by the element', () => {
     // The default (what a form reset restores) no longer carries marker text.
     expect(textarea.defaultValue).toBe('hello');
     setText('updated');
-    expect(textarea.value).toBe('typed');
+    expect(textarea.value).toBe('updated');
     expect(textarea.defaultValue).toBe('updated');
   });
 
@@ -400,7 +400,7 @@ describe('textarea and title text is bound by the element', () => {
     }
   });
 
-  it("after the user types, a textarea's reactive text changes only its default, client-rendered and adopted alike", () => {
+  it("after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike", () => {
     // Client-rendered (Phase 1)
     createRoot((dispose) => {
       const [text, setText] = createSignal('Hello Ann');
@@ -408,10 +408,11 @@ describe('textarea and title text is bound by the element', () => {
       expect(textarea.value).toBe('Hello Ann');
       textarea.value = 'Hello Ann, my long message';
       setText('Hello Bob');
-      expect(textarea.value).toBe('Hello Ann, my long message');
+      expect(textarea.value).toBe('Hello Bob');
       expect(textarea.defaultValue).toBe('Hello Bob');
       setText('Hello Cy');
       expect(textarea.defaultValue).toBe('Hello Cy');
+      expect(textarea.value).toBe('Hello Cy');
       dispose();
     });
 
@@ -425,7 +426,7 @@ describe('textarea and title text is bound by the element', () => {
     expect(textarea.value).toBe('Hello Bo');
     textarea.value = 'Hello Bo, my long message';
     setText('Hello Bob');
-    expect(textarea.value).toBe('Hello Bo, my long message');
+    expect(textarea.value).toBe('Hello Bob');
     expect(textarea.defaultValue).toBe('Hello Bob');
   });
 });
