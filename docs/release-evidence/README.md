@@ -504,5 +504,5 @@ cached and network bytes" (`ERR_MODULE_NOT_FOUND` on the workspace compiler), th
 (`release-packed-resolution`) is on `main` and reaches the integration branch with its merge. The fixture
 block does not depend on the checkout's builds: its staging, run alone with the builds removed, installs the
 packed libraries outside the checkout, proves each import resolves inside the install, and builds all four
-applications with the packed `build()` (5.6 s); its packed build hash for the ledger application equals the
-working tree's. The `cargo` and browser stages need the same machine as any P17 run.
+applications with the packed `build()` (5.6 s); the build hashes of all four applications built with the packed set equal those of the working
+tree's build (`7b976f527291`, `dccd4063fcb2`, `e4164a114b44`, `8e9620ba2f21`). The `cargo` and browser stages need the same machine as any P17 run.
