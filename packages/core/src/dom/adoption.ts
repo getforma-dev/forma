@@ -4,12 +4,15 @@ import { AdoptionDom, AdoptionDomError, type AdoptionCursor } from './adoption-p
 import { withAdoptionDescription, type ComponentDescription } from './adoption-description.js';
 import { registerDisposer } from '../reactive/root.js';
 import { untrack } from '../reactive/untrack.js';
+import { createSignal } from '../reactive/signal.js';
+import { longestIncreasingSubsequence } from './list.js';
+import { deactivateIsland, deactivateAllIslands } from './activate.js';
 import { AdoptionLifecycle, type PreparationOptions, type PreparedGroup } from '../reactive/adoption-lifecycle.js';
 import { contentNs, SVG_NS, MATHML_NS, withNamespace } from './namespace.js';
 import { isEventHandlerAttr } from '../security/url-safety.js';
 import { prepareAttribute } from './adoption-attributes.js';
 import { isFormControlProperty } from './form-control.js';
-import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor } from './hydrate.js';
+import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './hydrate.js';
 
 interface Listener { element:Element; event:string; listener:EventListener; controller?:AbortController }
 export interface PreparedAdoption {
@@ -135,6 +138,109 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       registerDisposer(()=>{cached.clear();});
     });
   }
+  function list(desc:ListDescriptor,cursor:AdoptionCursor,ns:string|null):void {
+    const range=cursor.range('l');
+    // This private checkpoint covers one element per row. Fragment/range rows
+    // retain an explicit implementation requirement before activation switches.
+    type Key=string|number;
+    type Row={owner:PreparedGroup<unknown>;node:Element;item:unknown;setIndex:(value:number)=>void};
+    let cache=new Map<Key,Row>(),ordered:Row[]=[];
+    let owner:PreparedGroup<void>,keyOwner:PreparedGroup<{items:unknown[];keys:Key[]}>;
+    function keys(values:unknown):{items:unknown[];keys:Key[]} {
+      if(!Array.isArray(values))refuse();
+      const output:Key[]=[],seen=new Set<string>();
+      for(let i=0;i<values.length;i++){
+        if(!Object.hasOwn(values,i))refuse();
+        const key=untrack(()=>desc.keyFn(values[i]));
+        if(typeof key!=='string'&&(typeof key!=='number'||!Number.isFinite(key)))refuse();
+        const printed=String(key);if(seen.has(printed))refuse();seen.add(printed);output.push(key);
+      }
+      return {items:values.slice(),keys:output};
+    }
+    function contents():Node[] {
+      const result:Node[]=[];
+      for(let node=range.start.nextSibling;node!==range.end;node=node?.nextSibling??null){
+        if(!node)refuse();result.push(node);
+      }
+      return result;
+    }
+    owner=scope.group(()=>{
+      const initial=scope.observe(desc.items,value=>{
+        const parent=range.start.parentNode;
+        if(!parent||range.end.parentNode!==parent)refuse();
+        const before=contents(),oldElements=before.filter(node=>node.nodeType===1);
+        if(oldElements.length!==ordered.length||ordered.some((row,i)=>row.node!==oldElements[i]))refuse();
+        const check=()=>{
+          if(scope.phase!=='live'||range.start.parentNode!==parent||range.end.parentNode!==parent)refuse();
+        };
+        const unchanged=()=>{check();const now=contents();if(now.length!==before.length||now.some((node,i)=>node!==before[i]))refuse();};
+        const nextOwner=owner.child(()=>withAdoptionDescription(()=>keys(value),false));
+        const next=nextOwner.value,planned=new Map<Key,Row>(),rows:Row[]=[];unchanged();
+        // Execute all row factories before the first move. Each candidate is
+        // already owned, so a later factory failure also disposes prior ones.
+        for(let i=0;i<next.items.length;i++){
+          const item=next.items[i],key=next.keys[i]!,prior=cache.get(key);
+          let row=prior;
+          if(!row||(desc.options?.updateOnItemChange==='rerender'&&row.item!==item)){
+            let setIndex!:(value:number)=>void;
+            const child=owner.child(()=>untrack(()=>withNamespace(ns,()=>withAdoptionDescription(()=>{
+              const [getIndex,set]=createSignal(i);setIndex=set;
+              const node=fresh(desc.renderFn(item,getIndex));
+              if(!node||node.nodeType!==1||node.parentNode)refuse();return node as Element;
+            },false))));
+            row={owner:child,node:child.value,item,setIndex};
+          }
+          planned.set(key,row);rows.push(row);unchanged();
+        }
+        const retained=new Set(rows),leaving=ordered.filter(row=>!retained.has(row));
+        keyOwner.dispose();unchanged();keyOwner=nextOwner;
+        // Disposal and nested-island teardown are user callback boundaries.
+        // Complete and recheck them before any framework list mutation.
+        for(const row of leaving){
+          row.owner.dispose();unchanged();
+          if(row.node.hasAttribute('data-forma-island'))deactivateIsland(row.node as HTMLElement);
+          deactivateAllIslands(row.node);unchanged();
+        }
+        unchanged();
+        const oldIndex=new Map(ordered.map((row,i)=>[row,i]));
+        const reused:number[]=[],positions:number[]=[];
+        rows.forEach((row,i)=>{const index=oldIndex.get(row);if(index!==undefined){reused.push(index);positions.push(i);}});
+        const stationary=new Set(longestIncreasingSubsequence(reused).map(index=>positions[index]!));
+        for(const row of leaving){check();parent.removeChild(row.node);}
+        let anchor:Node=range.end;
+        for(let i=rows.length-1;i>=0;i--){
+          check();const row=rows[i]!;
+          if(!stationary.has(i))parent.insertBefore(row.node,anchor);
+          anchor=row.node;
+        }
+        check();cache=planned;ordered=rows;
+        for(let i=0;i<rows.length;i++){check();rows[i]!.setIndex(i);}
+      });
+      keyOwner=scope.group(()=>keys(initial));
+      const prepared=keyOwner.value,elements=contents().filter(node=>node.nodeType===1) as Element[];
+      if(elements.length!==prepared.items.length)throw new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT');
+      const keyed=elements.filter(element=>element.hasAttribute('data-forma-key'));
+      if(keyed.length&&keyed.length!==elements.length)refuse();
+      const originalRows=new Map<string,Element>();
+      for(const element of keyed){const key=element.getAttribute('data-forma-key')!;if(originalRows.has(key))refuse();originalRows.set(key,element);}
+      const inside=dom.within(range);
+      for(let i=0;i<prepared.items.length;i++){
+        const item=prepared.items[i],key=prepared.keys[i]!,target=inside.elementHead();
+        // Retain the key→original-row association. Until181 this private
+        // checkpoint requires order parity and never moves rows during bind.
+        if(keyed.length&&originalRows.get(String(key))!==target)refuse();
+        let setIndex!:(value:number)=>void;
+        const child=scope.group(()=>{
+          const [getIndex,set]=createSignal(i);setIndex=set;
+          walk(construct(()=>desc.renderFn(item,getIndex),ns),inside,ns);
+          if(!inside.immediatelyAfter(target))refuse();
+        });
+        const row={owner:child,node:target,item,setIndex};cache.set(key,row);ordered.push(row);
+      }
+      inside.finish();
+      registerDisposer(()=>{cache.clear();ordered=[];});
+    });
+  }
   function walk(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
     if(value==null||typeof value==='boolean')return;
     if(typeof value==='string'||typeof value==='number'){cursor.text(String(value));return;}
@@ -147,10 +253,11 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       previous=text(initial);target=cursor.textRange(previous);return;
     }
     if(typeof value!=='object')return refuse();
-    const description=value as HydrationDescriptor|FragmentDescriptor|ComponentDescription|ShowDescriptor;
+    const description=value as HydrationDescriptor|FragmentDescriptor|ComponentDescription|ShowDescriptor|ListDescriptor;
     switch(description.type){
       case 'element':element(description,cursor,ns);return;
       case 'show':show(description,cursor,ns);return;
+      case 'list':list(description,cursor,ns);return;
       case 'fragment':for(const child of description.children)walk(child,cursor,ns);return;
       case 'component':{
         // Registered nested hosts are opaque and must use their own checked
