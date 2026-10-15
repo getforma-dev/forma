@@ -24,7 +24,17 @@ export interface IslandBindingOptions {
 /** Source associations are compilation bookkeeping, never part of canonical bytes. */
 export interface LocalSignalIdentity { ordinal: number; getter: string; setter?: string; file: string; start: number; end: number }
 export interface CapturedSignalIdentity { ordinal: number; getter: string; file: string; start: number }
-export interface IslandBindings { bindings: BindingRecord[]; locals: LocalSignalIdentity[]; captures: CapturedSignalIdentity[] }
+export type AdoptionCodec = 'string' | 'number' | 'boolean' | 'string-array';
+export interface AdoptionSite { file: string; start: number; end: number }
+export interface AdoptionTuple extends AdoptionSite { signal: number; initial: BindingValue; annotation?: AdoptionCodec | null }
+export interface AdoptionRead extends AdoptionSite { signal: number; getter: string; shorthand?: string }
+export interface AdoptionChild extends AdoptionSite { calleeStart: number; calleeEnd: number; argumentsStart: number; typeArguments?: string }
+/** Original-source evidence only. Never serialized into schema/binding bytes. */
+export interface AdoptionSources {
+  tuples: AdoptionTuple[]; reads: AdoptionRead[]; children: AdoptionChild[];
+  rows: { id: number; source: BindingValue }[]; modules: Map<string, string>;
+}
+export interface IslandBindings { bindings: BindingRecord[]; locals: LocalSignalIdentity[]; captures: CapturedSignalIdentity[]; adoption?: AdoptionSources }
 interface Module {
   file: string; source: string; ast: t.File; scope: Scope;
   references: WeakMap<t.Node, Binding>; scopes: WeakMap<t.Node, Scope>;
@@ -37,7 +47,8 @@ interface Environment {
   functions: Set<t.Node>;
   staticRows: Set<Binding>;
 }
-type DeferredValue = BindingValue | { resolve:(readGetter:boolean)=>BindingValue; callable:()=>boolean };
+type DeferredValue = BindingValue | { resolve:(readGetter:boolean)=>BindingValue; callable:()=>boolean; writable?:()=>WritableRead | undefined };
+interface WritableRead { signal: number; node: t.Node; getter: t.Identifier; module: Module; forwarded?: boolean; shorthand?: string }
 function resolved(value: DeferredValue,readGetter=true): BindingValue { return 'resolve' in value ? value.resolve(readGetter) : value; }
 interface Signal { binding: Binding; module: Module; declaration: t.VariableDeclarator; initial: t.Expression }
 const functionKey = (node: t.Node): string => `${node.start}:${node.end}:${node.type}`;
@@ -55,6 +66,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
   const modules = new Map<string, Module>(), moduleOf = new WeakMap<Binding, Module>();
   const captures: CapturedSignalIdentity[] = [], captureValues: unknown[] = [], captureIds = new Map<Binding, number>();
   const locals: LocalSignalIdentity[] = [];
+  const adoption: AdoptionSources = { tuples: [], reads: [], children: [], rows: [], modules: new Map() };
   let nextSignal = 0, nextRow = 0;
   const signalInitializers = new Map<number, BindingValue>();
   const activeFunctions = new Set<t.Node>(), activeValues = new Set<Binding>();
@@ -75,7 +87,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         }
       },
     });
-    const result = { file, source, ast, scope, references, scopes, functions }; modules.set(file, result);
+    const result = { file, source, ast, scope, references, scopes, functions }; modules.set(file, result); adoption.modules.set(file, source);
     traverse(ast, { Scopable(path) { for (const binding of Object.values(path.scope.bindings)) moduleOf.set(binding, result); } });
     return result;
   }
@@ -258,6 +270,72 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     return t.isVariableDeclarator(declaration)&&!!declaration.init
       &&callable(declaration.init,environment(mod,env),seen);
   }
+  // This proof follows the actual lexical getter, never a semantic value path
+  // alone: named arbitrary forwarding functions and eager reads get no setter.
+  function writable(node: t.Node, env: Environment, seen = new Set<Binding>()): WritableRead | undefined {
+    const original = node;
+    if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node) || t.isTSSatisfiesExpression(node)) return undefined;
+    node = unwrap(node);
+    if (isFunction(node)) {
+      if (node.params.length || t.isFunctionDeclaration(node) || t.isBlockStatement(node.body) && (node.body.body.length !== 1 || !t.isReturnStatement(node.body.body[0]))) return undefined;
+      const returned = returnExpressionOf(node);
+      if (!t.isCallExpression(returned) || returned.arguments.length) return undefined;
+      const proof = writable(returned.callee, env, seen);
+      return proof && (proof.forwarded ? proof : { ...proof, node: original });
+    }
+    if (t.isMemberExpression(node) && t.isIdentifier(node.object)) {
+      const key = !node.computed && t.isIdentifier(node.property) ? node.property.name : t.isStringLiteral(node.property) ? node.property.value : undefined;
+      const field = key === undefined ? undefined : objectFields(node.object, env)?.get(key);
+      return field && 'resolve' in field ? field.writable?.() : undefined;
+    }
+    if (!t.isIdentifier(node)) return undefined;
+    const local = binding(node, env), mod = moduleOf.get(local) ?? env.module;
+    if (seen.has(local)) return undefined; seen.add(local);
+    const known = env.values.get(local);
+    if (known && 'resolve' in known) return known.writable?.();
+    if (known?.kind === 'signal' && known.path.length === 0 && directSignal(local, mod)) {
+      return { signal: known.id, node: original, getter: node, module: env.module };
+    }
+    const declaration = local.path.node;
+    // Only immutable identifier aliases preserve function identity. In
+    // particular `const forward = () => get()` is not a proven getter alias.
+    if (t.isVariableDeclarator(declaration) && t.isIdentifier(declaration.id) && !declaration.id.typeAnnotation && t.isIdentifier(declaration.init)) {
+      const proof = writable(declaration.init, environment(mod, env), seen);
+      return proof && (proof.forwarded ? proof : { ...proof, node: original, getter: node, module: env.module });
+    }
+    return undefined;
+  }
+  function recordWritable(node: t.Node, env: Environment, shorthand?: string): void {
+    const proof = writable(node, env);
+    if (proof && proof.node.start != null && proof.node.end != null) adoption.reads.push({
+      file: proof.module.file, start: proof.node.start, end: proof.node.end,
+      signal: proof.signal, getter: proof.getter.name, shorthand: proof.shorthand ?? (proof.node === node ? shorthand : undefined),
+    });
+  }
+  function annotationCodec(node: t.Node | null | undefined): AdoptionCodec | null {
+    if (t.isTSParenthesizedType(node)) return annotationCodec(node.typeAnnotation);
+    if (t.isTSStringKeyword(node)) return 'string';
+    if (t.isTSNumberKeyword(node)) return 'number';
+    if (t.isTSBooleanKeyword(node)) return 'boolean';
+    if (t.isTSArrayType(node) && t.isTSStringKeyword(node.elementType)) return 'string-array';
+    return null;
+  }
+  function tupleAnnotation(declaration: t.VariableDeclarator): AdoptionCodec | null | undefined {
+    // Preserve narrow/optional/generic contracts. Unknown annotations do not
+    // inherit authority merely because this particular initializer is scalar.
+    if ('typeAnnotation' in declaration.id && declaration.id.typeAnnotation) return null;
+    if (t.isTSAsExpression(declaration.init) || t.isTSTypeAssertion(declaration.init) || t.isTSNonNullExpression(declaration.init) || t.isTSSatisfiesExpression(declaration.init)) return null;
+    const call = unwrap(declaration.init!);
+    if (!t.isCallExpression(call)) return null;
+    const parameters = call.typeParameters;
+    if (parameters && t.isTSTypeParameterInstantiation(parameters)) {
+      return parameters.params.length === 1 ? annotationCodec(parameters.params[0]) : null;
+    }
+    const initial = call.arguments[0];
+    if (t.isTSAsExpression(initial) || t.isTSTypeAssertion(initial)) return annotationCodec(initial.typeAnnotation);
+    if (t.isTSNonNullExpression(initial) || t.isTSSatisfiesExpression(initial)) return null;
+    return undefined;
+  }
   function expression(node: t.Node, env: Environment, depth = 0, readGetter = true): BindingValue {
     if (depth > C.MAX_VALUE_DEPTH) fail(env.module, node, 'binding expression depth exceeds 64');
     node = unwrap(node);
@@ -348,7 +426,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       if (fields.has(key)) fail(env.module, field, `duplicate component input ${key}`);
       // Helper inputs are only semantic bindings when the helper reads them.
       // CHILD resolves these thunks in its canonical declared-field order.
-      fields.set(key, {resolve:readGetter=>expression(field.value,env,0,readGetter),callable:()=>callable(field.value,env)});
+      fields.set(key, {resolve:readGetter=>expression(field.value,env,0,readGetter),callable:()=>callable(field.value,env),writable:()=>{ const proof=writable(field.value,env); return proof && {...proof,forwarded:true,shorthand:proof.shorthand ?? (proof.node===field.value && field.shorthand ? key : undefined)}; }});
     }
     return fields;
   }
@@ -368,6 +446,8 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
               if (!info) { if (declaration.init) rejectInitializerWrites(declaration.init, env); continue; }
               const ordinal = nextSignal++, initial = expression(info.initial, env, 0, false);
               signalInitializers.set(ordinal, initial);
+              const signalCall = unwrap(declaration.init!);
+              adoption.tuples.push({file:env.module.file,start:signalCall.start!,end:signalCall.end!,signal:ordinal,initial,annotation:tupleAnnotation(declaration)});
               records.push({ kind: 'signal', value: initial }); env.values.set(local, { kind: 'signal', id: ordinal, path: [] });
               const setter = declaration.id.elements[1];
               locals.push({ ordinal, getter: getter.name, setter: t.isIdentifier(setter) ? setter.name : undefined, file: env.module.file, start: declaration.start ?? 0, end: declaration.end ?? 0 });
@@ -486,6 +566,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       const key = name(field.key); if (key === undefined) fail(env.module, field, 'native attribute name is unknown');
       if (/^on/i.test(key) || key === 'ref' || scalar(unwrap(field.value)) || staticRowRead(field.value, env)) continue;
       records.push({ kind: 'attribute', name: key, value: expression(field.value, env) });
+      if (key === 'value' || key === 'checked' || key === 'selected') recordWritable(field.value, env, field.shorthand ? key : undefined);
     }
   }
   function staticRowRead(node: t.Node, env: Environment): boolean {
@@ -558,7 +639,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         keyEnv.values.set(binding(key.params[0], keyEnv), { kind: 'row', id: ordinal, path: [] });
         const keyReturn = returnExpressionOf(key); if (!keyReturn) fail(env.module, key, 'list key has no return');
         const keyPath = expression(keyReturn, keyEnv); if (keyPath.kind !== 'row' || keyPath.id !== ordinal) fail(env.module, key, 'list key must be a literal row path');
-        const value = expression(source, env), body: BindingRecord[] = []; functionBody(map, nested, body);
+        const value = expression(source, env), body: BindingRecord[] = []; adoption.rows.push({id:ordinal,source:value}); functionBody(map, nested, body);
         records.push({ kind: 'list', value, key: keyPath.path, body }); return;
       }
       if (t.isIdentifier(node.callee)) {
@@ -567,7 +648,10 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
           if (helper) { functionBody(helper.fn, environment(helper.module, env), records); return; }
           records.push({ kind: 'text', value: expression(node, env) }); return;
         }
-        if (node.arguments.length <= 1) { child(node.callee, callFields(node.arguments[0], env), env, records); return; }
+        if (node.arguments.length <= 1) {
+          if (registration(node.callee, env)) adoption.children.push({file:env.module.file,start:node.start!,end:node.end!,calleeStart:node.callee.start!,calleeEnd:node.callee.end!,typeArguments:node.typeParameters ? env.module.source.slice(node.typeParameters.start!,node.typeParameters.end!) : undefined,argumentsStart:node.arguments[0]?.start ?? node.end! - 1});
+          child(node.callee, callFields(node.arguments[0], env), env, records); return;
+        }
       }
     }
     records.push({ kind: 'text', value: expression(node, env) });
@@ -588,5 +672,5 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
   functionBody(root.fn, env, records);
   const bindings: BindingRecord[] = [...captureValues.map(value => ({ kind: 'capture' as const, value })), ...records];
   encodeBindings('ssr', bindings);
-  return { bindings, locals, captures };
+  return { bindings, locals, captures, adoption };
 }
