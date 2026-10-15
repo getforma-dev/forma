@@ -327,7 +327,7 @@ function inlineProblem(bytes: Uint8Array): { reason: string; index?: number; tex
 
 /**
  * The runtime a production build writes: core's, as an esbuild transform
- * (whitespace and names, ES2022, no comments kept, no source map), checked for
+ * (whitespace and names, ES2022, legal comments kept, no source map), checked for
  * what forma-server refuses as core's own file is. A classic script goes in
  * and a classic script comes out, so it keeps its `"use strict"` and its
  * top-level scope; the same bytes in, the same bytes out. esbuild escapes
@@ -344,8 +344,11 @@ async function minified(read: FrameRuntime): Promise<FrameRuntime> {
     ({ code } = await esbuild.transform(read.bytes.toString('utf8'), {
       loader: 'js',
       minify: true,
+      // The target core builds the frame for (tsup.config.ts, the formajs-frame
+      // entry): a different one would lower or refuse syntax core wrote.
       target: 'es2022',
-      legalComments: 'none',
+      // A licence banner in core's file, if it ever has one, is served with it.
+      legalComments: 'inline',
       sourcemap: false,
       logLevel: 'silent',
     }));
@@ -361,8 +364,12 @@ async function minified(read: FrameRuntime): Promise<FrameRuntime> {
   const bytes = Buffer.from(code, 'utf8');
   const problem = inlineProblem(bytes);
   if (problem) {
-    const at = problem.index !== undefined && problem.text !== undefined ? position(problem.text, problem.index) : {};
-    throw refusal('BUILD-806', `@getforma/core ${read.version}'s ${FRAME_RUNTIME_SOURCE}, once the build minified it, ${problem.reason}`, { file: read.source, ...at });
+    // No file or position: they would point into core's file for a fault of the
+    // minified copy, whose lines are not core's.
+    throw refusal(
+      'BUILD-806',
+      `the minified copy of @getforma/core ${read.version}'s ${FRAME_RUNTIME_SOURCE} that the build would write ${problem.reason}; core's own file passed the same check, so the fault is the minifier's (esbuild), not the file's`,
+    );
   }
   return { ...read, bytes, minified: true };
 }

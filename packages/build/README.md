@@ -197,8 +197,11 @@ The build then writes `dist/formajs-frame.global.js` from the
   file's name, its SRI in the manifest and the SHA-256 forma-server computes
   for the frame's policy are those of the bytes served, and the script the
   browser runs is the one hashed. The size report's frame row reports those
-  served bytes beside core's file. Watch mode copies core's bytes unchanged
-  (a development build, readable in the browser's tools). It is inlined, never
+  served bytes beside core's file. No source map is written: the script is
+  inlined in an opaque-origin frame with `connect-src 'none'`, so a map could
+  not be fetched, and its comment would be part of the hashed bytes. Watch mode
+  copies core's bytes unchanged (a development build, readable in the browser's
+  tools): that is the copy to debug. It is inlined, never
   fetched: no route loads it, it gets no `.br` or `.gz` copy, and the worker's
   lists leave it out.
 - **It refuses what forma-server would refuse** (FRAME-103), before anything is
@@ -268,7 +271,7 @@ a route ships.
 
 | Step | What happens |
 |------|-------------|
-| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`) |
+| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`, and `BUILD-820` when it cannot be minified) |
 | **Frame runtime** | (Optional, `previewFrame: true`) Writes the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, minified (core's file stays readable; watch mode copies it unchanged), as `forma-runtime.js`, hashed with the other assets and left uncompressed |
 | **Bundle** | esbuild bundles each entry point with JSX transform (`jsxFactory: "h"`) |
 | **CSS** | Runs Tailwind CLI or concatenates CSS files |

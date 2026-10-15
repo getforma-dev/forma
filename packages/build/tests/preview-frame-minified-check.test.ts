@@ -44,7 +44,9 @@ describe('previewFrame: the minified runtime is checked for what forma-server re
       previewFrame: true,
     }).then(() => undefined, (e: unknown) => e as Error & { diagnostics?: Array<{ code: string }> });
     expect(error?.message).toMatch(/^@getforma\/build: BUILD-806 /);
-    expect(error?.message).toContain('once the build minified it');
+    expect(error?.message).toContain('the minified copy of @getforma/core 2.1.0');
+    expect(error?.message).toContain('the fault is the minifier');
+    expect(error?.diagnostics?.[0]).toMatchObject({ file: '', line: 0, column: 0 });
     expect(error?.message).toContain('contains "</script"');
     expect(error?.diagnostics?.map((d) => d.code)).toEqual(['BUILD-806']);
     expect(existsSync(dist)).toBe(false);
