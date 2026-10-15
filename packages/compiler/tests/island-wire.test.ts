@@ -54,7 +54,8 @@ describe('island contract wire integration', () => {
   });
   it('encodes explicit empty-string defaults and nullish operands without text ambiguity', () => {
     const ctx = new IrEmitContext();
-    const source = ctx.addSlot('label', C.SLOT_TYPE_TEXT);
+    ctx.setPropsSchema([[{...field('label'),type:{kind:'optional',inner:{kind:'string'}}}]]);
+    const source = ctx.addSlot('label', C.SLOT_TYPE_TEXT, C.SLOT_SOURCE_SERVER);
     const fallback = ctx.addConstantSlot('', C.SLOT_TYPE_TEXT);
     const destination = ctx.addTemporarySlot(C.SLOT_TYPE_TEXT);
     ctx.emit(C.OP_COALESCE); ctx.emitU16(source); ctx.emitU16(fallback); ctx.emitU16(destination);

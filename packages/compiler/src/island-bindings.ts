@@ -11,6 +11,8 @@ import * as C from './fmir-constants';
 
 export interface IslandBindingOptions {
   props: readonly string[];
+  /** Exact original declaration selected by the registration resolver. */
+  functionStart?: number;
   mode?: IslandRenderMode;
   loadModule?: ModuleLoader;
   islands?: ReadonlySet<string>;
@@ -320,9 +322,12 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         for (const statement of fn.body.body) {
           if (t.isVariableDeclaration(statement)) {
             for (const declaration of statement.declarations) {
-              if (!t.isArrayPattern(declaration.id) || !t.isIdentifier(declaration.id.elements[0])) continue;
+              if (!t.isArrayPattern(declaration.id) || !t.isIdentifier(declaration.id.elements[0])) {
+                if (declaration.init) rejectInitializerWrites(declaration.init, env);
+                continue;
+              }
               const getter = declaration.id.elements[0], local = binding(getter, env), info = directSignal(local, env.module);
-              if (!info) continue;
+              if (!info) { if (declaration.init) rejectInitializerWrites(declaration.init, env); continue; }
               const ordinal = nextSignal++, initial = expression(info.initial, env);
               signalInitializers.set(ordinal, initial);
               records.push({ kind: 'signal', value: initial }); env.values.set(local, { kind: 'signal', id: ordinal, path: [] });
@@ -333,7 +338,12 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
           else if (t.isExpressionStatement(statement)) {
             const value = unwrap(statement.expression);
             if (t.isStringLiteral(value)) continue;
-            if (t.isCallExpression(value) && ['createEffect', 'onCleanup'].includes(coreName(value.callee, env.module) ?? '')) {
+            if (t.isCallExpression(value) && coreName(value.callee, env.module) === 'onCleanup') {
+              // The callback runs at disposal, after initial rendering.
+              for (const argument of value.arguments) rejectInitializerWrites(argument, env);
+              continue;
+            }
+            if (t.isCallExpression(value) && coreName(value.callee, env.module) === 'createEffect') {
               rejectBindingWrites(value, env); continue;
             }
             fail(env.module, statement, 'unsupported pre-return expression or mutation; native bindings must keep their described initial value');
@@ -341,6 +351,27 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         }
       } else render(fn.body, env, records);
     } finally { activeFunctions.delete(fn); }
+  }
+  function getter(node: t.Node, env: Environment, seen = new Set<Binding>()): boolean {
+    if (!t.isIdentifier(node)) return false;
+    const local = env.module.references.get(node);
+    if (!local || seen.has(local)) return false; seen.add(local);
+    const value = env.values.get(local);
+    if (value && typeof value !== 'function' && value.kind === 'signal') return true;
+    const declaration = local.path.node;
+    if (t.isVariableDeclarator(declaration) && t.isIdentifier(declaration.init)) return getter(declaration.init, env, seen);
+    return !!signal(local, env.module, node);
+  }
+  function rejectInitializerWrites(node: t.Node, env: Environment): void {
+    // Creating a function does not execute its body. All other initializer
+    // expressions execute before return even if their result is never read.
+    if (isFunction(node)) return;
+    if (t.isCallExpression(node) && !(node.arguments.length === 0 && getter(node.callee, env))) fail(env.module, node, 'unsupported pre-return initializer call; native bindings require closed execution');
+    if (t.isNewExpression(node) || t.isAssignmentExpression(node) || t.isUpdateExpression(node) || t.isAwaitExpression(node) || t.isYieldExpression(node)) fail(env.module, node, 'unsupported pre-return initializer mutation');
+    for (const key of t.VISITOR_KEYS[node.type] ?? []) {
+      const child = (node as unknown as Record<string,unknown>)[key];
+      for (const value of Array.isArray(child) ? child : [child]) if (value && typeof value === 'object' && 'type' in value) rejectInitializerWrites(value as t.Node,env);
+    }
   }
   function setter(node: t.Node, env: Environment, seen = new Set<Binding>(), exports = new Set<string>()): boolean {
     if (!t.isIdentifier(node)) return false;
@@ -388,6 +419,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
   }
   function rejectBindingWrites(node: t.Node, env: Environment): void {
     if (t.isCallExpression(node) && setter(node.callee, env)) fail(env.module, node, 'pre-return effect writes a signal used by native rendering');
+    if (t.isCallExpression(node) && coreName(node.callee, env.module) !== 'createEffect' && !(node.arguments.length === 0 && getter(node.callee, env))) fail(env.module, node, 'unsupported pre-return effect call; helper and external effects cannot prove a stable native seed');
     if (t.isAssignmentExpression(node) || t.isUpdateExpression(node)) {
       let target: t.Node = t.isAssignmentExpression(node) ? node.left : node.argument;
       while (t.isMemberExpression(target)) target = target.object;
@@ -542,9 +574,17 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     records.push({ kind: 'text', value: expression(node, env) });
   }
 
-  const found = resolveExportedFunction(source, file, exportedName, { loadModule: options.loadModule, allowLocal: true });
-  if (found.kind !== 'found') throw new PropsSchemaError(file, 1, 1, found.detail);
-  const root = fromLookup(found), env = environment(root.module), records: BindingRecord[] = [];
+  let root: {module:Module;fn:ComponentFunction};
+  if (options.functionStart !== undefined) {
+    const owner = module(source,file), fn = [...owner.functions.values()].find(fn=>fn.start===options.functionStart);
+    if (!fn) throw new PropsSchemaError(file, 1, 1, 'registered function declaration is absent from original source');
+    root = {module:owner,fn};
+  } else {
+    const found = resolveExportedFunction(source, file, exportedName, { loadModule: options.loadModule, allowLocal: true });
+    if (found.kind !== 'found') throw new PropsSchemaError(file, 1, 1, found.detail);
+    root = fromLookup(found);
+  }
+  const env = environment(root.module), records: BindingRecord[] = [];
   bindParameter(root.fn.params[0], new Map(options.props.map(name => [name, { kind: 'prop', path: [name] } as BindingValue])), env);
   functionBody(root.fn, env, records);
   const bindings: BindingRecord[] = [...captureValues.map(value => ({ kind: 'capture' as const, value })), ...records];

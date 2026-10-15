@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { parse } from '@babel/parser';
 import * as t from '@babel/types';
-import { resolveExportedFunction, readImportBindings } from './export-resolver';
+import { resolveExportedFunction, readImportBindings, type ComponentFunction } from './export-resolver';
 import { resolveFilePath, type ModuleLoader } from './module-loader';
 import { encodePropsSchema, type PropsSchema, type SchemaField, type SchemaType } from './fmir-payload';
 import { MAX_SCHEMA_ITEMS, MAX_TYPE_DEPTH } from './fmir-constants';
@@ -29,7 +29,6 @@ function nameOf(node: t.Node): string | undefined {
 
 /** Empty-parameter pages have an empty contract; a parameter must declare its type. */
 export function readPageProps(file: string, exportedName: string): DeclaredPageProps {
-  const root = dirname(resolve(file));
   const raw: ModuleLoader = (from, specifier) => {
     if (!specifier.startsWith('.')) return null;
     const path = resolveFilePath(dirname(from), specifier);
@@ -37,7 +36,12 @@ export function readPageProps(file: string, exportedName: string): DeclaredPageP
   };
   const found = resolveExportedFunction(readFileSync(file, 'utf8'), file, exportedName, { loadModule: raw, allowLocal: true });
   if (found.kind !== 'found') throw new PropsSchemaError(file, 1, 1, `cannot resolve declared page: ${found.detail}`);
-  const fn = found.fn;
+  return readFunctionProps(found.fn, found.filePath, dirname(resolve(file)));
+}
+
+/** A browserOnly implementation has a declared input schema even though its body is client-only. */
+export function readFunctionProps(fn: ComponentFunction, file: string, root = dirname(resolve(file))): DeclaredPageProps {
+  const found = { filePath: file };
   if (!fn.params.length) return { schema: [[]], parameter: { kind: 'none' } };
   if (fn.params.length !== 1) fail(found.filePath, fn, 'a page takes exactly one declared props parameter');
   const param = fn.params[0]!;
