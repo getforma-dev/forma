@@ -1,11 +1,12 @@
 /** Private, unprivileged ownership kernel shared by direct and compiled adoption. */
-import { effect as rawEffect, getActiveSub } from 'alien-signals';
+import { effect as rawEffect, getActiveSub, setActiveSub } from 'alien-signals';
 import { withAdoptionSink, type AdoptionSink, type DeferredEffect, type AdoptionCodec } from './adoption-hooks.js';
 import { openBatch, closeBatchWithoutRoot } from './batch.js';
 import { createUnownedRoot, registerDisposer } from './root.js';
 import { withAdoptionEvents } from './adoption-events.js';
 import { reportError } from './dev.js';
 import { withAdoptionEffectFailure } from './effect.js';
+import { currentAdoptionDiagnostic, withAdoptionDiagnostic, type AdoptionDiagnostic } from './adoption-diagnostics.js';
 
 type Phase = 'preparing' | 'validated' | 'seeding' | 'live' | 'aborted';
 type Code = 'FORMA_E_HYDRATE_INPUT_TARGET' | 'FORMA_E_HYDRATE_INPUT_CONFLICT'
@@ -23,12 +24,14 @@ export type PreparationGroup = {
   disposers: (() => void)[];
   children: Set<PreparationGroup>;
   parent?: PreparationGroup;
+  diagnostic?:AdoptionDiagnostic;
 };
 export interface PreparedGroup<T> {
   readonly value: T;
   readonly alive: boolean;
   run<U>(fn: () => U): U;
   child<U>(fn: () => U): PreparedGroup<U>;
+  trackedChild<U>(fn: () => U): PreparedGroup<U>;
   dispose(): void;
 }
 export interface PreparationOptions {
@@ -36,7 +39,7 @@ export interface PreparationOptions {
   check?: () => void;
   failure?: (error: unknown, code: Code) => void;
 }
-function group(): PreparationGroup { return { alive: true, disposers: [], children: new Set() }; }
+function group(diagnostic=currentAdoptionDiagnostic()): PreparationGroup { return { alive: true, disposers: [], children: new Set(), diagnostic }; }
 
 /**
  * No ValidatedIsland, capture/enroll methods or built-in setter registry exists
@@ -86,14 +89,14 @@ export class AdoptionLifecycle implements AdoptionSink {
     const owner=this.currentGroup;
     let result!:T, error:unknown, failed=false, dispose!:()=>void;
     withAdoptionSink(undefined,()=>withAdoptionEffectFailure(
-      cause=>this.fail(cause,'FORMA_E_HYDRATE_EFFECT'),
+      cause=>this.fail(cause,'FORMA_E_HYDRATE_EFFECT',owner.diagnostic),
       ()=>withAdoptionEvents(this.eventWrapper(owner),()=>createUnownedRoot(rootDispose=>{
         dispose=rootDispose;
-        try{result=fn();}catch(cause){failed=true;error=cause;}
+        try{result=withAdoptionDiagnostic(owner.diagnostic,fn);}catch(cause){failed=true;error=cause;}
       })),
     ));
     this.own(dispose,owner);
-    if(failed){this.fail(error,'FORMA_E_HYDRATE_EFFECT');throw error;}
+    if(failed){this.fail(error,'FORMA_E_HYDRATE_EFFECT',owner.diagnostic);throw error;}
     if(this.state==='aborted'||!owner.alive)throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
     return result;
   }
@@ -102,7 +105,7 @@ export class AdoptionLifecycle implements AdoptionSink {
    * publication; each live invocation owns synchronous work and contains its
    * failure, including work constructed after reentrant teardown. */
   liveCallback<T>(invoke:(value:T)=>void):(value:T)=>void {
-    this.require('preparing');return this.callbackFor(this.currentGroup,invoke);
+    this.require('preparing');return this.callbackFor(this.currentGroup,invoke,currentAdoptionDiagnostic());
   }
   private eventWrapper(owner:PreparationGroup):(listener:EventListenerOrEventListenerObject)=>EventListener {
     return listener=>this.callbackFor(owner,(event:Event)=>{
@@ -110,9 +113,9 @@ export class AdoptionLifecycle implements AdoptionSink {
       else listener.handleEvent(event);
     });
   }
-  private callbackFor<T>(parent:PreparationGroup,invoke:(value:T)=>void):(value:T)=>void {
+  private callbackFor<T>(parent:PreparationGroup,invoke:(value:T)=>void,diagnostic=parent.diagnostic):(value:T)=>void {
     if(!parent.alive||this.state==='aborted')return ()=>{};
-    const owner=group();owner.parent=parent;parent.children.add(owner);
+    const owner=group(diagnostic);owner.parent=parent;parent.children.add(owner);
     // A live effect generation may replace the element before the island dies.
     // Its actual reactive disposer revokes this listener's callback resources.
     registerDisposer(()=>this.disposeGroup(owner));
@@ -128,7 +131,7 @@ export class AdoptionLifecycle implements AdoptionSink {
   group<T>(fn: () => T): PreparedGroup<T> {
     if(this.state!=='preparing'&&this.state!=='live')throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
     this.require(this.state);
-    const child=group();
+    const child=group(currentAdoptionDiagnostic()??this.currentGroup.diagnostic);
     child.parent=this.currentGroup;
     this.currentGroup.children.add(child);
     const enter=<U>(build:()=>U):U=>{
@@ -139,7 +142,18 @@ export class AdoptionLifecycle implements AdoptionSink {
     const value=run(fn);
     return {value,get alive(){return child.alive;},run,
       child:<U>(build:()=>U)=>enter(()=>this.group(build)),
+      trackedChild:<U>(build:()=>U)=>enter(()=>this.trackedGroup(build)),
       dispose:()=>this.disposeGroup(child)};
+  }
+
+  /** Keep a ternary's selected-value reads on its current observer while its
+   * callbacks and resources belong to a separate, disposable generation. */
+  trackedGroup<T>(fn: () => T): PreparedGroup<T> {
+    const observer = getActiveSub();
+    return this.group(() => {
+      const previous = setActiveSub(observer);
+      try { return fn(); } finally { setActiveSub(previous); }
+    });
   }
 
   private disposeGroup(owner: PreparationGroup): void {
@@ -158,15 +172,16 @@ export class AdoptionLifecycle implements AdoptionSink {
   /** One tracked initial read; no second read just to install a writer. */
   observe<T>(read: () => T, write: (value: T) => void): T {
     this.require('preparing');
-    const owner = this.currentGroup;
+    const owner = this.currentGroup, diagnostic=currentAdoptionDiagnostic()??owner.diagnostic;
     let initial!: T, error: unknown, first = true, failed = false;
     // The owned initial root also catches roots/effects created by a reader;
     // these must not leak into an ambient effect that happened to trigger it.
-    const dispose = this.run(() => rawEffect(() => {
+    let dispose:()=>void;
+    try { dispose = this.run(() => rawEffect(() => {
       if (first) {
         first = false;
         this.readers.push({ flags: getActiveSub()!, group: owner });
-        try { initial = read(); } catch (cause) { failed = true; error = cause; }
+        try { initial = withAdoptionDiagnostic(diagnostic,read); } catch (cause) { failed = true; error = cause; }
       } else if (this.state === 'live' && owner.alive) {
         // A live branch factory/cleanup can write the condition currently
         // being observed. Match createEffect's bounded self-write handling;
@@ -176,15 +191,20 @@ export class AdoptionLifecycle implements AdoptionSink {
         try{
           do{
             if(node)node.flags&=~32;
-            const next=read();
+            const next=withAdoptionDiagnostic(diagnostic,read);
             if(this.state!=='live'||!owner.alive)break;
-            write(next);
+            withAdoptionDiagnostic(diagnostic,()=>write(next));
             if(this.state!=='live'||!owner.alive||!node||(node.flags&32)===0)break;
             if(++runs>=100){node.flags&=~32;throw new AdoptionScopeError('FORMA_E_HYDRATE_VALUE');}
           }while(true);
-        }catch(cause){this.fail(cause,'FORMA_E_HYDRATE_VALUE');}
+        }catch(cause){this.fail(cause,'FORMA_E_HYDRATE_VALUE',diagnostic);}
       } else this.invalidated = true;
-    }));
+    })); } catch(cause) {
+      // A nested tracked group may abort this scope after its reader throws.
+      // The run-level revocation check must not mask that original exception.
+      if(failed)throw error;
+      throw cause;
+    }
     this.own(dispose, owner);
     if (failed) { this.abort(); throw error; }
     if (this.state === 'aborted' || !owner.alive) throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
@@ -200,7 +220,9 @@ export class AdoptionLifecycle implements AdoptionSink {
   }
 
   deferEffect(start: DeferredEffect): (() => void) | undefined {
-    return this.state === 'preparing' ? this.defer(start, 'FORMA_E_HYDRATE_EFFECT') : undefined;
+    // This sink can remain on the stack after synchronous caller disposal.
+    // Refuse stale construction rather than falling through to an ordinary effect.
+    return this.defer(start, 'FORMA_E_HYDRATE_EFFECT');
   }
   deferRef(callback: () => void): () => void {
     return this.defer(() => { callback(); return () => {}; }, 'FORMA_E_HYDRATE_REF');
@@ -208,7 +230,7 @@ export class AdoptionLifecycle implements AdoptionSink {
 
   private defer(start: DeferredEffect, code: Code): () => void {
     this.require('preparing');
-    const group = this.currentGroup;
+    const group = this.currentGroup, diagnostic=currentAdoptionDiagnostic()??group.diagnostic;
     let cancelled = false, dispose: (() => void) | undefined;
     const cancel = () => { if (!cancelled) { cancelled = true; dispose?.(); } };
     registerDisposer(cancel);
@@ -224,25 +246,28 @@ export class AdoptionLifecycle implements AdoptionSink {
         // effects disposable; nested effects inherit effect.ts's failure boundary.
         const startRoot = () => createUnownedRoot(rootDispose => {
           dispose = rootDispose;
-          try { registerDisposer(start(error => this.fail(error, code))); }
+          try { registerDisposer(withAdoptionDiagnostic(diagnostic,()=>start(error => this.fail(error, code,diagnostic)))); }
           catch (error) { failed = true; cause = error; }
         });
         withAdoptionSink(undefined, () => withAdoptionEffectFailure(
-          error => this.fail(error, 'FORMA_E_HYDRATE_EFFECT'),
+          error => this.fail(error, 'FORMA_E_HYDRATE_EFFECT',diagnostic),
           () => withAdoptionEvents(this.eventWrapper(group), startRoot),
         ));
-        if (failed) this.fail(cause, code);
+        if (failed) this.fail(cause, code,diagnostic);
         if (cancelled || !group.alive || this.state !== 'live') dispose?.();
-      } catch (error) { this.fail(error, code); }
+      } catch (error) { this.fail(error, code,diagnostic); }
     });
     return cancel;
   }
 
-  private fail(error: unknown, code: Code): void {
+  private fail(error: unknown, code: Code, diagnostic?:AdoptionDiagnostic): void {
     if (this.state === 'aborted') return;
+    const detail=diagnostic??currentAdoptionDiagnostic();
     this.abort();
     try {
-      if (this.options.failure) this.options.failure(error, code);
+      if (this.options.failure) {
+        withAdoptionDiagnostic(detail,()=>this.options.failure!(error,code));
+      }
       else reportError(error, 'adoption callback');
     } catch (reportingError) { reportError(reportingError, 'adoption error reporting'); }
   }
