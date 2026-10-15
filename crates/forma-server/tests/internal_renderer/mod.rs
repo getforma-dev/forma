@@ -72,6 +72,7 @@ pub(super) fn render_shell(
     crate::render_browser_shell(&config, ctx)
 }
 mod checked_render;
+mod island_state;
 mod page_response;
 mod preview_frame;
 mod raw_html;

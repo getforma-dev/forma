@@ -941,3 +941,12 @@ invalid. The build fails before replacing the prior output.
 
 **Fix.** Generate the worker from the completed manifest after final asset bytes
 are written. Do not substitute a filename hash or an abbreviated digest.
+
+### Native island request state
+
+| Code | Boundary | Meaning |
+| --- | --- | --- |
+| RENDER-501 | island snapshot | Declared ordered input mapping or projected value is invalid; includes route, component and field path. No partial page is returned. |
+| RENDER-502 | island snapshot | Complete escaped UTF-8 state envelope exceeds 1,048,576 bytes, including envelope/commas/escapes. Exactly the limit is accepted. |
+
+State is captured before an island body runs, so later list-row changes cannot alter an earlier occurrence. Only declared fields are disclosed; absent/null optional object fields are omitted and optional array positions remain null. Final response size includes the state script and all document metadata; exceeding the inherited/request output limit returns the existing `RENDER-301`. Body-only work counts remain available on that error.

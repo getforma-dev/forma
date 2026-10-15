@@ -1,0 +1,187 @@
+{
+  "status": "proposed; not accepted by current native reader",
+  "grammar": "FORMA-103-STATE-WIRE.md",
+  "byteOrder": "little-endian",
+  "hash": "SHA-256(binding_bytes || schema_bytes), first8bytes",
+  "vectors": [
+    {
+      "name": "empty",
+      "bindingHex": "01000000",
+      "bindingLength": 4,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "010000000101000000",
+      "digestHex": "65d3da188a274daa",
+      "sectionHex": "010013000000070004000000010000000500000001010000000000",
+      "sectionLength": 27,
+      "meaning": "Empty declared props and no local bindings; one static island contract."
+    },
+    {
+      "name": "two-independent-signals",
+      "bindingHex": "010004001400000001040101000400686974730300000000000045401400000001040101000400686974730300000000000045400600000002020000000006000000020201000000",
+      "bindingLength": 72,
+      "schemaHex": "01010001000400686974730703",
+      "schemaLength": 13,
+      "hashInputHex": "01000400140000000104010100040068697473030000000000004540140000000104010100040068697473030000000000004540060000000202000000000600000002020100000001010001000400686974730703",
+      "digestHex": "e0288b4ed7b96a27",
+      "sectionHex": "01005f0000000700480000000100040014000000010401010004006869747303000000000000454014000000010401010004006869747303000000000000454006000000020200000000060000000202010000000d000000010100010004006869747307030100020009000000030000000000004540",
+      "sectionLength": 118,
+      "meaning": "Two distinct SIGNAL ordinals read one optional hits prop; zero remains zero, null uses42.",
+      "orderedInputSlots": [
+        0
+      ],
+      "coalesceHex": [
+        "13000002000300",
+        "13000002000400"
+      ]
+    },
+    {
+      "name": "repeated-call-input",
+      "bindingHex": "010002000a0000000201010004006c6566740b0000000201010005007269676874",
+      "bindingLength": 33,
+      "schemaHex": "010100020004006c656674020500726967687402",
+      "schemaLength": 20,
+      "hashInputHex": "010002000a0000000201010004006c6566740b0000000201010005007269676874010100020004006c656674020500726967687402",
+      "digestHex": "096cc9510f0b99ee",
+      "sectionHex": "01003f000000070021000000010002000a0000000201010004006c6566740b000000020101000500726967687414000000010100020004006c6566740205007269676874020000",
+      "sectionLength": 71,
+      "orderedInputSlots": [
+        7,
+        7
+      ],
+      "meaning": "Distinct declared left/right fields may share source slot7; slot IDs are outside the digest."
+    },
+    {
+      "name": "nested-row",
+      "bindingHex": "010001003a000000050101000400726f777301020069640100250000000605004261646765010005006c6162656c0300000200070070726f66696c6504006e616d65",
+      "bindingLength": 66,
+      "schemaHex": "01030001000400726f77730608010002000200696403070070726f66696c65080200010004006e616d6502",
+      "schemaLength": 43,
+      "hashInputHex": "010001003a000000050101000400726f777301020069640100250000000605004261646765010005006c6162656c0300000200070070726f66696c6504006e616d6501030001000400726f77730608010002000200696403070070726f66696c65080200010004006e616d6502",
+      "digestHex": "24b4f63895220f2a",
+      "sectionHex": "010077000000070042000000010001003a000000050101000400726f777301020069640100250000000605004261646765010005006c6162656c0300000200070070726f66696c6504006e616d652b00000001030001000400726f77730608010002000200696403070070726f66696c65080200010004006e616d65020000",
+      "sectionLength": 127,
+      "meaning": "LIST ordinal0 projects each current row profile.name into child label; key id is row identity only."
+    },
+    {
+      "name": "empty-string-fallback",
+      "bindingHex": "010002000f000000010401010005006c6162656c04000006000000020200000000",
+      "bindingLength": 33,
+      "schemaHex": "010100010005006c6162656c0702",
+      "schemaLength": 14,
+      "hashInputHex": "010002000f000000010401010005006c6162656c04000006000000020200000000010100010005006c6162656c0702",
+      "digestHex": "5ab6ef5ae4181902",
+      "sectionHex": "010039000000070021000000010002000f000000010401010005006c6162656c040000060000000202000000000e000000010100010005006c6162656c07020100020003000000040000",
+      "sectionLength": 74,
+      "meaning": "Explicit empty-string constant differs from Null despite zero legacy slot default bytes.",
+      "coalesceHex": [
+        "13000002000300"
+      ]
+    },
+    {
+      "name": "utf8-no-normalization",
+      "bindingHex": "01000000",
+      "bindingLength": 4,
+      "schemaHex": "01010002000300ee80800503000000030065cc810200c3a90400f090808002",
+      "schemaLength": 31,
+      "hashInputHex": "0100000001010002000300ee80800503000000030065cc810200c3a90400f090808002",
+      "digestHex": "05a4f5a15752d3d6",
+      "sectionHex": "01002d000000070004000000010000001f00000001010002000300ee80800503000000030065cc810200c3a90400f0908080020000",
+      "sectionLength": 53,
+      "fieldOrder": [
+        "\ue000",
+        "\ud800\udc00"
+      ],
+      "enumOrder": [
+        "",
+        "e\u0301",
+        "\u00e9"
+      ],
+      "meaning": "Unsigned UTF-8 ordering, empty enum literal admitted, decomposed and precomposed accents remain distinct."
+    },
+    {
+      "name": "recursive-aggregate-constant",
+      "bindingHex": "0100010032000000010006020005006974656d73050300000003000000000000f03f0006010004006e616d6504030074776f0500726561647902",
+      "bindingLength": 58,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "0100010032000000010006020005006974656d73050300000003000000000000f03f0006010004006e616d6504030074776f05007265616479020101000000",
+      "digestHex": "a5cbf557cc796559",
+      "sectionHex": "01004900000007003a0000000100010032000000010006020005006974656d73050300000003000000000000f03f0006010004006e616d6504030074776f0500726561647902050000000101000000010002003000000006020005006974656d73050300000003000000000000f03f0006010004006e616d6504030074776f0500726561647902",
+      "sectionLength": 135,
+      "expectedConstant": {
+        "items": [
+          1,
+          null,
+          {
+            "name": "two"
+          }
+        ],
+        "ready": true
+      },
+      "meaning": "Nested object/array signal default keeps the null array position and canonical object field order."
+    },
+    {
+      "name": "browser-only-mode",
+      "bindingHex": "01010000",
+      "bindingLength": 4,
+      "schemaHex": "010100010005007469746c650702",
+      "schemaLength": 14,
+      "hashInputHex": "01010000010100010005007469746c650702",
+      "digestHex": "2342a3b2fecc87da",
+      "sectionHex": "01001c000000070004000000010100000e000000010100010005007469746c6507020000",
+      "sectionLength": 36,
+      "nativeModeSameSchemaDigest": "278ea789a13accf1",
+      "meaning": "Ordinary browser-only body expressions are excluded; explicit mode and declared schema still determine identity."
+    },
+    {
+      "name": "one-capture-two-uses",
+      "bindingHex": "010003000a0000000703000000000000f03f0600000002070000000006000000020700000000",
+      "bindingLength": 38,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "010003000a0000000703000000000000f03f06000000020700000000060000000207000000000101000000",
+      "digestHex": "a0066f7375e72064",
+      "sectionHex": "010035000000070026000000010003000a0000000703000000000000f03f06000000020700000000060000000207000000000500000001010000000000",
+      "sectionLength": 61,
+      "semanticBindings": [
+        "moduleBindingA",
+        "moduleBindingA"
+      ],
+      "meaning": "The same actual getter is reused; its closed initial value is not a handler seed."
+    },
+    {
+      "name": "two-distinct-equal-captures",
+      "bindingHex": "010004000a0000000703000000000000f03f0a0000000703000000000000f03f0600000002070000000006000000020701000000",
+      "bindingLength": 52,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "010004000a0000000703000000000000f03f0a0000000703000000000000f03f06000000020700000000060000000207010000000101000000",
+      "digestHex": "bdebe9ab51b51a43",
+      "sectionHex": "010043000000070034000000010004000a0000000703000000000000f03f0a0000000703000000000000f03f06000000020700000000060000000207010000000500000001010000000000",
+      "sectionLength": 75,
+      "semanticBindings": [
+        "moduleBindingA",
+        "moduleBindingB"
+      ],
+      "meaning": "Equal initial constants never merge distinct actual lexical/import getter bindings."
+    },
+    {
+      "name": "import-aliases-one-capture",
+      "bindingHex": "010003000a0000000703000000000000f03f0600000002070000000006000000020700000000",
+      "bindingLength": 38,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "010003000a0000000703000000000000f03f06000000020700000000060000000207000000000101000000",
+      "digestHex": "a0066f7375e72064",
+      "sectionHex": "010035000000070026000000010003000a0000000703000000000000f03f06000000020700000000060000000207000000000500000001010000000000",
+      "sectionLength": 61,
+      "semanticBindings": [
+        "import {count as left} from ./signals",
+        "import {count as right} from ./signals"
+      ],
+      "sameDigestAs": "one-capture-two-uses",
+      "meaning": "Both aliases resolve to one exported getter; alias spelling is absent from canonical bytes."
+    }
+  ]
+}

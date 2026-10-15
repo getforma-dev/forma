@@ -78,7 +78,15 @@ fn head_and_nonce(page: PageResponse) -> (String, String) {
     assert!(csp.contains(&format!("'nonce-{nonce}'")), "{csp}");
     let start = parts.html.find("<head>\n").expect("head") + "<head>\n".len();
     let end = parts.html.find("</head>").expect("head end");
-    (parts.html[start..end].to_string(), nonce)
+    let head = &parts.html[start..end];
+    const STATE: &str = "<script type=\"application/json\" data-island-state>{\"v\":1,\"s\":[],\"i\":[]}</script>\n";
+    // These fixtures have no islands. Assert the new state block exactly,
+    // then compare the pre-existing typed links/style portion unchanged.
+    assert_eq!(
+        head.matches(STATE).count(),
+        usize::from(parts.html.contains("data-forma-ssr"))
+    );
+    (head.replace(STATE, ""), nonce)
 }
 
 fn preload(nonce: &str, file: &str) -> String {

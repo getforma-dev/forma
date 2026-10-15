@@ -107,6 +107,18 @@ pub struct LimitViolation {
     pub actual: usize,
 }
 
+/// A declared island input which could not be snapshotted during rendering.
+/// Boxed in IrError so path diagnostics do not enlarge every common error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IslandStateViolation {
+    /// Static island identifier.
+    pub island: u16,
+    /// Declared field/index path within its props.
+    pub path: String,
+    /// Stable reason for refusing the snapshot.
+    pub reason: &'static str,
+}
+
 /// Errors that can occur when parsing FMIR binary data.
 ///
 /// Marked `#[non_exhaustive]`: new failure modes are added as the parser is
@@ -235,14 +247,7 @@ pub enum IrError {
         limit: usize,
     },
     /// An executed island's declared request state cannot be projected.
-    InvalidIslandState {
-        /// Static island identifier.
-        island: u16,
-        /// Declared field/index path within its props.
-        path: String,
-        /// Stable reason for refusing the snapshot.
-        reason: &'static str,
-    },
+    InvalidIslandState(Box<IslandStateViolation>),
     /// The complete escaped state envelope exceeds its fixed byte ceiling.
     IslandStateLimitExceeded {
         /// Maximum complete envelope bytes.
@@ -393,12 +398,12 @@ impl fmt::Display for IrError {
             IrError::OutputLimitExceeded { limit } => {
                 write!(f, "rendered output exceeded the limit of {limit} bytes")
             }
-            IrError::InvalidIslandState {
-                island,
-                path,
-                reason,
-            } => {
-                write!(f, "RENDER-501: island {island} {path}: {reason}")
+            IrError::InvalidIslandState(problem) => {
+                write!(
+                    f,
+                    "RENDER-501: island {} {}: {}",
+                    problem.island, problem.path, problem.reason
+                )
             }
             IrError::IslandStateLimitExceeded { limit } => {
                 write!(f, "RENDER-502: island state exceeded {limit} encoded bytes")

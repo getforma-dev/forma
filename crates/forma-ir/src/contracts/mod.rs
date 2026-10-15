@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn independent_paper_vectors_parse_exactly() {
         let all: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../docs/proposals/FORMA-103-WIRE-VECTORS.json"
+            "../../tests/fixtures/island-contracts/wire-vectors.json"
         ))
         .unwrap();
         for vector in all["vectors"].as_array().unwrap() {

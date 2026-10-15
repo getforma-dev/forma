@@ -219,7 +219,10 @@ pub(crate) fn write_document(
     config: &PageConfig,
     nonce: &CspNonce,
     ssr_body: Option<&str>,
+    island_state: Option<&forma_ir::IslandState>,
     ctx: &RenderCtx,
+    max_output_bytes: usize,
+    counts: crate::RenderCounts,
 ) -> Result<String, RenderError> {
     // Defence in depth: CspNonce already rejects anything attribute- or
     // directive-significant, so this never changes a real nonce.
@@ -244,30 +247,59 @@ pub(crate) fn write_document(
     );
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
 
-    // Pushed rather than `format!`ed, so the walk's HTML (up to the 8 MiB
-    // budget) is copied once, into the document, and not first into a root.
-    let ssr_len = ssr_body.map_or(0, str::len);
-    let mut html = String::with_capacity(head.len() + ssr_len + 1024);
-    html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
-    html.push_str(&head);
-    html.push_str("</head>\n<body");
-    html.push_str(&parts.body_class_attr);
-    html.push_str(">\n");
-    html.push_str(&parts.body_prefix);
-    match ssr_body {
-        Some(ssr) => {
-            html.push_str("<div id=\"app\" data-forma-ssr>");
-            html.push_str(ssr);
-            html.push_str("</div>");
-        }
-        None => html.push_str("<div id=\"app\"></div>"),
+    // Every byte of the completed document, including state tags/envelope,
+    // counts against the same response limit. Charge before allocating/copying
+    // the final document; body walk counts remain a separate diagnostic.
+    let fragments = [
+        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n",
+        head.as_str(),
+        if island_state.is_some() {
+            "<script type=\"application/json\" data-island-state>"
+        } else {
+            ""
+        },
+        island_state.map_or("", forma_ir::IslandState::as_json),
+        if island_state.is_some() {
+            "</script>\n"
+        } else {
+            ""
+        },
+        "</head>\n<body",
+        parts.body_class_attr.as_str(),
+        ">\n",
+        parts.body_prefix.as_str(),
+        if ssr_body.is_some() {
+            "<div id=\"app\" data-forma-ssr>"
+        } else {
+            "<div id=\"app\"></div>"
+        },
+        ssr_body.unwrap_or(""),
+        if ssr_body.is_some() { "</div>" } else { "" },
+        "\n",
+        parts.config_json_tag.as_str(),
+        parts.page_js_tag.as_str(),
+        "\n",
+        parts.sw_script.as_str(),
+        "</body>\n</html>",
+    ];
+    let total = fragments
+        .iter()
+        .try_fold(0usize, |total, part| total.checked_add(part.len()));
+    let Some(total) = total.filter(|total| *total <= max_output_bytes) else {
+        return Err(RenderError::Budget {
+            route: config.route_pattern.into(),
+            component_path: Vec::new(),
+            counts,
+            cause: forma_ir::IrError::OutputLimitExceeded {
+                limit: max_output_bytes,
+            },
+        });
+    };
+    let mut html = String::with_capacity(total);
+    for fragment in fragments {
+        html.push_str(fragment);
     }
-    html.push('\n');
-    html.push_str(&parts.config_json_tag);
-    html.push_str(&parts.page_js_tag);
-    html.push('\n');
-    html.push_str(&parts.sw_script);
-    html.push_str("</body>\n</html>");
+
     Ok(html)
 }
 
