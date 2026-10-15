@@ -33,7 +33,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       # Deliberately not from the lockfile: this job exists to check the newest
       # published @getforma/core against what the compiler emits.
@@ -42,7 +42,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/compat"
           cd "$RUNNER_TEMP/compat"
           npm init -y > /dev/null
-          npm install --no-audit --no-fund @getforma/core@latest
+          npm install --ignore-scripts --no-audit --no-fund @getforma/core@latest
           node -p "'core ' + require('@getforma/core/package.json').version"
 
       - name: Verify compiler-generated imports exist in @getforma/core

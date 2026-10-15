@@ -64,7 +64,7 @@ TARBALL="$(ls "$OUT"/pack/getforma-core-*.tgz)"
 # saved nowhere: a lockfile entry for the tarball would let npm ci install a
 # cached copy of an earlier core under the same integrity (checked:
 # build-app.mjs fails if core needs a dependency the lockfile does not pin).
-npm ci --prefix "$SCRIPT_DIR/app" --ignore-scripts --no-audit --no-fund > /dev/null
+npm ci --ignore-scripts --prefix "$SCRIPT_DIR/app" --ignore-scripts --no-audit --no-fund > /dev/null
 npm install --prefix "$SCRIPT_DIR/app" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund "$TARBALL" > /dev/null
 echo "core:    $(node -p "require('$SCRIPT_DIR/app/node_modules/@getforma/core/package.json').version") from $(basename "$TARBALL")"
 

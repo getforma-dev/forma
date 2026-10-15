@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- FORMA-117: pin the runtime dependency `alien-signals` to exactly 3.1.2. Upgrades require an explicit reviewed dependency change.
+
 ### Documentation
 
 - **A2 audit follow-ups, group 1 (FORMA-180).** `docs/HTML-RUNTIME.md`'s

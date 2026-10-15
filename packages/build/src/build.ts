@@ -87,12 +87,10 @@ function resolveTailwindCli(): string | null {
 }
 
 /**
- * Run @tailwindcss/cli on an input file. Prefers the locally installed CLI
+ * Run @tailwindcss/cli on an input file. Requires the locally installed CLI
  * script executed with the current Node binary — no shell on any platform,
  * so paths with spaces survive and nothing is exposed to shell injection.
- * Falls back to npx for projects that rely on it fetching the CLI on demand —
- * through spawnTool, because npx is a .cmd shim on Windows (see its doc
- * comment for why that needs a shell).
+ * Missing tools fail locally; a build never downloads an executable (N11).
  */
 function runTailwind(input: string, outPath: string): void {
   const args = ['-i', input, '-o', outPath, '--minify'];
@@ -103,7 +101,7 @@ function runTailwind(input: string, outPath: string): void {
     return;
   }
 
-  spawnTool('npx', ['@tailwindcss/cli', ...args], { stdio: 'inherit' });
+  throw new Error('Install @tailwindcss/cli locally as a development dependency before building CSS. Forma never fetches build tools.');
 }
 
 function generateCss(

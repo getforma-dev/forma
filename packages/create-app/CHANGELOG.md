@@ -4,6 +4,10 @@
 
 ### Changed
 
+- FORMA-117: both templates disable dependency lifecycle scripts through their shipped `.npmrc`, with reviewed install-script decisions recorded in `allowScripts`.
+
+### Changed
+
 - **The dashboard README says what its `npm ci` reports and why nothing fixes
   it yet** (FORMA-180, the A2 audit's F18): 4 high advisories, all one chain,
   `@tailwindcss/cli` 4.3.3 → `@parcel/watcher` 2.5.1 → `micromatch` 4.0.8 →
