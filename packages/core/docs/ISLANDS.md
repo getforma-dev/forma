@@ -91,33 +91,27 @@ Server rows carry `data-forma-key` matching the `keyFn` output, wrapped in a
 The client island seeds a signal from `props.items` and passes it to
 `createList`:
 
-```ts
-import { activateIslands, createSignal, createList, h } from "@getforma/core";
+```tsx
+import { activateIslands, createSignal, createList } from "@getforma/core";
 
-activateIslands({
-  TrackList: (props: { items: { id: number; name: string }[] }) => {
-    // Seed from server data — NOT createSignal([])
-    const [items, setItems] = createSignal(props?.items ?? []);
+function TrackList(props: { items: { id: number; name: string }[] }) {
+  const [items] = createSignal(props.items);
+  return <div><ul>{createList(
+    items,
+    item => item.id,
+    item => <li>{item.name}</li>,
+  )}</ul></div>;
+}
 
-    // Root must match the island root (<div data-forma-island="0">) —
-    // a tag mismatch makes adoption bail and re-render fresh.
-    return h("div", null,
-      h("ul", null,
-        createList(
-          items,
-          (item) => item.id,
-          (item) => h("li", null, item.name),
-        ),
-      ),
-    );
-  },
-});
+activateIslands({ TrackList });
 ```
 
 Keys are compared as strings — `data-forma-key="1"` matches `(item) => item.id`
 for `id: 1`. Matched rows are adopted in place without re-rendering; unmatched
-client items render fresh, and unmatched SSR rows are removed (the two warnings
-above).
+client items render fresh, and unmatched SSR rows are removed. Development
+builds warn about these keyed mismatches. These repairs are retained current
+adoption behavior; FORMA-104 will replace mismatch repair with its checked
+transaction. State preflight itself makes no DOM writes.
 
 If **no** row carries `data-forma-key`, adoption matches rows by index, which is
 right only when the client array is the one the server rendered. So it first
@@ -296,12 +290,12 @@ viewport, a map, an editor. Wrap such a component in `browserOnly()`, the one
 marker for a subtree that renders in the browser alone (one name, so a search
 finds every use):
 
-```ts
-import { activateIslands, browserOnly, h } from "@getforma/core";
+```tsx
+import { activateIslands, browserOnly } from "@getforma/core";
 
 // chart.tsx: declared once, at the top level of a module.
 export const Chart = browserOnly((props: { title: string }) =>
-  h("canvas", { "aria-label": props.title }),
+  <canvas aria-label={props.title} />,
 );
 
 // The page renders it like any component: <Chart title="Sales" />.
@@ -361,7 +355,8 @@ is decided for 3.0.0 (DR-1).
 
 ## Hydration triggers
 
-Control when an island hydrates via `data-forma-hydrate`:
+The compiler-generated host includes `data-forma-hydrate` to select when an
+already-loaded registration activates. This does not control bundle fetching:
 
 | Trigger | When it hydrates | Use case |
 |---|---|---|
@@ -371,8 +366,9 @@ Control when an island hydrates via `data-forma-hydrate`:
 | `interaction` | On first `pointerdown` or `focusin` | Skeleton + skin pattern |
 
 ```html
+<!-- Excerpt of a generated host; its occurrence/hash attributes are omitted. -->
 <div data-forma-island="1" data-forma-component="Comments" data-forma-hydrate="visible">
-  <!-- JS loads only when scrolled into view -->
+  <!-- Activation waits until visible; this does not defer bundle loading. -->
 </div>
 ```
 
