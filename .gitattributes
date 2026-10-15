@@ -54,3 +54,6 @@ packages/compiler/tests/fixtures/keyed-lists/** -text
 crates/forma-ir/tests/fixtures/js-emitter/*.state.json text eol=lf
 # FORMA-181: the archive test hashes the declared-props SRI manifest byte-for-byte.
 crates/forma-server/tests/fixtures/props-contract/manifest.json text eol=lf
+# FORMA-182: archived pre-value-rules sources are authenticated by SHA-256
+# (packages/compiler/tests/value-rules-archive.test.ts), so checkout must keep their LF bytes.
+docs/archive/2026-10-15-pre-value-rules/** -text
