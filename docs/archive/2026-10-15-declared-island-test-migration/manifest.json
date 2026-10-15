@@ -1,0 +1,20 @@
+{
+  "source": "32fe587fed138712e0a316ba0674ee7db4c79d97",
+  "files": [
+    {
+      "path": "packages/compiler/tests/island-registry.test.ts",
+      "sha256": "9b0ae643e1a15c4246f17d0989f744f3e235cd613f45cd8b72f8a63bd7db252e",
+      "bytes": 41433
+    },
+    {
+      "path": "packages/compiler/tests/browser-only.test.ts",
+      "sha256": "10ad8058461dce62847ccdbb0379af8012fc642bea63b77dd86f20b9cae9d113",
+      "bytes": 7434
+    },
+    {
+      "path": "packages/compiler/tests/helpers/fmir.ts",
+      "sha256": "e3988be694846ccc82880e71db6ec70ca9aa1e680e59bd08de902f620e26096e",
+      "bytes": 14656
+    }
+  ]
+}

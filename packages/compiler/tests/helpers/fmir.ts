@@ -18,6 +18,7 @@ import { expect } from 'vitest';
 import { OP_OPEN_TAG, OP_CLOSE_TAG, OP_VOID_TAG, OP_TEXT, OP_DYN_TEXT, OP_DYN_ATTR, OP_SHOW_IF, OP_SHOW_ELSE, OP_LIST, OP_ISLAND_START, OP_ISLAND_END, OP_PROP } from '../../src/fmir-constants';
 export { OP_OPEN_TAG, OP_CLOSE_TAG, OP_VOID_TAG, OP_TEXT, OP_DYN_TEXT, OP_DYN_ATTR, OP_SHOW_IF, OP_SHOW_ELSE, OP_LIST, OP_ISLAND_START, OP_ISLAND_END, OP_PROP } from '../../src/fmir-constants';
 import { readFmirContainer } from '../../src/fmir';
+import * as C from '../../src/fmir-constants';
 
 // ---------------------------------------------------------------------------
 // Primitive readers
@@ -318,6 +319,44 @@ export function parseOpcodeList(binary: Uint8Array): string[] {
   return disassemble(binary).lines;
 }
 
+/** References outside bytecode/tables: schema names/files/enums, list key
+ * segments, and diagnostic source file/component names. Section10 contracts
+ * carry inline canonical text and bytes, not string-table indices. */
+function metadataStringReferences(binary: Uint8Array, count: number): Set<number> {
+  const found = new Set<number>();
+  for (const section of readFmirContainer(binary).sections) {
+    if (![C.SECTION_PROPS_SCHEMA, C.SECTION_KEY_PATHS, C.SECTION_SOURCE_POSITIONS].includes(section.id)) continue;
+    const view = new DataView(section.bytes.buffer, section.bytes.byteOffset, section.bytes.byteLength);
+    let cursor = 0;
+    const u8 = () => { const n = view.getUint8(cursor); cursor++; return n; };
+    const u16 = () => { const n = view.getUint16(cursor, true); cursor += 2; return n; };
+    const u32 = () => { const n = view.getUint32(cursor, true); cursor += 4; return n; };
+    const ref = () => { const index = u32(); expect(index).toBeLessThan(count); found.add(index); };
+    if (section.id === C.SECTION_PROPS_SCHEMA) {
+      const objects = u16();
+      for (let object = 0; object < objects; object++) {
+        const fields = u16();
+        for (let field = 0; field < fields; field++) {
+          ref(); ref(); u32(); u32();
+          let kind = u8();
+          while (kind === C.SCHEMA_ARRAY || kind === C.SCHEMA_OPTIONAL) kind = u8();
+          if (kind === C.SCHEMA_OBJECT) u16();
+          else if (kind === C.SCHEMA_ENUM) { const variants = u16(); for (let i = 0; i < variants; i++) ref(); }
+          else expect([C.SCHEMA_BOOLEAN, C.SCHEMA_STRING, C.SCHEMA_NUMBER, C.SCHEMA_DATE]).toContain(kind);
+        }
+      }
+    } else if (section.id === C.SECTION_KEY_PATHS) {
+      const paths = u32();
+      for (let path = 0; path < paths; path++) { u32(); const parts = u8(); for (let part = 0; part < parts; part++) ref(); }
+    } else {
+      const positions = u32();
+      for (let position = 0; position < positions; position++) { u32(); ref(); u32(); u32(); ref(); }
+    }
+    expect(cursor, `metadata section ${section.id} decoded exactly`).toBe(section.bytes.length);
+  }
+  return found;
+}
+
 // ---------------------------------------------------------------------------
 // Universal binary invariants
 // ---------------------------------------------------------------------------
@@ -335,7 +374,7 @@ export function parseOpcodeList(binary: Uint8Array): string[] {
  *      handles DYN_ATTR/DYN_TEXT/SHOW_IF/LIST/PROP bind to.
  *   3. The string table is interned: no value appears twice.
  *   4. No orphan strings: every entry is reachable from the bytecode, the slot
- *      table or the island table. An unreferenced entry is dead weight in every
+ *      table, island table or schema/key/source metadata. An unreferenced entry is dead weight in every
  *      response and means an emitter interned something it never used.
  *   5. Each island's recorded byte_offset points exactly at its ISLAND_START —
  *      the Rust walker seeks there to render the island subtree.
@@ -361,6 +400,7 @@ export function assertBinaryInvariants(binary: Uint8Array): void {
   const referenced = new Set(referencedStrings);
   for (const slot of slots) referenced.add(slot.nameIdx);
   for (const island of islands) referenced.add(island.nameIdx);
+  for (const index of metadataStringReferences(binary, strings.length)) referenced.add(index);
   const orphans = strings.filter((_, i) => !referenced.has(i));
   expect(orphans, 'string table has entries nothing references').toEqual([]);
 
