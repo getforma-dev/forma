@@ -20,7 +20,7 @@ on:
       - 'docs/**'
       - 'LICENSE'
   pull_request:
-    branches: [main]
+    branches: [main, merge/forma-stack]
   workflow_dispatch:
 
 # One run per ref. A second push to the same branch cancels the first.

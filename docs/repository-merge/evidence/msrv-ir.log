@@ -1,0 +1,6 @@
+   Compiling syn v2.0.119
+   Compiling tracing-attributes v0.1.31
+    Checking tracing v0.1.44
+    Checking forma-ir v0.2.2 (/Users/victorvillacis/dev/Forma/work/FORMA-113/out2/forma/crates/forma-ir)
+    Finished dev [unoptimized + debuginfo] target(s) in 5.95s
+cargo +1.71 check -p forma-ir --all-targets --locked  8.49s user 2.46s system 182% cpu 5.994 total

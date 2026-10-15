@@ -1,0 +1,6 @@
+    Checking serde_urlencoded v0.7.1
+    Checking hyper-util v0.1.20
+    Checking axum v0.8.9
+    Checking forma-server v0.2.2 (/Users/victorvillacis/dev/Forma/work/FORMA-113/out2/forma/crates/forma-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.32s
+cargo +1.85 check -p forma-server --all-targets --locked  30.40s user 4.91s system 422% cpu 8.364 total

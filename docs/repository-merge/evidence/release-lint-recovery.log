@@ -1,0 +1,8 @@
+ok - A3 catches no re-packaged crate matched before publishing
+ok - K5 catches the pack job locking without the MSRV-aware resolver
+ok - K5 catches the pack job locking with the resolver setting at `allow`
+ok - K5 catches the pack job with no `cargo generate-lockfile`
+ok - E1 catches continue-on-error on the re-package and match step
+ok - E4 catches `|| true` after a match
+ok - every rule has a seed (A0 A1 A2 A3 C1 D1 D2 D3 D4 D5 E1 E2 E3 E4 E5 J1 J2 J3 J4 K1 K2 K3 K4 K5 P1 P2 P3 P4 R1 T1 W0)
+check-release-workflow self-test: 63 of 63 checks passed (62 seeded violations, 31 rules)

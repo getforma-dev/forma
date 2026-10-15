@@ -1,0 +1,48 @@
+diff --git a/packages/build/tests/preview-frame.test.ts b/packages/build/tests/preview-frame.test.ts
+index 4ebd3b5..2919ab2 100644
+--- a/packages/build/tests/preview-frame.test.ts
++++ b/packages/build/tests/preview-frame.test.ts
+@@ -148,6 +148,22 @@ async function refusal(config: BuildConfig): Promise<Error & { diagnostics?: Bui
+   return error!;
+ }
+ 
++/**
++ * Run `fn` with `dir` as the working directory. Since the repository merge
++ * (FORMA-113) this package sits in a workspace whose root installs
++ * @getforma/core, so "none is installed where the build runs" holds only from
++ * a directory outside it: the fixture's own, as an application's would be.
++ */
++async function from<T>(dir: string, fn: () => Promise<T>): Promise<T> {
++  const previous = process.cwd();
++  process.chdir(dir);
++  try {
++    return await fn();
++  } finally {
++    process.chdir(previous);
++  }
++}
++
+ /** Two entries in two packages, each with its own core (A 2.1.0, and B at `versionB`, whose runtime differs unless `sameRuntime`). */
+ function twoPackages(versionB: string, sameRuntime = false) {
+   const dir = root();
+@@ -241,8 +257,8 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
+   }, 30_000);
+ 
+   it('BUILD-805: the bundles import no core, and none is installed where the build runs', async () => {
+-    const { dist, config } = fixture(undefined);
+-    const error = await refusal({ ...config, previewFrame: true });
++    const { root: dir, dist, config } = fixture(undefined);
++    const error = await from(dir, () => refusal({ ...config, previewFrame: true }));
+     expect(error.message).toMatch(/^@getforma\/build: BUILD-805 /);
+     expect(error.message).toContain('the bundles import no @getforma/core, nor is one installed where the build runs');
+     expect(existsSync(dist)).toBe(false);
+@@ -350,7 +366,8 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
+   }, 30_000);
+ 
+   it('BUILD-805, BUILD-806 and BUILD-807 carry the catalogue\'s why and fix', async () => {
+-    const missing = await refusal({ ...fixture(undefined).config, previewFrame: true });
++    const none = fixture(undefined);
++    const missing = await from(none.root, () => refusal({ ...none.config, previewFrame: true }));
+     const refusedRuntime = await refusal({ ...fixture({ frame: '<!--' }).config, previewFrame: true });
+     const differing = await refusal({ ...twoPackages('2.1.1').config, previewFrame: true });
+     const reported = [missing, refusedRuntime, differing].map(e => e.diagnostics![0]!);
