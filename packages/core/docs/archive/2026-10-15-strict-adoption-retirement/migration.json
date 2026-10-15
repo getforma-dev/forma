@@ -15,9 +15,9 @@
     },
     {
       "original": "packages/core/bench/hydrate.bench.ts",
-      "status": "pending",
+      "status": "migrated-pending-independent-review",
       "original_named_cases": [],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 15 benchmark declarations/shapes/presets retained. Strict fixtures connect/remove the original host each cycle, exact slot defaults start at zero plus slot index, and guards require zero writes/refusals plus page/list later liveness. Validation smoke ran one selected 200-iteration adoption benchmark with all fixture guards; no comparable performance claim. Archived detached repairing-path measurements are historical."
     },
     {
       "original": "packages/core/docs/API.md",
@@ -92,18 +92,18 @@
     },
     {
       "original": "packages/core/e2e/trusted-types.spec.ts",
-      "status": "pending",
+      "status": "migrated-pending-native-review",
       "original_named_cases": [
         "the shared registry holds no policy object, and its forma-runtime handle mints nothing from a string (enforced)",
         "under Report-Only a string written to innerHTML raises one report and still renders",
         "enforced, a string written to innerHTML is refused and raises one violation",
         "the shared forma mint is callable by page scripts while duplicate named policy creation is refused"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Only the adopted raw-content fixture now contains matching original A markup built with DOM calls. All Report-Only/enforced raw sink, violation, transition and no-pageerror expectations remain; added original article/bold identity and callback-retained zero-write commit proof. Native replay pending coherent build."
     },
     {
       "original": "packages/core/src/__tests__/hydration-observability.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "conditional rendering: client render shows visible branch",
         "conditional rendering: hydration descriptor initialBranch matches client visible branch",
@@ -111,15 +111,15 @@
         "createShow during hydration returns ShowDescriptor not HydrationDescriptor",
         "h() during hydration returns HydrationDescriptor not a DOM element"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/__tests__/index-surface.test.ts",
-      "status": "pending",
+      "status": "retained-unchanged-pending-integration",
       "original_named_cases": [
         "the subpaths pinned here are exactly the ones package.json publishes"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Exact public exports remain unchanged; retired repairing helpers were private and never in this surface. Replay with final integrated core."
     },
     {
       "original": "packages/core/src/__tests__/renderer-contract.test.ts",
@@ -235,7 +235,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/h-function-components.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "calls the function with merged props including children",
         "passes children array in props when called with null props",
@@ -245,7 +245,7 @@
         "does NOT generate hydration descriptors \u2014 returns real DOM even during hydration mode",
         "nested function components work: h(Outer) where Outer returns h(Inner)"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/dom/__tests__/helpers/owned-adoption.ts",
@@ -315,7 +315,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "exports hydrateIsland from dom/index",
         "defaults to false",
@@ -418,7 +418,7 @@
         "a binding that throws while being built fails only its own island",
         "a binding that throws on a shared-signal update does not freeze the other island"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/dom/__tests__/list-adoption-count.test.ts",
@@ -485,7 +485,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/list-hydration.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "returns ListDescriptor when hydrating=true",
         "returns DocumentFragment when hydrating=false",
@@ -514,7 +514,7 @@
         "removes a duplicate data-forma-key row instead of leaving a ghost",
         "adopts a list that is a show branch with no wrapper element"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/dom/__tests__/multi-island-integration.test.ts",
