@@ -1,0 +1,102 @@
+import {realpathSync} from 'node:fs';
+import type {BuildOptions,Plugin,PluginBuild} from 'esbuild';
+import type {IslandRegistry} from './island-registry';
+import {PropsSchemaError} from './props-schema';
+import {SourceSnapshot} from './source-snapshot';
+import {applySourceEdits,type SourceEdit} from './source-edits';
+
+type Setup = Plugin['setup'];
+const factories = new WeakSet<Setup>();
+const contexts = new WeakMap<BuildOptions,CompilationContext>();
+
+export interface EntryCompilation {
+  readonly snapshot:SourceSnapshot;
+  readonly registry?:IslandRegistry;
+  readonly valid:boolean;
+  readonly entry?:string;
+  readonly edits:readonly SourceEdit[];
+}
+interface Participant {epoch:number;done:boolean;input?:EntryCompilation}
+interface Prepared {snapshot:SourceSnapshot;sources:Map<string,string>}
+
+/** One setup group is captured by its callbacks; later contexts cannot replace it. */
+class CompilationContext {
+  readonly participants=new Map<Setup,Participant>();
+  private prepared?:Prepared;
+  constructor(readonly expected:ReadonlySet<Setup>) {}
+  get setupComplete():boolean {return this.participants.size===this.expected.size;}
+  begin(setup:Setup):void {
+    const current=this.participants.get(setup)!;
+    current.epoch++;current.done=false;current.input=undefined;this.prepared=undefined;
+  }
+  complete(setup:Setup,input:EntryCompilation):void {
+    const current=this.participants.get(setup)!;current.input=input;current.done=true;
+  }
+  private prepare():Prepared {
+    if(this.prepared)return this.prepared;
+    const records=[...this.participants.values()],epoch=records[0]?.epoch;
+    if(!this.setupComplete||!epoch||records.some(record=>!record.done||record.epoch!==epoch)) {
+      throw new Error('BUILD-610 all SSR entry analyses must complete for this build cycle before loading browser modules');
+    }
+    const inputs=records.map(record=>record.input!),snapshot=new SourceSnapshot();
+    for(const input of inputs) {
+      for(const [file,source] of input.snapshot.files) {
+        if(snapshot.files.has(file)&&snapshot.files.get(file)!==source)throw new PropsSchemaError(file,1,1,
+          'SSR entries captured different original source bytes; retry the complete build');
+        snapshot.files.set(file,source);
+      }
+      for(const file of input.snapshot.dependencies)snapshot.dependencies.add(file);
+      for(const directory of input.snapshot.directories)snapshot.directories.add(directory);
+    }
+    const sources=new Map(snapshot.files),byFile=new Map<string,SourceEdit[]>();
+    // A refused native contribution never lends partial instrumentation authority.
+    // Its owning onEnd retains the original source-located diagnostic.
+    if(inputs.every(input=>input.valid)) {
+      for(const input of inputs)if(input.entry) {
+        const edits=byFile.get(input.entry)??[];
+        for(const edit of input.edits)if(!edits.some(previous=>previous.start===edit.start&&previous.end===edit.end&&previous.text===edit.text))edits.push(edit);
+        byFile.set(input.entry,edits);
+      }
+      for(const [file,edits] of byFile) {
+        const source=snapshot.files.get(file);
+        if(source===undefined)throw new PropsSchemaError(file,1,1,'entry edits have no original source snapshot');
+        try {sources.set(file,applySourceEdits(source,edits));}
+        catch(error) {throw new PropsSchemaError(file,1,1,`conflicting SSR entry edits: ${(error as Error).message}`);}
+      }
+    }
+    this.prepared={snapshot,sources};return this.prepared;
+  }
+  read(file:string):{contents:string;watchFiles:string[];watchDirs:string[]}|undefined {
+    const prepared=this.prepare(),source=prepared.sources.get(realpathSync(file));
+    if(source===undefined)return undefined;
+    return {contents:source,watchFiles:[...prepared.snapshot.files.keys(),...prepared.snapshot.dependencies],watchDirs:[...prepared.snapshot.directories]};
+  }
+  unchanged():boolean {
+    // Keep each contributor's resolution checks, plus any union-only reads that
+    // the later adoption collector makes through the prepared source snapshot.
+    return [...this.participants.values()].every(record=>record.input?.snapshot.unchanged())&&this.prepare().snapshot.unchanged();
+  }
+}
+
+/** Private marker preserves ordinary cloned plugin objects with the same setup. */
+export function registerSsrPlugin(plugin:Plugin):Plugin {factories.add(plugin.setup);return plugin;}
+
+export function joinSsrCompilation(build:PluginBuild,setup:Setup):{
+  begin():void;complete(input:EntryCompilation):void;
+  read(file:string):ReturnType<CompilationContext['read']>;unchanged():boolean;
+} {
+  // esbuild creates a fresh PluginBuild per setup but shares initialOptions.
+  // All onStart callbacks finish before onLoad. A later setup using the same
+  // options may create a new group once the preceding group has all members.
+  const members=(build.initialOptions.plugins??[]).map(plugin=>plugin.setup).filter(candidate=>factories.has(candidate));
+  const expected=new Set(members);
+  if(!expected.has(setup)||expected.size!==members.length)throw new Error('BUILD-611 SSR plugins must have distinct registered setup instances');
+  let context=contexts.get(build.initialOptions);
+  if(context?.setupComplete)context=undefined;
+  else if(context?.participants.has(setup))throw new Error('BUILD-611 overlapping setup with the same options object is ambiguous; use a distinct options object for concurrent builds');
+  if(!context){context=new CompilationContext(expected);contexts.set(build.initialOptions,context);}
+  if(context.expected.size!==expected.size||[...expected].some(member=>!context!.expected.has(member)))throw new Error('BUILD-611 SSR plugin membership changed during setup');
+  context.participants.set(setup,{epoch:0,done:false});
+  const captured=context;
+  return {begin:()=>captured.begin(setup),complete:input=>captured.complete(setup,input),read:file=>captured.read(file),unchanged:()=>captured.unchanged()};
+}
