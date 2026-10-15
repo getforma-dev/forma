@@ -417,3 +417,67 @@ fixture archives, browser controls and verifier helpers. Final artifact
 review and hosted CI remain merge gates. No application, tag or publication was
 changed. The source A2 templates and pending FORMA-185/144/188/191 qualifications
 remain explicit; `liveReleaseReady` is still false.
+
+## Source templates and required candidate scaffolds (FORMA-144 slice 1)
+
+`v3-template-slice1-set.json` identifies the seven archives packed from
+`bfb722c42e717a689ede68e3dc7171b081c63448`. The actual template source now uses
+`PageProps`, typed `PageHandle`, strict loading and finalization before binding.
+The minimal page declares its count in TypeScript and Rust; dashboard still
+explicitly declares Browser routes. The narrow original entry-selection fix
+`06d31a505cccd74c6c5d00886acab21166962166` is preserved in the branch ancestry.
+The whole-source packaging adapter is removed, with its originals archived.
+
+Source locks are identified seeds at the coordinated version. Only known Forma
+archive checksums are absent; every historical external registry pin remains.
+Version preparation supports development, alpha, beta and stable seeds. Packing
+seals the actual internal archive digests, and the candidate consumer validates
+those complete shipped locks before substituting only authenticated internal
+archives/sources. `v3-template-slice1-template-restore.json` records every one of
+the ten before/after source hashes from the real successful pack.
+
+The final local scaffold replay passed 162 tests, including all 17 required
+heavy cases, in 87.41 seconds with create-app's own locked Vitest 4.1.11. It runs
+the actual packed CLI outside the checkout, checks signatures for registry
+packages and DS11 hashes for local candidates, and uses paths containing spaces.
+Its owned child must announce an already-held OS-assigned listener; a foreign
+server cannot satisfy readiness. Missing, skipped or failed heavy cases fail
+the result. CI now requires candidate packing and the same complete suite on
+Linux and Windows, independently of registry readiness. The separate published
+lane consumes the exact coordinated registry CLI after all seven versions exist.
+No published-development replay is claimed.
+
+The initial scaffold attempt is retained with `passed: false`. It selected the
+root Vitest 3.2.7 and expected an optional compiler-local esbuild copy to be
+installed. The corrected runner resolves create-app's own runner. The final
+inventory confirms both templates install top-level esbuild 0.28.2 plus
+build-local 0.28.1; minimal's compiler resolves the top-level peer and omits its
+optional local copy. Every installed location/version and required recorded
+copy is checked. This explicitly defers the historical FORMA-165 single-copy
+guarantee to slice 3 rather than changing frozen external pins to force it.
+
+`v3-template-slice1-p17.json` passes 33 checks in 74.091 seconds: exact packed
+source equality, both actual templates with locked installation/build and
+browser interaction, declared props/finalization/refusals, TT, tag integrity,
+all 12 worker checks, and a distinct handler count of 7 observed in raw SSR HTML
+before JavaScript. The ten-file record is byte-identical to the local pack's
+record. The complete repository gate passed in 204 seconds; actionlint, SR43,
+TypeScript and 33 focused boundary controls passed. The two known generated
+browser bundles were preserved in local evidence and restored after the gate.
+
+Exact-head hosted Linux/Windows results are separate acceptance evidence.
+Slice 2 still owns adopting differing server state during activation: the
+current whole-page mount starts at 0. Slice 3 owns final template/release cleanup
+and the deduplication decision. FORMA-144 remains open, other pending milestone
+qualifications remain recorded, and `liveReleaseReady` remains false. Nothing
+was tagged or published.
+
+The first hosted run at `188a572` passed candidate packing and the Linux
+candidate suite, then exposed two older watch-test races in Node22 and `check`.
+`v3-template-slice1-watch-followup.json` records them. One fixture now awaits
+initial registration and completed cycles through the existing helper; the
+other publishes its intended complete Cargo versions atomically and awaits
+owned process-tree closure. Every existing refusal/recovery assertion and
+separate malformed-metadata control remains. Both full build suites pass
+238/238 on Node22 and Node24 after the test-only correction. These changes do
+not alter packaged production bytes; final hosted acceptance is still required.

@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "ticket": "FORMA-144",
+  "slice": 1,
+  "sourceCommit": "bfb722c42e717a689ede68e3dc7171b081c63448",
+  "narrowPrerequisite": "06d31a505cccd74c6c5d00886acab21166962166",
+  "sourceReviewCheckpoint": "5dc4a2c",
+  "runnerReviewCheckpoint": "cedee7c",
+  "local": {
+    "fullGate": {
+      "passed": true,
+      "seconds": 204
+    },
+    "createApp": {
+      "passed": 162,
+      "heavyRequired": 17,
+      "skipped": 0,
+      "seconds": 87.41,
+      "platform": "darwin",
+      "vitest": "4.1.11"
+    },
+    "boundaryTests": 33,
+    "typescript": true,
+    "actionlint": true,
+    "sr43": true,
+    "p17": {
+      "passed": 33,
+      "seconds": 74.091
+    },
+    "tenFileRestoration": true
+  },
+  "retainedFailure": {
+    "record": "v3-template-slice1-scaffold-initial.json",
+    "passed": 161,
+    "failed": 1,
+    "reason": "Test expected the optional compiler-local esbuild copy to be installed; npm correctly uses the existing peer. Corrected test requires all mandatory locked copies and authenticates every installed copy. Initial runner selected root Vitest3.2.7; final replay resolves create-app locked4.1.11."
+  },
+  "externalPins": "Historical external lock entries preserved; recorded current dependency closure added without fresh resolution.",
+  "singleEsbuildCopy": "Historical FORMA-165 single-copy guarantee is explicitly deferred to slice3; final scaffold report records actual locations, versions, consumer resolutions and optional omission.",
+  "pending": [
+    "hosted exact-head Linux and Windows candidate scaffold results",
+    "FORMA-144 slice2 island/state adoption",
+    "FORMA-144 slice3 final template/release cleanup and deduplication decision"
+  ],
+  "count7": "Raw HTTP before JavaScript only. Current browser whole-page mount starts at0; adopting differing handler state is slice2.",
+  "publication": false,
+  "liveReleaseReady": false,
+  "evidenceSha256": {
+    "v3-template-slice1-set.json": "5e005932f002b42691e874312877ad3a64a78c62f2d5bf3eff40a39f8c8da655",
+    "v3-template-slice1-template-restore.json": "2101389d7fc2011a819da797ff41163ec52409a3985dba6cd61bbd6e1b56194e",
+    "v3-template-slice1-p17.json": "f0828c1af3eac92502ebfa5876f82da364f7004ce4ef58aa3d15416efe164ab1",
+    "v3-template-slice1-scaffold.json": "f2b4cc5abcff7d35ae682e988cc401d239f897ddf3031bfd70f55b6a323385b9",
+    "v3-template-slice1-scaffold-initial.json": "3547ebdef6c5c5f5710857988afda784bfacd80cfa5a68617343278ed0f3052c"
+  }
+}

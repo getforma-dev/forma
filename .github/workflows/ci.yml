@@ -432,78 +432,117 @@ jobs:
       - name: After a publish, a different checksum fails and a late version warns
         run: bash scripts/test-check-published-crate.sh
 
-  # create-app's scaffold gate, as its repository ran it: the templates are
-  # scaffolded for real, their dependencies installed FROM NPM, the frontend
-  # built and the Rust compiled, on Linux and Windows. It installs published
-  # packages, so it can only run when every @getforma pin in templates/
-  # resolves on npm; `preflight` decides, and skips it with a warning naming
-  # the pins rather than leaving it permanently red (a release in progress,
-  # packages first). It is also the one job here that runs past G6's ten
-  # minutes (12-15m on ubuntu, ~20m on windows, measured in create-forma-app's
-  # CI): it tests the registry's state, not this tree's, and FORMA-115a decides
-  # whether it stays per-merge or moves to the release path and a schedule.
+  # Candidate archives are always built and tested, even while registry versions
+  # are unpublished. No publication credential or registry preflight gates these.
+  candidate-pack:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      record-sha256: ${{ steps.pack.outputs.record-sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+        with:
+          toolchain: '1.93.1'
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - run: npm run build
+      - name: Candidate boundary controls
+        run: node --test scripts/candidate-scaffold.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release.test.mjs
+      - name: Pack committed candidates and record ten-file restoration
+        id: pack
+        run: node scripts/candidate-scaffold.mjs pack "$RUNNER_TEMP/candidate artifacts"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: scaffold-candidates
+          path: ${{ runner.temp }}/candidate artifacts
+          if-no-files-found: error
+          retention-days: 14
+
+  candidate-scaffold:
+    permissions:
+      contents: read
+    needs: candidate-pack
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+        with:
+          toolchain: '1.93.1'
+      - name: Cache downloaded Cargo registry only
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+          key: candidate-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: candidate-registry-${{ runner.os }}-
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: scaffold-candidates
+          path: ${{ runner.temp }}/candidate artifacts
+          digest-mismatch: error
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - name: Portable commands and owned listener controls
+        run: node --test scripts/owned-server.test.mjs scripts/portable-command.test.mjs
+      - name: Packed candidate full scaffold suite
+        env:
+          RECORD_SHA256: ${{ needs.candidate-pack.outputs.record-sha256 }}
+        # Node reads host paths itself. No shell builds an npm command string;
+        # the owned scratch and artifact paths deliberately contain spaces.
+        run: node --input-type=module -e "import {prepareCandidate,runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process'; const tmp=process.env.RUNNER_TEMP; const sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(); runCandidate(prepareCandidate(join(tmp,'candidate artifacts'),process.env.RECORD_SHA256,sha,join(tmp,'candidate scaffold')),join(tmp,'candidate-scaffold-report.json'));"
+      - name: Preserve scaffold evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: candidate-scaffold-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/candidate-scaffold-report.json
+            ${{ runner.temp }}/candidate scaffold/preparation.json
+            ${{ runner.temp }}/candidate scaffold/vitest.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Registry coverage remains distinct: it consumes the exact published CLI's
+  # sealed templates after all seven coordinated packages exist. A 404 means
+  # unpublished; an unreadable registry is an error. Neither skips candidates.
   preflight:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    # Enumerating the pins takes milliseconds and each `npm view` is one
-    # registry round trip. 5 bounds an unresponsive registry.
     timeout-minutes: 5
     outputs:
       ready: ${{ steps.check.outputs.ready }}
       missing: ${{ steps.check.outputs.missing }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: 22
-          cache: npm
-      - name: Every @getforma pin in templates/ must resolve on npm
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Exact coordinated published version
         id: check
-        working-directory: packages/create-app
-        run: |
-          set -uo pipefail
-          PINS=$(node -e '
-            const fs = require("fs"), path = require("path");
-            const out = new Set();
-            (function walk(dir) {
-              for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-                const p = path.join(dir, e.name);
-                if (e.isDirectory()) { if (e.name !== "node_modules") walk(p); }
-                else if (e.name === "package.json") {
-                  const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
-                  for (const field of ["dependencies", "devDependencies"]) {
-                    for (const [name, range] of Object.entries(pkg[field] || {})) {
-                      if (name.startsWith("@getforma/")) out.add(name + "@" + range);
-                    }
-                  }
-                }
-              }
-            })("templates");
-            console.log([...out].sort().join("\n"));
-          ')
-          echo "Template pins on the @getforma scope:"
-          MISSING=""
-          for pin in $PINS; do
-            if RESOLVED=$(npm view "$pin" version 2>/dev/null) && [ -n "$RESOLVED" ]; then
-              echo "  OK          $pin -> $RESOLVED"
-            else
-              echo "  UNPUBLISHED $pin"
-              MISSING="${MISSING:+$MISSING }$pin"
-            fi
-          done
-          if [ -n "$MISSING" ]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "missing=$MISSING" >> "$GITHUB_OUTPUT"
-            echo "::warning title=scaffold gate skipped::These template pins are not on npm yet: $MISSING"
-            echo "::warning::The scaffold job installs the templates for real, so it CANNOT pass until"
-            echo "::warning::those versions publish. It is skipped rather than left permanently red."
-            echo "::warning::NOT VERIFIED in this run: templates install, the frontend builds, cargo compiles."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "missing=" >> "$GITHUB_OUTPUT"
-            echo "All template pins resolve; the scaffold gate will run."
-          fi
+        run: node scripts/published-scaffold.mjs preflight
 
   scaffold:
     permissions:
@@ -515,41 +554,38 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    # 2 templates x (npm install + frontend build + cargo build) x 2 operating
-    # systems; tests/helpers.ts puts `timeout: 900_000` on every spawnSync and
-    # bounds the server's startup polling. Typical 12-15m on ubuntu, ~20m on
-    # windows (create-forma-app's CI). 45 is ~3x the ubuntu number.
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          node-version: 22
-          cache: npm
-      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
-      # NOT Swatinem/rust-cache: the build that matters happens in a fresh temp
-      # directory, so its target/ is unreachable anyway; the win here is the
-      # shared crate registry, cached explicitly.
-      - name: Cache the cargo registry
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+        with:
+          toolchain: '1.93.1'
+      - name: Cache downloaded Cargo registry only
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
-            ~/.cargo/git/db
-          key: cargo-registry-${{ runner.os }}-${{ hashFiles('packages/create-app/templates/**/Cargo.toml') }}
-          restore-keys: |
-            cargo-registry-${{ runner.os }}-
+          key: published-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: published-registry-${{ runner.os }}-
       - run: npm ci --ignore-scripts
-      # SR2 (FORMA-180, the A2 audit's F11): the install this job builds from
-      # carries the npm registry's signatures.
       - run: npm audit signatures
-      - run: npm run build -w packages/create-app
-      - run: npx vitest run
-        working-directory: packages/create-app
-        env:
-          FORMA_SCAFFOLD_E2E: '1'
-          # Retry transient registry/index 5xx rather than failing a 15-minute
-          # job over a blip, the exact failure mode of the 2026-08-06 outage.
-          CARGO_NET_RETRY: '10'
-          CARGO_INCREMENTAL: '0'
+      - name: Published CLI full scaffold suite
+        run: node --input-type=module -e "import {preparePublished} from './scripts/published-scaffold.mjs'; import {runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; const tmp=process.env.RUNNER_TEMP; runCandidate(await preparePublished(join(tmp,'published scaffold')),join(tmp,'published-scaffold-report.json'));"
+      - name: Preserve registry scaffold evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: published-scaffold-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/published-scaffold-report.json
+            ${{ runner.temp }}/published scaffold/published-record.json
+            ${{ runner.temp }}/published scaffold/vitest.json
+          if-no-files-found: warn
+          retention-days: 14

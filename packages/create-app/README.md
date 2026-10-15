@@ -1,7 +1,7 @@
 # @getforma/create-app
 
 [![npm version](https://img.shields.io/npm/v/@getforma/create-app.svg)](https://www.npmjs.com/package/@getforma/create-app)
-[![CI](https://github.com/getforma-dev/create-forma-app/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/create-forma-app/actions/workflows/ci.yml)
+[![CI](https://github.com/getforma-dev/forma/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/forma/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeScript frontend, fully wired.
@@ -77,7 +77,7 @@ whoever writes the next template.
 
 ## What You Get
 
-- **Rust server** (`src/main.rs`) — Axum + `forma-server`: page rendering with `try_render` (or `render_browser_shell` for a declared browser route), each page a `PageResponse` carrying its per-request CSP nonce and `Cache-Control: no-store`, asset serving from `rust-embed`, no service worker, and a `tracing` subscriber that logs every render error by code and route
+- **Rust server** (`src/main.rs`) — Axum + `forma-server`: page rendering with a bound `PageHandle<Props>` (or `render_browser_shell` for an explicit Browser route), each page a `PageResponse` carrying its per-request CSP nonce and `Cache-Control: no-store`, asset serving from `rust-embed`, no service worker, and a `tracing` subscriber that logs every render error by code and route
 - **TypeScript frontend** (`admin/src/`) — FormaJS with JSX, signals, components
 - **Build pipeline** (`admin/build.ts`) — `@getforma/build`: bundling, content hashing, Brotli/gzip, manifest, in strict mode, so a construct the server cannot render fails the build with its code and line
 - **A `.gitignore`** that covers build output, secrets and (for the dashboard) Playwright artifacts — and deliberately does not ignore `Cargo.lock`
@@ -86,15 +86,24 @@ whoever writes the next template.
 ## Development
 
 ```bash
-npm test        # structural tests — builds the CLI first via `pretest`
+npm test        # structural tests — builds the CLI explicitly first
 npx tsc --noEmit
 ```
 
-The real gate is opt-in because it needs a network and a Rust toolchain:
+The candidate gate needs a network and a Rust toolchain. From the repository
+root, build and commit the source, then use a fresh artifact/work directory:
 
 ```bash
-FORMA_SCAFFOLD_E2E=1 npx vitest run
+npm run build
+node scripts/candidate-scaffold.mjs pack /absolute/path/to/candidate-artifacts
+# Use the record SHA-256 printed by pack and this checkout's full Git commit.
+node scripts/candidate-scaffold.mjs run /absolute/path/to/candidate-artifacts RECORD_SHA256 COMMIT /absolute/path/to/candidate-work /absolute/path/to/report.json
 ```
+
+CI always runs the full candidate suite on Linux and Windows. The separate
+registry lane runs the actual published CLI when all seven coordinated versions
+exist. Missing or skipped candidate jobs fail the release gate. The source lock
+seeds are never passed directly to an unpublished registry installation.
 
 That scaffolds each template into a temp directory, installs from the
 template's lockfile with `npm ci`, builds the frontend, runs
@@ -109,8 +118,10 @@ worker, and leave `/sw.js` to forma-server's retiring worker. It also runs
 construct the server cannot render fails the minimal template's strict build,
 and that the minimal server refuses to start on a truncated module and
 answers a failed render with its own 500, carrying neither the error nor an
-empty shell. CI runs it on Linux and Windows, and again before
-`npm publish`.
+empty shell. A distinct handler value of 7 must appear in raw SSR HTML;
+missing/wrong props and unbound routes must stop before a listener opens.
+Slice 2 owns adopting a differing server value during browser activation.
+The gate requires all 17 heavy controls plus the structural suite, with no skips.
 
 | Document | What it is |
 |---|---|
@@ -149,10 +160,19 @@ MIT
 
 ## Development staging toward 3.0.0
 
-The checked-in templates keep the A2 consumer pins until FORMA-144 completes the
-final API migration. Release packing stages exact candidate npm and Cargo
-requirements/locks, validates those packed bytes, then restores the source files.
-A source template copied by hand is not that staged release set.
+The checked-in templates now use the declared-props and finalized Pages APIs.
+Minimal keeps its whole-page mount with matching server/browser defaults;
+island state adoption and the broader template redesign remain FORMA-144
+slices 2 and 3.
+
+Source template locks are explicitly identified **seeds** at the coordinated
+package version. They retain every external registry checksum and omit only
+the known Forma candidate checksums, which cannot exist before the archives
+are packed. Release packing seals those entries from actual archive bytes,
+validates the shipped locks, and restores all ten source files. The source-only
+`template-lock-seeds.json` marker is never shipped. Use the packed candidate
+scaffold workflow for local end-to-end development; copying source templates
+by hand does not produce an installable unpublished candidate set.
 
 The scaffolder writes a separate application identity into `admin/build.ts`.
 Valid worker names stay unchanged; accepted project names with underscores or
