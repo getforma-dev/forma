@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "commit": "72c2804bfac5e416257fb4fa5319228643f012fd",
+  "passed": true,
+  "tests": [
+    {
+      "name": "forma-ir: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "ba8a1a4d9e642c7975110df534c6c50f0a9e2693090a5ef6868753b5522843ab",
+      "auditLockSha256": "ba8a1a4d9e642c7975110df534c6c50f0a9e2693090a5ef6868753b5522843ab"
+    },
+    {
+      "name": "forma-ir-derive: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "bd1a299255d10c64b44852a30e23e63a3b34061484f23488f528a8e4125cf75e",
+      "auditLockSha256": "bd1a299255d10c64b44852a30e23e63a3b34061484f23488f528a8e4125cf75e"
+    },
+    {
+      "name": "forma-server: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "e627ff6f358359534105ca447b71928588bc4f3efca611b78723cd87f67b33c3",
+      "auditLockSha256": "2608f5480b74d588da325854f32e3801a9bda816c1c144d6d9fc024dec23af39"
+    },
+    {
+      "name": "fresh advisories over every exact shipped crate lock",
+      "passed": true,
+      "seconds": 4.266
+    },
+    {
+      "name": "packed CLI has an isolated, locked runtime dependency installation",
+      "passed": true,
+      "seconds": 0.351
+    },
+    {
+      "name": "packed compiler emits the frozen corpus read by packed forma-ir",
+      "passed": true,
+      "seconds": 6.005
+    },
+    {
+      "name": "packed loader refuses a corrupt module before binding",
+      "passed": true
+    },
+    {
+      "name": "minimal: packed CLI, locked install, signatures, build, serve and interaction",
+      "passed": true,
+      "seconds": 16.547
+    },
+    {
+      "name": "dashboard: packed CLI, locked install, signatures, build, serve and interaction",
+      "passed": true,
+      "seconds": 5.743
+    }
+  ],
+  "pending": {
+    "FORMA-185": "FMIR v3 corpus and corrupt-module checks",
+    "FORMA-112": "manifest 2 and runtime version-pair rejection",
+    "FORMA-102": "declared props and bind mutation suite",
+    "FORMA-144": "both templates use the milestone's API",
+    "FORMA-188": "fixture applications and skew drill",
+    "FORMA-191": "release measurements"
+  },
+  "signatures": "registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256",
+  "templates": [
+    {
+      "template": "minimal",
+      "npmLockSha256": "e7528dad48f7940a5b1c605828b6f954439d45216053ecc5c434396778808941",
+      "packedPackages": [
+        "forma-ir@0.2.2",
+        "forma-ir-derive@0.0.0",
+        "forma-server@0.2.2",
+        "@getforma/core@2.1.0",
+        "@getforma/compiler@0.3.7",
+        "@getforma/build@0.3.1",
+        "@getforma/create-app@0.6.2"
+      ]
+    },
+    {
+      "template": "dashboard",
+      "npmLockSha256": "e52fdd89ddf78d535770b6148c6e6abd73325daafca9220b5766188b9e2e127f",
+      "packedPackages": [
+        "forma-ir@0.2.2",
+        "forma-ir-derive@0.0.0",
+        "forma-server@0.2.2",
+        "@getforma/core@2.1.0",
+        "@getforma/compiler@0.3.7",
+        "@getforma/build@0.3.1",
+        "@getforma/create-app@0.6.2"
+      ]
+    }
+  ],
+  "elapsedSeconds": 33.558,
+  "verifierCommit": "3dd269d80146b666679f9c1ef922a3c1ea40de47"
+}

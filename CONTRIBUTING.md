@@ -100,11 +100,10 @@ there.
 
 ## Releasing
 
-The crates release through `.github/workflows/release.yml` from the tags
-`ir-v<version>` and `server-v<version>`, as [`crates/CONTRIBUTING.md`](crates/CONTRIBUTING.md)
-describes. The npm packages' release workflow for this repository is
-FORMA-115a; until it lands, 2.x, 0.3.x and 0.6.x fixes release from the
-maintenance branches of the old repositories.
+All seven packages use one version and one `v*` tag through the merged
+repository workflow. See [the release runbook](docs/RELEASING.md) for version
+preparation, packed verification, the two publishing environments and partial
+release recovery. The current A2 rehearsal cannot publish a live milestone.
 
 ## Pull requests
 

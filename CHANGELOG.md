@@ -15,6 +15,12 @@ PropsMode are removed. All bytecode string references fail at load. V2 modules r
 rebuild. The fourteen HTML goldens are unchanged; real emission, independent fault fixtures,
 loader-before-bind checks, stable fuzz replay and a pinned nightly fuzz workflow cover the change.
 
+### Unified release workflow (FORMA-187)
+
+- FORMA-187: prepare the unified seven-package release pipeline, exact-commit CI
+  gate, packed template/corpus verification, two minimal publishing jobs and
+  compatibility record. A2 dry runs remain non-publishing; milestone contract
+  hooks must be completed before the first `v3.0.0-alpha.1` release.
 
 ### The repository merge (FORMA-113)
 
