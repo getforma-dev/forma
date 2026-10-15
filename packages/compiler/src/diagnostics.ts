@@ -276,6 +276,9 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-821', 'A retained asset cannot be vouched for',
     "A file the previous manifest lists is missing from the previous dist, is not a regular file, or its bytes no longer match the SHA-384 the manifest recorded; or this build emitted a file of the same name with other bytes. The build will not copy bytes it cannot vouch for into a release browsers execute, and it fails before writing any output.",
     "Keep the whole release artifact unaltered, as the build wrote it, and pass that directory. If the previous dist was damaged, restore it from the artifact store, or build this release as a security release (security: true) to retain nothing."),
+  entry('BUILD-822', 'FORMA_SECURITY_RELEASE is not a value the build understands',
+    "The environment variable that marks a release as a security release (nothing is retained from the previous release) holds a value other than 1, true, 0, false or empty. Reading an unknown value as unmarked would retain a revoked build's assets in the release that exists to remove them, so the build refuses it.",
+    "Set FORMA_SECURITY_RELEASE=1 (or true) for a release that fixes a vulnerability, or unset it."),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);

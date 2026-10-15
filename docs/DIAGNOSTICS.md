@@ -995,6 +995,18 @@ was damaged, restore it from the artifact store, or mark this release security
 `packages/build/tests/retention.test.ts` > "refuses bytes that do not match the
 recorded SHA-384, a missing file, a link and a directory (BUILD-821)".
 
+### BUILD-822 FORMA_SECURITY_RELEASE is not a value the build understands
+
+`FORMA_SECURITY_RELEASE` marks a release that fixes a vulnerability: nothing is
+retained from the previous release (SR45). It is read as `FORMA_STRICT` is, trimmed and
+case-insensitive: `1` or `true` marks, unset, empty, `0` or `false` leaves it unmarked,
+and any other value fails the build, since reading `yes` as unmarked would retain a
+revoked build's assets in the release that exists to remove them.
+
+**Fix.** Set it to `1` (or `true`), or unset it. Verified by
+`packages/build/tests/retention.test.ts` > "reads FORMA_SECURITY_RELEASE as FORMA_STRICT
+is read, and refuses any other value (BUILD-822)".
+
 ### Native island request state
 
 | Code | Boundary | Meaning |

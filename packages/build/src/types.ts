@@ -122,7 +122,8 @@ export interface BuildConfig {
    * from the one `dist/` the application embeds. One generation: what the
    * previous release itself retained is not copied again. A directory other
    * than `outputDir`, which the build replaces whole. Leave it out for a first
-   * deploy, or when no release is live. Every copied file is checked against
+   * deploy, or when no release is live. The previous dist is trusted like the source: the check below catches a damaged or
+   * altered file, not someone who can also rewrite its manifest. Every copied file is checked against
    * the SHA-384 the previous manifest recorded (`BUILD-821`); a path that is
    * not a usable previous release fails the build (`BUILD-820`). Ignored in
    * watch mode.
@@ -133,7 +134,8 @@ export interface BuildConfig {
    * retained from `previousDist`, so no earlier build's asset is served and a
    * revoked build's tabs meet 404s for their lazy chunks. The application's
    * deploy pipeline must mark every such release, a Forma security upgrade
-   * included. `FORMA_SECURITY_RELEASE=1` in the environment marks it too, and a
+   * included. `FORMA_SECURITY_RELEASE=1` (or `true`, any case) in the environment marks it too; any
+   * value other than 1, true, 0, false or empty fails the build (`BUILD-822`); and a
    * `false` here does not unmark it.
    */
   security?: boolean;

@@ -299,6 +299,12 @@ forma-server serves them as it serves any immutable asset, so you embed one
   `FORMA_SECURITY_RELEASE=1` (a `false` in the config does not unmark it). The
   build then retains nothing and the revoked build's files are not served; a
   revoked build's open tabs meet 404s for their lazy chunks.
+- **Trust.** The SHA-384 check catches a damaged or altered file, not someone who can
+  also rewrite the previous `manifest.json`: the previous `dist/` is trusted like your
+  source. Keep it as a protected release artifact.
+- `FORMA_SECURITY_RELEASE` is read like `FORMA_STRICT`: `1` or `true` (any case,
+  trimmed) marks; unset, empty, `0` or `false` does not; anything else fails the build
+  (`BUILD-822`).
 - Watch mode ignores both options.
 
 The identity does not depend on the retained set: the same inputs give the same

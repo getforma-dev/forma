@@ -82,6 +82,20 @@ async function withoutIrChatter<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * `FORMA_SECURITY_RELEASE`, read as FORMA_STRICT is, but case-insensitive and trimmed:
+ * `1` or `true` marks the release; unset, empty, `0` or `false` leaves it unmarked; any
+ * other value fails the build (BUILD-822). A mark that fails open (`yes` read as off)
+ * would retain the revoked build's assets in a release that exists to remove them.
+ * Verified by: packages/build/tests/retention.test.ts > "reads FORMA_SECURITY_RELEASE as FORMA_STRICT is read, and refuses any other value (BUILD-822)"
+ */
+function securityFromEnvironment(raw: string | undefined): boolean {
+  const value = raw?.trim().toLowerCase();
+  if (value === undefined || value === '' || value === '0' || value === 'false') return false;
+  if (value === '1' || value === 'true') return true;
+  throw new Error(`BUILD-822 FORMA_SECURITY_RELEASE is ${JSON.stringify(raw)}: set it to 1 or true to mark a release that fixes a vulnerability, or unset it (0 and false also leave it unmarked)`);
+}
+
 /** Hash a file and return an 8-char hex prefix. */
 function contentHash(filePath: string): string {
   const content = readFileSync(filePath);
@@ -588,7 +602,7 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   const project = process.cwd();
   // A release marked security retains nothing (L-16, SR45); the environment marks it too, and
   // a `false` in the configuration does not unmark it: the mark can only be forgotten safely.
-  const security = userConfig.security === true || process.env.FORMA_SECURITY_RELEASE === '1';
+  const security = userConfig.security === true || securityFromEnvironment(process.env.FORMA_SECURITY_RELEASE);
   const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app), security };
   // The previous release is read and checked before anything is bundled or written, so a wrong
   // path fails at once (BUILD-820). Watch mode and a security release never read it.

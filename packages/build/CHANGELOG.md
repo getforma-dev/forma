@@ -19,6 +19,10 @@
 - New `BuildConfig.security` and `FORMA_SECURITY_RELEASE=1`: a release marked
   security retains nothing from `previousDist` (a `false` does not unmark it).
   Both option names, and the environment variable, are approved (L-57).
+- `FORMA_SECURITY_RELEASE` is parsed as `FORMA_STRICT` is (trimmed, case-insensitive):
+  `1`/`true` marks, unset/empty/`0`/`false` does not, any other value fails the build
+  with `BUILD-822`, so a mark can never fail open. The previous `dist/` is trusted like
+  the source: the SHA-384 check catches damage or alteration, not a rewritten manifest.
 - Watch mode ignores both options, with a note.
 
 ## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
