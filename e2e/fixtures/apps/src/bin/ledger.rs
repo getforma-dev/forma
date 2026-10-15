@@ -1,5 +1,5 @@
 //! The ledger fixture application: a household finance page whose arrival island is
-//! seeded from the server's snapshot (shape of Ledger's arrival route; nothing copied).
+//! seeded from the server's snapshot (shaped after a household finance app's arrival route, with synthetic values).
 
 use std::sync::Arc;
 
@@ -39,7 +39,7 @@ async fn main() {
     fixture::finalize(&start.pages);
     let router = Router::new()
         .route("/household", get(household_page))
-        .route("/api/v1/instance", get(fixture::instance))
+        .route("/api/status", get(fixture::instance))
         .with_state(Arc::new(App { household }));
     fixture::serve(fixture::with_assets::<Assets>(router)).await;
 }
@@ -52,7 +52,7 @@ async fn household_page(State(app): State<Arc<App>>) -> Response {
         arrival_cash: "$12,345.67".into(),
         arrival_bills: "$34.00".into(),
         arrival_income: "$2,000.00".into(),
-        arrival_status: "Opening the workspace".into(),
+        arrival_status: "Loading".into(),
         arrival_summary: true,
     };
     fixture::respond(

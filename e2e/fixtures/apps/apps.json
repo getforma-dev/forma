@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "note": "The index of the fixture applications (FORMA-188). Each page is written fresh to the shape of a consumer's page; shapeSource names where the shape was read (file and symbol, never copied). `state` is the oracle: the values the handler serves, in wire names, which the spec compares with the page's state envelope.",
+  "note": "The index of the fixture applications (FORMA-188). Each page is shaped after a consumer's page (element structure, island count, prop types, list sizes) and written new with neutral, synthetic labels, class names and values; none of it is taken from an application. `state` is the oracle: the values the handler serves, in wire names, which the spec compares with the page's state envelope.",
   "apps": {
     "ledger": {
       "css": "ledger/src/styles/app.css",
-      "shapeSource": "Ledger arrival island: admin/src/household/arrival.tsx (the signals, the show:arrivalSummary condition, the retry button), src/arrival.rs (the boot values), read at the ref clone 97e6573",
+      "shapeSource": "shaped after a household finance app's arrival island: its signals, one conditional summary, a status line moved by the island's own request, a retry button",
       "routes": {
         "/household": {
           "page": "household",
@@ -22,7 +22,7 @@
               "arrivalCash": "$12,345.67",
               "arrivalBills": "$34.00",
               "arrivalIncome": "$2,000.00",
-              "arrivalStatus": "Opening the workspace",
+              "arrivalStatus": "Loading",
               "arrivalSummary": true
             }
           },
@@ -49,7 +49,7 @@
             },
             {
               "selector": "#arrival-status",
-              "text": "Opening the workspace"
+              "text": "Loading"
             }
           ],
           "path": "/household"
@@ -58,7 +58,7 @@
     },
     "fauth": {
       "css": "fauth/src/styles/app.css",
-      "shapeSource": "fAuth tenant login (pin b750ca5): admin/src/tenant/login/{TenantLoginCard.ts,store.ts} for the modes, providers and signup rules, crates/server/src/handlers/hosted_login.rs for the tenant config the handler holds",
+      "shapeSource": "shaped after an authentication service's pages: a tenant's hosted login (modes, providers, signup rules), a get-started page of provider booleans, a results page of rows",
       "routes": {
         "/t/:slug/login": {
           "page": "tenant-login",
@@ -102,11 +102,11 @@
               "text": "Continue with GitHub"
             },
             {
-              "selector": "#tl-submit-in",
+              "selector": "#lc-submit-in",
               "text": "Sign in"
             },
             {
-              "selector": "#tl-toggle",
+              "selector": "#lc-toggle",
               "text": "Don't have an account? Sign up"
             }
           ],
@@ -126,7 +126,7 @@
                   "startRegister": false,
                   "allowPublicSignup": false,
                   "inviteOnly": true,
-                  "inviteNotice": "This tenant is invite-only. New account sign-up requires an invite link."
+                  "inviteNotice": "Registration here is by invitation only. Ask for an invitation link."
                 }
               },
               "serverValues": [
@@ -136,7 +136,7 @@
                 },
                 {
                   "selector": "#invite-notice",
-                  "text": "This tenant is invite-only. New account sign-up requires an invite link."
+                  "text": "Registration here is by invitation only. Ask for an invitation link."
                 }
               ]
             },
@@ -154,7 +154,7 @@
                   "startRegister": true,
                   "allowPublicSignup": true,
                   "inviteOnly": true,
-                  "inviteNotice": "Invite link detected. You can sign in or create your invited account."
+                  "inviteNotice": "An invitation was found. You may sign in or register with it."
                 }
               },
               "serverValues": [
@@ -164,10 +164,10 @@
                 },
                 {
                   "selector": "#invite-notice",
-                  "text": "Invite link detected. You can sign in or create your invited account."
+                  "text": "An invitation was found. You may sign in or register with it."
                 },
                 {
-                  "selector": "#tl-submit-up",
+                  "selector": "#lc-submit-up",
                   "text": "Create account"
                 }
               ]
@@ -185,7 +185,7 @@
           ],
           "state": {
             "RegistrationForm": {
-              "clientId": "platform-onboarding",
+              "clientId": "onboarding-client",
               "serverUrl": "https://auth.example.test",
               "hasGoogle": true,
               "hasGithub": false,
@@ -199,7 +199,7 @@
             },
             {
               "selector": "#ob-client",
-              "text": "Client platform-onboarding"
+              "text": "Client onboarding-client"
             }
           ]
         },
@@ -276,7 +276,7 @@
     },
     "ksx": {
       "css": "ksx/src/styles/app.css",
-      "shapeSource": "ksx Studio check page (pin 0cb57e2, Victor-Villacis/ksx): studio-ui/src/{CheckPage,CheckIsland,check}.ts for the screen, the show: conditions and the live echo; the nested mapper and session payload (CheckPayload) for the props shape",
+      "shapeSource": "shaped after a controller studio's button-check screen: a nested roster payload, derived booleans, a chip grid, a keyboard echo",
       "routes": {
         "/check": {
           "page": "check",
@@ -290,27 +290,27 @@
           ],
           "state": {
             "FeedStatus": {
-              "sessionLine": "Ready to test.",
-              "feedHint": "Press a panel key and watch every action it drives.",
-              "feedLine": "Waiting for the panel.",
-              "lossLine": "2 frames were dropped.",
+              "sessionLine": "Idle.",
+              "feedHint": "Press a key to see which inputs respond.",
+              "feedLine": "Waiting for input.",
+              "lossLine": "2 frames skipped.",
               "framesSeen": 1001,
               "hasLoss": true,
               "quiet": true,
               "running": false
             },
             "LiveEcho": {
-              "hint": "Press a panel key and watch every action it drives."
+              "hint": "Press a key to see which inputs respond."
             }
           },
           "serverValues": [
             {
               "selector": "#check-title",
-              "text": "Button check"
+              "text": "Input monitor"
             },
             {
               "selector": "#session-line",
-              "text": "Ready to test."
+              "text": "Idle."
             },
             {
               "selector": "#frames-seen",
@@ -318,7 +318,7 @@
             },
             {
               "selector": "#loss-line",
-              "text": "2 frames were dropped."
+              "text": "2 frames skipped."
             },
             {
               "selector": "#generated",
@@ -335,23 +335,23 @@
               "path": "/check?state=empty",
               "state": {
                 "FeedStatus": {
-                  "sessionLine": "Ready to test.",
-                  "feedHint": "Press a panel key and watch every action it drives.",
-                  "feedLine": "Waiting for the panel.",
-                  "lossLine": "2 frames were dropped.",
+                  "sessionLine": "Idle.",
+                  "feedHint": "Press a key to see which inputs respond.",
+                  "feedLine": "Waiting for input.",
+                  "lossLine": "2 frames skipped.",
                   "framesSeen": 1001,
                   "hasLoss": true,
                   "quiet": true,
                   "running": false
                 },
                 "LiveEcho": {
-                  "hint": "Press a panel key and watch every action it drives."
+                  "hint": "Press a key to see which inputs respond."
                 }
               },
               "serverValues": [
                 {
                   "selector": "#empty h2",
-                  "text": "No controller is ready to test"
+                  "text": "No device configured"
                 },
                 {
                   "selector": "#frames-seen",

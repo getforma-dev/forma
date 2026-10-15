@@ -1,6 +1,6 @@
 //! The fauth fixture application: three handlers' worth of declared props, shaped like an
 //! authentication service's pages (a tenant's hosted login, the platform's get-started page
-//! and a results page), each bound to its route at start. Nothing is copied from the service.
+//! and a results page), each bound to its route at start. The pages are shaped after the service's; labels and values are synthetic.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -122,7 +122,7 @@ fn tenant(slug: &str) -> Option<Tenant> {
         "acme" => Some(Tenant {
             name: "Acme Cloud",
             logo: Some("/fixture/logo.svg"),
-            color: "#c4a265",
+            color: "#4a6fa5",
             providers: &[Provider::Google, Provider::Github, Provider::Email],
             signup: SignupMode::Public,
         }),
@@ -184,9 +184,9 @@ async fn login_page(
     let invite_notice = if !invite_only {
         String::new()
     } else if allow_public_signup {
-        "Invite link detected. You can sign in or create your invited account.".to_string()
+        "An invitation was found. You may sign in or register with it.".to_string()
     } else {
-        "This tenant is invite-only. New account sign-up requires an invite link.".to_string()
+        "Registration here is by invitation only. Ask for an invitation link.".to_string()
     };
     let props = TenantLoginProps {
         slug: slug.clone(),
@@ -215,7 +215,7 @@ async fn login_page(
 
 async fn onboarding_page(State(app): State<Arc<App>>) -> Response {
     let props = OnboardingProps {
-        client_id: "platform-onboarding".into(),
+        client_id: "onboarding-client".into(),
         server_url: Some("https://auth.example.test".into()),
         has_google: true,
         has_github: false,
@@ -294,6 +294,6 @@ async fn logo() -> impl IntoResponse {
             (axum::http::header::CONTENT_TYPE, "image/svg+xml"),
             (axum::http::header::CACHE_CONTROL, "no-store"),
         ],
-        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect width=\"24\" height=\"24\" fill=\"#c4a265\"/></svg>",
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect width=\"24\" height=\"24\" fill=\"#4a6fa5\"/></svg>",
     )
 }

@@ -48,7 +48,9 @@ size and packaging gates, the compiler-to-walker FMIR contract, and the
 browser lanes that take a page from TypeScript source through the compiler and
 the Rust walker to a hydrated DOM in Chromium. CI runs the same command on
 every push and pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
-It needs Node 20 or later, a stable Rust toolchain with `rustfmt`, `clippy` and
+It needs Node 24 (`.node-version`; the parity harness's step runs TypeScript by
+Node's type stripping, and the script stops at once on a Node without it), a
+stable Rust toolchain with `rustfmt`, `clippy` and
 Playwright's Chromium
 (`npx playwright install chromium`, once).
 

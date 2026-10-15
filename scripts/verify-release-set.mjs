@@ -398,7 +398,7 @@ export async function verify(dir, reportPath) {
             const enforced = set.contracts.trustedTypes === 'enforced-v1';
             const servedPolicy = enforced ? requireEnforcedTrustedTypes(response.headers) : response.headers.get('content-security-policy');
             const html = await response.text();
-            assert(!html.includes('<div id="app"></div>') || template === 'dashboard', 'minimal SSR is an empty shell');
+            assert(!/<div id="app"[^>]*><\/div>/.test(html) || template === 'dashboard', 'minimal SSR is an empty shell');
             const page = await browser.newPage();
             page.setDefaultTimeout(15_000);
             const errors = []; page.on('pageerror', e => errors.push(e.message));

@@ -138,7 +138,7 @@ for (const name of APPS) {
 
         test(`${label}: adoption writes nothing, every island keeps its server values, and then the islands work`, async ({ browser }) => {
           const { verifyIslandPage } = await verifier();
-          const behaviour: Behaviour = main ? ((await behaviours()).BEHAVIOURS[`${name} ${route}`] ?? {}) : {};
+          const behaviour: Behaviour = (await behaviours()).BEHAVIOURS[main ? `${name} ${route}` : `${name} ${label}`] ?? {};
           const manifest = readJson(join(OUT, name, 'dist', 'manifest.json'));
           const states = expectation.state ?? {};
           const hosts: Record<string, number> = {};
@@ -152,7 +152,7 @@ for (const name of APPS) {
               hosts,
             },
             hold: behaviour.hold ?? [],
-            interact: behaviour.interact ?? (async (tab: Page) => (await tab.locator('[data-forma-island]').count())),
+            interact: behaviour.interact,
           });
           expect(result.mutations).toBe(0);
           expect(result.interacted, 'the page defines no behaviour that proves activation').toBeTruthy();
@@ -183,6 +183,26 @@ for (const name of APPS) {
     }
   });
 }
+
+test.describe('activation is required, not assumed', () => {
+  let server: Running;
+  test.beforeAll(async () => { server = await start('ksx'); });
+  test.afterAll(async () => { await server?.stop(); });
+  const manifest = () => readJson(join(OUT, 'ksx', 'dist', 'manifest.json'));
+
+  test('a page with no behaviour that proves activation is refused', async ({ browser }) => {
+    const { verifyIslandPage } = await verifier();
+    await expect(verifyIslandPage(browser, server.origin, '/check', manifest(), { path: '/check?state=empty' })).rejects.toThrow(/needs an interact behaviour/);
+  });
+
+  test('a variant whose islands never activate fails its behaviour (the reviewer\'s probe)', async ({ browser }) => {
+    const { verifyIslandPage } = await verifier();
+    const { BEHAVIOURS } = await behaviours();
+    const interact = BEHAVIOURS['ksx /check (no controller)'].interact;
+    // The held script is answered with an empty module: the hosts are in the HTML and nothing ran.
+    await expect(verifyIslandPage(browser, server.origin, '/check', manifest(), { path: '/check?state=empty', interact, scriptBody: '', timeout: 3000 })).rejects.toThrow();
+  });
+});
 
 test.describe('fixtures the closed type set and N2 refuse', () => {
   const negative = (INDEX as unknown as { negative: { name: string; entry: string; code: string; message: string; file?: string }[] }).negative;
@@ -222,7 +242,8 @@ test.describe('fixtures the closed type set and N2 refuse', () => {
     expect(result.message).toContain(entry.code);
     expect(result.message).toContain(entry.message);
     const bytes = Number(/loads ([\d,]+) B gzip -9 of Forma code/.exec(result.message)?.[1]?.replaceAll(',', ''));
-    expect(bytes).toBeGreaterThan(25_500);
+    const ceiling = Number(/ceiling of ([\d,]+) B/.exec(result.message)?.[1]?.replaceAll(',', ''));
+    expect(bytes).toBeGreaterThan(ceiling);
   });
 });
 
@@ -240,6 +261,7 @@ test.describe('fixture application bench: the consumers\' heaviest pages', () =>
       expect(counts, 'the server reports the walker\'s counts').toBeTruthy();
       const nodes = Number(counts![1]);
       const target = page.shape?.targetNodes;
+      if (route !== '/pages/islands-100') expect(target, `${route} has no targetNodes`).toBeTruthy();
       if (target) expect(Math.abs(nodes - target) / target, `${nodes} nodes against ${target}`).toBeLessThan(0.03);
       const html = await response.text();
       expect(html.match(/data-forma-island="/g)?.length).toBe(page.shape?.islands);

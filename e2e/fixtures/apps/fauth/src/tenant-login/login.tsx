@@ -32,7 +32,7 @@ export type TenantLoginProps = {
 export const defaultTenantLogin: TenantLoginProps = {
   slug: '',
   appName: '',
-  primaryColor: '#c4a265',
+  primaryColor: '#4a6fa5',
   providers: [],
   signupMode: 'public',
   loginRedirectUrl: '/',
@@ -53,11 +53,11 @@ export function OAuthButtons(props: { hasGoogle: boolean; hasGithub: boolean; ha
   const [chosen, setChosen] = createSignal('');
   const [hasChoice, setHasChoice] = createSignal(false);
   return (
-    <div class="tl-oauth-buttons">
+    <div class="lc-oauth-buttons">
       {createShow(
         () => props.hasGoogle,
         () => (
-          <button id="oauth-google" class="tl-btn tl-btn-oauth" type="button" onClick={() => { setChosen('Continuing with Google'); setHasChoice(true); }}>
+          <button id="oauth-google" class="lc-btn lc-btn-oauth" type="button" onClick={() => { setChosen('Continuing with Google'); setHasChoice(true); }}>
             Continue with Google
           </button>
         ),
@@ -65,7 +65,7 @@ export function OAuthButtons(props: { hasGoogle: boolean; hasGithub: boolean; ha
       {createShow(
         () => props.hasGithub,
         () => (
-          <button id="oauth-github" class="tl-btn tl-btn-oauth" type="button" onClick={() => { setChosen('Continuing with GitHub'); setHasChoice(true); }}>
+          <button id="oauth-github" class="lc-btn lc-btn-oauth" type="button" onClick={() => { setChosen('Continuing with GitHub'); setHasChoice(true); }}>
             Continue with GitHub
           </button>
         ),
@@ -100,7 +100,7 @@ export function AuthForm(props: { startLogin: boolean; startRegister: boolean; a
   function revealPassword() {
     const next = !reveal();
     setReveal(next);
-    const input = document.getElementById('tl-password');
+    const input = document.getElementById('lc-password');
     if (input instanceof HTMLInputElement) input.type = next ? 'text' : 'password';
   }
   function submit(event: Event) {
@@ -109,48 +109,48 @@ export function AuthForm(props: { startLogin: boolean; startRegister: boolean; a
     setFailed(true);
   }
   return (
-    <div class="tl-auth">
-      <div class="tl-subtitle" id="auth-subtitle">{() => (registering() ? 'Create your account' : 'Sign in to your account')}</div>
+    <div class="lc-auth">
+      <div class="lc-subtitle" id="auth-subtitle">{() => (registering() ? 'Create your account' : 'Sign in to your account')}</div>
       {createShow(
         () => props.inviteOnly,
-        () => <div class="tl-notice" id="invite-notice">{props.inviteNotice}</div>,
+        () => <div class="lc-notice" id="invite-notice">{props.inviteNotice}</div>,
       )}
       <form id="auth-form" onSubmit={submit}>
         {createShow(
           () => registering(),
           () => (
-            <div class="tl-field">
-              <label for="tl-name">Name</label>
-              <input id="tl-name" type="text" placeholder="Your name" value={() => name()} onInput={(e: Event) => setName((e.target as HTMLInputElement).value)} />
+            <div class="lc-field">
+              <label for="lc-name">Name</label>
+              <input id="lc-name" type="text" placeholder="Your name" value={() => name()} onInput={(e: Event) => setName((e.target as HTMLInputElement).value)} />
             </div>
           ),
         )}
-        <div class="tl-field">
-          <label for="tl-email">Email</label>
-          <input id="tl-email" type="email" placeholder="you@example.com" autocomplete="email" value={() => email()} onInput={(e: Event) => setEmail((e.target as HTMLInputElement).value)} />
+        <div class="lc-field">
+          <label for="lc-email">Email</label>
+          <input id="lc-email" type="email" placeholder="you@example.com" autocomplete="email" value={() => email()} onInput={(e: Event) => setEmail((e.target as HTMLInputElement).value)} />
         </div>
-        <div class="tl-field">
-          <label for="tl-password">Password</label>
-          <input id="tl-password" type="password" autocomplete="current-password" value={() => password()} onInput={(e: Event) => setPassword((e.target as HTMLInputElement).value)} />
-          <button id="tl-reveal" type="button" aria-label="Show or hide password" onClick={revealPassword}>
+        <div class="lc-field">
+          <label for="lc-password">Password</label>
+          <input id="lc-password" type="password" autocomplete="current-password" value={() => password()} onInput={(e: Event) => setPassword((e.target as HTMLInputElement).value)} />
+          <button id="lc-reveal" type="button" aria-label="Show or hide password" onClick={revealPassword}>
             {() => (reveal() ? 'Hide' : 'Show')}
           </button>
         </div>
         {createShow(
           () => signingIn(),
-          () => <a id="tl-forgot" class="tl-link" href="#forgot">Forgot password?</a>,
+          () => <a id="lc-forgot" class="lc-link" href="#forgot">Forgot password?</a>,
         )}
-        <label class="tl-remember" for="tl-remember">
-          <input id="tl-remember" type="checkbox" checked={() => remember()} onChange={(e: Event) => setRemember((e.target as HTMLInputElement).checked)} />
+        <label class="lc-remember" for="lc-remember">
+          <input id="lc-remember" type="checkbox" checked={() => remember()} onChange={(e: Event) => setRemember((e.target as HTMLInputElement).checked)} />
           Remember email
         </label>
         {createShow(
           () => signingIn(),
-          () => <button id="tl-submit-in" class="tl-btn tl-btn-primary" type="submit">Sign in</button>,
+          () => <button id="lc-submit-in" class="lc-btn lc-btn-primary" type="submit">Sign in</button>,
         )}
         {createShow(
           () => registering(),
-          () => <button id="tl-submit-up" class="tl-btn tl-btn-primary" type="submit">Create account</button>,
+          () => <button id="lc-submit-up" class="lc-btn lc-btn-primary" type="submit">Create account</button>,
         )}
       </form>
       {createShow(
@@ -160,8 +160,8 @@ export function AuthForm(props: { startLogin: boolean; startRegister: boolean; a
       {createShow(
         () => props.allowPublicSignup,
         () => (
-          <div class="tl-toggle">
-            <button id="tl-toggle" class="tl-link" type="button" onClick={toggle}>
+          <div class="lc-toggle">
+            <button id="lc-toggle" class="lc-link" type="button" onClick={toggle}>
               {() => (registering() ? 'Already have an account? Sign in' : "Don't have an account? Sign up")}
             </button>
           </div>

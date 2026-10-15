@@ -25,9 +25,9 @@ export function tileBehaviour(ids) {
 export const BEHAVIOURS = {
   'ledger /household': {
     // The island fetches the workspace at activation: held until adoption is judged.
-    hold: ['/api/v1/instance'],
+    hold: ['/api/status'],
     interact: async (page) => {
-      await expect(page.locator('#arrival-status')).toHaveText('The workspace is ready.');
+      await expect(page.locator('#arrival-status')).toHaveText('Loaded.');
       await expect(page.locator('#arrival-retry')).toHaveCount(0);
       return 'status moved to ready';
     },
@@ -37,20 +37,20 @@ export const BEHAVIOURS = {
       await page.locator('#oauth-google').click();
       await expect(page.locator('#oauth-chosen')).toHaveText('Continuing with Google');
       // Sign up: the name field and the other button appear, the sign-in only controls go.
-      await page.locator('#tl-toggle').click();
+      await page.locator('#lc-toggle').click();
       await expect(page.locator('#auth-subtitle')).toHaveText('Create your account');
-      await expect(page.locator('#tl-name')).toBeVisible();
-      await expect(page.locator('#tl-submit-up')).toHaveText('Create account');
-      await expect(page.locator('#tl-submit-in')).toHaveCount(0);
-      await expect(page.locator('#tl-forgot')).toHaveCount(0);
-      await page.locator('#tl-toggle').click();
-      await expect(page.locator('#tl-submit-in')).toBeVisible();
-      await expect(page.locator('#tl-forgot')).toBeVisible();
+      await expect(page.locator('#lc-name')).toBeVisible();
+      await expect(page.locator('#lc-submit-up')).toHaveText('Create account');
+      await expect(page.locator('#lc-submit-in')).toHaveCount(0);
+      await expect(page.locator('#lc-forgot')).toHaveCount(0);
+      await page.locator('#lc-toggle').click();
+      await expect(page.locator('#lc-submit-in')).toBeVisible();
+      await expect(page.locator('#lc-forgot')).toBeVisible();
       // A visitor's own fields are the island's: typing, revealing, submitting empty.
-      await page.locator('#tl-password').fill('hunter2');
-      await page.locator('#tl-reveal').click();
-      await expect(page.locator('#tl-password')).toHaveAttribute('type', 'text');
-      await page.locator('#tl-submit-in').click();
+      await page.locator('#lc-password').fill('hunter2');
+      await page.locator('#lc-reveal').click();
+      await expect(page.locator('#lc-password')).toHaveAttribute('type', 'text');
+      await page.locator('#lc-submit-in').click();
       await expect(page.locator('#auth-failure')).toHaveText('Enter your email address.');
       return 'oauth, mode toggle, reveal and failure';
     },
@@ -77,6 +77,43 @@ export const BEHAVIOURS = {
       return 'filter bar and toolbar';
     },
   },
+  // Each variant reaches the islands that have something to do on it.
+  'fauth /t/:slug/login (invite-only tenant)': {
+    interact: async (page) => {
+      await page.locator('#lc-password').fill('hunter2');
+      await page.locator('#lc-reveal').click();
+      await expect(page.locator('#lc-password')).toHaveAttribute('type', 'text');
+      await page.locator('#lc-submit-in').click();
+      await expect(page.locator('#auth-failure')).toHaveText('Enter your email address.');
+      return 'reveal and failure';
+    },
+  },
+  'fauth /t/:slug/login (invite link on an invite-only tenant, starting in register mode)': {
+    interact: async (page) => {
+      await page.locator('#lc-toggle').click();
+      await expect(page.locator('#auth-subtitle')).toHaveText('Sign in to your account');
+      await expect(page.locator('#lc-submit-in')).toBeVisible();
+      return 'mode toggle';
+    },
+  },
+  'fauth /platform/benchmark (no results)': {
+    interact: async (page) => {
+      await page.locator('#bm-query').fill('abc');
+      await expect(page.locator('#bm-summary')).toHaveText('Showing 0 results for "abc", by name.');
+      await page.locator('#bm-failures').click();
+      await expect(page.locator('#bm-filtered')).toBeVisible();
+      return 'filter bar and toolbar';
+    },
+  },
+  'ksx /check (no controller)': {
+    interact: async (page) => {
+      await page.locator('#count-frame').click();
+      await expect(page.locator('#frames-seen')).toHaveText('1002');
+      await page.keyboard.press('g');
+      await expect(page.locator('#echo-last')).toHaveText('Last key: G');
+      return 'frame counter and key echo';
+    },
+  },
   'bench /pages/300': tileBehaviour([0]),
   'bench /pages/1500': tileBehaviour([0, 9]),
   'bench /pages/10000': tileBehaviour([0, 4]),
@@ -88,7 +125,7 @@ export const BEHAVIOURS = {
       await page.locator('#count-frame').click();
       await expect(page.locator('#frames-seen')).toHaveText('1002');
       await expect(page.locator('#quiet-line')).toHaveCount(0);
-      await expect(page.locator('#feed-line')).toHaveText('Receiving frames.');
+      await expect(page.locator('#feed-line')).toHaveText('Frames arriving.');
       // One key lights every chip it drives, on every slot at once (the screen's point).
       await page.keyboard.press('g');
       await expect(page.locator('.chip.lit')).toHaveCount(2);
@@ -121,16 +158,16 @@ export const EXTRAS = {
         try {
           const tab = await context.newPage();
           let calls = 0;
-          await tab.route('**/api/v1/instance', async (route) => {
+          await tab.route('**/api/status', async (route) => {
             calls += 1;
             if (calls === 1) await route.fulfill({ status: 503, body: 'down' });
             else await route.continue();
           });
           await tab.goto(new URL('/household', origin).href);
-          await expect(tab.locator('#arrival-status')).toHaveText('The workspace could not load (attempt 1). This snapshot is not live.');
+          await expect(tab.locator('#arrival-status')).toHaveText('Loading failed (attempt 1). Showing the opening snapshot.');
           await expect(tab.locator('#arrival-cash')).toHaveText('$12,345.67');
           await tab.locator('#arrival-retry').click();
-          await expect(tab.locator('#arrival-status')).toHaveText('The workspace is ready.');
+          await expect(tab.locator('#arrival-status')).toHaveText('Loaded.');
           await expect(tab.locator('#arrival-retry')).toHaveCount(0);
           expect(calls).toBe(2);
         } finally { await context.close(); }
@@ -155,7 +192,7 @@ export const EXTRAS = {
           expect(await tab.locator('#tenant-name b').count()).toBe(0);
           expect(await tab.locator('title').textContent()).toContain('";alert(1);//');
           // The page still works after the hostile name: the document was not cut short.
-          await tab.locator('#tl-toggle').click();
+          await tab.locator('#lc-toggle').click();
           await expect(tab.locator('#auth-subtitle')).toHaveText('Create your account');
           expect(errors).toEqual([]);
           expect(await tab.evaluate(() => globalThis.__violations)).toEqual([]);
@@ -176,7 +213,7 @@ export const EXTRAS = {
         try {
           await expect(page.locator('#oauth-google')).toHaveCount(0);
           await expect(page.locator('#oauth-github')).toHaveCount(0);
-          await expect(page.locator('#tl-toggle')).toHaveCount(0);
+          await expect(page.locator('#lc-toggle')).toHaveCount(0);
           await expect(page.locator('#invite-notice')).toBeVisible();
         } finally { await context.close(); }
       },
@@ -188,7 +225,7 @@ export const EXTRAS = {
       async run({ browser, origin }) {
         const { context, page } = await open(browser, origin, '/check?state=empty', { javaScriptEnabled: false });
         try {
-          await expect(page.locator('#empty h2')).toHaveText('No controller is ready to test');
+          await expect(page.locator('#empty h2')).toHaveText('No device configured');
           await expect(page.locator('#chips')).toHaveCount(0);
           await expect(page.locator('#roster li')).toHaveCount(0);
         } finally { await context.close(); }

@@ -221,7 +221,7 @@ The build then copies `dist/formajs-frame.global.js` from the
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route, what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile) beside the application's; printed and returned as `BuildResult.sizes`. **N2's gate:** a route whose Forma code is over 25,500 B gzip -9 fails the build with `BUILD-819` before anything is written (decision brief L-55; the ceiling is not configurable) |
+| **Size report** | Per route, what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's; printed and returned as `BuildResult.sizes`. **N2's gate:** a route whose Forma code is over 25,500 B gzip -9 fails the build with `BUILD-819` before anything is written (decision brief L-55; the ceiling is not configurable) |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 ## Configuration
@@ -319,7 +319,7 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
   "version": 2,
   "writer": "3.0.0",
   "app": "ledger",
-  "build": "example-build-identifier",
+  "build": "5f0c9a1e7d2b4c86",
   "aliases": {"home.js": "home.a1b2c3d4.js", "home.ir": "home.a1b2c3d4.ir"},
   "assets": {
     "home.a1b2c3d4.js": {"immutable": true},
@@ -336,8 +336,27 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
 The actual build includes `integrity: "sha384-<base64>"` for each asset, computed
 from its final uncompressed bytes. Compression sidecars, the manifest and the
 worker are excluded. Integrity enforcement is FORMA-111; emission alone does not
-provide that enforcement. `build` retains the previous filename-derived algorithm
-(and `dev` during watch); FORMA-186 owns the final deployment identity.
+provide that enforcement.
+
+### The deployment identity (`build`)
+
+`build` is the build's deployment identity: 16 lowercase hexadecimal characters
+(`dev` in watch mode). A production build computes it first, from every output of
+a first bundling pass (the JavaScript and CSS bundles, the other emitted files and
+the `.ir` modules, plus the css entries and fonts) and the writers' versions, and
+only then compiles it in:
+
+- as the constant `__FORMA_BUILD__` (esbuild `define`), which `@getforma/core`
+  compares with the `data-forma-build` attribute forma-server writes on the page's
+  root before it activates anything;
+- as a `/*forma-build:<id>*/` banner in every JavaScript output, so the names,
+  which hash content, change with the identity: every deploy renames every bundle.
+
+The same inputs give the same identity wherever they are built from (esbuild
+hashes paths relative to the working directory, so build from the project root).
+An edit that changes no output byte, a comment, changes nothing and disturbs no
+open tab. The identity does not depend on a previous `dist/`. The first pass
+costs one more bundling run; the compiler's lines for it are not printed twice.
 
 forma-server validates the schema, writer window, app, references and route modes
 before loading modules. It resolves logical names through `aliases` and reads

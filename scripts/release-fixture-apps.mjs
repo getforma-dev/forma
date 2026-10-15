@@ -250,10 +250,10 @@ export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, bro
             const cases = [{ label: route, path: page.path ?? route, expectation: page, main: true },
               ...(page.variants ?? []).map(variant => ({ label: `${route} (${variant.name})`, path: variant.path, expectation: variant, main: false }))];
             for (const { label, path, expectation, main } of cases) {
-              const behaviour = main ? (BEHAVIOURS[`${name} ${route}`] ?? {}) : {};
+              const behaviour = BEHAVIOURS[main ? `${name} ${route}` : `${name} ${label}`] ?? {};
               const result = await verifyIslandPage(browser, origin, route, manifest, {
                 path, expected: expectedFor(page, expectation), hold: behaviour.hold ?? [],
-                interact: behaviour.interact ?? (async tab => tab.locator('[data-forma-island]').count()),
+                interact: behaviour.interact,
               });
               assert.equal(result.mutations, 0, `${name} ${label}: adoption wrote to the DOM`);
               assert(result.interacted, `${name} ${label}: nothing proved the islands active`);

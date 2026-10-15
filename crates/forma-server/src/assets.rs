@@ -256,10 +256,10 @@ fn is_embedded<A: Embed + 'static>(name: &str) -> bool {
 #[cfg(not(debug_assertions))]
 type NameSet = std::collections::HashSet<std::borrow::Cow<'static, str>>;
 
-/// How many `Embed` types get a cached name set. An application serves one;
-/// asset retention would serve two (this build's and the previous one's). A
-/// type beyond the last slot is checked by scanning its list: slower, never
-/// wrong.
+/// How many `Embed` types get a cached name set. An application serves one: asset
+/// retention (FORMA-186) copies the previous release's files into the one `dist/`
+/// the application embeds. A type beyond the last slot is checked by scanning its
+/// list: slower, never wrong.
 #[cfg(not(debug_assertions))]
 const NAME_CACHE_SLOTS: usize = 4;
 

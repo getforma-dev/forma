@@ -208,6 +208,11 @@ async fn a_panicking_component_returns_fault_the_handler_answers_500_and_the_nex
     let (status, html) = body(app.get("acme")).await;
     assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Acme") && html.contains("data-forma-ssr"));
+    // A server-rendered page names the build too, on the same root (FORMA-186, DR-29).
+    assert!(html.contains(&format!(
+        "<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
+        app.manifest.build
+    )));
 }
 
 #[tokio::test]
@@ -511,7 +516,11 @@ async fn render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_pa
     let headers = response.headers().clone();
     let (status, html) = body(response).await;
     assert_eq!(status, StatusCode::OK);
-    assert!(html.contains("<div id=\"app\"></div>"));
+    // The shell's root names the build the manifest names (FORMA-186, DR-29).
+    assert!(html.contains(&format!(
+        "<div id=\"app\" data-forma-build=\"{}\"></div>",
+        manifest.build
+    )));
     assert!(!html.contains("data-forma-ssr") && !html.contains("Acme"));
     let start = html
         .find("<script type=\"module\" nonce=\"")
