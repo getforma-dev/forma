@@ -187,8 +187,8 @@ applications of `e2e/fixtures/apps/` against DS11, after the templates:
    other branches); and the packed compiler's refusal of the shapes `negative/` holds.
 
 The measurement step (`scripts/release-measurements.mjs`) then fails P17 naming a figure and both numbers
-when P17's wall time passes G6's 1,800 s, when Forma's code on any fixture route passes N2's 25,500 B
-gzip -9 (L-55; the build refuses it too, BUILD-819), or when a fixture route has no figure; and records,
+when P17's wall time passes G6's 1,800 s, when Forma's code on any fixture route passes N2's ceiling
+(read from the packed build's own constant, never written in the step, and cross-checked against the build's verdict for the route; gzip -9; L-55; the build refuses it too, BUILD-819), or when a fixture route has no figure; and records,
 with the machine and profile, in `report.measurements` (which `release-record.mjs` embeds in DS12 and
 summarises in one line of the Release's notes): P17's time, N2 per route in gzip and Brotli beside the
 application's own bytes, and the walker's node, byte and list counts of the consumer-shaped pages

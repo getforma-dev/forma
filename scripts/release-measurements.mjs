@@ -4,18 +4,27 @@
 //   - P17's own wall time against G6's thirty minutes (FORMA-187's definition: the tag's push to the
 //     GitHub Release written; P17 alone may not use more than the whole);
 //   - Forma's code per fixture route, from the packed build's size report, against N2 as L-55
-//     restated it (25,500 B gzip -9 per route), re-asserted beside the build's own BUILD-819;
+//     restated it (the packed build's own ceiling, gzip -9 per route), re-asserted beside the build's own BUILD-819;
 //   - the shape of the consumer-shaped pages (the walker's node, byte and list counts, the islands),
 //     recorded and not gated: FORMA-191 reads them and adds N1, N3 and N5 rows to the same report.
 //
 // Nothing here sets a threshold. Both figures are recorded decisions: G6 (appendix C) and L-55.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { cpus, totalmem } from 'node:os';
 
 /** G6: tag push to the Release written, thirty minutes (FORMA-187). P17 is a part of that, so it may not exceed it alone. */
 export const P17_BUDGET_SECONDS = 1800;
-/** N2 as restated by L-55: Forma's own code per route, bytes gzip -9. `packages/build/src/route-size.ts` holds the same figure; a test ties them. */
-export const N2_FORMA_GZIP_BYTES = 25_500;
+/**
+ * N2's ceiling is never written here: the packed build's own constant is the figure (`readPackedCeiling`),
+ * and each route's row is cross-checked against the verdict the build reported for it.
+ */
+export function readPackedCeiling(buildDist) {
+  const found = /FORMA_CODE_CEILING_GZIP\s*=\s*([\d_]+)/.exec(readFileSync(join(buildDist, 'index.js'), 'utf8'));
+  assert(found, `N2: the packed build (${buildDist}) does not name its ceiling (FORMA_CODE_CEILING_GZIP); the measurement step will not invent one`);
+  return Number(found[1].replaceAll('_', ''));
+}
 
 const fmt = n => n.toLocaleString('en-US');
 
@@ -37,12 +46,15 @@ export function machineProfile({ env = process.env, rustc = 'unknown', npm = 'un
 }
 
 /** One N2 row per route of the packed build's size report. `sizes` is `BuildResult.sizes`. */
-export function n2Rows(app, sizes, limit = N2_FORMA_GZIP_BYTES) {
+export function n2Rows(app, sizes, limit) {
+  assert(Number.isInteger(limit) && limit > 0, `N2 ${app}: no ceiling was supplied; read it from the packed build`);
   assert(Array.isArray(sizes) && sizes.length > 0, `${app}: the packed build reported no route sizes`);
   return sizes.map(size => {
     for (const [name, value] of [['forma.gzip', size.forma?.gzip], ['forma.brotli', size.forma?.brotli], ['gzip', size.gzip]]) {
       assert(Number.isInteger(value) && value >= 0, `${app} ${size.route}: the size report has no ${name}`);
     }
+    // The build's own verdict for the route must agree with this row's.
+    if (typeof size.over === 'boolean') assert.equal(size.over, size.forma.gzip > limit, `N2 ${app} ${size.route}: the packed build's verdict (over: ${size.over}) disagrees with ${size.forma.gzip} B against ${limit} B`);
     return {
       id: 'N2', app, route: size.route,
       formaGzip: size.forma.gzip, formaBrotli: size.forma.brotli,

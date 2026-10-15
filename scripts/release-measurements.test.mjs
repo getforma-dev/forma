@@ -1,44 +1,54 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT } from './release-set.mjs';
-import { N2_FORMA_GZIP_BYTES, P17_BUDGET_SECONDS, assertN2, completeMeasurements, machineProfile, n2Rows, p17Time, releaseNotesLine, shapeRow } from './release-measurements.mjs';
+import { P17_BUDGET_SECONDS, readPackedCeiling, assertN2, completeMeasurements, machineProfile, n2Rows, p17Time, releaseNotesLine, shapeRow } from './release-measurements.mjs';
 
 const size = (route, formaGzip, extra = {}) => ({ route, gzip: formaGzip + 600, brotli: formaGzip + 100, forma: { raw: 1, gzip: formaGzip, brotli: formaGzip - 2000 }, application: { raw: 1, gzip: 600, brotli: 500 }, over: false, ...extra });
 const machine = machineProfile({ env: { RUNNER_OS: 'Linux', RUNNER_ARCH: 'X64' }, rustc: 'rustc 1.93.1', npm: '11.6.2' });
 
-test('the two recorded figures are the figures the tree states', () => {
-  // N2 (L-55) is enforced by the build as BUILD-819; the measurement must use the same number.
-  const source = readFileSync(join(ROOT, 'packages/build/src/route-size.ts'), 'utf8');
-  assert.equal(Number(/FORMA_CODE_CEILING_GZIP = ([\d_]+);/.exec(source)?.[1].replaceAll('_', '')), N2_FORMA_GZIP_BYTES);
+test('N2\'s ceiling is read from the packed build, never written here, and its verdict must agree', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-ceiling-'));
+  try {
+    writeFileSync(join(dir, 'index.js'), 'var FORMA_CODE_CEILING_GZIP = 27500;\n');
+    assert.equal(readPackedCeiling(dir), 27_500);
+    writeFileSync(join(dir, 'index.js'), 'var FORMA_CODE_CEILING_GZIP = 25_500;\n');
+    assert.equal(readPackedCeiling(dir), 25_500);
+    writeFileSync(join(dir, 'index.js'), 'var other = 1;\n');
+    assert.throws(() => readPackedCeiling(dir), /does not name its ceiling/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+  assert.throws(() => n2Rows('a', [size('/', 1)]), /no ceiling was supplied/);
+  assert.throws(() => n2Rows('a', [size('/', 27_000, { over: true })], 27_500), /disagrees/);
+  assert.doesNotThrow(() => n2Rows('a', [size('/', 27_000, { over: false })], 27_500));
   // G6 is printed into every Release's notes as the target.
   assert.match(readFileSync(join(ROOT, 'scripts/release-record.mjs'), 'utf8'), new RegExp(`target ${P17_BUDGET_SECONDS} seconds`));
 });
 
 test('N2: a route over the ceiling fails naming the app, the route and both numbers', () => {
-  const rows = n2Rows('ledger', [size('/household', 25_366)]);
+  const rows = n2Rows('ledger', [size('/household', 25_366)], 25_500);
   assert.equal(rows[0].passed, true);
   assert.deepEqual(assertN2(rows, [{ app: 'ledger', route: '/household' }]), rows);
-  const over = n2Rows('ledger', [size('/household', 25_731)]);
+  const over = n2Rows('ledger', [size('/household', 25_731, { over: true })], 25_500);
   assert.equal(over[0].passed, false);
   assert.throws(() => assertN2(over, [{ app: 'ledger', route: '/household' }]), /N2 ledger \/household: 25,731 B of Forma code over 25,500 B gzip -9/);
   // The boundary is inclusive, as the build's own gate is.
-  assert.equal(n2Rows('a', [size('/', 25_500)])[0].passed, true);
-  assert.equal(n2Rows('a', [size('/', 25_501)])[0].passed, false);
+  assert.equal(n2Rows('a', [size('/', 25_500)], 25_500)[0].passed, true);
+  assert.equal(n2Rows('a', [size('/', 25_501, { over: true })], 25_500)[0].passed, false);
 });
 
 test('N2: a fixture route with no figure, or a size report without Forma bytes, fails', () => {
-  const rows = n2Rows('ledger', [size('/household', 25_000)]);
+  const rows = n2Rows('ledger', [size('/household', 25_000)], 25_500);
   assert.throws(() => assertN2(rows, [{ app: 'ledger', route: '/household' }, { app: 'fauth', route: '/t/:slug/login' }]), /no figure was recorded for this fixture route/);
-  assert.throws(() => n2Rows('ledger', []), /reported no route sizes/);
-  assert.throws(() => n2Rows('ledger', [{ route: '/', gzip: 1, brotli: 1 }]), /no forma\.gzip/);
+  assert.throws(() => n2Rows('ledger', [], 25_500), /reported no route sizes/);
+  assert.throws(() => n2Rows('ledger', [{ route: '/', gzip: 1, brotli: 1 }], 25_500), /no forma\.gzip/);
 });
 
 test('P17 time: inside thirty minutes passes, one second over fails with both numbers', () => {
   assert.equal(p17Time(205).passed, true);
   assert.equal(p17Time(P17_BUDGET_SECONDS).passed, true);
-  const rows = n2Rows('ledger', [size('/household', 25_000)]);
+  const rows = n2Rows('ledger', [size('/household', 25_000)], 25_500);
   const base = { machine, n2: rows, expectedRoutes: [{ app: 'ledger', route: '/household' }] };
   assert.equal(completeMeasurements({ ...base, seconds: 205 }).p17.passed, true);
   assert.throws(() => completeMeasurements({ ...base, seconds: P17_BUDGET_SECONDS + 1 }), /P17-time 1,801 s over 1,800 s/);
@@ -55,7 +65,7 @@ test('the machine block names the platform, the processors and the profile, and 
   assert.equal(machine.runner, 'Linux X64');
   assert(machine.cpus >= 1 && machine.node.startsWith('v') && machine.profile.includes('debug'));
   assert.equal(machineProfile({ env: {} }).runner, 'local');
-  const rows = n2Rows('fauth', [size('/a', 25_100), size('/b', 25_424)]);
+  const rows = n2Rows('fauth', [size('/a', 25_100), size('/b', 25_424)], 25_500);
   const line = releaseNotesLine(completeMeasurements({ machine, seconds: 301.4, n2: rows, expectedRoutes: [{ app: 'fauth', route: '/a' }, { app: 'fauth', route: '/b' }] }));
   assert.match(line, /P17 ran 301 s of 1,800 s/);
   assert.match(line, /25,424 B of 25,500 B gzip -9 \(fauth \/b\)/);
