@@ -4,6 +4,7 @@ import { basename, join } from 'node:path';
 import { BUILD_WRITER_VERSION } from './compatibility.js';
 import type { AssetManifest, AssetMetadata, BuildConfig, RouteManifest } from './types.js';
 import type { EntryProducts } from './entry-products.js';
+import type { RouteClass } from './route-size.js';
 
 export function generateManifest(
   config: BuildConfig,
@@ -12,7 +13,7 @@ export function generateManifest(
   graphFiles: ReadonlySet<string> = new Set(),
   products: EntryProducts = new Map(),
   identity?: string,
-): { manifest: AssetManifest; warnings: string[] } {
+): { manifest: AssetManifest; warnings: string[]; classes: Record<string, RouteClass> } {
   const distDir = config.outputDir;
   const BUDGET_THRESHOLD = config.budgetThreshold ?? 200_000;
   const warnings: string[] = [];
@@ -32,6 +33,14 @@ export function generateManifest(
 
   // Build route manifest
   const routes: Record<string, RouteManifest> = {};
+  // The size report's classes (DR-35, FORMA-190), decided where the owner is:
+  // a server-rendered route whose native product needs no browser has no
+  // interactive region, one that does activates islands; any other route that
+  // lists a script mounts its whole page (a declared ssr:false entry, or every
+  // route of an application built without ssr), and one that lists none ships
+  // nothing.
+  // Verified by: packages/build/tests/route-size.test.ts > "classifies each route from its entry's native product: a static page has no interactive region, a page with islands is islands, a declared ssr:false entry is a whole-page mount"
+  const classes: Record<string, RouteClass> = {};
 
   for (const [route, mapping] of Object.entries(config.routes)) {
     // Route ownership is selected from configuration before browser filtering.
@@ -103,6 +112,9 @@ export function generateManifest(
 
     if (serverRendered && !routeEntry.ir) throw new Error(`BUILD-817 route ${route} declares SSR but its compiled module is missing; fix compilation before serving this build`);
     routes[route] = routeEntry;
+    classes[route] = serverRendered
+      ? (staticRoute ? 'no-interactive-region' : 'islands')
+      : (jsFiles.length > 0 ? 'whole-page-mount' : 'no-interactive-region');
 
     // Budget warning
     if (totalSize > BUDGET_THRESHOLD) {
@@ -118,7 +130,7 @@ export function generateManifest(
   if (!config.watch) for (const file of graphFiles) immutable.add(file);
   const metadata: Record<string, AssetMetadata> = {};
   for (const file of readdirSync(distDir).sort()) {
-    if (file === 'manifest.json' || file === 'sw.js' || /\.(?:br|gz)$/.test(file)) continue;
+    if (file === 'manifest.json' || file === 'size-report.json' || file === 'sw.js' || /\.(?:br|gz)$/.test(file)) continue;
     if (!statSync(join(distDir, file)).isFile()) continue;
     metadata[file] = {
       immutable: !config.watch && immutable.has(file),
@@ -142,5 +154,5 @@ export function generateManifest(
     assets: metadata,
     routes,
   };
-  return { manifest, warnings };
+  return { manifest, warnings, classes };
 }

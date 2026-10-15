@@ -97,12 +97,15 @@ pub fn try_load_module_preloads<A: Embed>() -> Result<crate::ModulePreloads, Str
 /// Files that must never be served through the asset route.
 ///
 /// `manifest.json` exposes the full route table, asset graph and per-route
-/// size budgets, and nothing client-side fetches it. A direct `.br`/`.gz`
+/// size budgets, and nothing client-side fetches it. The same goes for
+/// `size-report.json`, the build's size report written beside it
+/// (FORMA-190): every route with its class, ceilings and bytes. A direct `.br`/`.gz`
 /// request would return compressed bytes with no `Content-Encoding`, i.e. a
 /// corrupt response. IR modules are server input and are never public assets — those siblings are only ever reachable through content
 /// negotiation below.
 fn is_denied(filename: &str) -> bool {
     filename == "manifest.json"
+        || filename == "size-report.json"
         || filename.ends_with(".ir")
         || filename.ends_with(".br")
         || filename.ends_with(".gz")
@@ -520,6 +523,9 @@ mod tests {
         // .br/.gz request would return compressed bytes with no
         // Content-Encoding.
         assert!(is_denied("manifest.json"));
+        // The build's size report sits beside the manifest (FORMA-190) and
+        // lists the same route table with each route's bytes.
+        assert!(is_denied("size-report.json"));
         assert!(is_denied("page.abc12345.ir"));
         assert!(is_denied("app.a1b2c3d4.js.br"));
         assert!(is_denied("app.a1b2c3d4.js.gz"));
@@ -684,6 +690,47 @@ mod tests {
             header_of(&response, "content-encoding").as_deref(),
             Some("gzip")
         );
+    }
+
+    /// The fixtures plus a `size-report.json`, as an output of `@getforma/build`
+    /// 3.0 embeds it beside the manifest (FORMA-190): really embedded, so that a
+    /// 404 for it can only be the handler's refusal and not an absent file.
+    struct WithReport;
+
+    impl Embed for WithReport {
+        fn get(path: &str) -> Option<rust_embed::EmbeddedFile> {
+            if path != "size-report.json" {
+                return Fixtures::get(path);
+            }
+            let mut file = Fixtures::get("manifest.json")?;
+            file.data = std::borrow::Cow::Borrowed(br#"{"version":1,"routes":[]}"#);
+            Some(file)
+        }
+        fn iter() -> impl Iterator<Item = std::borrow::Cow<'static, str>> {
+            Fixtures::iter().chain(std::iter::once(std::borrow::Cow::Borrowed(
+                "size-report.json",
+            )))
+        }
+    }
+
+    // Verified by: crates/forma-server/src/assets.rs > "denied_names_are_never_served"
+    #[tokio::test]
+    async fn an_embedded_size_report_is_not_served_through_the_route() {
+        assert!(is_embedded::<WithReport>("size-report.json"));
+        assert!(WithReport::get("size-report.json").is_some());
+        for accept in [None, Some("br, gzip"), Some("identity")] {
+            let mut headers = HeaderMap::new();
+            if let Some(accept) = accept {
+                headers.insert(header::ACCEPT_ENCODING, accept.parse().unwrap());
+            }
+            let response =
+                serve_asset::<WithReport>(Path("size-report.json".to_string()), headers).await;
+            assert_eq!(response.status(), StatusCode::NOT_FOUND, "{accept:?}");
+        }
+        // The same embed still serves what it should: the report's neighbours.
+        let served =
+            serve_asset::<WithReport>(Path("app.a1b2c3d4.js".to_string()), HeaderMap::new()).await;
+        assert_eq!(served.status(), StatusCode::OK);
     }
 
     #[tokio::test]

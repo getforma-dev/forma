@@ -35,7 +35,7 @@ import { entryProducts, browserEntries, type EntryProduct, type EntryProducts } 
 import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
 import { computeIdentity, DEV_IDENTITY, identityBanner, type IdentityFile } from './identity.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
-import { formatRouteSizes, routeSizeFailure, routeSizes } from './route-size.js';
+import { REPORT_CEILINGS, formatSizeReport, frameSize, routeSizeFailure, routeSizes, serializeSizeReport, workerSize, type BuildTimes, type SizeReport } from './route-size.js';
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
   DiagnosticsCollector,
@@ -376,6 +376,14 @@ function validateConfig(config: BuildConfig): void {
         );
       }
     }
+    // A JavaScript config is not type checked: a string here would read as on.
+    // Verified by: packages/build/tests/route-size.test.ts > "refuses a canvas that is not a boolean before writing anything"
+    const canvas: unknown = mapping?.canvas;
+    if (canvas !== undefined && typeof canvas !== 'boolean') {
+      problems.push(
+        `routes['${route}'].canvas is ${shown(canvas)}: use true to declare the route a canvas (365 KiB of JavaScript instead of 75 KiB, N2), or leave it out`,
+      );
+    }
   }
 
   // The JSON report is a build-time record, not an asset: inside outputDir it
@@ -438,12 +446,16 @@ function printBundleSummary(metafiles: esbuild.Metafile[], assets: Record<string
 // Service Worker Generation
 // ---------------------------------------------------------------------------
 
-function generateServiceWorker(
+/** The worker's source: production, from the finished manifest; watch mode's network-only worker. */
+function workerSourceFor(
   config: BuildConfig,
   manifest: Pick<AssetManifest, 'app' | 'build' | 'assets'>,
   excludedFiles: string[] = [],
-): void {
-  const source = serviceWorkerSource({ ...manifest, development: config.watch === true, excludedFiles });
+): string {
+  return serviceWorkerSource({ ...manifest, development: config.watch === true, excludedFiles });
+}
+
+function generateServiceWorker(config: BuildConfig, source: string): void {
   writeFileAtomic(join(config.outputDir, 'sw.js'), source);
   console.log(`   SW generated: dist/sw.js (${config.watch ? 'network-only development' : 'verified on-demand assets'})`);
 }
@@ -632,6 +644,17 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
 async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRuntime | undefined, compiler: typeof import('@getforma/compiler') | undefined, compatibility: () => void): Promise<BuildResult> {
   const distDir = config.outputDir;
   const createdDir = !existsSync(distDir);
+
+  // The production build's times, by phase (N7, FORMA-190): wall-clock
+  // milliseconds from here to each mark, for the printed report and the
+  // result; the size-report.json file holds none.
+  const phases: BuildTimes['phases'] = { bundle: 0, hash: 0, compress: 0, manifest: 0 };
+  let lap = performance.now();
+  const mark = (phase: keyof BuildTimes['phases']): void => {
+    const now = performance.now();
+    phases[phase] = Math.round(now - lap);
+    lap = now;
+  };
 
   // ── Clean output directory (watch mode; a staging directory is new) ──
   rmSync(distDir, { recursive: true, force: true });
@@ -914,7 +937,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
 
       // Generate a dev service worker so /sw.js doesn't 404
-      generateServiceWorker(config, { app: config.app!, assets: {}, build: 'dev' });
+      generateServiceWorker(config, workerSourceFor(config, { app: config.app!, assets: {}, build: 'dev' }));
 
       // The pages' first compilation; each rebuild replaces its page's own.
       const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
@@ -928,6 +951,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         // Watch mode is a development build, unminified and inline-mapped:
         // its bytes are not what a route ships, so there is no report.
         sizes: [],
+        sizeReport: { version: 1, ceilings: REPORT_CEILINGS, routes: [] },
       };
     }
 
@@ -979,10 +1003,13 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       if (errors.length > 0) throw strictFailure(errors);
     }
 
+    mark('bundle');
+
     // ── Content hashing ───────────────────────────────────────────────
     const assets = hashAssets(config, graph?.assets);
     printBundleSummary(metafiles, assets, shownDir);
     console.log(`   ${Object.keys(assets).length} assets hashed`);
+    mark('hash');
 
     // ── Compression ───────────────────────────────────────────────────
     // The preview frame's runtime is inlined by forma-server, never fetched:
@@ -990,19 +1017,39 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     // Verified by: packages/build/tests/preview-frame.test.ts > "the runtime is inlined, never fetched: no compressed copies, and no entry in the on-demand worker's immutable list"
     const frameFile = frame ? assets[FRAME_RUNTIME_ASSET] : undefined;
     compressAssets(distDir, new Set(frameFile ? [frameFile] : []));
+    mark('compress');
 
     // ── Manifest generation ───────────────────────────────────────────
-    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products, identity);
+    const { manifest, warnings, classes } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products, identity);
     if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
+    mark('manifest');
 
-    // ── The size report, and N2's gate on it (FORMA-021, L-55) ──────────
-    // Forma's code per route, from the bundler's metafile and the hashed files
-    // the manifest names, printed for every route; a route over the ceiling
-    // fails the build here, before the manifest is written and the staging
-    // directory swapped in, so the previous output stays as it was (L-21).
+    // ── The size report, and the gate on it (FORMA-021, FORMA-190, L-55) ──
+    // Each route's class and Forma's code, from the bundler's metafile and the
+    // hashed files the manifest names, with the service worker a route with
+    // JavaScript registers, the preview frame's runtime when it is on, and the
+    // times above; printed for every route. A route over a ceiling fails the
+    // build here, before the manifest is written and the staging directory
+    // swapped in, so the previous output stays as it was (L-21).
     // Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's Forma code is over the ceiling, leaving no output"
-    const sizes = routeSizes(manifest.routes, metafiles, assets, distDir);
-    console.log(`\n${formatRouteSizes(sizes).join('\n')}`);
+    // Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's JavaScript is over 75 KiB, unless the route is declared a canvas, and a canvas is held to 365 KiB"
+    const workerSource = workerSourceFor(config, manifest, frameFile ? [frameFile] : []);
+    const worker = workerSize(workerSource);
+    const sizes = routeSizes(manifest.routes, metafiles, assets, distDir, {
+      classes,
+      canvases: new Set(Object.entries(config.routes).filter(([, mapping]) => mapping.canvas === true).map(([route]) => route)),
+      worker,
+    });
+    const times: BuildTimes = { totalMs: Object.values(phases).reduce((total, ms) => total + ms, 0), phases };
+    const sizeReport: SizeReport = {
+      version: 1,
+      ceilings: REPORT_CEILINGS,
+      routes: sizes,
+      worker,
+      ...(frameFile ? { frame: frameSize(frameFile, distDir) } : {}),
+      times,
+    };
+    console.log(`\n${formatSizeReport(sizeReport).join('\n')}`);
     const overCeiling = routeSizeFailure(sizes);
     if (overCeiling) throw overCeiling;
 
@@ -1010,12 +1057,18 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       join(distDir, 'manifest.json'),
       JSON.stringify(manifest, null, 2) + '\n',
     );
+    // Beside the manifest, without the times: the application embeds this
+    // directory, and the same sources are the same bytes. forma-server refuses
+    // to serve it, as it refuses the manifest.
+    // Verified by: packages/build/tests/route-size.test.ts > "writes size-report.json beside the manifest: every route with its class, ceilings and verdict, the service worker, and no clock reading"
+    writeFileSync(join(distDir, 'size-report.json'), serializeSizeReport(sizeReport));
     console.log(
       `\nManifest written: ${shownDir}/manifest.json (build: ${manifest.build.slice(0, 12)}...)`,
     );
+    console.log(`Size report written: ${shownDir}/size-report.json`);
 
     // ── Service worker generation ─────────────────────────────────────
-    generateServiceWorker(config, manifest, frameFile ? [frameFile] : []);
+    generateServiceWorker(config, workerSource);
 
     return {
       manifest,
@@ -1023,6 +1076,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       warnings,
       diagnostics,
       sizes,
+      sizeReport,
     };
   } catch (err) {
     // Watch mode: remove the output directory if this build created it. A
