@@ -4,7 +4,7 @@
   "contract": "A finite number written as DOM text or as an attribute value is formatted as ECMAScript Number.prototype.toString formats it: the shortest digits that round-trip, a fixed form when the decimal exponent n satisfies -6 < n <= 21, otherwise an exponent with an explicit '+' sign, and -0 as '0'. Each `lexeme` is parsed as a binary64 on both sides (Rust `str::parse::<f64>`, JS `Number(lexeme)`), so a lexeme past 2^53 is rounded before formatting; an exact integer origin beyond 2^53 - 1 is rule 3's refusal, not this rule.",
   "consumers": [
     "crates/forma-ir/src/walker.rs > value_rule_vectors (DYN_TEXT and DYN_ATTR on a Number slot)",
-    "packages/core/src/dom/__tests__/value-rules.test.ts (String(n) as the oracle; h() text and attribute children; adoption expectations)"
+    "packages/core/src/dom/__tests__/value-rule-2-numbers.test.ts (String(n) as the oracle; h() text and attribute children; adoption expectations)"
   ],
   "note": "Hand-enumerated finite vectors. NaN and the infinities are not vectors: RENDER-402 refuses a non-finite declared number before it can be rendered, and the walker's spelling of them ('NaN', 'Infinity', '-Infinity') is the same as String(). Not a generator or campaign.",
   "values": [

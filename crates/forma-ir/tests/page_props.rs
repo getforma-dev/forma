@@ -465,8 +465,9 @@ fn raw_identifiers_and_leading_underscores_have_stable_camel_case_names() {
 // -- FORMA-182 rules 3 and 4: the shared value-rule vectors ------------------
 //
 // `tests/fixtures/parity/integers.json` and `dates.json` are read here and by
-// @getforma/core's suite (packages/core/src/dom/__tests__/value-rules.test.ts),
-// so the admission boundary has one source of truth on both sides.
+// @getforma/core's suites (packages/core/src/dom/__tests__/value-rule-3-integers
+// .test.ts and value-rule-4-dates.test.ts), so the admission boundary has one
+// source of truth on both sides.
 mod value_rule_vectors {
     use super::*;
     use serde_json::Value;

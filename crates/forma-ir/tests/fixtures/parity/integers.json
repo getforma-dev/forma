@@ -5,7 +5,7 @@
   "consumers": [
     "crates/forma-ir/tests/page_props.rs > integer_vectors_are_admitted_or_refused_in_the_integer_domain (encode_props on i64 and u64 origins, f64 origins)",
     "crates/forma-ir/src/walker.rs > value_rule_vectors (an admitted integer as DYN_TEXT)",
-    "packages/core/src/dom/__tests__/value-rules.test.ts (Number.isSafeInteger and BigInt as the oracle; JSON.parse round trip; h() text)"
+    "packages/core/src/dom/__tests__/value-rule-3-integers.test.ts (Number.isSafeInteger and BigInt as the oracle; JSON.parse round trip; h() text)"
   ],
   "note": "Hand-enumerated. `kind` names the Rust origin type the vector is encoded from; `lexeme` is the exact decimal, never a JSON number, so no reader rounds it before the check.",
   "exact": [

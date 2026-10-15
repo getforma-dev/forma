@@ -6266,18 +6266,16 @@ mod tests {
     // -- FORMA-182 rules 2 to 7: the shared value-rule vectors ---------------
     //
     // One JSON file per rule under tests/fixtures/parity/, each read by this
-    // crate and by @getforma/core's suite (packages/core/src/dom/__tests__/
-    // value-rules.test.ts); the compiled shapes of rules 4, 6 and 7 are read
-    // by @getforma/compiler's suite. Every case walks the real opcode stream.
+    // crate and by @getforma/core's per-rule suites (packages/core/src/dom/
+    // __tests__/value-rule-<n>-*.test.ts); the compiled shapes of rules 4, 6
+    // and 7 are read by @getforma/compiler's (packages/compiler/tests/
+    // value-rule-<n>-*.test.ts). Every case walks the real opcode stream.
     mod value_rule_vectors {
         use super::*;
         use serde_json::Value;
 
         const NUMBERS: &str = include_str!("../tests/fixtures/parity/numbers.json");
         const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
-        const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
-        const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
-        const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
 
         fn cases(file: &str, section: &str) -> Vec<Value> {
             let all: Value = serde_json::from_str(file).unwrap();
@@ -6299,20 +6297,6 @@ mod tests {
             format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
         }
 
-        /// The text a browser shows: marker comments and the empty-range
-        /// zero-width spaces removed.
-        fn visible(rendered: &str) -> String {
-            let mut out = String::new();
-            let mut rest = rendered;
-            while let Some(start) = rest.find("<!--") {
-                out.push_str(&rest[..start]);
-                let end = rest[start..].find("-->").unwrap() + start + 3;
-                rest = &rest[end..];
-            }
-            out.push_str(rest);
-            out.replace('\u{200B}', "")
-        }
-
         fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
             if actual != expected {
                 failures.push(format!(
@@ -6328,18 +6312,6 @@ mod tests {
                 failures.len(),
                 failures.join("\n")
             );
-        }
-
-        /// A slot value from a vector's JSON value: a string, a number, a
-        /// boolean or null (the shapes the vectors use).
-        fn slot_value(value: &Value) -> SlotValue {
-            match value {
-                Value::Null => SlotValue::Null,
-                Value::Bool(b) => SlotValue::Bool(*b),
-                Value::Number(n) => SlotValue::Number(n.as_f64().unwrap()),
-                Value::String(s) => SlotValue::Text(s.clone()),
-                other => panic!("unsupported vector value {other}"),
-            }
         }
 
         #[test]

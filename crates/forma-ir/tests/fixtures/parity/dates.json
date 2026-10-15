@@ -4,8 +4,8 @@
   "contract": "A date travels as a signed integer count of milliseconds since the Unix epoch, truncated toward zero to whole milliseconds, within plus or minus 8.64e15 (the range ECMAScript's TimeClip accepts); beyond it the render refuses with RENDER-403. The server never formats a date as text: a declared Date in a text position, bare or through String(), is a build error, so no locale, time zone or ICU table on the server can reach the page. Formatting is the component's, in the browser, from the number.",
   "consumers": [
     "crates/forma-ir/tests/page_props.rs > date_vectors_are_epoch_milliseconds_truncated_toward_zero (encode_props on SystemTime origins)",
-    "packages/compiler/tests/value-rules.test.ts (a declared Date in text is refused)",
-    "packages/core/src/dom/__tests__/value-rules.test.ts (new Date(ms).getTime() as the oracle for admission and truncation)"
+    "packages/compiler/tests/value-rule-4-dates.test.ts (a declared Date in text is refused)",
+    "packages/core/src/dom/__tests__/value-rule-4-dates.test.ts (new Date(ms).getTime() as the oracle for admission and truncation)"
   ],
   "note": "Hand-enumerated. `lexeme` is the exact signed decimal; `truncation` builds the instant from `sign`, whole `millis` and extra `nanos` so the sub-millisecond part is exact on both sides (the client parses sign * (millis + nanos / 1e6)).",
   "epochMs": [
