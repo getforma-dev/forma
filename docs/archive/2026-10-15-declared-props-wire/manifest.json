@@ -1,0 +1,30 @@
+{
+  "sourceCommit": "3c34b9e8c5297009b74d26a993b99f8d8412bef8",
+  "files": [
+    {
+      "path": "crates/forma-server/tests/fixtures/props-contract/empty.ir",
+      "bytes": 261,
+      "sha256": "72c74b86a266039a9296b96a051ecd4f05d63c20efc621f2404070027beef2e9"
+    },
+    {
+      "path": "crates/forma-server/tests/fixtures/props-contract/home.ir",
+      "bytes": 1173,
+      "sha256": "86ec5e01fe4e747e871cb6697e2956541c34db735766de02bbbba033444928ef"
+    },
+    {
+      "path": "crates/forma-server/tests/fixtures/props-contract/manifest.json",
+      "bytes": 1378,
+      "sha256": "d64e986ccc9a5f515eaa0bab24e05d73cceb61bbfd096e7726516866d2e00f6d"
+    },
+    {
+      "path": "crates/forma-server/tests/fixtures/props-contract/empty-typed.ir",
+      "bytes": 267,
+      "sha256": "2f291337f6408f3d26665117df7f851695190cd38905c114e7495fb4158fef02"
+    },
+    {
+      "path": "packages/compiler/scripts/emit-props-contract.mjs",
+      "bytes": 980,
+      "sha256": "08993341beaba49178e7800dc139b846da3f7af807896d72f1936f6761cdcacc"
+    }
+  ]
+}
