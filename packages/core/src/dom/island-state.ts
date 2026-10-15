@@ -69,7 +69,7 @@ function copySchema(input: IslandSchema): IslandSchema {
   let bytes = 3; // schema version:u8 and object_count:u16
   const charge = (size: number): void => { bytes += size; if (bytes > MAX_STATE_BYTES) fail(); };
   const text = (value: string): void => {
-    const size = utf8Length(value, 65535, true);
+    const size = schemaTextBytes(value);
     if (size < 0) fail();
     charge(2 + size);
   };
@@ -125,8 +125,8 @@ function copySchema(input: IslandSchema): IslandSchema {
 }
 
 /** Count encoded bytes without allocating an unbounded TextEncoder result. */
-function utf8Length(text: string, limit: number, strict = false): number {
-  if (text.length > limit) return -1;
+function schemaTextBytes(text: string): number {
+  if (text.length > 65535) return -1;
   let bytes = 0;
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
@@ -134,10 +134,10 @@ function utf8Length(text: string, limit: number, strict = false): number {
     else if (code < 0x800) bytes += 2;
     else if (code >= 0xd800 && code <= 0xdbff && text.charCodeAt(i + 1) >= 0xdc00 && text.charCodeAt(i + 1) <= 0xdfff) { bytes += 4; i++; }
     else {
-      if (strict && code >= 0xd800 && code <= 0xdfff) return -1;
+      if (code >= 0xd800 && code <= 0xdfff) return -1;
       bytes += 3;
     }
-    if (bytes > limit) return -1;
+    if (bytes > 65535) return -1;
   }
   return bytes;
 }
@@ -145,9 +145,9 @@ function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boo
   return Object.keys(value).length === keys.length && keys.every(key => own(value, key));
 }
 interface Entry { h: string; p: Record<string, unknown> }
-interface Claim { state: string | null; component: string | null; h: string | null; occurrence: number | null; duplicate: boolean }
+interface Claim { component: string | null; h: string | null; occurrence: number | null; duplicate: boolean }
 interface DocumentState {
-  entries: (Entry | IslandStateError)[];
+  entries: (Entry | null)[];
   claims: WeakMap<Element, Claim>;
   error?: IslandStateError;
 }
@@ -167,7 +167,7 @@ function readDocument(doc: Document): DocumentState {
   const counts = new Map<number, Claim>();
   for (const host of doc.querySelectorAll<HTMLElement>('[data-forma-island]')) {
     const text = host.getAttribute('data-forma-state');
-    const claim: Claim = { state: text, component: host.getAttribute('data-forma-component'), h: host.getAttribute('data-forma-h'), occurrence: occurrenceOf(text), duplicate: false };
+    const claim: Claim = { component: host.getAttribute('data-forma-component'), h: host.getAttribute('data-forma-h'), occurrence: occurrenceOf(text), duplicate: false };
     state.claims.set(host, claim);
     if (claim.occurrence !== null) {
       const previous = counts.get(claim.occurrence);
@@ -193,10 +193,12 @@ function readDocument(doc: Document): DocumentState {
       || !Array.isArray(envelope.s) || envelope.s.length !== 0 || !Array.isArray(envelope.i)) {
       refuse('FORMA_E_ISLAND_STATE', 'invalid v1 state envelope');
     }
+    // The capped decoded JSON stays private. A null sentinel avoids allocating
+    // an Error and stack for each malformed entry; only requested hosts need
+    // diagnostics, and valid siblings remain independently eligible.
     state.entries = envelope.i.map((entry: unknown) => object(entry) && exactKeys(entry, ['h', 'p'])
       && typeof entry.h === 'string' && HASH.test(entry.h) && object(entry.p)
-      ? { h: entry.h, p: entry.p }
-      : new IslandStateError('FORMA_E_ISLAND_STATE', 'invalid state entry'));
+      ? entry as unknown as Entry : null);
   } catch (error) {
     state.error = error instanceof IslandStateError ? error : new IslandStateError('FORMA_E_ISLAND_STATE', 'cannot read state block');
   }
@@ -235,16 +237,15 @@ function project(input: Record<string, unknown>, schema: IslandSchema): Record<s
     if (++count > MAX_STATE_BYTES) fail();
     let { type } = work;
     while (type.kind === 'optional' && work.value !== null) type = type.inner;
-    let value: unknown;
+    let value: unknown = work.value;
     switch (type.kind) {
       case 'optional': value = null; break;
-      case 'boolean': if (typeof work.value !== 'boolean') fail(); value = work.value; break;
-      case 'string': if (typeof work.value !== 'string') fail(); value = work.value; break;
-      case 'number': if (typeof work.value !== 'number' || !Number.isFinite(work.value)) fail(); value = work.value; break;
+      case 'boolean': case 'string': if (typeof value !== type.kind) fail(); break;
+      case 'number': if (typeof value !== 'number' || !Number.isFinite(value)) fail(); break;
       case 'date':
         if (typeof work.value !== 'number' || !Number.isInteger(work.value) || Math.abs(work.value) > 8.64e15) return fail();
         value = new Date(work.value); break;
-      case 'enum': if (typeof work.value !== 'string' || !type.variants.includes(work.value)) fail(); value = work.value; break;
+      case 'enum': if (typeof value !== 'string' || !type.variants.includes(value)) fail(); break;
       case 'object': {
         if (!object(work.value)) return fail();
         const out: Record<string, unknown> = Object.create(null);
@@ -263,7 +264,7 @@ function project(input: Record<string, unknown>, schema: IslandSchema): Record<s
 function originalClaim(host: HTMLElement, state: DocumentState): Claim {
   const claim = state.claims.get(host);
   if (!claim || claim.duplicate || claim.occurrence === null
-    || host.getAttribute('data-forma-state') !== claim.state
+    || host.getAttribute('data-forma-state') !== String(claim.occurrence)
     || host.getAttribute('data-forma-component') !== claim.component
     || host.getAttribute('data-forma-h') !== claim.h) {
     refuse('FORMA_E_ISLAND_IDENTITY', 'island does not match its original document claim');
@@ -294,8 +295,8 @@ export function preflightIslands(registry: Record<string, IslandHydrateFn>, root
       if (state.error) throw state.error;
       const claim = originalClaim(host, state);
       const entry = state.entries[claim.occurrence!];
-      if (!entry) refuse('FORMA_E_ISLAND_IDENTITY', 'state occurrence is out of range');
-      if (entry instanceof IslandStateError) throw entry;
+      if (entry === undefined) refuse('FORMA_E_ISLAND_IDENTITY', 'state occurrence is out of range');
+      if (entry === null) refuse('FORMA_E_ISLAND_STATE', 'invalid state entry');
       if (!claim.component || !own(registry, claim.component)) refuse('FORMA_E_ISLAND_REGISTRATION', 'missing own compiled registration');
       const hydrate = registry[claim.component]!;
       const registration = registrations.get(hydrate);
