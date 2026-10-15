@@ -46,3 +46,5 @@ docs/archive/2026-10-15-pre-keyed-rows/** -text
 packages/compiler/tests/fixtures/keyed-lists/** -text
 # FORMA-181: the archive test hashes the live list-same-source.state.json byte-for-byte.
 crates/forma-ir/tests/fixtures/js-emitter/*.state.json text eol=lf
+# FORMA-181: the archive test hashes the declared-props SRI manifest byte-for-byte.
+crates/forma-server/tests/fixtures/props-contract/manifest.json text eol=lf
