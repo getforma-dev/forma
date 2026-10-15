@@ -1,0 +1,61 @@
+{
+  "rule": 1,
+  "title": "DOM text normalization: line endings and NUL (FORMA-182, design 4 lines 103-106, DR-9)",
+  "contract": "N(s): each CRLF pair becomes one LF, each remaining CR becomes LF, each NUL becomes U+FFFD; every other code point is preserved. N applies per authored or bound value, after the permitted value-to-string conversion and before ordinary DOM text or attribute comparison, escaping or writing. It never applies to transport, declared props, state envelopes, keys, source strings or digests.",
+  "consumers": [
+    "crates/forma-ir/src/text.rs (normalized_chars) and crates/forma-ir/src/walker.rs tests: TEXT, DYN_TEXT, static and DYN_ATTR attributes, textarea",
+    "packages/core/src/dom/__tests__/normalize-text.test.ts: normalizeDomText, createText, h() children and attributes, form-control text, adoption expectations"
+  ],
+  "note": "Hand-enumerated finite vectors. Not a generator or campaign. A vector changed here fails whichever side no longer agrees. Lone surrogates are not representable in Rust strings and keep each side's existing policy. HTML pre leading-LF protection is a later checkpoint and has no vector here yet.",
+  "values": [
+    { "id": "empty", "input": "", "expected": "" },
+    { "id": "ascii", "input": "plain text", "expected": "plain text" },
+    { "id": "lf-identity", "input": "a\nb", "expected": "a\nb" },
+    { "id": "crlf", "input": "a\r\nb", "expected": "a\nb" },
+    { "id": "cr", "input": "a\rb", "expected": "a\nb" },
+    { "id": "cr-cr-lf", "input": "a\r\r\nb", "expected": "a\n\nb" },
+    { "id": "lf-cr", "input": "a\n\rb", "expected": "a\n\nb" },
+    { "id": "crlf-crlf", "input": "\r\n\r\n", "expected": "\n\n" },
+    { "id": "trailing-cr", "input": "a\r", "expected": "a\n" },
+    { "id": "leading-crlf", "input": "\r\na", "expected": "\na" },
+    { "id": "nul", "input": "a\u0000b", "expected": "a�b" },
+    { "id": "nul-only", "input": "\u0000", "expected": "�" },
+    { "id": "leading-nul", "input": "\u0000a", "expected": "�a" },
+    { "id": "trailing-nul", "input": "a\u0000", "expected": "a�" },
+    { "id": "nul-run", "input": "a\u0000\u0000\u0000b", "expected": "a���b" },
+    { "id": "nul-crlf", "input": "\u0000\r\n", "expected": "�\n" },
+    { "id": "cr-nul-lf", "input": "a\r\u0000\nb", "expected": "a\n�\nb" },
+    { "id": "replacement-identity", "input": "a�b", "expected": "a�b" },
+    { "id": "astral", "input": "A😀B", "expected": "A😀B" },
+    { "id": "astral-around-nul", "input": "😀\u0000😀", "expected": "😀�😀" },
+    { "id": "combining-then-crlf", "input": "é\r\n", "expected": "é\n" },
+    { "id": "whitespace-preserved", "input": " \t a \f b  ", "expected": " \t a \f b  " },
+    { "id": "escape-chars-preserved", "input": "<&>\"'", "expected": "<&>\"'" },
+    { "id": "escape-around-nul", "input": "<\u0000>", "expected": "<�>" },
+    { "id": "zwsp-identity", "input": "​", "expected": "​" },
+    { "id": "other-c0-preserved", "input": "a\u0001b\u001fc", "expected": "a\u0001b\u001fc" }
+  ],
+  "children": [
+    { "id": "split-cr-lf", "children": ["\r", "\n"], "expected": "\n\n" },
+    { "id": "one-crlf", "children": ["\r\n"], "expected": "\n" },
+    { "id": "split-crlf-boundary", "children": ["a\r", "\nb"], "expected": "a\n\nb" },
+    { "id": "empty-then-leading-lf", "children": ["", "\nx"], "expected": "\nx" },
+    { "id": "nul-split", "children": ["\u0000", "\u0000"], "expected": "��" },
+    { "id": "mixed", "children": ["a\r\n", "b\u0000", "\rc"], "expected": "a\nb�\nc" }
+  ],
+  "textarea": [
+    { "id": "leading-lf", "children": ["\nline"], "html": "<textarea>\n\nline</textarea>", "value": "\nline" },
+    { "id": "leading-crlf", "children": ["\r\nline"], "html": "<textarea>\n\nline</textarea>", "value": "\nline" },
+    { "id": "leading-cr", "children": ["\rline"], "html": "<textarea>\n\nline</textarea>", "value": "\nline" },
+    { "id": "empty-then-leading-lf", "children": ["", "\nline"], "html": "<textarea>\n\nline</textarea>", "value": "\nline" },
+    { "id": "split-cr-lf", "children": ["\r", "\nline"], "html": "<textarea>\n\n\nline</textarea>", "value": "\n\nline" },
+    { "id": "nul-then-lf", "children": ["\u0000\nline"], "html": "<textarea>�\nline</textarea>", "value": "�\nline" },
+    { "id": "no-leading-break", "children": ["a\r\nb"], "html": "<textarea>a\nb</textarea>", "value": "a\nb" }
+  ],
+  "unsafeUrlNearMiss": [
+    { "id": "crlf-inside-scheme", "input": "java\r\nscript:alert(1)", "refused": true },
+    { "id": "crlf-after-scheme", "input": "javascript:\r\nalert(1)", "refused": true },
+    { "id": "cr-inside-scheme", "input": "java\rscript:alert(1)", "refused": true },
+    { "id": "nul-inside-scheme", "input": "java\u0000script:alert(1)", "refused": false, "written": "java�script:alert(1)" }
+  ]
+}

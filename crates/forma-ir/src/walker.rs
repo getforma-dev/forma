@@ -5777,4 +5777,290 @@ mod tests {
         assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 24 });
         assert_eq!(failure.counts.list_iterations, 24);
     }
+
+    // -- FORMA-182 rule 1: the shared normalization vectors ------------------
+    //
+    // One finite JSON file, read by this crate and by @getforma/core's suite
+    // (packages/core/src/dom/__tests__/normalize-text.test.ts), so a vector
+    // changed on one side fails the other. Every case walks the real opcode
+    // stream through `walk_to_html`; nothing here calls a helper directly.
+    // Each test collects every disagreeing vector before failing, so a first
+    // run reports the whole gap, not its first line.
+    mod normalization_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const VECTORS: &str = include_str!("../tests/fixtures/parity/normalization.json");
+
+        fn cases(section: &str) -> Vec<Value> {
+            let all: Value = serde_json::from_str(VECTORS).unwrap();
+            all[section].as_array().unwrap().clone()
+        }
+
+        fn field<'a>(case: &'a Value, key: &str) -> &'a str {
+            case[key].as_str().unwrap()
+        }
+
+        fn children(case: &Value) -> Vec<String> {
+            case["children"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap().to_string())
+                .collect()
+        }
+
+        fn escape_html(text: &str) -> String {
+            text.replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;")
+        }
+
+        fn escape_attr(text: &str) -> String {
+            escape_html(text).replace('"', "&quot;")
+        }
+
+        /// A DYN_TEXT range as the walker writes it: an empty value is held
+        /// by a zero-width space so the browser creates a Text node.
+        fn marker(id: u16, text: &str) -> String {
+            let inner = if text.is_empty() {
+                "\u{200B}".to_string()
+            } else {
+                escape_html(text)
+            };
+            format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
+        }
+
+        /// The text a browser would show for a marker-separated output: the
+        /// marker comments and the empty-range zero-width spaces removed. No
+        /// `children` vector contains a zero-width space of its own.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
+        fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
+            if actual != expected {
+                failures.push(format!(
+                    "{label}: expected {expected:?}, walker wrote {actual:?}"
+                ));
+            }
+        }
+
+        fn finish(failures: Vec<String>) {
+            assert!(
+                failures.is_empty(),
+                "{} disagreeing vector(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        #[test]
+        fn text_and_dyn_text_write_each_value_normalized() {
+            let mut failures = Vec::new();
+            for case in cases("values") {
+                let (id, input, expected) = (
+                    field(&case, "id"),
+                    field(&case, "input"),
+                    field(&case, "expected"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open("p", &[])
+                    .text(input)
+                    .close("p")
+                    .open("p", &[])
+                    .dyn_text(slot)
+                    .close("p");
+                let want = format!(
+                    "<p>{}</p><p>{}</p>",
+                    escape_html(expected),
+                    marker(slot, expected)
+                );
+                check(
+                    &mut failures,
+                    &format!("values/{id} text+dyn_text"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn static_and_dynamic_attributes_write_each_value_normalized() {
+            let mut failures = Vec::new();
+            for case in cases("values") {
+                let (id, input, expected) = (
+                    field(&case, "id"),
+                    field(&case, "input"),
+                    field(&case, "expected"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open("p", &[("title", input), ("id", "ok")])
+                    .close("p")
+                    .open("p", &[("id", "ok")])
+                    .dyn_attr("title", slot)
+                    .close("p");
+                let e = escape_attr(expected);
+                // A static empty value is written as the bare name (the
+                // walker's existing byte-stable shorthand; same DOM value).
+                let static_attr = if expected.is_empty() {
+                    " title".to_string()
+                } else {
+                    format!(" title=\"{e}\"")
+                };
+                let want = format!("<p{static_attr} id=\"ok\"></p><p id=\"ok\" title=\"{e}\"></p>");
+                check(
+                    &mut failures,
+                    &format!("values/{id} attr+dyn_attr"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn adjacent_values_normalize_each_before_composition() {
+            // `['\r', '\n']` is two line feeds and `['\r\n']` is one: the rule
+            // is per authored value, so a normalizer that buffered the output
+            // stream would fold the first case and fail here. Three shapes of
+            // the same children: adjacent TEXT, adjacent DYN_TEXT ranges, and
+            // a static first value before dynamic ones.
+            let mut failures = Vec::new();
+            for case in cases("children") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let values = children(&case);
+
+                let mut page = Page::new();
+                page.open("p", &[]);
+                for value in &values {
+                    page.text(value);
+                }
+                page.close("p");
+                let want = format!("<p>{}</p>", escape_html(expected));
+                check(
+                    &mut failures,
+                    &format!("children/{id} adjacent TEXT"),
+                    &page.render(),
+                    &want,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("p", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                check(
+                    &mut failures,
+                    &format!("children/{id} adjacent DYN_TEXT (visible text)"),
+                    &visible(&page.render()),
+                    &want,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values[1..].iter().map(|v| page.slot(text(v))).collect();
+                page.open("p", &[]).text(&values[0]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                check(
+                    &mut failures,
+                    &format!("children/{id} TEXT then DYN_TEXT (visible text)"),
+                    &visible(&page.render()),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn textarea_children_protect_only_an_initial_normalized_line_feed() {
+            // The parser drops one LF straight after `<textarea>`, so the
+            // writer doubles an initial LF. After normalization that is the
+            // only initial break there is; an empty chunk does not consume
+            // the boundary, and a separate `\r` then `\n` is two values.
+            let mut failures = Vec::new();
+            for case in cases("textarea") {
+                let (id, html) = (field(&case, "id"), field(&case, "html"));
+                let values = children(&case);
+
+                let mut page = Page::new();
+                page.open("textarea", &[]);
+                for value in &values {
+                    page.text(value);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("textarea/{id} static"),
+                    &page.render(),
+                    html,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("textarea", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("textarea/{id} dynamic"),
+                    &page.render(),
+                    html,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn url_attributes_are_checked_as_the_normalized_string_that_is_written() {
+            // Normalization runs before the URL policy, and the string the
+            // policy checked is the string written: a CR or CRLF inside a
+            // scheme is still refused, and a NUL never reaches the output.
+            // The benign sibling attribute stays in both branches (P3).
+            let mut failures = Vec::new();
+            for case in cases("unsafeUrlNearMiss") {
+                let (id, input) = (field(&case, "id"), field(&case, "input"));
+                let refused = case["refused"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open("a", &[("href", input), ("id", "ok")])
+                    .close("a")
+                    .open("a", &[("id", "ok")])
+                    .dyn_attr("href", slot)
+                    .close("a");
+                let want = if refused {
+                    "<a id=\"ok\"></a><a id=\"ok\"></a>".to_string()
+                } else {
+                    let written = escape_attr(field(&case, "written"));
+                    format!(
+                        "<a href=\"{written}\" id=\"ok\"></a><a id=\"ok\" href=\"{written}\"></a>"
+                    )
+                };
+                check(
+                    &mut failures,
+                    &format!("unsafeUrlNearMiss/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+    }
 }
