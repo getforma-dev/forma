@@ -1,11 +1,7 @@
-// A results page: a dataset the server holds, a filter bar and a results toolbar that are
-// islands, and the table itself, which is server markup only. What the old page filtered
-// and sorted in the browser the handler now sends already ordered: a derived view is a
-// declared value, not an expression the compiler evaluates (DR-2). The rows are a list
-// outside every island on purpose: a client-side list ships core's keyed reconciler, and
-// a route with one is over N2's ceiling today (negative/list-island, the finding behind
-// FORMA-188's notes); the toolbar reaches the table by id, as the old page's handlers did.
-import { h, createShow, createSignal } from '@getforma/core';
+// The handler sends the initial filtered and sorted dataset as declared values (DR-2).
+// The results island owns the table's keyed list and can reorder it after adoption;
+// L-58's N2 ceiling includes core's client-side list reconciler.
+import { h, createList, createShow, createSignal } from '@getforma/core';
 
 export type SortColumn = 'name' | 'score';
 export type BenchmarkRow = {
@@ -50,7 +46,8 @@ export function FilterBar(props: { query: string; sortColumn: SortColumn; rowCou
   );
 }
 
-export function ResultsToolbar(props: { failureCount: number; hasError: boolean; error?: string | null; noRows: boolean }) {
+export function ResultsToolbar(props: { rows: BenchmarkRow[]; failureCount: number; hasError: boolean; error?: string | null; noRows: boolean }) {
+  const [rows, setRows] = createSignal(props.rows);
   const [failures] = createSignal(props.failureCount);
   const [hasError] = createSignal(props.hasError);
   const [error] = createSignal(props.error);
@@ -73,6 +70,24 @@ export function ResultsToolbar(props: { failureCount: number; hasError: boolean;
         Failures only ({() => failures()})
       </button>
       {createShow(() => onlyFailures(), () => <span id="bm-filtered" role="status">Showing failures only.</span>)}
+      <button id="bm-reverse" type="button" onClick={() => setRows([...rows()].reverse())}>Reverse results</button>
+      <table id="bm-table">
+        <thead><tr><th>Name</th><th>Score</th><th>Verdict</th><th>Failure</th></tr></thead>
+        <tbody>
+          {createList(
+            () => rows(),
+            (row) => row.id,
+            (row) => (
+              <tr data-row={row.id} data-passed={row.passed}>
+                <td>{row.name}</td>
+                <td>{row.score}</td>
+                <td>{row.verdict}</td>
+                <td>{row.failure}</td>
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

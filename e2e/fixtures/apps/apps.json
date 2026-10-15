@@ -222,7 +222,31 @@
             "ResultsToolbar": {
               "failureCount": 1,
               "hasError": false,
-              "noRows": false
+              "noRows": false,
+              "rows": [
+                {
+                  "id": 1,
+                  "name": "gate-allow",
+                  "score": 98.5,
+                  "verdict": "pass",
+                  "passed": true
+                },
+                {
+                  "id": 2,
+                  "name": "gate-deny",
+                  "score": 71.25,
+                  "verdict": "pass",
+                  "passed": true
+                },
+                {
+                  "id": 3,
+                  "name": "gate-timeout",
+                  "score": 12,
+                  "verdict": "fail",
+                  "passed": false,
+                  "failure": "timed out after 30 s"
+                }
+              ]
             }
           },
           "serverValues": [
@@ -256,7 +280,8 @@
                 "ResultsToolbar": {
                   "failureCount": 0,
                   "hasError": false,
-                  "noRows": true
+                  "noRows": true,
+                  "rows": []
                 }
               },
               "serverValues": [
@@ -300,7 +325,58 @@
               "running": false
             },
             "LiveEcho": {
-              "hint": "Press a key to see which inputs respond."
+              "hint": "Press a key to see which inputs respond.",
+              "chips": [
+                {
+                  "id": 1,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "A",
+                  "label": "A",
+                  "keys": "G"
+                },
+                {
+                  "id": 2,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "B",
+                  "label": "B",
+                  "keys": "H"
+                },
+                {
+                  "id": 3,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "dpad.up",
+                  "label": "D-pad ↑",
+                  "keys": "W ArrowUp"
+                },
+                {
+                  "id": 4,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "lt",
+                  "label": "LT",
+                  "keys": ""
+                },
+                {
+                  "id": 5,
+                  "slot": "2",
+                  "player": "P2",
+                  "control": "A",
+                  "label": "✕",
+                  "keys": "G"
+                },
+                {
+                  "id": 6,
+                  "slot": "2",
+                  "player": "P2",
+                  "control": "B",
+                  "label": "○",
+                  "keys": "H"
+                }
+              ],
+              "hasSlots": true
             }
           },
           "serverValues": [
@@ -345,7 +421,9 @@
                   "running": false
                 },
                 "LiveEcho": {
-                  "hint": "Press a key to see which inputs respond."
+                  "hint": "Press a key to see which inputs respond.",
+                  "chips": [],
+                  "hasSlots": false
                 }
               },
               "serverValues": [
@@ -774,14 +852,13 @@
       "message": "computed declared values remain outside the native subset",
       "file": "negative/computed-condition/app.tsx",
       "why": "the first construct the old tenant login used that 3.0.0 does not admit; the fixture passes a declared boolean instead"
-    },
+    }
+  ],
+  "positive": [
     {
       "name": "list-island",
-      "entry": "negative/list-island/app.tsx",
-      "fails": "size",
-      "code": "BUILD-819",
-      "message": "over its size ceiling",
-      "why": "an island with a client-side list is over N2's 25,500 B of Forma code today; the finding is recorded in FORMA-188's log and the ksx and fauth pages keep their lists outside islands until it is decided"
+      "entry": "positive/list-island/app.tsx",
+      "why": "L-58: a client-side keyed list is admitted by N2; the packed and source lanes record its Forma bytes from size-report.json"
     }
   ]
 }

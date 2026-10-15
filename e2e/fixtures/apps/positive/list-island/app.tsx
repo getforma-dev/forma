@@ -1,9 +1,5 @@
-// The finding behind FORMA-188's notes: an island that holds a client-side list ships core's keyed
-// reconciler, which puts the route's Forma code over N2's ceiling today (BUILD-819), while the same
-// island without the list is under it. Every consumer page with a list inside an island is this
-// shape (the studio's chips, the service's results table). apps.spec.ts builds this entry and
-// expects the refusal; when the ceiling is restated or the list code is cut, that test fails and
-// the list moves back into the ksx and fauth islands. Never served.
+// The smallest island that brings a keyed list into the browser. L-58 admits its
+// reconciler under N2; both source and packed lanes record its actual size report.
 import { h, mount, activateIslands, createSignal, createList } from '@getforma/core';
 
 type Row = { id: number; name: string };

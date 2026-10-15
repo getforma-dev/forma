@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 import { CRATES, ROOT, digest, json, run, save, stageNpmLock } from './release-set.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { withOwnedServer } from './owned-server.mjs';
-import { assertN2, n2Rows, readPackedCeiling, shapeRow } from './release-measurements.mjs';
+import { assertN2, n2Rows, readPackedSizes, shapeRow } from './release-measurements.mjs';
 
 export const FIXTURES = join(ROOT, 'e2e/fixtures/apps');
 const EXCLUDED = new Set(['out', 'node_modules', 'target', 'README.md', 'apps.spec.ts', 'build.sh']);
@@ -238,8 +238,7 @@ export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, bro
   try {
     const index = readApps(project);
     const expectedRoutes = Object.entries(index.apps).flatMap(([app, each]) => Object.keys(each.routes).map(route => ({ app, route })));
-    const ceiling = readPackedCeiling(join(project, 'node_modules/@getforma/build/dist'));
-    const n2 = Object.entries(staged.reports).flatMap(([app, each]) => n2Rows(app, each.sizes, ceiling));
+    const n2 = Object.keys(staged.reports).flatMap(app => n2Rows(app, readPackedSizes(join(project, 'out', app, 'dist'))));
     const shapes = [], pages = [];
     await test('fixture applications: Forma\'s code on every fixture route is inside N2\'s ceiling in the packed build', async () => { assertN2(n2, expectedRoutes); });
     for (const [name, app] of Object.entries(index.apps)) {
