@@ -188,7 +188,7 @@ impl RenderCtx {
 /// | RENDER-102 | [`Walk`](RenderError::Walk) | The walk refused the module or its data |
 /// | RENDER-201 | [`Policy`](RenderError::Policy) | A policy extension is not a source a page may add |
 /// | RENDER-202 | [`Nonce`](RenderError::Nonce) | The system random source failed to draw a nonce |
-/// | RENDER-301 | [`Budget`](RenderError::Budget) | The walk's output passed `max_output_bytes` |
+/// | RENDER-301 | [`Budget`](RenderError::Budget) | The complete escaped response passed `max_output_bytes` |
 /// | RENDER-302 | [`Budget`](RenderError::Budget) | The walk's list rows passed `max_list_iterations` |
 /// | RENDER-303 | [`Budget`](RenderError::Budget) | Lists or control flow nested past the walker's depth |
 /// | RENDER-501 | [`IslandState`](RenderError::IslandState) | Declared island input mapping or value is invalid |
@@ -282,17 +282,17 @@ pub enum RenderError {
         /// The failed draw.
         cause: NonceError,
     },
-    /// RENDER-301, RENDER-302, RENDER-303: the walk reached one of its
-    /// budgets, and stopped there instead of running on.
+    /// RENDER-301, RENDER-302, RENDER-303: the complete response exceeded
+    /// its output-byte limit, or the walk reached a list/depth budget.
     #[non_exhaustive]
     Budget {
         /// The route being rendered.
         route: String,
         /// The islands open where the walk stopped, outermost first.
         component_path: Vec<String>,
-        /// How far the walk got before the budget stopped it.
+        /// Body-only walk work, including when complete response assembly refuses.
         counts: RenderCounts,
-        /// The budget the walker reports.
+        /// The output, list, or depth budget that refused the response.
         cause: IrError,
     },
     /// RENDER-399: the render panicked and the panic was caught. The

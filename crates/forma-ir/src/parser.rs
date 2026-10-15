@@ -464,6 +464,9 @@ impl IrModule {
                 &starts,
             )?;
         }
+        // Preserve established structural diagnostics (including optional
+        // key paths/source positions) before the new conditional contract gate.
+        module.validate_contracts(&starts)?;
         Ok(module)
     }
 
@@ -501,7 +504,8 @@ impl IrModule {
     /// stay cheap and so malformed IR fails at load rather than rendering
     /// mystery HTML on some later request.
     pub fn validate(&self) -> Result<(), IrError> {
-        self.validation_starts().map(|_| ())
+        let starts = self.validation_starts()?;
+        self.validate_contracts(&starts)
     }
 
     fn validation_starts(&self) -> Result<Vec<(u32, Opcode)>, IrError> {
@@ -580,12 +584,16 @@ impl IrModule {
                 return Err(IrError::InvalidSchema("island object index out of range"));
             }
         }
+        Ok(starts)
+    }
+
+    fn validate_contracts(&self, starts: &[(u32, Opcode)]) -> Result<(), IrError> {
         if let Some(contracts) = &self.contracts {
-            contracts.validate(self, &starts)?;
+            contracts.validate(self, starts)?;
         } else if !self.islands.is_empty() || starts.iter().any(|(_, op)| *op == Opcode::Coalesce) {
             return Err(IrError::MissingSection(SECTION_ISLAND_CONTRACTS));
         }
-        Ok(starts)
+        Ok(())
     }
 
     /// Linearly decode `opcodes[start..end]`, requiring that it tiles exactly
