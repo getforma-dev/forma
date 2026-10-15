@@ -241,8 +241,10 @@ test.describe('fixtures the closed type set and N2 refuse', () => {
     expect(result.built, 'N2 now admits an island with a client-side list; flip this fixture').toBe(false);
     expect(result.message).toContain(entry.code);
     expect(result.message).toContain(entry.message);
-    const bytes = Number(/loads ([\d,]+) B gzip -9 of Forma code/.exec(result.message)?.[1]?.replaceAll(',', ''));
-    const ceiling = Number(/ceiling of ([\d,]+) B/.exec(result.message)?.[1]?.replaceAll(',', ''));
+    const size = /Forma code ([\d,]+) B against ([\d,]+) B/.exec(result.message);
+    expect(size, 'BUILD-819 names both the measured Forma code and its ceiling').not.toBeNull();
+    const bytes = Number(size![1].replaceAll(',', ''));
+    const ceiling = Number(size![2].replaceAll(',', ''));
     expect(bytes).toBeGreaterThan(ceiling);
   });
 });

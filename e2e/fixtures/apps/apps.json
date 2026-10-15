@@ -780,7 +780,7 @@
       "entry": "negative/list-island/app.tsx",
       "fails": "size",
       "code": "BUILD-819",
-      "message": "over N2's ceiling",
+      "message": "over its size ceiling",
       "why": "an island with a client-side list is over N2's 25,500 B of Forma code today; the finding is recorded in FORMA-188's log and the ksx and fauth pages keep their lists outside islands until it is decided"
     }
   ]
