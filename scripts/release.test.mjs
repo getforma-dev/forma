@@ -48,6 +48,24 @@ test('version preparation changes seven manifests, exact internal requirements a
   assert(dev.get('Cargo.toml').includes('3.0.1-dev'));
   assert(![...dev.keys()].some(p => p.includes('/templates/')), 'development alignment must preserve A2 template pins');
 });
+test('version preparation remains valid under the actual internal dependency guard', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-version-guard-'));
+  try {
+    for (const version of ['3.0.0-dev', '3.0.0-alpha.1', '3.0.0']) {
+      for (const [path, text] of versionFiles(ROOT, version)) {
+        const full = join(dir, path);
+        mkdirSync(join(full, '..'), { recursive: true });
+        writeFileSync(full, text);
+      }
+      for (const crate of ['forma-ir', 'forma-ir-derive', 'forma-server']) {
+        const source = join(dir, 'crates', crate, 'src');
+        mkdirSync(source, { recursive: true });
+        writeFileSync(join(source, 'lib.rs'), '');
+      }
+      assert.match(run('bash', [join(ROOT, 'scripts/check-forma-ir-requirement.sh'), join(dir, 'Cargo.toml')]), /ok: forma-server/);
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
 test('Cargo packages unpublished interdependent crates and repacks byte-identically from the same commit and lock', () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-cargo-package-'));
   try {

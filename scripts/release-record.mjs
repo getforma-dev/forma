@@ -2,9 +2,24 @@
 import assert from 'node:assert/strict';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { json, save, run, ROOT } from './release-set.mjs';
 
-try {
+export function changelogEntry(changelog, version) {
+  // Match the entire version token: a stable tag must not select an alpha entry.
+  const lines = changelog.split(/\r?\n/);
+  const start = lines.findIndex(line => {
+    const heading = /^## (?:\[([^\]]+)\]|(\S+))(?=\s|$)/.exec(line);
+    return heading && (heading[1] ?? heading[2]) === version;
+  });
+  assert(start >= 0, `missing CHANGELOG entry for ${version}`);
+  let end = start + 1;
+  while (end < lines.length && !/^## /.test(lines[end])) end++;
+  assert(lines.slice(start + 1, end).some(line => line.trim()), `empty CHANGELOG entry for ${version}`);
+  return lines.slice(start, end).join('\n').trimEnd();
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) try {
   const dir = resolve(process.argv[2]), reportPath = resolve(process.argv[3]);
   const set = json(join(dir, 'release-set.json')), report = json(reportPath);
   assert.equal(set.commit, process.env.GITHUB_SHA);
@@ -17,9 +32,8 @@ try {
   const record = { ...set, ciRun: process.env.CI_RUN, startedAt: new Date(started).toISOString(), recordedAt: now.toISOString(), elapsedSeconds: (now.getTime() - started) / 1000, timingBasis: 'GitHub tag-triggered workflow created_at to release record write (queue included)', measurements: report };
   const changelog = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
   const version = set.tag.slice(1);
-  const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const entry = new RegExp(`^## \\[?${escaped}\\]?[^\\n]*\\n([\\s\\S]*?)(?=^## |$)`, 'm').exec(changelog)?.[0];
-  assert(entry?.trim(), `missing CHANGELOG entry for ${version}`);
+  const entry = changelogEntry(changelog, version);
+  record.changelog = entry;
   const rows = set.packages.map(p => `| ${p.name} | ${p.version} | \`${p.sha256}\` |`).join('\n');
   let notes = `${entry}\n\nCommit: \`${set.commit}\` · run: ${set.run} · CI: ${record.ciRun}\n\n| Package | Version | SHA-256 |\n|---|---|---|\n${rows}\n\nContract versions: \`${JSON.stringify(set.contracts)}\`\n\nTag-event run to record: ${record.elapsedSeconds.toFixed(1)} seconds; target 1800 seconds. Full measurements and DS11 hashes are in the attached JSON.\n`;
   const recordPath = join(dir, 'release-record.json'), notesPath = join(dir, 'release-notes.md');

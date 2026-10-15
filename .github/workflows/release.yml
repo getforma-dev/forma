@@ -37,6 +37,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/check-release-ci.mjs
 
+  # The existing reusable suite runs Chromium, Firefox and WebKit on this tag.
+  engines:
+    needs: check
+    permissions:
+      contents: read
+    uses: ./.github/workflows/e2e-engines.yml
+
   pack:
     needs: check
     permissions:
@@ -77,7 +84,7 @@ jobs:
           overwrite: true
 
   verify:
-    needs: [check, pack]
+    needs: [check, pack, engines]
     permissions:
       contents: read
     runs-on: ubuntu-latest

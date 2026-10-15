@@ -9,7 +9,7 @@ WORKFLOW = '.github/workflows/release.yml'
 PUBLISH = { 'publish-crates' => 'crates', 'publish-npm' => 'npm' }.freeze
 VERIFY = 'bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"'
 NEEDS = {
-  'check' => [], 'pack' => ['check'], 'verify' => %w[check pack],
+  'check' => [], 'engines' => ['check'], 'pack' => ['check'], 'verify' => %w[check pack engines],
   'publish-crates' => %w[check pack verify], 'publish-npm' => %w[check pack verify publish-crates],
   'record' => %w[check pack verify publish-crates publish-npm]
 }.freeze
@@ -29,7 +29,7 @@ def violations(doc)
   out << 'T1 only v* tag pushes may trigger releases' unless doc['on'] == { 'push' => { 'tags' => ['v*'] } }
   out << 'T2 publishing must never cancel another run' unless doc.dig('concurrency', 'cancel-in-progress') == false
   jobs = doc.fetch('jobs', {})
-  return out + ['J1 exact six-job release pipeline required'] unless jobs.is_a?(Hash) && jobs.keys.sort == NEEDS.keys.sort
+  return out + ['J1 exact seven-job release pipeline required'] unless jobs.is_a?(Hash) && jobs.keys.sort == NEEDS.keys.sort
   out << 'P1 top-level permissions are forbidden' if doc.key?('permissions')
   [doc, *jobs.values].each do |holder|
     shell = holder.dig('defaults', 'run', 'shell')
@@ -47,7 +47,10 @@ def violations(doc)
              { 'contents' => 'read' }
            end
     out << "P2 #{name} permissions differ from least privilege" unless job['permissions'] == want
-    out << "E1 #{name} must fail closed" if job.key?('continue-on-error') || job.key?('container') || job.key?('services') || job.key?('uses')
+    out << "E1 #{name} must fail closed" if job.key?('continue-on-error') || job.key?('container') || job.key?('services') || (name != 'engines' && job.key?('uses'))
+    if name == 'engines'
+      out << 'B1 all three engines must run from this tagged commit without inputs or secrets' unless job['uses'] == './.github/workflows/e2e-engines.yml' && (job.keys - %w[needs permissions uses]).empty?
+    end
     out << "E2 #{name} cannot skip a gate" if job.key?('if') && !PUBLISH.key?(name)
     steps(job).each do |step|
       out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || step.key?('if')
@@ -127,6 +130,11 @@ if ARGV.include?('--self-test') && errors.empty?
     ['OIDC on pack', 'P2', ->(d) { d['jobs']['pack']['permissions']['id-token'] = 'write' }],
     ['global OIDC', 'P1', ->(d) { d['permissions'] = 'write-all' }],
     ['missing P17 dependency', 'J2', ->(d) { d['jobs']['publish-npm']['needs'].delete('verify') }],
+    ['missing engine job', 'J1', ->(d) { d['jobs'].delete('engines') }],
+    ['bypassed engine dependency', 'J2', ->(d) { d['jobs']['verify']['needs'].delete('engines') }],
+    ['skipped engine suite', 'E2', ->(d) { d['jobs']['engines']['if'] = 'false' }],
+    ['replaced engine suite', 'B1', ->(d) { d['jobs']['engines']['uses'] = './.github/workflows/ci.yml' }],
+    ['credential passed to engines', 'B1', ->(d) { d['jobs']['engines']['secrets'] = 'inherit' }],
     ['npm before crates', 'J2', ->(d) { d['jobs']['publish-npm']['needs'].delete('publish-crates') }],
     ['missing environment', 'J4', ->(d) { d['jobs']['publish-npm'].delete('environment') }],
     ['success status function', 'J3', ->(d) { d['jobs']['publish-npm']['if'] = "success() || startsWith(github.ref, 'refs/tags/v')" }],
@@ -151,7 +159,7 @@ if ARGV.include?('--self-test') && errors.empty?
     errors << "self-test failed to reject #{name} with #{rule}" unless violations(seeded).any? { |v| v.start_with?(rule) }
   end
   puts "#{seeds.length} SR13/SR43 seeded violations rejected" if errors.empty?
-  errors << 'release helper tests failed' unless system('node', '--test', 'scripts/release.test.mjs')
+  errors << 'release helper tests failed' unless system('node', '--test', *Dir.glob('scripts/release*.test.mjs').sort)
 end
 abort(errors.join("\n")) unless errors.empty?
-puts 'release workflow: tag → exact CI → locked pack → P17 → crates → npm → record; credential jobs constrained'
+puts 'release workflow: tag → exact CI → locked pack + three engines → P17 → crates → npm → record; credential jobs constrained'
