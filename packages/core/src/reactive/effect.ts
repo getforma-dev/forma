@@ -51,8 +51,9 @@ export function withAdoptionEffectFailure<T>(failure: (error: unknown) => void, 
 
 const POOL_SIZE = 32;
 const MAX_REENTRANT_RUNS = 100;
+// Allocate slots only when the public effect path uses them. A top-level
+// fill loop would survive in runtime bundles that do not use this pool.
 const pool: (() => void)[][] = [];
-for (let i = 0; i < POOL_SIZE; i++) pool.push([]);
 let poolIdx = POOL_SIZE;
 
 // ---------------------------------------------------------------------------
@@ -74,7 +75,7 @@ interface SubNode { flags: number; }
 
 function acquireArray(): (() => void)[] {
   if (poolIdx > 0) {
-    const arr = pool[--poolIdx]!;
+    const arr = pool[--poolIdx] ?? [];
     arr.length = 0;
     return arr;
   }

@@ -200,9 +200,11 @@ Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "after the user 
 Initial SVG/MathML adoption validates the original namespace and node shape;
 it does not repair a different tag, missing text marker or missing child. Matching
 attributes are not rewritten, including iframe `src`, which would reload even
-when assigned the same URL. Namespace behavior for later fresh materialization
-is still under qualification; the current development checkpoint has two known
-namespace/materializer failures and does not claim that work complete.
+when assigned the same URL. Later fresh branches and rows resolve namespaces
+from each constructed parent. Nested HTML links inside SVG `foreignObject` and
+SVG titles inside MathML `annotation-xml` retain their intended namespaces.
+Fresh template children belong to `template.content`; later readers keep their
+own cleanup lifetime when the fragment moves into its live parent.
 
 Styles are compared through an inert CSSOM model, without assigning a live
 style block. The direct facade accepts strings and own-data object fields with
@@ -220,6 +222,8 @@ cannot establish the document's scripting mode. Ordinary CSR is unchanged.
 Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "adopts a server-rendered inline SVG with no DOM write and no re-created node"
 Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "adopts case-sensitive SVG tags such as clipPath and linearGradient in place"
 Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "writes nothing where the server already holds the value, and still writes every change"
+Verified by `src/dom/__tests__/adoption-materialize.test.ts` > "constructs later nested namespace branches with the actual owned Show adapter"
+Verified by `src/dom/__tests__/adoption-postcommit-materialize.test.ts` > "keeps movable template readers and nested compiler conditional values live after insertion"
 Verified by `src/dom/__tests__/adoption-content.test.ts` > "refuses a missing or different served style rather than filling or repairing it"
 Verified by `src/dom/__tests__/adoption-content.test.ts` > "supports own string and finite-number object fields for the direct hydration facade"
 Verified by `src/dom/__tests__/adopt-inner-html.test.ts` > "adoption writes nothing where the server already holds the markup"
@@ -288,7 +292,7 @@ Verified by `src/dom/__tests__/browser-only.test.ts` > "called as a component, r
 The earlier compiler 0.3.7 whole-page mount observations and repair behavior are
 preserved in the [exact prior guide](archive/2026-10-15-strict-adoption-retirement/packages/core/docs/ISLANDS.md.txt).
 They do not describe this strict activation path. Compiler subset completion,
-later materialization, package-size limits and integrated template/packed gates
+package-size limits and integrated template/packed gates
 remain separate development acceptance work; this guide is not a declaration
 that FORMA-104 or the complete 3.0 upgrade is finished.
 
