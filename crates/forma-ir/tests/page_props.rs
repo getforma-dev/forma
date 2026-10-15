@@ -561,4 +561,76 @@ mod value_rule_vectors {
         }
         finish(failures);
     }
+
+    #[test]
+    fn date_vectors_are_epoch_milliseconds_truncated_toward_zero() {
+        let m = one(PropType::Date);
+        let mut failures = Vec::new();
+        let instant = |sign: i64, millis: u64, nanos: u64| {
+            let offset = Duration::from_millis(millis) + Duration::from_nanos(nanos);
+            if sign < 0 {
+                UNIX_EPOCH.checked_sub(offset)
+            } else {
+                UNIX_EPOCH.checked_add(offset)
+            }
+        };
+        for case in cases(DATES, "epochMs") {
+            let id = case["id"].as_str().unwrap();
+            let lexeme = case["lexeme"].as_str().unwrap();
+            let admitted = case["admitted"].as_bool().unwrap();
+            let millis: i64 = lexeme.parse().unwrap();
+            // Some platforms cannot represent a SystemTime at the Date range
+            // boundary; such a vector is skipped there, as the existing test does.
+            let Some(value) = instant(millis.signum(), millis.unsigned_abs(), 0) else {
+                continue;
+            };
+            match (encode_props(&m, &Date { value }, "/d"), admitted) {
+                (Ok(encoded), true) => {
+                    let written = encoded["value"].to_string();
+                    if written != lexeme {
+                        failures.push(format!(
+                            "dates/epochMs/{id}: encoded as {written}, expected {lexeme}"
+                        ));
+                    }
+                }
+                (Ok(encoded), false) => failures.push(format!(
+                    "dates/epochMs/{id}: admitted as {encoded}, expected RENDER-403"
+                )),
+                (Err(error), true) => failures.push(format!(
+                    "dates/epochMs/{id}: refused with {}, expected admission",
+                    error.code()
+                )),
+                (Err(error), false) if error.code() != "RENDER-403" => failures.push(format!(
+                    "dates/epochMs/{id}: refused with {}, expected RENDER-403",
+                    error.code()
+                )),
+                (Err(_), false) => {}
+            }
+        }
+        for case in cases(DATES, "truncation") {
+            let id = case["id"].as_str().unwrap();
+            let expected = case["expected"].as_str().unwrap();
+            let sign = case["sign"].as_i64().unwrap();
+            let millis = case["millis"].as_u64().unwrap();
+            let nanos = case["nanos"].as_u64().unwrap();
+            let Some(value) = instant(sign, millis, nanos) else {
+                continue;
+            };
+            match encode_props(&m, &Date { value }, "/d") {
+                Ok(encoded) => {
+                    let written = encoded["value"].to_string();
+                    if written != expected {
+                        failures.push(format!(
+                            "dates/truncation/{id}: encoded as {written}, expected {expected}"
+                        ));
+                    }
+                }
+                Err(error) => failures.push(format!(
+                    "dates/truncation/{id}: refused with {}",
+                    error.code()
+                )),
+            }
+        }
+        finish(failures);
+    }
 }

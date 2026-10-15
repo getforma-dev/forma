@@ -204,11 +204,48 @@ on the origin), `crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
 equals the safe-integer range; an admitted value survives `JSON.parse` and
 `String()` exactly; a refused one is not a safe integer).
 
-## Rules 4 to 7: listed, not qualified here
+## Rule 4: dates as epoch milliseconds, no `Intl` on the server
+
+**Statement.** A date travels as a signed integer count of milliseconds since
+the Unix epoch, truncated toward zero to whole milliseconds, within ±8.64e15
+(the range ECMAScript's `TimeClip` accepts); beyond it the render refuses with
+`RENDER-403`. The server never formats a date as text: a declared `Date` in a
+text or attribute position, bare or through `String()`, is a build error
+(`BUILD-610`, "a declared date cannot be used directly as text"), so no
+locale, time zone or ICU table on the server can reach the page. Formatting is
+the component's, in the browser, from the number.
+
+**Why.** ICU 72 put U+202F into time formats and Firefox patched it back to a
+space (Mozilla 1806042): any server-side formatting is a parity break waiting
+on a library version. The number is exact on both sides and `new Date(ms)` is
+the same instant everywhere.
+
+**Implementation.** Rust: `crates/forma-ir/src/props/value.rs` >
+`date_milliseconds` (`SystemTime` to signed milliseconds, the sub-millisecond
+part dropped on both sides of the epoch, the bound checked before the cast);
+no formatting API exists in the crates (no `Intl`, no `chrono` formatting).
+Compiler: `packages/compiler/src/props-bindings.ts` > `propSlot` refuses a
+declared `date` as `text` or `attribute`, and `propPath` refuses `String()` of
+any declared prop. Client: `new Date(ms)`. No code changed for this rule; the
+vectors pin it.
+
+**Vectors.** `crates/forma-ir/tests/fixtures/parity/dates.json`: `epochMs`
+(the epoch, one either side, an ordinary instant, both limits, both one-over,
+a safe integer past the Date range), `truncation` (`sign`, whole `millis`,
+extra `nanos`, `expected`: toward zero on both sides of the epoch, including
+−0.999999 ms as `0`), and `compiledText` (a declared Date bare in text,
+through `String()`, and as an attribute: each `BUILD-610`). Consumers:
+`crates/forma-ir/tests/page_props.rs` > `value_rule_vectors` >
+"date_vectors_are_epoch_milliseconds_truncated_toward_zero",
+`packages/compiler/tests/value-rule-4-dates.test.ts`, and
+`packages/core/src/dom/__tests__/value-rule-4-dates.test.ts` (`new
+Date(ms).getTime()` is the oracle: the instant for an admitted vector, NaN
+for a refused one, and the truncated value for the fractional ones).
+
+## Rules 5 to 7: listed, not qualified here
 
 | # | Rule | Where the current behaviour lives |
 |---|---|---|
-| 4 | Dates as epoch milliseconds, no `Intl` on the server | `crates/forma-ir/src/props/value.rs`; the state envelope |
 | 5 | `null` writes nothing on every side | Walker `DYN_TEXT` (U+200B holder), `h()`, adoption `text()` |
 | 6 | A boolean in text is a build error | Not implemented; codes reserved with FORMA-101 |
 | 7 | Conditions are boolean-typed | Not implemented; codes reserved with FORMA-101 |

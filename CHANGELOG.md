@@ -6,6 +6,7 @@
 
 - Rule 2, numbers in ECMAScript formatting: stated in `docs/parity-rules.md` with the shared vector file `crates/forma-ir/tests/fixtures/parity/numbers.json` (29 lexemes with their `Number.prototype.toString` spelling), read by forma-ir's walker suite and by core's, where the engine is the oracle. No code changed: the walker's `format_js_number` already agrees on every vector.
 - Rule 3, integers within ±(2^53 − 1): stated with `crates/forma-ir/tests/fixtures/parity/integers.json` (exact origins `i64`/`u64` at the limits, one over, the rounding-loss case and the extremes; float origins admitted whatever their magnitude), read by forma-ir's props-admission suite (`encode_props`), the walker suite and core's (`Number.isSafeInteger` and `BigInt` as the oracle). No code changed: FORMA-102's checked admission already agrees.
+- Rule 4, dates as epoch milliseconds, no `Intl` on the server: stated with `crates/forma-ir/tests/fixtures/parity/dates.json` (the TimeClip range and its one-over cases; truncation toward zero with sub-millisecond parts; a declared `Date` in text, through `String()` or as an attribute refused at build), read by forma-ir's props-admission suite, the compiler's and core's (`new Date(ms).getTime()` as the oracle). No code changed.
 
 ### Value rule 1: line endings and NUL — FORMA-182
 
