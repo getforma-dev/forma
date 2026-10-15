@@ -17,6 +17,10 @@
       "bytes": 1357,
       "sha256": "5d9bcbc21cca8be64fd35379e2508d023c256dac443d5e8b96198003ffb83a69"
     },
+    "keyed-shapes.ir": {
+      "bytes": 862,
+      "sha256": "83f3043b74337cb850f820f2322373a17ba8591c3e777b7f788a52f2e2182ed5"
+    },
     "local-aggregates.ir": {
       "bytes": 1514,
       "sha256": "7e95e261b0003e3ebf37d06c1f3b391df63cd17ac487c77410d4ccbd9e5d9efc"

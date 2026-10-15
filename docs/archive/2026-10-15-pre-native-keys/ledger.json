@@ -1,0 +1,51 @@
+{
+  "sourceCommit": "330b65a5443c61676969eaa089e3aaa2c914d054",
+  "reason": "FORMA-181 checkpoint B: the walker writes data-forma-key on every row of a LIST named by FMIR section 0x0006. Only rendered HTML of keyed lists changes; module bytes, canonical dumps and state snapshots are unchanged because the compiler and the state envelope are untouched.",
+  "files": {
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html": {
+      "archived": "js-emitter/list-same-source.html",
+      "before": {
+        "bytes": 1931,
+        "sha256": "d557fcdb4472a590e718c7bcb613d0dc5ba122cf4aaddfeffcb177967206b5b7"
+      },
+      "after": {
+        "bytes": 2471,
+        "sha256": "69287450f982c0ceb0ff2845366a0ac24b39b4f438271d08eaa12662cbab7ef7"
+      },
+      "change": "each row of both keyed lists carries data-forma-key with the identity the contract harness now feeds at the list's key path (todos[n].id, todos#2[n].id); nothing else in the golden moved"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.ir": {
+      "before": {
+        "bytes": 585,
+        "sha256": "7aa2d7f7ef456b19f012e3600cb116d978c78cae2aa4b220947d978e88c7fb3e"
+      },
+      "after": {
+        "bytes": 585,
+        "sha256": "7aa2d7f7ef456b19f012e3600cb116d978c78cae2aa4b220947d978e88c7fb3e"
+      },
+      "change": "unchanged: the compiler did not change at checkpoint B"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.dump": {
+      "before": {
+        "bytes": 1363,
+        "sha256": "07deef490b509c539ca5f4ce5ad8922263c1b8fce0e09de597a941d895f31e5c"
+      },
+      "after": {
+        "bytes": 1363,
+        "sha256": "07deef490b509c539ca5f4ce5ad8922263c1b8fce0e09de597a941d895f31e5c"
+      },
+      "change": "unchanged"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.state.json": {
+      "before": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      },
+      "after": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      },
+      "change": "unchanged: keys are not part of the state envelope"
+    }
+  }
+}

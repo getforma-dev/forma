@@ -8,11 +8,13 @@ pub use crate::contracts::state::IslandState;
 use crate::contracts::state::StateBuilder;
 #[cfg(feature = "tracing")]
 use crate::format::SlotSource;
-use crate::format::{IrError, IslandTrigger, Opcode};
+use crate::format::{IrError, IslandTrigger, ListKeyReason, ListKeyViolation, Opcode};
 use crate::parser::IrModule;
 use crate::slot::{SlotData, SlotValue};
 use crate::text::{normalize_text, normalized_chars};
+use std::collections::HashMap;
 use std::fmt;
+use std::rc::Rc;
 
 // ---------------------------------------------------------------------------
 // Walk state
@@ -64,6 +66,46 @@ impl Default for WalkLimits {
     }
 }
 
+/// One row of a keyed LIST while its body is walked (FORMA-181, DR-8).
+///
+/// The row-owned guard for `data-forma-key`: the key is attached to the
+/// first element opened at the depth the row was entered at, which is the
+/// row's own root, never a descendant and never an element a later row or
+/// the code after the list opens. At its own level the row admits exactly
+/// that one root, optionally wholly enclosed by one registered child's
+/// `<!--f:iN-->` envelope (the child's host is the root); text, a
+/// conditional or list range, a second element, an envelope that does not
+/// enclose the root, a close of an element the row did not open, or an
+/// element left open refuse the render. The compiler proves the shape from
+/// the source (BUILD-613), so this is the defence for a hand-built module,
+/// under the same code the key itself refuses with (RENDER-503).
+struct KeyedRow {
+    /// Byte offset of the LIST, as section `0x0006` names it.
+    list_offset: u32,
+    /// Zero-based position of the row in the array this execution iterates.
+    ordinal: usize,
+    /// The key path, dotted, for the row's diagnostics.
+    path: Rc<str>,
+    /// The canonical key, until the row's root element takes it.
+    key: Option<String>,
+    /// [`WalkState::element_depth`] when the row's body started.
+    entry_depth: usize,
+    /// Elements opened at `entry_depth` so far.
+    roots: usize,
+    /// Whether anything but the root and its envelope was written at
+    /// `entry_depth`.
+    stray_content: bool,
+    /// The registered child whose island envelope opened at `entry_depth`
+    /// before the root and has not closed yet.
+    envelope: Option<u16>,
+}
+
+impl KeyedRow {
+    fn refuse(&self, reason: ListKeyReason) -> IrError {
+        list_key_error(self.list_offset, self.ordinal, &self.path, reason)
+    }
+}
+
 /// Mutable state threaded through recursive `walk_range` calls.
 ///
 /// This avoids adding extra parameters every time we need new walker state
@@ -73,8 +115,19 @@ struct WalkState {
     list_depth: u8,
     /// Pending island info to inject on the next OPEN_TAG/VOID_TAG.
     pending_island: Option<IslandPending>,
-    /// Pending list-item key to inject on the next OPEN_TAG/VOID_TAG.
-    pending_list_key: Option<String>,
+    /// Elements opened (`OPEN_TAG`) and not yet closed (`CLOSE_TAG`) at this
+    /// point of the walk. A keyed row's root is the element opened at the
+    /// depth the row was entered at ([`KeyedRow::entry_depth`]).
+    element_depth: usize,
+    /// The keyed rows the walk is inside, outermost first (FORMA-181). Only
+    /// the innermost can still be waiting for its root: an inner row is
+    /// entered at a deeper element depth than the root its outer row already
+    /// opened. Pushed and popped by the LIST item loop, never cleared at a
+    /// range end.
+    keyed_rows: Vec<KeyedRow>,
+    /// Whether the start tag still open is a keyed row's root, so a DYN_ATTR
+    /// named `data-forma-key` on it is refused as an authored identity.
+    open_tag_is_row_root: bool,
     /// Checked, owned snapshots in execution order, separate from body HTML.
     island_state: StateBuilder,
     /// True when an OpenTag or VoidTag has been opened but the `>` has not
@@ -148,7 +201,9 @@ impl WalkState {
         WalkState {
             list_depth: 0,
             pending_island: None,
-            pending_list_key: None,
+            element_depth: 0,
+            keyed_rows: Vec::new(),
+            open_tag_is_row_root: false,
             island_state: StateBuilder::new(),
             pending_tag_close: false,
             pending_tag_name: String::new(),
@@ -187,6 +242,64 @@ impl WalkState {
                 slots.set(slot_id, previous);
             }
         }
+    }
+
+    /// The innermost keyed row, when the walk is at the depth it was
+    /// entered at: the level where its root element and nothing else belongs.
+    fn keyed_row_at_entry_depth(&mut self) -> Option<&mut KeyedRow> {
+        let depth = self.element_depth;
+        self.keyed_rows
+            .last_mut()
+            .filter(|row| row.entry_depth == depth)
+    }
+
+    /// An element is being opened: if it is the innermost keyed row's root,
+    /// count it and hand back the key it carries.
+    fn open_row_root(&mut self) -> Option<String> {
+        let row = self.keyed_row_at_entry_depth()?;
+        row.roots += 1;
+        row.key.take()
+    }
+
+    /// Text or a marker is being written: at a keyed row's own level that is
+    /// content beside its root, which the row's shape does not admit.
+    fn note_row_level_content(&mut self) {
+        if let Some(row) = self.keyed_row_at_entry_depth() {
+            row.stray_content = true;
+        }
+    }
+
+    /// An island starts: at a keyed row's own level it is admitted only as
+    /// the envelope of a registered child whose host is the row's root, so
+    /// only before that root and only once.
+    fn note_row_level_island_start(&mut self, island_id: u16) {
+        if let Some(row) = self.keyed_row_at_entry_depth() {
+            if row.roots == 0 && row.envelope.is_none() && !row.stray_content {
+                row.envelope = Some(island_id);
+            } else {
+                row.stray_content = true;
+            }
+        }
+    }
+
+    /// An island ends: at a keyed row's own level it must close the envelope
+    /// that opened before the root, right after that one root.
+    fn note_row_level_island_end(&mut self, island_id: u16) {
+        if let Some(row) = self.keyed_row_at_entry_depth() {
+            if row.envelope == Some(island_id) && row.roots == 1 {
+                row.envelope = None;
+            } else {
+                row.stray_content = true;
+            }
+        }
+    }
+
+    /// A CLOSE_TAG at a keyed row's own level closes an element the row did
+    /// not open (the list's parent): the row is not balanced.
+    fn closes_outside_keyed_row(&self) -> bool {
+        self.keyed_rows
+            .last()
+            .is_some_and(|row| row.entry_depth == self.element_depth)
     }
 }
 
@@ -702,7 +815,20 @@ fn walk_range_impl(
                 if !is_valid_name(tag) {
                     return Err(IrError::InvalidName(tag.to_string()));
                 }
+                // A keyed row closes only elements it opened (FORMA-181): a
+                // CLOSE_TAG at its own level would end the list's parent from
+                // inside one row.
+                if state.closes_outside_keyed_row() {
+                    return Err(innermost_row_error(
+                        state,
+                        ListKeyReason::UnbalancedRow,
+                        IrError::InvalidSection,
+                    ));
+                }
                 leave_element(out, tag, state, limit)?;
+                // Saturating: a CLOSE_TAG without its OPEN_TAG outside any
+                // keyed row is tolerated as before.
+                state.element_depth = state.element_depth.saturating_sub(1);
                 push_checked(out, "</", limit)?;
                 push_checked(out, tag, limit)?;
                 push_checked(out, ">", limit)?;
@@ -712,6 +838,7 @@ fn walk_range_impl(
                 let str_idx = read_u32(ops, pos)?;
                 pos += 4;
                 let text = strings.get(str_idx)?;
+                state.note_row_level_content();
                 if let Some(parent) = state.text_only.as_mut() {
                     if !parent.value_bound {
                         write_text_only(out, parent, text, limit)?;
@@ -742,6 +869,7 @@ fn walk_range_impl(
                 pos += 2;
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
+                state.note_row_level_content();
                 let value = slots.get(slot_id).to_text();
 
                 // SR44's stand-in for a component that panics: this crate's
@@ -793,6 +921,15 @@ fn walk_range_impl(
 
                 if state.pending_tag_close {
                     let attr_name = strings.get(attr_str_idx)?;
+                    if state.open_tag_is_row_root
+                        && attr_name.eq_ignore_ascii_case("data-forma-key")
+                    {
+                        return Err(innermost_row_error(
+                            state,
+                            ListKeyReason::AuthoredKey,
+                            IrError::InvalidName(attr_name.to_string()),
+                        ));
+                    }
                     // `value` on a textarea or select, and `selected` on an
                     // option of a bound select, are written another way.
                     if consume_control_attr(state, attr_name, Prop::Slot(slots.get(slot_id))) {
@@ -848,6 +985,9 @@ fn walk_range_impl(
                     });
                 }
                 state.islands.push(island_id);
+                // A registered child's envelope may wrap a keyed row's root
+                // (its host); anything else at the row's level is refused.
+                state.note_row_level_island_start(island_id);
 
                 // No marker inside a text-only element, where it is text.
                 if state.text_only.is_none() {
@@ -893,6 +1033,7 @@ fn walk_range_impl(
                 if state.islands.last() == Some(&island_id) {
                     state.islands.pop();
                 }
+                state.note_row_level_island_end(island_id);
 
                 // The island is over: anything still pending belongs to no
                 // element inside it. Without this, an ISLAND_START not
@@ -935,6 +1076,9 @@ fn walk_range_impl(
                 let then_len = read_u32(ops, pos + 2)? as usize;
                 let else_len = read_u32(ops, pos + 6)? as usize;
                 pos += 10;
+                // A conditional at a keyed row's own level is a range, not
+                // the one stable root the key needs (BUILD-613 from source).
+                state.note_row_level_content();
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
                 let condition = slots.get(slot_id).as_bool();
@@ -1012,6 +1156,9 @@ fn walk_range_impl(
             // walker-local fix. SWITCH also has no default case in the opcode
             // layout; a non-matching value renders nothing.
             Opcode::List => {
+                // `pos` already passed the opcode byte: the LIST's own offset,
+                // the one section 0x0006 names, is one before it.
+                let list_offset = (pos - 1) as u32;
                 // slot_id(2) + item_slot_id(2) + body_len(4) = 8 bytes header
                 let slot_id = read_u16(ops, pos)?;
                 let item_slot_id = read_u16(ops, pos + 2)?;
@@ -1019,9 +1166,30 @@ fn walk_range_impl(
                 pos += 8;
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
+                // A list at a keyed row's own level is a range beside the
+                // row's root, not the root (BUILD-613 from source).
+                state.note_row_level_content();
 
                 let body_start = pos;
                 let body_end = bounded_offset(pos, body_len, region_limit)?;
+
+                // The key path section 0x0006 attaches to this LIST, if any,
+                // resolved once per LIST execution, not per row: the entries
+                // are sorted by offset (the parser refuses anything else), so
+                // this is one binary search, and every segment index was
+                // checked against the string table at load. A LIST without an
+                // entry is unkeyed and renders exactly as before.
+                let key_path = match module
+                    .key_paths
+                    .binary_search_by_key(&list_offset, |path| path.list_offset)
+                {
+                    Ok(index) => Some(ListKey::resolve(
+                        list_offset,
+                        &module.key_paths[index].segments,
+                        strings,
+                    )?),
+                    Err(_) => None,
+                };
 
                 // Emit list markers — none inside a text-only element, where
                 // they are text. Decided once, so the pair always matches.
@@ -1045,77 +1213,33 @@ fn walk_range_impl(
 
                 if let Some(items) = items.filter(|a| !a.is_empty()) {
                     state.list_depth += 1;
-                    if state.list_depth > MAX_LIST_DEPTH {
-                        return Err(IrError::ListDepthExceeded {
+                    let walked = if state.list_depth > MAX_LIST_DEPTH {
+                        Err(IrError::ListDepthExceeded {
                             max: MAX_LIST_DEPTH,
-                        });
-                    }
-                    // A list longer than what is left of the budget fails
-                    // here, before its first row, instead of walking up to
-                    // the budget and failing there (DR-13, SR38): a hostile
-                    // 60,000-row list costs a comparison, not 50,000 rows.
-                    // It fails exactly when the per-row check below would
-                    // have, sooner, and before any error the rows would have
-                    // raised first (an output budget, a malformed row). That
-                    // check stays: rows of nested lists can spend the budget
-                    // after this list was let in.
-                    //
-                    // Verified by: crates/forma-ir/src/walker.rs > "a_list_longer_than_the_remaining_budget_fails_before_its_first_row"
-                    // Verified by: crates/forma-ir/src/walker.rs > "a_list_exactly_at_the_remaining_budget_still_renders"
-                    let remaining = state
-                        .max_list_iterations
-                        .saturating_sub(state.list_iterations);
-                    if items.len() > remaining {
-                        return Err(IrError::ListBudgetExceeded {
-                            max: state.max_list_iterations,
-                        });
-                    }
-                    for item in items.iter() {
-                        // Total across all depths, never decremented: depth
-                        // alone does not bound volume, and four nested LISTs
-                        // over the same array give n^4 body walks.
-                        //
-                        // Checked before counting, so at the error the count
-                        // is the rows actually walked (`WalkCounts`).
-                        if state.list_iterations >= state.max_list_iterations {
-                            return Err(IrError::ListBudgetExceeded {
-                                max: state.max_list_iterations,
-                            });
-                        }
-                        state.list_iterations += 1;
-                        // Scoped binding instead of a per-row `SlotData`
-                        // clone: swap the item in, walk, swap back. Same
-                        // isolation between rows, without copying every other
-                        // slot on the page once per row.
-                        let mark = state.slot_journal.len();
-                        let previous = slots.replace(item_slot_id, item.clone());
-                        state.slot_journal.push((item_slot_id, previous));
-
-                        let walked = walk_range(
+                        })
+                    } else {
+                        walk_list_rows(
                             module,
                             slots,
                             ops,
-                            body_start,
-                            body_end,
+                            ListRows {
+                                items: &items,
+                                item_slot_id,
+                                body_start,
+                                body_end,
+                                key: key_path.as_ref(),
+                            },
                             out,
                             state,
-                            depth + 1,
-                        );
-                        // Unwind before propagating: an aborted walk must
-                        // still hand `slots` back exactly as it was, because
-                        // an enclosing row is about to unwind on top of it.
-                        state.unwind_slot_journal(slots, mark);
-                        walked?;
-
-                        // A LIST_ITEM_KEY that never met an element belongs to
-                        // this item only — do not let it leak onto whatever
-                        // element the next item (or the code after the list)
-                        // happens to open.
-                        state.pending_list_key = None;
-                    }
+                            depth,
+                        )
+                    };
+                    // Restored on every path, as the slot journal and the
+                    // keyed-row stack are inside `walk_list_rows`: an error
+                    // leaves the walk state as the LIST found it.
                     state.list_depth -= 1;
+                    walked?;
                 }
-                state.pending_list_key = None;
 
                 if markers {
                     push_checked(out, "<!--/f:l", limit)?;
@@ -1164,7 +1288,7 @@ fn walk_range_impl(
         WalkMode::Range { .. } => {
             // Flush any pending tag close at the end of the opcode range.
             //
-            // NOTE: `pending_island` / `pending_list_key` are deliberately NOT
+            // NOTE: `pending_island` / `keyed_rows` are deliberately NOT
             // cleared here. This function runs for every nested control-flow
             // body with the same state, so clearing at range end would wipe
             // the island attributes of a legitimate
@@ -1181,6 +1305,201 @@ fn walk_range_impl(
             // that means the IR is malformed. Return an error.
             Err(IrError::IslandNotFound(target_island_id))
         }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Keyed list rows (FORMA-181, DR-8)
+// ---------------------------------------------------------------------------
+
+/// A keyed LIST's identity source, resolved once per execution of the LIST.
+struct ListKey<'m> {
+    /// Byte offset of the LIST, as section `0x0006` names it.
+    list_offset: u32,
+    /// The key path's segments, as field names.
+    segments: Vec<&'m str>,
+    /// The path dotted, for diagnostics: shared by every row of the
+    /// execution, so a row costs a refcount, not a copy.
+    path: Rc<str>,
+}
+
+impl<'m> ListKey<'m> {
+    fn resolve(
+        list_offset: u32,
+        segments: &[u32],
+        strings: &'m crate::parser::StringTable,
+    ) -> Result<Self, IrError> {
+        let segments = segments
+            .iter()
+            .map(|segment| strings.get(*segment))
+            .collect::<Result<Vec<&str>, IrError>>()?;
+        let path = Rc::from(segments.join("."));
+        Ok(ListKey {
+            list_offset,
+            segments,
+            path,
+        })
+    }
+}
+
+/// What one execution of a LIST iterates (see [`walk_list_rows`]).
+struct ListRows<'a, 'm> {
+    items: &'a [SlotValue],
+    item_slot_id: u16,
+    body_start: usize,
+    body_end: usize,
+    key: Option<&'a ListKey<'m>>,
+}
+
+/// Walk every row of one LIST execution.
+///
+/// Every error leaves the walk state as the rows found it: the slot journal
+/// is unwound to the row's mark and a keyed row's guard is popped before the
+/// error propagates, and the caller restores the list depth. No partial page
+/// is returned either way: an error ends the whole walk.
+fn walk_list_rows(
+    module: &IrModule,
+    slots: &mut SlotData,
+    ops: &[u8],
+    rows: ListRows<'_, '_>,
+    out: &mut String,
+    state: &mut WalkState,
+    depth: usize,
+) -> Result<(), IrError> {
+    let limit = state.max_output_bytes;
+    // A list longer than what is left of the budget fails here, before its
+    // first row, instead of walking up to the budget and failing there
+    // (DR-13, SR38): a hostile 60,000-row list costs a comparison, not 50,000
+    // rows. It fails exactly when the per-row check below would have, sooner,
+    // and before any error the rows would have raised first (an output
+    // budget, a malformed row, a keyed row's identity). That check stays: rows
+    // of nested lists can spend the budget after this list was let in.
+    //
+    // Verified by: crates/forma-ir/src/walker.rs > "a_list_longer_than_the_remaining_budget_fails_before_its_first_row"
+    // Verified by: crates/forma-ir/src/walker.rs > "a_list_exactly_at_the_remaining_budget_still_renders"
+    let remaining = state
+        .max_list_iterations
+        .saturating_sub(state.list_iterations);
+    if rows.items.len() > remaining {
+        return Err(IrError::ListBudgetExceeded {
+            max: state.max_list_iterations,
+        });
+    }
+    // The keys this execution of the list has rendered, each with the row
+    // that rendered it. Scoped to one execution: an inner list under two
+    // outer rows, or two lists over the same array, may reuse a key. Bounded
+    // by the output budget: a key is admitted only when its normalized text
+    // fits in what is left of the budget, and every admitted key is then
+    // written, escaped, on its row's root, so the keys held here never
+    // outgrow the output.
+    let mut seen_keys: HashMap<String, usize> = HashMap::new();
+    for (ordinal, item) in rows.items.iter().enumerate() {
+        // Total across all depths, never decremented: depth alone does not
+        // bound volume, and four nested LISTs over the same array give n^4
+        // body walks.
+        //
+        // Checked before counting, so at the error the count is the rows
+        // actually walked (`WalkCounts`).
+        if state.list_iterations >= state.max_list_iterations {
+            return Err(IrError::ListBudgetExceeded {
+                max: state.max_list_iterations,
+            });
+        }
+        state.list_iterations += 1;
+
+        // A keyed row's identity is read from the row's own data before its
+        // body runs, so a row without one writes nothing, and the whole render
+        // is refused: no page carries a list the client could not adopt.
+        if let Some(key) = rows.key {
+            let refuse = |reason| list_key_error(key.list_offset, ordinal, &key.path, reason);
+            let value = crate::keys::key_value_at(item, &key.segments).map_err(refuse)?;
+            // The text is built only once it is known to fit: a key longer
+            // than what is left of the output budget could never be written,
+            // and copying it first would let one row allocate past the budget.
+            if crate::keys::normalized_len_exceeds(value, limit.saturating_sub(out.len())) {
+                return Err(IrError::OutputLimitExceeded { limit });
+            }
+            let text = crate::keys::canonical_key_text(value).map_err(refuse)?;
+            if let Some(&first_row) = seen_keys.get(&text) {
+                // The two ordinals, never the key: it is the row's data.
+                return Err(refuse(ListKeyReason::Duplicate { first_row }));
+            }
+            seen_keys.insert(text.clone(), ordinal);
+            state.keyed_rows.push(KeyedRow {
+                list_offset: key.list_offset,
+                ordinal,
+                path: Rc::clone(&key.path),
+                key: Some(text),
+                entry_depth: state.element_depth,
+                roots: 0,
+                stray_content: false,
+                envelope: None,
+            });
+        }
+
+        // Scoped binding instead of a per-row `SlotData` clone: swap the item
+        // in, walk, swap back. Same isolation between rows, without copying
+        // every other slot on the page once per row.
+        let mark = state.slot_journal.len();
+        let previous = slots.replace(rows.item_slot_id, item.clone());
+        state.slot_journal.push((rows.item_slot_id, previous));
+
+        let walked = walk_range(
+            module,
+            slots,
+            ops,
+            rows.body_start,
+            rows.body_end,
+            out,
+            state,
+            depth + 1,
+        );
+        // Unwind before propagating: an aborted walk must still hand `slots`
+        // back exactly as it was, because an enclosing row is about to unwind
+        // on top of it.
+        state.unwind_slot_journal(slots, mark);
+        // The row's guard ends with the row, whatever the walk returned; a key
+        // it still holds met no root element.
+        let keyed_row = if rows.key.is_some() {
+            state.keyed_rows.pop()
+        } else {
+            None
+        };
+        walked?;
+
+        if let Some(row) = keyed_row {
+            if state.element_depth != row.entry_depth {
+                // An element the row opened is still open: its root (or what
+                // follows it) did not close where the row ends.
+                return Err(row.refuse(ListKeyReason::UnbalancedRow));
+            }
+            if row.roots != 1 || row.stray_content || row.envelope.is_some() {
+                return Err(row.refuse(ListKeyReason::RowShape {
+                    roots: row.roots,
+                    stray_content: row.stray_content || row.envelope.is_some(),
+                }));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// The whole-render refusal for one keyed row (RENDER-503).
+fn list_key_error(list_offset: u32, row: usize, path: &str, reason: ListKeyReason) -> IrError {
+    IrError::InvalidListKey(Box::new(ListKeyViolation {
+        list_offset,
+        row,
+        path: path.to_string(),
+        reason,
+    }))
+}
+
+/// A refusal inside the innermost keyed row, or `fallback` when the walk is in
+/// none (unreachable through the callers, which act only inside a row).
+fn innermost_row_error(state: &WalkState, reason: ListKeyReason, fallback: IrError) -> IrError {
+    match state.keyed_rows.last() {
+        Some(row) => row.refuse(reason),
+        None => fallback,
     }
 }
 
@@ -1378,8 +1697,27 @@ fn emit_open_tag(
     if !is_valid_name(tag) {
         return Err(IrError::InvalidName(tag.to_string()));
     }
+    // Decided before the depth moves: an element opened at the depth the
+    // innermost keyed row was entered at is that row's root (FORMA-181).
+    let row_key = state.open_row_root();
+    state.open_tag_is_row_root = row_key.is_some();
+    if row_key.is_some()
+        && attrs
+            .iter()
+            .any(|(key, _)| key.eq_ignore_ascii_case("data-forma-key"))
+    {
+        // The identity attribute is the walker's to write, once, from the
+        // key path; an authored one would be a second, silently first-wins
+        // identity on the same root.
+        return Err(innermost_row_error(
+            state,
+            ListKeyReason::AuthoredKey,
+            IrError::InvalidName("data-forma-key".to_string()),
+        ));
+    }
     if has_content {
         enter_element(out, tag, state, limit)?;
+        state.element_depth += 1;
     }
     push_checked(out, "<", limit)?;
     push_checked(out, tag, limit)?;
@@ -1424,8 +1762,11 @@ fn emit_open_tag(
         push_checked(out, "\"", limit)?;
     }
 
-    // Inject pending list-item key
-    if let Some(key) = state.pending_list_key.take() {
+    // The keyed row's identity, on its root (FORMA-181, DR-8). The canonical
+    // text is already normalized (value rule 1); `push_escaped_attr` applies
+    // the same rule again, which is idempotent, and escapes for the
+    // attribute, so the browser decodes exactly the canonical text.
+    if let Some(key) = row_key {
         push_checked(out, " data-forma-key=\"", limit)?;
         push_escaped_attr(out, &key, limit)?;
         push_checked(out, "\"", limit)?;
@@ -1795,6 +2136,7 @@ fn leave_element(
 /// this instead, so a control is resolved whichever opcode ends its tag.
 fn close_start_tag(out: &mut String, state: &mut WalkState, limit: usize) -> Result<(), IrError> {
     state.pending_tag_close = false;
+    state.open_tag_is_row_root = false;
     match std::mem::take(&mut state.pending_control) {
         PendingControl::None => {}
         PendingControl::Textarea { value } => {
@@ -6603,6 +6945,734 @@ mod tests {
                 );
             }
             finish(failures);
+        }
+    }
+
+    /// FORMA-181 checkpoint B: keyed rows. Hand-built modules with a real FMIR section
+    /// `0x0006`, so the walker's own refusals (RENDER-503) are reached without the
+    /// compiler's source proof in front of them, and the unkeyed low-level form is pinned
+    /// beside each keyed case.
+    mod keyed_rows {
+        use super::*;
+        use crate::format::{ListKeyReason, ListKeyViolation};
+        use crate::parser::test_helpers::with_key_paths;
+
+        const STRINGS: &[&str] = &[
+            "rows",           // 0
+            "row",            // 1
+            "li",             // 2
+            "id",             // 3
+            "span",           // 4
+            "label",          // 5
+            "input",          // 6
+            "type",           // 7
+            "checkbox",       // 8
+            "data-forma-key", // 9
+            "authored",       // 10
+            "tags",           // 11
+            "b",              // 12
+            "Child",          // 13
+            "ul",             // 14
+            "DATA-FORMA-KEY", // 15
+            "text",           // 16
+            "user",           // 17
+            "tag",            // 18
+        ];
+        const LI: u32 = 2;
+        const ID: u32 = 3;
+        const SPAN: u32 = 4;
+        const INPUT: u32 = 6;
+        const TYPE: u32 = 7;
+        const CHECKBOX: u32 = 8;
+        const KEY_ATTR: u32 = 9;
+        const AUTHORED: u32 = 10;
+        const TAGS: u32 = 11;
+        const B: u32 = 12;
+        const CHILD: u32 = 13;
+        const UL: u32 = 14;
+        const KEY_ATTR_UPPER: u32 = 15;
+        const TEXT: u32 = 16;
+        const USER: u32 = 17;
+        /// rows (0), row (1), tags (2, read from the row), tag (3), label (4). The row
+        /// slots are client-sourced so the declared-fixture builder leaves them out of the
+        /// page schema it writes for the island cases (it encodes scalars only).
+        const SLOTS: &[(u16, u32, u8, u8, &[u8])] = &[
+            (0, 0, 0x04, 0x00, &[]),
+            (1, 1, 0x05, 0x01, &[]),
+            (2, 11, 0x04, 0x01, &[]),
+            (3, 18, 0x05, 0x01, &[]),
+            (4, 5, 0x01, 0x00, &[]),
+        ];
+        /// A LIST's header: opcode, array slot, item slot, body length.
+        const LIST_HEADER: usize = 9;
+
+        fn keyed(opcodes: &[u8], paths: &[(u32, &[u32])]) -> IrModule {
+            let base = build_declared_fixture(STRINGS, SLOTS, opcodes, &[]);
+            IrModule::parse(&with_key_paths(&base, paths)).unwrap()
+        }
+
+        /// With an island table the module's typed flow is checked, and the fixture
+        /// builder declares `rows` as `string[]`, so the row slot is a string slot. The
+        /// walker binds whatever rows the data holds; the object rows below carry the key.
+        fn keyed_with_islands(
+            opcodes: &[u8],
+            paths: &[(u32, &[u32])],
+            islands: &[(u16, u8, u8, u32, u32, &[u16])],
+        ) -> IrModule {
+            const ISLAND_SLOTS: &[(u16, u32, u8, u8, &[u8])] =
+                &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x01, &[])];
+            let base = build_declared_fixture(STRINGS, ISLAND_SLOTS, opcodes, islands);
+            IrModule::parse(&with_key_paths(&base, paths)).unwrap()
+        }
+
+        fn unkeyed(opcodes: &[u8]) -> IrModule {
+            IrModule::parse(&build_declared_fixture(STRINGS, SLOTS, opcodes, &[])).unwrap()
+        }
+
+        fn rows(values: Vec<SlotValue>) -> SlotData {
+            let mut slots = SlotData::new(5);
+            slots.set(0, SlotValue::array(values));
+            slots.set(4, SlotValue::Text("x".into()));
+            slots
+        }
+
+        fn object(pairs: Vec<(&str, SlotValue)>) -> SlotValue {
+            SlotValue::object(pairs.into_iter().map(|(k, v)| (k.to_string(), v)).collect())
+        }
+
+        fn id(value: SlotValue) -> SlotValue {
+            object(vec![("id", value), ("name", text("secret"))])
+        }
+
+        fn text(value: &str) -> SlotValue {
+            SlotValue::Text(value.into())
+        }
+
+        fn num(value: f64) -> SlotValue {
+            SlotValue::Number(value)
+        }
+
+        fn refused(module: &IrModule, slots: &SlotData) -> ListKeyViolation {
+            match walk_to_html(module, slots) {
+                Err(IrError::InvalidListKey(violation)) => {
+                    let message = IrError::InvalidListKey(violation.clone()).to_string();
+                    assert!(message.starts_with("RENDER-503: LIST at bytecode offset "));
+                    // A diagnostic names positions and the path, never row data.
+                    assert!(!message.contains("secret"), "{message}");
+                    *violation
+                }
+                other => panic!("expected RENDER-503, got {other:?}"),
+            }
+        }
+
+        fn violation(
+            list_offset: u32,
+            row: usize,
+            path: &str,
+            reason: ListKeyReason,
+        ) -> ListKeyViolation {
+            ListKeyViolation {
+                list_offset,
+                row,
+                path: path.into(),
+                reason,
+            }
+        }
+
+        /// `<li><span></span></li>`: the key belongs on the `li`.
+        fn li_body() -> Vec<u8> {
+            [
+                encode_open_tag(LI, &[]),
+                encode_open_tag(SPAN, &[]),
+                encode_close_tag(SPAN),
+                encode_close_tag(LI),
+            ]
+            .concat()
+        }
+
+        #[test]
+        fn a_keyed_list_writes_each_rows_canonical_key_once_on_its_root() {
+            let ops = encode_list(0, 1, &li_body());
+            let data = rows(vec![
+                id(num(1.0)),
+                id(text("a&\"<b>'")),
+                id(num(-0.0)),
+                id(text("x\r\ny\0")),
+                id(num(-9_007_199_254_740_991.0)),
+                id(text("")),
+            ]);
+            let html = walk_to_html(&keyed(&ops, &[(0, &[ID])]), &data).unwrap();
+            assert_eq!(
+                html,
+                concat!(
+                    "<!--f:l0-->",
+                    "<li data-forma-key=\"1\"><span></span></li>",
+                    "<li data-forma-key=\"a&amp;&quot;&lt;b&gt;'\"><span></span></li>",
+                    "<li data-forma-key=\"0\"><span></span></li>",
+                    "<li data-forma-key=\"x\ny\u{FFFD}\"><span></span></li>",
+                    "<li data-forma-key=\"-9007199254740991\"><span></span></li>",
+                    "<li data-forma-key=\"\"><span></span></li>",
+                    "<!--/f:l0-->"
+                )
+            );
+        }
+
+        #[test]
+        fn an_unkeyed_list_renders_byte_identically_with_no_key_and_no_key_rules() {
+            let ops = encode_list(0, 1, &li_body());
+            let data = rows(vec![id(num(1.0)), id(text("a"))]);
+            let keyed_out =
+                walk_to_html_counted(&keyed(&ops, &[(0, &[ID])]), &data, WalkLimits::default())
+                    .unwrap();
+            let plain = walk_to_html_counted(&unkeyed(&ops), &data, WalkLimits::default()).unwrap();
+            assert_eq!(
+                plain.html,
+                "<!--f:l0--><li><span></span></li><li><span></span></li><!--/f:l0-->"
+            );
+            assert_eq!(
+                keyed_out
+                    .html
+                    .replace(" data-forma-key=\"1\"", "")
+                    .replace(" data-forma-key=\"a\"", ""),
+                plain.html
+            );
+            assert_eq!(
+                keyed_out.counts.list_iterations,
+                plain.counts.list_iterations
+            );
+            assert_eq!(keyed_out.counts.nodes, plain.counts.nodes);
+            // Without section 6 none of the key rules apply: scalar, missing and repeated
+            // values, several roots, text beside a root and an authored attribute all render
+            // as the low-level reader always did.
+            let anything = rows(vec![text("a"), text("a"), SlotValue::Null, object(vec![])]);
+            assert_eq!(
+                walk_to_html(&unkeyed(&ops), &anything).unwrap(),
+                format!(
+                    "<!--f:l0-->{}<!--/f:l0-->",
+                    "<li><span></span></li>".repeat(4)
+                )
+            );
+            let loose = [
+                encode_open_tag(LI, &[(KEY_ATTR, AUTHORED)]),
+                encode_close_tag(LI),
+                encode_text(TEXT),
+                encode_void_tag(INPUT, &[]),
+            ]
+            .concat();
+            assert_eq!(
+                walk_to_html(&unkeyed(&encode_list(0, 1, &loose)), &rows(vec![text("a")])).unwrap(),
+                "<!--f:l0--><li data-forma-key=\"authored\"></li>text<input><!--/f:l0-->"
+            );
+        }
+
+        #[test]
+        fn a_void_root_carries_the_key_and_admits_nothing_beside_it() {
+            let void = encode_void_tag(INPUT, &[(TYPE, CHECKBOX)]);
+            let html = walk_to_html(
+                &keyed(&encode_list(0, 1, &void), &[(0, &[ID])]),
+                &rows(vec![id(num(7.0)), id(num(8.0))]),
+            )
+            .unwrap();
+            assert_eq!(
+                html,
+                "<!--f:l0--><input type=\"checkbox\" data-forma-key=\"7\"><input type=\"checkbox\" data-forma-key=\"8\"><!--/f:l0-->"
+            );
+            let beside = [void.clone(), encode_text(TEXT)].concat();
+            assert_eq!(
+                refused(
+                    &keyed(&encode_list(0, 1, &beside), &[(0, &[ID])]),
+                    &rows(vec![id(num(7.0))])
+                ),
+                violation(
+                    0,
+                    0,
+                    "id",
+                    ListKeyReason::RowShape {
+                        roots: 1,
+                        stray_content: true
+                    }
+                )
+            );
+        }
+
+        /// A registered child as the row: `<!--f:iN-->` wholly encloses the host, which is
+        /// the row's root and carries both the island attributes and the key.
+        #[test]
+        fn a_registered_child_envelope_enclosing_the_root_puts_the_key_on_the_host() {
+            let body = [
+                encode_island_start(0),
+                encode_open_tag(B, &[]),
+                encode_close_tag(B),
+                encode_island_end(0),
+            ]
+            .concat();
+            let ops = encode_list(0, 1, &body);
+            let island = (0, 0x01, 0x01, CHILD, LIST_HEADER as u32, &[][..]);
+            let module = keyed_with_islands(&ops, &[(0, &[ID])], &[island]);
+            let html = walk_to_html(&module, &rows(vec![id(num(1.0)), id(num(2.0))])).unwrap();
+            let host = |occurrence: usize, key: &str| {
+                format!("<!--f:i0--><b data-forma-island=\"0\" data-forma-component=\"Child\" data-forma-status=\"pending\" data-forma-hydrate=\"load\" data-forma-state=\"{occurrence}\" data-forma-h=\"0000000000000000\" data-forma-key=\"{key}\"></b><!--/f:i0-->")
+            };
+            assert_eq!(
+                html,
+                format!("<!--f:l0-->{}{}<!--/f:l0-->", host(0, "1"), host(1, "2"))
+            );
+        }
+
+        #[test]
+        fn an_island_envelope_that_does_not_wholly_enclose_the_root_refuses() {
+            // (body, ISLAND_START's offset inside the body, roots counted)
+            let empty_island_then_root = [
+                encode_island_start(0),
+                encode_island_end(0),
+                encode_open_tag(LI, &[]),
+                encode_close_tag(LI),
+            ]
+            .concat();
+            let root_then_child = [
+                encode_open_tag(LI, &[]),
+                encode_close_tag(LI),
+                encode_island_start(0),
+                encode_open_tag(B, &[]),
+                encode_close_tag(B),
+                encode_island_end(0),
+            ]
+            .concat();
+            let cases: [(&[u8], usize, usize); 2] = [
+                (&empty_island_then_root, 0, 1),
+                (
+                    &root_then_child,
+                    encode_open_tag(LI, &[]).len() + encode_close_tag(LI).len(),
+                    2,
+                ),
+            ];
+            for (body, at, roots) in cases {
+                let island = (0, 0x01, 0x01, CHILD, (LIST_HEADER + at) as u32, &[][..]);
+                let module = keyed_with_islands(&encode_list(0, 1, body), &[(0, &[ID])], &[island]);
+                assert_eq!(
+                    refused(&module, &rows(vec![id(num(1.0))])),
+                    violation(
+                        0,
+                        0,
+                        "id",
+                        ListKeyReason::RowShape {
+                            roots,
+                            stray_content: true
+                        }
+                    )
+                );
+            }
+        }
+
+        /// `<li>` PROP(row.tags) LIST(tags){ `<b></b>` } `</li>`, both lists keyed by `id`.
+        fn nested() -> (Vec<u8>, u32) {
+            let inner = encode_list(
+                2,
+                3,
+                &[encode_open_tag(B, &[]), encode_close_tag(B)].concat(),
+            );
+            let outer_body = [
+                encode_open_tag(LI, &[]),
+                encode_prop(1, TAGS, 2),
+                inner,
+                encode_close_tag(LI),
+            ]
+            .concat();
+            let inner_offset =
+                LIST_HEADER + encode_open_tag(LI, &[]).len() + encode_prop(1, TAGS, 2).len();
+            (encode_list(0, 1, &outer_body), inner_offset as u32)
+        }
+
+        fn group(key: f64, tags: Vec<SlotValue>) -> SlotValue {
+            object(vec![("id", num(key)), ("tags", SlotValue::array(tags))])
+        }
+
+        #[test]
+        fn each_execution_of_a_list_is_its_own_duplicate_scope() {
+            let (ops, inner) = nested();
+            let module = keyed(&ops, &[(0, &[ID]), (inner, &[ID])]);
+            // The inner LIST runs once per outer row: the same keys under two outer rows,
+            // and an inner key equal to its outer row's key, are not duplicates.
+            let data = rows(vec![
+                group(1.0, vec![id(text("a")), id(num(1.0))]),
+                group(2.0, vec![id(text("a"))]),
+            ]);
+            assert_eq!(
+                walk_to_html(&module, &data).unwrap(),
+                concat!(
+                    "<!--f:l0-->",
+                    "<li data-forma-key=\"1\"><!--f:l2--><b data-forma-key=\"a\"></b><b data-forma-key=\"1\"></b><!--/f:l2--></li>",
+                    "<li data-forma-key=\"2\"><!--f:l2--><b data-forma-key=\"a\"></b><!--/f:l2--></li>",
+                    "<!--/f:l0-->"
+                )
+            );
+            // Within one execution they are: the inner LIST's offset, its row, the path.
+            let duplicate = rows(vec![
+                group(1.0, vec![id(text("a"))]),
+                group(2.0, vec![id(text("b")), id(text("a")), id(text("b"))]),
+            ]);
+            assert_eq!(
+                refused(&module, &duplicate),
+                violation(inner, 2, "id", ListKeyReason::Duplicate { first_row: 0 })
+            );
+            // Two sibling LISTs over the same rows are two executions too.
+            let twice = [encode_list(0, 1, &li_body()), encode_list(0, 1, &li_body())].concat();
+            let second = encode_list(0, 1, &li_body()).len() as u32;
+            let html = walk_to_html(
+                &keyed(&twice, &[(0, &[ID]), (second, &[ID])]),
+                &rows(vec![id(num(1.0)), id(num(2.0))]),
+            )
+            .unwrap();
+            assert_eq!(html.matches("data-forma-key=\"1\"").count(), 2, "{html}");
+            assert_eq!(html.matches("data-forma-key=\"2\"").count(), 2, "{html}");
+        }
+
+        #[test]
+        fn keys_collide_on_their_canonical_text_not_on_their_type_or_spelling() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let collide = [
+                (num(1.0), text("1")),
+                (num(0.0), num(-0.0)),
+                (text("0"), num(-0.0)),
+                (text("a\r\nb"), text("a\nb")),
+                (text("a\rb"), text("a\nb")),
+                (text("\0"), text("\u{FFFD}")),
+            ];
+            for (first, second) in collide {
+                let label = format!("{first:?} {second:?}");
+                assert_eq!(
+                    refused(&module, &rows(vec![id(first), id(second)])),
+                    violation(0, 1, "id", ListKeyReason::Duplicate { first_row: 0 }),
+                    "{label}"
+                );
+            }
+            let distinct = [
+                (num(1.0), text("01")),
+                (text("A"), text("a")),
+                (text("a"), text("a ")),
+                (text("\u{e9}"), text("e\u{301}")),
+                (text("-0"), num(0.0)),
+            ];
+            for (first, second) in distinct {
+                let label = format!("{first:?} {second:?}");
+                assert!(
+                    walk_to_html(&module, &rows(vec![id(first), id(second)])).is_ok(),
+                    "{label}"
+                );
+            }
+        }
+
+        #[test]
+        fn a_row_without_an_identity_at_the_path_refuses_with_its_reason() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let not_identity = |kind| ListKeyReason::NotAnIdentity { kind };
+            let twice = SlotValue::object(vec![("id".into(), num(1.0)), ("id".into(), num(2.0))]);
+            let cases = [
+                (
+                    object(vec![("name", text("secret"))]),
+                    ListKeyReason::MissingField {
+                        segment: "id".into(),
+                    },
+                ),
+                (id(SlotValue::Null), not_identity("null")),
+                (id(SlotValue::Bool(true)), not_identity("a boolean")),
+                (
+                    id(object(vec![("secret", num(1.0))])),
+                    not_identity("an object"),
+                ),
+                (
+                    id(SlotValue::array(vec![text("secret")])),
+                    not_identity("an array"),
+                ),
+                (id(num(1.5)), ListKeyReason::NotASafeInteger),
+                (id(num(f64::NAN)), ListKeyReason::NotASafeInteger),
+                (id(num(f64::INFINITY)), ListKeyReason::NotASafeInteger),
+                (id(num(f64::NEG_INFINITY)), ListKeyReason::NotASafeInteger),
+                (
+                    id(num(9_007_199_254_740_992.0)),
+                    ListKeyReason::NotASafeInteger,
+                ),
+                (
+                    id(num(-9_007_199_254_740_992.0)),
+                    ListKeyReason::NotASafeInteger,
+                ),
+                (
+                    text("secret"),
+                    ListKeyReason::NotAnObject {
+                        segment: "id".into(),
+                    },
+                ),
+                (
+                    twice,
+                    ListKeyReason::DuplicateField {
+                        segment: "id".into(),
+                    },
+                ),
+            ];
+            for (bad, reason) in cases {
+                // The refused row is the second: the first rendered nothing the page keeps.
+                assert_eq!(
+                    refused(&module, &rows(vec![id(num(1.0)), bad])),
+                    violation(0, 1, "id", reason)
+                );
+            }
+            // A nested path reads objects only, and names itself dotted.
+            let nested = keyed(&encode_list(0, 1, &li_body()), &[(0, &[USER, ID])]);
+            let user = |value| object(vec![("user", value)]);
+            assert_eq!(
+                walk_to_html(&nested, &rows(vec![user(id(text("u1")))])).unwrap(),
+                "<!--f:l0--><li data-forma-key=\"u1\"><span></span></li><!--/f:l0-->"
+            );
+            for value in [
+                text("u1"),
+                SlotValue::Null,
+                SlotValue::array(vec![id(num(1.0))]),
+            ] {
+                assert_eq!(
+                    refused(&nested, &rows(vec![user(value)])),
+                    violation(
+                        0,
+                        0,
+                        "user.id",
+                        ListKeyReason::NotAnObject {
+                            segment: "id".into()
+                        }
+                    )
+                );
+            }
+        }
+
+        #[test]
+        fn a_keyed_row_renders_exactly_one_balanced_root_and_nothing_beside_it() {
+            let shape = |roots, stray_content| ListKeyReason::RowShape {
+                roots,
+                stray_content,
+            };
+            let li = [encode_open_tag(LI, &[]), encode_close_tag(LI)].concat();
+            let cases: Vec<(&str, Vec<u8>, ListKeyReason)> = vec![
+                ("empty row", Vec::new(), shape(0, false)),
+                (
+                    "two roots",
+                    [li.clone(), li.clone()].concat(),
+                    shape(2, false),
+                ),
+                (
+                    "text beside",
+                    [li.clone(), encode_text(TEXT)].concat(),
+                    shape(1, true),
+                ),
+                ("text only", encode_text(TEXT), shape(0, true)),
+                ("dynamic text only", encode_dyn_text(4, 0), shape(0, true)),
+                (
+                    "conditional root",
+                    encode_show_if(4, &li, &li),
+                    shape(1, true),
+                ),
+                (
+                    // Its one row's `li` is at the outer row's level too, so it counts as
+                    // the outer row's root; the range around it is the refusal.
+                    "list at the row's level",
+                    encode_list(2, 3, &li),
+                    shape(1, true),
+                ),
+                (
+                    "closes the list's parent",
+                    encode_close_tag(UL),
+                    ListKeyReason::UnbalancedRow,
+                ),
+                (
+                    "closes the parent after its root",
+                    [li.clone(), encode_close_tag(UL), encode_open_tag(UL, &[])].concat(),
+                    ListKeyReason::UnbalancedRow,
+                ),
+                (
+                    "leaves its root open",
+                    encode_open_tag(LI, &[]),
+                    ListKeyReason::UnbalancedRow,
+                ),
+            ];
+            for (name, body, reason) in cases {
+                let ops = [
+                    encode_open_tag(UL, &[]),
+                    encode_list(0, 1, &body),
+                    encode_close_tag(UL),
+                ]
+                .concat();
+                let offset = encode_open_tag(UL, &[]).len() as u32;
+                let module = keyed(&ops, &[(offset, &[ID])]);
+                let mut data = rows(vec![id(num(1.0))]);
+                data.set(2, SlotValue::array(vec![text("t")]));
+                assert_eq!(
+                    refused(&module, &data),
+                    violation(offset, 0, "id", reason),
+                    "{name}"
+                );
+            }
+        }
+
+        #[test]
+        fn an_authored_data_forma_key_on_the_root_refuses_and_on_a_descendant_renders() {
+            let authored = |body: Vec<u8>| {
+                refused(
+                    &keyed(&encode_list(0, 1, &body), &[(0, &[ID])]),
+                    &rows(vec![id(num(1.0))]),
+                )
+            };
+            let expected = violation(0, 0, "id", ListKeyReason::AuthoredKey);
+            for attr in [KEY_ATTR, KEY_ATTR_UPPER] {
+                assert_eq!(
+                    authored(
+                        [
+                            encode_open_tag(LI, &[(attr, AUTHORED)]),
+                            encode_close_tag(LI)
+                        ]
+                        .concat()
+                    ),
+                    expected
+                );
+                assert_eq!(
+                    authored(encode_void_tag(INPUT, &[(attr, AUTHORED)])),
+                    expected
+                );
+                assert_eq!(
+                    authored(
+                        [
+                            encode_open_tag(LI, &[]),
+                            encode_dyn_attr(attr, 4),
+                            encode_close_tag(LI)
+                        ]
+                        .concat()
+                    ),
+                    expected
+                );
+            }
+            let descendant = [
+                encode_open_tag(LI, &[]),
+                encode_open_tag(SPAN, &[(KEY_ATTR, AUTHORED)]),
+                encode_close_tag(SPAN),
+                encode_close_tag(LI),
+            ]
+            .concat();
+            assert_eq!(
+                walk_to_html(
+                    &keyed(&encode_list(0, 1, &descendant), &[(0, &[ID])]),
+                    &rows(vec![id(num(1.0))])
+                )
+                .unwrap(),
+                "<!--f:l0--><li data-forma-key=\"1\"><span data-forma-key=\"authored\"></span></li><!--/f:l0-->"
+            );
+        }
+
+        #[test]
+        fn a_refused_row_leaves_the_slot_journal_keyed_rows_and_list_depth_as_found() {
+            let (ops, inner) = nested();
+            let module = keyed(&ops, &[(0, &[ID]), (inner, &[ID])]);
+            let bad_inner_key = rows(vec![
+                group(1.0, vec![id(text("a"))]),
+                group(2.0, vec![id(text("a")), id(text("a"))]),
+            ]);
+            // The inner row's key is fine, but the output budget runs out inside it (50 bytes
+            // end within its `<b data-forma-key="a">`): a non-key error unwinds the same way.
+            let over_budget_inside = rows(vec![group(1.0, vec![id(text("a"))])]);
+            let cases = [
+                (
+                    bad_inner_key,
+                    WalkLimits::default(),
+                    IrError::InvalidListKey(Box::new(violation(
+                        inner,
+                        1,
+                        "id",
+                        ListKeyReason::Duplicate { first_row: 0 },
+                    ))),
+                ),
+                (
+                    over_budget_inside,
+                    WalkLimits {
+                        max_output_bytes: 50,
+                        ..WalkLimits::default()
+                    },
+                    IrError::OutputLimitExceeded { limit: 50 },
+                ),
+            ];
+            for (data, limits, expected) in cases {
+                let mut slots = data.clone();
+                let before = format!("{slots:?}");
+                let mut state = WalkState::new(limits);
+                let mut out = String::new();
+                let error = walk_range(
+                    &module,
+                    &mut slots,
+                    &module.opcodes,
+                    0,
+                    module.opcodes.len(),
+                    &mut out,
+                    &mut state,
+                    0,
+                )
+                .unwrap_err();
+                assert_eq!(error, expected);
+                assert_eq!(state.list_depth, 0, "{error:?}");
+                assert!(state.keyed_rows.is_empty(), "{error:?}");
+                assert!(state.slot_journal.is_empty(), "{error:?}");
+                assert_eq!(format!("{slots:?}"), before, "{error:?}");
+            }
+        }
+
+        #[test]
+        fn a_key_is_charged_to_the_output_budget_before_it_is_built() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let long = "k".repeat(1000);
+            let opened = "<!--f:l0-->".len();
+            let limits = WalkLimits {
+                max_output_bytes: opened + 999,
+                ..WalkLimits::default()
+            };
+            let failure =
+                walk_to_html_counted(&module, &rows(vec![id(text(&long))]), limits).unwrap_err();
+            assert_eq!(
+                failure.error,
+                IrError::OutputLimitExceeded {
+                    limit: opened + 999
+                }
+            );
+            // Refused before the row wrote anything: only the list's opening marker.
+            assert_eq!(failure.counts.bytes, opened);
+            // A NUL is counted as the three bytes U+FFFD takes.
+            let nul = "\0".repeat(400);
+            let limits = WalkLimits {
+                max_output_bytes: opened + 1000,
+                ..WalkLimits::default()
+            };
+            let failure =
+                walk_to_html_counted(&module, &rows(vec![id(text(&nul))]), limits).unwrap_err();
+            assert_eq!(failure.counts.bytes, opened);
+            // Exactly at the budget the page renders.
+            let html = walk_to_html(&module, &rows(vec![id(text("key"))])).unwrap();
+            let exact = WalkLimits {
+                max_output_bytes: html.len(),
+                ..WalkLimits::default()
+            };
+            assert_eq!(
+                walk_to_html_with_limits(&module, &rows(vec![id(text("key"))]), exact).unwrap(),
+                html
+            );
+        }
+
+        #[test]
+        fn the_iteration_budget_refuses_a_keyed_list_before_any_key_is_read() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let limits = WalkLimits {
+                max_list_iterations: 1,
+                ..WalkLimits::default()
+            };
+            let failure = walk_to_html_counted(
+                &module,
+                &rows(vec![id(SlotValue::Null), id(num(1.0))]),
+                limits,
+            )
+            .unwrap_err();
+            assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 1 });
+            assert_eq!(failure.counts.list_iterations, 0);
         }
     }
 }
