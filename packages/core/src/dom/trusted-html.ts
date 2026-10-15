@@ -182,17 +182,16 @@ export function htmlOf(value: TrustedHtml): string {
 /** Require named raw markup before any sink or cached-markup fast path. */
 export function rawHtml(value: unknown, sink: RawSink): string {
   if (isTrustedHtml(value)) return htmlOf(value);
-  const [code, where] = RAW_HTML_CODES[sink];
-  throw new TypeError(`[forma] ${code}: ${where} requires trustedHtml(); plain strings and look-alikes are refused`);
+  throw new TypeError(`[forma] ${RAW_HTML_CODES[sink]}: ${sink} requires trustedHtml()`);
 }
 
 /** Stable refusal codes; these remain active in production artifacts. */
-export const RAW_HTML_CODES: Record<RawSink, readonly [code: string, where: string]> = {
-  innerHTML: ['FORMA_E_RAW_INNER_HTML', 'dangerouslySetInnerHTML'],
-  setHTMLUnsafe: ['FORMA_E_RAW_SET_HTML', 'setHTMLUnsafe()'],
-  template: ['FORMA_E_RAW_TEMPLATE', 'template() or templateMany()'],
-  reconcile: ['FORMA_E_RAW_RECONCILE', 'reconcile()'],
-  srcdoc: ['FORMA_E_RAW_SRCDOC', 'srcdoc'],
+export const RAW_HTML_CODES: Record<RawSink, string> = {
+  innerHTML: 'FORMA_E_RAW_INNER_HTML',
+  setHTMLUnsafe: 'FORMA_E_RAW_SET_HTML',
+  template: 'FORMA_E_RAW_TEMPLATE',
+  reconcile: 'FORMA_E_RAW_RECONCILE',
+  srcdoc: 'FORMA_E_RAW_SRCDOC',
 };
 
 /** A binding cannot carry the named raw value; refuse it before a DOM sink. */

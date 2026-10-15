@@ -19,7 +19,7 @@ const configs = rawConfig as Options[];
 
 /** Stable refusal markers must survive every production bundling. */
 const RAW_MARKS = [
-  ...Object.values(RAW_HTML_CODES).map(([code]) => code),
+  ...Object.values(RAW_HTML_CODES),
 ];
 /** Script construction refusal is also unconditional. */
 const SCRIPT_MARK = 'FORMA_E_SCRIPT_ELEMENT';
