@@ -1,0 +1,6 @@
+this Cargo does not support nightly features, but if you
+switch to nightly channel you can pass
+`-Zlints` to enable this feature.
+    Checking forma-ir-derive v0.0.0 (/Users/victorvillacis/dev/Forma/work/FORMA-113/out2/forma/crates/forma-ir-derive)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.04s
+cargo +1.71 check -p forma-ir-derive --all-targets --locked  0.04s user 0.04s system 124% cpu 0.062 total
