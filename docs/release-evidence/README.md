@@ -1,5 +1,38 @@
 # FORMA-187 non-publishing evidence
 
+## The first live publish: 3.0.0-alpha.2 (milestone M2), 2026-10-15
+
+`v3.0.0-alpha.2` on `119c12c` published through the unified workflow: release run
+38771766038, exact-commit CI run 38769339489; every job green (`check` 15 s, `pack` 60 s,
+the three engines, `verify` 3 min 25 s, `publish-crates` 35 s, `publish-npm` 5 min 58 s
+including registry visibility polling, `record` 23 s). The GitHub Release "Forma
+3.0.0-alpha.2 (alpha, M2)" is a pre-release carrying `release-record.json`, `p17.json` and
+`SHA256SUMS`. **G6's first real figure: 768.9 seconds** from the tag-triggered workflow's
+`created_at` (16:46:16Z) to the acknowledged Release write (16:59:04.9Z), queue included;
+772 seconds from the tag push (16:46:12Z) to the Release's publication (16:59:04Z). Target
+1,800 seconds: met. `alpha-published-release-record.json` is the Release's record (DS12);
+`alpha-published-SHA256SUMS` is the run's DS11 record.
+
+The runbook's L7, the P17 replay on the published bytes: the four npm tarballs and the
+three `.crate` files were downloaded from registry.npmjs.org and static.crates.io (User-Agent
+`design-doc-factory-research/1.0`), set beside the run's `release-set.json` and `Cargo.lock`,
+and every file matched the run's DS11 record (`shasum -a 256 -c SHA256SUMS`: nine OK, the
+Release's `SHA256SUMS` byte-identical to the run's). P17 from the `v3.0.0-alpha.2` checkout,
+workspace unbuilt, milestone enforced (`dryRun: false`): `alpha-published-p17.json`,
+`passed: true`, 34 checks in 81.2 seconds, milestone alpha (M2) ready, the four internal
+edges of the packed set resolved inside it, both templates installed from the published
+bytes, built, served and interacted with.
+
+The runbook's L8, the fault-injection check the plan names: the published `forma-ir` crate
+unpacked beside the tag's `fuzz/regressions` (four committed regressions), its lock resolving
+`forma-ir-derive 3.0.0-alpha.2` from crates.io at the recorded checksum (`--locked`):
+`fmir_v3` 8 passed, `fuzz_regressions` 6 passed.
+
+Before it, `v3.0.0-alpha.1` on `8ba2930` (run 38764599499) stopped in `verify`'s P17 and
+published nothing: the harness resolved the packed build's optional compiler peer through
+the unbuilt workspace link. Fixed in PR 54 (`scripts/release-packed-resolution.mjs`); the
+version was not retagged.
+
 ## The milestone-aware gate (first alpha preparation)
 
 Runs on a Mac (Node 24.22.0, Cargo 1.93.1) on 2026-10-15 at the committed tree
