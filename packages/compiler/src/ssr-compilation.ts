@@ -2,7 +2,8 @@ import {realpathSync} from 'node:fs';
 import type {BuildOptions,Plugin,PluginBuild} from 'esbuild';
 import type {IslandRegistry} from './island-registry';
 import {PropsSchemaError} from './props-schema';
-import {SourceSnapshot} from './source-snapshot';
+import {SourceSnapshot,withSourceSnapshot} from './source-snapshot';
+import {collectAdoptionEdits} from './adoption-hooks';
 import {applySourceEdits,type SourceEdit} from './source-edits';
 
 type Setup = Plugin['setup'];
@@ -48,21 +49,27 @@ class CompilationContext {
       for(const file of input.snapshot.dependencies)snapshot.dependencies.add(file);
       for(const directory of input.snapshot.directories)snapshot.directories.add(directory);
     }
-    const sources=new Map(snapshot.files),byFile=new Map<string,SourceEdit[]>();
+    const byFile=new Map<string,SourceEdit[]>();
     // A refused native contribution never lends partial instrumentation authority.
     // Its owning onEnd retains the original source-located diagnostic.
     if(inputs.every(input=>input.valid)) {
+      const registries=inputs.flatMap(input=>input.registry?[input.registry]:[]);
+      // One collector sees every original registry before any onLoad wins. Its
+      // helper reads use the same union snapshot and are guarded at publication.
+      const hooks=withSourceSnapshot(snapshot,()=>collectAdoptionEdits(registries));
+      for(const [file,edits] of hooks)byFile.set(file,[...edits]);
       for(const input of inputs)if(input.entry) {
         const edits=byFile.get(input.entry)??[];
         for(const edit of input.edits)if(!edits.some(previous=>previous.start===edit.start&&previous.end===edit.end&&previous.text===edit.text))edits.push(edit);
         byFile.set(input.entry,edits);
       }
-      for(const [file,edits] of byFile) {
-        const source=snapshot.files.get(file);
-        if(source===undefined)throw new PropsSchemaError(file,1,1,'entry edits have no original source snapshot');
-        try {sources.set(file,applySourceEdits(source,edits));}
-        catch(error) {throw new PropsSchemaError(file,1,1,`conflicting SSR entry edits: ${(error as Error).message}`);}
-      }
+    }
+    const sources=new Map(snapshot.files);
+    for(const [file,edits] of byFile) {
+      const source=snapshot.files.get(file);
+      if(source===undefined)throw new PropsSchemaError(file,1,1,'compiler edits have no original source snapshot');
+      try {sources.set(file,applySourceEdits(source,edits));}
+      catch(error) {throw new PropsSchemaError(file,1,1,`conflicting original compiler edits: ${(error as Error).message}`);}
     }
     this.prepared={snapshot,sources};return this.prepared;
   }
@@ -73,7 +80,7 @@ class CompilationContext {
   }
   unchanged():boolean {
     // Keep each contributor's resolution checks, plus any union-only reads that
-    // the later adoption collector makes through the prepared source snapshot.
+    // the adoption collector makes through the prepared source snapshot.
     return [...this.participants.values()].every(record=>record.input?.snapshot.unchanged())&&this.prepare().snapshot.unchanged();
   }
 }
