@@ -87,6 +87,7 @@ export function verifyPackedPropsTests(manifest) {
     'unknown_browser_and_ambiguous_pages_refuse_binding',
     'no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists',
     'reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot',
+    'reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery',
   ];
   const args = ['test', '--locked', '--manifest-path', manifest, '--test', 'typed_pages', '--', '--color', 'never'];
   const env = { ...process.env };
