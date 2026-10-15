@@ -116,10 +116,11 @@ export function run(cmd: string, args: string[], cwd: string, timeout = 900_000,
 }
 
 /** A scaffolded project's compiled server, or a thrown error naming the missing path. */
-function serverBinary(projectDir: string, binaryName: string): string {
+function serverBinary(projectDir: string, binaryName: string, profile: 'debug' | 'release' = 'debug'): string {
+  if (profile !== 'debug' && profile !== 'release') throw new Error(`unsupported server profile: ${profile}`);
   const exe = path.join(
     process.env.CARGO_TARGET_DIR ?? path.join(projectDir, 'target'),
-    'debug',
+    profile,
     process.platform === 'win32' ? `${binaryName}.exe` : binaryName,
   );
   if (!fs.existsSync(exe)) throw new Error(`server binary missing: ${exe}`);
@@ -131,8 +132,9 @@ export async function withServer<T>(
   projectDir: string,
   binaryName: string,
   visit: (body: string, res: Response, get: (path: string) => Promise<Response>, output: () => string) => T | Promise<T>,
+  { profile = 'debug' }: { profile?: 'debug' | 'release' } = {},
 ): Promise<T> {
-  return withOwnedServer(serverBinary(projectDir, binaryName), [], projectDir,
+  return withOwnedServer(serverBinary(projectDir, binaryName, profile), [], projectDir,
     async (res: Response, origin: string, output: () => string) =>
       visit(await res.text(), res, route => fetch(origin + route, { signal: AbortSignal.timeout(5_000) }), output));
 }

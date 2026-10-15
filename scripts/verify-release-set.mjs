@@ -444,14 +444,22 @@ export async function verify(dir, reportPath) {
             if (template === 'minimal' && islandTemplates) {
               const manifest = json(join(admin, 'dist/manifest.json'));
               assert.match(html.replace(/<!--[\s\S]*?-->/g, ''), /Count:\s*<span[^>]*>7<\/span>/, 'original handler count is missing before JavaScript');
-              for (const [engine, launcher] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
-                const actual = engine === 'chromium' ? browser : await launcher.launch();
-                try {
-                  const island = await verifyMinimalIsland(actual, origin, manifest);
-                  const staticRoute = await verifyStaticTemplate(actual, origin, manifest);
-                  report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, island, staticRoute });
-                } finally { if (actual !== browser) await actual.close(); }
-              }
+              // Observe release behavior without replacing the debug binary: the
+              // corrupt-file controls below require rust-embed's debug disk reads.
+              // Debug's deliberate endpoint-free Report-Only TT logs in WebKit.
+              run('cargo', ['build', '--locked', '--release'], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
+              const releaseBinary = join(scratch, 'target/release', process.platform === 'win32' ? `${name}.exe` : name);
+              await server(releaseBinary, project, null, async (releaseResponse, releaseOrigin) => {
+                assert.equal(releaseResponse.headers.get('content-security-policy-report-only'), null, 'strict release template has an unexpected diagnostic policy');
+                for (const [engine, launcher] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
+                  const actual = engine === 'chromium' ? browser : await launcher.launch();
+                  try {
+                    const island = await verifyMinimalIsland(actual, releaseOrigin, manifest);
+                    const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest);
+                    report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, profile: 'release', island, staticRoute });
+                  } finally { if (actual !== browser) await actual.close(); }
+                }
+              });
             }
             if (set.contracts.assetIntegrity === 'sha384-v1') {
               const manifest = json(join(admin, 'dist/manifest.json'));
