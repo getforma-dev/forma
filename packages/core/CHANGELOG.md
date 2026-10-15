@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Keyed rows: the key-text seam is wired to rule 1 — FORMA-181
+
+- `src/dom/key-text.ts` (private; nothing in the bundle imports it yet) builds the canonical text of a list key: a safe integer prints as its decimal integer (`-0` as `0`), a string with an unpaired surrogate is refused, and any other string goes through FORMA-182's shared `normalizeDomText` (CRLF and CR become LF, NUL becomes U+FFFD), so `"a\r\nb"` and `"a\nb"` are the same row and `1` and `"1"` are too. `src/dom/__tests__/key-text.test.ts` runs 182's `values` vectors (`crates/forma-ir/tests/fixtures/parity/normalization.json`) and 181's shared key vectors (`keys.json`, the same ones forma-ir's walker reads) through `canonicalKeyText`, and asserts the module carries no normalizer of its own and returns `normalizeDomText`'s result. Adoption by key (FORMA-181 checkpoint C) is its first consumer.
+
 ### Value rule 1: line endings and NUL — FORMA-182
 
 - Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. The URL guard classifies the raw value and refuses a NUL anywhere in a URL attribute (normalized it would be a fetchable same-origin relative reference); the normalized value is what is written. `h('pre', null, '\nline')` now agrees with the walker's `<pre>\n\nline</pre>` in every engine. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.

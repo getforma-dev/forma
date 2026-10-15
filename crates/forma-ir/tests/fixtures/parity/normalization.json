@@ -1,7 +1,7 @@
 {
   "rule": 1,
   "title": "DOM text normalization: line endings and NUL (FORMA-182, design 4 lines 103-106, DR-9)",
-  "contract": "N(s): each CRLF pair becomes one LF, each remaining CR becomes LF, each NUL becomes U+FFFD; every other code point is preserved. N applies per authored or bound value, after the permitted value-to-string conversion and before ordinary DOM text or attribute comparison, escaping or writing. It never applies to transport, declared props, state envelopes, keys, source strings or digests.",
+  "contract": "N(s): each CRLF pair becomes one LF, each remaining CR becomes LF, each NUL becomes U+FFFD; every other code point is preserved. N applies per authored or bound value, after the permitted value-to-string conversion and before ordinary DOM text or attribute comparison, escaping or writing. It never applies to transport, declared props, state envelopes, keys as data, source strings or digests; the canonical text of a list key, written as data-forma-key, is N of a string key (keys.json, FORMA-181).",
   "consumers": [
     "crates/forma-ir/src/text.rs (normalized_chars) and crates/forma-ir/src/walker.rs tests: TEXT, DYN_TEXT, static and DYN_ATTR attributes, textarea, pre, URL guard",
     "packages/core/src/dom/__tests__/normalize-text.test.ts: normalizeDomText, createText, h() children and attributes, form-control text, adoption expectations, URL guard",
