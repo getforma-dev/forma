@@ -1,11 +1,11 @@
-import{describe,it,expect,vi}from'vitest';
-import{prepareAdoption}from'../adoption.js';
-import{h,fragment}from'../element.js';
-import{createShow}from'../show.js';
-import{createList}from'../list.js';
-import{AdoptionLifecycle}from'../../reactive/adoption-lifecycle.js';
-import{createRoot,registerDisposer}from'../../reactive/root.js';
-import{createSignal}from'../../reactive/signal.js';
+import {describe,it,expect,vi} from 'vitest';
+import {prepareAdoption} from '../adoption.js';
+import {h,fragment} from '../element.js';
+import {createShow} from '../show.js';
+import {createList} from '../list.js';
+import {AdoptionLifecycle} from '../../reactive/adoption-lifecycle.js';
+import {createRoot,registerDisposer} from '../../reactive/root.js';
+import {createSignal} from '../../reactive/signal.js';
 function fixture(html:string){const doc=document.implementation.createHTMLDocument();doc.body.innerHTML=html;return doc.body.firstElementChild!;}
 describe('private public-hydrate target seam',()=>{
  it('consumes a marked element host or exact unmarked container child without changing either marker',()=>{
