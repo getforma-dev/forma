@@ -71,7 +71,7 @@ export function verifyPackedCorpus(manifest, fmir) {
     'corpus_contains_every_expected_case', 'every_case_parses_as_fmir',
     'slot_names_are_pairwise_unique', 'slot_ids_are_pairwise_unique',
     'every_case_walks_to_html', 'every_island_entry_walks_as_a_fragment',
-    'resolution_cases_ship_named_islands_over_named_slots',
+    fmir === 2 ? 'resolution_cases_ship_named_islands_over_named_slots' : 'resolution_cases_ship_named_contracts_and_client_defaults',
     'corpus_exercises_multibyte_utf8', 'rendered_html_matches_golden',
     ...(fmir === 3 ? ['canonical_dumps_match_the_typescript_emitter'] : []),
   ].map(name => fmir === 3 ? `js_emitter_contract::${name}` : name);
