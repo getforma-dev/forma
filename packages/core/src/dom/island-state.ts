@@ -33,6 +33,7 @@ export type IslandPreflight = { readonly host: HTMLElement; readonly value: Vali
 
 const MAX_STATE_BYTES = 1_048_576;
 const HASH = /^[0-9a-f]{16}$/;
+const stateEncoder = new TextEncoder();
 const forbidden = new Set(['__proto__', 'constructor', 'prototype']);
 const registrations = new WeakMap<IslandHydrateFn, Registration>();
 const own = (value: object, name: PropertyKey): boolean => Object.prototype.hasOwnProperty.call(value, name);
@@ -178,7 +179,14 @@ function readDocument(doc: Document): DocumentState {
     const block = doc.head?.querySelector('script[type="application/json"][data-island-state]');
     if (!block) refuse('FORMA_E_ISLAND_STATE', 'missing first head state block');
     const text = block.textContent ?? '';
-    if (utf8Length(text, MAX_STATE_BYTES) < 0) refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
+    // A UTF-16 code unit needs at least one encoded byte, so reject before
+    // allocation when that lower bound exceeds the ceiling. encodeInto writes
+    // only to this capped buffer and reports incomplete input on overflow.
+    if (text.length > MAX_STATE_BYTES) refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
+    const target = new Uint8Array(Math.min(MAX_STATE_BYTES, text.length * 3));
+    if (stateEncoder.encodeInto(text, target).read !== text.length) {
+      refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
+    }
     let envelope: unknown;
     try { envelope = JSON.parse(text); } catch { refuse('FORMA_E_ISLAND_STATE', 'invalid state JSON'); }
     if (!object(envelope) || !exactKeys(envelope, ['v', 's', 'i']) || envelope.v !== 1
