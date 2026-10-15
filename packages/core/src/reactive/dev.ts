@@ -33,11 +33,18 @@ function isDev(): boolean {
  * diagnostics cannot fire — not in a browser, and not in the Node/SSR or
  * bundler process that leaves NODE_ENV unset, which is where they used to.
  *
- * What that does NOT mean is that every guarded statement is gone. esbuild's
- * `minifySyntax` inlines the `false` into many `if (__DEV__)` sites and deletes
- * them, but it cannot do so where the constant crosses a code-splitting chunk
- * boundary (dist/index.js and dist/index.cjs import it from a shared chunk).
- * The surviving `__DEV__ && console.warn(…)` calls cost bytes; they cannot run.
+ * The guarded statements go with it. esbuild's `minifySyntax` inlines the
+ * `false` into every `if (__DEV__)` site in the module that holds the constant
+ * and deletes them, but it cannot do so where the constant crosses a
+ * code-splitting chunk boundary (dist/index.js and dist/index.cjs import this
+ * module from a shared chunk), and esbuild never inlines a `const` into its
+ * use sites at all, so a module-level copy of this constant folds only where
+ * tsup's Rollup pass runs, which the standard runtime IIFE and the frame have
+ * none of. So every development warning is guarded at its site by the same
+ * expression over `__FORMA_DEV_BUILD__`, with this export as the raw-source
+ * fallback (FORMA-021 C1): in `signal.ts`, `store.ts`, `element.ts`,
+ * `list.ts`, `trusted-html.ts` and the instance registry below. No warning
+ * text reaches a production artifact, whatever chunk the module lands in.
  *
  * Two details this expression depends on, both load-bearing:
  *
@@ -50,6 +57,7 @@ function isDev(): boolean {
  *     the output, keep the NODE_ENV read alive, and block const inlining.
  *
  * Verified by: src/reactive/__tests__/dev-flag.test.ts > "resolves __DEV__ at build time and drops the NODE_ENV fallback"
+ * Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
  */
 export const __DEV__: boolean =
   (typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
@@ -88,11 +96,18 @@ type InstanceHost = Record<symbol, InstanceRegistry | undefined>;
  *      of the core (they must: the hardened build does not code-split, and the
  *      browser build inlines its dependencies).
  *
- * Deliberately NOT gated on `__DEV__`: this is a packaging mistake that only
- * manifests in built consumption, where `__DEV__` is `false`. It fires at most
- * once per process and does nothing when a single copy is loaded.
+ * Development builds only (FORMA-021 C3): the registry and its warning are
+ * folded out of every production artifact, which the build already checks for
+ * two physical copies of core through `@getforma/build`'s `core-instances.ts`
+ * (BUILD-816, on the bundler's metafile). The development build (the
+ * `development` export condition, `dist/dev/`) keeps the registry: it fires at
+ * most once per process and does nothing when a single copy is loaded. A page
+ * that mixes two production copies gets no console line from core; the CDN
+ * bundles never carried the development build.
  *
  * Verified by: src/reactive/__tests__/dev-flag.test.ts > "warns once when a second copy of the module graph registers"
+ * Verified by: src/reactive/__tests__/dev-flag.test.ts > "the duplicate-instance registry exists only in the development build"
+ * Verified by: src/__tests__/development-build.test.ts > "a process that loads the development build twice is told so by the duplicate-instance warning; the production build keeps no registry"
  */
 function registerInstance(): void {
   const host = globalThis as unknown as InstanceHost;
@@ -111,7 +126,9 @@ function registerInstance(): void {
   }
 }
 
-registerInstance();
+// Guarded at the site, in the folding shape, so the registry and its text leave
+// every production artifact, the Rollup-free runtime IIFEs included.
+if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) registerInstance();
 
 // ---------------------------------------------------------------------------
 // Global error handlers

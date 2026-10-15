@@ -22,6 +22,15 @@ import {
 } from '../security/url-safety.js';
 import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, refuseScriptElement, type TrustedHtml } from './trusted-html.js';
 
+declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the dropped-prop warnings leave the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
+
 /**
  * Symbol used as JSX Fragment factory. h(Fragment, null, ...children) returns DocumentFragment.
  *
@@ -422,7 +431,7 @@ function handleEvent(el: Element, key: string, value: unknown): void {
       typeof (value as { handleEvent?: unknown }).handleEvent === 'function');
   if (!listenable) {
     if (value == null) return;
-    if (__DEV__) warnDropped(el, key, 'inline-event-handler');
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
   const controller = getAbortController(el);
@@ -548,7 +557,7 @@ function handleXLink(el: Element, key: string, value: unknown): void {
     }
     const strVal = String(v);
     if (isUnsafeAttrWrite(el.localName, key, strVal)) {
-      if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       el.removeAttributeNS(XLINK_NS, localName);
       return;
     }
@@ -623,7 +632,7 @@ function handleBooleanAttr(el: Element, key: string, value: unknown): void {
  */
 function handleGenericAttr(el: Element, key: string, value: unknown): void {
   if (isEventHandlerAttr(key)) {
-    if (__DEV__) warnDropped(el, key, 'inline-event-handler');
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
   // `key` is fixed for this binding, so the (allocating) URL-attribute lookup
@@ -646,7 +655,7 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
         cache[key] = strVal;
         return;
       }
-      if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
     }
     if (cache[key] === null) return;
     cache[key] = null;
@@ -755,7 +764,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   if (key.charCodeAt(0) === 120 /* x */ && key.startsWith('xlink:')) {
     const strVal = String(value);
     if (isUnsafeAttrWrite(el.localName, key, strVal)) {
-      if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       return;
     }
     el.setAttributeNS(XLINK_NS, key, strVal);
@@ -775,7 +784,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   // against the element's tag.
   // Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops on* props in the value===true branch"
   if (isEventHandlerAttr(key)) {
-    if (__DEV__) warnDropped(el, key, 'inline-event-handler');
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
   checkRawAttr(key, value);
@@ -787,7 +796,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   }
   const strVal = String(value);
   if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {
-    if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
     return;
   }
   // The string the URL guard checked is the string written: an object is
@@ -839,8 +848,6 @@ function appendChild(parent: Node, child: unknown): void {
     // Fragment children are tracked separately because DocumentFragment
     // empties itself on appendChild — we need to remove children manually.
     let currentFragChildren: Node[] | null = null;
-    let warnedArray = false;
-    const DEBUG = typeof (globalThis as any).__FORMA_DEBUG__ !== 'undefined';
     // The parent is known here, so what the child builds takes its content's
     // namespace from the start.
     // Verified by: src/dom/__tests__/namespace-resolution.test.ts > "a function child inside an svg builds in the SVG namespace on every run"
@@ -868,20 +875,16 @@ function appendChild(parent: Node, child: unknown): void {
       if (Array.isArray(v)) {
         const frag = document.createDocumentFragment();
         for (const item of v) {
+          // A nested array is skipped, as it always was; the tracing that
+          // named it hung on an undocumented `__FORMA_DEBUG__` global and went
+          // with createShow's and createSwitch's (FORMA-021 C2).
           if (item instanceof Node) frag.appendChild(item);
-          else if (Array.isArray(item)) {
-            if (DEBUG) console.warn('[forma] Nested arrays in function children are not supported. Flatten the array or use createList().');
-          } else if (item != null && item !== false && item !== true) {
+          else if (!Array.isArray(item) && item != null && item !== false && item !== true) {
             frag.appendChild(new Text(String(item)));
           }
         }
         // Empty array → treat as null (no DOM output)
         resolved = frag.childNodes.length > 0 ? frag : null;
-
-        if (DEBUG && !warnedArray) {
-          warnedArray = true;
-          console.warn('[forma] Function child returned an array — auto-wrapped in DocumentFragment. Consider using createList() or wrapping in a container element for better performance.');
-        }
       }
 
       if (resolved instanceof Node) {

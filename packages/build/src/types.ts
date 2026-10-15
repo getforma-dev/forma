@@ -4,6 +4,8 @@
  * Configuration and result types for the Forma build pipeline.
  */
 
+import type { RouteSize } from './route-size.js';
+
 // ---------------------------------------------------------------------------
 // Configuration Types
 // ---------------------------------------------------------------------------
@@ -189,4 +191,13 @@ export interface BuildResult {
   warnings: string[];
   /** Every coded SSR diagnostic the build reported, page by page. */
   diagnostics: BuildDiagnostic[];
+  /**
+   * The size report (FORMA-021): per route, what it loads cold in raw, gzip -9
+   * and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as
+   * bundled) beside the application's. A production build fails with
+   * `BUILD-819` before writing its output when a route's `forma.gzip` is over
+   * N2's ceiling, `FORMA_CODE_CEILING_GZIP` (25,500 B; decision brief L-55).
+   * Empty in watch mode, whose unminified bytes are not what a route ships.
+   */
+  sizes: RouteSize[];
 }
