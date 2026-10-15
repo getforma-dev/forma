@@ -2,15 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   STRUCTURAL_KINDS, compareTrees, isTransportComment, makeReport, stripTransport, structuralClass, summarize,
-  type CanonNode, type ElementNode,
+  type CanonAttr, type CanonNode, type ElementNode,
 } from '../src/compare.mts';
 
 const HTML = 'http://www.w3.org/1999/xhtml';
 const SVG = 'http://www.w3.org/2000/svg';
-const el = (tag: string, attrs: Record<string, string>, children: CanonNode[], ns: string | null = HTML): ElementNode => ({ kind: 'element', ns, tag, attrs, children });
+const XLINK = 'http://www.w3.org/1999/xlink';
+/** Attributes given as an object (ordinary, unnamespaced), stored as the canonical sorted list. */
+const el = (tag: string, attrs: Record<string, string>, children: CanonNode[], ns: string | null = HTML): ElementNode =>
+  ({ kind: 'element', ns, tag, attrs: Object.entries(attrs).sort(([a], [b]) => (a < b ? -1 : 1)).map(([name, value]) => ({ name, ns: null, value })), children });
+/** Attributes given as the list itself, for names an object literal cannot hold and for namespaces. */
+const elA = (tag: string, attrs: CanonAttr[], children: CanonNode[], ns: string | null = HTML): ElementNode => ({ kind: 'element', ns, tag, attrs, children });
 const text = (t: string): CanonNode => ({ kind: 'text', text: t });
 const comment = (t: string): CanonNode => ({ kind: 'comment', text: t });
-const both = (server: CanonNode, client: CanonNode) => compareTrees(stripTransport(server).tree, stripTransport(client).tree);
+const both = (server: CanonNode, client: CanonNode) => compareTrees(stripTransport(server, 'server').tree, stripTransport(client, 'client').tree);
 
 test('identical trees compare equal with no first difference', () => {
   const tree = el('main', { id: 'app' }, [el('p', { class: 'on' }, [text('shown')]), text('tail')]);
@@ -73,8 +78,8 @@ test('marker-only differences are ignored: walker markers, the U+200B holder and
   ]);
   const result = both(server, client);
   assert.equal(result.count, 0, JSON.stringify(result.differences));
-  assert.equal((stripTransport(server).tree as ElementNode).children.length, 1, 'the island markers are gone');
-  assert.deepEqual((stripTransport(server).tree as ElementNode).children[0]!, (stripTransport(client).tree as ElementNode).children[0]!);
+  assert.equal((stripTransport(server, 'server').tree as ElementNode).children.length, 1, 'the island markers are gone');
+  assert.equal(result.holderAmbiguous, 1, 'the empty f:t is a holder, matched and counted');
 });
 
 test('an authored comment is content, not a marker: it stays and a different one is a comment difference', () => {
@@ -112,12 +117,12 @@ test('a U+200B that is not the sole content of an f:t pair is text, not transpor
 test('data-forma-key is lifted out: a key on the server side alone is no attribute difference, and a wrong or missing key is a key difference', () => {
   const server = el('ul', {}, [el('li', { 'data-forma-key': '7', class: 'row' }, [text('a')]), el('li', { 'data-forma-key': '8', class: 'row' }, [text('b')])]);
   const client = el('ul', {}, [el('li', { class: 'row' }, [text('a')]), el('li', { class: 'row' }, [text('b')])]);
-  const stripped = stripTransport(server);
-  assert.deepEqual(stripped.keys, { 'ul > li:nth-child(1)': '7', 'ul > li:nth-child(2)': '8' });
-  assert.equal(compareTrees(stripped.tree, stripTransport(client).tree).count, 0);
-  const checked = compareTrees(stripped.tree, stripTransport(client).tree, {
+  const stripped = stripTransport(server, 'server');
+  assert.deepEqual(Object.fromEntries(stripped.keys), { 'ul > li:nth-child(1)': '7', 'ul > li:nth-child(2)': '8' });
+  assert.equal(compareTrees(stripped.tree, stripTransport(client, 'client').tree).count, 0);
+  const checked = compareTrees(stripped.tree, stripTransport(client, 'client').tree, {
     serverKeys: stripped.keys,
-    expectedKeys: { 'ul > li:nth-child(1)': '7', 'ul > li:nth-child(2)': '9', 'ul > li:nth-child(3)': '10' },
+    expectedKeys: new Map(Object.entries({ 'ul > li:nth-child(1)': '7', 'ul > li:nth-child(2)': '9', 'ul > li:nth-child(3)': '10' })),
   });
   assert.equal(checked.count, 2);
   assert.deepEqual(checked.differences, [
@@ -166,4 +171,83 @@ test('the report carries module, seed, index, verdict, the first difference and 
   assert.equal(summarize(equal), 'P1 static-page#0 equal');
   const refused = makeReport({ module: 'home', seed: 's', index: 1, check: 'P1', verdict: 'server-refused', refusal: { code: 'RENDER-402', path: 'rows[0].id' } }, null);
   assert.equal(summarize(refused), 'P1 home#1 server-refused: RENDER-402 at rows[0].id');
+});
+
+test('stripping is side-aware: a client twin that writes an activation attribute or data-forma-key differs (attribute-extra), and no client key is lifted', () => {
+  const server = el('div', { class: 'x', 'data-forma-island': '0', 'data-forma-status': 'pending', 'data-forma-key': '7' }, [text('t')]);
+  const client = el('div', { class: 'x', 'data-forma-island': '0', 'data-forma-key': '7' }, [text('t')]);
+  const result = both(server, client);
+  assert.deepEqual(result.differences, [
+    { kind: 'attribute-extra', path: 'div[data-forma-island]', client: '0' },
+    { kind: 'attribute-extra', path: 'div[data-forma-key]', client: '7' },
+  ]);
+  assert.equal(result.structural, 2);
+  assert.deepEqual([...stripTransport(client, 'client').keys], [], 'the client side lifts nothing');
+  assert.deepEqual([...stripTransport(server, 'server').keys], [['div', '7']]);
+  // Marker comments and core's anchors are transport on both sides.
+  assert.equal(both(el('p', {}, [comment('forma-show'), text('a'), comment('/forma-show')]), el('p', {}, [comment('f:t0'), text('a'), comment('/f:t0')])).count, 0);
+});
+
+test('an attribute in another namespace under the same qualified name is an attribute-namespace difference', () => {
+  const parsed = elA('use', [{ name: 'xlink:href', ns: XLINK, value: '#a' }], [], SVG);
+  const plain = elA('use', [{ name: 'xlink:href', ns: null, value: '#a' }], [], SVG);
+  const result = both(parsed, plain);
+  assert.deepEqual(result.differences, [{ kind: 'attribute-namespace', path: 'use[xlink:href]', server: XLINK, client: 'null' }]);
+  assert.equal(result.structural, 0, 'a value kind, documented');
+  const valueToo = both(parsed, elA('use', [{ name: 'xlink:href', ns: null, value: '#b' }], [], SVG));
+  assert.deepEqual(valueToo.differences.map(d => d.kind), ['attribute-namespace', 'attribute-value']);
+  assert.equal(both(parsed, structuredClone(parsed)).count, 0);
+});
+
+test('attributes named __proto__ or constructor are ordinary attributes, compared like any other', () => {
+  const proto = (value: string): CanonAttr[] => [{ name: '__proto__', ns: null, value }];
+  assert.deepEqual(both(elA('div', proto('x'), []), elA('div', [], [])).differences, [{ kind: 'attribute-missing', path: 'div[__proto__]', server: 'x' }]);
+  assert.deepEqual(both(elA('div', proto('x'), []), elA('div', proto('y'), [])).differences, [{ kind: 'attribute-value', path: 'div[__proto__]', server: 'x', client: 'y' }]);
+  assert.deepEqual(both(elA('div', [], []), elA('div', [{ name: 'constructor', ns: null, value: 'c' }], [])).differences,
+    [{ kind: 'attribute-extra', path: 'div[constructor]', client: 'c' }]);
+  assert.equal(both(elA('div', proto('x'), []), elA('div', proto('x'), [])).count, 0);
+});
+
+test('the U+200B holder: the wire cannot tell an empty dynamic text from a U+200B value, so a holder matches "" or "​", counted every time', () => {
+  const held = el('p', {}, [comment('f:t0'), text('​'), comment('/f:t0')]);
+  for (const client of [el('p', {}, []), el('p', {}, [text('​')])]) {
+    const result = both(held, client);
+    assert.equal(result.count, 0, JSON.stringify(result.differences));
+    assert.equal(result.holderAmbiguous, 1);
+  }
+  const wrong = both(held, el('p', {}, [text('x')]));
+  assert.deepEqual(wrong.differences, [{ kind: 'text', path: 'p > #text', server: '', client: 'x' }]);
+  assert.equal(wrong.holderAmbiguous, 1);
+  const between = el('p', {}, [text('a'), comment('f:t0'), text('​'), comment('/f:t0'), text('b')]);
+  assert.equal(both(between, el('p', {}, [text('ab')])).count, 0);
+  assert.equal(both(between, el('p', {}, [text('a​b')])).count, 0);
+  assert.equal(both(between, el('p', {}, [text('a​​b')])).count, 1, 'one holder is one U+200B at most');
+  assert.equal(both(between, el('p', {}, [text('a b')])).count, 1);
+  assert.equal(both(el('p', {}, [text('​')]), el('p', {}, [])).holderAmbiguous, 0, 'a U+200B outside an f:t pair is no holder');
+  const report = makeReport({ module: 'm', seed: 's', index: 0, check: 'P1' }, both(held, el('p', {}, [])));
+  assert.equal(report.holderAmbiguous, 1);
+  assert.equal(summarize(report), 'P1 m#0 equal (1 holder-ambiguous)');
+});
+
+test('the harness normalizes nothing: trim, line endings, NUL, case and U+200B differences in text and attributes are all differences', () => {
+  const pairs: [string, string][] = [['a', 'a '], [' a', 'a'], ['a\r\nb', 'a\nb'], ['a\rb', 'a\nb'], ['a\0b', 'a�b'], ['Ab', 'ab'], ['x', 'x​'], ['é', 'é']];
+  for (const [server, client] of pairs) {
+    const label = JSON.stringify([server, client]);
+    assert.deepEqual(both(el('p', {}, [text(server)]), el('p', {}, [text(client)])).differences,
+      [{ kind: 'text', path: 'p > #text', server, client }], `text ${label}`);
+    assert.deepEqual(both(el('p', { title: server }, []), el('p', { title: client }, [])).differences,
+      [{ kind: 'attribute-value', path: 'p[title]', server, client }], `attribute ${label}`);
+  }
+  assert.deepEqual(both(el('img', { alt: '' }, []), el('img', {}, [])).differences, [{ kind: 'attribute-missing', path: 'img[alt]', server: '' }], 'present-but-empty is not absent');
+});
+
+test('a path counts element siblings only, as CSS does, so it selects the node in DevTools whatever text or comments precede it', () => {
+  const server = el('p', {}, [text('hello '), comment('authored'), el('b', { class: 'x' }, []), text(' and '), el('i', {}, [text('one')])]);
+  const client = el('p', {}, [text('hello '), comment('authored'), el('b', { class: 'y' }, []), text(' and '), el('i', {}, [text('two')])]);
+  assert.deepEqual(both(server, client).differences, [
+    { kind: 'attribute-value', path: 'p > b:nth-child(1)[class]', server: 'x', client: 'y' },
+    { kind: 'text', path: 'p > i:nth-child(2) > #text', server: 'one', client: 'two' },
+  ]);
+  const keyed = stripTransport(el('ul', {}, [comment('f:l0'), text('\n'), el('li', { 'data-forma-key': 'a' }, []), comment('/f:l0')]), 'server');
+  assert.deepEqual(Object.fromEntries(keyed.keys), { 'ul > li:nth-child(1)': 'a' }, 'removing transport never changes a position');
 });

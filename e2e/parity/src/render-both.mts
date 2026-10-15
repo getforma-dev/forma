@@ -69,20 +69,27 @@ export async function renderBoth(options: RenderBothOptions): Promise<Report> {
   const [rendered] = renderStates(ir, [slotJson(state)]);
   if (!rendered) throw new Error('parity_render returned no entry');
   if ('error' in rendered) {
-    return makeReport({ ...base, verdict: 'server-refused', refusal: { code: 'WALK', message: rendered.error, path: rendered.componentPath?.join(' > ') } }, null);
+    // The low-level path has no refusal codes of its own (the typed path's RENDER-40x are slice 2's): a walker error is an error.
+    return makeReport({ ...base, verdict: 'error', error: `walker: ${rendered.error}${rendered.componentPath?.length ? ` in ${rendered.componentPath.join(' > ')}` : ''}` }, null);
   }
   const html = options.alterServerHtml ? options.alterServerHtml(rendered.html) : rendered.html;
   const browser = options.browser ?? await launch(options.engine);
   try {
     const bundle = await bundlePage(entry.page);
-    const both = await renderInBrowser({ browser, component: entry.page, bundle, html, state: rendered.state, props: state, schema: described.schema });
+    let both: Awaited<ReturnType<typeof renderInBrowser>>;
+    try {
+      both = await renderInBrowser({ browser, component: entry.page, bundle, html, state: rendered.state, props: state, schema: described.schema });
+    } catch (error) {
+      // A twin core cannot build (or a page that never finished) is this report's verdict, not a throw.
+      return makeReport({ ...base, verdict: 'error', error: (error instanceof Error ? error.message : String(error)).split('\n')[0]!, server: { tree: null, html } }, null);
+    }
     // The two containers are the harness's own; the page's nodes are their children, compared
     // under one neutral root so paths read `page > section:nth-child(1) > …`.
-    const asPage = (tree: CanonNode): CanonNode => (tree.kind === 'element' ? { ...tree, tag: 'page', attrs: {} } : tree);
-    const server = stripTransport(asPage(both.served), 'page');
-    const client = stripTransport(asPage(both.twin), 'page');
+    const asPage = (tree: CanonNode): CanonNode => (tree.kind === 'element' ? { ...tree, tag: 'page', attrs: [] } : tree);
+    const server = stripTransport(asPage(both.served), 'server', 'page');
+    const client = stripTransport(asPage(both.twin), 'client', 'page');
     const comparison = compareTrees(server.tree, client.tree);
-    const report = makeReport({ ...base, server: { tree: server.tree, html, keys: server.keys }, client: { tree: client.tree } }, comparison);
+    const report = makeReport({ ...base, server: { tree: server.tree, html, keys: Object.fromEntries(server.keys) }, client: { tree: client.tree } }, comparison);
     if (both.pageErrors.length || both.consoleErrors.length) {
       return { ...report, verdict: 'error', error: `page errors: ${[...both.pageErrors, ...both.consoleErrors].join('; ')}` };
     }

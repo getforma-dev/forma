@@ -11,8 +11,14 @@
  * child list; they are serialized under one pseudo-element child, `#content`, so they are compared
  * and a template whose children were appended directly (live, not inert) differs from one whose
  * children were parsed (a structural difference, which is the truth).
+ *
+ * Attributes are a list of `{name, ns, value}` read from each `Attr` (the qualified name, the
+ * namespace URI, the value), sorted by name and then namespace: no attribute name can meet an
+ * object's prototype (`__proto__`), and an XLink `xlink:href` is not the same attribute as a
+ * plain one spelled alike. Node types other than element, text and comment (a processing
+ * instruction, CDATA) cannot come out of an HTML parse or `h()` and are dropped.
  */
-import type { CanonNode } from './compare.mts';
+import type { CanonAttr, CanonNode } from './compare.mts';
 
 export function canonicalizeDom(root: Node): CanonNode {
   const visit = (node: Node): CanonNode | null => {
@@ -20,11 +26,8 @@ export function canonicalizeDom(root: Node): CanonNode {
     if (node.nodeType === 8) return { kind: 'comment', text: (node as Comment).data };
     if (node.nodeType !== 1) return null;
     const element = node as Element;
-    const attrs: Record<string, string> = {};
-    const names: string[] = [];
-    for (const attribute of Array.from(element.attributes)) names.push(attribute.name);
-    names.sort();
-    for (const name of names) attrs[name] = element.getAttribute(name) ?? '';
+    const attrs: CanonAttr[] = Array.from(element.attributes, attribute => ({ name: attribute.name, ns: attribute.namespaceURI, value: attribute.value }));
+    attrs.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : (a.ns ?? '') < (b.ns ?? '') ? -1 : (a.ns ?? '') > (b.ns ?? '') ? 1 : 0));
     const children: CanonNode[] = [];
     for (const child of Array.from(element.childNodes)) {
       const out = visit(child);
@@ -37,7 +40,7 @@ export function canonicalizeDom(root: Node): CanonNode {
         const out = visit(child);
         if (out) inert.push(out);
       }
-      children.push({ kind: 'element', ns: null, tag: '#content', attrs: {}, children: inert });
+      children.push({ kind: 'element', ns: null, tag: '#content', attrs: [], children: inert });
     }
     return { kind: 'element', ns: element.namespaceURI, tag: element.localName, attrs, children };
   };

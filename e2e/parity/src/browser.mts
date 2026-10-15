@@ -41,7 +41,7 @@ const ORIGIN = 'http://parity.invalid';
  * forma-server's own policy allows them (`crates/forma-server/src/csp.rs`), so authored content
  * renders without a policy error that is not a parity case.
  */
-const POLICY = "default-src 'none'; script-src 'self'; img-src 'self' data:; style-src-attr 'unsafe-inline'; " +
+export const PAGE_POLICY = "default-src 'none'; script-src 'self'; img-src 'self' data:; style-src-attr 'unsafe-inline'; " +
   "require-trusted-types-for 'script'; trusted-types forma; base-uri 'none'";
 const CORE_DIST = resolve(REPO, 'packages/core/dist/forma.esm.js');
 
@@ -134,7 +134,7 @@ export async function renderInBrowser(options: RenderInBrowserOptions): Promise<
   try {
     await page.route(`${ORIGIN}/**`, route => {
       const path = new URL(route.request().url()).pathname;
-      if (path === '/parity.html') return route.fulfill({ contentType: 'text/html; charset=utf-8', headers: { 'Content-Security-Policy': POLICY }, body: document });
+      if (path === '/parity.html') return route.fulfill({ contentType: 'text/html; charset=utf-8', headers: { 'Content-Security-Policy': PAGE_POLICY }, body: document });
       if (path === '/core.mjs') return route.fulfill({ contentType: 'text/javascript', body: readFileSync(CORE_DIST, 'utf8') });
       if (path === '/page.mjs') return route.fulfill({ contentType: 'text/javascript', body: options.bundle });
       if (path === '/boot.mjs') return route.fulfill({ contentType: 'text/javascript', body: bootScript(options.component) });
