@@ -59,6 +59,7 @@ export class AdoptionDom {
   private readonly ancestry: Position[] = [];
   private readonly parsed = new Set<Node>();
   private readonly ranges = new Map<Comment, AdoptionRange>();
+  private released = false;
 
   constructor(readonly host: Element) {
     this.document = host.ownerDocument;
@@ -85,8 +86,13 @@ export class AdoptionDom {
     }
   }
 
+  /** Commit/refusal ends the snapshot lifetime; live regions retain only their own nodes. */
+  release(): void {
+    this.released = true; this.nodes.clear(); this.ancestry.length = 0; this.parsed.clear(); this.ranges.clear();
+  }
+
   assertUnchanged(): void {
-    if (this.host.ownerDocument !== this.document || !this.document.contains(this.host)
+    if (this.released || this.host.ownerDocument !== this.document || !this.document.contains(this.host)
       || this.ancestry.some(item => !samePosition(item))) refuse('FORMA_E_HYDRATE_STRUCTURE');
     for (const item of this.nodes.values()) {
       const node = item.node;
@@ -116,6 +122,9 @@ export class AdoptionDom {
     if (!this.nodes.has(element)) refuse('FORMA_E_HYDRATE_STRUCTURE');
     if (element.getAttributeNS(namespace, local) !== value) refuse('FORMA_E_HYDRATE_VALUE');
   }
+
+  /** A component root consumes the original host itself, never its siblings. */
+  root(): AdoptionCursor { return new AdoptionCursor(this, this.host, this.host.nextSibling); }
 
   children(parent: Node = this.host): AdoptionCursor {
     this.parse(parent);
@@ -176,6 +185,12 @@ export class AdoptionCursor {
   private current(): Node | null {
     while (this.next !== this.end && this.next?.nodeType === 8 && !marker(this.next)) this.next = this.next.nextSibling;
     return this.next === this.end ? null : this.next;
+  }
+
+  /** Nested claim matching happens before its independently owned component runs. */
+  isIslandBoundary(): boolean {
+    const node = this.current();
+    return !!node && (node.nodeType === 1 && (node as Element).hasAttribute('data-forma-island') || this.dom.rangeAt(node)?.kind === 'i');
   }
 
   element(tag: string, namespace: string | null = null): Element {
