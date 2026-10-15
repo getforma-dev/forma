@@ -74,6 +74,29 @@ describe('original-source adoption hooks',()=>{
     const f=fixture(`export function Counter(p:{optional?:string;choice:'a'|'b'}){const [a]=createSignal(p.optional);const [b]=createSignal(p.choice);const [c]=createSignal<'x'|'y'>('x');const [d]=createSignal('x' as const);const [e]=createSignal<string|null>('x');const [f]=createSignal(p.optional ?? '');return h('div',null,h('input',{value:a}),h('input',{value:b}),h('input',{value:c}),h('input',{value:d}),h('input',{value:e}),h('input',{value:f}));}`);
     expect(writableCount(f.text)).toBe(1);expect(f.text).toMatch(/__forma_adoptWritable\(f, f, "string"/);expect(f.text).toContain("createSignal<'x'|'y'>('x')");
   });
+  it('retains upstream narrowing through aliases, projected fields and forwarded helper props',()=>{
+    for (const initial of [
+      "const first='x' as const;const second=first;const initial=second",
+      "const source={value:'x' as 'x'|'y'};const initial=source.value",
+      "const source={value:'x'} as const;const alias=source;const initial=alias.value",
+      "const initial:'x'|'y'='x'",
+    ]) {
+      const f=fixture(`export function Counter(){${initial};const [value]=createSignal(initial);return h('input',{value});}`);
+      expect(writableCount(f.text),initial).toBe(0);expect(f.text).toContain('__forma_adoptSignal(');
+    }
+    const forwarded=fixture(`function Field(p){const [value]=createSignal(p.initial);return h('input',{value});}function Forward(p){return Field(p);}export function Counter(){const initial='x' as const;return Forward({initial});}`);
+    expect(writableCount(forwarded.text)).toBe(0);
+    const destructured=fixture(`function Field({initial}){const [value]=createSignal(initial);return h('input',{value});}export function Counter(){const initial=['x'] as const;return Field({initial});}`);
+    expect(writableCount(destructured.text)).toBe(0);
+  });
+  it('keeps helper and row parameter assertions unseedable, while explicit broad signal contracts remain authoritative',()=>{
+    const helper=fixture(`function Field(p:{initial:'x'|'y'}){const [value]=createSignal(p.initial);return h('input',{value});}export function Counter(){return Field({initial:'x'});}`);
+    expect(writableCount(helper.text)).toBe(0);
+    const row=fixture(`export function Counter(p:{rows:{id:string;value:string}[]}){return createList(()=>p.rows,row=>row.id,(row:{id:string;value:'x'|'y'})=>{const [value]=createSignal(row.value);return h('input',{value});});}`);
+    expect(writableCount(row.text)).toBe(0);
+    const explicit=fixture(`export function Counter(){const initial='x' as const;const [value]=createSignal<string>(initial);return h('input',{value});}`);
+    expect(writableCount(explicit.text)).toBe(1);
+  });
   it('proves dense string arrays only, with explicit empty-array annotation retained',()=>{
     const f=fixture(`export function Counter(p:{options:string[]}){const [a]=createSignal(p.options);const [b]=createSignal<string[]>([]);const [c]=createSignal([]);return h('div',null,h('select',{value:a}),h('select',{value:b}),h('select',{value:c}));}`);
     expect(writableCount(f.text)).toBe(2);expect(f.text).toContain('createSignal<string[]>([])');
