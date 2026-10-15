@@ -240,7 +240,7 @@ describe('the raw sinks', () => {
 
   it('the sink table covers every raw sink the warnings name', () => {
     expect(Object.keys(SINKS).sort()).toEqual(Object.keys(RAW_HTML_CODES).sort());
-    expect(Object.values(RAW_HTML_CODES).map(([code]) => code).sort()).toEqual([
+    expect(Object.values(RAW_HTML_CODES).sort()).toEqual([
       'FORMA_E_RAW_INNER_HTML',
       'FORMA_E_RAW_RECONCILE',
       'FORMA_E_RAW_SET_HTML',
@@ -259,7 +259,7 @@ describe('the raw sinks', () => {
 
   it('every raw sink refuses strings before parsing, including an already cached trusted value', () => {
     for (const [sink, write] of Object.entries(SINKS) as Array<[RawSink, typeof SINKS[RawSink]]>) {
-      const [code] = RAW_HTML_CODES[sink];
+      const code = RAW_HTML_CODES[sink];
       const markup = '<p class="' + sink + '">reviewed</p>';
       expect(() => write(markup as unknown as TrustedHtml), sink).toThrow(code);
       expect(write(trustedHtml(markup)), sink).toBe(EXPECTED[sink](markup));
@@ -301,7 +301,7 @@ describe('the raw sinks', () => {
   it('every raw sink refuses look-alikes and String objects', () => {
     for (const value of [{ toString: () => '<b>look-alike</b>' }, new String('<i>boxed</i>'), {__formaTrustedHtml:true}]) {
       for (const [sink, write] of Object.entries(SINKS) as Array<[RawSink, typeof SINKS[RawSink]]>) {
-        expect(() => write(value as unknown as TrustedHtml), sink).toThrow(RAW_HTML_CODES[sink][0]);
+        expect(() => write(value as unknown as TrustedHtml), sink).toThrow(RAW_HTML_CODES[sink]);
       }
     }
   });

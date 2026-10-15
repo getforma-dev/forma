@@ -1157,6 +1157,7 @@ function updateTemplateData(el: Element, item: unknown): void {
 
 /** WeakMap for caching compiled attribute templates */
 const templateAttrs = new WeakMap<Element, Array<{ attr: string; compiled: CompiledTemplate }>>();
+const RUNTIME_SRCDOC_REASON = `${RUNTIME_SRCDOC_CODE}: srcdoc is refused; use h() with trustedHtml()`;
 
 /**
  * Process attribute templates on a cloned element and its descendants.
@@ -1535,7 +1536,7 @@ function cloneAttributeTemplates(el: Element, item: unknown, mount?: MountCtx): 
       if (attr.value.includes('{item')) {
         if (isRawHtmlAttr(attr.name)) {
           reportDiagnostic('markup-refused', `row ${attr.name}="${attr.value}"`,
-            `${RUNTIME_SRCDOC_CODE}: row srcdoc interpolation is refused; use h() with trustedHtml()`, RUNTIME_SRCDOC_CODE, mount);
+            RUNTIME_SRCDOC_REASON, RUNTIME_SRCDOC_CODE, mount);
           node.removeAttribute(attr.name);
           continue;
         }
@@ -2305,7 +2306,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           `${name}="${attr.value}"`,
           scope.mount?.tier === 'unreviewed'
             ? 'srcdoc binding is refused in an unreviewed mount'
-            : `${RUNTIME_SRCDOC_CODE}: ${name} is refused; use h() with trustedHtml()`,
+            : RUNTIME_SRCDOC_REASON,
           scope.mount?.tier === 'unreviewed' ? 'FORMA_E_UNREVIEWED_SRCDOC' : RUNTIME_SRCDOC_CODE,
           scope.mount,
         );
