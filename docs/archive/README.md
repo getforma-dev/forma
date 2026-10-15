@@ -136,3 +136,5 @@ source templates, the temporary candidate source adapter and superseded
 rendering/lock guidance, with original path/SHA-256 records. Current package
 inputs use typed handlers and identified source lock seeds; packed candidates
 carry actual archive checksums. Island adoption remains a later slice.
+
+- [Signal defaults before explicit closed constants](2026-10-15-state-signal-defaults/README.md): original array/object warning and handler-injection advice, replaced by FORMA-103 native constant provenance.

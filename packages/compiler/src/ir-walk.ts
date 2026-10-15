@@ -1,3 +1,4 @@
+import {closedBinding,closedSlot,closedHint,closedListRows,emitClosedText,type ClosedEnvironment,type ClosedRows} from './closed-bindings';
 /**
  * Forma Compiler - IR Walk Engine
  *
@@ -48,13 +49,12 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
-import { childPropsScope, islandPropsScope, emitPropText, listPropsScope, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { childPropsScope, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
 import {
   enterComponentScope,
-  lookupLiteralRows,
   lookupSignal,
   newSignalRegistry,
   type SignalDefault,
@@ -310,6 +310,16 @@ interface EvalEnv {
 }
 
 /** The env for the scope the walk is in right now. */
+function closedEnv(walkCtx:WalkContext):ClosedEnvironment {
+  return {file:walkCtx.sourceFile??'',rows:walkCtx.closedRows,signal:identifier=>{
+    const signal=lookupSignal(walkCtx.signalScope,identifier.name),lexical=walkCtx.propsScope?.references.get(identifier);
+    // A nearer non-signal declaration never acquires an outer same-spelled
+    // aggregate merely because the legacy scalar scope can look up that name.
+    if(lexical&&signal?.declaration&&lexical.path.node!==signal.declaration)return undefined;
+    return signal;
+  }};
+}
+
 function evalEnv(walkCtx: WalkContext): EvalEnv {
   return {
     signal: (name) => lookupSignal(walkCtx.signalScope, name)?.default,
@@ -428,7 +438,7 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
     && t.isIdentifier(node.callee)
     && node.arguments.length === 0
   ) {
-    return env.signal(node.callee.name)?.default;
+    const value=env.signal(node.callee.name);return value?.type==='aggregate'?undefined:value?.default;
   }
 
   // Explicit cast: String(expr) / Number(expr). Pages write these around a
@@ -542,6 +552,7 @@ export interface WalkContext {
   /** Declared page/child prop paths; independent from source variable names. */
   propsScope?: PropsScope;
   islandRegistry?: IslandRegistry;
+  closedRows?: ClosedRows;
   islandSchemas?: Map<string, number>;
   /** File-level constant arrays (for Rule 9 static unroll). */
   fileConstants?: Map<string, any[]>;
@@ -1047,7 +1058,7 @@ export function walkHTree(
 
       const val = prop.value as t.Expression;
 
-      const declaredSlot = propSlot(val, walkCtx.propsScope, ctx, 'attribute');
+      const declaredSlot = propSlot(val, walkCtx.propsScope, ctx, 'attribute') ?? closedSlot(val,ctx,closedEnv(walkCtx),'attribute');
       if (declaredSlot !== undefined) {
         dynAttrs.push({ keyIdx: ctx.addString(key), slotId: declaredSlot });
         continue;
@@ -1306,7 +1317,7 @@ export function walkCallExpression(
       let schemaObject = schemas.get(registered.identity);
       if (schemaObject === undefined) { schemaObject = ctx.appendPropsSchema(registered.declared.schema); schemas.set(registered.identity, schemaObject); }
       const inputs = islandInputs(ctx, schemaObject, node.arguments[0], walkCtx.propsScope, walkCtx.sourceFile!, walkCtx.stringConstants,
-        name => lookupSignal(walkCtx.signalScope, name)?.default.default);
+        name => lookupSignal(walkCtx.signalScope, name)?.default.default,node=>closedBinding(node,ctx,closedEnv(walkCtx)));
       let sub: ResolvedSubComponent | null = null;
       let scope: PropsScope | undefined;
       if (registered.mode === 'ssr') {
@@ -1675,7 +1686,7 @@ function emitChild(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
-  if (emitPropText(child, walkCtx.propsScope, ctx)) return;
+  if (emitPropText(child, walkCtx.propsScope, ctx)||emitClosedText(child,ctx,closedEnv(walkCtx))) return;
   if (walkCtx.propsScope && t.isConditionalExpression(child)) { emitTernaryShowIf(child, hName, ctx, walkCtx, childIndex); return; }
   // Rule 12: null, undefined, false → skip
   if (isNullish(child)) return;
@@ -1942,7 +1953,7 @@ function addShowSlot(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): number {
-  const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx);
+  const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx) ?? closedSlot(cond,ctx,closedEnv(walkCtx));
   if (declaredSlot !== undefined) return declaredSlot;
   const slotName = deriveShowSlotName(cond, walkCtx);
 
@@ -2085,7 +2096,7 @@ function emitCreateShowBranch(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
-  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
+  if (emitPropText(expr, walkCtx.propsScope, ctx)||emitClosedText(expr,ctx,closedEnv(walkCtx))) return;
   // Unwrap arrow function: () => h('div', ...)
   if (isFunctionExpr(expr)) {
     const fn = expr as t.ArrowFunctionExpression | t.FunctionExpression;
@@ -2251,36 +2262,20 @@ function emitCreateList(
     ? `#${registry.total}`
     : uniqueName(registry.counts, derivedName);
 
-  // A source signal initialized with literal rows has no slot, so its rows
-  // never reach the list's array slot: the server renders the list empty
-  // unless a handler fills it, where the browser renders the rows (BUILD-303).
-  // Reported only; what is emitted does not change.
-  const sourceName = signalReadName(node.arguments[0]);
-  const literal = sourceName ? lookupLiteralRows(walkCtx.signalScope, sourceName) : undefined;
-  if (literal) {
-    warnDegraded(
-      walkCtx,
-      'BUILD-303',
-      node,
-      `createList(...) over signal '${sourceName}', whose literal default has ${literal.rows} row(s)`,
-      `the server renders the list EMPTY unless the handler fills 'list:${base}:array', while the browser`
-      + ` renders the default's rows — start the signal empty (\`createSignal([])\`) and fill it from the server`
-      + ` (the handler sets 'list:${base}:array'; an island seeds the signal from its props), or unroll a`
-      + ' module-level const with ...CONST.map(...)',
-    );
-  }
-
   // Declared arrays read the root server value; local arrays and their named
   // debugging/projection slots stay CLIENT-owned. Retain local labels used by
   // the frozen corpus harness; their names never grant handler binding access.
   const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
-  const arraySlotId = declaredArray ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
-  const itemSlotId = declaredArray !== undefined ? ctx.addTemporarySlot(TYPE_OBJECT) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
+  const closedArray=declaredArray===undefined?closedBinding(node.arguments[0],ctx,closedEnv(walkCtx)):undefined;
+  if(closedArray&&closedArray.values.some(value=>!Array.isArray(value)&&value!==null))throw new PropsSchemaError(walkCtx.sourceFile??'',node.loc?.start.line??1,(node.loc?.start.column??0)+1,'createList closed source must be an array');
+  const closedItems=closedArray?.values.flatMap(value=>Array.isArray(value)?value:[]);
+  const arraySlotId = declaredArray ?? closedArray?.slot() ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
+  const itemSlotId = closedItems ? ctx.addTemporarySlot(closedHint(closedItems,closedEnv(walkCtx),node)) : declaredArray !== undefined ? ctx.addTemporarySlot(listItemHint(walkCtx.propsScope!,node.arguments[0]!)) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
 
   // Scan the body for param.prop member accesses to determine which
   // properties need PROP extraction opcodes.
   const propNames = new Set<string>();
-  if (declaredArray === undefined) collectMemberProps(bodyExpr, paramName, propNames);
+  if (declaredArray === undefined && !closedArray) collectMemberProps(bodyExpr, paramName, propNames);
 
   // Create target slots for each property and build the bindings map
   const bindings = new Map<string, number>();
@@ -2316,6 +2311,7 @@ function emitCreateList(
   const listWalkCtx: WalkContext = {
     ...walkCtx,
     listItemBindings: bindings,
+    closedRows:closedItems?closedListRows(mapFn,closedItems,itemSlotId,walkCtx.closedRows):walkCtx.closedRows,
     propsScope: declaredArray !== undefined && walkCtx.propsScope ? listPropsScope(walkCtx.propsScope, mapFn, node.arguments[0]!, itemSlotId) : walkCtx.propsScope,
   };
 
@@ -2798,7 +2794,7 @@ function emitBranchContent(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
-  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
+  if (emitPropText(expr, walkCtx.propsScope, ctx)||emitClosedText(expr,ctx,closedEnv(walkCtx))) return;
   if (t.isConditionalExpression(expr)) { emitTernaryShowIf(expr, hName, ctx, walkCtx, childIndex); return; }
   // String literal → TEXT
   if (t.isStringLiteral(expr)) {

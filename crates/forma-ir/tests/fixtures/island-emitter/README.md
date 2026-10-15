@@ -13,6 +13,10 @@ and verifies that zero, false and empty strings remain values. The optional-root
 case proves `props?.count` on a declared, non-null props root has exactly the
 same wire identity as `props.count`, retaining 1001 and defaulting only nullish
 values. Nullable intermediate accesses and optional calls still refuse.
+Local aggregate controls cover nested LIST values, shared module seeds, unused
+constants and each row's declared island input. The aggregate fallback control
+keeps an empty array and typed scalar rows; a nested closed nullish projection
+folds before COALESCE rather than inventing schema provenance.
 No timestamps, absolute temporary source paths or generated call IDs occur in
 the contract digest. The current binary hashes are in `manifest.json`.
 

@@ -59,6 +59,24 @@ describe('declared island writer integration',()=>{
       'export function Badge(p:{data:{names:(string|null)[]};note?:string}){return h("b",null,"fixed");}');
     expect(getIslands(result.binary)[0]!.slotIds).toHaveLength(2);expect(getSlots(result.binary).every(slot=>slot.source===C.SLOT_SOURCE_CLIENT)).toBe(true);
   });
+  it('preserves nonempty local aggregate seeds and nested row values without handler fields',()=>{
+    const result=emit('local-aggregates','import {Badge} from "./island";export function Page(){return h("main",null,Badge({}));}',
+      'const [shared]=createSignal([{id:3,user:{name:"capture"}}]);export function Badge(){const [data]=createSignal({title:"local",rows:[{id:1,user:{name:"first"},tags:["x","y"]},{id:2,user:{name:"second"},tags:["z"]}]});const [unused]=createSignal({never:"read"});const [empty]=createSignal([]);return h("section",{"data-title":()=>data().title},createList(()=>data().rows,r=>r.id,r=>h("b",{"data-id":r.id},r.user.name,createList(()=>r.tags,t=>t,t=>h("i",null,t)))),createList(shared,r=>r.id,r=>h("b",null,r.user.name)),createList(empty,r=>r.id,r=>h("i",null,r.name)));}');
+    expect(getSlots(result.binary).every(slot=>slot.source===C.SLOT_SOURCE_CLIENT)).toBe(true);
+    expect(getIslands(result.binary)[0]!.slotIds).toEqual([]);
+  });
+  it('projects literal row inputs into each registered occurrence without changing its schema',()=>{
+    emit('local-inputs','import {Badge} from "./island";export function Page(){const [rows]=createSignal([{id:1,user:{name:"one"}},{id:2,user:{name:"two"}}]);return h("main",null,createList(rows,r=>r.id,r=>Badge({label:r.user.name})));}',
+      'export function Badge(p:{label:string}){return h("b",null,p.label);}');
+  });
+  it('pairs a declared optional aggregate with a closed fallback and correctly typed scalar rows',()=>{
+    emit('aggregate-fallback','import {Badge} from "./island";export function Page(p:{rows?:string[]}){return h("main",null,Badge({rows:p.rows}));}',
+      'export function Badge(p:{rows?:string[]}){const [rows]=createSignal(p.rows??["fallback"]);return h("section",null,createList(rows,r=>r,r=>h("b",null,r)));}');
+  });
+  it('folds a closed nested optional projection before choosing a fallback',()=>{
+    emit('nested-closed-nullish','import {Badge} from "./island";export function Page(){return h("main",null,Badge({data:{title:null}}),Badge({data:{title:"kept"}}));}',
+      'export function Badge(p:{data:{title?:string}}){const [title]=createSignal(p.data.title??"fallback");return h("b",null,title);}');
+  });
   it('keeps browserOnly expressions outside native execution with declared state',()=>{
     const result=emit('browser','import {Badge} from "./island";export function Page(p:{label:string}){return h("main",null,Badge({label:p.label}));}',
       'export const Badge=browserOnly((p:{label:string})=>window.arbitrary(p));');

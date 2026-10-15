@@ -66,6 +66,7 @@ export class IrEmitContext {
   private propsSchema: Array<PropsSchema[number]> = [[]];
   private readonly islandBindings = new Map<number, { mode: IslandRenderMode; bindings: readonly BindingRecord[] }>();
   private readonly constants = new Map<number, unknown>();
+  private readonly closedProjections = new Map<number, unknown>();
   private keyPaths: KeyPath[] = [];
   private sourcePositions: SourcePosition[] | undefined;
 
@@ -178,7 +179,15 @@ export class IrEmitContext {
 
   /** Closed provenance is distinct from a schema hint, including literal null. */
   constantSlot(id: number): { value: unknown } | undefined {
-    return this.constants.has(id) ? { value: this.constants.get(id) } : undefined;
+    return this.constants.has(id) ? { value: this.constants.get(id) } : this.closedProjections.has(id) ? {value:this.closedProjections.get(id)} : undefined;
+  }
+
+  /** Compiler-known PROP result; still independently validated by native flow. */
+  recordClosedProjection(source:number,key:string,target:number):void {
+    const closed=this.constantSlot(source);if(!closed)return;
+    const value=closed.value;
+    if(value===null)this.closedProjections.set(target,null);
+    else if(typeof value==='object'&&!Array.isArray(value))this.closedProjections.set(target,Object.hasOwn(value,key)?(value as Record<string,unknown>)[key]:null);
   }
 
   /** Begin capturing slot ids referenced while walking an island subtree. */

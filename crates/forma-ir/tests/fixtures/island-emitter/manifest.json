@@ -1,6 +1,10 @@
 {
   "generator": "packages/compiler/tests/island-emission.test.ts",
   "files": {
+    "aggregate-fallback.ir": {
+      "bytes": 471,
+      "sha256": "c8d50a5c08b05a33579931613da42d05e183f2b5ef8185e58ad5384869dc1ce5"
+    },
     "aggregate.ir": {
       "bytes": 444,
       "sha256": "df5353a99d14bf7ef12935c42f17b0ad3fd470aae9543d44358a4253e4cdbb84"
@@ -12,6 +16,18 @@
     "closed-nullish.ir": {
       "bytes": 1357,
       "sha256": "5d9bcbc21cca8be64fd35379e2508d023c256dac443d5e8b96198003ffb83a69"
+    },
+    "local-aggregates.ir": {
+      "bytes": 1384,
+      "sha256": "4ffd7ab6bbde9bb991266bc73656a716c5606220f654d7aefdbbc578640f5502"
+    },
+    "local-inputs.ir": {
+      "bytes": 475,
+      "sha256": "fecd5ccd1d9514637c2c3ab5503482a7788fabe4cc8f6924f0b14d38cfb15d85"
+    },
+    "nested-closed-nullish.ir": {
+      "bytes": 650,
+      "sha256": "7972618072b7a70ec333da43956b05267c650dfdc6eae0a53795d295eb11dc6d"
     },
     "nullish.ir": {
       "bytes": 734,

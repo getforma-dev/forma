@@ -132,6 +132,7 @@ export function propSlot(node: t.Node | null | undefined, scope: PropsScope | un
   for (let i = 1; i < path.length; i++) {
     const target = ctx.addTemporarySlot(hint(propType(path.slice(0, i + 1), scope, node)));
     ctx.emit(C.OP_PROP); ctx.emitU16(slot); ctx.emitU32(ctx.addString(path[i]!)); ctx.emitU16(target);
+    ctx.recordClosedProjection(slot,path[i]!,target);
     slot = target;
   }
   ctx.recordSlotRef(slot);
@@ -278,6 +279,13 @@ export function islandPropsScope(fn: ComponentFunction, file: string, ctx: IrEmi
   }
   bindParameter(scope,fn.params[0],fields); declarations(scope,fn,ctx); validateBindings(scope,fn);
   return scope;
+}
+
+export function listItemHint(scope:PropsScope,source:t.Node):number {
+  const path=propPath(source,scope);if(!path)invalid(scope,source,'missing declared list source');
+  const type=inner(propType(path,scope,source));
+  if(type.kind!=='array')invalid(scope,source,'createList declared source must have an array type');
+  return hint(type.element);
 }
 
 /** A row uses its own local projection root, never a handler-addressed slot. */

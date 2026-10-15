@@ -92,10 +92,13 @@ The line is the one 0.3.6 printed, with the code after `IR:` and the position
 after the file, one per construct; a `.tsx` file's position is the line the
 author wrote, mapped back through the JSX transform. Composition past the
 3-level inlining limit (`BUILD-403`) names the chain from the page down, so it
-can be counted. A signal initialized with a literal array or object
-(`BUILD-504`) is a note, never an error: DR-1 admits it, and each read of it
-is reported where it is read, a `createList` over literal rows as `BUILD-303`
-(the server renders that list empty unless a handler fills it).
+can be counted. Bounded literal array and object signal defaults now retain
+explicit CLIENT constant values. Nested LIST/PROP bindings preserve those values;
+unread aggregates do not allocate native constants. A declared optional array
+may use a closed `??` fallback; an empty array remains a real value. No handler
+can fill these local slots. BUILD-303/504 remain reserved historical codes; the
+[old guidance](../../docs/archive/2026-10-15-state-signal-defaults/README.md) is preserved.
+
 
 `@getforma/build`'s strict mode (`strict: true`, or `FORMA_STRICT=1`) turns
 them into errors that fail the build, all at once, and writes them as JSON on
