@@ -60,17 +60,12 @@ forma-server's retiring worker: a browser that installed a Forma worker on this
 origin before deletes its caches and unregisters it on its next visit. The
 worker is opt-in, per application; see `forma_server::sw` before turning it on.
 
-**WebKit (Safari) logs one console error per page in a debug build:** "The
-Content Security Policy 'require-trusted-types-for 'script'; trusted-types
-forma forma-runtime' was delivered in report-only mode, but does not specify a
-'report-to'". forma-server 0.2.2 sends Trusted Types in
-`Content-Security-Policy-Report-Only` in development builds, and this template
-names no reporting endpoint. It blocks nothing, and a release build sends no
-Report-Only policy without an endpoint. The Playwright suite runs Chromium,
-which logs nothing for it; a WebKit project that fails on console errors meets
-it until the server names an endpoint it answers, for example
-`PolicyExtensions::new().report_uri("/csp-reports")` on the `RenderCtx`
-(`with_policy`) and a route that accepts the POST.
+**Trusted Types are enforced.** Page responses include both
+`require-trusted-types-for 'script'` and the named `forma forma-runtime`
+policies in their normal CSP. External scripts and styles carry their
+manifest SHA-384 integrity and `crossorigin="anonymous"`. Keep the returned
+`PageResponse` intact so its fresh nonce and `Cache-Control: no-store` travel
+with the HTML.
 
 ---
 
@@ -197,7 +192,8 @@ dashboard's entry `ssr: false`, `main.rs` serves every page through
 `render_browser_shell`, and there is no `build:ssr` script to reach for by
 mistake. The server never walks a module here, so no failed server render can
 quietly become a client-mounted page. If you do wire SSR up yourself for a
-page, render it with `try_render`: a failure comes back to the handler as a
+page, declare its props, bind a `PageHandle<Props>` once and call
+`pages.finalize()` before listening. `handle.render(&props, &ctx)` returns a
 coded `RenderError`, which it logs through the `tracing` subscriber `main.rs`
 installs and answers with an error page.
 
@@ -207,9 +203,10 @@ is, a construct the compiler cannot render on the server fails the build with
 its code, file and line instead of becoming an empty island.
 
 **Want to see Phase 2 working?** Scaffold the `minimal` template
-(`npx @getforma/create-app my-app --template minimal`). It keeps its page shell
-as literal JSX, so `npm run build:ssr` emits real IR (0 islands) and the server
-sends real markup that the client adopts.
+(`npx @getforma/create-app my-app --template minimal`). It declares `HomeProps { count: number }`; `npm run build:ssr` emits real IR
+and the typed Rust handler supplies the count before JavaScript. The current
+whole-page mount starts at the same default; island state adoption remains a
+separate migration.
 
 **Want the rule rather than the anecdote?** The numbers above were measured
 against this template as shipped, with the compiler version its `package.json`

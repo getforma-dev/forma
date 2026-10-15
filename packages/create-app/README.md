@@ -77,7 +77,7 @@ whoever writes the next template.
 
 ## What You Get
 
-- **Rust server** (`src/main.rs`) — Axum + `forma-server`: page rendering with `try_render` (or `render_browser_shell` for a declared browser route), each page a `PageResponse` carrying its per-request CSP nonce and `Cache-Control: no-store`, asset serving from `rust-embed`, no service worker, and a `tracing` subscriber that logs every render error by code and route
+- **Rust server** (`src/main.rs`) — Axum + `forma-server`: page rendering with a bound `PageHandle<Props>` (or `render_browser_shell` for an explicit Browser route), each page a `PageResponse` carrying its per-request CSP nonce and `Cache-Control: no-store`, asset serving from `rust-embed`, no service worker, and a `tracing` subscriber that logs every render error by code and route
 - **TypeScript frontend** (`admin/src/`) — FormaJS with JSX, signals, components
 - **Build pipeline** (`admin/build.ts`) — `@getforma/build`: bundling, content hashing, Brotli/gzip, manifest, in strict mode, so a construct the server cannot render fails the build with its code and line
 - **A `.gitignore`** that covers build output, secrets and (for the dashboard) Playwright artifacts — and deliberately does not ignore `Cargo.lock`
@@ -149,10 +149,19 @@ MIT
 
 ## Development staging toward 3.0.0
 
-The checked-in templates keep the A2 consumer pins until FORMA-144 completes the
-final API migration. Release packing stages exact candidate npm and Cargo
-requirements/locks, validates those packed bytes, then restores the source files.
-A source template copied by hand is not that staged release set.
+The checked-in templates now use the declared-props and finalized Pages APIs.
+Minimal keeps its whole-page mount with matching server/browser defaults;
+island state adoption and the broader template redesign remain FORMA-144
+slices 2 and 3.
+
+Source template locks are explicitly identified **seeds** at the coordinated
+package version. They retain every external registry checksum and omit only
+the known Forma candidate checksums, which cannot exist before the archives
+are packed. Release packing seals those entries from actual archive bytes,
+validates the shipped locks, and restores all ten source files. The source-only
+`template-lock-seeds.json` marker is never shipped. Use the packed candidate
+scaffold workflow for local end-to-end development; copying source templates
+by hand does not produce an installable unpublished candidate set.
 
 The scaffolder writes a separate application identity into `admin/build.ts`.
 Valid worker names stay unchanged; accepted project names with underscores or

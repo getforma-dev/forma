@@ -1,16 +1,11 @@
 import { h, Fragment, mount, createSignal } from '@getforma/core';
 
-const [count, setCount] = createSignal(0);
+type HomeProps = { count: number };
 
-// The SSR root is the tree returned by this `mount` callback.
-//
-// Everything written as literal JSX here is walked at build time into the
-// `.ir` file and rendered to HTML by the Rust server (`npm run build:ssr`).
-// Anything the compiler cannot walk statically — a component tag, a helper
-// call that returns JSX, a dynamic tag — degrades to an island placeholder
-// that only appears once JavaScript runs. Keep the shell literal and the
-// dynamic parts inside `{() => ...}` bindings, as below.
-mount(() => {
+// Slice 1 binds these declared props on the server. The whole-page mount is
+// retained until the island/state-block migration; its browser default is 0.
+function Home(props: HomeProps) {
+  const [count, setCount] = createSignal(props.count);
   return (
     <main class="page">
       <h1>{{PROJECT_NAME}}</h1>
@@ -27,4 +22,6 @@ mount(() => {
       </p>
     </main>
   );
-}, '#app');
+}
+
+mount(() => Home({ count: 0 }), '#app');

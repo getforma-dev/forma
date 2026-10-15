@@ -165,19 +165,28 @@ dependencies = [
 
 [[package]]
 name = "forma-ir"
-version = "0.2.2"
+version = "3.0.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50025373ef8b25641712b2d1515656117ea5920d5e8fe57d86a2e13bbb43d5ac"
 dependencies = [
+ "forma-ir-derive",
  "serde_json",
  "tracing",
 ]
 
 [[package]]
-name = "forma-server"
-version = "0.2.2"
+name = "forma-ir-derive"
+version = "3.0.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e34bf322d400bba901d2862bf03395226c3a4f131415d6e955362ce869f802ba"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "forma-server"
+version = "3.0.0-dev"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "axum",
  "base64",

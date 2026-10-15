@@ -127,3 +127,11 @@ now states the corrected named-root behavior explicitly. The original failing
 source and log are preserved in `work/FORMA-103/tmp/same-file-entry/` and
 `same-file-entry.log`; ordinary regression tests cover the corrected roots and
 the unchanged inline path. No historical FMIR fixture or report was replaced.
+
+## FORMA-144 source-template migration — 2026-10-15
+
+[The slice 1 archive](2026-10-15-template-slice1/README.md) preserves the A2
+source templates, the temporary candidate source adapter and superseded
+rendering/lock guidance, with original path/SHA-256 records. Current package
+inputs use typed handlers and identified source lock seeds; packed candidates
+carry actual archive checksums. Island adoption remains a later slice.

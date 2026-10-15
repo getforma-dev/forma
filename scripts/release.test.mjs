@@ -46,7 +46,8 @@ test('version preparation changes seven manifests, exact internal requirements a
   assert.equal(json(join(ROOT, 'packages/core/package.json')).version, before, 'pure preparation must not alter source');
   const dev = versionFiles(ROOT, '3.0.1-dev');
   assert(dev.get('Cargo.toml').includes('3.0.1-dev'));
-  assert(![...dev.keys()].some(p => p.includes('/templates/')), 'development alignment must preserve A2 template pins');
+  assert.match(dev.get('packages/create-app/templates/minimal/Cargo.toml'), /forma-ir = "=3.0.1-dev"/);
+  assert.equal(JSON.parse(dev.get('packages/create-app/template-lock-seeds.json')).version, '3.0.1-dev');
 });
 test('version preparation keeps every Cargo workspace aligned without changing external pins', () => {
   const paths = ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock'];

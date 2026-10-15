@@ -8,6 +8,7 @@ import { dirname, resolve, join, basename, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
+import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template-lock-seeds.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const NPM = ['core', 'compiler', 'build', 'create-app'];
@@ -92,14 +93,9 @@ export function versionFiles(root, version) {
     text = text.replace(/(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g, `$1${version}"`);
     files.set(path, text);
   }
-  // Milestone template work belongs to FORMA-144; development alignment leaves A2 pins intact.
-  for (const template of version.endsWith('-dev') ? [] : ['minimal', 'dashboard']) {
-    const prefix = `packages/create-app/templates/${template}`;
-    const p = JSON.parse(read(`${prefix}/admin/package.json`));
-    updateRequirements(p, version);
-    files.set(`${prefix}/admin/package.json`, JSON.stringify(p, null, 2) + '\n');
-    files.set(`${prefix}/Cargo.toml`, read(`${prefix}/Cargo.toml`).replace(/^(forma-(?:ir|ir-derive|server) = ")[^"]+"/gm, `$1=${version}"`));
-  }
+  // Source seeds never invent the hash of an archive containing this commit.
+  const previous = JSON.parse(read('packages/create-app/package.json')).version;
+  for (const [path, text] of prepareTemplateSeeds(root, previous, version)) files.set(path, text);
   return files;
 }
 
@@ -275,24 +271,6 @@ export function packedCargoGraph(root, packages, out) {
     return { lock: readFileSync(join(root, 'Cargo.lock'), 'utf8'), packages: metadata };
   } finally { rmSync(scratch, { recursive: true, force: true }); }
 }
-// Temporary, explicitly reviewed candidate sources until FORMA-144 migrates
-// the A2 source templates. Authenticate the entire old source before adapting;
-// changed source must be reviewed rather than partially rewritten.
-const candidateTemplateSources = new Map([
-  ['527ab0341b29621ae6b26d455b818851907d8fbcefc3d95067b900026ad6d81f', 'minimal'],
-  ['b64ec04e23bc48f330d7ec53500705502773a548091ca6138ff6c364ca906b2b', 'dashboard'],
-]);
-export function stageTemplateSource(text, version) {
-  assert(SEMVER.test(version), 'template source adapter requires a supported version');
-  const major = Number(version.split('.')[0]);
-  if (major < 3) return text;
-  assert.equal(major, 3, 'template source adapter is reviewed only for candidate 3.x');
-  assert.equal(Number(version.split('.')[1]), 0, 'template source adapter is reviewed only for candidate 3.0.x');
-  assert.equal(json(join(ROOT, 'scripts/release-contracts.json')).boundRender, 'finalized-v1', 'candidate source requires the finalized-v1 rendering contract');
-  const name = candidateTemplateSources.get(createHash('sha256').update(text).digest('hex'));
-  assert(name, 'template source adapter requires an exact reviewed A2 source digest');
-  return readFileSync(join(ROOT, 'scripts/fixtures/candidate-templates', `${name}.rs`), 'utf8');
-}
 export function withStagedTemplates(root, packages, out, callback) {
   const originals = stageTemplates(root, packages, out);
   try { return callback(); }
@@ -301,19 +279,38 @@ export function withStagedTemplates(root, packages, out, callback) {
 export function stageTemplates(root, packages, out) {
   const originals = new Map();
   const stagedFiles = new Map();
-  const server = packages.find(p => p.registry === 'crates' && p.name === 'forma-server');
-  const sourceAdapter = server && Number(server.version.split('.')[0]) >= 3;
+  if (existsSync(join(root, 'packages/create-app/package.json'))) assert(existsSync(join(root, SEED_MARKER)), 'source templates require their explicit lock-seed identity');
+  if (existsSync(join(root, SEED_MARKER))) {
+    const expected = json(join(root, 'packages/create-app/package.json')).version;
+    const known = [...CRATES, ...NPM.slice(0,3).map(name => `@getforma/${name}`)].sort();
+    assert.deepEqual(packages.map(p => p.name).sort(), known, 'source seeds require all six runtime candidates');
+    for (const p of packages) {
+      assert.equal(p.version, expected, `${p.name}: mixed source seed/candidate version`);
+      assert.equal(p.registry, CRATES.includes(p.name) ? 'crates' : 'npm', `${p.name}: unexpected candidate registry`);
+    }
+    readTemplateSeeds(root, expected); // Validate both templates before writes or archive inspection.
+    assert(existsSync(join(root, 'Cargo.lock')), 'source seeds require the committed candidate Cargo graph');
+  } else {
+    // Low-level historical fixtures may be already sealed. A recorded Cargo
+    // graph must never turn an unidentified missing hash into a source seed.
+    for (const template of ['minimal', 'dashboard']) {
+      const dir = join(root, 'packages/create-app/templates', template);
+      for (const [path, entry] of Object.entries(json(join(dir, 'admin/package-lock.json')).packages)) {
+        if (/^node_modules\/@getforma\/(core|compiler|build)$/.test(path)) assert(/^sha512-[A-Za-z0-9+/]{86}==$/.test(entry.integrity ?? ''), 'unidentified template: missing checksum for internal npm package');
+      }
+      for (const block of readFileSync(join(dir, 'Cargo.lock'), 'utf8').split(/(?=^\[\[package\]\])/m)) {
+        if (/^name = "forma-(ir|ir-derive|server)"\r?$/m.test(block)) assert(/^checksum = "[a-f0-9]{64}"\r?$/m.test(block), 'unidentified template: missing checksum for internal crate');
+      }
+    }
+  }
   const cargoGraph = existsSync(join(root, 'Cargo.lock')) ? packedCargoGraph(root, packages, out) : undefined;
   // Compute every replacement before touching the tree, so a malformed second template
   // cannot leave the first template staged when packing fails.
   for (const template of ['minimal', 'dashboard']) {
     const dir = join(root, 'packages/create-app/templates', template);
     for (const name of ['admin/package.json', 'admin/package-lock.json', 'Cargo.toml', 'Cargo.lock']) originals.set(join(dir, name), readFileSync(join(dir, name)));
-    if (sourceAdapter) {
-      const path = join(dir, 'src/main.rs');
-      originals.set(path, readFileSync(path));
-      stagedFiles.set(path, stageTemplateSource(originals.get(path).toString('utf8'), server.version));
-    }
+    const source = join(dir, 'src/main.rs');
+    if (existsSync(source)) originals.set(source, readFileSync(source));
     const staged = stageNpmLock(json(join(dir, 'admin/package.json')), json(join(dir, 'admin/package-lock.json')), packages, out, false, existsSync(join(root, 'package-lock.json')) ? json(join(root, 'package-lock.json')) : undefined);
     stagedFiles.set(join(dir, 'admin/package.json'), JSON.stringify(staged.manifest, null, 2) + '\n');
     stagedFiles.set(join(dir, 'admin/package-lock.json'), JSON.stringify(staged.lock, null, 2) + '\n');

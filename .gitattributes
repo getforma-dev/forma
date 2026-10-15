@@ -37,6 +37,7 @@ crates/forma-ir/tests/fixtures/js-emitter/*.dump text eol=lf
 packages/compiler/src/fmir-constants.ts text eol=lf
 crates/forma-ir/src/fmir_constants.rs text eol=lf
 
-# Candidate adapters authenticate the historical template source bytes.
+# Packed candidates use the actual template source bytes on every platform.
 packages/create-app/templates/*/src/main.rs text eol=lf
-scripts/fixtures/candidate-templates/*.rs text eol=lf
+# Original source/doc bytes are authenticated by the migration archive index.
+docs/archive/2026-10-15-template-slice1/** -text
