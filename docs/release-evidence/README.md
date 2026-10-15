@@ -2,29 +2,44 @@
 
 ## The milestone-aware gate (first alpha preparation)
 
-Two dry runs on a Mac (Node 24.22.0, Cargo 1.93.1) after the contract file became
-milestone-aware, both from `main` at `b68a795`; nothing was tagged or published.
+Runs on a Mac (Node 24.22.0, Cargo 1.93.1) on 2026-10-15 at the committed tree
+`30dec78` of PR 49 (the branch after `main` `6afe461`, which carries PR 48, was merged
+in, plus the review fixes); nothing was tagged or published. The script is
+`work/FORMA-187-alpha/tmp/r2-rehearsal.sh`, its log beside it.
 
-`alpha-gate-dev-dry-run-{set,p17}.json` and `-SHA256SUMS`: the packed set of `main` as
-it is, at `3.0.0-dev`. 33 P17 checks passed in 89.6 seconds. Set and report carry
-`milestone: null`, which is what a `-dev` set records: no milestone publishes it.
+`alpha-gate-dev-dry-run-{set,p17}.json` and `-SHA256SUMS`: the packed set of that tree
+as it is, at `3.0.0-dev`, `pack --dry-run`; `commit` is `30dec78` and the tree was
+clean, so the set is reproducible from the branch. 33 P17 checks passed in 68.7 seconds.
+Set and report carry `milestone: null`, which is what a `-dev` set records: no milestone
+publishes it. The packed `forma-ir` crate, unpacked beside the tree's `fuzz/regressions`
+with the packed derive crate patched in by path, passed `fmir_v3` 8 and
+`fuzz_regressions` 6 (the runbook's L8 command).
 
-`alpha-gate-alpha-rehearsal-{set,p17}.json` and `-SHA256SUMS`: the same tree after
-`node scripts/release-set.mjs version 3.0.0-alpha.1` (seven manifests, three Cargo locks,
-the npm lock and the template seeds and ranges), rebuilt and packed with `--dry-run`. 33
-P17 checks passed in 69.2 seconds. Set and report carry `milestone: { name: "alpha",
-plan: "M2", ready: true, later: { beta, rc, final } }`, the shape DS11 and DS12 will carry
-on the alpha day. The version change was then reverted; `main` stays at `3.0.0-dev`.
+`alpha-gate-alpha-live-{set,p17}.json` and `-SHA256SUMS`: the live path, not a dry run.
+The same tree after `node scripts/release-set.mjs version 3.0.0-alpha.1`, committed to a
+throwaway commit `49f0243` (so the live pack's clean-tree check could pass; it is not on
+the branch and the set's `commit` names it), rebuilt and packed with
+`GITHUB_REF_NAME=v3.0.0-alpha.1 GITHUB_RUN_ID=0` and no `--dry-run`: `dryRun: false`,
+`tag: v3.0.0-alpha.1`, `milestone: { name: "alpha", plan: "M2", ready: true, blocking: [],
+later: { beta, rc, final } }`, which `pack` resolved through `assertMilestoneReady`
+before packing. P17 on that set, with the milestone enforced (the live branch of
+`verify-release-set.mjs`), passed 33 checks in 94.3 seconds. `verifyIdentity` from
+`release-publish.mjs`, under the publish job's environment (`GITHUB_SHA` the throwaway
+commit, the tag, run 0), accepted the set. The tree was then reset to `30dec78`.
 
-`alpha-gate-beta-refusal.log`: the negative control. With the manifests at `3.0.0-beta.1`
-and a live ref `v3.0.0-beta.1`, `release-set.mjs pack` refused before packing a single
-file, naming every open beta gate: "beta (M3) still waits for: FORMA-103 (beta) ...;
-nothing may publish". The output directory stayed empty.
+`alpha-gate-refusals.log`: the negative controls. `verifyIdentity` refused five tampered
+copies of the live set: `FORMA-185` set `pending` in the recorded contract; `milestone.ready`
+forged `true` over a pending `FORMA-144 slice 1`; the contract's `version` set to `3.1.0`;
+`liveReleaseReady` beside the milestones; `dryRun: true`. With the manifests at
+`3.0.0-beta.1` and a live ref `v3.0.0-beta.1`, `release-set.mjs pack` refused before packing
+a single file, naming every open beta gate ("beta (M3) still waits for: FORMA-103 (beta)
+...; nothing may publish"); with the manifests at `3.1.0-alpha.1` and `v3.1.0-alpha.1`, it
+refused with "the contract gates 3.0.0, not 3.1.0". Both output directories stayed empty.
 
-The contract names the alpha's gates done (FORMA-110, 185, 112, 102, 107, 109, 111, 144
-slice 1) and the beta's, rc's and final's pending; the lint's self-test rejects 32
-workflow and 11 contract seeds and ends with `milestones ready to publish: alpha`. The
-alpha day's ordered steps are in `docs/release/ALPHA-RUNBOOK.md`.
+The contract names `version` `3.0.0`, the alpha's gates done (FORMA-110, 185, 112, 102,
+107, 109, 111, 144 slice 1) and the beta's, rc's and final's pending; the lint's self-test
+rejects 32 workflow and 13 contract seeds and ends with `milestones ready to publish:
+alpha`. The alpha day's ordered steps are in `docs/release/ALPHA-RUNBOOK.md`.
 
 The A2 report tests the exact seven previously published archives retained by
 FORMA-113 in `tmp/a2-tarballs`, `tmp/a2-crates` and the founder-published derive
