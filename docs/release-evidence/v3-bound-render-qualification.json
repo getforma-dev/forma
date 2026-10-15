@@ -90,6 +90,11 @@
       "3e6a3c4c50f284438cf1f96cdb854e4726363614"
     ],
     "verifiedThrough": "c84a1cebdb0c8baf755192ad6ab6a773b9481d2c",
-    "delta": "Only docs/release-evidence files differ from the artifact source; no packed production source changed."
+    "delta": "Only docs/release-evidence files differ from the artifact source; no packed production source changed.",
+    "postArtifactTestDelta": {
+      "source": "42826beac1a6a3e1596728f5af1097c775ce1487",
+      "scope": "Build-test-only Windows process-tree/stdio cleanup and bounded fixture deletion, with an owned descendant/unrelated-process control. No published source changed; prior archive acceptance remains at858666f.",
+      "review": "Lead independently reviewed the fix; exact-head Windows CI remains required."
+    }
   }
 }
