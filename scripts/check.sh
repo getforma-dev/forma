@@ -57,6 +57,8 @@ step "npm run build (compiler, build, core, create-app)"
 npm run build
 step "npm test --workspaces"
 npm test --workspaces
+step "declared props: compiler bytes match the native typed-handler fixtures"
+node packages/compiler/scripts/emit-props-contract.mjs --check
 step "packed compiler API and actual optional-compiler compatibility"
 node --test scripts/compatibility-package.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"

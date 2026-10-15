@@ -1,10 +1,4 @@
-//! The lenient loader warns, at run time, that it is deprecated (once per
-//! process, in debug builds), and the strict loader, the default, logs no
-//! "Phase 1 fallback" for a failure it hands back instead (FORMA-121).
-//!
-//! Its own test binary: the deprecation warning is once per process, so only
-//! one test here may call the lenient loader.
-
+//! Both strict entry points report errors without logging a fallback they never take.
 use forma_server::assets::try_load_manifest;
 use rust_embed::Embed;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -66,34 +60,23 @@ fn count_warnings(needles: &'static [&'static str], run: impl FnOnce()) -> usize
 }
 
 #[test]
-#[allow(deprecated)]
-fn load_ir_modules_logs_its_deprecation_once_per_process_in_debug_builds() {
-    let manifest = try_load_manifest::<Flipped>().expect("manifest");
-    let deprecations = count_warnings(&["load_ir_modules is deprecated", "strict"], || {
-        for _ in 0..3 {
-            // Still degrades as at 0.2.1: the log is the only change.
-            let (modes, _) = forma_server::load_ir_modules::<Flipped>(&manifest);
-            assert_eq!(modes.len(), 7);
-        }
-    });
-    let expected = if cfg!(debug_assertions) { 1 } else { 0 };
-    assert_eq!(deprecations, expected);
-
-    // And it still logs each fallback, as at 0.2.1.
-    let fallbacks = count_warnings(&["Phase 1 fallback"], || {
-        let _ = forma_server::load_ir_modules::<Flipped>(&manifest);
-    });
-    assert_eq!(fallbacks, 5, "one per bad module");
-}
-
-#[test]
 fn the_default_loader_logs_no_fallback_it_does_not_take() {
     // The strict loader hands every failure back for the server to refuse
     // start on; a "Phase 1 fallback" line from it would be untrue.
     let manifest = try_load_manifest::<Flipped>().expect("manifest");
     let fallbacks = count_warnings(&["Phase 1 fallback"], || {
-        let errors = forma_server::load_ir_modules_strict::<Flipped>(&manifest).unwrap_err();
-        assert_eq!(errors.len(), 5);
+        assert_eq!(
+            forma_server::load_ir_modules_strict::<Flipped>(&manifest)
+                .unwrap_err()
+                .len(),
+            5
+        );
+        assert_eq!(
+            forma_server::load_ir_modules::<Flipped>(&manifest)
+                .unwrap_err()
+                .len(),
+            5
+        );
     });
     assert_eq!(fallbacks, 0);
 }

@@ -43,14 +43,14 @@
 //! Content nobody reviewed renders in the preview frame, whose document
 //! [`PageResponse::frame`] writes ([`frame`]).
 //!
-//! A route the build declares `ssr: false` is served by
-//! [`render_browser_shell`]. At start, [`load_ir_modules_strict`] is the
-//! module loader: stop on its errors, before the port binds. [`IrModules`]
-//! loads the same way and, in a debug build, rereads a page's module when the
-//! build's watch mode rewrites it. Deprecated in
-//! 0.2.2, removed in 3.0.0: `render_page` and its Phase 1 fallback,
-//! `render_page_with_nonce`, the lenient `load_ir_modules`, [`PageOutput`]'s
-//! public fields and `headers()`, and `PageConfig::config_script`.
+//! At startup [`load_ir_modules`] strictly loads a [`Pages`] registry. Bind each
+//! derived [`PageProps`] handler before opening the listener, then call
+//! [`PageHandle::render`] with values and request metadata. [`load_ir_modules_strict`]
+//! remains an interim strict tuple helper; no lenient loader remains.
+//! A route explicitly declared browser-only uses [`render_browser_shell`].
+//! Debug reload rechecks a changed schema and keeps the last good module and
+//! asset snapshot on file corruption. The remaining low-level render and raw
+//! output bridges are removed by FORMA-107/109.
 
 // Makes README.md's and SECURITY.md's "Zero `unsafe` blocks" a property the
 // compiler enforces rather than a claim.
@@ -78,6 +78,8 @@ pub mod frame;
 pub mod head;
 /// Loading and version-checking the per-route `.ir` modules at startup.
 pub mod ir;
+/// Bound page contracts and checked handler rendering.
+pub mod pages;
 /// Raw HTML: the one named type for markup written unescaped.
 pub mod raw;
 /// The render that returns its failure: `try_render`, `render_browser_shell`.
@@ -98,14 +100,18 @@ pub use csp::{
     build_csp_header, generate_csp_nonce, CspNonce, InvalidNonce, NonceError, PolicyError,
     PolicyExtensions,
 };
+pub use forma_ir::props::{PropsError, PropsSource, PropsWarning};
 /// Parser errors and their authoritative `code()` method.
 pub use forma_ir::IrError;
+/// Derive and trait for declared handler props.
+pub use forma_ir::PageProps;
 /// Re-exported: [`RenderCtx::with_limits`] takes it.
 pub use forma_ir::WalkLimits;
 pub use frame::{FrameError, PreviewFrame, FRAME_RUNTIME_ASSET};
 pub use head::{HeadLink, HeadLinkError, ModulePreloads};
 #[allow(deprecated)]
 pub use ir::{load_ir_modules, load_ir_modules_strict, IrLoadError, IrModules};
+pub use pages::{PageHandle, Pages};
 pub use raw::RawHtml;
 pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};

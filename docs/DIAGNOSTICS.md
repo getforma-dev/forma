@@ -898,3 +898,27 @@ browser-only explicitly when it does not have server output.
 its last valid manifest until a successful rebuild. Verified by
 `packages/build/tests/strict.test.ts` and
 `packages/build/tests/manifest-compatibility.test.ts`.
+
+## Declared handler diagnostics (FORMA-102)
+
+These codes are returned as structured Rust errors/warnings. Bind errors identify route/property and TypeScript/Rust source positions when available; checked-value errors include the array index in the property path. No listener should open until binds succeed, and a failed render returns no HTML.
+
+| Code | Meaning |
+|---|---|
+| BIND-101 | A declared TypeScript field is absent from Rust, including an optional field. |
+| BIND-102 | Rust and TypeScript field kinds differ. |
+| BIND-103 | Optional Rust data cannot satisfy a required TypeScript field. |
+| BIND-104 | String enum literal sets differ. |
+| BIND-105 | Rust metadata is malformed, recursive or outside the closed schema. |
+| BIND-106 | Declared SERVER roots are missing, duplicated, undeclared, defaulted or mistyped. |
+| BIND-107 | Unknown page/route or logical manifest alias. |
+| BIND-108 | A browser-only or removed route has no SSR contract. |
+| BIND-109 | Logical page alias matches more than one route. |
+| BIND-201 | Extra Rust field: warning; omitted from encoded data. |
+| RENDER-401 | Integer outside JavaScript's exact safe range. |
+| RENDER-402 | Non-finite floating point value. |
+| RENDER-403 | Date outside JavaScript's supported epoch-millisecond range. |
+| RENDER-404 | Value projection does not match the bound closed schema. |
+| RENDER-405 | A changed development module cannot bind to the existing handler; includes BIND causes. |
+
+See [declared props](DECLARED-PROPS.md) for optional-field precedence, safe dates and reload behavior.

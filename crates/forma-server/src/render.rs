@@ -37,6 +37,8 @@ pub struct RenderCtx {
     limits: WalkLimits,
     module_preloads: Option<ModulePreloads>,
     head_links: Vec<HeadLink>,
+    title: Option<String>,
+    body_class: Option<String>,
 }
 
 impl RenderCtx {
@@ -44,6 +46,27 @@ impl RenderCtx {
     /// 50,000 list rows).
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Override the bound page's document title for this request; escaped as text.
+    #[must_use]
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    /// Set this request's body class; escaped as an attribute.
+    #[must_use]
+    pub fn with_body_class(mut self, class: impl Into<String>) -> Self {
+        self.body_class = Some(class.into());
+        self
+    }
+
+    pub(crate) fn title(&self) -> Option<&str> {
+        self.title.as_deref()
+    }
+    pub(crate) fn body_class(&self) -> Option<&str> {
+        self.body_class.as_deref()
     }
 
     /// Extend this page's policy (see [`PolicyExtensions`]).
@@ -136,6 +159,20 @@ impl RenderCtx {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderError {
+    /// RENDER-401..404: a handler value violates its declared contract.
+    #[non_exhaustive]
+    Props {
+        /// Checked value error, including its declared property path and sources.
+        cause: forma_ir::props::PropsError,
+    },
+    /// RENDER-405: a development reload no longer matches the bound handler.
+    #[non_exhaustive]
+    Binding {
+        /// Bound route.
+        route: String,
+        /// Binding refusals for the changed module. No partial HTML is returned.
+        errors: Vec<forma_ir::props::PropsError>,
+    },
     /// RENDER-101: [`try_render`] renders on the server, and the config
     /// carries no module or no slots for it. A browser-rendered route is
     /// served by [`render_browser_shell`], by declaration.
@@ -206,6 +243,8 @@ impl RenderError {
     /// The stable code, such as `RENDER-301`.
     pub fn code(&self) -> &'static str {
         match self {
+            RenderError::Props { cause } => cause.code(),
+            RenderError::Binding { .. } => "RENDER-405",
             RenderError::MissingModule { .. } => "RENDER-101",
             RenderError::Walk { .. } => "RENDER-102",
             RenderError::Policy { .. } => "RENDER-201",
@@ -222,12 +261,22 @@ impl RenderError {
     /// The route pattern the render was for.
     pub fn route(&self) -> &str {
         match self {
+            RenderError::Props { cause } => cause.route(),
+            RenderError::Binding { route, .. } => route,
             RenderError::MissingModule { route }
             | RenderError::Walk { route, .. }
             | RenderError::Policy { route, .. }
             | RenderError::Nonce { route, .. }
             | RenderError::Budget { route, .. }
             | RenderError::Fault { route, .. } => route,
+        }
+    }
+
+    /// The declared property path of a checked-value refusal.
+    pub fn property_path(&self) -> Option<&str> {
+        match self {
+            Self::Props { cause } => Some(cause.path()),
+            _ => None,
         }
     }
 
@@ -263,6 +312,13 @@ impl fmt::Display for RenderError {
             write!(f, " in {}", path.join(" > "))?;
         }
         match self {
+            RenderError::Props { cause } => write!(f, ": {cause}"),
+            RenderError::Binding { errors, .. } => {
+                for error in errors {
+                    write!(f, "; {error}")?;
+                }
+                Ok(())
+            }
             RenderError::MissingModule { .. } => {
                 write!(f, ": no module or slots to render on the server")
             }
@@ -288,6 +344,10 @@ impl std::error::Error for RenderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             RenderError::Walk { cause, .. } | RenderError::Budget { cause, .. } => Some(cause),
+            RenderError::Props { cause } => Some(cause),
+            RenderError::Binding { errors, .. } => {
+                errors.first().map(|error| error as &dyn std::error::Error)
+            }
             RenderError::Policy { cause, .. } => Some(cause),
             RenderError::Nonce { cause, .. } => Some(cause),
             _ => None,
