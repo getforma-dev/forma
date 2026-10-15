@@ -21,7 +21,8 @@ The existing island entry's documented trailing-extension rule is unchanged.
 
 Reserve required section `0x000A`, **island contracts**, with descriptor flags
 exactly `SECTION_REQUIRED` (1). New writers emit it even when there are no
-islands or closed constants, in which case its complete payload is `00 00 00 00`. New readers accept an
+islands or closed constants, in which case its complete payload is
+`00 00 00 00`. New readers accept an
 absent section only when the island table is empty and the bytecode has no
 COALESCE. A nonempty island table without it is `LOAD-105 MissingSection(10)`
 with a rebuild diagnostic. This explicitly retires pre-contract development
@@ -48,15 +49,16 @@ repeat constant_count times:
 `record_len = 10 + bindings_len + schema_len`. Records are in strictly ascending
 static `island_id` order, with exactly one record per island-table entry. Static
 ids need not be dense. Counts are at most `MAX_ISLANDS` (4096). Check this and
-`count * 22 <= remaining_bytes - 2` before allocating: the shortest record is its
-4-byte length, 10-byte prefix, 3-byte binding program and 5-byte empty-root schema; retain two bytes for the
+`count * 23 <= remaining_bytes - 2` before allocating: the shortest record is its
+4-byte length, 10-byte prefix, 4-byte binding program and 5-byte empty-root
+schema; retain two bytes for the
 constant count. No subtraction occurs before checking those two bytes exist.
 Each byte array is at most 1,048,576 bytes and the existing 16,777,216-byte module
 limit still bounds their sum. Checked addition/multiplication is mandatory.
 
 The closed constant table is sorted by unique global slot id, at most65,535
 records. Check `constant_count * 7 <= remaining_bytes` before allocating; each
-constant is at least its one-byte tag and at most65,538 bytes. Each referenced
+constant is at least its one-byte tag and at most1,048,576 bytes. Each referenced
 slot is CLIENT, has zero default bytes in0x0003, and is never the destination of
 PROP/COALESCE or the item slot of LIST. This table initializes it at module load
 with the explicit typed constant. Zero default bytes without such an entry still
@@ -65,7 +67,6 @@ default bytes cannot distinguish an empty string from absence. It adds no
 implicit text quoting and changes no old slot encoding. The map's global ids
 are excluded from identity; corresponding literal values are already in the
 component binding bytes. Unreferenced constants are refused.
-
 
 An island entry now requires `schema_object != 0xffff` and `digest_len = 8`.
 `slot_count` equals the number of fields of its referenced global schema object.
@@ -76,7 +77,9 @@ to one value. Remove the legacy duplicate-capture check, retain declared-id,
 count and type checks. Each island still has one static ISLAND_START offset.
 Execution of that offset in a list can produce any number of request instances.
 
-The compiler emits input preparation immediately before ISLAND_START. A skipped
+The compiler emits input preparation immediately before ISLAND_START. Full ordered-field input assignability uses the same
+typed provenance rules as section5, not just slot hints; a repeated input must
+satisfy both fields independently. A skipped
 branch produces no instance. Inputs are read at execution, not cached at module
 load; a list input is the current row's value. No variable-name or encoded-path
 slot convention becomes an API. The page's root SERVER mapping remains the
@@ -154,7 +157,8 @@ They contain no module slot ids, marker ids, byte offsets, call-site static
 island ids, source positions or global string ids.
 
 ```
-binding_bytes := binding_version:u8 (=1), block
+binding_bytes := binding_version:u8 (=1), render_mode:u8, block
+render_mode: 00 native SSR, 01 browserOnly
 block := record_count:u16, record[record_count]
 record := payload_len:u32, kind:u8, kind_payload
 
@@ -166,6 +170,19 @@ kind 05 LIST: value, key_count:u8, key_segment:text[key_count], body:block
 kind 06 CHILD: registration_name:text, field_count:u16,
                (field_name:text, value)[field_count]
 ```
+
+Mode01 has exactly an empty block (`record_count=0`); any record in it is
+LOAD-103. Its complete binding program is `01 01 00 00`, versus `01 00 00 00`
+for an empty native-SSR program. A browserOnly component has no native bindings
+by definition. Its ordinary client-only expressions/calls/globals/signals are
+excluded, not translated into a metadata evaluator and not restricted by the
+native binding grammar. Its declared schema is still required and hashed.
+Changing SSR/browserOnly mode changes identity. A native mode01 region must
+contain only its empty host's OPEN/CLOSE (or VOID) with static attributes and
+no dynamic output, nested island or content opcodes; field-input preparation
+still precedes ISLAND_START. The mode is an explicit contract fact, not inferred
+from an accidentally empty native body. It introduces no byte in the existing
+island-table reserved field, which remains zero.
 
 `payload_len` includes kind and its payload. Every record consumes exactly that
 many bytes. Total records across all blocks are at most 65,535; block nesting is
@@ -210,7 +227,8 @@ constant := tag:u8, payload
   02 true
   03 number: IEEE-754 binary64 little-endian[8]
   04 string: text
-  05 empty array
+  05 array: element_count:u32, constant[element_count]
+  06 object: field_count:u16, (name:text, constant)[field_count]
 
 unary operators: 01 !, 02 unary +, 03 unary -
 binary operators: 01 +, 02 -, 03 *, 04 /, 05 %, 06 **,
@@ -233,6 +251,19 @@ beyond the safe integer range is a compile refusal, before rounding. An absent
 optional object-field input uses null and is omitted when producing `p`; array
 null elements keep their positions.
 
+Array constants are dense and ordered; null elements retain their positions.
+Object constants have unique names sorted by unsigned UTF-8 and preserve all
+explicit null-valued keys until schema projection. An empty array/object has
+its normal zero count. Nested arrays/objects are allowed, including signal
+defaults already in the published subset. Each constant has at most65,535 total
+value nodes, at most65,535 elements per array, at most1024 fields per object,
+and depth at most1024. Count minima are one byte per array element and three
+bytes per object field. Check lengths/ceilings before allocation and traverse
+iteratively. The total1MiB constant ceiling applies across all nested values,
+not independently to each child. Strings retain the text-length ceiling.
+Closed compile-time evaluation must produce this dense bounded data grammar;
+it does not execute arbitrary functions or retain getters/prototypes.
+
 UNARY/BINARY preserve a local expression's semantic structure in the identity,
 even where the existing SSR evaluator folds its initial value. They do not add
 native arithmetic opcodes. Computed expressions that depend on declared props
@@ -247,10 +278,11 @@ SHOW conditions and both branch bindings do; LIST sources, key paths and body
 bindings do; nested island prop mappings do. A literal participates when it is
 part of one of those expressions, not merely static markup.
 
-This is intentionally a closed first contract: nonempty object/array constant
-initializers and arbitrary call expressions are not newly admitted by103.
-This limitation needs review against the repository fixtures before wire code;
-there is no fallback digest for an omitted binding.
+The native binding contract remains closed: arbitrary runtime calls are not
+newly admitted to native SSR by103. Existing bounded closed object/array
+initializers remain admitted. A browserOnly body is excluded by its explicit
+mode above, so its ordinary client expressions do not encounter this native
+grammar. There is no fallback digest for an omitted native binding.
 
 ## 4. Identity bytes and checks
 
@@ -301,8 +333,10 @@ fallback, with no default and a single static defining instruction. Repeated
 execution of that instruction inside a list is permitted; sharing a destination
 between two lexical signals is not. Fallback is a CLIENT constant initialized by the explicit0x000A constant
 table, with no defining instruction anywhere in the module and no SERVER
-ownership. Initial103 admission is scalar boolean/string/number or enum
-fallback; dates and nonempty aggregate fallback are BUILD-610. An empty-string fallback is constant tag04 followed by length0000 in the
+ownership. Fallback may be any closed scalar/array/object constant assignable to the
+non-optional source type, checked recursively through its actual schema.
+Nonempty arrays/objects retain their positions and named fields. A bare number
+is never assignable to Date; date constructor calls are not closed literals. An empty-string fallback is constant tag04 followed by length0000 in the
 constant table; its source slot still has zero legacy default bytes, but the
 table initializes it to Text("") rather than Null. An ordinary empty-string
 source is likewise Text("") and must not select the fallback.
@@ -335,9 +369,14 @@ The block contains no redundant static id. `browserOnly` has an entry and empty
 host. Browser-shell routes emit no state block and mount through their browser
 entry; they do not attempt SSR-state preflight.
 
-After the complete walk, project all declared fields through the actual schema;
-omit undeclared extras and absent/null optional object fields, preserve optional
-array positions as null, and check values before producing a PageResponse.
+At ISLAND_START, before visiting any body or advancing a LIST temporary, read
+and project this occurrence's ordered inputs through its actual declared schema
+into an owned deep snapshot. Append that snapshot before its child occurrences.
+Never defer input reads/projection until the end of the walk, and never retain
+references to mutable row/scratch slots. Omit undeclared extras and absent/null
+optional object fields, preserve optional array positions as null, and check
+values before accepting the snapshot. After the complete walk, only serialize
+these already checked snapshots; no input is read again before PageResponse.
 Numbers preserve102's contract: Rust integers are range-checked before numeric
 conversion; f64 values must be finite. JSON cannot recover a Rust numeric type
 that was not encoded, so the decoder does not invent integer provenance from a
@@ -357,23 +396,45 @@ RENDER-104. State bytes also count toward107's final response-byte budget.
 
 Core finds only `document.head.querySelector('script[type="application/json"][data-island-state]')`
 once per Document (cached success or refusal in a WeakMap), never a subtree/body
-fallback. Parse a strict version1 envelope with empty `s`, dense entries, `h` as
-exact16 lowercase hex and `p` as a non-array object. Bound the encoded input
+fallback. Parse an envelope that is an object with exactly `v`, `s`, `i`, version1,
+empty-array `s` and array `i`. Bound the encoded input
 before JSON.parse, and use bounded iterative traversal/projection after parsing.
 Always strip forbidden keys at every depth; copy declared values into fresh
 per-instance objects so two occurrences never share mutable decoded data.
 
-Before arming any trigger or running a component, scan the original Document
-host set to establish occurrence claims, even when activation was requested for
-a subtree; arm only the requested valid hosts afterward. Preflight requires: each occurrence is in range and uniquely claimed, root h equals entry h
-equals compiled registration h, the registration schema validates its p, and
-the component registration exists. Detect duplicate references before either
-claimant can activate. Missing/malformed global state refuses all islands;
-per-entry schema/hash failure leaves that island inert. No DOM write, status
-attribute, marker removal, component invocation, effect or trigger installation
-occurs on state/hash/schema refusal. Diagnostics and internal WeakMap state are
-permitted. Later body blocks, inline `data-forma-props` and `__forma_islands`
-are never read. The last two channels are removed, not fallback paths.
+Before arming any trigger or running a component, snapshot the original
+Document host set and its occurrence claims once, even when activation is
+requested for a subtree. The cached identity associates each original Element
+object with its occurrence, component key and root digest. Later injected hosts
+cannot claim an unclaimed or previously validated occurrence; changing original
+host marker attributes does not retarget the cached association. If those
+attributes no longer equal the snapshot on activation, refuse that host. Arm
+only requested hosts that have passed preflight.
+
+Failure scope is exact:
+
+- Global: absent first head block, oversized text, invalid JSON, non-object
+  envelope, missing/extra envelope fields, wrong `v`, nonempty/non-array `s`, or
+  non-array `i`. Cache one global refusal; all hosts stay inert. A later valid
+  block cannot replace it.
+- Per entry: an element of `i` is not an object with exactly `h` and `p`, h is
+  not exact16 lowercase hex, or p is not a non-null non-array object. Cache a
+  refused entry at that index; do not reject unrelated well-formed entries.
+- Per host: malformed/out-of-range occurrence, missing registration, mismatched
+  root/entry/compiled h, or schema-invalid p. Refuse only that host. Duplicate
+  claims in the frozen original host set refuse every claimant of that index
+  before any claimant can activate; unrelated indices remain eligible.
+- A later host absent from the frozen Element map is refused even if it copies
+  valid original marker strings. A newly added body state block is never read.
+
+No DOM write, status attribute, marker removal, component invocation, effect or
+trigger installation occurs on state/hash/schema refusal. Diagnostics and
+internal WeakMap state are permitted. All entry/host checks occur before any
+component execution. Later body blocks, inline `data-forma-props` and
+`__forma_islands` are never read. The last two channels are removed, not fallback
+paths. A malformed individual entry never turns into a global refusal merely
+because it was encountered before another valid entry.
+
 
 The private success result is conceptually
 `ValidatedIsland { host, occurrence, registration, props }`, not a public bypass.
@@ -396,9 +457,10 @@ contract-qualified corpus deliberately, and distinguish intentional state/head/
 host-marker changes from unchanged visible content. Native checks run with
 UPDATE_GOLDEN absent.
 
-`FORMA-103-WIRE-VECTORS.json` contains six proposed exact byte vectors (empty,
+`FORMA-103-WIRE-VECTORS.json` contains eight proposed exact byte vectors (empty,
 two signals, repeated inputs, nested row mapping, empty-string fallback and
-UTF-8 ordering without normalization). Python constructs the vectors and Node
+UTF-8 ordering without normalization, recursive aggregate constants and
+browserOnly mode). Python constructs the vectors and Node
 independently agrees on hash/length/section boundaries in retained scratch
 logs. These are spec vectors, not evidence that the current native reader
 accepts the new grammar. The native dump/parser replay follows approval.
@@ -414,7 +476,8 @@ the ticket's100 deterministic values/schema, all declaration disclosure tests,
 zero MutationRecords on state refusal, strict-policy events and byte limits.
 
 Review the explicit closed-constant table needed for empty-string defaults,
-the closed binding-expression admission against fixtures, and the preserved
+the native-only binding-expression admission and browserOnly exclusion, and
+the preserved
 generic-number versus Rust-integer distinction in section6. These are concrete
 grammar choices, not permission to omit bindings or silently weaken a test.
 The spec can be amended before its reader/emitter checkpoint; no production
