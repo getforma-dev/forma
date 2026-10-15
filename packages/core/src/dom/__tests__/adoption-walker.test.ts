@@ -8,7 +8,9 @@ import { registerDisposer } from '../../reactive/root.js';
 function fixture(html:string){
   const doc=document.implementation.createHTMLDocument();doc.body.innerHTML=html;
   const host=doc.body.firstElementChild!;
-  const observer=new MutationObserver(()=>{});observer.observe(host,{attributes:true,childList:true,characterData:true,subtree:true});
+  const records:MutationRecord[]=[];
+  const native=new MutationObserver(batch=>records.push(...batch));native.observe(host,{attributes:true,childList:true,characterData:true,subtree:true});
+  const observer={takeRecords:()=>records.splice(0).concat(native.takeRecords()),disconnect:()=>native.disconnect()};
   return {doc,host,observer};
 }
 describe('private prepared descriptor walker',()=>{
@@ -20,7 +22,7 @@ describe('private prepared descriptor walker',()=>{
     const prepare=vi.fn(()=>{createEffect(effect);return h('p',{class:labelRead,title:'title',ref},'before ',countRead);});
     const plan=prepareAdoption(host,prepare);
     expect(plan.phase).toBe('validated');expect(prepare).toHaveBeenCalledOnce();expect(countRead).toHaveBeenCalledOnce();expect(labelRead).toHaveBeenCalledOnce();expect(effect).not.toHaveBeenCalled();expect(ref).not.toHaveBeenCalled();
-    expect(observer.takeRecords()).toEqual([]);plan.commit();await Promise.resolve();
+    expect(observer.takeRecords()).toEqual([]);plan.commit();await new Promise(resolve=>setTimeout(resolve,0));
     expect(effect).toHaveBeenCalledOnce();expect(ref).toHaveBeenCalledExactlyOnceWith(host);expect(countRead).toHaveBeenCalledOnce();expect(labelRead).toHaveBeenCalledOnce();
     expect(host.outerHTML).toBe(initial);expect([...host.childNodes]).toEqual(nodes);expect(observer.takeRecords()).toEqual([]);
     setCount(8);setLabel('two');expect(host.className).toBe('two');expect(host.childNodes[2]!.textContent).toBe('8');

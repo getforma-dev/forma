@@ -14,7 +14,7 @@ export interface PreparedAttribute {
 }
 
 export function prepareAttribute(element:Element,key:string,value:unknown):PreparedAttribute {
-  const qualified=ALIASES[key]??key;
+  const qualified=Object.hasOwn(ALIASES,key)?ALIASES[key]!:key;
   const namespace=qualified.startsWith('xlink:')?XLINK_NS:null;
   const local=namespace?qualified.slice(6):element.namespaceURI==='http://www.w3.org/1999/xhtml'?qualified.toLowerCase():qualified;
   const normalize=(next:unknown):string|null=>{
