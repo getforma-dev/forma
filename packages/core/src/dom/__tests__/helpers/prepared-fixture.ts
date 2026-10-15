@@ -18,17 +18,27 @@ export function prepareAndCommit(host: Element, build: () => unknown): PreparedA
   const plan = prepareAdoption(host, build); plans.add(plan); registerDisposer(() => plan.dispose());
   plan.commit(); return plan;
 }
+/** Execute the real planner, preserving all original nodes even on refusal. */
+export function refusalAttempt(host: Element, build: () => unknown): () => void {
+  return () => {
+    expect(host.ownerDocument.contains(host)).toBe(true);
+    const before = host.outerHTML, nodes: Node[] = [], walker = host.ownerDocument.createTreeWalker(host);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) nodes.push(node);
+    const observer = new MutationObserver(() => {});
+    observer.observe(host, { attributes: true, childList: true, characterData: true, subtree: true });
+    try {
+      const unexpected = prepareAdoption(host, build);
+      unexpected.dispose();
+    } finally {
+      try {
+        expect(host.outerHTML).toBe(before);
+        const after: Node[] = [], cursor = host.ownerDocument.createTreeWalker(host);
+        for (let node = cursor.nextNode(); node; node = cursor.nextNode()) after.push(node);
+        expect(after).toEqual(nodes); expect(observer.takeRecords()).toEqual([]);
+      } finally { observer.disconnect(); }
+    }
+  };
+}
 export function expectRefusal(host: Element, build: () => unknown, code: string): void {
-  expect(host.ownerDocument.contains(host)).toBe(true);
-  const before = host.outerHTML, nodes: Node[] = [], walker = host.ownerDocument.createTreeWalker(host);
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) nodes.push(node);
-  const observer = new MutationObserver(() => {});
-  observer.observe(host, { attributes: true, childList: true, characterData: true, subtree: true });
-  try {
-    expect(() => prepareAdoption(host, build)).toThrow(code);
-    expect(host.outerHTML).toBe(before);
-    const after: Node[] = [], cursor = host.ownerDocument.createTreeWalker(host);
-    for (let node = cursor.nextNode(); node; node = cursor.nextNode()) after.push(node);
-    expect(after).toEqual(nodes); expect(observer.takeRecords()).toEqual([]);
-  } finally { observer.disconnect(); }
+  expect(refusalAttempt(host, build)).toThrow(code);
 }

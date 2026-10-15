@@ -6,7 +6,7 @@ import { createShow } from '../show';
 import { withAdoptionDescription, type HydrationDescriptor, type ListDescriptor } from '../adoption-description';
 import { AdoptionDom } from '../adoption-plan';
 import { h } from '../element';
-import { connect, fixture, prepareAndCommit, expectRefusal } from './helpers/prepared-fixture';
+import { connect, fixture, prepareAndCommit, expectRefusal, refusalAttempt } from './helpers/prepared-fixture';
 
 describe('createList description contract', () => {
   it('describes the exact original readers/options without invoking a row', () => {
@@ -23,7 +23,7 @@ describe('createList description contract', () => {
   });
   it.each([[null,'STRUCTURE'], [undefined,'STRUCTURE'], ['hello','NODE'], [{type:'element',tag:'div',props:null,children:[]},'NODE'], [{type:'show',condition:()=>true,whenTrue:()=>null},'MARKER'], [{type:'other'},'STRUCTURE']] as const)('refuses a non-list value against an owned list range: %j', (value,code) => {
     const host=fixture('<ul><!--f:l0--><li>A</li><!--/f:l0--></ul>');
-    expectRefusal(host,()=>h('ul',null,value),'FORMA_E_HYDRATE_'+code);
+    expect(refusalAttempt(host,()=>h('ul',null,value))).toThrow('FORMA_E_HYDRATE_'+code);
   });
 });
 
@@ -37,7 +37,7 @@ describe('strict native list marker ranges', () => {
     expect(dom.rangeAt(root.childNodes[0]!)?.end).toBe(root.childNodes[2]);expect(dom.rangeAt(root.childNodes[3]!)?.end).toBe(root.childNodes[5]);dom.release();
   });
   it('refuses orphan list start markers without repairing the range',()=>{
-    const root=fixture('<ul><!--f:l0--><li>orphan</li></ul>');expectRefusal(root,()=>h('ul',null,createList(()=>[],()=>0,()=>h('li'))),'FORMA_E_HYDRATE_MARKER');
+    const root=fixture('<ul><!--f:l0--><li>orphan</li></ul>');expect(refusalAttempt(root,()=>h('ul',null,createList(()=>[],()=>0,()=>h('li'))))).toThrow('FORMA_E_HYDRATE_MARKER');
   });
   it('coexists with paired text and show markers',()=>{
     const root=fixture('<div><!--f:t0-->Hello<!--/f:t0--><!--f:s0--><span></span><!--/f:s0--><!--f:l0--><li></li><!--/f:l0--></div>'),dom=new AdoptionDom(root);dom.children();
@@ -213,7 +213,7 @@ describe('strict prepared list adoption', () => {
       };
 
       connect(ssrEl);
-      expectRefusal(ssrEl, () => desc, 'FORMA_E_HYDRATE_STRUCTURE');
+      expectRefusal(ssrEl, () => desc, 'FORMA_E_HYDRATE_LIST_COUNT');
       expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
       setItems([]); expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
 
@@ -616,7 +616,7 @@ describe('adopted list rows', () => {
         renderFn: (item: any) => h('li', { 'data-forma-key': item.id }, item.id),
       };
 
-      expectRefusal(ul, () => listParent(listDesc), 'FORMA_E_HYDRATE_STRUCTURE');
+      expectRefusal(ul, () => listParent(listDesc), 'FORMA_E_HYDRATE_LIST_COUNT');
       expect(Array.from(ul.querySelectorAll('li'))).toEqual(lis);
       setItems([]); expect(Array.from(ul.querySelectorAll('li'))).toEqual(lis);
 
