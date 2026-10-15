@@ -135,7 +135,7 @@ branch reads:
 The file under `dist/dev/` is built from the same sources with the same
 options as its production twin, except that `__DEV__` is `true`, so it keeps
 the warnings a production build drops: hydration mismatches, props the
-renderer drops, raw-HTML sinks, the `FORMA_W_DEPRECATED_` codes
+renderer drops, the `FORMA_W_DEPRECATED_` codes
 ([STABILITY.md](STABILITY.md#development-builds)). The type declarations are
 shared, so TypeScript sees one package either way.
 
