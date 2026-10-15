@@ -37,7 +37,7 @@ test('version preparation changes seven manifests, exact internal requirements a
   for (const name of ['core', 'compiler', 'build', 'create-app']) {
     const p = JSON.parse(files.get(`packages/${name}/package.json`));
     assert.equal(p.version, '3.0.0-alpha.1');
-    assert.equal(p.repository.url, 'https://github.com/getforma-dev/forma.git');
+    assert.equal(p.repository.url, 'git+https://github.com/getforma-dev/forma.git');
   }
   assert.match(files.get('Cargo.toml'), /version = "3.0.0-alpha.1"/);
   assert.match(files.get('crates/forma-ir-derive/Cargo.toml'), /version = "3.0.0-alpha.1"/);
