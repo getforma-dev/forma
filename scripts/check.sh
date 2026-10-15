@@ -58,7 +58,7 @@ npm run build
 step "npm test --workspaces"
 npm test --workspaces
 step "packed compiler API and actual optional-compiler compatibility"
-node --test scripts/compatibility-package.test.mjs
+node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core

@@ -48,10 +48,10 @@ declare global {
       contentEditable?: MaybeReactive<boolean | 'true' | 'false' | 'inherit'>;
 
       // Data attributes
-      [key: `data-${string}`]: MaybeReactive<string | number | boolean>;
+      [key: `data-${string}`]: MaybeReactive<string | number | boolean> | undefined;
 
       // ARIA attributes
-      [key: `aria-${string}`]: MaybeReactive<string | number | boolean>;
+      [key: `aria-${string}`]: MaybeReactive<string | number | boolean> | undefined;
 
       // Mouse events
       onClick?: (e: MouseEvent) => void;
