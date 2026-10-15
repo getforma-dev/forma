@@ -1,0 +1,120 @@
+[
+  {
+    "reference": "registry A2 npm",
+    "package": "getforma-build-0.3.1.tgz",
+    "reference_sha256": "39984db0146ebd067cd27d116968c7857a4d7a62c7d5818ea3a74cac24a9b16b",
+    "merged_sha256": "76fa70b7f2dfec437495a087a4ed9c224113b0fd5caa17666a6a901ba5c3fd66",
+    "archive_identical": false,
+    "reference_files": 6,
+    "merged_files": 6,
+    "changed_members": [
+      "package/dist/index.js"
+    ]
+  },
+  {
+    "reference": "registry A2 npm",
+    "package": "getforma-compiler-0.3.7.tgz",
+    "reference_sha256": "9880a97baad29d0951af1604b32643d76541831f9485f7c87c8c03c100d07134",
+    "merged_sha256": "9880a97baad29d0951af1604b32643d76541831f9485f7c87c8c03c100d07134",
+    "archive_identical": true,
+    "reference_files": 4,
+    "merged_files": 4,
+    "changed_members": []
+  },
+  {
+    "reference": "registry A2 npm",
+    "package": "getforma-core-2.1.0.tgz",
+    "reference_sha256": "696f04e2125c9ea91b669c6df34e5e1584667d8e3b0f6075a7090de84ce533c3",
+    "merged_sha256": "696f04e2125c9ea91b669c6df34e5e1584667d8e3b0f6075a7090de84ce533c3",
+    "archive_identical": true,
+    "reference_files": 123,
+    "merged_files": 123,
+    "changed_members": []
+  },
+  {
+    "reference": "registry A2 npm",
+    "package": "getforma-create-app-0.6.2.tgz",
+    "reference_sha256": "218fe298b4fa769d94274b29ca8b53f69f325b0e4540455bf27ec7c2d31dc774",
+    "merged_sha256": "bab62b9d6a0e9c6a4b8b113ce73582284b0dc20c33b8e54852d38eecd76f6e88",
+    "archive_identical": false,
+    "reference_files": 39,
+    "merged_files": 39,
+    "changed_members": [
+      "package/templates/dashboard/README.md"
+    ]
+  },
+  {
+    "reference": "frozen main npm",
+    "package": "getforma-build-0.3.1.tgz",
+    "reference_sha256": "76fa70b7f2dfec437495a087a4ed9c224113b0fd5caa17666a6a901ba5c3fd66",
+    "merged_sha256": "76fa70b7f2dfec437495a087a4ed9c224113b0fd5caa17666a6a901ba5c3fd66",
+    "archive_identical": true,
+    "reference_files": 6,
+    "merged_files": 6,
+    "changed_members": []
+  },
+  {
+    "reference": "frozen main npm",
+    "package": "getforma-compiler-0.3.7.tgz",
+    "reference_sha256": "9880a97baad29d0951af1604b32643d76541831f9485f7c87c8c03c100d07134",
+    "merged_sha256": "9880a97baad29d0951af1604b32643d76541831f9485f7c87c8c03c100d07134",
+    "archive_identical": true,
+    "reference_files": 4,
+    "merged_files": 4,
+    "changed_members": []
+  },
+  {
+    "reference": "registry A2 crates",
+    "package": "forma-ir-0.2.2.crate",
+    "reference_sha256": "50025373ef8b25641712b2d1515656117ea5920d5e8fe57d86a2e13bbb43d5ac",
+    "merged_sha256": "7398e6ed2e4ed042976afd830237d3e400f05ba2ecb55d523d92e9598db3a44b",
+    "archive_identical": false,
+    "reference_files": 47,
+    "merged_files": 47,
+    "changed_members": [
+      "forma-ir-0.2.2/.cargo_vcs_info.json",
+      "forma-ir-0.2.2/CHANGELOG.md",
+      "forma-ir-0.2.2/Cargo.lock",
+      "forma-ir-0.2.2/tests/list_scaling.rs"
+    ]
+  },
+  {
+    "reference": "registry A2 crates",
+    "package": "forma-server-0.2.2.crate",
+    "reference_sha256": "e34bf322d400bba901d2862bf03395226c3a4f131415d6e955362ce869f802ba",
+    "merged_sha256": "b78de5b12778fad75c68985dd9c72c82ace973a31fa4f87ac7b78582edf3057d",
+    "archive_identical": false,
+    "reference_files": 91,
+    "merged_files": 91,
+    "changed_members": [
+      "forma-server-0.2.2/.cargo_vcs_info.json",
+      "forma-server-0.2.2/CHANGELOG.md",
+      "forma-server-0.2.2/Cargo.lock"
+    ]
+  },
+  {
+    "reference": "frozen main crates",
+    "package": "forma-ir-0.2.2.crate",
+    "reference_sha256": "ca5cfff85ebc45659b191893e3f31e5c95e3d565e1de9564ebe8ec7106603c52",
+    "merged_sha256": "7398e6ed2e4ed042976afd830237d3e400f05ba2ecb55d523d92e9598db3a44b",
+    "archive_identical": false,
+    "reference_files": 47,
+    "merged_files": 47,
+    "changed_members": [
+      "forma-ir-0.2.2/.cargo_vcs_info.json"
+    ]
+  },
+  {
+    "reference": "frozen main crates",
+    "package": "forma-server-0.2.2.crate",
+    "reference_sha256": "75bb7fe9b8c38a9735890e4f11877a09e13be7abb3fa8c56d09216b5a0c326ea",
+    "merged_sha256": "b78de5b12778fad75c68985dd9c72c82ace973a31fa4f87ac7b78582edf3057d",
+    "archive_identical": false,
+    "reference_files": 91,
+    "merged_files": 91,
+    "changed_members": [
+      "forma-server-0.2.2/.cargo_vcs_info.json",
+      "forma-server-0.2.2/Cargo.lock"
+    ]
+  }
+]

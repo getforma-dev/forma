@@ -1,0 +1,24 @@
+# The Cargo workspace (crates/) and the e2e lanes' own workspace (e2e/).
+target/
+# Cargo.lock IS committed since the repository merge (FORMA-113): the root
+# workspace's and the e2e lanes'.
+
+# The npm workspace. packages/core and packages/create-app keep their own
+# .gitignore files from their repositories; these rules cover the root and the
+# compiler and build packages, which came from forma-tools' root.
+node_modules/
+dist/
+test-results/
+playwright-report/
+# `npm run emit:corpus` output. The committed copies of these .ir files live in
+# crates/forma-ir/tests/fixtures/js-emitter/, next to the goldens they are
+# checked against.
+packages/compiler/ir-corpus/
+
+# The SSR e2e lane's generated site (e2e/ssr/build.sh). e2e/ssr/node_modules is
+# covered by node_modules/ above.
+e2e/ssr/out/
+
+# The preview-frame e2e lane's output: the packed core, the builds, lane.json
+# (e2e/frame/build.sh). e2e/frame/app/node_modules is covered by node_modules/.
+e2e/frame/out/

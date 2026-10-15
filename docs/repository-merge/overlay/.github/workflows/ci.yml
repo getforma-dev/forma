@@ -1,0 +1,543 @@
+name: CI
+
+# One CI for the whole stack (FORMA-113; v2 R17, G6). The `check` job runs
+# scripts/check.sh, the one command that builds every package in both
+# languages and runs every test from a clean clone; the jobs beside it are the
+# builds that need another toolchain, target or operating system, and the
+# release-workflow lint. No job checks out another repository: the compiler,
+# the walker and the client runtime are all in this tree, so the FMIR contract
+# and the e2e lanes that used to clone forma and formajs build from the
+# workspace (A2 audit F5).
+on:
+  push:
+    branches: [main]
+    # Doc-only pushes to main do not need the runners. Deliberately NOT applied
+    # to `pull_request`: if any of these jobs is a required status check, a
+    # skipped workflow leaves the check permanently pending and the PR can
+    # never merge.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# One run per ref. A second push to the same branch cancels the first.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Incremental artifacts are pure overhead on an ephemeral runner and bloat
+  # the rust-cache payload.
+  CARGO_INCREMENTAL: 0
+  # crates.io and static.rust-lang.org both returned 5xx during the 2026-08-06
+  # Actions incident. Retrying is free; a failed run over a blip is not.
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+
+# Every job declares its token (FORMA-010): each one only reads this
+# repository. The cache and artifact steps authenticate with the runner's own
+# service token, which `permissions:` does not govern.
+jobs:
+  # R17's command. Everything scripts/check.sh lists, in one job, so its wall
+  # time is the number G6 bounds.
+  check:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # MEASURED locally at the rehearsal (FORMA-113; see the ticket's log for
+    # the number); the Rust half alone measured 2.1m in forma's CI with its
+    # cache, the e2e lanes 2m in forma-tools'. 25 bounds a cold cache on a slow
+    # runner; the two browser install steps are bounded on their own.
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          # The crates' workspace and the e2e lanes' own (e2e/Cargo.toml).
+          workspaces: |
+            .
+            e2e
+          key: check
+
+      # Chromium in two halves, its system packages from the runner's apt
+      # mirror and then the browser from Playwright's CDN, each restored from a
+      # cache when it can be and each bounded with one retry (FORMA-179): a
+      # slow apt mirror once held formajs's WebKit install past its job's
+      # timeout. Both caches are keyed on the resolved Playwright version,
+      # which decides the browser build and the package list; the packages'
+      # key also names the runner image, whose package versions they must
+      # match. The version is read from the lockfile, before `npm ci`.
+      - name: Resolve Playwright version and runner image
+        id: pw
+        run: |
+          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      # apt checks each restored archive against the signed package index
+      # before it installs it, and downloads again any that differs.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}-chromium
+      - name: Install chromium's system packages, retried once
+        # Normally seconds (formajs measured 22 MB in 2s); each attempt is cut
+        # at 4 minutes, with up to 60 s of waiting for the dpkg lock between
+        # them: about 9m40s at worst.
+        timeout-minutes: 11
+        env:
+          PLAYWRIGHT_VERSION: ${{ steps.pw.outputs.version }}
+        run: |
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
+          for attempt in 1 2; do
+            if timeout --kill-after=20s 4m npx --yes "playwright@$PLAYWRIGHT_VERSION" install-deps chromium; then
+              break
+            fi
+            if [ "$attempt" = 2 ]; then
+              echo "::error::installing chromium's system packages failed twice; see the apt output above"
+              exit 1
+            fi
+            echo "::warning::installing chromium's system packages failed or ran past 4 minutes; retrying once"
+            # `timeout` runs as the runner user and cannot signal the root
+            # `apt-get` that `sudo` started, so after a cut it may still hold
+            # the dpkg lock; then `dpkg --configure -a` fails on that lock,
+            # and under errexit the step ended here, so the retry never ran
+            # (A2 audit F17a, FORMA-180). Its failure is tolerated and the
+            # lock waited out, up to 60 seconds, before attempt 2.
+            sudo dpkg --configure -a || true
+            for waited in $(seq 1 60); do
+              if ! sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; then break; fi
+              if [ "$waited" = 60 ]; then echo "::warning::the dpkg lock is still held after 60s; attempt 2 runs anyway"; fi
+              sleep 1
+            done
+          done
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium
+      - name: Install chromium, retried once
+        # A no-op on a cache hit; each attempt is cut at 2 minutes.
+        timeout-minutes: 5
+        env:
+          PLAYWRIGHT_VERSION: ${{ steps.pw.outputs.version }}
+        run: |
+          for attempt in 1 2; do
+            if timeout --kill-after=20s 2m npx --yes "playwright@$PLAYWRIGHT_VERSION" install chromium; then
+              exit 0
+            fi
+            echo "::warning::installing chromium failed or ran past 2 minutes (attempt $attempt of 2)"
+          done
+          echo "::error::installing chromium failed twice; see the output above"
+          exit 1
+
+      - name: R17's command
+        run: npm run check
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            test-results/
+            packages/core/playwright-report/
+            packages/build/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # The npm packages on every Node line they support. The lowest entry here is
+  # what packages/core's `engines.node` may claim: a floor no job executes is an
+  # untested promise. Keep them in step.
+  # Verified by: src/__tests__/package-exports.test.ts > "the engines floor is a version CI actually runs"
+  node:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # MEASURED in the four repositories' CI: `npm ci` 30-60s, the builds and
+    # unit suites under a minute each. 15 bounds a slow runner.
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      # `npm ci` installs exactly what package-lock.json records and fails when
+      # it disagrees with package.json; `npm install` may resolve anew and
+      # rewrite it (FORMA-010, DR-32).
+      - run: npm ci
+      - run: npm run build
+      - run: npm test --workspaces
+      - run: npx tsc --noEmit -p packages/create-app
+      - run: node packages/build/scripts/test-raw-lint-bin.mjs
+
+  # The compiler and build package on Windows, as forma-tools ran them: this
+  # toolchain's first field-reported bug was Windows-only and structural (the
+  # tailwind step spawned `npx` with execFileSync and no shell, which
+  # CreateProcess cannot use to run the `npx.cmd` shim), and the primary
+  # consumer develops on Windows. Core and create-app never ran on Windows in
+  # their repositories; this job keeps the coverage that existed, not more.
+  windows-node:
+    permissions:
+      contents: read
+    runs-on: windows-latest
+    # MEASURED in forma-tools' CI: 2-3m for the install, ~45s for the two
+    # builds, 3s for the suites. 20 bounds the install on a slow runner.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w packages/compiler -w packages/build
+      - run: npm test -w packages/compiler -w packages/build
+      # SR8 through the package as an application installs it (FORMA-126),
+      # through npm's .cmd shim.
+      - run: node packages/build/scripts/test-raw-lint-bin.mjs
+
+  # The crates on Windows, as forma's CI ran them: ksx Studio, the first
+  # consumer planned for release, is a Windows app.
+  windows-rust:
+    permissions:
+      contents: read
+    runs-on: windows-latest
+    # MEASURED in forma's CI: 6.5m on windows (run #16). 20 is ~3x.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: windows
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - run: cargo test --workspace
+      - run: cargo doc --workspace --no-deps
+      - name: Verify WASM build
+        run: cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
+      - name: The wasm exports' deprecation reaches a caller
+        run: cargo test -p forma-ir --doc --features wasm
+
+  # Run the suite where `usize` is 32 bits, as it is on wasm32, the target
+  # forma-ir ships a build for. Offset arithmetic that cannot wrap on 64-bit
+  # can wrap there, and a debug build turns that into a panic, so building for
+  # wasm32 is not enough: the tests have to RUN at 32 bits.
+  test-32bit:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    needs: check
+    # MEASURED: 5.3m in forma's CI (run #16, healthy runner). 20 is ~4x.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          targets: i686-unknown-linux-gnu
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: i686
+      - name: Install 32-bit toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+      - run: cargo test --workspace --target i686-unknown-linux-gnu
+
+  # forma-server has code that exists only in release builds
+  # (`cfg(not(debug_assertions))`): the per-type file-name cache behind
+  # `serve_asset`. Every other job builds the dev profile, so none of them
+  # compiles that code, let alone runs it. 0.2.0 shipped a release-only defect
+  # there with all of them green. This job lints and runs forma-server's whole
+  # suite with the release profile the crate ships in.
+  test-release:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    needs: check
+    # MEASURED: 34s in forma's CI on a cold key. 20 leaves room for a slow runner.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: release
+      - run: cargo clippy -p forma-server --all-targets --all-features --release -- -D warnings
+      - run: cargo test -p forma-server --release
+
+  # The crates publish different `rust-version` values and each is load-bearing
+  # on crates.io/docs.rs, so each is built at exactly the declared version.
+  # Since the merge the workspace commits its Cargo.lock, made with Cargo's
+  # MSRV-aware resolver (`CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback`,
+  # which honours the lowest `rust-version` among the members, forma-ir's 1.71,
+  # for the whole graph), so each leg builds the committed lock with --locked:
+  # a lock the declared Rust cannot build fails here, not at a consumer.
+  msrv:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    needs: check
+    # MEASURED: 3.5m in forma's CI for `msrv (forma-server)` (run #16). 15 is ~4x.
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crate: forma-ir
+            rust: "1.71"
+          - crate: forma-ir-derive
+            rust: "1.71"
+          - crate: forma-server
+            rust: "1.85"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          # An MSRV toolchain produces incompatible artifacts; keying by crate
+          # AND version stops the legs evicting each other's cache.
+          key: msrv-${{ matrix.crate }}-${{ matrix.rust }}
+      - run: cargo check -p ${{ matrix.crate }} --all-targets --locked
+
+  # deny.toml ships in the repo; running it is what makes it a policy rather
+  # than a file. It checks the committed lock, the graph the crates ship with.
+  deny:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # The action fetches the RustSec advisory DB over the network; everything
+    # else is local. 10 is ~5x a typical 2m run.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2
+        with:
+          command: check
+
+  # `[patch.crates-io]` silently falls back to the PUBLISHED forma-ir if the
+  # local version stops satisfying forma-server's requirement, which would
+  # mean CI green-lights a workspace it never actually tested.
+  patch-is-live:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # `cargo tree` resolves the graph without building it. MEASURED: <5s warm
+    # locally; cold it is dominated by the registry index fetch.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: patch-is-live
+      - name: forma-server must resolve forma-ir from this workspace
+        run: |
+          cargo tree -p forma-server -i forma-ir | tee /tmp/tree.txt
+          grep -q "crates/forma-ir" /tmp/tree.txt \
+            || { echo "::error::forma-server is building against the PUBLISHED forma-ir, not this tree"; exit 1; }
+      # The patch above also masks a requirement looser than the tree's
+      # forma-ir (0.2.2 carried `"0.2.0"` until FORMA-138): the requirement,
+      # normal and dev, must equal forma-ir's version (A2 audit F8, FORMA-180);
+      # FORMA-112 replaces this with the one-version rule.
+      - name: forma-server's forma-ir requirement equals forma-ir's version
+        run: |
+          bash scripts/test-check-forma-ir-requirement.sh
+          bash scripts/check-forma-ir-requirement.sh
+
+  # SR43 (FORMA-134): release.yml keeps `id-token: write` on its publish job
+  # alone, with no cache and no dependency code beside it. actionlint checks
+  # every workflow's syntax and, with the runner's shellcheck, its scripts;
+  # check-release-workflow.rb checks SR43's shape and, with --self-test, that
+  # each of its rules catches a violation seeded into a copy of the workflow;
+  # test-release-artifacts.sh checks that a packed file altered between the
+  # pack and publish jobs fails the check the publish job runs first.
+  # The npm packages' release workflow and their copies of these scripts
+  # (packages/*/scripts/) are unified by FORMA-115a; until then the crates'
+  # release.yml is the only one here and the only one this job lints.
+  release-workflow:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # MEASURED locally: actionlint and shellcheck under 1s over these
+    # workflows, the lint and its self-test under 1s, the artefact tests about
+    # 1s; the actionlint download is 2.4 MB. 5 bounds a slow download.
+    timeout-minutes: 5
+    env:
+      ACTIONLINT_VERSION: 1.7.12
+      # SHA-256 of actionlint_1.7.12_linux_amd64.tar.gz, checked on 2026-10-14
+      # against the release's checksums file and GitHub's asset digest, with
+      # its build provenance verified (`gh attestation verify -R
+      # rhysd/actionlint`: signed by the release workflow at refs/tags/v1.7.12).
+      ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install actionlint, checked against its pinned SHA-256
+        run: |
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/actionlint.tar.gz" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+      - name: actionlint
+        run: |
+          shellcheck --version | head -2
+          "$RUNNER_TEMP/actionlint" -version
+          "$RUNNER_TEMP/actionlint"
+      - name: SR43 lint and its seeded violations
+        run: |
+          ruby --version
+          ruby scripts/check-release-workflow.rb --self-test
+      - name: A packed file altered between jobs fails the publish job's check
+        run: bash scripts/test-release-artifacts.sh
+      - name: After a publish, a different checksum fails and a late version warns
+        run: bash scripts/test-check-published-crate.sh
+
+  # create-app's scaffold gate, as its repository ran it: the templates are
+  # scaffolded for real, their dependencies installed FROM NPM, the frontend
+  # built and the Rust compiled, on Linux and Windows. It installs published
+  # packages, so it can only run when every @getforma pin in templates/
+  # resolves on npm; `preflight` decides, and skips it with a warning naming
+  # the pins rather than leaving it permanently red (a release in progress,
+  # packages first). It is also the one job here that runs past G6's ten
+  # minutes (12-15m on ubuntu, ~20m on windows, measured in create-forma-app's
+  # CI): it tests the registry's state, not this tree's, and FORMA-115a decides
+  # whether it stays per-merge or moves to the release path and a schedule.
+  preflight:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # Enumerating the pins takes milliseconds and each `npm view` is one
+    # registry round trip. 5 bounds an unresponsive registry.
+    timeout-minutes: 5
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+      missing: ${{ steps.check.outputs.missing }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Every @getforma pin in templates/ must resolve on npm
+        id: check
+        working-directory: packages/create-app
+        run: |
+          set -uo pipefail
+          PINS=$(node -e '
+            const fs = require("fs"), path = require("path");
+            const out = new Set();
+            (function walk(dir) {
+              for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) { if (e.name !== "node_modules") walk(p); }
+                else if (e.name === "package.json") {
+                  const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+                  for (const field of ["dependencies", "devDependencies"]) {
+                    for (const [name, range] of Object.entries(pkg[field] || {})) {
+                      if (name.startsWith("@getforma/")) out.add(name + "@" + range);
+                    }
+                  }
+                }
+              }
+            })("templates");
+            console.log([...out].sort().join("\n"));
+          ')
+          echo "Template pins on the @getforma scope:"
+          MISSING=""
+          for pin in $PINS; do
+            if RESOLVED=$(npm view "$pin" version 2>/dev/null) && [ -n "$RESOLVED" ]; then
+              echo "  OK          $pin -> $RESOLVED"
+            else
+              echo "  UNPUBLISHED $pin"
+              MISSING="${MISSING:+$MISSING }$pin"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "missing=$MISSING" >> "$GITHUB_OUTPUT"
+            echo "::warning title=scaffold gate skipped::These template pins are not on npm yet: $MISSING"
+            echo "::warning::The scaffold job installs the templates for real, so it CANNOT pass until"
+            echo "::warning::those versions publish. It is skipped rather than left permanently red."
+            echo "::warning::NOT VERIFIED in this run: templates install, the frontend builds, cargo compiles."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "missing=" >> "$GITHUB_OUTPUT"
+            echo "All template pins resolve; the scaffold gate will run."
+          fi
+
+  scaffold:
+    permissions:
+      contents: read
+    needs: [preflight, node]
+    if: needs.preflight.outputs.ready == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    # 2 templates x (npm install + frontend build + cargo build) x 2 operating
+    # systems; tests/helpers.ts puts `timeout: 900_000` on every spawnSync and
+    # bounds the server's startup polling. Typical 12-15m on ubuntu, ~20m on
+    # windows (create-forma-app's CI). 45 is ~3x the ubuntu number.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      # NOT Swatinem/rust-cache: the build that matters happens in a fresh temp
+      # directory, so its target/ is unreachable anyway; the win here is the
+      # shared crate registry, cached explicitly.
+      - name: Cache the cargo registry
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('packages/create-app/templates/**/Cargo.toml') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
+      - run: npm ci
+      # SR2 (FORMA-180, the A2 audit's F11): the install this job builds from
+      # carries the npm registry's signatures.
+      - run: npm audit signatures
+      - run: npm run build -w packages/create-app
+      - run: npx vitest run
+        working-directory: packages/create-app
+        env:
+          FORMA_SCAFFOLD_E2E: '1'
+          # Retry transient registry/index 5xx rather than failing a 15-minute
+          # job over a blip, the exact failure mode of the 2026-08-06 outage.
+          CARGO_NET_RETRY: '10'
+          CARGO_INCREMENTAL: '0'

@@ -1,0 +1,13 @@
+# The Rust halves of the two cross-package e2e lanes, one workspace with one
+# Cargo.lock (FORMA-113; before the repository merge each lane carried its own
+# lock, and the two disagreed on forma's crates). Both depend on this
+# repository's crates by path (../crates/...), so the lanes test the walker and
+# the server this tree ships, never a release snapshot.
+#
+# Not members of the root workspace on purpose: the frame server embeds what
+# e2e/frame/build.sh builds (`#[folder = "../out/dist-on/"]`), which does not
+# exist on a clean clone, so `cargo test --workspace` at the root must not try
+# to compile it. The root Cargo.toml excludes `e2e`.
+[workspace]
+members = ["ssr/render", "frame/server"]
+resolver = "2"
