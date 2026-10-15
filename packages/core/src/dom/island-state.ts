@@ -274,8 +274,8 @@ function originalClaim(host: HTMLElement, state: DocumentState): Claim {
 /** Recheck at the moment a deferred component would execute. Still no DOM write. */
 export function checkIslandClaim(value: ValidatedIsland): void {
   const document = validatedDocuments.get(value);
-  if (!document || value.host.ownerDocument !== document) {
-    refuse('FORMA_E_ISLAND_IDENTITY', 'island validation belongs to a different document');
+  if (!document || value.host.ownerDocument !== document || !document.contains(value.host)) {
+    refuse('FORMA_E_ISLAND_IDENTITY', 'island is outside its validated document');
   }
   const state = readDocument(document);
   const claim = originalClaim(value.host, state);
