@@ -256,6 +256,7 @@ pub fn walk_to_html_with_limits(
     let mut out = String::with_capacity(initial_capacity(len));
     let mut state = WalkState::new(limits);
     let mut slots_mut = slots.clone();
+    slots_mut.apply_module_constants(module);
     walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
     finish_page(&mut out, &state)?;
     Ok(out)
@@ -373,6 +374,7 @@ pub fn walk_to_html_counted(
         state.fault_armed = true;
     }
     let mut slots_mut = slots.clone();
+    slots_mut.apply_module_constants(module);
 
     // The closure only borrows: after an unwind, `state` and `out` still say
     // where the walk was and how much it had written. Nothing they hold is
@@ -541,6 +543,7 @@ pub(crate) fn walk_island_with_limits(
     // nested in the fragment keeps its props instead of losing them on return.
     state.force_inline_props = true;
     let mut slots_mut = slots.clone();
+    slots_mut.apply_module_constants(module);
 
     let component_name = module.strings.get(entry.name_str_idx)?.to_string();
     let inline_props = if entry.slot_ids.is_empty() {
@@ -1183,6 +1186,20 @@ fn walk_range_impl(
                 }
 
                 pos = body_end;
+            }
+
+            Opcode::Coalesce => {
+                let source = read_u16(ops, pos)?;
+                let fallback = read_u16(ops, pos + 2)?;
+                let destination = read_u16(ops, pos + 4)?;
+                pos += 6;
+                let chosen = if matches!(slots.get(source), SlotValue::Null) {
+                    slots.get(fallback)
+                } else {
+                    slots.get(source)
+                };
+                let previous = slots.replace(destination, chosen.clone());
+                state.journal_write(destination, previous);
             }
 
             Opcode::Prop => {
