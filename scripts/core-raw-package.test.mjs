@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT, json, save, run, stageNpmLock } from './release-set.mjs';
 
-test('packed core declarations accept only typed raw markup under a strict external JSX consumer', { timeout: 120_000 }, () => {
+test('packed core declarations enforce raw markup and callable island boundaries in a strict JSX consumer', { timeout: 120_000 }, () => {
   const root = mkdtempSync(join(tmpdir(), 'forma-raw-types-'));
   try {
     const pkg = json(join(ROOT, 'packages/core/package.json'));
@@ -20,7 +20,7 @@ test('packed core declarations accept only typed raw markup under a strict exter
     const app = join(root, 'consumer'); mkdirSync(app);
     save(join(app, 'package.json'), local.manifest); save(join(app, 'package-lock.json'), local.lock);
     run('npm', ['ci', '--offline', '--ignore-scripts', '--no-audit', '--no-fund'], app, { stdio: 'pipe' });
-    const imports = 'import { h, trustedHtml, setHTMLUnsafe, setAttr, template, templateMany } from "@getforma/core";\nimport { mountMarkup } from "@getforma/core/runtime";\nconst html = trustedHtml("<p>reviewed</p>"); const el = document.createElement("div");\n';
+    const imports = 'import { h, trustedHtml, setHTMLUnsafe, setAttr, template, templateMany, activateIslands, browserOnly, createSignal, type IslandHydrateFn } from "@getforma/core";\nimport { mountMarkup } from "@getforma/core/runtime";\nconst html = trustedHtml("<p>reviewed</p>"); const el = document.createElement("div");\n';
     writeFileSync(join(app, 'positive.tsx'), imports + [
       'h("div", { dangerouslySetInnerHTML: { __html: html } });',
       'h("div", { dangerouslySetInnerHTML: () => false });',
@@ -29,6 +29,12 @@ test('packed core declarations accept only typed raw markup under a strict exter
       'const frame = <iframe srcdoc={html} data-forma-island={undefined} />;',
       'const content = <div dangerouslySetInnerHTML={{ __html: html }} />;',
       'mountMarkup(el, html, { tier: "reviewed" });',
+      'function Counter(props: { initial: number }) { const [count] = createSignal(props.initial); return <span>{() => count()}</span>; }',
+      'const Chart = browserOnly((props: { title: string }) => <canvas aria-label={props.title} />);',
+      // Existing callable declarations remain assignable. Runtime preflight
+      // still requires compiler metadata; a type does not mint that brand.
+      'const inherited: IslandHydrateFn = (element, props) => { element.dataset.value = String(props?.value ?? ""); };',
+      'activateIslands({ Counter, Chart, inherited });',
     ].join('\n'));
     const negative = [
       'h("div", { dangerouslySetInnerHTML: { __html: "raw" } });',
@@ -44,7 +50,13 @@ test('packed core declarations accept only typed raw markup under a strict exter
     save(join(app, 'tsconfig.json'), { compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', jsx: 'react', jsxFactory: 'h', noEmit: true, strict: true, skipLibCheck: false, types: [] }, files: ['positive.tsx'] });
     const compile = () => run(process.execPath, [join(ROOT, 'node_modules/typescript/bin/tsc'), '-p', join(app, 'tsconfig.json')], app, { stdio: 'pipe', env: { ...process.env, NODE_PATH: '' } });
     assert.doesNotThrow(compile, 'the positive consumer must compile without library errors');
+    const noncallable = ['42', 'null', 'undefined', '"Counter"', '{ render: Counter }'];
+    writeFileSync(join(app, 'island-negative.tsx'), imports +
+      'function Counter(props: { initial: number }) { return h("span", null, props.initial); }\n' +
+      noncallable.map(value => '// @ts-expect-error a registry entry must be callable\nactivateIslands({ Bad: ' + value + ' });').join('\n'));
     const config = json(join(app, 'tsconfig.json')); config.files = ['negative.tsx']; save(join(app, 'tsconfig.json'), config);
     assert.doesNotThrow(compile, 'all nine plain-string calls must have their own type error');
+    config.files = ['island-negative.tsx']; save(join(app, 'tsconfig.json'), config);
+    assert.doesNotThrow(compile, 'all five noncallable entries must have their own type error');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

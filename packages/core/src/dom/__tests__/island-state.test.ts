@@ -108,6 +108,18 @@ describe('first-head document authority', () => {
 });
 
 describe('entry and original-host isolation', () => {
+  it('retains valid sibling state among many unclaimed malformed entries', () => {
+    const entries = Array.from({ length: 4096 }, () => null) as unknown[];
+    entries.push({ h: H, p: { value: 1001 } });
+    const doc = page({ v: 1, s: [], i: entries }, host(0) + host(4096));
+    const registry = { Test: registration(schema({ kind: 'number' })) };
+    for (let call = 0; call < 2; call++) {
+      const results = preflightIslands(registry, doc);
+      expect(code(results[0]!)).toBe('FORMA_E_ISLAND_STATE');
+      expect(valid(results[1]!).props.value).toBe(1001);
+    }
+    expect(doc.querySelectorAll('[data-forma-status="pending"]')).toHaveLength(2);
+  });
   it.each([null, [], {}, { h: H, p: {}, extra: 1 }, { h: H.toUpperCase(), p: {} }, { h: H, p: null }, { h: H, p: [] }])('isolates malformed entry %j from a valid sibling', bad => {
     const doc = page({ v: 1, s: [], i: [bad, { h: H, p: {} }] }, host(0) + host(1));
     const results = preflightIslands({ Test: registration() }, doc);
