@@ -78,6 +78,7 @@ interface FileHooks {
   tuples: Map<string, AdoptionSite>;
   reads: Map<string, AdoptionRead & {codec:AdoptionCodec | undefined}>;
   children: Map<string, AdoptionSources['children'][number]>;
+  conditionals: Map<string, AdoptionSources['conditionals'][number]>;
 }
 
 /** Union all split-build registrations before choosing one import per module.
@@ -92,7 +93,7 @@ export function collectAdoptionEdits(registries: IslandRegistry | readonly Islan
     for (const [file, source] of evidence.modules) {
       const prior = files.get(file);
       if (prior && prior.source !== source) throw new Error('adoption source snapshots disagree');
-      if (!prior) files.set(file,{source,tuples:new Map(),reads:new Map(),children:new Map()});
+      if (!prior) files.set(file,{source,tuples:new Map(),reads:new Map(),children:new Map(),conditionals:new Map()});
     }
     const tuples = new Map(evidence.tuples.map(tuple => [tuple.signal, tuple]));
     const codecs = new Map<number, AdoptionCodec | undefined>();
@@ -105,16 +106,17 @@ export function collectAdoptionEdits(registries: IslandRegistry | readonly Islan
       hooks.reads.set(key,{...read,codec:old && (old.codec !== proven || old.getter !== read.getter) ? undefined : proven});
     }
     for (const child of evidence.children) files.get(child.file)!.children.set(siteKey(child),child);
+    for (const conditional of evidence.conditionals) files.get(conditional.file)!.conditionals.set(siteKey(conditional),conditional);
   }
   const result = new Map<string,readonly SourceEdit[]>();
   for (const [file,hooks] of files) {
     const reads = [...hooks.reads.values()].filter(read => read.codec !== undefined);
-    if (!hooks.tuples.size && !reads.length && !hooks.children.size) continue;
-    const ast = parse(hooks.source,{sourceType:'module',plugins:['typescript','jsx']});
+    if (!hooks.tuples.size && !reads.length && !hooks.children.size && !hooks.conditionals.size) continue;
+    const ast = parse(hooks.source,{sourceType:'module',plugins:['typescript','jsx'],tokens:true});
     const names = new Set<string>();
     traverse(ast,{Identifier(path){names.add(path.node.name);},JSXIdentifier(path){names.add(path.node.name);}});
     const unique = (base:string):string => { let name=base;while(names.has(name))name+='_';names.add(name);return name; };
-    const tupleName=unique('__forma_adoptSignal'),readName=unique('__forma_adoptWritable'),childName=unique('__forma_adoptChild');
+    const tupleName=unique('__forma_adoptSignal'),readName=unique('__forma_adoptWritable'),childName=unique('__forma_adoptChild'),conditionalName=unique('__forma_adoptConditional');
     const imports:string[]=[];const edits:SourceEdit[]=[];
     const wrap=(site:AdoptionSite,before:string,after:string):void=>{
       edits.push({start:site.start,end:site.start,text:before},{start:site.end,end:site.end,text:after});
@@ -129,6 +131,21 @@ export function collectAdoptionEdits(registries: IslandRegistry | readonly Islan
         const callee=hooks.source.slice(child.calleeStart,child.calleeEnd)+(child.typeArguments??'');
         edits.push({start:child.start,end:child.argumentsStart,text:`${childName}(undefined, ${callee}, [`});
         edits.push({start:child.end-1,end:child.end,text:'])'});
+      }
+    }
+    if(hooks.conditionals.size){
+      imports.push(`__adoptionConditional as ${conditionalName}`);
+      const separator=(label:string,start:number,end:number):SourceEdit=>{
+        // Babel offsets and SourceEdit offsets are both original UTF-16 indices.
+        // A comment containing punctuation is never an operator token.
+        const matches=ast.tokens!.filter(token=>typeof token.type==='object' && token.type.label===label && token.start>=start && token.end<=end);
+        if(matches.length!==1)throw new Error('adoption conditional punctuation disagrees with original operands');
+        const token=matches[0]!;
+        return {start:token.start,end:token.end,text:'), () => ('};
+      };
+      for(const conditional of hooks.conditionals.values()){
+        wrap(conditional,`${conditionalName}(() => (`,'))');
+        edits.push(separator('?',conditional.test.end,conditional.consequent.start),separator(':',conditional.consequent.end,conditional.alternate.start));
       }
     }
     const importAt=ast.program.directives.at(-1)?.end ?? ast.program.interpreter?.end ?? 0;

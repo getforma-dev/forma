@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Conditional description seam — FORMA-104
+
+- Record source ranges only for existing admitted DOM conditional bindings and compose private descriptor hooks with tuple, writable-read and child edits. Original comments, parentheses and lexical thunks remain intact; scalar/value ternaries and canonical schema, binding and FMIR bytes are unchanged. Strict activation remains dependent work.
+
 ### Paired island compilation — FORMA-103
 
 - Generate browser registration metadata and FMIR from one captured source graph; compare resolved declarations and canonical contracts for distinct browser/SSR entries. Type-only dependencies join the same watcher.
