@@ -295,10 +295,10 @@ export class ComponentAnalyzer {
         if (args.length < 1 || !t.isObjectExpression(args[0])) return;
 
         for (const prop of (args[0] as T.ObjectExpression).properties) {
-          if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
-            islandNames.add(prop.key.name);
-          } else if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
-            islandNames.add((prop.value as T.Identifier).name);
+          // Native Page selection excludes the actual registered local binding,
+          // not its public registry key (which may use a different name).
+          if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
+            islandNames.add(prop.value.name);
           }
         }
       },
