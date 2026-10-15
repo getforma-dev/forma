@@ -905,3 +905,49 @@ contents, including an empty server-marked root. Use declared
 a separate caller-owned API; it does not regain compiled registration authority.
 This is a staged FORMA-105 boundary pending the compiler, FORMA-104 adoption and
 template successor integration.
+
+## Staged island adoption diagnostics (FORMA-104)
+
+This is the approved target contract for the pending FORMA-104 activation
+integration. Private preparation/lifecycle helpers already use several of these
+codes; the complete host event, diagnostic location and status behavior below is
+not a claim about the currently exported activation path. No new callable public
+API is introduced by this catalogue update. Ordinary CSR error handling remains
+unchanged.
+
+| Code | Boundary | Meaning and corrective action |
+| --- | --- | --- |
+| `FORMA_E_HYDRATE_NODE` | node matching; retained code | The expected node kind, tag or namespace does not match the served node. Keep the server and client component structure consistent; adoption does not replace the node. |
+| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_MARKER` | marker validation | A required marker is missing, malformed, duplicated, out of range or incorrectly nested. Preserve the compiler/native marker grammar and paired output. |
+| `FORMA_E_HYDRATE_STRUCTURE` | structural validation | A claimed node/range, topology or ownership relationship is invalid or changed during preparation, or the private walker cannot validate the context. Do not move or replace the prepared structure before commit. The [private raw noscript limitation](../packages/core/docs/ADOPTION-PREPARATION.md) also uses this code. |
+| `FORMA_E_HYDRATE_VALUE` | initial value/default validation | Initial text, attributes, branch/list values or normalized control defaults disagree with the served content/state, or a prepared observation was invalidated. Fix the initial server/client disagreement; do not rely on an early user edit to hide it. |
+| `FORMA_E_HYDRATE_INPUT_TARGET` | early edit transfer | An edited control has no authenticated component-local reversible binding, or its edited value cannot be converted by that binding's explicit codec. Use an eligible local binding; an untouched read-only binding is allowed. Static initialization preserves edits without seeding. |
+| `FORMA_E_HYDRATE_INPUT_CONFLICT` | early edit transfer | Multiple edited controls propose incompatible values for the same actual local signal. Resolve the conflicting edits before retrying; traversal order cannot choose a winner. |
+| `FORMA_E_HYDRATE_EFFECT` | live callback failure | An owned effect, live binding or event callback fails after commit. Correct the throwing application callback; its adopted owner is disposed, while unrelated owners remain live. |
+| `FORMA_E_HYDRATE_REF` | deferred ref failure | A deferred ref callback fails after commit. Correct the ref; its adopted owner is disposed. |
+| `FORMA_E_HYDRATE_COMPONENT` | component construction | Component construction throws before commit. Correct the component; prepared subscriptions/listeners are disposed and served content is retained. |
+
+The planned production and development notification is one bubbling
+`forma:error` event from the failed island host per owner, with frozen detail:
+
+```ts
+{ island: componentName, occurrence, binding: number | null, code, path? }
+```
+
+`binding` is a deterministic island-local adoption traversal index, not an FMIR
+slot, signal ordinal or identity input. It is `null` before a binding can be
+identified. `path`, when available, describes structural location such as a
+branch or list-row occurrence. The detail contains no props, request-state
+payload, input values or thrown error object. Existing `onError`/console
+reporting can be secondary; it does not replace this planned event.
+
+For a framework mismatch or component failure before commit, the planned
+failure path preserves the original nodes/content and performs only the
+required `data-forma-status="error"` write, once. It does not repair, mount a
+fallback, attach partial listeners or seed controls. The earlier FORMA-103
+state/schema/identity preflight remains a distinct zero-write refusal. After
+commit, a callback failure disposes its owner and reports once, retaining the
+DOM as last written; application writes that occurred before the throw are not
+claimed to be rolled back. Successful adoption records active ownership
+internally and does not require a success-status or SSR-marker cleanup write.
