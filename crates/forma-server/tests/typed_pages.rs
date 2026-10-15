@@ -227,13 +227,29 @@ fn every_request_checks_numeric_and_date_bounds_with_declared_paths() {
         ("RENDER-402", Some("rows[0].id"))
     );
     value.rows[0].id = 7.0;
-    value.at = UNIX_EPOCH - Duration::from_nanos(1);
+    value.at = UNIX_EPOCH
+        .checked_sub(Duration::from_millis(1))
+        .expect("the millisecond before the Unix epoch is representable");
     assert!(handle.render(&value, &RenderCtx::new()).is_ok());
-    value.at = UNIX_EPOCH + Duration::from_millis(8_640_000_000_000_001);
-    assert_eq!(
-        handle.render(&value, &RenderCtx::new()).unwrap_err().code(),
-        "RENDER-403"
-    );
+    // Windows SystemTime cannot represent the JS Date boundary. The private
+    // numeric conversion test in forma-ir checks both bounds on every platform;
+    // exercise the full typed-render error wherever SystemTime can reach it.
+    for negative in [false, true] {
+        let outside = Duration::from_millis(8_640_000_000_000_001);
+        let date = if negative {
+            UNIX_EPOCH.checked_sub(outside)
+        } else {
+            UNIX_EPOCH.checked_add(outside)
+        };
+        if let Some(date) = date {
+            value.at = date;
+            let error = handle.render(&value, &RenderCtx::new()).unwrap_err();
+            assert_eq!(
+                (error.code(), error.route(), error.property_path()),
+                ("RENDER-403", "/", Some("at"))
+            );
+        }
+    }
     value.mode = Mode::Offline;
 }
 
