@@ -123,7 +123,7 @@
     },
     {
       "original": "packages/core/src/__tests__/renderer-contract.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-independent-review",
       "original_named_cases": [
         "lists exactly the sinks this contract claims to cover",
         "every module that writes an attribute is represented in SINKS",
@@ -141,11 +141,11 @@
         "the vectors cover SVG, its HTML integration points, a name h() did not know, and MathML",
         "h(), building each child with its parent known, gives every element the namespace the parser gives it, with the same markup"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Removed retired applyDynamicProps/adoptNode row and non-writing hydrate.ts sink entry. All hostile/safe URL, handler/name, boolean and text vectors now run through actual prepareAdoption+commit and later signal update; existing direct helper-only prepared row is upgraded to the real pipeline. Retired arbitrary object-coercion positives are replaced with eight URL attribute STRUCTURE refusals before any toString call. Typed srcdoc, raw/CSS special sinks and honest writer inventory remain; no new NON_SINK exemption."
     },
     {
       "original": "packages/core/src/dom/__tests__/adopt-inner-html.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-independent-review",
       "original_named_cases": [
         "A \u2192 null \u2192 A shows A again, client-rendered and adopted",
         "A \u2192 false \u2192 A shows A again, client-rendered and adopted",
@@ -156,7 +156,7 @@
         "a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives",
         "adoption refuses strings and look-alikes before writing, then accepts a trusted recovery"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All31 expanded controls retained: historical empty static/reactive raw repair cases become two explicit VALUE refusals with original identity, zero initial/later writes; null/false recovery loops now start from matching original markup; success leaves SSR attribute; later untyped failure aborts adoption while ordinary CSR recovery remains positive. The once-per-registry raw-plus-children warning is preserved on a matching fixture and required production fix d3537cc; original migrated warning failure is retained."
     },
     {
       "original": "packages/core/src/dom/__tests__/form-control-adoption.test.ts",
@@ -518,7 +518,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/trusted-html.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-independent-review",
       "original_named_cases": [
         "trustedHtml() returns a TrustedHTML from the forma policy where the browser has Trusted Types",
         "without Trusted Types it returns a frozen stand-in that core recognises",
@@ -544,7 +544,7 @@
         "a refused policy name warns once in development, and the sinks then write strings the page refuses",
         "an element named trustedTypes is not Trusted Types"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All existing typed policy/sink vectors retained. Initial raw fixture now matches requested markup; later untyped raw/srcdoc aborts the adopted owner and keeps previous DOM; ordinary CSR still recovers with the same trusted markup. Trusted Types simulation and all violation assertions remain unchanged."
     }
   ]
 }
