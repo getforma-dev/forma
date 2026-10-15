@@ -1,8 +1,9 @@
-/** Private descriptor walker. Activation is switched only after its remaining
- * control-flow/control/raw-HTML checkpoints and compiled product review. */
+/** Private strict descriptor walker and owned postcommit updates. */
 import { AdoptionDom, AdoptionDomError, type AdoptionCursor } from './adoption-plan.js';
 import { AdoptionRow } from './adoption-row.js';
 import { liveList, listItems, type LiveListRow, type ListItems } from './adoption-live-list.js';
+import { liveRanges } from './adoption-live-ranges.js';
+import { materializeAdoption } from './adoption-materialize.js';
 import { withAdoptionDescription, type ComponentDescription } from './adoption-description.js';
 import { registerDisposer } from '../reactive/root.js';
 import { untrack } from '../reactive/untrack.js';
@@ -197,19 +198,20 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     };
     if(raw)fallback=scope.group(children);else children();
   }
-  function fresh(value:unknown):Node|null {
-    if(value==null||typeof value==='boolean')return null;
-    if(typeof value==='string'||typeof value==='number')return host.ownerDocument.createTextNode(String(value));
-    if(value instanceof Node)return value;
-    return refuse();
+  const materialization=liveRanges(scope,host.ownerDocument,element=>{
+    if(element.hasAttribute('data-forma-island'))deactivateIsland(element);deactivateAllIslands(element);
+  });
+  function fresh(value:unknown,ns:string|null):Node|null {
+    return materializeAdoption(value,ns,materialization);
   }
   type ConditionalSnapshot={parent:Node;nodes:Node[]};
   type ConditionalValue={kind:'conditional';branch:PreparedGroup<unknown>;before?:ConditionalSnapshot};
   function conditionalBranch(desc:ShowDescriptor,ns:string|null,initial:boolean,parent?:PreparedGroup<unknown>,snapshot?:()=>ConditionalSnapshot):ConditionalValue {
     const before=snapshot?.(),selected=desc.condition()?desc.whenTrue:desc.whenFalse;
-    const build=()=>withNamespace(ns,()=>withAdoptionDescription(
-      ()=>initial?selected?.():fresh(selected?.()),initial,
-    ));
+    const build=()=>{
+      const value=withNamespace(ns,()=>withAdoptionDescription(()=>selected?.()));
+      return initial?value:fresh(value,ns);
+    };
     const branch=parent?parent.trackedChild(build):scope.trackedGroup(build);
     return {kind:'conditional',branch,before};
   }
@@ -265,9 +267,10 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         let entering=cached.get(next);
         if(entering)cached.delete(next);
         else{
-          const branch=owner.child(()=>untrack(()=>withNamespace(ns,()=>withAdoptionDescription(
-            ()=>{const value=observed?.description()??desc;return fresh((next?value.whenTrue:value.whenFalse)?.());},false,
-          ))));
+          const branch=owner.child(()=>untrack(()=>{
+            const value=observed?.description()??desc;
+            return fresh(withNamespace(ns,()=>withAdoptionDescription(()=>(next?value.whenTrue:value.whenFalse)?.())),ns);
+          }));
           const fragment=host.ownerDocument.createDocumentFragment();
           if(branch.value)fragment.appendChild(branch.value);
           entering={fragment,owner:branch};
@@ -354,7 +357,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     });
     reconciler=liveList({range,owner,live:()=>scope.phase==='live',
       keys:value=>withAdoptionDescription(()=>keys(value),false),
-      render:(item,index)=>withNamespace(ns,()=>withAdoptionDescription(()=>fresh(desc.renderFn(item,index)),false)),
+      render:(item,index)=>fresh(withNamespace(ns,()=>withAdoptionDescription(()=>desc.renderFn(item,index))),ns),
       rerender:desc.options?.updateOnItemChange==='rerender',removeChildren:element=>{
         if(element.hasAttribute('data-forma-island'))deactivateIsland(element);deactivateAllIslands(element);
       }},{cache,ordered,tail,keyOwner});
