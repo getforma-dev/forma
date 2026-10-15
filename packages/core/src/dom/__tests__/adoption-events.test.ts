@@ -3,7 +3,7 @@ import { prepareAdoption } from '../adoption.js';
 import { h } from '../element.js';
 import { createShow } from '../show.js';
 import { createSignal } from '../../reactive/signal.js';
-import { createEffect } from '../../reactive/effect.js';
+import { createEffect, internalEffect } from '../../reactive/effect.js';
 import { createRoot, registerDisposer } from '../../reactive/root.js';
 function fixture(html='<button>run</button>'){const doc=document.implementation.createHTMLDocument();doc.body.innerHTML=html;return doc.body.firstElementChild as HTMLElement;}
 describe('prepared event listener boundaries',()=>{
@@ -32,4 +32,19 @@ describe('prepared event listener boundaries',()=>{
   const first=host.querySelector('button')!;first.click();expect(runs).toHaveBeenCalledOnce();setVisible(false);setValue(1);expect(runs).toHaveBeenCalledOnce();first.click();expect(runs).toHaveBeenCalledOnce();
   setVisible(true);const fresh=host.querySelector('button')!;fresh.click();expect(runs).toHaveBeenCalledTimes(2);plan.dispose();setValue(2);expect(runs).toHaveBeenCalledTimes(2);
  });
+ it('owns listeners created by deferred effects and refs on their later generations',()=>{
+  for(const fromRef of [false,true]){
+   const host=fixture(),[generation,setGeneration]=createSignal(0),[value,setValue]=createSignal(0),runs=vi.fn();let next!:HTMLButtonElement;
+   const start=()=>createEffect(()=>{generation();next=h('button',{onClick:()=>{createEffect(()=>{value();runs();});}},'child') as HTMLButtonElement;});
+   const plan=prepareAdoption(host,()=>{if(!fromRef)start();return h('button',fromRef?{ref:start}:null,'run');});plan.commit();
+   const old=next;old.click();expect(runs).toHaveBeenCalledOnce();setGeneration(1);setValue(1);expect(runs).toHaveBeenCalledOnce();old.click();expect(runs).toHaveBeenCalledOnce();
+   next.click();expect(runs).toHaveBeenCalledTimes(2);plan.dispose();setValue(2);expect(runs).toHaveBeenCalledTimes(2);
+  }
+ });
+ it('captures listener ownership for a later internal binding run without leaking it to ordinary CSR',()=>{
+  const host=fixture(),[generation,setGeneration]=createSignal(0),[value,setValue]=createSignal(0),runs=vi.fn(),outside=vi.fn();let next!:HTMLButtonElement;
+  const plan=prepareAdoption(host,()=>h('button',{onClick:()=>{internalEffect(()=>{generation();next=h('button',{onClick:()=>{createEffect(()=>{value();runs();});}},'child') as HTMLButtonElement;});}},'run'));plan.commit();host.click();setGeneration(1);next.click();expect(runs).toHaveBeenCalledOnce();
+  let stop:()=>void=()=>{};const ordinary=h('button',{onClick:()=>{stop=createEffect(()=>{value();outside();});}},'ordinary') as HTMLButtonElement;ordinary.click();plan.dispose();setValue(1);expect(runs).toHaveBeenCalledOnce();expect(outside).toHaveBeenCalledTimes(2);stop();
+ });
+
 });

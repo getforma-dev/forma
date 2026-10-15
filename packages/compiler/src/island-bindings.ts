@@ -25,13 +25,15 @@ export interface IslandBindingOptions {
 export interface LocalSignalIdentity { ordinal: number; getter: string; setter?: string; file: string; start: number; end: number }
 export interface CapturedSignalIdentity { ordinal: number; getter: string; file: string; start: number }
 export type AdoptionCodec = 'string' | 'number' | 'boolean' | 'string-array';
-export interface AdoptionSite { file: string; start: number; end: number }
+interface AdoptionRange { start: number; end: number }
+export interface AdoptionSite extends AdoptionRange { file: string }
 export interface AdoptionTuple extends AdoptionSite { signal: number; initial: BindingValue; annotation?: AdoptionCodec | null }
 export interface AdoptionRead extends AdoptionSite { signal: number; getter: string; shorthand?: string }
 export interface AdoptionChild extends AdoptionSite { calleeStart: number; calleeEnd: number; argumentsStart: number; typeArguments?: string }
+export interface AdoptionConditional extends AdoptionSite { test: AdoptionRange; consequent: AdoptionRange; alternate: AdoptionRange }
 /** Original-source evidence only. Never serialized into schema/binding bytes. */
 export interface AdoptionSources {
-  tuples: AdoptionTuple[]; reads: AdoptionRead[]; children: AdoptionChild[];
+  tuples: AdoptionTuple[]; reads: AdoptionRead[]; children: AdoptionChild[]; conditionals: AdoptionConditional[];
   rows: { id: number; source: BindingValue }[]; modules: Map<string, string>;
 }
 export interface IslandBindings { bindings: BindingRecord[]; locals: LocalSignalIdentity[]; captures: CapturedSignalIdentity[]; adoption?: AdoptionSources }
@@ -67,7 +69,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
   const modules = new Map<string, Module>(), moduleOf = new WeakMap<Binding, Module>();
   const captures: CapturedSignalIdentity[] = [], captureValues: unknown[] = [], captureIds = new Map<Binding, number>();
   const locals: LocalSignalIdentity[] = [];
-  const adoption: AdoptionSources = { tuples: [], reads: [], children: [], rows: [], modules: new Map() };
+  const adoption: AdoptionSources = { tuples: [], reads: [], children: [], conditionals: [], rows: [], modules: new Map() };
   let nextSignal = 0, nextRow = 0;
   const signalInitializers = new Map<number, BindingValue>();
   const activeFunctions = new Set<t.Node>(), activeValues = new Set<Binding>();
@@ -682,7 +684,14 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       else child(opening.name, callFields(t.objectExpression(fields), env), env, records);
       return;
     }
-    if (t.isConditionalExpression(node)) { records.push({ kind: 'show', value: expression(node.test, env), then: branch(node.consequent, env), else: branch(node.alternate, env) }); return; }
+    if (t.isConditionalExpression(node)) {
+      records.push({ kind: 'show', value: expression(node.test, env), then: branch(node.consequent, env), else: branch(node.alternate, env) });
+      // Only this admitted DOM path gains a descriptor. Scalar/value ternaries
+      // never enter here, and source coordinates are not canonical bytes.
+      const range = (operand: t.Node): AdoptionRange => ({start: operand.start!, end: operand.end!});
+      adoption.conditionals.push({file: env.module.file, ...range(node), test: range(node.test), consequent: range(node.consequent), alternate: range(node.alternate)});
+      return;
+    }
     if (t.isCallExpression(node)) {
       const core = coreName(node.callee, env.module);
       if (core === 'h') {

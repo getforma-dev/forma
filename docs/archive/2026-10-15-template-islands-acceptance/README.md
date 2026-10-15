@@ -1,0 +1,5 @@
+# Template islands acceptance migration
+
+These exact originals preserve the slice 1 qualification harness at the commit in `sources.json`. The active migration keeps all 17 heavy scaffold cases and their lock, startup, render-budget, policy, nonce, MSRV and name controls; it adds actual packed island adoption and static-route observations across three engines.
+
+The previous unknown `.map` fallback expectation becomes a mandatory BUILD-610 refusal with previous-output preservation. The original alternate-entry test is replaced by distinct entry files referencing the same canonical component declarations, while retaining native-versus-browser source discrimination. The handler now supplies 7 directly; invalid binding controls remain. Historical P17 `sourceTemplates: declared-v1` still executes its prior source and activation checks. The new `islands-v1` path requires exact source inventory, declared state, original node identity, zero adoption writes, working listeners, and no executable static-route requests. No successful qualification is implied by the source migration itself.

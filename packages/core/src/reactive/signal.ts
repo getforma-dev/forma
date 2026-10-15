@@ -11,6 +11,8 @@ import { signal as createRawSignal, setActiveSub, trigger } from 'alien-signals'
 import { __DEV__ } from './dev.js';
 import { recordAdoptionSignal } from './adoption-hooks.js';
 
+declare const __FORMA_FRAME_BUILD__: boolean | undefined;
+
 // Debug names live in a side table rather than on the getter's `.name`, so
 // alien-signals' isSignal() (which keys off the bound function name) still
 // recognizes named signals.
@@ -147,7 +149,12 @@ export function createSignal<T>(initialValue: T, options?: SignalOptions<T>): [g
   }
   const eq = options?.equals;
   const setter: SignalSetter<T> = (v: T | ((prev: T) => T)) => applySignalSet(s, v, eq);
-  if (!eq) recordAdoptionSignal(getter, setter);
+  // The frame uses signals without component adoption; ordinary builds and
+  // raw-source consumers retain actual getter/setter capture.
+  // Verified by: src/reactive/__tests__/frame-capture.test.ts > "omits capture only in the frame while retaining ordinary tuple and setter behavior"
+  if (!eq && !(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__)) {
+    recordAdoptionSignal(getter, setter);
+  }
 
   return [getter, setter];
 }

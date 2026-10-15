@@ -27,3 +27,15 @@ export function __adoptionChild<A extends unknown[], R>(
   if (!describingAdoption) return Reflect.apply(component, receiver, args) as R;
   return Object.freeze({ type: 'component', receiver, component, args: Object.freeze([...args]) }) as R;
 }
+
+/** @internal Original DOM ternaries keep their ordinary lazy evaluation outside
+ * description. The strict walker owns condition reads and branch preparation. */
+// Verified by: src/dom/__tests__/adoption-conditional.test.ts > "describes without executing any thunk or allocating DOM, then retains the original readers"
+export function __adoptionConditional<T, F>(
+  test: () => unknown,
+  consequent: () => T,
+  alternate: () => F,
+): T | F {
+  if (!describingAdoption) return test() ? consequent() : alternate();
+  return { type: 'show', condition: test, whenTrue: consequent, whenFalse: alternate } as T | F;
+}

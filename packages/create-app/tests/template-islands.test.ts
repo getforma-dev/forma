@@ -21,6 +21,7 @@ const runtime: Plugin = { name: 'template-runtime-observation', setup(b) {
     export const Fragment = 'fragment';
     export function mount(component) { globalThis.mounts++; globalThis.page = component(); }
     export function createSignal(value) { globalThis.seeds.push(value); return [() => value, next => value = next]; }
+    export function __adoptionSignal(_site, tuple) { return tuple; }
     export function activateIslands(registry) { globalThis.registry = registry; }
     export function __islandRegistration(component, metadata) { const call = props => component(props); call.metadata = metadata; return call; }
   ` }));

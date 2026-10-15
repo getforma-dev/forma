@@ -65,6 +65,7 @@ export class AdoptionDom {
   private readonly document: Document;
   private readonly nodes = new Map<Node, ObservedNode>();
   private readonly ancestry: Position[] = [];
+  private readonly templates = new Map<HTMLTemplateElement, DocumentFragment>();
   private readonly parsed = new Set<Node>();
   private readonly ranges = new Map<Comment, AdoptionRange>();
   private released = false;
@@ -77,11 +78,11 @@ export class AdoptionDom {
     }
     // Explicit stack: static element depth is not the FMIR control-flow depth.
     // There is no new blanket node/depth limit on otherwise admitted output.
-    const pending: Node[] = [host];
+    const pending: {node:Node;inert:boolean}[] = [{node:host,inert:false}];
     while (pending.length) {
-      const node = pending.pop()!;
+      const {node,inert} = pending.pop()!;
       const element = node.nodeType === 1 ? node as Element : null;
-      const opaque = node !== host && !!element?.hasAttribute('data-forma-island');
+      const opaque = !inert && node !== host && !!element?.hasAttribute('data-forma-island');
       this.nodes.set(node, {
         ...position(node), first: node.firstChild, last: node.lastChild,
         data: node.nodeType === 3 || node.nodeType === 8 ? (node as CharacterData).data : null,
@@ -90,18 +91,27 @@ export class AdoptionDom {
         })) : null,
         opaque,
       });
-      if (!opaque) for (let child = node.lastChild; child; child = child.previousSibling) pending.push(child);
+      if (!opaque) {
+        for (let child = node.lastChild; child; child = child.previousSibling) pending.push({node:child,inert});
+        // Template descendants are inert content, not connected child islands.
+        // Verified by: src/dom/__tests__/adoption-plan.test.ts > "refuses changed %s captured before component execution"
+        if(element?.namespaceURI===HTML_NS&&element.localName==='template'){
+          const template=element as HTMLTemplateElement,fragment=template.content;
+          this.templates.set(template,fragment);pending.push({node:fragment,inert:true});
+        }
+      }
     }
   }
 
   /** Commit/refusal ends the snapshot lifetime; live regions retain only their own nodes. */
   release(): void {
-    this.released = true; this.nodes.clear(); this.ancestry.length = 0; this.parsed.clear(); this.ranges.clear();
+    this.released = true; this.nodes.clear(); this.templates.clear(); this.ancestry.length = 0; this.parsed.clear(); this.ranges.clear();
   }
 
   assertUnchanged(): void {
     if (this.released || this.host.ownerDocument !== this.document || !this.document.contains(this.host)
       || this.ancestry.some(item => !samePosition(item))) refuse('FORMA_E_HYDRATE_STRUCTURE');
+    for(const [template,fragment] of this.templates)if(template.content!==fragment)refuse('FORMA_E_HYDRATE_STRUCTURE');
     for (const item of this.nodes.values()) {
       const node = item.node;
       if (!samePosition(item) || (!item.opaque && (node.firstChild !== item.first || node.lastChild !== item.last))) {

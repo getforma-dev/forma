@@ -1,0 +1,40 @@
+{
+  "commit": "959679792d1d5d2408b557a3a94d7af122afa3bb",
+  "files": [
+    {
+      "path": "scripts/verify-release-set.mjs",
+      "sha256": "f53571fbf51da476a499f377d5844e7bab71b7bf14fdef18b135b47fb5b580dd",
+      "bytes": 39774
+    },
+    {
+      "path": "scripts/candidate-scaffold.mjs",
+      "sha256": "a7c9f338538b65373ef1a2e20283ab3c00b0cb0378a2480f4b177f5a763fc9d4",
+      "bytes": 12573
+    },
+    {
+      "path": "scripts/release-contracts.json",
+      "sha256": "9595ce9cbe710131ab6b8b4c714002e638d2ad6dd5bb7ce2909bb9b8ee9ce874",
+      "bytes": 688
+    },
+    {
+      "path": "packages/create-app/tests/scaffold.test.ts",
+      "sha256": "8da8f44a78f4cb2e8f947344098f115dcf42ccf22d5f2a0ffb20bce355c87b11",
+      "bytes": 38130
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "5559cc732b418dab7781a87bce459b11a350b2c4324ebad990552d593156431e",
+      "bytes": 27587
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "sha256": "3a5a2572f1ea274ac618d47c6f1c00f77e14e26c04ca22c4ae035bae68beaa51",
+      "bytes": 9624
+    },
+    {
+      "path": "scripts/candidate-scaffold.test.mjs",
+      "sha256": "6291bd900b8b762318142334e222e7b1a9980c4669b8720bc9231cf78ff405c7",
+      "bytes": 2763
+    }
+  ]
+}

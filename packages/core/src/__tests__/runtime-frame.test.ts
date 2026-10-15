@@ -282,6 +282,9 @@ describe('the frame runtime build (the real tsup config)', () => {
     // It never mounts the page on load or watches body: no tierless path.
     expect(code).not.toContain('DOMContentLoaded');
     expect(code).not.toContain('MutationObserver');
+    // No component adoption runs in the frame, so its signals need no
+    // component-local getter/setter enrollment bridge.
+    expect(code).not.toContain('recordAdoptionSignal');
     // What it is: the frame's connection, mounting in tier (c).
     expect(code).toContain('connectFrame(window)');
     expect(code).toContain('"unreviewed"');
