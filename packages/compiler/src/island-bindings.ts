@@ -46,8 +46,9 @@ interface Environment {
   objects: Map<Binding, Map<string, DeferredValue>>;
   functions: Set<t.Node>;
   staticRows: Set<Binding>;
+  restrictedInputs: Set<Binding>;
 }
-type DeferredValue = BindingValue | { resolve:(readGetter:boolean)=>BindingValue; callable:()=>boolean; writable?:()=>WritableRead | undefined };
+type DeferredValue = BindingValue | { resolve:(readGetter:boolean)=>BindingValue; callable:()=>boolean; writable?:()=>WritableRead | undefined; restricted?:()=>boolean };
 interface WritableRead { signal: number; node: t.Node; getter: t.Identifier; module: Module; forwarded?: boolean; shorthand?: string }
 function resolved(value: DeferredValue,readGetter=true): BindingValue { return 'resolve' in value ? value.resolve(readGetter) : value; }
 interface Signal { binding: Binding; module: Module; declaration: t.VariableDeclarator; initial: t.Expression }
@@ -137,7 +138,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     return found.declarations.get(found.name)!;
   }
   function environment(mod: Module, parent?: Environment): Environment {
-    return { module: mod, values: new Map(parent?.values), objects: new Map(parent?.objects), functions: new Set(parent?.functions), staticRows: new Set(parent?.staticRows) };
+    return { module: mod, values: new Map(parent?.values), objects: new Map(parent?.objects), functions: new Set(parent?.functions), staticRows: new Set(parent?.staticRows), restrictedInputs: new Set(parent?.restrictedInputs) };
   }
   function binding(node: t.Node, env: Environment): Binding {
     const result = env.module.references.get(node);
@@ -320,7 +321,45 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     if (t.isTSArrayType(node) && t.isTSStringKeyword(node.elementType)) return 'string-array';
     return null;
   }
-  function tupleAnnotation(declaration: t.VariableDeclarator): AdoptionCodec | null | undefined {
+  /** Source types survive value canonicalization only through this separate
+   * proof. A closed value is not proof that its setter accepts every value of
+   * the same primitive type. Upstream annotations/casts remain conservative;
+   * an explicit broad createSignal<T> contract can grant authority directly. */
+  function restrictedInitializer(node: t.Node, env: Environment, seen = new Set<Binding>(), depth = 0): boolean {
+    if (depth > C.MAX_VALUE_DEPTH) return true;
+    const next = (value: t.Node) => restrictedInitializer(value, env, new Set(seen), depth + 1);
+    if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node) || t.isTSSatisfiesExpression(node)) return true;
+    if (t.isParenthesizedExpression(node)) return next(node.expression);
+    if (t.isIdentifier(node)) {
+      const local = binding(node, env), mod = moduleOf.get(local) ?? env.module;
+      if (seen.has(local) || env.restrictedInputs.has(local)) return true;
+      seen.add(local);
+      const declaration = local.path.node;
+      if (t.isVariableDeclarator(declaration) && t.isIdentifier(declaration.id)) {
+        if (declaration.id.typeAnnotation) return true;
+        if (declaration.init) return restrictedInitializer(declaration.init, environment(mod, env), seen, depth + 1);
+      }
+      // Another local signal retains its own tuple contract in codecOf().
+      if (directSignal(local, mod)) return false;
+      const known = env.values.get(local);
+      if (known) return 'resolve' in known ? known.restricted?.() ?? false : false;
+      const fields = env.objects.get(local);
+      if (fields) return [...fields.values()].some(value => 'resolve' in value && value.restricted?.());
+      return true;
+    }
+    if (t.isMemberExpression(node) || t.isOptionalMemberExpression(node)) return next(node.object);
+    if (isFunction(node)) {
+      const returned = returnExpressionOf(node);
+      return !!node.returnType || node.params.length !== 0 || !returned || next(returned);
+    }
+    if (t.isCallExpression(node)) return node.arguments.length !== 0 || next(node.callee);
+    if (t.isArrayExpression(node)) return node.elements.some(value => !value || t.isSpreadElement(value) || next(value));
+    if (t.isObjectExpression(node)) return node.properties.some(field => !t.isObjectProperty(field) || field.computed || next(field.value));
+    if (t.isLogicalExpression(node) || t.isBinaryExpression(node)) return next(node.left) || next(node.right);
+    if (t.isUnaryExpression(node)) return next(node.argument);
+    return !scalar(node) && !(t.isTemplateLiteral(node) && node.expressions.length === 0);
+  }
+  function tupleAnnotation(declaration: t.VariableDeclarator, env: Environment): AdoptionCodec | null | undefined {
     // Preserve narrow/optional/generic contracts. Unknown annotations do not
     // inherit authority merely because this particular initializer is scalar.
     if ('typeAnnotation' in declaration.id && declaration.id.typeAnnotation) return null;
@@ -334,7 +373,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     const initial = call.arguments[0];
     if (t.isTSAsExpression(initial) || t.isTSTypeAssertion(initial)) return annotationCodec(initial.typeAnnotation);
     if (t.isTSNonNullExpression(initial) || t.isTSSatisfiesExpression(initial)) return null;
-    return undefined;
+    return initial && restrictedInitializer(initial, env) ? null : undefined;
   }
   function expression(node: t.Node, env: Environment, depth = 0, readGetter = true): BindingValue {
     if (depth > C.MAX_VALUE_DEPTH) fail(env.module, node, 'binding expression depth exceeds 64');
@@ -402,14 +441,21 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     }
     fail(env.module, node, `unsupported native binding expression ${node.type}`);
   }
-  function bindParameter(param: t.Node | undefined, fields: Map<string, DeferredValue>, env: Environment): void {
+  function bindParameter(param: t.Node | undefined, fields: Map<string, DeferredValue>, env: Environment, schemaRoot = false): void {
     if (!param) return;
-    if (t.isIdentifier(param)) { env.objects.set(binding(param, env), fields); return; }
+    if (t.isIdentifier(param)) {
+      const local = binding(param, env);
+      env.objects.set(local, fields);
+      if (!schemaRoot && param.typeAnnotation) env.restrictedInputs.add(local);
+      return;
+    }
     if (t.isObjectPattern(param)) {
       for (const field of param.properties) {
         if (!t.isObjectProperty(field) || field.computed || !t.isIdentifier(field.value)) fail(env.module, field, 'component props need explicit parameter aliases');
         const value = fields.get(name(field.key)!); if (!value) fail(env.module, field, 'destructured field is absent from declared props');
-        env.values.set(binding(field.value, env), value);
+        const local = binding(field.value, env);
+        env.values.set(local, value);
+        if (!schemaRoot && param.typeAnnotation) env.restrictedInputs.add(local);
       }
       return;
     }
@@ -417,7 +463,15 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
   }
   function callFields(arg: t.Node | undefined, env: Environment): Map<string, DeferredValue> {
     if (!arg || t.isNullLiteral(arg)) return new Map();
-    if (t.isIdentifier(arg)) { const known = objectFields(arg, env); if (known) return new Map(known); }
+    if (t.isIdentifier(arg)) {
+      const known = objectFields(arg, env);
+      if (known) return new Map([...known].map(([key, value]) => [key, {
+        resolve: (readGetter: boolean) => resolved(value, readGetter),
+        callable: () => 'resolve' in value && value.callable(),
+        writable: () => 'resolve' in value ? value.writable?.() : undefined,
+        restricted: () => restrictedInitializer(arg, env),
+      }]));
+    }
     if (!t.isObjectExpression(arg)) fail(env.module, arg, 'component inputs need explicit declared fields');
     const fields = new Map<string, DeferredValue>();
     for (const field of arg.properties) {
@@ -426,7 +480,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       if (fields.has(key)) fail(env.module, field, `duplicate component input ${key}`);
       // Helper inputs are only semantic bindings when the helper reads them.
       // CHILD resolves these thunks in its canonical declared-field order.
-      fields.set(key, {resolve:readGetter=>expression(field.value,env,0,readGetter),callable:()=>callable(field.value,env),writable:()=>{ const proof=writable(field.value,env); return proof && {...proof,forwarded:true,shorthand:proof.shorthand ?? (proof.node===field.value && field.shorthand ? key : undefined)}; }});
+      fields.set(key, {resolve:readGetter=>expression(field.value,env,0,readGetter),restricted:()=>restrictedInitializer(field.value,env),callable:()=>callable(field.value,env),writable:()=>{ const proof=writable(field.value,env); return proof && {...proof,forwarded:true,shorthand:proof.shorthand ?? (proof.node===field.value && field.shorthand ? key : undefined)}; }});
     }
     return fields;
   }
@@ -447,7 +501,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
               const ordinal = nextSignal++, initial = expression(info.initial, env, 0, false);
               signalInitializers.set(ordinal, initial);
               const signalCall = unwrap(declaration.init!);
-              adoption.tuples.push({file:env.module.file,start:signalCall.start!,end:signalCall.end!,signal:ordinal,initial,annotation:tupleAnnotation(declaration)});
+              adoption.tuples.push({file:env.module.file,start:signalCall.start!,end:signalCall.end!,signal:ordinal,initial,annotation:tupleAnnotation(declaration,env)});
               records.push({ kind: 'signal', value: initial }); env.values.set(local, { kind: 'signal', id: ordinal, path: [] });
               const setter = declaration.id.elements[1];
               locals.push({ ordinal, getter: getter.name, setter: t.isIdentifier(setter) ? setter.name : undefined, file: env.module.file, start: declaration.start ?? 0, end: declaration.end ?? 0 });
@@ -593,6 +647,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       for (const row of rows) {
         const nested = environment(env.module, env), parameter = binding(callback.params[0], nested);
         nested.values.set(parameter, { kind: 'constant', value: row }); nested.staticRows.add(parameter);
+        if (callback.params[0].typeAnnotation) nested.restrictedInputs.add(parameter);
         functionBody(callback, nested, records);
       }
       return;
@@ -635,7 +690,9 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         const [source, key, map] = node.arguments;
         if (!source || !key || !isFunction(key) || !isFunction(map) || !t.isIdentifier(key.params[0]) || !t.isIdentifier(map.params[0])) fail(env.module, node, 'createList needs named key and row callbacks');
         const ordinal = nextRow++, nested = environment(env.module, env), keyEnv = environment(env.module, env);
-        nested.values.set(binding(map.params[0], nested), { kind: 'row', id: ordinal, path: [] });
+        const rowBinding = binding(map.params[0], nested);
+        nested.values.set(rowBinding, { kind: 'row', id: ordinal, path: [] });
+        if (map.params[0].typeAnnotation) nested.restrictedInputs.add(rowBinding);
         keyEnv.values.set(binding(key.params[0], keyEnv), { kind: 'row', id: ordinal, path: [] });
         const keyReturn = returnExpressionOf(key); if (!keyReturn) fail(env.module, key, 'list key has no return');
         const keyPath = expression(keyReturn, keyEnv); if (keyPath.kind !== 'row' || keyPath.id !== ordinal) fail(env.module, key, 'list key must be a literal row path');
@@ -668,7 +725,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     root = fromLookup(found);
   }
   const env = environment(root.module), records: BindingRecord[] = [];
-  bindParameter(root.fn.params[0], new Map(options.props.map(name => [name, { kind: 'prop', path: [name] } as BindingValue])), env);
+  bindParameter(root.fn.params[0], new Map(options.props.map(name => [name, { kind: 'prop', path: [name] } as BindingValue])), env, true);
   functionBody(root.fn, env, records);
   const bindings: BindingRecord[] = [...captureValues.map(value => ({ kind: 'capture' as const, value })), ...records];
   encodeBindings('ssr', bindings);
