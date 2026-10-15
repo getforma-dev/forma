@@ -1,6 +1,6 @@
 /** Private, unprivileged ownership kernel shared by direct and compiled adoption. */
 import { effect as rawEffect, getActiveSub } from 'alien-signals';
-import { withAdoptionSink, type AdoptionSink, type DeferredEffect } from './adoption-hooks.js';
+import { withAdoptionSink, type AdoptionSink, type DeferredEffect, type AdoptionCodec } from './adoption-hooks.js';
 import { openBatch, closeBatchWithoutRoot } from './batch.js';
 import { createUnownedRoot, registerDisposer } from './root.js';
 import { reportError } from './dev.js';
@@ -162,6 +162,9 @@ export class AdoptionLifecycle implements AdoptionSink {
     if (this.state === 'aborted' || !owner.alive) throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
     return initial;
   }
+
+  /** Read-only codec lookup; direct adoption never grants writeback authority. */
+  inputCodec(_read:()=>unknown):AdoptionCodec|undefined { return undefined; }
 
   /** Unprivileged direct adoption can observe, but can never seed an early edit. */
   queueEdit(_read: () => unknown, _value: unknown): void {

@@ -30,6 +30,22 @@ describe('read-only structural cursor', () => {
     observer.disconnect();
   });
 
+  it('captures exact multiple-node, shared-text and zero-width row spans without splitting',async()=>{
+    const {host}=fixture('<!--f:l0-->pre<b>a</b>postpre<b>b</b>post<!--/f:l0-->');
+    const original=[...host.childNodes],records:MutationRecord[]=[],observer=new MutationObserver(batch=>records.push(...batch));
+    observer.observe(host,{subtree:true,attributes:true,childList:true,characterData:true});
+    const dom=new AdoptionDom(host),root=dom.children(),rows=dom.within(root.range('l'));
+    const a=rows.capture(()=>{rows.text('pre');const b=rows.element('b');dom.children(b).text('a');rows.text('post');});
+    const empty=rows.capture(()=>{});
+    const b=rows.capture(()=>{rows.text('pre');const b=rows.element('b');dom.children(b).text('b');rows.text('post');});
+    rows.finish();root.finish();dom.assertUnchanged();await new Promise(resolve=>setTimeout(resolve,0));
+    expect(empty.pieces).toEqual([]);expect(a.pieces.map(piece=>piece.node)).toEqual(original.slice(1,4));
+    expect(b.pieces.map(piece=>piece.node)).toEqual(original.slice(3,6));
+    expect(a.pieces[2]).toEqual({node:original[3],from:0,to:4,text:'postpre'});
+    expect(b.pieces[0]).toEqual({node:original[3],from:4,to:7,text:'postpre'});
+    expect([...host.childNodes]).toEqual(original);expect(records.concat(observer.takeRecords())).toEqual([]);observer.disconnect();
+  });
+
   it('does not skip authored whitespace or silently accept surplus nodes', () => {
     const { host } = fixture(' <b>bold</b> ');
     const dom = new AdoptionDom(host), cursor = dom.children();

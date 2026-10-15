@@ -67,6 +67,11 @@ export class AdoptionScope extends AdoptionLifecycle {
     return wrapper;
   }
 
+  override inputCodec(read:()=>unknown):AdoptionCodec|undefined {
+    const binding=this.bindings.get(read);
+    return this.state==='preparing'&&binding?.group.alive&&binding.local.group.alive?binding.codec:undefined;
+  }
+
   /** Called only after the DOM planner detects a real normalized early edit. */
   override queueEdit(read: () => unknown, value: unknown): void {
     this.require('preparing');
