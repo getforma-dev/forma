@@ -1,0 +1,1 @@
+import {h,createSignal,createList,browserOnly} from "@getforma/core";export function Badge(p:{rows?:string[]}){const [rows]=createSignal(p.rows??["fallback"]);return h("section",null,createList(rows,r=>r,r=>h("b",null,r)));}

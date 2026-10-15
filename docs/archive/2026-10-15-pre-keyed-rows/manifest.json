@@ -1,0 +1,114 @@
+{
+  "sourceCommit": "bb6435f4e8ab867cf187a93cc746e0aa1a689313",
+  "role": "Pre-FORMA-181 checkpoint A originals: the complete native island-emitter fixture directory, the js-emitter list-same-source outputs and the inline test sources that FORMA-181 migrates or now refuses. Byte-exact; never regenerated to make a new implementation pass.",
+  "sha256": {
+    "island-emitter/README.md": {
+      "bytes": 1707,
+      "sha256": "175296eb9cc26c20cd0890a9d357e9235293aaeb07d2e9fb5f74f79eeb1fab58"
+    },
+    "island-emitter/aggregate-fallback.ir": {
+      "bytes": 471,
+      "sha256": "c8d50a5c08b05a33579931613da42d05e183f2b5ef8185e58ad5384869dc1ce5"
+    },
+    "island-emitter/aggregate.ir": {
+      "bytes": 444,
+      "sha256": "df5353a99d14bf7ef12935c42f17b0ad3fd470aae9543d44358a4253e4cdbb84"
+    },
+    "island-emitter/browser.ir": {
+      "bytes": 297,
+      "sha256": "c1b57e4939c57e22bba167e7903c543b17cd9f97416158e4df3e475175b41447"
+    },
+    "island-emitter/closed-nullish.ir": {
+      "bytes": 1357,
+      "sha256": "5d9bcbc21cca8be64fd35379e2508d023c256dac443d5e8b96198003ffb83a69"
+    },
+    "island-emitter/local-aggregates.ir": {
+      "bytes": 1384,
+      "sha256": "4ffd7ab6bbde9bb991266bc73656a716c5606220f654d7aefdbbc578640f5502"
+    },
+    "island-emitter/local-inputs.ir": {
+      "bytes": 475,
+      "sha256": "fecd5ccd1d9514637c2c3ab5503482a7788fabe4cc8f6924f0b14d38cfb15d85"
+    },
+    "island-emitter/manifest.json": {
+      "bytes": 1702,
+      "sha256": "0b2e8f25e1c5971fbce3250b08bcdf995fecbfd0b7cba179c330e2f2be77f597"
+    },
+    "island-emitter/nested-closed-nullish.ir": {
+      "bytes": 877,
+      "sha256": "4462dc102fb5d5befefc8d76d34ee97650354f0610b3a8bfd54e981eab779bd0"
+    },
+    "island-emitter/nullish.ir": {
+      "bytes": 734,
+      "sha256": "a54af73a0bd883c387f6d322e8ab4830cdbf90155a45b29b4ce5429db4387898"
+    },
+    "island-emitter/optional-root.ir": {
+      "bytes": 396,
+      "sha256": "5c48e61516540312bc3c7a135576029cd56c9c12a662e0079bf5c02fb1ddfd39"
+    },
+    "island-emitter/repeated.ir": {
+      "bytes": 412,
+      "sha256": "2093d47caf249d9c65d069917a60668c6eafb2dafc4971e971faba0a7fd8095b"
+    },
+    "island-emitter/roundtrip.ir": {
+      "bytes": 803,
+      "sha256": "71614946e59f9accbd25d9dae36549939fbd9500155eac25d59b1b6eb9838d07"
+    },
+    "island-emitter/roundtrip.registration.json": {
+      "bytes": 1150,
+      "sha256": "53ae64b671e5b57805a64acfe2aa9c44540bb47a5a43a9564b238a3fd47f47b6"
+    },
+    "island-emitter/rows.ir": {
+      "bytes": 478,
+      "sha256": "9dfc5904e67de0455c9a784215656fb2873272d0eeef6d8429a5fe97b114f67a"
+    },
+    "js-emitter/list-same-source.dump": {
+      "bytes": 1266,
+      "sha256": "1fa2d95c093537a9ac5bf36184f438659c12fb70e3001f8cc34bdca9883b8ee1"
+    },
+    "js-emitter/list-same-source.html": {
+      "bytes": 1931,
+      "sha256": "d557fcdb4472a590e718c7bcb613d0dc5ba122cf4aaddfeffcb177967206b5b7"
+    },
+    "js-emitter/list-same-source.ir": {
+      "bytes": 551,
+      "sha256": "7f986f793563480adb51bcf74d1d3652999b30598ac22efd2e1c3dce9f039dc3"
+    },
+    "js-emitter/list-same-source.state.json": {
+      "bytes": 242,
+      "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+    },
+    "sources/adoption-conditional-direct-row-conditional.tsx": {
+      "bytes": 293,
+      "sha256": "ce44a8358e63f828d0273d6a701b3f8455786ae4004e77c29c4457e2823e27ff"
+    },
+    "sources/adoption-conditional-row-root-conditional.tsx": {
+      "bytes": 431,
+      "sha256": "02a1595e8b145836e9debec9572576866f9d686923800603edf7fe233cb0acb5"
+    },
+    "sources/island-emission-aggregate-fallback.island.ts": {
+      "bytes": 225,
+      "sha256": "c11b44970b67871cb8a6310a747d3f58dd2bcd8a2ce7b98070e71ca176984406"
+    },
+    "sources/island-emission-aggregate-fallback.page.ts": {
+      "bytes": 186,
+      "sha256": "384070e4fd476e659f5f950cf1f045c3950eb23fce7951ae70635e58bf0ff05c"
+    },
+    "sources/island-emission-local-aggregates.island.ts": {
+      "bytes": 635,
+      "sha256": "7f7187a2944ba160bc67a54f9810c98ae03b5285f11b76aad29d51bcfdf455cd"
+    },
+    "sources/island-emission-local-aggregates.page.ts": {
+      "bytes": 157,
+      "sha256": "1ef6bee028cf27572d459e1b8284b3449999fed6fbc08d3d45c970213d8dc8e8"
+    },
+    "sources/island-emission.app.ts": {
+      "bytes": 163,
+      "sha256": "d002f7f58ca5df82ab02a396d23e4e36417379527a9841624ca7cfbb684f03cd"
+    },
+    "sources/props-bindings-scalar-key.ts": {
+      "bytes": 178,
+      "sha256": "2145607a6aa57336b70f5f8dc1d7cf237f7592d2e63af303518121360b03c504"
+    }
+  }
+}
