@@ -90,7 +90,9 @@ fn derive_refuses_unsupported_shapes_at_the_offending_declaration() {
                 .iter()
                 .any(|s| s["is_primary"] == true
                     && s["line_start"] == line
-                    && s["file_name"] == "src/lib.rs")),
+                    && s["file_name"].as_str().is_some_and(|file| {
+                        std::path::Path::new(file) == std::path::Path::new("src").join("lib.rs")
+                    }))),
             "diagnostic must point at line {line}, not the derive invocation: {text}"
         );
     }
