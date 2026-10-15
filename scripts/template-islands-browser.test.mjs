@@ -9,7 +9,7 @@ const state = value => `<script type="application/json" data-island-state>${JSON
 const host = '<section data-forma-island="0" data-forma-component="Counter" data-forma-state="0" data-forma-h="0123456789abcdef"><p class="count">Count: <span>7</span></p><button>Increment</button><button>Reset</button></section>';
 const listeners = `let value=7; const span=document.querySelector('.count span'), buttons=document.querySelectorAll('button'); buttons[0].addEventListener('click',()=>{span.textContent=String(++value)}); buttons[1].addEventListener('click',()=>{value=0;span.textContent='0'});`;
 const manifest = { routes: { '/': {mode:'ssr',js:['entry.js'],css:['style.css'],ir:'home.ir'}, '/about': {mode:'ssr',js:[],css:['style.css'],ir:'about.ir'} } };
-async function fixture({script=listeners, staticScript=false}, visit) {
+async function fixture({script=listeners, staticScript=false, earlyScript=''}, visit) {
   const server=createServer((request,response)=>{
     const headers={'cache-control':'no-store','content-security-policy':csp};
     if(request.url==='/favicon.ico'){response.writeHead(204);response.end();return;}
@@ -17,7 +17,7 @@ async function fixture({script=listeners, staticScript=false}, visit) {
     if(request.url==='/_assets/style.css'){response.writeHead(200,{'content-type':'text/css',...headers});response.end('main{color:rgb(1,2,3)}');return;}
     const about=request.url==='/about';
     response.writeHead(200,{'content-type':'text/html',...headers});
-    response.end(`<!doctype html><html><head><link rel="stylesheet" href="/_assets/style.css">${state(about?[]:[{h:'0123456789abcdef',p:{count:7}}])}</head><body><main><h1>${about?'About this app':'Home'}</h1>${about?'<p>Static body</p>':host}</main>${!about||staticScript?'<script type="module" nonce="template-test" src="/_assets/entry.js"></script>':''}</body></html>`);
+    response.end(`<!doctype html><html><head><link rel="stylesheet" href="/_assets/style.css">${state(about?[]:[{h:'0123456789abcdef',p:{count:7}}])}</head><body><main><h1>${about?'About this app':'Home'}</h1>${about?'<p>Static body</p>':host}</main>${earlyScript?`<script nonce="template-test">${earlyScript}</script>`:''}${!about||staticScript?'<script type="module" nonce="template-test" src="/_assets/entry.js"></script>':''}</body></html>`);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const browser=await chromium.launch({headless:true});
@@ -57,4 +57,15 @@ test('static template observation rejects a script even if it performs no writes
 test('static template observation refuses contradictory accepted route metadata',async()=>{
   await assert.rejects(verifyStaticTemplate(undefined,'http://localhost',{routes:{'/about':{...manifest.routes['/about'],js:['entry.js']}}}));
   await assert.rejects(verifyStaticTemplate(undefined,'http://localhost',{routes:{'/about':{...manifest.routes['/about'],modulepreload:['entry.js']}}}));
+});
+
+test('template observation refuses an inline rewrite that precedes the held module',async()=>{
+  await fixture({earlyScript:"document.querySelector('.count span').textContent='7';"},async(browser,origin)=>{
+    await assert.rejects(verifyMinimalIsland(browser,origin,manifest),/executable inventory/);
+  });
+});
+test('template observation retains parser-time inventory when an early inline script removes itself',async()=>{
+  await fixture({earlyScript:"document.querySelector('.count span').textContent='7';document.currentScript.remove();"},async(browser,origin)=>{
+    await assert.rejects(verifyMinimalIsland(browser,origin,manifest),/executable inventory/);
+  });
 });

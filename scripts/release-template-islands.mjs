@@ -22,6 +22,19 @@ async function observe(context, timeout = 15_000) {
   context.on('serviceworker', worker => workers.push(worker.url()));
   await page.addInitScript(() => {
     globalThis.__formaTemplateViolations = [];
+    // Keep parser-time executable inventory too: an inline script must not hide
+    // an early write by removing itself before the held entry is released.
+    const seen = new Set();
+    const record = node => {
+      if (node.nodeType !== 1) return;
+      if (node.matches('script')) seen.add(node);
+      for (const script of node.querySelectorAll('script')) seen.add(script);
+    };
+    const inventory = new MutationObserver(records => {
+      for (const change of records) for (const node of change.addedNodes) record(node);
+    });
+    inventory.observe(document, {subtree:true,childList:true});
+    globalThis.__formaTemplateScriptInventory = {seen,inventory,record};
     document.addEventListener('securitypolicyviolation', event => {
       globalThis.__formaTemplateViolations.push({ directive: event.effectiveDirective, disposition: event.disposition, uri: event.blockedURI });
     });
@@ -56,7 +69,18 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
     // the intercepted module is still unable to execute (DOMContentLoaded waits).
     await page.waitForFunction(() => document.readyState !== 'loading');
     assert(requested, 'actual minimal module was not requested before observation');
-    const before = await page.evaluate(count => {
+    assert.deepEqual(observed.requests.filter(request => request.type === 'script').map(request => request.url), [entry], 'an additional executable script was requested before observation');
+    const before = await page.evaluate(({count, entryURL}) => {
+      const inventory = globalThis.__formaTemplateScriptInventory;
+      for (const change of inventory.inventory.takeRecords()) for (const node of change.addedNodes) inventory.record(node);
+      inventory.inventory.disconnect();
+      const executable = script => script.type !== 'application/json';
+      const current = [...document.querySelectorAll('script')].filter(executable);
+      const observed = [...inventory.seen].filter(executable);
+      if (current.length !== 1 || observed.length !== 1 || current[0] !== observed[0]
+        || current[0].type !== 'module' || current[0].src !== entryURL || current[0].textContent.trim()) {
+        throw new Error('executable inventory is not exactly the held manifest module');
+      }
       const host = document.querySelector('[data-forma-island][data-forma-component="Counter"]');
       const blocks = document.querySelectorAll('script[data-island-state]');
       if (!host || blocks.length !== 1) throw new Error('missing original Counter host/state');
@@ -74,7 +98,7 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
       observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true });
       globalThis.__formaTemplateAdoption = { nodes, host, observer, records };
       return { count: entry.p.count, hash: entry.h, nodes: nodes.length };
-    }, expectedCount);
+    }, {count:expectedCount, entryURL:entry});
     release();
     await settle(page);
     const adoption = await page.evaluate(() => {
