@@ -201,6 +201,10 @@ export class AdoptionCursor {
     return !!node && (node.nodeType === 1 && (node as Element).hasAttribute('data-forma-island') || this.dom.rangeAt(node)?.kind === 'i');
   }
 
+  rangeKind():MarkerKind|undefined { const node=this.current();return node?this.dom.rangeAt(node)?.kind:undefined; }
+
+  get atEnd():boolean { return this.next===this.end&&this.offset===0; }
+
   /** Retain exactly what this operation consumed, including authored comments
    * skipped while walking and partial/static Text shared by adjacent rows. */
   capture<T>(visit:()=>T):{value:T;pieces:readonly AdoptionPiece[]} {
@@ -217,14 +221,6 @@ export class AdoptionCursor {
     }
     return {value,pieces};
   }
-
-  /** Single-element row checkpoint; range rows will retain their own spans. */
-  elementHead(): Element {
-    const node=this.current();
-    if(this.offset||!node||node.nodeType!==1)refuse('FORMA_E_HYDRATE_NODE');
-    return node as Element;
-  }
-  immediatelyAfter(node:Node):boolean { return this.offset===0&&this.next===node.nextSibling; }
 
   element(tag: string, namespace: string | null = null): Element {
     const node = this.current();
