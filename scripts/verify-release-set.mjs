@@ -10,6 +10,7 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
+import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
 async function freePort() {
   const server = net.createServer();
@@ -151,6 +152,16 @@ export function requireAssetIntegrity(resources, manifest, route = '/') {
   return resources;
 }
 
+// P17 requires every named browser assertion; a resolved but partial result is a failure.
+export function requireWorkerChecks(observation, names, app) {
+  assert.equal(observation.passed, true, 'worker replay did not pass');
+  assert.equal(observation.app, app, 'worker replay used a different application');
+  assert.deepEqual(observation.results?.map(result => result.name), names, 'worker replay omitted or duplicated a required check');
+  for (const result of observation.results) assert.equal(result.passed, true, `worker replay did not execute ${result.name}`);
+  const { directory, ...portable } = observation;
+  return portable;
+}
+
 export function verifyPackedPropsFixtures(compiler, serverCrate) {
   assert.equal(typeof compiler.generateRealIr, 'function', 'packed compiler lacks its IR emitter');
   for (const [app, name] of [['app', 'home'], ['empty-app', 'empty'], ['empty-typed-app', 'empty-typed']]) {
@@ -290,6 +301,22 @@ export async function verify(dir, reportPath) {
     const { chromium } = await import('@playwright/test');
     const browser = await chromium.launch();
     try {
+      if (set.contracts.assetIntegrity === 'sha384-v1') {
+        const { build } = await import(pathToFileURL(join(scratch, 'packages/build/dist/index.js')).href);
+        assert.equal(typeof build, 'function', 'packed build package lacks build()');
+        const app = 'p17-integrity';
+        const options = { build, browser, workDir: join(scratch, 'worker-browser'), app };
+        await test('packed build verifies cached and network bytes including dynamic chunks and compressed delivery', async () => {
+          report.workerIntegrity = requireWorkerChecks(await verifyWorkerIntegrity(options), WORKER_INTEGRITY_CHECKS, app);
+        });
+        await test('packed builds preserve waiting lifecycle and actual packed Rust retirement', async () => {
+          const retiringWorkerSource = run('cargo', ['run', '--quiet', '--locked', '--manifest-path', join(scratch, 'crates/forma-server/Cargo.toml'), '--example', 'retiring_worker_source', '--', app], ROOT,
+            { env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
+          const sourcePath = join(scratch, 'retiring-worker.js');
+          writeFileSync(sourcePath, retiringWorkerSource);
+          report.workerLifecycle = { ...requireWorkerChecks(await verifyWorkerLifecycle({ ...options, retiringWorkerSource }), WORKER_LIFECYCLE_CHECKS, app), retiringWorkerSha256: digest(sourcePath) };
+        });
+      }
       for (const template of ['minimal', 'dashboard']) {
         await test(`${template}: packed CLI, locked install, signatures, build, serve and interaction`, async () => {
           const name = `release-${template}`;

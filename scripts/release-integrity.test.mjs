@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run } from './release-set.mjs';
-import { requireAssetIntegrity, verifyPackedIntegrityTests } from './verify-release-set.mjs';
+import { requireAssetIntegrity, verifyPackedIntegrityTests, requireWorkerChecks } from './verify-release-set.mjs';
 const integrity = `sha384-${'A'.repeat(64)}`;
 const manifest = { assets: { 'app.js': { integrity }, 'style.css': { integrity }, 'chunk.js': { integrity } }, routes: { '/': { js: ['app.js'], css: ['style.css'] } } };
 const resources = [
@@ -39,4 +39,15 @@ test('packed native integrity checks execute and refuse missing or skipped cover
   fixture(source=>source,verifyPackedIntegrityTests);
   fixture(()=>'',manifest=>assert.throws(()=>verifyPackedIntegrityTests(manifest),/missing/));
   fixture(source=>source.replace('#[test]','#[test] #[ignore]'),manifest=>assert.throws(()=>verifyPackedIntegrityTests(manifest),/did not execute/));
+});
+
+test('packed worker reports require every named browser control to execute', () => {
+  const names = ['cache bytes', 'network bytes', 'waiting', 'retirement'];
+  const observation = {passed: true, app: 'p17', results: names.map(name => ({name, passed: true})), directory: '/local/evidence', build: 'abcd'};
+  assert.deepEqual(requireWorkerChecks(observation, names, 'p17'), {passed: true, app: 'p17', results: observation.results, build: 'abcd'});
+  assert.throws(() => requireWorkerChecks({...observation, passed: false}, names, 'p17'), /did not pass/);
+  assert.throws(() => requireWorkerChecks(observation, names, 'other'), /different application/);
+  assert.throws(() => requireWorkerChecks({...observation, results: observation.results.slice(1)}, names, 'p17'), /omitted or duplicated/);
+  assert.throws(() => requireWorkerChecks({...observation, results: [...observation.results, observation.results[0]]}, names, 'p17'), /omitted or duplicated/);
+  assert.throws(() => requireWorkerChecks({...observation, results: observation.results.map((result, index) => index === 0 ? {...result, passed: false} : result)}, names, 'p17'), /did not execute/);
 });
