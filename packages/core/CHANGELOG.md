@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Value rule 6: a boolean in text writes nothing — FORMA-182
+
+- **Rendered output changes with no source change:** strict adoption maps a boolean text value to the empty string, as `h()` does (`docs/parity-rules.md`, rule 6). A reactive child returning `false` or `true` over a served range used to be expected, and later written, as the word, so an adopted page showed `false` where a fresh render showed nothing, and the empty range the walker now serves for `() => ready() && 'Go'` at `false` was refused with `FORMA_E_HYDRATE_VALUE`. A page compiled by an earlier compiler, which served the word there, is now refused at that idiom: compiler and core move together in 3.0.0. Verified by `src/dom/__tests__/value-rule-6-boolean-text.test.ts` and `e2e/value-rules.spec.ts` in three engines; mutation probe `adoption/boolean-text-word`.
+
+### Value rule 5: `null` writes nothing — FORMA-182
+
+- **Rendered output changes with no source change:** `h()`'s `class`/`className` writer follows the attribute presence table, static and reactive (`docs/parity-rules.md`, rule 5): `null`, `undefined` and `false` remove the attribute, `true` writes it bare, anything else its string. In the published `3.0.0-alpha.2` and earlier, a reactive class getter returning `null`, `undefined` or `false` wrote `class="null"`, `class="undefined"` or `class="false"` (and since rule 1's normalizer it threw inside its effect and kept the previous class); it now removes the attribute, as the walker does. A static `class: true` wrote `class="true"` and now writes the bare attribute the walker writes. Verified by `src/dom/__tests__/value-rule-5-null.test.ts` and `e2e/value-rules.spec.ts` in three engines.
+
 ### Keyed rows: the key-text seam is wired to rule 1 — FORMA-181
 
 - `src/dom/key-text.ts` (private; nothing in the bundle imports it yet) builds the canonical text of a list key: a safe integer prints as its decimal integer (`-0` as `0`), a string with an unpaired surrogate is refused, and any other string goes through FORMA-182's shared `normalizeDomText` (CRLF and CR become LF, NUL becomes U+FFFD), so `"a\r\nb"` and `"a\nb"` are the same row and `1` and `"1"` are too. `src/dom/__tests__/key-text.test.ts` runs 182's `values` vectors (`crates/forma-ir/tests/fixtures/parity/normalization.json`) and 181's shared key vectors (`keys.json`, the same ones forma-ir's walker reads) through `canonicalKeyText`, and asserts the module carries no normalizer of its own and returns `normalizeDomText`'s result. Adoption by key (FORMA-181 checkpoint C) is its first consumer.

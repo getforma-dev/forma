@@ -4,7 +4,7 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium, type Browser, type Page } from '@playwright/test';
-import { PAGE_POLICY } from '../src/browser.mts';
+import { LOW_LEVEL_POLICY as PAGE_POLICY } from '../src/browser.mts';
 import { compareTrees, stripTransport, type CanonNode, type ElementNode } from '../src/compare.mts';
 import { canonicalizeDom } from '../src/dom-canon.mts';
 

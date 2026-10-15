@@ -235,7 +235,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   if(callable(node))return;
   const refuse=(what:string):never=>fail(mod,at,'BUILD-616',`LIST source is ${what}, not a function: core calls it to read the rows, so pass the getter itself or a function returning them, such as () => rows`);
   const value=literal(mod,node);if(value)refuse(value);
-  let origin=node;
+  let origin:t.Node=node;
   while(t.isMemberExpression(origin))origin=unwrap(origin.object);
   if(t.isCallExpression(origin)&&getterValue(mod,unwrap(origin.callee))) {
    const resolved=visibleValue(mod,node),data=resolved?literal(mod,resolved):undefined;

@@ -45,10 +45,13 @@ function refuse():never {throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE')
 /** An admitted text expectation or later value, under rule 1: the served DOM
  * holds the walker's normalized text, so the client's value is compared and
  * later written the same way. Transport (the props themselves) stays exact.
- * Verified by: src/dom/__tests__/normalize-text.test.ts > "a served normalized range matches a client value $id without a write" */
+ * A null or a boolean is the empty string, as h() writes nothing for either
+ * (rules 5 and 6, docs/parity-rules.md); the word of a boolean is String()'s.
+ * Verified by: src/dom/__tests__/normalize-text.test.ts > "a served normalized range matches a client value $id without a write"
+ * Verified by: src/dom/__tests__/value-rule-6-boolean-text.test.ts > "$id: the mixed idiom writes nothing for its boolean and the string otherwise; its served range adopts without a write" */
 function text(value:unknown):string {
-  if(value==null)return '';
-  if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return normalizeDomText(String(value));
+  if(value==null||typeof value==='boolean')return '';
+  if(typeof value==='string'||typeof value==='number')return normalizeDomText(String(value));
   return refuse();
 }
 function ownProps(props:Record<string,unknown>):[string,unknown][] {

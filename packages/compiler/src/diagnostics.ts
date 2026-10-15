@@ -189,6 +189,13 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-613', 'List row without one stable owned root',
     'The row callback does not return exactly one stable Element (text, nothing, several roots, a conditional or control-flow root, or an authored `data-forma-key`), so the row identity has no root to live on; the build fails even without strict mode.',
     'Return one Element per row, `(row) => h(\'li\', …)` or `<li>…</li>` (a Fragment around exactly one Element, or a registered child rendering one, is admitted); put conditionals inside that root and leave `data-forma-key` to the compiler.'),
+  entry('BUILD-614', 'Boolean in text',
+    'A boolean-typed value is read into a text position (a declared boolean prop, a signal whose default is a boolean, a closed boolean, or an expression that can only be a boolean): the browser writes nothing for a boolean child whatever its value while the server would write "true" or "false" (value rule 6, docs/parity-rules.md); the build fails even without strict mode.',
+    'Write `String(flag)` for the word (a non-optional declared boolean or a boolean signal), or render content with createShow or a ternary; `cond && \'text\'`, whose boolean result stands for nothing, stays valid.'),
+  entry('BUILD-615', 'Condition that is not boolean-typed',
+    'A createShow condition or a ternary test reads a value the compiler can prove is not a boolean (a number, a string, null, an object, or a declared, closed or signal value of such a type): the server would pick the branch by ECMAScript truthiness, which a page reading `count` or `name` only imitates (value rule 7, docs/parity-rules.md); the build fails even without strict mode.',
+    'Compare explicitly so the condition is a boolean: `() => count() > 0`, `() => name() !== \'\'`, `() => item() !== null`, or `!!x` when truthiness is what is meant.'),
+
   entry('BUILD-616', 'List source that is not a function',
     'Core calls a list\'s source to read its rows, and this one is provably not a function (a literal, a binding to one, a provably data-valued getter result or field, or a field its parameter type declares as data), so the page would fail in the browser with `items is not a function`; the build fails even without strict mode.',
     'Pass the getter itself or a function returning the rows: `createList(rows, …)` with `const [rows] = createSignal([...])`, `createList(() => p.rows, …)`, or `const todos = () => [...]`.'),
@@ -270,9 +277,9 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-818', 'Worker metadata cannot authenticate an asset',
     'A protected immutable JS/CSS/WASM filename or its full canonical SHA-384 digest is invalid.',
     'Generate the worker from the completed manifest after final asset bytes are written; do not substitute a filename hash or abbreviated digest.'),
-  entry('BUILD-819', "A route's Forma code is over N2's ceiling",
-    "What the route loads cold carries more than 25,500 B gzip -9 of @getforma/core and alien-signals as bundled (decision brief L-55, DR-35), or a file the manifest names for it was written by no bundling pass so its Forma code cannot be attributed. The build fails before writing its output.",
-    "Trim what the route imports from @getforma/core, or split the route; the ceiling is policy, not an option. The report above the failure shows each route's Forma code beside its own."),
+  entry('BUILD-819', "A route is over its size ceiling",
+    "What the route loads cold is over the ceiling of its class (decision brief L-55, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 25,500 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.",
+    "Trim what the route imports from @getforma/core or ships of its own, split the route, or declare a page that hosts many modules a canvas; the ceilings are policy, not an option. The report above the failure shows each route's class, Forma code and JavaScript beside the ceilings."),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);
