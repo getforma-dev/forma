@@ -119,7 +119,6 @@ fn config<'a>(
         title: "Tenant",
         route_pattern: ROUTE,
         manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: None,
@@ -418,7 +417,7 @@ fn render_399_a_panic_inside_the_walk() {
 // -- What a successful render returns ----------------------------------------
 
 #[tokio::test]
-async fn try_render_writes_render_page_s_document_and_counts_the_walk() {
+async fn try_render_writes_the_document_and_counts_the_walk() {
     let manifest = manifest();
     let module = branding_module();
     let slots = branding("Acme", 3);
@@ -437,16 +436,6 @@ async fn try_render_writes_render_page_s_document_and_counts_the_walk() {
     let root_end = parts.html[root_start..].find("</div>\n").expect("root end") + root_start;
     // `bytes` is the walk's HTML: the root's contents, not the document.
     assert_eq!(counts.bytes, root_end - root_start);
-
-    // The same document the 0.2.1 render writes for this page and nonce.
-    #[allow(deprecated)]
-    let old = forma_server::render_page_with_nonce(
-        &config(&manifest, Some(&module), Some(&slots)),
-        &parts.nonce,
-    );
-    #[allow(deprecated)]
-    let old_html = old.html;
-    assert_eq!(parts.html, old_html);
 
     // And the response's headers bless that nonce, with no-store.
     let csp = parts
@@ -481,14 +470,7 @@ fn try_render_never_serves_a_shell_in_place_of_a_failure() {
         IrModule::parse(&build_minimal_ir(&["bad tag"], &[], &walk_error, &[])).expect("parses");
     let empty = SlotData::new(0);
 
-    // The deprecated path falls back to an empty shell with a 200...
-    #[allow(deprecated)]
-    let fallback = forma_server::render_page(&config(&manifest, Some(&bad), Some(&empty)));
-    #[allow(deprecated)]
-    let fallback_html = fallback.html;
-    assert!(fallback_html.contains("<div id=\"app\"></div>"));
-
-    // ...the bridge returns the failure, for every failure class.
+    // Every failure class returns an error rather than a successful shell.
     assert!(try_render(
         &config(&manifest, Some(&bad), Some(&empty)),
         &RenderCtx::new()

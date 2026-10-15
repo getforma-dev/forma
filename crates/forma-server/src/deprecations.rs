@@ -1,104 +1,41 @@
-//! Doctests that pin each A2 deprecation (compiled only for `cargo test --doc`).
-//!
-//! Each deprecated item has two snippets of the same code: one under
-//! `#![allow(deprecated)]` that must compile, proving the 0.2.1 call still
-//! works, and one under `#![deny(deprecated)]` that must not, proving the
-//! deprecation is there. The pair is what makes the `compile_fail` honest: the
-//! only difference between the two is the lint level.
+//! Compile controls for the removed A2 response/raw-script bridges.
 
-/// `render_page_with_nonce` (L-14).
+/// Public renderers return the typed response; callers cannot construct or split
+/// it implicitly. The named unchecked exit remains available for reviewed uses.
 ///
 /// ```
-/// #![allow(deprecated)]
-/// use forma_server::{render_page_with_nonce, CspNonce, PageConfig};
-/// fn render(config: &PageConfig) { let _ = render_page_with_nonce(config, &CspNonce::generate()); }
+/// use axum::response::IntoResponse;
+/// use forma_server::{PageResponse, PageConfig, RenderCtx, try_render, render_browser_shell};
+/// fn respond(page: PageResponse) { let _ = page.into_response(); }
+/// fn render(config: &PageConfig) { let _ = try_render(config, &RenderCtx::new()); }
+/// fn shell(config: &PageConfig) { let _ = render_browser_shell(config, &RenderCtx::new()); }
+/// fn reviewed(page: PageResponse) { let _ = page.into_parts_unchecked(); }
 /// ```
 ///
 /// ```compile_fail
-/// #![deny(deprecated)]
-/// use forma_server::{render_page_with_nonce, CspNonce, PageConfig};
-/// fn render(config: &PageConfig) { let _ = render_page_with_nonce(config, &CspNonce::generate()); }
+/// use forma_server::PageOutput;
 /// ```
-pub(crate) struct RenderPageWithNonce;
-
-/// `PageOutput`'s public fields (DR-17).
-///
+/// ```compile_fail
+/// use forma_server::render_page;
 /// ```
-/// #![allow(deprecated)]
-/// fn parts(page: forma_server::PageOutput) -> (String, String, forma_server::CspNonce) {
-///     (page.html, page.csp, page.nonce)
+/// ```compile_fail
+/// use forma_server::render_page_with_nonce;
+/// ```
+/// ```compile_fail
+/// fn html(page: forma_server::PageResponse) -> String { page.html }
+/// ```
+/// ```compile_fail
+/// fn script(page: &mut forma_server::PageConfig<'_>) { page.config_script = Some("alert(1)"); }
+/// ```
+/// ```compile_fail
+/// fn prefix(page: &mut forma_server::PageConfig<'_>) { page.body_prefix = Some("<nav>raw</nav>"); }
+/// ```
+/// ```
+/// fn prefix<'a>(page: &mut forma_server::PageConfig<'a>, reviewed: &'a forma_server::RawHtml) {
+///     page.body_prefix = Some(reviewed);
 /// }
 /// ```
-///
-/// ```compile_fail
-/// #![deny(deprecated)]
-/// fn html(page: forma_server::PageOutput) -> String { page.html }
-/// ```
-///
-/// ```compile_fail
-/// #![deny(deprecated)]
-/// fn csp(page: forma_server::PageOutput) -> String { page.csp }
-/// ```
-///
-/// ```compile_fail
-/// #![deny(deprecated)]
-/// fn nonce(page: forma_server::PageOutput) -> forma_server::CspNonce { page.nonce }
-/// ```
-pub(crate) struct PageOutputFields;
-
-/// `PageOutput::headers` (DR-17).
-///
-/// ```
-/// #![allow(deprecated)]
-/// fn headers(page: &forma_server::PageOutput) -> usize { page.headers().len() }
-/// ```
-///
-/// ```compile_fail
-/// #![deny(deprecated)]
-/// fn headers(page: &forma_server::PageOutput) -> usize { page.headers().len() }
-/// ```
-pub(crate) struct PageOutputHeaders;
-
-/// `PageConfig::config_script` (DR-18): naming the field at all, `None`
-/// included, warns, since every 0.2.x `PageConfig` literal lists it.
-///
-/// ```
-/// #![allow(deprecated)]
-/// use forma_server::{AssetManifest, PageConfig, RenderMode};
-/// fn config(manifest: &AssetManifest) -> PageConfig<'_> {
-///     PageConfig {
-///         title: "t", route_pattern: "/", manifest, config_script: None, config_json: None,
-///         body_class: None, personality_css: None, body_prefix: None,
-///         render_mode: RenderMode::Phase1ClientMount, ir_module: None, slots: None,
-///     }
-/// }
-/// ```
-///
-/// ```compile_fail
-/// #![deny(deprecated)]
-/// use forma_server::{AssetManifest, PageConfig, RenderMode};
-/// fn config(manifest: &AssetManifest) -> PageConfig<'_> {
-///     PageConfig {
-///         title: "t", route_pattern: "/", manifest, config_script: None, config_json: None,
-///         body_class: None, personality_css: None, body_prefix: None,
-///         render_mode: RenderMode::Phase1ClientMount, ir_module: None, slots: None,
-///     }
-/// }
-/// ```
-pub(crate) struct ConfigScript;
-
-/// `render_page` (DR-11; FORMA-120).
-///
-/// ```
-/// #![allow(deprecated)]
-/// fn render(config: &forma_server::PageConfig) { let _ = forma_server::render_page(config); }
-/// ```
-///
-/// ```compile_fail
-/// #![deny(deprecated)]
-/// fn render(config: &forma_server::PageConfig) { let _ = forma_server::render_page(config); }
-/// ```
-pub(crate) struct RenderPage;
+pub(crate) struct RemovedBridges;
 
 /// `assets::load_manifest` (L-13; FORMA-120).
 ///

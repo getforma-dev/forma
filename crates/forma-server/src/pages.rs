@@ -228,7 +228,6 @@ impl<P: PageProps> PageHandle<P> {
             title: ctx.title().unwrap_or(&self.inner.page),
             route_pattern: route,
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: ctx.body_class(),
             personality_css: None,

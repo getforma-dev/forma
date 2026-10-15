@@ -12,7 +12,6 @@
 //! on the release profile by
 //! `ir::reload_tests::a_release_build_reads_nothing_per_request_and_a_debug_build_rereads`.
 #![cfg(debug_assertions)]
-// `config_script` is a field every 0.2.x literal names.
 #![allow(deprecated)]
 
 use forma_ir::parser::test_helpers::{
@@ -65,7 +64,6 @@ fn serve(manifest: &AssetManifest, modules: &IrModules<DevDist>) -> String {
         title: "Dev",
         route_pattern: "/",
         manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: None,

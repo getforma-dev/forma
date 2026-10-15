@@ -246,8 +246,14 @@ describe('"Verified by" citations', () => {
         } catch {
           throw new Error(`${doc}: cited test file does not exist: ${file}`);
         }
+        // The archived A2 audit records its original warning behavior. Keep
+        // that historical prose intact while following its regression to the
+        // stricter v3 refusal test; this exception applies only to that citation.
+        const currentName = doc === 'docs/archive/2026-08-05-hardening-audit.md'
+          && name === 'emits srcdoc but warns that escaping does not neutralize it'
+          ? 'srcdoc requires trustedHtml and strings are refused before the sink' : name;
         const declared =
-          source.includes(`'${name}'`) || source.includes(`"${name}"`) || source.includes(`\`${name}\``);
+          source.includes(`'${currentName}'`) || source.includes(`"${currentName}"`) || source.includes(`\`${currentName}\``);
         expect(declared, `${doc} cites "${name}" in ${file}, which has no such test`).toBe(true);
       }
     }

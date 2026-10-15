@@ -54,7 +54,7 @@ function page(): HTMLElement {
 }
 
 function mountOn(root: Element, markup: string | TrustedHtml, options: MountOptions): MountHandle {
-  const handle = mountMarkup(root, markup, options);
+  const handle = mountMarkup(root, typeof markup === 'string' ? runtime.trustedHtml(markup) : markup, options);
   handles.push(handle);
   return handle;
 }
@@ -126,7 +126,7 @@ describe('SR16: binding only under the root handed in', () => {
       expect([text('beside'), text('in-body'), text('before')]).toEqual(['raw', 'raw', 'raw']);
 
       // An update renders under the root again, and only there.
-      handle.update(`<div data-forma-state='{"m":3}'><p id="inside" data-text="{m}">0</p></div>`);
+      handle.update(runtime.trustedHtml(`<div data-forma-state='{"m":3}'><p id="inside" data-text="{m}">0</p></div>`));
       await settle();
       expect(text('inside')).toBe('3');
       expect([text('beside'), text('in-body'), text('before')]).toEqual(['raw', 'raw', 'raw']);
@@ -235,7 +235,7 @@ describe("SR16 in 2.x: the page's mount switch", () => {
       // No auto-mount on load: the server's own data-forma-state is not bound.
       expect(text('served')).toBe('raw');
       const widget = fresh.mountMarkup(document.getElementById('root')!,
-        `<div data-forma-state='{"w":3}'><p id="inside" data-text="{w}">-</p></div>`, { tier: 'reviewed', grants: {} });
+        runtime.trustedHtml(`<div data-forma-state='{"w":3}'><p id="inside" data-text="{w}">-</p></div>`), { tier: 'reviewed', grants: {} });
       expect(text('inside')).toBe('3');
 
       // No body observer: markup injected beside the root stays unbound.
@@ -249,7 +249,7 @@ describe("SR16 in 2.x: the page's mount switch", () => {
       for (const call of [
         () => fresh.mount(document.body),
         () => fresh.initRuntime(),
-        () => fresh.reconcile(scratch, injected('reconciled')),
+        () => fresh.reconcile(scratch, runtime.trustedHtml(injected('reconciled'))),
       ]) {
         expect(call).toThrow(/FORMA_E_MOUNT_MANUAL/);
       }
@@ -766,7 +766,7 @@ describe('DR-15: grants', () => {
     expect(text('failed')).toBe('data-fetch timed out after 5000 ms');
 
     // Never longer than data-fetch's 30 s.
-    expect(() => mountMarkup(document.createElement('div'), '', {
+    expect(() => mountMarkup(document.createElement('div'), runtime.trustedHtml(''), {
       tier: 'reviewed',
       grants: { fetch: { paths: ['/api/'], timeoutMs: 30_001 } },
     })).toThrow(/FORMA_E_MOUNT_ARGS/);
@@ -925,14 +925,14 @@ describe('tiers and configuration', () => {
   it('an unreviewed mount refuses any origin but an opaque one, and any grant', () => {
     const root = page();
     root.innerHTML = '<p id="before">before</p>';
-    expect(() => mountMarkup(root, probe('1'), { tier: 'unreviewed' })).toThrow(/FORMA_E_MOUNT_ORIGIN/);
+    expect(() => mountMarkup(root, runtime.trustedHtml(probe('1')), { tier: 'unreviewed' })).toThrow(/FORMA_E_MOUNT_ORIGIN/);
     // Refused before it touched anything.
     expect(text('before')).toBe('before');
 
     // In a sandboxed frame without allow-same-origin, `origin` is "null".
     vi.stubGlobal('origin', 'null');
-    expect(() => mountMarkup(root, probe('1'), { tier: 'unreviewed', grants: { dom: true } })).toThrow(/FORMA_E_MOUNT_ARGS/);
-    expect(() => mountMarkup(root, probe('1'), { tier: 'unreviewed', grants: {} })).toThrow(/FORMA_E_MOUNT_ARGS/);
+    expect(() => mountMarkup(root, runtime.trustedHtml(probe('1')), { tier: 'unreviewed', grants: { dom: true } })).toThrow(/FORMA_E_MOUNT_ARGS/);
+    expect(() => mountMarkup(root, runtime.trustedHtml(probe('1')), { tier: 'unreviewed', grants: {} })).toThrow(/FORMA_E_MOUNT_ARGS/);
     expect(text('before')).toBe('before');
 
     answers();
@@ -987,7 +987,7 @@ describe('tiers and configuration', () => {
     ]);
 
     // An update is stripped the same way, a plain string too.
-    handle.update(`<p id="kept">again</p><link rel="dns-prefetch" href="http://127.0.0.1:3900/">`);
+    handle.update(runtime.trustedHtml(`<p id="kept">again</p><link rel="dns-prefetch" href="http://127.0.0.1:3900/">`));
     await settle();
     expect(text('kept')).toBe('again');
     expect(root.querySelectorAll('link')).toHaveLength(0);
@@ -1036,7 +1036,7 @@ describe('tiers and configuration', () => {
     // The parse is the root's own: a <tr> the root would not have parsed is
     // not there, on the first render and on an update alike (a <template>
     // would have kept it, and the diff would have cloned it in).
-    handle.update('<tr><td>cell</td></tr><p id="p">third</p>');
+    handle.update(runtime.trustedHtml('<tr><td>cell</td></tr><p id="p">third</p>'));
     expect(text('p')).toBe('third');
     expect(root.querySelector('tr')).toBeNull();
     expect(toRoot()).toBe(0);
@@ -1073,16 +1073,17 @@ describe('tiers and configuration', () => {
     expect(refused.filter((d) => /binding is refused/.test(d.reason))).toHaveLength(1);
 
     // An update is treated the same way, written or bound.
-    handle.update(`<iframe id="again" srcdoc="${doc}"></iframe><div data-forma-state='{"d":"${doc}"}'><iframe data-bind:srcdoc="d"></iframe></div><p id="kept">again</p>`);
+    handle.update(runtime.trustedHtml(`<iframe id="again" srcdoc="${doc}"></iframe><div data-forma-state='{"d":"${doc}"}'><iframe data-bind:srcdoc="d"></iframe></div><p id="kept">again</p>`));
     await settle();
     expect(text('kept')).toBe('again');
     expect(root.querySelectorAll('[srcdoc]')).toHaveLength(0);
     handles.pop()!.unmount();
 
-    // The control: a reviewed mount writes srcdoc, written and bound.
+    // Reviewed literal markup keeps its reviewed srcdoc; runtime expressions cannot mint one.
     mountOn(root, `<iframe id="w" srcdoc="${doc}"></iframe><div data-forma-state='{"d":"${doc}"}'><iframe id="b" data-bind:srcdoc="d"></iframe></div>`, { tier: 'reviewed' });
     expect(document.getElementById('w')!.getAttribute('srcdoc')).toBe(doc);
-    expect(document.getElementById('b')!.getAttribute('srcdoc')).toBe(doc);
+    expect(document.getElementById('b')!.getAttribute('srcdoc')).toBeNull();
+    expect(runtime.getDiagnostics().some((d) => d.code === 'FORMA_E_RUNTIME_SRCDOC')).toBe(true);
   });
 
   it('an unreviewed mount fails closed: a <link> that reaches the root after the strip is removed, reported, and the markup refused', async () => {
@@ -1105,7 +1106,7 @@ describe('tiers and configuration', () => {
       return copy;
     });
     let thrown: (Error & { code?: string }) | null = null;
-    try { handle.update('<p id="k">2</p><span id="s">s</span>'); } catch (err) { thrown = err as Error; }
+    try { handle.update(runtime.trustedHtml('<p id="k">2</p><span id="s">s</span>')); } catch (err) { thrown = err as Error; }
     cloning.mockRestore();
     expect(thrown?.code).toBe('FORMA_E_UNREVIEWED_LINK');
     expect(root.childNodes).toHaveLength(0);
@@ -1115,7 +1116,7 @@ describe('tiers and configuration', () => {
     expect(reached[0]!.reason).toMatch(/reached the document/);
     expect(reached[0]!.kind).toBe('markup-refused');
     // The mount lives on, and renders what is clean.
-    handle.update('<p id="k">3</p>');
+    handle.update(runtime.trustedHtml('<p id="k">3</p>'));
     expect(text('k')).toBe('3');
     handles.pop()!.unmount();
 
@@ -1138,19 +1139,19 @@ describe('tiers and configuration', () => {
   it('a mount call names a known tier, an element and markup, and mounts a root once', () => {
     const root = page();
     for (const bad of [
-      () => mountMarkup(root, '', {} as MountOptions),
-      () => mountMarkup(root, '', { tier: 'trusted' } as unknown as MountOptions),
-      () => mountMarkup(null as unknown as Element, '', { tier: 'reviewed' }),
-      () => mountMarkup(root, 7 as unknown as string, { tier: 'reviewed' }),
-      () => mountMarkup(root, '', { tier: 'reviewed', grants: { fetch: {} as never } }),
-      () => mountMarkup(root, '', { tier: 'reviewed', grants: { fetch: { paths: ['api/'] } } }),
-      () => mountMarkup(root, '', { tier: 'reviewed', grants: { fetch: { paths: ['/'], methods: ['TRACE' as never] } } }),
-      () => mountMarkup(root, '', { tier: 'reviewed', config: { exprBudget: -1 } }),
+      () => mountMarkup(root, runtime.trustedHtml(''), {} as MountOptions),
+      () => mountMarkup(root, runtime.trustedHtml(''), { tier: 'trusted' } as unknown as MountOptions),
+      () => mountMarkup(null as unknown as Element, runtime.trustedHtml(''), { tier: 'reviewed' }),
+      () => mountMarkup(root, 7 as unknown as TrustedHtml, { tier: 'reviewed' }),
+      () => mountMarkup(root, runtime.trustedHtml(''), { tier: 'reviewed', grants: { fetch: {} as never } }),
+      () => mountMarkup(root, runtime.trustedHtml(''), { tier: 'reviewed', grants: { fetch: { paths: ['api/'] } } }),
+      () => mountMarkup(root, runtime.trustedHtml(''), { tier: 'reviewed', grants: { fetch: { paths: ['/'], methods: ['TRACE' as never] } } }),
+      () => mountMarkup(root, runtime.trustedHtml(''), { tier: 'reviewed', config: { exprBudget: -1 } }),
     ]) {
       expect(bad).toThrow(/FORMA_E_MOUNT_ARGS/);
     }
     mountOn(root, probe('1'), { tier: 'compiled' });
-    expect(() => mountMarkup(root, '', { tier: 'compiled' })).toThrow(/FORMA_E_MOUNT_TWICE/);
+    expect(() => mountMarkup(root, runtime.trustedHtml(''), { tier: 'compiled' })).toThrow(/FORMA_E_MOUNT_TWICE/);
   });
 
   it('bindings a tierless path made under the root go first, with what they rendered', () => {
@@ -1170,13 +1171,13 @@ describe('tiers and configuration', () => {
     expect(oldN.textContent).toBe('1');
   });
 
-  it('takes trustedHtml() markup beside a string, and nothing else', () => {
+  it('takes trustedHtml() markup and refuses look-alikes', () => {
     const root = page();
     const handle = mountOn(root, runtime.trustedHtml(probe('6 * 7')), { tier: 'reviewed', grants: {} });
     expect(text('out')).toBe('42');
     handle.update(runtime.trustedHtml(`<div data-forma-state='{"v":"next"}'><p id="out" data-text="{v}">-</p></div>`));
     expect(text('out')).toBe('next');
-    const lookAlike = { toString: () => probe('1') } as unknown as string;
+    const lookAlike = { toString: () => probe('1') } as unknown as TrustedHtml;
     expect(() => handle.update(lookAlike)).toThrow(/FORMA_E_MOUNT_ARGS/);
     expect(text('out')).toBe('next');
   });
@@ -1195,7 +1196,7 @@ describe('tiers and configuration', () => {
     // The detached nodes are no longer bound.
     button.click();
     expect(p.textContent).toBe('1');
-    expect(() => handle.update(probe('1'))).toThrow(/FORMA_E_MOUNT_GONE/);
+    expect(() => handle.update(runtime.trustedHtml(probe('1')))).toThrow(/FORMA_E_MOUNT_GONE/);
     // The root can be mounted again.
     mountOn(root, probe('40 + 2'), { tier: 'reviewed' });
     expect(text('out')).toBe('42');
@@ -1239,7 +1240,7 @@ describe('configuration only from the call', () => {
       expect(text('l')).toBe('50000');
 
       await new Promise((r) => setTimeout(r, 0)); // a fresh task: a fresh meter
-      const tiered = fresh.mountMarkup(document.getElementById('tiered')!, `<div data-forma-state='{}'><p id="t" data-text="{${heavy}}">-</p></div>`, {
+      const tiered = fresh.mountMarkup(document.getElementById('tiered')!, runtime.trustedHtml(`<div data-forma-state='{}'><p id="t" data-text="{${heavy}}">-</p></div>`), {
         tier: 'reviewed',
       });
       expect(text('t')).toBe('-');
@@ -1248,7 +1249,7 @@ describe('configuration only from the call', () => {
       await new Promise((r) => setTimeout(r, 0));
       const configured = fresh.mountMarkup(
         document.getElementById('configured')!,
-        `<div data-forma-state='{}'><p id="c" data-text="{${heavy}}">-</p></div>`,
+        runtime.trustedHtml(`<div data-forma-state='{}'><p id="c" data-text="{${heavy}}">-</p></div>`),
         { tier: 'reviewed', config: { exprBudget: 1_000_000 } },
       );
       expect(text('c')).toBe('50000');
@@ -1276,7 +1277,7 @@ describe('the tierless reconcile() keeps 2.0.x', () => {
       `<div data-forma-state='{}'><div data-fetch="GET /api/items → items |error:failed"></div>` +
       `<p id="reach" data-text="{$el.closest('section').getAttribute('data-secret')}">-</p>` +
       `<p id="items" data-text="{items?.error}">-</p><p id="failed" data-text="{failed}">-</p></div>`;
-    runtime.reconcile(container, markup);
+    runtime.reconcile(container, runtime.trustedHtml(markup));
     await settle();
     // Every power, as at 2.0.x: the page's attribute, and a 404's body as data.
     expect(text('reach')).toBe('s3cret');
@@ -1284,7 +1285,7 @@ describe('the tierless reconcile() keeps 2.0.x', () => {
     expect(text('failed')).toBe('');
     expect(denials()).toEqual([]);
 
-    runtime.reconcile(container, markup.replace('items?.error', 'items?.error ?? 0'));
+    runtime.reconcile(container, runtime.trustedHtml(markup.replace('items?.error', 'items?.error ?? 0')));
     const logged = warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes('FORMA_W_DEPRECATED_RECONCILE'));
     expect(logged).toEqual([`[forma] FORMA_W_DEPRECATED_RECONCILE: ${DEPRECATIONS.FORMA_W_DEPRECATED_RECONCILE}`]);
     expect(logged[0]).toContain('mountMarkup(root, markup, { tier, grants })');

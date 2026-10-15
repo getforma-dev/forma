@@ -1,20 +1,13 @@
-//! `RawHtml`: the one named raw-HTML type in Rust (DR-19, SR15; FORMA-126).
-//!
-//! Two guarantees: one constructor, so a search for `RawHtml::trusted` finds
-//! every raw entry; and a `RawHtml` in `body_prefix` is written exactly as the
-//! same text passed as a string was, on every render path, so moving a call
-//! site to it changes nothing in the page.
-// `render_page` and `render_page_with_nonce` (deprecated in 0.2.2) are two of
-// the paths, and `config_script` is a field every 0.2.x literal names.
-#![allow(deprecated)]
+//! The single named RawHtml constructor and typed body-prefix boundary.
+//! Retained renderers write reviewed markup verbatim; strings fail to type-check.
 
 use forma_ir::parser::test_helpers::{
     build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
 };
 use forma_ir::{IrModule, SlotData};
 use forma_server::{
-    render_browser_shell, render_page, render_page_with_nonce, try_render, AssetManifest, CspNonce,
-    PageConfig, RawHtml, RenderCtx, RenderMode, RouteAssets,
+    render_browser_shell, try_render, AssetManifest, PageConfig, RawHtml, RenderCtx, RenderMode,
+    RouteAssets,
 };
 use std::collections::HashMap;
 use std::path::Path;
@@ -141,7 +134,7 @@ fn second_constructors(files: &[(String, String)]) -> Vec<String> {
         }
     }
     traits.sort();
-    if traits != ["Clone", "Deref", "Drop", "Eq", "PartialEq", "fmt::Debug"] {
+    if traits != ["Clone", "Deref", "Eq", "PartialEq", "fmt::Debug"] {
         findings.push(format!("RawHtml implements {traits:?}"));
     }
 
@@ -405,13 +398,12 @@ fn config<'a>(
     manifest: &'a AssetManifest,
     module: &'a IrModule,
     slots: &'a SlotData,
-    body_prefix: Option<&'a str>,
+    body_prefix: Option<&'a RawHtml>,
 ) -> PageConfig<'a> {
     PageConfig {
         title: "Raw",
         route_pattern: ROUTE,
         manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: None,
@@ -422,21 +414,11 @@ fn config<'a>(
     }
 }
 
-/// The four renders that write a page's document, each returning (HTML,
-/// nonce). The nonce is drawn per render on three of them, so documents are
+/// Both retained renderers return (HTML, nonce). Each draws a fresh nonce, so documents are
 /// compared with it replaced.
 type Render = fn(&PageConfig) -> (String, String);
 
-const PATHS: [(&str, Render); 4] = [
-    ("render_page", |c| {
-        let page = render_page(c);
-        (page.html, page.nonce.to_string())
-    }),
-    ("render_page_with_nonce", |c| {
-        let nonce = CspNonce::parse("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=").expect("nonce");
-        let page = render_page_with_nonce(c, &nonce);
-        (page.html, page.nonce.to_string())
-    }),
+const PATHS: [(&str, Render); 2] = [
     ("try_render", |c| {
         let parts = try_render(c, &RenderCtx::new())
             .expect("renders")
@@ -452,7 +434,7 @@ const PATHS: [(&str, Render); 4] = [
 ];
 
 #[test]
-fn a_raw_html_body_prefix_is_written_exactly_as_the_same_string_on_every_path() {
+fn a_raw_html_body_prefix_is_written_verbatim_on_every_retained_path() {
     let manifest = manifest();
     let module = module();
     let slots = SlotData::new(0);
@@ -460,21 +442,13 @@ fn a_raw_html_body_prefix_is_written_exactly_as_the_same_string_on_every_path() 
     // character, none of which may be escaped or altered.
     let markup = "<header data-x=\"1\">Caf\u{e9} &amp; <b>bar</b></header>";
     let raw = RawHtml::trusted(markup);
-    let as_string = String::from(markup);
 
     for (name, render) in PATHS {
         let (with_raw, nonce_raw) = render(&config(&manifest, &module, &slots, Some(&raw)));
-        let (with_string, nonce_string) =
-            render(&config(&manifest, &module, &slots, Some(&as_string)));
         let (without, nonce_none) = render(&config(&manifest, &module, &slots, None));
 
         let with_raw = with_raw.replace(&nonce_raw, "N");
-        let with_string = with_string.replace(&nonce_string, "N");
         let without = without.replace(&nonce_none, "N");
-        assert_eq!(
-            with_raw, with_string,
-            "{name}: RawHtml and string write the same page"
-        );
         // Present, once, verbatim, right before the root...
         assert_eq!(with_raw.matches(markup).count(), 1, "{name}");
         assert!(
@@ -499,7 +473,6 @@ fn the_documented_body_prefix_form_compiles_on_the_msrv_and_renders() {
         title: "Tenant",
         route_pattern: ROUTE,
         manifest: &manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: None,

@@ -21,7 +21,7 @@ import {
   writeFormControlProperty,
 } from './form-control.js';
 import { reconcileList, createList } from './list.js';
-import { htmlOf, isTrustedHtml, warnInnerHtmlChildren, warnRawAttr } from './trusted-html.js';
+import { htmlOf, isTrustedHtml, warnInnerHtmlChildren, checkRawAttr } from './trusted-html.js';
 import { createShow } from './show.js';
 import { isEventHandlerAttr, isRawHtmlAttr, isUnsafeAttrWrite } from '../security/url-safety.js';
 
@@ -408,7 +408,7 @@ export function applyDynamicProps(el: Element, props: Record<string, unknown> | 
         // trusted HTML for `srcdoc` is written as itself, as h() does (DR-19).
         // Verified by: src/dom/__tests__/trusted-html.test.ts > "an adopted island's srcdoc binding writes trustedHtml() typed and warns once for a string"
         // Verified by: src/__tests__/renderer-contract.test.ts > "writes %s as the string the URL guard checked, not a second conversion"
-        warnRawAttr(attrKey, v);
+        checkRawAttr(attrKey, v);
         if (el.getAttribute(attrKey) !== str) el.setAttribute(attrKey, typeof v === 'object' && isRawHtmlAttr(attrKey) && isTrustedHtml(v) ? htmlOf(v) : str);
       }
     });

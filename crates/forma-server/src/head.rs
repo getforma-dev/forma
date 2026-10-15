@@ -8,8 +8,7 @@
 //!
 //! Each reaches the page through [`RenderCtx`](crate::RenderCtx), so only
 //! [`try_render`](crate::try_render) and
-//! [`render_browser_shell`](crate::render_browser_shell) write them; the
-//! deprecated `render_page` writes the document 0.2.1 wrote.
+//! [`render_browser_shell`](crate::render_browser_shell) write them.
 //!
 //! [`PageConfig::config_json`]: crate::PageConfig::config_json
 

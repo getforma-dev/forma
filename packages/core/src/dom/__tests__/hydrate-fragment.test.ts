@@ -1,3 +1,4 @@
+import { trustedHtml } from '../trusted-html';
 /**
  * Fragments in adoption (FORMA-003, decision brief DR-7 (a)).
  *
@@ -227,7 +228,7 @@ describe('Fragment adoption', () => {
     const setters: Array<(v: number) => void> = [];
     activateIslands({
       Many: (el) => {
-        const fragment = templateMany('<button>0</button><i>tail</i>');
+        const fragment = templateMany(trustedHtml('<button>0</button><i>tail</i>'));
         el.append(fragment);
         const [n, setN] = createSignal(0);
         setters.push(setN);

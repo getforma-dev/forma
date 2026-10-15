@@ -49,8 +49,9 @@
 //! remains an interim strict tuple helper; no lenient loader remains.
 //! A route explicitly declared browser-only uses [`render_browser_shell`].
 //! Debug reload rechecks a changed schema and keeps the last good module and
-//! asset snapshot on file corruption. The remaining low-level render and raw
-//! output bridges are removed by FORMA-107/109.
+//! asset snapshot on file corruption. The low-level `try_render` bridge remains
+//! until FORMA-107. Removed in 3.0.0: `PageOutput`, `render_page`,
+//! `render_page_with_nonce` and `PageConfig::config_script`.
 
 // Makes README.md's and SECURITY.md's "Zero `unsafe` blocks" a property the
 // compiler enforces rather than a claim.
@@ -69,7 +70,7 @@
 pub mod assets;
 /// Content-Security-Policy construction and nonce generation.
 pub mod csp;
-/// Doctests pinning each deprecation; built only by `cargo test --doc`.
+/// Compile controls pinning removed response/raw-script bridges.
 #[cfg(doctest)]
 mod deprecations;
 // Documented by its own `//!` docs (the preview frame, DR-14 tier (c)).
@@ -115,6 +116,4 @@ pub use pages::{PageHandle, Pages};
 pub use raw::RawHtml;
 pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};
-#[allow(deprecated)]
-pub use template::{render_page, render_page_with_nonce};
 pub use types::*;

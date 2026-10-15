@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Response and raw boundaries — FORMA-109
+
+- Remove `PageOutput`, `render_page`, `render_page_with_nonce` and `PageConfig::config_script`. Retained checked renderers return only `PageResponse`; HTML leaves separately only through the named `into_parts_unchecked` exit. `try_render` remains for typed-handle integration until FORMA-107.
+- Require `PageConfig::body_prefix: Option<&RawHtml>` and remove the string-provenance registry and RAW-101 bridge warning. Keep the single reviewed `RawHtml::trusted` constructor.
+- Enforce both Trusted Types directives for strict pages and named frames in every build without requiring a reporting endpoint. The typed route relaxation removes only those directives from enforcement and retains Report-Only; SR8 governs owner/date metadata. Existing frame overrides, document headers, nonce generation and escaped JSON remain.
+
 ### Declared handler props — FORMA-102
 
 - `load_ir_modules` now strictly returns `Pages`; `bind::<P>(page)` verifies a derived handler once, then `PageHandle<P>::render(&props, &ctx)` checks and projects request values into exact declared SERVER roots. The old lenient tuple loader is removed; `load_ir_modules_strict` remains temporarily.

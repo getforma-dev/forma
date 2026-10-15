@@ -19,7 +19,7 @@ import {
   isUnsafeAttrWrite,
   isUrlAttr,
 } from '../security/url-safety.js';
-import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, warnRawAttr, warnScriptElement } from './trusted-html.js';
+import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, refuseScriptElement, type TrustedHtml } from './trusted-html.js';
 
 /**
  * Symbol used as JSX Fragment factory. h(Fragment, null, ...children) returns DocumentFragment.
@@ -294,19 +294,19 @@ function warnDropped(el: Element, key: string, reason: string): void {
 }
 
 /**
- * `__html` of a `dangerouslySetInnerHTML` value, checked: a string or a
- * `trustedHtml()` value, else a TypeError naming what was given.
+ * `__html` of a `dangerouslySetInnerHTML` value: a `trustedHtml()` value,
+ * otherwise a coded TypeError before any DOM write.
  */
 function innerHtmlOf(value: unknown): unknown {
-  if (typeof value !== 'object' || !('__html' in (value as any))) {
+  if (value === null || typeof value !== 'object' || !('__html' in (value as any))) {
     throw new TypeError(
-      'dangerouslySetInnerHTML: expected { __html: string }, got ' + typeof value,
+      'FORMA_E_RAW_INNER_HTML: dangerouslySetInnerHTML requires { __html: trustedHtml() }, got ' + typeof value,
     );
   }
   const html = (value as { __html: unknown }).__html;
-  if (typeof html !== 'string' && !isTrustedHtml(html)) {
+  if (!isTrustedHtml(html)) {
     throw new TypeError(
-      'dangerouslySetInnerHTML: __html must be a string or a trustedHtml() value, got ' + typeof html,
+      'FORMA_E_RAW_INNER_HTML: dangerouslySetInnerHTML requires trustedHtml(), got ' + typeof html,
     );
   }
   return html;
@@ -455,8 +455,7 @@ function handleEvent(el: Element, key: string, value: unknown): void {
  * strings through `__html` — this will create an XSS vulnerability.
  * Only use with trusted, server-generated markup, wrapped in `trustedHtml()`
  * (DR-19): a `TrustedHTML` reaches the sink as it is, so a page enforcing
- * Trusted Types accepts it; a plain string still works in 2.x and warns once
- * in development (FORMA_W_RAW_INNER_HTML).
+ * Trusted Types accepts it. Plain strings are refused before the sink in all builds.
  *
  * Supports both static `{ __html }` values and reactive functions that return
  * one. `null` empties the element through `replaceChildren()`, which no
@@ -481,12 +480,11 @@ function handleInnerHTML(el: Element, _key: string, value: unknown): void {
  * `el`'s content: h()'s reactive path and adoption's (FORMA-176), one writer so
  * the two cannot drift.
  *
- * - Markup reaches the content through the raw sink: a `trustedHtml()` value
- *   typed, anything else as before, with its development warning. It is
- *   recorded as current only once written, so a write the page refused (a
- *   string under enforced Trusted Types) is tried again for the same markup.
- * - `null` empties the element and forgets the markup, so the same markup
- *   after a `null` is written again (A → null → A).
+ * - Only a `trustedHtml()` value reaches the raw sink. It is recorded as
+ *   current only once written, so a failed write cannot suppress a later
+ *   accepted write of the same markup.
+ * - `null` and `false` empty the element and forget the markup, so the same
+ *   markup after either sentinel is written again.
  * - `adopt` makes the first run an adoption (DR-5): markup the server's
  *   element already holds is not written again ({@link holdsMarkup}), and a
  *   first `null` keeps the server's content, the children adoption bound, as
@@ -504,7 +502,7 @@ export function bindInnerHTML(el: Element, value: unknown, adopt: boolean): void
     const adopting = first;
     first = false;
     const cache = getCache(el);
-    if (resolved == null) {
+    if (resolved == null || resolved === false) {
       cache['innerHTML'] = null;
       if (!adopting && el.firstChild) el.replaceChildren();
       return;
@@ -531,8 +529,7 @@ export function bindInnerHTML(el: Element, value: unknown, adopt: boolean): void
  * an unclosed `<p>` or a `<table>` without `<tbody>` all serialise
  * differently, so byte equality alone would rewrite the server's nodes (an
  * iframe reloads, typed text is lost: DR-5). The parse writes `sink` itself,
- * so `trustedHtml()` stays typed; a string is parsed as a string, which a page
- * requiring Trusted Types reports or refuses, as it would the write.
+ * so `trustedHtml()` stays typed. Raw strings have already been refused.
  *
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "markup the server wrote in a form the browser serialises differently is not rewritten: %j"
  */
@@ -540,9 +537,8 @@ function holdsMarkup(el: Element, markup: string, sink: string): boolean {
   const current = el.innerHTML;
   if (current === markup) return true;
   // An empty element (the walker's) holds no markup to compare: write, with
-  // no parse first, so a string raises one Trusted Types report, as client
-  // rendering does, not two.
-  // Verified by: src/dom/__tests__/trusted-html.test.ts > "adopting a string onto the walker's empty element raises one Trusted Types report, as client rendering does"
+  // no parse first. The typed admission check also runs for an empty target.
+  // Verified by: src/dom/__tests__/trusted-html.test.ts > "adopted and client reactive strings are refused before the browser sink"
   if (current === '') return false;
   const tpl = document.createElement('template');
   tpl.innerHTML = sink;
@@ -652,17 +648,17 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
   const write = (v: unknown): void => {
     const cache = getCache(el);
     if (v != null && v !== false) {
+      checkRawAttr(key, v);
       const strVal = String(v);
       // Already written, already guarded — see the note above the function.
       if (cache[key] === strVal) return;
       if (!urlAttr || !isDangerousUrl(strVal, el.localName)) {
-        cache[key] = strVal;
         // The string the URL guard checked is the string written: an object
         // is converted once, above. Only trusted HTML for `srcdoc` is written
         // as itself, so a TrustedHTML reaches that sink typed (DR-19).
         // Verified by: src/__tests__/renderer-contract.test.ts > "writes %s as the string the URL guard checked, not a second conversion"
-        warnRawAttr(key, v);
         el.setAttribute(key, typeof v === 'object' && isRawHtmlAttr(key) && isTrustedHtml(v) ? htmlOf(v) : strVal);
+        cache[key] = strVal;
         return;
       }
       if (__DEV__) warnDropped(el, key, 'unsafe-URL');
@@ -797,7 +793,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
     if (__DEV__) warnDropped(el, key, 'inline-event-handler');
     return;
   }
-  warnRawAttr(key, value);
+  checkRawAttr(key, value);
 
   // true → empty string attribute, else stringified value
   if (value === true) {
@@ -980,9 +976,14 @@ function appendChild(parent: Node, child: unknown): void {
  * ```
  */
 // Overloads: function component, Fragment, string
+/** Named raw props remain typed even though other attributes are extensible. */
+export type ElementProps = Record<string, unknown> & {
+  dangerouslySetInnerHTML?: { __html: TrustedHtml } | (() => { __html: TrustedHtml } | null | false) | null | false;
+  srcdoc?: TrustedHtml | (() => TrustedHtml | null | false) | null | false;
+};
 export function h(tag: (props: Record<string, unknown>) => unknown, props?: Record<string, unknown> | null, ...children: unknown[]): Node;
 export function h(tag: typeof Fragment, props?: null, ...children: unknown[]): DocumentFragment;
-export function h(tag: string, props?: Record<string, unknown> | null, ...children: unknown[]): HTMLElement;
+export function h(tag: string, props?: ElementProps | null, ...children: unknown[]): HTMLElement;
 export function h(
   tag: string | typeof Fragment | ((props: Record<string, unknown>) => unknown),
   props?: Record<string, unknown> | null,
@@ -1010,6 +1011,7 @@ export function h(
 
   // After the Fragment guard above, tag is guaranteed to be a string
   const tagName = tag as string;
+  refuseScriptElement(tagName);
 
   if (hydrating) {
     return { type: 'element', tag: tagName, props: props ?? null, children } as unknown as HTMLElement;
@@ -1025,8 +1027,6 @@ export function h(
   // content being built (namespace.ts), which is HTML for a child built
   // before its parent exists, unless the tree is inside svg().
   if (DUAL_USE_SVG_TAGS.has(tagName)) {
-    // 3.0.0 refuses a script element (DR-19, FORMA-109); 2.x warns once.
-    warnScriptElement(tagName);
     const ns = getNamespace();
     el = ns ? document.createElementNS(ns, tagName) : getProto(tagName).cloneNode(false) as HTMLElement;
   } else if (ELEMENT_PROTOS && ELEMENT_PROTOS[tagName]) {

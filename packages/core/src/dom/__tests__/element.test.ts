@@ -1,3 +1,4 @@
+import { trustedHtml, type TrustedHtml } from '../trusted-html';
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -82,7 +83,7 @@ describe('h() — static props', () => {
   });
 
   it('sets dangerouslySetInnerHTML', () => {
-    const el = h('div', { dangerouslySetInnerHTML: { __html: '<b>bold</b>' } });
+    const el = h('div', { dangerouslySetInnerHTML: { __html: trustedHtml('<b>bold</b>') } });
     expect(el.innerHTML).toBe('<b>bold</b>');
   });
 
@@ -316,20 +317,20 @@ describe('fragment()', () => {
 });
 
 describe('h() — dangerouslySetInnerHTML validation', () => {
-  it('reactive function returning { __html: string } updates innerHTML', () => {
+  it('reactive function returning { __html: TrustedHtml } updates innerHTML', () => {
     createRoot(() => {
-      const [html, setHtml] = createSignal({ __html: '<b>hello</b>' });
+      const [html, setHtml] = createSignal({ __html: trustedHtml('<b>hello</b>') });
       const el = h('div', { dangerouslySetInnerHTML: html });
       expect(el.innerHTML).toBe('<b>hello</b>');
 
-      setHtml({ __html: '<i>updated</i>' });
+      setHtml({ __html: trustedHtml('<i>updated</i>') });
       expect(el.innerHTML).toBe('<i>updated</i>');
     });
   });
 
   it('reactive function returning null clears innerHTML', () => {
     createRoot(() => {
-      const [html, setHtml] = createSignal<{ __html: string } | null>({ __html: '<b>hello</b>' });
+      const [html, setHtml] = createSignal<{ __html: TrustedHtml } | null>({ __html: trustedHtml('<b>hello</b>') });
       const el = h('div', { dangerouslySetInnerHTML: html });
       expect(el.innerHTML).toBe('<b>hello</b>');
 
@@ -340,18 +341,21 @@ describe('h() — dangerouslySetInnerHTML validation', () => {
 
   it('static path throws TypeError for invalid shape (not an object)', () => {
     expect(() => {
+      // @ts-expect-error invalid raw prop must also fail at runtime
       h('div', { dangerouslySetInnerHTML: 'not-an-object' });
     }).toThrow(TypeError);
   });
 
   it('static path throws TypeError for object missing __html', () => {
     expect(() => {
+      // @ts-expect-error invalid raw prop must also fail at runtime
       h('div', { dangerouslySetInnerHTML: { wrong: 'key' } });
     }).toThrow(TypeError);
   });
 
-  it('static path throws TypeError when __html is not a string', () => {
+  it('static path throws TypeError when __html is not TrustedHtml', () => {
     expect(() => {
+      // @ts-expect-error a number is neither a string nor TrustedHtml
       h('div', { dangerouslySetInnerHTML: { __html: 42 } });
     }).toThrow(TypeError);
   });
@@ -359,14 +363,16 @@ describe('h() — dangerouslySetInnerHTML validation', () => {
   it('reactive path throws TypeError for invalid shape', () => {
     expect(() => {
       createRoot(() => {
+        // @ts-expect-error invalid reactive shape must fail at runtime
         h('div', { dangerouslySetInnerHTML: () => 'not-an-object' });
       });
     }).toThrow(TypeError);
   });
 
-  it('reactive path throws TypeError when __html is not a string', () => {
+  it('reactive path throws TypeError when __html is not TrustedHtml', () => {
     expect(() => {
       createRoot(() => {
+        // @ts-expect-error invalid reactive markup must fail at runtime
         h('div', { dangerouslySetInnerHTML: () => ({ __html: 123 }) });
       });
     }).toThrow(TypeError);

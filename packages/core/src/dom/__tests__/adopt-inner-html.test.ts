@@ -33,7 +33,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-type Inner = { __html: string | TrustedHtml } | null;
+type Inner = { __html: TrustedHtml } | null | false;
 
 /** The two server outputs for `<article id="doc">` holding `markup`. */
 const SERVERS = [
@@ -57,7 +57,7 @@ const linesWith = (code: string): string[] =>
 
 describe('dangerouslySetInnerHTML in adoption', () => {
   it.each(SERVERS)('an adopted reactive dangerouslySetInnerHTML shows its content, follows its signal through null and back, and matches client rendering ($name)', (server) => {
-    const [inner, setInner] = createSignal<Inner>({ __html: '<b>A</b>' });
+    const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml('<b>A</b>') });
     const client = h('article', { id: 'client', dangerouslySetInnerHTML: () => inner() });
     const adopted = adopt(server.html('<b>A</b>'), () => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }));
 
@@ -69,9 +69,9 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     expect(adopted.innerHTML).toBe('<b>A</b>');
     same();
     for (const [next, expected] of [
-      [{ __html: '<i>B</i>' }, '<i>B</i>'],
+      [{ __html: trustedHtml('<i>B</i>') }, '<i>B</i>'],
       [null, ''],
-      [{ __html: '<b>A</b>' }, '<b>A</b>'],
+      [{ __html: trustedHtml('<b>A</b>') }, '<b>A</b>'],
       [{ __html: trustedHtml('<u>C</u>') }, '<u>C</u>'],
     ] as const) {
       setInner(next);
@@ -81,14 +81,28 @@ describe('dangerouslySetInnerHTML in adoption', () => {
   });
 
   it('A → null → A shows A again, client-rendered and adopted', () => {
-    const [inner, setInner] = createSignal<Inner>({ __html: '<b>A</b>' });
+    const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml('<b>A</b>') });
     const client = h('article', { dangerouslySetInnerHTML: () => inner() });
     const adopted = adopt('<article id="doc"></article>', () => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }));
     for (let round = 0; round < 3; round++) {
       setInner(null);
       expect(client.childNodes.length).toBe(0);
       expect(adopted.childNodes.length).toBe(0);
-      setInner({ __html: '<b>A</b>' });
+      setInner({ __html: trustedHtml('<b>A</b>') });
+      expect(client.innerHTML, `round ${round}`).toBe('<b>A</b>');
+      expect(adopted.innerHTML, `round ${round}`).toBe('<b>A</b>');
+    }
+  });
+
+  it('A → false → A shows A again, client-rendered and adopted', () => {
+    const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml('<b>A</b>') });
+    const client = h('article', { dangerouslySetInnerHTML: () => inner() });
+    const adopted = adopt('<article id="doc"></article>', () => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }));
+    for (let round = 0; round < 3; round++) {
+      setInner(false);
+      expect(client.childNodes.length).toBe(0);
+      expect(adopted.childNodes.length).toBe(0);
+      setInner({ __html: trustedHtml('<b>A</b>') });
       expect(client.innerHTML, `round ${round}`).toBe('<b>A</b>');
       expect(adopted.innerHTML, `round ${round}`).toBe('<b>A</b>');
     }
@@ -99,7 +113,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     const serverChild = document.querySelector('#doc b');
     const observer = new MutationObserver(() => {});
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
-    const [inner, setInner] = createSignal<Inner>({ __html: '<b>A</b><i>B</i>' });
+    const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml('<b>A</b><i>B</i>') });
     mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
     const records = observer.takeRecords();
     observer.disconnect();
@@ -107,13 +121,13 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     expect(records.map((r) => `${r.type}:${(r.target as Element).id}:${r.attributeName ?? ''}`)).toEqual(['attributes:app:data-forma-ssr']);
     expect(document.querySelector('#doc b')).toBe(serverChild);
     // And a change is still written.
-    setInner({ __html: '<p>changed</p>' });
+    setInner({ __html: trustedHtml('<p>changed</p>') });
     expect(document.getElementById('doc')!.innerHTML).toBe('<p>changed</p>');
   });
 
   it.each(SERVERS)('a static dangerouslySetInnerHTML is adopted as h() renders it, from either server output ($name)', (server) => {
-    const client = h('article', { dangerouslySetInnerHTML: { __html: '<b>static</b>' } });
-    const adopted = adopt(server.html('<b>static</b>'), () => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: '<b>static</b>' } }));
+    const client = h('article', { dangerouslySetInnerHTML: { __html: trustedHtml('<b>static</b>') } });
+    const adopted = adopt(server.html('<b>static</b>'), () => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<b>static</b>') } }));
     expect(adopted.innerHTML).toBe('<b>static</b>');
     expect(adopted.innerHTML).toBe(client.innerHTML);
     expect(adopted.hasAttribute('dangerouslysetinnerhtml')).toBe(false);
@@ -127,7 +141,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     const serverChild = document.querySelector('#doc b');
     const observer = new MutationObserver(() => {});
     observer.observe(document.getElementById('doc')!, { subtree: true, childList: true, attributes: true, characterData: true });
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: '<b>A</b>' } }, h('span', null, 'kid')), '#app');
+    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<b>A</b>') } }, h('span', null, 'kid')), '#app');
     expect(observer.takeRecords()).toEqual([]);
     observer.disconnect();
     expect(document.querySelector('#doc b')).toBe(serverChild);
@@ -135,7 +149,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     expect(linesWith('Hydration mismatch')).toEqual([]);
   });
 
-  it.each([undefined, null, false])("a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and bound (%s)", (value) => {
+  it.each([undefined, null, false] as const)("a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and bound (%s)", (value) => {
     // formajs#32's review (B1): h() and ./ssr treat a null, undefined or false
     // prop as absent (the `cond && { __html }` pattern among them), so the
     // children are the content; adoption threw, or wiped them, instead.
@@ -173,13 +187,13 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     const firstNode = doc.firstChild;
     const observer = new MutationObserver(() => {});
     observer.observe(doc, { subtree: true, childList: true, attributes: true, characterData: true });
-    const [inner, setInner] = createSignal<Inner>({ __html: markup });
+    const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml(markup) });
     mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
     expect(observer.takeRecords()).toEqual([]);
     observer.disconnect();
     expect(doc.firstChild).toBe(firstNode);
     // A change is still written.
-    setInner({ __html: '<p>changed</p>' });
+    setInner({ __html: trustedHtml('<p>changed</p>') });
     expect(doc.innerHTML).toBe('<p>changed</p>');
   });
 
@@ -187,27 +201,27 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     document.body.innerHTML = '<div id="app" data-forma-ssr><article id="doc"><label>Name <input id="name"></label></article></div>';
     const input = document.getElementById('name') as HTMLInputElement;
     input.value = 'typed before activation';
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: '<label>Name <input id=name></label>' } }), '#app');
+    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<label>Name <input id=name></label>') } }), '#app');
     expect(document.getElementById('name')).toBe(input);
     expect(input.value).toBe('typed before activation');
   });
 
   it('children beside the prop warn once in development, in h() and in adoption, and a falsy prop does not', () => {
-    h('article', { dangerouslySetInnerHTML: { __html: '<b>A</b>' } }, h('span', null, 'kid'));
-    h('article', { dangerouslySetInnerHTML: () => ({ __html: '<b>A</b>' }) }, 'text');
+    h('article', { dangerouslySetInnerHTML: { __html: trustedHtml('<b>A</b>') } }, h('span', null, 'kid'));
+    h('article', { dangerouslySetInnerHTML: () => ({ __html: trustedHtml('<b>A</b>') }) }, 'text');
     const lines = linesWith(INNER_HTML_CHILDREN_CODE);
     expect(lines).toHaveLength(1);
     expect(lines[0]).toMatch(/^\[forma\] FORMA_W_INNER_HTML_CHILDREN: /);
     expect(lines[0]).toContain('adoption keeps only the markup');
     // Adoption says the same, once per page or process.
     delete (globalThis as Record<symbol, unknown>)[REGISTRY];
-    adopt('<article id="doc"><span>kid</span></article>', () => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: '<b>A</b>' } }, h('span', null, 'kid')));
+    adopt('<article id="doc"><span>kid</span></article>', () => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<b>A</b>') } }, h('span', null, 'kid')));
     expect(linesWith(INNER_HTML_CHILDREN_CODE)).toHaveLength(2);
     // No prop, a falsy prop, or no children: nothing to say.
     delete (globalThis as Record<symbol, unknown>)[REGISTRY];
     h('article', { dangerouslySetInnerHTML: false }, h('span', null, 'kid'));
     h('article', { dangerouslySetInnerHTML: null }, 'text');
-    h('article', { dangerouslySetInnerHTML: { __html: '<b>A</b>' } }, null, false);
+    h('article', { dangerouslySetInnerHTML: { __html: trustedHtml('<b>A</b>') } }, null, false);
     h('article', null, h('span', null, 'kid'));
     expect(linesWith(INNER_HTML_CHILDREN_CODE)).toHaveLength(2);
   });
@@ -226,7 +240,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     expect(clicks).toBe(1);
     expect(client.innerHTML).toBe('<button>fallback</button>');
     // Markup replaces the children, client-rendered and adopted alike; null then empties both.
-    setInner({ __html: '<b>A</b>' });
+    setInner({ __html: trustedHtml('<b>A</b>') });
     expect(adopted.innerHTML).toBe('<b>A</b>');
     expect(client.innerHTML).toBe('<b>A</b>');
     setInner(null);
@@ -234,28 +248,23 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     expect(client.childNodes.length).toBe(0);
   });
 
-  it('adoption writes a string through the raw sink with its development warning, and trustedHtml() with none', () => {
+  it('adoption refuses strings and look-alikes before writing, then accepts a trusted recovery', () => {
     const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml('<b>typed</b>') });
     const adopted = adopt('<article id="doc"></article>', () => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }));
-    expect(adopted.innerHTML).toBe('<b>typed</b>');
-    expect(linesWith('FORMA_W_RAW_INNER_HTML')).toEqual([]);
-    setInner({ __html: '<i>plain</i>' });
-    setInner({ __html: '<i>plain again</i>' });
-    expect(adopted.innerHTML).toBe('<i>plain again</i>');
-    expect(linesWith('FORMA_W_RAW_INNER_HTML')).toHaveLength(1);
-    // A value that is neither is refused, as h() refuses it: the binding's
-    // error is reported for both, and the content stays.
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     const client = h('article', { dangerouslySetInnerHTML: () => inner() });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     const errors: unknown[] = [];
-    const off = onError((err) => { errors.push(err); });
+    const off = onError(err => errors.push(err));
     try {
-      setInner({ __html: 7 as unknown as string });
-    } finally {
-      off();
-    }
-    expect(errors.map((e) => (e as Error).name)).toEqual(['TypeError', 'TypeError']);
-    expect(adopted.innerHTML).toBe('<i>plain again</i>');
-    expect(client.innerHTML).toBe('<i>plain again</i>');
+      setInner({ __html: '<i>plain</i>' as unknown as TrustedHtml });
+      setInner({ __html: 7 as unknown as TrustedHtml });
+    } finally { off(); }
+    expect(errors).toHaveLength(4);
+    expect(errors.every(error => String(error).includes('FORMA_E_RAW_INNER_HTML'))).toBe(true);
+    expect(adopted.innerHTML).toBe('<b>typed</b>');
+    expect(client.innerHTML).toBe('<b>typed</b>');
+    setInner({ __html: trustedHtml('<i>plain</i>') });
+    expect(adopted.innerHTML).toBe('<i>plain</i>');
+    expect(client.innerHTML).toBe('<i>plain</i>');
   });
 });

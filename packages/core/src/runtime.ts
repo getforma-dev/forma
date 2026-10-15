@@ -160,7 +160,7 @@
 import { createSignal, internalEffect, createComputed, batch } from './reactive';
 import { reconcileList, type ListTransitionHooks } from './dom/list';
 import { createReconciler } from './dom/reconcile';
-import { isTrustedHtml, trustedHtml, warnRuntimeSrcdoc, type TrustedHtml } from './dom/trusted-html';
+import { isTrustedHtml, trustedHtml, RUNTIME_SRCDOC_CODE, type TrustedHtml } from './dom/trusted-html';
 import { isDangerousUrl, isUrlAttr, isEventHandlerAttr, isRawHtmlAttr } from './security/url-safety';
 import {
   clearExpressionCache,
@@ -584,7 +584,7 @@ export interface MountHandle {
   readonly tier: MountTier;
   readonly name: string;
   /** Render new markup into the root: reconciled, so scopes whose shape is unchanged keep their state. */
-  update(markup: string | TrustedHtml): void;
+  update(markup: TrustedHtml): void;
   /** Dispose every binding of the mount and empty its root. */
   unmount(): void;
   /** Development builds: the grants used so far. Production builds: `null`. */
@@ -1118,7 +1118,7 @@ function evaluateCompiledTemplate(compiled: CompiledTemplate, item: unknown): st
  * Clone a template element and apply item data to all text node placeholders.
  * Stores the original template text in a WeakMap so updates can re-apply without re-cloning.
  */
-function cloneWithTemplateData(template: Element, item: unknown): Element {
+function cloneWithTemplateData(template: Element, item: unknown, mount?: MountCtx): Element {
   const clone = template.cloneNode(true) as Element;
   const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
@@ -1131,12 +1131,12 @@ function cloneWithTemplateData(template: Element, item: unknown): Element {
     }
   }
   // Also process attributes (e.g. data-key, href, src, etc.)
-  cloneAttributeTemplates(clone, item);
+  cloneAttributeTemplates(clone, item, mount);
   return clone;
 }
 
 /**
- * Update an existing cloned element's text nodes with new item data.
+ * Update an existing cloned element's text and safe attributes with new item data.
  * Uses the cached original template patterns from the WeakMap.
  */
 function updateTemplateData(el: Element, item: unknown): void {
@@ -1148,10 +1148,16 @@ function updateTemplateData(el: Element, item: unknown): void {
       node.textContent = evaluateCompiledTemplate(compiled, item);
     }
   }
+  for (const node of [el, ...Array.from(el.querySelectorAll('*'))]) {
+    for (const { attr, compiled } of templateAttrs.get(node) ?? []) {
+      applyTemplateAttribute(node, attr, compiled, item);
+    }
+  }
 }
 
 /** WeakMap for caching compiled attribute templates */
 const templateAttrs = new WeakMap<Element, Array<{ attr: string; compiled: CompiledTemplate }>>();
+const RUNTIME_SRCDOC_REASON = `${RUNTIME_SRCDOC_CODE}: srcdoc is refused; use h() with trustedHtml()`;
 
 /**
  * Process attribute templates on a cloned element and its descendants.
@@ -1511,7 +1517,16 @@ function applyShowVisibility(
   );
 }
 
-function cloneAttributeTemplates(el: Element, item: unknown): void {
+function applyTemplateAttribute(node: Element, attr: string, compiled: CompiledTemplate, item: unknown): void {
+  const value = evaluateCompiledTemplate(compiled, item);
+  if (isUnsafeAttrBinding(attr, value, node.tagName.toLowerCase())) {
+    node.removeAttribute(attr);
+  } else {
+    node.setAttribute(attr, value);
+  }
+}
+
+function cloneAttributeTemplates(el: Element, item: unknown, mount?: MountCtx): void {
   const all = [el, ...Array.from(el.querySelectorAll('*'))];
   for (const node of all) {
     const entries: Array<{ attr: string; compiled: CompiledTemplate }> = [];
@@ -1519,18 +1534,15 @@ function cloneAttributeTemplates(el: Element, item: unknown): void {
       // Skip directive attributes — they'll be evaluated by bindElement with the child scope
       if (isDirectiveAttr(attr.name)) continue;
       if (attr.value.includes('{item')) {
+        if (isRawHtmlAttr(attr.name)) {
+          reportDiagnostic('markup-refused', `row ${attr.name}="${attr.value}"`,
+            RUNTIME_SRCDOC_REASON, RUNTIME_SRCDOC_CODE, mount);
+          node.removeAttribute(attr.name);
+          continue;
+        }
         const compiled = compileTemplate(attr.value);
         entries.push({ attr: attr.name, compiled });
-        const value = evaluateCompiledTemplate(compiled, item);
-        if (isUnsafeAttrBinding(attr.name, value, node.tagName.toLowerCase())) {
-          node.removeAttribute(attr.name);
-        } else {
-          // A row's `srcdoc` is a raw entry no trustedHtml() can reach:
-          // written as the string it is, and warned of (FORMA-126).
-          // Verified by: src/__tests__/runtime-srcdoc.test.ts > "a list row's srcdoc writes its string and warns once with the runtime code"
-          warnRuntimeSrcdoc(attr.name);
-          node.setAttribute(attr.name, value);
-        }
+        applyTemplateAttribute(node, attr.name, compiled, item);
       }
     }
     if (entries.length > 0) {
@@ -2284,16 +2296,18 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       disposers.push(dispose);
     } else if (name.startsWith('data-bind:')) {
       const attrName = name.slice(10); // 'data-bind:'.length === 10
-      if (scope.mount?.tier === 'unreviewed' && isRawHtmlAttr(attrName)) {
+      if (isRawHtmlAttr(attrName)) {
         // An unreviewed mount renders no srcdoc (see refuseUnreviewed): the
         // one binding that could write one is refused before it runs, and
         // reported (formajs#35's review, S2).
         // Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported"
         reportDiagnostic(
           'markup-refused',
-          attr.value,
-          'unreviewed markup renders no srcdoc: the binding is refused',
-          'FORMA_E_UNREVIEWED_SRCDOC',
+          `${name}="${attr.value}"`,
+          scope.mount?.tier === 'unreviewed'
+            ? 'srcdoc binding is refused in an unreviewed mount'
+            : RUNTIME_SRCDOC_REASON,
+          scope.mount?.tier === 'unreviewed' ? 'FORMA_E_UNREVIEWED_SRCDOC' : RUNTIME_SRCDOC_CODE,
           scope.mount,
         );
         el.removeAttribute(attrName);
@@ -2322,10 +2336,6 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         if (isUnsafeAttrBinding(attrName, str, el.tagName.toLowerCase())) {
           el.removeAttribute(attrName);
         } else {
-          // `data-bind:srcdoc` is a raw entry no trustedHtml() can reach:
-          // written as the string it is, and warned of (FORMA-126).
-          // Verified by: src/__tests__/runtime-srcdoc.test.ts > "data-bind:srcdoc writes its string and warns once with the runtime code"
-          warnRuntimeSrcdoc(attrName);
           el.setAttribute(attrName, str);
         }
       });
@@ -2412,7 +2422,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
 
       /** Clone template, bind directives via child scope */
       function createBoundClone(item: unknown, index: number): Element {
-        const clone = cloneWithTemplateData(template, item);
+        const clone = cloneWithTemplateData(template, item, scope.mount);
         const childScope = createChildScope(scope, { item, index });
         const itemDisposers: (() => void)[] = [];
         bindElement(clone, childScope, itemDisposers);
@@ -3147,7 +3157,7 @@ function resetScope(element: Element): void {
 
 // ── Reconciler ──
 
-let _reconciler: ((container: Element, html: string | TrustedHtml) => void) | null = null;
+let _reconciler: ((container: Element, html: TrustedHtml) => void) | null = null;
 
 /** The `body` observer pauses while a reconciler patches, so it does not see the patch. */
 function disconnectObserver(): void {
@@ -3185,8 +3195,7 @@ function getReconciler() {
 
 /**
  * Reconcile a container's DOM against new markup. A raw sink: pass
- * `trustedHtml(markup)` (DR-19); a plain string still works in 2.x and warns
- * once in development.
+ * `trustedHtml(markup)` (DR-19); plain strings are refused before parsing.
  *
  * The tierless path: it binds the markup with every power the runtime has,
  * wherever the container is. It behaves as at 2.0.x; in a development build
@@ -3196,7 +3205,7 @@ function getReconciler() {
  * @deprecated Removed in 3.0.0. Use `mountMarkup(root, markup, { tier, grants })`.
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "reconcile behaves as at 2.0.x and warns once in development"
  */
-function reconcile(container: Element, html: string | TrustedHtml): void {
+function reconcile(container: Element, html: TrustedHtml): void {
   assertTierless('reconcile()');
   if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
     || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && sourceIsDev())) {
@@ -3296,12 +3305,12 @@ function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): 
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount refuses any origin but an opaque one, and any grant"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "the development report lists exactly the grants a fixture widget used"
  */
-function mountMarkup(root: Element, markup: string | TrustedHtml, options: MountOptions): MountHandle {
+function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions): MountHandle {
   if (!root || typeof root !== 'object' || root.nodeType !== 1) {
     throw mountError('FORMA_E_MOUNT_ARGS', 'the root must be an element');
   }
-  if (typeof markup !== 'string' && !isTrustedHtml(markup)) {
-    throw mountError('FORMA_E_MOUNT_ARGS', 'the markup must be a string or trustedHtml()');
+  if (!isTrustedHtml(markup)) {
+    throw mountError('FORMA_E_MOUNT_ARGS', 'the markup must be trustedHtml()');
   }
   const tier = options?.tier;
   if (tier !== 'compiled' && tier !== 'reviewed' && tier !== 'unreviewed') {
@@ -3370,7 +3379,7 @@ function mountMarkup(root: Element, markup: string | TrustedHtml, options: Mount
     disposeAll();
     root.replaceChildren();
   };
-  const render = (html: string | TrustedHtml): void => {
+  const render = (html: TrustedHtml): void => {
     if (!String(html).trim()) {
       clear();
       return;
@@ -3405,10 +3414,10 @@ function mountMarkup(root: Element, markup: string | TrustedHtml, options: Mount
     root,
     tier,
     name: ctx.name,
-    update(next: string | TrustedHtml): void {
+    update(next: TrustedHtml): void {
       alive();
-      if (typeof next !== 'string' && !isTrustedHtml(next)) {
-        throw mountError('FORMA_E_MOUNT_ARGS', 'the markup must be a string or trustedHtml()');
+      if (!isTrustedHtml(next)) {
+        throw mountError('FORMA_E_MOUNT_ARGS', 'the markup must be trustedHtml()');
       }
       render(next);
     },

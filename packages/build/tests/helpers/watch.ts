@@ -10,7 +10,8 @@
  */
 
 import { expect, vi } from 'vitest';
-import { spawn } from 'node:child_process';
+import { execFile, spawn, type ChildProcess } from 'node:child_process';
+import { promisify } from 'node:util';
 import { once } from 'node:events';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -29,6 +30,29 @@ export interface Watcher {
   change(update: () => void): Promise<void>;
 }
 
+/** Stop only this fixture's process tree, then wait for inherited stdio to close.
+ * `exit` alone does not imply the esbuild descendant released its handles.
+ * https://nodejs.org/api/child_process.html#event-close
+ * https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/taskkill
+ */
+export async function stopOwnedWatcher(child: ChildProcess, closed: Promise<unknown>, group: boolean): Promise<void> {
+  if (child.exitCode === null && child.signalCode === null && child.pid !== undefined) {
+    try {
+      if (group) process.kill(-child.pid, 'SIGTERM');
+      else await promisify(execFile)('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, timeout: 5_000 });
+    } catch (error) {
+      // The process may have exited between the check and the targeted kill.
+      if (child.exitCode === null && child.signalCode === null && (error as NodeJS.ErrnoException).code !== 'ESRCH') throw error;
+    }
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([closed, new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`owned watcher ${child.pid} did not close its stdio within 5 seconds`)), 5_000);
+    })]);
+  } finally { clearTimeout(timer); }
+}
+
 export async function watching(config: BuildConfig, body: (watcher: Watcher) => Promise<void>, cwd?: string): Promise<void> {
   const runner = join(config.outputDir, '..', `watch-runner-${process.pid}.mjs`);
   await bundleBuildRunner(runner);
@@ -37,6 +61,9 @@ export async function watching(config: BuildConfig, body: (watcher: Watcher) => 
   // writing into the output directory while the test removes it (ENOTEMPTY).
   const group = process.platform !== 'win32';
   const child = spawn(process.execPath, ['--input-type=module', '-e', `import {build} from ${JSON.stringify(pathToFileURL(runner).href)}; await build(${JSON.stringify({ app: 'fixture', ...config, watch: true })});`], { cwd, stdio: ['ignore', 'pipe', 'pipe'], detached: group });
+  const closed = once(child, 'close');
+  // Observe spawn errors now while still propagating them during teardown.
+  void closed.catch(() => {});
   let output = '';
   child.stdout.on('data', chunk => { output += chunk; });
   child.stderr.on('data', chunk => { output += chunk; });
@@ -70,11 +97,6 @@ export async function watching(config: BuildConfig, body: (watcher: Watcher) => 
   try {
     await body(watcher);
   } finally {
-    if (child.exitCode === null) {
-      const exited = once(child, 'exit');
-      if (group && child.pid !== undefined) process.kill(-child.pid, 'SIGTERM');
-      else child.kill('SIGTERM');
-      await exited;
-    }
+    await stopOwnedWatcher(child, closed, group);
   }
 }

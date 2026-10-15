@@ -253,7 +253,7 @@ it does not invalidate imported-entry evidence. No application repository,
 package version, tag or live publication changed.
 
 
-## Portable Date boundary qualification
+## Portable Date boundary qualification (FORMA-102)
 
 The current exact artifact source is `153972defd480cd6821aa3fbb6d16294550b902f`,
 recorded by `v3-props-date-set.json`. Windows cannot construct a SystemTime at
@@ -274,3 +274,76 @@ both templates; all ten source template files were restored. See
 refused attempts remain unchanged. The full 162-second gate remains explicitly
 at its earlier source; this record adds focused and packed checks for the
 private refactor. Hosted exact-head CI, including Windows, is still required.
+
+
+## Typed raw markup and enforced Trusted Types (FORMA-109)
+
+`v3-trusted-types-set.json` records seven unpublished 3.0.0-dev archives from
+`1c032095ec072ea8cd41f3b604cd6892024aa048`. Its verifier passed all 22 checks
+in 49.08 seconds (`v3-trusted-types-p17.json`). Both packed templates compiled,
+served the two enforced Trusted Types directives and completed their positive
+browser interactions with native Trusted Types available, zero
+`securitypolicyviolation` events and zero page errors. The report preserves both
+the actual HTTP policy and the navigation response policy. Separate native tests
+prove that the policy is live: Report-Only permits and reports a raw assignment,
+while enforcement refuses and reports it. Empty page-error arrays alone are not
+the CSP acceptance criterion.
+
+The server removes PageOutput, caller-supplied nonces, config_script and the old
+render_page helpers. Core raw markup APIs require trustedHtml, script creation
+is refused, and runtime srcdoc bindings emit Forma diagnostics before reaching
+a native sink. F2 controls independently update a document binding and reused
+list rows, preserving neighboring bindings. The shared forma mint and named frame
+policy remain intentional; this does not claim isolation from other page scripts.
+See [the migration contract](../TRUSTED-TYPES.md).
+
+`v3-trusted-types-qualification.json` records the 159-second complete local gate,
+126 affected browser checks across Chromium/Firefox/WebKit, the six subsequent
+F2 updates and nine packed-condition checks across those engines, release helpers
+and raw-log hashes. All existing size budgets remain unchanged. The final
+Windows-only diagnostic assertions were replayed separately before the final
+artifact set. Independent review authenticated every archive, all three internal
+crate checksum edges and the source commit. Exact-head hosted CI remains a
+separate merge gate; this evidence commit follows the recorded artifact source.
+
+`v3-trusted-types-template-restore.json` proves all ten A2 source template files
+were restored exactly. Candidate 3.x staging removes only the known unused
+config_script:None field; FORMA-144 replaces this temporary adapter with the final
+source templates. The full packed gate also retains the declared-props and
+rejected-manifest recovery controls from 102. Fresh per-attempt Cargo packaging
+prevents a reused temporary index from recording stale dependent checksums.
+
+Earlier 109 attempts and historical release evidence remain unchanged. Raw logs
+and archives are retained under `work/FORMA-109/`. No application migration,
+release tag, registry publication, new fuzz campaign or broad payload campaign
+was performed. Application and fixture qualification in 152/188, remaining release
+contracts and measurements are still separate; liveReleaseReady remains false.
+
+
+## Portable date boundary follow-up
+
+The current FORMA-109 artifacts are `v3-trusted-types-portable-set.json` from
+`2110f01b745b2caea767b277fad39c486fce7aad`. All 22 P17 checks pass in 59.826
+seconds, both templates retain enforced policies with native Trusted Types and
+zero CSP events/page errors, and all ten source template files restore exactly.
+The original 1c032095 artifacts and reports above remain unchanged.
+
+Windows cannot represent the original typed Pages test's out-of-range SystemTime,
+so its fixture panicked before testing the renderer. The shared FORMA-102 follow-up
+extracts the existing conversion into a private duration helper and tests both
+signed numeric boundaries directly on every platform; representable SystemTime
+cases retain the public-path tests. The lead reviewed the behavior-preserving
+change, and the local private conversion and seven typed Pages controls passed.
+Because crate source changed, all seven artifacts and their actual packed tests
+were rebuilt. `v3-trusted-types-portable-qualification.json` links the earlier
+full FORMA-109 qualification and preserves the new source, hashes and Windows failure
+log. Later dependency evidence/documentation commits do not change these packed
+production bytes; final-head hosted CI remains required separately.
+
+A later Windows Node run passed the manifest/watch assertions but fixture cleanup
+failed with EBUSY after only the watcher's parent had exited. The test harness now
+terminates only its owned PID tree on Windows, waits for inherited stdio closure,
+and retries the affected fixture's removal with a bounded delay. A real parent/
+descendant control also verifies an unrelated fixture remains alive. All52 affected
+watch controls pass locally. This is a test-only delta over the recorded production
+artifact source2110f01; its Windows hosted run is required before merging.

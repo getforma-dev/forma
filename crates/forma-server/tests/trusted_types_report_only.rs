@@ -1,24 +1,14 @@
-//! Trusted Types in Report-Only, the reporting endpoint, and the per-route
-//! relaxation (DR-20, L-38, SR8, SR39; FORMA-127).
-//!
-//! Every path that writes the enforced policy also writes
-//! `Content-Security-Policy-Report-Only: require-trusted-types-for 'script';
-//! trusted-types forma forma-runtime`: the three ways to make a
-//! `PageResponse` (`Path`), and the deprecated `PageOutput::headers()`. The
-//! enforced policy does not change, and the 0.2.1 goldens
-//! (`tests/compat_0_2_1.rs`, the document and the enforced policy) stay as
-//! they were.
-// The bridge from `render_page` (deprecated in 0.2.2) is one of the paths,
-// and `config_script` is a field every 0.2.x literal names.
-#![allow(deprecated)]
+//! Enforced Trusted Types, optional reporting, and scoped route relaxation.
+//! Both retained document renderers enforce without a reporting endpoint; only
+//! the named relaxation moves those directives to Report-Only.
 
 use axum::body::to_bytes;
 use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use forma_server::csp::build_csp_header;
 use forma_server::{
-    render_browser_shell, render_page, try_render, AssetManifest, CspNonce, PageConfig,
-    PageResponse, PolicyError, PolicyExtensions, RenderCtx, RenderError, RenderMode, RouteAssets,
+    render_browser_shell, try_render, AssetManifest, CspNonce, PageConfig, PageResponse,
+    PolicyError, PolicyExtensions, RenderCtx, RenderError, RenderMode, RouteAssets,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -59,14 +49,12 @@ fn manifest() -> AssetManifest {
 /// Every public way to make a `PageResponse`.
 #[derive(Debug, Clone, Copy)]
 enum Path {
-    /// `render_page(..).into_page_response(..)`, the bridge for 0.2.1 code.
-    Bridge,
     /// `try_render`.
     TryRender,
     /// `render_browser_shell`.
     Shell,
 }
-const PATHS: [Path; 3] = [Path::Bridge, Path::TryRender, Path::Shell];
+const PATHS: [Path; 2] = [Path::TryRender, Path::Shell];
 
 /// A page on `route` with `extensions` along `path`, or the extension it
 /// refused.
@@ -89,7 +77,6 @@ fn make(
         title: "Home",
         route_pattern: route,
         manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: None,
@@ -105,7 +92,6 @@ fn make(
         Err(other) => panic!("{path:?}: only the policy may fail here, got {other}"),
     };
     match path {
-        Path::Bridge => render_page(&config).into_page_response(extensions),
         Path::TryRender => policy(try_render(&config, &ctx)),
         Path::Shell => policy(render_browser_shell(&config, &ctx)),
     }
@@ -141,17 +127,13 @@ fn one(headers: &HeaderMap, name: &str) -> Option<String> {
 }
 
 #[tokio::test]
-async fn trusted_types_go_out_in_report_only_with_an_endpoint_or_in_a_debug_build_and_the_enforced_policy_is_unchanged(
-) {
+async fn trusted_types_are_enforced_without_an_endpoint_in_every_build() {
     let manifest = manifest();
     for path in PATHS {
         let page = make(path, &manifest, "/", &PolicyExtensions::new()).expect("renders");
         let (headers, nonce) = sent(page).await;
-        // The enforced policy is 0.2.1's, byte for byte. With no endpoint,
-        // Trusted Types sit beside it, reported and not enforced, in a
-        // development build only: released, a Report-Only policy with no
-        // endpoint reports to nobody and makes WebKit log an error on every
-        // page. No endpoint, no reporting header.
+        // Both directives are enforced without an endpoint. The additional
+        // diagnostic Report-Only header remains optional on strict routes.
         assert_eq!(
             one(&headers, "content-security-policy").as_deref(),
             Some(build_csp_header(&nonce).as_str()),
@@ -163,6 +145,12 @@ async fn trusted_types_go_out_in_report_only_with_an_endpoint_or_in_a_debug_buil
             "{path:?}"
         );
         assert_eq!(one(&headers, "reporting-endpoints"), None, "{path:?}");
+        assert!(
+            one(&headers, "content-security-policy")
+                .unwrap()
+                .contains(TRUSTED_TYPES),
+            "{path:?}: enforcement requires no endpoint"
+        );
         // Name an endpoint and every build sends it.
         let page = make(
             path,
@@ -179,45 +167,6 @@ async fn trusted_types_go_out_in_report_only_with_an_endpoint_or_in_a_debug_buil
         );
         assert_eq!(one(&headers, "cache-control").as_deref(), Some("no-store"));
     }
-
-    // The deprecated `PageOutput::headers()`, which names no endpoint,
-    // follows the same rule.
-    let page = render_page(&PageConfig {
-        title: "Old",
-        route_pattern: "/",
-        manifest: &manifest,
-        config_script: None,
-        config_json: None,
-        body_class: None,
-        personality_css: None,
-        body_prefix: None,
-        render_mode: RenderMode::Phase1ClientMount,
-        ir_module: None,
-        slots: None,
-    });
-    let headers = page.headers();
-    let get = |name: &str| -> Vec<String> {
-        headers
-            .iter()
-            .filter(|(n, _)| n.as_str() == name)
-            .map(|(_, v)| v.to_str().expect("ascii").to_string())
-            .collect()
-    };
-    assert_eq!(
-        get("content-security-policy"),
-        std::slice::from_ref(&page.csp)
-    );
-    let expected: &[&str] = if cfg!(debug_assertions) {
-        &[TRUSTED_TYPES]
-    } else {
-        &[]
-    };
-    assert_eq!(get("content-security-policy-report-only"), expected);
-    assert_eq!(
-        page.csp,
-        build_csp_header(&page.nonce),
-        "the field is 0.2.1's"
-    );
 }
 
 #[tokio::test]
@@ -354,47 +303,48 @@ async fn a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason
     let warnings = Warnings::default();
     let guard = tracing::subscriber::set_default(warnings.clone());
 
-    // In 0.2.x a relaxed route's headers are an unrelaxed route's: Trusted
-    // Types stay reported, so the sinks left to move stay visible.
+    // Relaxation changes only the two enforcement directives; reporting remains.
     for path in PATHS {
         let (relaxed, relaxed_nonce) =
             sent(make(path, &manifest, "/studio", &studio).expect("renders")).await;
         let (plain, plain_nonce) =
             sent(make(path, &manifest, "/plain", &base).expect("renders")).await;
-        for name in [
-            "content-security-policy",
-            "content-security-policy-report-only",
-            "reporting-endpoints",
-        ] {
+        for name in ["content-security-policy-report-only", "reporting-endpoints"] {
             assert_eq!(
                 one(&relaxed, name).map(|v| v.replace(relaxed_nonce.as_str(), "N")),
                 one(&plain, name).map(|v| v.replace(plain_nonce.as_str(), "N")),
                 "{path:?} {name}"
             );
         }
+        let enforced = one(&relaxed, "content-security-policy").expect("enforced");
+        assert!(!enforced.contains("trusted-types"));
+        let strict = one(&plain, "content-security-policy").expect("strict");
+        assert!(strict.contains(TRUSTED_TYPES));
+        assert_eq!(
+            enforced.replace(relaxed_nonce.as_str(), "N"),
+            strict
+                .replace(plain_nonce.as_str(), "N")
+                .replace(&format!("; {TRUSTED_TYPES}"), "")
+        );
         assert!(one(&relaxed, "content-security-policy-report-only")
             .expect("reported")
             .starts_with(TRUSTED_TYPES));
     }
-    // Rendered again, on another route, and through the bridge.
+    // Repeated renders and a second route retain bounded per-route logging.
     for _ in 0..3 {
         make(Path::TryRender, &manifest, "/studio", &studio).expect("renders");
     }
     make(Path::Shell, &manifest, "/vector", &studio).expect("renders");
-    // Another reason, on a route already logged and through the bridge
-    // (whose pages share no route): each is its own entry.
+    // A second reason on the same route is a separate log entry.
     let canvas = base
         .clone()
         .relax_trusted_types("canvas reconcile; owner canvas; until 2027-02-28");
     for _ in 0..2 {
         make(Path::TryRender, &manifest, "/studio", &canvas).expect("renders");
-        make(Path::Bridge, &manifest, "/", &canvas).expect("renders");
     }
     drop(guard);
 
-    // Logged once per route and reason: /studio (whichever path rendered it
-    // first), /vector, the bridge, which has no route, and the second reason
-    // on /studio and on the bridge.
+    // Logged once for each route/reason pair.
     let logged = warnings.0.lock().expect("lock").clone();
     let first = "app.ts sinks; owner studio; until 2027-01-31";
     let second = "canvas reconcile; owner canvas; until 2027-02-28";
@@ -411,16 +361,9 @@ async fn a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason
             (route.as_str(), reason)
         })
         .collect();
-    let bridge = "(a page made by PageOutput::into_page_response)";
     assert_eq!(
         seen,
-        [
-            (bridge, first),
-            ("/studio", first),
-            ("/vector", first),
-            ("/studio", second),
-            (bridge, second),
-        ],
+        [("/studio", first), ("/vector", first), ("/studio", second),],
         "{logged:?}"
     );
     for (_, message) in &logged {
@@ -439,5 +382,31 @@ async fn a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason
         )
         .expect_err("refused");
         assert_eq!(error.directive(), "trusted-types", "{path:?}");
+    }
+
+    // The same route-scoped boundary holds in release without any endpoint.
+    for path in PATHS {
+        let extensions = PolicyExtensions::new()
+            .relax_trusted_types("legacy sink; owner example; until 2027-01-31");
+        let (relaxed, nonce) = sent(make(path, &manifest, "/studio", &extensions).unwrap()).await;
+        let strict = build_csp_header(&nonce);
+        assert_eq!(
+            one(&relaxed, "content-security-policy").unwrap(),
+            strict.replace(&format!("; {TRUSTED_TYPES}"), "")
+        );
+        assert_eq!(
+            one(&relaxed, "content-security-policy-report-only").as_deref(),
+            Some(TRUSTED_TYPES)
+        );
+        assert_eq!(one(&relaxed, "cache-control").as_deref(), Some("no-store"));
+        assert_eq!(
+            one(&relaxed, "x-content-type-options").as_deref(),
+            Some("nosniff")
+        );
+        let (sibling, _) =
+            sent(make(path, &manifest, "/plain", &PolicyExtensions::new()).unwrap()).await;
+        assert!(one(&sibling, "content-security-policy")
+            .unwrap()
+            .contains(TRUSTED_TYPES));
     }
 }

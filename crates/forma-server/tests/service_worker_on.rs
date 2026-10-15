@@ -1,15 +1,8 @@
-//! An application that enables its worker (FORMA-130, DR-25, Q15: today
-//! Ledger): its pages register `/sw.js`, and `/sw.js` serves the worker its
-//! build embedded.
-//!
-//! Its own test binary: the setting is process-wide.
-// `render_page` is deprecated on the A2 stack (FORMA-120); these tests use
-// it because it is the page API on `main` too.
-#![allow(deprecated)]
+//! An explicitly enabled worker retains its registration and delivery behavior.
 
 use axum::body::to_bytes;
 use axum::http::StatusCode;
-use forma_server::{render_page, sw, AssetManifest, PageConfig, RenderMode};
+use forma_server::{render_browser_shell, sw, AssetManifest, PageConfig, RenderCtx, RenderMode};
 use rust_embed::Embed;
 use std::collections::HashMap;
 use std::sync::Once;
@@ -48,19 +41,23 @@ fn an_enabled_application_s_pages_register_the_worker() {
         routes: HashMap::new(),
     };
     #[allow(deprecated)]
-    let page = render_page(&PageConfig {
-        title: "Ledger",
-        route_pattern: "/",
-        manifest: &manifest,
-        config_script: None,
-        config_json: None,
-        body_class: None,
-        personality_css: None,
-        body_prefix: None,
-        render_mode: RenderMode::Phase1ClientMount,
-        ir_module: None,
-        slots: None,
-    });
+    let page = render_browser_shell(
+        &PageConfig {
+            title: "Ledger",
+            route_pattern: "/",
+            manifest: &manifest,
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        },
+        &RenderCtx::new(),
+    )
+    .unwrap()
+    .into_parts_unchecked();
     #[allow(deprecated)]
     let (html, nonce) = (page.html, page.nonce);
     // The 0.2.1 registration, nonced with this page's nonce.

@@ -1,3 +1,4 @@
+import { trustedHtml } from '../trusted-html';
 /**
  * Client-side attribute-write safety for h().
  *
@@ -187,14 +188,10 @@ describe('h() inline event-handler injection', () => {
 });
 
 describe('h() raw-HTML attributes', () => {
-  it('emits srcdoc but warns that escaping does not neutralize it', () => {
-    const el = h('iframe', { srcdoc: '<p>trusted</p>', sandbox: '' });
-    // Deliberately NOT blocked: a sandboxed srcdoc iframe is a legitimate pattern.
+  it('srcdoc requires trustedHtml and strings are refused before the sink', () => {
+    // @ts-expect-error 3.x removes the raw string prop.
+    expect(() => h('iframe', { srcdoc: '<p>plain</p>', sandbox: '' })).toThrow('FORMA_E_RAW_SRCDOC');
+    const el = h('iframe', { srcdoc: trustedHtml('<p>trusted</p>'), sandbox: '' });
     expect(el.getAttribute('srcdoc')).toBe('<p>trusted</p>');
-    // A plain string is the 2.x form of a raw entry (DR-19): one coded
-    // warning, which says why escaping is no defence here.
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(
-      /^\[forma\] FORMA_W_RAW_SRCDOC: .*escaping does not neutralize/,
-    ));
   });
 });

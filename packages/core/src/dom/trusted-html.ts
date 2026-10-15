@@ -10,7 +10,7 @@
  * searching for `trustedHtml`, and nothing else in core makes the value. (The
  * zero-build runtime's own `srcdoc` bindings, `data-bind:srcdoc` and a list
  * row's `srcdoc`, are raw entries too, which no `trustedHtml()` can reach: see
- * {@link warnRuntimeSrcdoc}.)
+ * the runtime's coded refusal.)
  *
  * Where the browser has Trusted Types, `trustedHtml` returns a `TrustedHTML`
  * made by Forma's policy `forma`, so a page whose policy carries
@@ -20,30 +20,11 @@
  * unchanged: what `trustedHtml` is given is trusted, so the guarantee is the
  * name review and CI see, enforced at the sink by the browser.
  *
- * The 2.x bridge (L-18): every raw sink still takes what it took before and
- * writes it exactly as before; in a development build the first value each
- * sink receives that is not trusted HTML logs one warning with a code:
- *
- * | Code | Sink |
- * |---|---|
- * | FORMA_W_RAW_INNER_HTML | `dangerouslySetInnerHTML` |
- * | FORMA_W_RAW_SET_HTML | `setHTMLUnsafe()` |
- * | FORMA_W_RAW_TEMPLATE | `template()`, `templateMany()` |
- * | FORMA_W_RAW_RECONCILE | `reconcile()` |
- * | FORMA_W_RAW_SRCDOC | `srcdoc` (h(), adoption, `./ssr`) |
- * | FORMA_W_RAW_RUNTIME_SRCDOC | the runtime's `data-bind:srcdoc`, a list row's `srcdoc` |
- * | FORMA_W_SCRIPT_ELEMENT | `h('script')` (refused in 3.0.0) |
- * | FORMA_W_TT_POLICY_REFUSED | the page refused `forma` or `forma-runtime` |
- *
- * Under a Trusted Types policy a string written to a sink is the browser's
- * business: reported under Report-Only, refused when enforced.
- *
- * The second policy, `forma-runtime`, is the zero-build runtime's parser's
- * own: `reconcile()` trims what it is given before it parses it, so markup
- * that arrived as a browser `TrustedHTML` is minted again, trimmed, through
- * it, and so is the `srcdoc` of an iframe that markup parsed into, when the
- * diff writes it. A string given to `reconcile()` is never minted: it reaches
- * the sink as a string.
+ * Every raw sink requires this value in development and production. Strings
+ * and look-alikes are refused with a stable FORMA_E_* code before a DOM write.
+ * This names reviewed raw content; it does not sanitize it or prevent other
+ * page scripts from using the shared forma mint. The forma-runtime parser
+ * accepts only browser TrustedHTML, never a string from that shared handle.
  */
 
 import { __DEV__ } from '../reactive/dev.js';
@@ -54,7 +35,7 @@ declare const __FORMA_DEV_BUILD__: boolean | undefined;
 /**
  * Markup vouched for by {@link trustedHtml}: a browser `TrustedHTML` where the
  * browser has Trusted Types, else Forma's frozen stand-in. Every raw sink takes
- * one beside a string; 3.0.0's sinks take only this. A `TrustedHTML` from an
+ * only this value. A `TrustedHTML` from an
  * application's own policy is accepted at run time too; TypeScript sees it as
  * this type only through a cast (`value as unknown as TrustedHtml`).
  */
@@ -66,7 +47,7 @@ export interface TrustedHtml {
   readonly __formaTrustedHtml: true;
 }
 
-/** The raw sinks, as the development warnings name them. */
+/** The raw sinks, as their refusal codes name them. */
 export type RawSink = 'innerHTML' | 'setHTMLUnsafe' | 'template' | 'reconcile' | 'srcdoc';
 
 /** The part of a browser's Trusted Types policy core uses. */
@@ -198,43 +179,23 @@ export function htmlOf(value: TrustedHtml): string {
   return (markup ?? value) as unknown as string;
 }
 
-/**
- * What raw sink `sink` writes for `value`: trusted HTML as {@link htmlOf}
- * gives it; anything else as it is, converted by the sink as it always was,
- * after the sink's development warning (once per process).
- *
- * Verified by: src/dom/__tests__/trusted-html.test.ts > "a string to each raw sink still renders, and warns once with the sink's code in development"
- * Verified by: src/dom/__tests__/trusted-html.test.ts > "a look-alike object or a String object is written as before and warns as a string does"
- */
+/** Require named raw markup before any sink or cached-markup fast path. */
 export function rawHtml(value: unknown, sink: RawSink): string {
   if (isTrustedHtml(value)) return htmlOf(value);
-  warnRawString(sink);
-  return value as string;
+  throw new TypeError(`[forma] ${RAW_HTML_CODES[sink]}: ${sink} requires trustedHtml()`);
 }
 
-// ---------------------------------------------------------------------------
-// Development warnings
-// ---------------------------------------------------------------------------
-
-/**
- * Each raw sink's development code, how its warning names it, and what the
- * warning adds for it.
- */
-export const RAW_STRING_CODES: Record<RawSink, readonly [code: string, where: string, note?: string]> = {
-  innerHTML: ['FORMA_W_RAW_INNER_HTML', 'dangerouslySetInnerHTML'],
-  setHTMLUnsafe: ['FORMA_W_RAW_SET_HTML', 'setHTMLUnsafe()'],
-  template: ['FORMA_W_RAW_TEMPLATE', 'template() or templateMany()'],
-  reconcile: ['FORMA_W_RAW_RECONCILE', 'reconcile()'],
-  srcdoc: [
-    'FORMA_W_RAW_SRCDOC',
-    'srcdoc',
-    'The browser parses its value as an HTML document, and escaping does not neutralize ' +
-    'that: pass only trusted markup, and prefer a sandboxed iframe. ',
-  ],
+/** Stable refusal codes; these remain active in production artifacts. */
+export const RAW_HTML_CODES: Record<RawSink, string> = {
+  innerHTML: 'FORMA_E_RAW_INNER_HTML',
+  setHTMLUnsafe: 'FORMA_E_RAW_SET_HTML',
+  template: 'FORMA_E_RAW_TEMPLATE',
+  reconcile: 'FORMA_E_RAW_RECONCILE',
+  srcdoc: 'FORMA_E_RAW_SRCDOC',
 };
 
-/** The code the zero-build runtime's own `srcdoc` bindings log. */
-export const RUNTIME_SRCDOC_CODE = 'FORMA_W_RAW_RUNTIME_SRCDOC';
+/** A binding cannot carry the named raw value; refuse it before a DOM sink. */
+export const RUNTIME_SRCDOC_CODE = 'FORMA_E_RUNTIME_SRCDOC';
 
 /** The code a refused policy name logs. */
 export const POLICY_REFUSED_CODE = 'FORMA_W_TT_POLICY_REFUSED';
@@ -247,73 +208,9 @@ function warnOnce(key: string, line: string): void {
   console.warn(line);
 }
 
-/**
- * The development warning for a value that is not trusted HTML given to raw
- * sink `sink`.
- *
- * Verified by: src/dom/__tests__/trusted-html.test.ts > "a string to each raw sink still renders, and warns once with the sink's code in development"
- */
-export function warnRawString(sink: RawSink): void {
-  // `__DEV__`, written out with the build flag so the build folds it at this
-  // `if` whatever artifact or chunk the module lands in. Every published
-  // artifact is built with the flag `false`, which drops the warning and the
-  // table above with it; an imported `__DEV__`, or a module-level constant,
-  // does not fold across a chunk boundary or in the runtime's IIFE.
-  // Verified by: src/dom/__tests__/trusted-html-build.test.ts > "a production build carries none of the raw-HTML warnings, in any artifact"
-  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
-    || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
-    const [code, where, note = ''] = RAW_STRING_CODES[sink];
-    warnOnce(
-      code,
-      `[forma] ${code}: ${where} was given a plain string, or another value that is not ` +
-      `trustedHtml(). ${note}Wrap markup you vouch for in trustedHtml(), so review and CI ` +
-      'can find every raw entry; anything else still works in 2.x, is reported by a page ' +
-      'whose policy requires Trusted Types and refused where it enforces them, and 3.0.0 ' +
-      'accepts only trustedHtml() (DR-19). Logged once, in development builds.',
-    );
-  }
-}
-
-/**
- * The development warning for a value that is not trusted HTML written to
- * attribute `name`, when that attribute is a raw sink (`srcdoc`). The checks
- * are inside the build's condition, so a production build drops the call with
- * them.
- *
- * Verified by: src/dom/__tests__/element-url-safety.test.ts > "emits srcdoc but warns that escaping does not neutralize it"
- */
-export function warnRawAttr(name: string, value: unknown): void {
-  // The condition of warnRawString, for the same reason.
-  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
-    || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
-    if (isRawHtmlAttr(name) && !isTrustedHtml(value)) warnRawString('srcdoc');
-  }
-}
-
-/**
- * The development warning for the zero-build runtime's own `srcdoc` writes:
- * `data-bind:srcdoc`, and `{item…}` in a list row's `srcdoc`. Each writes an
- * expression's value, or a row's data, as a document: a raw entry that no
- * `trustedHtml()` can reach, written as a string and never minted, so a page
- * requiring Trusted Types reports or refuses it. 3.0.0 refuses these bindings
- * (FORMA-109).
- *
- * Verified by: src/__tests__/runtime-srcdoc.test.ts > "data-bind:srcdoc writes its string and warns once with the runtime code"
- * Verified by: src/__tests__/runtime-srcdoc.test.ts > "a list row's srcdoc writes its string and warns once with the runtime code"
- */
-export function warnRuntimeSrcdoc(name: string): void {
-  // The condition of warnRawString, for the same reason.
-  if (((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
-    || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) && isRawHtmlAttr(name)) {
-    warnOnce(
-      RUNTIME_SRCDOC_CODE,
-      `[forma] ${RUNTIME_SRCDOC_CODE}: the HTML runtime wrote "${name}" from a binding ` +
-      '(data-bind:srcdoc, or {item} in a list row): the browser parses it as a document, ' +
-      'a raw entry no trustedHtml() can name, written as a string that a page requiring ' +
-      'Trusted Types reports or refuses. 3.0.0 refuses srcdoc bindings in the runtime ' +
-      '(FORMA-109): build the frame with h() and trustedHtml(). Logged once, in development builds.',
-    );
-  }
+/** Validate srcdoc before conversion, cached comparisons, or a DOM write. */
+export function checkRawAttr(name: string, value: unknown): void {
+  if (isRawHtmlAttr(name)) rawHtml(value, 'srcdoc');
 }
 
 /**
@@ -322,7 +219,6 @@ export function warnRuntimeSrcdoc(name: string): void {
  * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused policy name warns once in development, and the sinks then write strings the page refuses"
  */
 function warnPolicyRefused(name: string): void {
-  // The condition of warnRawString, for the same reason.
   if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
     || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
     warnOnce(
@@ -348,7 +244,6 @@ export const INNER_HTML_CHILDREN_CODE = 'FORMA_W_INNER_HTML_CHILDREN';
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "children beside the prop warn once in development, in h() and in adoption, and a falsy prop does not"
  */
 export function warnInnerHtmlChildren(props: Record<string, unknown> | null | undefined, children: unknown[]): void {
-  // The condition of warnRawString, for the same reason.
   if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
     || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
     const inner = props?.dangerouslySetInnerHTML;
@@ -365,22 +260,9 @@ export function warnInnerHtmlChildren(props: Record<string, unknown> | null | un
   }
 }
 
-/**
- * The development warning for `h(tag)` where `tag` is `script`, which 3.0.0
- * refuses (FORMA-109).
- *
- * Verified by: src/dom/__tests__/trusted-html.test.ts > "h('script') warns once in development and still builds the element"
- */
-export function warnScriptElement(tag: string): void {
-  // The condition of warnRawString, for the same reason.
-  if (((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
-    || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) && tag === 'script') {
-    warnOnce(
-      'FORMA_W_SCRIPT_ELEMENT',
-      "[forma] FORMA_W_SCRIPT_ELEMENT: h('script') built a script element. Under the page's " +
-      "'strict-dynamic' policy a script inserted by trusted code runs whatever its src or text " +
-      "names, so 3.0.0 refuses h('script') (DR-19): load scripts from the page or the build " +
-      'instead. Logged once, in development builds.',
-    );
+/** Scripts belong to the page/build; h() never creates one. */
+export function refuseScriptElement(tag: string): void {
+  if (tag.toLowerCase() === 'script') {
+    throw new TypeError("[forma] FORMA_E_SCRIPT_ELEMENT: h('script') is refused; load code through the page's bundle");
   }
 }
