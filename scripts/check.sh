@@ -18,8 +18,13 @@
 #   e2e     the build package's browser test, the full-stack, SSR and
 #           preview-frame lanes (forma-tools' `e2e` job, which used to clone
 #           formajs and forma) and core's own Playwright suite, all in Chromium
+#   parity  the parity harness's own tests (FORMA-183, e2e/parity/): the state
+#           generator, the comparison, the serializer against Chromium's
+#           parser and renderBoth end to end; the corpus run joins this script
+#           when it turns blocking
 #
-# Needs: Node 20+ with npm, a stable Rust toolchain with rustfmt, clippy and
+# Needs: Node 24 with npm (`.node-version`; the parity harness's TypeScript runs
+# by Node's type stripping), a stable Rust toolchain with rustfmt, clippy and
 # Playwright's Chromium
 # (`npx playwright install chromium` once; CI installs it before this runs).
 # Not here: the 32-bit, release-profile and MSRV builds, cargo-deny, the
@@ -28,6 +33,12 @@
 # workflows.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# Fail fast on the wrong Node: the parity harness's step (near the end) runs
+# TypeScript by Node's own type stripping (Node 24, `.node-version`). A Node
+# without it fails here, by name, before the long run, never skipping the step
+# (TESTING.md P7).
+node -e 'if (!process.features.typescript) { console.error(`::error::scripts/check.sh needs a Node that strips types (.node-version: 24) for the parity harness; this is ${process.version}`); process.exit(1); }'
 
 started=$(date +%s)
 step() { echo; echo "### $* ($(( $(date +%s) - started ))s)"; }
@@ -90,6 +101,10 @@ npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs
 npx playwright test
 npm run test:e2e -w packages/core
+
+step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
+npx tsc --noEmit -p e2e/parity
+node --test "e2e/parity/tests/*.test.mts"
 
 echo
 echo "check: every gate passed in $(( $(date +%s) - started ))s"

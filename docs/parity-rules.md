@@ -33,6 +33,15 @@ A `textarea` whose content starts with a line feed has it doubled, because the
 parser drops the first one. Verified by: `crates/forma-ir/src/walker.rs` >
 "a_textarea_doubles_a_leading_line_feed".
 
+The U+200B holder is a property of the wire, not only of the walker: a dynamic
+text whose value is empty and one whose value is U+200B are written as the same
+bytes, `<!--f:tN-->` U+200B `<!--/f:tN-->`, so a reader of the HTML cannot tell
+them apart. The parity harness (FORMA-183) therefore matches a holder against
+client text `""` or U+200B and counts every holder it compares as
+`holderAmbiguous` in its report (`e2e/parity/README.md`). Whether the walker
+should write a U+200B value distinguishably from the holder is open, for rule
+5's owner (FORMA-182).
+
 ## Rule 1: line endings and NUL
 
 **Statement.** Define `N(s)` on a string: replace each CRLF pair with one LF,
