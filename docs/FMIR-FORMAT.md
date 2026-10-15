@@ -5,6 +5,9 @@ TypeScript writer in `packages/compiler`. FORMA-185 implements this contract on 
 repository. FORMA-112 adds the major/minor compatibility window: readers accept writers of
 the same major up to their own minor, ignoring patch. The development set is `3.0.0-dev`;
 wire versions contain only the base triple `3.0.0`. This staging version is not a release.
+FORMA-103 adds required island contracts (section `0x000A`), typed COALESCE (`0x13`)
+and a bounded per-document state envelope. The [reviewed state grammar](proposals/FORMA-103-STATE-WIRE.md)
+is the normative definition of these additions and their fixed vectors.
 
 The independently reviewed specification and its example were recovered from the interrupted
 FORMA-114 author task. The 24-byte header, CRC exclusion range and load-time string-reference
@@ -24,9 +27,9 @@ everything around them:
 | Signature | `FMIR` + u16 version `2` + u16 flags `0` + u64 `source_hash` written `0`, never checked (16 bytes) | PNG-style 8-byte signature, writer's version as three u16, body length, CRC-32 of every byte except its own four-byte field (24 bytes) |
 | Sections | Exactly four, fixed order, fixed-offset descriptors (offset, size), data from byte 48 | A table: count, then (id, flags, offset, length) per section; known ids, a required flag, unknown optional sections skipped, unknown required refused |
 | Integrity | None; structure checks only | Declared length must match; CRC-32 (IEEE) over the file excluding its own field checked before any section is parsed |
-| Required content | bytecode, strings, slots, islands | bytecode, strings, slots, islands (with schema reference and digest), props schema; key paths where rows are keyed |
+| Required content | bytecode, strings, slots, islands | bytecode, strings, slots, islands (with schema reference and digest), props schema; section10 for any island; key paths where rows are keyed |
 | Optional content | none possible | source positions; reserved ids for 114b's build identity and deployment |
-| Opcodes | 18 defined (`0x01`-`0x12`), 12 emitted | 12; `0x09`, `0x0D`-`0x11` reserved for good |
+| Opcodes | 18 defined (`0x01`-`0x12`), 12 emitted | 13 emitted including COALESCE `0x13`; `0x09`, `0x0D`-`0x11` reserved for good |
 | Versioning | exact match on `2` | same major, writer minor no greater than reader minor, patch ignored; both versions named on refusal |
 | Readers | forma-ir 0.2.x, the WASM walker | forma-ir 3.x only; no v2 reader (L-18) |
 
@@ -96,7 +99,7 @@ oracle, without raising the package's declared Node requirement.
 2. Signature mismatch: `LOAD-102`. If bytes `[0,4)` are `FMIR`, read `N` as u16 LE at `[4,6)`:
    "an FMIR module before v3 (header version N): rebuild with a 3.x compiler". Do not label a
    legacy header whose N is 7 as version 2. Otherwise report "bad signature".
-3. Writer triple differs from the reader triple: `LOAD-108`, naming both.
+3. Writer major differs, or writer minor exceeds reader minor: `LOAD-108`, naming both. Patch is ignored.
 4. `24 + body_len != len`: `LOAD-104`, naming declared and actual body lengths.
 5. `crc32(bytes[0..18] ++ bytes[22..]) != crc`: `LOAD-104`, naming stored and computed CRCs.
    No section is parsed and no allocation based on its counts occurs before this succeeds;
@@ -104,7 +107,9 @@ oracle, without raising the package's declared Node requirement.
 6. Header reserved bytes `[22,24)` nonzero: `LOAD-103` (`ReservedBits`). They are CRC-covered,
    but a correctly restamped nonzero reserved field still has to fail its own rule.
 7. Validate the section table (4), then parse and cross-check sections in the order specified
-   in section 5, including structural bytecode validation before key paths and source positions.
+   in section 5, including structural bytecode validation before key paths and source positions. Only after those
+   checks does a module with islands but no section10 refuse with `LOAD-105`; malformed old
+   payloads keep their earlier structural refusal. Contract contents/type flow are then validated.
 
 The CRC detects a bad copy (truncation, a flipped storage or transfer byte, text-mode conversion).
 It is not an authentication signature: a producer that can replace the file can restamp its CRC.
@@ -139,8 +144,8 @@ Rules a reader enforces, each a refusal:
   Sections tile the body with no gap and no overlap (`LOAD-103`). A section may have `length 0`.
 - Reserved flag bits set: `LOAD-103` (fail closed, as v2's header flags did; `format.rs`
   L342-L348).
-- For an id the reader knows, the reader's own table in section 5 says whether it is required; the
-  file's flag is not consulted. For an id the reader does not know: `required` set is `LOAD-106`,
+- For the original known IDs, the reader's table in section5 determines required presence.
+  Section10 additionally requires its required flag to be set; clearing it is LOAD-103. For an id the reader does not know: `required` set is `LOAD-106`,
   naming the id, the writer's version and the reader's; `required` clear is skipped, the bytes
   never read.
 - Every section the reader's table marks required for this writer version must be present:
@@ -172,6 +177,7 @@ later version, as opcode bytes do.
 | `0x0007` | source positions | optional | 5.7 (L-7) |
 | `0x0008` | build identity | optional; reserved until 114b | 5.8 |
 | `0x0009` | deployment | optional; reserved until 114b | 5.8 |
+| `0x000A` | island contracts and closed constants | required when islands exist; current writer always emits it | reviewed state grammar |
 
 The writer sets required bit 0 on emitted ids `0x0001` through `0x0006`, and clears it on
 `0x0007`; the canonical dump includes flags. Known-id readers still apply their own required set.
@@ -201,7 +207,7 @@ Unchanged from v2: a flat stream of the twelve opcodes of section 6 with the ope
 `format.rs` L443-L492. The structural rules of `parser.rs` L509-L641 stay: regions tile exactly;
 every slot id named is declared; every `ISLAND_START` names an island in the table; a `SHOW_IF`'s
 `SHOW_ELSE` byte lies inside its region; depth at most 64. A byte from the reserved set (`0x09`,
-`0x0D`-`0x11`) or outside `0x01`-`0x12` is `IrError::InvalidOpcode` (`LOAD-103`).
+`0x0D`-`0x11`) or outside the assigned set through `0x13` is `IrError::InvalidOpcode` (`LOAD-103`).
 A zero-length bytecode section is valid (an empty page); the other required tables must still
 contain their count fields, and props schema must contain empty object 0.
 
@@ -257,7 +263,7 @@ per island:
   name_str_idx u32     the component's registered name
   byte_offset u32      offset of this island's ISLAND_START in the bytecode
   schema_object u16    index into the props schema's object table; 0xFFFF: none
-  digest_len u8        0 until FORMA-105; then 8 (SHA-256 truncated to 8 bytes)
+  digest_len u8        8 for current declared islands (SHA-256 truncated to 8 bytes)
   digest[digest_len]
   slot_count u16
   slot_ids u16[slot_count]
@@ -269,20 +275,22 @@ carrying `id` (`parser.rs` L472-L481); `schema_object`, unless `0xFFFF`, must in
 table; every `slot_id` must be declared; `id`s are unique; `name_str_idx` indexes strings;
 trigger is 1-4 and reserved is zero. All known fields must fit the entry:
 `15 + digest_len + 2 + 2 * slot_count <= entry_len`, else `LOAD-103`.
-The u16 `entry_len` therefore admits at most 32,759 slot ids when digest is empty; a writer
+The u16 `entry_len` therefore admits at most 32,755 slot IDs with the current eight-byte digest
+(32,759 in the historical empty-digest record); a writer
 checks this and fails with a `BUILD-6xx` diagnostic instead of truncating its length.
-Digest bytes remain opaque to FORMA-185's reader; FORMA-105 enforces its digest rule.
+Current islands require a real schema object, exactly eight digest bytes and one
+ordered input slot for every declared field. Input slots may repeat; two fields
+can receive the same server value without sharing client signal identity.
 
-What changed and why: `props_mode` is gone. Its only emitted value was `Inline` (the historical v2 contract), `Deferred`
-was never implemented, and DR-4 moves island props into one JSON state block in the head (v2 8.3),
-so the mode has no meaning at 3.0.0. `slot_ids` stay for 114a as the bridge the walker reads today
-(`walker.rs` L917-L925 builds the island's props from them); FORMA-103 and FORMA-105 replace or
-supplement them with the schema reference and the digest, which is why both have a place now.
-`digest` content is FORMA-105's (DR-6; design 3's `h`, `output/designs/3-server-to-page-data.md`
-L80-L82): SHA-256 over the binding table and props schema as emitted, first 8 bytes
-(`digest_len = 8`), represented as 16 hex digits where it appears in HTML. Emit no digest bytes
-until FORMA-105 lands; that ticket fixes its byte concatenation and validation. The schema's
-canonical display text is not the chosen hash input. Q4, Q7 and Q8 are settled.
+FORMA-103's canonical binding program (including SSR/browserOnly mode) and local
+schema bytes are concatenated and hashed with SHA-256; the first eight digest
+bytes appear as sixteen lowercase hex characters in HTML and state. The native
+reader validates the contract structure and typed provenance; independent paired
+writer/native vectors authenticate the hash calculation. The browser compares
+host, state and compiled registration digests before any component or DOM write.
+The precise bytes, capture identity rules, closed constants and all bounds are in
+[the normative state grammar](proposals/FORMA-103-STATE-WIRE.md). No global string
+IDs, source positions or call-site IDs enter that hash.
 
 ### 5.5 Props schema (`0x0005`)
 
@@ -390,7 +398,7 @@ length field nor proposed route/mode payload from the first draft is a format co
 
 ## 6. The opcode set after the drop
 
-Twelve opcodes; the bytes and operand encodings of `format.rs` L443-L492 unchanged for each:
+Thirteen opcodes. The original twelve operand encodings remain unchanged; FORMA-103 adds COALESCE:
 
 | Byte | Opcode | Operands | Marker written |
 |---|---|---|---|
@@ -406,6 +414,7 @@ Twelve opcodes; the bytes and operand encodings of `format.rs` L443-L492 unchang
 | `0x0B` | `ISLAND_START` | `island_id u16` | `<!--f:iN-->` |
 | `0x0C` | `ISLAND_END` | `island_id u16` | |
 | `0x12` | `PROP` | `src_slot_id u16`, `prop_str_idx u32`, `target_slot_id u16` | |
+| `0x13` | `COALESCE` | `source u16`, `closed_fallback u16`, `destination u16` | none; replaces null only |
 
 Reserved, never reassigned, refused as `InvalidOpcode` by every 3.x reader: `0x09` (`SWITCH`),
 `0x0D` (`TRY_START`), `0x0E` (`FALLBACK`), `0x0F` (`PRELOAD`), `0x10` (`COMMENT`), `0x11`
@@ -414,7 +423,7 @@ L1295-L1353; `parser.rs` L529-L534, L556-L558, L585-L639), with their tests and 
 A compiler that one day emits one of these constructs assigns a new byte with a cross test (DR-28)
 rather than reviving the old meaning: `SWITCH` had no hydration marker and no default case
 (`ARCHITECTURE.md` L941), `PRELOAD` wrote no nonce (`walker.rs` L1337-L1343), and `LIST_ITEM_KEY`
-could not key rows (the historical v2 contract). Bytes `0x13`-`0xFF` are unassigned; a 3.x minor may assign one (design 1
+could not key rows (the historical v2 contract). Bytes `0x14`-`0xFF` are unassigned; a 3.x minor may assign one (design 1
 L82), and a 3.0 reader refuses a module carrying it, which the major/minor window also requires.
 
 Enum values keep their meaning (`FMIR-FORMAT.md` L143-L145): `SlotType` 1-5, `SlotSource` 0-1,
@@ -540,10 +549,13 @@ writer triple to 3.1.0 and restamp: `LOAD-108` against reader 3.0.0. A restamped
 writer is accepted under the patch-independent window. Append optional section 0x0100 and rebuild table/length/CRC: PASS and
 identical render; required flag set instead yields `LOAD-106`, naming writer and reader versions.
 
-The production TypeScript encoder reproduces this 183-byte example exactly. The independent
+The original five payload sections still reconstruct this 183-byte example exactly.
+Current producers additionally emit the required empty section10 contract table; the
+original byte oracle remains unchanged and is tested through explicit historical reconstruction. The independent
 Python encoder at `scripts/fmir-spec/example.py` and its `listing.txt` are a separate oracle;
 `crates/forma-ir/tests/fixtures/fmir-v3/index.tsv` preserves the exact-stage expected codes;
-`window-expectations.tsv` is the explicit current expectation table.
+`window-expectations.tsv` preserves the intermediate112 acceptance.
+`state-expectations.tsv` is the current native-reader table; original files are unchanged.
 
 ---
 
@@ -588,21 +600,28 @@ npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures
 cargo test -p forma-ir --lib js_emitter_contract
 ```
 
-Every original `.html` golden stays byte-identical. The Rust test compares all four slot-data
-regimes and island fragments, and compares every `.dump` with the TypeScript text. The root
-check gate fails if emission changes the committed corpus. Later AST schema extraction,
-island digest generation and keyed-row behavior belong to FORMA-102, FORMA-105 and FORMA-181;
-this writer exposes their typed wire encoders and emits empty page schema object 0 where no
-schema is yet supplied. Default AST emission remains unkeyed, preserving the frozen HTML.
+The original fourteen outputs, their source inputs and HTML are preserved unchanged in
+[the pre-state corpus archive](archive/2026-10-15-pre-state-contract-corpus/README.md).
+They document the pre-contract behavior; old island modules now refuse. Current
+corpus regeneration is an explicit103 migration: declared props, section10,
+state/hash host markers and private local constants are intentional changes.
+The independent paired writer/native fixtures in `tests/fixtures/island-emitter`
+cover ordered inputs, list occurrences, nullish defaults and state projection.
+No archived fixture may be overwritten to make a new implementation pass.
 
 The 67 independent fixtures in `tests/fixtures/fmir-v3` preserve the exact-stage bytes and
 `index.tsv`. FORMA-112's explicit `window-expectations.tsv` accepts the existing 3.0.1 module,
-so seven are accepted and 60 refused. `fmir_v3.rs` checks the current codes; the server's
+and its seven-pass/60-refusal qualification remains historical. FORMA-103's
+`state-expectations.tsv` changes only the two old island positives to LOAD-105,
+so five are accepted and 62 refused. `fmir_v3.rs` checks the current native codes; the server's
 `strict_loader.rs` checks every refusal
 through the real strict loader and proves the fixture server binds no port. Positive modules
 in that batch remain accepted. Additional tests cover all string-operand shapes, exact limits,
-10,000-level recursive inputs, and canonical reconstruction. The standard CRC vector and
-183-byte example are pinned independently in both languages. Regenerate the specification
+10,000-level recursive inputs, and canonical reconstruction. The TypeScript `readFmirContainer` API is a lossless header/table inspector, not a
+second payload loader: its tests pin header/table refusal codes and preserve raw
+bytes, including old island bytes the native reader now refuses. Native tests own
+structural/schema/required10 precedence. The standard CRC vector and 183-byte
+historical example are pinned independently in both languages. Regenerate the specification
 fixtures with `python3 -I scripts/fmir-spec/fixtures.py`; a fixture diff requires format review.
 
 ### 11.2 Canonical text and reconstruction

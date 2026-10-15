@@ -447,7 +447,7 @@ export class IrEmitContext {
       assertEmit(island.schemaObject === 0xffff || island.schemaObject < this.propsSchema.length, 'island schema object out of bounds');
       uint(island.byteOffset, 0xffffffff, 'island byte offset');
       const length = 25 + island.slotIds.length * 2;
-      assertEmit(length <= 0xffff, 'island entry exceeds u16 length (at most 32759 slot ids)');
+      assertEmit(length <= 0xffff, 'island entry exceeds u16 length (at most 32755 slot ids)');
       for (const id of island.slotIds) assertEmit(declaredSlots.has(id), `island references undeclared slot ${id}`);
       totalSize += 2 + length;
     }
