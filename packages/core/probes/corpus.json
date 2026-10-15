@@ -2005,8 +2005,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "    entry: { 'formajs-frame': 'src/runtime-frame.ts' },\n    format: ['iife'],\n    outDir: 'dist',\n    minify: true,\n    sourcemap: false,",
-  "replace": "    entry: { 'formajs-frame': 'src/runtime-frame.ts' },\n    format: ['iife'],\n    outDir: 'dist',\n    minify: true,\n    sourcemap: true,",
+  "find": "    entry: { 'formajs-frame': 'src/runtime-frame.ts' },\n    format: ['iife'],\n    outDir: 'dist',\n    minify: false,\n    sourcemap: false,",
+  "replace": "    entry: { 'formajs-frame': 'src/runtime-frame.ts' },\n    format: ['iife'],\n    outDir: 'dist',\n    minify: false,\n    sourcemap: true,",
   "note": "the frame runtime ends in a sourceMappingURL comment, which an opaque-origin frame would try to fetch. Verified by: src/__tests__/runtime-frame.test.ts > \"the frame runtime is one classic script a server can inline as it is\""
  },
  {

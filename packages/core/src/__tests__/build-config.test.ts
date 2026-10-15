@@ -95,14 +95,7 @@ describe('tsup configuration', () => {
     // `new Function` fallback both survive into the shipped bytes.
     for (const config of configs) {
       expect(esbuildOptionsOf(config).minifySyntax, JSON.stringify(entryNames(config))).toBe(true);
-      // Identifier and whitespace minification stay off in every published
-      // artifact (readable distribution; supply-chain scanners flagged the
-      // single-line IIFEs as obfuscated), except the preview frame's runtime:
-      // a server inlines it into every preview document under `no-store`, so
-      // each load pays its raw bytes (FORMA-180 F1, FORMA-190).
-      const frame = entryNames(config).includes('formajs-frame');
-      if (frame) expect(config.minify, 'the preview frame runtime is built minified').toBe(true);
-      else expect(config.minify, `${JSON.stringify(entryNames(config))}: identifier/whitespace minification must stay off`).toBeFalsy();
+      expect(config.minify, 'identifier/whitespace minification must stay off').toBeFalsy();
     }
   });
 

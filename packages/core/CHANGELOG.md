@@ -4,23 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### The preview frame's runtime is built minified, its gate ratcheted down — FORMA-190
-
-- `dist/formajs-frame.global.js` is built with `minify: true` (whitespace and
-  names), the one artifact that is: forma-server writes it into every preview
-  document under `no-store`, so each load paid its **164,316 B** of readable
-  bytes (the A2 audit's F1). It is **85,057 B** now, 28,732 B gzip against
-  39,612 (28,703 against 39,432 at level 9). Still one classic script, the same bytes
-  from the same sources (two builds are byte-identical), no source map comment,
-  no `</script` or `<!--`; the build's BUILD-806 check is unchanged. Its gate in
-  `scripts/check-size.mjs` goes **down**, 40,000 → 29,000 B, the minified
-  measurement rounded up to the next 500 B (the README row follows). The
-  other artifacts keep identifier and whitespace minification off, as
-  `build-config.test.ts` still asserts; this exception is the frame's alone.
-  Because the runtime's function names are renamed, `runtime-frame.test.ts`
-  asserts the strings it says (`FRAME_E_RENDER`, `"unreviewed"`) on the shipped
-  build and the names on a readable build of the same entry.
-
 ### Value rule 1: line endings and NUL — FORMA-182
 
 - Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. The URL guard classifies the raw value and refuses a NUL anywhere in a URL attribute (normalized it would be a fetchable same-origin relative reference); the normalized value is what is written. `h('pre', null, '\nline')` now agrees with the walker's `<pre>\n\nline</pre>` in every engine. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.

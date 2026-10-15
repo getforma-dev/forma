@@ -282,45 +282,18 @@ describe('the frame runtime build (the real tsup config)', () => {
     // It never mounts the page on load or watches body: no tierless path.
     expect(code).not.toContain('DOMContentLoaded');
     expect(code).not.toContain('MutationObserver');
-    // What it is: the frame's connection, mounting in tier (c). The shipped
-    // bytes are minified (below), so this names what survives minification:
-    // the strings, not the function that holds them.
-    expect(code).toContain('FRAME_E_RENDER');
-    expect(code).toContain('"unreviewed"');
-  });
-
-  it('the frame runtime is built minified, whitespace and names, and says the same as the readable build (FORMA-190)', { timeout: 120_000 }, async () => {
-    // Inlined into every preview document under `no-store`, so every load
-    // pays its raw bytes: 164 KB readable (FORMA-180, F1). The readable build
-    // is the reference here: same entry, same defines, `minify` off.
-    const code = await production();
-    const readable = await buildFrame({ minify: false });
-    expect(readable).toMatch(/^ {2,}\S/m);
-    expect(readable).toContain('connectFrame(window)');
-    // The shipped one keeps neither its line structure nor its function names,
-    // and is well under two thirds of the readable bytes.
-    expect(readable.split('\n').length).toBeGreaterThan(1000);
-    expect(code.split('\n').length).toBeLessThan(100);
-    expect(code).not.toContain('connectFrame');
-    expect(code.length).toBeLessThan(readable.length * 0.6);
-    // What the runtime says to a host and to its own page is text, and
-    // survives: the same codes and tier in both builds.
-    for (const text of ['FRAME_E_RENDER', 'FRAME_E_MESSAGE', '"unreviewed"', 'forma-frame']) {
-      expect(code, `minified: ${text}`).toContain(text);
-      expect(readable, `readable: ${text}`).toContain(text);
-    }
     // No component adoption runs in the frame, so its signals need no
-    // component-local getter/setter enrollment bridge. A name, so asked of the
-    // readable build.
-    expect(readable).not.toContain('recordAdoptionSignal');
+    // component-local getter/setter enrollment bridge.
+    expect(code).not.toContain('recordAdoptionSignal');
+    // What it is: the frame's connection, mounting in tier (c).
+    expect(code).toContain('connectFrame(window)');
+    expect(code).toContain('"unreviewed"');
   });
 
   it('without the frame flag the same entry would auto-mount the page', { timeout: 120_000 }, async () => {
     // The control for the test above: the flag, not the entry, keeps the
     // tierless path out.
-    // Built readable, since the call it looks for is a name the shipped build
-    // renames.
-    const code = await buildFrame({ minify: false, define: { ...FRAME_DEFINE, [FRAME_BUILD_FLAG]: 'false' } });
+    const code = await buildFrame({ define: { ...FRAME_DEFINE, [FRAME_BUILD_FLAG]: 'false' } });
     expect(code).toContain('DOMContentLoaded');
     expect(code).not.toContain('connectFrame(window)');
   });

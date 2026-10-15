@@ -97,14 +97,9 @@ export const GATES = [
     // FORMA-126/127 and FORMA-173 and #30's review fixes (38,953 B), rounded
     // up to the next 500 B, as L-51 sets the runtime gates; raised to 39,500 B
     // by unreviewed markup mounted without its `<link>` elements (39,264 B),
-    // and to 40,000 B by that change's review, formajs#35 (39,705 B). Built
-    // minified since FORMA-190 (the A2 audit's F1: the document carries these
-    // bytes on every load), it measures 28,732 B, and the gate is ratcheted down
-    // to 29,000 B, the next 500 B; a change that grows it past that raises it
-    // under L-51 as before. The minified size is the one that tells a
-    // regression: the readable build, 39.6 KB, would fail it.
+    // and to 40,000 B by that change's review, formajs#35 (39,705 B).
     entry: 'dist/formajs-frame.global.js',
-    limit: 29000,
+    limit: 40000,
     note: 'preview frame runtime (one classic script, inlined by the server)',
   },
   {

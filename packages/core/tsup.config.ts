@@ -173,24 +173,13 @@ const PRODUCTION: Options[] = [
   // flag, so it never mounts the page's `data-forma-state` on load or watches
   // `body`: it binds only the module its host sends, in tier (c). No global.
   //
-  // Built minified, whitespace and names (FORMA-190, from the A2 audit's F1):
-  // forma-server writes it into every preview document under `no-store`, so
-  // each load paid its 164 KB of readable bytes; minified they are 85 KB (28.7
-  // KB gzip against 39.6 KB). It is the one artifact here that is, and
-  // `build-config.test.ts` says so: the others stay readable for the
-  // supply-chain scanners that flagged single-line IIFEs. The bytes are still
-  // one deterministic classic script with no source map comment and no
-  // `</script` or `<!--` in it (the build's BUILD-806 check and the two
-  // byte-identical tests stand).
-  //
   // Verified by: src/__tests__/runtime-frame.test.ts > "the frame runtime is one classic script a server can inline as it is"
-  // Verified by: src/__tests__/runtime-frame.test.ts > "the frame runtime is built minified, whitespace and names, and says the same as the readable build (FORMA-190)"
   // Verified by: src/__tests__/runtime-frame.test.ts > "two builds of the frame runtime are byte-identical"
   {
     entry: { 'formajs-frame': 'src/runtime-frame.ts' },
     format: ['iife'],
     outDir: 'dist',
-    minify: true,
+    minify: false,
     sourcemap: false,
     target: 'es2022',
     define: { ...FRAME_DEFINE },
