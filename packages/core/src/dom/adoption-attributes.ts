@@ -25,11 +25,12 @@ export function prepareAttribute(element:Element,key:string,value:unknown):Prepa
     // Other object values never gain an arbitrary coercion path here.
     if(isRawHtmlAttr(qualified))return String(rawHtml(next,'srcdoc'));
     if(!['string','number','boolean'].includes(typeof next))throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');
-    // Rule 1 before the guard, comparison and cache: the normalized string is
-    // the one checked and the one written (the walker does the same).
+    // Rule 1 before comparison and cache: the normalized string is the one
+    // compared and written; the URL guard classifies the raw string, so a NUL
+    // anywhere in a URL attribute refuses (the walker does the same).
     // Verified by: src/dom/__tests__/normalize-text.test.ts > "adoption attribute expectations normalize $id before comparison and later writes"
-    const result=next===true?'':normalizeDomText(String(next));
-    return isUnsafeAttrWrite(element.localName,qualified,result)?null:result;
+    const raw=next===true?'':String(next),result=normalizeDomText(raw);
+    return isUnsafeAttrWrite(element.localName,qualified,raw)?null:result;
   };
   const initial=normalize(value);
   let previous=initial;

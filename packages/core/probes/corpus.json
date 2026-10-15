@@ -47,7 +47,7 @@
   "tags": [
    "security"
   ],
-  "find": "      if (!urlAttr || !isDangerousUrl(strVal, el.localName)) {",
+  "find": "      if (!urlAttr || !isDangerousUrl(raw, el.localName)) {",
   "replace": "      if (true) {",
   "note": "h() reactive attribute path writes javascript: URLs"
  },
@@ -85,7 +85,7 @@
   "tags": [
    "security"
   ],
-  "find": "  if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {\n    if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n    return;\n  }\n  // The string the URL guard checked",
+  "find": "  if (isUrlAttr(key) && isDangerousUrl(raw, el.localName)) {\n    if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n    return;\n  }\n  // The string the URL guard checked",
   "replace": "  // The string the URL guard checked",
   "note": "h() static attribute path writes javascript: URLs"
  },
@@ -111,7 +111,7 @@
   "tags": [
    "security"
   ],
-  "find": "    if (isUnsafeAttrWrite(el.localName, key, strVal)) {\n      if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
+  "find": "    if (isUnsafeAttrWrite(el.localName, key, raw)) {\n      if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
   "replace": "",
   "note": "reactive xlink:href writes javascript: URLs"
  },

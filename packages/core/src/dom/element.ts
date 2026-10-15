@@ -552,8 +552,10 @@ function handleXLink(el: Element, key: string, value: unknown): void {
       el.removeAttributeNS(XLINK_NS, localName);
       return;
     }
-    const strVal = normalizeDomText(String(v));
-    if (isUnsafeAttrWrite(el.localName, key, strVal)) {
+    // The guard classifies the raw string (a NUL anywhere refuses); the
+    // normalized string is what is written.
+    const raw = String(v), strVal = normalizeDomText(raw);
+    if (isUnsafeAttrWrite(el.localName, key, raw)) {
       if (__DEV__) warnDropped(el, key, 'unsafe-URL');
       el.removeAttributeNS(XLINK_NS, localName);
       return;
@@ -640,13 +642,14 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
     const cache = getCache(el);
     if (v != null && v !== false) {
       checkRawAttr(key, v);
-      // Normalized before the guard and the cache: the string checked is the
-      // string written and remembered.
+      // Normalized before the cache, so an equivalent value is not rewritten;
+      // the URL guard classifies the raw string (a NUL anywhere refuses) and
+      // the normalized string is what is written and remembered.
       // Verified by: src/dom/__tests__/normalize-text.test.ts > "h() attributes write $id normalized: static, dynamic, class and xlink"
-      const strVal = normalizeDomText(String(v));
+      const raw = String(v), strVal = normalizeDomText(raw);
       // Already written, already guarded — see the note above the function.
       if (cache[key] === strVal) return;
-      if (!urlAttr || !isDangerousUrl(strVal, el.localName)) {
+      if (!urlAttr || !isDangerousUrl(raw, el.localName)) {
         // The string the URL guard checked is the string written: an object
         // is converted once, above. Only trusted HTML for `srcdoc` is written
         // as itself, so a TrustedHTML reaches that sink typed (DR-19).
@@ -763,8 +766,8 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
 
   // xlink: namespace
   if (key.charCodeAt(0) === 120 /* x */ && key.startsWith('xlink:')) {
-    const strVal = normalizeDomText(String(value));
-    if (isUnsafeAttrWrite(el.localName, key, strVal)) {
+    const raw = String(value), strVal = normalizeDomText(raw);
+    if (isUnsafeAttrWrite(el.localName, key, raw)) {
       if (__DEV__) warnDropped(el, key, 'unsafe-URL');
       return;
     }
@@ -795,8 +798,8 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
     el.setAttribute(key, '');
     return;
   }
-  const strVal = normalizeDomText(String(value));
-  if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {
+  const raw = String(value), strVal = normalizeDomText(raw);
+  if (isUrlAttr(key) && isDangerousUrl(raw, el.localName)) {
     if (__DEV__) warnDropped(el, key, 'unsafe-URL');
     return;
   }

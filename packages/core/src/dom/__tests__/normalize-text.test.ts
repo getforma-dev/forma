@@ -23,8 +23,9 @@ import { AdoptionLifecycle } from '../../reactive/adoption-lifecycle.js';
 interface ValueVector { id: string; input: string; expected: string }
 interface ChildrenVector { id: string; children: string[]; expected: string }
 interface TextareaVector { id: string; children: string[]; html: string; value: string }
-interface UrlVector { id: string; input: string; refused: boolean; written?: string }
-interface Vectors { values: ValueVector[]; children: ChildrenVector[]; textarea: TextareaVector[]; unsafeUrlNearMiss: UrlVector[] }
+interface PreVector { id: string; children: string[]; html: string; htmlDynamic: string; value: string }
+interface UrlVector { id: string; input: string; refused: boolean; written?: string; attribute?: string; tag?: string }
+interface Vectors { values: ValueVector[]; children: ChildrenVector[]; textarea: TextareaVector[]; pre: PreVector[]; unsafeUrlNearMiss: UrlVector[] }
 
 const VECTOR_PATH = resolve(__dirname, '../../../../../crates/forma-ir/tests/fixtures/parity/normalization.json');
 const vectors = JSON.parse(readFileSync(VECTOR_PATH, 'utf8')) as Vectors;
@@ -109,8 +110,11 @@ describe('rule 1 vectors: ordinary attribute writers', () => {
       expect(dynamic.getAttribute('title')).toBe(expected);
       expect(dynamic.getAttribute('class')).toBe(expected);
     });
-    const use = svg(() => h('use', { 'xlink:href': input }));
-    expect(use.getAttributeNS(XLINK, 'href')).toBe(expected);
+    // xlink:title is not a URL attribute, so this is the xlink write path
+    // alone; xlink:href joins the URL policy (a NUL refuses: see the
+    // unsafeUrlNearMiss vectors).
+    const use = svg(() => h('use', { 'xlink:title': input }));
+    expect(use.getAttributeNS(XLINK, 'title')).toBe(expected);
   });
 
   it.each(vectors.values)('adoption attribute expectations normalize $id before comparison and later writes', ({ input, expected }) => {
@@ -156,6 +160,100 @@ describe('rule 1 vectors: composition is per authored value', () => {
 
   it.each(vectors.textarea)('textarea vector $id parses and renders to the same value', ({ children, value }) => {
     expect((h('textarea', null, ...children) as HTMLTextAreaElement).value).toBe(value);
+  });
+
+  it.each(vectors.pre)('pre vector $id builds the value the parser reads from the server HTML, static and reactive', ({ children, value }) => {
+    // The server doubles the initial LF because the parser drops one; h()
+    // writes the value itself. e2e/normalization.spec.ts parses `html` in
+    // the real engines and adopts this same descriptor over it.
+    expect(h('pre', null, ...children).textContent).toBe(value);
+    createRoot(() => {
+      const reactive = h('pre', null, ...children.map(child => () => child));
+      expect(reactive.textContent).toBe(value);
+    });
+  });
+});
+
+describe('rule 1: observer controls and caches', () => {
+  it('a later reactive update after a zero-write adoption is observed on the retained node (positive observer control)', async () => {
+    const doc = document.implementation.createHTMLDocument();
+    const host = servedRange(doc, 'seed');
+    const text = host.childNodes[1] as Text;
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver(batch => records.push(...batch));
+    observer.observe(host, { subtree: true, childList: true, characterData: true, attributes: true });
+    const [value, setValue] = createSignal('seed');
+    const plan = prepareAdoption(host, () => h('p', null, value));
+    try {
+      plan.commit();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      records.push(...observer.takeRecords());
+      expect(records).toEqual([]);
+      setValue('a\r\nb');
+      await new Promise(resolve => setTimeout(resolve, 0));
+      records.push(...observer.takeRecords());
+      expect(records.map(record => [record.type, record.target])).toEqual([['characterData', text]]);
+      expect(text.data).toBe('a\nb');
+    } finally { plan.dispose(); observer.disconnect(); }
+  });
+
+  it('a normalized-equivalent attribute update makes no redundant write; a different one writes once per attribute', () => {
+    createRoot(() => {
+      const [value, setValue] = createSignal('a\nb');
+      const element = h('span', { title: value, class: value });
+      const svgElement = svg(() => h('g', { class: value }));
+      expect(element.getAttribute('title')).toBe('a\nb');
+      const records: MutationRecord[] = [];
+      const observer = new MutationObserver(batch => records.push(...batch));
+      observer.observe(element, { attributes: true });
+      observer.observe(svgElement, { attributes: true });
+      const writes = vi.spyOn(element, 'setAttribute');
+      setValue('a\r\nb');
+      records.push(...observer.takeRecords());
+      expect(records).toEqual([]);
+      expect(writes).not.toHaveBeenCalled();
+      setValue('a\nc');
+      records.push(...observer.takeRecords());
+      expect(records.map(record => record.attributeName).sort()).toEqual(['class', 'class', 'title']);
+      expect(element.getAttribute('title')).toBe('a\nc');
+      expect(element.className).toBe('a\nc');
+      expect(svgElement.getAttribute('class')).toBe('a\nc');
+      observer.disconnect();
+    });
+  });
+
+  it('an early-edited textarea validates its normalized literal default and keeps the live value and selection', () => {
+    const doc = document.implementation.createHTMLDocument();
+    const area = doc.createElement('textarea');
+    area.append(doc.createTextNode('a\nb'));
+    doc.body.append(area);
+    area.value = 'typed early';
+    area.setSelectionRange(2, 7);
+    const failure = vi.fn();
+    const plan = prepareAdoption(area, () => h('textarea', { value: 'a\r\nb' }), { failure });
+    try {
+      plan.commit();
+      expect(failure).not.toHaveBeenCalled();
+      expect(plan.phase).toBe('live');
+      expect(area.value).toBe('typed early');
+      expect([area.selectionStart, area.selectionEnd]).toEqual([2, 7]);
+      expect(area.defaultValue).toBe('a\nb');
+    } finally { plan.dispose(); }
+  });
+
+  it('a reactive textarea child with a CRLF value is read exactly once while its normalized text validates', () => {
+    const doc = document.implementation.createHTMLDocument();
+    const area = doc.createElement('textarea');
+    area.append(doc.createTextNode('a\nb'));
+    doc.body.append(area);
+    const read = vi.fn(() => 'a\r\nb');
+    const plan = prepareAdoption(area, () => h('textarea', null, read));
+    try {
+      plan.commit();
+      expect(plan.phase).toBe('live');
+      expect(read).toHaveBeenCalledOnce();
+      expect(area.value).toBe('a\nb');
+    } finally { plan.dispose(); }
   });
 });
 
@@ -208,18 +306,18 @@ describe('rule 1 vectors: strict adoption', () => {
   });
 });
 
-describe('rule 1 vectors: the URL policy checks the normalized string that is written', () => {
-  it.each(vectors.unsafeUrlNearMiss)('$id on the static, dynamic and adoption attribute paths', ({ input, refused, written }) => {
-    const anchor = h('a', { href: input, id: 'ok' });
-    expect(anchor.getAttribute('id')).toBe('ok');
-    expect(anchor.getAttribute('href')).toBe(refused ? null : written!);
+describe('rule 1 vectors: the URL policy classifies the raw value and the normalized value is written', () => {
+  it.each(vectors.unsafeUrlNearMiss)('$id on the static, dynamic and adoption attribute paths', ({ input, refused, written, attribute = 'href', tag = 'a' }) => {
+    const element = h(tag, { [attribute]: input, id: 'ok' });
+    expect(element.getAttribute('id')).toBe('ok');
+    expect(element.getAttribute(attribute)).toBe(refused ? null : written!);
     createRoot(() => {
       const [value, setValue] = createSignal('/seed');
-      const dynamic = h('a', { href: value, id: 'ok' });
+      const dynamic = h(tag, { [attribute]: value, id: 'ok' });
       setValue(input);
-      expect(dynamic.getAttribute('href')).toBe(refused ? null : written!);
+      expect(dynamic.getAttribute(attribute)).toBe(refused ? null : written!);
       expect(dynamic.getAttribute('id')).toBe('ok');
     });
-    expect(prepareAttribute(document.createElement('a'), 'href', input).initial).toBe(refused ? null : written!);
+    expect(prepareAttribute(document.createElement(tag), attribute, input).initial).toBe(refused ? null : written!);
   });
 });

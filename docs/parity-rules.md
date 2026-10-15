@@ -60,16 +60,46 @@ constants, source strings, schema and binding bytes, digests and signal values
 stay exact: the component still receives `label === '\0'`; only its rendered
 text is U+FFFD. Trusted raw HTML, `srcdoc`, style objects and CSS strings,
 script and JSON sinks, DOM `Node` children, and attribute and tag names are not
-routed through the helper; their typed guards are unchanged. A scalar URL
-attribute is normalized first and then checked by the existing URL policy, so
-the string the guard classified is the string written.
+routed through the helper; their typed guards are unchanged.
+
+**URL attributes.** The URL policy classifies the raw value and the normalized
+value is written. A NUL anywhere in a URL attribute value refuses the write on
+both sides: no author writes one, and the U+FFFD it would become is not a
+character the URL parser ignores, so `java\0script:alert(1)` would otherwise be
+written as `java�script:alert(1)`, which every engine resolves as a
+same-origin relative reference and fetches on an `img` or `iframe` the moment
+it is attached (review S1, 2026-10-15). For every other character the policy's
+own strip of ASCII whitespace and controls makes the raw and normalized views
+agree, so a CR or CRLF inside a scheme is refused as before and an admitted
+value such as `/docs/a\r\nb` is written as `/docs/a\nb`. Verified by:
+`crates/forma-ir/src/walker.rs` >
+"url_attributes_are_checked_as_the_normalized_string_that_is_written" and
+`packages/core/src/security/__tests__/url-safety.test.ts` > "refuses a NUL
+anywhere in the value, not only in the scheme".
+
+**`pre` and `listing`.** The parser drops a line feed that is the first content
+token of a `pre`, `listing` or `textarea`. The walker therefore writes one
+extra LF when the first text token after such a start tag begins with a
+normalized LF, judged by output position: anything serialized in between (a
+marker comment, a child element, a closing tag) is itself the first token and
+consumes the boundary, while an empty text or a value-only opcode (`PROP`,
+`COALESCE`) writes nothing and leaves it. A dynamic value behind `<!--f:tN-->`
+is never doubled. The element is selected by tag spelling in any namespace, as
+the text-only tags are: the walker has no namespace stack, and neither SVG nor
+MathML defines an element of either name. `h()` and adoption write the value
+itself, so the two sides agree on the parsed tree. Verified by:
+`crates/forma-ir/src/walker.rs` >
+"pre_children_protect_only_an_initial_normalized_line_feed" and
+`packages/core/e2e/normalization.spec.ts` (each `pre` vector parsed by the
+three engines and strictly adopted without a write, plus the undoubled control
+that still refuses).
 
 **Implementation.**
 
 | Side | Helper | Writers |
 |---|---|---|
-| Rust | `crate::text::normalized_chars(&str)` (an iterator; crate-private) and `normalize_text(&str) -> Cow<str>` for already-owned strings | `push_escaped_html`, `push_escaped_attr`, `write_text_only` (leading-LF rule on the normalized text), `Prop::control_text`, `SelectBinding`, option-by-text matching, `is_dangerous_url` |
-| TypeScript | `normalizeDomText(string)` in `packages/core/src/dom/normalize-text.ts` (not a package export; import `forma/dom/normalize-text` inside the package) | `createText`; `h()` string children on the single, multiple, reactive scalar and reactive array paths; generic, class and `xlink:` attributes, static and dynamic; `writeFormControlProperty` and `childText`; adoption text and attribute expectations and later writes; the control oracle's expected defaults; the materializer |
+| Rust | `crate::text::normalized_chars(&str)` (an iterator; crate-private) and `normalize_text(&str) -> Cow<str>` for already-owned strings | `push_escaped_html`, `push_escaped_attr`, `write_text_only` (leading-LF rule on the normalized text), the `pre`/`listing` boundary (`WalkState::pre_boundary`), `Prop::control_text`, `SelectBinding`, option-by-text matching; `is_dangerous_url` refuses a raw NUL |
+| TypeScript | `normalizeDomText(string)` in `packages/core/src/dom/normalize-text.ts` (not a package export; inside the package import `./normalize-text.js`; its consumer beyond the writers is core's adoption, where FORMA-181's `key-text.ts` builds key text) | `createText`; `h()` string children on the single, multiple, reactive scalar and reactive array paths; generic, class and `xlink:` attributes, static and dynamic; `writeFormControlProperty` and `childText`; adoption text and attribute expectations and later writes; the control oracle's expected defaults; the materializer; `isDangerousUrl` refuses a raw NUL |
 
 The output budget counts the bytes actually written: a NUL grows from one byte
 to three, so the escapers check each normalized character's encoded length
@@ -78,16 +108,18 @@ against the limit. Verified by: `crates/forma-ir/src/walker.rs` >
 
 **Vectors.** `crates/forma-ir/tests/fixtures/parity/normalization.json`, one
 finite hand-enumerated file: `values` (helper mapping and every writer),
-`children` (per-value composition), `textarea` (server leading-LF protection)
-and `unsafeUrlNearMiss`. Consumers: `crates/forma-ir/src/text.rs` tests,
-`crates/forma-ir/src/walker.rs` > `normalization_vectors`, and
-`packages/core/src/dom/__tests__/normalize-text.test.ts`.
+`children` (per-value composition), `textarea` and `pre` (server leading-LF
+protection, static `html` and marker-separated `htmlDynamic`, and the parsed
+`value`) and `unsafeUrlNearMiss` (`attribute` and `tag` default to `href` on
+`a`). Consumers: `crates/forma-ir/src/text.rs` tests,
+`crates/forma-ir/src/walker.rs` > `normalization_vectors`,
+`packages/core/src/dom/__tests__/normalize-text.test.ts`, and
+`packages/core/e2e/normalization.spec.ts` in the three engines. A lone
+surrogate cannot be a vector: `serde_json` refuses the file, so the Rust reader
+panics rather than failing one case.
 
 **Not in this slice.**
 
-- The HTML `pre` first-content-token rule (design 4 requires a doubled leading
-  LF there too): the walker has no such state yet. The vector file carries no
-  `pre` case until it does.
 - `forma-server`'s `template.rs::escape_html` serializes the document title,
   body class and head metadata separately; it is not routed through the crate
   helper. Extending rule 1 to it is a separate cross-crate decision.
