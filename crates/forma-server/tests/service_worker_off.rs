@@ -2,9 +2,7 @@
 
 use axum::body::to_bytes;
 use axum::http::StatusCode;
-use forma_server::{
-    render_browser_shell, sw, AssetManifest, PageConfig, RenderCtx, RenderMode, RouteAssets,
-};
+use forma_server::{render_browser_shell, sw, AssetManifest, PageConfig, RenderCtx, RouteAssets};
 use rust_embed::Embed;
 use std::collections::HashMap;
 
@@ -47,9 +45,6 @@ fn page_html(manifest: &AssetManifest) -> String {
         body_class: None,
         personality_css: None,
         body_prefix: None,
-        render_mode: RenderMode::Phase1ClientMount,
-        ir_module: None,
-        slots: None,
     };
     #[allow(deprecated)]
     let page = render_browser_shell(&config, &RenderCtx::new())

@@ -78,12 +78,68 @@ fn props() -> Handler {
 }
 fn handle() -> PageHandle<Handler> {
     let manifest = try_load_manifest::<Assets>().unwrap();
-    load_ir_modules::<Assets>(&manifest)
-        .unwrap()
-        .bind("home")
-        .unwrap()
+    let pages = load_ir_modules::<Assets>(&manifest).unwrap();
+    let page = pages.bind("home").unwrap();
+    bind_empty(&pages);
+    pages.finalize().unwrap();
+    page
+}
+fn bind_empty(pages: &forma_server::Pages) {
+    pages.bind::<Empty>("empty").unwrap();
+    pages.bind::<Empty>("empty-typed").unwrap();
 }
 fn assert_send_sync<T: Send + Sync>() {}
+
+static SLOW_BIND: std::sync::OnceLock<(
+    std::sync::mpsc::SyncSender<()>,
+    std::sync::Mutex<std::sync::mpsc::Receiver<()>>,
+)> = std::sync::OnceLock::new();
+struct SlowEmpty;
+impl forma_ir::props::PropValue for SlowEmpty {
+    fn describe(
+        builder: &mut forma_ir::props::SchemaBuilder,
+    ) -> Result<forma_ir::schema::PropType, forma_ir::props::PropsError> {
+        let (entered, release) = SLOW_BIND.get().unwrap();
+        entered.send(()).unwrap();
+        release
+            .lock()
+            .unwrap()
+            .recv_timeout(Duration::from_secs(5))
+            .unwrap();
+        Empty::describe(builder)
+    }
+    fn encode_value(
+        &self,
+        context: &forma_ir::props::EncodeContext<'_>,
+        kind: &forma_ir::schema::PropType,
+        path: &str,
+    ) -> Result<Option<serde_json::Value>, forma_ir::props::PropsError> {
+        Empty {}.encode_value(context, kind, path)
+    }
+}
+impl forma_ir::PageProps for SlowEmpty {}
+
+#[test]
+fn finalization_refuses_a_bind_already_comparing_on_another_thread() {
+    let (entered_tx, entered_rx) = std::sync::mpsc::sync_channel(1);
+    let (release_tx, release_rx) = std::sync::mpsc::sync_channel(1);
+    SLOW_BIND
+        .set((entered_tx, std::sync::Mutex::new(release_rx)))
+        .unwrap();
+    let pages = load_ir_modules::<Assets>(&try_load_manifest::<Assets>().unwrap()).unwrap();
+    let home = pages.bind::<Handler>("home").unwrap();
+    bind_empty(&pages);
+    let other = pages.clone();
+    let pending = std::thread::spawn(move || other.bind::<SlowEmpty>("empty"));
+    entered_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    pages.finalize().unwrap();
+    release_tx.send(()).unwrap();
+    let errors = pending.join().unwrap().unwrap_err();
+    assert_eq!(errors[0].code, "BIND-111");
+    assert_eq!(errors[0].route, "/empty");
+    assert!(home.render(&props(), &RenderCtx::new()).is_ok());
+    pages.clone().finalize().unwrap();
+}
 
 #[test]
 fn actual_compiler_module_binds_by_declared_names_and_renders_two_list_views() {
@@ -306,10 +362,10 @@ mod reload {
         let original = Assets::get("home.ir").unwrap().data.into_owned();
         let manifest_bytes = Assets::get("manifest.json").unwrap().data.into_owned();
         let manifest = try_load_manifest::<Memory>().unwrap();
-        let handle = load_ir_modules::<Memory>(&manifest)
-            .unwrap()
-            .bind::<Handler>("home")
-            .unwrap();
+        let pages = load_ir_modules::<Memory>(&manifest).unwrap();
+        let handle = pages.bind::<Handler>("home").unwrap();
+        bind_empty(&pages);
+        pages.finalize().unwrap();
         let render = || {
             handle
                 .render(&props(), &RenderCtx::new())
@@ -372,10 +428,10 @@ mod reload {
                 .lock()
                 .unwrap()
                 .insert("manifest.json".into(), rejected);
-            let startup = load_ir_modules::<Memory>(&manifest)
-                .unwrap()
-                .bind::<Handler>("home")
-                .unwrap();
+            let pages = load_ir_modules::<Memory>(&manifest).unwrap();
+            let startup = pages.bind::<Handler>("home").unwrap();
+            bind_empty(&pages);
+            pages.finalize().unwrap();
             write("home.ir", replace(&original, b"local-only", b"edited-one"));
             let render_startup = || {
                 startup
@@ -395,15 +451,80 @@ mod reload {
     }
 
     #[test]
+    fn finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery() {
+        let _serial = SERIAL.lock().unwrap_or_else(|p| p.into_inner());
+        let _reset = Reset;
+        let original = Assets::get("home.ir").unwrap().data.into_owned();
+        let manifest_bytes = Assets::get("manifest.json").unwrap().data.into_owned();
+        let manifest = try_load_manifest::<Memory>().unwrap();
+        let pages = load_ir_modules::<Memory>(&manifest).unwrap();
+        let handle = pages.bind::<Handler>("home").unwrap();
+        bind_empty(&pages);
+        pages.finalize().unwrap();
+        let render = || {
+            handle
+                .render(&props(), &RenderCtx::new())
+                .unwrap()
+                .into_parts_unchecked()
+                .html
+        };
+        let baseline: serde_json::Value = serde_json::from_slice(&manifest_bytes).unwrap();
+        // Each independently valid manifest changes only one topology rule.
+        for change in ["add", "remove", "ssr-to-browser", "browser-to-ssr"] {
+            write("home.ir", original.clone());
+            write("manifest.json", manifest_bytes.clone());
+            assert!(render().contains("local-only"));
+            let mut next = baseline.clone();
+            next["assets"]["fresh.js"] = serde_json::json!({"immutable": false});
+            next["routes"]["/"]["js"] = serde_json::json!(["fresh.js"]);
+            match change {
+                "add" => next["routes"]["/added"] = baseline["routes"]["/empty"].clone(),
+                "remove" => {
+                    next["routes"].as_object_mut().unwrap().remove("/empty");
+                }
+                "ssr-to-browser" => {
+                    next["routes"]["/"]["mode"] = "browser".into();
+                    next["routes"]["/"].as_object_mut().unwrap().remove("ir");
+                }
+                "browser-to-ssr" => {
+                    next["routes"]["/client"] = baseline["routes"]["/empty"].clone()
+                }
+                _ => unreachable!(),
+            }
+            serde_json::from_value::<forma_server::AssetManifest>(next.clone()).unwrap();
+            write("manifest.json", next.to_string().into_bytes());
+            for replacement in [b"edited-one", b"edited-two"] {
+                write("home.ir", replace(&original, b"local-only", replacement));
+                for _ in 0..2 {
+                    let html = render();
+                    assert!(html.contains("local-only"), "{change}: {html}");
+                    assert!(!html.contains("edited-"));
+                    assert!(!html.contains("fresh.js"));
+                }
+            }
+            // Restoring the exact prior manifest allows the pending module edit.
+            write("manifest.json", manifest_bytes.clone());
+            assert!(render().contains("edited-two"));
+            // A compatible asset-only build then updates the complete pair.
+            let mut compatible = baseline.clone();
+            compatible["assets"]["fresh.js"] = serde_json::json!({"immutable": false});
+            compatible["routes"]["/"]["js"] = serde_json::json!(["fresh.js"]);
+            write("manifest.json", compatible.to_string().into_bytes());
+            let html = render();
+            assert!(html.contains("edited-two") && html.contains("fresh.js"));
+        }
+    }
+
+    #[test]
     fn reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot() {
         let _serial = SERIAL.lock().unwrap_or_else(|p| p.into_inner());
         let _reset = Reset;
         let original = Assets::get("home.ir").unwrap().data.into_owned();
         let manifest = try_load_manifest::<Memory>().unwrap();
-        let handle = load_ir_modules::<Memory>(&manifest)
-            .unwrap()
-            .bind::<Handler>("home")
-            .unwrap();
+        let pages = load_ir_modules::<Memory>(&manifest).unwrap();
+        let handle = pages.bind::<Handler>("home").unwrap();
+        bind_empty(&pages);
+        pages.finalize().unwrap();
         assert!(handle
             .render(&props(), &RenderCtx::new())
             .unwrap()
@@ -446,12 +567,27 @@ mod reload {
         next["routes"]["/"]["mode"] = "browser".into();
         next["routes"]["/"].as_object_mut().unwrap().remove("ir");
         write("manifest.json", next.to_string().into_bytes());
+        let previous = handle
+            .render(&props(), &RenderCtx::new())
+            .unwrap()
+            .into_parts_unchecked()
+            .html;
+        assert!(previous.contains("data-forma-ssr"));
+        assert!(
+            previous.contains("local-only"),
+            "changed route mode must keep the finalized snapshot"
+        );
+        next["routes"]["/new-ssr"] = next["routes"]["/empty"].clone();
+        write("manifest.json", next.to_string().into_bytes());
+        assert!(handle
+            .render(&props(), &RenderCtx::new())
+            .unwrap()
+            .into_parts_unchecked()
+            .html
+            .contains("local-only"));
         assert_eq!(
-            handle
-                .render(&props(), &RenderCtx::new())
-                .unwrap_err()
-                .code(),
-            "RENDER-405"
+            pages.bind::<Empty>("/new-ssr").unwrap_err()[0].code,
+            "BIND-111"
         );
     }
 }
@@ -459,10 +595,14 @@ mod reload {
 #[test]
 fn no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists() {
     let pages = load_ir_modules::<Assets>(&try_load_manifest::<Assets>().unwrap()).unwrap();
-    for name in ["empty", "empty-typed"] {
-        let page = pages
-            .bind::<Empty>(name)
-            .unwrap()
+    pages.bind::<Handler>("home").unwrap();
+    let handles: Vec<_> = ["empty", "empty-typed"]
+        .into_iter()
+        .map(|name| (name, pages.bind::<Empty>(name).unwrap()))
+        .collect();
+    pages.finalize().unwrap();
+    for (name, handle) in handles {
+        let page = handle
             .render(&Empty {}, &RenderCtx::new())
             .unwrap()
             .into_parts_unchecked();
@@ -476,4 +616,286 @@ fn no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists()
             "the unseeded local array starts empty"
         );
     }
+}
+
+#[test]
+fn finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs() {
+    let manifest = try_load_manifest::<Assets>().unwrap();
+    let pages = load_ir_modules::<Assets>(&manifest).unwrap();
+    assert!(pages.bind::<Empty>("home").is_err());
+    let errors = pages.finalize().unwrap_err();
+    assert_eq!(
+        errors
+            .iter()
+            .map(|e| (e.code, e.route.as_str()))
+            .collect::<Vec<_>>(),
+        [
+            ("BIND-110", "/"),
+            ("BIND-110", "/empty"),
+            ("BIND-110", "/empty-typed")
+        ]
+    );
+    assert!(errors[0].to_string().contains("home.ir"));
+    let home = pages.bind::<Handler>("home").unwrap();
+    assert_eq!(
+        home.render(&props(), &RenderCtx::new()).unwrap_err().code(),
+        "RENDER-406"
+    );
+    // A successful duplicate alias binding still counts for this route alone.
+    let duplicate = pages.clone().bind::<Handler>("/").unwrap();
+    assert_eq!(pages.finalize().unwrap_err().len(), 2);
+    bind_empty(&pages);
+    pages.finalize().unwrap();
+    pages.clone().finalize().unwrap();
+    assert!(home
+        .render(&props(), &RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked()
+        .html
+        .contains("Ada &amp; Bob"));
+    assert!(duplicate.render(&props(), &RenderCtx::new()).is_ok());
+    assert_eq!(
+        pages.bind::<Handler>("home").unwrap_err()[0].code,
+        "BIND-111"
+    );
+}
+
+#[test]
+fn two_routes_sharing_an_alias_need_two_successful_exact_bindings() {
+    let mut manifest = try_load_manifest::<Assets>().unwrap();
+    manifest
+        .routes
+        .insert("/other".into(), manifest.routes["/"].clone());
+    let pages = load_ir_modules::<Assets>(&manifest).unwrap();
+    bind_empty(&pages);
+    pages.bind::<Handler>("/").unwrap();
+    let errors = pages.finalize().unwrap_err();
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].route, "/other");
+    pages.bind::<Handler>("/other").unwrap();
+    pages.finalize().unwrap();
+}
+
+#[test]
+fn bind_limits_inherit_and_request_overrides_never_change_sibling_defaults() {
+    use forma_server::Limits;
+    let pages = load_ir_modules::<Assets>(&try_load_manifest::<Assets>().unwrap()).unwrap();
+    let strict = pages
+        .bind_with::<Handler>(
+            "home",
+            Limits {
+                max_list_iterations: 3,
+                ..Limits::default()
+            },
+        )
+        .unwrap();
+    let loose = pages
+        .bind_with::<Handler>(
+            "/",
+            Limits {
+                max_list_iterations: 4,
+                ..Limits::default()
+            },
+        )
+        .unwrap();
+    bind_empty(&pages);
+    pages.finalize().unwrap();
+    let data = props();
+    let failure = strict.render(&data, &RenderCtx::new()).unwrap_err();
+    assert_eq!((failure.code(), failure.route()), ("RENDER-302", "/"));
+    assert_eq!(
+        failure.counts().unwrap().list_iterations,
+        2,
+        "second view refuses before its first row"
+    );
+    assert_eq!(
+        loose
+            .render(&data, &RenderCtx::new())
+            .unwrap()
+            .counts()
+            .list_iterations,
+        4
+    );
+    assert_eq!(
+        strict
+            .render(&data, &RenderCtx::new().with_limits(loose.limits()))
+            .unwrap()
+            .counts()
+            .list_iterations,
+        4
+    );
+    assert_eq!(strict.limits().max_list_iterations, 3);
+    assert_eq!(
+        strict.render(&data, &RenderCtx::new()).unwrap_err().code(),
+        "RENDER-302"
+    );
+    let zero = Limits {
+        max_output_bytes: 0,
+        ..Limits::default()
+    };
+    let error = loose
+        .render(&data, &RenderCtx::new().with_limits(zero))
+        .unwrap_err();
+    assert_eq!(error.code(), "RENDER-301");
+    assert_eq!(error.counts().unwrap().bytes, 0);
+    assert!(loose.render(&data, &RenderCtx::new()).is_ok());
+}
+
+#[test]
+fn typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy() {
+    let data = serde_json::json!({"note":"</script><img src=x onerror=alert(1)>", "other":"<!--"});
+    let css = "@media (width < 600px){p::after{content:\"</style><img src=x>\"}}";
+    let prefix = "<aside data-reviewed>Brand</aside>";
+    let ctx = RenderCtx::new()
+        .with_config_json(data.clone())
+        .with_personality_css(css)
+        .with_body_prefix(forma_server::RawHtml::trusted(prefix));
+    let parts = handle()
+        .render(&props(), &ctx)
+        .unwrap()
+        .into_parts_unchecked();
+    assert!(parts
+        .html
+        .contains(&format!("{prefix}<div id=\"app\" data-forma-ssr>")));
+    assert!(parts.html.contains("@media (width < 600px)"));
+    assert!(parts.html.contains(r"<\/style><img src=x>"));
+    assert!(!parts.html.contains("</style><img"));
+    let json = parts
+        .html
+        .split("window.__FORMA_CONFIG__=")
+        .nth(1)
+        .unwrap()
+        .split(";</script>")
+        .next()
+        .unwrap();
+    assert!(!json.contains('<'));
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(json).unwrap(),
+        data
+    );
+    assert!(parts
+        .html
+        .contains(&format!("<style nonce=\"{}\">", parts.nonce)));
+    let header = |name: &str| {
+        parts
+            .headers
+            .iter()
+            .find(|(n, _)| n.as_str() == name)
+            .unwrap()
+            .1
+            .to_str()
+            .unwrap()
+    };
+    assert_eq!(header("cache-control"), "no-store");
+    assert!(header("content-security-policy").contains("require-trusted-types-for 'script'"));
+    assert!(header("content-security-policy").contains(&format!("'nonce-{}'", parts.nonce)));
+}
+
+#[test]
+fn only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize() {
+    let mut manifest = try_load_manifest::<Assets>().unwrap();
+    let shell = |route| forma_server::PageConfig {
+        title: "Browser",
+        route_pattern: route,
+        manifest: &manifest,
+        config_json: None,
+        body_class: None,
+        personality_css: None,
+        body_prefix: None,
+    };
+    for route in ["/", "/missing"] {
+        let error =
+            forma_server::render_browser_shell(&shell(route), &RenderCtx::new()).unwrap_err();
+        assert_eq!((error.code(), error.route()), ("RENDER-103", route));
+    }
+    let page = forma_server::render_browser_shell(&shell("/client"), &RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked();
+    assert!(page.html.contains("<div id=\"app\"></div>"));
+    assert!(!page.html.contains("data-forma-ssr"));
+    assert!(page
+        .headers
+        .iter()
+        .any(|(name, value)| name == "cache-control" && value == "no-store"));
+    manifest
+        .routes
+        .retain(|_, route| route.mode == forma_server::RouteMode::Browser);
+    let pages = load_ir_modules::<Assets>(&manifest).unwrap();
+    pages.finalize().unwrap();
+}
+
+#[test]
+#[allow(clippy::print_stderr)] // Explicitly report both timing scopes for this measurement.
+fn a_sixty_thousand_row_typed_request_refuses_before_its_first_row() {
+    use std::time::Instant;
+    let handle = handle();
+    let mut data = props();
+    data.rows = (0..60_000)
+        .map(|_| Row {
+            enabled: true,
+            detail: Detail {
+                label: "row".into(),
+            },
+            id: 1.0,
+        })
+        .collect();
+    let start = Instant::now();
+    let error = handle.render(&data, &RenderCtx::new()).unwrap_err();
+    let total = start.elapsed();
+    assert_eq!(error.code(), "RENDER-302");
+    let counts = error.counts().unwrap();
+    assert_eq!(counts.list_iterations, 0);
+    eprintln!(
+        "60000-row refusal: walker={:?}; total typed encoding/render={total:?}",
+        counts.walk_time
+    );
+    // The SR38 timing is the walker refusal, not the preceding checked encoding.
+    #[cfg(not(debug_assertions))]
+    assert!(
+        counts.walk_time < Duration::from_millis(1),
+        "{:?}",
+        counts.walk_time
+    );
+}
+
+struct PanickingHandler {
+    panic_now: bool,
+}
+impl forma_ir::props::PropValue for PanickingHandler {
+    fn describe(
+        builder: &mut forma_ir::props::SchemaBuilder,
+    ) -> Result<forma_ir::schema::PropType, forma_ir::props::PropsError> {
+        Empty::describe(builder)
+    }
+    fn encode_value(
+        &self,
+        context: &forma_ir::props::EncodeContext<'_>,
+        kind: &forma_ir::schema::PropType,
+        path: &str,
+    ) -> Result<Option<serde_json::Value>, forma_ir::props::PropsError> {
+        assert!(!self.panic_now, "tenant branding conversion failed");
+        Empty {}.encode_value(context, kind, path)
+    }
+}
+impl forma_ir::PageProps for PanickingHandler {}
+
+#[test]
+fn a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders() {
+    let pages = load_ir_modules::<Assets>(&try_load_manifest::<Assets>().unwrap()).unwrap();
+    pages.bind::<Handler>("home").unwrap();
+    pages.bind::<Empty>("empty-typed").unwrap();
+    let page = pages.bind::<PanickingHandler>("empty").unwrap();
+    pages.finalize().unwrap();
+    let error = page
+        .render(&PanickingHandler { panic_now: true }, &RenderCtx::new())
+        .unwrap_err();
+    assert_eq!((error.code(), error.route()), ("RENDER-399", "/empty"));
+    assert!(error
+        .to_string()
+        .contains("tenant branding conversion failed"));
+    assert!(error.component_path().is_empty());
+    let good = page
+        .render(&PanickingHandler { panic_now: false }, &RenderCtx::new())
+        .unwrap();
+    assert!(good.into_parts_unchecked().html.contains("empty-local"));
 }

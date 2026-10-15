@@ -41,7 +41,7 @@ use std::time::Duration;
 /// # let _ = parts.html;
 /// ```
 ///
-/// Verified by: crates/forma-server/tests/page_response.rs > "page_response_writes_no_store_the_policy_and_the_document_headers"
+/// Verified by: crates/forma-server/tests/internal_renderer/page_response.rs > "page_response_writes_no_store_the_policy_and_the_document_headers"
 #[derive(Debug)]
 pub struct PageResponse {
     html: String,
@@ -55,10 +55,11 @@ pub struct PageResponse {
 /// On a [`crate::RenderError`] for a budget or a fault, the same counts say
 /// how far the walk got. For a page served without a walk (a browser
 /// shell) every count is zero. `nodes` and `list_iterations` are counted by
-/// [`crate::try_render`].
+/// [`crate::PageHandle::render`].
 ///
-/// The walk time is the number to watch for moving a page off an async
-/// worker: see [`crate::try_render`]'s `spawn_blocking` recipe.
+/// Walk time excludes checked props conversion and document assembly. Measure
+/// the complete handle call when deciding to move owned request data and a
+/// cloned handle into the application runtime's blocking pool.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct RenderCounts {

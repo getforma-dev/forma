@@ -220,7 +220,7 @@ impl PreviewFrame {
     /// `FRAME-101` to `FRAME-104` (see the [module docs](self)); refuse to
     /// start on any of them.
     ///
-    /// Verified by: crates/forma-server/tests/preview_frame.rs > "a_frame_without_its_runtime_is_a_coded_error_at_start"
+    /// Verified by: crates/forma-server/tests/internal_renderer/preview_frame.rs > "a_frame_without_its_runtime_is_a_coded_error_at_start"
     pub fn load<A: Embed>(manifest: &AssetManifest, app_origin: &str) -> Result<Self, FrameError> {
         manifest
             .validate()
@@ -317,7 +317,7 @@ impl PageResponse {
     /// `FRAME-201` when no nonce can be drawn for `style-src`: there is no
     /// frame without one; `FRAME-202`, ruled out by the checks at start.
     ///
-    /// Verified by: crates/forma-server/tests/preview_frame.rs > "the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch"
+    /// Verified by: crates/forma-server/tests/internal_renderer/preview_frame.rs > "the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch"
     pub fn frame(preview: &PreviewFrame) -> Result<PageResponse, FrameError> {
         frame_with(preview, CspNonce::try_generate)
     }

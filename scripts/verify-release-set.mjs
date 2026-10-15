@@ -79,7 +79,7 @@ export function verifyPackedCorpus(manifest, fmir) {
 }
 // Required by the recorded declared-v1 props contract. Never accept an empty
 // Cargo target, a filtered/ignored check or bytes from the source compiler.
-export function verifyPackedPropsTests(manifest) {
+export function verifyPackedPropsTests(manifest, { boundRender = false } = {}) {
   const names = [
     'actual_compiler_module_binds_by_declared_names_and_renders_two_list_views',
     'every_request_checks_numeric_and_date_bounds_with_declared_paths',
@@ -89,6 +89,16 @@ export function verifyPackedPropsTests(manifest) {
     'reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot',
     'reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery',
   ];
+  if (boundRender) names.push(
+    'finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs',
+    'finalization_refuses_a_bind_already_comparing_on_another_thread',
+    'two_routes_sharing_an_alias_need_two_successful_exact_bindings',
+    'bind_limits_inherit_and_request_overrides_never_change_sibling_defaults',
+    'typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy',
+    'only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize',
+    'a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders',
+    'reload::finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery',
+  );
   const args = ['test', '--locked', '--manifest-path', manifest, '--test', 'typed_pages', '--', '--color', 'never'];
   const env = { ...process.env };
   delete env.UPDATE_GOLDEN;
@@ -129,6 +139,8 @@ export async function verify(dir, reportPath) {
   const started = Date.now(), set = json(join(dir, 'release-set.json'));
   assert([undefined, null, 'enforced-v1'].includes(set.contracts.trustedTypes), 'P17 has no verifier for the recorded Trusted Types contract');
   assert([null, 'declared-v1'].includes(set.contracts.props), 'P17 has no verifier for the recorded props contract');
+  assert([undefined, null, 'finalized-v1'].includes(set.contracts.boundRender), 'P17 has no verifier for the recorded bound rendering contract');
+  if (set.contracts.boundRender === 'finalized-v1') assert.equal(set.contracts.props, 'declared-v1', 'finalized rendering requires the declared props checks');
   for (const p of set.packages) assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file}: wrong packed bytes`);
   const scratch = join(ROOT, `.release-verify-${process.pid}`);
   mkdirSync(scratch);
@@ -202,7 +214,7 @@ export async function verify(dir, reportPath) {
         const compiler = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
         const serverCrate = join(scratch, 'crates/forma-server');
         verifyPackedPropsFixtures(compiler, serverCrate);
-        verifyPackedPropsTests(join(serverCrate, 'Cargo.toml'));
+        verifyPackedPropsTests(join(serverCrate, 'Cargo.toml'), { boundRender: set.contracts.boundRender === 'finalized-v1' });
       });
     }
     const { chromium } = await import('@playwright/test');

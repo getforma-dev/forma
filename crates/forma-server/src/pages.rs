@@ -1,7 +1,6 @@
 //! Startup binding between declared TypeScript page props and a derived Rust handler.
 use crate::{
-    AssetManifest, IrLoadError, IrModules, PageConfig, PageResponse, RenderCtx, RenderError,
-    RenderMode, RouteMode,
+    AssetManifest, IrLoadError, Limits, PageConfig, PageResponse, RenderCtx, RenderError, RouteMode,
 };
 use forma_ir::{
     format::{SlotSource, SlotType},
@@ -12,7 +11,7 @@ use forma_ir::{
 };
 use rust_embed::Embed;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fmt,
     marker::PhantomData,
     sync::{Arc, Mutex},
@@ -26,7 +25,15 @@ type GetModule = dyn Fn(&str) -> Option<(Arc<IrModule>, Arc<AssetManifest>)> + S
 pub struct Pages {
     manifest: Arc<AssetManifest>,
     get: Arc<GetModule>,
+    seal: Arc<dyn Fn() -> Result<(), String> + Send + Sync>,
+    registration: Arc<Mutex<Registration>>,
 }
+#[derive(Default)]
+struct Registration {
+    bound: HashSet<String>,
+    finalized: bool,
+}
+
 impl fmt::Debug for Pages {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Pages")
@@ -38,10 +45,13 @@ impl Pages {
     pub(crate) fn load<A: Embed + 'static>(
         manifest: &AssetManifest,
     ) -> Result<Self, Vec<IrLoadError>> {
-        let modules = IrModules::<A>::load(manifest)?;
+        let modules = Arc::new(crate::ir::IrModules::<A>::load(manifest)?);
+        let cache = Arc::clone(&modules);
         Ok(Self {
             manifest: Arc::new(manifest.clone()),
             get: Arc::new(move |route| modules.snapshot(route)),
+            seal: Arc::new(move || cache.freeze_topology()),
+            registration: Arc::new(Mutex::new(Registration::default())),
         })
     }
 
@@ -49,6 +59,23 @@ impl Pages {
     /// `home.ir` alias). Names matching multiple routes are refused: bind the exact
     /// route in that case. Comparison and root-slot validation happen here, once.
     pub fn bind<P: PageProps>(&self, page: &str) -> Result<PageHandle<P>, Vec<PropsError>> {
+        self.bind_with(page, Limits::default())
+    }
+
+    /// Bind this page with immutable defaults inherited by each request.
+    pub fn bind_with<P: PageProps>(
+        &self,
+        page: &str,
+        limits: Limits,
+    ) -> Result<PageHandle<P>, Vec<PropsError>> {
+        if self.is_finalized() {
+            return Err(vec![error(
+                "BIND-111",
+                page,
+                "",
+                "page registry is already finalized",
+            )]);
+        }
         let route = self.resolve(page).map_err(|e| vec![e])?;
         let (module, _) = (self.get)(&route).ok_or_else(|| {
             vec![error(
@@ -59,18 +86,58 @@ impl Pages {
             )]
         })?;
         let binding = Binding::new(module, &route)?;
+        let mut registration = self.registration.lock().unwrap_or_else(|p| p.into_inner());
+        if registration.finalized {
+            return Err(vec![error(
+                "BIND-111",
+                &route,
+                "",
+                "page registry is already finalized",
+            )]);
+        }
         for warning in binding.props.warnings() {
             tracing::warn!(code = warning.code, route = %route, path = %warning.path, "{warning}");
         }
+        registration.bound.insert(route.clone());
         Ok(PageHandle {
             inner: Arc::new(Handle {
                 page: page.into(),
+                limits,
                 route,
                 pages: self.clone(),
                 binding: Mutex::new(Arc::new(binding)),
             }),
             marker: PhantomData,
         })
+    }
+
+    /// Complete startup after every SSR route has a verified handler. Call this
+    /// before the application opens its listener. A refusal leaves registration
+    /// open so missing handlers can be bound; success seals every clone together.
+    /// Browser routes require no binding. Repeated successful calls are harmless.
+    pub fn finalize(&self) -> Result<(), Vec<PropsError>> {
+        let mut registration = self.registration.lock().unwrap_or_else(|p| p.into_inner());
+        if registration.finalized {
+            return Ok(());
+        }
+        let mut errors: Vec<_> = self.manifest.routes.iter()
+            .filter(|(route, assets)| assets.mode == RouteMode::Ssr && !registration.bound.contains(*route))
+            .map(|(route, assets)| error("BIND-110", route, "", format!("SSR module {} has no verified handler; bind it before opening the listener", assets.ir.as_deref().unwrap_or("<missing>"))))
+            .collect();
+        errors.sort_by(|a, b| a.route.cmp(&b.route));
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        (self.seal)().map_err(|message| vec![error("BIND-112", "<manifest>", "", message)])?;
+        registration.finalized = true;
+        Ok(())
+    }
+
+    fn is_finalized(&self) -> bool {
+        self.registration
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .finalized
     }
 
     fn resolve(&self, page: &str) -> Result<String, PropsError> {
@@ -134,6 +201,7 @@ impl<P: PageProps> Binding<P> {
     }
 }
 struct Handle<P: PageProps> {
+    limits: Limits,
     page: String,
     route: String,
     pages: Pages,
@@ -170,6 +238,11 @@ impl<P: PageProps> PageHandle<P> {
     pub fn route(&self) -> &str {
         &self.inner.route
     }
+    /// The page defaults selected at bind. A request override does not change them.
+    pub fn limits(&self) -> Limits {
+        self.inner.limits
+    }
+
     /// Extra Rust fields reported by the currently verified contract. They are
     /// omitted from encoded page data, even when their values are unsafe.
     pub fn warnings(&self) -> Vec<PropsWarning> {
@@ -186,6 +259,15 @@ impl<P: PageProps> PageHandle<P> {
     /// overrides it for this request. Head/policy/preload settings keep their
     /// existing typed wrappers. No raw script or HTML string enters this API.
     pub fn render(&self, props: &P, ctx: &RenderCtx) -> Result<PageResponse, RenderError> {
+        crate::render::guard(&self.inner.route, || self.render_inner(props, ctx))
+    }
+
+    fn render_inner(&self, props: &P, ctx: &RenderCtx) -> Result<PageResponse, RenderError> {
+        if !self.inner.pages.is_finalized() {
+            return Err(RenderError::Unfinalized {
+                route: self.inner.route.clone(),
+            });
+        }
         let route = &self.inner.route;
         let (current, manifest) =
             (self.inner.pages.get)(route).ok_or_else(|| RenderError::Binding {
@@ -228,15 +310,18 @@ impl<P: PageProps> PageHandle<P> {
             title: ctx.title().unwrap_or(&self.inner.page),
             route_pattern: route,
             manifest: &manifest,
-            config_json: None,
+            config_json: ctx.config_json(),
             body_class: ctx.body_class(),
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase2SsrReconcile,
-            ir_module: Some(binding.props.module()),
-            slots: Some(&slots),
+            personality_css: ctx.personality_css(),
+            body_prefix: ctx.body_prefix(),
         };
-        crate::try_render(&config, ctx)
+        crate::render::render_bound(
+            &config,
+            ctx,
+            Some(binding.props.module()),
+            Some(&slots),
+            ctx.limits(self.inner.limits),
+        )
     }
 }
 

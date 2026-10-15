@@ -2,7 +2,7 @@
 
 use axum::body::to_bytes;
 use axum::http::StatusCode;
-use forma_server::{render_browser_shell, sw, AssetManifest, PageConfig, RenderCtx, RenderMode};
+use forma_server::{render_browser_shell, sw, AssetManifest, PageConfig, RenderCtx};
 use rust_embed::Embed;
 use std::collections::HashMap;
 use std::sync::Once;
@@ -38,7 +38,20 @@ fn an_enabled_application_s_pages_register_the_worker() {
         aliases: HashMap::new(),
         build: "test".to_string(),
         assets: HashMap::new(),
-        routes: HashMap::new(),
+        routes: [(
+            "/".into(),
+            forma_server::RouteAssets {
+                mode: forma_server::RouteMode::Browser,
+                modulepreload: vec![],
+                js: vec![],
+                css: vec![],
+                fonts: vec![],
+                ir: None,
+                total_size_br: 0,
+                budget_warn_threshold: 0,
+            },
+        )]
+        .into(),
     };
     #[allow(deprecated)]
     let page = render_browser_shell(
@@ -50,9 +63,6 @@ fn an_enabled_application_s_pages_register_the_worker() {
             body_class: None,
             personality_css: None,
             body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
         },
         &RenderCtx::new(),
     )

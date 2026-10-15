@@ -11,7 +11,9 @@
 //! good ones.
 
 use forma_server::assets::try_load_manifest;
-use forma_server::{load_ir_modules_strict, IrLoadError, IrModules, RenderMode};
+use forma_server::{load_ir_modules, IrLoadError};
+#[derive(forma_ir::PageProps)]
+struct Empty {}
 use rust_embed::Embed;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -180,7 +182,7 @@ fn error_for<'a>(errors: &'a [IrLoadError], route: &str) -> &'a IrLoadError {
 #[test]
 fn a_flipped_byte_fails_the_default_loader_naming_route_file_and_code() {
     let manifest = try_load_manifest::<Flipped>().expect("manifest");
-    let errors = load_ir_modules_strict::<Flipped>(&manifest).expect_err("bad modules refuse");
+    let errors = load_ir_modules::<Flipped>(&manifest).expect_err("bad modules refuse");
 
     for (route, file, code, cause) in [
         ("/magic", "magic.ir", "LOAD-102", "bad signature"),
@@ -218,7 +220,7 @@ fn a_flipped_byte_fails_the_default_loader_naming_route_file_and_code() {
 #[test]
 fn a_truncated_module_fails_the_default_loader_naming_route_file_and_code() {
     let manifest = try_load_manifest::<Truncated>().expect("manifest");
-    let errors = load_ir_modules_strict::<Truncated>(&manifest).expect_err("refuses");
+    let errors = load_ir_modules::<Truncated>(&manifest).expect_err("refuses");
     assert_eq!(errors.len(), 2, "{errors:?}");
     for (route, file, code, cause) in [
         ("/header", "header.ir", "LOAD-103", "buffer too short"),
@@ -234,52 +236,16 @@ fn a_truncated_module_fails_the_default_loader_naming_route_file_and_code() {
 #[test]
 fn a_route_declared_ssr_false_needs_no_module() {
     let manifest = try_load_manifest::<Good>().expect("manifest");
-    let (modes, modules) = load_ir_modules_strict::<Good>(&manifest).expect("all good");
-    assert_eq!(modes.get("/"), Some(&RenderMode::Phase2SsrReconcile));
-    assert!(modules.contains_key("/"));
-    // `/app` has no `ir`: nothing to load, nothing to refuse.
-    assert_eq!(modes.get("/app"), Some(&RenderMode::Phase1ClientMount));
-    assert!(!modules.contains_key("/app"));
-}
-
-#[test]
-fn ir_modules_load_refuses_exactly_what_the_strict_loader_refuses() {
-    // `IrModules::load` (FORMA-166) is the strict loader with a development
-    // reload on top: the same modules load, and the same failures, with the
-    // same codes, refuse the start.
-    fn sorted(mut errors: Vec<IrLoadError>) -> Vec<IrLoadError> {
-        errors.sort_by(|a, b| a.route.cmp(&b.route));
-        errors
-    }
-    let flipped = try_load_manifest::<Flipped>().expect("manifest");
-    assert_eq!(
-        sorted(IrModules::<Flipped>::load(&flipped).expect_err("refused")),
-        sorted(load_ir_modules_strict::<Flipped>(&flipped).expect_err("refused"))
-    );
-    let truncated = try_load_manifest::<Truncated>().expect("manifest");
-    assert_eq!(
-        sorted(IrModules::<Truncated>::load(&truncated).expect_err("refused")),
-        sorted(load_ir_modules_strict::<Truncated>(&truncated).expect_err("refused"))
-    );
-    let good = try_load_manifest::<Good>().expect("manifest");
-    let modules = IrModules::<Good>::load(&good).expect("loads");
-    let (_, strict) = load_ir_modules_strict::<Good>(&good).expect("loads");
-    let page = modules.get("/").expect("the good page");
-    assert_eq!(page.opcodes, strict["/"].opcodes);
-    assert!(modules.get("/app").is_none(), "ssr: false has no module");
-}
-
-#[test]
-fn the_final_loader_name_refuses_the_same_bad_modules() {
-    fn sorted(mut errors: Vec<IrLoadError>) -> Vec<IrLoadError> {
-        errors.sort_by(|a, b| a.route.cmp(&b.route));
-        errors
-    }
-    let manifest = try_load_manifest::<Flipped>().unwrap();
-    assert_eq!(
-        sorted(forma_server::load_ir_modules::<Flipped>(&manifest).unwrap_err()),
-        sorted(load_ir_modules_strict::<Flipped>(&manifest).unwrap_err())
-    );
+    let pages = load_ir_modules::<Good>(&manifest).expect("all good");
+    let page = pages.bind::<Empty>("/").unwrap();
+    assert_eq!(pages.bind::<Empty>("/app").unwrap_err()[0].code, "BIND-108");
+    pages.finalize().unwrap();
+    assert!(page
+        .render(&Empty {}, &forma_server::RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked()
+        .html
+        .contains(">hello</p>"));
 }
 
 // -- A fixture server: load, then bind ----------------------------------------
@@ -289,8 +255,8 @@ fn the_final_loader_name_refuses_the_same_bad_modules() {
 enum Loader {
     /// The default: `load_ir_modules_strict`.
     Default,
-    /// The final typed page registry.
-    Pages,
+    /// Deliberately omit required handler registration.
+    Unbound,
 }
 
 #[derive(Debug)]
@@ -298,6 +264,7 @@ enum Loader {
 enum StartError {
     Manifest(String),
     Modules(Vec<IrLoadError>),
+    Binding(Vec<forma_server::PropsError>),
     Io(std::io::Error),
 }
 
@@ -309,21 +276,17 @@ fn serve<A: Embed + 'static>(
     bind: impl FnOnce() -> std::io::Result<TcpListener>,
 ) -> Result<(), StartError> {
     let manifest = try_load_manifest::<A>().map_err(StartError::Manifest)?;
-    let modules = match loader {
-        Loader::Default => load_ir_modules_strict::<A>(&manifest)
-            .map_err(StartError::Modules)?
-            .1
-            .len(),
-        Loader::Pages => {
-            let _pages =
-                forma_server::load_ir_modules::<A>(&manifest).map_err(StartError::Modules)?;
-            manifest
-                .routes
-                .values()
-                .filter(|route| route.mode == forma_server::RouteMode::Ssr)
-                .count()
+    let pages = load_ir_modules::<A>(&manifest).map_err(StartError::Modules)?;
+    let mut modules = 0;
+    if matches!(loader, Loader::Default) {
+        for (route, assets) in &manifest.routes {
+            if assets.mode == forma_server::RouteMode::Ssr {
+                pages.bind::<Empty>(route).map_err(StartError::Binding)?;
+                modules += 1;
+            }
         }
-    };
+    }
+    pages.finalize().map_err(StartError::Binding)?;
     let listener = bind().map_err(StartError::Io)?;
     let (mut stream, _) = listener.accept().map_err(StartError::Io)?;
     write!(stream, "{} server-rendered pages", modules).map_err(StartError::Io)?;
@@ -373,29 +336,20 @@ fn with_a_bad_module_the_fixture_server_binds_no_port() {
 }
 
 #[test]
-fn the_same_server_binds_and_serves_with_good_modules_through_both_strict_loaders() {
-    // Good modules start through either strict public entry point.
-    for (set, loader, expected) in [
-        ("good", Loader::Default, "1 server-rendered pages"),
-        ("good", Loader::Pages, "1 server-rendered pages"),
-    ] {
-        let (started, bound) = match set {
-            "good" => spawn::<Good>(loader),
-            _ => spawn::<Flipped>(loader),
-        };
-        let addr = bound
-            .recv_timeout(Duration::from_secs(5))
-            .unwrap_or_else(|error| panic!("{set}: server did not bind: {error}"));
-        let mut stream = TcpStream::connect_timeout(&addr, Duration::from_secs(5))
-            .unwrap_or_else(|error| panic!("{set}: cannot connect to {addr}: {error}"));
-        let mut reply = String::new();
-        stream.read_to_string(&mut reply).expect("reply");
-        assert_eq!(reply, expected, "{set} with {loader:?}");
-        assert!(matches!(
-            started.recv_timeout(Duration::from_secs(5)),
-            Ok(Ok(()))
-        ));
-    }
+fn the_same_server_binds_and_serves_after_all_handlers_finalize() {
+    let (started, bound) = spawn::<Good>(Loader::Default);
+    let addr = bound
+        .recv_timeout(Duration::from_secs(5))
+        .expect("server binds");
+    let mut stream = TcpStream::connect_timeout(&addr, Duration::from_secs(5))
+        .expect("connect to the fixture's owned listener");
+    let mut reply = String::new();
+    stream.read_to_string(&mut reply).expect("reply");
+    assert_eq!(reply, "1 server-rendered pages");
+    assert!(matches!(
+        started.recv_timeout(Duration::from_secs(5)),
+        Ok(Ok(()))
+    ));
 }
 
 /// Every reviewed fault must retain its exact code in the real loader, and
@@ -404,7 +358,7 @@ fn the_same_server_binds_and_serves_with_good_modules_through_both_strict_loader
 fn every_reviewed_v3_refusal_happens_before_bind() {
     let manifest = try_load_manifest::<ReviewedV3>().expect("reviewed manifest");
     let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/window-expectations.tsv");
-    let errors = load_ir_modules_strict::<ReviewedV3>(&manifest).expect_err("fault fixtures");
+    let errors = load_ir_modules::<ReviewedV3>(&manifest).expect_err("fault fixtures");
     let mut refused = 0;
     for row in index.lines().skip(1) {
         let fields: Vec<_> = row.split('\t').collect();
@@ -424,6 +378,22 @@ fn every_reviewed_v3_refusal_happens_before_bind() {
     match started.recv_timeout(Duration::from_secs(5)) {
         Ok(Err(StartError::Modules(errors))) => assert_eq!(errors.len(), refused),
         other => panic!("expected all reviewed refusals before binding, got {other:?}"),
+    }
+    assert_eq!(bound.try_recv(), Err(mpsc::TryRecvError::Disconnected));
+}
+
+#[test]
+fn an_unbound_ssr_route_refuses_before_the_fixture_listener() {
+    let (started, bound) = spawn::<Good>(Loader::Unbound);
+    match started.recv_timeout(Duration::from_secs(5)) {
+        Ok(Err(StartError::Binding(errors))) => {
+            assert_eq!(errors.len(), 1);
+            assert_eq!(
+                (errors[0].code, errors[0].route.as_str()),
+                ("BIND-110", "/")
+            );
+        }
+        other => panic!("expected unbound refusal, got {other:?}"),
     }
     assert_eq!(bound.try_recv(), Err(mpsc::TryRecvError::Disconnected));
 }

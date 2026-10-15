@@ -233,7 +233,8 @@ pub(crate) fn write_document(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{RenderMode, RouteAssets};
+    use crate::render_contract::{RenderFixture as PageConfig, RenderPath as RenderMode};
+    use crate::types::RouteAssets;
     use forma_ir::parser::IrModule;
     use forma_ir::slot::{SlotData, SlotValue};
     use std::collections::HashMap;
@@ -241,8 +242,8 @@ mod tests {
     fn render_parts(config: &PageConfig) -> crate::PageParts {
         let ctx = RenderCtx::new();
         match config.render_mode {
-            RenderMode::Phase1ClientMount => crate::render_browser_shell(config, &ctx),
-            RenderMode::Phase2SsrReconcile => crate::try_render(config, &ctx),
+            RenderMode::Phase1ClientMount => crate::render_contract::render_shell(config, &ctx),
+            RenderMode::Phase2SsrReconcile => crate::render_contract::render_ssr(config, &ctx),
         }
         .expect("valid fixture renders")
         .into_parts_unchecked()

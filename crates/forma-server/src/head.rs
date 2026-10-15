@@ -7,7 +7,7 @@
 //! block.
 //!
 //! Each reaches the page through [`RenderCtx`](crate::RenderCtx), so only
-//! [`try_render`](crate::try_render) and
+//! [`PageHandle::render`](crate::PageHandle::render) and
 //! [`render_browser_shell`](crate::render_browser_shell) write them.
 //!
 //! [`PageConfig::config_json`]: crate::PageConfig::config_json
@@ -32,7 +32,7 @@ use std::sync::Arc;
 /// the watcher renames stays listed until the server restarts; its preload
 /// fails harmlessly, as a hint, and the module itself still loads.
 ///
-/// Verified by: crates/forma-server/tests/typed_homes.rs > "try_render_writes_the_routes_manifest_modulepreload_links_nonced"
+/// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "try_render_writes_the_routes_manifest_modulepreload_links_nonced"
 #[derive(Debug, Clone)]
 pub struct ModulePreloads {
     routes: Arc<HashMap<String, Vec<String>>>,
@@ -47,7 +47,7 @@ impl ModulePreloads {
     /// modules (`js`), which forma-server already preloads, and repeats are
     /// left out.
     ///
-    /// Verified by: crates/forma-server/tests/typed_homes.rs > "a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table"
+    /// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table"
     pub(crate) fn from_manifest_json(json: &str) -> Result<Self, String> {
         let manifest = crate::AssetManifest::from_json(json)?;
         let built: std::collections::HashSet<&str> =
@@ -125,8 +125,8 @@ impl ModulePreloads {
 /// # Ok::<(), forma_server::HeadLinkError>(())
 /// ```
 ///
-/// Verified by: crates/forma-server/tests/typed_homes.rs > "head_links_are_written_escaped_in_the_head_in_the_order_added"
-/// Verified by: crates/forma-server/tests/typed_homes.rs > "a_head_link_carries_only_the_listed_link_types"
+/// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "head_links_are_written_escaped_in_the_head_in_the_order_added"
+/// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "a_head_link_carries_only_the_listed_link_types"
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HeadLink {
     rel: String,
@@ -174,8 +174,8 @@ impl HeadLink {
     /// | HEAD-103 | `href` is a `javascript:` or `vbscript:` URL, in any case and with any tab, newline or leading control character a browser strips |
     /// | HEAD-104 | `href` is empty |
     ///
-    /// Verified by: crates/forma-server/tests/typed_homes.rs > "a_head_link_carries_only_the_listed_link_types"
-    /// Verified by: crates/forma-server/tests/typed_homes.rs > "a_head_link_refuses_a_script_url_and_keeps_every_other"
+    /// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "a_head_link_carries_only_the_listed_link_types"
+    /// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "a_head_link_refuses_a_script_url_and_keeps_every_other"
     pub fn new(rel: &str, href: &str) -> Result<HeadLink, HeadLinkError> {
         let refuse = |code, reason| {
             Err(HeadLinkError {

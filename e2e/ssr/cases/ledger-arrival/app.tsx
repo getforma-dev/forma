@@ -3,19 +3,18 @@
 // the signals from the props first; with no island (development, Phase 1) the
 // page is mounted whole. Then the workspace load starts.
 import { h, mount, activateIslands } from '@getforma/core';
-import { Arrival, loadWorkspace, seedArrival } from './arrival';
+import { Arrival, loadWorkspace, seedArrival, defaultArrival } from './arrival';
 import { ArrivalPage } from './page';
 
 if (document.querySelector('[data-forma-component="Arrival"]')) {
   // Keep registration literal so the compiler emits the real named island.
   activateIslands({
     Arrival: (_root: HTMLElement, props: Record<string, unknown> | null) => {
-      seedArrival(props);
-      return Arrival();
+      return Arrival(seedArrival(props));
     },
   });
 } else {
-  mount(() => ArrivalPage(), '#app');
+  mount(() => ArrivalPage(defaultArrival), '#app');
 }
 
 void loadWorkspace();

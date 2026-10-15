@@ -8,15 +8,17 @@
 //! (`Path`): `try_render` and `render_browser_shell`.
 #![allow(deprecated)]
 
+use super::{
+    render_shell as render_browser_shell, render_ssr as try_render, RenderFixture as PageConfig,
+    RenderPath as RenderMode,
+};
+use crate as forma_server;
 use forma_ir::parser::test_helpers::{
     build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
 };
 use forma_ir::{IrModule, SlotData};
 use forma_server::assets::{try_load_manifest, try_load_module_preloads};
-use forma_server::{
-    render_browser_shell, try_render, AssetManifest, HeadLink, PageConfig, PageResponse, RenderCtx,
-    RenderError, RenderMode, RouteAssets,
-};
+use forma_server::{AssetManifest, HeadLink, PageResponse, RenderCtx, RenderError, RouteAssets};
 use rust_embed::Embed;
 use std::collections::HashMap;
 

@@ -8,6 +8,11 @@
 //! `try_render`, then `Ok(page) => page`, `Err(e) =>` the application's own
 //! error page.
 
+use super::{
+    render_shell as render_browser_shell, render_ssr as try_render, RenderFixture as PageConfig,
+    RenderPath as RenderMode,
+};
+use crate as forma_server;
 use axum::body::to_bytes;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -16,10 +21,7 @@ use forma_ir::parser::test_helpers::{
     build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_text,
 };
 use forma_ir::{IrModule, SlotData, SlotValue, WalkLimits};
-use forma_server::{
-    render_browser_shell, try_render, AssetManifest, PageConfig, PolicyExtensions, RenderCtx,
-    RenderError, RenderMode, RouteAssets,
-};
+use forma_server::{AssetManifest, PolicyExtensions, RenderCtx, RenderError, RouteAssets};
 use std::collections::HashMap;
 
 const ROUTE: &str = "/t/:tenant";

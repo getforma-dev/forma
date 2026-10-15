@@ -275,17 +275,23 @@ export function packedCargoGraph(root, packages, out) {
     return { lock: readFileSync(join(root, 'Cargo.lock'), 'utf8'), packages: metadata };
   } finally { rmSync(scratch, { recursive: true, force: true }); }
 }
-// Temporary candidate adapter until FORMA-144 migrates the source templates.
-// Historical A2 files stay byte-identical; only the known unused field is removed.
+// Temporary, explicitly reviewed candidate sources until FORMA-144 migrates
+// the A2 source templates. Authenticate the entire old source before adapting;
+// changed source must be reviewed rather than partially rewritten.
+const candidateTemplateSources = new Map([
+  ['527ab0341b29621ae6b26d455b818851907d8fbcefc3d95067b900026ad6d81f', 'minimal'],
+  ['b64ec04e23bc48f330d7ec53500705502773a548091ca6138ff6c364ca906b2b', 'dashboard'],
+]);
 export function stageTemplateSource(text, version) {
   assert(SEMVER.test(version), 'template source adapter requires a supported version');
   const major = Number(version.split('.')[0]);
   if (major < 3) return text;
   assert.equal(major, 3, 'template source adapter is reviewed only for candidate 3.x');
-  const fields = text.match(/\bconfig_script\s*:/g) ?? [];
-  const known = text.match(/^[ \t]+config_script: None,\r?\n/gm) ?? [];
-  assert(fields.length === 1 && known.length === 1, 'template source adapter requires exactly one known config_script: None field');
-  return text.replace(known[0], '');
+  assert.equal(Number(version.split('.')[1]), 0, 'template source adapter is reviewed only for candidate 3.0.x');
+  assert.equal(json(join(ROOT, 'scripts/release-contracts.json')).boundRender, 'finalized-v1', 'candidate source requires the finalized-v1 rendering contract');
+  const name = candidateTemplateSources.get(createHash('sha256').update(text).digest('hex'));
+  assert(name, 'template source adapter requires an exact reviewed A2 source digest');
+  return readFileSync(join(ROOT, 'scripts/fixtures/candidate-templates', `${name}.rs`), 'utf8');
 }
 export function withStagedTemplates(root, packages, out, callback) {
   const originals = stageTemplates(root, packages, out);

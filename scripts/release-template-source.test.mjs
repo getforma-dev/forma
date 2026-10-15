@@ -8,16 +8,20 @@ import { ROOT, stageTemplateSource, withStagedTemplates } from './release-set.mj
 const candidate = [{ registry: 'crates', name: 'forma-server', version: '3.0.0-dev', sha256: 'a'.repeat(64) }];
 function source(template) { return readFileSync(join(ROOT, 'packages/create-app/templates', template, 'src/main.rs'), 'utf8'); }
 
-test('the candidate source adapter removes only the known unused field; A2 source remains byte-identical', () => {
+test('the candidate source adapter stages finalized typed APIs; A2 source remains byte-identical', () => {
   for (const template of ['minimal', 'dashboard']) {
     const original = source(template);
     assert.equal(stageTemplateSource(original, '0.2.2'), original);
     const staged = stageTemplateSource(original, '3.0.0-dev');
-    assert.equal(staged, original.replace(/^\s+config_script: None,\r?\n/m, ''));
+    assert.equal(staged, readFileSync(join(ROOT, 'scripts/fixtures/candidate-templates', `${template}.rs`), 'utf8'));
+    assert(staged.includes('pages.finalize()'));
+    assert(staged.indexOf('pages.finalize()') < staged.indexOf('tokio::net::TcpListener::bind'));
+    assert(!/\b(?:try_render|load_ir_modules_strict|RenderMode|SlotData)\b/.test(staged));
     assert(staged.includes('config_json: None,'));
     for (const bad of [original.replace('config_script: None,', 'config_script: Some("unexpected"),'), original + '\n config_script: None,\n', original.replace('config_script: None,', '')]) {
-      assert.throws(() => stageTemplateSource(bad, '3.0.0-dev'), /exactly one known/);
+      assert.throws(() => stageTemplateSource(bad, '3.0.0-dev'), /exact reviewed A2 source digest/);
     }
+    assert.throws(() => stageTemplateSource(original, '3.1.0-dev'), /only for candidate 3.0.x/);
     assert.throws(() => stageTemplateSource(original, '4.0.0-dev'), /reviewed only for candidate 3.x/);
   }
 });
@@ -59,7 +63,7 @@ test('unexpected source in the second template fails before either template chan
     writeFileSync(broken, source('dashboard').replace('config_script: None,', 'config_script: Some("unexpected"),'));
     before.set(broken, readFileSync(broken));
     let packed = false;
-    assert.throws(() => withStagedTemplates(root, candidate, root, () => { packed = true; }), /exactly one known/);
+    assert.throws(() => withStagedTemplates(root, candidate, root, () => { packed = true; }), /exact reviewed A2 source digest/);
     assert.equal(packed, false);
     for (const [path, bytes] of before) assert.deepEqual(readFileSync(path), bytes, path);
   } finally { rmSync(root, { recursive: true, force: true }); }

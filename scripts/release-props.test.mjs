@@ -51,3 +51,9 @@ test('packed declared fixture comparison refuses stale bytes and placeholder fal
     assert.throws(() => verifyPackedPropsFixtures({ generateRealIr: () => null }, dir), /fell back to placeholder/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('recorded finalized rendering refuses a package with only interim typed checks', () => {
+  fixture(source => source, manifest => assert.throws(
+    () => verifyPackedPropsTests(manifest, { boundRender: true }), /missing finalization_refuses/,
+  ));
+});

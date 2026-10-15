@@ -922,3 +922,13 @@ These codes are returned as structured Rust errors/warnings. Bind errors identif
 | RENDER-405 | A changed development module cannot bind to the existing handler; includes BIND causes. |
 
 See [declared props](DECLARED-PROPS.md) for optional-field precedence, safe dates and reload behavior.
+
+### Startup completion and explicit browser rendering
+
+| Code | Boundary | Meaning |
+| --- | --- | --- |
+| BIND-110 | finalize | Declared SSR route has no verified handler; startup remains open for repair. |
+| BIND-111 | bind | Registry is finalized; bind before finalization or create a fresh registry. |
+| BIND-112 | startup/reload | Route names/modes changed; restart and bind the new topology. |
+| RENDER-103 | browser shell | Route is absent or is not explicitly Browser. |
+| RENDER-406 | typed render | Registry has not successfully finalized; no response is produced. |

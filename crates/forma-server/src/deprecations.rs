@@ -5,9 +5,9 @@
 ///
 /// ```
 /// use axum::response::IntoResponse;
-/// use forma_server::{PageResponse, PageConfig, RenderCtx, try_render, render_browser_shell};
+/// use forma_server::{PageResponse, PageConfig, RenderCtx, PageHandle, render_browser_shell};
 /// fn respond(page: PageResponse) { let _ = page.into_response(); }
-/// fn render(config: &PageConfig) { let _ = try_render(config, &RenderCtx::new()); }
+/// fn render<P: forma_ir::PageProps>(page: &PageHandle<P>, value: &P) { let _ = page.render(value, &RenderCtx::new()); }
 /// fn shell(config: &PageConfig) { let _ = render_browser_shell(config, &RenderCtx::new()); }
 /// fn reviewed(page: PageResponse) { let _ = page.into_parts_unchecked(); }
 /// ```
@@ -62,3 +62,38 @@ pub(crate) struct LoadManifest;
 /// }
 /// ```
 pub(crate) struct LoadIrModules;
+
+/// Removed alternate SSR and loader entry points cannot bypass binding.
+/// ```compile_fail
+/// use forma_server::try_render;
+/// ```
+/// ```compile_fail
+/// use forma_server::load_ir_modules_strict;
+/// ```
+/// ```compile_fail
+/// use forma_server::IrModules;
+/// ```
+/// ```compile_fail
+/// use forma_server::RenderMode;
+/// ```
+/// ```compile_fail
+/// fn raw_module(page: &mut forma_server::PageConfig<'_>) { page.ir_module = None; }
+/// ```
+/// ```compile_fail
+/// fn raw_slots(page: &mut forma_server::PageConfig<'_>) { page.slots = None; }
+/// ```
+/// ```compile_fail
+/// fn raw_prefix() { forma_server::RenderCtx::new().with_body_prefix("raw"); }
+/// ```
+/// ```
+/// use forma_ir::PageProps;
+/// use forma_server::{load_ir_modules, PageHandle, RenderCtx, Limits};
+/// #[derive(PageProps)] struct Empty {}
+/// fn start<A: rust_embed::Embed + 'static>(manifest: &forma_server::AssetManifest) -> Result<PageHandle<Empty>, String> {
+///     let pages = load_ir_modules::<A>(manifest).map_err(|e| format!("{e:?}"))?;
+///     let home = pages.bind_with("home", Limits::default()).map_err(|e| format!("{e:?}"))?;
+///     pages.finalize().map_err(|e| format!("{e:?}"))?;
+///     Ok(home)
+/// }
+/// ```
+pub(crate) struct BoundRenderOnly;

@@ -313,7 +313,7 @@ pub(crate) fn report_only_policy() -> Option<String> {
 /// # let _ = (console, login);
 /// ```
 ///
-/// Verified by: crates/forma-server/tests/page_response.rs > "no_policy_extension_yields_a_response_without_the_policy"
+/// Verified by: crates/forma-server/tests/internal_renderer/page_response.rs > "no_policy_extension_yields_a_response_without_the_policy"
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct PolicyExtensions {
     img_src: Vec<String>,
@@ -946,7 +946,7 @@ fn is_port(port: &str) -> bool {
 /// `runtime_sha256` is base64; `None` only if a header value could not be
 /// made, which those rule out.
 ///
-/// Verified by: crates/forma-server/tests/preview_frame.rs > "the_frame_policy_replaces_exactly_its_nine_directives"
+/// Verified by: crates/forma-server/tests/internal_renderer/preview_frame.rs > "the_frame_policy_replaces_exactly_its_nine_directives"
 pub(crate) fn frame_policy(
     nonce: &CspNonce,
     runtime_sha256: &str,

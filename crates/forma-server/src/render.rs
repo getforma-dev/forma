@@ -1,6 +1,5 @@
-//! Checked page rendering: a PageResponse with counts, or a coded error.
-//! `try_render` remains the low-level bridge used by typed page handles;
-//! `render_browser_shell` serves explicitly browser-rendered routes.
+//! Checked document rendering and per-request metadata.
+//! Server rendering is entered only through a finalized bound page handle.
 
 use crate::csp::{self, CspNonce, NonceError, PolicyError, PolicyExtensions};
 use crate::head::{HeadLink, ModulePreloads};
@@ -30,16 +29,18 @@ use std::time::Instant;
 #[derive(Debug, Clone, Default)]
 pub struct RenderCtx {
     policy: PolicyExtensions,
-    limits: WalkLimits,
+    limits: Option<WalkLimits>,
     module_preloads: Option<ModulePreloads>,
     head_links: Vec<HeadLink>,
     title: Option<String>,
     body_class: Option<String>,
+    config_json: Option<serde_json::Value>,
+    personality_css: Option<String>,
+    body_prefix: Option<crate::RawHtml>,
 }
 
 impl RenderCtx {
-    /// The strict policy and the walker's default budgets (8 MiB of output,
-    /// 50,000 list rows).
+    /// The strict policy with limits inherited from the bound page.
     pub fn new() -> Self {
         Self::default()
     }
@@ -58,6 +59,37 @@ impl RenderCtx {
         self
     }
 
+    /// Request data written as escaped JSON, never executable handler script.
+    #[must_use]
+    pub fn with_config_json(mut self, value: serde_json::Value) -> Self {
+        self.config_json = Some(value);
+        self
+    }
+
+    /// Request branding CSS. The document writer neutralizes style end tags.
+    #[must_use]
+    pub fn with_personality_css(mut self, css: impl Into<String>) -> Self {
+        self.personality_css = Some(css.into());
+        self
+    }
+
+    /// Explicit trusted markup before the page root; plain strings do not satisfy this API.
+    #[must_use]
+    pub fn with_body_prefix(mut self, html: crate::RawHtml) -> Self {
+        self.body_prefix = Some(html);
+        self
+    }
+
+    pub(crate) fn config_json(&self) -> Option<&serde_json::Value> {
+        self.config_json.as_ref()
+    }
+    pub(crate) fn personality_css(&self) -> Option<&str> {
+        self.personality_css.as_deref()
+    }
+    pub(crate) fn body_prefix(&self) -> Option<&crate::RawHtml> {
+        self.body_prefix.as_ref()
+    }
+
     pub(crate) fn title(&self) -> Option<&str> {
         self.title.as_deref()
     }
@@ -72,11 +104,18 @@ impl RenderCtx {
         self
     }
 
-    /// Budget this page's walk differently from the defaults.
+    /// Override both walk budgets for this request only. Without this call,
+    /// the handle's bind-time limits apply. Use its `limits()` value with struct
+    /// update syntax to change just one budget.
     #[must_use]
     pub fn with_limits(mut self, limits: WalkLimits) -> Self {
-        self.limits = limits;
+        self.limits = Some(limits);
         self
+    }
+
+    /// Use the bound page's limits unless this request explicitly overrides them.
+    pub(crate) fn limits(&self, inherited: WalkLimits) -> WalkLimits {
+        self.limits.unwrap_or(inherited)
     }
 
     /// Write the route's `modulepreload` links from the build's manifest,
@@ -100,7 +139,7 @@ impl RenderCtx {
     /// }
     /// ```
     ///
-    /// Verified by: crates/forma-server/tests/typed_homes.rs > "try_render_writes_the_routes_manifest_modulepreload_links_nonced"
+    /// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "try_render_writes_the_routes_manifest_modulepreload_links_nonced"
     #[must_use]
     pub fn with_module_preloads(mut self, preloads: &ModulePreloads) -> Self {
         self.module_preloads = Some(preloads.clone());
@@ -112,7 +151,7 @@ impl RenderCtx {
     /// call site belongs on the application's raw-entry allowlist
     /// (`forma-raw-lint`).
     ///
-    /// Verified by: crates/forma-server/tests/typed_homes.rs > "head_links_are_written_escaped_in_the_head_in_the_order_added"
+    /// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "head_links_are_written_escaped_in_the_head_in_the_order_added"
     #[must_use]
     pub fn with_head_link(mut self, link: HeadLink) -> Self {
         self.head_links.push(link);
@@ -143,6 +182,8 @@ impl RenderCtx {
 /// | Code | Variant | Cause |
 /// |---|---|---|
 /// | RENDER-101 | [`MissingModule`](RenderError::MissingModule) | The config has no module or no slots to render |
+/// | RENDER-103 | [`RouteMode`](RenderError::RouteMode) | A shell route is absent or not Browser |
+/// | RENDER-406 | [`Unfinalized`](RenderError::Unfinalized) | Required startup finalization is incomplete |
 /// | RENDER-102 | [`Walk`](RenderError::Walk) | The walk refused the module or its data |
 /// | RENDER-201 | [`Policy`](RenderError::Policy) | A policy extension is not a source a page may add |
 /// | RENDER-202 | [`Nonce`](RenderError::Nonce) | The system random source failed to draw a nonce |
@@ -155,6 +196,18 @@ impl RenderCtx {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderError {
+    /// RENDER-103: a browser shell requires an explicitly declared browser route.
+    #[non_exhaustive]
+    RouteMode {
+        /// The requested route.
+        route: String,
+    },
+    /// RENDER-406: every SSR handler must bind and the registry must finalize first.
+    #[non_exhaustive]
+    Unfinalized {
+        /// The bound route.
+        route: String,
+    },
     /// RENDER-401..404: a handler value violates its declared contract.
     #[non_exhaustive]
     Props {
@@ -169,7 +222,7 @@ pub enum RenderError {
         /// Binding refusals for the changed module. No partial HTML is returned.
         errors: Vec<forma_ir::props::PropsError>,
     },
-    /// RENDER-101: [`try_render`] renders on the server, and the config
+    /// RENDER-101: Server rendering, and the config
     /// carries no module or no slots for it. A browser-rendered route is
     /// served by [`render_browser_shell`], by declaration.
     #[non_exhaustive]
@@ -239,6 +292,8 @@ impl RenderError {
     /// The stable code, such as `RENDER-301`.
     pub fn code(&self) -> &'static str {
         match self {
+            RenderError::RouteMode { .. } => "RENDER-103",
+            RenderError::Unfinalized { .. } => "RENDER-406",
             RenderError::Props { cause } => cause.code(),
             RenderError::Binding { .. } => "RENDER-405",
             RenderError::MissingModule { .. } => "RENDER-101",
@@ -257,6 +312,7 @@ impl RenderError {
     /// The route pattern the render was for.
     pub fn route(&self) -> &str {
         match self {
+            RenderError::RouteMode { route } | RenderError::Unfinalized { route } => route,
             RenderError::Props { cause } => cause.route(),
             RenderError::Binding { route, .. } => route,
             RenderError::MissingModule { route }
@@ -308,6 +364,13 @@ impl fmt::Display for RenderError {
             write!(f, " in {}", path.join(" > "))?;
         }
         match self {
+            RenderError::RouteMode { .. } => {
+                write!(f, ": route is not explicitly browser-rendered")
+            }
+            RenderError::Unfinalized { .. } => write!(
+                f,
+                ": bind every SSR route and finalize Pages before serving"
+            ),
             RenderError::Props { cause } => write!(f, ": {cause}"),
             RenderError::Binding { errors, .. } => {
                 for error in errors {
@@ -351,109 +414,59 @@ impl std::error::Error for RenderError {
     }
 }
 
-/// Render a page on the server: the page with its counts, or why not.
-///
-/// This lower-level bridge never substitutes an empty shell for a failure: a
-/// missing module, a walk the module or data fails, an exceeded budget, an
-/// invalid policy extension, a failed nonce draw and a panic each come back
-/// as a [`RenderError`] with a stable code, the route and the component
-/// path. The page is written into its own buffer and returned whole, or not
-/// at all, so no partial page leaves. Forma logs none of these: the handler
-/// chooses the response. (A caught panic still runs the process's panic hook
-/// first: the default hook prints it to stderr, and a reporting hook, such as
-/// an error tracker's, records it.)
-///
-/// It always renders on the server, regardless of `config.render_mode`. A route
-/// the build declares browser-rendered is
-/// served by [`render_browser_shell`].
-///
-/// ```no_run
-/// use axum::http::StatusCode;
-/// use axum::response::{IntoResponse, Response};
-/// use forma_server::{try_render, PageConfig, RenderCtx};
-///
-/// fn home(config: &PageConfig) -> Response {
-///     match try_render(config, &RenderCtx::new()) {
-///         Ok(page) => page.into_response(), // no-store, policy, headers
-///         Err(error) => {
-///             // Count it by code and route; serve the application's error page.
-///             eprintln!("{error}");
-///             StatusCode::INTERNAL_SERVER_ERROR.into_response()
-///         }
-///     }
-/// }
-/// ```
-///
-/// # Threads and panics
-///
-/// The walk is synchronous work on the caller's thread, and forma-server
-/// starts nothing and depends on no async runtime. At the measured 12.5
-/// million nodes a second, a page past about 12,500 nodes holds the thread
-/// past a millisecond; [`RenderCounts`] reports each page's nodes and walk
-/// time, so a handler whose counts show that can move the render into tokio's
-/// blocking pool itself (owned inputs, since the closure must be `'static`):
-///
-/// ```no_run
-/// # use std::sync::Arc;
-/// # use forma_server::{try_render, AssetManifest, PageConfig, RenderCtx, RenderMode, PageResponse, RenderError};
-/// # use forma_ir::{IrModule, SlotData};
-/// # #[allow(deprecated)]
-/// async fn heavy(
-///     manifest: Arc<AssetManifest>,
-///     module: Arc<IrModule>,
-///     slots: SlotData,
-/// ) -> Result<PageResponse, RenderError> {
-///     tokio::task::spawn_blocking(move || {
-///         # #[allow(deprecated)]
-///         let config = PageConfig {
-///             title: "Ledger",
-///             route_pattern: "/ledger",
-///             manifest: &manifest,
-///             config_json: None,
-///             body_class: None,
-///             personality_css: None,
-///             body_prefix: None,
-///             render_mode: RenderMode::Phase2SsrReconcile,
-///             ir_module: Some(&module),
-///             slots: Some(&slots),
-///         };
-///         try_render(&config, &RenderCtx::new())
-///     })
-///     .await
-///     .expect("the blocking task ran")
-/// }
-/// ```
-///
-/// A panic inside the render is caught and returned as
-/// [`RenderError::Fault`], which holds only while the application
-/// unwinds on panic, as both templates leave it. Under `panic = "abort"` a
-/// fault still ends the process with every request in flight.
-///
-/// Verified by: crates/forma-server/tests/try_render.rs > "a_panicking_component_returns_fault_the_handler_answers_500_and_the_next_request_renders"
-pub fn try_render(config: &PageConfig, ctx: &RenderCtx) -> Result<PageResponse, RenderError> {
-    render_guarded(config, ctx, CspNonce::try_generate, Root::Walk)
+/// The sole private SSR entry: its module and slots come from a verified handle.
+pub(crate) fn render_bound(
+    config: &PageConfig,
+    ctx: &RenderCtx,
+    module: Option<&forma_ir::IrModule>,
+    slots: Option<&forma_ir::SlotData>,
+    limits: WalkLimits,
+) -> Result<PageResponse, RenderError> {
+    render_guarded(
+        config,
+        ctx,
+        CspNonce::try_generate,
+        Root::Walk {
+            module,
+            slots,
+            limits,
+        },
+    )
 }
 
 /// Serve a route the build declares browser-rendered (`ssr: false`): the
 /// nonced bundle and the same headers as any page, around an empty root.
 ///
-/// By declaration, never in place of a failure: it does not walk,
-/// even when the config carries a module. Fails only as a page fails before
-/// its walk: an invalid policy extension, a failed nonce draw, or a fault.
+/// By declaration, never in place of a failure: it does not walk. Unknown and
+/// SSR routes are refused before document work. Policy, nonce and fault errors
+/// retain the same response boundary as a bound SSR page.
 ///
-/// Verified by: crates/forma-server/tests/try_render.rs > "render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers"
+/// Verified by: crates/forma-server/tests/internal_renderer/checked_render.rs > "render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers"
 pub fn render_browser_shell(
     config: &PageConfig,
     ctx: &RenderCtx,
 ) -> Result<PageResponse, RenderError> {
+    if !config
+        .manifest
+        .route(config.route_pattern)
+        .is_some_and(|route| route.mode == crate::RouteMode::Browser)
+    {
+        return Err(RenderError::RouteMode {
+            route: config.route_pattern.into(),
+        });
+    }
     render_guarded(config, ctx, CspNonce::try_generate, Root::Shell)
 }
 
 /// What goes in the page's root.
 #[derive(Debug, Clone, Copy)]
-enum Root {
+enum Root<'a> {
     /// The walk's HTML.
-    Walk,
+    Walk {
+        module: Option<&'a forma_ir::IrModule>,
+        slots: Option<&'a forma_ir::SlotData>,
+        limits: WalkLimits,
+    },
     /// Nothing: the browser renders.
     Shell,
 }
@@ -469,12 +482,20 @@ fn render_guarded(
     config: &PageConfig,
     ctx: &RenderCtx,
     draw: impl FnOnce() -> Result<CspNonce, NonceError>,
-    root: Root,
+    root: Root<'_>,
 ) -> Result<PageResponse, RenderError> {
-    match catch_unwind(AssertUnwindSafe(|| render(config, ctx, draw, root))) {
+    guard(config.route_pattern, || render(config, ctx, draw, root))
+}
+
+/// Catch request-side unwinds, including user-defined props conversion.
+pub(crate) fn guard(
+    route: &str,
+    render: impl FnOnce() -> Result<PageResponse, RenderError>,
+) -> Result<PageResponse, RenderError> {
+    match catch_unwind(AssertUnwindSafe(render)) {
         Ok(result) => result,
         Err(payload) => Err(RenderError::Fault {
-            route: config.route_pattern.to_string(),
+            route: route.to_string(),
             component_path: Vec::new(),
             counts: RenderCounts::default(),
             message: panic_message(payload.as_ref()),
@@ -486,7 +507,7 @@ fn render(
     config: &PageConfig,
     ctx: &RenderCtx,
     draw: impl FnOnce() -> Result<CspNonce, NonceError>,
-    root: Root,
+    root: Root<'_>,
 ) -> Result<PageResponse, RenderError> {
     let route = || config.route_pattern.to_string();
     let nonce = draw().map_err(|cause| RenderError::Nonce {
@@ -501,12 +522,16 @@ fn render(
 
     let (ssr_body, counts) = match root {
         Root::Shell => (None, RenderCounts::default()),
-        Root::Walk => {
-            let (Some(module), Some(slots)) = (config.ir_module, config.slots) else {
+        Root::Walk {
+            module,
+            slots,
+            limits,
+        } => {
+            let (Some(module), Some(slots)) = (module, slots) else {
                 return Err(RenderError::MissingModule { route: route() });
             };
             let started = Instant::now();
-            let walked = forma_ir::walk_to_html_counted(module, slots, ctx.limits);
+            let walked = forma_ir::walk_to_html_counted(module, slots, limits);
             let walk_time = started.elapsed();
             match walked {
                 Ok(out) => (
@@ -568,7 +593,7 @@ fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{AssetManifest, RenderMode};
+    use crate::types::AssetManifest;
     use std::collections::HashMap;
 
     fn manifest() -> AssetManifest {
@@ -593,9 +618,6 @@ mod tests {
             body_class: None,
             personality_css: None,
             body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
         }
     }
 
@@ -605,7 +627,14 @@ mod tests {
         // render takes its draw as a parameter and this test hands it a
         // failing one. `try_render` passes `CspNonce::try_generate`.
         let manifest = manifest();
-        for root in [Root::Walk, Root::Shell] {
+        for root in [
+            Root::Walk {
+                module: None,
+                slots: None,
+                limits: WalkLimits::default(),
+            },
+            Root::Shell,
+        ] {
             let error = render_guarded(
                 &shell_config(&manifest),
                 &RenderCtx::new(),
@@ -654,7 +683,14 @@ mod tests {
         // No module at all: if the walk ran first this would be RENDER-101.
         let manifest = manifest();
         let ctx = RenderCtx::new().with_policy(PolicyExtensions::new().form_action("'none'"));
-        let error = try_render(&shell_config(&manifest), &ctx).unwrap_err();
+        let error = render_bound(
+            &shell_config(&manifest),
+            &ctx,
+            None,
+            None,
+            WalkLimits::default(),
+        )
+        .unwrap_err();
         assert_eq!(error.code(), "RENDER-201");
     }
 
