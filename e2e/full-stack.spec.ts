@@ -11,6 +11,20 @@
  */
 import { test, expect } from '@playwright/test';
 
+// The two FormaJS bundles the page loads are written by e2e/sync-fixtures.sh
+// from packages/core/dist and are not tracked: a committed copy is only ever
+// stale (the one tracked until 2026-10-15 predated trustedHtml() and failed
+// five cases here, FORMA-105). Refuse to run against a missing bundle, and
+// against one that lacks the public API full-stack.html calls, naming the fix.
+test('the bundles are the fresh sync, not a stale copy', async ({ request }) => {
+  for (const name of ['formajs-runtime.global.js', 'formajs.global.js']) {
+    const response = await request.get(`/${name}`);
+    expect(response.status(), `e2e/fixtures/${name} is missing; run bash e2e/sync-fixtures.sh`).toBe(200);
+  }
+  const bundle = await (await request.get('/formajs.global.js')).text();
+  expect(bundle, 'e2e/fixtures/formajs.global.js is stale (no trustedHtml); run bash e2e/sync-fixtures.sh').toContain('trustedHtml');
+});
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/full-stack.html');
 });

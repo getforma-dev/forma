@@ -18,7 +18,17 @@ if [ ! -d "$FORMAJS_DIR" ]; then
 fi
 
 echo "Building FormaJS..."
-(cd "$FORMAJS_DIR" && npm run build) > /dev/null 2>&1
+# Quiet on success, the whole output on failure: a silent exit 1 here once
+# left the lane running against the stale bundles git used to track
+# (2026-10-15, FORMA-105).
+BUILD_LOG="$(mktemp -t forma-core-build.XXXXXX)"
+if ! (cd "$FORMAJS_DIR" && npm run build) > "$BUILD_LOG" 2>&1; then
+  echo "Error: FormaJS build failed in $FORMAJS_DIR; its output:" >&2
+  cat "$BUILD_LOG" >&2
+  rm -f "$BUILD_LOG"
+  exit 1
+fi
+rm -f "$BUILD_LOG"
 
 echo "Copying fixtures..."
 RUNTIME_BUNDLE="$FORMAJS_DIR/dist/formajs-runtime.global.js"
