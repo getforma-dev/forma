@@ -208,7 +208,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     expect([FORMA_CODE_CEILING_GZIP, PAGE_JAVASCRIPT_CEILING_GZIP, CANVAS_JAVASCRIPT_CEILING_GZIP]).toEqual([25_500, 75 * 1024, 365 * 1024]);
   });
 
-  describe('S7: a route at its ceiling passes, a route one byte over fails naming the route and its bytes', () => {
+  it('S7: a route at its ceiling passes, a route one byte over fails naming the route and its bytes', () => {
     type Bytes = { forma: number; application: number };
     // [measure, class, canvas, the bytes at the ceiling, one byte over, the figure named, the ceiling named]
     const cases: Array<[string, RouteClass, boolean, Bytes, Bytes, string, number]> = [
@@ -220,17 +220,17 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
       ['JavaScript of a route with no interactive region', 'no-interactive-region', false, { forma: 0, application: 0 }, { forma: 0, application: 1 }, 'JavaScript 1', 0],
     ];
     const label = { 'islands': 'islands', 'whole-page-mount': 'whole-page mount', 'no-interactive-region': 'no interactive region' };
-    it.each(cases)('%s', (_measure, routeClass, canvas, at, over, named, ceiling) => {
+    for (const [measure, routeClass, canvas, at, over, named, ceiling] of cases) {
       const atCeiling = route('/page', routeClass, { ...at, canvas });
-      expect(atCeiling.over).toBe(false);
-      expect(routeSizeFailure([atCeiling])).toBeUndefined();
+      expect(atCeiling.over, `${measure}: at its ceiling`).toBe(false);
+      expect(routeSizeFailure([atCeiling]), `${measure}: at its ceiling`).toBeUndefined();
 
       const oneOver = route('/page', routeClass, { ...over, canvas });
-      expect(oneOver.over).toBe(true);
+      expect(oneOver.over, `${measure}: one byte over`).toBe(true);
       const failure = routeSizeFailure([oneOver, atCeiling])!;
-      expect(failure.message).toMatch(/^BUILD-819 a route is over its size ceiling/);
-      expect(failure.message).toContain(`/page (${label[routeClass]}${canvas ? ', canvas' : ''}) ${named} B against ${ceiling.toLocaleString('en-US')} B`);
-    });
+      expect(failure.message, measure).toMatch(/^BUILD-819 a route is over its size ceiling/);
+      expect(failure.message, measure).toContain(`/page (${label[routeClass]}${canvas ? ', canvas' : ''}) ${named} B against ${ceiling.toLocaleString('en-US')} B`);
+    }
   });
 
   it('counts the service worker in the JavaScript of a route that has JavaScript, and never in one that has none', () => {
