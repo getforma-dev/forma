@@ -135,6 +135,12 @@ export interface FileSize extends ByteSizes {
   file: string;
 }
 
+/** The preview frame's runtime in the output: the served file, and core's before the build minified it. */
+export interface FrameSize extends FileSize {
+  /** Raw bytes of core's `dist/formajs-frame.global.js`. */
+  sourceRaw: number;
+}
+
 /** Wall-clock milliseconds, per phase of a production build and in all (N7). */
 export interface BuildTimes {
   totalMs: number;
@@ -159,7 +165,7 @@ export interface SizeReport {
   /** The generated `sw.js`. */
   worker?: FileSize;
   /** The preview frame's runtime, inlined into every preview document and never fetched (`previewFrame`); the frame document row. */
-  frame?: FileSize;
+  frame?: FrameSize;
   /** In the printed report and the build result; never in the file. */
   times?: BuildTimes;
 }
@@ -351,9 +357,14 @@ export function workerSize(source: string): FileSize {
   return { file: WORKER_FILE, ...measureBytes(Buffer.from(source)) };
 }
 
-/** The preview frame's runtime as the build wrote it into `distDir`: the file forma-server inlines into every frame document. */
-export function frameSize(file: string, distDir: string): FileSize {
-  return { file, ...compressed(join(distDir, file)) };
+/**
+ * The preview frame's runtime as the build wrote it into `distDir`: the file
+ * forma-server inlines into every frame document, so its served bytes, with
+ * the length of core's file beside them (`sourceRaw`, before the build
+ * minified it).
+ */
+export function frameSize(file: string, distDir: string, sourceRaw: number): FrameSize {
+  return { file, ...compressed(join(distDir, file)), sourceRaw };
 }
 
 /** The ceilings the report states. */
@@ -410,7 +421,7 @@ export function formatSizeReport(report: SizeReport): string[] {
   }
   if (report.frame) {
     const { file, raw, gzip, brotli } = report.frame;
-    lines.push(`${label('Frame document')}${file}  ${bytes(raw)} B raw, ${bytes(gzip)} B gzip, ${bytes(brotli)} B Brotli; inlined into every preview document, never fetched, and not a route's`);
+    lines.push(`${label('Frame document')}${file}  ${bytes(raw)} B raw (core's file: ${bytes(report.frame.sourceRaw)} B), ${bytes(gzip)} B gzip, ${bytes(brotli)} B Brotli; inlined into every preview document, never fetched, and not a route's`);
   }
   if (report.times) {
     const { totalMs, phases } = report.times;

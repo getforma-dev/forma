@@ -45,7 +45,7 @@ const CATALOGUE_DOC = resolve(__dirname, '../../../docs/DIAGNOSTICS.md');
 /** Codes with no page that can trigger them; each is tested on its own. */
 const NOT_A_PAGE = new Set([
   'BUILD-606', 'BUILD-801', 'BUILD-805', 'BUILD-806', 'BUILD-807', 'BUILD-808',
-  'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819',
+  'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819', 'BUILD-820',
 ]);
 
 interface Marker { code: string; file: string; line: number }

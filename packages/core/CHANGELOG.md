@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Documentation
+
+- **The preview frame's runtime in an application's output (FORMA-190).** `docs/HTML-RUNTIME.md`'s frame section says core's `dist/formajs-frame.global.js` stays readable and that `@getforma/build` writes a minified copy of it into the application's output (about 85 KB raw against 164 KB), which is what forma-server inlines and hashes. No change to this package's files.
+
 ### Value rule 1: line endings and NUL — FORMA-182
 
 - Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. The URL guard classifies the raw value and refuses a NUL anywhere in a URL attribute (normalized it would be a fetchable same-origin relative reference); the normalized value is what is written. `h('pre', null, '\nline')` now agrees with the walker's `<pre>\n\nline</pre>` in every engine. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.

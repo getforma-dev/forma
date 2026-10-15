@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased — the preview frame's runtime is minified in the application's output (FORMA-190)
+
+- With `previewFrame: true`, a production build writes core's
+  `dist/formajs-frame.global.js` into `dist/` **minified** (an esbuild
+  transform: whitespace and names, ES2022, no comments, deterministic) instead
+  of copying it unchanged. forma-server writes these bytes into every preview
+  document under `no-store`, so every load paid core's 164 KB readable file
+  (the A2 audit's F1); it is now about half that, and about 29 KB gzip against
+  39.6. Core's published file stays readable: the readable-distribution policy
+  holds for anything published to npm, so the saving is made here, in the
+  application's output. The transform runs before the hashing pass: the
+  `forma-runtime.<hash>.js` name, the manifest's SRI and the SHA-256
+  forma-server computes for the frame's policy are those of the bytes served.
+  `BUILD-806`'s check (`</script`, `<!--`, a carriage return, a NUL, not UTF-8,
+  empty) runs on core's file as before and again on the minified bytes.
+- **`BUILD-820`** is new: esbuild cannot parse core's frame runtime for ES2022
+  (a file something rewrote). It fails the build before anything is written,
+  strict mode or not.
+- The size report's **frame-document row** reports the served bytes and, in
+  `sourceRaw`, core's file before the build minified it.
+- **Watch mode copies core's bytes unchanged**, as before: a development
+  build, readable in the browser's tools.
+- Tests: `tests/preview-frame.test.ts` > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published", "the minified runtime does what core's does, and two builds write the same bytes", "BUILD-820: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"; the frame e2e lane (`e2e/frame/`) asserts the served file is minified, named and listed by its own hash, embedded and allowed by forma-server, and run in Chromium under the hash-only policy.
+
 ## Unreleased — the size report with route classes and ceilings (FORMA-190)
 
 - **One report, extended.** The size report of FORMA-021 now classifies each
