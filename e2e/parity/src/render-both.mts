@@ -51,6 +51,12 @@ export interface RenderBothOptions {
    * alters one attribute's text fails P1 naming the fixture, the state and the node).
    */
   readonly alterServerHtml?: (html: string) => string;
+  /**
+   * Test seam, never set by the CLI: the twin's page source in place of the corpus entry's, over
+   * the same module (F1's error-verdict test renders the archived original page, whose list
+   * source core cannot call).
+   */
+  readonly page?: PageComponent;
 }
 
 /** The low-level path's state: object 0's fields by name, which is how the walker's slot table names declared roots. */
@@ -75,10 +81,11 @@ export async function renderBoth(options: RenderBothOptions): Promise<Report> {
   const html = options.alterServerHtml ? options.alterServerHtml(rendered.html) : rendered.html;
   const browser = options.browser ?? await launch(options.engine);
   try {
-    const bundle = await bundlePage(entry.page);
+    const component = options.page ?? entry.page;
+    const bundle = await bundlePage(component);
     let both: Awaited<ReturnType<typeof renderInBrowser>>;
     try {
-      both = await renderInBrowser({ browser, component: entry.page, bundle, html, state: rendered.state, props: state, schema: described.schema });
+      both = await renderInBrowser({ browser, component, bundle, html, state: rendered.state, props: state, schema: described.schema });
     } catch (error) {
       // A twin core cannot build (or a page that never finished) is this report's verdict, not a throw.
       return makeReport({ ...base, verdict: 'error', error: (error instanceof Error ? error.message : String(error)).split('\n')[0]!, server: { tree: null, html } }, null);

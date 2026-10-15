@@ -100,7 +100,9 @@ element siblings as CSS does, so the path selects the node in DevTools) and both
 carries the module, the seed, the state index, the verdict (`equal`, `different`,
 `expected-divergent`, `server-refused`, `error`), the first difference, the counts, the holder
 count, both canonical trees and the server's HTML. A page error or console error during the
-render, or a twin core cannot build, is an `error`, never a pass and never a throw.
+render, or a twin core cannot build, is an `error`, never a pass and never a throw. (Its test
+renders the archived pre-F1 `list-same-source` page, whose list source core cannot call, through
+`renderBoth`'s `page` seam; the corpus page itself passes a function since BUILD-614.)
 
 ## The corpus and its ratchet
 
