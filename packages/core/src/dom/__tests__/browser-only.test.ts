@@ -12,6 +12,7 @@
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { activateIslands } from '../activate';
+import { compiled, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { h } from '../element';
 import { mount } from '../mount';
 import { browserOnly } from '../browser-only';
@@ -32,8 +33,8 @@ function ChartImpl(props: { title?: string; points?: number }) {
 
 /** The host forma-ir renders for a browser-only island: empty, with its props. */
 function serverHost(props?: object): void {
-  const attr = props ? ` data-forma-props='${JSON.stringify(props)}'` : '';
-  document.body.innerHTML = `<main><h1>Report</h1><div data-forma-island="0" data-forma-component="Chart" data-forma-status="pending" data-forma-hydrate="load"${attr}></div></main>`;
+  document.body.innerHTML = `<main><h1>Report</h1><div data-forma-island="0" data-forma-component="Chart" data-forma-status="pending" data-forma-hydrate="load"></div></main>`;
+  installState([props ?? {}]);
 }
 
 describe('browserOnly', () => {
@@ -41,7 +42,7 @@ describe('browserOnly', () => {
     const Chart = browserOnly(ChartImpl);
     serverHost({ title: 'Sales', points: 3 });
 
-    activateIslands({ Chart });
+    activateIslands({ Chart: compiled(Chart, [[{ name: 'title', type: { kind: 'optional', inner: { kind: 'string' } } }, { name: 'points', type: { kind: 'optional', inner: { kind: 'number' } } }]], 1) });
 
     const chart = document.getElementById('chart')!;
     expect(chart).not.toBeNull();
@@ -65,7 +66,7 @@ describe('browserOnly', () => {
     });
     serverHost();
 
-    activateIslands({ Chart });
+    activateIslands({ Chart: compiled(Chart, [[{ name: 'title', type: { kind: 'optional', inner: { kind: 'string' } } }]], 1) });
 
     expect(seen).toEqual([{}]);
     expect(document.getElementById('canvas')).not.toBeNull();
@@ -89,3 +90,5 @@ describe('browserOnly', () => {
     expect(impl).not.toHaveBeenCalled();
   });
 });
+
+useFreshDocument();

@@ -1,19 +1,5 @@
-/**
- * Island activation: error isolation, props-block trust, and teardown.
- *
- * Regression suite for:
- * - `island-shared-props-parse-unguarded` / `islands-script-parse-not-isolated`
- *   (a bare JSON.parse of `#__forma_islands`, located by id alone, outside the
- *   per-island try/catch: one bad block stopped EVERY island hydrating, and any
- *   element with that id could supply props to all of them)
- * - `hydrate-error-path-zombie-effects` (a failed island kept its effects alive
- *   forever, with no handle left for deactivateIsland to reach them)
- * - `activate-islands-no-shadow-root-param` (islands in a ShadowRoot could be
- *   deactivated but never activated)
- * - `sanitize-props-shallow-no-opt-in-deep` (no supported way to sanitize deeply)
- * - DR-21 / FORMA-004 (activation stripped pollution keys at the top level only,
- *   so a nested `__proto__` reached any island that deep-merged its props)
- */
+/** Original error-isolation and deep-projection controls, with authoritative head state. */
+import { compiled, emptyRegistry, FIXTURE_HASH, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createEffect, createSignal } from 'forma/reactive';
 import { activateIslands, deactivateIsland, sanitizePropsDeep } from '../activate';
@@ -23,66 +9,26 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('shared __forma_islands props block', () => {
-  it('a malformed __forma_islands block does not stop islands from hydrating', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div>
-      <div data-forma-island="1" data-forma-component="B" data-forma-props='{"inline":true}' data-forma-status="pending"><p>1</p></div>
-      <script id="__forma_islands" type="application/json">{"0":{"broken":</script>
-    `;
-
-    const a = vi.fn();
-    const b = vi.fn();
-    activateIslands({ A: a, B: b });
-
-    // Both islands hydrate; the one whose props came from the broken block just
-    // gets null instead of taking the whole page down with it.
-    expect(a).toHaveBeenCalledTimes(1);
-    expect(a.mock.calls[0]![1]).toBeNull();
-    expect(b).toHaveBeenCalledWith(expect.anything(), { inline: true });
-    const islands = document.querySelectorAll('[data-forma-island]');
-    expect(islands[0]?.getAttribute('data-forma-status')).toBe('active');
-    expect(islands[1]?.getAttribute('data-forma-status')).toBe('active');
+describe('removed shared props block', () => {
+  it.each(['malformed', 'empty', 'non-script', 'valid'] as const)('refuses the %s legacy block without using it as fallback', legacy => {
+    const body = legacy === 'malformed' ? '{"0":{"broken":' : legacy === 'empty' ? '' : '{"0":{"role":"admin"}}';
+    const tag = legacy === 'non-script' ? 'div' : 'script';
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div><${tag} id="__forma_islands" type="application/json">${body}</${tag}>`;
+    const component = vi.fn(), error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const before = document.documentElement.outerHTML;
+    activateIslands(emptyRegistry({ A: component }));
+    expect(component).not.toHaveBeenCalled();
+    expect(document.documentElement.outerHTML).toBe(before);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_STATE'));
   });
 
-  it('an empty __forma_islands script block degrades to null props', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div>
-      <script id="__forma_islands" type="application/json"></script>
-    `;
-
-    const a = vi.fn();
-    activateIslands({ A: a });
-
-    expect(a).toHaveBeenCalledWith(expect.anything(), null);
-  });
-
-  it('ignores a non-script element carrying id __forma_islands', () => {
-    // A user-controlled node (a comment body, a profile field) with this id used
-    // to supply props to every island on the page.
-    document.body.innerHTML = `
-      <div id="__forma_islands">{"0":{"role":"admin"}}</div>
-      <div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div>
-    `;
-
-    const a = vi.fn();
-    activateIslands({ A: a });
-
-    expect(a).toHaveBeenCalledWith(expect.anything(), null);
-  });
-
-  it('still reads props from a real script block', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div>
-      <script id="__forma_islands" type="application/json">{"0":{"title":"hello"}}</script>
-    `;
-
-    const a = vi.fn();
-    activateIslands({ A: a });
-
-    expect(a).toHaveBeenCalledWith(expect.anything(), { title: 'hello' });
+  it('ignores a body block when the first head block supplies valid declared props', () => {
+    document.body.innerHTML = '<div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div><script id="__forma_islands" type="application/json">{"0":{"title":"attacker"}}</script>';
+    installState([{ title: 'hello' }]);
+    const component = vi.fn();
+    activateIslands({ A: compiled(component, [[{ name: 'title', type: { kind: 'string' } }]]) });
+    expect(component).toHaveBeenCalledExactlyOnceWith({ title: 'hello' });
+    expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('active');
   });
 });
 
@@ -92,16 +38,17 @@ describe('failed island teardown', () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Boom" data-forma-status="pending"><p>x</p></div>
     `;
+    installState();
 
     const [count, setCount] = createSignal(0);
     let runs = 0;
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Boom: () => {
         createEffect(() => { count(); runs++; });
         throw new Error('kaboom');
       },
-    });
+    }));
 
     const island = document.querySelector('[data-forma-island]')!;
     expect(island.getAttribute('data-forma-status')).toBe('error');
@@ -119,11 +66,12 @@ describe('failed island teardown', () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Ok" data-forma-status="pending"><p>x</p></div>
     `;
+    installState();
 
     const [count, setCount] = createSignal(0);
     let runs = 0;
 
-    activateIslands({ Ok: () => { createEffect(() => { count(); runs++; }); } });
+    activateIslands(emptyRegistry({ Ok: () => { createEffect(() => { count(); runs++; }); } }));
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(island.getAttribute('data-forma-status')).toBe('active');
@@ -138,41 +86,26 @@ describe('failed island teardown', () => {
 });
 
 describe('activateIslands root parameter', () => {
-  it('activates islands inside a shadow root when one is passed as root', () => {
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+  it('refuses a shadow-only host even when the shadow root is explicitly passed', () => {
+    const host = document.createElement('div'); document.body.appendChild(host);
     const shadow = host.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Shadowed" data-forma-status="pending"><p>in shadow</p></div>
-    `;
-
-    const fn = vi.fn();
-    // document.querySelectorAll does not pierce shadow roots, so the default
-    // root finds nothing at all.
-    activateIslands({ Shadowed: fn });
-    expect(fn).not.toHaveBeenCalled();
-
-    activateIslands({ Shadowed: fn }, shadow);
-    expect(fn).toHaveBeenCalledTimes(1);
-    expect(shadow.querySelector('[data-forma-island]')?.getAttribute('data-forma-status')).toBe('active');
-
-    host.remove();
+    shadow.innerHTML = `<div data-forma-island="0" data-forma-component="Shadowed" data-forma-state="0" data-forma-h="${FIXTURE_HASH}" data-forma-status="pending"><p>in shadow</p></div>`;
+    installState();
+    const component = vi.fn(), error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const before = shadow.innerHTML;
+    activateIslands(emptyRegistry({ Shadowed: component }));
+    activateIslands(emptyRegistry({ Shadowed: component }), shadow);
+    expect(component).not.toHaveBeenCalled(); expect(shadow.innerHTML).toBe(before);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
   });
 
-  it('falls back to the document props block for a shadow subtree', () => {
-    document.body.innerHTML = `<script id="__forma_islands" type="application/json">{"7":{"from":"page"}}</script>`;
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const shadow = host.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `
-      <div data-forma-island="7" data-forma-component="Shadowed" data-forma-status="pending"><p>x</p></div>
-    `;
-
-    const fn = vi.fn();
-    activateIslands({ Shadowed: fn }, shadow);
-
-    expect(fn).toHaveBeenCalledWith(expect.anything(), { from: 'page' });
-    host.remove();
+  it('an explicit light-DOM subtree shares original document authority', () => {
+    document.body.innerHTML = '<main><div data-forma-island="7" data-forma-component="A" data-forma-status="pending"><p>original</p></div></main>';
+    installState([{ from: 'page' }]);
+    const component = vi.fn();
+    activateIslands({ A: compiled(component, [[{ name: 'from', type: { kind: 'string' } }]]) }, document.querySelector('main')!);
+    expect(component).toHaveBeenCalledExactlyOnceWith({ from: 'page' });
+    expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('active');
   });
 });
 
@@ -217,8 +150,8 @@ describe('sanitizePropsDeep', () => {
     return keys;
   }
 
-  it('island activation strips forbidden keys at every depth, inline and shared, with no opt-out', () => {
-    // The same hostile payload through both channels, to two islands. Every
+  it('island activation projects only declared safe fields at every depth for both instances', () => {
+    // The same hostile payload in two head-state entries. Every
     // pollution key sits below the top level, inside an object and inside an
     // array element, next to a benign sibling that must survive.
     const payload =
@@ -226,12 +159,17 @@ describe('sanitizePropsDeep', () => {
       '"deeper":{"constructor":{"prototype":{"x":1}},"prototype":{"y":2},"ok":4}},' +
       '"rows":[{"__proto__":{"row":true},"id":1},{"id":2}]}';
     document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Inline"
-           data-forma-props='${payload}' data-forma-status="pending"><p>0</p></div>
-      <div data-forma-island="1" data-forma-component="Shared" data-forma-status="pending"><p>1</p></div>
-      <script id="__forma_islands" type="application/json">{"1":${payload}}</script>
+      <div data-forma-island="0" data-forma-component="First" data-forma-status="pending"><p>0</p></div>
+      <div data-forma-island="1" data-forma-component="Second" data-forma-status="pending"><p>1</p></div>
     `;
 
+    installState([JSON.parse(payload), JSON.parse(payload)]);
+    const schema = [
+      [{ name: 'title', type: { kind: 'string' } }, { name: 'nested', type: { kind: 'object', object: 1 } }, { name: 'rows', type: { kind: 'array', element: { kind: 'object', object: 3 } } }],
+      [{ name: 'keep', type: { kind: 'number' } }, { name: 'deeper', type: { kind: 'object', object: 2 } }],
+      [{ name: 'ok', type: { kind: 'number' } }],
+      [{ name: 'id', type: { kind: 'number' } }],
+    ] as const;
     const received: Record<string, unknown>[] = [];
     const merged: Record<string, unknown>[] = [];
     // A naive deep merge, the pattern DR-21 guards: a nested "__proto__" key
@@ -247,12 +185,12 @@ describe('sanitizePropsDeep', () => {
       }
       return into;
     };
-    const island = (_el: HTMLElement, props: Record<string, unknown> | null) => {
+    const island = (props: Record<string, unknown>) => {
       received.push(props!);
       merged.push(deepMerge({}, props!));
     };
     try {
-      activateIslands({ Inline: island, Shared: island });
+      activateIslands({ First: compiled(island, schema), Second: compiled(island, schema) });
       expect(({} as Record<string, unknown>)['isAdmin']).toBeUndefined();
       expect(({} as Record<string, unknown>)['row']).toBeUndefined();
     } finally {
@@ -280,34 +218,16 @@ describe('sanitizePropsDeep', () => {
     expect(document.querySelectorAll('[data-forma-status="active"]')).toHaveLength(2);
   });
 
-  it('island props nested 10,000 deep are parsed and stripped', () => {
-    // Recursive-parser depth floor. A JSON.parse reviver would strip during
-    // the parse, but V8 applies revivers recursively and overflows near 5,000
-    // levels; the strip has to be the iterative pass.
+  it('standalone sanitization still strips props nested 10,000 deep', () => {
     const DEPTH = 10_000;
-    const inline = '{"a":'.repeat(DEPTH) + '{"__proto__":{"deep":true},"leaf":1}' + '}'.repeat(DEPTH);
-    const shared = `{"1":${inline}}`;
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div>
-      <div data-forma-island="1" data-forma-component="A" data-forma-status="pending"><p>1</p></div>
-      <script id="__forma_islands" type="application/json">${shared}</script>
-    `;
-    document.querySelector('[data-forma-island="0"]')!.setAttribute('data-forma-props', inline);
-
-    const bottoms: Record<string, unknown>[] = [];
-    activateIslands({
-      A: (_el, props) => {
-        let node = props as Record<string, unknown>;
-        for (let i = 0; i < DEPTH; i++) node = node['a'] as Record<string, unknown>;
-        bottoms.push(node);
-      },
-    });
-
-    expect(bottoms).toHaveLength(2);
-    for (const bottom of bottoms) {
-      expect(Object.getOwnPropertyNames(bottom)).toEqual(['leaf']);
-      expect(bottom['leaf']).toBe(1);
-    }
-    expect(({} as Record<string, unknown>)['deep']).toBeUndefined();
+    const text = '{"a":'.repeat(DEPTH) + '{"__proto__":{"deep":true},"leaf":1}' + '}'.repeat(DEPTH);
+    const props = sanitizePropsDeep(JSON.parse(text));
+    let bottom = props;
+    for (let i = 0; i < DEPTH; i++) bottom = bottom.a;
+    expect(Object.getOwnPropertyNames(bottom)).toEqual(['leaf']);
+    expect(bottom.leaf).toBe(1);
+    expect(({} as Record<string, unknown>).deep).toBeUndefined();
   });
 });
+
+useFreshDocument();
