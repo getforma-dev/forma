@@ -56,6 +56,17 @@ describe('declared root slot bindings', () => {
     expect(new Set(slots.map(slot => slot.name)).size).toBe(slots.length);
   });
 
+  it('keeps local list debug labels CLIENT-owned and avoids declared root name collisions', () => {
+    const binary = emit(imports + `export function Page(p: { 'list:rows:item': string; 'list:rows:label': string }) {
+      const [rows] = createSignal([]);
+      return h('main', null, p['list:rows:item'], createList(rows, row => row.id, row => h('p', null, row.label)));
+    }`);
+    const slots = getSlots(binary);
+    expect(slots.filter(slot => slot.source === 0).map(slot => slot.name)).toEqual(['list:rows:item', 'list:rows:label']);
+    expect(new Set(slots.map(slot => slot.name)).size).toBe(slots.length);
+    expect(slots.find(slot => slot.name === 'list:rows:array')?.source).toBe(1);
+  });
+
   it.each([
     `export function Page(p: { text: string }) { return h('p', null, Number(p.text)); }`,
     `export function Page(p: { date: Date }) { return h('p', null, String(p.date)); }`,
