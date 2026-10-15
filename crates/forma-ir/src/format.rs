@@ -523,9 +523,9 @@ pub struct SectionTable {
 impl SectionTable {
     /// Parse the body prefix; the caller has already checked header integrity.
     pub fn parse(data: &[u8]) -> Result<Self, IrError> {
-        if data.len() < TABLE_PREFIX_SIZE {
+        if data.len() < 2 {
             return Err(IrError::BufferTooShort {
-                expected: TABLE_PREFIX_SIZE,
+                expected: 2,
                 actual: data.len(),
             });
         }

@@ -277,10 +277,11 @@ fn decimal(text: &str) -> bool {
 // IslandTableParsed
 // ---------------------------------------------------------------------------
 
-/// Parsed island table — an indexed collection of island entries.
+/// Parsed FMIR v3 island table, including opaque digest and trailing extension bytes.
 ///
-/// Binary format: `count(u16)`, then `count` variable-length entries of
-/// `[id(u16), trigger(u8), props_mode(u8), name_str_idx(u32), byte_offset(u32), slot_count(u16), [slot_id(u16) x slot_count]]`.
+/// Each entry has a u16 byte length, id/trigger/reserved/name/bytecode-offset,
+/// schema-object reference, a length-prefixed digest and a counted slot-id list.
+/// `docs/FMIR-FORMAT.md` specifies the exact bounded record layout.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IslandTableParsed {
     islands: Vec<IslandEntry>,

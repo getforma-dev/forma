@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Embed the compiler package's base version when bundling, so a build/watch
+  runner outside the installed package still emits the correct FMIR writer version.
+
 ### Changed
 - **FMIR v3 (FORMA-185).** The writer now emits the 24-byte signature/version/length/CRC header and the indexed section table, with required bytecode, strings, slots, v3 islands and page props schema. Writer versions use this package's actual base major/minor/patch and must match forma-ir exactly; prerelease suffixes are omitted. Rebuild v2 modules with the aligned stack. The 14 HTML goldens are unchanged.
 - `IrEmitContext` rejects invalid operand references, reserved opcodes, out-of-range lengths/counts and invalid slot defaults before returning a binary. PropsMode is removed; `addIsland` now takes `(name, trigger, slotIds, byteOffset, schemaObject?)`.

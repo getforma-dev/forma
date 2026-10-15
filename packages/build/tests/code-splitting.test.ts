@@ -1,3 +1,4 @@
+import { readFmirContainer } from '../../compiler/src/fmir';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -70,7 +71,7 @@ describe('Opt-in ESM code splitting', () => {
     const result = await build({ ...config, ssr: true, ssrEntryPoints: { phone: join(src, 'phone-ssr.tsx'), desktop: join(src, 'desktop-ssr.tsx') } });
     for (const [route, text] of [['/phone', 'Phone arrival'], ['/desktop', 'Desktop arrival']]) {
       const file = result.manifest.routes[route].ir; expect(file).toBeDefined();
-      const ir = readFileSync(join(dist, file!)); expect(ir.subarray(0, 4).toString()).toBe('FMIR'); expect(ir.toString()).toContain(text);
+      const ir = readFileSync(join(dist, file!)); expect(readFmirContainer(ir).writer).toEqual([3, 0, 0]); expect(ir.toString()).toContain(text);
     }
   });
   it('keeps private browser-decrypted routes Phase 1 in a mixed SSR application', async () => {

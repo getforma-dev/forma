@@ -308,7 +308,10 @@ enum StartError {
 /// A server's start in the order DR-11 asks for: load every module, then bind
 /// the port, then serve. It answers one connection with the number of pages
 /// it can server-render, and returns.
-fn serve<A: Embed>(addr: SocketAddr, loader: Loader) -> Result<(), StartError> {
+fn serve<A: Embed>(
+    loader: Loader,
+    bind: impl FnOnce() -> std::io::Result<TcpListener>,
+) -> Result<(), StartError> {
     let manifest = try_load_manifest::<A>().map_err(StartError::Manifest)?;
     let modules = match loader {
         Loader::Default => {
@@ -319,45 +322,36 @@ fn serve<A: Embed>(addr: SocketAddr, loader: Loader) -> Result<(), StartError> {
         #[allow(deprecated)]
         Loader::Lenient => forma_server::load_ir_modules::<A>(&manifest).1,
     };
-    let listener = TcpListener::bind(addr).map_err(StartError::Io)?;
+    let listener = bind().map_err(StartError::Io)?;
     let (mut stream, _) = listener.accept().map_err(StartError::Io)?;
     write!(stream, "{} server-rendered pages", modules.len()).map_err(StartError::Io)?;
     Ok(())
 }
 
-/// A loopback address with a port nothing is listening on.
-fn free_addr() -> SocketAddr {
-    let probe = TcpListener::bind("127.0.0.1:0").expect("an ephemeral port");
-    probe.local_addr().expect("its address")
-}
-
-/// Connect to `addr`, retrying for up to two seconds while the server starts.
-fn connect(addr: SocketAddr) -> Option<TcpStream> {
-    for _ in 0..40 {
-        if let Ok(stream) = TcpStream::connect_timeout(&addr, Duration::from_millis(50)) {
-            return Some(stream);
-        }
-        std::thread::sleep(Duration::from_millis(50));
-    }
-    None
-}
-
-/// Start `serve` on its own thread; return what it said, if it returned.
+/// Start `serve` on its own thread. Report the address only after binding an
+/// OS-assigned port; probing and releasing a "free" port races other tests.
 fn spawn<A: Embed + 'static>(
-    addr: SocketAddr,
     loader: Loader,
-) -> mpsc::Receiver<Result<(), StartError>> {
+) -> (
+    mpsc::Receiver<Result<(), StartError>>,
+    mpsc::Receiver<SocketAddr>,
+) {
     let (tx, rx) = mpsc::channel();
+    let (bound_tx, bound_rx) = mpsc::channel();
     std::thread::spawn(move || {
-        let _ = tx.send(serve::<A>(addr, loader));
+        let result = serve::<A>(loader, move || {
+            let listener = TcpListener::bind("127.0.0.1:0")?;
+            let _ = bound_tx.send(listener.local_addr()?);
+            Ok(listener)
+        });
+        let _ = tx.send(result);
     });
-    rx
+    (rx, bound_rx)
 }
 
 #[test]
 fn with_a_bad_module_the_fixture_server_binds_no_port() {
-    let addr = free_addr();
-    let started = spawn::<Flipped>(addr, Loader::Default);
+    let (started, bound) = spawn::<Flipped>(Loader::Default);
 
     // It refuses at once, naming the bad modules...
     match started.recv_timeout(Duration::from_secs(5)) {
@@ -367,10 +361,12 @@ fn with_a_bad_module_the_fixture_server_binds_no_port() {
         }
         other => panic!("expected a refused start, got {other:?}"),
     }
-    // ...and nothing is listening on its port.
-    assert!(
-        TcpStream::connect_timeout(&addr, Duration::from_millis(200)).is_err(),
-        "a refused server must not have bound {addr}"
+    // ...and the binding closure was never called. An unrelated listener can
+    // no longer masquerade as this fixture's server or consume its connection.
+    assert_eq!(
+        bound.try_recv(),
+        Err(mpsc::TryRecvError::Disconnected),
+        "a refused server must not have bound a port"
     );
 }
 
@@ -383,12 +379,15 @@ fn the_same_server_binds_and_serves_with_good_modules_or_the_lenient_loader() {
         ("good", Loader::Default, "1 server-rendered pages"),
         ("flipped", Loader::Lenient, "1 server-rendered pages"),
     ] {
-        let addr = free_addr();
-        let started = match set {
-            "good" => spawn::<Good>(addr, loader),
-            _ => spawn::<Flipped>(addr, loader),
+        let (started, bound) = match set {
+            "good" => spawn::<Good>(loader),
+            _ => spawn::<Flipped>(loader),
         };
-        let mut stream = connect(addr).unwrap_or_else(|| panic!("{set}: nothing bound {addr}"));
+        let addr = bound
+            .recv_timeout(Duration::from_secs(5))
+            .unwrap_or_else(|error| panic!("{set}: server did not bind: {error}"));
+        let mut stream = TcpStream::connect_timeout(&addr, Duration::from_secs(5))
+            .unwrap_or_else(|error| panic!("{set}: cannot connect to {addr}: {error}"));
         let mut reply = String::new();
         stream.read_to_string(&mut reply).expect("reply");
         assert_eq!(reply, expected, "{set} with {loader:?}");
@@ -421,11 +420,10 @@ fn every_reviewed_v3_refusal_happens_before_bind() {
     }
     assert_eq!(refused, 61);
     assert_eq!(errors.len(), refused);
-    let addr = free_addr();
-    let started = spawn::<ReviewedV3>(addr, Loader::Default);
+    let (started, bound) = spawn::<ReviewedV3>(Loader::Default);
     match started.recv_timeout(Duration::from_secs(5)) {
         Ok(Err(StartError::Modules(errors))) => assert_eq!(errors.len(), refused),
         other => panic!("expected all reviewed refusals before binding, got {other:?}"),
     }
-    assert!(TcpStream::connect_timeout(&addr, Duration::from_millis(200)).is_err());
+    assert_eq!(bound.try_recv(), Err(mpsc::TryRecvError::Disconnected));
 }

@@ -7,7 +7,7 @@
   "description": "Create a new Forma app — Rust + TypeScript SSR framework",
   "repository": {
     "type": "git",
-    "url": "https://github.com/getforma-dev/forma.git",
+    "url": "git+https://github.com/getforma-dev/forma.git",
     "directory": "packages/create-app"
   },
   "bin": {

@@ -220,3 +220,16 @@ fn canonical_dump_losslessly_rebuilds_every_accepted_review_fixture() {
         assert_eq!(build_ir_sections(&refs), original, "{}", fields[0]);
     }
 }
+
+#[test]
+fn an_available_section_count_is_checked_before_the_missing_reserved_prefix() {
+    use forma_ir::parser::test_helpers::{build_minimal_ir, restamp};
+    let mut bytes = build_minimal_ir(&[], &[], &[], &[]);
+    bytes.truncate(26); // header plus only section_count, no reserved u16
+    bytes[24..26].copy_from_slice(&65u16.to_le_bytes());
+    restamp(&mut bytes);
+    assert_eq!(IrModule::parse(&bytes).unwrap_err().code(), "LOAD-107");
+    bytes[24..26].copy_from_slice(&64u16.to_le_bytes());
+    restamp(&mut bytes);
+    assert_eq!(IrModule::parse(&bytes).unwrap_err().code(), "LOAD-103");
+}

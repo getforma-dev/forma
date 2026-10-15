@@ -1,6 +1,6 @@
 /** FMIR v3 container encoding and lossless diagnostics. Structural payload validation
  * belongs to the emitter and the Rust loader; this reader validates the container. */
-import { readFileSync } from 'node:fs';
+import compilerPackage from '../package.json';
 import * as C from './fmir-constants.js';
 
 export type WriterVersion = readonly [number, number, number];
@@ -11,10 +11,9 @@ export function baseWriterVersion(version: string): WriterVersion {
   if (parts.some(n => n > 0xffff)) throw new Error(`Compiler package version exceeds FMIR u16 components: ${version}`);
   return parts as unknown as WriterVersion;
 }
-// Both source and bundled dist are one directory below the published package.json.
-export const COMPILER_WRITER_VERSION = baseWriterVersion(
-  JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version,
-);
+// Bundlers embed package metadata with this module, including when a build tool
+// bundles the compiler into its own runner outside the package directory.
+export const COMPILER_WRITER_VERSION = baseWriterVersion(compilerPackage.version);
 
 const CRC_TABLE = Uint32Array.from({ length: 256 }, (_, i) => {
   let c = i;

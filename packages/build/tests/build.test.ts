@@ -1,3 +1,5 @@
+import { readFmirContainer } from '../../compiler/src/fmir';
+import { SECTION_ISLANDS } from '../../compiler/src/fmir-constants';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { build } from '../src/build';
 import * as publicApi from '../src/index';
@@ -992,11 +994,12 @@ describe('@getforma/build — SSR output', () => {
     expect(irName).toMatch(/^app\.[0-9a-f]{8}\.ir$/);
     expect(manifest.routes['/']!.ir).toBe(irName);
     const ir = readFileSync(join(outDir, irName!));
-    expect(String.fromCharCode(ir[0]!, ir[1]!, ir[2]!, ir[3]!)).toBe('FMIR');
+    const container = readFmirContainer(ir);
+    expect(container.writer).toEqual([3, 0, 0]);
     expect(ir.length).toBeGreaterThan(200);
     // Island table entry count (u16 at the islands section offset) is 1.
-    const islandTableOffset = ir.readUInt32LE(40);
-    expect(ir.readUInt16LE(islandTableOffset)).toBe(1);
+    const islands = container.sections.find(section => section.id === SECTION_ISLANDS)!;
+    expect(new DataView(islands.bytes.buffer, islands.bytes.byteOffset).getUint16(0, true)).toBe(1);
 
     // …and NOTHING island-shaped is left in the output directory or the
     // manifest. The generated `<page>.islands.js` registry was unusable in
