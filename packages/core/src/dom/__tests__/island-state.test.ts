@@ -62,6 +62,20 @@ for (const test of cases) it(`roundtrips 100 fixed ${test.name} values by the co
 });
 
 describe('first-head document authority', () => {
+  it('requires the original light-DOM document at execution, preserving a restored same-node claim', () => {
+    const doc = page(), checked = valid(preflightIslands({ Test: registration() }, doc)[0]!);
+    expect(() => checkIslandClaim(checked)).not.toThrow();
+    checked.host.remove();
+    expect(checked.host.ownerDocument).toBe(doc);
+    expect(() => checkIslandClaim(checked)).toThrow('FORMA_E_ISLAND_IDENTITY');
+    const shadowHost = doc.createElement('section'); doc.body.appendChild(shadowHost);
+    shadowHost.attachShadow({ mode: 'open' }).appendChild(checked.host);
+    expect(checked.host.isConnected).toBe(true);
+    expect(() => checkIslandClaim(checked)).toThrow('FORMA_E_ISLAND_IDENTITY');
+    doc.body.appendChild(checked.host);
+    expect(() => checkIslandClaim(checked)).not.toThrow();
+  });
+
   it.each([
     null, [], {}, { v: 1, s: [], i: [], extra: true }, { v: 2, s: [], i: [] },
     { v: 1, s: {}, i: [] }, { v: 1, s: [1], i: [] }, { v: 1, s: [], i: {} },
