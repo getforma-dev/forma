@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
+## [Unreleased]
+
+### The deployment identity — FORMA-186 (DR-29, L-6 as amended by L-56)
 
 - `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
   identity: 16 lowercase hex characters, computed first from every output of a
@@ -28,7 +30,7 @@
   after FORMA-021's cuts, becomes about 25,130 B: its headroom under N2's 25,500 B
   falls from 399 B to about 370 B.
 
-## Unreleased — the size report per route and N2's gate (FORMA-021)
+### The size report per route and N2's gate — FORMA-021
 
 - A production build reports, per route, what the route loads cold (its `js`
   files and their `modulepreload` dependencies) in raw, gzip -9 and Brotli-11
@@ -49,7 +51,26 @@
   payload (default 200 KB), is unchanged and separate: it is the application's
   budget, N2 is Forma's.
 
-## Unreleased — verified production workers (FORMA-111)
+### Static SSR entry products — FORMA-105
+
+- Consume exact-result compiler products before publishing browser/native output. Keep the configured native route owner and IR when its reachable island set is empty; publish no JS or module preload for that route.
+- Retain active static/dynamic chunk closures, CSS/font resources and explicit non-static inlined resources. Watch commits candidate metadata only with the manifest and preserves old generation URLs through static/island transitions and failed publication.
+- Refuse contradictory extra native/script or server-inlined static route mappings with `BUILD-611`.
+
+### Paired publication — FORMA-103
+
+- Compile watched browser and native output together, including SSR-only and type-only dependencies. Publish immutable JS/chunk and SHA-256 IR generations, then switch the manifest by rename; retain older files for requests holding an earlier manifest.
+- Stage output and rollback failed replacements, validation or final manifest writes. Watch consumers must use manifest aliases, not stable entry or IR filenames. Production still promotes its complete staging directory.
+
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.3.1. Part of the seven-package set 3.0.0-alpha.1; the verified production workers (FORMA-111), manifest 2 and the start-time checks (FORMA-112) and the removals (FORMA-110) below are the alpha's gates. The per-build size report with route classes (FORMA-190) and the restated N2 ceiling (L-55: 25,500 B gzip per route) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
+
+### Verified production workers — FORMA-111
 
 - Production workers use finalized immutable manifest metadata and full SHA-384,
   including lazy chunks. Cache hits and network responses are verified before
@@ -61,18 +82,7 @@
   retirement patterns and the exact development worker bytes remain unchanged.
 
 
-## [Unreleased]
-
-### Static SSR entry products — FORMA-105
-
-- Consume exact-result compiler products before publishing browser/native output. Keep the configured native route owner and IR when its reachable island set is empty; publish no JS or module preload for that route.
-- Retain active static/dynamic chunk closures, CSS/font resources and explicit non-static inlined resources. Watch commits candidate metadata only with the manifest and preserves old generation URLs through static/island transitions and failed publication.
-- Refuse contradictory extra native/script or server-inlined static route mappings with `BUILD-611`.
-
-### Paired publication — FORMA-103
-
-- Compile watched browser and native output together, including SSR-only and type-only dependencies. Publish immutable JS/chunk and SHA-256 IR generations, then switch the manifest by rename; retain older files for requests holding an earlier manifest.
-- Stage output and rollback failed replacements, validation or final manifest writes. Watch consumers must use manifest aliases, not stable entry or IR filenames. Production still promotes its complete staging directory.
+### Earlier unreleased entries, also in this alpha
 
 ### Changed — FORMA-112
 

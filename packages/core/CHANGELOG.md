@@ -68,6 +68,14 @@ All notable changes to this project will be documented in this file.
 - `mount()` refuses a `data-forma-ssr` target with `FORMA_E_MOUNT_SSR` before component/root/effect/listener creation or DOM writes. Ordinary Browser mounting, explicit browserOnly islands and public caller-owned `hydrateIsland()` are retained.
 - Adoption-specific regression tests now call the retained public hydrator under explicit roots; the old mount/fallback assertions are archived exactly. Strict activation is now connected; compiler/static entry selection, the template successor and final packed qualification remain separate acceptance gates.
 
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), published on npm under the `next` dist-tag; `latest` stays 2.1.0 and plain ranges exclude it (L-41). Part of the seven-package set 3.0.0-alpha.1 with `@getforma/compiler`, `@getforma/build`, `@getforma/create-app`, `forma-ir`, `forma-ir-derive` and `forma-server`. The breaking changes below (FORMA-109, 110, 112, 185) are the alpha's gates; island props, adoption, the literal registry, keyed rows and the marker rules (FORMA-103, 104, 105, 181, 182) are pending before the beta on the integration branch. N2 is restated per L-55 to 25,500 B gzip per route with the package caps ratcheting to 46,500 B after the safe cuts; this alpha still ships under the 30,000 (graph) and 29,000 (browser ESM) B gzip caps, which it passes. See the root CHANGELOG for the whole set.
+
 ### Typed raw boundaries — FORMA-109
 
 - Raw markup APIs require `trustedHtml()` and reject strings and look-alikes before DOM writes or cache shortcuts, in both development and production. This includes `dangerouslySetInnerHTML`, `srcdoc`, `setAttr`, `setHTMLUnsafe`, `template`/`templateMany`, `reconcile`, `mountMarkup` and its update operation. Null/false clears remain supported; `h('script')` is refused.

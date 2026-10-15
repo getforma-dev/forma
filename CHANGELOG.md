@@ -21,6 +21,57 @@
 
 - `e2e/fixtures/formajs-runtime.global.js` and `e2e/fixtures/formajs.global.js` are no longer tracked; `e2e/sync-fixtures.sh` writes them from `packages/core/dist` and `scripts/check.sh` runs it first. The committed copies predated `trustedHtml()` and failed five cases of `e2e/full-stack.spec.ts` whenever the lane ran without a fresh sync. The spec now refuses to run without the bundles, naming the sync script, and the sync script prints core's build output when that build fails instead of exiting silently. Verified by `e2e/full-stack.spec.ts` > `the bundles are the fresh sync, not a stale copy`.
 
+## [3.0.0-alpha.2] - 2026-10-15
+
+The tag `v3.0.0-alpha.1` on `8ba2930` never published: its release run (38764599499) passed
+`check`, the three engines and `pack`, then `verify` failed in P17 before the publish jobs,
+which were skipped; nothing reached crates.io or npm. The cause was the verification harness,
+not the packages: the packed `@getforma/build` imports its optional compiler peer by name, and
+P17 ran the packed libraries from a scratch directory whose upward module search reached the
+checkout's root `node_modules`, where the workspace link `@getforma/compiler` points at
+`packages/compiler`, which the `verify` job never builds (`ERR_MODULE_NOT_FOUND` on
+`packages/compiler/dist/index.js`). On a built workstation the same search had silently used
+the workspace build instead of the packed bytes, which is why every local dry run passed.
+
+P17 now writes a `node_modules/@getforma` beside the unpacked packages, linking each packed
+library, and proves with Node's own resolver that every bare `@getforma/*` specifier in every
+packed dist resolves inside the packed set (`scripts/release-packed-resolution.mjs`, a new P17
+check before any packed code runs, and `release-packed-resolution.test.mjs`, which reproduces
+the tag's failure in an unbuilt checkout and refuses a built workspace standing in). Since a
+version is never retagged, this alpha is `3.0.0-alpha.2`: the seven packages at the new
+version, their bytes otherwise identical to alpha.1's, and the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first pre-release of 3.0.0: milestone M2 of PLAN-merge-and-3.0.0 (FORMA-145 step 2,
+FORMA-187's M2 exit), published from this repository by the unified release workflow as one
+seven-package set. On crates.io: `forma-ir`, `forma-ir-derive` and `forma-server` 3.0.0-alpha.1
+(Cargo pre-release versions; plain requirements exclude them). On npm: `@getforma/core`,
+`@getforma/compiler`, `@getforma/build` and `@getforma/create-app` 3.0.0-alpha.1 under the
+`next` dist-tag; `latest` stays at the 2.x and 0.x lines, so `npm install` does not pick the
+alpha up (L-41). No application takes a pre-release (L-54). The GitHub Release names the
+milestone, the pending gates and every artefact's SHA-256; the release is timed against G6.
+
+This alpha carries the breaking changes listed below, the gates of the alpha in
+`scripts/release-contracts.json`: FORMA-110, 185, 112, 102, 107, 109, 111 and 144 slice 1.
+Pending before the beta (M3), not in this alpha: FORMA-103, 104, 105, 181, 182, 183, 184,
+144 slice 2, 188's fixture applications and 021's ratchet; that work is on the integration
+branch `codex/forma-upgrade-review`. N2 is restated per L-55 (D6 taken, DR-35's fallback):
+at most 25,500 B gzip of Forma code per route (26,000 if the safe cuts slip), Brotli reported
+beside it, with the core and browser-ESM package caps ratcheting to 46,500 B after the safe
+cuts C1 to C3 (naming FORMA-103 and 104). Neither the restated ceiling nor the ratcheted caps
+nor the cuts are on `main`: this alpha ships under the previous caps (core 30,000 and browser
+ESM 29,000 B gzip), which its gate passes; the restated figures arrive with the beta.
+
+Release mechanics of this pull request, beside the version script's seven manifests, three
+Cargo locks, npm lock and template seeds: core's documentation-truth test treats a pre-release
+like `-dev` (the CDN snippets, CSP history and support table keep naming the last stable
+release, 2.1.0, which is what `latest` serves); the compiler's supported-surface test computes
+the core peer from the package version (`^3.0.0 || =3.0.0-alpha.1`, the window the version
+script writes); the `forma-ir` and `forma-server` READMEs, which ship inside the crates, name
+`=3.0.0-alpha.1`. The post-release pull request returns `main` to `3.0.0-dev`.
+
+
 ### Removed — FORMA-110
 
 - Removed core's server functions, Node SSR and WASM entry points; the compiler's Vite plugins and their standalone transforms; and the WASM walker feature, build step, manifest field and server bootstrap. Browser islands continue to use `h()` and native Rust SSR remains supported.
@@ -29,6 +80,8 @@
 
 
 ### FMIR v3 development staging (FORMA-185)
+
+- Seeded-bug qualification of the decoder fuzzing: three deliberate reader defects (CRC check skipped, section-table bound off by one, string length unchecked) were each found by the nightly targets within seconds; the minimised inputs are committed under `fuzz/regressions/` and replayed on every pull request by `seeded_decoder_defects_are_caught_deterministically` (`docs/FMIR-FORMAT.md` §11.4).
 
 The seven package versions are aligned at `3.0.0-dev` so the compiler and Rust reader can
 compare their exact base version `3.0.0`; nothing is tagged or published. Templates retain
@@ -47,6 +100,15 @@ loader-before-bind checks, stable fuzz replay and a pinned nightly fuzz workflow
   gate, packed template/corpus verification, two minimal publishing jobs and
   compatibility record. A2 dry runs remain non-publishing; milestone contract
   hooks must be completed before the first `v3.0.0-alpha.1` release.
+- FORMA-187 (first alpha): the live gate is milestone-aware. `scripts/release-contracts.json`
+  states which tickets gate the alpha, beta, rc and final; a tag publishes only when every
+  gate of its milestone and the earlier ones is done, checked in pack, P17, both publish jobs
+  and the record. The alpha's gates (110, 185, 112, 102, 107, 109, 111, 144 slice 1) are done;
+  the later milestones' are pending. The GitHub Release names the milestone and the pending
+  list; the contract's `version` (3.0.0) is asserted against the tag's base version. The SR43
+  lint checks the contract's shape with thirteen seeded violations. Pre-releases
+  publish on npm `next` and as Cargo pre-release versions (`npmPublishArgs`, `cargoPublishArgs`,
+  tested). `docs/release/ALPHA-RUNBOOK.md` is the alpha day's ordered runbook.
 
 ### The repository merge (FORMA-113)
 

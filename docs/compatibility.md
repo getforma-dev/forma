@@ -5,8 +5,10 @@ FORMA-185 FMIR v3 format. The seven packages share a release version:
 `forma-ir`, `forma-ir-derive`, `forma-server`, `@getforma/core`,
 `@getforma/compiler`, `@getforma/build`, and `@getforma/create-app`.
 It is not a declaration that the remaining 3.0.0 milestone work has shipped.
-`scripts/release-contracts.json` keeps `liveReleaseReady: false` and identifies
-remaining contracts. Historical A2 and partial FMIR-v3 release evidence is retained.
+`scripts/release-contracts.json` states which tickets gate which milestone: the
+alpha's gates are done, the beta's, rc's and final's are pending, and a tag
+publishes only for a milestone whose gates are all done (`docs/RELEASING.md`,
+"Milestone gate"). Historical A2 and partial FMIR-v3 release evidence is retained.
 
 ## Window and upgrade order
 
