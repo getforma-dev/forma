@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Compatibility — FORMA-112
+
+- Broaden FMIR reader acceptance to same-major, writer-minor-at-most-reader-minor compatibility; patch is ignored. Preserve historical exact-stage fixtures and add an explicit current expectation table. Shared version pairs exercise the actual header parser.
+
 ### Removed — FORMA-110
 
 - Removed the `wasm` feature, its `render`/`render_island` JavaScript exports, wasm-bindgen dependency and wasm-pack metadata. The native parser and page walker remain supported.

@@ -117,8 +117,11 @@ fn render_everywhere(config: &PageConfig) -> Vec<String> {
 fn a_string_body_prefix_warns_once_per_process_in_debug_builds_and_a_raw_html_never_does() {
     let f = Fixture {
         manifest: AssetManifest {
-            version: 1,
-            build_hash: "test".to_string(),
+            version: 2,
+            writer: "3.0.0".into(),
+            app: "ledger".into(),
+            aliases: HashMap::new(),
+            build: "test".to_string(),
             assets: HashMap::new(),
             routes: HashMap::new(),
         },

@@ -50,8 +50,11 @@ impl Subscriber for Deprecations {
 #[test]
 fn render_page_logs_its_deprecation_once_per_process_in_debug_builds() {
     let manifest = AssetManifest {
-        version: 1,
-        build_hash: "test".to_string(),
+        version: 2,
+        writer: "3.0.0".into(),
+        app: "ledger".into(),
+        aliases: HashMap::new(),
+        build: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
     };

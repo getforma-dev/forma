@@ -99,3 +99,5 @@ why it was wrong the first time.
 - **Package CHANGELOGs** are the record of what changed and when. This archive
   is for material that was *wrong or superseded*, which is a different
   question.
+
+- [FORMA-185 exact-stage FMIR v3 contract](2026-10-15-FMIR-FORMAT-exact-stage.md): superseded only in version acceptance by FORMA-112; the maintained format keeps its bytes and structural rules.

@@ -27,6 +27,12 @@ pub fn reader_version() -> [u16; 3] {
     ]
 }
 
+/// Whether a reader accepts a writer: the same major and no newer minor.
+/// Patch versions and package prerelease suffixes do not narrow the wire window.
+pub const fn accepts_writer(reader: [u16; 3], writer: [u16; 3]) -> bool {
+    reader[0] == writer[0] && writer[1] <= reader[1]
+}
+
 /// CRC-32/ISO-HDLC of a sequence of byte slices, without adding bytes at their boundaries.
 pub fn crc32(chunks: &[&[u8]]) -> u32 {
     const fn table() -> [u32; 256] {
@@ -297,7 +303,7 @@ impl fmt::Display for IrError {
             ),
             IrError::UnsupportedWriter { writer, reader } => write!(
                 f,
-                "writer {}.{}.{} differs from reader {}.{}.{}",
+                "writer {}.{}.{} is incompatible with reader {}.{}.{}",
                 writer[0], writer[1], writer[2], reader[0], reader[1], reader[2]
             ),
             IrError::LengthMismatch { declared, actual } => write!(
@@ -448,6 +454,11 @@ pub struct IrHeader {
 impl IrHeader {
     /// Validate a complete file's header, including exact length and CRC, before section parsing.
     pub fn parse(data: &[u8]) -> Result<Self, IrError> {
+        Self::parse_for_reader(data, reader_version())
+    }
+
+    // Private: production readers always use their own Cargo package version.
+    fn parse_for_reader(data: &[u8], reader: [u16; 3]) -> Result<Self, IrError> {
         limit("module bytes", data.len(), MAX_MODULE_SIZE)?;
         if data.len() < HEADER_SIZE {
             return Err(IrError::BufferTooShort {
@@ -470,8 +481,7 @@ impl IrHeader {
             le_u16(&data[10..12]),
             le_u16(&data[12..14]),
         ];
-        let reader = reader_version();
-        if writer != reader {
+        if !accepts_writer(reader, writer) {
             return Err(IrError::UnsupportedWriter { writer, reader });
         }
         let body_len = le_u32(&data[14..18]);
@@ -791,4 +801,50 @@ pub struct IslandEntry {
     pub byte_offset: u32,
     /// Which slots belong to this island.
     pub slot_ids: Vec<u16>,
+}
+
+#[cfg(test)]
+mod compatibility_tests {
+    use super::*;
+    #[test]
+    fn shared_version_pairs_pass_through_the_actual_header_reader() {
+        let pairs: serde_json::Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/compatibility/version-pairs.json"
+        ))
+        .unwrap();
+        let base = |s: &str| -> [u16; 3] {
+            let parts: Vec<u16> = s
+                .split('-')
+                .next()
+                .unwrap()
+                .split('.')
+                .map(|p| p.parse().unwrap())
+                .collect();
+            [parts[0], parts[1], parts[2]]
+        };
+        for pair in pairs.as_array().unwrap() {
+            let reader = base(pair["reader"].as_str().unwrap());
+            let writer = base(pair["writer"].as_str().unwrap());
+            let mut bytes = crate::parser::test_helpers::build_minimal_ir(&[], &[], &[], &[]);
+            for (i, value) in writer.iter().enumerate() {
+                bytes[8 + i * 2..10 + i * 2].copy_from_slice(&value.to_le_bytes());
+            }
+            let crc = crc32(&[&bytes[..18], &bytes[22..]]);
+            bytes[18..22].copy_from_slice(&crc.to_le_bytes());
+            let result = IrHeader::parse_for_reader(&bytes, reader);
+            assert_eq!(
+                result.is_ok(),
+                pair["accepted"].as_bool().unwrap(),
+                "{pair}: {result:?}"
+            );
+            if let Err(error) = result {
+                assert_eq!(error.code(), "LOAD-108");
+                for version in [reader, writer] {
+                    assert!(error
+                        .to_string()
+                        .contains(&format!("{}.{}.{}", version[0], version[1], version[2])));
+                }
+            }
+        }
+    }
 }

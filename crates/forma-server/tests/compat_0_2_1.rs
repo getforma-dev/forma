@@ -13,8 +13,11 @@ use std::collections::HashMap;
 
 fn manifest() -> AssetManifest {
     AssetManifest {
-        version: 1,
-        build_hash: "test".to_string(),
+        version: 2,
+        writer: "3.0.0".into(),
+        app: "ledger".into(),
+        aliases: HashMap::new(),
+        build: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
     }
@@ -98,6 +101,8 @@ fn documents() -> Vec<(&'static str, String)> {
     routes.insert(
         "/r".to_string(),
         RouteAssets {
+            mode: forma_server::RouteMode::Ssr,
+            modulepreload: Vec::new(),
             js: vec!["vendor.1.js".into(), "app.2.js".into()],
             css: vec!["s.3.css".into()],
             fonts: vec!["f.4.woff2".into()],
@@ -107,8 +112,11 @@ fn documents() -> Vec<(&'static str, String)> {
         },
     );
     let manifest = AssetManifest {
-        version: 1,
-        build_hash: "h".into(),
+        version: 2,
+        writer: "3.0.0".into(),
+        app: "ledger".into(),
+        aliases: HashMap::new(),
+        build: "h".into(),
         assets: HashMap::new(),
         routes,
     };

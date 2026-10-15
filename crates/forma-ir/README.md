@@ -49,7 +49,8 @@ islands open where the walk stopped. It catches a panic inside the walk as
 ## FMIR v3 development
 
 The development set is `3.0.0-dev`. Modules carry a 24-byte signature/version/length/CRC
-header and a variable section table; the reader accepts its own exact base version `3.0.0`.
+header and a variable section table; the reader accepts writers of its own major up to its own minor; patch is ignored.
+Package prerelease suffixes are absent from the numeric wire triple.
 V2 modules require rebuilding. `IrModule::parse` validates every bytecode string reference,
 props schemas, key paths and optional source positions before rendering; `IrError::code()`
 provides stable `LOAD-` diagnostics. See [`FMIR-FORMAT.md`](../../docs/FMIR-FORMAT.md)

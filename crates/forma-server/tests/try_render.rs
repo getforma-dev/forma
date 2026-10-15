@@ -32,6 +32,8 @@ fn manifest() -> AssetManifest {
     routes.insert(
         ROUTE.to_string(),
         RouteAssets {
+            mode: forma_server::RouteMode::Ssr,
+            modulepreload: Vec::new(),
             js: vec!["app.a1b2c3d4.js".to_string()],
             css: vec![],
             fonts: vec![],
@@ -41,8 +43,11 @@ fn manifest() -> AssetManifest {
         },
     );
     AssetManifest {
-        version: 1,
-        build_hash: "test".to_string(),
+        version: 2,
+        writer: "3.0.0".into(),
+        app: "ledger".into(),
+        aliases: HashMap::new(),
+        build: "test".to_string(),
         assets: HashMap::new(),
         routes,
     }

@@ -77,7 +77,7 @@ pub fn load_manifest<A: Embed>() -> crate::AssetManifest {
 /// Fallible [`load_manifest`].
 pub fn try_load_manifest<A: Embed>() -> Result<crate::AssetManifest, String> {
     let data = try_asset::<A>("manifest.json")?;
-    serde_json::from_str(&data).map_err(|e| format!("Failed to parse manifest.json: {e}"))
+    crate::AssetManifest::from_json(&data)
 }
 
 /// Each route's `modulepreload` list from the embedded `manifest.json`, for
@@ -99,10 +99,13 @@ pub fn try_load_module_preloads<A: Embed>() -> Result<crate::ModulePreloads, Str
 /// `manifest.json` exposes the full route table, asset graph and per-route
 /// size budgets, and nothing client-side fetches it. A direct `.br`/`.gz`
 /// request would return compressed bytes with no `Content-Encoding`, i.e. a
-/// corrupt response — those siblings are only ever reachable through content
+/// corrupt response. IR modules are server input and are never public assets — those siblings are only ever reachable through content
 /// negotiation below.
 fn is_denied(filename: &str) -> bool {
-    filename == "manifest.json" || filename.ends_with(".br") || filename.ends_with(".gz")
+    filename == "manifest.json"
+        || filename.ends_with(".ir")
+        || filename.ends_with(".br")
+        || filename.ends_with(".gz")
 }
 
 /// A parsed `Accept-Encoding` entry.
@@ -208,12 +211,24 @@ pub async fn serve_asset<A: Embed + 'static>(
         // Serve the first candidate whose compressed sibling actually exists —
         // an asset with only a .gz used to be served raw to a br+gzip client.
         if let Some(file) = A::get(&format!("{filename}.{suffix}")) {
-            return asset_response(&filename, file, Some(encoding), if_none_match);
+            return asset_response(
+                &filename,
+                file,
+                Some(encoding),
+                if_none_match,
+                immutable_asset::<A>(&filename),
+            );
         }
     }
 
     match A::get(&filename) {
-        Some(file) => asset_response(&filename, file, None, if_none_match),
+        Some(file) => asset_response(
+            &filename,
+            file,
+            None,
+            if_none_match,
+            immutable_asset::<A>(&filename),
+        ),
         None => StatusCode::NOT_FOUND.into_response(),
     }
 }
@@ -281,21 +296,32 @@ fn cached_names<A: Embed + 'static>() -> Option<&'static NameSet> {
     None
 }
 
-/// True if the filename carries a content hash, i.e. its bytes can never
-/// change under this name.
-///
-/// `@getforma/build` composes hashed names as `<base>.<8 lowercase hex>.<ext>`.
-/// It hashes only `.js/.css/.wasm/.ir` — fonts, svg and the like keep their
-/// original names and must NOT be pinned for a year with `immutable`, or a
-/// redeploy cannot invalidate them.
-fn is_content_hashed(filename: &str) -> bool {
-    let name = filename.rsplit('/').next().unwrap_or(filename);
-    name.split('.').skip(1).any(|segment| {
-        segment.len() == 8
-            && segment
-                .bytes()
-                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
-    })
+/// Trust only validated manifest metadata, including retained entries. Debug
+/// rereads on every request; release caches are keyed by the actual Embed type.
+fn immutable_asset<A: Embed + 'static>(filename: &str) -> bool {
+    fn names<A: Embed>() -> std::collections::HashSet<String> {
+        try_load_manifest::<A>()
+            .map(|m| {
+                m.assets
+                    .into_iter()
+                    .filter_map(|(name, meta)| meta.immutable.then_some(name))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        type Entry = (std::any::TypeId, std::collections::HashSet<String>);
+        static CACHE: [std::sync::OnceLock<Entry>; 4] = [const { std::sync::OnceLock::new() }; 4];
+        let key = std::any::TypeId::of::<A>();
+        for slot in &CACHE {
+            let (owner, names) = slot.get_or_init(|| (key, names::<A>()));
+            if *owner == key {
+                return names.contains(filename);
+            }
+        }
+    }
+    names::<A>().contains(filename)
 }
 
 fn asset_response(
@@ -303,6 +329,7 @@ fn asset_response(
     file: rust_embed::EmbeddedFile,
     encoding: Option<&str>,
     if_none_match: Option<&str>,
+    immutable: bool,
 ) -> Response {
     let mime = mime_for(filename);
     // Strong ETag from the content hash rust-embed already computed. This
@@ -317,7 +344,7 @@ fn asset_response(
         encoding.unwrap_or("")
     );
 
-    let cache_control = if is_content_hashed(filename) {
+    let cache_control = if immutable {
         "public, max-age=31536000, immutable"
     } else {
         "public, max-age=0, must-revalidate"
@@ -478,19 +505,13 @@ mod tests {
     }
 
     #[test]
-    fn content_hash_detection_gates_immutable_caching() {
-        assert!(is_content_hashed("app.a1b2c3d4.js"));
-        assert!(is_content_hashed("page.00000000.ir"));
-        // Un-hashed: pinning these for a year means a redeploy cannot
-        // invalidate them.
-        assert!(!is_content_hashed("manifest.json"));
-        assert!(!is_content_hashed("sw.js"));
-        assert!(!is_content_hashed("index.html"));
-        assert!(!is_content_hashed("Inter Variable.woff2"));
-        // Wrong length or non-hex must not count.
-        assert!(!is_content_hashed("app.a1b2c3.js"));
-        assert!(!is_content_hashed("app.a1b2c3d4e5.js"));
-        assert!(!is_content_hashed("app.zzzzzzzz.js"));
+    fn metadata_is_required_for_immutable_caching() {
+        #[derive(Embed)]
+        #[folder = "test_fixtures/"]
+        struct Files;
+        assert!(immutable_asset::<Files>("app.a1b2c3d4.js"));
+        assert!(!immutable_asset::<Files>("style.css"));
+        assert!(!immutable_asset::<Files>("unlisted.a1b2c3d4.js"));
     }
 
     #[test]
@@ -499,6 +520,7 @@ mod tests {
         // .br/.gz request would return compressed bytes with no
         // Content-Encoding.
         assert!(is_denied("manifest.json"));
+        assert!(is_denied("page.abc12345.ir"));
         assert!(is_denied("app.a1b2c3d4.js.br"));
         assert!(is_denied("app.a1b2c3d4.js.gz"));
         assert!(!is_denied("app.a1b2c3d4.js"));

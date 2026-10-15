@@ -8,7 +8,7 @@ use std::{fs, path::Path};
 #[test]
 fn reviewed_v3_fixture_codes_are_exact() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fmir-v3");
-    let index = fs::read_to_string(root.join("index.tsv")).unwrap();
+    let index = fs::read_to_string(root.join("window-expectations.tsv")).unwrap();
     let mut checked = 0;
     for row in index.lines().skip(1) {
         let fields: Vec<_> = row.split('\t').collect();
@@ -18,10 +18,14 @@ fn reviewed_v3_fixture_codes_are_exact() {
             Ok(_) => "PASS",
             Err(e) => e.code(),
         };
-        assert_eq!(code, fields[1], "{}: {result:?}", fields[0]);
+        let expected = fields[1];
+        assert_eq!(code, expected, "{}: {result:?}", fields[0]);
         if let Ok(module) = result {
             assert_eq!(module.raw_bytes(), bytes);
-            assert_eq!(module.header.writer, reader_version());
+            assert!(forma_ir::format::accepts_writer(
+                reader_version(),
+                module.header.writer
+            ));
         }
         checked += 1;
     }
@@ -189,7 +193,7 @@ fn module_ceiling_is_checked_before_decoding_but_includes_its_boundary() {
 fn canonical_dump_losslessly_rebuilds_every_accepted_review_fixture() {
     use forma_ir::parser::test_helpers::build_ir_sections;
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fmir-v3");
-    let index = fs::read_to_string(root.join("index.tsv")).unwrap();
+    let index = fs::read_to_string(root.join("window-expectations.tsv")).unwrap();
     for row in index.lines().skip(1) {
         let fields: Vec<_> = row.split('\t').collect();
         if fields[1] != "PASS" {
@@ -200,7 +204,11 @@ fn canonical_dump_losslessly_rebuilds_every_accepted_review_fixture() {
         let text = forma_ir::dump::dump_ir(&module);
         let mut lines = text.lines();
         let header = lines.next().unwrap();
-        assert!(header.starts_with("FMIR v3 writer=3.0.0 "));
+        let writer = module.header.writer;
+        assert!(header.starts_with(&format!(
+            "FMIR v3 writer={}.{}.{} ",
+            writer[0], writer[1], writer[2]
+        )));
         let mut sections = Vec::new();
         while let Some(descriptor) = lines.next() {
             let fields: Vec<_> = descriptor.split_whitespace().collect();
@@ -217,7 +225,12 @@ fn canonical_dump_losslessly_rebuilds_every_accepted_review_fixture() {
             .iter()
             .map(|(id, flags, bytes)| (*id, *flags, bytes.as_slice()))
             .collect();
-        assert_eq!(build_ir_sections(&refs), original, "{}", fields[0]);
+        let mut rebuilt = build_ir_sections(&refs);
+        for (i, value) in writer.iter().enumerate() {
+            rebuilt[8 + i * 2..10 + i * 2].copy_from_slice(&value.to_le_bytes());
+        }
+        forma_ir::parser::test_helpers::restamp(&mut rebuilt);
+        assert_eq!(rebuilt, original, "{}", fields[0]);
     }
 }
 

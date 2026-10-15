@@ -51,8 +51,11 @@ impl Subscriber for Warnings {
 #[test]
 fn the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once() {
     let manifest = AssetManifest {
-        version: 1,
-        build_hash: "test".to_string(),
+        version: 2,
+        writer: "3.0.0".into(),
+        app: "ledger".into(),
+        aliases: HashMap::new(),
+        build: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
     };

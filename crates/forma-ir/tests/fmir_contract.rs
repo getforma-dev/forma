@@ -74,7 +74,7 @@ fn variable_sections_tile_exactly_and_reserved_fields_fail_closed() {
     assert_eq!(IrModule::parse(&bytes).unwrap_err().code(), "LOAD-103");
 }
 #[test]
-fn legacy_and_different_patch_are_rebuild_errors() {
+fn legacy_and_newer_minor_are_rebuild_errors() {
     let mut legacy = vec![0; 48];
     legacy[..4].copy_from_slice(b"FMIR");
     legacy[4] = 2;
@@ -83,10 +83,10 @@ fn legacy_and_different_patch_are_rebuild_errors() {
     assert!(err.to_string().contains("header version 2"));
     assert!(err.to_string().contains("rebuild"));
     let mut bytes = build_minimal_ir(&[], &[], &[], &[]);
-    bytes[12] = 1;
+    bytes[10] = 1;
     restamp(&mut bytes);
     let err = IrModule::parse(&bytes).unwrap_err();
     assert_eq!(err.code(), "LOAD-108");
-    assert!(err.to_string().contains("3.0.1"));
+    assert!(err.to_string().contains("3.1.0"));
     assert!(err.to_string().contains("3.0.0"));
 }

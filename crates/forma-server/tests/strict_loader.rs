@@ -32,7 +32,20 @@ struct Truncated;
 
 #[derive(Embed)]
 #[folder = "../forma-ir/tests/fixtures/fmir-v3/"]
+struct ReviewedV3Files;
 struct ReviewedV3;
+impl Embed for ReviewedV3 {
+    fn get(path: &str) -> Option<rust_embed::EmbeddedFile> {
+        ReviewedV3Files::get(if path == "manifest.json" {
+            "window-manifest.json"
+        } else {
+            path
+        })
+    }
+    fn iter() -> impl Iterator<Item = std::borrow::Cow<'static, str>> {
+        ReviewedV3Files::iter()
+    }
+}
 
 // -- The fixtures and their generator ----------------------------------------
 
@@ -63,23 +76,21 @@ fn flip(mut bytes: Vec<u8>, at: usize, mask: u8) -> Vec<u8> {
 /// A manifest naming `/` (good), `/app` (`ssr: false`, no module) and the
 /// given routes' modules.
 fn manifest_json(bad: &[(&str, &str)]) -> String {
-    let route = |ir: Option<&str>| {
-        let ir = ir.map_or(String::new(), |f| format!(r#","ir":"{f}""#));
-        format!(
-            r#"{{"js":["app.js"],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0{ir}}}"#
-        )
-    };
-    let mut routes = vec![
-        format!(r#""/":{}"#, route(Some("page.0f0f.ir"))),
-        format!(r#""/app":{}"#, route(None)),
-    ];
-    for (path, file) in bad {
-        routes.push(format!(r#""{path}":{}"#, route(Some(file))));
+    let mut routes = serde_json::Map::new();
+    let mut assets = serde_json::Map::new();
+    assets.insert("app.js".into(), serde_json::json!({"immutable":false}));
+    for (pattern, ir) in [("/", Some("page.0f0f.ir")), ("/app", None)]
+        .into_iter()
+        .chain(bad.iter().map(|(p, f)| (*p, Some(*f))))
+    {
+        let mut route = serde_json::json!({"mode":if ir.is_some(){"ssr"}else{"browser"},"js":["app.js"],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0});
+        if let Some(file) = ir {
+            route["ir"] = file.into();
+            assets.insert(file.into(), serde_json::json!({"immutable":false}));
+        }
+        routes.insert(pattern.into(), route);
     }
-    format!(
-        "{{\"version\":1,\"build_hash\":\"fixture\",\"assets\":{{}},\"routes\":{{{}}}}}\n",
-        routes.join(",")
-    )
+    serde_json::json!({"version":2,"writer":"3.0.0","app":"ledger","build":"fixture","aliases":{},"assets":assets,"routes":routes}).to_string()+"\n"
 }
 
 /// Every fixture file: (set, file name, bytes).
@@ -177,7 +188,7 @@ fn a_flipped_byte_fails_the_default_loader_naming_route_file_and_code() {
             "/version",
             "version.ir",
             "LOAD-108",
-            "writer 2.0.0 differs from reader 3.0.0",
+            "writer 2.0.0 is incompatible with reader 3.0.0",
         ),
         ("/section", "section.ir", "LOAD-104", "checksum mismatch"),
         ("/opcode", "opcode.ir", "LOAD-103", "invalid opcode: 0x81"),
@@ -227,7 +238,7 @@ fn a_route_declared_ssr_false_needs_no_module() {
     assert_eq!(modes.get("/"), Some(&RenderMode::Phase2SsrReconcile));
     assert!(modules.contains_key("/"));
     // `/app` has no `ir`: nothing to load, nothing to refuse.
-    assert_eq!(modes.get("/app"), None);
+    assert_eq!(modes.get("/app"), Some(&RenderMode::Phase1ClientMount));
     assert!(!modules.contains_key("/app"));
 }
 
@@ -282,8 +293,8 @@ fn the_deprecated_lenient_loader_behaves_as_at_0_2_1() {
         );
         assert!(modules.contains_key(route), "{route}");
     }
-    assert_eq!(modes.get("/app"), None);
-    assert_eq!(modes.len(), 6);
+    assert_eq!(modes.get("/app"), Some(&RenderMode::Phase1ClientMount));
+    assert_eq!(modes.len(), 7);
 }
 
 // -- A fixture server: load, then bind ----------------------------------------
@@ -403,7 +414,7 @@ fn the_same_server_binds_and_serves_with_good_modules_or_the_lenient_loader() {
 #[test]
 fn every_reviewed_v3_refusal_happens_before_bind() {
     let manifest = try_load_manifest::<ReviewedV3>().expect("reviewed manifest");
-    let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/index.tsv");
+    let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/window-expectations.tsv");
     let errors = load_ir_modules_strict::<ReviewedV3>(&manifest).expect_err("fault fixtures");
     let mut refused = 0;
     for row in index.lines().skip(1) {
@@ -418,7 +429,7 @@ fn every_reviewed_v3_refusal_happens_before_bind() {
             refused += 1;
         }
     }
-    assert_eq!(refused, 61);
+    assert_eq!(refused, 60);
     assert_eq!(errors.len(), refused);
     let (started, bound) = spawn::<ReviewedV3>(Loader::Default);
     match started.recv_timeout(Duration::from_secs(5)) {

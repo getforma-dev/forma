@@ -287,48 +287,223 @@ pub fn asset_security_headers() -> &'static [(axum::http::HeaderName, axum::http
     })
 }
 
-/// Asset manifest loaded from `manifest.json` in the embedded dist directory.
-#[derive(Debug, Clone, Deserialize)]
+/// Validated schema-2 build manifest. Deserialize through the shared validator.
+#[derive(Debug, Clone)]
 pub struct AssetManifest {
-    /// Manifest schema version.
+    /// Manifest schema, currently 2.
     pub version: u32,
-    /// Identifier for the build that produced these assets.
-    pub build_hash: String,
-    /// Logical asset name → content-hashed filename.
-    pub assets: HashMap<String, String>,
-    /// Route pattern → the assets that route needs.
+    /// Writer's numeric base version, without package prerelease metadata.
+    pub writer: String,
+    /// Application identity; the same grammar as the worker namespace.
+    pub app: String,
+    /// Opaque build identifier. Deployment identity is owned by FORMA-186.
+    pub build: String,
+    /// Logical names mapped to emitted filenames.
+    pub aliases: HashMap<String, String>,
+    /// Metadata keyed by emitted filenames, including retained files.
+    pub assets: HashMap<String, AssetMetadata>,
+    /// Explicit rendering mode and assets for each route.
     pub routes: HashMap<String, RouteAssets>,
+}
+
+/// Metadata for one emitted file. Integrity enforcement belongs to FORMA-111.
+#[derive(Debug, Clone, Deserialize)]
+pub struct AssetMetadata {
+    /// Whether this URL may be cached immutably; never inferred from its name.
+    pub immutable: bool,
+    /// SHA-384 of uncompressed final bytes, when supplied by the build.
+    pub integrity: Option<String>,
+    /// Metadata for a retained asset; retention discovery belongs to FORMA-186.
+    #[serde(default)]
+    pub retained: bool,
+}
+
+/// The manifest's explicit route mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum RouteMode {
+    /// A required compiled module is rendered on the server.
+    Ssr,
+    /// An intentionally browser-rendered route, with no compiled module.
+    Browser,
 }
 
 /// Per-route asset references.
 #[derive(Debug, Clone, Deserialize)]
 pub struct RouteAssets {
+    /// Explicit browser or server rendering, independent of file availability.
+    pub mode: RouteMode,
     /// JS modules for this route, in load order.
     pub js: Vec<String>,
     /// Stylesheets for this route.
     pub css: Vec<String>,
     /// Fonts to preload for this route.
     pub fonts: Vec<String>,
+    /// Static module dependencies, excluding duplicates and route entrypoints at render.
+    #[serde(default)]
+    pub modulepreload: Vec<String>,
     /// Total brotli-compressed size of the route's assets, in bytes.
     pub total_size_br: u64,
     /// Size above which the build warns about this route's payload.
     pub budget_warn_threshold: u64,
-    /// The route's compiled FMIR module, as its hashed `.ir` file name, when it
-    /// has one (Phase 2).
+    /// Required for SSR, absent for an intentional browser route.
     #[serde(default)]
     pub ir: Option<String>,
 }
 
+impl<'de> Deserialize<'de> for AssetManifest {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = serde_json::Value::deserialize(deserializer)?;
+        // Diagnose old schemas before their missing schema-2 fields.
+        if value.get("version").and_then(|v| v.as_u64()) != Some(2) {
+            return Err(serde::de::Error::custom(format!(
+                "MANIFEST-101 unsupported manifest schema {}; reader requires schema 2",
+                value.get("version").unwrap_or(&serde_json::Value::Null)
+            )));
+        }
+        if value.get("app").is_none() {
+            return Err(serde::de::Error::custom("MANIFEST-101 manifest without app is a legacy schema-1 manifest; rebuild for schema 2"));
+        }
+        #[derive(Deserialize)]
+        struct Raw {
+            version: u32,
+            writer: String,
+            app: String,
+            build: String,
+            aliases: HashMap<String, String>,
+            assets: HashMap<String, AssetMetadata>,
+            routes: HashMap<String, RouteAssets>,
+        }
+        let raw: Raw = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+        let manifest = AssetManifest {
+            version: raw.version,
+            writer: raw.writer,
+            app: raw.app,
+            build: raw.build,
+            aliases: raw.aliases,
+            assets: raw.assets,
+            routes: raw.routes,
+        };
+        manifest.validate().map_err(serde::de::Error::custom)?;
+        Ok(manifest)
+    }
+}
+
 impl AssetManifest {
-    /// Resolve a logical asset name to its content-hashed filename.
+    /// Read and validate schema, versions, modes and references at startup.
+    pub fn from_json(json: &str) -> Result<Self, String> {
+        serde_json::from_str(json).map_err(|e| format!("manifest.json: {e}"))
+    }
+
+    /// Revalidate even a manifest constructed by the caller before loading modules.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.version != 2 {
+            return Err(format!(
+                "MANIFEST-101 unsupported manifest schema {}; reader requires schema 2",
+                self.version
+            ));
+        }
+        if self.app.is_empty() {
+            return Err("MANIFEST-101 manifest without app is a legacy schema-1 manifest; rebuild for schema 2".into());
+        }
+        crate::sw::ServiceWorker::for_app(&self.app).map_err(|e| format!("MANIFEST-103 {e}"))?;
+        let parts = self.writer.split('.').collect::<Vec<_>>();
+        if parts.len() != 3
+            || parts.iter().any(|p| {
+                p.is_empty()
+                    || !p.bytes().all(|b| b.is_ascii_digit())
+                    || (p.len() > 1 && p.starts_with('0'))
+            })
+        {
+            return Err(format!(
+                "MANIFEST-102 writer {:?} must be a numeric base X.Y.Z without a prerelease suffix",
+                self.writer
+            ));
+        }
+        let mut writer = [0u16; 3];
+        for (i, part) in parts.iter().enumerate() {
+            writer[i] = part.parse().map_err(|_| {
+                format!(
+                    "MANIFEST-102 writer {:?} exceeds the u16 version range",
+                    self.writer
+                )
+            })?;
+        }
+        let reader = forma_ir::format::reader_version();
+        if !forma_ir::format::accepts_writer(reader, writer) {
+            return Err(format!("MANIFEST-102 writer {} is incompatible with reader {}.{}.{}; upgrade the reader within major {} to at least minor {}",self.writer,reader[0],reader[1],reader[2],writer[0],writer[1]));
+        }
+        if self.build.is_empty() {
+            return Err("MANIFEST-103 build must not be empty".into());
+        }
+        fn filename(name: &str) -> bool {
+            !name.is_empty()
+                && !name.starts_with('/')
+                && !name.contains(['\\', '?', '#', ':'])
+                && !name.chars().any(char::is_control)
+                && name
+                    .split('/')
+                    .all(|p| !p.is_empty() && p != "." && p != "..")
+        }
+        for (name, meta) in &self.assets {
+            if !filename(name) {
+                return Err(format!("MANIFEST-103 invalid asset filename {name:?}"));
+            }
+            if let Some(integrity) = &meta.integrity {
+                use base64::Engine;
+                if integrity
+                    .strip_prefix("sha384-")
+                    .and_then(|s| base64::engine::general_purpose::STANDARD.decode(s).ok())
+                    .is_none_or(|bytes| bytes.len() != 48)
+                {
+                    return Err(format!(
+                        "MANIFEST-103 invalid SHA-384 integrity for {name:?}"
+                    ));
+                }
+            }
+        }
+        for (alias, file) in &self.aliases {
+            if !filename(alias) || !self.assets.contains_key(file) {
+                return Err(format!(
+                    "MANIFEST-103 alias {alias:?} names unlisted asset {file:?}"
+                ));
+            }
+        }
+        for (pattern, route) in &self.routes {
+            if !pattern.starts_with('/') {
+                return Err(format!("MANIFEST-103 route {pattern:?} must begin with /"));
+            }
+            match (route.mode,route.ir.as_deref()) {
+                (RouteMode::Ssr,Some(file)) if file.ends_with(".ir")=>{},
+                (RouteMode::Browser,None)=>{},
+                _=>return Err(format!("MANIFEST-103 route {pattern}: ssr requires an .ir module; browser must not declare one")),
+            }
+            for file in route
+                .js
+                .iter()
+                .chain(&route.css)
+                .chain(&route.fonts)
+                .chain(&route.modulepreload)
+                .chain(route.ir.iter())
+            {
+                if !self.assets.contains_key(file) {
+                    return Err(format!("MANIFEST-103 route {pattern} references {file:?}, which is not one of the build's files (the manifest's assets)"));
+                }
+            }
+        }
+        crate::sw::validate_manifest_app(self)?;
+        Ok(())
+    }
+
+    /// Resolve a logical name through the manifest's explicit aliases.
     pub fn resolve<'a>(&'a self, logical_name: &'a str) -> &'a str {
-        self.assets
+        self.aliases
             .get(logical_name)
-            .map(|s| s.as_str())
+            .map(String::as_str)
             .unwrap_or(logical_name)
     }
 
-    /// Get route assets for a route pattern.
+    /// Get assets and the declared mode for a route.
     pub fn route(&self, pattern: &str) -> Option<&RouteAssets> {
         self.routes.get(pattern)
     }

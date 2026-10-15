@@ -30,7 +30,8 @@ fn setup() {
         let on = sw::ServiceWorker::for_app("ledger")
             .expect("valid name")
             .enabled();
-        sw::configure(on).expect("configured before first use");
+        let manifest = forma_server::assets::try_load_manifest::<Fixtures>().expect("manifest");
+        sw::configure_for_manifest(on, &manifest).expect("configured before first use");
     });
 }
 
@@ -38,8 +39,11 @@ fn setup() {
 fn an_enabled_application_s_pages_register_the_worker() {
     setup();
     let manifest = AssetManifest {
-        version: 1,
-        build_hash: "test".to_string(),
+        version: 2,
+        writer: "3.0.0".into(),
+        app: "ledger".into(),
+        aliases: HashMap::new(),
+        build: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
     };

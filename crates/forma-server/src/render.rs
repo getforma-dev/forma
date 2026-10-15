@@ -519,8 +519,11 @@ mod tests {
 
     fn manifest() -> AssetManifest {
         AssetManifest {
-            version: 1,
-            build_hash: "test".to_string(),
+            version: 2,
+            writer: "3.0.0".into(),
+            app: "ledger".into(),
+            aliases: HashMap::new(),
+            build: "test".to_string(),
             assets: HashMap::new(),
             routes: HashMap::new(),
         }
