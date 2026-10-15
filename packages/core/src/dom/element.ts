@@ -220,7 +220,7 @@ const ABORT_SYM = Symbol.for('forma-abort');
 
 /**
  * @internal Get or lazily create the AbortController an element's listeners
- * are attached with, the one {@link cleanup} aborts. h() and adoption share it.
+ * are attached with, the one {@link cleanup} aborts for ordinary h() elements.
  */
 export function getAbortController(el: Element): AbortController {
   let controller = (el as any)[ABORT_SYM] as AbortController | undefined;

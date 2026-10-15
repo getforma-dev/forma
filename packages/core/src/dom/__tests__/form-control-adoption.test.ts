@@ -1,10 +1,10 @@
 /**
  * Form controls at adoption (FORMA-003, decision brief DR-5 and DR-7 (b), (c)).
  *
- * The first write of an adopted control's binding must not destroy what the
- * user entered between first paint and activation, and must write nothing when
- * the server already rendered the client's value. Later updates still go
- * through the live-property writer (the checkpoint fix 042e353).
+ * Public hydration never repairs the original server DOM or invents authority
+ * to seed an edited reactive reader. Matching unedited bindings remain live;
+ * literal initial values preserve edits. Compiler-owned writable control
+ * positives are retained separately in adoption-control-bindings.test.ts.
  *
  * `textarea` and `title` are RCDATA elements: a hydration marker the server
  * writes inside one is text, not a comment. Servers on forma-ir 0.2.1 or later
@@ -13,8 +13,9 @@
  * here the way a browser parses it: one text node holding the marker text.
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createRoot, createSignal } from 'forma/reactive';
+import { onError } from '../../reactive/dev.js';
 import { h } from '../element';
 import { adoptInRoot } from './helpers/owned-adoption.js';
 
@@ -43,35 +44,59 @@ function recordMutations(root: Node): () => MutationRecord[] {
   };
 }
 
+/** Public hydration has no compiled signal/setter authority. */
+function adoptMatching(build: () => unknown, app: HTMLElement): () => void {
+  const report = vi.fn(), stop = onError(report);
+  try {
+    const dispose = adoptInRoot(build, app);
+    expect(report).not.toHaveBeenCalled();
+    return dispose;
+  } finally { stop(); }
+}
+
+function refused(build: () => unknown, app: HTMLElement, code: string): () => void {
+  const before = app.outerHTML, nodes = Array.from(app.querySelectorAll('*'));
+  const done = recordMutations(app), report = vi.fn(), stop = onError(report);
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    const dispose = adoptInRoot(build, app);
+    expect(report).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ code }), { source: 'hydration' });
+    expect(app.outerHTML).toBe(before);
+    expect(Array.from(app.querySelectorAll('*'))).toEqual(nodes);
+    expect(done()).toEqual([]);
+    return dispose;
+  } finally { stop(); log.mockRestore(); }
+}
+
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 describe('adoption keeps what the user entered before activation', () => {
-  it('keeps text typed into an input before activation, then follows later updates', () => {
+  it('refuses an edited public reactive input and leaves its later updates inert', () => {
     const app = serve('<form><input id="t" name="t" value="Saved"><input id="s" value="Static"></form>');
     byId<HTMLInputElement>('t').value = 'Typed';
     byId<HTMLInputElement>('s').value = 'Typed too';
     const [value, setValue] = createSignal('Saved');
 
-    adoptInRoot(() => h('form', null,
+    refused(() => h('form', null,
       h('input', { id: 't', name: 't', value: () => value() }),
       h('input', { id: 's', value: 'Static' }),
-    ), app);
+    ), app, 'FORMA_E_HYDRATE_INPUT_TARGET');
 
     const input = byId<HTMLInputElement>('t');
     expect(input.value).toBe('Typed');
     expect(byId<HTMLInputElement>('s').value).toBe('Typed too');
     expect(new FormData(app.querySelector('form')!).get('t')).toBe('Typed');
-    // After activation the binding is live again: updates are written.
+    // No compiled authority exists to seed this public reader; refusal aborts it.
     setValue('Reset');
-    expect(input.value).toBe('Reset');
+    expect(input.value).toBe('Typed');
     setValue('Again');
-    expect(input.value).toBe('Again');
+    expect(input.value).toBe('Typed');
     input.value = 'Typed later';
     setValue('Saved');
-    expect(input.value).toBe('Saved');
+    expect(input.value).toBe('Typed later');
   });
 
-  it('keeps a checkbox and a radio choice the user changed before activation', () => {
+  it('refuses edited public checkbox and radio readers without changing either choice', () => {
     const app = serve(
       '<div><input type="checkbox" id="c" checked>' +
       '<input type="radio" name="r" value="x" id="rx" checked><input type="radio" name="r" value="y" id="ry"></div>',
@@ -82,23 +107,23 @@ describe('adoption keeps what the user entered before activation', () => {
     const [agree, setAgree] = createSignal(true);
     const [choice, setChoice] = createSignal('x');
 
-    adoptInRoot(() => h('div', null,
+    refused(() => h('div', null,
       h('input', { type: 'checkbox', id: 'c', checked: () => agree() }),
       h('input', { type: 'radio', name: 'r', value: 'x', id: 'rx', checked: () => choice() === 'x' }),
       h('input', { type: 'radio', name: 'r', value: 'y', id: 'ry', checked: () => choice() === 'y' }),
-    ), app);
+    ), app, 'FORMA_E_HYDRATE_INPUT_TARGET');
 
     const checks = () => ['c', 'rx', 'ry'].map((id) => byId<HTMLInputElement>(id).checked);
     expect(checks()).toEqual([false, false, true]);
     setAgree(false);
     setAgree(true);
-    expect(checks()).toEqual([true, false, true]);
+    expect(checks()).toEqual([false, false, true]);
     setChoice('y');
     setChoice('x');
-    expect(checks()).toEqual([true, true, false]);
+    expect(checks()).toEqual([false, false, true]);
   });
 
-  it('keeps a select option the user picked before activation, with or without selected in the server HTML', () => {
+  it('refuses edited public selection and mismatched older defaults without repair', () => {
     for (const html of [
       // forma-ir 0.2.1 (FORMA-002): `selected` on the matching option.
       '<select id="s" name="s"><option value="a">A</option><option value="b" selected>B</option><option value="c">C</option></select>',
@@ -109,37 +134,37 @@ describe('adoption keeps what the user entered before activation', () => {
       byId<HTMLSelectElement>('s').value = 'c';
       const [choice, setChoice] = createSignal('b');
 
-      const dispose = adoptInRoot(() => h('form', null,
+      const dispose = refused(() => h('form', null,
         h('select', { id: 's', name: 's', value: () => choice() },
           h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B'), h('option', { value: 'c' }, 'C')),
-      ), app);
+      ), app, html.includes(' selected') ? 'FORMA_E_HYDRATE_INPUT_TARGET' : 'FORMA_E_HYDRATE_VALUE');
 
       const select = byId<HTMLSelectElement>('s');
       expect(select.value).toBe('c');
       expect(new FormData(app.querySelector('form')!).get('s')).toBe('c');
       setChoice('a');
-      expect(select.value).toBe('a');
+      expect(select.value).toBe('c');
       setChoice('b');
-      expect(select.value).toBe('b');
+      expect(select.value).toBe('c');
       dispose();
     }
   });
 
-  it('selects the bound option of an untouched select from an older server', () => {
+  it('refuses an untouched older select whose selected default disagrees', () => {
     const app = serve('<form><select id="s" name="s" value="b"><option value="a">A</option><option value="b">B</option></select></form>');
     // An older server's HTML selects the first option: the bug FORMA-002 fixes on the server.
     expect(byId<HTMLSelectElement>('s').value).toBe('a');
 
-    adoptInRoot(() => h('form', null,
+    refused(() => h('form', null,
       h('select', { id: 's', name: 's', value: () => 'b' },
         h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')),
-    ), app);
+    ), app, 'FORMA_E_HYDRATE_VALUE');
 
-    expect(byId<HTMLSelectElement>('s').value).toBe('b');
-    expect(new FormData(app.querySelector('form')!).get('s')).toBe('b');
+    expect(byId<HTMLSelectElement>('s').value).toBe('a');
+    expect(new FormData(app.querySelector('form')!).get('s')).toBe('a');
   });
 
-  it("keeps a multiple select's edited selection and an option's selected binding", () => {
+  it("refuses edited public multiple-select and option readers without changing selection", () => {
     const app = serve(
       '<div><select id="m" multiple><option value="a" selected>A</option><option value="b">B</option><option value="c" selected>C</option></select>' +
       '<select id="o"><option value="x" id="ox" selected>X</option><option value="y" id="oy">Y</option></select></div>',
@@ -151,38 +176,38 @@ describe('adoption keeps what the user entered before activation', () => {
     const [values, setValues] = createSignal(['a', 'c']);
     const [pick, setPick] = createSignal('x');
 
-    adoptInRoot(() => h('div', null,
+    refused(() => h('div', null,
       h('select', { id: 'm', multiple: true, value: () => values() },
         h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B'), h('option', { value: 'c' }, 'C')),
       h('select', { id: 'o' },
         h('option', { value: 'x', id: 'ox', selected: () => pick() === 'x' }, 'X'),
         h('option', { value: 'y', id: 'oy', selected: () => pick() === 'y' }, 'Y')),
-    ), app);
+    ), app, 'FORMA_E_HYDRATE_INPUT_TARGET');
 
     const chosen = () => Array.from(multi.options).filter((o) => o.selected).map((o) => o.value);
     expect(chosen()).toEqual(['a', 'b']);
     expect(byId<HTMLSelectElement>('o').value).toBe('y');
     setValues(['c']);
-    expect(chosen()).toEqual(['c']);
+    expect(chosen()).toEqual(['a', 'b']);
     setPick('y');
     setPick('x');
-    expect(byId<HTMLSelectElement>('o').value).toBe('x');
+    expect(byId<HTMLSelectElement>('o').value).toBe('y');
   });
 
-  it("keeps text typed into a textarea's value form before activation, from either server output", () => {
+  it("refuses edited public textarea readers and older mismatched defaults", () => {
     for (const html of ['<textarea id="n" value="Saved"></textarea>', '<textarea id="n">Saved</textarea>']) {
       const app = serve(html);
       byId<HTMLTextAreaElement>('n').value = 'Typed';
       const [notes, setNotes] = createSignal('Saved');
 
-      const dispose = adoptInRoot(() => h('textarea', { id: 'n', value: () => notes() }), app);
+      const dispose = refused(() => h('textarea', { id: 'n', value: () => notes() }), app, html.includes(' value=') ? 'FORMA_E_HYDRATE_VALUE' : 'FORMA_E_HYDRATE_INPUT_TARGET');
 
       const textarea = byId<HTMLTextAreaElement>('n');
       expect(textarea.value).toBe('Typed');
       setNotes('Cleared');
-      expect(textarea.value).toBe('Cleared');
+      expect(textarea.value).toBe('Typed');
       setNotes('Saved');
-      expect(textarea.value).toBe('Saved');
+      expect(textarea.value).toBe('Typed');
       dispose();
     }
   });
@@ -201,7 +226,7 @@ describe('adoption writes nothing the server already rendered', () => {
     const done = recordMutations(app);
     const [value, setValue] = createSignal('Saved');
 
-    adoptInRoot(() => h('form', null,
+    adoptMatching(() => h('form', null,
       h('input', { id: 't', value: () => value() }),
       h('input', { type: 'checkbox', id: 'c', checked: () => true }),
       h('select', { id: 's', value: () => 'b' }, h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')),
@@ -211,9 +236,9 @@ describe('adoption writes nothing the server already rendered', () => {
     ), app);
     await Promise.resolve();
 
-    // Only the container's own data-forma-ssr removal.
+    // Success is internal; even the legacy SSR attribute stays untouched.
     const records = done();
-    expect(records.map((r) => `${r.type}:${(r.target as Element).id}:${r.attributeName ?? ''}`)).toEqual(['attributes:app:data-forma-ssr']);
+    expect(records.map((r) => `${r.type}:${(r.target as Element).id}:${r.attributeName ?? ''}`)).toEqual([]);
     expect(byId<HTMLInputElement>('t').value).toBe('Saved');
     expect(byId<HTMLSelectElement>('s').value).toBe('b');
     expect(byId<HTMLTextAreaElement>('ta').value).toBe('hello');
@@ -225,21 +250,21 @@ describe('adoption writes nothing the server already rendered', () => {
     expect(again().some((r) => r.type === 'attributes' && (r.target as Element).id === 't')).toBe(true);
   });
 
-  it('repairs an untouched control the server rendered with another value', () => {
+  it('refuses mismatched control defaults without repairing any sibling', () => {
     const app = serve('<div><input id="t" value="Old"><input type="checkbox" id="c"><textarea id="ta">old</textarea><div><title id="tt">Old</title></div></div>');
 
-    adoptInRoot(() => h('div', null,
+    refused(() => h('div', null,
       h('input', { id: 't', value: () => 'New' }),
       h('input', { type: 'checkbox', id: 'c', checked: () => true }),
       h('textarea', { id: 'ta' }, () => 'new'),
       h('div', null, h('title', { id: 'tt' }, () => 'New')),
-    ), app);
+    ), app, 'FORMA_E_HYDRATE_VALUE');
 
-    expect(byId<HTMLInputElement>('t').value).toBe('New');
-    expect(byId<HTMLInputElement>('t').getAttribute('value')).toBe('New');
-    expect(byId<HTMLInputElement>('c').checked).toBe(true);
-    expect(byId<HTMLTextAreaElement>('ta').value).toBe('new');
-    expect(byId('tt').textContent).toBe('New');
+    expect(byId<HTMLInputElement>('t').value).toBe('Old');
+    expect(byId<HTMLInputElement>('t').getAttribute('value')).toBe('Old');
+    expect(byId<HTMLInputElement>('c').checked).toBe(false);
+    expect(byId<HTMLTextAreaElement>('ta').value).toBe('old');
+    expect(byId('tt').textContent).toBe('Old');
   });
 });
 
@@ -249,7 +274,7 @@ describe('textarea and title text is bound by the element', () => {
     const done = recordMutations(app.querySelector('form')!);
     const [text, setText] = createSignal('hello');
 
-    adoptInRoot(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app);
+    adoptMatching(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app);
     await Promise.resolve();
 
     const textarea = byId<HTMLTextAreaElement>('ta');
@@ -264,7 +289,7 @@ describe('textarea and title text is bound by the element', () => {
     expect(textarea.defaultValue).toBe('reset');
   });
 
-  it('accepts a textarea with marker text from an older server and removes the markers', () => {
+  it('refuses older textarea marker text without stripping or binding it', () => {
     const app = serve('<form><textarea id="ta" name="ta"></textarea></form>');
     const textarea = byId<HTMLTextAreaElement>('ta');
     textarea.textContent = legacy('hello');
@@ -272,32 +297,32 @@ describe('textarea and title text is bound by the element', () => {
     expect(textarea.value).toBe(legacy('hello'));
     const [text, setText] = createSignal('hello');
 
-    adoptInRoot(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app);
+    refused(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app, 'FORMA_E_HYDRATE_VALUE');
 
-    expect(textarea.value).toBe('hello');
-    expect(textarea.defaultValue).toBe('hello');
-    expect(new FormData(app.querySelector('form')!).get('ta')).toBe('hello');
+    expect(textarea.value).toBe(legacy('hello'));
+    expect(textarea.defaultValue).toBe(legacy('hello'));
+    expect(new FormData(app.querySelector('form')!).get('ta')).toBe(legacy('hello'));
     setText('updated');
-    expect(textarea.value).toBe('updated');
+    expect(textarea.value).toBe(legacy('hello'));
     setText('hello');
-    expect(textarea.value).toBe('hello');
+    expect(textarea.value).toBe(legacy('hello'));
   });
 
-  it('keeps text typed into a marker-carrying textarea before activation', () => {
+  it('refuses a marker-carrying textarea while preserving its edited live value', () => {
     const app = serve('<textarea id="ta"></textarea>');
     const textarea = byId<HTMLTextAreaElement>('ta');
     textarea.textContent = legacy('hello');
     textarea.value = 'typed';
     const [text, setText] = createSignal('hello');
 
-    adoptInRoot(() => h('textarea', { id: 'ta' }, () => text()), app);
+    refused(() => h('textarea', { id: 'ta' }, () => text()), app, 'FORMA_E_HYDRATE_VALUE');
 
     expect(textarea.value).toBe('typed');
-    // The default (what a form reset restores) no longer carries marker text.
-    expect(textarea.defaultValue).toBe('hello');
+    // A mismatched original default remains intact on refusal.
+    expect(textarea.defaultValue).toBe(legacy('hello'));
     setText('updated');
-    expect(textarea.value).toBe('updated');
-    expect(textarea.defaultValue).toBe('updated');
+    expect(textarea.value).toBe('typed');
+    expect(textarea.defaultValue).toBe(legacy('hello'));
   });
 
   it('keeps server text that only looks like marker text, edited or not, without a write', async () => {
@@ -311,9 +336,9 @@ describe('textarea and title text is bound by the element', () => {
     edited.value = 'typed';
     const done = recordMutations(app.firstElementChild!);
 
-    adoptInRoot(() => h('div', null,
-      h('textarea', { id: 'edited' }, () => literal),
-      h('textarea', { id: 'untouched' }, () => literal),
+    adoptMatching(() => h('div', null,
+      h('textarea', { id: 'edited' }, literal),
+      h('textarea', { id: 'untouched' }, literal),
     ), app);
     await Promise.resolve();
 
@@ -323,7 +348,7 @@ describe('textarea and title text is bound by the element', () => {
     expect(untouched.value).toBe(literal);
   });
 
-  it("cleans an older server's markers around a literal marker exactly, and leaves a disagreeing edited default alone", () => {
+  it("refuses older markers around literal marker text and preserves both edited defaults", () => {
     const literal = 'Docs say <!--f:t0--> is a marker';
     const app = serve('<div><textarea id="legacy"></textarea><textarea id="disagree"></textarea></div>');
     const legacyArea = byId<HTMLTextAreaElement>('legacy');
@@ -334,67 +359,69 @@ describe('textarea and title text is bound by the element', () => {
     legacyArea.value = 'typed';
     disagree.value = 'typed too';
 
-    adoptInRoot(() => h('div', null,
+    refused(() => h('div', null,
       h('textarea', { id: 'legacy' }, () => literal),
       h('textarea', { id: 'disagree' }, () => 'Client text'),
-    ), app);
+    ), app, 'FORMA_E_HYDRATE_VALUE');
 
     expect(legacyArea.value).toBe('typed');
-    expect(legacyArea.defaultValue).toBe(literal);
+    expect(legacyArea.defaultValue).toBe(legacy(literal));
     expect(disagree.value).toBe('typed too');
     expect(disagree.defaultValue).toBe('Server text');
   });
 
-  it('adopts an empty value from an older server, written as a zero-width space between markers, as empty', () => {
+  it('refuses an older zero-width-space marker value without clearing it', () => {
     const app = serve('<textarea id="ta"></textarea>');
     const textarea = byId<HTMLTextAreaElement>('ta');
     textarea.textContent = legacy('\u200B');
     textarea.value = 'typed';
     const [text, setText] = createSignal('');
 
-    adoptInRoot(() => h('textarea', { id: 'ta' }, () => text()), app);
+    refused(() => h('textarea', { id: 'ta' }, () => text()), app, 'FORMA_E_HYDRATE_VALUE');
 
     expect(textarea.value).toBe('typed');
-    expect(textarea.defaultValue).toBe('');
+    expect(textarea.defaultValue).toBe(legacy('\u200B'));
     setText('later');
-    expect(textarea.defaultValue).toBe('later');
+    expect(textarea.defaultValue).toBe(legacy('\u200B'));
     setText('');
-    expect(textarea.defaultValue).toBe('');
+    expect(textarea.defaultValue).toBe(legacy('\u200B'));
   });
 
-  it('binds a textarea with static and reactive text, from either server output', () => {
+  it('binds matching composed textarea text and refuses older marker-bearing output', () => {
     for (const serverText of ['Note: v', `Note: ${legacy('v')}`]) {
       const app = serve('<textarea id="ta"></textarea>');
       byId<HTMLTextAreaElement>('ta').textContent = serverText;
       const [x, setX] = createSignal('v');
 
-      const dispose = adoptInRoot(() => h('textarea', { id: 'ta' }, 'Note: ', () => x()), app);
+      const adopt = serverText === 'Note: v' ? adoptMatching : (build: () => unknown, host: HTMLElement) => refused(build, host, 'FORMA_E_HYDRATE_VALUE');
+      const dispose = adopt(() => h('textarea', { id: 'ta' }, 'Note: ', () => x()), app);
 
       const textarea = byId<HTMLTextAreaElement>('ta');
-      expect(textarea.value).toBe('Note: v');
+      expect(textarea.value).toBe(serverText);
       expect(textarea.childNodes).toHaveLength(1);
       setX('w');
-      expect(textarea.value).toBe('Note: w');
+      expect(textarea.value).toBe(serverText === 'Note: v' ? 'Note: w' : serverText);
       setX('v');
-      expect(textarea.value).toBe('Note: v');
+      expect(textarea.value).toBe(serverText);
       dispose();
     }
   });
 
-  it("binds a title's reactive text by the element, with or without marker text", () => {
+  it("binds matching title text by the element and refuses older marker-bearing output", () => {
     for (const serverText of ['Docs: Page', `Docs: ${legacy('Page')}`]) {
       const app = serve('<div><title id="tt"></title></div>');
       byId('tt').textContent = serverText;
       const [title, setTitle] = createSignal('Page');
 
-      const dispose = adoptInRoot(() => h('div', null, h('title', { id: 'tt' }, 'Docs: ', () => title())), app);
+      const adopt = serverText === 'Docs: Page' ? adoptMatching : (build: () => unknown, host: HTMLElement) => refused(build, host, 'FORMA_E_HYDRATE_VALUE');
+      const dispose = adopt(() => h('div', null, h('title', { id: 'tt' }, 'Docs: ', () => title())), app);
 
       const el = byId('tt');
-      expect(el.textContent).toBe('Docs: Page');
+      expect(el.textContent).toBe(serverText);
       setTitle('Next');
-      expect(el.textContent).toBe('Docs: Next');
+      expect(el.textContent).toBe(serverText === 'Docs: Page' ? 'Docs: Next' : serverText);
       setTitle('Page');
-      expect(el.textContent).toBe('Docs: Page');
+      expect(el.textContent).toBe(serverText);
       expect(el.childNodes).toHaveLength(1);
       dispose();
     }
@@ -419,7 +446,7 @@ describe('textarea and title text is bound by the element', () => {
     // Server-rendered and adopted (Phase 2)
     const app = serve('<textarea id="ta">Hello Ann</textarea>');
     const [text, setText] = createSignal('Hello Ann');
-    adoptInRoot(() => h('textarea', { id: 'ta' }, () => text()), app);
+    adoptMatching(() => h('textarea', { id: 'ta' }, () => text()), app);
     const textarea = byId<HTMLTextAreaElement>('ta');
     setText('Hello Bo');
     // Untouched, the value follows its default.
@@ -455,7 +482,7 @@ describe('option values', () => {
 
     // Adopted: the server wrote no value attribute for a nullish value.
     const app = serve('<form><select name="s"><option>Alpha</option><option>Beta</option></select></form>');
-    adoptInRoot(() => h('form', null,
+    adoptMatching(() => h('form', null,
       h('select', { name: 's' },
         h('option', { value: () => undefined }, 'Alpha'),
         h('option', { value: () => null }, 'Beta')),

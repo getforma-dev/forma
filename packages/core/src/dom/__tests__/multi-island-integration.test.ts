@@ -2,7 +2,7 @@ import { emptyRegistry, installState, useFreshDocument } from './helpers/compile
 /**
  * Multi-island integration tests — full-page scenarios.
  *
- * Tests the complete activateIslands → hydrateIsland → adoptNode pipeline
+ * Tests the complete activateIslands → prepareAdoption → commit pipeline
  * with real component functions, reactive signals, and SSR HTML.
  *
  * Covers:
@@ -27,15 +27,7 @@ describe('multi-island integration', () => {
   // Test 1: Two islands both interactive
   // -------------------------------------------------------------------------
   it('two islands: both interactive, handlers fire, reactive text updates', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Counter" data-forma-status="pending">
-        <button>Click</button>
-        <span><!--f:t0-->0<!--/f:t0--></span>
-      </div>
-      <div data-forma-island="1" data-forma-component="Greeting" data-forma-status="pending">
-        <p><!--f:t0-->Hello<!--/f:t0--></p>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Counter" data-forma-status="pending"><button>Click</button><span><!--f:t0-->0<!--/f:t0--></span></div><div data-forma-island="1" data-forma-component="Greeting" data-forma-status="pending"><p><!--f:t0-->Hello<!--/f:t0--></p></div>`;
     installState();
 
     let setCount!: (v: number) => void;
@@ -59,8 +51,9 @@ describe('multi-island integration', () => {
       },
     }));
 
-    // Both islands activated
-    expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(2);
+    // Both islands commit internally without rewriting their original status
+    expect(Array.from(document.querySelectorAll('[data-forma-island]')).filter(host => typeof (host as any).__formaDispose === 'function')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-forma-status="pending"]')).toHaveLength(2);
 
     // Counter updates reactively
     setCount(5);
@@ -72,12 +65,7 @@ describe('multi-island integration', () => {
   });
 
   it('single island: click handler fires and updates reactive text', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Counter" data-forma-status="pending">
-        <button>Click</button>
-        <span><!--f:t0-->0<!--/f:t0--></span>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Counter" data-forma-status="pending"><button>Click</button><span><!--f:t0-->0<!--/f:t0--></span></div>`;
     installState();
 
     activateIslands(emptyRegistry({
@@ -90,7 +78,9 @@ describe('multi-island integration', () => {
       },
     }));
 
-    expect(document.querySelector('[data-forma-status="active"]')).toBeTruthy();
+    const host = document.querySelector('[data-forma-island]') as any;
+    expect(typeof host.__formaDispose).toBe('function');
+    expect(host.getAttribute('data-forma-status')).toBe('pending');
 
     // Simulate click
     const button = document.querySelector('[data-forma-island="0"] button')!;
@@ -107,18 +97,7 @@ describe('multi-island integration', () => {
   // Test 2: Island with list + show
   // -------------------------------------------------------------------------
   it('island with list + show: adoption + subsequent reconciliation', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="TodoList" data-forma-status="pending">
-        <!--f:s0-->
-        <ul>
-          <!--f:l0-->
-          <li data-forma-key="1">Task 1</li>
-          <li data-forma-key="2">Task 2</li>
-          <!--/f:l0-->
-        </ul>
-        <!--/f:s0-->
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="TodoList" data-forma-status="pending"><!--f:s0--><ul><!--f:l0--><li data-forma-key="1">Task 1</li><li data-forma-key="2">Task 2</li><!--/f:l0--></ul><!--/f:s0--></div>`;
     installState();
 
     let setItems!: (v: { id: string; text: string }[]) => void;
@@ -149,7 +128,9 @@ describe('multi-island integration', () => {
       },
     }));
 
-    expect(document.querySelector('[data-forma-status="active"]')).toBeTruthy();
+    const host = document.querySelector('[data-forma-island]') as any;
+    expect(typeof host.__formaDispose).toBe('function');
+    expect(host.getAttribute('data-forma-status')).toBe('pending');
 
     // Initial state: 2 items
     expect(document.querySelectorAll('li').length).toBe(2);
@@ -177,14 +158,7 @@ describe('multi-island integration', () => {
   it('island failure recovery: broken island, page remains usable', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending">
-        <p>SSR content stays</p>
-      </div>
-      <div data-forma-island="1" data-forma-component="Working" data-forma-status="pending">
-        <p><!--f:t0-->OK<!--/f:t0--></p>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending"><p>SSR content stays</p></div><div data-forma-island="1" data-forma-component="Working" data-forma-status="pending"><p><!--f:t0-->OK<!--/f:t0--></p></div>`;
     installState();
 
     let setMsg!: (v: string) => void;
@@ -206,7 +180,7 @@ describe('multi-island integration', () => {
 
     // Working island is interactive
     expect(document.querySelector('[data-forma-island="1"]')!
-      .getAttribute('data-forma-status')).toBe('active');
+      .getAttribute('data-forma-status')).toBe('pending');
     setMsg('Updated');
     expect(document.querySelector('[data-forma-island="1"] p')!.textContent)
       .toBe('Updated');
@@ -217,14 +191,7 @@ describe('multi-island integration', () => {
   it('broken island preserves SSR content while sibling gets dispose function', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending">
-        <p>Preserved content</p>
-      </div>
-      <div data-forma-island="1" data-forma-component="Good" data-forma-status="pending">
-        <span>OK</span>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending"><p>Preserved content</p></div><div data-forma-island="1" data-forma-component="Good" data-forma-status="pending"><span>OK</span></div>`;
     installState();
 
     activateIslands(emptyRegistry({
@@ -240,9 +207,9 @@ describe('multi-island integration', () => {
     expect(broken.__formaDispose).toBeUndefined();
     expect(broken.querySelector('p')!.textContent).toBe('Preserved content');
 
-    // Good island: active, has dispose
+    // Good SSR island: internally live with a disposer, original status unchanged
     const good = document.querySelector('[data-forma-island="1"]') as any;
-    expect(good.getAttribute('data-forma-status')).toBe('active');
+    expect(good.getAttribute('data-forma-status')).toBe('pending');
     expect(typeof good.__formaDispose).toBe('function');
 
     errorSpy.mockRestore();

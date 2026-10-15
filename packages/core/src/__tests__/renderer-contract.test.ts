@@ -1,15 +1,14 @@
 /**
  * THE SHARED RENDERER CONTRACT.
  *
- * FormaJS writes attributes and text through six browser code paths, and
+ * FormaJS writes attributes and text through five browser code paths, and
  * every one of them must uphold the same guarantees:
  *
  *   1. `src/dom/element.ts`  — `h()` with static props
  *   2. `src/dom/element.ts`  — `h()` with reactive (function) props
- *   3. `src/dom/hydrate.ts`  — `applyDynamicProps()` / `adoptNode()` (adoption)
- *   4. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
- *   5. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
- *   6. `src/dom/adoption-attributes.ts` — the private prepared postcommit writer
+ *   3. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
+ *   4. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
+ *   5. `src/dom/adoption.ts` — strict preparation/commit and its later writers
  *
  * Historically each guarantee was asserted thoroughly on exactly ONE of them.
  * That single habit produced 7 of the 25 code defects in
@@ -39,9 +38,7 @@ import { join, relative, resolve } from 'node:path';
 import { h } from '../dom/element';
 import { prepareRaw, prepareStyle } from '../dom/adoption-content';
 import { trustedHtml } from '../dom/trusted-html';
-import { applyDynamicProps, adoptNode } from '../dom/hydrate';
 import { prepareAdoption } from '../dom/adoption';
-import { prepareAttribute } from '../dom/adoption-attributes';
 import { mount, unmount } from '../runtime';
 import { URL_ATTRS } from '../security/url-safety';
 import { compileHandler, runHandler } from '../expr/index';
@@ -224,38 +221,29 @@ const SINKS: Sink[] = [
     writeText: (tag, text) => owned(() => h(tag, null, () => text)),
   },
   {
-    name: 'adopt',
-    programmaticNames: true,
-    declarative: true,
-    objectValues: true,
-    write: (tag, name, value) =>
-      owned(() => {
-        // Adoption only ever binds FUNCTION props: static ones are already in
-        // the server HTML. The element it adopts is the server's own output.
-        const el = parse(`<${tag}></${tag}>`);
-        applyDynamicProps(el, { [name]: () => value, [BENIGN_ATTR]: () => BENIGN_VALUE });
-        return el;
-      }),
-    writeText: (tag, text) =>
-      owned(() => {
-        // The SSR shape a text marker adopts: <!--f:t0-->text<!--/f:t0-->.
-        const el = parse(`<${tag}><!--f:t0-->placeholder<!--/f:t0--></${tag}>`);
-        adoptNode({ type: 'element', tag, props: null, children: [(): string => text] }, el);
-        return el;
-      }),
-  },
-  {
     name: 'prepared-adopt',
     programmaticNames: true,
     declarative: true,
     objectValues: false,
     write: (tag, name, value) => {
-      const el = document.createElement(tag);
-      host().appendChild(el);
+      const box = host();
+      const el = tag === 'use'
+        ? document.createElementNS('http://www.w3.org/2000/svg', tag)
+        : document.createElement(tag);
+      if (tag === 'use') {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        box.appendChild(svg); svg.appendChild(el);
+      } else box.appendChild(el);
       el.setAttribute(BENIGN_ATTR, BENIGN_VALUE);
-      // Exercise the exact private postcommit attribute writer. Form-control
-      // planning is separately gated; these rows concern the attribute sink.
-      prepareAttribute(el, name, null).write(value);
+      const [read, set] = createSignal<unknown>(null);
+      let failed = false, failure: unknown;
+      const plan = prepareAdoption(el, () => h(tag, { [name]: read, [BENIGN_ATTR]: BENIGN_VALUE }), {
+        failure: error => { failed = true; failure = error; },
+      });
+      disposers.push(plan.dispose);
+      plan.commit();
+      set(value);
+      if (failed) throw failure;
       return el;
     },
     writeText: (tag, text) => {
@@ -348,7 +336,6 @@ describe('renderer contract: the table covers every sink', () => {
     expect(SINKS.map((s) => s.name)).toEqual([
       'h-static',
       'h-reactive',
-      'adopt',
       'prepared-adopt',
       'data-bind',
       '$el.setAttribute',
@@ -365,12 +352,11 @@ describe('renderer contract: the table covers every sink', () => {
       'src/dom-utils/mutate.ts': 'setAttr() helper — covered by mutate.test.ts',
       'src/dom/activate.ts': 'writes only data-forma-* status, a fixed internal name',
       'src/dom/adoption-controls.ts': 'fixed control attributes only on new detached-document normalization mirrors; retained native MutationObserver plus live setter controls prove no writes to the observed document (adoption-controls.spec.ts)',
-      'src/dom/form-control.ts': 'writes only fixed value/checked/selected names, covered by h/adopt sinks and form-control.test.ts',
+      'src/dom/form-control.ts': 'writes only fixed value/checked/selected names, covered by h/prepared-adopt sinks and form-control.test.ts',
       'src/dom/reconcile.ts': 'copies attributes DOM→DOM between two already-guarded elements; writes no on* or script src, and mints a trusted srcdoc (trusted-html.test.ts)',
     };
     const DOM_SINK_FILES = [
       'src/dom/element.ts',
-      'src/dom/hydrate.ts',
       'src/dom/adoption-attributes.ts',
       'src/runtime.ts',
       'src/expr/interp.ts',
@@ -433,6 +419,13 @@ describe('renderer contract: the table covers every sink', () => {
     expect(() => prepared.write('iframe', 'srcdoc', '<b>raw</b>')).toThrow('FORMA_E_RAW_SRCDOC');
     const frame = prepared.write('iframe', 'srcdoc', trustedHtml('<b>typed</b>'));
     expect(frame.getAttribute('srcdoc')).toBe('<b>typed</b>');
+  });
+
+  it.each([...URL_ATTRS])('strict preparation refuses object coercion at %s before any write', attr => {
+    const prepared = SINKS.find(sink => sink.name === 'prepared-adopt')!;
+    const convert = vi.fn(() => 'javascript:alert(1)');
+    expect(() => prepared.write(ATTR_TAG[attr]!, attr, { toString: convert })).toThrow('FORMA_E_HYDRATE_STRUCTURE');
+    expect(convert).not.toHaveBeenCalled();
   });
 
   it('covers every URL-bearing attribute the security module declares', () => {
