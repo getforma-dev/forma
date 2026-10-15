@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Keyed list rows — FORMA-181
+
+- `RenderError::code()` reports `RENDER-503` for a walk refused by forma-ir's `IrError::InvalidListKey` (a keyed row without a usable identity, a duplicate key, a row without one root): a new cause with its own code, still carried by `RenderError::Walk` with the route, component path and counts. Every other walk refusal stays `RENDER-102`.
+
 ### Staged static SSR policy — FORMA-105
 
 - Refuse island modules paired with an empty SSR JavaScript list at startup/reload (LOAD-109); keep the prior valid module and manifest together, including unchanged-IR and same-byte recovery transitions.

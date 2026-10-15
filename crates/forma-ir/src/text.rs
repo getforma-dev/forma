@@ -1,6 +1,7 @@
 //! Rule 1 of the value rules (FORMA-182, `docs/parity-rules.md`): the text
 //! normalization every ordinary DOM text and attribute write applies, shared
-//! by the walker's escapers and, later, by the keyed-row key builder.
+//! by the walker's escapers and by the keyed-row key text (`crate::keys`,
+//! FORMA-181).
 //!
 //! `N(s)`: each CRLF pair becomes one LF, each remaining CR becomes LF, each
 //! NUL becomes U+FFFD, and every other code point is preserved: no trimming,
@@ -8,7 +9,8 @@
 //! value-to-string conversion and before escaping, so a browser parsing the
 //! walker's HTML and `@getforma/core` writing the same value to the DOM agree
 //! byte for byte. It never applies to transport: declared props, the state
-//! envelope, keys as data, source strings and digests stay exact.
+//! envelope, keys as data, source strings and digests stay exact; only the
+//! key's text written as `data-forma-key` is normalized.
 //!
 //! The shared vectors are `tests/fixtures/parity/normalization.json`; core's
 //! `normalizeDomText` reads the same file.
