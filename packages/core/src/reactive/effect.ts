@@ -23,6 +23,8 @@ import { reportError } from './dev.js';
 import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
 import { deferAdoptionEffect } from './adoption-hooks.js';
 
+declare const __FORMA_FRAME_BUILD__: boolean | undefined;
+
 // A live adopted callback's nested effects inherit its failure boundary. This
 // is dynamically scoped around execution and restored even when it throws.
 let adoptionFailure: ((error: unknown) => void) | undefined;
@@ -147,9 +149,13 @@ export function internalEffect(fn: () => void): () => void {
   // Adopted live readers can construct nodes, listeners and nested work. Reuse
   // the effect generation owner/failure boundary while retaining initial throw.
   // Verified by: src/dom/__tests__/reviewer-events-internal-generation.test.ts > "revokes removed public h function-child listeners and their callback resources on each generation"
-  if (adoptionFailure) return createEffectNow(fn, adoptionFailure, true);
-  const events = getAdoptionEvents();
-  const run = () => withAdoptionEvents(events, fn);
+  // The frame has no adopted regions; keep its ordinary reader independent
+  // of the adoption-only effect owner and event context. Undefined flags keep
+  // raw-source tooling on the normal path.
+  // Verified by: src/reactive/__tests__/frame-effect.test.ts > "keeps the frame reader reactive and disposable without linking the unused adoption effect graph"
+  if (!(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) && adoptionFailure) return createEffectNow(fn, adoptionFailure, true);
+  const events = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionEvents();
+  const run = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : () => withAdoptionEvents(events, fn);
   let firstRun = true;
   const dispose = rawEffect(() => {
     if (firstRun) {
