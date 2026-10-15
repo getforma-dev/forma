@@ -21,3 +21,8 @@ The combined113+117+187 checkout passed `npm run check` in 172 seconds
 (145 Chromium checks included), 27 seeded SR13/SR43 workflow violations,
 11 release-helper tests and 21 artifact-integrity cases. Actionlint and the 117
 source policy also passed. Local logs remain in `work/FORMA-187/tmp/`.
+
+The separate current-source candidate at `bd01d9de517183788dee693f271116d99342e474` also passed P17 in
+34.736 seconds after the 117 integration, including shipped `_npmrc`
+files and all three embedded-lock advisory checks. Its archives differ from historical
+A2 by design; `current-source-set.json` records the new candidate hashes.

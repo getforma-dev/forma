@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "commit": "bd01d9de517183788dee693f271116d99342e474",
+  "passed": true,
+  "tests": [
+    {
+      "name": "forma-ir: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "3cc5823dd51bd0e04ad7f9ece461d7592054fca0208277eae47a9e4ca672661f",
+      "auditLockSha256": "3cc5823dd51bd0e04ad7f9ece461d7592054fca0208277eae47a9e4ca672661f"
+    },
+    {
+      "name": "forma-ir-derive: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "bd1a299255d10c64b44852a30e23e63a3b34061484f23488f528a8e4125cf75e",
+      "auditLockSha256": "bd1a299255d10c64b44852a30e23e63a3b34061484f23488f528a8e4125cf75e"
+    },
+    {
+      "name": "forma-server: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "8f85fedfd7a9df487e49020ce206602410013bb5cd875af0c16d77419cb0f452",
+      "auditLockSha256": "d7fe9a66d5475fb9179854c64035cd7946d6a738ee31fe84bf1a8c2ab3ea8a0e"
+    },
+    {
+      "name": "fresh advisories over every exact shipped crate lock",
+      "passed": true,
+      "seconds": 2.985
+    },
+    {
+      "name": "packed compiler emits the frozen corpus read by packed forma-ir",
+      "passed": true,
+      "seconds": 5.645
+    },
+    {
+      "name": "packed loader refuses a corrupt module before binding",
+      "passed": true
+    },
+    {
+      "name": "minimal: packed CLI, locked install, signatures, build, serve and interaction",
+      "passed": true,
+      "seconds": 18.47
+    },
+    {
+      "name": "dashboard: packed CLI, locked install, signatures, build, serve and interaction",
+      "passed": true,
+      "seconds": 6.976
+    }
+  ],
+  "pending": {
+    "FORMA-185": "FMIR v3 corpus and corrupt-module checks",
+    "FORMA-112": "manifest 2 and runtime version-pair rejection",
+    "FORMA-102": "declared props and bind mutation suite",
+    "FORMA-144": "both templates use the milestone's API",
+    "FORMA-188": "fixture applications and skew drill",
+    "FORMA-191": "release measurements"
+  },
+  "signatures": "registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256",
+  "templates": [
+    {
+      "template": "minimal",
+      "npmLockSha256": "d989e9194e58e7b03f816ac0aaa305e80e96d058f9df2e62962df802fd7882f5",
+      "packedPackages": [
+        "forma-ir@0.2.2",
+        "forma-ir-derive@0.0.0",
+        "forma-server@0.2.2",
+        "@getforma/core@2.1.0",
+        "@getforma/compiler@0.3.7",
+        "@getforma/build@0.3.1",
+        "@getforma/create-app@0.6.2"
+      ]
+    },
+    {
+      "template": "dashboard",
+      "npmLockSha256": "040aed84ab6e4c15393640560a26614d4fa8ad3bc1615cb3a0c67094f2aa0af1",
+      "packedPackages": [
+        "forma-ir@0.2.2",
+        "forma-ir-derive@0.0.0",
+        "forma-server@0.2.2",
+        "@getforma/core@2.1.0",
+        "@getforma/compiler@0.3.7",
+        "@getforma/build@0.3.1",
+        "@getforma/create-app@0.6.2"
+      ]
+    }
+  ],
+  "elapsedSeconds": 34.736
+}
