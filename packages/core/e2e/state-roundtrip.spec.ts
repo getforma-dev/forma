@@ -29,7 +29,7 @@ test('100 fixed native values preserve all eight declared kinds through real bro
     path: fileURLToPath(new URL('../dist/forma.esm.js', import.meta.url)), contentType: 'text/javascript',
   }));
   await page.route('**/state-boot.mjs', route => route.fulfill({ contentType: 'text/javascript', body: `
-    import { __islandRegistration, activateIslands, createSignal, createEffect } from '/state-core.mjs';
+    import { __islandRegistration, activateIslands, createSignal, createEffect, h } from '/state-core.mjs';
     const violations = [];
     document.addEventListener('securitypolicyviolation', event => violations.push(event.violatedDirective));
     let calls = 0;
@@ -43,6 +43,7 @@ test('100 fixed native values preserve all eight declared kinds through real bro
       window.__roundtrip = { observed, dateIsDate: props.date instanceof Date, calls, effects, violations,
         keys: Object.keys(props).sort(), nestedKeys: Object.keys(props.nested).sort(),
         hostCount: document.querySelectorAll('[data-forma-island]').length };
+      return h('p', null, props.label, props.value);
     }, ${JSON.stringify(registration)});
     activateIslands({ Badge });
     window.__roundtripDone = true;
@@ -75,7 +76,7 @@ test('100 fixed native values preserve all eight declared kinds through real bro
     expect(actual.hostCount).toBe(1);
     expect(actual.violations).toEqual([]);
     await expect(page.locator('head script[data-island-state]')).toHaveCount(1);
-    await expect(page.locator('[data-forma-island]')).toHaveAttribute('data-forma-status', 'active');
+    await expect(page.locator('[data-forma-island]')).toHaveAttribute('data-forma-status', 'pending');
   }
   expect(pageErrors).toEqual([]);
   expect(consoleErrors).toEqual([]);

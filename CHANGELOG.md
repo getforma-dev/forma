@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Value rule 1: line endings and NUL — FORMA-182
+
+- `docs/parity-rules.md` states the marker vocabulary and rule 1 (CRLF and CR to LF, NUL to U+FFFD, per value, before ordinary DOM text and attribute writes) and lists rules 2 to 7 with where their behaviour lives today. One shared vector file, `crates/forma-ir/tests/fixtures/parity/normalization.json`, is read by forma-ir's and core's suites. The walker and `@getforma/core` apply the rule in their ordinary writers; transport (props, state, keys) stays exact. The `textarea`, `pre` and `listing` first-token line feed is protected by the walker and the URL guards refuse a NUL anywhere in a URL attribute. Document-head metadata in forma-server and the broader value rules remain open.
+
 ### SSR e2e lane on the 3.0.0 entry contract (FORMA-105)
 
 - The SSR e2e cases (`e2e/ssr/cases/`) use the one entry shape `BUILD-611` accepts: a standalone literal registry and a standalone top-level `mount()`. Their conditional entries (`if (islands) activateIslands(...) else mount(...)`) were the pre-3.0.0 shape and refused compilation once the entry policy landed; `mount()` no longer adopts a server-marked root, so each case's interactive subtree is an island seeded from declared props and `root-fragment` is a static page that serves no script (DR-6).

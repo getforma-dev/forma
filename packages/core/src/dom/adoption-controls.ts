@@ -2,6 +2,7 @@
 import { AdoptionDomError } from './adoption-plan.js';
 import { AdoptionScopeError } from '../reactive/adoption-lifecycle.js';
 import type { AdoptionCodec } from '../reactive/adoption-hooks.js';
+import { normalizeDomText } from './normalize-text.js';
 
 type Control = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLOptionElement;
 type Key = 'value' | 'checked' | 'selected' | 'text';
@@ -44,7 +45,10 @@ function initial(value: unknown): Initial {
   }
   return mismatch();
 }
-function text(value: Initial): string { return value == null ? '' : Array.isArray(value) ? value.join(',') : String(value); }
+/** An expected declared value as the detached oracle models it: rule 1 applies
+ * (the walker wrote the default that way); snapshots of live values stay exact.
+ * Verified by: src/dom/__tests__/normalize-text.test.ts > "a textarea value expectation normalizes to the served default before the control oracle compares" */
+function text(value: Initial): string { return value == null ? '' : normalizeDomText(Array.isArray(value) ? value.join(',') : String(value)); }
 function selection(element: Control): Snapshot['selection'] {
   if(element.localName!=='input'&&element.localName!=='textarea')return [null,null,null];
   const input=element as HTMLInputElement|HTMLTextAreaElement;
@@ -148,7 +152,7 @@ export class AdoptionControls {
         const value=bound(item.element,'value');
         if(value) {
           const select=clone as HTMLSelectElement;
-          if(select.multiple&&Array.isArray(value.initial)) {const wanted=new Set(value.initial);for(const option of Array.from(select.options))option.selected=wanted.has(option.value);}
+          if(select.multiple&&Array.isArray(value.initial)) {const wanted=new Set(value.initial.map(normalizeDomText));for(const option of Array.from(select.options))option.selected=wanted.has(option.value);}
           else select.value=text(value.initial);
         }
       }

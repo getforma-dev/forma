@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- FORMA-182: the walker writes ordinary text and attribute values under value rule 1
+  (`docs/parity-rules.md`): CRLF and CR become LF and NUL becomes U+FFFD, per value, as
+  the browser parses them; `textarea`, `pre` and `listing` double only an initial
+  normalized LF of their first content token (a marker comment or child consumes that
+  boundary); a bound select or textarea value and an option's value or text are
+  compared normalized; the URL guard classifies the raw value and refuses a NUL
+  anywhere in a URL attribute. The output budget now counts
+  each normalized character's encoded length, so a three-byte U+FFFD or a four-byte
+  astral character can no longer overshoot the limit. Crate-private `text::normalized_chars`;
+  shared vectors in `tests/fixtures/parity/normalization.json`. The state envelope and
+  declared props stay byte-exact.
 - FORMA-102: re-export `PageProps` derive for named structs/unit enums, compare the
   actual FMIR schema by name, and retain a checked module in `props::BoundProps`.
   Projection omits absent object fields, preserves array positions and excludes
