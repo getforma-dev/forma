@@ -177,6 +177,47 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     if(value instanceof Node)return value;
     return refuse();
   }
+  type ConditionalSnapshot={parent:Node;nodes:Node[]};
+  type ConditionalValue={kind:'conditional';branch:PreparedGroup<unknown>;before?:ConditionalSnapshot};
+  function conditionalBranch(desc:ShowDescriptor,ns:string|null,initial:boolean,parent?:PreparedGroup<unknown>,snapshot?:()=>ConditionalSnapshot):ConditionalValue {
+    const before=snapshot?.(),selected=desc.condition()?desc.whenTrue:desc.whenFalse;
+    const build=()=>withNamespace(ns,()=>withAdoptionDescription(
+      ()=>initial?selected?.():fresh(selected?.()),initial,
+    ));
+    const branch=parent?parent.trackedChild(build):scope.trackedGroup(build);
+    return {kind:'conditional',branch,before};
+  }
+  function conditional(initial:ConditionalValue,cursor:AdoptionCursor,ns:string|null,connect:(write:(next:ConditionalValue)=>void,snapshot:()=>ConditionalSnapshot)=>void):void {
+    const range=cursor.range('s');let active=initial.branch;
+    const snapshot=():ConditionalSnapshot=>{
+      const parent=range.start.parentNode;if(!parent||range.end.parentNode!==parent)refuse();
+      const nodes:Node[]=[];
+      for(let node=range.start.nextSibling;node!==range.end;node=node?.nextSibling??null){if(!node)refuse();nodes.push(node);}
+      return {parent,nodes};
+    };
+    const check=(before:ConditionalSnapshot)=>{
+      if(scope.phase!=='live'||range.start.parentNode!==before.parent||range.end.parentNode!==before.parent)refuse();
+      let node=range.start.nextSibling;for(const expected of before.nodes){if(node!==expected)refuse();node=node.nextSibling;}
+      if(node!==range.end)refuse();
+    };
+    active.run(()=>{const inside=dom.within(range);walk(active.value,inside,ns);inside.finish();});
+    connect(next=>{
+      const before=next.before;if(!before)refuse();check(before);
+      active.dispose();check(before);
+      for(const node of before.nodes)if(node.nodeType===1)deactivateAllIslands(node as Element);
+      check(before);
+      for(const node of before.nodes)before.parent.removeChild(node);
+      if(next.branch.value)before.parent.insertBefore(next.branch.value as Node,range.end);
+      active=next.branch;
+    },snapshot);
+  }
+  function directConditional(desc:ShowDescriptor,cursor:AdoptionCursor,ns:string|null):void {
+    let owner:PreparedGroup<void>,initial=true,write!:(next:ConditionalValue)=>void,snapshot:(()=>ConditionalSnapshot)|undefined;
+    owner=scope.group(()=>{
+      const first=scope.observe(()=>conditionalBranch(desc,ns,initial,owner,snapshot),next=>write(next));initial=false;
+      conditional(first,cursor,ns,(update,read)=>{write=update;snapshot=read;});
+    });
+  }
   function show(desc:ShowDescriptor,cursor:AdoptionCursor,ns:string|null,observed?:{
     initial:boolean;description:()=>ShowDescriptor;connect:(write:(next:boolean)=>void)=>void;
   }):void {
@@ -360,18 +401,22 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(cursor.rangeKind()==='t')cursor.textRange(String(value));else cursor.text(String(value));return;
     }
     if(typeof value==='function'){
-      scope.group(()=>{
-        type Read={kind:'show';value:boolean;description:ShowDescriptor}|{kind:'text';value:string};
+      let owner:PreparedGroup<void>,first=true,snapshot:(()=>ConditionalSnapshot)|undefined;
+      owner=scope.group(()=>{
+        type Read=ConditionalValue|{kind:'show';value:boolean;description:ShowDescriptor}|{kind:'text';value:string};
         let write:(value:Read)=>void;
         const initial=scope.observe<Read>(()=>{
           const result=withNamespace(ns,()=>withAdoptionDescription(value as ()=>unknown));
           if(result&&typeof result==='object'&&(result as ShowDescriptor).type==='show'){
             const description=result as ShowDescriptor;
+            if(description.conditional)return conditionalBranch(description,ns,first,owner,snapshot);
             return {kind:'show',description,value:!!description.condition()};
           }
           return {kind:'text',value:text(result)};
-        },next=>write(next));
-        if(initial.kind==='show'){
+        },next=>write(next));first=false;
+        if(initial.kind==='conditional'){
+          conditional(initial,cursor,ns,(update,read)=>{snapshot=read;write=next=>{if(next.kind!=='conditional')refuse();update(next);};});
+        }else if(initial.kind==='show'){
           let description=initial.description;
           show(description,cursor,ns,{initial:initial.value,description:()=>description,connect:update=>{
             write=next=>{if(next.kind!=='show')refuse();description=next.description;update(next.value);};
@@ -386,7 +431,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     const description=value as HydrationDescriptor|FragmentDescriptor|ComponentDescription|ShowDescriptor|ListDescriptor;
     switch(description.type){
       case 'element':element(description,cursor,ns);return;
-      case 'show':show(description,cursor,ns);return;
+      case 'show':if(description.conditional)directConditional(description,cursor,ns);else show(description,cursor,ns);return;
       case 'list':list(description,cursor,ns);return;
       case 'fragment':for(const child of description.children)walk(child,cursor,ns);return;
       case 'component':{

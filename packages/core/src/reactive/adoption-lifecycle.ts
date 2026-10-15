@@ -1,5 +1,5 @@
 /** Private, unprivileged ownership kernel shared by direct and compiled adoption. */
-import { effect as rawEffect, getActiveSub } from 'alien-signals';
+import { effect as rawEffect, getActiveSub, setActiveSub } from 'alien-signals';
 import { withAdoptionSink, type AdoptionSink, type DeferredEffect, type AdoptionCodec } from './adoption-hooks.js';
 import { openBatch, closeBatchWithoutRoot } from './batch.js';
 import { createUnownedRoot, registerDisposer } from './root.js';
@@ -29,6 +29,7 @@ export interface PreparedGroup<T> {
   readonly alive: boolean;
   run<U>(fn: () => U): U;
   child<U>(fn: () => U): PreparedGroup<U>;
+  trackedChild<U>(fn: () => U): PreparedGroup<U>;
   dispose(): void;
 }
 export interface PreparationOptions {
@@ -139,7 +140,18 @@ export class AdoptionLifecycle implements AdoptionSink {
     const value=run(fn);
     return {value,get alive(){return child.alive;},run,
       child:<U>(build:()=>U)=>enter(()=>this.group(build)),
+      trackedChild:<U>(build:()=>U)=>enter(()=>this.trackedGroup(build)),
       dispose:()=>this.disposeGroup(child)};
+  }
+
+  /** Keep a ternary's selected-value reads on its current observer while its
+   * callbacks and resources belong to a separate, disposable generation. */
+  trackedGroup<T>(fn: () => T): PreparedGroup<T> {
+    const observer = getActiveSub();
+    return this.group(() => {
+      const previous = setActiveSub(observer);
+      try { return fn(); } finally { setActiveSub(previous); }
+    });
   }
 
   private disposeGroup(owner: PreparationGroup): void {

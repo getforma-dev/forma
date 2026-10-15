@@ -35,7 +35,7 @@ describe('private conditional description', () => {
       const result = withAdoptionDescription(() => __adoptionConditional(test, yes, no)) as unknown as {
         type: string; condition: typeof test; whenTrue: typeof yes; whenFalse: typeof no;
       };
-      expect(result).toEqual({ type: 'show', condition: test, whenTrue: yes, whenFalse: no });
+      expect(result).toEqual({ type: 'show', conditional: true, condition: test, whenTrue: yes, whenFalse: no });
       expect(test).not.toHaveBeenCalled(); expect(yes).not.toHaveBeenCalled(); expect(no).not.toHaveBeenCalled();
       expect(create).not.toHaveBeenCalled(); expect(fragment).not.toHaveBeenCalled();
       expect(result.condition()).toBe(true); expect(result.whenTrue()).toBe('yes');

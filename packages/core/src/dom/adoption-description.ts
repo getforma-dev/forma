@@ -37,7 +37,7 @@ export function __adoptionConditional<T, F>(
   alternate: () => F,
 ): T | F {
   if (!describingAdoption) return test() ? consequent() : alternate();
-  return { type: 'show', condition: test, whenTrue: consequent, whenFalse: alternate } as T | F;
+  return { type: 'show', conditional: true, condition: test, whenTrue: consequent, whenFalse: alternate } as T | F;
 }
 
 /** Descriptor returned by h() during adoption description instead of a real Element. */
@@ -51,6 +51,8 @@ export interface HydrationDescriptor {
 /** Descriptor returned by createShow() during adoption description. */
 export interface ShowDescriptor {
   type: 'show';
+  /** Original compiler ternaries rerun selected values, unlike createShow. */
+  conditional?: true;
   condition: () => unknown;
   whenTrue: () => unknown;
   whenFalse?: () => unknown;
