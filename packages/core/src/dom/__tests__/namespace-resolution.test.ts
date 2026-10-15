@@ -13,7 +13,7 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createSignal, createRoot } from 'forma/reactive';
-import { h, svg } from '../element';
+import { h, svg, Fragment } from '../element';
 import { createShow } from '../show';
 import { createList } from '../list';
 import { createSwitch } from '../switch';
@@ -248,17 +248,20 @@ describe('MathML', () => {
   });
 });
 
-describe('what adoption builds inside an SVG is SVG (FORMA-026)', () => {
-  it('a show branch the server left empty, the branches it toggles to, and fresh keyed rows', () => {
+describe('later creation after strict SVG adoption (FORMA-026)', () => {
+  it('matching show and list ranges retain identity, then later branches and fresh rows use SVG', () => {
     document.body.innerHTML =
       '<div id="app" data-forma-ssr><svg viewBox="0 0 10 10">' +
-      '<g id="show"><!--f:s0--><!--/f:s0--></g>' +
-      '<g id="rows"><!--f:l0--><a data-forma-key="a" href="#a"><title>a</title></a><!--/f:l0--></g>' +
+      '<g id="show"><!--f:s0--><title>On</title><!--/f:s0--></g>' +
+      '<g id="rows"><!--f:l0--><a data-forma-key="a" href="#a"><title>a</title></a><a data-forma-key="b" href="#b"><title>b</title></a><!--/f:l0--></g>' +
       '</svg></div>';
     const app = document.getElementById('app')!;
     const kept = app.querySelector('[data-forma-key="a"]')!;
     const [on, setOn] = createSignal(true);
     const [keys, setKeys] = createSignal(['a', 'b']);
+    const originalNodes = Array.from(app.querySelectorAll('*'));
+    const observer = new MutationObserver(() => {});
+    observer.observe(app, { subtree: true, childList: true, attributes: true, characterData: true });
     const warn = console.warn;
     console.warn = () => {};
     try {
@@ -270,6 +273,8 @@ describe('what adoption builds inside an SVG is SVG (FORMA-026)', () => {
       console.warn = warn;
     }
 
+    expect(observer.takeRecords()).toEqual([]); observer.disconnect();
+    expect(Array.from(app.querySelectorAll('*'))).toEqual(originalNodes);
     const svgOnly = () => namespaces(app.querySelector('svg')!).every((entry) => entry.endsWith(`:${SVG}`));
     expect(app.querySelector('#show')!.firstElementChild!.localName).toBe('title');
     expect(app.querySelector('[data-forma-key="a"]')).toBe(kept);
@@ -287,42 +292,70 @@ describe('what adoption builds inside an SVG is SVG (FORMA-026)', () => {
 });
 
 describe('adoption at the parser\'s HTML integration points (FORMA-026)', () => {
-  it('what adoption creates inside an SVG is built in SVG from the start: a ref on it is called once', () => {
+  it('refuses initial SVG tag drift with no ref, then runs one ref for later SVG creation', () => {
     document.body.innerHTML = '<div id="app" data-forma-ssr><svg viewBox="0 0 10 10"><circle r="1"></circle></svg></div>';
     const app = document.getElementById('app')!;
+    const circle = app.querySelector('circle');
+    const before = app.innerHTML;
     const refs: Element[] = [];
-    const warn = console.warn;
-    console.warn = () => {};
-    try {
-      adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
-        h('g', null, h('title', { ref: (el: Element) => refs.push(el) }, 'T'), h('a', { href: '#x' })),
-      ) as unknown as HTMLElement, app);
-    } finally {
-      console.warn = warn;
-    }
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const content = () => h('g', null, h('title', { ref: (el: Element) => refs.push(el) }, 'T'), h('a', { href: '#x' }));
+    const observer = new MutationObserver(() => {});
+    observer.observe(app, { subtree: true, childList: true, attributes: true, characterData: true });
+    adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' }, content()), app);
+    expect(observer.takeRecords()).toEqual([]);
+    observer.disconnect();
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_NODE');
+    expect(app.innerHTML).toBe(before);
+    expect(app.querySelector('circle')).toBe(circle);
+    expect(refs).toEqual([]);
+    app.querySelector('svg')!.innerHTML = '<!--f:s0--><!--/f:s0-->';
+    const [shown, setShown] = createSignal(false);
+    adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' }, createShow(shown, content)), app);
+    expect(refs).toEqual([]);
+    setShown(true);
     const title = app.querySelector('title')!;
     expect(title.namespaceURI).toBe(SVG);
     expect(app.querySelector('a')!.namespaceURI).toBe(SVG);
     expect(refs).toEqual([title]);
   });
 
-  it('adoption creates what the server left out of a desc or an mtext in HTML, and an svg in SVG anywhere', () => {
-    document.body.innerHTML =
-      '<div id="app" data-forma-ssr><div><svg><desc id="d"></desc></svg>' +
-      '<math><mtext id="t"></mtext><annotation-xml id="x" encoding="application/mathml+xml"></annotation-xml></math></div></div>';
-    const app = document.getElementById('app')!;
-    const warn = console.warn;
-    console.warn = () => {};
-    try {
-      adoptInRoot(() => h('div', null,
-        h('svg', null, h('desc', { id: 'd' }, h('a', { href: '#d' }, 'd'))),
-        h('math', null,
-          h('mtext', { id: 't' }, h('a', { href: '#t' }, 't'), h('mglyph')),
-          h('annotation-xml', { id: 'x', encoding: 'application/mathml+xml' }, h('svg', null, h('title', null, 'x')))),
-      ) as unknown as HTMLElement, app);
-    } finally {
-      console.warn = warn;
+  it('refuses missing integration-point content, then creates later HTML and nested SVG in the proper namespace', () => {
+    const app = document.createElement('div');
+    app.id = 'app'; app.setAttribute('data-forma-ssr', '');
+    // happy-dom cannot parse MathML: construct the same namespace-correct server tree.
+    const outer = document.createElement('div'); app.append(outer); document.body.append(app);
+    const svgNode = document.createElementNS(SVG, 'svg'); outer.append(svgNode);
+    const desc = document.createElementNS(SVG, 'desc'); desc.id = 'd'; svgNode.append(desc);
+    const math = document.createElementNS(MATHML, 'math'); outer.append(math);
+    const token = document.createElementNS(MATHML, 'mtext'); token.id = 't'; math.append(token);
+    const annotation = document.createElementNS(MATHML, 'annotation-xml'); annotation.id = 'x';
+    annotation.setAttribute('encoding', 'application/mathml+xml'); math.append(annotation);
+    const contents = [() => h('a', { href: '#d' }, 'd'),
+      () => h('a', { href: '#t' }, 't'), () => h('mglyph'),
+      () => h('svg', null, h('title', null, 'x'))] as const;
+    const before = app.innerHTML;
+    const originals = Array.from(app.querySelectorAll('*'));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const observer = new MutationObserver(() => {});
+    observer.observe(app, { subtree: true, childList: true, attributes: true, characterData: true });
+    adoptInRoot(() => h('div', null, h('svg', null, h('desc', { id: 'd' }, contents[0]())),
+      h('math', null, h('mtext', { id: 't' }, contents[1](), contents[2]()),
+        h('annotation-xml', { id: 'x', encoding: 'application/mathml+xml' }, contents[3]()))), app);
+    expect(observer.takeRecords()).toEqual([]); observer.disconnect();
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_NODE');
+    expect(app.innerHTML).toBe(before);
+    expect(Array.from(app.querySelectorAll('*'))).toEqual(originals);
+    for (const [i, parent] of [desc, token, annotation].entries()) {
+      parent.append(document.createComment(`f:s${i}`), document.createComment(`/f:s${i}`));
     }
+    const [shown, setShown] = createSignal(false);
+    adoptInRoot(() => h('div', null,
+      h('svg', null, h('desc', { id: 'd' }, createShow(shown, contents[0]))),
+      h('math', null,
+        h('mtext', { id: 't' }, createShow(shown, () => h(Fragment, null, contents[1](), contents[2]()))),
+        h('annotation-xml', { id: 'x', encoding: 'application/mathml+xml' }, createShow(shown, contents[3])))), app);
+    setShown(true);
     const ns = (sel: string) => `${app.querySelector(sel)!.localName}:${app.querySelector(sel)!.namespaceURI}`;
     expect(ns('#d a')).toBe(`a:${XHTML}`);
     expect(ns('#t a')).toBe(`a:${XHTML}`);

@@ -16,6 +16,7 @@ import { h } from '../element';
 import { adoptInRoot } from './helpers/owned-adoption.js';
 import { activateIslands } from '../activate';
 import { createList } from '../list';
+import { createShow } from '../show';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const XHTML = 'http://www.w3.org/1999/xhtml';
@@ -59,8 +60,9 @@ describe('adopting inline SVG', () => {
       ), app);
     });
 
-    // The only write is direct hydration removing data-forma-ssr from its container.
-    expect(writes).toEqual(['attributes:div:data-forma-ssr']);
+    // Strict adoption leaves the SSR marker and every server node untouched.
+    expect(app.hasAttribute('data-forma-ssr')).toBe(true);
+    expect(writes).toEqual([]);
     expect(app.querySelector('svg')).toBe(svg);
     expect(svg.querySelector('title')).toBe(title);
     expect(svg.querySelector('path')).toBe(path);
@@ -97,10 +99,8 @@ describe('adopting inline SVG', () => {
       }));
     });
 
-    // activateIslands writes status attributes on each island root; inside an
-    // island nothing is written.
-    expect(writes.filter((w) => !w.startsWith('attributes:span:'))).toEqual([]);
-    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual(['active', 'active']);
+    expect(writes).toEqual([]);
+    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual([null, null]);
     expect(islands.map((i) => i.querySelector('svg'))).toEqual(svgs);
     expect(islands.map((i) => i.querySelector('title')!.namespaceURI)).toEqual([SVG, SVG]);
 
@@ -136,7 +136,7 @@ describe('adopting inline SVG', () => {
       ), app);
     });
 
-    expect(writes).toEqual(['attributes:div:data-forma-ssr']);
+    expect(writes).toEqual([]);
     expect(clipPath.localName).toBe('clipPath');
     expect(app.querySelector('clipPath')).toBe(clipPath);
     expect(app.querySelector('linearGradient')).toBe(gradient);
@@ -145,17 +145,24 @@ describe('adopting inline SVG', () => {
     expect(app.querySelector('clipPath rect')).toBe(clipRect);
   });
 
-  it("binds a reactive SVG title by the element without writing, and it stays in the SVG namespace", () => {
+  it("refuses missing SVG text markers, then binds a marked title without writing and keeps its namespace", () => {
     document.body.innerHTML = `<div id="app" data-forma-ssr>${ICON}</div>`;
     const app = document.getElementById('app')!;
     const title = app.querySelector('title')!;
     const [label, setLabel] = createSignal('Close');
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const before = app.innerHTML;
+    expect(writesDuring(app, () => adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
+      h('title', null, () => label()), h('path', { d: 'M0 0L10 10' })), app))).toEqual([]);
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_MARKER');
+    expect(app.innerHTML).toBe(before);
+    title.innerHTML = '<!--f:t0-->Close<!--/f:t0-->';
 
     const writes = writesDuring(app, () => {
       adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' }, h('title', null, () => label()), h('path', { d: 'M0 0L10 10' })), app);
     });
 
-    expect(writes).toEqual(['attributes:div:data-forma-ssr']);
+    expect(writes).toEqual([]);
     for (const next of ['Open', 'Dismiss', 'Close']) {
       setLabel(next);
       expect(app.querySelector('title')).toBe(title);
@@ -181,13 +188,7 @@ describe('adopting inline SVG', () => {
       ), app);
     });
 
-    // List adoption re-inserts each adopted row before the region's end marker
-    // (a move of the server's own node, the same for HTML rows), so the
-    // observer sees childList records; none of them adds a node of its own.
-    const serverNodes = new Set<Node>(server.values());
-    const added = records.flatMap((rec) => Array.from(rec.addedNodes));
-    expect(added.filter((n) => !serverNodes.has(n))).toEqual([]);
-    expect(records.filter((rec) => rec.type !== 'childList').map((rec) => rec.attributeName)).toEqual(['data-forma-ssr']);
+    expect(records).toEqual([]);
     const circles = () => Array.from(app.querySelectorAll('circle'));
     expect(circles()).toHaveLength(40);
     expect(circles().every((c) => c === server.get(c.getAttribute('data-forma-key')) && c.namespaceURI === SVG)).toBe(true);
@@ -203,80 +204,102 @@ describe('adopting inline SVG', () => {
   });
 });
 
-describe('what adoption creates inside SVG and MathML', () => {
-  it('rebuilds a mismatched SVG child in the SVG namespace, title and a included', () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+describe('strict namespace validation and later SVG and MathML creation', () => {
+  it('refuses mismatched SVG children without repair, then creates later Show content in SVG', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     document.body.innerHTML = '<div id="app" data-forma-ssr><svg viewBox="0 0 10 10"><circle r="1"/></svg></div>';
     const app = document.getElementById('app')!;
     const svg = app.querySelector('svg')!;
-
-    adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
-      h('title', null, 'Close'),
-      h('a', { href: '#close' }, h('path', { d: 'M0 0L10 10' })),
-    ), app);
-
+    const circle = svg.firstElementChild;
+    const before = app.innerHTML;
+    const content = () => h('g', null, h('title', null, 'Close'),
+      h('a', { href: '#close' }, h('path', { d: 'M0 0L10 10' })));
+    expect(recordsDuring(app, () => adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
+      h('title', null, 'Close'), h('a', { href: '#close' }, h('path', { d: 'M0 0L10 10' }))), app))).toEqual([]);
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_NODE');
+    expect(app.innerHTML).toBe(before);
     expect(app.querySelector('svg')).toBe(svg);
-    expect(Array.from(svg.children, (el) => `${el.localName}:${el.namespaceURI}`)).toEqual([`title:${SVG}`, `a:${SVG}`]);
-    expect(svg.querySelector('title')!.textContent).toBe('Close');
-    expect(svg.querySelector('a path')!.namespaceURI).toBe(SVG);
-    expect(svg.querySelector('a')!.getAttribute('href')).toBe('#close');
+    expect(svg.firstElementChild).toBe(circle);
+
+    app.innerHTML = '<svg viewBox="0 0 10 10"><!--f:s0--><!--/f:s0--></svg>';
+    const [shown, setShown] = createSignal(false);
+    expect(recordsDuring(app, () => adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' }, createShow(shown, content)), app))).toEqual([]);
+    setShown(true);
+    const created = app.querySelector('g')!;
+    expect(Array.from(created.children, el => `${el.localName}:${el.namespaceURI}`)).toEqual([`title:${SVG}`, `a:${SVG}`]);
+    expect(created.querySelector('title')!.textContent).toBe('Close');
+    expect(created.querySelector('a path')!.namespaceURI).toBe(SVG);
+    expect(created.querySelector('a')!.getAttribute('href')).toBe('#close');
   });
 
-  it('rebuilds a mismatched SVG list row in the SVG namespace', () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('refuses a mismatched SVG list row without replacing either server row', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     document.body.innerHTML =
       '<div id="app" data-forma-ssr><svg><!--f:l0--><g data-forma-key="a"></g><g data-forma-key="b"></g><!--/f:l0--></svg></div>';
     const app = document.getElementById('app')!;
-    const keptRow = app.querySelector('[data-forma-key="b"]')!;
-
-    adoptInRoot(() => h('svg', null, createList(() => ['a', 'b'], (k) => k, (k) => k === 'a'
+    const rows = Array.from(app.querySelectorAll('g'));
+    const before = app.innerHTML;
+    expect(recordsDuring(app, () => adoptInRoot(() => h('svg', null, createList(() => ['a', 'b'], k => k, k => k === 'a'
       ? h('a', { 'data-forma-key': k, href: '#a' }, h('title', null, 'A'))
-      : h('g', { 'data-forma-key': k }))), app);
-
-    const rebuilt = app.querySelector('[data-forma-key="a"]')!;
-    expect(rebuilt.localName).toBe('a');
-    expect(rebuilt.namespaceURI).toBe(SVG);
-    expect(rebuilt.querySelector('title')!.namespaceURI).toBe(SVG);
-    expect(app.querySelector('[data-forma-key="b"]')).toBe(keptRow);
+      : h('g', { 'data-forma-key': k }))), app))).toEqual([]);
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_NODE');
+    expect(app.innerHTML).toBe(before);
+    expect(Array.from(app.querySelectorAll('g'))).toEqual(rows);
+    expect(rows.every(row => row.namespaceURI === SVG)).toBe(true);
   });
 
-  it('creates the content of a foreignObject in the HTML namespace', () => {
-    // #kept: the server rendered the foreignObject but not its content.
-    // #empty: the server rendered neither, so the foreignObject is created too.
+  it('refuses missing foreignObject content and creates later content in the HTML namespace', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     document.body.innerHTML =
       '<div id="app" data-forma-ssr><div>' +
       '<svg id="kept" viewBox="0 0 10 10"><foreignObject width="10" height="10"></foreignObject></svg>' +
       '<svg id="empty" viewBox="0 0 10 10"></svg></div></div>';
     const app = document.getElementById('app')!;
     const foreignObject = app.querySelector('#kept foreignObject')!;
+    const before = app.innerHTML;
     const content = () => h('foreignObject', { width: '10', height: '10' }, h('div', null, h('a', { href: '#more' }, 'more')));
-
-    adoptInRoot(() => h('div', null,
+    expect(recordsDuring(app, () => adoptInRoot(() => h('div', null,
       h('svg', { id: 'kept', viewBox: '0 0 10 10' }, content()),
-      h('svg', { id: 'empty', viewBox: '0 0 10 10' }, content()),
-    ), app);
-
+      h('svg', { id: 'empty', viewBox: '0 0 10 10' }, content())), app))).toEqual([]);
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_NODE');
+    expect(app.innerHTML).toBe(before);
     expect(app.querySelector('#kept foreignObject')).toBe(foreignObject);
+
+    app.innerHTML = '<div><svg id="kept" viewBox="0 0 10 10"><foreignObject width="10" height="10"><!--f:s0--><!--/f:s0--></foreignObject></svg>' +
+      '<svg id="empty" viewBox="0 0 10 10"><!--f:s1--><!--/f:s1--></svg></div>';
+    const kept = app.querySelector('foreignObject');
+    const [shown, setShown] = createSignal(false);
+    expect(recordsDuring(app, () => adoptInRoot(() => h('div', null,
+      h('svg', { id: 'kept', viewBox: '0 0 10 10' }, h('foreignObject', { width: '10', height: '10' },
+        createShow(shown, () => h('div', null, h('a', { href: '#more' }, 'more'))))),
+      h('svg', { id: 'empty', viewBox: '0 0 10 10' }, createShow(shown, content))), app))).toEqual([]);
+    setShown(true);
+    expect(app.querySelector('#kept foreignObject')).toBe(kept);
     for (const id of ['kept', 'empty']) {
-      const created = Array.from(app.querySelectorAll(`#${id} *`), (el) => `${el.localName}:${el.namespaceURI}`);
-      expect(created).toEqual([`foreignObject:${SVG}`, `div:${XHTML}`, `a:${XHTML}`]);
+      expect(Array.from(app.querySelectorAll(`#${id} *`), el => `${el.localName}:${el.namespaceURI}`))
+        .toEqual([`foreignObject:${SVG}`, `div:${XHTML}`, `a:${XHTML}`]);
       expect(app.querySelector(`#${id} a`)).toBeInstanceOf(HTMLAnchorElement);
     }
   });
 
-  it('creates MathML the server did not render in the MathML namespace', () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('refuses missing MathML and creates later MathML in its namespace with live token text', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     document.body.innerHTML = '<div id="app" data-forma-ssr><p id="formula"></p></div>';
     const app = document.getElementById('app')!;
     const p = document.getElementById('formula')!;
     const [x, setX] = createSignal('x');
-
-    adoptInRoot(() => h('p', { id: 'formula' }, h('math', null, h('mi', null, () => x()), h('mo', null, '+'), h('mn', null, '1'))), app);
-
+    const formula = () => h('math', null, h('mi', null, () => x()), h('mo', null, '+'), h('mn', null, '1'));
+    const before = app.innerHTML;
+    expect(recordsDuring(app, () => adoptInRoot(() => h('p', { id: 'formula' }, formula()), app))).toEqual([]);
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_NODE');
+    expect(app.innerHTML).toBe(before);
     expect(app.querySelector('#formula')).toBe(p);
-    expect(Array.from(p.querySelectorAll('*'), (el) => `${el.localName}:${el.namespaceURI}`)).toEqual(
-      [`math:${MATHML}`, `mi:${MATHML}`, `mo:${MATHML}`, `mn:${MATHML}`],
-    );
+    p.innerHTML = '<!--f:s0--><!--/f:s0-->';
+    const [shown, setShown] = createSignal(false);
+    expect(recordsDuring(app, () => adoptInRoot(() => h('p', { id: 'formula' }, createShow(shown, formula)), app))).toEqual([]);
+    setShown(true);
+    expect(Array.from(p.querySelectorAll('*'), el => `${el.localName}:${el.namespaceURI}`)).toEqual(
+      [`math:${MATHML}`, `mi:${MATHML}`, `mo:${MATHML}`, `mn:${MATHML}`]);
     setX('y');
     expect(p.textContent).toBe('y+1');
   });
@@ -295,7 +318,7 @@ describe('reactive attributes at adoption', () => {
       adoptInRoot(() => h('a', { id: 'link', href: () => href(), className: () => 'on', 'aria-busy': () => busy() },
         h('button', { id: 'b', disabled: () => disabled() }, 'go')), app);
     });
-    expect(writes).toEqual(['attributes:div:data-forma-ssr']);
+    expect(writes).toEqual([]);
 
     const link = document.getElementById('link')!;
     const button = document.getElementById('b')!;
