@@ -174,7 +174,8 @@ export class AdoptionLifecycle implements AdoptionSink {
     let initial!: T, error: unknown, first = true, failed = false;
     // The owned initial root also catches roots/effects created by a reader;
     // these must not leak into an ambient effect that happened to trigger it.
-    const dispose = this.run(() => rawEffect(() => {
+    let dispose:()=>void;
+    try { dispose = this.run(() => rawEffect(() => {
       if (first) {
         first = false;
         this.readers.push({ flags: getActiveSub()!, group: owner });
@@ -196,7 +197,12 @@ export class AdoptionLifecycle implements AdoptionSink {
           }while(true);
         }catch(cause){this.fail(cause,'FORMA_E_HYDRATE_VALUE');}
       } else this.invalidated = true;
-    }));
+    })); } catch(cause) {
+      // A nested tracked group may abort this scope after its reader throws.
+      // The run-level revocation check must not mask that original exception.
+      if(failed)throw error;
+      throw cause;
+    }
     this.own(dispose, owner);
     if (failed) { this.abort(); throw error; }
     if (this.state === 'aborted' || !owner.alive) throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
