@@ -30,3 +30,36 @@ A2 by design; `current-source-set.json` records the new candidate hashes.
 Both final replays check the actual `data-forma-status` marker and inject a real
 pending DOM island to prove the gate rejects it before cleanup. Browser failures
 fail immediately; only the initial HTTP readiness request is retried.
+
+## Independent review and corrected replay
+
+The original current-source P17 report above is **superseded and invalid as
+acceptance evidence**. Its same-version 0.2.2 rebuild puts a published-registry IR
+checksum inside the server crate, which differs from the newly packed DS11 IR
+archive. The earlier local adapter silently repaired that mismatch. The original
+JSON is retained for traceability; `current-source-replay-status.json` records
+the correction. Do not relax checksum validation or publish rebuilt old versions.
+
+The stricter verifier passes the exact published A2 set in 33.558 seconds
+(`a2-published-p17-after-review.json`). It rejects both independently prepared
+negative controls: a shipped template with a wrong npm checksum,
+and a packed CLI missing its runtime dependency. The CLI now installs outside the
+checkout using only its own declared runtime dependencies and the recorded lock
+graph. Internal npm and Cargo lock fields are validated before local substitution.
+
+A fresh unpublished two-crate fixture proves the dependent packed Cargo.lock
+checksum equals the newly packed predecessor's SHA-256. This relationship is now
+a release-helper regression assertion. Fresh-version rehearsals are distinct from
+rebuilding already published A2 versions.
+
+The release workflow also gates P17/publication on Chromium, Firefox and WebKit.
+Development, alpha and stable version preparation pass the internal dependency
+guard; changelog extraction retains the complete exact-version body in both the
+GitHub notes and JSON record. The combined helper suite passes 18 tests, the
+workflow lint rejects 32 seeded violations, and the dependency guard passes 12
+cases. Live publication remains disabled.
+
+After integrating the reviewed corrections and the server fixture port fix, the
+full repository gate passed in 127 seconds. Generated browser bundles were saved
+in local evidence and restored; they are reproducible test outputs, not source
+changes for this release-workflow PR. Final-head hosted CI is checked separately.

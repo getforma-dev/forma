@@ -1,0 +1,10 @@
+{
+  "status": "superseded-invalid",
+  "evidence": [
+    "current-source-set.json",
+    "current-source-p17.json"
+  ],
+  "reason": "Stricter independent replay rejects the same-version current-source repack: forma-server packed Cargo.lock pins the already-published forma-ir version checksum rather than the newly packed DS11 forma-ir archive. Previous local substitution repaired that mismatch and hid it. Preserve original reports as historical evidence, not passing acceptance.",
+  "replacement": "a2-published-p17-after-review.json tests exact published A2 bytes. Fresh unpublished two-crate packaging also proves the dependent checksum equals its newly packed predecessor. Future current-source rehearsals must use fresh unpublished versions.",
+  "verifierCommit": "3dd269d80146b666679f9c1ef922a3c1ea40de47"
+}

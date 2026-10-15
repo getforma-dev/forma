@@ -31,6 +31,10 @@ command and release workflow probes. A skipped required job, failed run, missing
 run or API failure refuses the release. It does not silently wait forever;
 rerun after CI completes if the tag arrived first.
 
+The credential-free `engines` job also runs the reusable Chromium, Firefox and
+WebKit suite on the tagged commit. P17 depends on all three engines succeeding;
+both publishing jobs depend on P17, so an engine failure blocks publication.
+
 ## Packed set and template locks
 
 `pack` installs the committed dependency graph with scripts off, builds, then
@@ -63,6 +67,13 @@ Unpublished candidates have no registry signatures yet: DS11 SHA-256 authenticat
 their bytes, while `npm audit signatures` checks their registry dependencies.
 Future contract owners extend this same P17 job; they must not weaken exact version
 checks to make the A2 skeleton pass.
+
+Before those substitutions, P17 validates each shipped internal dependency's
+version, registry URL, checksum and dependency metadata against DS11. It never
+repairs a malformed shipped lock. The packed CLI runs outside the source checkout,
+with only the runtime dependencies declared by its packed manifest, installed
+scripts-off from the recorded lock graph. A missing packaged dependency therefore
+fails the same CLI execution that a consumer would run.
 
 ## Publication and retry
 

@@ -83,6 +83,9 @@ test('Cargo packages unpublished interdependent crates and repacks byte-identica
     const lock = digest(join(dir, 'Cargo.lock'));
     run('cargo', ['package', '--workspace', '--no-verify', '--locked', '--offline'], dir);
     const first = ['first', 'second'].map(n => digest(join(dir, 'target/package', `forma-release-test-${n}-3.0.0-alpha.1.crate`)));
+    const packedLock = run('tar', ['-xOf', join(dir, 'target/package/forma-release-test-second-3.0.0-alpha.1.crate'), 'forma-release-test-second-3.0.0-alpha.1/Cargo.lock']);
+    const predecessor = packedLock.split(/(?=\[\[package\]\])/).find(block => /^name = "forma-release-test-first"$/m.test(block));
+    assert.equal(/^checksum = "([^"]+)"/m.exec(predecessor ?? '')?.[1], first[0], 'dependent crate must pin the newly packed predecessor, not an existing registry version');
     run('cargo', ['package', '--workspace', '--no-verify', '--locked', '--offline'], dir);
     assert.deepEqual(['first', 'second'].map(n => digest(join(dir, 'target/package', `forma-release-test-${n}-3.0.0-alpha.1.crate`))), first);
     assert.equal(digest(join(dir, 'Cargo.lock')), lock);
