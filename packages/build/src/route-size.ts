@@ -24,13 +24,22 @@
  * without Forma's bytes) is not additive either, and the two agree to within
  * one percent on the minimal template's Counter route (FORMA-021's analysis).
  *
+ * One thing besides those packages' bytes is Forma's: the identity banner
+ * (FORMA-186, DR-29) that Forma's build writes at the top of every JavaScript
+ * file, the lead's ruling. No input owns it, so it is counted from the file's
+ * own first bytes. It is a 16-hex id, which does not compress, so it costs about
+ * 30 B gzip for each JavaScript file a route loads cold (measured on the SSR
+ * lane's Counter: 29 B for one file, 74 B for the same page split in two).
+ *
  * Verified by: packages/build/tests/route-size.test.ts > "reports each route's Forma code beside its own, in gzip -9 and Brotli, from the bundler's metafile"
+ * Verified by: packages/build/tests/route-size.test.ts > "counts the identity banner at the top of a file as Forma's code, and a comment anywhere else as nobody's"
  * Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's Forma code is over the ceiling, leaving no output"
  */
 import type { Metafile } from 'esbuild';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readFileSync, readSync, statSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
+import { IDENTITY_BANNER_HEAD } from './identity.js';
 import type { RouteManifest } from './types.js';
 
 /** N2's ceiling: Forma's code per route, bytes gzip -9 (L-55). */
@@ -109,6 +118,26 @@ export function isFormaInput(input: string, cache: Map<string, string | undefine
 }
 
 /**
+ * The bytes of the identity banner at the top of `path`, or 0: Forma's build writes
+ * it into every JavaScript file (identity.ts), so N2 counts it as Forma's code. Only
+ * the exact header counts, and only at the very start.
+ */
+export function identityBannerBytes(path: string): number {
+  let fd: number | undefined;
+  try {
+    fd = openSync(path, 'r');
+    const head = Buffer.alloc(64);
+    const read = readSync(fd, head, 0, head.length, 0);
+    const match = IDENTITY_BANNER_HEAD.exec(head.subarray(0, read).toString('latin1'));
+    return match ? match[0].length : 0;
+  } catch {
+    return 0;
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
+}
+
+/**
  * A file's sizes. The compression pass has already written `.gz` (gzip -9)
  * and `.br` (Brotli 11) beside every file it could shrink, with the settings
  * N2 counts, so those are read rather than compressed again (Brotli 11 is the
@@ -165,8 +194,10 @@ export function routeSizes(
     for (const [input, contribution] of Object.entries(output.inputs)) {
       if (isFormaInput(input, packages)) formaRaw += contribution.bytesInOutput;
     }
-    // The file's own bytes are the denominator: its module wrapper and export
-    // lines, which no input owns, count as the application's.
+    // The identity banner is Forma's (see the header). The file's own bytes are the
+    // denominator: its module wrapper and export lines, which no input owns, count as
+    // the application's.
+    formaRaw += identityBannerBytes(join(distDir, file));
     const share = sizes.raw > 0 ? formaRaw / sizes.raw : 0;
     const result: RouteSizeFile = {
       file,
