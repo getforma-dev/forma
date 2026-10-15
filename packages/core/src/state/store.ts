@@ -1,0 +1,579 @@
+/**
+ * Forma State - Store
+ *
+ * Deep reactive store with path-based signal granularity.
+ * Every property path (e.g. `user.name`, `items.0.done`) gets its own signal,
+ * so only effects that read a specific path are notified when it changes.
+ *
+ * Inspired by SolidJS's createStore and Vue's reactive(), with:
+ * - Lazy proxy wrapping (child objects proxied on first access)
+ * - Structural sharing (replacing an object invalidates child signals)
+ * - Array mutation batching (push/pop/splice/sort etc. batch their signals)
+ *
+ * Backed by alien-signals via forma/reactive.
+ */
+
+import { createSignal, batch, untrack, value, __DEV__ } from 'forma/reactive';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type SignalPair = [get: () => unknown, set: (v: unknown) => void];
+
+/** Setter for a reactive store — accepts a partial update object or updater function. */
+export type StoreSetter<T extends object> = (
+  partial: Partial<T> | ((prev: T) => Partial<T>),
+) => void;
+
+// ---------------------------------------------------------------------------
+// Symbols
+// ---------------------------------------------------------------------------
+
+/** Access the underlying raw (unproxied) object from a store proxy. */
+const RAW = Symbol('forma-raw');
+
+/** Marker: true on every store proxy so we can detect them. */
+const PROXY = Symbol('forma-proxy');
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const ARRAY_MUTATORS = new Set([
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'splice',
+  'sort',
+  'reverse',
+  'fill',
+  'copyWithin',
+]);
+
+/**
+ * Keys that must never be written through the store. `JSON.parse` creates
+ * `__proto__` as a real own, enumerable property, so an untrusted payload fed to
+ * `setState` (or assigned onto the proxy) would otherwise reach
+ * `Reflect.set(target, '__proto__', …)`, which invokes
+ * `Object.prototype.__proto__`'s setter with `this = target` and replaces the
+ * store object's prototype — letting the payload forge state fields the app
+ * never defined. `constructor`/`prototype` are refused alongside it to match
+ * the RPC-argument and island-props sanitizers.
+ *
+ * Verified by: src/state/__tests__/store-proto-hijack.test.ts > "setState with a __proto__ key does not replace the store prototype"
+ */
+const FORBIDDEN_STORE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** Dev-only diagnostic for a rejected pollution key. */
+function warnForbiddenKey(key: string): void {
+  console.warn(
+    `[forma] Refused to write "${key}" into a store — this key can replace the ` +
+    `object's prototype. Strip it from untrusted payloads before calling setState.`,
+  );
+}
+
+function shouldWrap(v: unknown): v is object {
+  if (v == null || typeof v !== 'object') return false;
+  // Don't wrap special built-ins (Date, RegExp, Map, Set, etc.)
+  if (v instanceof Date || v instanceof RegExp || v instanceof Map ||
+      v instanceof Set || v instanceof WeakMap || v instanceof WeakSet ||
+      v instanceof Error || v instanceof Promise) {
+    return false;
+  }
+  // Already a store proxy — no double wrapping
+  if ((v as any)[PROXY]) return false;
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Deep-clone helper (used for functional setter snapshots)
+// ---------------------------------------------------------------------------
+
+function deepClone(obj: unknown, seen?: WeakSet<object>): unknown {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (!seen) seen = new WeakSet();
+  if (seen.has(obj as object)) return obj; // circular — return ref as-is
+  seen.add(obj as object);
+  if (Array.isArray(obj)) return obj.map(item => deepClone(item, seen));
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(obj as Record<string, unknown>)) {
+    // `out['__proto__'] = v` would invoke Object.prototype's setter and swap the
+    // clone's prototype instead of copying a key, so the snapshot handed to a
+    // functional updater would inherit attacker-supplied fields. Only this key
+    // is skipped: `constructor`/`prototype` copy as ordinary own properties
+    // here, and dropping them would silently lose real data.
+    // Verified by: src/state/__tests__/store-proto-hijack.test.ts > "a functional-updater snapshot never inherits from an injected prototype"
+    if (key === '__proto__') continue;
+    out[key] = deepClone((obj as any)[key], seen);
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a deep reactive store.
+ *
+ * Returns a tuple of `[getter proxy, setter function]`.
+ * The getter proxy tracks reads at every property path via dedicated signals.
+ * Setting a property (either via `setState()` or direct mutation like
+ * `state.user.name = 'Bob'`) only notifies effects that actually read that
+ * specific path.
+ *
+ * ```ts
+ * const [state, setState] = createStore({
+ *   count: 0,
+ *   user: { name: 'Alice', age: 30 },
+ *   items: [{ text: 'Buy milk', done: false }],
+ * });
+ *
+ * // Fine-grained reads
+ * state.user.name;          // tracked at path "user.name"
+ * state.items[0].done;      // tracked at path "items.0.done"
+ *
+ * // Setter API (batched)
+ * setState({ count: 1 });
+ * setState(prev => ({ count: prev.count + 1 }));
+ *
+ * // Direct mutation (via Proxy set trap)
+ * state.user.name = 'Bob';  // only "user.name" subscribers notified
+ * state.items[0].done = true;
+ *
+ * // Array mutations
+ * state.items.push({ text: 'Walk dog', done: false });
+ * ```
+ *
+ * **Limitation:** `Object.keys(state)`, `for...in`, and spread (`{...state}`)
+ * are NOT reactive. Adding or removing a property will not trigger effects
+ * that iterated over keys. Use signals or explicit arrays for collections
+ * that need to react to membership changes.
+ */
+export function createStore<T extends object>(
+  initial: T,
+): [get: T, set: StoreSetter<T>] {
+  // -------------------------------------------------------------------------
+  // Signal-per-path map
+  // -------------------------------------------------------------------------
+
+  /** Map of dot-separated paths -> signal pairs. */
+  const signals = new Map<string, SignalPair>();
+
+  /** Parent path -> set of direct child paths for O(1) child invalidation. */
+  const children = new Map<string, Set<string>>();
+
+  /**
+   * Per-array-path "version" signals. alien-signals dedupes by identity and a
+   * custom `equals` can only suppress (not force) a notify, so an in-place array
+   * mutation cannot be signalled by re-setting the array reference. A monotonic
+   * counter bumped with a functional updater always notifies, so effects that
+   * read an array itself (iteration/.map/length) re-run on any mutation.
+   */
+  const arrayVersions = new Map<string, SignalPair>();
+  function getArrayVersion(path: string): SignalPair {
+    let p = arrayVersions.get(path);
+    if (!p) { p = createSignal<unknown>(0) as SignalPair; arrayVersions.set(path, p); }
+    return p;
+  }
+  function bumpArrayVersion(path: string): void {
+    const p = arrayVersions.get(path);
+    if (p) p[1]((n: number) => n + 1);
+  }
+
+  /**
+   * Register a signal path with its parent in the adjacency map.
+   * This allows walking the tree instead of scanning all signals.
+   */
+  function registerChild(path: string): void {
+    const lastDot = path.lastIndexOf('.');
+    if (lastDot === -1) return; // root-level, no parent
+    const parentPath = path.substring(0, lastDot);
+    let set = children.get(parentPath);
+    if (!set) { set = new Set(); children.set(parentPath, set); }
+    set.add(path);
+  }
+
+  /**
+   * Get or create the signal for a given path.
+   * When creating, seeds with `initialValue`.
+   */
+  function getSignal(path: string, initialValue?: unknown): SignalPair {
+    let pair = signals.get(path);
+    if (!pair) {
+      pair = createSignal<unknown>(initialValue) as SignalPair;
+      signals.set(path, pair);
+      registerChild(path);
+    }
+    return pair;
+  }
+
+  // -------------------------------------------------------------------------
+  // Proxy cache  (raw object -> proxy)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Proxies keyed by (raw object -> basePath -> proxy). The two-level map is
+   * required because the same raw object can be aliased at multiple paths
+   * (`state.a = state.b = shared`); each path needs its own proxy so writes
+   * notify the correct path signal. Entries are GC'd with the raw object.
+   */
+  const proxyCache = new WeakMap<object, Map<string, object>>();
+
+  // -------------------------------------------------------------------------
+  // Invalidation
+  // -------------------------------------------------------------------------
+
+  /**
+   * Recursively delete all child signals using the adjacency map.
+   * Called when an entire sub-tree is replaced so stale signals are not reused.
+   * O(k) where k = number of descendant signals, instead of O(n) over all signals.
+   */
+  function invalidateChildren(parentPath: string): void {
+    const childSet = children.get(parentPath);
+    if (!childSet) return;
+    for (const childPath of childSet) {
+      // Recursively invalidate grandchildren first
+      invalidateChildren(childPath);
+      // Remove the signal itself
+      signals.delete(childPath);
+      // Clean up this child's entry in the adjacency map
+      children.delete(childPath);
+    }
+    // Clear the parent's children set (all children have been removed)
+    childSet.clear();
+  }
+
+  function lastSegment(path: string): string {
+    const d = path.lastIndexOf('.');
+    return d === -1 ? path : path.substring(d + 1);
+  }
+
+  /**
+   * Set a path signal to a literal value. The signal setter interprets a
+   * function value as a functional updater, so a stored function (e.g. an array
+   * method like `items.map` read as a child path) must be wrapped with `value()`
+   * or it would be called as `fn(prev)` and throw.
+   */
+  function setLiteral(pair: SignalPair, v: unknown): void {
+    pair[1](typeof v === 'function' ? value(v) : v);
+  }
+
+  /**
+   * NOTIFY (not delete) each existing child signal of `parentPath` with its
+   * re-read value from the mutated raw parent — indices beyond a new length read
+   * back undefined, notifying their effects. Recurses into surviving object
+   * children; children that became primitive/absent have their subtrees deleted.
+   * Walks only children.get(parentPath) (O(k)), never all signals.
+   */
+  function reconcileChildren(parentPath: string, rawParent: unknown): void {
+    const set = children.get(parentPath);
+    if (!set) return;
+    for (const childPath of set) {
+      const key = lastSegment(childPath);
+      const nv = (rawParent as Record<string, unknown>)[key];
+      const pair = signals.get(childPath);
+      if (pair) setLiteral(pair, nv);
+      if (nv != null && typeof nv === 'object') {
+        reconcileChildren(childPath, nv);
+      } else {
+        invalidateChildren(childPath);
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Proxy factory (lazy, recursive)
+  // -------------------------------------------------------------------------
+
+  function wrap(raw: object, basePath: string): object {
+    // Primitives / non-wrappable values pass through
+    if (!shouldWrap(raw)) return raw;
+
+    // Return the cached proxy for this (raw, basePath) pair if we have one.
+    let byPath = proxyCache.get(raw);
+    if (byPath) {
+      const hit = byPath.get(basePath);
+      if (hit) return hit;
+    }
+
+    const isArr = Array.isArray(raw);
+    // Pre-compute the path prefix to avoid repeated string concatenation in hot paths
+    const basePrefix = basePath ? basePath + '.' : '';
+
+    const proxy: object = new Proxy(raw, {
+      // -------------------------------------------------------------------
+      // GET
+      // -------------------------------------------------------------------
+      get(target: any, prop: PropertyKey, receiver: unknown): unknown {
+        // Escape hatches
+        if (prop === RAW) return target;
+        if (prop === PROXY) return true;
+
+        // Symbols pass through (Symbol.iterator, Symbol.toPrimitive, etc.)
+        if (typeof prop === 'symbol') {
+          return Reflect.get(target, prop, receiver);
+        }
+
+        const key = String(prop);
+        // Cache-friendly path construction: avoid template literals in hot path
+        const childPath = basePrefix + key;
+
+        // ------------------------------------------------------------------
+        // Array mutator methods — wrap to batch signal updates
+        // ------------------------------------------------------------------
+        if (isArr && ARRAY_MUTATORS.has(key)) {
+          return (...args: unknown[]) => {
+            let result: unknown;
+            batch(() => {
+              // Unwrap proxy arguments (e.g. pushing a store proxy)
+              const rawArgs = args.map((a) =>
+                a != null && typeof a === 'object' && (a as any)[RAW]
+                  ? (a as any)[RAW]
+                  : a,
+              );
+              result = (target as any)[key].apply(target, rawArgs);
+
+              // Notify (not delete) every child signal with its re-read value so
+              // index/length/nested effects re-run instead of being orphaned.
+              reconcileChildren(basePath, target);
+
+              // Notify the length signal (plain set — an unchanged length, e.g.
+              // splice 5->5, correctly does not re-fire length-only effects).
+              const lenPair = signals.get(basePrefix + 'length');
+              if (lenPair) lenPair[1]((target as unknown[]).length);
+
+              // Bump the array's own-path version so iteration/.map effects re-run.
+              if (basePath) bumpArrayVersion(basePath);
+            });
+            return result;
+          };
+        }
+
+        // ------------------------------------------------------------------
+        // Array `length` — special-case so it's always tracked
+        // ------------------------------------------------------------------
+        if (isArr && key === 'length') {
+          const [getter] = getSignal(childPath, target.length);
+          getter(); // subscribe
+          return target.length;
+        }
+
+        // ------------------------------------------------------------------
+        // Regular property access
+        // ------------------------------------------------------------------
+        const value = Reflect.get(target, prop);
+
+        // Resolve the live signal for this path (no inline cache — it could not
+        // be invalidated when invalidateChildren/deleteProperty removed the
+        // signal, which split reads and writes across two signal objects).
+        const pair = getSignal(childPath, value);
+        pair[0](); // subscribe to this path
+
+        // Subscribe array reads to the array's own-path version so any in-place
+        // mutation (push/splice/sort/truncate) re-runs iteration/.map effects.
+        if (Array.isArray(value)) {
+          getArrayVersion(childPath)[0]();
+        }
+
+        // Lazily wrap child objects/arrays
+        if (shouldWrap(value)) {
+          return wrap(value, childPath);
+        }
+
+        return value;
+      },
+
+      // -------------------------------------------------------------------
+      // SET
+      // -------------------------------------------------------------------
+      set(target: any, prop: PropertyKey, value: unknown): boolean {
+        if (typeof prop === 'symbol') {
+          return Reflect.set(target, prop, value);
+        }
+
+        const key = String(prop);
+
+        // Reject prototype-hijacking keys at the single choke point every write
+        // passes through (setState, `state.x = …`, Object.assign onto the
+        // proxy). Report success so a spread of untrusted data does not throw in
+        // strict mode — the key is simply not applied.
+        // Verified by: src/state/__tests__/store-proto-hijack.test.ts > "assigning __proto__ directly on the proxy does not replace the prototype"
+        if (FORBIDDEN_STORE_KEYS.has(key)) {
+          if (__DEV__) warnForbiddenKey(key);
+          return true;
+        }
+
+        const childPath = basePrefix + key;
+
+        // Unwrap if the value being set is itself a proxy
+        const rawValue =
+          value != null && typeof value === 'object' && (value as any)[RAW]
+            ? (value as any)[RAW]
+            : value;
+
+        // Capture the old raw value BEFORE overwriting so we can evict its proxy.
+        const oldRaw = Reflect.get(target, prop);
+
+        // Write to the underlying object
+        Reflect.set(target, prop, rawValue);
+
+        // If we're replacing with a DIFFERENT object, invalidate child signals
+        // and evict the old value's proxy for this path. Guard on oldRaw !==
+        // rawValue: re-assigning the identical object (state.x = state.x) must
+        // NOT invalidate descendants, which would orphan their subscribers.
+        if (rawValue != null && typeof rawValue === 'object' && oldRaw !== rawValue) {
+          invalidateChildren(childPath);
+          evictProxy(oldRaw, childPath);
+        }
+
+        // Update the length signal when setting indexed array elements
+        if (isArr && key !== 'length') {
+          const lengthPath = basePrefix + 'length';
+          const lenPair = signals.get(lengthPath);
+          if (lenPair) {
+            lenPair[1](target.length);
+          }
+        }
+
+        // Truncating (or growing) via `arr.length = n`: notify the dropped index
+        // signals (they read back undefined) and the array's own-path version.
+        if (isArr && key === 'length') {
+          batch(() => {
+            reconcileChildren(basePath, target);
+            if (basePath) bumpArrayVersion(basePath);
+          });
+        }
+
+        // Notify (or create) the signal for this path
+        const [, setter] = getSignal(childPath, rawValue);
+        setter(rawValue);
+
+        return true;
+      },
+
+      // -------------------------------------------------------------------
+      // HAS — track membership checks
+      // -------------------------------------------------------------------
+      has(target: any, prop: PropertyKey): boolean {
+        if (typeof prop === 'symbol') {
+          return Reflect.has(target, prop);
+        }
+        const key = String(prop);
+        const childPath = basePrefix + key;
+        // Subscribe so that `'x' in state` is tracked
+        const [getter] = getSignal(childPath, Reflect.get(target, prop));
+        getter();
+        return Reflect.has(target, prop);
+      },
+
+      // -------------------------------------------------------------------
+      // OWNKEYS — return keys from the raw target
+      // -------------------------------------------------------------------
+      ownKeys(target: any): (string | symbol)[] {
+        return Reflect.ownKeys(target);
+      },
+
+      // -------------------------------------------------------------------
+      // GETOWNPROPERTYDESCRIPTOR — needed for Object.keys / spread / ...
+      // -------------------------------------------------------------------
+      getOwnPropertyDescriptor(target: any, prop: PropertyKey) {
+        return Object.getOwnPropertyDescriptor(target, prop);
+      },
+
+      // -------------------------------------------------------------------
+      // DELETEPROPERTY — clean up signals when a key is removed
+      // -------------------------------------------------------------------
+      deleteProperty(target: any, prop: PropertyKey): boolean {
+        if (typeof prop === 'symbol') {
+          return Reflect.deleteProperty(target, prop);
+        }
+
+        const key = String(prop);
+        const childPath = basePrefix + key;
+
+        const oldRaw = Reflect.get(target, prop);
+        const result = Reflect.deleteProperty(target, prop);
+
+        // Notify subscribers of state.x and 'x' in state (they share childPath)
+        // of the removal. KEEP the path's own signal (bound to undefined) — like
+        // object-replace does via invalidateChildren — so re-adding the key
+        // re-uses the same signal and its subscribers are notified. Deleting the
+        // signal would orphan them (a fresh signal would be minted on re-add).
+        const delPair = signals.get(childPath);
+        if (delPair) delPair[1](undefined);
+
+        // Evict the removed value's proxy for this path.
+        evictProxy(oldRaw, childPath);
+
+        // Remove DESCENDANT signals (childPath's own signal stays bound).
+        invalidateChildren(childPath);
+
+        return result;
+      },
+    });
+
+    if (!byPath) { byPath = new Map(); proxyCache.set(raw, byPath); }
+    byPath.set(basePath, proxy);
+    return proxy;
+  }
+
+  /** Evict the cached proxy bound to `path` for a raw object being replaced/removed. */
+  function evictProxy(oldRaw: unknown, path: string): void {
+    if (oldRaw == null || typeof oldRaw !== 'object') return;
+    const om = proxyCache.get(oldRaw as object);
+    if (om) {
+      om.delete(path);
+      if (om.size === 0) proxyCache.delete(oldRaw as object);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Root proxy
+  // -------------------------------------------------------------------------
+
+  const rootProxy = wrap(initial, '') as T;
+
+  // -------------------------------------------------------------------------
+  // Snapshot (for functional setter)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Produce a plain-object snapshot of the store's current state.
+   * Reads are untracked so calling `setState(prev => ...)` inside an effect
+   * does not create additional subscriptions.
+   */
+  function getCurrentSnapshot(): T {
+    return untrack(() => deepClone(initial) as T);
+  }
+
+  // -------------------------------------------------------------------------
+  // Setter
+  // -------------------------------------------------------------------------
+
+  const setter: StoreSetter<T> = (
+    partial: Partial<T> | ((prev: T) => Partial<T>),
+  ) => {
+    // Resolve functional updates by snapshotting current state
+    const updates: Partial<T> =
+      typeof partial === 'function' ? partial(getCurrentSnapshot()) : partial;
+
+    // Batch all top-level key writes so effects run only once
+    batch(() => {
+      for (const key of Object.keys(updates) as (keyof T & string)[]) {
+        // Skipped here as well as in the proxy's set trap: the trap is the
+        // backstop for direct mutation, this loop stops the same key before it
+        // is ever handed to Reflect.set.
+        if (FORBIDDEN_STORE_KEYS.has(key)) {
+          if (__DEV__) warnForbiddenKey(key);
+          continue;
+        }
+        (rootProxy as Record<string, unknown>)[key] = (updates as Record<string, unknown>)[key];
+      }
+    });
+  };
+
+  return [rootProxy, setter];
+}

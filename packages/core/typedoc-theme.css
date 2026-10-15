@@ -1,0 +1,176 @@
+/**
+ * FormaJS API Docs — Gruvbox Dark Theme
+ *
+ * Only overrides dark mode. Light mode uses TypeDoc's default theme untouched.
+ */
+
+/* -------------------------------------------------------------------------
+ * Dark mode only — Gruvbox palette
+ * ----------------------------------------------------------------------- */
+
+:root[data-theme="dark"],
+:root[data-theme="os"] {
+  /* Gruvbox Dark backgrounds */
+  --color-background:              #282828;
+  --color-background-secondary:    #32302f;
+  --color-background-warning:      #3c3836;
+
+  /* Text */
+  --color-text:                    #ebdbb2;
+  --color-text-aside:              #a89984;
+  --color-comment-tag-text:        #d5c4a1;
+
+  /* Links */
+  --color-link:                    #8ec07c;
+
+  /* Navigation */
+  --color-active-menu-item:        #3c3836;
+
+  /* Functions — green */
+  --color-ts-function:             #b8bb26;
+  --color-ts-method:               #b8bb26;
+  --color-ts-call-signature:       #b8bb26;
+  --color-ts-accessor:             #b8bb26;
+
+  /* Interfaces / types — aqua */
+  --color-ts-interface:            #8ec07c;
+  --color-ts-type-alias:           #8ec07c;
+
+  /* Classes — yellow */
+  --color-ts-class:                #fabd2f;
+  --color-ts-constructor:          #fabd2f;
+  --color-ts-constructor-signature: #fabd2f;
+
+  /* Properties / variables — blue */
+  --color-ts-property:             #83a598;
+  --color-ts-variable:             #83a598;
+  --color-ts-get-signature:        #83a598;
+  --color-ts-set-signature:        #83a598;
+
+  /* Enums — orange */
+  --color-ts-enum:                 #fe8019;
+  --color-ts-enum-member:          #fe8019;
+
+  /* Namespaces — purple */
+  --color-ts-namespace:            #d3869b;
+  --color-ts-module:               #d3869b;
+
+  /* Warnings & tags */
+  --color-warning-text:            #fabd2f;
+  --color-deprecated:              #fb4934;
+
+  /* Code blocks */
+  --color-code-background:         #1d2021;
+
+  /* Accent */
+  --color-accent:                  #689d6a;
+
+  /* Syntax highlighting */
+  --dark-hl-0:   #ebdbb2;  /* default text */
+  --dark-hl-1:   #b8bb26;  /* keywords */
+  --dark-hl-2:   #8ec07c;  /* types */
+  --dark-hl-3:   #fabd2f;  /* strings */
+  --dark-hl-4:   #d3869b;  /* numbers */
+  --dark-hl-5:   #928374;  /* comments */
+  --dark-hl-6:   #fe8019;  /* decorators */
+  --dark-hl-7:   #fb4934;  /* operators */
+  --dark-hl-8:   #83a598;  /* parameters */
+  --dark-hl-9:   #d5c4a1;  /* punctuation */
+  --dark-hl-10:  #b8bb26;  /* function names */
+  --dark-code-background: #1d2021;
+}
+
+/* -------------------------------------------------------------------------
+ * Dark-mode layout polish
+ * ----------------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .site-menu {
+    background: #32302f;
+    border-right: 1px solid #504945;
+  }
+
+  :root:not([data-theme="light"]) pre {
+    border: 1px solid #504945;
+  }
+
+  :root:not([data-theme="light"]) .tsd-tag {
+    background: #504945;
+    color: #d5c4a1;
+  }
+
+  :root:not([data-theme="light"]) #tsd-search input {
+    background: #3c3836;
+    color: #ebdbb2;
+    border: 1px solid #665c54;
+  }
+
+  :root:not([data-theme="light"]) #tsd-search input:focus {
+    border-color: #689d6a;
+  }
+
+  :root:not([data-theme="light"]) .tsd-panel {
+    border: 1px solid #504945;
+  }
+
+  :root:not([data-theme="light"]) .tsd-panel-group > .tsd-panel {
+    background: #32302f;
+  }
+}
+
+:root[data-theme="dark"] .site-menu {
+  background: #32302f;
+  border-right: 1px solid #504945;
+}
+
+:root[data-theme="dark"] pre {
+  border: 1px solid #504945;
+}
+
+:root[data-theme="dark"] .tsd-tag {
+  background: #504945;
+  color: #d5c4a1;
+}
+
+:root[data-theme="dark"] #tsd-search input {
+  background: #3c3836;
+  color: #ebdbb2;
+  border: 1px solid #665c54;
+}
+
+:root[data-theme="dark"] #tsd-search input:focus {
+  border-color: #689d6a;
+}
+
+:root[data-theme="dark"] .tsd-panel {
+  border: 1px solid #504945;
+}
+
+:root[data-theme="dark"] .tsd-panel-group > .tsd-panel {
+  background: #32302f;
+}
+
+/* -------------------------------------------------------------------------
+ * Shared typography (both themes)
+ * ----------------------------------------------------------------------- */
+
+pre {
+  border-radius: 6px;
+}
+pre code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.tsd-signature {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+}
+.tsd-tag {
+  border-radius: 4px;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+}
+.tsd-panel {
+  border-radius: 6px;
+}
