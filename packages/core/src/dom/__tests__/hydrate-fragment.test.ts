@@ -105,7 +105,8 @@ describe('Fragment adoption', () => {
     islands[0]!.querySelector<HTMLButtonElement>('.inc')!.click();
     expect(text()).toEqual(['0', '1']);
     expect(Array.from(document.querySelectorAll('span, button'))).toEqual(server);
-    expect(error.mock.calls.filter(call => String(call[0]).includes('FORMA_E_HYDRATE_STRUCTURE'))).toHaveLength(2);
+    // The first Fragment child cannot match the compiled island's owned div host.
+    expect(error.mock.calls.filter(call => String(call[0]).includes('FORMA_E_HYDRATE_NODE'))).toHaveLength(2);
     // Separate caller-owned, unmarked containers exercise the public range API.
     // The refused compiled hosts retain their claims, status and original nodes.
     const publicRoot = document.createElement('section');
