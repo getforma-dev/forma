@@ -185,7 +185,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/form-control.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-independent-review",
       "original_named_cases": [
         "initializes static and reactive selects after their options, before ref",
         "writes textarea live values, overriding initial children",
@@ -197,7 +197,18 @@
         "uses live properties for adopted static and reactive form controls",
         "binds an adopted select after missing option children are constructed"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "First seven ordinary CSR controls are unchanged. The adopted static/reactive property case uses a connected matching original server tree and actual preparation, retaining every live-value assertion plus identity. The missing-option construction case now requires NODE refusal, unchanged empty select, selectedIndex -1 and zero mutation records; original repair expectation remains archived.",
+      "case_map": {
+        "initializes static and reactive selects after their options, before ref": "initializes static and reactive selects after their options, before ref",
+        "writes textarea live values, overriding initial children": "writes textarea live values, overriding initial children",
+        "does not let an attribute cache skip a reset after user edits": "does not let an attribute cache skip a reset after user edits",
+        "avoids writing an unchanged input value and preserves the caret": "avoids writing an unchanged input value and preserves the caret",
+        "handles static values after input type and does not assign filenames": "handles static values after input type and does not assign filenames",
+        "supports multiple selected values and clearing a multiple select": "supports multiple selected values and clearing a multiple select",
+        "updates selected properties after the user changes an option": "updates selected properties after the user changes an option",
+        "uses live properties for adopted static and reactive form controls": "uses live properties for adopted static and reactive form controls",
+        "binds an adopted select after missing option children are constructed": "refuses an adopted select with missing options without constructing them"
+      }
     },
     {
       "original": "packages/core/src/dom/__tests__/h-function-components.test.ts",
@@ -221,7 +232,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate-cleanup.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-independent-review",
       "original_named_cases": [
         "hydrated event listeners fire before cleanup",
         "after cleanup(el), event listeners no longer fire",
@@ -230,7 +241,15 @@
         "cleanup is idempotent \u2014 calling twice does not throw",
         "element can receive new listeners after cleanup"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All six original listener lifetime cases retained against actual prepare/commit/dispose. Private shared Symbol.for controller expectation intentionally replaced by ordinary h cleanup versus prepared owner isolation; adopted controller storage is no longer shared. Initial no-listener-before-commit assertion added.",
+      "case_map": {
+        "hydrated event listeners fire before cleanup": "hydrated event listeners fire only after commit",
+        "after cleanup(el), event listeners no longer fire": "after owner disposal, event listeners no longer fire",
+        "multiple event listeners on the same element share one AbortController": "one owner disposal revokes every adopted listener on the element",
+        "shares AbortController with element.ts (same Symbol.for key)": "keeps ordinary h listener cleanup independent of an adopted owner",
+        "cleanup is idempotent \u2014 calling twice does not throw": "owner disposal is idempotent",
+        "element can receive new listeners after cleanup": "element can receive a new adopted owner after disposal"
+      }
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate-fragment.test.ts",

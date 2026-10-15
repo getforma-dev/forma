@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRoot, createSignal } from '../../reactive';
+import { createRoot, createSignal, registerDisposer } from '../../reactive';
 import { h } from '../element';
-import { adoptNode, applyDynamicProps } from '../hydrate';
+import { prepareAdoption } from '../adoption';
 
 describe('live form properties', () => {
   it('initializes static and reactive selects after their options, before ref', () => {
@@ -104,34 +104,45 @@ describe('live form properties', () => {
   it('uses live properties for adopted static and reactive form controls', () => {
     createRoot((dispose) => {
       const [state, setState] = createSignal({ value: 'Saved', checked: true });
-      const input = document.createElement('input');
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      const textarea = document.createElement('textarea');
-      applyDynamicProps(input, { value: () => state().value });
-      applyDynamicProps(checkbox, { checked: () => state().checked });
-      applyDynamicProps(textarea, { value: 'Saved notes' });
+      const doc = document.implementation.createHTMLDocument();
+      doc.body.innerHTML = '<section><input value="Saved"><input type="checkbox" checked><textarea>Saved notes</textarea></section>';
+      const host = doc.body.firstElementChild!;
+      const [input, checkbox] = Array.from(host.querySelectorAll('input'));
+      const textarea = host.querySelector('textarea')!;
+      const original = Array.from(host.childNodes);
+      const plan = prepareAdoption(host, () => h('section', null,
+        h('input', { value: () => state().value }),
+        h('input', { type: 'checkbox', checked: () => state().checked }),
+        h('textarea', { value: 'Saved notes' }),
+      ));
+      registerDisposer(plan.dispose);
+      plan.commit();
+      expect(Array.from(host.childNodes)).toEqual(original);
       expect(textarea.value).toBe('Saved notes');
-      expect(input.value).toBe('Saved');
-      expect(checkbox.checked).toBe(true);
-      input.value = 'Dirty';
-      checkbox.checked = false;
+      expect(input!.value).toBe('Saved');
+      expect(checkbox!.checked).toBe(true);
+      input!.value = 'Dirty';
+      checkbox!.checked = false;
       setState({ value: 'Saved', checked: true });
-      expect(input.value).toBe('Saved');
-      expect(checkbox.checked).toBe(true);
+      expect(input!.value).toBe('Saved');
+      expect(checkbox!.checked).toBe(true);
       dispose();
     });
   });
 
-  it('binds an adopted select after missing option children are constructed', () => {
-    createRoot((dispose) => {
-      const select = document.createElement('select');
-      adoptNode({ type: 'element', tag: 'select', props: { value: 'b' }, children: [
-        { type: 'element', tag: 'option', props: { value: 'a' }, children: ['A'] },
-        { type: 'element', tag: 'option', props: { value: 'b' }, children: ['B'] },
-      ] }, select);
-      expect(select.value).toBe('b');
-      dispose();
-    });
+  it('refuses an adopted select with missing options without constructing them', () => {
+    const doc = document.implementation.createHTMLDocument();
+    doc.body.innerHTML = '<select></select>';
+    const select = doc.body.firstElementChild as HTMLSelectElement;
+    const observer = new MutationObserver(() => {});
+    observer.observe(select, { subtree: true, attributes: true, childList: true, characterData: true });
+    try {
+      expect(() => prepareAdoption(select, () => h('select', { value: 'b' },
+        h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B'),
+      ))).toThrow('FORMA_E_HYDRATE_NODE');
+      expect(select.childNodes).toHaveLength(0);
+      expect(select.selectedIndex).toBe(-1);
+      expect(observer.takeRecords()).toEqual([]);
+    } finally { observer.disconnect(); }
   });
 });

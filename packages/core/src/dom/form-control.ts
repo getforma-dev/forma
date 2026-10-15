@@ -65,7 +65,7 @@ export function writeFormControlProperty(el: Element, key: string, value: unknow
 }
 
 // ---------------------------------------------------------------------------
-// A textarea's reactive text: bound by the element, as its default value
+// A textarea's reactive text: bound by the element as controlled live/default state
 // ---------------------------------------------------------------------------
 
 /**
