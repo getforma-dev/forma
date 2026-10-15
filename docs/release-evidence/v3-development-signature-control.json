@@ -1,5 +1,5 @@
 {
-  "helper": "/Users/victorvillacis/dev/Forma/work/FORMA-185/forma/scripts/audit-release-signatures.mjs",
+  "helper": "scripts/audit-release-signatures.mjs",
   "node": "v24.22.0",
   "npm": "11.19.1",
   "controls": [

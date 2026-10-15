@@ -4,7 +4,7 @@ import { fork, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:http';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { join, dirname, resolve } from 'node:path';
+import { join, dirname, resolve, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 const self = fileURLToPath(import.meta.url);
@@ -40,7 +40,7 @@ if (process.argv[2] === '--registry') {
   const artifacts = join(root, 'artifacts'), project = join(root, 'consumer');
   mkdirSync(artifacts); mkdirSync(project);
   let registry;
-  const report = { helper, node: process.version, npm: execFileSync('npm',['--version'],{encoding:'utf8'}).trim(), controls: [] };
+  const report = { helper: relative(process.cwd(), helper).split('\\').join('/'), node: process.version, npm: execFileSync('npm',['--version'],{encoding:'utf8'}).trim(), controls: [] };
   const pack = (manifest) => {
     const stage = mkdtempSync(join(root, 'pack-')); mkdirSync(join(stage, 'package'));
     save(join(stage, 'package/package.json'), manifest);
