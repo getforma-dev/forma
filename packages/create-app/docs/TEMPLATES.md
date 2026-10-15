@@ -1,7 +1,9 @@
 # Maintaining source templates
 
 Both templates use the current typed Pages API. Minimal declares a numeric
-count in TypeScript and Rust, binds its handle and finalizes before listening.
+count in TypeScript and Rust, binds its home and empty-props About handles,
+and finalizes before listening. Only Counter is registered for activation;
+About has no islands and its native build publishes no JavaScript.
 Dashboard explicitly remains browser-rendered. Preserve the PageResponse
 boundary, strict compiler diagnostics, worker-off default, consumer MSRV and
 scripts-off npm policy when changing either template.
@@ -52,6 +54,21 @@ its report records the actual inventory and optional omissions. No external
 pin is upgraded to force deduplication. Final stable deduplication remains a
 slice 3 decision, alongside the remaining template/release cleanup.
 
-The distinct server count 7 check reads raw HTTP before JavaScript. The current
-whole-page mount retains its browser default 0; adopting differing handler
-state during activation remains slice 2, after the state-block work.
+## Slice 2 source and qualification
+
+Home passes its declared count to a unary Counter with component-local state.
+The native handler starts at7; an explicit Browser build starts at0. The
+compiler removes the authenticated native page mount and injects Counter's
+exact schema/binding metadata. About's empty-props page has no registered
+islands; its native manifest retains its IR and stylesheet with empty JS.
+Dashboard remains explicitly Browser.
+
+The combined source mount is a compile-time native selector, not a permitted
+whole-page SSR hydration call. Do not wrap it in an SSR runtime conditional,
+use its return, or add a second root: unsupported entry shapes refuse.
+
+The actual emitted source tests are in `tests/template-islands.test.ts`.
+Final slice2 acceptance additionally requires the integrated strict adopter,
+actual packed handler7 → activation → increment8/reset0, zero adoption writes
+and a real static navigation with no script/worker requests. Preserve slice1's
+raw-HTTP-only reports as historical evidence; they do not prove these claims.

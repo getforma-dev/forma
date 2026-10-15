@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed — FORMA-144 slice 2
+
+- Extract the minimal template's unary Counter island with a declared count. The native handler supplies7 independently of Browser mode's0; native compilation removes the whole-page mount and retains only the registered interactive region.
+- Add a typed empty-props About route sharing the stylesheet. Its native product has no islands or JavaScript; Dashboard remains explicitly Browser. Dependency manifests and lock seeds are unchanged.
+- Source controls pair the actual emitted metadata and browser entry. Final zero-write adoption and zero-network qualification still require the integrated104/105 packed consumers; slice3 release/size work remains open.
+
 ### Changed — FORMA-144 slice 1
 
 - Source templates now call the current typed Pages API, bind declared props and finalize before listening. Minimal declares a numeric count in TypeScript and Rust; dashboard remains explicitly browser-rendered.
