@@ -145,7 +145,7 @@ function nameOf(packageJson: string): string | undefined {
  * it); the walk stops at a `node_modules` directory. `cache` holds the answer
  * for every directory already walked.
  */
-function coreOf(file: string, cache: Map<string, string | undefined>): string | undefined {
+export function coreOf(file: string, cache: Map<string, string | undefined>): string | undefined {
   const walked: string[] = [];
   let dir = dirname(file);
   let found: string | undefined;

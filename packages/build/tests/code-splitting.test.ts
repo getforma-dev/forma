@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, wr
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { build } from '../src/build';
+import { build } from './helpers/named-build';
 import { watching } from './helpers/watch';
 
 const temporary: string[] = [];
@@ -24,7 +24,7 @@ function fixture() {
 }
 
 const chunks = (dist: string) => readdirSync(dist).filter(file => /^chunk\..*\.js$/.test(file));
-const listedChunks = (manifest: { assets: Record<string, string> }) => [...new Set(Object.values(manifest.assets))].filter(file => /^chunk\..*\.js$/.test(file));
+const listedChunks = (manifest: { assets: Record<string, string> }) => [...new Set(Object.values(manifest.aliases))].filter(file => /^chunk\..*\.js$/.test(file));
 
 describe('Opt-in ESM code splitting', () => {
   it('generates opt-in on-demand workers from the real immutable output graph without install-time downloads', async () => {
@@ -32,7 +32,7 @@ describe('Opt-in ESM code splitting', () => {
     const worker = readFileSync(join(dist, 'sw.js'), 'utf8');
     expect(worker).toContain('on-demand immutable assets only'); expect(worker).not.toContain('addAll');
     const allowed = JSON.parse(worker.match(/const ASSET_URLS = new Set\((\[.*\])\);/)![1]) as string[];
-    expect(allowed.sort()).toEqual([...new Set(Object.values(result.manifest.assets))].filter(name => name.endsWith('.js')).map(name => '/_assets/' + name).sort());
+    expect(allowed.sort()).toEqual([...new Set(Object.values(result.manifest.aliases))].filter(name => name.endsWith('.js')).map(name => '/_assets/' + name).sort());
     expect(allowed).not.toContain('/_assets/phone.js'); expect(allowed).not.toContain('/household');
   });
   it('keeps imports executable, lazy chunks deferred and the runtime singleton shared across routes', async () => {
@@ -44,25 +44,25 @@ describe('Opt-in ESM code splitting', () => {
     expect(firstFiles.map(file => readFileSync(join(dist, file), 'utf8')).join('')).not.toContain('LAZY_FINANCIAL_TOOL');
     expect(readdirSync(dist).filter(file => file.endsWith('.js')).map(file => readFileSync(join(dist, file), 'utf8')).join('')).toContain('LAZY_FINANCIAL_TOOL');
     const phone = await import(pathToFileURL(join(dist, route.js[0])).href);
-    const desktop = await import(pathToFileURL(join(dist, result.manifest.assets['desktop.js'])).href);
+    const desktop = await import(pathToFileURL(join(dist, result.manifest.aliases['desktop.js'])).href);
     expect(phone.first).toBe(desktop.second);
     const later = await phone.open(); expect(later.later).toBe(phone.first); expect(later.label).toBe('LAZY_FINANCIAL_TOOL');
     const size = (file: string) => { try { return statSync(join(dist, `${file}.br`)).size; } catch { return statSync(join(dist, file)).size; } };
     expect(route.total_size_br).toBe(firstFiles.reduce((sum, file) => sum + size(file), 0));
-    for (const file of readdirSync(dist).filter(file => file.endsWith('.js') && file !== 'sw.js')) expect(Object.values(result.manifest.assets)).toContain(file);
+    for (const file of readdirSync(dist).filter(file => file.endsWith('.js') && file !== 'sw.js')) expect(Object.values(result.manifest.aliases)).toContain(file);
   });
   it('invalidates linked entry URLs after a dynamic chunk changes and remains deterministic otherwise', async () => {
     const { src, config } = fixture(); const before = await build(config); const identical = await build(config);
     expect(identical.buildHash).toBe(before.buildHash);
     writeFileSync(join(src, 'later.ts'), 'import { singleton } from "./shared"; export const later = singleton; export const label = "CHANGED_FINANCIAL_TOOL";');
     const after = await build(config);
-    expect(after.manifest.assets['phone.js']).not.toBe(before.manifest.assets['phone.js']);
-    expect(after.manifest.assets['desktop.js']).toBe(before.manifest.assets['desktop.js']);
+    expect(after.manifest.aliases['phone.js']).not.toBe(before.manifest.aliases['phone.js']);
+    expect(after.manifest.aliases['desktop.js']).toBe(before.manifest.aliases['desktop.js']);
   });
   it('preserves explicitly server-inlined entry copies without overwriting graph manifest mappings', async () => {
     const { dist, config } = fixture(); const result = await build({ ...config, serverInlined: ['phone.js'] });
-    expect(readFileSync(join(dist, 'phone.js'), 'utf8')).toBe(readFileSync(join(dist, result.manifest.assets['phone.js']), 'utf8'));
-    expect(result.manifest.assets['phone.js']).toMatch(/^phone\.[A-Z0-9]{8}\.js$/);
+    expect(readFileSync(join(dist, 'phone.js'), 'utf8')).toBe(readFileSync(join(dist, result.manifest.aliases['phone.js']), 'utf8'));
+    expect(result.manifest.aliases['phone.js']).toMatch(/^phone\.[A-Z0-9]{8}\.js$/);
   });
   it('still emits genuine SSR IR for each configured page while splitting the browser graph', async () => {
     const { src, dist, config } = fixture();
@@ -108,7 +108,7 @@ describe('Opt-in ESM code splitting', () => {
     // place keeps it.
     const { src, dist, config } = fixture();
     await watching(config, async ({ manifest }) => {
-      await vi.waitFor(() => expect(manifest().build_hash).toBe('dev'), { timeout: 5000 });
+      await vi.waitFor(() => expect(manifest().build).toBe('dev'), { timeout: 5000 });
       const oldChunks = chunks(dist);
       const inode = () => statSync(join(dist, 'manifest.json'), { bigint: true }).ino;
       const first = inode();

@@ -26,7 +26,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { DIAGNOSTIC_CATALOGUE } from '@getforma/compiler';
 
-import { build } from '../src/build';
+import { build } from './helpers/named-build';
 import type { AssetManifest, BuildConfig, BuildDiagnostic } from '../src/types';
 import { buildInChild } from './helpers/child-build';
 import { watching } from './helpers/watch';
@@ -110,10 +110,10 @@ function fixture(core?: StandIn, extra: Partial<BuildConfig> = {}) {
 
 /** Which core the frame copied, and which cores each bundle contains. */
 function cores(dist: string, manifest: AssetManifest): { frame?: string; bundles: Record<string, string[]> } {
-  const runtime = manifest.assets['forma-runtime.js'];
+  const runtime = manifest.aliases['forma-runtime.js'];
   const frame = runtime ? /FRAME_(\w+)/.exec(readFileSync(join(dist, runtime), 'utf8'))?.[1] : undefined;
   const bundles: Record<string, string[]> = {};
-  for (const [name, file] of Object.entries(manifest.assets)) {
+  for (const [name, file] of Object.entries(manifest.aliases)) {
     if (name === 'forma-runtime.js' || !file.endsWith('.js')) continue;
     bundles[name] = [...new Set([...readFileSync(join(dist, file), 'utf8').matchAll(/CORE_(\w+)/g)].map(m => m[1]!))].sort();
   }
@@ -187,9 +187,9 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
 
     const core = readFileSync(frameFile);
     const name = `forma-runtime.${sha256(core, 'hex').slice(0, 8)}.js`;
-    expect(result.manifest.assets['forma-runtime.js']).toBe(name);
+    expect(result.manifest.aliases['forma-runtime.js']).toBe(name);
     const manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8'));
-    expect(manifest.assets['forma-runtime.js']).toBe(name);
+    expect(manifest.aliases['forma-runtime.js']).toBe(name);
 
     // The bytes are core's, unchanged: no minify, no transform, no line
     // endings rewritten, so the SHA-256 forma-server computes for the frame's
@@ -201,7 +201,7 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
     expect(written.toString('utf8')).not.toBe(CDN_ALIAS);
     // Only under its hashed name: no unhashed copy, and no route loads it.
     expect(existsSync(join(dist, 'forma-runtime.js'))).toBe(false);
-    expect(manifest.routes['/'].js).toEqual([result.manifest.assets['app.js']]);
+    expect(manifest.routes['/'].js).toEqual([result.manifest.aliases['app.js']]);
     expect(logs.join('\n')).toContain('Preview frame runtime: forma-runtime.js from @getforma/core 2.1.0');
     expect(logs.join('\n')).toContain('the core the bundles import');
   }, 30_000);
@@ -209,13 +209,13 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
   it('the runtime is inlined, never fetched: no compressed copies, and no entry in the on-demand worker\'s immutable list', async () => {
     const { dist, config } = fixture({});
     const result = await build({ ...config, previewFrame: true, serviceWorker: 'on-demand', app: 'demo' });
-    const runtime = result.manifest.assets['forma-runtime.js']!;
+    const runtime = result.manifest.aliases['forma-runtime.js']!;
     const files = readdirSync(dist);
     expect(files).toContain(runtime);
     expect(files.filter(file => file.startsWith(`${runtime}.`))).toEqual([]);
     // The application's bundle is listed, as before.
     const worker = readFileSync(join(dist, 'sw.js'), 'utf8');
-    expect(worker).toContain(`/_assets/${result.manifest.assets['app.js']}`);
+    expect(worker).toContain(`/_assets/${result.manifest.aliases['app.js']}`);
     expect(worker).not.toContain('forma-runtime');
   }, 30_000);
 
@@ -233,7 +233,7 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
     expect(snapshot(off.dist)).toEqual(before);
     expect(snapshot(refusedRuntime.dist)).toEqual(before);
     const manifest = JSON.parse(readFileSync(join(unset.dist, 'manifest.json'), 'utf8'));
-    expect(Object.keys(manifest.assets)).toEqual(['app.js']);
+    expect(Object.keys(manifest.aliases)).toEqual(['app.js']);
     expect(Object.keys(before).filter(file => file.startsWith('forma-runtime'))).toEqual([]);
   }, 30_000);
 
@@ -346,8 +346,8 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
       const { dist, frameFile, config } = fixture({});
       await watching({ ...config, codeSplitting, previewFrame: true }, async ({ manifest, output }) => {
         await vi.waitFor(() => {
-          expect(manifest().build_hash).toBe('dev');
-          expect(manifest().assets['forma-runtime.js'], output()).toBe('forma-runtime.js');
+          expect(manifest().build).toBe('dev');
+          expect(manifest().aliases['forma-runtime.js'], output()).toBe('forma-runtime.js');
         }, { timeout: 10_000 });
         expect(readFileSync(join(dist, 'forma-runtime.js')).equals(readFileSync(frameFile))).toBe(true);
       });

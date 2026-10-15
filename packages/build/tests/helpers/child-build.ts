@@ -37,7 +37,7 @@ export async function buildInChild(config: BuildConfig, cwd: string, scratch: st
     `import { writeFileSync } from 'node:fs';`,
     `import { build } from ${JSON.stringify(pathToFileURL(runner).href)};`,
     `try {`,
-    `  const { manifest } = await build(${JSON.stringify(config)});`,
+    `  const { manifest } = await build(${JSON.stringify({app: 'fixture', ...config})});`,
     `  writeFileSync(${JSON.stringify(result)}, JSON.stringify({ manifest }));`,
     `} catch (error) {`,
     `  writeFileSync(${JSON.stringify(result)}, JSON.stringify({ message: error.message, diagnostics: error.diagnostics }));`,

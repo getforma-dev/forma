@@ -76,7 +76,7 @@ export function readFmirContainer(bytes: Uint8Array, reader: WriterVersion = COM
     throw new FmirContainerError(C.LOAD_102, legacy ? `an FMIR module before v3 (header version ${view.getUint16(4, true)}): rebuild with a 3.x compiler` : 'bad signature');
   }
   const writer: WriterVersion = [view.getUint16(8, true), view.getUint16(10, true), view.getUint16(12, true)];
-  requireRule(writer.every((v, i) => v === reader[i]), C.LOAD_108, `writer ${writer.join('.')}; reader ${reader.join('.')}`);
+  requireRule(writer[0] === reader[0] && writer[1] <= reader[1], C.LOAD_108, `writer ${writer.join('.')} is outside reader ${reader.join('.')}'s major/minor window`);
   const bodyLength = view.getUint32(14, true), checksum = view.getUint32(18, true);
   requireRule(bodyLength === bytes.length - C.HEADER_SIZE, C.LOAD_104, `declared body ${bodyLength}; actual ${bytes.length - C.HEADER_SIZE}`);
   const computed = crc32(bytes.subarray(0, 18), bytes.subarray(22));

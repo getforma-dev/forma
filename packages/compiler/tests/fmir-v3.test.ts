@@ -54,7 +54,18 @@ describe('FMIR v3 wire contract', () => {
     expect(baseWriterVersion('3.2.7-alpha.1+build.6')).toEqual([3, 2, 7]);
     expect(() => baseWriterVersion('3.2')).toThrow();
     expect(() => baseWriterVersion('65536.0.0')).toThrow(/u16/);
-    for (const version of ['3.1.0', '3.0.1', '2.9.0']) expect(() => readFmirContainer(fixture(`LOAD-108-writer-${version}.ir`))).toThrow(/LOAD-108/);
+    expect(readFmirContainer(fixture('LOAD-108-writer-3.0.1.ir')).writer).toEqual([3, 0, 1]);
+    for (const version of ['3.1.0', '2.9.0']) expect(() => readFmirContainer(fixture(`LOAD-108-writer-${version}.ir`))).toThrow(/LOAD-108/);
+  });
+  it('runs the shared compatibility table through actual encoded headers', () => {
+    const pairs = JSON.parse(readFileSync(resolve(root, 'crates/forma-ir/tests/fixtures/compatibility/version-pairs.json'), 'utf8')) as {reader: string; writer: string; accepted: boolean}[];
+    const sections = readFmirContainer(fixture('PASS-good-a.ir')).sections;
+    for (const {reader, writer, accepted} of pairs) {
+      const bytes = encodeFmirSections(sections, baseWriterVersion(writer));
+      const read = () => readFmirContainer(bytes, baseWriterVersion(reader));
+      if (accepted) expect(read().writer).toEqual(baseWriterVersion(writer));
+      else expect(read).toThrow(`writer ${baseWriterVersion(writer).join('.')} is outside reader ${baseWriterVersion(reader).join('.')}`);
+    }
   });
   it('pins streaming CRC and skips rather than zero-fills its field', () => {
     expect(crc32(enc.encode('123456789'))).toBe(C.CRC_CHECK_VALUE);

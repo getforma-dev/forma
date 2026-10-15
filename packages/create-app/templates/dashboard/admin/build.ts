@@ -6,6 +6,7 @@ import { build } from '@getforma/build';
 // `render_browser_shell`, and nothing here turns SSR on: an SSR build of this
 // app emits island placeholders the client cannot adopt.
 await build({
+  app: '{{APP_NAME}}',
   entryPoints: [
     { entry: 'src/app.tsx', outfile: 'dashboard.js', ssr: false },
   ],

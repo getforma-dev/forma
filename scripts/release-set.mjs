@@ -40,11 +40,22 @@ export function assertReleaseSet(packages, tag) {
   return version;
 }
 function internal(name) { return name.startsWith('@getforma/') || CRATES.includes(name); }
-function updateRequirements(p, version) {
+export function compatibilityPeer(version) {
+  assert(SEMVER.test(version), 'peer range requires a supported package version');
+  const [major, minor] = version.split('.');
+  const stable = `^${major}.${minor}.0`;
+  // npm excludes prereleases from ordinary carets: opt into this coordinated
+  // prerelease only, without admitting a future minor's prerelease.
+  return version.includes('-') ? `${stable} || =${version}` : stable;
+}
+function updateRequirements(p, version, owner = p.name) {
   for (const kind of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
     for (const name of Object.keys(p[kind] ?? {})) if (internal(name)) p[kind][name] = `=${version}`;
   }
+  const peer = owner === '@getforma/compiler' ? '@getforma/core' : owner === '@getforma/build' ? '@getforma/compiler' : null;
+  if (peer) p.peerDependencies = { ...p.peerDependencies, [peer]: compatibilityPeer(version) };
 }
+
 export function versionFiles(root, version) {
   assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3, 'expected a 3.x-or-later release version or X.Y.Z-dev');
   const files = new Map();
@@ -70,7 +81,8 @@ export function versionFiles(root, version) {
   const lock = JSON.parse(read('package-lock.json'));
   for (const [path, p] of Object.entries(lock.packages)) {
     if (NPM.some(name => path === `packages/${name}`)) p.version = version;
-    updateRequirements(p, version);
+    const member = NPM.find(name => path === `packages/${name}`);
+    updateRequirements(p, version, member ? `@getforma/${member}` : p.name);
   }
   files.set('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
   for (const path of ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock']) {

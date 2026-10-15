@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { builtinModules, createRequire } from 'node:module';
 import {
   NEVER_COPY,
+  applicationName,
   placeCargoLockRoot,
   replacePlaceholders,
   restoreGitignores,
@@ -321,5 +322,20 @@ describe('placeCargoLockRoot', () => {
   it('does nothing when there is no Cargo.lock', () => {
     expect(() => placeCargoLockRoot(path.join(dir, 'Cargo.lock'), 'app')).not.toThrow();
     expect(fs.existsSync(path.join(dir, 'Cargo.lock'))).toBe(false);
+  });
+});
+
+describe('applicationName', () => {
+  it('preserves ordinary project names and derives stable distinct IDs for other accepted names', () => {
+    expect(applicationName('ledger')).toBe('ledger');
+    expect(applicationName('ledger-admin')).toBe('ledger-admin');
+    for (const name of ['ledger_admin', 'x'.repeat(64), 'x'.repeat(63) + 'y']) {
+      expect(validateProjectName(name)).toBeNull();
+      expect(applicationName(name)).toMatch(/^[a-z0-9][a-z0-9-]{0,62}$/);
+      expect(applicationName(name)).toBe(applicationName(name));
+    }
+    expect(applicationName('ledger_admin')).not.toBe(applicationName('ledger-admin'));
+    expect(applicationName('x'.repeat(64))).not.toBe(applicationName('x'.repeat(63) + 'y'));
+    expect(() => applicationName('../outside')).toThrow();
   });
 });

@@ -76,6 +76,7 @@ for (const name of cases) {
   // One page per case, built under its own name so the hashed files of all
   // cases can share one /_assets/ directory without colliding.
   const { manifest } = await build({
+    app: 'e2e-ssr',
     entryPoints: [{ entry, outfile: `${name}.js` }],
     routes: { '/': { js: [name], css: [] } },
     outputDir: dist,

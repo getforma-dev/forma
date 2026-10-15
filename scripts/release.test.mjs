@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { selectRun, checkJobs } from './check-release-ci.mjs';
 import { registryStatus, waitForPackage } from './release-publish.mjs';
-import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, digest, run, json } from './release-set.mjs';
+import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, digest, run, json } from './release-set.mjs';
 
 const sha = 'a'.repeat(40), repo = 'getforma-dev/forma';
 const goodRun = { id: 100, head_sha: sha, head_branch: 'main', event: 'push', path: '.github/workflows/ci.yml', repository: { full_name: repo }, status: 'completed', conclusion: 'success', run_number: 7, run_attempt: 1 };
@@ -181,4 +181,22 @@ test('malformed second template leaves every source file unchanged during stagin
     assert.throws(() => stageTemplates(dir, [{ registry: 'crates', name: 'forma-ir', version: '3.0.0', sha256: 'a'.repeat(64) }], dir), /missing checksum/);
     for (const [path, content] of before) assert.equal(readFileSync(path, 'utf8'), content);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('version preparation keeps the window peers and exact packed crate pins distinct', () => {
+  for (const [version, expected] of [
+    ['3.2.7', '^3.2.0'], ['3.2.0-dev', '^3.2.0 || =3.2.0-dev'],
+    ['3.2.0-alpha.1', '^3.2.0 || =3.2.0-alpha.1'],
+  ]) {
+    assert.equal(compatibilityPeer(version), expected);
+    const files = versionFiles(ROOT, version);
+    for (const [member, peer] of [['compiler', '@getforma/core'], ['build', '@getforma/compiler']]) {
+      const manifest = JSON.parse(files.get(`packages/${member}/package.json`));
+      const locked = JSON.parse(files.get('package-lock.json')).packages[`packages/${member}`];
+      assert.equal(manifest.peerDependencies[peer], expected);
+      assert.equal(locked.peerDependencies[peer], expected);
+      if (member === 'build') assert.equal(manifest.peerDependenciesMeta[peer].optional, true);
+    }
+    assert.match(files.get('crates/forma-server/Cargo.toml'), new RegExp(`version = "=${version.replaceAll('.', '\\.') }"`));
+  }
 });

@@ -62,6 +62,7 @@ const { build } = await import(join(repo, 'packages/build/dist/index.js'));
 const sha256 = (bytes, encoding) => createHash('sha256').update(bytes).digest(encoding);
 
 const config = (outputDir, extra = {}) => ({
+  app: 'e2e-frame',
   entryPoints: [{ entry: join(app, 'src', 'app.ts'), outfile: 'app.js' }],
   routes: { '/': { js: ['app'], css: [] } },
   outputDir,
@@ -72,8 +73,8 @@ for (const dir of ['dist-on', 'dist-off', 'dist-tampered']) rmSync(join(out, dir
 mkdirSync(out, { recursive: true });
 
 const on = await build(config(join(out, 'dist-on'), { previewFrame: true }));
-const asset = on.manifest.assets['forma-runtime.js'];
-if (!asset) fail(`previewFrame: true wrote no assets["forma-runtime.js"]: ${JSON.stringify(on.manifest.assets)}`);
+const asset = on.manifest.aliases['forma-runtime.js'];
+if (!asset) fail(`previewFrame: true wrote no assets["forma-runtime.js"]: ${JSON.stringify(on.manifest.aliases)}`);
 const frame = readFileSync(join(core, 'dist', 'formajs-frame.global.js'));
 const written = readFileSync(join(out, 'dist-on', asset));
 if (!written.equals(frame)) fail(`${asset} is not core's dist/formajs-frame.global.js byte for byte`);
@@ -82,7 +83,7 @@ if (existsSync(cdnAlias) && readFileSync(cdnAlias).equals(written)) fail(`${asse
 if (asset !== `forma-runtime.${sha256(frame, 'hex').slice(0, 8)}.js`) fail(`${asset} is not named by its content hash`);
 
 const off = await build(config(join(out, 'dist-off')));
-if ('forma-runtime.js' in off.manifest.assets) fail('the build without previewFrame names a runtime');
+if ('forma-runtime.js' in off.manifest.aliases) fail('the build without previewFrame names a runtime');
 
 cpSync(join(out, 'dist-on'), join(out, 'dist-tampered'), { recursive: true });
 appendFileSync(join(out, 'dist-tampered', asset), TAMPER);

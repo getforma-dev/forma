@@ -18,7 +18,7 @@ import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { build } from '../src/build';
+import { build } from './helpers/named-build';
 import type { BuildConfig } from '../src/types';
 import { watching } from './helpers/watch';
 
@@ -75,7 +75,7 @@ describe('watch mode resolves the development export condition (FORMA-169)', () 
         // Watch mode writes the dev manifest after its first build, under the
         // entry's own name. (`manifest()` also fails the test if the child died.)
         await vi.waitFor(() => {
-          expect(manifest().build_hash).toBe('dev');
+          expect(manifest().build).toBe('dev');
           expect(existsSync(join(dist, 'app.js'))).toBe(true);
         }, { timeout: 10_000 });
         // Retried: the first build may still be writing the bundle.
@@ -95,7 +95,7 @@ describe('watch mode resolves the development export condition (FORMA-169)', () 
     for (const codeSplitting of [false, true]) {
       const { dist, config } = fixture(codeSplitting);
       const result = await build(config);
-      expect(await resolvedBy(join(dist, result.manifest.assets['app.js']!)), `codeSplitting: ${codeSplitting}`).toEqual([
+      expect(await resolvedBy(join(dist, result.manifest.aliases['app.js']!)), `codeSplitting: ${codeSplitting}`).toEqual([
         'dual-build:default',
         'module-first:module',
         'browser-first:browser',

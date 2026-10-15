@@ -25,14 +25,14 @@ export interface Watcher {
   output(): string;
 }
 
-export async function watching(config: BuildConfig, body: (watcher: Watcher) => Promise<void>): Promise<void> {
+export async function watching(config: BuildConfig, body: (watcher: Watcher) => Promise<void>, cwd?: string): Promise<void> {
   const runner = join(config.outputDir, '..', `watch-runner-${process.pid}.mjs`);
   await bundleBuildRunner(runner);
   // On POSIX the child leads its own process group, so the kill below also
   // reaches the esbuild service it starts, which otherwise can still be
   // writing into the output directory while the test removes it (ENOTEMPTY).
   const group = process.platform !== 'win32';
-  const child = spawn(process.execPath, ['--input-type=module', '-e', `import {build} from ${JSON.stringify(pathToFileURL(runner).href)}; await build(${JSON.stringify({ ...config, watch: true })});`], { stdio: ['ignore', 'pipe', 'pipe'], detached: group });
+  const child = spawn(process.execPath, ['--input-type=module', '-e', `import {build} from ${JSON.stringify(pathToFileURL(runner).href)}; await build(${JSON.stringify({ app: 'fixture', ...config, watch: true })});`], { cwd, stdio: ['ignore', 'pipe', 'pipe'], detached: group });
   let output = '';
   child.stdout.on('data', chunk => { output += chunk; });
   child.stderr.on('data', chunk => { output += chunk; });
