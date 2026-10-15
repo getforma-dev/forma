@@ -6,6 +6,14 @@
       "bytes": 99,
       "sha256": "7a016d3041a3b8fd19d6b0bfeff4c7c511928eaac0f958d58a1ead40e2e90343"
     },
+    "sources/ir-walk-zero-number-condition.declarations.ts": {
+      "bytes": 32,
+      "sha256": "dcebad9a9f7c9296d3364490ab0cddb2066fd46cdda0125bb2a3500bfce004f3"
+    },
+    "sources/ir-walk-zero-number-condition.expression.ts": {
+      "bytes": 47,
+      "sha256": "4a5ec34b947c91e6be4daae8a65a3e50b8b6d2daee743ab15d0c54a93d571e38"
+    },
     "sources/props-bindings-declared-boolean-child.page.ts": {
       "bytes": 246,
       "sha256": "0f397efad30a4fc547ba17de82367a1e4a79373236f41e02fe0e8a02786f0b08"

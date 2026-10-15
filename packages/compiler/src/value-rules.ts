@@ -1,5 +1,5 @@
 /**
- * Value rule 6, the compiler's half (FORMA-182; docs/parity-rules.md;
+ * Value rules 6 and 7, the compiler's half (FORMA-182; docs/parity-rules.md;
  * decision brief DR-9, design 4's decision 2).
  *
  * Rule 6, BUILD-614: a text position whose value is boolean-typed is a build
@@ -8,13 +8,18 @@
  * as text either breaks parity or shows nothing in the browser: the author
  * meant the word (`String(flag)`) or a conditional.
  *
- * It refuses only what the compiler can prove from the source: a declared or
+ * Rule 7, BUILD-615: a `createShow` condition or a ternary test must be
+ * boolean-typed. The walker picks the branch by ECMAScript ToBoolean, which a
+ * number or a string only imitates (React's `{count && …}` printing `0`).
+ *
+ * Both refuse only what the compiler can prove from the source: a declared or
  * closed type, a signal's literal default, a module-level boolean `const`, or
  * the operator that produces the value. What it cannot type is left to the
- * existing paths (BUILD-301).
+ * existing paths (BUILD-301, BUILD-302).
  *
- * Verified by: packages/compiler/tests/value-rule-6-boolean-text.test.ts and
- * the BUILD-614 pair in packages/compiler/tests/diagnostics-conformance.test.ts.
+ * Verified by: packages/compiler/tests/value-rule-6-boolean-text.test.ts,
+ * packages/compiler/tests/value-rule-7-conditions.test.ts and the BUILD-614 and
+ * BUILD-615 pairs in packages/compiler/tests/diagnostics-conformance.test.ts.
  */
 import * as t from '@babel/types';
 import { parse } from '@babel/parser';
@@ -87,20 +92,22 @@ export function closedKind(values: readonly unknown[]): ValueKind {
   return values.some(value => typeof value === 'boolean') ? 'boolean' : 'other';
 }
 
-const moduleBooleans = new Map<string, { source: string; values: Map<string, boolean> }>();
+type Literal = boolean | number | string;
+const moduleLiterals = new Map<string, { source: string; values: Map<string, Literal> }>();
 
 /**
- * A module-level `const NAME = true | false` of `file` (export-wrapped or not,
- * through `as const`), unless the name is also bound in a nested scope (the
- * same conservative shadowing guard the string constants use).
+ * A module-level `const NAME = <boolean, number or string literal>` of `file`
+ * (export-wrapped or not, through `as const`), unless the name is also bound in
+ * a nested scope (the same conservative shadowing guard the string constants
+ * use). Rules 6 and 7 read its type; only a condition folds its value.
  */
-export function moduleBoolean(file: string | undefined, name: string): boolean | undefined {
+export function moduleLiteral(file: string | undefined, name: string): Literal | undefined {
   if (!file) return undefined;
   let source: string;
   try { source = readSourceFile(file); } catch { return undefined; }
-  let entry = moduleBooleans.get(file);
+  let entry = moduleLiterals.get(file);
   if (!entry || entry.source !== source) {
-    const values = new Map<string, boolean>();
+    const values = new Map<string, Literal>();
     try {
       const ast = parse(source, { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
       for (const statement of ast.program.body) {
@@ -109,18 +116,18 @@ export function moduleBoolean(file: string | undefined, name: string): boolean |
         for (const declarator of declaration.declarations) {
           let init: t.Node | null | undefined = declarator.init;
           while (init && (t.isTSAsExpression(init) || t.isTSSatisfiesExpression(init) || t.isParenthesizedExpression(init))) init = init.expression;
-          if (t.isIdentifier(declarator.id) && t.isBooleanLiteral(init)) values.set(declarator.id.name, init.value);
+          if (t.isIdentifier(declarator.id) && (t.isBooleanLiteral(init) || t.isNumericLiteral(init) || t.isStringLiteral(init))) values.set(declarator.id.name, init.value);
         }
       }
       for (const shadowed of nestedScopeBindings(ast)) values.delete(shadowed);
     } catch { /* an unparseable module proves nothing */ }
     entry = { source, values };
-    moduleBooleans.set(file, entry);
+    moduleLiterals.set(file, entry);
   }
   return entry.values.get(name);
 }
 
-function refuse(code: 'BUILD-614', file: string, node: t.Node, detail: string): never {
+function refuse(code: 'BUILD-614' | 'BUILD-615', file: string, node: t.Node, detail: string): never {
   const at = originalPosition(file, node.loc?.start ?? { line: 1, column: 0 });
   throw new PropsSchemaError(file, at.line, at.column, detail, code);
 }
@@ -129,4 +136,10 @@ function refuse(code: 'BUILD-614', file: string, node: t.Node, detail: string): 
 export function refuseBooleanText(file: string, node: t.Node, what: string): never {
   refuse('BUILD-614', file, node,
     `${what} is a boolean in text: the browser writes nothing for it whatever its value, and the server would write "true" or "false"; write String(flag) for the word, or createShow or a ternary for content`);
+}
+
+/** Rule 7: `what` is a condition that is not boolean-typed. */
+export function refuseConditionType(file: string, node: t.Node, what: string): never {
+  refuse('BUILD-615', file, node,
+    `${what} is not boolean-typed: the server would pick the branch by truthiness, which the page only imitates; compare explicitly (count() > 0, name() !== '', item() !== null)`);
 }

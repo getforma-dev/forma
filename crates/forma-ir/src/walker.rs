@@ -6278,6 +6278,7 @@ mod tests {
         const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
         const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
         const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
+        const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
 
         fn cases(file: &str, section: &str) -> Vec<Value> {
             let all: Value = serde_json::from_str(file).unwrap();
@@ -6563,6 +6564,43 @@ mod tests {
                         &want,
                     );
                 }
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_7_a_boolean_condition_selects_the_branch() {
+            // The type refusal itself is the compiler's (BUILD-615); a
+            // compiled SHOW_IF reads a Bool slot, and its range is what core's
+            // suite and the three-engine replay adopt.
+            let mut failures = Vec::new();
+            for case in cases(CONDITIONS, "walker") {
+                let (id, branch) = (field(&case, "id"), field(&case, "branch"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("div", &[])
+                    .show_if(
+                        slot,
+                        |p| {
+                            p.open("b", &[]).text("then").close("b");
+                        },
+                        |p| {
+                            p.open("i", &[]).text("else").close("i");
+                        },
+                    )
+                    .close("div");
+                let inner = if branch == "then" {
+                    "<b>then</b>"
+                } else {
+                    "<i>else</i>"
+                };
+                check(
+                    &mut failures,
+                    &format!("conditions/walker/{id}"),
+                    &page.render(),
+                    &format!("<div><!--f:s{slot}-->{inner}<!--/f:s{slot}--></div>"),
+                );
             }
             finish(failures);
         }

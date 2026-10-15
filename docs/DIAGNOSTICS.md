@@ -655,6 +655,30 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/
 [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/pass/app.tsx) pin the
 original TSX position of the text.
 
+### BUILD-615 Condition that is not boolean-typed
+
+**Why.** FORMA-182, value rule 7 ([parity rules](parity-rules.md)): the walker picks a
+`SHOW_IF` branch by the condition's value, with ECMAScript truthiness for anything that is not a
+boolean, and a page whose condition is a number or a string only imitates what the author meant
+(React's `{count && …}` printing `0` is the shape kept out). The compiler refuses a
+`createShow` condition or a ternary test it can prove is not boolean-typed: a declared prop of
+another type (an optional boolean is admitted: absent reads as false on both sides), a signal
+whose literal default is a number, a string or `null`, a closed value (an aggregate or list-row
+field, a module-level `const`) of another type, a literal, or an expression whose result is not
+always a boolean (`a() && count()`, `name() || 'x'`). A boolean signal, a negation, a comparison,
+`Boolean(x)`, `&&` and `||` of booleans, and a module-level boolean `const` (now folded, so the
+server renders the branch the browser takes) are admitted. A condition the compiler cannot type
+at all stays BUILD-302. This refusal is mandatory without strict mode.
+
+**Fix.** Compare explicitly so the condition is a boolean: `() => count() > 0`,
+`() => name() !== ''`, `() => item() !== null`, or `!!x` when truthiness is what is meant.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/pass/app.tsx) pin the
+original TSX position of the condition.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.

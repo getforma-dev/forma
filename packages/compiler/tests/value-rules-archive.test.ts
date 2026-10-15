@@ -1,6 +1,6 @@
 /** The archived pre-value-rules sources (docs/archive/2026-10-15-pre-value-rules) stay
  *  executable refusal evidence: each form FORMA-182's rules 6 and 7 migrated now refuses with
- *  its code. */
+ *  its code (BUILD-614, BUILD-615). */
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -33,9 +33,16 @@ describe('archived pre-value-rules sources', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(() => generateRealIr(join(dir, 'app.ts'))).toThrow(/^BUILD-614 .*app\.ts:6:\d+: signal open\(\) is a boolean in text/);
   });
+  it('the zero-number condition the low-level walk read refuses with BUILD-615 at the condition, composed into a page', () => {
+    const dir = scratch();
+    writeFileSync(join(dir, 'app.ts'), archived('declared-page.app.ts'));
+    writeFileSync(join(dir, 'page.ts'), `import { h, createSignal } from '@getforma/core';\n${archived('ir-walk-zero-number-condition.declarations.ts')}\nexport function Page() { return h('main', null, ${archived('ir-walk-zero-number-condition.expression.ts')}); }`);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(() => generateRealIr(join(dir, 'app.ts'))).toThrow(/^BUILD-615 .*page\.ts:3:\d+: condition count\(\.\.\.\) is not boolean-typed/);
+  });
   it('keeps every archived original byte-exact under its manifest', () => {
     const names = Object.keys(manifest.sha256).sort();
-    expect(names.length).toBe(3);
+    expect(names.length).toBe(5);
     for (const name of names) {
       const bytes = readFileSync(join(ARCHIVE, name));
       expect(bytes.length, name).toBe(manifest.sha256[name]!.bytes);

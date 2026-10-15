@@ -1,12 +1,13 @@
 # Parity rules: the marker vocabulary and the value rules
 
 **Status:** rule 1 is stated and implemented for the body/DOM slice (FORMA-182,
-checkpoint 2), and rules 2 to 6 are stated with their shared vectors; the
-marker vocabulary below describes what the walker writes today. Rule 7 is
-listed with where its current behaviour lives; this document does not claim it
-is qualified, and FORMA-182 is not complete while it, the namespace-vector
-relocation, `renderBoth` (FORMA-184) and the ticket's large-scale
-qualification remain open.
+checkpoint 2), and rules 2 to 7 are stated with their shared vectors, each
+read by the Rust and TypeScript suites and, where the rule reaches the DOM,
+replayed in Chromium, Firefox and WebKit; the marker vocabulary below
+describes what the walker writes today. Changes that need a broader decision
+are written as proposals at the end, not as code. FORMA-182 is not complete
+while the namespace-vector relocation, `renderBoth` (FORMA-184) and the
+ticket's large-scale (fuzzed) qualification remain open.
 
 **Why one document.** Three implementations produce or consume the same tree:
 the Rust walker (`crates/forma-ir/src/walker.rs`) writes HTML, `h()` in
@@ -385,11 +386,65 @@ Applications are counted with FORMA-192's read-only runs. The FMIR corpus
 (`crates/forma-ir/tests/fixtures/js-emitter`) and the declared-props fixtures
 are byte-identical.
 
-## Rule 7: listed, not qualified here
+## Rule 7: conditions are boolean-typed
 
-| # | Rule | Where the current behaviour lives |
-|---|---|---|
-| 7 | Conditions are boolean-typed | Not implemented; code reserved with FORMA-101 |
+**Statement.** The condition of a `createShow` and the test of a ternary child
+must be boolean-typed. A condition the compiler can prove is of another type is
+a build error, `BUILD-615`: a declared prop that is not a boolean, a signal
+whose literal default is a number, a string or `null`, a closed value (an
+aggregate or list-row field, an aggregate itself, a module-level `const`) of
+another type, a non-boolean literal, or an expression whose result is not always
+a boolean (`a() && count()`, `name() || 'x'`). Admitted: a declared boolean
+(optional included: absent reads as `false` on both sides), a boolean signal, a
+closed boolean, a boolean literal, `!x` and `!!x`, a comparison, `Boolean(x)`,
+and `&&` or `||` of booleans. A module-level boolean `const` is now folded in a
+condition, so the server renders the branch the browser takes (it used to be
+`BUILD-302`, the `else` branch whatever the value). A condition the compiler
+cannot type at all keeps `BUILD-302`: the server renders the `else` branch
+without proof, as before.
+
+**Why.** The walker picks a `SHOW_IF` branch by the slot's boolean; for any
+other value it falls back to ECMAScript truthiness, which a number or a string
+only imitates what the author meant (React's `{count && …}` printing `0` is the
+shape design 4 keeps out). The compiler built every such condition (first
+failures: `work/FORMA-182-rules/first-failures/compiler-rule-7.log`, 17 of 28:
+the fifteen refusals missing, a module boolean reported `BUILD-302` and rendered
+`else` when it was `true`). With the type fixed at build time, the walker's
+truthiness fallback is unreachable from a compiled product.
+
+**Implementation.** Compiler: `packages/compiler/src/ir-walk.ts` > `addShowSlot`
+(the one place a `createShow` condition and a ternary test become a `SHOW_IF`
+slot) checks the declared type (`props-bindings.ts` > `declaredKind`), the closed
+values (`value-rules.ts` > `closedKind`) and the expression (`valueKind`), refuses
+with `refuseConditionType`, and folds module booleans with `moduleLiteral`.
+`BUILD-615` is catalogued in `diagnostics.ts` and `docs/DIAGNOSTICS.md` with its
+conformance pair (`packages/compiler/tests/fixtures/conformance/BUILD-615/`:
+`() => count()` refused, `() => count() > 0` admitted). Rust and core: no change;
+the walker selects by the boolean, `createShow` by the condition's value.
+
+**Vectors.** `crates/forma-ir/tests/fixtures/parity/conditions.json`:
+`compiledCondition` (twenty-eight shapes, each refused with its code or built as
+a `SHOW_IF` on a `TYPE_BOOL` slot with exactly its `diagnostics` and, where
+given, the branch `writes` shows under the defaults) and `walker` (the branch a
+`Bool` slot selects). Consumers: `packages/compiler/tests/value-rule-7-conditions.test.ts`,
+the `BUILD-615` pair in `packages/compiler/tests/diagnostics-conformance.test.ts`,
+`crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
+"rule_7_a_boolean_condition_selects_the_branch" (the exact `<!--f:sN-->` range
+with element branches), `packages/core/src/dom/__tests__/value-rule-7-conditions.test.ts`
+(`createShow` on a boolean, static and toggled; the walker's range adopted without
+a write and toggled), and `packages/core/e2e/value-rules.spec.ts` in the three
+engines (the same range parsed, adopted without a write, toggled and back).
+
+**Migration.** A page whose condition is a number, a string, `null` or an object
+no longer builds; the fix is an explicit comparison or `!!`. One compiler test
+read a zero-number condition (`tests/ir-walk.test.ts` > "writes false when the
+condition evaluates falsy, including a zero number read through !!"); it reads
+`!!count()` now, and the original fragments are archived in
+`docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-615` by
+`packages/compiler/tests/value-rules-archive.test.ts`. The FMIR corpus, the
+declared-props fixtures, the create-app templates (the dashboard is
+`ssr: false`; the minimal template has no condition) and the SSR e2e cases build
+unchanged. Applications are counted with FORMA-192's read-only runs.
 
 ## Proposals (not implemented)
 
@@ -410,6 +465,51 @@ needs its own vectors (each ARIA state and its tokens, `aria-hidden` and the
 `true`/`false`/`mixed` tri-states). Proposed: a `aria` section in a new
 vector file, the four writers changed in one coordinated pull request, and a
 CHANGELOG entry that names it a rendering change.
+
+### The walker refusing a non-boolean `SHOW_IF` slot
+
+Rule 7 makes the walker's truthiness fallback unreachable from a compiled
+product, but the walker still applies it to a hand-assembled module or a server
+that sets a show slot to a number through the untyped slot API. Proposed: the
+walker refuses a `SHOW_IF` whose slot value is not `Bool` or `Null` (a render
+error with its own code) instead of imitating ToBoolean, with a vector per value
+kind in `conditions.json`. Not done here: it changes `crates/forma-ir/src/walker.rs`
+in the code FORMA-181 checkpoint B is changing, and it needs the render-error
+catalogue's owner to name the code.
+
+### Namespace context for the walker
+
+The walker chooses a text-only parent (`title`, `textarea`, `style`, `script`)
+and the `pre`/`listing`/`textarea` first-line-feed rule by tag spelling in any
+namespace; it has no namespace stack. Static text agrees: FORMA-026's vectors
+(`packages/core/src/__tests__/vectors/namespaces.json`, read by core's
+`renderer-contract.test.ts` and `e2e/adoption.spec.ts`) cover an SVG `<title>`
+with literal text. A dynamic child does not: adoption treats only the HTML
+`title` as text-only (`packages/core/src/dom/adoption.ts` checks its
+`namespaceURI`), so inside an SVG `<title>` it expects the `<!--f:tN-->` range
+the walker never writes there, and refuses the walker's
+`<svg><title>x</title></svg>` for `h('svg', null, h('title', null, () => x))`
+with `FORMA_E_HYDRATE_MARKER` (checked while writing this; the same markup with
+the range adopts). The same holds for an SVG `style` or `script`, which the
+parser builds as ordinary children in foreign content. Proposed:
+
+1. Move `namespaces.json` to `crates/forma-ir/tests/fixtures/parity/` and give
+   forma-ir a reader for it, so each vector's server markup is the walker's own
+   output for its tree (today the markup is hand-written).
+2. Add a namespace stack to the walker's state: push `svg` at `<svg>`, `mathml`
+   at `<math>`, back to `html` inside the integration points (`foreignObject`,
+   `desc` and `title` in SVG; `annotation-xml` with an HTML encoding in MathML),
+   pop at the matching close; select text-only parents and the line-feed rule only
+   in the `html` namespace. FMIR needs no new opcode: the namespace follows from
+   the tags.
+3. Add vectors for each disagreement before the change (an SVG `title` holding a
+   `DYN_TEXT`, an SVG `style`, a `pre` inside `foreignObject`), first-failure logs,
+   then the walker change and, where the client chooses by spelling, its matching
+   selection, in one pull request.
+
+Order: after FORMA-181 checkpoint B merges, since both change the walker's state.
+Until then a dynamic value inside an SVG `title` refuses adoption loudly rather
+than rendering wrong; a static one is unaffected.
 
 FORMA-026's SVG and MathML namespace vectors stay at
 `packages/core/src/__tests__/vectors/namespaces.json` until their relocation is

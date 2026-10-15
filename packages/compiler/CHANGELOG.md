@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Value rule 7: conditions are boolean-typed — FORMA-182
+
+- New mandatory code `BUILD-615` (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 7): a `createShow` condition or a ternary test the compiler can prove is not boolean-typed fails the build, strict mode or not: a declared prop of another type (an optional boolean is admitted), a signal whose default is a number, a string or `null`, a closed value of another type (an aggregate, an aggregate or list-row field, a module-level `const`), a non-boolean literal, or a mix such as `a() && count()` or `name() || 'x'`. Conformance pair in `tests/fixtures/conformance/BUILD-615/`. A condition the compiler cannot type keeps `BUILD-302`.
+- A module-level `const` initialized with `true` or `false` is folded in a condition, so the server renders the branch the browser takes instead of reporting `BUILD-302` and rendering `else`.
+- Migrated `tests/ir-walk.test.ts` > "writes false when the condition evaluates falsy, including a zero number read through !!" (it read `count()` as the condition); the original fragments are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-615` by `tests/value-rules-archive.test.ts`. The FMIR corpus, the declared-props fixtures, the create-app templates and the SSR e2e cases build unchanged.
+
 ### Value rule 6: a boolean in text is a build error — FORMA-182
 
 - New mandatory code `BUILD-614` (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 6): a text position whose value is provably boolean-typed fails the build, strict mode or not: a declared boolean prop (optional included; it used to write nothing), a signal whose default is a boolean (it was served as `true`/`false`), a closed boolean (aggregate or list-row field, a module-level `const` of `true`/`false`), or an expression that can only be a boolean (`!x`, a comparison), read eagerly or through a getter, as a child or a `createShow`/ternary branch. Conformance pair in `tests/fixtures/conformance/BUILD-614/`.

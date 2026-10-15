@@ -338,6 +338,14 @@ export function emitPropText(node: t.Node, scope: PropsScope | undefined, ctx: I
   return true;
 }
 
+/** Value rule 7: whether a declared read is boolean-typed (optional admitted:
+ * absent reads as false on both sides); undefined when it is not a declared read. */
+export function declaredKind(node: t.Node | null | undefined, scope: PropsScope | undefined): 'boolean' | 'other' | undefined {
+  const path = propPath(node, scope);
+  if (!path || !scope || !node) return undefined;
+  return inner(propType(path, scope, node)).kind === 'boolean' ? 'boolean' : 'other';
+}
+
 /** The argument of `String(x)` (read through a getter) when x is a non-optional declared boolean. */
 function stringOfDeclaredBoolean(node: t.Node, scope: PropsScope): t.Node | undefined {
   const call = unwrap(node);

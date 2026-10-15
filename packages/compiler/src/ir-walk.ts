@@ -50,11 +50,11 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
-import { childPropsScope, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
-import { moduleBoolean, refuseBooleanText, valueKind, type KindEnvironment } from './value-rules';
+import { closedKind, moduleLiteral, refuseBooleanText, refuseConditionType, valueKind, type KindEnvironment } from './value-rules';
 import {
   enterComponentScope,
   lookupSignal,
@@ -333,7 +333,7 @@ function evalEnv(walkCtx: WalkContext): EvalEnv {
 function kindEnv(walkCtx: WalkContext): KindEnvironment {
   return {
     signal: (name) => lookupSignal(walkCtx.signalScope, name)?.default,
-    constant: (name) => walkCtx.stringConstants?.get(name) ?? moduleBoolean(walkCtx.sourceFile, name),
+    constant: (name) => walkCtx.stringConstants?.get(name) ?? moduleLiteral(walkCtx.sourceFile, name),
   };
 }
 
@@ -1847,7 +1847,7 @@ function emitChild(
   }
 
   // A module-level boolean const read as text (rule 6).
-  if (t.isIdentifier(child) && moduleBoolean(walkCtx.sourceFile, child.name) !== undefined) {
+  if (t.isIdentifier(child) && typeof moduleLiteral(walkCtx.sourceFile, child.name) === 'boolean') {
     refuseBooleanText(walkCtx.sourceFile ?? '', child, `module constant ${child.name}`);
   }
 
@@ -1910,16 +1910,39 @@ function addShowSlot(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): number {
-  const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx) ?? closedSlot(cond,ctx,closedEnv(walkCtx));
-  if (declaredSlot !== undefined) return declaredSlot;
+  // Value rule 7 (docs/parity-rules.md): a condition must be boolean-typed.
+  // What the compiler can prove is not boolean (a declared, closed or signal
+  // type, a literal, an operator's result) is BUILD-615; what it cannot type
+  // keeps the BUILD-302 path below.
+  const file = walkCtx.sourceFile ?? '', refuse = (): never => refuseConditionType(file, cond!, `condition ${describeNode(cond!)}`);
+  const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx);
+  if (declaredSlot !== undefined) {
+    if (declaredKind(cond, walkCtx.propsScope) !== 'boolean') refuse();
+    return declaredSlot;
+  }
+  const closed = closedBinding(cond, ctx, closedEnv(walkCtx));
+  if (closed && closedKind(closed.values) !== 'boolean') refuse();
+  const closedSlotId = closed ? closedSlot(cond, ctx, closedEnv(walkCtx)) : undefined;
+  if (closedSlotId !== undefined) return closedSlotId;
+  if (cond && valueKind(cond, kindEnv(walkCtx)) === 'other') refuse();
   const slotName = deriveShowSlotName(cond, walkCtx);
 
+  // A condition also folds a module-level boolean const (`const SHOWN = true`),
+  // so the server renders the branch the browser takes instead of ELSE.
+  const base = evalEnv(walkCtx);
+  const env: EvalEnv = { signal: base.signal, ident: (name) => {
+    const known = base.ident(name);
+    if (known !== undefined) return known;
+    const literal = moduleLiteral(walkCtx.sourceFile, name);
+    return typeof literal === 'boolean' ? literal : undefined;
+  } };
   let value: EvalValue | undefined;
   if (cond && isFunctionExpr(cond)) {
-    value = tryEvalExprDefault(cond as t.ArrowFunctionExpression | t.FunctionExpression, evalEnv(walkCtx));
+    value = tryEvalExprDefault(cond as t.ArrowFunctionExpression | t.FunctionExpression, env);
   } else if (cond && t.isExpression(cond)) {
-    value = evalNode(cond, evalEnv(walkCtx));
+    value = evalNode(cond, env);
   }
+  if (value !== undefined && typeof value !== 'boolean') refuse();
 
   if (value === undefined) {
     warnDegraded(

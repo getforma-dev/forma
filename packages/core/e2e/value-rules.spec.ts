@@ -224,3 +224,34 @@ test('rule 6 control: the word the walker wrote for the idiom at false before ru
   });
   expect(kept).toBe('false');
 });
+
+// -- Rule 7: conditions are boolean-typed ---------------------------------------
+interface ConditionVector { id: string; value: boolean; branch: 'then' | 'else' }
+for (const { id, value, branch } of vectors<{ walker: ConditionVector[] }>('conditions.json').walker) {
+  test(`rule 7 ${id}: the walker's SHOW_IF range adopts createShow on a boolean without a write, and a toggle swaps the branch`, async ({ page }) => {
+    await serve(page, `<div><!--f:s0-->${branch === 'then' ? '<b>then</b>' : '<i>else</i>'}<!--/f:s0--></div>`);
+    const seen = await page.evaluate(async (value) => {
+      const { h, Fragment, createShow, createSignal } = await import('/adoption-core.mjs' as string);
+      const { adoptMatching } = await import('/test-owned-adoption.mjs' as string);
+      const app = document.querySelector('#app')!, served = app.querySelector('b, i')!;
+      const records: string[] = [];
+      const observer = new MutationObserver(batch => batch.forEach(record => records.push(record.type)));
+      observer.observe(app, { subtree: true, childList: true, characterData: true, attributes: true });
+      const [when, setWhen] = createSignal(value);
+      adoptMatching(() => h(Fragment, null, h('div', null, createShow(when, () => h('b', null, 'then'), () => h('i', null, 'else')))), '#app');
+      await new Promise(resolve => setTimeout(resolve, 0));
+      records.push(...observer.takeRecords().map(record => record.type));
+      observer.disconnect();
+      const adopted = { text: app.textContent, records, retained: app.querySelector('b, i') === served };
+      setWhen(!value);
+      const toggled = app.textContent;
+      setWhen(value);
+      return { adopted, toggled, back: app.textContent };
+    }, value);
+    expect(seen).toEqual({
+      adopted: { text: branch, records: [], retained: true },
+      toggled: branch === 'then' ? 'else' : 'then',
+      back: branch,
+    });
+  });
+}
