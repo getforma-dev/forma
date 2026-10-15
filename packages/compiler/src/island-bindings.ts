@@ -313,6 +313,15 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       signal: proof.signal, getter: proof.getter.name, shorthand: proof.shorthand ?? (proof.node === node ? shorthand : undefined),
     });
   }
+  function textareaTarget(children: readonly t.Node[], env: Environment): void {
+    // Only the sole direct reader has an invertible target. A static prefix,
+    // concatenation, multiple children or eager read must never gain a setter.
+    if (children.length !== 1) return;
+    const child = children[0]!;
+    if (t.isJSXExpressionContainer(child)) {
+      if (!t.isJSXEmptyExpression(child.expression)) recordWritable(child.expression, env);
+    } else recordWritable(child, env);
+  }
   function annotationCodec(node: t.Node | null | undefined): AdoptionCodec | null {
     if (t.isTSParenthesizedType(node)) return annotationCodec(node.typeAnnotation);
     if (t.isTSStringKeyword(node)) return 'string';
@@ -665,7 +674,11 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         if (!t.isExpression(value)) fail(env.module, attribute, 'invalid attribute expression');
         fields.push(t.objectProperty(t.stringLiteral(attribute.name.name), value));
       }
-      if (/^[a-z]/.test(opening.name.name)) { attributes(fields, env, records); for (const item of node.children) render(item, env, records); }
+      if (/^[a-z]/.test(opening.name.name)) {
+        attributes(fields, env, records);
+        if (opening.name.name === 'textarea') textareaTarget(node.children, env);
+        for (const item of node.children) render(item, env, records);
+      }
       else child(opening.name, callFields(t.objectExpression(fields), env), env, records);
       return;
     }
@@ -677,7 +690,9 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         if (!tag) fail(env.module, node, 'h has no tag');
         if (t.isStringLiteral(tag)) {
           if (props && !t.isNullLiteral(props)) { if (!t.isObjectExpression(props)) fail(env.module, props, 'native h attributes need an object'); attributes(props.properties, env, records); }
-          for (const item of node.arguments.slice(2)) render(item, env, records);
+          const children = node.arguments.slice(2);
+          if (tag.value === 'textarea') textareaTarget(children, env);
+          for (const item of children) render(item, env, records);
         } else child(tag, callFields(props, env), env, records);
         return;
       }
