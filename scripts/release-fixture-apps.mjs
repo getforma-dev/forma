@@ -21,13 +21,33 @@ export const FIXTURES = join(ROOT, 'e2e/fixtures/apps');
 const EXCLUDED = new Set(['out', 'node_modules', 'target', 'README.md', 'apps.spec.ts', 'build.sh']);
 const LIBRARIES = ['core', 'compiler', 'build'];
 
-/** The project's own manifest: the three libraries at the set's exact version, nothing else of ours. */
-export function fixtureManifest(version) {
+/**
+ * The project's own manifest: the three libraries at the set's exact version, and esbuild, which the
+ * compiler names as a peer and loads from the application's own tree (without it the compiler cannot
+ * lower JSX and falls back to a placeholder, BUILD-603; the templates declare it the same way).
+ */
+export function fixtureManifest(version, esbuild) {
   return {
     name: 'forma-fixture-apps', version: '0.0.0', private: true,
     dependencies: { '@getforma/core': `=${version}` },
-    devDependencies: { '@getforma/build': `=${version}`, '@getforma/compiler': `=${version}` },
+    devDependencies: { '@getforma/build': `=${version}`, '@getforma/compiler': `=${version}`, esbuild },
   };
+}
+
+/** esbuild and its platform binaries, exactly as the tagged tree's lock pins them (nothing is resolved afresh). */
+function esbuildEntries(rootLock) {
+  const range = rootLock.packages?.['']?.devDependencies?.esbuild;
+  assert(range && rootLock.packages['node_modules/esbuild'], 'the tagged tree\'s lock does not pin esbuild, the compiler\'s peer');
+  const entries = {};
+  for (const [key, entry] of Object.entries(rootLock.packages)) {
+    if (key !== 'node_modules/esbuild' && !key.startsWith('node_modules/@esbuild/')) continue;
+    assert(entry.version && entry.resolved && entry.integrity, `${key}: the tagged tree's lock holds no integrity-pinned archive`);
+    const copy = structuredClone(entry);
+    for (const flag of ['dev', 'devOptional', 'peer', 'optional']) delete copy[flag];
+    if (key.startsWith('node_modules/@esbuild/')) copy.optional = true;
+    entries[key] = copy;
+  }
+  return { range, entries };
 }
 
 /**
@@ -43,12 +63,14 @@ export function stageFixtureNpm(packages, artifactDir, rootLock) {
   });
   const version = candidates[0].version;
   for (const p of candidates) assert.equal(p.version, version, `${p.name}: the libraries must share one version`);
-  const manifest = fixtureManifest(version);
+  const { range, entries } = esbuildEntries(rootLock);
+  const manifest = fixtureManifest(version, range);
   const seed = {
     name: manifest.name, version: manifest.version, lockfileVersion: 3, requires: true,
     packages: {
       '': { name: manifest.name, version: manifest.version, dependencies: manifest.dependencies, devDependencies: manifest.devDependencies },
       ...Object.fromEntries(candidates.map(p => [`node_modules/${p.name}`, {}])),
+      ...entries,
     },
   };
   const seeded = stageNpmLock(manifest, seed, packages, artifactDir, false, rootLock);
@@ -125,8 +147,8 @@ export function nearestPackage(from, name) {
   }
 }
 
-/** Every `@getforma/*` import of the installed libraries resolves to a file inside the project. */
-export function assertResolvesInside(project, consumers = { '@getforma/build': ['@getforma/compiler', '@getforma/core'], '@getforma/compiler': ['@getforma/core'] }) {
+/** Every import of the installed libraries (the other libraries, and the esbuild the compiler loads) resolves inside the project. */
+export function assertResolvesInside(project, consumers = { '@getforma/build': ['@getforma/compiler', '@getforma/core', 'esbuild'], '@getforma/compiler': ['@getforma/core', 'esbuild'] }) {
   const inside = realpathSync(project) + sep;
   const found = {};
   for (const [consumer, imports] of Object.entries(consumers)) {

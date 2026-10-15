@@ -72,10 +72,12 @@ test('the npm install is the three libraries from DS11\'s bytes, locked, with ev
     const packages = ['core', 'compiler', 'build'].map(n => ({ registry: 'npm', name: `@getforma/${n}`, version: '3.0.0-alpha.2', file: `${n}.tgz` }));
     const entry = (name, version) => ({ version, resolved: `https://registry.npmjs.org/${name}/-/${name}-${version}.tgz`, integrity: `sha512-${'x'.repeat(86)}==` });
     const sourceLock = { lockfileVersion: 3, packages: {
-      '': {}, 'packages/core': { name: '@getforma/core', dependencies: { 'alien-signals': '3.1.2' } },
+      '': { devDependencies: { esbuild: '^0.28.1' } }, 'packages/core': { name: '@getforma/core', dependencies: { 'alien-signals': '3.1.2' } },
       'packages/compiler': { name: '@getforma/compiler', dependencies: { acorn: '^8.0.0' } },
       'packages/build': { name: '@getforma/build', dependencies: { esbuild: '^0.28.1' } },
-      'node_modules/alien-signals': entry('alien-signals', '3.1.2'), 'node_modules/acorn': entry('acorn', '8.14.0'), 'node_modules/esbuild': entry('esbuild', '0.28.1'),
+      'node_modules/alien-signals': entry('alien-signals', '3.1.2'), 'node_modules/acorn': entry('acorn', '8.14.0'),
+      'node_modules/esbuild': { ...entry('esbuild', '0.28.1'), dev: true, optionalDependencies: { '@esbuild/darwin-arm64': '0.28.1' } },
+      'node_modules/@esbuild/darwin-arm64': { ...entry('@esbuild/darwin-arm64', '0.28.1'), dev: true, optional: true },
     } };
     const before = JSON.stringify(sourceLock);
     const { manifest, lock } = stageFixtureNpm(packages, dir, sourceLock);
@@ -89,11 +91,17 @@ test('the npm install is the three libraries from DS11\'s bytes, locked, with ev
     assert.equal(manifest.dependencies['@getforma/core'], `file:${join(dir, 'core.tgz')}`);
     assert.equal(manifest.devDependencies['@getforma/build'], `file:${join(dir, 'build.tgz')}`);
     assert.equal(lock.packages['node_modules/@getforma/build/node_modules/esbuild'].version, '0.28.1');
+    // The compiler loads esbuild from the application's own tree: it is the project's, at the tagged tree's pin.
+    assert.equal(manifest.devDependencies.esbuild, '^0.28.1');
+    assert.equal(lock.packages['node_modules/esbuild'].integrity, sourceLock.packages['node_modules/esbuild'].integrity);
+    assert.equal(lock.packages['node_modules/esbuild'].dev, undefined);
+    assert.equal(lock.packages['node_modules/@esbuild/darwin-arm64'].optional, true);
+    assert.throws(() => stageFixtureNpm(packages, dir, { ...sourceLock, packages: { ...sourceLock.packages, '': {} } }), /does not pin esbuild/);
     assert.equal(lock.packages['node_modules/@getforma/core/node_modules/alien-signals'].integrity, sourceLock.packages['node_modules/alien-signals'].integrity);
     assert.deepEqual(lock.packages[''].devDependencies, manifest.devDependencies);
     assert.throws(() => stageFixtureNpm(packages.slice(0, 2), dir, sourceLock), /DS11 has no @getforma\/build/);
     assert.throws(() => stageFixtureNpm(packages.map((p, i) => i ? p : { ...p, version: '3.0.1' }), dir, sourceLock), /share one version/);
-    assert.deepEqual(fixtureManifest('3.0.0-alpha.2').devDependencies, { '@getforma/build': '=3.0.0-alpha.2', '@getforma/compiler': '=3.0.0-alpha.2' });
+    assert.deepEqual(fixtureManifest('3.0.0-alpha.2', '^0.28.1').devDependencies, { '@getforma/build': '=3.0.0-alpha.2', '@getforma/compiler': '=3.0.0-alpha.2', esbuild: '^0.28.1' });
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -102,7 +110,10 @@ test('an import resolves inside the packed install, and one that would reach the
   try {
     const install = (root, names) => { for (const name of names) { mkdirSync(join(root, 'node_modules/@getforma', name), { recursive: true }); writeFileSync(join(root, 'node_modules/@getforma', name, 'package.json'), `{"name":"@getforma/${name}"}`); } };
     install(project, ['core', 'compiler', 'build']);
+    mkdirSync(join(project, 'node_modules/esbuild'), { recursive: true });
+    writeFileSync(join(project, 'node_modules/esbuild/package.json'), '{"name":"esbuild"}');
     const found = assertResolvesInside(project);
+    assert.equal(found['@getforma/compiler -> esbuild'], join('node_modules', 'esbuild'), 'the compiler\'s peer is the project\'s own');
     assert.equal(found['@getforma/build -> @getforma/compiler'], join('node_modules', '@getforma', 'compiler'));
     // The compiler is not installed in the project, but an enclosing directory (a checkout's workspace link) has one.
     rmSync(join(project, 'node_modules/@getforma/compiler'), { recursive: true });
