@@ -2,12 +2,13 @@
 // P17 skeleton. Package code comes from DS11; the test harness and third-party tools come
 // from the tagged tree's committed lock. No OIDC permission is needed here.
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync, symlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
-import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock } from './release-set.mjs';
+import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
 
 async function freePort() {
   const server = net.createServer();
@@ -53,11 +54,12 @@ export async function verify(dir, reportPath) {
   for (const p of set.packages) assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file}: wrong packed bytes`);
   const scratch = join(ROOT, `.release-verify-${process.pid}`);
   mkdirSync(scratch);
+  const cli = mkdtempSync(join(tmpdir(), 'forma-packed-cli-'));
   const report = { schema: 1, commit: set.commit, passed: false, tests: [], pending: set.contracts.pending, signatures: 'registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256', templates: [] };
   const test = async (name, fn) => { console.log(`P17: ${name}`); const at = Date.now(); await fn(); report.tests.push({ name, passed: true, seconds: (Date.now() - at) / 1000 }); };
   try {
     for (const p of set.packages) {
-      unpack(join(dir, p.file), join(scratch, p.path));
+      unpack(join(dir, p.file), p.name === '@getforma/create-app' ? cli : join(scratch, p.path));
       if (p.registry === 'crates') {
         const manifest = join(scratch, p.path, 'Cargo.toml');
         writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[workspace]\n');
@@ -70,9 +72,10 @@ export async function verify(dir, reportPath) {
         // Registry checksums for unpublished internal packages cannot resolve before upload.
         // Patch only those packages to the DS11 source and preserve all third-party locks.
         const text = readFileSync(lock, 'utf8');
+        assertCargoCandidateLock(text, set.packages, p.name);
         const present = CRATES.filter(n => n !== p.name && text.includes(`name = "${n}"`));
         if (present.length) {
-          writeFileSync(lock, stageCargoLock(text, set.packages, true));
+          writeFileSync(lock, stageCargoLock(text, set.packages, true, p.name));
           writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[patch.crates-io]\n' + present.map(n => `${n} = { path = ${JSON.stringify(join(scratch, 'crates', n))} }`).join('\n') + '\n');
         }
         const auditLockSha256 = digest(lock);
@@ -81,10 +84,13 @@ export async function verify(dir, reportPath) {
         report.tests.push({ name: `${p.name}: packed Cargo.lock advisories`, passed: true, shippedLockSha256, auditLockSha256 });
       }
     });
-    // npm may keep prompts beside the create-app workspace rather than hoisting it. The
-    // packed CLI still needs this third-party runtime dependency from the committed lock.
-    const cliDependencies = join(ROOT, 'packages/create-app/node_modules');
-    if (existsSync(cliDependencies)) symlinkSync(cliDependencies, join(scratch, 'packages/create-app/node_modules'), 'dir');
+    await test('packed CLI has an isolated, locked runtime dependency installation', async () => {
+      const runtime = packedRuntimeLock(json(join(cli, 'package.json')), json(join(ROOT, 'package-lock.json')), 'packages/create-app');
+      save(join(cli, 'package.json'), runtime.manifest); save(join(cli, 'package-lock.json'), runtime.lock);
+      const lockHash = digest(join(cli, 'package-lock.json'));
+      run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], cli, { stdio: 'inherit' });
+      assert.equal(digest(join(cli, 'package-lock.json')), lockHash, 'npm changed the packed CLI runtime lock');
+    });
     await test('packed compiler emits the frozen corpus read by packed forma-ir', async () => {
       const { generateRealIr } = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
       const corpus = join(ROOT, 'packages/compiler/tests/fixtures/ir-corpus');
@@ -107,7 +113,7 @@ export async function verify(dir, reportPath) {
       for (const template of ['minimal', 'dashboard']) {
         await test(`${template}: packed CLI, locked install, signatures, build, serve and interaction`, async () => {
           const name = `release-${template}`;
-          run(process.execPath, [join(scratch, 'packages/create-app/dist/index.js'), name, '--template', template], scratch);
+          run(process.execPath, [join(cli, 'dist/index.js'), name, '--template', template], scratch, { env: { ...process.env, NODE_PATH: '' } });
           const project = join(scratch, name), admin = join(project, 'admin');
           const staged = stageNpmLock(json(join(admin, 'package.json')), json(join(admin, 'package-lock.json')), set.packages, dir, true);
           save(join(admin, 'package.json'), staged.manifest); save(join(admin, 'package-lock.json'), staged.lock);
@@ -183,6 +189,7 @@ export async function verify(dir, reportPath) {
     if (!report.passed) save(reportPath, { ...report, elapsedSeconds: (Date.now() - started) / 1000 });
     // Keep logs/report outside scratch; remove only this invocation's own output.
     rmSync(scratch, { recursive: true, force: true });
+    rmSync(cli, { recursive: true, force: true });
   }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) verify(resolve(process.argv[2]), resolve(process.argv[3])).catch(e => { console.error(`P17: ${e.stack}`); process.exitCode = 1; });

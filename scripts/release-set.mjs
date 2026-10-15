@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
-import { dirname, resolve, join, basename } from 'node:path';
+import { dirname, resolve, join, basename, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -64,7 +64,7 @@ export function versionFiles(root, version) {
     const path = `packages/${name}/package.json`, p = JSON.parse(read(path));
     p.version = version;
     updateRequirements(p, version);
-    p.repository = { type: 'git', url: 'https://github.com/getforma-dev/forma.git', directory: `packages/${name}` };
+    p.repository = { type: 'git', url: 'git+https://github.com/getforma-dev/forma.git', directory: `packages/${name}` };
     files.set(path, JSON.stringify(p, null, 2) + '\n');
   }
   const lock = JSON.parse(read('package-lock.json'));
@@ -89,9 +89,97 @@ export function versionFiles(root, version) {
   return files;
 }
 
+const dependencyKinds = ['dependencies', 'devDependencies', 'optionalDependencies'];
+const packedMetadata = ['dependencies', 'peerDependencies', 'peerDependenciesMeta', 'optionalDependencies', 'engines', 'bin'];
+function npmUrl(p) { return `https://registry.npmjs.org/${p.name}/-/${p.name.split('/').at(-1)}-${p.version}.tgz`; }
+export function assertNpmTemplateLock(manifest, lock, packages, artifactDir) {
+  assert(lock.packages?.[''], 'template npm lock is missing its root');
+  for (const kind of dependencyKinds) {
+    assert.deepEqual(lock.packages[''][kind], manifest[kind], `template npm lock root ${kind} disagrees with manifest`);
+    for (const [name, requirement] of Object.entries(manifest[kind] ?? {})) {
+      if (!name.startsWith('@getforma/')) continue;
+      const candidate = packages.find(p => p.registry === 'npm' && p.name === name);
+      assert(candidate, `template has no release candidate for ${name}`);
+      assert(['', '=', '^', '~'].some(prefix => requirement === `${prefix}${candidate.version}`), `${name}: template requirement disagrees with candidate`);
+      assert(lock.packages[`node_modules/${name}`], `${name}: missing template lock entry`);
+    }
+  }
+  for (const [key, entry] of Object.entries(lock.packages)) {
+    const name = /(?:^|\/)node_modules\/(@getforma\/[^/]+)$/.exec(key)?.[1];
+    if (!name) continue;
+    const candidate = packages.find(p => p.registry === 'npm' && p.name === name);
+    assert(candidate, `template has no release candidate for ${name}`);
+    const file = join(artifactDir, candidate.file);
+    assert.equal(entry.version, candidate.version, `${name}: shipped template lock version`);
+    assert.equal(entry.resolved, npmUrl(candidate), `${name}: shipped template lock registry URL`);
+    assert.equal(entry.integrity, `sha512-${digest(file, 'sha512', 'base64')}`, `${name}: shipped template lock integrity`);
+    assert(!entry.link, `${name}: shipped template lock must use a registry archive`);
+    const packed = JSON.parse(run('tar', ['-xOf', file, 'package/package.json']));
+    assert.equal(packed.name, name); assert.equal(packed.version, candidate.version);
+    for (const kind of packedMetadata) assert.deepEqual(entry[kind], packed[kind], `${name}: shipped template lock ${kind}`);
+  }
+}
+export function assertCargoCandidateLock(text, packages, rootName) {
+  for (const block of text.split(/(?=\[\[package\]\])/)) {
+    const name = /^name = "([^"]+)"/m.exec(block)?.[1];
+    if (!CRATES.includes(name)) continue;
+    const candidate = packages.find(p => p.registry === 'crates' && p.name === name);
+    assert(candidate, `Cargo lock has no release candidate for ${name}`);
+    assert.equal(/^version = "([^"]+)"/m.exec(block)?.[1], candidate.version, `${name}: shipped Cargo lock version`);
+    // A packaged crate's own root is a local package; every other candidate is registry-pinned.
+    if (name === rootName && !/^source = /m.test(block)) {
+      assert(!/^checksum = /m.test(block), `${name}: local root has an unexpected checksum`);
+      continue;
+    }
+    assert.equal(/^source = "([^"]+)"/m.exec(block)?.[1], 'registry+https://github.com/rust-lang/crates.io-index', `${name}: shipped Cargo lock source`);
+    assert.equal(/^checksum = "([^"]+)"/m.exec(block)?.[1], candidate.sha256, `${name}: shipped Cargo lock checksum`);
+  }
+}
+
+// Build a standalone runtime lock using only the packed manifest's dependency edges.
+// npm ci validates their ranges and archive integrity without running lifecycle scripts.
+// The installation lives outside the checkout so undeclared imports cannot find source deps.
+export function packedRuntimeLock(packed, sourceLock, sourcePath) {
+  assert.equal(sourceLock.lockfileVersion, 3, 'packed runtime requires a v3 recorded lock');
+  const manifest = structuredClone(packed);
+  delete manifest.devDependencies; delete manifest.workspaces;
+  const lock = { name: manifest.name, version: manifest.version, lockfileVersion: 3, requires: true, packages: { '': { name: manifest.name, version: manifest.version } } };
+  for (const kind of ['dependencies', 'optionalDependencies', 'engines']) if (manifest[kind]) lock.packages[''][kind] = manifest[kind];
+  const locate = (from, name) => {
+    for (let at = from; ; at = posix.dirname(at)) {
+      if (posix.basename(at) !== 'node_modules') {
+        const key = posix.join(at === '.' ? '' : at, 'node_modules', name);
+        if (sourceLock.packages[key]) return key;
+      }
+      if (!at || at === '.') return;
+    }
+  };
+  const visit = (metadata, from, dest, ancestors = []) => {
+    const dependencies = { ...metadata.peerDependencies, ...metadata.dependencies, ...metadata.optionalDependencies };
+    for (const name of Object.keys(dependencies)) {
+      assert(/^(?:@[a-z0-9_.-]+\/)?[a-z0-9_.-]+$/i.test(name), `invalid runtime dependency ${name}`);
+      const optional = Object.hasOwn(metadata.optionalDependencies ?? {}, name) || (metadata.peerDependenciesMeta?.[name]?.optional && !Object.hasOwn(metadata.dependencies ?? {}, name));
+      const key = locate(from, name);
+      if (!key && optional) continue;
+      assert(key, `${name}: packed runtime dependency is absent from the recorded lock`);
+      if (ancestors.some(a => a.key === key && a.name === name)) continue;
+      const entry = structuredClone(sourceLock.packages[key]);
+      assert(!entry.link && entry.version && entry.resolved && entry.integrity, `${name}: packed runtime requires an integrity-pinned archive`);
+      for (const flag of ['dev', 'devOptional', 'peer', 'optional']) delete entry[flag];
+      if (optional) entry.optional = true;
+      const target = posix.join(dest, 'node_modules', name);
+      lock.packages[target] = entry;
+      visit(entry, key, target, [...ancestors, { key, name }]);
+    }
+  };
+  visit(manifest, sourcePath, '');
+  return { manifest, lock };
+}
+
 // Preserve every third-party resolution. Only candidate package versions, dependency metadata,
 // URLs and checksums change; npm ci will refuse a stale third-party graph.
 export function stageNpmLock(manifest, lock, packages, artifactDir, local = false) {
+  if (local) assertNpmTemplateLock(manifest, lock, packages, artifactDir);
   lock = structuredClone(lock); manifest = structuredClone(manifest);
   for (const candidate of packages.filter(p => p.registry === 'npm')) {
     const key = `node_modules/${candidate.name}`;
@@ -101,13 +189,13 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
       if (manifest[kind]?.[candidate.name]) manifest[kind][candidate.name] = local ? `file:${file}` : `=${candidate.version}`;
     }
     const entry = lock.packages[key];
+    entry.resolved = local ? `file:${file}` : npmUrl(candidate);
+    if (local) continue; // The shipped version, integrity and graph were validated, not repaired.
     entry.version = candidate.version;
-    const short = candidate.name.split('/').at(-1);
-    entry.resolved = local ? `file:${file}` : `https://registry.npmjs.org/${candidate.name}/-/${short}-${candidate.version}.tgz`;
     entry.integrity = `sha512-${digest(file, 'sha512', 'base64')}`;
     delete entry.link;
     const packed = JSON.parse(run('tar', ['-xOf', file, 'package/package.json']));
-    for (const kind of ['dependencies', 'peerDependencies', 'peerDependenciesMeta', 'optionalDependencies', 'engines', 'bin']) {
+    for (const kind of packedMetadata) {
       if (packed[kind]) entry[kind] = packed[kind]; else delete entry[kind];
     }
   }
@@ -116,7 +204,8 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
   }
   return { manifest, lock };
 }
-export function stageCargoLock(text, packages, local = false) {
+export function stageCargoLock(text, packages, local = false, rootName) {
+  if (local) assertCargoCandidateLock(text, packages, rootName);
   return text.split(/(?=\[\[package\]\])/).map(block => {
     const name = /^name = "([^"]+)"/m.exec(block)?.[1];
     const candidate = packages.find(p => p.registry === 'crates' && p.name === name);
