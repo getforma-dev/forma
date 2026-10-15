@@ -4,7 +4,8 @@
  * 1. prepare: describe the module, generate its states, bundle the twin and the production entry,
  *    and check that the compiler's `.ir` for that entry is the committed module the server renders;
  * 2. serve: every module and state through the application's path in one `parity_render typed`
- *    process (the low-level walker path only where the typed bind refuses, and the report says so);
+ *    process (the low-level walker path only where the typed path refuses, which fails the run
+ *    unless corpus.json declares `serverPath: "low-level"` for the module);
  * 3. browse: each state's document in Chromium; P1 and, for pages with islands, P2.
  */
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';

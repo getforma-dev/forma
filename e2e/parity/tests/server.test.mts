@@ -84,7 +84,7 @@ test('typed: the synthesized manifest loads through the production loader, binds
   assert.match(render.headers['content-security-policy']!, new RegExp(`script-src 'nonce-${nonce.replace(/[+/=]/g, c => `\\${c}`)}' 'strict-dynamic'`));
   assert.match(render.headers['content-security-policy']!, /require-trusted-types-for 'script'/);
   assert.ok(render.document.includes(`src="/_assets/${BOOT_FILE}" integrity="${integrity(BOOT_SOURCE)}"`), 'the boot is the route script, integrity-checked');
-  assert.ok(render.document.includes('<div id="app" data-forma-ssr><main id="app"><!--f:i0-->'));
+  assert.ok(render.document.includes('<div id="app" data-forma-build="parity" data-forma-ssr><main id="app"><!--f:i0-->'), 'the root names the manifest\'s build (FORMA-186)');
   assert.ok(render.document.includes('class="&lt;/script&gt;"'));
   assert.match(render.document, /<script type="application\/json" data-island-state>\{"v":1,/);
 });
@@ -123,4 +123,26 @@ test('typed: a module the production loader refuses is that module\'s entry with
   assert.deepEqual(refused!.renders, []);
   assert.deepEqual(fine!.bind, []);
   assert.ok('document' in fine!.renders[0]!);
+});
+
+test('typed: string row keys stay unique under rule 1, so a 32-row keyed list renders where two edges are one text', () => {
+  const ir = resolve(REPO, 'crates/forma-ir/tests/fixtures/island-emitter/aggregate-fallback.ir');
+  const described = describeModule(ir);
+  assert.deepEqual(described.keys.map(key => key.path), [['id']], 'rows keyed by a string id');
+  const keyPaths = described.keys.map(key => key.path);
+  const states: Json[] = [];
+  for (let index = 0; states.length < 4 && index < 400; index++) {
+    const state = generate(described.schema, 'forma-183', index, { module: 'aggregate-fallback', keyPaths }) as { rows?: { id: string }[] };
+    // The rows that would collide without the position suffix: "\r\n" and "\r" are one text after rule 1.
+    if ((state.rows?.length ?? 0) >= 32) states.push(state as Json);
+  }
+  assert.equal(states.length, 4, 'four 32-row states');
+  const ruleOne = (text: string) => text.replace(/\r\n?/g, '\n').replace(/\0/g, '�');
+  for (const state of states as { rows: { id: string }[] }[]) {
+    const keys = state.rows.map(row => ruleOne(row.id));
+    assert.equal(new Set(keys).size, keys.length, 'unique key texts');
+  }
+  const [module] = renderTyped([typedRequest('aggregate-fallback', ir, states)]);
+  assert.deepEqual(module!.bind, []);
+  module!.renders.forEach((render, k) => assert.ok('document' in render, `state ${k} renders: ${JSON.stringify(render).slice(0, 200)}`));
 });

@@ -3,7 +3,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeReport, type Difference, type Report } from '../src/compare.mts';
-import { applyExpected, readExpected, type ExpectedEntry } from '../src/expected.mts';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { applyExpected, invalidEntry, readExpected, type ExpectedEntry } from '../src/expected.mts';
 
 const different = (module: string, index: number, differences: Difference[], check: 'P1' | 'P2' = 'P1'): Report =>
   makeReport({ module, seed: 's', index, check }, { differences, first: differences[0] ?? null, count: differences.length, structural: 0, holderAmbiguous: 0 });
@@ -57,5 +60,41 @@ test('the committed list parses, and each entry names a ticket or a finding and 
     assert.match(item.ticket, /^(FORMA-\d+|finding F\d+)/, JSON.stringify(item));
     assert.ok(item.note.length > 20, `${item.module}: the note says why`);
     if (item.match) new RegExp(item.match, 'u');
+  }
+});
+
+test('an entry is refused unless it is pinned: a state or "*" with a path, a message pattern for an error, a value pattern for any other kind', () => {
+  const valid = { module: 'm', index: 0, check: 'P1', kind: 'attribute-value', path: 'page > p:nth-child(1)[title]', match: '^ → x$', ticket: 'FORMA-182', note: 'why it diverges' } as const;
+  assert.equal(invalidEntry(valid), null);
+  assert.equal(invalidEntry({ ...valid, index: '*' }), null, '"*" with a path');
+  assert.equal(invalidEntry({ module: 'm', index: '*', check: 'P1', kind: 'error', match: 'items is not a function', ticket: 'FORMA-181', note: 'why' }), null, 'an error is pinned by its message');
+  const refused: [Record<string, unknown>, RegExp][] = [
+    [{ ...valid, index: '*', path: undefined }, /index "\*" needs a path/],
+    [{ ...valid, match: undefined }, /needs a value pattern/],
+    [{ ...valid, kind: 'attribute-extra', match: '' }, /needs a value pattern/],
+    [{ module: 'm', index: 0, check: 'P1', kind: 'error', ticket: 'T', note: 'n' }, /error entry needs a message pattern/],
+    [{ ...valid, kind: 'something' }, /kind "something" is not/],
+    [{ ...valid, check: 'P4' }, /check "P4" is not/],
+    [{ ...valid, index: -1 }, /index -1 is neither/],
+    [{ ...valid, index: '3' }, /index "3" is neither/],
+    [{ ...valid, match: '(' }, /match is not a pattern/],
+    [{ ...valid, ticket: '' }, /names no ticket/],
+    [{ ...valid, note: '' }, /says nothing of why/],
+    [{ ...valid, module: '' }, /names no module/],
+  ];
+  for (const [entry, why] of refused) assert.match(invalidEntry(entry as Partial<ExpectedEntry>) ?? 'accepted', why, JSON.stringify(entry));
+});
+
+test('one invalid entry fails the whole list on load, naming it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-parity-expected-'));
+  try {
+    const file = join(dir, 'expected.json');
+    writeFileSync(file, JSON.stringify({ entries: [
+      { module: 'm', index: 0, check: 'P1', kind: 'text', path: 'p', match: '^a → b$', ticket: 'FORMA-182', note: 'fine' },
+      { module: 'catch-all', index: '*', check: 'P1', kind: 'attribute-value', ticket: 'FORMA-182', note: 'too broad' },
+    ] }));
+    assert.throws(() => readExpected(file), /entry 1 \(catch-all P1 attribute-value\) is invalid: index "\*" needs a path/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
