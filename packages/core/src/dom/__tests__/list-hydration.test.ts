@@ -213,7 +213,8 @@ describe('strict prepared list adoption', () => {
       };
 
       connect(ssrEl);
-      expectRefusal(ssrEl, () => desc, 'FORMA_E_HYDRATE_LIST_COUNT');
+      // FORMA-181 checkpoint C: keys present on one side only are a key refusal, not a count.
+      expectRefusal(ssrEl, () => desc, 'FORMA_E_HYDRATE_KEY');
       expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
       setItems([]); expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
 
@@ -223,7 +224,9 @@ describe('strict prepared list adoption', () => {
     dispose?.();
   });
 
-  it('refuses initial reordered keys and preserves later supported reordering', () => {
+  // FORMA-181 checkpoint C: the original refused this order (archived in
+  // docs/archive/2026-10-15-pre-key-adoption/); keyed rows now bind by key without a move.
+  it('adopts initial reordered keys in place and reconciles only on a real update', () => {
     let dispose: (() => void) | undefined;
 
     createRoot((d) => {
@@ -272,10 +275,11 @@ describe('strict prepared list adoption', () => {
       };
 
       connect(ssrEl);
-      expectRefusal(ssrEl, () => desc, 'FORMA_E_HYDRATE_STRUCTURE');
+      prepareAndCommit(ssrEl, () => desc);
+      // Adoption moved nothing: the served order stays until the list source changes.
       expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
       setItems([{ id: 'a', text: 'A' }, { id: 'b', text: 'B' }, { id: 'c', text: 'C' }]);
-      prepareAndCommit(ssrEl, () => desc);
+      expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
       setItems([{ id: 'c', text: 'C' }, { id: 'b', text: 'B' }, { id: 'a', text: 'A' }]);
       expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liC, liB, liA]);
 
@@ -616,7 +620,8 @@ describe('adopted list rows', () => {
         renderFn: (item: any) => h('li', { 'data-forma-key': item.id }, item.id),
       };
 
-      expectRefusal(ul, () => listParent(listDesc), 'FORMA_E_HYDRATE_LIST_COUNT');
+      // FORMA-181 checkpoint C: a repeated served key is a key refusal before any row is walked.
+      expectRefusal(ul, () => listParent(listDesc), 'FORMA_E_HYDRATE_KEY');
       expect(Array.from(ul.querySelectorAll('li'))).toEqual(lis);
       setItems([]); expect(Array.from(ul.querySelectorAll('li'))).toEqual(lis);
 
