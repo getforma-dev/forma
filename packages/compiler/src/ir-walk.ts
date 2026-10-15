@@ -1064,6 +1064,18 @@ export function walkHTree(
         continue;
       }
 
+      // h() calls function-valued props. A direct built-in getter therefore
+      // reads the same value as () => getter(), including its native default.
+      // Reuse lexical provenance so a same-spelled local is never an outer
+      // signal merely because the legacy signal scope can find that name.
+      const directSignal = t.isIdentifier(val) ? closedEnv(walkCtx).signal(val) : undefined;
+      if (directSignal) {
+        const slotId = directSignal.slotId;
+        ctx.recordSlotRef(slotId);
+        dynAttrs.push({ keyIdx: ctx.addString(key), slotId });
+        continue;
+      }
+
       // Static literal value -> static attribute pair
       if (isStaticLiteral(val)) {
         const strVal = staticLiteralToAttrString(val);
