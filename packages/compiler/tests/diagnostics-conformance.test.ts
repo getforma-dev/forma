@@ -25,6 +25,7 @@
  * each other, so a code cannot be added to one and not the others.
  */
 
+import { PropsSchemaError } from '../src/props-schema';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -83,7 +84,7 @@ function compile(dir: string): { diagnostics: Diagnostic[]; lines: string[] } {
     lines.push(args.map(String).join(' '));
   });
   try {
-    const { diagnostics } = collectDiagnostics(() => generateRealIr(entryOf(dir)));
+    const { diagnostics } = collectDiagnostics(() => { try { return generateRealIr(entryOf(dir)); } catch (error) { if (!(error instanceof PropsSchemaError)) throw error; return null; } });
     return { diagnostics, lines };
   } finally {
     spy.mockRestore();

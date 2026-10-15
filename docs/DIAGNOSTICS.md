@@ -600,6 +600,14 @@ No page triggers it on purpose: it is tested by an unwritable output directory a
 
 ## BUILD-7xx: A construct adoption does not handle; `browserOnly()` is the way out
 
+### BUILD-610 Invalid declared page props
+
+The page's declared props or their binding expression cannot be represented by the closed FMIR contract. Unsupported types, recursive schemas, unresolved declarations, reassignment, coercion and computed prop expressions fail compilation, including builds without `--strict`. The reported location is the original TypeScript declaration or expression before JSX lowering. No placeholder IR is written.
+
+**Fix.** Declare named, typed object fields using booleans, strings, finite numbers, Date, string-literal enums, arrays, optional/null values and nested objects. Keep props immutable. Pass a computed presentation value as its own declared field. Read nested fields directly; repeated lists can share a declared array.
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/fail/page.tsx) and [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/pass/page.tsx) pin original TSX positions.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** A `.map()` returning elements is not adopted. As a child, the server renders an empty island shell and the rows never appear after activation; in a reactive child (`() => rows.map(…)`), the server renders empty text and after activation the page shows the elements as text (`[object HTMLLIElement]`).

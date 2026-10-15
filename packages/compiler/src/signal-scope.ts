@@ -220,6 +220,8 @@ function isLiteralStructure(node: T.Node | null | undefined): boolean {
 // ---------------------------------------------------------------------------
 
 export interface SignalCollectOptions {
+  /** Prop seeds are mapped by declared field identity, not literal defaults. */
+  propSeeds?: ReadonlySet<string>;
   /** File the statements came from — named in every diagnostic. */
   filePath: string;
   /** Module-level string constants of `filePath`, so a default declared once as
@@ -373,6 +375,7 @@ export function collectSignalDeclarations(
       const first = elements[0];
       if (!first || !t.isIdentifier(first)) continue;
       const signalName = first.name;
+      if (options.propSeeds?.has(signalName)) continue;
 
       const initArg = varDecl.init.arguments[0];
       if (!initArg || t.isSpreadElement(initArg)) {
@@ -642,6 +645,7 @@ function isProgramScopeFunction(ast: T.File, fn: T.Node): boolean {
 }
 
 export interface ComponentScopeInput {
+  propSeeds?: ReadonlySet<string>;
   /** Parsed module of `filePath` (already JSX-transformed). */
   ast: T.File;
   /** The component function. Its block body is the inner frame; an
@@ -696,7 +700,7 @@ export function enterComponentScope(input: ComponentScopeInput): SignalScope {
   return enterSignalScope(
     parent,
     `${filePath}#fn:${fnName}@${fn.start ?? 0}`,
-    collectSignalDeclarations(fn.body.body, { filePath, constants }),
+    collectSignalDeclarations(fn.body.body, { filePath, constants, propSeeds: input.propSeeds }),
     ctx,
     registry,
   );

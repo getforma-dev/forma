@@ -190,8 +190,8 @@ describe('IR roundtrip validation', () => {
       expect(ops).toContain('TEXT "Home"');
       expect(ops).toContain('TEXT "Reports"');
       // List, show and event-handler elision all survive the real pipeline.
-      expect(ops).toContain('LIST array=list:rows:array item=list:rows:item body=33');
-      expect(ops).toContain('PROP list:rows:item.name -> list:rows:name');
+      expect(ops).toContain('LIST array=list:rows:array item=$slot9 body=33');
+      expect(ops).toContain('PROP $slot9.name -> $slot10');
       expect(ops).toContain('SHOW_IF show:busy then=17 else=17');
       expect(ops).toContain('VOID_TAG input type="search" placeholder="Filter"');
       expect(getStrings(binary)).not.toContain('onSubmit');
@@ -220,8 +220,8 @@ describe('IR roundtrip validation', () => {
         'text:0',
         'text:0#2',
         'list:rows:array',
-        'list:rows:item',
-        'list:rows:name',
+        '$slot9',          // private local list item
+        '$slot10',         // private local list projection
         'attr:class#4',    // the list body
         'show:busy',
       ]);
@@ -249,10 +249,10 @@ describe('IR roundtrip validation', () => {
         expect([0x00, 0x01]).toContain(slot.source);
       });
 
-      // List slots carry the server source and container type hints.
+      // A no-props page owns local list state; no handler addresses its scratch slots.
       const byName = new Map(slots.map(slot => [slot.name, slot]));
-      expect(byName.get('list:rows:array')).toMatchObject({ typeHint: 0x04, source: 0x00 });
-      expect(byName.get('list:rows:item')).toMatchObject({ typeHint: 0x05, source: 0x00 });
+      expect(byName.get('list:rows:array')).toMatchObject({ typeHint: 0x04, source: 0x01 });
+      expect(byName.get('$slot9')).toMatchObject({ typeHint: 0x05, source: 0x01 });
       expect(byName.get('show:busy')).toMatchObject({ typeHint: 0x02, source: 0x01 });
       // The signal default declared in the island file reaches the slot table.
       expect(byName.get('statusText')).toMatchObject({ typeHint: 0x01, default: 'idle' });
