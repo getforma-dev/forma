@@ -24,6 +24,9 @@ export interface PreparedAdoption {
   dispose(): void;
 }
 export interface AdoptionOptions {
+  /** Public hydrate keeps its explicit marked-host/container convention.
+   * Compiled activation leaves this unset and consumes only its owned host. */
+  target?: 'host'|'public';
   /** Source-private compiled caller supplies the real 103 scope; the default
    * direct-API kernel has no capture/enroll methods or setter authority. */
   scope?: (options:PreparationOptions)=>AdoptionLifecycle;
@@ -392,9 +395,17 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     }
   }
   try{
-    const cursor=dom.root();
-    scope.run(()=>walk(construct(build,contentNs(host.parentNode)),cursor,contentNs(host.parentNode),true));
-    cursor.finish();
+    const start=(value:unknown):void=>{
+      if(options.target==='public'&&value&&typeof value==='object'&&(value as ComponentDescription).type==='component'){
+        const component=value as ComponentDescription;
+        scope.group(()=>start(construct(()=>Reflect.apply(component.component,component.receiver,component.args),contentNs(host))));return;
+      }
+      const own=options.target!=='public'||(value&&typeof value==='object'
+        &&(value as HydrationDescriptor).type==='element'&&host.hasAttribute('data-forma-island'));
+      const cursor=own?dom.root():dom.children(host),ns=own?contentNs(host.parentNode):contentNs(host);
+      walk(value,cursor,ns,true);cursor.finish();
+    };
+    scope.run(()=>start(construct(build,options.target==='public'?contentNs(host):contentNs(host.parentNode))));
     for(const observation of controls.finish())if(observation.kind==='binding'&&observation.edited){
       const binding=controlBindings.get(observation.token)!;
       if(!binding.read)refuse();
