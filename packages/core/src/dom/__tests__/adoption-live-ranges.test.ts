@@ -4,7 +4,7 @@ import { prepareAdoption } from '../adoption.js';
 import { h, fragment } from '../element.js';
 import { AdoptionLifecycle } from '../../reactive/adoption-lifecycle.js';
 import { createSignal } from '../../reactive/signal.js';
-import { createEffect } from '../../reactive/effect.js';
+import { createEffect, internalEffect } from '../../reactive/effect.js';
 import { registerDisposer } from '../../reactive/root.js';
 import type { ListDescriptor } from '../adoption-description.js';
 function fixture(){const doc=document.implementation.createHTMLDocument();doc.body.innerHTML='<section></section>';const host=doc.body.firstElementChild!,failure=vi.fn();let scope!:AdoptionLifecycle;const plan=prepareAdoption(host,()=>h('section'),{scope:options=>(scope=new AdoptionLifecycle(options)),failure});plan.commit();return{host,plan,scope,failure,ranges:liveRanges(scope,doc,()=>{})};}
@@ -60,6 +60,29 @@ describe('owned fresh ranges after publication',()=>{
   const {host,plan,ranges,failure}=fixture(),[value,setValue]=createSignal(1),events:string[]=[];
   host.append(ranges.dynamic(()=>{const next=value();events.push('read'+next);registerDisposer(()=>events.push('cleanup'+next));if(next===2)throw new Error('read candidate');return next;},item=>h('b',null,item)));const original=host.firstElementChild;
   setValue(2);expect(events.indexOf('read2')).toBeLessThan(events.indexOf('cleanup1'));expect(events.filter(event=>event==='cleanup1')).toHaveLength(1);expect(events.filter(event=>event==='cleanup2')).toHaveLength(1);expect(host.firstElementChild).toBe(original);expect(host.textContent).toBe('1');expect(failure).toHaveBeenCalledOnce();expect(plan.phase).toBe('aborted');
+ });
+
+ it('keeps a real-element scalar reader owner beyond the ordinary writer generation',()=>{
+  const {host,plan,scope,ranges}=fixture(),[value,setValue]=createSignal(1),order:string[]=[];
+  const read=ranges.reader(host,()=>{const next=value();order.push('read'+next);registerDisposer(()=>order.push('cleanup'+next));return next;});
+  scope.group(()=>internalEffect(()=>{const value=read();if(host.firstChild)host.firstChild.textContent=String(value);else host.append(String(value));}));const original=host.firstChild;order.length=0;
+  setValue(2);expect(order).toEqual(['read2','cleanup1']);expect(host.firstChild).toBe(original);expect(host.textContent).toBe('2');plan.dispose();expect(order).toEqual(['read2','cleanup1','cleanup2']);
+ });
+ it('drains a failed real-element candidate without allowing the shared writer to run',()=>{
+  const {host,plan,scope,ranges,failure}=fixture(),[value,setValue]=createSignal(1),order:string[]=[],write=vi.fn();
+  const read=ranges.reader(host,()=>{const next=value();order.push('read'+next);registerDisposer(()=>order.push('cleanup'+next));if(next===2)throw new Error('reader');return next;});
+  scope.group(()=>internalEffect(()=>{const next=read();write(next);host.textContent=String(next);}));const original=host.firstChild;setValue(2);
+  expect(order.indexOf('read2')).toBeLessThan(order.indexOf('cleanup1'));expect(order.filter(value=>value==='cleanup2')).toHaveLength(1);expect(write).toHaveBeenCalledOnce();expect(host.firstChild).toBe(original);expect(host.textContent).toBe('1');expect(plan.phase).toBe('aborted');expect(failure).toHaveBeenCalledOnce();
+ });
+ it('prevents a stale real-element writer after preceding cleanup moves its target',()=>{
+  const {host,plan,scope,ranges,failure}=fixture(),[value,setValue]=createSignal(1),outside=host.ownerDocument.createElement('aside'),target=host.ownerDocument.createElement('p'),write=vi.fn();host.append(target);host.after(outside);
+  const read=ranges.reader(target,()=>{const next=value();if(next===1)registerDisposer(()=>outside.append(target));return next;});scope.group(()=>internalEffect(()=>{const next=read();write(next);target.textContent=String(next);}));setValue(2);
+  expect(target.parentNode).toBe(outside);expect(target.textContent).toBe('1');expect(write).toHaveBeenCalledOnce();expect(plan.phase).toBe('aborted');expect(failure).toHaveBeenCalledOnce();
+ });
+ it('prevents a stale real-element writer after a reader disposes the plan',()=>{
+  const {host,plan,scope,ranges}=fixture(),[value,setValue]=createSignal(1),write=vi.fn();
+  const read=ranges.reader(host,()=>{const next=value();if(next===2)plan.dispose();return next;});scope.group(()=>internalEffect(()=>{const next=read();write(next);host.textContent=String(next);}));setValue(2);
+  expect(plan.phase).toBe('aborted');expect(write).toHaveBeenCalledOnce();expect(host.textContent).toBe('1');
  });
 
 });

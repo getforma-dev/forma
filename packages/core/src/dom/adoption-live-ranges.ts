@@ -47,6 +47,22 @@ export function liveRanges(scope:AdoptionLifecycle,document:Document,removeChild
       return fragment;
   }
   return {
+    /** Keep a real-element reader's ownership outside its ordinary writer's
+     * automatically retired generation. The shared writer retains Text nodes
+     * and textarea/property semantics after this checked read returns. */
+    reader<T>(target:Element|DocumentFragment,read:()=>T):()=>T {
+      const owner=scope.group(()=>undefined);let active:PreparedGroup<T>|undefined;
+      owner.run(()=>registerDisposer(()=>{active=undefined;}));
+      return ()=>{
+        const parent=target.parentNode,previous=target.previousSibling,following=target.nextSibling,nodes=[...target.childNodes];
+        const check=()=>{
+          if(scope.phase!=='live'||!owner.alive||target.parentNode!==parent||target.previousSibling!==previous||target.nextSibling!==following)refuse();
+          const current=target.childNodes;if(current.length!==nodes.length||nodes.some((node,index)=>node!==current[index]))refuse();
+        };
+        const next=owner.trackedChild(read);check();
+        active?.dispose();check();active=next;return next.value;
+      };
+    },
     list(desc:ListDescriptor,_namespace:string|null,render:(item:unknown,index:()=>number)=>Node|null):DocumentFragment {
       const {fragment,start,end}=range(),owner=scope.group(()=>undefined);
       owner.run(()=>{
