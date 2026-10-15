@@ -1357,7 +1357,6 @@ struct ListRows<'a, 'm> {
 /// is unwound to the row's mark and a keyed row's guard is popped before the
 /// error propagates, and the caller restores the list depth. No partial page
 /// is returned either way: an error ends the whole walk.
-#[allow(clippy::too_many_arguments)]
 fn walk_list_rows(
     module: &IrModule,
     slots: &mut SlotData,

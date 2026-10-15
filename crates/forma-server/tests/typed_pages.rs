@@ -884,6 +884,37 @@ fn a_sixty_thousand_row_typed_request_refuses_before_its_first_row() {
     );
 }
 
+/// FORMA-181 checkpoint B: a duplicate or non-identity row key in the handler's own data is a
+/// native render failure before any response (RENDER-503): no page, no partial state, a message
+/// that names the LIST, the rows and the path but no row data; the next good request renders.
+#[test]
+fn a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503() {
+    let handle = handle();
+    let refused = |rows: [f64; 2]| {
+        let mut data = props();
+        data.rows[0].id = rows[0];
+        data.rows[1].id = rows[1];
+        let error = handle.render(&data, &RenderCtx::new()).unwrap_err();
+        assert_eq!(error.code(), "RENDER-503", "{error}");
+        let text = error.to_string();
+        assert!(text.contains("row 1, key path `id`: "), "{text}");
+        assert!(
+            !text.contains("First") && !text.contains("Second"),
+            "{text}"
+        );
+        text
+    };
+    assert!(refused([7.0, 7.0]).contains("the row repeats the key row 0 already rendered"));
+    assert!(refused([0.0, -0.0]).contains("the row repeats the key row 0 already rendered"));
+    // A fraction is a valid declared number but not a row identity: the key-only rule does not
+    // narrow the declared type, it refuses the key.
+    assert!(refused([7.0, 1.5]).contains("not an integer within the safe range"));
+    assert!(
+        refused([7.0, 9_007_199_254_740_992.0]).contains("not an integer within the safe range")
+    );
+    assert!(handle.render(&props(), &RenderCtx::new()).is_ok());
+}
+
 struct PanickingHandler {
     panic_now: bool,
 }
