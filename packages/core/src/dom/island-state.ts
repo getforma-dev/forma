@@ -35,7 +35,7 @@ const MAX_STATE_BYTES = 1_048_576;
 const HASH = /^[0-9a-f]{16}$/;
 const stateEncoder = new TextEncoder();
 const forbidden = new Set(['__proto__', 'constructor', 'prototype']);
-const registrations = new WeakMap<IslandHydrateFn, Registration>();
+const registrations = new WeakMap<(...args: never[]) => unknown, Registration>();
 const own = (value: object, name: PropertyKey): boolean => Object.prototype.hasOwnProperty.call(value, name);
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 function refuse(code: IslandStateCode, detail: string): never { throw new IslandStateError(code, detail); }
@@ -285,7 +285,7 @@ export function checkIslandClaim(value: ValidatedIsland): void {
 }
 
 /** Validate the whole requested set before any caller may arm a trigger. */
-export function preflightIslands(registry: Record<string, IslandHydrateFn>, root: ParentNode): IslandPreflight[] {
+export function preflightIslands(registry: Record<string, (...args: never[]) => unknown>, root: ParentNode): IslandPreflight[] {
   const doc = (root as Node).nodeType === 9 ? root as Document : (root as Node).ownerDocument;
   if (!doc) return [];
   const state = readDocument(doc);
