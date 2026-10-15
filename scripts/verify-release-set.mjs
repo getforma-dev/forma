@@ -141,6 +141,7 @@ export function requireAssetIntegrity(resources, manifest, route = '/') {
     assert(['script', 'stylesheet', 'modulepreload'].includes(kind), `unexpected protected resource ${kind}`);
     const key = `${kind}:${file}`; counts.set(key, (counts.get(key) || 0) + 1);
   }
+  for (const [key, count] of counts) assert.equal(count, 1, `resource ${key} is duplicated`);
   const expected = new Map();
   const expect = (kind, file) => { const key = `${kind}:${file}`; expected.set(key, (expected.get(key) || 0) + 1); };
   for (const file of declared.css) expect('stylesheet', file);
@@ -428,6 +429,19 @@ export async function verify(dir, reportPath) {
               } finally { writeFileSync(manifestPath, bytes); }
             }
             report.tests.push({ name: `${template}: packed manifest schema/app/writer refused before binding`, passed: true });
+            if (set.contracts.assetIntegrity === 'sha384-v1') {
+              const asset = manifest.routes['/'].js.at(-1);
+              assert(asset, 'packed integrity refusal requires a declared entry');
+              for (const integrity of [undefined, null, 'sha384-short', `sha256-${'A'.repeat(64)}`]) {
+                try {
+                  const invalid = structuredClone(manifest);
+                  invalid.assets[asset].integrity = integrity;
+                  save(manifestPath, invalid);
+                  await server(binary, project, port, async () => {}, ['MANIFEST-103', asset]);
+                } finally { writeFileSync(manifestPath, bytes); }
+              }
+              report.tests.push({ name: `${template}: packed manifest missing and malformed digests refused before binding`, passed: true });
+            }
             const off = 'sw::configure(sw::ServiceWorker::off())';
             const mainSource = readFileSync(main, 'utf8'); assert(mainSource.includes(off), 'template worker startup changed; update P17 adapter');
             writeFileSync(main, mainSource.replace(off, `sw::configure_for_manifest(sw::ServiceWorker::for_app(${JSON.stringify(name)}).unwrap().enabled(), &manifest)`));

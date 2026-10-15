@@ -20,7 +20,8 @@ test('packed resource observations require exact digests and preserved nonce/cro
     assert.throws(() => requireAssetIntegrity(bad,manifest),reason);
   }
   assert.throws(() => requireAssetIntegrity(resources.slice(1),manifest),/missing or duplicated/);
-  assert.throws(() => requireAssetIntegrity([...resources,resources[3]],manifest),/missing or duplicated/);
+  assert.throws(() => requireAssetIntegrity([...resources,resources[3]],manifest),/duplicated/);
+  assert.throws(() => requireAssetIntegrity([...resources,resources[2]],manifest),/duplicated/);
 });
 const names = ['both_public_document_paths_write_exact_integrity_and_keep_nonces','every_asset_requires_full_canonical_integrity_before_startup','constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags'];
 function fixture(change, check) {
