@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "props-contract",
+  "build": "fixture",
+  "aliases": {
+    "home.ir": "home.ir",
+    "empty.ir": "empty.ir",
+    "empty-typed.ir": "empty-typed.ir"
+  },
+  "assets": {
+    "home.ir": {
+      "immutable": false,
+      "integrity": "sha384-Xc74s5TN794u4JI+Nw0nTqJ7sTNj6f/Oy4WVT4eKiRkaeZj5s7NqqE/GhrSHmqiI"
+    },
+    "empty.ir": {
+      "immutable": false,
+      "integrity": "sha384-AN37DfFiUj7HjRdDUuTNZgw6G0kWn3BUqFkYFxZb+zHmgwFmsL0kVgXoDVZAeTT8"
+    },
+    "empty-typed.ir": {
+      "immutable": false,
+      "integrity": "sha384-0fkqgDQ2dB80IikcOJlyyuFtv8O9FFY3lq+k6pJtW8SF9YqqxNiHUgFLt0sUOeuI"
+    }
+  },
+  "routes": {
+    "/": {
+      "mode": "ssr",
+      "ir": "home.ir",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    },
+    "/client": {
+      "mode": "browser",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    },
+    "/empty": {
+      "mode": "ssr",
+      "ir": "empty.ir",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    },
+    "/empty-typed": {
+      "mode": "ssr",
+      "ir": "empty-typed.ir",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    }
+  }
+}

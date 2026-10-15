@@ -11,15 +11,15 @@
   "assets": {
     "home.ir": {
       "immutable": false,
-      "integrity": "sha384-Xc74s5TN794u4JI+Nw0nTqJ7sTNj6f/Oy4WVT4eKiRkaeZj5s7NqqE/GhrSHmqiI"
+      "integrity": "sha384-lfGl/rg+5SSgTsGsQnY2qGftIw5R8bTeMScbv+NtsvSNvWFGN7HFch9/c36BDscT"
     },
     "empty.ir": {
       "immutable": false,
-      "integrity": "sha384-AN37DfFiUj7HjRdDUuTNZgw6G0kWn3BUqFkYFxZb+zHmgwFmsL0kVgXoDVZAeTT8"
+      "integrity": "sha384-cDdRm18ztx92ViwemrizHYCmrAerg+wSv29L+n+fjqrAIqz9nIa5ORllA12QqElK"
     },
     "empty-typed.ir": {
       "immutable": false,
-      "integrity": "sha384-0fkqgDQ2dB80IikcOJlyyuFtv8O9FFY3lq+k6pJtW8SF9YqqxNiHUgFLt0sUOeuI"
+      "integrity": "sha384-3KzPnmLxcGMWILbhZw8KkdC4pF7sEafAPi9UhyO+RQldd4KQyaDA5qrURInBr08u"
     }
   },
   "routes": {

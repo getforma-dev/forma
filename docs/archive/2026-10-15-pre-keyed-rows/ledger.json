@@ -89,6 +89,54 @@
         "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
       },
       "change": "unchanged (verified byte-identical after regeneration)"
+    },
+    "crates/forma-server/tests/fixtures/props-contract/home.ir": {
+      "archived": "props-contract/home.ir",
+      "before": {
+        "bytes": 1189,
+        "sha256": "621a01988d52df761a8081aeb2149f90549b5db0aec8511e362f3c4faee74ca8"
+      },
+      "after": {
+        "bytes": 1223,
+        "sha256": "d4eea555d9b23971b436106695f3e6129876f3ab30f482f05def872aec68c01a"
+      },
+      "change": "section 6 added: frozen declared-props compiler output of packages/compiler/tests/fixtures/props-contract whose source uses createList; source unchanged, HTML and typed bind/render unchanged"
+    },
+    "crates/forma-server/tests/fixtures/props-contract/empty.ir": {
+      "archived": "props-contract/empty.ir",
+      "before": {
+        "bytes": 223,
+        "sha256": "5910b4a68597b2d66403944efca4982cbff4c7bfa37585f0bfd22db5a6be803f"
+      },
+      "after": {
+        "bytes": 252,
+        "sha256": "9db2ffea96985da5a9bf949f64797c440c8b2ceab18d55cfcd02a0689cab616c"
+      },
+      "change": "section 6 added: frozen declared-props compiler output of packages/compiler/tests/fixtures/props-contract whose source uses createList; source unchanged, HTML and typed bind/render unchanged"
+    },
+    "crates/forma-server/tests/fixtures/props-contract/empty-typed.ir": {
+      "archived": "props-contract/empty-typed.ir",
+      "before": {
+        "bytes": 229,
+        "sha256": "d223ea2d1db1e7ef1bc15a519ff3d0eab7b6b0d97481d525714b256f2deaff82"
+      },
+      "after": {
+        "bytes": 258,
+        "sha256": "2f0f8307cbcf5e60c7108e9859adab65cd7dffe2cd2e40e634eea58bc58f3411"
+      },
+      "change": "section 6 added: frozen declared-props compiler output of packages/compiler/tests/fixtures/props-contract whose source uses createList; source unchanged, HTML and typed bind/render unchanged"
+    },
+    "crates/forma-server/tests/fixtures/props-contract/manifest.json": {
+      "archived": "props-contract/manifest.json",
+      "before": {
+        "bytes": 1378,
+        "sha256": "a97c670fa6333466fa60fb49c7904514d2f018acaa879d9879f699406f0edd98"
+      },
+      "after": {
+        "bytes": 1378,
+        "sha256": "00472edce0c91fbc3b0229b872fb88d7a2933d7fe28e09ba0a42d688dba93a68"
+      },
+      "change": "SRI integrity of the three regenerated .ir files (sha384), rewritten by emit-props-contract.mjs; routes and aliases unchanged"
     }
   }
 }

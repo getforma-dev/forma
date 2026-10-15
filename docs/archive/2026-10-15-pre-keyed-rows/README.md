@@ -20,6 +20,12 @@ count and SHA-256. Nothing here is regenerated to make a new implementation pass
   not render keys.
 - `sources/`: the inline test programs that FORMA-181 either migrates or now refuses. The
   tests composed them from fragments; each file is the exact composition the compiler saw.
+- `props-contract/`: the three frozen declared-props server fixtures
+  `crates/forma-server/tests/fixtures/props-contract/{home,empty,empty-typed}.ir` and their SRI
+  `manifest.json`. They are compiler output of `packages/compiler/tests/fixtures/props-contract`,
+  whose sources use `createList`, so they gain section 6 and were regenerated with
+  `node packages/compiler/scripts/emit-props-contract.mjs` (which rewrites the manifest's
+  sha384 integrity). Source, HTML and typed bind/render are unchanged.
 
 ## Migration map
 

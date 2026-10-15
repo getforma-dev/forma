@@ -42,7 +42,7 @@ describe('archived pre-keyed-rows sources', () => {
   });
   it('keeps every archived original byte-exact under its manifest', () => {
     const names = Object.keys(manifest.sha256).sort();
-    expect(names.length).toBe(27);
+    expect(names.length).toBe(31);
     for (const name of names) {
       const bytes = readFileSync(join(ARCHIVE, name));
       expect(bytes.length, name).toBe(manifest.sha256[name]!.bytes);
@@ -50,9 +50,12 @@ describe('archived pre-keyed-rows sources', () => {
     }
   });
   it('records a before and after hash for every regenerated native and corpus file, and only those', () => {
-    const ledger = JSON.parse(readFileSync(join(ARCHIVE, 'ledger.json'), 'utf8')) as {files: Record<string, {before: {bytes: number; sha256: string}; after: {bytes: number; sha256: string}; change: string}>};
+    const ledger = JSON.parse(readFileSync(join(ARCHIVE, 'ledger.json'), 'utf8')) as {files: Record<string, {archived?: string; before: {bytes: number; sha256: string}; after: {bytes: number; sha256: string}; change: string}>};
     const root = resolve(__dirname, '../../..');
     const changed = Object.entries(ledger.files).filter(([, entry]) => entry.before.sha256 !== entry.after.sha256).map(([path]) => path).sort();
+    // Nine compiler outputs gain section 6 (four native island-emitter fixtures, the
+    // list-same-source corpus case, the three frozen declared-props server fixtures), plus the
+    // declared-props SRI manifest that emit-props-contract.mjs rewrites for them.
     expect(changed).toEqual([
       'crates/forma-ir/tests/fixtures/island-emitter/aggregate-fallback.ir',
       'crates/forma-ir/tests/fixtures/island-emitter/local-aggregates.ir',
@@ -60,12 +63,17 @@ describe('archived pre-keyed-rows sources', () => {
       'crates/forma-ir/tests/fixtures/island-emitter/rows.ir',
       'crates/forma-ir/tests/fixtures/js-emitter/list-same-source.dump',
       'crates/forma-ir/tests/fixtures/js-emitter/list-same-source.ir',
+      'crates/forma-server/tests/fixtures/props-contract/empty-typed.ir',
+      'crates/forma-server/tests/fixtures/props-contract/empty.ir',
+      'crates/forma-server/tests/fixtures/props-contract/home.ir',
+      'crates/forma-server/tests/fixtures/props-contract/manifest.json',
     ]);
     for (const [path, entry] of Object.entries(ledger.files)) {
       const live = readFileSync(join(root, path));
       expect(createHash('sha256').update(live).digest('hex'), path).toBe(entry.after.sha256);
-      const archivedPath = path.replace('crates/forma-ir/tests/fixtures/', '');
+      const archivedPath = entry.archived ?? path.replace('crates/forma-ir/tests/fixtures/', '');
       expect(manifest.sha256[archivedPath]!.sha256, path).toBe(entry.before.sha256);
+      expect(manifest.sha256[archivedPath]!.bytes, path).toBe(entry.before.bytes);
     }
   });
 });
