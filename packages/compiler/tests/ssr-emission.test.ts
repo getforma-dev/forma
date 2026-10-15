@@ -476,11 +476,17 @@ describe('generateRealIr — signals in the scopes the walk inlines', () => {
       `,
     }, 'app.ts');
 
-    const result = emitReal(entry);
-    // The page's binding gets an anonymous slot with no default — and says so.
-    expect(slotNames(result.binary)).toEqual(['hidden', 'text:0']);
-    expect(slotByName(result.binary, 'text:0')!.default).toBe('');
+    expect(() => emitReal(entry)).toThrow(/BUILD-610.*page\.ts:5:63/s);
     expect(warnings()).toContain('dynamic text child');
+    // Removing the out-of-scope read leaves the actual local signal intact.
+    writeProject({ 'page.ts': `
+      import { h } from 'formajs';
+      import { Sub } from './sub';
+      export function Page() { return h('div', { id: 'app' }, Sub()); }
+    ` }, 'app.ts');
+    const result = emitReal(entry);
+    expect(slotNames(result.binary)).toEqual(['hidden']);
+    expect(slotByName(result.binary, 'hidden')!.default).toBe('inner');
   });
 });
 

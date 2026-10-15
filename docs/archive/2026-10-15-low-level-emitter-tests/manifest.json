@@ -1,0 +1,11 @@
+{
+  "packages/compiler/tests/ir-emit.test.ts": "fcce246f0895963c59ab1178dcd9daa6b723d2589c1059f0d0d147917449d7e6",
+  "packages/compiler/tests/ir-roundtrip.test.ts": "c5b7456214f0cf26812d9e78de3f942e6bf3bf4d27db33de2a162382388775b4",
+  "packages/compiler/tests/fixtures/ssr-page/app.ts": "9b6d1ff93fb4bdd9ae149a999fbea0009b774a85b23d5f422d5b8d86fe403a85",
+  "packages/compiler/tests/fixtures/ssr-page/status-panel.ts": "4304c144accd83cf53e2567d134fec6d44b3dbd8c09268a336ac278af7f69fab",
+  "packages/compiler/tests/fixtures/ssr-page/page.ts": "5c9adc1fc0f58d729f0cb8054fe561032707767d04d4d939c7def8030ae6830d",
+  "packages/compiler/tests/fixtures/ssr-page/summary-card.ts": "7fa426068bc90bd8f92b705b133724ccb985e0d81f3b0fd052014be6965fd89d",
+  "packages/compiler/tests/ssr-render.test.ts": "0948f6a52aed52f124d3e10730524daba650ec7b3b6b00d403f3d114f0a4bfde",
+  "packages/compiler/tests/ir-walk.test.ts": "c9ab4f186040fb01da125e0580be6ec721aad08494c14f4812ea138ccb7948bc",
+  "packages/compiler/tests/ssr-emission.test.ts": "170d80b23eb17855089d9a53ed2e8d9236b77d31f1f47a6f3eb0cfd13f60ff28"
+}

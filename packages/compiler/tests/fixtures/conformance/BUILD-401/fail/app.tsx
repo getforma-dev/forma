@@ -3,6 +3,6 @@ import { Fancy } from 'fixture-fancy-ui';
 
 mount(() => (
   <main>
-    <div><Fancy /></div>{/* expect: BUILD-401 */}
+    <div><Fancy /></div>{/* expect: BUILD-401; expect: BUILD-610 */}
   </main>
 ), '#app');

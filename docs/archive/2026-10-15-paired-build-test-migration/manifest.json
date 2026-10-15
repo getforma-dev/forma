@@ -1,0 +1,6 @@
+{
+  "packages/build/tests/strict.test.ts": "26efbe876c36b35d438286cde6c0ddbaddd5c56c11c85590d63e2c4f4031e010",
+  "packages/build/tests/manifest-compatibility.test.ts": "4ad85f5e12190225cc952c16d04922a29d9040038ee8a8c1c1b469f38d75e280",
+  "packages/build/tests/server-functions-removed.test.ts": "4c05b826397139bfef4fc73780d51ce9c6a9d26f74ba146500119ea08c58b414",
+  "packages/build/tests/development-condition.test.ts": "4b5eea9fa603127f0793464aea4e9e6bba37a17514252d1d8b376f0cad3709bb"
+}

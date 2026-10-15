@@ -27,7 +27,7 @@ export function islandInputs(ctx:IrEmitContext,schemaObject:number,arg:t.Node|un
     const value=supplied.get(field.name);
     if(!value&&field.type.kind!=='optional')fail(arg,`missing declared island input ${field.name}`);
     if(value&&scope) {
-      const path=propPath(value,scope);
+      const path=propPath(value,scope,false);
       if(path) {
         if(!schemaAssignable(propType(path,scope,value),field.type,schema))fail(value,`declared island input ${field.name} has an incompatible type`);
         return propSlot(value,scope,ctx)!;
@@ -40,7 +40,7 @@ export function islandInputs(ctx:IrEmitContext,schemaObject:number,arg:t.Node|un
     }
     let constant:unknown=null;
     if(value) {
-      const getter=t.isIdentifier(value)?value.name:t.isCallExpression(value)&&t.isIdentifier(value.callee)&&value.arguments.length===0?value.callee.name:undefined;
+      const getter=t.isCallExpression(value)&&t.isIdentifier(value.callee)&&value.arguments.length===0?value.callee.name:undefined;
       const initial=getter?signal?.(getter):undefined;
       constant=initial===undefined?closedExpression(value,file,constants):initial;
     }

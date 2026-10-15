@@ -3,6 +3,6 @@ const tag = 'section';
 
 mount(() => (
   <main>
-    {h(tag, null, 'section body')}{/* expect: BUILD-103 */}
+    {h(tag, null, 'section body')}{/* expect: BUILD-103; expect: BUILD-610 */}
   </main>
 ), '#app');

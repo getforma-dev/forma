@@ -3,6 +3,6 @@ let rows = [{ name: 'a' }, { name: 'b' }];
 
 mount(() => (
   <main>
-    {h('ul', null, ...rows.map((r) => h('li', null, r.name)))}{/* expect: BUILD-104 */}
+    {h('ul', null, ...rows.map((r) => h('li', null, r.name)))}{/* expect: BUILD-104; expect: BUILD-610 */}
   </main>
 ), '#app');

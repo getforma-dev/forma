@@ -3,6 +3,8 @@
 use forma_ir::{walk_to_html_counted, IrModule, SlotData, SlotValue, WalkLimits};
 use serde_json::{json, Value};
 
+// This qualification harness writes its deterministic JSON protocol to stdout.
+#[allow(clippy::print_stdout)]
 fn main() {
     let bytes = include_bytes!("../tests/fixtures/island-emitter/roundtrip.ir");
     let module = IrModule::parse(bytes).expect("reviewed actual compiler output");

@@ -6,31 +6,34 @@ and one of fix (FORMA-119; v2's DR-1, L-3, N12). This page lists every code.
 The catalogue in `packages/compiler/src/diagnostics.ts` is the source; a test
 keeps this page, the catalogue and the conformance fixtures equal.
 
+## Declared-state diagnostics (FORMA-103)
+
+Unsupported native island expressions now end the build with source-located
+**BUILD-610**, including without strict mode. Earlier construct-specific reason
+codes remain in diagnostic reports; they no longer authorize empty fallback
+hosts. Registered browser-only components require declared metadata.
+
+**Reserved retired codes:** BUILD-303 (literal-row list degradation), BUILD-504
+(aggregate default note), BUILD-408 (registered fallback shell), BUILD-706
+(old browser-only prop dropping), and BUILD-708 (unregistered browser-only shell). Closed
+aggregate defaults are now represented directly, and the fallback writer is
+removed. These codes will not be reused. Exact earlier text and fixtures remain
+in [the pre-state diagnostics archive](archive/2026-10-15-pre-state-diagnostics/README.md).
+
 ## What a diagnostic looks like
 
-A default build prints each one as a warning, one line, as at compiler 0.3.6,
-with the code after `IR:` and the position after the file:
+Reason diagnostics print the code after `IR:` and the source position after the
+file. Unsupported native expressions also produce a BUILD-610 error, even when
+strict mode is disabled:
 
 ```
-   IR: BUILD-101 call expression helpers.extra(...) in /app/src/home/app.tsx:12:11 — emitted as an empty island shell, so it renders nothing server-side and only appears once the client bundle hydrates
+   IR: BUILD-101 call expression helpers.extra(...) in /app/src/home/app.tsx:12:11 — cannot form a declared native island contract
 ```
 
-Apart from the exceptions below, no line is added or removed and the text
-around the code and position is unchanged, so a gate that counts these lines per file (GateWASM's
-`check-ir-degradations.mjs`) or matches their text (ksx Studio's
-`build.mjs`) sees what it saw at 0.3.6. The exceptions are rare and
-deliberate: three page-level lines that named no file now name the entry
-(`inline return node is not a call expression`, `real emission failed`,
-and the module-write failure, which now also starts with `IR:`); a literal
-past 65,535 bytes is reported where it is written instead of as
-`real emission failed`; BUILD-701 to BUILD-707 word, with the way out,
-constructs that were reported as an unresolved component, a call or a text
-child; and **BUILD-303 adds a line** where 0.3.6 printed none: a
-`createList` whose source is a plain read (`rows`, `rows()`,
-`() => rows()`) of a signal initialized with literal rows, which the server
-renders empty unless a handler fills it. A gate that counts or matches these
-lines sees one more line per such list (GateWASM `b750ca5` and ksx Studio
-`0cb57e2` have none).
+The stable reason codes identify the construct; BUILD-610 makes its refusal
+unconditional. Diagnostic wording describes the current result. Historical
+warning-only behavior and the original source fixtures are preserved in the
+pre-state archive above.
 
 The line and column are where the author wrote the construct: in a `.tsx` or
 `.jsx` file, which the compiler reads after esbuild has turned its JSX into
@@ -66,9 +69,9 @@ The line and column are where the author wrote the construct: in a `.tsx` or
 - **The compiler**: `collectDiagnostics(() => generateRealIr(entry))`, and
   `DIAGNOSTIC_CATALOGUE`, are exported.
 
-The default stays a warning: without strict mode, every existing build
-behaves as at 0.3.6. 3.0.0 makes strict the only mode (DR-1's migration,
-step 3).
+Ordinary advisory diagnostics remain warnings unless strict mode is enabled.
+Malformed or unsupported declared native contracts always fail with BUILD-610;
+turning strict mode off cannot restore a fallback shell or empty scalar value.
 
 ## Counting composition depth (L-26)
 
@@ -80,8 +83,7 @@ can be counted in strict mode: the number of BUILD-403 entries.
 ## Notes
 
 A note is printed as every diagnostic is, but strict mode never fails on it.
-They are BUILD-504, a construct DR-1's published subset admits, and the raw-entry
-lint's BUILD-813 for an allowlist entry listing nothing. BUILD-816 is a production
+The raw-entry lint's BUILD-813 reports an allowlist entry listing nothing. BUILD-816 is a production
 build warning, also nonfatal under strict mode. BUILD-802 is retired: unnamed
 applications now fail identity validation (BUILD-815).
 
@@ -104,7 +106,7 @@ applications now fail identity validation (BUILD-815).
 
 ### BUILD-101 Unrecognised call in the tree
 
-**Why.** The call becomes an anonymous island (`island_<n>`) that no registry names: the server renders an empty shell and nothing fills it.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Write the subtree as h() calls, a component in a relative file, createShow or createList, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -118,7 +120,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-102 Unrecognised child expression
 
-**Why.** A child the compiler cannot represent (a bare ternary, a bare `&&`, an identifier, a template literal, an object) becomes an anonymous island the server renders empty.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Wrap a reactive child in a function (`() => …`), use createShow for a conditional and createList for rows, or fold the value into a module-level const.
 
@@ -132,7 +134,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-103 Dynamic tag
 
-**Why.** `h(expr, …)` with a tag the compiler cannot read becomes an anonymous island the server renders empty.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Use a literal tag name, or a component the compiler can follow.
 
@@ -146,7 +148,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-104 Spread child that does not unroll
 
-**Why.** A spread child is unrolled only as `...CONST.map(item => h(…))` over a module-level array of object literals; anything else becomes an anonymous island the server renders empty.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Unroll a module-level const array of object literals, or render runtime rows with createList(source, keyFn, (row) => h(…)).
 
@@ -160,7 +162,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-105 Spread over a table that is not static
 
-**Why.** The spread names a table the compiler cannot read (imported from a package, built at run time, or shadowed by a nested declaration), so it becomes an anonymous island the server renders empty.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Declare the table as a literal `const` of object literals in the module it is imported from, with no nested declaration of the same name, or use createList.
 
@@ -174,7 +176,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-106 createShow branch the compiler cannot follow
 
-**Why.** A createShow branch that is not `() => h(…)` (or a direct h() call) becomes an anonymous island the server renders empty.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Write the branch inline as `() => h(…)`.
 
@@ -188,7 +190,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-107 createList the compiler cannot walk
 
-**Why.** A createList without all three arguments, with a map function that is not inline, takes no named row parameter or returns nothing visible becomes a `createList` island the server renders empty.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Write `createList(source, keyFn, (row) => h(…))` with the map function inline and the row parameter named, reading `row.field`.
 
@@ -304,7 +306,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-301 Text the compiler cannot evaluate
 
-**Why.** The text renders empty on the server and fills in only once the browser activates the page.
+**Why.** This unresolved dynamic text expression has no closed native value and ends the build with BUILD-610.
 
 **Fix.** Initialize the signals it reads with literal defaults so the server can render them.
 
@@ -330,25 +332,11 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 <div>{() => isOpen() ? <p>open</p> : <p>closed</p>}</div>
 ```
 
-### BUILD-303 List over a signal initialized with literal rows
-
-**Why.** The list's source is a plain read (`rows`, `rows()`, `() => rows()`) of a signal initialized with literal rows, which have no slot, so the server renders the list empty unless a handler fills `list:<name>:array`, while the browser renders the rows. A derived source over literal rows (`() => rows().filter(…)`) is not detected in A2.
-
-**Fix.** Start the signal empty (`createSignal([])`) and fill it from the server (the handler sets `list:<name>:array`; an island seeds the signal from its props), or unroll a module-level const with `...CONST.map(…)`.
-
-**In strict mode.** An error.
-
-Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BUILD-303/fail/app.tsx) (the near miss is [beside it](../packages/compiler/tests/fixtures/conformance/BUILD-303/pass/)):
-
-```tsx
-<ul>{createList(items, (r) => r.id, (r) => <li>{r.n}</li>)}</ul>
-```
-
 ## BUILD-4xx: A component the compiler does not inline
 
 ### BUILD-401 Component imported from a package
 
-**Why.** The compiler follows relative imports only, so the component becomes an empty island shell under its own name that nothing fills on the server.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Compile the component's source in the application (a relative import), or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -362,7 +350,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-402 Component the compiler cannot find
 
-**Why.** No relative import or declaration in the calling file resolves the name, so it becomes an empty island shell that nothing fills on the server.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Import the component from a relative path, or declare it in the calling file.
 
@@ -376,7 +364,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-403 Composition past the inlining limit of 3
 
-**Why.** Components are inlined three levels deep; the fourth level becomes an empty island shell. The diagnostic names the chain from the page down.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Flatten the chain so the component sits at depth 3 or less, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -390,7 +378,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-404 Recursive component
 
-**Why.** A component inside its own subtree is not inlined: it becomes an empty island shell.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Render the recursion with createList over data, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -404,7 +392,7 @@ return <ul><Tree /></ul>;
 
 ### BUILD-405 Component passed a prop the compiler cannot evaluate
 
-**Why.** A component is inlined only with literal props, so it becomes an empty island shell.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Pass literal values (strings, numbers, booleans, null) as props.
 
@@ -418,7 +406,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-406 Component the compiler cannot follow
 
-**Why.** The component has no return the compiler can follow to an h() call, or its file failed to parse, so it becomes an empty island shell.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Return the h() tree directly from the component (an expression body or a top-level `return h(…)`).
 
@@ -442,20 +430,6 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ```tsx
 <Card><b>bold</b></Card>
-```
-
-### BUILD-408 Registered island whose content the compiler cannot compile
-
-**Why.** The island is registered, so its empty shell activates in the browser, but the server renders a hole where it will appear (or truncates its content at the failure).
-
-**Fix.** Make the island resolvable (a relative import, returning its h() tree), or declare it with browserOnly() so the empty host is intended.
-
-**In strict mode.** An error.
-
-Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BUILD-408/fail/app.tsx) (the near miss is [beside it](../packages/compiler/tests/fixtures/conformance/BUILD-408/pass/)):
-
-```tsx
-<LiveChart />
 ```
 
 ## BUILD-5xx: A signal the compiler cannot name
@@ -500,20 +474,6 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ```ts
 const [count] = createSignal(7);
-```
-
-### BUILD-504 Signal initialized with an array or object literal (note)
-
-**Why.** The signal gets no named slot, so its literal value does not reach the server. DR-1 admits literal arrays and objects, so this is a note, never an error. A read in text, an attribute or a conditional is reported where it is (BUILD-301, 206, 302), and a createList whose source is a plain read of literal rows (`rows`, `rows()`, `() => rows()`) as BUILD-303; a derived source such as `createList(() => rows().filter(…))` is not detected in A2.
-
-**Fix.** Act on the diagnostic at each read. A createList over `createSignal([])` needs nothing: both sides start empty.
-
-**In strict mode.** A note: never an error.
-
-Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BUILD-504/fail/app.tsx) (the near miss is [beside it](../packages/compiler/tests/fixtures/conformance/BUILD-504/pass/)):
-
-```tsx
-const [rows] = createSignal([] as Array<{ id: number; name: string }>);
 ```
 
 ## BUILD-6xx: The page module: a placeholder, or a literal too long
@@ -610,7 +570,7 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/
 
 ### BUILD-701 Plain array child (`.map()` without createList)
 
-**Why.** A `.map()` returning elements is not adopted. As a child, the server renders an empty island shell and the rows never appear after activation; in a reactive child (`() => rows.map(…)`), the server renders empty text and after activation the page shows the elements as text (`[object HTMLLIElement]`).
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Render rows with createList(source, keyFn, (row) => h(…)), unroll a module-level const with ...CONST.map(…), or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -624,7 +584,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-702 createErrorBoundary in a server-rendered component
 
-**Why.** Adoption has no handling for createErrorBoundary: the server renders an empty shell where it stands, and on a mount() root activation throws (`insertBefore`: parameter 1 is not of type 'Node'), so nothing after it activates.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Move the boundary out of the server-rendered tree, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -638,7 +598,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-703 createSwitch in a server-rendered component
 
-**Why.** Adoption has no handling for createSwitch: the server renders an empty shell where it stands, and on a mount() root activation throws (`insertBefore`: parameter 1 is not of type 'Node'), so nothing after it activates.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Use createShow for each case, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -652,7 +612,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-704 createPortal in a server-rendered component
 
-**Why.** Adoption has no handling for createPortal: the server renders an empty shell where it stands; activation goes on past it, but the portal's content never appears.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Create the portal from an effect after activation, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -666,7 +626,7 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-705 createSuspense in a server-rendered component
 
-**Why.** Adoption has no handling for createSuspense: the server renders an empty shell where it stands, and on a mount() root activation throws (`insertBefore`: parameter 1 is not of type 'Node'), so nothing after it activates.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Render the loaded state from server data, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.
 
@@ -678,23 +638,9 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 {createSuspense(() => <p>loading</p>, () => <p>loaded</p>)}
 ```
 
-### BUILD-706 browserOnly() prop the compiler cannot evaluate
-
-**Why.** A browser-only island's server output is its empty host with its declared props; a prop the compiler cannot evaluate to a string, number, boolean or null (a function, a spread, an array, a run-time value) is not among them, so the component never receives it.
-
-**Fix.** Pass a literal or a module-level const, or read the value in the browser.
-
-**In strict mode.** An error.
-
-Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BUILD-706/fail/app.tsx) (the near miss is [beside it](../packages/compiler/tests/fixtures/conformance/BUILD-706/pass/)):
-
-```tsx
-<Chart data={rows()} />
-```
-
 ### BUILD-707 browserOnly() called inside the tree
 
-**Why.** browserOnly() wraps a component declaration; called in the tree, the compiler cannot name the island, so it becomes an empty shell nothing registers.
+**Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
 
 **Fix.** Declare `const X = browserOnly(Impl)` at the top level of a module, render `<X …/>`, and register X in activateIslands.
 
@@ -704,20 +650,6 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ```tsx
 <div>{browserOnly(Panel)}</div>
-```
-
-### BUILD-708 browserOnly() component not registered
-
-**Why.** The page activates islands from a registry that does not name this component, so its empty host never renders in the browser.
-
-**Fix.** Add the component to the activateIslands({ … }) registry under the name it is rendered with.
-
-**In strict mode.** An error.
-
-Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BUILD-708/fail/app.tsx) (the near miss is [beside it](../packages/compiler/tests/fixtures/conformance/BUILD-708/pass/)):
-
-```tsx
-<Chart />
 ```
 
 ## BUILD-8xx: The build package (reported by `@getforma/build`)

@@ -4,12 +4,11 @@
  *
  * The compiler's own conformance corpus pins each code at its line
  * (packages/compiler/tests/diagnostics-conformance.test.ts). This file pins
- * what the build does with them: without `--strict` nothing changes but the
- * report; with it the build fails, after compiling every page, with all of
- * them at once, and leaves the previous output as it was.
+ * how advisory diagnostics become errors under strict mode and how mandatory
+ * BUILD-610 refusals always fail while preserving reports and prior output.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -61,12 +60,12 @@ function config(entries: Record<string, string>, extra: Partial<BuildConfig> = {
   };
 }
 
-/** Two pages, each with one construct the compiler cannot represent. */
+/** Two pages with advisory attribute diagnostics; strict mode promotes both. */
 function twoBrokenPages() {
   return {
     home: page('home', [
-      `const helpers = { extra: () => h('em', null, 'x') };`,
-      `mount(() => h('main', null, h('div', null, helpers.extra())), '#app');`,
+      `function lookupClass() { return 'extra'; }`,
+      `mount(() => h('main', null, h('div', { class: () => lookupClass() })), '#app');`,
     ]),
     about: page('about', [
       `function lookupName() { return 'pad'; }`,
@@ -76,7 +75,7 @@ function twoBrokenPages() {
 }
 
 describe('--strict', () => {
-  it('S6: an unrepresentable construct fails the strict build with its code, file and line', async () => {
+  it('S6: strict mode reports every advisory error with its code, file and line', async () => {
     const entries = twoBrokenPages();
     let failure: (Error & { diagnostics?: BuildDiagnostic[] }) | undefined;
     try {
@@ -87,11 +86,11 @@ describe('--strict', () => {
     expect(failure?.name).toBe('FormaStrictBuildError');
     // Both pages' errors, at once: the build compiled every page before failing.
     expect(failure!.diagnostics!.map((d) => [d.page, d.code, d.file, d.line, d.severity])).toEqual([
-      ['home', 'BUILD-101', entries.home, 3, 'error'],
-      ['about', 'BUILD-207', entries.about, 3, 'error'],
+      ['home', 'BUILD-206', realpathSync(entries.home), 3, 'error'],
+      ['about', 'BUILD-207', realpathSync(entries.about), 3, 'error'],
     ]);
     expect(failure!.message).toContain(`${entries.home}:3:`);
-    expect(failure!.message).toContain('BUILD-101');
+    expect(failure!.message).toContain('BUILD-206');
     expect(failure!.message).toContain(`${entries.about}:3:`);
     expect(failure!.message).toContain('BUILD-207');
     expect(failure!.message).toMatch(/why: .*\n {4}fix: /);
@@ -105,7 +104,7 @@ describe('--strict', () => {
     const result = await build(config(entries));
     expect(existsSync(join(outDir, 'manifest.json'))).toBe(true);
     expect(result.diagnostics.map((d) => [d.page, d.code, d.severity])).toEqual([
-      ['home', 'BUILD-101', 'warning'],
+      ['home', 'BUILD-206', 'warning'],
       ['about', 'BUILD-207', 'warning'],
     ]);
     // One line each, in the 0.3.6 shape plus the code and the position (the
@@ -113,7 +112,7 @@ describe('--strict', () => {
     const irLines = warnings.filter((w) => w.includes('IR: '));
     expect(irLines).toHaveLength(2);
     expect(irLines.find((line) => line.includes('home.ts'))).toMatch(
-      /^ {3}IR: BUILD-101 call expression helpers\.extra\(\.\.\.\) in .*home\.ts:3:\d+ — emitted as an empty island shell/,
+      /^ {3}IR: BUILD-206 .*home\.ts:3:\d+/s,
     );
   }, 30_000);
 
@@ -125,7 +124,7 @@ describe('--strict', () => {
     expect(result.warnings.some((w) => w.startsWith('BUILD-802 '))).toBe(false);
   }, 30_000);
 
-  it('passes a clean build, and never fails on a note', async () => {
+  it('passes closed aggregate defaults without the retired note', async () => {
     const entries = {
       home: page('home', [
         `const [rows] = createSignal([]);`,
@@ -133,7 +132,7 @@ describe('--strict', () => {
       ]),
     };
     const result = await build(config(entries, { strict: true }));
-    expect(result.diagnostics.map((d) => [d.code, d.severity])).toEqual([['BUILD-504', 'note']]);
+    expect(result.diagnostics).toEqual([]);
   }, 30_000);
 });
 
@@ -151,11 +150,11 @@ describe('the JSON report', () => {
       ]),
     };
     const report = join(tmpRoot, 'diagnostics.json');
-    await build(config(entries, { diagnosticsJson: report }));
+    await expect(build(config(entries, { diagnosticsJson: report }))).rejects.toThrow(/BUILD-610/);
     const json = JSON.parse(readFileSync(report, 'utf8'));
     expect(Object.keys(json)).toEqual(['version', 'strict', 'diagnostics']);
     expect(json.version).toBe(1);
-    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-403']);
+    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-403', 'BUILD-610']);
     expect(Object.keys(json.diagnostics[0])).toEqual(
       ['code', 'severity', 'page', 'file', 'line', 'column', 'message', 'why', 'fix', 'chain'],
     );
@@ -217,7 +216,7 @@ describe('the JSON report', () => {
     const json = JSON.parse(readFileSync(report, 'utf8'));
     expect(json.version).toBe(1);
     expect(json.strict).toBe(true);
-    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-101', 'BUILD-207']);
+    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-206', 'BUILD-207']);
     for (const d of json.diagnostics as BuildDiagnostic[]) {
       for (const key of ['code', 'severity', 'page', 'file', 'line', 'column', 'message', 'why', 'fix']) {
         expect(d, key).toHaveProperty(key);
@@ -280,15 +279,18 @@ describe('--strict in watch mode', () => {
       `const helpers = { extra: () => h('em', null, 'x') };`,
       `mount(() => h('main', null, h('div', null, helpers.extra())), '#app');`,
     ]);
-    await watching(config({ home }, { strict: true }), async ({ output }) => {
+    await watching(config({ home }, { strict: true }), async ({ output, manifest, change }) => {
       await vi.waitFor(() => {
-        expect(output()).toMatch(/IR not rewritten for home: BUILD-101 call expression helpers\.extra/);
+        expect(output()).toMatch(/BUILD-610.*helpers\.extra/);
+        expect(output()).toContain('[watch] build finished');
       }, { timeout: 10_000 });
       expect(existsSync(join(outDir, 'home.ir'))).toBe(false);
 
-      page('home', [`mount(() => h('main', null, h('div', null, 'fixed')), '#app');`]);
+      expect(existsSync(join(outDir, 'manifest.json'))).toBe(false);
+      await change(() => { page('home', [`mount(() => h('main', null, h('div', null, 'fixed')), '#app');`]); });
       await vi.waitFor(() => {
-        expect(existsSync(join(outDir, 'home.ir'))).toBe(true);
+        expect(existsSync(join(outDir, manifest().aliases['home.ir']))).toBe(true);
+        expect(existsSync(join(outDir, manifest().aliases['home.js']))).toBe(true);
       }, { timeout: 10_000 });
     });
   }, 30_000);

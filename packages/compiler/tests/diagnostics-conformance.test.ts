@@ -11,7 +11,7 @@
  *          admits, which does not report the code and builds under `strict`.
  *
  * Every diagnostic a fixture reports is marked, whatever its code: a fixture
- * whose construct also brings a note (a BUILD-504 declaration) marks it too,
+ * whose construct also causes mandatory BUILD-610 marks both reasons,
  * so "reports exactly its markers" holds for both halves.
  *
  * Some codes cannot be written as a page: BUILD-606 (the compiler failing, or
@@ -133,12 +133,10 @@ describe('the code catalogue', () => {
   });
 
   it('lists exactly the codes strict mode never fails on', () => {
-    // A construct DR-1 admits, and the deprecated paths that keep working in
-    // A2; and the
-    // raw-entry lint's BUILD-813, an allowlist entry listing nothing, on which
-    // the lint's run does not fail.
+    // Empty raw-entry allowlists and the production duplicate-core advisory
+    // remain nonfatal; unsupported native contracts always refuse.
     expect(DIAGNOSTIC_CATALOGUE.filter((e) => !e.strict).map((e) => e.code))
-      .toEqual(['BUILD-504', 'BUILD-813', 'BUILD-816']);
+      .toEqual(['BUILD-813', 'BUILD-816']);
   });
 
   it('gives every code a why and a fix', () => {
@@ -317,5 +315,31 @@ describe('declared contract refusal is unconditional', () => {
     expect(errors).toHaveLength(1);
     expect(errors[0]!.text).toMatch(/^BUILD-610 /);
     expect(errors[0]!.location).toMatchObject({ file: join(CORPUS, 'BUILD-610/fail/page.tsx'), line: 3 });
+  });
+});
+
+describe('retired fallback source forms remain unconditional refusals',()=>{
+  it.each(['browser-only-unclosed','browser-only-unregistered','array-return-function'])('refuses %s without strict mode',async name=>{
+    const dir=resolve(CORPUS,'../declared-refusals',name);
+    const {diagnostics}=compile(dir);
+    expect(reportedAndExpected(dir,diagnostics).reported).toEqual(reportedAndExpected(dir,diagnostics).expected);
+    const errors=await strictBuild(dir,false);
+    expect(errors).toHaveLength(1);expect(errors[0]!.text).toMatch(/^BUILD-610 /);
+    const expected=markers(dir,'BUILD-610')[0]!;
+    expect(errors[0]!.location).toMatchObject({file:expected.file,line:expected.line});
+  });
+});
+
+
+describe('unresolved scalar text refuses without strict mode', () => {
+  it('retains the reason and refuses at the original source position', async () => {
+    const dir = join(CORPUS, 'BUILD-301/fail');
+    const { diagnostics } = compile(dir);
+    expect(reportedAndExpected(dir, diagnostics).reported).toEqual(reportedAndExpected(dir, diagnostics).expected);
+    const errors = await strictBuild(dir, false);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.text).toMatch(/^BUILD-610 /);
+    const expected = markers(dir, 'BUILD-610')[0]!;
+    expect(errors[0]!.location).toMatchObject({ file: expected.file, line: expected.line });
   });
 });

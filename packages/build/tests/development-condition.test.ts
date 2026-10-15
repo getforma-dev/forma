@@ -73,14 +73,14 @@ describe('watch mode resolves the development export condition (FORMA-169)', () 
       const { dist, config } = fixture(codeSplitting);
       await watching(config, async ({ manifest }) => {
         // Watch mode writes the dev manifest after its first build, under the
-        // entry's own name. (`manifest()` also fails the test if the child died.)
+        // immutable name selected by its committed alias. (`manifest()` also fails the test if the child died.)
         await vi.waitFor(() => {
           expect(manifest().build).toBe('dev');
-          expect(existsSync(join(dist, 'app.js'))).toBe(true);
+          expect(existsSync(join(dist, manifest().aliases['app.js']))).toBe(true);
         }, { timeout: 10_000 });
         // Retried: the first build may still be writing the bundle.
         await vi.waitFor(async () => {
-          expect(await resolvedBy(join(dist, 'app.js')), `codeSplitting: ${codeSplitting}`).toEqual([
+          expect(await resolvedBy(join(dist, manifest().aliases['app.js'])), `codeSplitting: ${codeSplitting}`).toEqual([
             'dual-build:development',
             'module-first:module',
             'browser-first:browser',
