@@ -8,6 +8,48 @@ All notable changes to this project will be documented in this file.
 
 - Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. The URL guard classifies the raw value and refuses a NUL anywhere in a URL attribute (normalized it would be a fetchable same-origin relative reference); the normalized value is what is written. `h('pre', null, '\nline')` now agrees with the walker's `<pre>\n\nline</pre>` in every engine. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.
 
+### Size: the safe cuts, the ratcheted package gates and N2 restated — FORMA-021
+
+- **Every development warning is folded out of every production artifact (C1).**
+  The warnings of `h()` (a dropped prop), `createStore` (a prototype-polluting
+  key), `createList` (a duplicate key, a non-array), `createSignal`'s debug
+  name, the instance registry and `reportError`'s console fallback are now guarded at their sites by the build flag, in the shape esbuild
+  folds while parsing, instead of by an imported `__DEV__` constant that esbuild
+  never inlines and that Rollup folds only inside one chunk. The code-split
+  entries (`dist/index.js` and its chunks) shipped ten such guards with their
+  warning bodies, dead but paid for, and the runtime IIFEs a `__DEV__` binding; no production artifact binds `__DEV__` now. The development build (the `development`
+  condition) keeps every warning; `scripts/verify-dist.mjs` now checks the
+  texts themselves, present in the development twin's graph and absent from
+  each production file, where it used to look for a `__DEV__` binding.
+- **The `__FORMA_DEBUG__` console tracing is gone (C2).** `createShow` and
+  `createSwitch` logged their transitions, and `h()` warned about nested arrays
+  in a function child, when a page set an undocumented `globalThis.__FORMA_DEBUG__`;
+  no document, test or application referenced it. Behaviour is unchanged.
+- **The duplicate-instance registry is development-only (C3).** The
+  `Symbol.for('@getforma/core#instances')` counter and its 467-byte warning no
+  longer ship in production builds, the CDN bundles included; the development
+  build keeps them and warns once for a second development copy. Two physical
+  copies of core in one bundle remain `@getforma/build`'s `BUILD-816`
+  diagnostic, found on the bundler's metafile. A page mixing two production
+  copies gets no console line from core (`docs/CDN-AND-EXPORTS.md`).
+- **Measured** (`npm run check:size`, gzip; the Counter route at gzip -9 by
+  `@getforma/build`'s model of the minimal template's page): core entry 47,546
+  to 46,097 B, browser ESM 47,203 to 46,115 B, HTML runtime 41,648 to 41,254 B,
+  hardened runtime 40,509 to 40,175 B, frame runtime 39,997 to 39,603 B, the
+  Counter route 25,759 to 25,101 B (Brotli 23,004 to 22,482 B). The three runtime
+  gates (41,500, 40,500, 40,000 B) are unchanged and pass again.
+- **The core and browser-ESM gates ratchet to 46,500 B each** (L-51; decision
+  brief L-55). The growth from 2.1.0's 29,515 and 28,369 B is two accepted
+  contracts, not dead code: strict island activation (FORMA-104, DR-5: +19,043 B
+  gzip on the core entry) and the declared island state block (FORMA-103, DR-4:
+  +3,620 B), minus the retired repairing walker.
+- **N2 restated** (DR-35's fallback, decision brief L-55): Forma's code per
+  route, `@getforma/core` and `alien-signals` as bundled, at most **25,500 B
+  gzip -9** (1 KB = 1,000 B), Brotli reported beside it; `@getforma/build`
+  reports it per route and fails the build over it (`BUILD-819`). The 10 KB of
+  v2 appendix C is unreachable under strict adoption: the floor without it is
+  11 to 12 KB, and 2.1.0's island was 13.9 KB.
+
 ### Strict island activation — FORMA-104 development integration
 
 - Connect the checked transaction to compiled SSR activation. It requires one matching owned Element, validates before publication, and makes zero initial DOM writes on success. Private phase replaces success-status/SSR-marker writes. Empty SSR, imperative Node/void returns and mismatches no longer select a repair or client fallback.

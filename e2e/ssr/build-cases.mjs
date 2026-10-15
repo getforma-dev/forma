@@ -29,11 +29,21 @@ const outDir = join(here, 'out');
 const buildDir = join(outDir, 'build');
 const assetsDir = join(outDir, 'site', '_assets');
 
-/** Islands each case must compile to, by name; every other case has none. */
+/**
+ * Islands each case must compile to, by name. A case with none is a static
+ * route: since 3.0.0 (FORMA-105, DR-6) a server-rendered page with no island
+ * loads no JavaScript at all, so its `/` route has an empty `js` list.
+ */
 const expectedIslands = {
   'browser-only': ['Chart'],
+  'edited-controls': ['Controls'],
   'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],
+  'root-fragment': [],
+  select: ['Picker'],
+  'textarea-child': ['Editor'],
+  'textarea-value': ['Editor'],
+  title: ['Heading'],
 };
 
 function fail(message) {
@@ -71,17 +81,30 @@ for (const name of cases) {
   const dist = join(buildDir, name);
 
   // One page per case, built under its own name so the hashed files of all
-  // cases can share one /_assets/ directory without colliding.
+  // cases can share one /_assets/ directory without colliding. The same
+  // app.tsx is built twice, as an application declares a page in both modes:
+  // `/` is the server-rendered route (Phase 2), whose browser product the
+  // compiler reduces to island activation, and `/csr` is the explicit Browser
+  // route (`ssr: false`, Phase 1), which keeps the entry's mount and renders
+  // the page whole from an empty #app.
   const { manifest } = await build({
     app: 'e2e-ssr',
-    entryPoints: [{ entry, outfile: `${name}.js` }],
-    routes: { '/': { js: [name], css: [] } },
+    entryPoints: [
+      { entry, outfile: `${name}.js` },
+      { entry, outfile: `${name}-csr.js`, ssr: false },
+    ],
+    routes: { '/': { js: [name], css: [] }, '/csr': { js: [`${name}-csr`], css: [] } },
     outputDir: dist,
     ssr: true,
   });
 
   const route = manifest.routes['/'];
   if (!route?.ir) fail(`${name}: the build emitted no .ir module for route /`);
+  if (route.mode !== 'ssr') fail(`${name}: route / is ${route.mode}, not ssr`);
+  const csr = manifest.routes['/csr'];
+  if (csr?.mode !== 'browser' || csr.js.length !== 1 || csr.ir) {
+    fail(`${name}: route /csr must be an explicit Browser route with one script and no module; got ${JSON.stringify(csr)}`);
+  }
 
   const real = generateRealIr(entry);
   if (!real) fail(`${name}: the compiler fell back to a placeholder module (generateRealIr returned null)`);
@@ -94,9 +117,13 @@ for (const name of cases) {
   if (JSON.stringify(islands) !== JSON.stringify(expected)) {
     fail(`${name}: expected islands ${JSON.stringify(expected)}, the compiler emitted ${JSON.stringify(islands)}`);
   }
+  // A static page ships no script; a page with islands ships exactly its own.
+  if (route.js.length !== (islands.length ? 1 : 0)) {
+    fail(`${name}: route / with islands ${JSON.stringify(islands)} lists scripts ${JSON.stringify(route.js)}`);
+  }
 
-  for (const file of [...route.js, route.ir]) {
+  for (const file of [...route.js, route.ir, ...csr.js]) {
     copyFileSync(join(dist, file), join(assetsDir, file));
   }
-  console.log(`built ${name}: ${route.js.join(', ')} + ${route.ir} (islands: ${islands.join(', ') || 'none'})`);
+  console.log(`built ${name}: ${route.js.join(', ') || 'no script'} + ${route.ir} (islands: ${islands.join(', ') || 'none'}); /csr: ${csr.js.join(', ')}`);
 }

@@ -17,13 +17,17 @@ Browser-level verification of the entire Forma pipeline. Tests run in a real Chr
 exercises the whole Phase 2 chain, one page per case in `e2e/ssr/cases/`:
 
 1. `e2e/ssr/build-cases.mjs` builds each case with `@getforma/build` (`ssr: true`)
-   from this working tree, and fails unless the served `.ir` is byte-identical to
-   what `generateRealIr` emits (no silent placeholder) and the islands are the
-   ones the case declares.
+   from this working tree, its one `app.tsx` declared twice as an application
+   declares a page in both modes: route `/` server-rendered, and route `/csr`
+   an explicit Browser route (`ssr: false`). It fails unless the served `.ir` is
+   byte-identical to what `generateRealIr` emits (no silent placeholder), the
+   islands are the ones the case declares, a page with islands ships exactly
+   its own script and a page with none ships no script.
 2. `e2e/ssr/render/` (Rust) renders each page with forma's real walker and page
-   template, `forma_server::render_page`, from a forma checkout: `index.html`
-   (Phase 2, slots from the case's `slots.json`) and `csr.html` (the same build,
-   client-rendered), each with the response headers `render_page` produced.
+   template through the typed Pages API: `index.html` (Phase 2, props from the
+   case's `slots.json`) and `csr.html` (Phase 1, the `/csr` route's shell, which
+   the entry's `mount()` fills from an empty `#app`), each with the response
+   headers the server produced.
 3. `e2e/ssr/serve.mjs` serves them on port 3458 with those headers (the page's
    own CSP nonce), and Playwright reads the parsed DOM, live control values and
    `FormData` before JavaScript, after activation and after interaction.
@@ -37,20 +41,38 @@ When the fix lands, Playwright reports an unexpected pass and the job goes red
 until that line is removed. `ledger-arrival` is the positive fixture: Ledger's
 pattern of seeding an island's signals from its props before the component runs.
 
+Since 3.0.0 (FORMA-105, DR-6) every entry has the one shape the compiler
+accepts (`BUILD-611`, [`docs/DIAGNOSTICS.md`](../docs/DIAGNOSTICS.md)): a
+standalone literal `activateIslands({ ... })` and a standalone top-level
+`mount()`. The compiler selects the page through the mount and removes it from
+the `/` route's browser product, which activates the registered islands alone;
+a page with no island loads no JavaScript. `mount()` no longer adopts a
+server-marked root (`FORMA_E_MOUNT_SSR`), so each case's interactive subtree is
+an island seeded from declared props, and `root-fragment` is a static page. The
+`/csr` build of the same entry keeps the mount. Activation is observed as core
+documents it ([`ISLANDS.md`](../packages/core/docs/ISLANDS.md), "Strict
+activation"): a successful island makes no DOM write, so `data-forma-status`
+stays `pending`; the spec waits for the module to run, requires no host in
+`error` and no `forma:error` event; that row cannot tell a silent no-op from
+success, so each behaviour test exercises the island through a reactive reader
+(a text the island's signal drives, or a control it updates). The lane's pre-3.0.0 shape is kept under
+[`docs/archive/2026-10-15-islands-only-e2e/`](../docs/archive/2026-10-15-islands-only-e2e/).
+
 | Case | What it pins | Today |
 |------|--------------|-------|
-| `generic-state` | server value 7 survives activation of a `mount()` root | expected-fail, FORMA-103 / FORMA-104 |
-| `root-fragment` | a root JSX Fragment's button works after Phase 2 activation | passes (flipped by FORMA-003) |
-| `textarea-child`, `title` | no marker text before JavaScript | passes (flipped by FORMA-002) |
-| `textarea-value` | value before JavaScript (FORMA-002); live value after activation and client-rendered (FORMA-003) | passes (flipped by both) |
-| `select` | `b` selected and submitted before JavaScript (FORMA-002), after activation and client-rendered (FORMA-003) | passes (flipped by both) |
-| `edited-controls` | text, checkbox and option edited before activation survive it | passes (fails with formajs `042e353`) |
+| `generic-state` | the server value 7 survives activation of the `Counter` island, and it counts on | passes (FORMA-103) |
+| `root-fragment` | a page with no island: the walker renders a root JSX Fragment's children; no script is served and the button is inert (DR-6); client-rendered, the button works | passes |
+| `textarea-child`, `title` | no marker text before JavaScript (FORMA-002); live text after the island activates | passes |
+| `textarea-value` | value before JavaScript (FORMA-002); live value after activation and client-rendered (FORMA-003) | passes |
+| `select` | `b` selected and submitted before JavaScript (FORMA-002), after activation and client-rendered (FORMA-003) | passes |
+| `edited-controls` | text, checkbox and option edited before the island activates survive it (DR-5, FORMA-104) | passes |
 | `ledger-arrival` | seeded values survive activation; Retry runs | passes |
 | `browser-only` | a `browserOnly()` component: the server sends its empty host with its declared props, the browser renders it there and it works; client-rendered it renders as any component (FORMA-119) | passes |
 
 The table "every case is server-rendered and activates" adds the shared
-controls for every case: the walker's HTML, activation, the Phase 1 mount, and
-no console error.
+controls for every case: the walker's HTML; island activation, or for a static
+page no script referenced or requested; the Phase 1 mount; and no console
+error.
 
 The SSR server listens on port 3458, or on `FORMA_SSR_E2E_PORT` when set.
 Playwright reuses a server already on that port, which may be another clone's,
@@ -113,6 +135,14 @@ This automatically:
    frame spec starts its own server on a free port)
 6. Runs the Playwright tests in headless Chromium
 
+The two FormaJS bundles in `e2e/fixtures/` exist only after step 2; git does
+not track them. Until 2026-10-15 it did, and the tracked copies predated
+`trustedHtml()` (FORMA-126), so `npx playwright test` run without the sync, or
+after a `git checkout -- e2e/fixtures`, failed the five template and
+cross-cutting cases with `trustedHtml is not a function` while a fresh sync
+passed them all. `full-stack.spec.ts` now refuses to run without the bundles
+and names the sync script.
+
 ### Custom FormaJS or forma path, or another SSR port
 
 ```bash
@@ -138,10 +168,10 @@ The GitHub Actions CI workflow runs E2E automatically on every push to main and 
 e2e/
 ├── fixtures/
 │   ├── full-stack.html              ← Test page with all three entry points
-│   ├── formajs-runtime.global.js    ← Auto-synced from formajs build
-│   ├── formajs.global.js            ← Auto-synced from formajs build
+│   ├── formajs-runtime.global.js    ← Written by sync-fixtures.sh; not tracked (a committed copy is only ever stale)
+│   ├── formajs.global.js            ← Written by sync-fixtures.sh; not tracked
 │   └── compiled-counter.js          ← Reviewed template/clone reference (the old JSX transform is retired)
-├── full-stack.spec.ts               ← 15 Playwright tests
+├── full-stack.spec.ts               ← 16 Playwright tests (one guards the synced bundles)
 ├── sync-fixtures.sh                 ← Builds FormaJS and copies dist files
 ├── ssr/
 │   ├── cases/<case>/app.tsx         ← One page per case (+ slots.json)

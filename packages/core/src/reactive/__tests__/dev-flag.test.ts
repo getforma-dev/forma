@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { build } from 'esbuild';
 import { resolve } from 'node:path';
-import { PROD_DEFINE, RAW_SOURCE_DEV_GLOBAL } from '../../../scripts/build-defines.mjs';
+import { DEV_DEFINE, PROD_DEFINE, RAW_SOURCE_DEV_GLOBAL } from '../../../scripts/build-defines.mjs';
 
 const ROOT = process.cwd();
 const DEV_MODULE = resolve(ROOT, 'src/reactive/dev.ts');
@@ -25,12 +25,12 @@ const DEV_MODULE = resolve(ROOT, 'src/reactive/dev.ts');
  * case: esbuild's browser platform folds `process.env.NODE_ENV` away by itself,
  * which would make the raw-source assertion below pass for the wrong reason.
  */
-async function bundleDevModule(define: Record<string, string>): Promise<string> {
+async function bundleDevModule(define: Record<string, string>, format: 'esm' | 'iife' = 'esm'): Promise<string> {
   const result = await build({
     entryPoints: [DEV_MODULE],
     bundle: true,
     write: false,
-    format: 'esm',
+    format,
     platform: 'node',
     target: 'es2022',
     minifySyntax: true,
@@ -119,5 +119,34 @@ describe('duplicate-instance detection', () => {
     await import('../dev.js');
     expect(host[INSTANCE_KEY]?.count).toBe(3);
     expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('the duplicate-instance registry exists only in the development build', async () => {
+    // FORMA-021 C3: the registry and its warning are guarded at the site by
+    // the build flag. Production folds both away (the build checks duplicate
+    // cores through @getforma/build's core-instances.ts instead); the
+    // development build keeps them and they run.
+    const marks = ['Duplicate @getforma/core instance detected', '@getforma/core#instances'];
+    const production = await bundleDevModule({ ...PROD_DEFINE }, 'iife');
+    for (const mark of marks) expect(production, `production: ${mark}`).not.toContain(mark);
+    const development = await bundleDevModule({ ...DEV_DEFINE }, 'iife');
+    for (const mark of marks) expect(development, `development: ${mark}`).toContain(mark);
+
+    const host = globalThis as unknown as InstanceHost;
+    delete host[INSTANCE_KEY];
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // The production bundle registers nothing, however often it runs.
+    new Function(production)();
+    new Function(production)();
+    expect(host[INSTANCE_KEY]).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+    // The development bundle counts each copy and warns once for the second.
+    new Function(development)();
+    expect(host[INSTANCE_KEY]?.count).toBe(1);
+    expect(warn).not.toHaveBeenCalled();
+    new Function(development)();
+    expect(host[INSTANCE_KEY]?.count).toBe(2);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain('Duplicate @getforma/core instance detected (2 copies loaded)');
   });
 });

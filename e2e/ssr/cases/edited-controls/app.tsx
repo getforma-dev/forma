@@ -3,14 +3,17 @@
 // they differ from the client's state, so what was typed, ticked or picked
 // before activation is overwritten. The select's initial choice is its first
 // option, so this case does not depend on the server's `selected` (FORMA-002).
-import { h, mount, createSignal } from '@getforma/core';
+//
+// Since 3.0.0 (FORMA-105, DR-6) the form is the island Controls, seeded from
+// declared props; activation adopts it alone (FORMA-104) and must leave the
+// user's edits in place.
+import { h, mount, activateIslands, createSignal } from '@getforma/core';
 
-const [name, setName] = createSignal('server');
-const [agreed, setAgreed] = createSignal(false);
-const [size, setSize] = createSignal('s');
-
-mount(() => (
-  <main>
+function Controls(props: { name: string; agreed: boolean; size: string }) {
+  const [name, setName] = createSignal(props.name);
+  const [agreed, setAgreed] = createSignal(props.agreed);
+  const [size, setSize] = createSignal(props.size);
+  return (
     <form id="f">
       <input id="name" name="name" value={() => name()} onInput={(e: Event) => setName((e.target as HTMLInputElement).value)} />
       <input id="agreed" name="agreed" type="checkbox" checked={() => agreed()} onChange={(e: Event) => setAgreed((e.target as HTMLInputElement).checked)} />
@@ -19,6 +22,20 @@ mount(() => (
         <option value="m">M</option>
         <option value="l">L</option>
       </select>
+      <span id="echo-name">{() => name()}</span>
+      <span id="echo-agreed">{() => (agreed() ? 'yes' : 'no')}</span>
+      <span id="echo-size">{() => size()}</span>
     </form>
-  </main>
-), '#app');
+  );
+}
+
+function Page() {
+  return (
+    <main>
+      <Controls name="server" agreed={false} size="s" />
+    </main>
+  );
+}
+
+activateIslands({ Controls });
+mount(() => Page(), '#app');

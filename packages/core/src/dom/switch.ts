@@ -71,16 +71,10 @@ export function createSwitch<T>(
     const val = value();
     if (val === currentMatch) return; // Same branch, skip
 
-    const DEBUG = typeof (globalThis as any).__FORMA_DEBUG__ !== 'undefined';
-    if (DEBUG) console.log('[forma:switch] transition', String(currentMatch), '→', String(val));
-
     currentMatch = val;
 
     const parent = startMarker.parentNode;
-    if (!parent) {
-      if (DEBUG) console.warn('[forma:switch] markers not in DOM yet, skipping');
-      return;
-    }
+    if (!parent) return;
     // Verified by: src/dom/__tests__/namespace-resolution.test.ts > "createSwitch cases inside an svg are SVG, each rendered once, cached cases included"
     const into = insertNs(parent);
     if (into !== undefined) ns = into;
@@ -92,20 +86,14 @@ export function createSwitch<T>(
     // valid for re-insertion later.
     if (currentNode) {
       if (currentNode.parentNode === parent) {
-        if (DEBUG) console.log('[forma:switch] removing single node');
         parent.removeChild(currentNode);
       } else if (currentNode.nodeType === 11 /* DOCUMENT_FRAGMENT_NODE */) {
         // Scoop DOM nodes back into the fragment for cache reuse
-        if (DEBUG) console.log('[forma:switch] scooping nodes back into fragment');
-        let scooped = 0;
         while (startMarker.nextSibling && startMarker.nextSibling !== endMarker) {
           currentNode.appendChild(startMarker.nextSibling);
-          scooped++;
         }
-        if (DEBUG) console.log('[forma:switch] scooped', scooped, 'nodes back into fragment');
       } else {
         // Other detached node — just clear between markers
-        if (DEBUG) console.log('[forma:switch] clearing detached node between markers');
         while (startMarker.nextSibling && startMarker.nextSibling !== endMarker) {
           parent.removeChild(startMarker.nextSibling);
         }
@@ -128,21 +116,16 @@ export function createSwitch<T>(
         });
         entry = { node, dispose: branchDispose };
         cache.set(val, entry);
-        if (DEBUG) console.log('[forma:switch] rendered new branch for', String(val), '→', node.nodeName, 'type', node.nodeType);
-      } else {
-        if (DEBUG) console.log('[forma:switch] reusing cached branch for', String(val), '→', entry.node.nodeName, 'type', entry.node.nodeType, 'childNodes', entry.node.childNodes?.length);
       }
       currentNode = entry.node;
     } else {
       // Fallback — not cached, effects are owned by the switch effect
       // and correctly torn down on next re-run.
       currentNode = fallback ? withNamespace(ns, fallback) : null;
-      if (DEBUG) console.log('[forma:switch] no match, using fallback');
     }
 
     if (currentNode) {
       parent.insertBefore(currentNode, endMarker);
-      if (DEBUG) console.log('[forma:switch] inserted', currentNode.nodeName, 'before end marker');
     }
   });
 

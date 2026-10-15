@@ -189,8 +189,6 @@ for (const rel of EXTERNAL_DEPS_OUTPUTS) {
 
 const PRODUCTION_DEV_INITIALIZER = /^(?:false|!1)$/;
 const DEVELOPMENT_DEV_INITIALIZER = /^(?:true|!0)$/;
-/** Development files that bind `__DEV__` (to anything). */
-const devBindings = new Set();
 
 for (const rel of jsArtifacts()) {
   const code = read(rel);
@@ -202,23 +200,38 @@ for (const rel of jsArtifacts()) {
   // syntax minification merges consecutive declarators into one `var` list.
   for (const m of code.matchAll(/\b(?:var|let|const)\s+__DEV__\s*=\s*([^,;\n]+)/g)) {
     const initializer = m[1].trim();
-    if (isDevelopment(rel)) devBindings.add(rel);
     if (!expected.test(initializer)) {
       fail(`${rel} binds __DEV__ to ${initializer}; a ${isDevelopment(rel) ? 'development' : 'production'} artifact must bind it to the constant ${isDevelopment(rel) ? 'true' : 'false'}`);
     }
   }
 }
 
-// The development entries really are development builds: the root entry's
-// module graph binds `__DEV__` in its shared chunk, and (above) binds it to
-// `true`. Without this a twin built with the production define would pass
-// every check in this section. (The hardened runtime is not code-split, so
-// the constant is inlined at each use and no binding is left; section 6
-// checks that its twin differs from it.)
+// The development entries really are development builds, and the production
+// ones really are not: every development warning is guarded at its site by
+// the build flag (FORMA-021 C1), so the texts below are in the root entry's
+// development graph and in no production artifact. A twin built with the
+// production define would fail the first check; a production file that kept
+// a warning (the chunk-boundary leak C1 closed) fails the second. No file
+// need bind `__DEV__` any more: with every site folded, Rollup drops the
+// unused export from the code-split graphs.
+const DEVELOPMENT_ONLY_TEXT = [
+  'Duplicate @getforma/core instance detected', // dev.ts, the instance registry (FORMA-021 C3)
+  '[forma] Dropped ',                           // element.ts, a dropped prop
+  'createList: duplicate key detected',         // list.ts
+  'Refused to write ',                          // store.ts, a prototype-polluting key
+];
+for (const rel of jsArtifacts()) {
+  if (isDevelopment(rel)) continue;
+  const code = read(rel);
+  for (const text of DEVELOPMENT_ONLY_TEXT) {
+    if (code.includes(text)) fail(`${rel} contains the development warning ${JSON.stringify(text)}: the build flag did not fold it away`);
+  }
+}
 for (const rel of [`${DEV_OUT_DIR}/index.js`, `${DEV_OUT_DIR}/index.cjs`]) {
   if (!existsSync(resolve(ROOT, rel))) continue; // reported by section 1
-  if (!collectGraph(rel, ROOT).files.some((file) => devBindings.has(file))) {
-    fail(`${rel} binds no __DEV__ anywhere in its module graph: it is not a development build`);
+  const code = collectGraph(rel, ROOT).files.map(read).join('\n');
+  for (const text of DEVELOPMENT_ONLY_TEXT) {
+    if (!code.includes(text)) fail(`${rel}'s module graph lacks the development warning ${JSON.stringify(text)}: it is not a development build`);
   }
 }
 
