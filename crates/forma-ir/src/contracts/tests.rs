@@ -879,3 +879,15 @@ fn nested_island_snapshots_precede_children_and_repeat_ordered_inputs() {
         );
     }
 }
+
+#[test]
+fn archived_precontract_island_requires_rebuild_and_archived_static_still_loads() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/archive/2026-10-15-pre-state-contract-corpus/crates/forma-ir/tests/fixtures/js-emitter");
+    let island = std::fs::read(root.join("barrel-exports.ir")).unwrap();
+    assert_eq!(
+        IrModule::parse(&island).unwrap_err(),
+        IrError::MissingSection(10)
+    );
+    let plain = std::fs::read(root.join("static-page.ir")).unwrap();
+    assert!(IrModule::parse(&plain).is_ok());
+}

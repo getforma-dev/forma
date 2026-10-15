@@ -26,11 +26,6 @@ struct IslandPending {
     trigger: IslandTrigger,
 }
 
-// Historical ceilings appear only in legacy test fixtures awaiting explicit
-// state-contract migration; there is no inline/spill channel in production.
-#[cfg(test)]
-const INLINE_PROPS_MAX_BYTES: usize = 1024;
-
 /// Default cap on the HTML a single walk may produce.
 ///
 /// A structurally valid module can otherwise force an arbitrarily large
@@ -412,7 +407,7 @@ fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
 ///
 /// Returns the island ROOT element carrying the full `data-forma-*` attribute
 /// set (`data-forma-island`, `-component`, `-status`, `-hydrate`, and
-/// `-props` when the island has any). Clients MUST swap it in with
+/// the occurrence/hash markers). Internal diagnostics may inspect this root with
 /// `replaceWith`/`outerHTML` and MUST NOT use `innerHTML` — that would discard
 /// exactly the attributes the runtime selects on.
 ///
@@ -2006,7 +2001,7 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
 mod tests {
     use super::*;
     use crate::parser::test_helpers::{
-        build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_show_if,
+        build_declared_fixture, encode_close_tag, encode_list, encode_open_tag, encode_show_if,
         encode_text, encode_void_tag,
     };
     use crate::slot::{SlotData, SlotValue};
@@ -2038,7 +2033,7 @@ mod tests {
 
     /// Helper: build an IrModule, walk it with empty slots, return the HTML.
     fn walk_static(strings: &[&str], opcodes: &[u8]) -> String {
-        let data = build_minimal_ir(strings, &[], opcodes, &[]);
+        let data = build_declared_fixture(strings, &[], opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         walk_to_html(&module, &slots).unwrap()
@@ -2051,7 +2046,7 @@ mod tests {
         opcodes: &[u8],
         slots: &SlotData,
     ) -> String {
-        let data = build_minimal_ir(strings, slot_decls, opcodes, &[]);
+        let data = build_declared_fixture(strings, slot_decls, opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         walk_to_html(&module, slots).unwrap()
     }
@@ -2064,9 +2059,21 @@ mod tests {
         opcodes: &[u8],
         slots: &SlotData,
     ) -> String {
-        let data = build_minimal_ir(strings, slot_decls, opcodes, island_decls);
+        let data = build_declared_fixture(strings, slot_decls, opcodes, island_decls);
         let module = IrModule::parse(&data).unwrap();
         walk_to_html(&module, slots).unwrap()
+    }
+
+    fn walk_with_islands_output(
+        strings: &[&str],
+        slot_decls: &[(u16, u32, u8, u8, &[u8])],
+        island_decls: &[(u16, u8, u8, u32, u32, &[u16])],
+        opcodes: &[u8],
+        slots: &SlotData,
+    ) -> WalkOutput {
+        let data = build_declared_fixture(strings, slot_decls, opcodes, island_decls);
+        let module = IrModule::parse(&data).unwrap();
+        walk_to_html_counted(&module, slots, WalkLimits::default()).unwrap()
     }
 
     /// Encode a DYN_ATTR opcode: opcode(1) + attr_str_idx(4) + slot_id(2)
@@ -2751,7 +2758,7 @@ mod tests {
         );
         // Inner slots get shadowed during iteration
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["s0", "s1", "s2", "s3", "s4", "s5"],
             &[
                 (0, 0, 0x04, 0x00, &[]),
@@ -2819,7 +2826,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(9)); // </body>
         opcodes.extend_from_slice(&encode_close_tag(0)); // </html>
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &[
                 "html", "lang", "en", "head", "meta", "charset", "utf-8", "title", "Test", "body",
                 "div", "id", "app",
@@ -2851,7 +2858,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_dyn_text(0, 0)); // DYN_TEXT slot=0 marker=0
         opcodes.extend_from_slice(&encode_close_tag(0)); // </div>
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &["div", "class", "greeting", "content"],
             &[(0, 3, 0x01, 0x00, &[])], // slot 0, name="content", type=Text
             &opcodes,
@@ -2889,7 +2896,7 @@ mod tests {
 
         let opcodes = encode_show_if(0, &then_ops, &else_ops);
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &["auth", "span", "class", "badge", "Logged In", "Guest"],
             &[(0, 0, 0x02, 0x00, &[])], // slot 0, name="auth", type=Bool
             &opcodes,
@@ -2937,7 +2944,7 @@ mod tests {
 
         let opcodes = encode_list(0, 1, &body);
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &["items", "item", "li"],
             &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])], // slot 0=Array, slot 1=Text
             &opcodes,
@@ -3014,7 +3021,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(8)); // </ul>
         opcodes.extend_from_slice(&encode_close_tag(0)); // </nav>
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &[
                 "nav", "class", "main-nav", "auth", "span", "Welcome", "items", "item", "ul", "li",
             ],
@@ -3073,7 +3080,7 @@ mod tests {
         );
         assert_eq!(
             html,
-            r#"<!--f:i0--><div data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load">Hello</div><!--/f:i0-->"#
+            r#"<!--f:i0--><div data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load" data-forma-state="0" data-forma-h="0000000000000000">Hello</div><!--/f:i0-->"#
         );
     }
 
@@ -3099,7 +3106,7 @@ mod tests {
         );
         assert_eq!(
             html,
-            r#"<!--f:i0--><div class="form" data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load"></div><!--/f:i0-->"#
+            r#"<!--f:i0--><div class="form" data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load" data-forma-state="0" data-forma-h="0000000000000000"></div><!--/f:i0-->"#
         );
     }
 
@@ -3124,16 +3131,16 @@ mod tests {
         );
         assert_eq!(
             html,
-            r#"<!--f:i0--><input data-forma-island="0" data-forma-component="Widget" data-forma-status="pending" data-forma-hydrate="load"><!--/f:i0-->"#
+            r#"<!--f:i0--><input data-forma-island="0" data-forma-component="Widget" data-forma-status="pending" data-forma-hydrate="load" data-forma-state="0" data-forma-h="0000000000000000"><!--/f:i0-->"#
         );
     }
 
-    // -- Test 36: walk_inline_props_attribute ---------------------------------
+    // -- Declared state is separate from body markup -------------------------
 
     #[test]
-    fn walk_inline_props_attribute() {
+    fn declared_props_are_separate_from_body_html() {
         // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
-        // Island entry has slots [0, 1]; small props stay inline
+        // Island entry has ordered inputs [0, 1]; all props use typed state.
         // Slot 0 = "title" (Text), Slot 1 = "count" (Number)
         // strings: 0="div", 1="MyComponent", 2="title", 3="count"
         let mut opcodes = Vec::new();
@@ -3146,7 +3153,7 @@ mod tests {
         slots.set(0, SlotValue::Text("Hello".to_string()));
         slots.set(1, SlotValue::Number(42.0));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "MyComponent", "title", "count"],
             &[
                 (0, 2, 0x01, 0x00, &[]), // slot 0, name="title", Text, Server
@@ -3157,36 +3164,12 @@ mod tests {
             &opcodes,
             &slots,
         );
-        // Props should be JSON: {"title":"Hello","count":42}
-        assert!(
-            html.contains("data-forma-props="),
-            "should contain data-forma-props, got: {html}"
-        );
-        assert!(
-            html.contains(r#"data-forma-island="0""#),
-            "should contain island id, got: {html}"
-        );
-        assert!(
-            html.contains(r#"data-forma-component="MyComponent""#),
-            "should contain component name, got: {html}"
-        );
-        // Parse the JSON from the props attribute to verify correctness.
-        // The attribute uses double quotes with HTML entity escaping:
-        //   data-forma-props="{&quot;title&quot;:&quot;Hello&quot;,&quot;count&quot;:42}"
-        // Browsers auto-decode &quot; back to " when reading getAttribute(),
-        // so we simulate that here by reversing the entity encoding.
-        let marker = "data-forma-props=\"";
-        let props_start = html.find(marker).unwrap() + marker.len();
-        let props_end = html[props_start..].find('"').unwrap() + props_start;
-        let raw_attr = &html[props_start..props_end];
-        let decoded = raw_attr
-            .replace("&quot;", "\"")
-            .replace("&amp;", "&")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">");
-        let props_json: serde_json::Value = serde_json::from_str(&decoded).unwrap();
-        assert_eq!(props_json["title"], "Hello");
-        assert_eq!(props_json["count"], 42);
+        assert!(!output.html.contains("data-forma-props"));
+        assert!(!output.html.contains("<script"));
+        assert!(output.html.contains("data-forma-component=\"MyComponent\""));
+        let json: serde_json::Value = serde_json::from_str(output.island_state.as_json()).unwrap();
+        assert_eq!(json["i"][0]["p"]["title"], "Hello");
+        assert_eq!(json["i"][0]["p"]["count"], 42);
     }
 
     // -- Test 37: walk_list_item_key_on_first_open_tag -----------------------
@@ -3214,7 +3197,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(0));
         opcodes.extend_from_slice(&encode_island_end(5));
 
-        let data = build_minimal_ir(&["div", "Hello"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "Hello"], &[], &opcodes, &[]);
         assert_eq!(
             IrModule::parse(&data).unwrap_err(),
             IrError::UnknownIslandId(5)
@@ -3235,7 +3218,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_island_end(0));
 
         let slots = SlotData::new(0);
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Outer", "Inner"],
             &[],
             &opcodes,
@@ -3277,11 +3260,11 @@ mod tests {
         assert!(html.contains(r#"data-forma-component="Inner""#));
     }
 
-    // -- Test 43: walk_inline_props_empty_slots ------------------------------
+    // -- Empty declared props still have an occurrence ---------------------
 
     #[test]
-    fn walk_inline_props_empty_slots() {
-        // Island with Inline props mode but no slot_ids — should not emit data-forma-props
+    fn empty_declared_inputs_do_not_emit_inline_props() {
+        // An empty declaration carries identity but no inferred slot props.
         // strings: 0="div", 1="Simple"
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
@@ -3307,10 +3290,10 @@ mod tests {
         );
     }
 
-    // -- Inline props size ceiling (F8) --------------------------------------
+    // -- State always has one channel, independent of payload size -----------
 
     /// Build a one-island page whose single prop slot holds `payload`.
-    fn walk_island_with_prop_payload(payload: &str) -> String {
+    fn walk_island_with_prop_payload(payload: &str) -> WalkOutput {
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(0, &[]));
@@ -3319,7 +3302,7 @@ mod tests {
 
         let mut slots = SlotData::new(1);
         slots.set(0, SlotValue::Text(payload.to_string()));
-        walk_with_islands(
+        walk_with_islands_output(
             &["div", "Big", "blob"],
             &[(0, 2, 0x01, 0x00, &[])],
             &[(0, 0x01, 0x01, 1, 0, &[0])],
@@ -3329,10 +3312,9 @@ mod tests {
     }
 
     #[test]
-    fn island_props_keep_the_first_slot_for_a_duplicated_name() {
-        // Slots 0 and 1 are both named "dup". The three name-resolving paths
-        // in this crate used to pick differently (first / last / last by
-        // ascending id); they all keep the first now.
+    fn duplicate_slot_names_do_not_invent_declared_island_props() {
+        // Both SERVER slots have the same lookup name. This island declares
+        // no inputs, so neither slot is implicitly serialized by name.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(0, &[]));
@@ -3343,63 +3325,50 @@ mod tests {
         slots.set(0, SlotValue::Text("first".into()));
         slots.set(1, SlotValue::Text("second".into()));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "Comp", "dup"],
             &[(0, 2, 0x01, 0x00, &[]), (1, 2, 0x01, 0x00, &[])],
-            &[(0, 0x01, 0x01, 1, 0, &[0, 1])],
+            &[(0, 0x01, 0x01, 1, 0, &[])],
             &opcodes,
             &slots,
         );
-        assert!(
-            html.contains(r#"data-forma-props="{&quot;dup&quot;:&quot;first&quot;}""#),
-            "expected the first slot to win, got: {html}"
-        );
+        let json: serde_json::Value = serde_json::from_str(output.island_state.as_json()).unwrap();
+        assert_eq!(json["i"][0]["p"], serde_json::json!({}));
+        assert!(!output.html.contains("data-forma-props"));
     }
 
     #[test]
-    fn inline_props_under_the_ceiling_stay_inline() {
-        let html = walk_island_with_prop_payload("small");
-        assert!(html.contains(r#"data-forma-props="{&quot;blob&quot;:&quot;small&quot;}""#));
-        assert!(!html.contains("__forma_islands"));
+    fn small_props_use_the_owned_state_channel() {
+        let output = walk_island_with_prop_payload("small");
+        assert!(output.island_state.as_json().contains("\"blob\":\"small\""));
+        assert!(!output.html.contains("data-forma-props"));
+        assert!(!output.html.contains("__forma_islands"));
     }
 
     #[test]
-    fn inline_props_over_the_ceiling_spill_to_the_shared_block() {
-        // An unbounded `data-forma-props` is a multi-kilobyte attribute
-        // repeated on every island root. Above the ceiling the payload moves
-        // to the shared block — and to EXACTLY one of the two channels, since
-        // the client reads the inline attribute first and would never look at
-        // the block if both were present.
-        let payload = "x".repeat(INLINE_PROPS_MAX_BYTES + 1);
-        let html = walk_island_with_prop_payload(&payload);
-        assert!(
-            !html.contains("data-forma-props"),
-            "over-size props must not stay in the attribute"
-        );
-        assert!(
-            html.contains(r#"<script id="__forma_islands" type="application/json">"#),
-            "over-size props must land in the shared block, got: {}",
-            &html[..html.len().min(200)]
-        );
-        assert!(html.contains(&payload), "the payload itself must survive");
+    fn larger_props_use_the_same_owned_state_channel() {
+        let payload = "x".repeat(1025);
+        let output = walk_island_with_prop_payload(&payload);
+        assert!(!output.html.contains("data-forma-props"));
+        assert!(!output.html.contains("__forma_islands"));
+        assert!(output.island_state.as_json().contains(&payload));
     }
 
     #[test]
-    fn island_fragment_keeps_over_size_props_inline() {
-        // A fragment cannot emit a second `__forma_islands` block: it would
-        // duplicate a DOM id and, being earlier in document order after the
-        // swap, shadow the page's own block for every other island.
+    fn diagnostic_fragment_does_not_restore_an_inline_state_channel() {
+        // Diagnostic fragments cannot restore either retired props channel.
+        // Supported page rendering consumes the counted walk's state separately.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(0, &[]));
         opcodes.extend_from_slice(&encode_close_tag(0));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let payload = "x".repeat(INLINE_PROPS_MAX_BYTES + 1);
+        let payload = "x".repeat(1024 + 1);
         let mut slots = SlotData::new(1);
         slots.set(0, SlotValue::Text(payload));
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Big", "blob"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3407,7 +3376,7 @@ mod tests {
         );
         let module = IrModule::parse(&data).unwrap();
         let fragment = walk_island(&module, &slots, 0).unwrap();
-        assert!(fragment.contains("data-forma-props"));
+        assert!(!fragment.contains("data-forma-props"));
         assert!(!fragment.contains("__forma_islands"));
     }
 
@@ -3416,9 +3385,8 @@ mod tests {
     // -- Test 45: walk_multiple_islands_script_tag ---------------------------
 
     #[test]
-    fn walk_multiple_islands_script_tag() {
-        // Two large inline-props islands spill into a single script tag
-        // with both entries
+    fn multiple_islands_share_one_owned_envelope() {
+        // Two islands append entries to the same independently owned envelope.
         // strings: 0="div", 1="span", 2="CompA", 3="CompB", 4="msg", 5="flag"
         let mut opcodes = Vec::new();
         // Island 0
@@ -3436,9 +3404,9 @@ mod tests {
         let mut slots = SlotData::new(3);
         slots.set(0, SlotValue::Text("hello".to_string()));
         slots.set(1, SlotValue::Bool(true));
-        slots.set(2, SlotValue::Text("x".repeat(INLINE_PROPS_MAX_BYTES)));
+        slots.set(2, SlotValue::Text("x".repeat(1024)));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "span", "CompA", "CompB", "msg", "flag", "padding"],
             &[
                 (0, 4, 0x01, 0x00, &[]), // slot 0, name="msg", Text
@@ -3452,14 +3420,11 @@ mod tests {
             &opcodes,
             &slots,
         );
-        // Parse the script tag JSON
-        let script_start =
-            html.find(r#"type="application/json">"#).unwrap() + r#"type="application/json">"#.len();
-        let script_end = html[script_start..].find("</script>").unwrap() + script_start;
-        let json: serde_json::Value =
-            serde_json::from_str(&html[script_start..script_end]).unwrap();
-        assert_eq!(json["0"]["msg"], "hello");
-        assert_eq!(json["1"]["flag"], true);
+        let json: serde_json::Value = serde_json::from_str(output.island_state.as_json()).unwrap();
+        assert_eq!(json["i"][0]["p"]["msg"], "hello");
+        assert_eq!(json["i"][1]["p"]["flag"], true);
+        assert_eq!(output.island_state.len(), 2);
+        assert!(!output.html.contains("<script"));
     }
 
     // -- Test 46: walk_list_item_key_consumed_once --------------------------
@@ -3633,7 +3598,7 @@ mod tests {
         opcodes.extend_from_slice(&island_end);
         opcodes.extend_from_slice(&close_div);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["MyIsland", "div", "p", "hello"],
             &[],
             &opcodes,
@@ -3649,7 +3614,7 @@ mod tests {
         assert_eq!(
             html,
             "<p data-forma-island=\"0\" data-forma-component=\"MyIsland\" \
-             data-forma-status=\"pending\" data-forma-hydrate=\"load\">hello</p>"
+             data-forma-status=\"pending\" data-forma-hydrate=\"load\" data-forma-state=\"0\" data-forma-h=\"0000000000000000\">hello</p>"
         );
         // The f:iN markers live outside the root and survive an outerHTML
         // swap, so the fragment must not re-emit them.
@@ -3674,7 +3639,7 @@ mod tests {
         opcodes.extend_from_slice(&close_div);
         opcodes.extend_from_slice(&island_end);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["IslandComp", "div", "greeting"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3692,7 +3657,8 @@ mod tests {
             "data-forma-component=\"IslandComp\"",
             "data-forma-status=\"pending\"",
             "data-forma-hydrate=\"visible\"",
-            "data-forma-props=",
+            "data-forma-state=\"0\"",
+            "data-forma-h=\"0000000000000000\"",
         ] {
             assert!(page.contains(attr), "page missing {attr}: {page}");
             assert!(
@@ -3703,19 +3669,16 @@ mod tests {
     }
 
     #[test]
-    fn walk_island_script_tag_mode_inlines_props_in_fragment() {
-        // A ScriptTag island rendered as a fragment must inline its props
-        // rather than emit a second __forma_islands block: that would
-        // duplicate a DOM id, and because the injected copy precedes the SSR
-        // one in document order it would shadow it — every other ScriptTag
-        // island would then read a truncated shared-props map.
+    fn obsolete_mode_cannot_restore_fragment_inline_props() {
+        // The obsolete tuple mode is ignored by the declared fixture builder.
+        // It cannot reactivate either retired body/inline props channel.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(1, &[]));
         opcodes.extend_from_slice(&encode_close_tag(1));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["IslandComp", "div", "greeting"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3727,8 +3690,8 @@ mod tests {
 
         let fragment = walk_island(&module, &slots, 0).unwrap();
         assert!(
-            fragment.contains("data-forma-props="),
-            "ScriptTag island fragment must inline its props: {fragment}"
+            !fragment.contains("data-forma-props="),
+            "diagnostic fragment must not inline props: {fragment}"
         );
         assert!(
             !fragment.contains("__forma_islands"),
@@ -3737,10 +3700,9 @@ mod tests {
     }
 
     #[test]
-    fn walk_island_nested_script_tag_island_keeps_its_props() {
-        // A nested ScriptTag island would otherwise push into the shared
-        // script_tag_props map, which a fragment render drops on return — so
-        // the nested island would mount with null props.
+    fn nested_diagnostic_fragment_has_occurrence_markers() {
+        // Nested diagnostic roots retain distinct occurrence identities.
+        // Actual page state is carried separately by the counted whole walk.
         let mut opcodes = encode_island_start(0);
         opcodes.extend_from_slice(&encode_open_tag(1, &[]));
         let inner_offset = opcodes.len() as u32;
@@ -3751,7 +3713,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(1));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["Outer", "div", "greeting", "Inner"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3770,8 +3732,8 @@ mod tests {
             "nested island must render: {fragment}"
         );
         assert!(
-            fragment.contains("data-forma-props="),
-            "nested ScriptTag island must keep its props inline: {fragment}"
+            fragment.contains("data-forma-state=\"1\""),
+            "nested island must retain its own occurrence: {fragment}"
         );
         assert!(!fragment.contains("__forma_islands"), "{fragment}");
     }
@@ -3780,7 +3742,7 @@ mod tests {
     fn walk_island_not_found() {
         // Build IR with no islands, then request island_id=5
         let opcodes = encode_text(0);
-        let data = build_minimal_ir(&["Hello"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["Hello"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
 
@@ -3813,7 +3775,7 @@ mod tests {
         opcodes.extend_from_slice(&close_div);
         opcodes.extend_from_slice(&island_end);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["IslandComp", "div", "greeting"],
             &[(0, 2, 0x01, 0x00, &[])], // slot_id=0, name="greeting", Text, Server
             &opcodes,
@@ -3830,7 +3792,7 @@ mod tests {
             html,
             "<div data-forma-island=\"0\" data-forma-component=\"IslandComp\" \
              data-forma-status=\"pending\" data-forma-hydrate=\"load\" \
-             data-forma-props=\"{&quot;greeting&quot;:&quot;World&quot;}\">\
+             data-forma-state=\"0\" data-forma-h=\"0000000000000000\">\
              <!--f:t0-->World<!--/f:t0--></div>"
         );
     }
@@ -3844,7 +3806,7 @@ mod tests {
         // 0x0B byte would pass a bare bounds check).
         let opcodes = encode_text(0); // just a small opcode stream
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["BadIsland", "hello"],
             &[],
             &opcodes,
@@ -4082,8 +4044,7 @@ mod tests {
         );
     }
 
-    /// Build a one-island large-props page whose single prop is `payload`,
-    /// and return (full html, the raw script-block body).
+    /// Return body HTML and the separately owned, script-safe state JSON.
     fn script_tag_props_html(payload: &str) -> (String, String) {
         // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
         // strings: 0="div", 1="Comp", 2="payload"
@@ -4095,9 +4056,9 @@ mod tests {
 
         let mut slots = SlotData::new(2);
         slots.set(0, SlotValue::Text(payload.to_string()));
-        slots.set(1, SlotValue::Text("x".repeat(INLINE_PROPS_MAX_BYTES)));
+        slots.set(1, SlotValue::Text("x".repeat(1024)));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "Comp", "payload", "padding"],
             &[(0, 2, 0x01, 0x00, &[]), (1, 3, 0x01, 0, &[])],
             &[(0, 0x01, 0x01, 1, 0, &[0, 1])],
@@ -4105,35 +4066,29 @@ mod tests {
             &slots,
         );
 
-        const OPEN: &str = "type=\"application/json\">";
-        let start = html.find(OPEN).expect("islands script block") + OPEN.len();
-        let end = html[start..].find("</script>").expect("script close") + start;
-        let body = html[start..end].to_string();
-        (html, body)
+        (output.html, output.island_state.as_json().to_owned())
     }
 
     #[test]
-    fn walk_script_tag_props_body_has_no_raw_angle_brackets() {
-        // The property that actually makes the escaping total: no bare '<' or
-        // '>' survives into the data block, so nothing in it can terminate or
-        // re-open the enclosing <script> element. Escaping only "</" (as this
-        // used to) is not enough — see the breakout test below.
+    fn owned_state_has_no_raw_script_openers() {
+        // No bare '<' survives, so the JSON cannot terminate or reopen a
+        // script element. Greater-than remains ordinary value-preserving text.
         let (_html, body) = script_tag_props_html("</script>alert(1)");
         assert!(
-            !body.contains('<') && !body.contains('>'),
-            "islands block must contain no raw angle brackets, got: {body}"
+            !body.contains('<'),
+            "state envelope must contain no raw script openers, got: {body}"
         );
-        assert!(body.contains("\\u003c/script\\u003e"), "got: {body}");
+        assert!(body.contains("\\u003c/script>"), "got: {body}");
 
         // ...and the escaping is value-preserving: JSON.parse (here
         // serde_json::from_str, which decodes \u003c identically) round-trips
         // back to the original prop value.
         let parsed: serde_json::Value = serde_json::from_str(&body).unwrap();
-        assert_eq!(parsed["0"]["payload"], "</script>alert(1)");
+        assert_eq!(parsed["i"][0]["p"]["payload"], "</script>alert(1)");
     }
 
     #[test]
-    fn walk_script_tag_props_escapes_comment_script_breakout() {
+    fn owned_state_escapes_existing_comment_script_regression() {
         // The payload the old "</" replace did NOT handle. `<!--` followed by
         // `<script` drives a spec-compliant HTML tokenizer into the
         // script-data-double-escaped state, where our own trailing </script>
@@ -4146,10 +4101,10 @@ mod tests {
             !html.contains("<!--<script"),
             "must not emit the script-data-double-escape trigger, got: {html}"
         );
-        assert!(!body.contains('<') && !body.contains('>'), "got: {body}");
+        assert!(!body.contains('<'), "got: {body}");
 
         let parsed: serde_json::Value = serde_json::from_str(&body).unwrap();
-        assert_eq!(parsed["0"]["payload"], payload);
+        assert_eq!(parsed["i"][0]["p"]["payload"], payload);
     }
 
     #[test]
@@ -4234,7 +4189,7 @@ mod tests {
         let attrs: Vec<(u32, u32)> = (0..200).map(|_| (1u32, 2u32)).collect();
         let opcodes = encode_open_tag(0, &attrs);
 
-        let data = build_minimal_ir(&["div", "data-x", &big], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "data-x", &big], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
 
@@ -4257,7 +4212,7 @@ mod tests {
     fn walk_output_limit_trips_on_a_single_dyn_text_value() {
         // DynText emits a whole slot value in one iteration too.
         let opcodes = encode_dyn_text(0, 0);
-        let data = build_minimal_ir(&["msg"], &[(0, 0, 0x01, 0x00, &[])], &opcodes, &[]);
+        let data = build_declared_fixture(&["msg"], &[(0, 0, 0x01, 0x00, &[])], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
 
         let mut slots = SlotData::new(1);
@@ -4283,7 +4238,7 @@ mod tests {
         let inner = encode_list(0, 1, &body);
         let opcodes = encode_list(0, 1, &inner);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["items", "item", "x"],
             &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
             &opcodes,
@@ -4327,7 +4282,8 @@ mod tests {
         // SHOW_IF: opcode(1) slot_id(2) then_len(4) else_len(4)
         let mut opcodes = encode_show_if(0, &encode_text(1), &encode_text(1));
         patch_u32(&mut opcodes, 3, 0xFFFF_FF00); // then_len
-        let data = build_minimal_ir(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
         assert!(matches!(
             IrModule::parse(&data),
             Err(IrError::MalformedControlFlow { .. })
@@ -4340,7 +4296,8 @@ mod tests {
         // rather than the SHOW_ELSE marker.
         let mut opcodes = encode_show_if(0, &encode_text(1), &encode_text(1));
         patch_u32(&mut opcodes, 3, 4); // then body is 5 bytes; claim 4
-        let data = build_minimal_ir(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
         assert!(matches!(
             IrModule::parse(&data),
             Err(IrError::MalformedControlFlow { .. })
@@ -4352,7 +4309,7 @@ mod tests {
         // LIST: opcode(1) slot_id(2) item_slot_id(2) body_len(4)
         let mut opcodes = encode_list(0, 1, &encode_text(2));
         patch_u32(&mut opcodes, 5, 0xFFFF_FF00);
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["items", "item", "x"],
             &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
             &opcodes,
@@ -4372,7 +4329,8 @@ mod tests {
         // integrity (a CRC that the producer did not restamp) would. This test exists so the
         // case is not later mistaken for a fixed hole.
         let opcodes = encode_show_if(0, &encode_text(1), &[]);
-        let data = build_minimal_ir(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
         assert!(IrModule::parse(&data).is_ok());
     }
 
@@ -4437,7 +4395,7 @@ mod tests {
         // Tag names are written unescaped, so an IR-authored name is direct
         // markup injection.
         let opcodes = encode_open_tag(0, &[]);
-        let data = build_minimal_ir(&["div onload=\"alert(1)\""], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div onload=\"alert(1)\""], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         assert!(matches!(
@@ -4450,7 +4408,7 @@ mod tests {
     fn walk_rejects_hostile_close_tag_name() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_close_tag(1));
-        let data = build_minimal_ir(&["div", "div><script"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "div><script"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         assert!(matches!(
@@ -4464,7 +4422,8 @@ mod tests {
         // Attribute names are skippable, so one bad key costs the attribute
         // rather than the whole page.
         let opcodes = encode_open_tag(0, &[(1, 2), (3, 2)]);
-        let data = build_minimal_ir(&["div", "x\"><script", "v", "ok-attr"], &[], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["div", "x\"><script", "v", "ok-attr"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         let html = walk_to_html(&module, &slots).unwrap();
@@ -4475,7 +4434,7 @@ mod tests {
     fn walk_drops_hostile_boolean_attribute_name() {
         // Same, via the boolean (empty-value) branch.
         let opcodes = encode_open_tag(0, &[(1, 2)]);
-        let data = build_minimal_ir(&["div", "y\"><script", ""], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "y\"><script", ""], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         assert_eq!(walk_to_html(&module, &slots).unwrap(), "<div>");
@@ -4485,7 +4444,7 @@ mod tests {
     fn walk_drops_hostile_dyn_attr_name() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "z\"><script", "val"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4503,7 +4462,7 @@ mod tests {
     fn walk_drops_javascript_url_in_dyn_attr() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["a", "href", "url"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4534,7 +4493,7 @@ mod tests {
     fn walk_keeps_safe_urls_and_data_images() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["img", "src", "url"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4562,7 +4521,7 @@ mod tests {
     fn walk_blocks_svg_data_url_outside_image_context() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["a", "href", "url"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4583,7 +4542,7 @@ mod tests {
     fn walk_drops_event_handler_attributes() {
         // Static attribute path...
         let opcodes = encode_open_tag(0, &[(1, 2)]);
-        let data = build_minimal_ir(&["div", "onmouseover", "alert(1)"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "onmouseover", "alert(1)"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         assert_eq!(
             walk_to_html(&module, &SlotData::new(0)).unwrap(),
@@ -4594,7 +4553,7 @@ mod tests {
         // ...and the dynamic one.
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "ONCLICK", "h"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4612,7 +4571,8 @@ mod tests {
         // but renderAttr applies identical rules to static props — leaving
         // them unchecked would preserve an SSR/CSR divergence.
         let opcodes = encode_open_tag(0, &[(1, 2)]);
-        let data = build_minimal_ir(&["a", "href", "javascript:alert(1)"], &[], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["a", "href", "javascript:alert(1)"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         assert_eq!(walk_to_html(&module, &SlotData::new(0)).unwrap(), "<a>");
     }
@@ -4766,7 +4726,7 @@ mod tests {
                 .map(|&(id, name, offset)| (id, 0x01, 0x01, name, offset, &[][..]))
                 .collect();
             let strings: Vec<&str> = strings.iter().map(String::as_str).collect();
-            let data = build_minimal_ir(&strings, &decls, &self.ops, &islands);
+            let data = build_declared_fixture(&strings, &decls, &self.ops, &islands);
             let module = IrModule::parse(&data).unwrap();
             let mut slots = SlotData::new(self.slots.len());
             for (id, (_, value)) in self.slots.iter().enumerate() {
@@ -4974,7 +4934,7 @@ mod tests {
             page.render(),
             "<textarea>x</textarea><!--f:i1--><div data-forma-island=\"1\" \
              data-forma-component=\"Island1\" data-forma-status=\"pending\" \
-             data-forma-hydrate=\"load\"></div><!--/f:i1-->"
+             data-forma-hydrate=\"load\" data-forma-state=\"1\" data-forma-h=\"0101010101010101\"></div><!--/f:i1-->"
         );
     }
 
@@ -5537,12 +5497,12 @@ mod tests {
         ops.extend_from_slice(&encode_list(1, 2, &row));
         ops.extend_from_slice(&encode_close_tag(0));
         ops.extend_from_slice(&encode_island_end(0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Branding", "i", "name", "colors", "color"],
             &[
                 (0, 3, 0x01, 0x00, &[]),
                 (1, 4, 0x04, 0x00, &[]),
-                (2, 5, 0x01, 0x00, &[]),
+                (2, 5, 0x01, 0x01, &[]),
             ],
             &ops,
             &[(0, 0x01, 0x01, 1, 0, &[])],
@@ -5621,7 +5581,7 @@ mod tests {
         // Invalid HTML names remain a render error; bad indices now fail at load.
         let mut ops = encode_open_tag(0, &[]);
         ops.extend_from_slice(&encode_open_tag(1, &[]));
-        let data = build_minimal_ir(&["p", "bad name"], &[], &ops, &[]);
+        let data = build_declared_fixture(&["p", "bad name"], &[], &ops, &[]);
         let module = IrModule::parse(&data).unwrap();
         let failure =
             walk_to_html_counted(&module, &SlotData::new(0), WalkLimits::default()).unwrap_err();
@@ -5650,7 +5610,7 @@ mod tests {
         ops.extend_from_slice(&encode_island_end(1));
         ops.extend_from_slice(&encode_close_tag(0));
         ops.extend_from_slice(&encode_island_end(0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Shell", "Card", "Done", "bad name"],
             &[],
             &ops,
@@ -5731,7 +5691,7 @@ mod tests {
             slots.push((2 * lists as u16, 3, 0x01, 0x00, &[]));
         }
         ops.extend_from_slice(&encode_close_tag(0));
-        let data = build_minimal_ir(&["div", "i", "items", "item"], &slots, &ops, &[]);
+        let data = build_declared_fixture(&["div", "i", "items", "item"], &slots, &ops, &[]);
         IrModule::parse(&data).unwrap()
     }
 
