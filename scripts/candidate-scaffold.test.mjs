@@ -16,6 +16,13 @@ test('candidate authentication refuses changed record, changed archive, other so
     const set={schema:1,commit,contracts:{sourceTemplates:'declared-v1'},packages}, record=join(dir,'release-set.json');
     save(record,set); const hash=digest(record);
     assert.deepEqual(validateCandidate(dir,hash,commit),set);
+    save(record,{...set,contracts:{sourceTemplates:'islands-v1',stateBlock:'declared-v1'}});
+    assert.equal(validateCandidate(dir,digest(record),commit).contracts.sourceTemplates,'islands-v1');
+    save(record,{...set,contracts:{sourceTemplates:'islands-v1',stateBlock:null}});
+    assert.throws(()=>validateCandidate(dir,digest(record),commit),/declared state/);
+    save(record,{...set,contracts:{sourceTemplates:'unknown-v99'}});
+    assert.throws(()=>validateCandidate(dir,digest(record),commit),/supported source/);
+    save(record,set);
     assert.throws(()=>validateCandidate(dir,'0'.repeat(64),commit),/record digest/);
     assert.throws(()=>validateCandidate(dir,hash,'b'.repeat(40)),/source/);
     writeFileSync(join(dir,packages[0].file),'changed');
@@ -31,7 +38,7 @@ test('candidate authentication refuses changed record, changed archive, other so
 test('candidate gate refuses omitted, skipped and failed existing heavy cases even if the process reports success', () => {
   const cases=REQUIRED_HEAVY.map(title=>({title,status:'passed',ancestorTitles:['scaffolded projects build (FORMA_SCAFFOLD_E2E=1)']}));
   const report=assertionResults=>({success:true,testResults:[{assertionResults}]});
-  assert.equal(requireHeavyResults(report(cases)).heavy,17);
+  assert.equal(requireHeavyResults(report(cases)).heavy,18);
   for(const status of ['pending','skipped','failed']) assert.throws(()=>requireHeavyResults(report(cases.map((p,i)=>i? p:{...p,status}))));
   assert.throws(()=>requireHeavyResults(report(cases.slice(1))),/did not run/);
   assert.throws(()=>requireHeavyResults(report([...cases,cases[0]])),/exactly once/);
