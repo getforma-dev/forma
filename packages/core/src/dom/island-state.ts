@@ -65,32 +65,40 @@ function copySchema(input: IslandSchema): IslandSchema {
   const fail = (): never => refuse('FORMA_E_ISLAND_REGISTRATION', 'invalid compiled props schema');
   if (!Array.isArray(input) || input.length < 1 || input.length > 1024) fail();
   const dependencies: number[][] = [], result: { name: string; type: IslandSchemaType }[][] = [];
-  let count = 0;
+  let bytes = 3; // schema version:u8 and object_count:u16
+  const charge = (size: number): void => { bytes += size; if (bytes > MAX_STATE_BYTES) fail(); };
+  const text = (value: string): void => {
+    const size = utf8Length(value, 65535, true);
+    if (size < 0) fail();
+    charge(2 + size);
+  };
   for (const fields of input) {
     if (!Array.isArray(fields) || fields.length > 1024) fail();
+    charge(2); // field_count:u16
     const names = new Set<string>(), edges: number[] = [], copy: { name: string; type: IslandSchemaType }[] = [];
     for (const field of fields) {
-      if (++count > 65535 || !object(field) || typeof field.name !== 'string' || forbidden.has(field.name) || names.has(field.name)) fail();
-      names.add(field.name);
+      if (!object(field) || typeof field.name !== 'string' || forbidden.has(field.name) || names.has(field.name)) fail();
+      names.add(field.name); text(field.name);
       const wrappers: ('array' | 'optional')[] = [];
       let type = field.type;
       while (object(type) && (type.kind === 'array' || type.kind === 'optional')) {
         if (wrappers.length === 16) fail();
-        wrappers.push(type.kind);
+        wrappers.push(type.kind); charge(1);
         type = type.kind === 'array' ? type.element : type.inner;
       }
       if (!object(type)) fail();
       let leaf: IslandSchemaType;
       switch (type.kind) {
-        case 'boolean': case 'string': case 'number': case 'date': leaf = { kind: type.kind }; break;
+        case 'boolean': case 'string': case 'number': case 'date': charge(1); leaf = { kind: type.kind }; break;
         case 'enum': {
           if (!Array.isArray(type.variants) || !type.variants.length || type.variants.length > 1024
             || type.variants.some((item: unknown) => typeof item !== 'string') || new Set(type.variants).size !== type.variants.length) fail();
+          charge(3); for (const variant of type.variants) text(variant);
           leaf = { kind: 'enum', variants: Object.freeze([...type.variants]) }; break;
         }
         case 'object':
           if (!Number.isInteger(type.object) || type.object < 0 || type.object >= input.length) fail();
-          edges.push(type.object); leaf = { kind: 'object', object: type.object }; break;
+          charge(3); edges.push(type.object); leaf = { kind: 'object', object: type.object }; break;
         default: fail();
       }
       for (let i = wrappers.length - 1; i >= 0; i--) {
@@ -116,18 +124,21 @@ function copySchema(input: IslandSchema): IslandSchema {
 }
 
 /** Count encoded bytes without allocating an unbounded TextEncoder result. */
-function withinByteLimit(text: string): boolean {
-  if (text.length > MAX_STATE_BYTES) return false;
+function utf8Length(text: string, limit: number, strict = false): number {
+  if (text.length > limit) return -1;
   let bytes = 0;
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
     if (code < 0x80) bytes++;
     else if (code < 0x800) bytes += 2;
     else if (code >= 0xd800 && code <= 0xdbff && text.charCodeAt(i + 1) >= 0xdc00 && text.charCodeAt(i + 1) <= 0xdfff) { bytes += 4; i++; }
-    else bytes += 3;
-    if (bytes > MAX_STATE_BYTES) return false;
+    else {
+      if (strict && code >= 0xd800 && code <= 0xdfff) return -1;
+      bytes += 3;
+    }
+    if (bytes > limit) return -1;
   }
-  return true;
+  return bytes;
 }
 function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   return Object.keys(value).length === keys.length && keys.every(key => own(value, key));
@@ -167,7 +178,7 @@ function readDocument(doc: Document): DocumentState {
     const block = doc.head?.querySelector('script[type="application/json"][data-island-state]');
     if (!block) refuse('FORMA_E_ISLAND_STATE', 'missing first head state block');
     const text = block.textContent ?? '';
-    if (!withinByteLimit(text)) refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
+    if (utf8Length(text, MAX_STATE_BYTES) < 0) refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
     let envelope: unknown;
     try { envelope = JSON.parse(text); } catch { refuse('FORMA_E_ISLAND_STATE', 'invalid state JSON'); }
     if (!object(envelope) || !exactKeys(envelope, ['v', 's', 'i']) || envelope.v !== 1

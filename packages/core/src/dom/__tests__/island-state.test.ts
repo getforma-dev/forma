@@ -192,6 +192,24 @@ describe('bounded schema projection without side effects', () => {
     while (Object.hasOwn(value, 'next')) { value = value.next as Record<string, unknown>; depth++; }
     expect(depth).toBe(999); expect(Object.keys(value)).toEqual([]);
   });
+  it('accepts a valid 70100-field schema below the reviewed byte cap', () => {
+    const objects: { name: string; type: IslandSchemaType }[][] = [Array.from({ length: 100 }, (_, i) => ({ name: `child${String(i).padStart(3, '0')}`, type: { kind: 'object', object: i + 1 } }))];
+    for (let i = 0; i < 100; i++) objects.push(Array.from({ length: 700 }, (_, j) => ({ name: j === 0 ? `a${String(i).padStart(3, '0')}` : `f${String(j).padStart(3, '0')}`, type: { kind: 'optional', inner: { kind: 'boolean' } } })));
+    expect(objects.reduce((total, fields) => total + fields.length, 0)).toBe(70100);
+    const props = Object.fromEntries(objects[0]!.map(field => [field.name, {}]));
+    const decoded = valid(preflightIslands({ Test: registration(objects) }, page(envelope([props])))[0]!).props;
+    expect(Object.keys(decoded)).toHaveLength(100);
+    expect(Object.values(decoded).every(value => Object.keys(value as object).length === 0)).toBe(true);
+  });
+  it('checks exact schema wire bytes at one MiB and one byte above', () => {
+    const fields = Array.from({ length: 16 }, (_, i) => ({ name: String.fromCharCode(97 + i) + 'x'.repeat(i === 15 ? 65497 : 65534), type: { kind: 'boolean' as const } }));
+    const wireBytes = 3 + 2 + fields.reduce((n, field) => n + 2 + new TextEncoder().encode(field.name).length + 1, 0);
+    expect(wireBytes).toBe(1048576);
+    expect(typeof registration([fields])).toBe('function');
+    fields[15]!.name += 'x';
+    expect(() => registration([fields])).toThrow('FORMA_E_ISLAND_REGISTRATION');
+    expect(() => registration([[{ name: '\ud800', type: { kind: 'boolean' } }]])).toThrow('FORMA_E_ISLAND_REGISTRATION');
+  });
   it('copies compiled metadata and refuses cyclic or forbidden schemas', () => {
     const shape: { name: string; type: IslandSchemaType }[][] = [[{ name: 'value', type: { kind: 'string' } }]];
     const compiled = registration(shape); shape[0]![0]!.name = 'changed';
