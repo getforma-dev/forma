@@ -13,7 +13,7 @@ use std::{fmt, ops::Deref};
 /// assert_eq!(logo.as_str(), "<nav>Example</nav>");
 /// ```
 ///
-/// Verified by: crates/forma-server/tests/raw_html.rs > "a_search_finds_one_raw_constructor"
+/// Verified by: crates/forma-server/tests/internal_renderer/raw_html.rs > "a_search_finds_one_raw_constructor"
 pub struct RawHtml {
     html: Box<str>,
 }

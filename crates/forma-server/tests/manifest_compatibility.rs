@@ -1,6 +1,6 @@
 //! Manifest validation happens before module loading or binding, including callers
 //! that construct a manifest themselves. This binary also owns its worker setting.
-use forma_server::{assets, load_ir_modules_strict, sw, AssetManifest};
+use forma_server::{assets, load_ir_modules, sw, AssetManifest};
 use rust_embed::Embed;
 use serde_json::{json, Value};
 
@@ -64,7 +64,7 @@ fn schema_writer_and_mode_refusals_happen_before_binding() {
         let mut bound = false;
         let result = (|| {
             let manifest = load(&v)?;
-            load_ir_modules_strict::<Files>(&manifest).map_err(|e| format!("{e:?}"))?;
+            load_ir_modules::<Files>(&manifest).map_err(|e| format!("{e:?}"))?;
             let listener = std::net::TcpListener::bind("127.0.0.1:0").map_err(|e| e.to_string())?;
             bound = true;
             Ok::<_, String>(listener)
@@ -80,7 +80,7 @@ fn schema_writer_and_mode_refusals_happen_before_binding() {
     }
     let mut constructed = load(&valid()).unwrap();
     constructed.writer = "3.1.0".into();
-    let errors = load_ir_modules_strict::<Files>(&constructed).unwrap_err();
+    let errors = load_ir_modules::<Files>(&constructed).unwrap_err();
     assert_eq!(errors.len(), 1);
     assert_eq!(errors[0].ir_file, "manifest.json");
     assert!(errors[0].reason.contains("3.1.0"));

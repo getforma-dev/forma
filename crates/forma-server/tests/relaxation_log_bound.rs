@@ -5,9 +5,7 @@
 //! Its own test binary: the bound is per process.
 #![allow(deprecated)]
 
-use forma_server::{
-    render_browser_shell, AssetManifest, PageConfig, PolicyExtensions, RenderCtx, RenderMode,
-};
+use forma_server::{render_browser_shell, AssetManifest, PageConfig, PolicyExtensions, RenderCtx};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tracing::field::{Field, Visit};
@@ -62,6 +60,20 @@ fn the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once() {
         PolicyExtensions::new().relax_trusted_types("migrating; owner app; until 2027-01-31"),
     );
     let render = |route: &str| {
+        let mut manifest = manifest.clone();
+        manifest.routes.insert(
+            route.into(),
+            forma_server::RouteAssets {
+                mode: forma_server::RouteMode::Browser,
+                modulepreload: vec![],
+                js: vec![],
+                css: vec![],
+                fonts: vec![],
+                ir: None,
+                total_size_br: 0,
+                budget_warn_threshold: 0,
+            },
+        );
         let config = PageConfig {
             title: "Relaxed",
             route_pattern: route,
@@ -70,9 +82,6 @@ fn the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once() {
             body_class: None,
             personality_css: None,
             body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
         };
         render_browser_shell(&config, &ctx).expect("a relaxed page still renders");
     };

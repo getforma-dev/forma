@@ -1,12 +1,6 @@
 # forma-server
 
-[![crates.io](https://img.shields.io/crates/v/forma-server)](https://crates.io/crates/forma-server)
-[![CI](https://github.com/getforma-dev/forma/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/forma/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-Axum middleware for the [Forma Stack](https://getforma.dev) — server-side rendering, content-hashed asset serving, and CSP headers. Renders pages from FMIR binary IR without a JavaScript runtime.
-
-## Install
+Typed server rendering and explicit browser shells for the Forma stack. This is the coordinated3.0.0-dev source contract; publication remains gated.
 
 ```toml
 [dependencies]
@@ -14,119 +8,53 @@ forma-server = "=3.0.0-dev"
 forma-ir = "=3.0.0-dev"
 ```
 
-This is the staged 3.0.0 contract; the release remains gated. Derive handler data with `forma_ir::PageProps`. The [archived A2 README](../../docs/archive/2026-10-15-declared-props/forma-server-README.md) preserves the old slot-injection API.
+## Startup and rendering
 
-## What It Does
-
-- **`PageHandle::<P>::render(&props, &ctx)`** — renders only a handler contract verified at startup; encodes declared fields by name, checks numeric/date bounds, and preserves policy/headers. See [declared props](../../docs/DECLARED-PROPS.md).
-- **`try_render(config, ctx)`** (interim low-level bridge; FORMA-107 removes it) — renders a page from an IR module + slot data and returns `Result<PageResponse, RenderError>`: the page with its counts (nodes, bytes, list rows, walk time), or a coded error naming the route and component; never an empty shell in place of a failure, and a panic in the render comes back as `RenderError::Fault`
-- **`render_browser_shell(config, ctx)`** — the bundle and the same headers around an empty root, for a route the build declares `ssr: false`
-- **`PageResponse`** — the page as axum's `IntoResponse`: always `Cache-Control: no-store`, the strict policy for the page's nonce, and the document headers; a handler extends the policy with typed `PolicyExtensions`, never as text
-- **`load_ir_modules_strict(manifest)`** — the module loader: loads and checks every `.ir` file the manifest declares at startup, or returns every failure (route, file and a `LOAD-1xx` code) so the server refuses to start before its port binds; a route declared `ssr: false` needs no module. `load_ir_modules` now returns the strict `Pages` registry; there is no lenient fallback. The tuple helper is retained temporarily for FORMA-107
-- **`IrModules::<Assets>::load(manifest)`** — the same strict loading, holding the modules for you: `get(route)` returns the route's module, and in a debug build rereads it when `forma-build --watch` rewrites it, so an edited page is served on the next request without a restart (a module that fails to load keeps the previous one and logs its code). A release build reads nothing after start
-- **`sw::serve_sw` and `sw::configure`**: the service worker is opt-in (0.2.2). By default no page registers one and `/sw.js` serves a retiring worker that clears Forma's v1 caches and unregisters; an application that wants its worker calls `sw::configure_for_manifest(ServiceWorker::for_app("name")?.enabled(), &manifest)` once at start
-- **`serve_asset(filename)`** — serves assets with Brotli/gzip negotiation; `Cache-Control: immutable` only for explicit manifest metadata (including retained assets and split chunks), revalidation + ETag for the rest
-- **`generate_csp_nonce()`** — 256-bit cryptographically random nonce (ring CSPRNG), returned as a validating `CspNonce`
-- **`build_csp_header(nonce)`** — strict CSP: nonce + `'strict-dynamic'` scripts, nonce-locked style elements, no `unsafe-eval`
-
-## Quick Start
+The only module loader is `load_ir_modules`. It checks every declared SSR module, then returns `Pages`. Bind every SSR route to its derived Rust handler and finalize before opening the application's listener. A missing/corrupt/incompatible module or schema mismatch is a startup failure. Browser routes require no typed handler.
 
 ```rust,no_run
 use forma_ir::PageProps;
-use forma_server::{assets, load_ir_modules, PageHandle, RenderCtx};
-
+use forma_server::{assets, load_ir_modules, Limits, PageHandle, RenderCtx};
 #[derive(PageProps)]
 struct HomeProps { title: String }
-
-fn start<Assets: rust_embed::Embed + 'static>() -> Result<PageHandle<HomeProps>, String> {
-    let manifest = assets::try_load_manifest::<Assets>()?;
-    let pages = load_ir_modules::<Assets>(&manifest).map_err(|errors| format!("{errors:?}"))?;
-    // Only after every bind succeeds should the application open its listener.
-    pages.bind("home").map_err(|errors| format!("{errors:?}"))
+fn start<A: rust_embed::Embed + 'static>() -> Result<PageHandle<HomeProps>, String> {
+    let manifest = assets::try_load_manifest::<A>()?;
+    let pages = load_ir_modules::<A>(&manifest).map_err(|e| format!("{e:?}"))?;
+    let home = pages.bind_with("home", Limits::default()).map_err(|e| format!("{e:?}"))?;
+    pages.finalize().map_err(|e| format!("{e:?}"))?;
+    Ok(home) // open the listener only after this succeeds
 }
-
 fn home(page: &PageHandle<HomeProps>) -> Result<forma_server::PageResponse, forma_server::RenderError> {
-    page.render(&HomeProps { title: "Hello".into() },
-        &RenderCtx::new().with_title("This request's title").with_body_class("home"))
+    page.render(&HomeProps { title: "Hello".into() }, &RenderCtx::new().with_title("Welcome"))
 }
 ```
 
-A page whose counts show more than about 12,500 nodes holds its thread past a millisecond (at the measured 12.5 million nodes a second); move that route's `try_render` into `tokio::task::spawn_blocking` (the recipe is in `try_render`'s documentation). forma-server itself starts no threads and depends on no async runtime.
+`bind` selects defaults; `bind_with` selects immutable page limits. Both accept an exact route or an unambiguous logical page alias. Failed binds never register a handler. `finalize` lists all unbound SSR routes and stays repairable; successful finalization seals every clone, is idempotent, and refuses later binds. Rendering before it succeeds returns406 without a response. Forma does not own the listener and cannot intercept an application that opens one prematurely.
 
-## Two Rendering Modes
+`PageHandle::render` checks and projects declared props by name and returns `Result<PageResponse, RenderError>`. The handler chooses/logs its error response. No failed render becomes an empty shell. See [declared props](../../docs/DECLARED-PROPS.md) for field/type/source diagnostics. Extra Rust fields warn and never enter the rendered data.
 
-| Mode | What happens | When to use |
-|------|-------------|-------------|
-| **Phase 1: Client Mount** | Renders `<div id="app"></div>` — FormaJS mounts from scratch | Explicit manifest browser mode |
-| **Phase 2: SSR Reconcile** | Renders full HTML from IR walker — FormaJS hydrates | A verified typed handler and declared page schema |
+## Limits and request metadata
 
-## Security
+`Limits` is the existing `WalkLimits` type:8MiB of walked HTML and50,000 total list iterations by default. `RenderCtx::new()` inherits the handle's limits. `with_limits` overrides both budgets for one request; struct-update from `page.limits()` changes one. Zero remains restrictive. A list longer than its remaining budget fails before its first row; output and list failures report counts reached with301/302. Fixed structural/depth ceilings remain.
 
-- **CSP headers**: Strict policy with cryptographic nonces — `'strict-dynamic'` scripts, nonce-locked style *elements*, no `unsafe-eval`. Style *attributes* are permitted via `style-src-attr 'unsafe-inline'`, because compiled `style:` bindings emit them and a nonce cannot be attached to an attribute; it is the policy's only `'unsafe-inline'`
-- **Trusted Types enforced by default**: every strict SSR page, browser shell and named preview frame sends `require-trusted-types-for 'script'; trusted-types forma forma-runtime`, in debug and release builds, without requiring a reporting endpoint. `PolicyExtensions::report_to` or `report_uri` adds optional reporting. A named `relax_trusted_types(reason)` removes only those two enforcement directives for its route and retains them in Report-Only; siblings remain strict. Each relaxation must have an owner and unexpired end date in the consumer's `forma-raw-lint` SR8 allowlist. Runtime validates a nonblank reason and logs bounded route/reason pairs; CI enforces the allowlist metadata. No sanitizer or caller-isolation guarantee comes from the shared Forma mint.
+Counts report nodes, walked bytes, list rows and **walker time**. The time excludes checked props conversion and document assembly. Measure the complete handle call separately when deciding whether to move a cloned handle and owned props into the runtime's blocking pool. Forma starts no threads.
 
-- **Nonce generation**: 256-bit entropy via ring CSPRNG, wrapped in a validating `CspNonce`
-- **Serve HTML and CSP together**: the HTML embeds a per-request nonce, so it must be sent `Cache-Control: no-store` and never cached across requests. `PageResponse` writes both, with `Cross-Origin-Opener-Policy` and the other document headers, every time it is sent; its HTML is reachable apart from them only through `into_parts_unchecked()`. A page needing another image or frame source, a form target or a login popup adds a typed `PolicyExtensions` entry; an invalid one fails the page rather than reaching a header. `PageOutput`, `render_page` and `render_page_with_nonce` are removed; the renderer owns nonce generation
-- **Asset serving**: `rust-embed` prevents path traversal, and requested names are checked for exact membership in the embedded list so debug and release builds behave identically; `manifest.json`, `.ir`, and direct `.br`/`.gz` requests are refused
-- **Preview frame (0.2.2)**: `PageResponse::frame` serves the document for content nobody reviewed, in an `iframe sandbox="allow-scripts"` the application ships. Its enforced policy (the only one rewritten) gives it an opaque origin (`sandbox allow-scripts`), lets only the inline runtime run (by its SHA-256), and closes its requests: `connect-src 'none'`, `img-src data:`, `style-src` by nonce, `font-src`, `worker-src` and `form-action 'none'`, since `'self'` still names the application in an opaque-origin document. Residuals: WebRTC, which no CSP directive closes, and navigations the host page's `frame-src` admits, so name the frame's exact URL there (`frame_src("https://studio.example/preview-frame")`); even then the frame's own path with another query is admitted (CSP ignores the query), and reaches the frame route and its access log. Link hints (`<link rel="preconnect">`, which no CSP directive governs and which connected in WebKit) and `srcdoc` are removed by `@getforma/core` 2.1.0's frame runtime before the module reaches the document. The host's side (one `MessageChannel` port, only `ready`/`resize`/`error`, teardown on a second load) is in the `frame` module's docs
-- **Template escaping**: URLs, class names and titles are HTML-escaped, and CSS terminators are neutralized. `config_script` is removed: code belongs in the bundle, while data uses `config_json`, whose serialized `<` characters are escaped.
+RenderCtx preserves the document's typed homes: title/body class, policy extensions, head links and manifest preloads; `with_config_json(Value)` writes escaped JSON, `with_personality_css` applies the existing style-end-tag escaping, and `with_body_prefix(RawHtml::trusted(...))` writes explicitly reviewed markup. Plain-string prefixes, handler scripts and caller-supplied nonces are unavailable. Raw entries remain subject to the application's reviewed allowlist.
 
-- **One named raw-HTML type**: markup written unescaped is a `RawHtml`, made only by `RawHtml::trusted(..)`, so a search for that name finds every raw entry; pass it as `body_prefix: Some(&raw)`. The field accepts only a borrowed `RawHtml`; plain strings fail to compile. What is not your own markup has a typed home on `RenderCtx`: the route's `modulepreload` links, read from the build's manifest and nonced by forma-server (`with_module_preloads`, loaded at start by `assets::try_load_module_preloads`), and head links such as icons (`with_head_link`: a closed list of link types that load neither style nor script, every value escaped, script URLs refused)
-- **Render failures are values**: `try_render` returns every failure as a `RenderError` with a stable code (RENDER-101 to RENDER-399), and catches a panic in the render as `RenderError::Fault`, so one bad page answers one request with the application's error page and the process carries on. That needs the application to unwind on panic, as both templates do: under `panic = "abort"` a fault still ends the process. Both crates deny `unwrap`, `expect` and `panic!` outside tests
-- **No unsafe code**: `#![forbid(unsafe_code)]` on the crate root — compiler-enforced, not asserted
+## Response and explicit browser mode
 
-## When You Need This
+`PageResponse` keeps HTML, a fresh nonce, enforced CSP, no-store and document security headers together. Axum's IntoResponse sends them. Its fields are private; `into_parts_unchecked` is the named reviewed integration exit. The named preview frame policy retains its separate documented overrides.
 
-**Use it when:** Your backend is Rust + Axum and you want the full Forma SSR pipeline with asset serving and CSP.
+`render_browser_shell(&PageConfig, &RenderCtx)` requires a manifest route explicitly declared Browser (`ssr:false`). An unknown or SSR route returns103 before document work. PageConfig is browser document metadata and carries no module, slots or render-mode selector. A browser shell has an empty root and the same response headers; it is never a fallback for SSR failure.
 
-**You don't need it if:** You're only using FormaJS client-side (no Rust server), or you're using a non-Axum framework (use `forma-ir` directly).
+Both Trusted Types directives are enforced without requiring a reporting endpoint. The typed per-route relaxation removes exactly those directives from enforcement and retains Report-Only; owner/date governance applies. The existing bounded relaxation audit and loader/reload diagnostics remain distinct from application-owned render-error reporting.
 
-## Part of the Forma Stack
+## Development and panics
 
-### Frontend (TypeScript)
+Debug reload keeps immutable module/asset snapshots paired. A corrupt write retains the last good pair; a valid incompatible schema returns405 until corrected. After finalization, adding/removing a route or changing its mode requires restart/rebinding. Compatible module and asset edits can reload without restart. Release builds use embedded snapshots without per-request filesystem reads.
 
-| Package | Description |
-|---|---|
-| [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR compiler and esbuild SSR plugin |
-| [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
+The complete handle boundary catches unwinding request faults, including custom props conversion, and returns399; a later request can still render. Under `panic = "abort"`, a fault ends the process and every in-flight request. The previously recorded fAuth abort profile therefore requires application migration review; this package does not change application profiles.
 
-### Backend (Rust)
+The old `try_render`, tuple loader, public IrModules/RenderMode, PageOutput, render_page, caller-nonce renderer and raw config_script are removed. [The previous staged README](../../docs/archive/2026-10-15-bound-render/forma-server-README.md) is preserved for migration context. Source A2 templates remain historical until their milestone migration; release verification stages an explicit candidate-only adapter, and live publication stays disabled.
 
-| Package | Description |
-|---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | FMIR parser and native HTML walker |
-| [forma-server](https://crates.io/crates/forma-server) | **This crate** — Axum middleware: SSR, asset serving, CSP |
-
-### Full Framework
-
-| Package | Description |
-|---|---|
-| [@getforma/create-app](https://github.com/getforma-dev/create-forma-app) | `npx @getforma/create-app` — scaffolds Rust server + TypeScript frontend |
-
-## License
-
-MIT
-
-### Schema-2 startup contract (FORMA-112)
-
-`assets::try_load_manifest` validates schema 2, the base writer version, application name,
-explicit route modes, aliases and asset references. Every serde deserialization uses the
-same validator; strict module loading revalidates caller-constructed manifests. A reader
-accepts writers of its own major up to its own minor, ignoring patch. A missing `app` is a
-legacy-schema refusal. SSR routes require their declared IR; browser routes are explicit.
-
-Enabled workers must use `sw::configure_for_manifest(worker, &manifest)` before binding.
-It compares the manifest application with `for_app`, names both on mismatch, and leaves
-configuration unchanged on failure. `configure(off)` remains available; unchecked enabled
-configuration is refused. Loading a manifest does not seal the default-off worker setting.
-
-The manifest contains `writer`, `app`, opaque `build`, `aliases`, filename-keyed `assets`,
-and `routes`. `AssetMetadata::immutable` alone controls caching; `integrity` carries an
-optional SHA-384 value (full enforcement is FORMA-111), and `retained` records metadata
-without implementing retention (FORMA-186). `build` is not yet the final deployment identity.
-Schema-1 manifests must be rebuilt; this source change does not migrate applications.
-
-Tests: `manifest_compatibility.rs`, `manifest_cache.rs`, `strict_loader.rs`, and the shared
-version-pair table in forma-ir. Development reload validates the same schema and retains the
-last good modules on invalid input; a valid switch to browser mode removes the old SSR module.
+Asset serving, opt-in checked service-worker configuration and the named preview frame retain their existing APIs. See their module documentation and [release runbook](../../docs/RELEASING.md).

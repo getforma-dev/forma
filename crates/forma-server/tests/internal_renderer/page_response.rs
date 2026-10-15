@@ -1,13 +1,17 @@
 //! PageResponse sends HTML, no-store and its nonce-bound policy together.
 //! Existing policy/property cases exercise the retained SSR and browser-shell paths.
 
+use super::{
+    render_shell as render_browser_shell, render_ssr as try_render, RenderFixture as PageConfig,
+    RenderPath as RenderMode,
+};
+use crate as forma_server;
 use axum::body::to_bytes;
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use forma_server::csp::{build_csp_header, PolicyExtensions};
 use forma_server::{
-    render_browser_shell, try_render, AssetManifest, CspNonce, PageConfig, PageResponse,
-    PolicyError, RenderCtx, RenderError, RenderMode, RouteAssets,
+    AssetManifest, CspNonce, PageResponse, PolicyError, RenderCtx, RenderError, RouteAssets,
 };
 use std::collections::HashMap;
 

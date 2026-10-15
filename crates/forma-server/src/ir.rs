@@ -6,7 +6,7 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use crate::{AssetManifest, RenderMode};
+use crate::{AssetManifest, RouteMode};
 
 /// Why a route could not be served with Phase 2 SSR.
 ///
@@ -121,7 +121,7 @@ struct Loaded {
 fn load_from(
     manifest: &AssetManifest,
     read: Read<'_>,
-) -> (HashMap<String, RenderMode>, Vec<Loaded>, Vec<IrLoadError>) {
+) -> (HashMap<String, RouteMode>, Vec<Loaded>, Vec<IrLoadError>) {
     let mut render_modes = HashMap::new();
     let mut loaded = Vec::new();
     let mut errors = Vec::new();
@@ -136,7 +136,7 @@ fn load_from(
 
     for (route_pattern, route_assets) in &manifest.routes {
         if route_assets.mode == crate::RouteMode::Browser {
-            render_modes.insert(route_pattern.clone(), RenderMode::Phase1ClientMount);
+            render_modes.insert(route_pattern.clone(), RouteMode::Browser);
             continue;
         }
         let Some(ref ir_filename) = route_assets.ir else {
@@ -151,7 +151,7 @@ fn load_from(
                     ir_file = %ir_filename,
                     "Loaded IR module for SSR"
                 );
-                render_modes.insert(route_pattern.clone(), RenderMode::Phase2SsrReconcile);
+                render_modes.insert(route_pattern.clone(), RouteMode::Ssr);
                 loaded.push(Loaded {
                     route: route_pattern.clone(),
                     ir_file: ir_filename.clone(),
@@ -176,19 +176,6 @@ fn load_from(
     (render_modes, loaded, errors)
 }
 
-/// [`load_from`] over the embedded files of `A`, as two maps.
-fn load_ir_modules_inner<A: Embed>(
-    manifest: &AssetManifest,
-) -> (
-    HashMap<String, RenderMode>,
-    HashMap<String, IrModule>,
-    Vec<IrLoadError>,
-) {
-    let (render_modes, loaded, errors) = load_from(manifest, &embedded::<A>);
-    let ir_modules = loaded.into_iter().map(|l| (l.route, l.module)).collect();
-    (render_modes, ir_modules, errors)
-}
-
 /// One of `A`'s files, through rust-embed.
 fn embedded<A: Embed>(name: &str) -> Option<Cow<'static, [u8]>> {
     A::get(name).map(|file| file.data)
@@ -203,146 +190,41 @@ pub fn load_ir_modules<A: Embed + 'static>(
     crate::Pages::load::<A>(manifest)
 }
 
-/// The module loader: every module the manifest declares, parsed and
-/// checked, or every failure, so the server can refuse to start.
-///
-/// The default from 0.2.2. Call it at start, before the port binds, and stop
-/// on `Err`: a module that is missing, corrupt, truncated or from another
-/// format version for a server-rendered route is a failed deploy, and CI and
-/// staging are where it should surface: one bad module refuses start,
-/// for every route. Each [`IrLoadError`] names the route, the file and
-/// a code. A route the build declares `ssr: false` carries no `ir` in the
-/// manifest and needs no module: it is not an error, and not in the maps.
-///
-/// ```no_run
-/// use forma_server::{assets, load_ir_modules_strict};
-///
-/// fn start<Assets: rust_embed::Embed>() -> Result<(), String> {
-///     let manifest = assets::try_load_manifest::<Assets>()?;
-///     let (render_modes, modules) = load_ir_modules_strict::<Assets>(&manifest).map_err(|errors| {
-///         let names: Vec<String> = errors.iter().map(|e| e.to_string()).collect();
-///         names.join("; ") // e.g. "route /: IR file page.ir: LOAD-103 ..."
-///     })?;
-///     // ...only now bind the port.
-///     # let _ = (render_modes, modules);
-///     Ok(())
-/// }
-/// ```
-///
-/// To have a debug build reread a page's module when the build's watch mode
-/// rewrites it, load with [`IrModules::load`] instead: the same check and
-/// errors.
-///
-/// Verified by: crates/forma-server/tests/strict_loader.rs > "with_a_bad_module_the_fixture_server_binds_no_port"
-#[allow(clippy::type_complexity)]
-pub fn load_ir_modules_strict<A: Embed>(
-    manifest: &AssetManifest,
-) -> Result<(HashMap<String, RenderMode>, HashMap<String, IrModule>), Vec<IrLoadError>> {
-    let (render_modes, ir_modules, errors) = load_ir_modules_inner::<A>(manifest);
-    if errors.is_empty() {
-        Ok((render_modes, ir_modules))
-    } else {
-        Err(errors)
-    }
-}
-
-/// The page modules, loaded at start by the strict loader, and in a debug
-/// build reread when the build's watch mode rewrites one.
-///
-/// [`load_ir_modules_strict`] hands the application its modules once, so a
-/// page edited under `forma-build --watch` showed its change only after a
-/// server restart. An application that holds its modules here instead asks
-/// for a route's module per request, with [`IrModules::get`]:
-///
-/// - **In a release build** `get` is a map lookup. Nothing is watched or
-///   checked: the modules are the ones embedded in the binary, which cannot
-///   change.
-/// - **In a debug build** (`cfg(debug_assertions)`) `get` first rereads the
-///   manifest's entry for the route and the module's file, and when the bytes
-///   differ from the module it holds, loads the new one through the same check
-///   as start ([`IrModule::parse`], the strict loader's). A module that fails
-///   it keeps the previous one, and the failure is logged once per distinct
-///   file, as a `tracing` warning carrying its `LOAD-1xx` code; the next good
-///   write replaces it. A route the manifest starts naming after start is
-///   loaded on its first `get`; a route the manifest stops naming keeps its
-///   last module.
-///
-/// Why per request, and why debug builds: in a debug build rust-embed reads
-/// every file from disk on each call, so rereading the manifest and the module
-/// costs two small reads and a comparison, and the next request sees the
-/// build's last write, with no watcher thread, no file-watching dependency
-/// and no path for forma-server to know beyond the `Embed` type. The watch
-/// mode publishes a module by rename and only when its bytes change, so a read
-/// never sees half a file and an unchanged module is never reloaded. In a
-/// release build rust-embed serves the bytes compiled in, so there is nothing
-/// to reread, and the check is not compiled: the switch is rust-embed's own.
-/// (An application that enables rust-embed's `debug-embed` feature has its
-/// files compiled into debug builds too; `get` then finds nothing changed.)
-///
-/// "Debug build" here means forma-server compiled with debug assertions
-/// (`cfg(debug_assertions)`), not a profile's name. Cargo's default `release`
-/// profile turns them off, so a default release binary reads nothing per
-/// request. A profile that sets `debug-assertions = true`, for the whole
-/// build or for forma-server alone (`[profile.release.package.forma-server]`),
-/// compiles the check into what it calls a release binary: each `get` then
-/// rereads the files, from the build folder on disk (rust-embed reads from
-/// disk under the same switch), or, with `debug-embed`, from the embedded
-/// bytes at the cost of a lock and a comparison. Keep debug assertions off in
-/// the profile you deploy.
-///
-/// The strict loader's `render_modes` map has no counterpart here: a route is
-/// server-rendered exactly when `get(route)` returns a module, and a route
-/// without one (`ssr: false`) is served with
-/// [`render_browser_shell`](crate::render_browser_shell).
-///
-/// ```no_run
-/// use forma_server::{assets, IrModules, PageConfig};
-/// use std::sync::Arc;
-///
-/// // At start, before the port binds: refuse to start on any error.
-/// fn start<Assets: rust_embed::Embed>() -> Result<Arc<IrModules<Assets>>, String> {
-///     let manifest = assets::try_load_manifest::<Assets>()?;
-///     let modules = IrModules::<Assets>::load(&manifest).map_err(|errors| {
-///         errors.iter().map(|e| e.to_string()).collect::<Vec<_>>().join("; ")
-///     })?;
-///     Ok(Arc::new(modules))
-/// }
-///
-/// // Per request: hold the route's module for the render.
-/// fn module<Assets: rust_embed::Embed>(modules: &IrModules<Assets>) -> Option<Arc<forma_ir::IrModule>> {
-///     modules.get("/") // then `ir_module: module.as_deref()` in the PageConfig
-/// }
-/// ```
-///
-/// Verified by: crates/forma-server/tests/dev_reload.rs > "an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page"
-/// Verified by: crates/forma-server/src/ir.rs > "a_release_build_reads_nothing_per_request_and_a_debug_build_rereads"
-pub struct IrModules<A> {
+/// Private cache behind the single public Pages loader.
+pub(crate) struct IrModules<A> {
     modules: Modules,
     assets: PhantomData<fn() -> A>,
 }
 
 impl<A: Embed> IrModules<A> {
     /// Load every module the manifest declares, through the strict loader:
-    /// the modules, or every failure, as [`load_ir_modules_strict`] returns
+    /// the modules, or every failure, as [`load_ir_modules`] returns
     /// them. Call it at start and refuse to start on `Err`.
     ///
     /// # Errors
     ///
     /// One [`IrLoadError`] per module that is not embedded or fails its
     /// check, naming route, file and code.
-    pub fn load(manifest: &AssetManifest) -> Result<Self, Vec<IrLoadError>> {
+    pub(crate) fn load(manifest: &AssetManifest) -> Result<Self, Vec<IrLoadError>> {
         Ok(IrModules {
             modules: Modules::load(manifest, &embedded::<A>)?,
             assets: PhantomData,
         })
     }
 
-    /// The route's module, or `None` for a route with none (a route the
-    /// build declares `ssr: false`, or one the manifest never named). In a
-    /// debug build, the module the build last wrote, if it loads; see the
-    /// type's documentation.
-    pub fn get(&self, route_pattern: &str) -> Option<Arc<IrModule>> {
-        self.modules.get(route_pattern, &embedded::<A>)
+    pub(crate) fn freeze_topology(&self) -> Result<(), String> {
+        #[cfg(debug_assertions)]
+        {
+            self.modules
+                .dev
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .freeze_topology()
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            Ok(())
+        }
     }
 
     /// Atomically pair the module with the validated manifest that named it.
@@ -400,7 +282,7 @@ impl Modules {
     }
 
     /// A debug build: the module the build last wrote, if it loads.
-    #[cfg(debug_assertions)]
+    #[cfg(all(debug_assertions, test))]
     fn get(&self, route: &str, read: Read<'_>) -> Option<Arc<IrModule>> {
         // Nothing panics while holding the lock; a poisoned state is still
         // the last good modules.
@@ -436,7 +318,7 @@ impl Modules {
 #[cfg(debug_assertions)]
 mod dev {
     use super::{check_module, Loaded, Read};
-    use crate::AssetManifest;
+    use crate::{AssetManifest, RouteMode};
     use forma_ir::parser::IrModule;
     use std::borrow::Cow;
     use std::collections::HashMap;
@@ -447,6 +329,8 @@ mod dev {
         /// `manifest.json` as last read, parsed or refused.
         manifest: Option<Vec<u8>>,
         accepted_manifest: Arc<AssetManifest>,
+        initial_topology: HashMap<String, RouteMode>,
+        frozen_topology: bool,
         /// Each route's module file, as the manifest last named it.
         names: HashMap<String, String>,
         /// Each route's module and what it was loaded from, or why not.
@@ -460,6 +344,14 @@ mod dev {
         current: Option<(String, Cow<'static, [u8]>, Arc<IrModule>)>,
         /// The file and bytes last refused, so a broken write is logged once.
         refused: Option<(String, Option<Vec<u8>>)>,
+    }
+
+    fn topology(manifest: &AssetManifest) -> HashMap<String, RouteMode> {
+        manifest
+            .routes
+            .iter()
+            .map(|(name, route)| (name.clone(), route.mode))
+            .collect()
     }
 
     impl Pages {
@@ -482,12 +374,22 @@ mod dev {
                 .collect();
             Pages {
                 accepted_manifest: Arc::new(manifest.clone()),
+                initial_topology: topology(manifest),
+                frozen_topology: false,
                 // The manifest on disk now is the baseline: a later change to
                 // it is what a `get` looks for.
                 manifest: read("manifest.json").map(Cow::into_owned),
                 names,
                 pages,
             }
+        }
+
+        pub(super) fn freeze_topology(&mut self) -> Result<(), String> {
+            if topology(&self.accepted_manifest) != self.initial_topology {
+                return Err("route names or modes changed during startup; reload the registry and bind again".into());
+            }
+            self.frozen_topology = true;
+            Ok(())
         }
 
         pub(super) fn routes(&self) -> Vec<String> {
@@ -571,6 +473,11 @@ mod dev {
                 return;
             }
             match serde_json::from_slice::<AssetManifest>(&bytes) {
+                Ok(manifest)
+                    if self.frozen_topology && topology(&manifest) != self.initial_topology =>
+                {
+                    tracing::warn!(code = "BIND-112", "route names or modes changed after finalization; restart and bind the changed routes; previous module and manifest stay (development reload)");
+                }
                 Ok(manifest) => {
                     self.accepted_manifest = Arc::new(manifest.clone());
                     self.names = manifest
@@ -649,14 +556,11 @@ mod tests {
         // Previously this fell through with no log line and no render_modes
         // entry — indistinguishable from a route that never had IR.
         let manifest = manifest_with_ir("/", Some("page.deadbeef.ir"));
-        let errors = load_ir_modules_strict::<Fixtures>(&manifest).unwrap_err();
+        let errors = load_ir_modules::<Fixtures>(&manifest).unwrap_err();
         assert_eq!(errors.len(), 1);
         assert_eq!(errors[0].route, "/");
         assert_eq!(errors[0].ir_file, "page.deadbeef.ir");
         assert_eq!(errors[0].code(), Some("LOAD-101"));
-
-        // The final typed registry uses the same strict startup gate.
-        assert_eq!(load_ir_modules::<Fixtures>(&manifest).unwrap_err(), errors);
     }
 
     #[test]
@@ -702,10 +606,8 @@ mod tests {
     fn a_route_with_no_ir_field_is_not_an_error() {
         // The distinction the old code could not express.
         let manifest = manifest_with_ir("/", None);
-        let (render_modes, ir_modules) =
-            load_ir_modules_strict::<Fixtures>(&manifest).expect("must not error");
-        assert_eq!(render_modes.get("/"), Some(&RenderMode::Phase1ClientMount));
-        assert!(ir_modules.is_empty());
+        let pages = load_ir_modules::<Fixtures>(&manifest).expect("must not error");
+        pages.finalize().unwrap();
     }
 }
 

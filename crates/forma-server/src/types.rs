@@ -1,16 +1,8 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-/// Per-route render strategy.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RenderMode {
-    /// Phase 1: empty `<div id="app"></div>`, client JS mounts from scratch.
-    Phase1ClientMount,
-    /// Phase 2: server renders HTML into `#app` via IR walker, client reconciles.
-    Phase2SsrReconcile,
-}
-
-/// Configuration for rendering an HTML page with external assets.
+/// Document metadata for an explicitly browser-rendered page.
+/// Server-rendered pages use a bound [`crate::PageHandle`].
 #[derive(Debug)]
 pub struct PageConfig<'a> {
     /// Text for the page's `<title>`, HTML-escaped on the way out.
@@ -50,12 +42,6 @@ pub struct PageConfig<'a> {
     /// head links from [`RenderCtx::with_head_link`](crate::RenderCtx::with_head_link),
     /// and data from [`PageConfig::config_json`].
     pub body_prefix: Option<&'a crate::RawHtml>,
-    /// Whether to server-render the body or ship an empty `#app` shell.
-    pub render_mode: RenderMode,
-    /// Pre-parsed IR module for Phase 2 SSR
-    pub ir_module: Option<&'a forma_ir::parser::IrModule>,
-    /// Slot data for Phase 2 SSR
-    pub slots: Option<&'a forma_ir::slot::SlotData>,
 }
 
 /// `X-Content-Type-Options: nosniff` — belongs on every response, not just

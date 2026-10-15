@@ -7,8 +7,8 @@ use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use forma_server::csp::build_csp_header;
 use forma_server::{
-    render_browser_shell, try_render, AssetManifest, CspNonce, PageConfig, PageResponse,
-    PolicyError, PolicyExtensions, RenderCtx, RenderError, RenderMode, RouteAssets,
+    load_ir_modules, render_browser_shell, AssetManifest, CspNonce, PageConfig, PageResponse,
+    PolicyError, PolicyExtensions, RenderCtx, RenderError, RouteAssets,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -49,7 +49,7 @@ fn manifest() -> AssetManifest {
 /// Every public way to make a `PageResponse`.
 #[derive(Debug, Clone, Copy)]
 enum Path {
-    /// `try_render`.
+    /// Finalized `PageHandle::render`.
     TryRender,
     /// `render_browser_shell`.
     Shell,
@@ -64,15 +64,6 @@ fn make(
     route: &str,
     extensions: &PolicyExtensions,
 ) -> Result<PageResponse, PolicyError> {
-    use forma_ir::parser::test_helpers::{
-        build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
-    };
-    let mut ops = encode_open_tag(0, &[]);
-    ops.extend_from_slice(&encode_text(1));
-    ops.extend_from_slice(&encode_close_tag(0));
-    let module = forma_ir::IrModule::parse(&build_minimal_ir(&["p", "hello"], &[], &ops, &[]))
-        .expect("module");
-    let slots = forma_ir::SlotData::new(0);
     let config = PageConfig {
         title: "Home",
         route_pattern: route,
@@ -81,9 +72,6 @@ fn make(
         body_class: None,
         personality_css: None,
         body_prefix: None,
-        render_mode: RenderMode::Phase2SsrReconcile,
-        ir_module: Some(&module),
-        slots: Some(&slots),
     };
     let ctx = RenderCtx::new().with_policy(extensions.clone());
     let policy = |result: Result<PageResponse, RenderError>| match result {
@@ -92,7 +80,31 @@ fn make(
         Err(other) => panic!("{path:?}: only the policy may fail here, got {other}"),
     };
     match path {
-        Path::TryRender => policy(try_render(&config, &ctx)),
+        Path::TryRender => {
+            #[derive(rust_embed::Embed)]
+            #[folder = "tests/fixtures/modules/good/"]
+            struct Assets;
+            #[derive(forma_ir::PageProps)]
+            struct Empty {}
+            let mut manifest = manifest.clone();
+            let assets = manifest.routes.get_mut(route).unwrap();
+            assets.mode = forma_server::RouteMode::Ssr;
+            assets.ir = Some("page.0f0f.ir".into());
+            for name in ["page.0f0f.ir", "app.a1b2c3d4.js"] {
+                manifest.assets.insert(
+                    name.into(),
+                    forma_server::AssetMetadata {
+                        immutable: false,
+                        integrity: None,
+                        retained: false,
+                    },
+                );
+            }
+            let pages = load_ir_modules::<Assets>(&manifest).unwrap();
+            let page = pages.bind::<Empty>(route).unwrap();
+            pages.finalize().unwrap();
+            policy(page.render(&Empty {}, &ctx))
+        }
         Path::Shell => policy(render_browser_shell(&config, &ctx)),
     }
 }

@@ -17,9 +17,11 @@
 use forma_ir::parser::test_helpers::{
     build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
 };
-use forma_ir::{IrModule, SlotData};
+
 use forma_server::assets::try_load_manifest;
-use forma_server::{try_render, AssetManifest, IrModules, PageConfig, RenderCtx, RenderMode};
+use forma_server::{load_ir_modules, AssetManifest, PageHandle, RenderCtx};
+#[derive(forma_ir::PageProps)]
+struct Empty {}
 use rust_embed::Embed;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -57,22 +59,8 @@ fn page(text: &str) -> Vec<u8> {
 const DEV_MANIFEST: &str = r#"{"version":2,"writer":"3.0.0","app":"ledger","build":"dev","aliases":{"app.js":"app.js","page.ir":"page.ir"},"assets":{"app.js":{"immutable":false},"page.ir":{"immutable":false}},"routes":{"/":{"js":["app.js"],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0,"ir":"page.ir","mode":"ssr"}}}"#;
 
 /// The application's handler: the route's module as it is now, rendered.
-fn serve(manifest: &AssetManifest, modules: &IrModules<DevDist>) -> String {
-    let module: Option<Arc<IrModule>> = modules.get("/");
-    let slots = SlotData::new(0);
-    let config = PageConfig {
-        title: "Dev",
-        route_pattern: "/",
-        manifest,
-        config_json: None,
-        body_class: None,
-        personality_css: None,
-        body_prefix: None,
-        render_mode: RenderMode::Phase2SsrReconcile,
-        ir_module: module.as_deref(),
-        slots: Some(&slots),
-    };
-    try_render(&config, &RenderCtx::new())
+fn serve(_manifest: &AssetManifest, page: &PageHandle<Empty>) -> String {
+    page.render(&Empty {}, &RenderCtx::new())
         .expect("renders")
         .into_parts_unchecked()
         .html
@@ -140,7 +128,9 @@ fn an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_prev
     publish("manifest.json", DEV_MANIFEST.as_bytes());
     publish("page.ir", &page("first"));
     let manifest = try_load_manifest::<DevDist>().expect("manifest");
-    let modules = IrModules::<DevDist>::load(&manifest).expect("loads");
+    let pages = load_ir_modules::<DevDist>(&manifest).expect("loads");
+    let modules = pages.bind::<Empty>("/").unwrap();
+    pages.finalize().unwrap();
     assert!(serve(&manifest, &modules).contains("<main><p>first</p></main>"));
 
     let warnings = Warnings::default();
@@ -177,5 +167,5 @@ fn an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_prev
 // thread: checked when this file compiles.
 const _: () = {
     fn shared<T: Send + Sync + 'static>() {}
-    let _ = shared::<IrModules<DevDist>>;
+    let _ = shared::<PageHandle<Empty>>;
 };

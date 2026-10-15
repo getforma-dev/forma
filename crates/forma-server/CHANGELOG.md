@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Bound rendering and startup completion — FORMA-107
+
+- Add repairable `Pages::finalize`: every declared SSR route must have a verified handler before rendering; successful completion seals all registry clones. Debug route topology changes require restart while compatible module/asset snapshots still reload.
+- Add `bind_with`/`Limits` defaults and explicit request overrides; preserve existing budgets/counts and guard the entire typed render, including props conversion, against unwinding faults.
+- Remove public `try_render`, tuple loader, IrModules, RenderMode and PageConfig's module/slots/mode fields. Explicit browser shells validate Browser route mode. Preserve SSR JSON, branding CSS and RawHtml through typed RenderCtx builders.
+
 ### Declared handler props — FORMA-102
 
 - `load_ir_modules` now strictly returns `Pages`; `bind::<P>(page)` verifies a derived handler once, then `PageHandle<P>::render(&props, &ctx)` checks and projects request values into exact declared SERVER roots. The old lenient tuple loader is removed; `load_ir_modules_strict` remains temporarily.

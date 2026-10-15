@@ -1,4 +1,4 @@
-//! Both strict entry points report errors without logging a fallback they never take.
+//! The strict loader report errors without logging a fallback they never take.
 use forma_server::assets::try_load_manifest;
 use rust_embed::Embed;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -65,12 +65,6 @@ fn the_default_loader_logs_no_fallback_it_does_not_take() {
     // start on; a "Phase 1 fallback" line from it would be untrue.
     let manifest = try_load_manifest::<Flipped>().expect("manifest");
     let fallbacks = count_warnings(&["Phase 1 fallback"], || {
-        assert_eq!(
-            forma_server::load_ir_modules_strict::<Flipped>(&manifest)
-                .unwrap_err()
-                .len(),
-            5
-        );
         assert_eq!(
             forma_server::load_ir_modules::<Flipped>(&manifest)
                 .unwrap_err()

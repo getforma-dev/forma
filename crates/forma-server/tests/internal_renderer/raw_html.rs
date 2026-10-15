@@ -1,14 +1,16 @@
 //! The single named RawHtml constructor and typed body-prefix boundary.
 //! Retained renderers write reviewed markup verbatim; strings fail to type-check.
 
+use super::{
+    render_shell as render_browser_shell, render_ssr as try_render, RenderFixture as PageConfig,
+    RenderPath as RenderMode,
+};
+use crate as forma_server;
 use forma_ir::parser::test_helpers::{
     build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
 };
 use forma_ir::{IrModule, SlotData};
-use forma_server::{
-    render_browser_shell, try_render, AssetManifest, PageConfig, RawHtml, RenderCtx, RenderMode,
-    RouteAssets,
-};
+use forma_server::{AssetManifest, RawHtml, RenderCtx, RouteAssets};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -163,7 +165,8 @@ fn second_constructors(files: &[(String, String)]) -> Vec<String> {
         findings.push(format!("RawHtml's inherent functions are {functions:?}"));
     }
 
-    // 4. A function anywhere whose return type names RawHtml: only `trusted`.
+    // 4. A function returning an owned RawHtml: only `trusted`. A borrowed
+    //    request-context accessor does not construct one.
     let mut returning = Vec::new();
     for (path, text) in &files {
         for (at, _) in text.match_indices(" -> ") {
@@ -172,7 +175,7 @@ fn second_constructors(files: &[(String, String)]) -> Vec<String> {
                 .find(" { ")
                 .unwrap_or(ret.len())
                 .min(ret.find(" where ").unwrap_or(ret.len()));
-            if ret[..end].contains("RawHtml") {
+            if ret[..end].contains("RawHtml") && ret[..end].replace(' ', "") != "Option<&RawHtml>" {
                 let function = text[..at].rfind(" fn ").map_or("", |f| &text[f + 4..]);
                 let name: String = function
                     .chars()
@@ -322,6 +325,17 @@ fn a_search_finds_one_raw_constructor() {
 
     // The crate as it is: RawHtml::trusted is the one constructor.
     assert_eq!(second_constructors(&files), Vec::<String>::new());
+
+    // Borrowing existing typed markup is not a second constructor. The owned
+    // Option return control below must still be detected.
+    let mut borrowed = files.clone();
+    borrowed
+        .iter_mut()
+        .find(|(p, _)| p == "render.rs")
+        .unwrap()
+        .1
+        .push_str("\npub fn prefix(&self) -> Option<&RawHtml> { self.prefix.as_ref() }\n");
+    assert_eq!(second_constructors(&borrowed), Vec::<String>::new());
 
     // Each second constructor, added to a copy of the sources, is found.
     for (what, file, code) in SECOND_CONSTRUCTORS {

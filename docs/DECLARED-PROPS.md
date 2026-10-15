@@ -23,7 +23,8 @@ struct HomeProps { title: String, rows: Vec<Row>, flash: Option<String> }
 let manifest = assets::try_load_manifest::<Assets>()?;
 let pages = load_ir_modules::<Assets>(&manifest)?;
 let home = pages.bind::<HomeProps>("home")?;
-// Only after every required bind succeeds should application startup open a port.
+pages.finalize()?;
+// Only after finalization succeeds should application startup open a port.
 let response = home.render(&props, &RenderCtx::new().with_title("This request").with_body_class("home"))?;
 ```
 
@@ -37,7 +38,7 @@ Integers must fit ±(2^53−1) before conversion. Floats must be finite. Dates t
 
 Direct nested fields, renamed child props, declared prop-seeded signals, `createShow`, direct/reactive ternaries and `createList` use the existing root slots and PROP instructions. Repeated lists share one declared array input and own separate row temporaries. Local signals and scratch slots are CLIENT-owned and are never handler-filled. Boolean text children are omitted like core's `h()`; direct object/array/Date text or attributes, runtime coercion and other computed declared expressions refuse BUILD-610. Pass a computed presentation value as a declared scalar. Unsupported schemas and binding expressions fail even without `--strict`; no placeholder output substitutes for declared data.
 
-A handle is cloneable and Send+Sync and compares the contract once. In development, corrupt/missing module writes retain the last good module and its matching asset manifest. A valid new schema is bound again; incompatibility returns RENDER-405 until the handler/page is corrected. Release builds use immutable embedded modules. FORMA-107 still owns finalization of all routes, budget policy and removal of low-level `try_render`; the strict tuple loader remains an interim compatibility helper. FORMA-103 owns browser state decoding/activation: two independently mutable signals seeded from one prop must keep separate activation identities even though SSR reads one server value.
+A handle is cloneable and Send+Sync and compares the contract once. In development, corrupt/missing module writes retain the last good module and its matching asset manifest. A valid new schema is bound again; incompatibility returns RENDER-405 until the handler/page is corrected. Release builds use immutable embedded modules. Finalization verifies every SSR route, seals binding and freezes the route topology; low-level `try_render` and the tuple loader have been removed. FORMA-103 owns browser state decoding/activation: two independently mutable signals seeded from one prop must keep separate activation identities even though SSR reads one server value.
 
 ## Evidence and preserved consumers
 
@@ -57,3 +58,9 @@ Read-only inventory used preserved clones under `work/review-FORMA-126-lint/cons
 | same fAuth, RegistrationForm; BenchmarkFilterBar, BenchmarkDataTable, PerfPanel | Nine registered islands total across login/onboarding/benchmark; local controls, shared dataset and derived filtering → local-state isolation and shared declared dataset. Application-specific filtering moves to a declared rendered value or later compiler work, not ad hoc slot injection. |
 
 Application migration remains in its assigned follow-up tickets. Fixture expansion is FORMA-188; row-key policy is106; browser activation is103. No live application repository was changed.
+
+## Startup completion and document extensions
+
+After all `pages.bind`/`bind_with` calls, call `pages.finalize()` before opening the listener. Unbound SSR routes fail startup; Browser routes need no typed binding. Handles refuse rendering until finalization succeeds. Failed finalization permits binding the missing routes and retrying; success seals registration. `bind_with` sets page limits and RenderCtx inherits them unless explicitly overridden.
+
+The final handle preserves request JSON, branding CSS and explicit RawHtml through `with_config_json`, `with_personality_css` and `with_body_prefix`. It accepts no raw script or nonce. The legacy try_render/tuple loader/SSR PageConfig fields are removed. Walker timing excludes props conversion and document assembly; measure complete requests separately.

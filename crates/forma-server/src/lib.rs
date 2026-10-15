@@ -1,57 +1,37 @@
-//! Axum middleware for Forma SSR.
+//! Typed server rendering and explicit browser shells for Forma.
 //!
-//! Provides page rendering ([`try_render`]), content-hashed asset serving,
-//! CSP headers with cryptographic nonces, an opt-in service worker ([`sw`]), and
-//! the Phase 1 (client mount) / Phase 2 (SSR reconcile) rendering pipeline.
+//! Load the build's validated manifest and modules, bind every SSR route to its
+//! derived handler, then call [`Pages::finalize`] before opening the listener.
+//! [`PageHandle::render`] returns a [`PageResponse`] or a coded [`RenderError`];
+//! it never substitutes a browser shell for a failure.
 //!
-//! # Quick Start
-//!
-//! ```rust,no_run
-//! use forma_server::{try_render, PageConfig, PageResponse, RenderCtx, RenderError};
-//! ```
-//!
-//! # Serving a page
-//!
-//! [`try_render`] returns the page or a coded [`RenderError`]; the handler
-//! chooses the response. A page's HTML embeds a per-request nonce
-//! that only its policy blesses, so the HTML, the policy and
-//! `Cache-Control: no-store` travel together: a [`PageResponse`], as axum's
-//! `IntoResponse`, writes all of them and cannot be sent without them.
-//! A handler that needs a looser policy adds typed
-//! [`PolicyExtensions`] through its [`RenderCtx`]; it never edits the
-//! policy's text.
-//!
-//! ```rust,no_run
-//! use axum::http::StatusCode;
-//! use axum::response::{IntoResponse, Response};
-//! use forma_server::{try_render, PageConfig, RenderCtx};
-//!
-//! fn home(config: &PageConfig) -> Response {
-//!     match try_render(config, &RenderCtx::new()) {
-//!         Ok(page) => page.into_response(),
-//!         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-//!     }
+//! ```no_run
+//! use forma_ir::PageProps;
+//! use forma_server::{assets, load_ir_modules, PageHandle, RenderCtx};
+//! #[derive(PageProps)]
+//! struct HomeProps { title: String }
+//! fn start<A: rust_embed::Embed + 'static>() -> Result<PageHandle<HomeProps>, String> {
+//!     let manifest = assets::try_load_manifest::<A>()?;
+//!     let pages = load_ir_modules::<A>(&manifest).map_err(|e| format!("{e:?}"))?;
+//!     let home = pages.bind("home").map_err(|e| format!("{e:?}"))?;
+//!     pages.finalize().map_err(|e| format!("{e:?}"))?;
+//!     Ok(home) // the application may now open its listener
+//! }
+//! fn home(page: &PageHandle<HomeProps>) -> Result<forma_server::PageResponse, forma_server::RenderError> {
+//!     page.render(&HomeProps { title:"Hello".into() }, &RenderCtx::new())
 //! }
 //! ```
 //!
-//! Markup the page carries unescaped is a [`RawHtml`], made only by
-//! [`RawHtml::trusted`], so a search for that name finds every raw entry.
-//! The route's `modulepreload` links come from the build's manifest
-//! and head links have a typed field, both through [`RenderCtx`]; data goes
-//! through `config_json`.
+//! The response keeps HTML, its fresh nonce, enforced CSP and no-store headers
+//! together. Per-request [`RenderCtx`] carries typed policy/head/preload settings,
+//! escaped JSON, branding CSS and an explicit [`RawHtml`] prefix, never a nonce
+//! or executable handler script. [`render_browser_shell`] accepts only a route
+//! explicitly declared Browser. Unreviewed content belongs in [`frame`].
 //!
-//! Content nobody reviewed renders in the preview frame, whose document
-//! [`PageResponse::frame`] writes ([`frame`]).
-//!
-//! At startup [`load_ir_modules`] strictly loads a [`Pages`] registry. Bind each
-//! derived [`PageProps`] handler before opening the listener, then call
-//! [`PageHandle::render`] with values and request metadata. [`load_ir_modules_strict`]
-//! remains an interim strict tuple helper; no lenient loader remains.
-//! A route explicitly declared browser-only uses [`render_browser_shell`].
-//! Debug reload rechecks a changed schema and keeps the last good module and
-//! asset snapshot on file corruption. FORMA-107 removes the remaining low-level
-//! render entry. PageOutput, render_page, render_page_with_nonce and config_script
-//! are removed; body_prefix requires RawHtml and strict policies enforce TT.
+//! In debug builds a corrupt edit keeps the previous module/asset snapshot;
+//! changed schemas are rebound, while changed route names or modes require a
+//! restart and fresh finalization. Release builds use their embedded snapshot.
+//! The old raw SSR entry, tuple loader, PageOutput and caller nonce API are gone.
 
 // Makes README.md's and SECURITY.md's "Zero `unsafe` blocks" a property the
 // compiler enforces rather than a claim.
@@ -83,7 +63,7 @@ pub mod ir;
 pub mod pages;
 /// Raw HTML: the one named type for markup written unescaped.
 pub mod raw;
-/// The render that returns its failure: `try_render`, `render_browser_shell`.
+/// Request context, errors and the explicit browser shell.
 pub mod render;
 /// The page response: HTML that never leaves without its policy.
 pub mod response;
@@ -92,7 +72,7 @@ pub mod response;
 pub mod sw;
 /// The HTML page template and the SSR render entry points.
 pub mod template;
-/// Request/response types: page config, manifest, render mode.
+/// Document metadata, manifest and declared route modes.
 pub mod types;
 
 /// Re-exported because it appears in [`assets::asset_bytes`]'s signature.
@@ -108,12 +88,18 @@ pub use forma_ir::IrError;
 pub use forma_ir::PageProps;
 /// Re-exported: [`RenderCtx::with_limits`] takes it.
 pub use forma_ir::WalkLimits;
+/// Limits inherited by a bound page, with optional per-request overrides.
+pub use forma_ir::WalkLimits as Limits;
 pub use frame::{FrameError, PreviewFrame, FRAME_RUNTIME_ASSET};
 pub use head::{HeadLink, HeadLinkError, ModulePreloads};
 #[allow(deprecated)]
-pub use ir::{load_ir_modules, load_ir_modules_strict, IrLoadError, IrModules};
+pub use ir::{load_ir_modules, IrLoadError};
 pub use pages::{PageHandle, Pages};
 pub use raw::RawHtml;
-pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
+pub use render::{render_browser_shell, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};
 pub use types::*;
+
+#[cfg(test)]
+#[path = "../tests/internal_renderer/mod.rs"]
+mod render_contract;
