@@ -28,7 +28,7 @@ import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { generateRealIr } from '../src/esbuild-ssr-plugin';
-import { renderDefaults, ZWSP } from './helpers/render';
+import { renderDefaults } from './helpers/render';
 
 let tmpDir: string;
 let warnSpy: ReturnType<typeof vi.spyOn>;
@@ -294,11 +294,10 @@ describe('SSR renders the text and attributes the client renders', () => {
 // ===========================================================================
 
 describe('what SSR still cannot render, stated exactly', () => {
-  it('emits the placeholder text node when a binding cannot be evaluated', () => {
-    // A signal whose initial value is not a literal has no default to render.
-    // The zero-width space is deliberate — it gives the client a Text node to
-    // bind to — and it is the honest output here, not a silent success.
-    const html = ssr({
+  it('refuses a binding whose initial value cannot be evaluated', () => {
+    // Unknown runtime initialization cannot be replaced by an empty native
+    // text value. The build refuses before producing a misleading document.
+    expect(() => ssr({
       'app.ts': ENTRY,
       'page.ts': pageAround('Sub()'),
       'sub.ts': `
@@ -308,9 +307,7 @@ describe('what SSR still cannot render, stated exactly', () => {
           return h('span', null, () => label());
         }
       `,
-    });
-
-    expect(html).toBe(`<div id="app"><span>${ZWSP}</span></div>`);
+    })).toThrow(/BUILD-610.*sub\.ts:5:34/s);
     // …and it says so, naming the file, the construct and the consequence.
     const warned = warnSpy.mock.calls.map((c) => c.join(' ')).join('\n');
     expect(warned).toContain("signal 'label'");
