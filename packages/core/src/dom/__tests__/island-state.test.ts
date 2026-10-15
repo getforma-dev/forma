@@ -187,7 +187,10 @@ describe('bounded schema projection without side effects', () => {
     valid(preflightIslands({ Test: registration() }, page(undefined, host(0), deepExtra))[0]!);
     const objects: { name: string; type: IslandSchemaType }[][] = Array.from({ length: 1000 }, (_, i) => i === 999 ? [] : [{ name: 'next', type: { kind: 'object', object: i + 1 } }]);
     const text = '{"v":1,"s":[],"i":[{"h":"' + H + '","p":' + '{"next":'.repeat(999) + '{}' + '}'.repeat(999) + '}]}';
-    valid(preflightIslands({ Test: registration(objects) }, page(undefined, host(0), text))[0]!);
+    const checked = valid(preflightIslands({ Test: registration(objects) }, page(undefined, host(0), text))[0]!);
+    let value = checked.props, depth = 0;
+    while (Object.hasOwn(value, 'next')) { value = value.next as Record<string, unknown>; depth++; }
+    expect(depth).toBe(999); expect(Object.keys(value)).toEqual([]);
   });
   it('copies compiled metadata and refuses cyclic or forbidden schemas', () => {
     const shape: { name: string; type: IslandSchemaType }[][] = [[{ name: 'value', type: { kind: 'string' } }]];
