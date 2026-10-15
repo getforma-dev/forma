@@ -37,6 +37,12 @@ crates/forma-ir/tests/fixtures/js-emitter/*.dump text eol=lf
 packages/compiler/src/fmir-constants.ts text eol=lf
 crates/forma-ir/src/fmir_constants.rs text eol=lf
 
+# The island-emitter registration golden is compared byte-for-byte with the
+# compiler's JSON.stringify output plus one LF
+# (packages/compiler/tests/island-emission.test.ts), so checkout must keep its
+# LF bytes on Windows too.
+crates/forma-ir/tests/fixtures/island-emitter/*.json text eol=lf
+
 # Packed candidates use the actual template source bytes on every platform.
 packages/create-app/templates/*/src/main.rs text eol=lf
 # Original source/doc bytes are authenticated by the migration archive index.
