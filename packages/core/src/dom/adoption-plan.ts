@@ -7,7 +7,7 @@ const HTML_NS = 'http://www.w3.org/1999/xhtml';
 type MarkerKind = 't' | 's' | 'l' | 'i';
 type Marker = { kind: MarkerKind; id: number; closing: boolean };
 type Code = 'FORMA_E_HYDRATE_NODE' | 'FORMA_E_HYDRATE_MARKER'
-  | 'FORMA_E_HYDRATE_STRUCTURE' | 'FORMA_E_HYDRATE_VALUE';
+  | 'FORMA_E_HYDRATE_STRUCTURE' | 'FORMA_E_HYDRATE_VALUE' | 'FORMA_E_HYDRATE_LIST_COUNT';
 
 export class AdoptionDomError extends Error {
   constructor(readonly code: Code) { super(`[forma] ${code}`); this.name = 'AdoptionDomError'; }
@@ -192,6 +192,14 @@ export class AdoptionCursor {
     const node = this.current();
     return !!node && (node.nodeType === 1 && (node as Element).hasAttribute('data-forma-island') || this.dom.rangeAt(node)?.kind === 'i');
   }
+
+  /** Single-element row checkpoint; range rows will retain their own spans. */
+  elementHead(): Element {
+    const node=this.current();
+    if(this.offset||!node||node.nodeType!==1)refuse('FORMA_E_HYDRATE_NODE');
+    return node as Element;
+  }
+  immediatelyAfter(node:Node):boolean { return this.offset===0&&this.next===node.nextSibling; }
 
   element(tag: string, namespace: string | null = null): Element {
     const node = this.current();
