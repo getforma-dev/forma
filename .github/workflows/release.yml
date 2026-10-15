@@ -76,7 +76,7 @@ jobs:
         run: |
           RECORD_SHA256=$(bash scripts/release-artifacts.sh record "$RUNNER_TEMP/release")
           echo "record-sha256=$RECORD_SHA256" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: release-packed
           path: ${{ runner.temp }}/release/
@@ -133,7 +133,7 @@ jobs:
         run: |
           REPORT_SHA256=$(bash scripts/release-artifacts.sh record "$RUNNER_TEMP/p17")
           echo "report-sha256=$REPORT_SHA256" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: release-p17
           path: ${{ runner.temp }}/p17/
