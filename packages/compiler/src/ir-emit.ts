@@ -63,14 +63,15 @@ export class IrEmitContext {
     byteOffset: number;
   }> = [];
 
-  private propsSchema: PropsSchema = [[]];
+  private propsSchema: Array<PropsSchema[number]> = [[]];
   private readonly islandBindings = new Map<number, { mode: IslandRenderMode; bindings: readonly BindingRecord[] }>();
   private readonly constants = new Map<number, unknown>();
   private keyPaths: KeyPath[] = [];
   private sourcePositions: SourcePosition[] | undefined;
 
   /** Declared page object zero and its nested object types. */
-  setPropsSchema(schema: PropsSchema): void { this.propsSchema = schema; }
+  setPropsSchema(schema: PropsSchema): void { this.propsSchema = [...schema]; }
+  getPropsSchema(): PropsSchema { return this.propsSchema; }
   /** Append a declared component schema without changing the page's root object. */
   appendPropsSchema(schema: PropsSchema): number {
     const offset = this.propsSchema.length;
@@ -78,7 +79,7 @@ export class IrEmitContext {
     const type = (value: SchemaType): SchemaType => value.kind === 'object' ? { ...value, object: value.object + offset }
       : value.kind === 'array' ? { ...value, element: type(value.element) }
         : value.kind === 'optional' ? { ...value, inner: type(value.inner) } : value;
-    this.propsSchema = [...this.propsSchema, ...schema.map(fields => fields.map(field => ({ ...field, type: type(field.type) })))];
+    this.propsSchema.push(...schema.map(fields => fields.map(field => ({ ...field, type: type(field.type) }))));
     return offset;
   }
   /** Metadata belongs to one declared component, while input slots belong to its call. */
@@ -194,24 +195,12 @@ export class IrEmitContext {
     for (const set of this.slotCaptureStack) set.add(id);
   }
 
-  /** Matches per-item list scratch slots (`list:<base>:item`). These are
-   *  TYPE_OBJECT working storage the LIST opcode overwrites per row, so after
-   *  SSR they hold the LAST rendered row — serializing them into an island's
-   *  data-forma-props would leak that row into the page. They are excluded
-   *  from island slot ids; everything else (attr:*, text:*, show:*,
-   *  list:*:array, list:*:<prop>, named signal slots) is kept. */
-  private static readonly LIST_ITEM_SCRATCH_RE = /^list:[^:]+:item$/;
-
-  /** Replace the slot ids of a registered island entry (back-filled after
-   *  the island's component subtree has been walked). Filters out per-item
-   *  list scratch slots — see LIST_ITEM_SCRATCH_RE. */
+  /** Ordered declared inputs may repeat a slot, including a current LIST row.
+   * The native walker snapshots them at ISLAND_START before the row advances. */
   setIslandSlotIds(islandId: number, slotIds: number[]): void {
     const island = this.islands.find(i => i.id === islandId);
     if (!island) return;
-    island.slotIds = slotIds.filter(id => {
-      const slot = this.slots.find(s => s.id === id);
-      return !slot || !IrEmitContext.LIST_ITEM_SCRATCH_RE.test(slot.name);
-    });
+    island.slotIds = [...slotIds];
   }
 
   /** Get a fresh marker id for DYN_TEXT. */

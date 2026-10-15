@@ -11,6 +11,7 @@ import * as C from './fmir-constants';
 import type { PropsSchema, SchemaType } from './fmir-payload';
 import type { ComponentFunction } from './export-resolver';
 import { PropsSchemaError, type DeclaredPageProps } from './props-schema';
+import { closedExpression, constantAssignable, schemaHint } from './closed-expression';
 
 type Path = readonly string[];
 export interface PropsScope {
@@ -166,7 +167,7 @@ function validateBindings(scope: PropsScope, fn: ComponentFunction): void {
   };
   visit(fn.body);
 }
-function declarations(scope: PropsScope, fn: ComponentFunction): void {
+function declarations(scope: PropsScope, fn: ComponentFunction, ctx?: IrEmitContext): void {
   if (!t.isBlockStatement(fn.body)) return;
   for (const statement of fn.body.body) if (t.isVariableDeclaration(statement)) for (const declaration of statement.declarations) {
     if (!declaration.init) continue;
@@ -181,7 +182,25 @@ function declarations(scope: PropsScope, fn: ComponentFunction): void {
     } else if (t.isArrayPattern(declaration.id) && t.isIdentifier(declaration.id.elements[0]) && t.isCallExpression(declaration.init)
       && t.isIdentifier(declaration.init.callee) && scope.signalImports.has(declaration.init.callee.name)
       && !scope.references.has(declaration.init.callee) && declaration.init.arguments[0]) {
-      const path = propPath(declaration.init.arguments[0], scope);
+      const initial = unwrap(declaration.init.arguments[0]);
+      let path = propPath(initial, scope);
+      if (!path && ctx && t.isLogicalExpression(initial) && initial.operator === '??') {
+        const sourcePath = propPath(initial.left, scope);
+        if (sourcePath) {
+          const sourceType = propType(sourcePath, scope, initial.left), targetType = inner(sourceType);
+          const fallback = closedExpression(initial.right, scope.file);
+          if (!constantAssignable(fallback, targetType, scope.schema)) invalid(scope, initial.right, 'nullish fallback does not match the declared non-null type');
+          const source = propSlot(initial.left, scope, ctx)!;
+          if (sourceType.kind !== 'optional') path = sourcePath;
+          else {
+            const value = ctx.addConstantSlot(fallback, schemaHint(targetType));
+            const target = ctx.addTemporarySlot(schemaHint(targetType));
+            ctx.emit(C.OP_COALESCE); ctx.emitU16(source); ctx.emitU16(value); ctx.emitU16(target);
+            const key = `\0coalesce:${target}`;
+            scope.views.set(key, {slot:target,type:targetType}); path = [key];
+          }
+        }
+      }
       if (path) scope.signals.set(declaration.id.elements[0].name, path);
       else if (containsDeclared(declaration.init.arguments[0], scope)) scope.unsupported.set(declaration.id.elements[0].name, declaration.init);
     } else if (t.isObjectPattern(declaration.id) && containsDeclared(declaration.init, scope)) {
@@ -192,7 +211,7 @@ function declarations(scope: PropsScope, fn: ComponentFunction): void {
 export function rootPropsScope(declared: DeclaredPageProps, fn: ComponentFunction, file: string, ctx: IrEmitContext): PropsScope | undefined {
   const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
   const signalImports = new Set([...readImportBindings(ast)].filter(([, binding]) => binding.imported === 'createSignal' && ['@getforma/core', 'formajs'].includes(binding.source)).map(([name]) => name));
-  const scope: PropsScope = { schema: declared.schema, roots: new Map(), aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), views: new Map(), signalImports, unsupported: new Map() };
+  const scope: PropsScope = { schema: ctx.getPropsSchema(), roots: new Map(), aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), views: new Map(), signalImports, unsupported: new Map() };
   indexBindings(scope, fn);
   const fields = new Map<string, Path>();
   for (const field of declared.schema[0]!) {
@@ -201,11 +220,11 @@ export function rootPropsScope(declared: DeclaredPageProps, fn: ComponentFunctio
   }
   if (declared.parameter.kind === 'named') scope.objects.set(declared.parameter.name, fields);
   else if (declared.parameter.kind === 'destructured') for (const [field, local] of declared.parameter.fields) scope.aliases.set(local, [field]);
-  declarations(scope, fn);
+  declarations(scope, fn, ctx);
   validateBindings(scope, fn);
   return scope;
 }
-export function childPropsScope(parent: PropsScope | undefined, fn: ComponentFunction, arg: t.Node | undefined, file: string): PropsScope | undefined {
+export function childPropsScope(parent: PropsScope | undefined, fn: ComponentFunction, arg: t.Node | undefined, file: string, ctx?: IrEmitContext): PropsScope | undefined {
   if (!parent) return undefined;
   const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
   const signalImports = new Set([...readImportBindings(ast)].filter(([, binding]) => binding.imported === 'createSignal' && ['@getforma/core', 'formajs'].includes(binding.source)).map(([name]) => name));
@@ -222,8 +241,23 @@ export function childPropsScope(parent: PropsScope | undefined, fn: ComponentFun
     }
   }
   bindParameter(scope, fn.params[0], fields);
-  declarations(scope, fn);
+  declarations(scope, fn, ctx);
   validateBindings(scope, fn);
+  return scope;
+}
+
+/** Declared island fields point at this occurrence's prepared input slots. */
+export function islandPropsScope(fn: ComponentFunction, file: string, ctx: IrEmitContext, schemaObject: number, inputs: readonly number[]): PropsScope {
+  const ast = parse(readFileSync(file, 'utf8'), {sourceType:'module',plugins:['typescript',...(/\.[jt]sx$/.test(file)?['jsx' as const]:[])]});
+  const signalImports = new Set([...readImportBindings(ast)].filter(([,binding])=>binding.imported==='createSignal'&&['@getforma/core','formajs'].includes(binding.source)).map(([name])=>name));
+  const scope: PropsScope = {schema:ctx.getPropsSchema(),roots:new Map(),aliases:new Map(),objects:new Map(),signals:new Map(),file,references:new WeakMap(),bindings:new Map(),views:new Map(),signalImports,unsupported:new Map()};
+  indexBindings(scope,fn);
+  const fields = new Map<string,Path>();
+  for (const [index,field] of scope.schema[schemaObject]!.entries()) {
+    const slot=inputs[index]!,key=`\0island:${schemaObject}:${index}:${slot}`;
+    scope.views.set(key,{slot,type:field.type}); fields.set(field.name,[key]);
+  }
+  bindParameter(scope,fn.params[0],fields); declarations(scope,fn,ctx); validateBindings(scope,fn);
   return scope;
 }
 
