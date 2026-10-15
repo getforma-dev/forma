@@ -1,0 +1,293 @@
+{
+  "base": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+  "reason": "Preserve exact pre-switch source, tests and documentation before strict adoption retirement. Assertion migrations are recorded separately; this archive alone does not qualify the replacement.",
+  "files": [
+    {
+      "original": "packages/core/CHANGELOG.md",
+      "archive": "packages/core/CHANGELOG.md.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "8209ca7b3a1e9d2e040d8aa53df836e42c0f64d73b72f795a935a2a150f8c539",
+      "bytes": 139822
+    },
+    {
+      "original": "packages/core/README.md",
+      "archive": "packages/core/README.md.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "98801909355d910e96f1c9da462ffebf1b6c0357dfc33101427ee50a3f4fe1a7",
+      "bytes": 10347
+    },
+    {
+      "original": "packages/core/bench/hydrate.bench.ts",
+      "archive": "packages/core/bench/hydrate.bench.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "f1954eff54f19cbb03c3d9a79f8d80839a391c449f881ad0304b27bf1567aff3",
+      "bytes": 8151
+    },
+    {
+      "original": "packages/core/docs/API.md",
+      "archive": "packages/core/docs/API.md.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "f642feac81462b0c588dc2fc7ab4d008cdffc7a2580cd239c81bc34306b9c6e4",
+      "bytes": 22602
+    },
+    {
+      "original": "packages/core/docs/CDN-AND-EXPORTS.md",
+      "archive": "packages/core/docs/CDN-AND-EXPORTS.md.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "78a203852d7983c2e103e56e08c230ea5145085ab7cc6554e1639bdb035a106b",
+      "bytes": 11040
+    },
+    {
+      "original": "packages/core/docs/ISLANDS.md",
+      "archive": "packages/core/docs/ISLANDS.md.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "ecef1fe615739a21336166a9417774c26a615ee63f247e95202c91d67f204068",
+      "bytes": 27067
+    },
+    {
+      "original": "packages/core/docs/PERFORMANCE.md",
+      "archive": "packages/core/docs/PERFORMANCE.md.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "916cc38522cfec9cd648dc1da0b2a31bcee564c14b20d0237e2f5dd4b23bae9c",
+      "bytes": 40073
+    },
+    {
+      "original": "packages/core/docs/STABILITY.md",
+      "archive": "packages/core/docs/STABILITY.md.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "69471a3a75c46aee8847aee42546aeaee9df00315755f5a1f66ee217eba65ea9",
+      "bytes": 11024
+    },
+    {
+      "original": "packages/core/e2e/adoption.spec.ts",
+      "archive": "packages/core/e2e/adoption.spec.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "c559956d327e72223afd08a6eb90919b8f9daa1ba3dcec6b881d1af01187a08f",
+      "bytes": 42945
+    },
+    {
+      "original": "packages/core/e2e/core-regressions.spec.ts",
+      "archive": "packages/core/e2e/core-regressions.spec.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "f179ebd0321943268f98ed4958aa15bd6393f65fa0b1add934d6be10bfea159e",
+      "bytes": 6069
+    },
+    {
+      "original": "packages/core/e2e/helpers/owned-adoption.ts",
+      "archive": "packages/core/e2e/helpers/owned-adoption.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "d1f676dc818add81ea454e85a504ef043bf0120c058bc9188c7c955d29edbb3f",
+      "bytes": 789
+    },
+    {
+      "original": "packages/core/e2e/trusted-types.spec.ts",
+      "archive": "packages/core/e2e/trusted-types.spec.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "6801b33caa82a714c9ef7c18f50b536b039624047741fc46528f3ee2c42a4d62",
+      "bytes": 23361
+    },
+    {
+      "original": "packages/core/src/__tests__/hydration-observability.test.ts",
+      "archive": "packages/core/src/__tests__/hydration-observability.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "869fb3b9a7949ee1788414e0bb72516694685c0f377c8608dd1c46b47ad32c11",
+      "bytes": 13001
+    },
+    {
+      "original": "packages/core/src/__tests__/index-surface.test.ts",
+      "archive": "packages/core/src/__tests__/index-surface.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "b7b6763a9cee741ff6bdf8ea7e9711c8d665c922f19a2468f4e86fccdf6e98bb",
+      "bytes": 5305
+    },
+    {
+      "original": "packages/core/src/__tests__/renderer-contract.test.ts",
+      "archive": "packages/core/src/__tests__/renderer-contract.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "cbf86ccb9b4a687429fa622a0f913da937ec724b27f254ebc636978459b2a8dd",
+      "bytes": 32028
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/adopt-inner-html.test.ts",
+      "archive": "packages/core/src/dom/__tests__/adopt-inner-html.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "fe3cb123b60940e25826fc47c2aee3a42e0a65a00a1eaa584bd6127a83f7befd",
+      "bytes": 15161
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/form-control-adoption.test.ts",
+      "archive": "packages/core/src/dom/__tests__/form-control-adoption.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "398cc24c2d0cf09e2b5f3b85d9ce67eb12c2861049780543e380d04ba3ac8582",
+      "bytes": 20569
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/form-control.test.ts",
+      "archive": "packages/core/src/dom/__tests__/form-control.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "b9e3b99d2f3989030e94d9567a3f8cb448ba63e1fd3aa559bf684bbadc90bcd9",
+      "bytes": 5927
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/h-function-components.test.ts",
+      "archive": "packages/core/src/dom/__tests__/h-function-components.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "e187f579fc92e6caba19a009ea73e52f8f735033ecd1f9e85e6019cd951e452b",
+      "bytes": 5866
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/helpers/owned-adoption.ts",
+      "archive": "packages/core/src/dom/__tests__/helpers/owned-adoption.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "b18be82e09c1cc0cfbb886e1526f3e809508353719f9b193807098fbb5f7c5ce",
+      "bytes": 1207
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/hydrate-cleanup.test.ts",
+      "archive": "packages/core/src/dom/__tests__/hydrate-cleanup.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "65f94aa963e402466f9f197057d0c320a87eab5b379ff8a875fa6ace8aeb00af",
+      "bytes": 3410
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/hydrate-fragment.test.ts",
+      "archive": "packages/core/src/dom/__tests__/hydrate-fragment.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "6b35001cf2fe10930ea5b4e852b2e334c5a6049b1634929af24e9e083449daeb",
+      "bytes": 17164
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/hydrate-svg.test.ts",
+      "archive": "packages/core/src/dom/__tests__/hydrate-svg.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "09e3246211f8797478c384320a0d33b247740ea22d3b6152b7ad80b3d59a3100",
+      "bytes": 15459
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/hydrate.test.ts",
+      "archive": "packages/core/src/dom/__tests__/hydrate.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "d0b3215bfe23ae2fea3324ce92ecbeeadc16d887551e583bf48d2394d3948eb0",
+      "bytes": 74950
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/list-adoption-count.test.ts",
+      "archive": "packages/core/src/dom/__tests__/list-adoption-count.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "374e300512372e4c272fe8497df3d5eb8839a08b9d5df5f64606b6d40a501497",
+      "bytes": 25987
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/list-disposal.test.ts",
+      "archive": "packages/core/src/dom/__tests__/list-disposal.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "d839459b22b3372f6f3536d8436499c6f45183f9e9ac8899ce0b6af4e5456fdc",
+      "bytes": 14998
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/list-hydration.test.ts",
+      "archive": "packages/core/src/dom/__tests__/list-hydration.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "2f93484b59b6e6d475b5b3f5e53882d9c49066dee6b00bdc2e1684d8da7a402c",
+      "bytes": 27843
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/multi-island-integration.test.ts",
+      "archive": "packages/core/src/dom/__tests__/multi-island-integration.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "f4e7cbb1e6fa10a64b82ac4a1f564bce8c6a012634d2983ddceabd2a1289d6f4",
+      "bytes": 8662
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/namespace-resolution.test.ts",
+      "archive": "packages/core/src/dom/__tests__/namespace-resolution.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "c94b03ffecf28cf56a86271ef52eda106962cd25c5eadef49988952ac83c197c",
+      "bytes": 16247
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/owned-adoption.test.ts",
+      "archive": "packages/core/src/dom/__tests__/owned-adoption.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "6efdbc6706850a27f9ff90051ce1dbfde3f1ec20bcd7e0d4d6d7eb88bb92d183",
+      "bytes": 959
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/trusted-html.test.ts",
+      "archive": "packages/core/src/dom/__tests__/trusted-html.test.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "118149a03ac43eab35c9166cec6ef9fc036b73e4d9c61680f7c979cb9a88ffcd",
+      "bytes": 30714
+    },
+    {
+      "original": "packages/core/src/dom/activate.ts",
+      "archive": "packages/core/src/dom/activate.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "7b88f4eed0af57afb8c8ddb9ea48c4c083c26db7c3d04f47dd72c49448d7bbef",
+      "bytes": 18350
+    },
+    {
+      "original": "packages/core/src/dom/adoption.ts",
+      "archive": "packages/core/src/dom/adoption.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "ea2e66419363e411ad58eee60364e728fed880ee57af773f2d292d8b1a7e4d03",
+      "bytes": 23588
+    },
+    {
+      "original": "packages/core/src/dom/element.ts",
+      "archive": "packages/core/src/dom/element.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "4c0e584b9f9f2618b3fb6e8170a9649ed896f01419533dfcec404967f389235f",
+      "bytes": 45765
+    },
+    {
+      "original": "packages/core/src/dom/form-control.ts",
+      "archive": "packages/core/src/dom/form-control.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "ae6b8ba56c1d0ade9585c1693321c9a3dadcf68d7d9f7f2b0f13f968d5f7f310",
+      "bytes": 11408
+    },
+    {
+      "original": "packages/core/src/dom/hydrate.ts",
+      "archive": "packages/core/src/dom/hydrate.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "18c15d49cbfb8be890d3d416cfa8fc74cde300f62dd8d27f6bcd7bc70d97a079",
+      "bytes": 69919
+    },
+    {
+      "original": "packages/core/src/dom/index.ts",
+      "archive": "packages/core/src/dom/index.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "f88404c26392bd28ebbcf82f7270ff0d2ec8b9569acef87eac3e41fd6c3e0267",
+      "bytes": 914
+    },
+    {
+      "original": "packages/core/src/dom/list.ts",
+      "archive": "packages/core/src/dom/list.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "7224c45b07e0e62f42143f50d454dfba2db61e15c76bc9f3f624774e215a3419",
+      "bytes": 24034
+    },
+    {
+      "original": "packages/core/src/dom/mount.ts",
+      "archive": "packages/core/src/dom/mount.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "69af563b4618eac37cb21cac174ced7cf58c17c62fda87b042dc0570551de45a",
+      "bytes": 2816
+    },
+    {
+      "original": "packages/core/src/dom/show.ts",
+      "archive": "packages/core/src/dom/show.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "5c7885e79637ea1344dc0ca6dbf65e025a87ea419876d4c2f825e3b32a3926ef",
+      "bytes": 5503
+    },
+    {
+      "original": "packages/core/src/index.ts",
+      "archive": "packages/core/src/index.ts.txt",
+      "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
+      "sha256": "df6e8d71db67c47fef5301833ad8bd42364ce8f1c759cc3a082624d336dcbd0c",
+      "bytes": 2843
+    }
+  ]
+}

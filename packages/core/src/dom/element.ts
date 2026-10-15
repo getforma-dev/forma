@@ -10,7 +10,6 @@
 
 import { internalEffect, __DEV__ } from 'forma/reactive';
 import { adoptionListener } from '../reactive/adoption-events.js';
-import { hydrating } from './hydrate.js';
 import { describingAdoption, __adoptionChild } from './adoption-description.js';
 import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
 import { isFormControlProperty, writeFormControlProperty, isReactiveTextOnly, childText } from './form-control.js';
@@ -220,23 +219,6 @@ function eventName(key: string): string {
 const ABORT_SYM = Symbol.for('forma-abort');
 
 /**
- * While an adoption walks the server's DOM: the elements that got a listener
- * controller, whether adoption bound the server's element or built one through
- * h(), so an adoption that fails part-way can detach them all (hydrate.ts).
- */
-let listened: Element[] | null = null;
-
-/**
- * @internal Start recording, into `into`, the elements that get a listener
- * controller (null stops). Returns the previous recorder, to restore.
- */
-export function recordListeners(into: Element[] | null): Element[] | null {
-  const prev = listened;
-  listened = into;
-  return prev;
-}
-
-/**
  * @internal Get or lazily create the AbortController an element's listeners
  * are attached with, the one {@link cleanup} aborts. h() and adoption share it.
  */
@@ -245,7 +227,6 @@ export function getAbortController(el: Element): AbortController {
   if (!controller) {
     controller = new AbortController();
     (el as any)[ABORT_SYM] = controller;
-    listened?.push(el);
   }
   return controller;
 }
@@ -1000,13 +981,13 @@ export function h(
     return tag(mergedProps) as unknown as HTMLElement;
   }
 
-  // Fragment: return DocumentFragment with children. While hydrating it is a
+  // Fragment: return DocumentFragment with children. During adoption description it is a
   // descriptor like any element, so adoption can walk its children as a range
   // of the server's nodes instead of receiving a detached fragment it cannot
   // match to anything.
   // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text under a caller-owned adoption root"
   if (tag === Fragment) {
-    if (describingAdoption || hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
+    if (describingAdoption) return { type: 'fragment', children } as unknown as DocumentFragment;
     const frag = document.createDocumentFragment();
     for (const child of children) {
       appendChild(frag, child);
@@ -1018,7 +999,7 @@ export function h(
   const tagName = tag as string;
   refuseScriptElement(tagName);
 
-  if (describingAdoption || hydrating) {
+  if (describingAdoption) {
     return { type: 'element', tag: tagName, props: props ?? null, children } as unknown as HTMLElement;
   }
 
@@ -1151,7 +1132,7 @@ export function fillElement<E extends Element>(
  * ```
  */
 export function fragment(...children: unknown[]): DocumentFragment {
-  if (describingAdoption || hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
+  if (describingAdoption) return { type: 'fragment', children } as unknown as DocumentFragment;
   const frag = document.createDocumentFragment();
   for (const child of children) {
     appendChild(frag, child);

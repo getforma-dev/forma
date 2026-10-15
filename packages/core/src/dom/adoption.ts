@@ -16,7 +16,7 @@ import { prepareStyle, prepareRaw, type PreparedRaw } from './adoption-content.j
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import { AdoptionControls, type ControlToken } from './adoption-controls.js';
 import { checkIslandClaim, isRegisteredIslandComponent, matchAdoptionChild, type ValidatedIsland } from './island-state.js';
-import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './hydrate.js';
+import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './adoption-description.js';
 
 interface Listener { element:Element; event:string; listener:EventListener; controller?:AbortController }
 export interface PreparedAdoption {
