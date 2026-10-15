@@ -481,3 +481,28 @@ owned process-tree closure. Every existing refusal/recovery assertion and
 separate malformed-metadata control remains. Both full build suites pass
 238/238 on Node22 and Node24 after the test-only correction. These changes do
 not alter packaged production bytes; final hosted acceptance is still required.
+
+## FORMA-188: P17 over the fixture applications and its measurement step
+
+`fixture-apps-p17.json` (with `fixture-apps-set.json`, the dry-run DS11 record) is P17 run by hand on the
+integration branch's `3.0.0-dev` set with the contract `fixtureApps: "declared-v1"`: **passed, 44 checks,
+147.1 s** on an Apple M1 Pro (10 CPUs, 16 GiB, Node 24.22.0, rustc 1.93.1), against G6's 1,800 s. DS11 was
+packed at `8f783b4` (the three FORMA-188 branches merged with the integration head `2c7d4f6`); the scripts ran
+from the next commit, which declares esbuild in the staged project. The fixture block took about 38 s of it:
+the isolated locked install and signature audit 4.1 s, the four packed strict builds 3.5 s, the Rust servers
+built from the packed crates on the pruned lock 13.8 s, then each packed server judged in Chromium (ledger
+0.9 s, fauth 5.3 s, ksx 2.2 s, bench 7.8 s): 15 pages (variants included), zero mutation records, the server's
+values kept, the islands working. Forma's code per fixture route, gzip -9, against N2's 25,500 B (`n2` rows
+carry Brotli and the application's own bytes): ledger `/household` 25,366; fauth `/t/:slug/login` 25,374,
+`/platform/onboarding` 25,373, `/platform/benchmark` 25,415; ksx `/check` 25,373; the six bench pages
+25,317 to 25,318. The walker's counts of the consumer-shaped pages: 298, 1,497, 9,995, 15,053 and 19,961
+nodes, and 904 for the page of 100 islands (the `shapes` rows).
+
+This run had the workspace builds present, so the existing worker-integrity test is not the faithful
+rehearsal of the verify job: with `packages/*/dist` removed it fails on this branch at "packed build verifies
+cached and network bytes" (`ERR_MODULE_NOT_FOUND` on the workspace compiler), the alpha.1 failure, whose fix
+(`release-packed-resolution`) is on `main` and reaches the integration branch with its merge. The fixture
+block does not depend on the checkout's builds: its staging, run alone with the builds removed, installs the
+packed libraries outside the checkout, proves each import resolves inside the install, and builds all four
+applications with the packed `build()` (5.6 s); its packed build hash for the ledger application equals the
+working tree's. The `cargo` and browser stages need the same machine as any P17 run.
