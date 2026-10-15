@@ -150,19 +150,23 @@ git push origin v3.0.0-alpha.1
 
 The tag push is the workflow's only trigger. Note the time: G6's thirty minutes run from here.
 
-### L4. Watch the run (about 40 to 50 minutes on the first tag)
+### L4. Watch the run (about 13 minutes measured; allow 30)
 
 ```
 gh run list --workflow release.yml --limit 1
 gh run watch <run-id> --exit-status
 ```
 
-G6's target is 1,800 seconds from the tag push to the GitHub Release written, and the rows below
-sum to about 37 to 47 minutes on cold runners (`engines` runs beside `pack`, so they overlap; the
-rest is serial). Expect the first real G6 figure to exceed 1,800 seconds. `release-record.mjs`
-records the figure and fails nothing on it; the ticket log takes it as the first measurement, and
-the beta is where the time is trimmed (caching `cargo-deny` and the browser in `verify` are the
-obvious cuts).
+G6's target is 1,800 seconds from the tag push to the GitHub Release written. The first real
+figure, `v3.0.0-alpha.2` on 2026-10-15 (run 38771766038): **768.9 seconds** from the workflow's
+`created_at` to the acknowledged Release write (the record's basis, queue included), 772 seconds
+from the tag push; by job, `check` 15 s, `pack` 60 s beside the three engines (about 2 min),
+`verify` 3 min 25 s cold, `publish-crates` 35 s, `publish-npm` 5 min 58 s (registry visibility
+polling dominates), `record` 23 s. Cold runners vary, and a slow `verify` or a long npm
+visibility wait can double a row, so budget the target's thirty minutes and read the figure the
+record writes: `release-record.mjs` fails nothing on it, and the ticket log takes each figure as
+the next data point. If a release ever approaches the target, caching `cargo-deny` and the
+browser in `verify` are the obvious cuts.
 
 What alpha.1 taught: on 2026-10-15 the tag `v3.0.0-alpha.1` on `8ba2930` passed `check`, the
 three engines and `pack`, then `verify` failed in P17 at 16:00Z (`ERR_MODULE_NOT_FOUND` on the
@@ -291,10 +295,10 @@ other bytes even after an unpublish [npm-unpublish-policy] [cargo-publishing]; t
 |---|---|---|
 | Day before | P1 to P5 (30 min), L1 (90 min, mostly CI) | — |
 | Alpha day, hour 0 | L2 (5 min) | F1 (10 min), F2 (20 min), F3 (15 min) |
-| Hour 0:45 | L3 tag (5 min), L4 watch (40 to 50 min; G6's 30 is the target, not the first figure) | on call for F2/F3 fixes |
-| Hour 1:40 | L5 (15 min), L6 (5 min) | — |
-| Hour 2:00 | L7 (30 min), L8 (20 min) | — |
-| Hour 2:50 | L9 (20 min) | — |
+| Hour 0:45 | L3 tag (5 min), L4 watch (13 min measured on alpha.2; allow 30, G6's target) | on call for F2/F3 fixes |
+| Hour 1:20 | L5 (15 min), L6 (5 min) | — |
+| Hour 1:40 | L7 (30 min), L8 (20 min) | — |
+| Hour 2:30 | L9 (20 min) | — |
 
 ## Sources
 
