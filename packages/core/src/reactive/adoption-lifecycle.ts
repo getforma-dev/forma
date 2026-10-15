@@ -87,10 +87,7 @@ export class AdoptionLifecycle implements AdoptionSink {
     let result!:T, error:unknown, failed=false, dispose!:()=>void;
     withAdoptionSink(undefined,()=>withAdoptionEffectFailure(
       cause=>this.fail(cause,'FORMA_E_HYDRATE_EFFECT'),
-      ()=>withAdoptionEvents(listener=>this.liveCallback((event:Event)=>{
-        if(typeof listener==='function')listener.call(event.currentTarget,event);
-        else listener.handleEvent(event);
-      }),()=>createUnownedRoot(rootDispose=>{
+      ()=>withAdoptionEvents(this.eventWrapper(owner),()=>createUnownedRoot(rootDispose=>{
         dispose=rootDispose;
         try{result=fn();}catch(cause){failed=true;error=cause;}
       })),
@@ -105,8 +102,20 @@ export class AdoptionLifecycle implements AdoptionSink {
    * publication; each live invocation owns synchronous work and contains its
    * failure, including work constructed after reentrant teardown. */
   liveCallback<T>(invoke:(value:T)=>void):(value:T)=>void {
-    if(this.state!=='preparing'&&this.state!=='live')throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
-    this.require(this.state);const owner=this.currentGroup;
+    this.require('preparing');return this.callbackFor(this.currentGroup,invoke);
+  }
+  private eventWrapper(owner:PreparationGroup):(listener:EventListenerOrEventListenerObject)=>EventListener {
+    return listener=>this.callbackFor(owner,(event:Event)=>{
+      if(typeof listener==='function')listener.call(event.currentTarget,event);
+      else listener.handleEvent(event);
+    });
+  }
+  private callbackFor<T>(parent:PreparationGroup,invoke:(value:T)=>void):(value:T)=>void {
+    if(!parent.alive||this.state==='aborted')return ()=>{};
+    const owner=group();owner.parent=parent;parent.children.add(owner);
+    // A live effect generation may replace the element before the island dies.
+    // Its actual reactive disposer revokes this listener's callback resources.
+    registerDisposer(()=>this.disposeGroup(owner));
     return value=>{
       if(this.state!=='live'||!owner.alive)return;
       const previous=this.currentGroup;this.currentGroup=owner;
@@ -219,7 +228,8 @@ export class AdoptionLifecycle implements AdoptionSink {
           catch (error) { failed = true; cause = error; }
         });
         withAdoptionSink(undefined, () => withAdoptionEffectFailure(
-          error => this.fail(error, 'FORMA_E_HYDRATE_EFFECT'), startRoot,
+          error => this.fail(error, 'FORMA_E_HYDRATE_EFFECT'),
+          () => withAdoptionEvents(this.eventWrapper(group), startRoot),
         ));
         if (failed) this.fail(cause, code);
         if (cancelled || !group.alive || this.state !== 'live') dispose?.();

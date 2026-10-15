@@ -20,6 +20,7 @@ import {
 } from './root.js';
 import { setCleanupCollector } from './cleanup.js';
 import { reportError } from './dev.js';
+import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
 import { deferAdoptionEffect } from './adoption-hooks.js';
 
 // A live adopted callback's nested effects inherit its failure boundary. This
@@ -143,15 +144,17 @@ function runCleanups(bag: (() => void)[] | undefined): void {
  * Verified by: src/dom/__tests__/hydrate.test.ts > "a binding that throws on a shared-signal update does not freeze the other island"
  */
 export function internalEffect(fn: () => void): () => void {
+  const events = getAdoptionEvents();
+  const run = () => withAdoptionEvents(events, fn);
   let firstRun = true;
   const dispose = rawEffect(() => {
     if (firstRun) {
       firstRun = false;
-      fn();
+      run();
       return;
     }
     try {
-      fn();
+      run();
     } catch (e) {
       reportError(e, 'binding');
     }
@@ -173,6 +176,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   // effects created during a parent re-run (when no root is lexically active) are
   // still owned and disposed.
   const ownerAtCreate = getOwner();
+  const events = getAdoptionEvents();
 
   // This effect owns its nested effects/roots via a reusable child-owner: it is
   // disposed (nested cleanups run) at the top of each run and on disposal, then
@@ -242,7 +246,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     try {
       // Run the body with this effect's child-owner installed so any nested
       // effects/roots it creates are owned by this generation.
-      const result = runWithOwner(childOwner, fn);
+      const result = withAdoptionEvents(events, () => runWithOwner(childOwner, fn));
       if (typeof result === 'function') {
         addCleanup(result as () => void);
       }
