@@ -6,9 +6,12 @@
  * an independent createRoot scope with try/catch error isolation.
  */
 
-import { createUnownedRoot, __DEV__ } from 'forma/reactive';
-import { hydrateIslandOrFail, isHydrateError, reportHydrateError } from './hydrate.js';
-import { preflightIslands, checkIslandClaim, type ValidatedIsland } from './island-state.js';
+import { createUnownedRoot } from 'forma/reactive';
+import { isHydrateError, reportHydrateError } from './adoption-errors.js';
+import { prepareAdoption, type PreparedAdoption } from './adoption.js';
+import { AdoptionScope } from '../reactive/adoption-scope.js';
+import { currentAdoptionDiagnostic, type AdoptionDiagnostic } from '../reactive/adoption-diagnostics.js';
+import { preflightIslands, checkIslandClaim, IslandStateError, type ValidatedIsland } from './island-state.js';
 
 /**
  * Function that hydrates an island.
@@ -24,6 +27,9 @@ import { preflightIslands, checkIslandClaim, type ValidatedIsland } from './isla
  *               their own effects.
  */
 export type IslandHydrateFn = (el: HTMLElement, props: Record<string, unknown> | null) => unknown;
+
+type ActivationPhase = 'scheduled'|'preparing'|'live'|'error'|'disposed';
+const activationPhase = new WeakMap<Element,ActivationPhase>();
 
 const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
@@ -144,22 +150,15 @@ export function activateIslands(
   // Materialize every requested result before running any component or arming
   // any trigger. An earlier component cannot alter a later host's input state.
   const checked = preflightIslands(registry, root);
+  const children = new Map<Element,ValidatedIsland>();
+  for(const result of checked)if('value'in result)children.set(result.host,result.value);
   for (const result of checked) {
     if ('error' in result) { console.error(result.error.message); continue; }
     const value = result.value;
     const island = value.host;
-    // Skip islands already processed or with a deferred trigger already
-    // scheduled, so a second activateIslands() (HMR / SPA re-mount) does not
-    // double-hydrate, double-bind handlers, or double-register observers. A
-    // freshly re-rendered island (status reset to 'pending', no scheduled
-    // marker) re-activates.
-    // Verified by: src/dom/__tests__/activate-reactivate.test.ts > "does not re-run a load island when activateIslands is called twice"
-    // Verified by: src/dom/__tests__/activate-reactivate.test.ts > "does not attach duplicate handlers on re-activation"
-    // Verified by: src/dom/__tests__/activate-reactivate.test.ts > "does not double-register a visible-trigger observer on re-invocation"
-    // Verified by: src/dom/__tests__/activate-reactivate.test.ts > "re-activates a freshly re-rendered island (status reset to pending)"
-    const status = island.getAttribute('data-forma-status');
-    if (status === 'active' || status === 'hydrating' || status === 'disposed' || status === 'error') continue;
-    if ((island as any).__formaScheduled) continue;
+    // The successful SSR path never writes a status attribute. Repeated and
+    // reentrant calls consult only the runtime's retained state.
+    if(activationPhase.has(island)||(island as any).__formaScheduled)continue;
 
     // The previous component (or a diagnostic callback) may have changed a
     // later host since the all-host preflight. Refuse before retaining work.
@@ -173,6 +172,7 @@ export function activateIslands(
     // deactivateIsland, deactivateAllIslands, disposal of a row containing it,
     // and the failed-hydration path below — untracks it again.
     trackIsland(island);
+    activationPhase.set(island,'scheduled');
 
     const trigger = island.getAttribute('data-forma-hydrate') || 'load';
 
@@ -185,7 +185,7 @@ export function activateIslands(
             if (!entry.isIntersecting) continue;
             observer.disconnect();
             delete (island as any).__formaObserver;
-            hydrateIslandRoot(value);
+            hydrateIslandRoot(value,children);
           }
         },
         { rootMargin: '200px' },
@@ -196,7 +196,7 @@ export function activateIslands(
       observer.observe(island);
     } else if (trigger === 'idle') {
       (island as any).__formaScheduled = true;
-      const hydrate = () => hydrateIslandRoot(value);
+      const hydrate = () => hydrateIslandRoot(value,children);
       // Track the timer so deactivateIsland can cancel it before it fires.
       if (typeof requestIdleCallback === 'function') {
         const handle = requestIdleCallback(hydrate);
@@ -211,7 +211,7 @@ export function activateIslands(
         island.removeEventListener('pointerdown', hydrate, true);
         island.removeEventListener('focusin', hydrate, true);
         delete (island as any).__formaInteractionHandler;
-        hydrateIslandRoot(value);
+        hydrateIslandRoot(value,children);
       };
       // Track the handler so deactivateIsland can remove it if the island is
       // torn down before the user ever interacts (otherwise it leaks and a
@@ -221,7 +221,7 @@ export function activateIslands(
       island.addEventListener('focusin', hydrate, { capture: true, once: true });
     } else {
       // load (default) — hydrate immediately
-      hydrateIslandRoot(value);
+      hydrateIslandRoot(value,children);
     }
   }
 }
@@ -236,6 +236,8 @@ export function activateIslands(
  * Verified by: src/dom/__tests__/deactivate.test.ts > "stops effects from running after disposal"
  */
 export function deactivateIsland(el: HTMLElement): void {
+  const previous=activationPhase.get(el);
+  activationPhase.set(el,'disposed');
   // Tear down any pending deferred-trigger work so it does not leak when the
   // island is torn down before it ever ran: the visible-trigger observer, and
   // the interaction-trigger pointerdown/focusin listeners (whose only other
@@ -271,7 +273,7 @@ export function deactivateIsland(el: HTMLElement): void {
   if (typeof dispose === 'function') {
     dispose();
     delete (el as any).__formaDispose;
-    el.setAttribute('data-forma-status', 'disposed');
+    if(previous==='live')el.setAttribute('data-forma-status', 'disposed');
   }
 }
 
@@ -297,73 +299,57 @@ export function deactivateAllIslands(root: ParentNode = document): void {
   }
 }
 
-/** Hydrate a single island root with error isolation. */
-function hydrateIslandRoot(value: ValidatedIsland): void {
-  const root = value.host;
-  // A deferred callback may outlive disposal or marker changes. Check the
-  // private validation and frozen claim immediately before component execution.
-  if ((root as any).__formaDisposed) return;
-  try { checkIslandClaim(value); } catch (error) {
-    deactivateIsland(root);
-    console.error(error instanceof Error ? error.message : error);
-    return;
+/** Activate one checked host. Browser-only replacement is explicit; SSR never
+ * falls back to creating DOM just because its original host is empty. */
+function hydrateIslandRoot(value:ValidatedIsland,children:ReadonlyMap<Element,ValidatedIsland>):void {
+  const root=value.host;
+  if((root as any).__formaDisposed||activationPhase.get(root)!=='scheduled')return;
+  try{checkIslandClaim(value);}catch(error){
+    deactivateIsland(root);console.error(error instanceof Error?error.message:error);return;
   }
-  const id = value.occurrence;
-  const componentName = root.getAttribute('data-forma-component')!;
-  const hydrateFn = value.registration.hydrate;
-  let disposeRoot: (() => void) | undefined;
-  try {
-    // Clear the deferred-trigger marker now that hydration is happening; the
-    // 'hydrating'/'active' status guards prevent re-runs from here on.
-    delete (root as any).__formaScheduled;
-    const props = value.props;
-    root.setAttribute('data-forma-status', 'hydrating');
-
-    // hydrateIsland may replace the shell element with the component's own
-    // root element (CSR fallback for empty islands). Track the active root.
-    let activeRoot: Element = root;
-    createUnownedRoot((dispose) => {
-      // Publish the disposer BEFORE running the component. Effects are created
-      // as the component runs, so if it throws half-way the ones already created
-      // are live — and if the disposer were only assigned after hydrateIsland
-      // returned, nothing would ever reach them: the island would keep reacting
-      // to signal writes forever and deactivateIsland would find nothing to
-      // dispose. The catch below uses this handle to tear the partial root down.
-      disposeRoot = dispose;
-      (root as any).__formaDispose = dispose;
-      activeRoot = hydrateIslandOrFail(() => hydrateFn(root, props), root);
-      if (activeRoot !== root) {
-        // The shell was replaced — move the handle onto the element that is
-        // actually in the document, so deactivateIsland finds it there. The
-        // tracking marker moves with the handle: it has to sit on the element
-        // deactivateIsland will be called with, or tearing the island down
-        // would never decrement the count.
-        delete (root as any).__formaDispose;
-        (activeRoot as any).__formaDispose = dispose;
-        untrackIsland(root);
-        trackIsland(activeRoot);
-      }
-    });
-
-    activeRoot.setAttribute('data-forma-status', 'active');
-  } catch (err) {
-    // A coded hydration error is logged in every build and passed to onError:
-    // in production the island's `error` status would otherwise be its only trace.
-    // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "an island that returns a detached DOM node is marked error with its code, its sibling unaffected"
-    // Verified by: src/dom/__tests__/list-adoption-count.test.ts > "marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row"
-    if (isHydrateError(err)) reportHydrateError(err, ` (island "${componentName}", id=${id})`);
-    else if (__DEV__) console.error(`[forma] Island "${componentName}" (id=${id}) failed:`, err);
-    // Dispose whatever was built before the throw: a failed island must not
-    // leave live effects writing into DOM nobody will hydrate again.
-    // Verified by: src/dom/__tests__/activate-isolation.test.ts > "disposes effects created before a failing island threw"
-    if (disposeRoot) {
-      try { disposeRoot(); } catch { /* a broken disposer must not mask the original error */ }
-      delete (root as any).__formaDispose;
+  delete (root as any).__formaScheduled;
+  activationPhase.set(root,'preparing');
+  const componentName=root.getAttribute('data-forma-component')!,occurrence=value.occurrence;
+  let plan:PreparedAdoption|undefined,scope:AdoptionScope|undefined,disposeRoot:(()=>void)|undefined,activeRoot:Element=root,reported=false,initialDiagnostic:AdoptionDiagnostic|undefined;
+  const dispose=()=>{scope?.abort();plan?.dispose();disposeRoot?.();};
+  (root as any).__formaDispose=dispose;
+  const failed=(error:unknown,fallback='FORMA_E_HYDRATE_COMPONENT')=>{
+    if(reported)return;reported=true;
+    dispose();delete (activeRoot as any).__formaDispose;untrackIsland(activeRoot);activationPhase.set(activeRoot,'error');
+    if(error instanceof IslandStateError){console.error(error.message);return;}
+    activeRoot.setAttribute('data-forma-status','error');
+    const code=isHydrateError(error)?error.code:fallback;
+    const context=currentAdoptionDiagnostic()??initialDiagnostic;
+    const detail=Object.freeze({island:componentName,occurrence,binding:context?.binding??null,code,...(context?{path:context.path}:{})});
+    const EventType=activeRoot.ownerDocument.defaultView?.CustomEvent??CustomEvent;
+    activeRoot.dispatchEvent(new EventType('forma:error',{bubbles:true,detail}));
+    reportHydrateError(error,` (island "${componentName}", id=${occurrence})`);
+  };
+  try{
+    if(value.registration.mode===1){
+      // Ordinary client construction has no adoption/early-edit authority.
+      createUnownedRoot(stop=>{
+        disposeRoot=stop;
+        const result=value.registration.hydrate(root,value.props);
+        if((root as any).__formaDisposed){stop();return;}
+        checkIslandClaim(value);
+        if(result instanceof Element){
+          for(const attr of Array.from(root.attributes))if(attr.name.startsWith('data-forma-'))result.setAttribute(attr.name,attr.value);
+          root.replaceWith(result);activeRoot=result;
+          delete (root as any).__formaDispose;(result as any).__formaDispose=dispose;
+          untrackIsland(root);trackIsland(result);activationPhase.set(root,'disposed');
+        }else if(result instanceof Node)root.appendChild(result);
+      });
+      if((root as any).__formaDisposed)return;
+      activationPhase.set(activeRoot,'live');activeRoot.setAttribute('data-forma-status','active');return;
     }
-    // A failed island has no live root and no scheduled trigger left, so it must
-    // stop forcing the row scan — otherwise one broken island on a page makes
-    // every list pay the subtree walk forever.
-    untrackIsland(root);
-    root.setAttribute('data-forma-status', 'error');
-  }
+    plan=prepareAdoption(root,()=>value.registration.hydrate(root,value.props),{
+      children,
+      scope:options=>(scope=new AdoptionScope(value,options)),
+      failure:failed,
+      errorContext:context=>{initialDiagnostic=context;},
+    });
+    plan.commit();
+    if(plan.phase==='live')activationPhase.set(root,'live');
+  }catch(error){failed(error);}
 }
