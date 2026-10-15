@@ -30,9 +30,11 @@ mount(() => h('section', null,
   h('div', { id: 'typed', dangerouslySetInnerHTML: { __html: trustedHtml('<i>typed</i>') } }),
   h('div', { id: 'raw' }),
 ), '#app');
-// FORMA-126: a plain string at a raw sink, twice; trustedHtml() above, never.
-setHTMLUnsafe(document.getElementById('raw'), '<b>first</b>');
-setHTMLUnsafe(document.getElementById('raw'), '<b>second</b>');
+// FORMA-109: every raw string is refused in both package conditions.
+window.__rawRefusals = ['<b>first</b>', '<b>second</b>'].map(markup => {
+  try { setHTMLUnsafe(document.getElementById('raw'), markup); return 'accepted'; }
+  catch (error) { return String(error); }
+});
 `;
 
 let scratch: string;
@@ -41,7 +43,7 @@ const bundles: Record<'development' | 'production', { code: string; inputs: stri
 test.beforeAll(async () => {
   test.setTimeout(120_000);
   scratch = realpathSync(mkdtempSync(join(tmpdir(), 'forma-e2e-development-')));
-  const packed = spawnSync('npm', ['pack', '--pack-destination', scratch, '--silent'], {
+  const packed = spawnSync('npm', ['pack', '--ignore-scripts', '--pack-destination', scratch, '--silent'], {
     cwd: ROOT, encoding: 'utf8', shell: process.platform === 'win32',
   });
   expect(packed.status, packed.stderr).toBe(0);
@@ -84,6 +86,8 @@ test.afterAll(() => {
 /** Load one bundle into a page and return what it logged. */
 async function run(page: import('@playwright/test').Page, mode: 'development' | 'production') {
   const logged: Array<{ type: string; text: string }> = [];
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
   page.on('console', (message) => logged.push({ type: message.type(), text: message.text() }));
   await page.route('**/development-build.html', (route) => route.fulfill({
     contentType: 'text/html',
@@ -94,6 +98,12 @@ async function run(page: import('@playwright/test').Page, mode: 'development' | 
   }));
   await page.goto('/development-build.html');
   await expect(page.locator('#link')).toHaveText('unsafe link');
+  const refused = await page.evaluate(() => (window as any).__rawRefusals);
+  expect(refused).toHaveLength(2);
+  for (const error of refused) expect(error).toContain('FORMA_E_RAW_SET_HTML');
+  await expect(page.locator('#raw')).toBeEmpty();
+  await expect(page.locator('#typed')).toHaveText('typed');
+  expect(errors).toEqual([]);
   return logged;
 }
 
@@ -110,17 +120,10 @@ test('a development bundle of the packed package resolves the development build 
   await expect(page.locator('#link')).not.toHaveAttribute('href');
 });
 
-test('a development bundle of the packed package logs a string at a raw sink once, with its code, and trustedHtml() never', async ({ page }) => {
+test('a development bundle of the packed package refuses every raw string with its code and accepts trustedHtml()', async ({ page }) => {
   const logged = await run(page, 'development');
 
-  // FORMA-126's bridge (L-18): the string still renders, and says so once.
-  await expect(page.locator('#raw')).toHaveText('second');
-  await expect(page.locator('#typed')).toHaveText('typed');
-  const raw = logged.filter((m) => m.text.includes('FORMA_W_RAW_'));
-  expect(raw.map((m) => [m.type, m.text.slice(0, m.text.indexOf(':'))])).toEqual([
-    ['warning', '[forma] FORMA_W_RAW_SET_HTML'],
-  ]);
-  expect(raw[0]!.text).toContain('trustedHtml()');
+  expect(logged.filter((m) => m.text.includes('FORMA_W_RAW_'))).toEqual([]);
 });
 
 test('a production bundle of the same application resolves the production files and logs nothing', async ({ page }) => {
@@ -136,6 +139,6 @@ test('a production bundle of the same application resolves the production files 
 
   expect(logged).toEqual([]);
   await expect(page.locator('#link')).not.toHaveAttribute('href');
-  await expect(page.locator('#raw')).toHaveText('second');
+  await expect(page.locator('#raw')).toBeEmpty();
   await expect(page.locator('#typed')).toHaveText('typed');
 });
