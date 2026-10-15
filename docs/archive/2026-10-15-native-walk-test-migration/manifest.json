@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "8c907ab64758ae71e279f66497b6c7aa5253ec9e",
+  "files": [
+    {
+      "source": "packages/compiler/tests/ir-walk.test.ts",
+      "archive": "ir-walk.test.ts",
+      "bytes": 84160,
+      "sha256": "a10157d7081558e2403a71ad6604ceeab61f9a1d0f0f9ee945c485f4a8e61830"
+    },
+    {
+      "source": "packages/compiler/tests/ssr-emission.test.ts",
+      "archive": "ssr-emission.test.ts",
+      "bytes": 36209,
+      "sha256": "c980da07d0e6777f5d15b9f51a7d77874cc7b4d625b56cbd69ff442ecb1cbeb8"
+    }
+  ]
+}
