@@ -181,6 +181,7 @@ describe('list adoption row-count check', () => {
     });
     warn.mockRestore();
 
+    // Explicit key/order parity is structural; it is checked before row walking.
     expect(received).toEqual([[CODE, 'hydration']]);
     expect(document.querySelector('[data-forma-island="0"]')!.getAttribute('data-forma-status')).toBe('error');
     const now = Array.from(document.querySelectorAll('li'));
