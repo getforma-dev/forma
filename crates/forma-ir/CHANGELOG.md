@@ -21,6 +21,8 @@
 
 ### FMIR v3 (FORMA-185)
 
+- Added the seeded-bug qualification regressions (`fuzz/regressions/*/seeded-*`) and the stable test `seeded_decoder_defects_are_caught_deterministically` that asserts the CRC, section-table bound and string-length guarantees on every pull request.
+
 - Replace the v2 container with the reviewed 24-byte header and CRC over all bytes except the
   stored CRC field; enforce exact Cargo base-version triples and a 16 MiB module ceiling.
 - Parse variable sections, bounded acyclic props schemas, island schema/digest fields, list key

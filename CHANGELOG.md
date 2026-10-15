@@ -11,6 +11,8 @@
 
 ### FMIR v3 development staging (FORMA-185)
 
+- Seeded-bug qualification of the decoder fuzzing: three deliberate reader defects (CRC check skipped, section-table bound off by one, string length unchecked) were each found by the nightly targets within seconds; the minimised inputs are committed under `fuzz/regressions/` and replayed on every pull request by `seeded_decoder_defects_are_caught_deterministically` (`docs/FMIR-FORMAT.md` §11.4).
+
 The seven package versions are aligned at `3.0.0-dev` so the compiler and Rust reader can
 compare their exact base version `3.0.0`; nothing is tagged or published. Templates retain
 their audited A2 pins until their own migration ticket. FORMA-112 owns the full release contract.
