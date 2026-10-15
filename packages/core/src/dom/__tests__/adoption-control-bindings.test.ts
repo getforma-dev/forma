@@ -85,7 +85,8 @@ describe('private walker control bindings',()=>{
     const f=fixture('<textarea>server</textarea>'),area=f.host as HTMLTextAreaElement;area.value='typed';let value!:ReturnType<typeof local<string>>;
     const writes=vi.spyOn(area,'defaultValue','set');const plan=f.prepare(()=>{value=local('server','string');return h('textarea',null,value.read);});
     plan.commit();await drain();expect(value.get()).toBe('typed');expect(writes).not.toHaveBeenCalled();expect(f.records()).toEqual([]);
-    value.set('later');expect(area.defaultValue).toBe('later');expect(area.value).toBe('typed');
+    value.set('later');expect(area.defaultValue).toBe('later');expect(area.value).toBe('later');
+    area.value='typed after activation';value.set('last');expect(area.value).toBe('last');
     const g=fixture('<textarea>prefix server</textarea>');(g.host as HTMLTextAreaElement).value='typed';
     expect(()=>g.prepare(()=>{const v=local('server','string');return h('textarea',null,'prefix ',v.read);})).toThrow('FORMA_E_HYDRATE_INPUT_TARGET');expect(g.records()).toEqual([]);
   });
@@ -135,6 +136,15 @@ describe('private walker control bindings',()=>{
     const f=fixture('<input type="number" value="1">'),input=f.host as HTMLInputElement;input.value='1.0';let value!:ReturnType<typeof local<number>>;
     const plan=f.prepare(()=>{value=local(1,'number');return h('input',{type:'number',value:value.read});});plan.commit();
     expect(value.get()).toBe(1);expect(input.value).toBe('1.0');expect(f.records()).toEqual([]);value.set(2);expect(input.value).toBe('2');
+  });
+
+  it('does not manufacture textarea child ownership from static empty holes beside a value prop',()=>{
+    for(const holes of [[],[null],[false],[true],[''],[null,false,true,'']]){
+      const f=fixture('<textarea>server</textarea>'),area=f.host as HTMLTextAreaElement;area.value='typed';
+      const plan=f.prepare(()=>h('textarea',{value:'server'},...holes),false);plan.commit();expect(area.value).toBe('typed');expect(f.records()).toEqual([]);
+    }
+    const f=fixture('<textarea>server</textarea>'),read=vi.fn(()=> '');
+    expect(()=>f.prepare(()=>h('textarea',{value:'server'},read),false)).toThrow('FORMA_E_HYDRATE_STRUCTURE');expect(read).not.toHaveBeenCalled();expect(f.records()).toEqual([]);
   });
 
 });

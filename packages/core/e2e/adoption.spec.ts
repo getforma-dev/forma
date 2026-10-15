@@ -184,7 +184,7 @@ test("an older server's marker text and unselected select are repaired at adopti
   await expect(page.locator('#tt')).toHaveText('updated');
 });
 
-test("after the user types, a textarea's reactive text changes only its default, client-rendered and adopted alike", async ({ page }) => {
+test("after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike", async ({ page }) => {
   await serve(page, '<div id="csr"></div><div id="ssr" data-forma-ssr><textarea id="adopted">Hello Ann</textarea></div>');
   await page.evaluate(async () => {
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
@@ -200,7 +200,7 @@ test("after the user types, a textarea's reactive text changes only its default,
   }
   await page.evaluate(() => (window as any).setText('Hello Bob'));
   for (const id of ['#rendered', '#adopted']) {
-    await expect(page.locator(id)).toHaveValue('Hello Ann, my long message');
+    await expect(page.locator(id)).toHaveValue('Hello Bob');
     expect(await page.locator(id).evaluate((el: HTMLTextAreaElement) => el.defaultValue)).toBe('Hello Bob');
   }
 });

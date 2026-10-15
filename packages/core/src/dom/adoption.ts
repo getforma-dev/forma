@@ -40,6 +40,17 @@ function ownProps(props:Record<string,unknown>):[string,unknown][] {
   });
 }
 
+function listenerObject(value:unknown):value is EventListenerObject {
+  if(value===null||typeof value!=='object')return false;
+  // Class methods are valid too. Do not execute an accessor before commit;
+  // native handleEvent lookup remains dynamic inside the owned live callback.
+  for(let object=value;object;object=Object.getPrototypeOf(object)){
+    const descriptor=Object.getOwnPropertyDescriptor(object,'handleEvent');
+    if(descriptor)return 'value'in descriptor?typeof descriptor.value==='function':typeof descriptor.get==='function';
+  }
+  return false;
+}
+
 /** Snapshot first, build once, then retain every prepared observation. The
  * returned object is private: no status write/event/activation occurs here. */
 export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionOptions={}):PreparedAdoption {
@@ -72,10 +83,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         const expected=binding.skip.value;binding.skip=undefined;
         if(Object.is(next,expected)||(Array.isArray(next)&&Array.isArray(expected)&&next.length===expected.length&&next.every((item,i)=>item===expected[i])))return;
       }
-      if(key==='text'){
-        const target=element as HTMLTextAreaElement,normalized=text(next);
-        if(target.defaultValue!==normalized)target.defaultValue=normalized;
-      }else writeFormControlProperty(element,key,next);
+      writeFormControlProperty(element,key,next);
     };
     const initial=read?scope.observe(read,write):value;
     const token=controls.add({element,key,initial,kind:read?'binding':'initial',codec:binding.read?scope.inputCodec(binding.read):undefined});
@@ -98,13 +106,16 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(key==='children')continue;
       if(key==='ref'){if(typeof value==='function')scope.deferRef(()=>value(element));continue;}
       if(key.startsWith('on')&&key.length>2){
-        // Listener installation has no user callback. Objects/accessor-backed
-        // handlers remain outside this private checkpoint until shared policy.
-        if(typeof value==='function'){
-          const item:Listener={element,event:key.slice(2).toLowerCase(),listener:function(event){if(scope.phase==='live')value.call(this,event);}};
+        // Preserve function receiver and native object handleEvent lookup,
+        // while keeping all callback-created work in this prepared owner.
+        if(typeof value==='function'||listenerObject(value)){
+          const listener=scope.liveCallback((event:Event)=>{
+            if(typeof value==='function')value.call(element,event);
+            else value.handleEvent(event);
+          });
+          const item:Listener={element,event:key.slice(2).toLowerCase(),listener};
           listeners.push(item);registerDisposer(()=>item.controller?.abort());
         }
-        else if(value!=null&&typeof value==='object')refuse();
         dom.expectAttribute(element,key.toLowerCase(),null);continue;
       }
       if(key==='style'||key==='dangerouslySetInnerHTML')refuse();
@@ -115,13 +126,14 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   }
   function element(desc:HydrationDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const own=desc.tag==='svg'?SVG_NS:desc.tag==='math'?MATHML_NS:ns;
-    const target=cursor.element(desc.tag,own);props(target,desc.props);
-    if(target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='textarea'){
-      // A value prop already owns the control. Children remain ordinary exact
-      // default text when supplied; duplicate ownership is rejected by kernel.
-      if(desc.children.length||!desc.props||!Object.hasOwn(desc.props,'value'))textarea(target,desc.children);
-      return;
-    }
+    const target=cursor.element(desc.tag,own);
+    const area=target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='textarea';
+    const valueProp=area&&desc.props&&Object.hasOwn(desc.props,'value');
+    // Static holes render nothing. A reactive child is still real ownership,
+    // even if it would read empty; never evaluate it to decide this boundary.
+    if(valueProp&&desc.children.some(child=>child!=null&&typeof child!=='boolean'&&child!==''))refuse();
+    props(target,desc.props);
+    if(area){if(!valueProp)textarea(target,desc.children);return;}
     const nested=dom.children(target),inner=contentNs(target);
     for(const child of desc.children)walk(child,nested,inner);
     nested.finish();
