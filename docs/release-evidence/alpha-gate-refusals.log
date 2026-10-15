@@ -1,0 +1,12 @@
+live pack exit 0 Thu Oct 15 10:56:10 EDT 2026
+--- verifyIdentity: accepted, then tampered sets refused
+verifyIdentity: accepted the live alpha set
+refused FORMA-185 pending in the recorded contract: alpha (M2) still waits for: FORMA-185 (alpha): FMIR v3 writer and reader on main, seeded-fault replay, the nig
+refused milestone.ready forged over a pending alpha gate: alpha (M2) still waits for: FORMA-144 slice 1 (alpha): both templates on the 3.0 API, packed and verified by P
+refused contract version 3.1.0 (N2): the contract gates 3.1.0, not 3.0.0; write the next release's contract first
+refused liveReleaseReady beside the milestones: contract file may not carry a global publish switch beside its milestones
+refused dryRun true: dry-run artifacts never publish
+release-set: beta (M3) still waits for: FORMA-103 (beta): island props in one JSON block, compiler-bound seeding; FORMA-104 (beta): adoption writes nothing on i
+beta live pack exit 1 (expected 1); files:        0
+release-set: the contract gates 3.0.0, not 3.1.0; write the next release's contract first
+minor live pack exit 1 (expected 1); files:        0
