@@ -1,12 +1,12 @@
 /** Private descriptor walker. Activation is switched only after its remaining
  * control-flow/control/raw-HTML checkpoints and compiled product review. */
 import { AdoptionDom, AdoptionDomError, type AdoptionCursor } from './adoption-plan.js';
-import { AdoptionRow, materializeRows } from './adoption-row.js';
+import { AdoptionRow } from './adoption-row.js';
+import { liveList, listItems, type LiveListRow, type ListItems } from './adoption-live-list.js';
 import { withAdoptionDescription, type ComponentDescription } from './adoption-description.js';
 import { registerDisposer } from '../reactive/root.js';
 import { untrack } from '../reactive/untrack.js';
 import { createSignal } from '../reactive/signal.js';
-import { longestIncreasingSubsequence } from './list.js';
 import { deactivateIsland, deactivateAllIslands } from './activate.js';
 import { AdoptionLifecycle, type PreparationOptions, type PreparedGroup } from '../reactive/adoption-lifecycle.js';
 import { contentNs, SVG_NS, MATHML_NS, withNamespace } from './namespace.js';
@@ -300,20 +300,10 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   function list(desc:ListDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const range=cursor.range('l');
     type Key=string|number;
-    type Row={owner:PreparedGroup<unknown>;span:AdoptionRow;item:unknown;setIndex:(value:number)=>void};
-    let cache=new Map<Key,Row>(),ordered:Row[]=[],tail:Node[]=[];
-    let owner:PreparedGroup<void>,keyOwner:PreparedGroup<{items:unknown[];keys:Key[]}>;
-    function keys(values:unknown):{items:unknown[];keys:Key[]} {
-      if(!Array.isArray(values))refuse();
-      const output:Key[]=[],seen=new Set<string>();
-      for(let i=0;i<values.length;i++){
-        if(!Object.hasOwn(values,i))refuse();
-        const key=untrack(()=>desc.keyFn(values[i]));
-        if(typeof key!=='string'&&(typeof key!=='number'||!Number.isFinite(key)))refuse();
-        const printed=String(key);if(seen.has(printed))refuse();seen.add(printed);output.push(key);
-      }
-      return {items:values.slice(),keys:output};
-    }
+    type Row=LiveListRow;
+    const cache=new Map<Key,Row>(),ordered:Row[]=[],tail:Node[]=[];
+    let owner:PreparedGroup<void>,keyOwner!:PreparedGroup<ListItems>,reconciler:ReturnType<typeof liveList>;
+    const keys=(values:unknown)=>listItems(values,desc.keyFn);
     function contents():Node[] {
       const result:Node[]=[];
       for(let node=range.start.nextSibling;node!==range.end;node=node?.nextSibling??null){
@@ -323,64 +313,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     }
     owner=scope.group(()=>{
       const initial=scope.observe(desc.items,value=>{
-        const parent=range.start.parentNode;
-        if(!parent||range.end.parentNode!==parent)refuse();
-        const before=contents(),covered:Node[]=[];
-        for(const row of ordered)for(const node of row.span.nodes())if(covered[covered.length-1]!==node)covered.push(node);
-        covered.push(...tail);
-        if(covered.length!==before.length||covered.some((node,i)=>node!==before[i]))refuse();
-        const check=()=>{
-          if(scope.phase!=='live'||range.start.parentNode!==parent||range.end.parentNode!==parent)refuse();
-        };
-        const unchanged=()=>{check();const now=contents();if(now.length!==before.length||now.some((node,i)=>node!==before[i]))refuse();};
-        const nextOwner=owner.child(()=>withAdoptionDescription(()=>keys(value),false));
-        const next=nextOwner.value,planned=new Map<Key,Row>(),rows:Row[]=[];unchanged();
-        // Execute all row factories before the first move. Each candidate is
-        // already owned, so a later factory failure also disposes prior ones.
-        for(let i=0;i<next.items.length;i++){
-          const item=next.items[i],key=next.keys[i]!,prior=cache.get(key);
-          let row=prior;
-          if(!row||(desc.options?.updateOnItemChange==='rerender'&&row.item!==item)){
-            let setIndex!:(value:number)=>void;
-            const child=owner.child(()=>untrack(()=>withNamespace(ns,()=>withAdoptionDescription(()=>{
-              const [getIndex,set]=createSignal(i);setIndex=set;
-              const node=fresh(desc.renderFn(item,getIndex));
-              if(node&&node.parentNode)refuse();return node;
-            },false))));
-            row={owner:child,span:AdoptionRow.fresh(child.value),item,setIndex};
-          }
-          planned.set(key,row);rows.push(row);unchanged();
-        }
-        const retained=new Set(rows),leaving=ordered.filter(row=>!retained.has(row));
-        keyOwner.dispose();unchanged();keyOwner=nextOwner;
-        // Disposal and nested-island teardown are user callback boundaries.
-        // Complete and recheck them before any framework list mutation.
-        for(const row of leaving){
-          row.owner.dispose();unchanged();
-          for(const node of row.span.nodes())if(node.nodeType===1){
-            const element=node as HTMLElement;
-            if(element.hasAttribute('data-forma-island'))deactivateIsland(element);
-            deactivateAllIslands(element);unchanged();
-          }
-        }
-        unchanged();
-        const changed=rows.length!==ordered.length||rows.some((row,i)=>row!==ordered[i]);
-        if(changed){
-          materializeRows(ordered.map(row=>row.span),check);
-          const oldIndex=new Map(ordered.map((row,i)=>[row,i]));
-          const reused:number[]=[],positions:number[]=[];
-          rows.forEach((row,i)=>{const index=oldIndex.get(row);if(index!==undefined&&row.span.first){reused.push(index);positions.push(i);}});
-          const stationary=new Set(longestIncreasingSubsequence(reused).map(index=>positions[index]!));
-          for(const row of leaving)for(const node of row.span.nodes()){check();parent.removeChild(node);}
-          let anchor:Node=tail[0]??range.end;
-          for(let i=rows.length-1;i>=0;i--){
-            check();const row=rows[i]!,nodes=row.span.nodes();
-            if(!stationary.has(i))for(const node of nodes){check();parent.insertBefore(node,anchor);}
-            if(row.span.first)anchor=row.span.first;
-          }
-        }
-        check();cache=planned;ordered=rows;
-        for(let i=0;i<rows.length;i++){check();rows[i]!.setIndex(i);}
+        reconciler.update(value);
       });
       keyOwner=scope.group(()=>keys(initial));
       const prepared=keyOwner.value,elements=contents().filter(node=>node.nodeType===1) as Element[];
@@ -417,8 +350,14 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       let last:Node|null=null;for(const row of ordered)if(row.span.last)last=row.span.last;
       let node=last?last.nextSibling:range.start.nextSibling;
       for(;node!==range.end;node=node?.nextSibling??null){if(!node)refuse();tail.push(node);}
-      registerDisposer(()=>{cache.clear();ordered=[];tail=[];});
+      registerDisposer(()=>reconciler?.clear());
     });
+    reconciler=liveList({range,owner,live:()=>scope.phase==='live',
+      keys:value=>withAdoptionDescription(()=>keys(value),false),
+      render:(item,index)=>withNamespace(ns,()=>withAdoptionDescription(()=>fresh(desc.renderFn(item,index)),false)),
+      rerender:desc.options?.updateOnItemChange==='rerender',removeChildren:element=>{
+        if(element.hasAttribute('data-forma-island'))deactivateIsland(element);deactivateAllIslands(element);
+      }},{cache,ordered,tail,keyOwner});
   }
   function walk(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
     at('node',()=>visit(value,cursor,ns,root));

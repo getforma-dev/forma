@@ -288,6 +288,27 @@
       "commit": "34136aaa9d5bba77095ad29b5b5aa232043c2ec9",
       "sha256": "df6e8d71db67c47fef5301833ad8bd42364ce8f1c759cc3a082624d336dcbd0c",
       "bytes": 2843
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/props-loading.test.ts",
+      "archive": "packages/core/src/dom/__tests__/props-loading.test.ts.txt",
+      "commit": "bca44dc4647d3f7a9fb85c3276112848bcb7a240",
+      "sha256": "19a19edde7e3f8bf0cfe0be50bf65b3213251f8762c9c773b511fdf9972a76b3",
+      "bytes": 6238
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/shared-signals-across-islands.test.ts",
+      "archive": "packages/core/src/dom/__tests__/shared-signals-across-islands.test.ts.txt",
+      "commit": "bca44dc4647d3f7a9fb85c3276112848bcb7a240",
+      "sha256": "07dc349348afd2070d63cd703035b29317215fe4b5d98cf1a7590e53c1ec4521",
+      "bytes": 9773
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/island-state-activation.test.ts",
+      "archive": "packages/core/src/dom/__tests__/island-state-activation.test.ts.txt",
+      "commit": "bca44dc4647d3f7a9fb85c3276112848bcb7a240",
+      "sha256": "bfc14f6aa62205e9375c5693e52a50dc7ca70d6420659718b6d77ce751202e69",
+      "bytes": 10255
     }
   ]
 }

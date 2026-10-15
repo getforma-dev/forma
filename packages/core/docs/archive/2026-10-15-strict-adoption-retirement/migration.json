@@ -596,6 +596,54 @@
       ],
       "disposition": "All existing typed policy/sink vectors retained. Initial raw fixture now matches requested markup; later untyped raw/srcdoc aborts the adopted owner and keeps previous DOM; ordinary CSR still recovers with the same trusted markup. Trusted Types simulation and all violation assertions remain unchanged.",
       "independent_review": "work/FORMA-104/retirement-tests-evidence: exact fa352 source deltas, 41 authenticated original files, 354 authored + 7 independent boundary controls passed."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/props-loading.test.ts",
+      "status": "migrated-pending-independent-review",
+      "original_named_cases": [
+        "loads declared scalar and array props from the first head state block",
+        "refuses absent state instead of manufacturing null props",
+        "a malformed state entry stays inert while a valid sibling activates",
+        "preserves quoted strings in head JSON without attribute decoding",
+        "refuses scalar and array props roots while accepting declared object and array fields"
+      ],
+      "disposition": "All original named and parameterized cases retained. Components now return exact matching descriptors; synthetic SSR indentation removed where absent from descriptors. Successful activation is private: original pending status is retained, with actual disposal/reactive behavior asserted. Props, frozen state, imported captures, trigger preflight, detached-host refusal and sibling isolation assertions are preserved.",
+      "validation": "Root replay on strict activation855: all three suites pass alongside unchanged import-graph controls (40 cases across four files); log work/review-FORMA-104/tmp/strict-state-and-import-parser.log.",
+      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/shared-signals-across-islands.test.ts",
+      "status": "migrated-pending-independent-review",
+      "original_named_cases": [
+        "signal change in island A causes reactive update in island B",
+        "shared store with multiple signals across three islands",
+        "shared signal with createShow across islands",
+        "shared signal with createList across islands",
+        "dispose of one island does not break shared signal in sibling"
+      ],
+      "disposition": "All original named and parameterized cases retained. Components now return exact matching descriptors; synthetic SSR indentation removed where absent from descriptors. Successful activation is private: original pending status is retained, with actual disposal/reactive behavior asserted. Props, frozen state, imported captures, trigger preflight, detached-host refusal and sibling isolation assertions are preserved.",
+      "validation": "Root replay on strict activation855: all three suites pass alongside unchanged import-graph controls (40 cases across four files); log work/review-FORMA-104/tmp/strict-state-and-import-parser.log.",
+      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/island-state-activation.test.ts",
+      "status": "migrated-pending-independent-review",
+      "original_named_cases": [
+        "validates every requested props object before the first component runs",
+        "rechecks a later immediate host after an earlier component changes its markers",
+        "runs a valid sibling while an individually malformed entry stays unchanged",
+        "seeds distinct local signals from1001 before first effects and preserves imported captures",
+        "never admits a later injected host on repeated calls"
+      ],
+      "disposition": "All original named and parameterized cases retained. Components now return exact matching descriptors; synthetic SSR indentation removed where absent from descriptors. Successful activation is private: original pending status is retained, with actual disposal/reactive behavior asserted. Props, frozen state, imported captures, trigger preflight, detached-host refusal and sibling isolation assertions are preserved.",
+      "validation": "Root replay on strict activation855: all three suites pass alongside unchanged import-graph controls (40 cases across four files); log work/review-FORMA-104/tmp/strict-state-and-import-parser.log.",
+      "original_parameterized_cases": [
+        "keeps %s refusals inert with zero DOM writes and no triggers [missing, truncated, hash, schema, registration, duplicate]",
+        "rechecks frozen identity immediately before %s activation [visible, idle, interaction]",
+        "refuses a detached later immediate host before mode %s component execution [0, 1]",
+        "refuses a detached deferred %s host without component or DOM writes [visible, idle, interaction]"
+      ],
+      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled."
     }
   ]
 }
