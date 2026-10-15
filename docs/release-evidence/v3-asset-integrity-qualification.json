@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "sourceCommit": "ac7c51bf86a553fd5ce338f8660341c0b4480cd4",
+  "recordedAt": "2026-10-15T04:29:26.246225+00:00",
+  "liveReleaseReady": false,
+  "contracts": {
+    "stage": "v3-development",
+    "fmir": 3,
+    "manifest": 2,
+    "props": "declared-v1",
+    "stateBlock": null,
+    "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+    "liveReleaseReady": false,
+    "pending": {
+      "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+      "FORMA-144": "both templates use the milestone's API",
+      "FORMA-188": "fixture applications and skew drill",
+      "FORMA-191": "release measurements"
+    },
+    "trustedTypes": "enforced-v1",
+    "boundRender": "finalized-v1",
+    "assetIntegrity": "sha384-v1"
+  },
+  "packed": {
+    "passed": true,
+    "checks": 31,
+    "seconds": 66.053,
+    "templates": 2,
+    "artifacts": 7,
+    "restoredTemplateFiles": 10,
+    "workerIntegrityChecks": 6,
+    "workerLifecycleChecks": 6,
+    "ds11RecordSha256": "bec79b61169c167e6010a4ffc3d165b1d841bee6e42dcda36555cfc60ec6d06e",
+    "setFile": "v3-asset-integrity-set.json",
+    "p17File": "v3-asset-integrity-p17.json",
+    "restorationFile": "v3-asset-integrity-template-restore.json"
+  },
+  "fullCheck": {
+    "passed": true,
+    "seconds": 146,
+    "source": "ac7c51bf86a553fd5ce338f8660341c0b4480cd4",
+    "log": "full-gate-2.log",
+    "coreUnit": 1915,
+    "compilerUnit": 704,
+    "buildUnit": 238,
+    "createAppUnit": 144,
+    "createAppPreviouslySkipped": 16,
+    "buildBrowser": 4,
+    "rootBrowserPassed": 52,
+    "rootBrowserExpectedFailure": 1,
+    "coreBrowserPassed": 93
+  },
+  "native": {
+    "serverDebug": 180,
+    "serverRelease": 173,
+    "ignoredFixtureRegenerator": 1,
+    "newPublicIntegrityControls": 3,
+    "serverMsrv": "1.85",
+    "checks": "All targets/features Clippy debug/release; actual renderer3.1 window; strict loader including frozen67 code fixtures and current manifest overlay."
+  },
+  "review": "Lead independently approved Rust production and public controls,22 historical manifest archives and their current digests, worker generation and61+3 focused build controls, both real browser replays with12 named checks, and packed-verifier helper source. Final artifact authentication and exact-head hosted CI are separate merge gates.",
+  "scope": "Manifest schema2 requires canonical full SHA384 on every asset. External script/stylesheet/modulepreload SRI retains nonces; inline bodies remain nonce-protected. Optional immutable on-demand worker checks cache and network bytes, refuses unavailable verification and mismatches, and preserves waiting, isolation and retirement. No application, tag or registry publication changed. Source A2 templates remain unchanged and FORMA144 remains pending.",
+  "browserScope": "Worker native controls use Chromium/CDP to distinguish HTTP cache from CacheStorage. They do not claim Firefox/WebKit execution; the separate hosted engine workflow remains required. The worker fixture is distinct from actual packed-server SRI/CSP observations.",
+  "historicalFixtures": "22 prior current manifests are archived byte-for-byte with hashes; current fixtures use actual available asset bytes. Deliberately absent metadata-only files use explicit empty-file placeholders. Historical IR and HTML bytes are unchanged.",
+  "preservedFailures": [
+    "full-gate-1.log: shared BUILD818 diagnostic catalogue omission, corrected ac7c51b; full-gate-2 passes",
+    "worker native first run: HTTP cache masking a CacheStorage observation, corrected in the browser harness; original log retained by worker author"
+  ],
+  "generatedFixtures": "Saved the two historically stale generated e2e bundle deltas to tmp/generated-fixtures-full-gate-2.patch, then restored only those files; tests consumed current builds.",
+  "logSha256": {
+    "full-gate-2.log": "d41b0ab54d380e3a4cd0b50e0902769488739ccadda64206f8f4c30888692a89",
+    "server-tests-final.log": "43a1d8baf158ea0dbcf3091568ee559fff1c37b8f6855c183a529eb919ce5eaa",
+    "server-tests-release.log": "759afa974a6a79cb252b085142e580d644969d291f6e575bc4db2a3b5df0ddc8",
+    "server-clippy.log": "4af29cc201a90b229ea9bf9f66dbb1bbbce4f32a7f1bd6033779d943e24609a7",
+    "server-clippy-release.log": "15fcca3387df628de901a866b5708cc3aa0d894797a0b337f4dd769f79612217",
+    "server-msrv.log": "f56be09812ffa5f963fe703258eeecf0da744e275f18dca796650d05cf0ab3b7",
+    "strict-loader-integrity.log": "d7a400cc5e7155dd84e7a6fea684c19fa7b77be0bdaa43f8afd009e280bb523d",
+    "renderer-window-integrity.log": "8bf63aebc189f55afeba1380b06f5757678fe71687ee79aa319774e2af611457",
+    "release-integrity-all.log": "fd968136fedf4cefdfd317be61e583f0aa4985f3c841f0c095646a15e9b800b6",
+    "compiler-catalogue-integrity.log": "70bf8eb1af782538f3d7172ada79dc652a9c44b15179be9361e9b8fd23a961b1",
+    "pack-111.log": "87193e7203142362d3a12acccc56ac4decd47f614884eb0c01ea842b5b76932f",
+    "p17-111.log": "6512583eae96a87e5f50231625db31a706d9bd0e628e93ff1f87231b4c84b8e3"
+  }
+}

@@ -127,3 +127,4 @@ source and log are preserved in `work/FORMA-103/tmp/same-file-entry/` and
 the unchanged inline path. No historical FMIR fixture or report was replaced.
 
 - [Pre-state-contract corpus](2026-10-15-pre-state-contract-corpus/README.md): immutable compiler inputs, emitted bytes/dumps/HTML and native corpus at FORMA-103 wire start; old island modules become explicit refusal inputs.
+- [Schema2 test manifests before mandatory SHA-384](2026-10-15-asset-integrity/README.md): exact prior metadata and hashes; original FMIR/document byte fixtures remain unchanged.

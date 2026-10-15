@@ -10,6 +10,7 @@
 //! declares `ssr: false` (`/app`, no `ir`), so one bad module is seen among
 //! good ones.
 
+use base64::Engine;
 use forma_server::assets::try_load_manifest;
 use forma_server::{load_ir_modules, IrLoadError};
 #[derive(forma_ir::PageProps)]
@@ -38,15 +39,40 @@ struct ReviewedV3Files;
 struct ReviewedV3;
 impl Embed for ReviewedV3 {
     fn get(path: &str) -> Option<rust_embed::EmbeddedFile> {
-        ReviewedV3Files::get(if path == "manifest.json" {
+        let mut file = ReviewedV3Files::get(if path == "manifest.json" {
             "window-manifest.json"
         } else {
             path
-        })
+        })?;
+        if path == "manifest.json" {
+            // Add the current metadata contract without rewriting any reviewed FMIR bytes or historical manifest.
+            let mut value: serde_json::Value =
+                serde_json::from_slice(&file.data).expect("historical manifest");
+            for (name, metadata) in value["assets"].as_object_mut().expect("assets") {
+                let digest = if name == "app.js" {
+                    // The loader-only corpus deliberately contains no browser bundle.
+                    integrity(b"")
+                } else {
+                    integrity(&ReviewedV3Files::get(name).expect("reviewed fixture").data)
+                };
+                metadata["integrity"] = digest.into();
+            }
+            file.data =
+                std::borrow::Cow::Owned(serde_json::to_vec(&value).expect("current metadata"));
+        }
+        Some(file)
     }
     fn iter() -> impl Iterator<Item = std::borrow::Cow<'static, str>> {
         ReviewedV3Files::iter()
     }
+}
+
+fn integrity(bytes: &[u8]) -> String {
+    format!(
+        "sha384-{}",
+        base64::engine::general_purpose::STANDARD
+            .encode(ring::digest::digest(&ring::digest::SHA384, bytes))
+    )
 }
 
 // -- The fixtures and their generator ----------------------------------------
@@ -80,7 +106,7 @@ fn flip(mut bytes: Vec<u8>, at: usize, mask: u8) -> Vec<u8> {
 fn manifest_json(bad: &[(&str, &str)]) -> String {
     let mut routes = serde_json::Map::new();
     let mut assets = serde_json::Map::new();
-    assets.insert("app.js".into(), serde_json::json!({"immutable":false}));
+    assets.insert("app.js".into(), serde_json::json!({"immutable":false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"}));
     for (pattern, ir) in [("/", Some("page.0f0f.ir")), ("/app", None)]
         .into_iter()
         .chain(bad.iter().map(|(p, f)| (*p, Some(*f))))
@@ -88,7 +114,7 @@ fn manifest_json(bad: &[(&str, &str)]) -> String {
         let mut route = serde_json::json!({"mode":if ir.is_some(){"ssr"}else{"browser"},"js":["app.js"],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0});
         if let Some(file) = ir {
             route["ir"] = file.into();
-            assets.insert(file.into(), serde_json::json!({"immutable":false}));
+            assets.insert(file.into(), serde_json::json!({"immutable":false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"}));
         }
         routes.insert(pattern.into(), route);
     }
@@ -138,6 +164,26 @@ fn fixture_files() -> Vec<(&'static str, &'static str, Vec<u8>)> {
     files.push(("truncated", "page.0f0f.ir", good));
     for (_, file, bytes) in truncated {
         files.push(("truncated", file, bytes));
+    }
+    let hashes: std::collections::HashMap<_, _> = files
+        .iter()
+        .filter(|(_, file, _)| *file != "manifest.json")
+        .map(|(set, file, bytes)| ((*set, *file), integrity(bytes)))
+        .collect();
+    for (set, file, bytes) in &mut files {
+        if *file != "manifest.json" {
+            continue;
+        }
+        let mut value: serde_json::Value = serde_json::from_slice(bytes).expect("fixture manifest");
+        for (name, metadata) in value["assets"].as_object_mut().expect("assets") {
+            // app.js is deliberately absent: these loader fixtures never fetch it.
+            metadata["integrity"] = hashes
+                .get(&(*set, name.as_str()))
+                .cloned()
+                .unwrap_or_else(|| integrity(b""))
+                .into();
+        }
+        *bytes = (serde_json::to_string_pretty(&value).expect("manifest") + "\n").into_bytes();
     }
     files
 }

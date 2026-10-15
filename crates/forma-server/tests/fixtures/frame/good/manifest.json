@@ -9,10 +9,12 @@
   },
   "assets": {
     "app.11111111.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-6W1R3WGl88vXPnL0vwa++l8DKS9QnWwUAhMmOMZZzClhy9tSbd3bPVeP7JbtaPU1"
     },
     "forma-runtime.0a1b2c3d.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-fEQ4KNrf75YOvb1Xuc34G25+EtB0T0Nmmzrqh2OIW5adQ8RGFmbrgnVbA/vofTZk"
     }
   },
   "routes": {}

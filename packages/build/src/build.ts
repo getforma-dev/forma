@@ -31,7 +31,7 @@ import { tmpdir } from 'node:os';
 import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { APP_NAME, appCacheName, serviceWorkerSource } from './service-worker.js';
+import { APP_NAME, serviceWorkerSource } from './service-worker.js';
 import { splitGraph, type SplitGraph } from './split-graph.js';
 import { createStagingDirectory, replaceDirectory, writeFileAtomic } from './output.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
@@ -273,9 +273,9 @@ function validateConfig(config: BuildConfig): void {
   const entryNames = new Set<string>();
 
   const serviceWorker: unknown = config.serviceWorker;
-  if (serviceWorker !== undefined && serviceWorker !== 'precache' && serviceWorker !== 'on-demand') {
+  if (serviceWorker !== undefined && serviceWorker !== 'on-demand') {
     problems.push(
-      `serviceWorker is '${String(serviceWorker)}': use 'precache' (the default) or 'on-demand'`,
+      `serviceWorker is '${String(serviceWorker)}': use 'on-demand' (the default); precache was removed in v3`,
     );
   }
 
@@ -415,35 +415,12 @@ function printBundleSummary(metafiles: esbuild.Metafile[], assets: Record<string
 
 function generateServiceWorker(
   config: BuildConfig,
-  assets: Record<string, string>,
-  buildHash: string,
+  manifest: Pick<AssetManifest, 'app' | 'build' | 'assets'>,
+  excludedFiles: string[] = [],
 ): void {
-  const distDir = config.outputDir;
-  const onDemand = config.serviceWorker === 'on-demand';
-  // Per application and build when the config names the application
-  // (FORMA-130); otherwise 0.3.0's shared `forma-` name.
-  const swCacheName = config.app !== undefined
-    ? appCacheName(config.app, buildHash)
-    : `forma-${buildHash.slice(0, 12)}${onDemand ? '-on-demand-v1' : ''}`;
-  const fonts = readdirSync(distDir)
-    .filter((f) => f.endsWith('.woff2'))
-    .sort();
-
-  // Precache: all CSS assets + all font files
-  const precacheUrls = [
-    ...Object.entries(assets)
-      .filter(([orig]) => orig.endsWith('.css'))
-      .map(([, hashed]) => `/_assets/${hashed}`),
-    ...fonts.map((f) => `/_assets/${f}`),
-  ];
-
-  const immutableUrls = onDemand ? [...new Set(Object.values(assets))]
-    .filter(file => !file.includes('..') && /^[A-Za-z0-9_.-]+\.[A-Za-z0-9_-]{8}\.(?:js|css|wasm)$/.test(file))
-    .sort().map(file => `/_assets/${file}`) : undefined;
-  const swContent = serviceWorkerSource(swCacheName, precacheUrls, config.watch === true, immutableUrls, config.app);
-
-  writeFileAtomic(join(distDir, 'sw.js'), swContent);
-  console.log(`   SW generated: dist/sw.js (${config.watch ? 'network-only development' : `cache: ${swCacheName}`})`);
+  const source = serviceWorkerSource({ ...manifest, development: config.watch === true, excludedFiles });
+  writeFileAtomic(join(config.outputDir, 'sw.js'), source);
+  console.log(`   SW generated: dist/sw.js (${config.watch ? 'network-only development' : 'verified on-demand assets'})`);
 }
 
 // ---------------------------------------------------------------------------
@@ -869,7 +846,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
 
       // Generate a dev service worker so /sw.js doesn't 404
-      generateServiceWorker(config, {}, 'dev');
+      generateServiceWorker(config, { app: config.app!, assets: {}, build: 'dev' });
 
       // The pages' first compilation; each rebuild replaces its page's own.
       const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
@@ -964,10 +941,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     );
 
     // ── Service worker generation ─────────────────────────────────────
-    const fetchedAssets = frameFile
-      ? Object.fromEntries(Object.entries(assets).filter(([name]) => name !== FRAME_RUNTIME_ASSET))
-      : assets;
-    generateServiceWorker(config, fetchedAssets, manifest.build);
+    generateServiceWorker(config, manifest, frameFile ? [frameFile] : []);
 
     return {
       manifest,

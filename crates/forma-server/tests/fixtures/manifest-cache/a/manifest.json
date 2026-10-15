@@ -1,1 +1,27 @@
-{"version": 2, "writer": "3.0.0", "app": "ledger", "build": "fixture", "aliases": {}, "assets": {"chunk-SPLITXYZ.js": {"immutable": true}, "old-retained.js": {"immutable": true, "retained": true}, "looks.aaaaaaaa.js": {"immutable": false}, "page.ir": {"immutable": true}}, "routes": {}}
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "ledger",
+  "build": "fixture",
+  "aliases": {},
+  "assets": {
+    "chunk-SPLITXYZ.js": {
+      "immutable": true,
+      "integrity": "sha384-knsvA5XkzjJvSrdZx1ql/DmffWwwN7LetAlSecp87TynD2jzV0FIaA/FLWwVvIkU"
+    },
+    "old-retained.js": {
+      "immutable": true,
+      "retained": true,
+      "integrity": "sha384-knsvA5XkzjJvSrdZx1ql/DmffWwwN7LetAlSecp87TynD2jzV0FIaA/FLWwVvIkU"
+    },
+    "looks.aaaaaaaa.js": {
+      "immutable": false,
+      "integrity": "sha384-knsvA5XkzjJvSrdZx1ql/DmffWwwN7LetAlSecp87TynD2jzV0FIaA/FLWwVvIkU"
+    },
+    "page.ir": {
+      "immutable": true,
+      "integrity": "sha384-knsvA5XkzjJvSrdZx1ql/DmffWwwN7LetAlSecp87TynD2jzV0FIaA/FLWwVvIkU"
+    }
+  },
+  "routes": {}
+}

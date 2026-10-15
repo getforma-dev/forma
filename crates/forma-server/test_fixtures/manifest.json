@@ -6,10 +6,12 @@
   "aliases": {},
   "assets": {
     "app.a1b2c3d4.js": {
-      "immutable": true
+      "immutable": true,
+      "integrity": "sha384-05ppHfj5uUjTrkhigMzhTN1E3gbaEYzbkhXj9PeB826jenLRpBDHbtzVoINFRCvL"
     },
     "style.css": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-Srj3L6FZq7QpeHXn0GaTqjmls1fodldGEylfclT47oDEbFcxCG/bX1L0YOkog4Di"
     }
   },
   "routes": {}

@@ -134,13 +134,13 @@ pub struct AssetManifest {
     pub routes: HashMap<String, RouteAssets>,
 }
 
-/// Metadata for one emitted file. Integrity enforcement belongs to FORMA-111.
+/// Metadata for one emitted file, including its full uncompressed-byte digest.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AssetMetadata {
     /// Whether this URL may be cached immutably; never inferred from its name.
     pub immutable: bool,
-    /// SHA-384 of uncompressed final bytes, when supplied by the build.
-    pub integrity: Option<String>,
+    /// Canonical SHA-384 of uncompressed final bytes (`sha384-` and 64 base64 characters).
+    pub integrity: String,
     /// Metadata for a retained asset; retention discovery belongs to FORMA-186.
     #[serde(default)]
     pub retained: bool,
@@ -191,6 +191,19 @@ impl<'de> Deserialize<'de> for AssetManifest {
         }
         if value.get("app").is_none() {
             return Err(serde::de::Error::custom("MANIFEST-101 manifest without app is a legacy schema-1 manifest; rebuild for schema 2"));
+        }
+        if let Some(assets) = value.get("assets").and_then(serde_json::Value::as_object) {
+            for (name, metadata) in assets {
+                if metadata
+                    .get("integrity")
+                    .and_then(serde_json::Value::as_str)
+                    .is_none()
+                {
+                    return Err(serde::de::Error::custom(format!(
+                        "MANIFEST-103 missing or non-string SHA-384 integrity for {name:?}"
+                    )));
+                }
+            }
         }
         #[derive(Deserialize)]
         struct Raw {
@@ -277,17 +290,10 @@ impl AssetManifest {
             if !filename(name) {
                 return Err(format!("MANIFEST-103 invalid asset filename {name:?}"));
             }
-            if let Some(integrity) = &meta.integrity {
-                use base64::Engine;
-                if integrity
-                    .strip_prefix("sha384-")
-                    .and_then(|s| base64::engine::general_purpose::STANDARD.decode(s).ok())
-                    .is_none_or(|bytes| bytes.len() != 48)
-                {
-                    return Err(format!(
-                        "MANIFEST-103 invalid SHA-384 integrity for {name:?}"
-                    ));
-                }
+            if !valid_integrity(&meta.integrity) {
+                return Err(format!(
+                    "MANIFEST-103 invalid SHA-384 integrity for {name:?}"
+                ));
             }
         }
         for (alias, file) in &self.aliases {
@@ -335,4 +341,19 @@ impl AssetManifest {
     pub fn route(&self, pattern: &str) -> Option<&RouteAssets> {
         self.routes.get(pattern)
     }
+}
+
+/// Full SHA-384, in the single canonical SRI spelling emitted by the build.
+pub(crate) fn valid_integrity(integrity: &str) -> bool {
+    use base64::Engine;
+    let Some(encoded) = integrity.strip_prefix("sha384-") else {
+        return false;
+    };
+    if encoded.len() != 64 {
+        return false;
+    }
+    let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(encoded) else {
+        return false;
+    };
+    bytes.len() == 48 && base64::engine::general_purpose::STANDARD.encode(bytes) == encoded
 }

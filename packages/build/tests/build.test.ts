@@ -561,12 +561,15 @@ describe('@getforma/build — functional', () => {
     // silently.
     const error = await rejection({ ...config, serviceWorker: 'ondemand' });
     expect(error.message).toContain(
-      "serviceWorker is 'ondemand': use 'precache' (the default) or 'on-demand'",
+      "serviceWorker is 'ondemand': use 'on-demand' (the default); precache was removed in v3",
     );
     expect(existsSync(outDir)).toBe(false);
 
-    // Two-sided: both documented values still build.
-    for (const serviceWorker of ['precache', 'on-demand'] as const) {
+    // Explicit legacy mode refuses before output; default and on-demand build.
+    const legacy = await rejection({ ...config, serviceWorker: 'precache' });
+    expect(legacy.message).toContain('precache was removed in v3');
+    expect(existsSync(outDir)).toBe(false);
+    for (const serviceWorker of [undefined, 'on-demand'] as const) {
       await build({ ...config, serviceWorker });
       expect(existsSync(join(outDir, 'sw.js'))).toBe(true);
     }
@@ -581,7 +584,7 @@ describe('@getforma/build — functional', () => {
       outputDir: outDir,
       app: 'ledger',
     };
-    for (const serviceWorker of ['precache', 'on-demand'] as const) {
+    for (const serviceWorker of [undefined, 'on-demand'] as const) {
       const { manifest } = await build({ ...config, serviceWorker });
       const worker = readFileSync(join(outDir, 'sw.js'), 'utf8');
       // The name forma-server's sw::ServiceWorker::for_app("ledger") retires.
@@ -620,7 +623,7 @@ describe('@getforma/build — functional', () => {
 
   it('writes a named manifest and worker without the retired unnamed-worker warning', async () => {
     const entry = join(srcDir, 'app.ts'); writeFileSync(entry, 'export const x = 1;');
-    for (const serviceWorker of ['precache', 'on-demand'] as const) {
+    for (const serviceWorker of [undefined, 'on-demand'] as const) {
       const result = await build({entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir: outDir, app: 'ledger', serviceWorker});
       expect(result.manifest.app).toBe('ledger');
       expect(result.warnings.filter(w => w.includes('BUILD-802'))).toEqual([]);

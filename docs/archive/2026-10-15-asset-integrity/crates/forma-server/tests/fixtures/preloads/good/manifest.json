@@ -1,0 +1,76 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "ledger",
+  "build": "fixture",
+  "aliases": {
+    "home.js": "home.A1B2C3D4.js",
+    "admin.js": "admin.E5F6A7B8.js",
+    "chunk.SHARED01.js": "chunk.SHARED01.js",
+    "chunk.HOMEONLY.js": "chunk.HOMEONLY.js",
+    "chunk.ADMIN001.js": "chunk.ADMIN001.js",
+    "chunk.LAZY0001.js": "chunk.LAZY0001.js"
+  },
+  "assets": {
+    "admin.E5F6A7B8.js": {
+      "immutable": false
+    },
+    "chunk.ADMIN001.js": {
+      "immutable": false
+    },
+    "chunk.HOMEONLY.js": {
+      "immutable": false
+    },
+    "chunk.LAZY0001.js": {
+      "immutable": false
+    },
+    "chunk.SHARED01.js": {
+      "immutable": false
+    },
+    "home.A1B2C3D4.js": {
+      "immutable": false
+    }
+  },
+  "routes": {
+    "/": {
+      "js": [
+        "home.A1B2C3D4.js"
+      ],
+      "modulepreload": [
+        "chunk.SHARED01.js",
+        "chunk.HOMEONLY.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "mode": "browser"
+    },
+    "/admin": {
+      "js": [
+        "admin.E5F6A7B8.js"
+      ],
+      "modulepreload": [
+        "chunk.ADMIN001.js",
+        "chunk.SHARED01.js",
+        "chunk.ADMIN001.js",
+        "admin.E5F6A7B8.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "mode": "browser"
+    },
+    "/plain": {
+      "js": [
+        "home.A1B2C3D4.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "mode": "browser"
+    }
+  }
+}

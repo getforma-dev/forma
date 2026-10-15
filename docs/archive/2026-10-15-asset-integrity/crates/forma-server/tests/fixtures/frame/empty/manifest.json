@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "ledger",
+  "build": "fixture",
+  "aliases": {
+    "forma-runtime.js": "forma-runtime.0a1b2c3d.js"
+  },
+  "assets": {
+    "forma-runtime.0a1b2c3d.js": {
+      "immutable": false
+    }
+  },
+  "routes": {}
+}

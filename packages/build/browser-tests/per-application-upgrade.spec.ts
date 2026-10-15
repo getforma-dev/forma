@@ -17,6 +17,7 @@
 //    second application's;
 //  - the first page that registers is not taken over (no clients.claim()).
 import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { appCacheName, serviceWorkerSource } from '../src/service-worker';
 
@@ -28,7 +29,8 @@ const BUILDS: Record<Build, { cache: string; asset: string; worker: string }> = 
 function build(label: Build, buildHash: string, assetHash: string) {
   const asset = `/_assets/app.${assetHash}.js`;
   const cache = appCacheName('ledger', buildHash);
-  return { cache, asset, worker: serviceWorkerSource(cache, [], false, [asset], 'ledger') };
+  const integrity = 'sha384-' + createHash('sha384').update(`document.querySelector('main').textContent = 'build ${label}';`).digest('base64');
+  return { cache, asset, worker: serviceWorkerSource({app: 'ledger', build: buildHash, assets: {[asset.slice('/_assets/'.length)]: {immutable: true, integrity}}}) };
 }
 
 const UNRELATED = 'unrelated-app';

@@ -48,9 +48,9 @@ export interface BuildConfig {
   formaAlias?: string;
   /** Bundle one shared ESM graph, preserving import() as separately loaded chunks. */
   codeSplitting?: boolean;
-  /** Production worker policy; default precaches CSS/fonts. On-demand caches
-   * only requested manifest-listed immutable code/style/WASM assets. */
-  serviceWorker?: 'precache' | 'on-demand';
+  /** Production worker policy; defaults to on-demand. Only requested, manifest-listed
+   * immutable code/style/WASM assets with verified bytes enter its cache. */
+  serviceWorker?: 'on-demand';
   /** Application/worker ID: 1–63 lowercase letters, digits or hyphens, starting
    * with a letter or digit. If omitted, a valid nearest Cargo package name is
    * used. Otherwise supply it explicitly; it is always written to manifest2. */
@@ -131,7 +131,7 @@ export interface RouteManifest {
 export interface AssetMetadata {
   /** The build guarantees this exact filename is immutable, independent of its spelling. */
   immutable: boolean;
-  /** Full SHA-384 of the uncompressed file; enforcement is implemented separately. */
+  /** Full SHA-384 of the final uncompressed file, used by SRI and the worker. */
   integrity: string;
   /** Older deployment artifact retained by the deployment-identity implementation. */
   retained?: boolean;

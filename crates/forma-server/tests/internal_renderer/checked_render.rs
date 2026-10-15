@@ -50,7 +50,7 @@ fn manifest() -> AssetManifest {
         app: "ledger".into(),
         aliases: HashMap::new(),
         build: "test".to_string(),
-        assets: HashMap::new(),
+        assets: super::fixture_assets(&routes),
         routes,
     }
 }
