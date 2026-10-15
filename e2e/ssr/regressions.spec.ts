@@ -213,9 +213,11 @@ test.describe('every case is server-rendered and activates', () => {
     expect(Object.keys(CASES).sort()).toEqual(dirs);
   });
 
-  // "Activates" here means every island on the page reached its active
-  // status (a static page has none and loads no script). That is not proof
-  // that anything was adopted correctly; the behaviour tests below check that.
+  // "Activates" here means the module ran, no host is in `error` and no
+  // `forma:error` was dispatched (a static page has none and loads no
+  // script). Strict SSR activation writes no status on success (`active` is
+  // written only on the browserOnly path), so a module that loads and does
+  // nothing passes this row; only the behaviour tests below catch that.
   for (const name of Object.keys(CASES) as CaseName[]) {
     test(`${name}: walker HTML present, Phase 2 ${CASES[name] === 'island' ? 'activates' : 'is static'}, Phase 1 mounts, no errors`, async ({ browser, page }) => {
       const noJs = await openWithoutJs(browser, `/${name}/`);
@@ -441,6 +443,7 @@ test.describe('edited-controls', () => {
 
     await held.activate();
     await expect(input).toHaveValue('server typed', SETTLE);
+    await expect(page.locator('#echo-name'), 'the island is live and its signal was seeded from the edit').toHaveText('server typed', SETTLE);
     await expect(input).toBeFocused();
     expect(await submitted(page, 'name')).toEqual(['server typed']);
   });
@@ -453,6 +456,7 @@ test.describe('edited-controls', () => {
 
     await held.activate();
     await expect(box).toBeChecked(SETTLE);
+    await expect(page.locator('#echo-agreed'), 'the island is live and its signal was seeded from the edit').toHaveText('yes', SETTLE);
     expect(await submitted(page, 'agreed')).toEqual(['on']);
   });
 
@@ -464,6 +468,7 @@ test.describe('edited-controls', () => {
 
     await held.activate();
     await expect(select).toHaveValue('l', SETTLE);
+    await expect(page.locator('#echo-size'), 'the island is live and its signal was seeded from the edit').toHaveText('l', SETTLE);
     expect(await submitted(page, 'size')).toEqual(['l']);
   });
 });

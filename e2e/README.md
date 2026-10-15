@@ -53,8 +53,9 @@ an island seeded from declared props, and `root-fragment` is a static page. The
 documents it ([`ISLANDS.md`](../packages/core/docs/ISLANDS.md), "Strict
 activation"): a successful island makes no DOM write, so `data-forma-status`
 stays `pending`; the spec waits for the module to run, requires no host in
-`error` and no `forma:error` event, and each behaviour test then exercises the
-island. The lane's pre-3.0.0 shape is kept under
+`error` and no `forma:error` event; that row cannot tell a silent no-op from
+success, so each behaviour test exercises the island through a reactive reader
+(a text the island's signal drives, or a control it updates). The lane's pre-3.0.0 shape is kept under
 [`docs/archive/2026-10-15-islands-only-e2e/`](../docs/archive/2026-10-15-islands-only-e2e/).
 
 | Case | What it pins | Today |

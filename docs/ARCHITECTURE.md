@@ -149,7 +149,7 @@ every hard bug in this stack's history has been two halves of it disagreeing.
    │                  opcode stream + slots  ──►  HTML String         │
    │                  + <!--f:tN--> markers                           │
    │                  + data-forma-* on island roots                  │
-   │                  + <script id="__forma_islands"> when spilled    │
+   │                  + <script data-island-state> in <head> (§3.5)   │
    │           → PageOutput { html, csp, nonce }                      │
    └──────────────────────────────┬───────────────────────────────────┘
                                   │  HTML + CSP header
@@ -157,12 +157,12 @@ every hard bug in this stack's history has been two halves of it disagreeing.
    ┌──────────────────────── BROWSER (@getforma/core) ────────────────┐
    │  app.<hash>.js runs → activateIslands(registry)                  │
    │    for each [data-forma-island]:                                 │
-   │      1. loadIslandProps  (data-forma-props, else __forma_islands) │
+   │      1. decode the head state block (data-forma-state, -h, §3.5) │
    │      2. run the island fn WITH those props                       │
    │         → it seeds signals: createSignal(props?.x ?? fallback)    │
    │      3. hydrateIsland → adoptNode walks the SSR DOM against the   │
    │         descriptors h() returned, binding effects to real nodes   │
-   │    status: pending → hydrating → active                          │
+   │    status: stays pending on success; error (+ forma:error) on failure │
    └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -238,7 +238,7 @@ are created for matched content.
 | build → Rust server | `.ir`, `.js`, `.css`, `manifest.json` | files, embedded via `rust-embed` | FMIR layout (§3.1), manifest schema |
 | compiler → Rust server | **slot names** | UTF-8 strings in the string table | slot naming scheme (§3.2) |
 | Rust walker → browser | HTML | marker comments + `data-forma-*` (§3.3, §3.4) | either side changing the grammar |
-| Rust walker → browser | island props | `data-forma-props` or `__forma_islands` (§3.5) | escaping, precedence, key shape |
+| Rust walker → browser | island props | the head `data-island-state` block, `data-forma-state`/`data-forma-h` on the host (§3.5) | the envelope, the digest, escaping |
 | server handler → walker | slot values | `SlotData`, by id or by name | slot naming; first-wins rule |
 
 ### 2.4 Where each repo actually sits
@@ -494,12 +494,12 @@ Two disjoint namespaces share the prefix. Do not confuse them.
 
 | Attribute | Written by | Read by | Values |
 |---|---|---|---|
-| `data-forma-ssr` | `forma-server` on `<div id="app">` | `mount()` — chooses hydrate vs CSR | present/absent |
+| `data-forma-ssr` | `forma-server` on `<div id="app">` | `mount()`, to refuse: it throws `FORMA_E_MOUNT_SSR` on a server-marked root (`mount.ts`); `activateIslands` is the only activation path. A Browser-shell route has no such root | present/absent |
 | `data-forma-island` | walker `emit_open_tag` | `activateIslands` selector | island id, decimal |
 | `data-forma-component` | walker | registry lookup key | component name |
-| `data-forma-status` | walker (`pending`), then client | re-activation guard | `pending`/`hydrating`/`active`/`error`/`disposed` |
+| `data-forma-status` | walker (`pending`); core writes `error` on a failed adoption (with one `forma:error` event), `disposed` on disposal, `active` only on the `browserOnly` path; a successful strict SSR activation writes nothing | nothing in core; informational | `pending`/`error`/`disposed`/`active` (`hydrating` is never written) |
 | `data-forma-hydrate` | walker | trigger dispatch | `load`/`visible`/`interaction`/`idle` |
-| `data-forma-props` | walker (Inline mode) | `loadIslandProps`, first choice | attribute-escaped JSON |
+| `data-forma-state`, `data-forma-h` | walker, on the island root | the state decoder: the occurrence's index in the head block, and the compiled digest it must match (§3.5) | decimal index; 16 lowercase hex |
 | `data-forma-key` | walker (`LIST_ITEM_KEY`) | list adoption key match | row key |
 
 **B. The zero-build HTML runtime's directive set** — `data-forma-state`,
@@ -512,11 +512,14 @@ contract and can change freely.
 adoption paths, and ksx.
 
 **What breaks if set A moves:** islands stop being found (`querySelectorAll('[data-forma-island]')`
-returns nothing → zero hydration, silently), or props stop loading, or a
-re-activation guard stops working and handlers get double-bound. Note the status
-values are load-bearing in both directions: `activateIslands` skips an island
-whose status is already `active`/`hydrating`/`disposed`/`error`, which is what
-makes a second `activateIslands()` call (HMR, SPA re-mount) safe.
+returns nothing → zero hydration, silently: a successful strict activation
+writes nothing to the DOM, so an unchanged `pending` is not evidence either way
+and only behaviour tells), or state stops decoding (digest or index mismatch
+leaves the island inert with a code). The re-activation guard is not the
+attribute: core keeps a private per-element `activationPhase` map
+(`activate.ts`), consulted on every call, which is what makes a second
+`activateIslands()` call (HMR, SPA re-mount) safe; `data-forma-status` is
+informational.
 
 **Sharp edge:** an island whose `ISLAND_START` is not followed by an element
 would have its attributes leak onto whatever element came next. The walker now
@@ -525,57 +528,30 @@ root, and drops-with-warning at `ISLAND_END` (`walker.rs`; forma-ir CHANGELOG
 0.2.0). *Only one element can carry the set* — that is why the compiler owes
 every island a shell element (`ir-walk.ts:emitIsland`).
 
-### 3.5 The `__forma_islands` props protocol
+### 3.5 Island state: the head block
 
-Island props reach the client through exactly one of two channels, never both:
+Island props reach the client through one channel: a single non-executable
+`<script type="application/json" data-island-state>` in `<head>` of every SSR
+response (present even with no islands), the envelope `{"v":1,"s":[],"i":[...]}`
+where each occurrence holds `h` (the compiled identity digest) and `p` (the
+projected declared props); the island root carries `data-forma-state` (its index
+in `i`) and `data-forma-h` (the digest it must match). The decoder reads the
+first matching head block once per Document; a mismatched digest or index leaves
+the island inert with a `FORMA_E_ISLAND_*` code and no DOM write. The contract,
+its limits (1 MiB envelope, `<` escaped, IEEE values preserved, epoch
+milliseconds as `Date`) and its tests are in
+[`packages/core/docs/ISLANDS.md`](../packages/core/docs/ISLANDS.md) and
+[`ISLAND-STATE.md`](../packages/core/docs/ISLAND-STATE.md); the wire grammar in
+`docs/proposals/FORMA-103-STATE-WIRE.md`.
 
-1. **Inline** — `data-forma-props='{"initial":5}'` on the island root,
-   attribute-escaped.
-2. **Shared block** — one `<script id="__forma_islands" type="application/json">`
-   for the whole page, an object keyed by island id **as a decimal string**:
-   `{"0": {...}, "3": {...}}`.
-
-**Precedence:** the client reads `data-forma-props` first and falls back to the
-shared block (`activate.ts:loadIslandProps`). The walker emits exactly one
-channel per island so precedence never has two answers to choose between
-(`walker.rs`, IslandStart).
-
-**The spill.** Inline props over `INLINE_PROPS_MAX_BYTES` (1024, measured on the
-JSON before HTML escaping) move to the shared block automatically. A *fragment*
-render (`walk_island`) never spills — it cannot legally emit a second block, and
-an injected duplicate `__forma_islands` id would shadow the SSR one for every
-other island on the page.
-
-**The escaping rule.** The block's JSON has every `<` and `>` written as
-`\u003c` / `\u003e` (plus U+2028/9). Consumers **MUST** decode with `JSON.parse`
-and **MUST NOT** string-match the raw script text. The previous `</` → `<\/`
-escape was insufficient: a props value containing `<!--` followed later by
-`<script` drives a spec-compliant tokenizer into the *script-data-double-escaped*
-state, where the walker's own `</script>` is consumed as text and the entire
-rest of the page — config script, module tag, `</body>` — is
-swallowed. The page renders completely inert, driven purely by user-controlled
-slot data (`walker.rs:push_json_script_body`; forma-ir CHANGELOG 0.2.0,
-Security). The parsed *values* are unchanged, so this was not a coordinated
-change.
-
-**Client-side robustness rules, learned the hard way:** the block is located as
-`script#__forma_islands` (not `getElementById`, which matched any element with
-that id — a user-controlled node earlier in the document could supply props to
-every island on the page) and parsed inside a try/catch (one malformed or empty
-block used to abort activation for *every* island, including islands with inline
-props or none) — HARDENING-AUDIT `island-shared-props-parse-unguarded`.
-
-**Sanitization is shallow by default** on both channels: top-level `__proto__` /
-`constructor` / `prototype` are deleted; nested ones are not. `sanitizePropsDeep`
-is the opt-in. RPC arguments *are* stripped recursively — the asymmetry is
-deliberate and documented (README, SECURITY.md, HARDENING-AUDIT
-`island-props-vs-rpc-sanitization-not-equivalent`).
-
-**Who depends on it:** the walker emits it; `@getforma/core` consumes it; ksx
-Studio *hand-emitted* the block server-side for a year because the compiler
-registered every island with empty `slot_ids` (dogfood #8) — that is now fixed
-upstream, and ksx's layout test asserting `slot_ids.is_empty()` is the tripwire
-that tells them to migrate to the native path.
+The two earlier channels, `data-forma-props` on the root and the shared
+`<script id="__forma_islands">` block with its spill rule and precedence, no
+longer provide SSR state (FORMA-103); their escaping lesson stands for the new
+block: JSON in a script body is written with `<`/`>` as `\u003c`/`\u003e` and
+consumers decode with `JSON.parse`, never by string-matching the raw text
+(`walker.rs:push_json_script_body`). Projection is by declared schema, so
+undeclared and forbidden fields never reach the component; `sanitizePropsDeep`
+remains a standalone utility for other data paths.
 
 ### 3.6 Contract enforcement — where the tests actually are
 

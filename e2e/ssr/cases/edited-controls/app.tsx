@@ -22,6 +22,9 @@ function Controls(props: { name: string; agreed: boolean; size: string }) {
         <option value="m">M</option>
         <option value="l">L</option>
       </select>
+      <span id="echo-name">{() => name()}</span>
+      <span id="echo-agreed">{() => (agreed() ? 'yes' : 'no')}</span>
+      <span id="echo-size">{() => size()}</span>
     </form>
   );
 }
