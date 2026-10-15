@@ -214,7 +214,7 @@ tickets. `liveReleaseReady` remains false; no tag or publication occurred.
 
 ## Declared props reload correction and repeated packaging
 
-The current accepted local artifacts are `v3-props-reload-set.json` from
+The reload correction artifacts are `v3-props-reload-set.json` from
 `8f7a2aa02398240845681f1c777e4b9dfdcf7eaa`. `v3-props-reload-p17.json` passes
 all 20 checks in 62.502 seconds, including all seven real typed Pages controls and
 both packed templates. Every archive SHA-256 and packed crate VCS commit matches
@@ -252,6 +252,28 @@ fails closed and is explicitly assigned to the approved FORMA-103 entry correcti
 it does not invalidate imported-entry evidence. No application repository,
 package version, tag or live publication changed.
 
+
+## Portable Date boundary qualification
+
+The current exact artifact source is `153972defd480cd6821aa3fbb6d16294550b902f`,
+recorded by `v3-props-date-set.json`. Windows cannot construct a SystemTime at
+the JavaScript Date limit. The typed-render test now uses checked construction;
+a private numeric test exercises the unchanged production conversion on every
+platform, including both signs, sub-millisecond truncation, exact limits, one
+millisecond beyond, and values beyond i64 before casting. No public API or
+accepted value changed. Native source-path assertions also retain portable Path
+semantics after the two earlier Windows failures.
+
+All ten props tests, the positive derive control and 23 compile refusals, seven
+typed Pages controls, the private Date test (also on Rust1.71) and IR/server
+Clippy passed. The
+fresh seven-artifact rehearsal passed all 20 checks in 61.524 seconds, including
+both templates; all ten source template files were restored. See
+`v3-props-date-p17.json`, `v3-props-date-template-restore.json` and
+`v3-props-date-qualification.json`. Earlier archives, successful reports and
+refused attempts remain unchanged. The full 162-second gate remains explicitly
+at its earlier source; this record adds focused and packed checks for the
+private refactor. Hosted exact-head CI, including Windows, is still required.
 
 ## Typed raw markup and enforced Trusted Types (FORMA-109)
 
