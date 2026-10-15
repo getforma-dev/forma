@@ -701,12 +701,14 @@ original TSX position of the condition.
 `items is not a function` even though the native module renders it (the page's list array is a
 named slot the module never evaluates). The compiler refuses a source it can prove is not a
 function: a literal (an array, an object, a string, a number, `null`, `undefined`), a binding
-whose value is one (an immutable local binding, or an immutable named export of an imported module), a provably data-valued core getter result
-or field (`rows()`, `data().rows`, where `rows` and `data` come from
-`createSignal`, `createComputed` or `createMemo`), or a field that an inline parameter type
+whose value is one (an immutable local binding, or an immutable named export of an imported module),
+a provably immutable data-valued core getter result (`rows()` from `createSignal`,
+`createComputed` or `createMemo`), or a field that an inline parameter type
 declares as data (`p.rows` with `p: { rows: Row[] }`). A function, a getter, and anything the
 compiler cannot see through (an untyped parameter's field, another call's result) stay admitted.
-A signal may hold a function and a computed callback may return one; those callable results and fields remain admitted, as do opaque results.
+A signal may hold a function and a computed callback may return one. A captured signal setter
+prevents using its initializer as proof; object fields can change through aliases or getter reads,
+so their initial values are not proof either. Callable and unknown results remain admitted.
 The refusal names the call's own argument. This refusal is mandatory without strict mode.
 
 **Fix.** Pass the getter itself or a function returning the rows: `createList(rows, …)` with

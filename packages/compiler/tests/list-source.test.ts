@@ -35,7 +35,6 @@ describe('BUILD-616: a list source core cannot call', () => {
   ['an array literal',``,`[{id:'a',label:'A'}]`],
   ['an alias of a const array',`const base=[{id:'a',label:'A'}];const rows=base;`,'rows'],
   ["a signal getter's value",`const [rows]=createSignal<Row[]>([{id:'a',label:'A'}]);`,'rows()'],
-  ["a field of a signal getter's value",`const [data]=createSignal({rows:[{id:'a',label:'A'}]});`,'data().rows'],
   ["a computed getter's value",`const rows=createComputed(()=>[{id:'a',label:'A'}]);`,'rows()'],
  ])('refuses %s at the list, and its function near miss compiles', (_label, declarations, source) => {
   const refused=compile(page(declarations,source));
@@ -88,6 +87,14 @@ mount(()=>Board({rows:[{id:'a',label:'A'}]}),'#app');`;
   ['an opaque signal value', `declare function initial():any;const [rows]=createSignal(initial());`, 'rows()'],
   ['an opaque computed value', `declare function initial():any;const rows=createComputed(()=>initial());`, 'rows()'],
   ['a function shadowing undefined', `const undefined=()=>[{id:'a',label:'A'}];`, 'undefined'],
+  ['a signal with a captured setter', `const [rows,setRows]=createSignal<any>([]);`, 'rows()'],
+  ['a signal changed to a function', `const [rows,setRows]=createSignal<any>([]);setRows(()=>()=>[{id:'a',label:'A'}]);`, 'rows()'],
+  ['a signal whose setter escapes', `declare function change(setter:any):void;const [rows,setRows]=createSignal<any>([]);change(setRows);`, 'rows()'],
+  ['an untyped object field whose value can change', `const [data]=createSignal({rows:[{id:'a',label:'A'}]});`, 'data().rows'],
+  ['an object field changed through its original alias', `const initial:any={rows:[]};const [data]=createSignal(initial);initial.rows=()=>[{id:'a',label:'A'}];`, 'data().rows'],
+  ['an object field changed through its getter', `const [data]=createSignal<any>({rows:[]});data().rows=()=>[{id:'a',label:'A'}];`, 'data().rows'],
+  ['a computed value reading a mutable object field', `const state:any={rows:[]};state.rows=()=>[{id:'a',label:'A'}];const rows=createComputed(()=>state.rows);`, 'rows()'],
+  ['a computed alias of a signal with a captured setter', `const [data,setData]=createSignal<any>([]);const rows=createComputed(()=>data());setData(()=>()=>[{id:'a',label:'A'}]);`, 'rows()'],
  ])('admits %s without assuming a getter returns data', (_label, declarations, source) => {
   const result=compile(page(declarations,source));
   expect(result.failure).toBeUndefined();

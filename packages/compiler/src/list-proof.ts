@@ -145,16 +145,17 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   const value=singleReturn(target.mod,target.fn,'BUILD-613','LIST row helper');
   active.add(id);try{return roots(target.mod,value,active);}finally{active.delete(id);}
  }
- /** The expression read by a core getter, when its initializer/return is visible. A
-  * signal can hold a function, and a computed callback can return one; neither is
-  * inherently data. Opaque results stay unknown rather than being refused. */
+ /** A getter's visible value source. Capturing a signal's setter makes its initial
+  * value insufficient evidence, even if no direct setter call is visible here.
+  * A computed callback's return still needs the immutable-value proof below. */
  function getterValue(mod:Module,node:t.Node):t.Node|undefined {
   if(!t.isIdentifier(node))return undefined;
   const found=mod.paths.get(node)?.scope.getBinding(node.name),decl=found?.path.node;
   if(!found||found.constantViolations.length||!t.isVariableDeclarator(decl)||!t.isCallExpression(decl.init))return undefined;
   const made=core(mod,decl.init.callee),initial=decl.init.arguments[0];
   if(!initial||t.isSpreadElement(initial)||t.isArgumentPlaceholder(initial))return undefined;
-  if(made==='createSignal'&&t.isArrayPattern(decl.id)&&decl.id.elements[0]===found.identifier)return initial;
+  if(made==='createSignal'&&t.isArrayPattern(decl.id)&&decl.id.elements[0]===found.identifier
+   &&decl.id.elements.slice(1).every(element=>element===null))return initial;
   if((made==='createComputed'||made==='createMemo')&&decl.id===found.identifier&&callable(unwrap(initial))) {
    const fn=unwrap(initial) as ComponentFunction;
    if(!t.isBlockStatement(fn.body))return fn.body;
@@ -164,8 +165,8 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   }
   return undefined;
  }
- /** Follow only visible immutable values. For a member, require one unambiguous
-  * property on a literal object; a spread/computed key could replace it. */
+ /** Follow immutable bindings, not mutable object fields. `const` protects a binding,
+  * not its members; a member may change through an alias or a getter result. */
  function visibleValue(mod:Module,input:t.Node,active=new Set<Binding>(),depth=0):t.Node|undefined {
   if(depth>=64)return undefined;
   const node=unwrap(input);
@@ -182,13 +183,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    const value=getterValue(mod,unwrap(node.callee));
    return value?visibleValue(mod,value,active,depth+1):undefined;
   }
-  if(t.isMemberExpression(node)) {
-   const name=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
-   const object=visibleValue(mod,node.object,active,depth+1);
-   if(name===undefined||!t.isObjectExpression(object)||object.properties.some(property=>!t.isObjectProperty(property)||property.computed))return undefined;
-   const properties=object.properties.filter(property=>t.isObjectProperty(property)&&field(property.key)===name) as t.ObjectProperty[];
-   return properties.length===1?visibleValue(mod,properties[0]!.value,active,depth+1):undefined;
-  }
+  if(t.isMemberExpression(node))return undefined;
   return node;
  }
  /** An exported binding's declaration in a module: `export const x = …`, `export function x`, or
@@ -224,8 +219,8 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   * F1 (FORMA-183's parity harness): core's createList calls its source to read the rows, so a
   * source the compiler can prove is not a function refuses with BUILD-616: a literal (an array, an
   * object, a string, a number…), a binding whose value is one (a local `const`, or a named export
-  * of an imported module), a provably data-valued core getter result or field (`rows()`,
-  * `data().rows`), or a field that an inline parameter annotation types as data (`p.rows` with
+  * of an imported module), a provably immutable data-valued core getter result (`rows()`),
+  * or a field that an inline parameter annotation types as data (`p.rows` with
   * `p: {rows: Row[]}`). A function, a getter, and anything the compiler cannot see through (an
   * untyped parameter's field, another call's result) stay admitted. The refusal names the call's
   * own argument, wherever the literal was declared.
@@ -235,11 +230,9 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   if(callable(node))return;
   const refuse=(what:string):never=>fail(mod,at,'BUILD-616',`LIST source is ${what}, not a function: core calls it to read the rows, so pass the getter itself or a function returning them, such as () => rows`);
   const value=literal(mod,node);if(value)refuse(value);
-  let origin:t.Node=node;
-  while(t.isMemberExpression(origin))origin=unwrap(origin.object);
-  if(t.isCallExpression(origin)&&getterValue(mod,unwrap(origin.callee))) {
+  if(t.isCallExpression(node)&&getterValue(mod,unwrap(node.callee))) {
    const resolved=visibleValue(mod,node),data=resolved?literal(mod,resolved):undefined;
-   if(data)refuse(`${data} read from a getter or field`);
+   if(data)refuse(`${data} read from an immutable getter value`);
   }
   if(t.isMemberExpression(node)) {
    const name=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;

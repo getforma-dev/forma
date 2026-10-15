@@ -197,7 +197,7 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'Compare explicitly so the condition is a boolean: `() => count() > 0`, `() => name() !== \'\'`, `() => item() !== null`, or `!!x` when truthiness is what is meant.'),
 
   entry('BUILD-616', 'List source that is not a function',
-    'Core calls a list\'s source to read its rows, and this one is provably not a function (a literal, a binding to one, a provably data-valued getter result or field, or a field its parameter type declares as data), so the page would fail in the browser with `items is not a function`; the build fails even without strict mode.',
+    'Core calls a list\'s source to read its rows, and this one is provably not a function (a literal, a binding to one, a provably immutable data-valued getter result, or a field its parameter type declares as data), so the page would fail in the browser with `items is not a function`; the build fails even without strict mode.',
     'Pass the getter itself or a function returning the rows: `createList(rows, …)` with `const [rows] = createSignal([...])`, `createList(() => p.rows, …)`, or `const todos = () => [...]`.'),
 
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
