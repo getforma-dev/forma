@@ -904,7 +904,7 @@
       "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled.",
       "independent_review": "Recover_history read complete3d7 diff/fulltests/helper;40/40 replay and44-original archive Git/SHA/length authentication passed. Evidence retained-tests-evidence/3d7-authentication.json.",
       "original_parameterized_cases": [
-        "refuses the removed %s props channel instead of silently decoding it [inline, shared]"
+        "refuses the removed %s props channel without changing server DOM [inline, shared]"
       ]
     },
     {
