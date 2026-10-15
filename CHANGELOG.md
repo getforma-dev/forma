@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixture applications (FORMA-188)
+
+- `e2e/fixtures/apps/`: three applications written fresh to the shape of consumers' pages (a household arrival island, an authentication service's tenant login, get-started and results pages, a controller studio's button-check screen), each a 3.0.0 page set: TypeScript props types, `#[derive(PageProps)]` handlers bound at start, islands with declared props. They build under `strict: true` with nothing above a note and are served by forma-server. `e2e/fixtures/apps/build.sh` is part of `scripts/check.sh`; `apps.spec.ts` checks, per page, the server's values with JavaScript off, the state envelope against the handler's values, adoption that writes nothing (the island module held, then released, a positive control on the observer) and the page's behaviour.
+- `negative/` holds the shapes the contract refuses: a props type outside the closed type set (BUILD-610 with file, line and column), a condition the compiler would have to evaluate (BUILD-610), and an island holding a client-side list, which is over N2's ceiling today (BUILD-819: 26,366 B of Forma code against 25,500 B). The pages keep their lists outside islands until the ceiling or the list code changes.
+
 ### Value rule 1: line endings and NUL — FORMA-182
 
 - `docs/parity-rules.md` states the marker vocabulary and rule 1 (CRLF and CR to LF, NUL to U+FFFD, per value, before ordinary DOM text and attribute writes) and lists rules 2 to 7 with where their behaviour lives today. One shared vector file, `crates/forma-ir/tests/fixtures/parity/normalization.json`, is read by forma-ir's and core's suites. The walker and `@getforma/core` apply the rule in their ordinary writers; transport (props, state, keys) stays exact. The `textarea`, `pre` and `listing` first-token line feed is protected by the walker and the URL guards refuse a NUL anywhere in a URL attribute. Document-head metadata in forma-server and the broader value rules remain open.

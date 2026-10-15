@@ -211,3 +211,12 @@ e2e/
 | "formajs-frame.global.js not found" | FORMAJS_DIR must be a FormaJS checkout with FORMA-128's frame runtime, built |
 | "@getforma/core depends on …, which e2e/frame/app/package-lock.json does not pin" | core gained or moved a dependency: add it to `e2e/frame/app/package.json`, run `npm install --package-lock-only` there, commit both |
 | "the lock file needs to be updated" (cargo, frame lane) | `cargo build --manifest-path e2e/frame/server/Cargo.toml` once, commit `e2e/frame/server/Cargo.lock` |
+
+## The fixture applications (`e2e/fixtures/apps/`)
+
+Three consumer-shaped applications (a household finance page, an authentication service's pages, a
+controller studio's check screen), each built in strict mode and served by forma-server through a
+`#[derive(PageProps)]` handler bound at start (FORMA-188). `e2e/fixtures/apps/build.sh` builds them from
+this working tree; `apps.spec.ts` starts each server and checks the values, strict adoption and
+behaviour of every page. P17 runs the same sources against the packed set. See
+[`fixtures/apps/README.md`](fixtures/apps/README.md).
