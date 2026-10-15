@@ -396,6 +396,16 @@ fn number(value: &Value) -> Option<f64> {
 /// The largest JavaScript `Date`, in milliseconds either side of the epoch.
 const MAX_DATE: f64 = 8.64e15;
 
+/// Project one JSON value by its declared type. Wherever the crate has a public `PropValue`
+/// implementation the value is handed to it, so a change to the crate's own checks is seen here:
+/// `Option` (absent and `null` are `None`), `bool`, `String`, `f64` (a non-finite number is
+/// `RENDER-402`), `Vec` (the crate's own row paths, `null` placeholders and depth limit), and
+/// enums through `EncodeContext::enumeration`. The harness keeps only what has no public
+/// counterpart: a JSON value of the wrong kind or missing (`RENDER-404`), dates (the crate's
+/// `SystemTime` implementation cannot represent the ±8.64e15 bounds on every platform, so the
+/// bound and the truncation toward zero are mirrored, `RENDER-403`), and the object projection
+/// (the derive's own pattern: `context.object`, `context.name`, `context.field`). `RENDER-401`
+/// (an integer origin beyond ±(2^53 − 1)) is unreachable: every JSON number is an f64.
 fn encode(
     context: &EncodeContext<'_>,
     kind: &PropType,
@@ -403,29 +413,28 @@ fn encode(
     value: Option<&Value>,
 ) -> Result<Option<Value>, PropsError> {
     let mismatch = || context.error("RENDER-404", path, "value does not match the declared type");
-    if let PropType::Optional(inner) = kind {
-        return match value {
-            None | Some(Value::Null) => Ok(None),
-            Some(value) => encode(context, inner, path, Some(value)),
+    if let PropType::Optional(_) = kind {
+        let present = match value {
+            None | Some(Value::Null) => None,
+            Some(value) => Some(DynProps(value.clone())),
         };
+        return present.encode_value(context, kind, path);
     }
     let value =
         value.ok_or_else(|| context.error("RENDER-404", path, "declared value is missing"))?;
     match kind {
         PropType::Boolean => value
             .as_bool()
-            .map(|b| Some(Value::Bool(b)))
-            .ok_or_else(mismatch),
+            .ok_or_else(mismatch)?
+            .encode_value(context, kind, path),
         PropType::String => value
             .as_str()
-            .map(|s| Some(Value::String(s.to_owned())))
-            .ok_or_else(mismatch),
-        PropType::Number => {
-            let n = number(value).ok_or_else(mismatch)?;
-            serde_json::Number::from_f64(n)
-                .map(|n| Some(Value::Number(n)))
-                .ok_or_else(|| context.error("RENDER-402", path, "number must be finite"))
-        }
+            .map(str::to_owned)
+            .ok_or_else(mismatch)?
+            .encode_value(context, kind, path),
+        PropType::Number => number(value)
+            .ok_or_else(mismatch)?
+            .encode_value(context, kind, path),
         PropType::Date => {
             let n = number(value).ok_or_else(mismatch)?;
             if !n.is_finite() || n.abs() > MAX_DATE {
@@ -441,15 +450,13 @@ fn encode(
             Ok(Some(Value::Number(millis.into())))
         }
         PropType::Enum(_) => context.enumeration(kind, path, value.as_str().ok_or_else(mismatch)?),
-        PropType::Array(inner) => {
-            let items = value.as_array().ok_or_else(mismatch)?;
-            let mut out = Vec::with_capacity(items.len());
-            for (index, item) in items.iter().enumerate() {
-                let item_path = format!("{path}[{index}]");
-                out.push(encode(context, inner, &item_path, Some(item))?.unwrap_or(Value::Null));
-            }
-            Ok(Some(Value::Array(out)))
-        }
+        PropType::Array(_) => value
+            .as_array()
+            .ok_or_else(mismatch)?
+            .iter()
+            .map(|item| DynProps(item.clone()))
+            .collect::<Vec<_>>()
+            .encode_value(context, kind, path),
         PropType::Object(_) => {
             let map = value.as_object().ok_or_else(mismatch)?;
             let mut out = serde_json::Map::new();

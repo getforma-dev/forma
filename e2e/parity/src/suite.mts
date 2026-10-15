@@ -28,6 +28,12 @@ export interface CorpusEntry {
   readonly page: PageComponent;
   /** `page`: no island; `islands`: activation runs (P2). */
   readonly kind: 'page' | 'islands';
+  /**
+   * Declares that the typed path refuses this module and the walker alone renders it. Without the
+   * declaration, a typed-path refusal or fallback fails the run (a module the production loader or
+   * `compare_schema` rejects is a finding for any application serving it).
+   */
+  readonly serverPath?: 'low-level';
   readonly note?: string;
 }
 
@@ -197,7 +203,8 @@ export function p2Report(base: ReportBase, run: PageRun): Report {
   const head = { module: base.module, seed: base.seed, index: base.index, check: 'P2' as const, serverPath: base.serverPath, state: base.state, ...(base.bind ? { bind: base.bind } : {}) };
   if (run.error) return makeReport({ ...head, verdict: 'error', error: `boot: ${run.error.split('\n')[0]}` }, null);
   if (!run.p2) return makeReport({ ...head, verdict: 'error', error: 'activation did not run' }, null);
-  if (run.p2.caught !== 1) return makeReport({ ...head, verdict: 'error', error: `the positive control saw ${run.p2.caught} records for one write: the observer cannot be trusted` }, null);
+  const missed = Object.entries(run.p2.control).filter(([, seen]) => !seen).map(([kind]) => kind);
+  if (missed.length) return makeReport({ ...head, verdict: 'error', error: `P2's observer did not record the control's ${missed.join(', ')} write: its zero records cannot be trusted` }, null);
   const differences: Difference[] = [
     ...run.p2.records.map(record => ({
       kind: 'mutation' as const,
@@ -209,8 +216,13 @@ export function p2Report(base: ReportBase, run: PageRun): Report {
     ...run.logged.filter(entry => entry.step === 'P2').map(entry => ({ kind: 'activation-error' as const, path: 'root', client: entry.text })),
   ];
   const activation = { hosts: run.p2.hosts, activated: run.p2.activated };
-  if (differences.length === 0 && activation.activated === 0) {
-    return makeReport({ ...head, verdict: 'error', activation, error: `no island host was activated (${activation.hosts} on the page): zero records would prove nothing` }, null);
+  // Every host must activate (deferred triggers are driven in the page); a host that never did is
+  // named, since zero records over it would prove nothing. A host whose adoption failed shows as
+  // differences (its status write, its forma:error). A state whose page has no host (a list of
+  // islands at length 0) has nothing to activate: equal, with the count saying so.
+  if (differences.length === 0 && run.p2.inactive.length) {
+    const named = run.p2.inactive.map(host => `${host.component ?? '?'} at ${host.path} (${host.trigger})`).join('; ');
+    return makeReport({ ...head, verdict: 'error', activation, error: `${activation.activated} of ${activation.hosts} island hosts activated; never activated: ${named}` }, null);
   }
   return makeReport({ ...head, activation }, { differences, first: differences[0] ?? null, count: differences.length, structural: 0, holderAmbiguous: 0 });
 }
@@ -219,6 +231,24 @@ export interface CheckOptions extends PlanOptions {
   readonly browser: Browser;
   /** Test seam (renderBoth): rewrites the served document before the browser parses it. */
   readonly alterServerHtml?: (html: string) => string;
+  /** Test seam: P2's observer watches a detached element (the positive control must then fail). */
+  readonly observeDetached?: boolean;
+  /** How long one state's boot may take before that state is an error (default 30 s). */
+  readonly bootTimeout?: number;
+}
+
+/**
+ * A module the typed path refused and the walker alone rendered, without corpus.json declaring
+ * `serverPath: "low-level"`: a `server-refused` report that fails the run, naming the codes.
+ */
+export function fallbackReport(plan: ModulePlan, server: Served, options: PlanOptions): Report | null {
+  if (server.path !== 'low-level' || options.lowLevel || plan.entry.serverPath === 'low-level') return null;
+  const codes = server.bind.map(refusal => `${refusal.code}${refusal.path ? ` at ${refusal.path}` : ''}`).join(', ') || 'no code';
+  const first = server.bind[0];
+  return makeReport({
+    module: plan.entry.name, seed: options.seed, index: plan.indices[0] ?? 0, check: 'P1', verdict: 'server-refused', serverPath: 'low-level', bind: server.bind,
+    refusal: { code: first?.code ?? 'TYPED', path: first?.path ?? '', message: `the typed path refused the module (${codes}) and the walker alone rendered it; corpus.json does not declare serverPath: "low-level"` },
+  }, null);
 }
 
 export interface Timings { prepare: number; launch: number; server: number; browser: number }
@@ -230,7 +260,7 @@ export async function check(plans: readonly ModulePlan[], options: CheckOptions,
   timings.server += performance.now() - started;
   started = performance.now();
   const reports: Report[] = [];
-  const page = new ParityPage(options.browser);
+  const page = new ParityPage(options.browser, options.bootTimeout);
   try {
     for (const plan of plans) {
       const name = plan.entry.name;
@@ -239,6 +269,8 @@ export async function check(plans: readonly ModulePlan[], options: CheckOptions,
         continue;
       }
       const server = served.get(name)!;
+      const fallback = fallbackReport(plan, server, options);
+      if (fallback) reports.push(fallback);
       for (let k = 0; k < plan.indices.length; k++) {
         const index = plan.indices[k]!;
         const state = plan.states[k]!;
@@ -255,6 +287,7 @@ export async function check(plans: readonly ModulePlan[], options: CheckOptions,
         const html = options.alterServerHtml ? options.alterServerHtml(document.html) : document.html;
         const run = await page.run({ html, headers: document.headers }, { twin: plan.twin, entry: plan.script }, {
           module: name, index, state, schema: plan.described.schema, props: plan.entry.page.props, entry: plan.script !== null,
+          ...(options.observeDetached ? { observeDetached: true } : {}),
         });
         const p1 = p1Report({ ...base, html }, run);
         reports.push(p1.verdict === 'equal' || !plan.diagnostics.length ? p1 : { ...p1, compiler: plan.diagnostics });

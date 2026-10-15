@@ -77,6 +77,20 @@ export function structuralClasses(reports: readonly Report[]): string[] {
   return [...classes].sort();
 }
 
+/** Which modules the typed path rendered and which the walker alone did, with the refusal codes. */
+export function serverPaths(reports: readonly Report[]): { typed: string[]; lowLevel: { module: string; codes: string[] }[] } {
+  const typed = new Set<string>(), low = new Map<string, Set<string>>();
+  for (const report of reports) {
+    if (report.serverPath === 'typed') typed.add(report.module);
+    if (report.serverPath === 'low-level') {
+      const codes = low.get(report.module) ?? new Set<string>();
+      for (const refusal of report.bind ?? []) codes.add(refusal.code);
+      low.set(report.module, codes);
+    }
+  }
+  return { typed: [...typed], lowLevel: [...low].map(([module, codes]) => ({ module, codes: [...codes] })) };
+}
+
 /** Server holders compared over the run (e2e/parity/README.md, 'What parity compares'). */
 export function holderAmbiguous(reports: readonly Report[]): number {
   return reports.reduce((sum, report) => sum + (report.holderAmbiguous ?? 0), 0);
@@ -112,6 +126,8 @@ export function summaryText(result: SuiteResult): string {
   for (const [check, verdicts] of Object.entries(counts)) {
     lines.push(`  ${check}: ${Object.entries(verdicts).map(([verdict, n]) => `${verdict} ${n}`).join(', ')}`);
   }
+  const paths = serverPaths(result.reports);
+  lines.push(`server paths: typed ${paths.typed.length} modules, walker-only ${paths.lowLevel.length}${paths.lowLevel.length ? ` (${paths.lowLevel.map(item => `${item.module}: ${item.codes.join(', ') || 'forced'}`).join('; ')})` : ''}`);
   const classes = structuralClasses(result.reports);
   lines.push(`structural classes: ${classes.length}${classes.length ? ` (${classes.join('; ')})` : ''}`);
   lines.push(`holder-ambiguous: ${holderAmbiguous(result.reports)} (server U+200B holders compared, each matching client "" or U+200B: the wire cannot tell them apart)`);

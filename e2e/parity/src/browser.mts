@@ -54,6 +54,8 @@ export interface StateInput {
   readonly props: 'none' | 'named' | 'destructured';
   /** Whether the module has a production browser entry (P2 runs only then). */
   readonly entry: boolean;
+  /** Test seam: P2's observer watches a detached element, so the positive control must fail. */
+  readonly observeDetached?: boolean;
 }
 
 export interface MutationRecordData {
@@ -70,11 +72,13 @@ export interface P2Result {
   readonly records: readonly MutationRecordData[];
   /** `forma:error` details dispatched during activation. */
   readonly events: readonly string[];
-  /** The positive control: records the observer saw for one deliberate write (must be 1). */
-  readonly caught: number;
+  /** The positive control: whether P2's own observer, still connected, recorded each deliberate write. */
+  readonly control: { readonly attributes: boolean; readonly childList: boolean; readonly characterData: boolean };
   readonly hosts: number;
-  /** Hosts whose hydration ran and holds core's disposer afterwards. */
+  /** Hosts whose hydration ran and holds core's disposer afterwards (deferred triggers driven). */
   readonly activated: number;
+  /** Hosts that never activated, with their trigger. */
+  readonly inactive: readonly { readonly path: string; readonly trigger: string; readonly component: string | null }[];
 }
 
 export interface Logged { readonly step: string; readonly text: string }
@@ -108,8 +112,12 @@ export class ParityPage {
 
   private readonly browser: Browser;
 
-  constructor(browser: Browser) {
+  private readonly bootTimeout: number;
+
+  /** `bootTimeout`: how long one state's boot may take before that state is an error (the run goes on). */
+  constructor(browser: Browser, bootTimeout = 30_000) {
     this.browser = browser;
+    this.bootTimeout = bootTimeout;
   }
 
   private async open(): Promise<Page> {
@@ -140,9 +148,20 @@ export class ParityPage {
     this.entry = bundles.entry;
     this.input = JSON.stringify(input);
     this.pageErrors = [];
-    await page.goto(`${ORIGIN}/?m=${encodeURIComponent(input.module)}&s=${input.index}`);
-    await page.waitForFunction(() => (window as unknown as { __parityResult?: unknown }).__parityResult !== undefined, undefined, { timeout: 30_000 });
-    const result = await page.evaluate(() => (window as unknown as { __parityResult: Omit<PageRun, 'pageErrors'> & { error?: string } }).__parityResult);
+    // One state that cannot boot (a blocked script, an early throw) is that state's error report;
+    // the run goes on with the next state and still fails overall.
+    let result: Omit<PageRun, 'pageErrors'> & { error?: string };
+    try {
+      await page.goto(`${ORIGIN}/?m=${encodeURIComponent(input.module)}&s=${input.index}`);
+      await page.waitForFunction(() => (window as unknown as { __parityResult?: unknown }).__parityResult !== undefined, undefined, { timeout: this.bootTimeout });
+      result = await page.evaluate(() => (window as unknown as { __parityResult: Omit<PageRun, 'pageErrors'> & { error?: string } }).__parityResult);
+    } catch (error) {
+      const reason = (error instanceof Error ? error.message : String(error)).split('\n')[0];
+      return {
+        served: null, twin: null, twinError: null, p2: null, error: `the boot did not finish in ${this.bootTimeout} ms: ${reason}`,
+        logged: [], violations: [], pageErrors: [...this.pageErrors],
+      };
+    }
     return {
       served: result.served ?? null,
       twin: result.twin ?? null,
