@@ -72,11 +72,14 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   const scope=options.scope?.(scopeOptions)??new AdoptionLifecycle(scopeOptions);
   const listeners:Listener[]=[];
   let nextBinding=0,initialFailure=false;
+  function rememberFailure(diagnostic:AdoptionDiagnostic|undefined):void {
+    if(diagnostic&&!initialFailure){initialFailure=true;options.errorContext?.(diagnostic);}
+  }
   function at<T>(label:string,fn:()=>T):T {
     const binding=nextBinding++,parent=currentAdoptionDiagnostic();
     const diagnostic=Object.freeze({binding,path:`${parent?.path??''}/${label}[${binding}]`});
     try{return withAdoptionDiagnostic(diagnostic,fn);}catch(error){
-      if(!initialFailure){initialFailure=true;options.errorContext?.(diagnostic);}throw error;
+      rememberFailure(diagnostic);throw error;
     }
   }
   const controlBindings=new Map<ControlToken,{read?:()=>unknown;skip?:{value:unknown};diagnostic?:AdoptionDiagnostic}>();
@@ -485,10 +488,12 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       walk(value,cursor,ns,true);cursor.finish();
     };
     scope.run(()=>start(construct(build,options.target==='public'?contentNs(host):contentNs(host.parentNode))));
-    for(const observation of controls.finish())if(observation.kind==='binding'&&observation.edited){
+    for(const observation of controls.finish(token=>rememberFailure(controlBindings.get(token)?.diagnostic)))if(observation.kind==='binding'&&observation.edited){
       const binding=controlBindings.get(observation.token)!;
       if(!binding.read)refuse();
-      withAdoptionDiagnostic(binding.diagnostic,()=>scope.queueEdit(binding.read!,observation.value));binding.skip={value:observation.value};
+      try{withAdoptionDiagnostic(binding.diagnostic,()=>scope.queueEdit(binding.read!,observation.value));}
+      catch(error){rememberFailure(binding.diagnostic);throw error;}
+      binding.skip={value:observation.value};
     }
     scope.seal();
   }catch(error){dispose();throw error;}

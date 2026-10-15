@@ -28,6 +28,15 @@ describe('compiled activation transaction',()=>{
   expect(events.map(event=>event.detail.binding)).toEqual([1,2,2]);expect(events[0]!.detail.path).toBe('/node[0]/@title[1]');expect(events[1]!.detail.path).toBe('/node[0]/node[1]/@ref[2]');expect(events[2]!.detail.path).toBe('/node[0]/node[1]/@onClick[2]');expect(events[1]!.detail.code).toBe('FORMA_E_HYDRATE_REF');expect(events[2]!.detail.code).toBe('FORMA_E_HYDRATE_EFFECT');
   expect(a!.getAttribute('data-forma-status')).toBe('error');expect(b!.getAttribute('data-forma-status')).toBe('error');
  });
+ it('retains the exact control binding context for default and edited-target refusals',()=>{
+  const [wrong,edited]=hosts(['<input value="wrong">','<input value="server">']),events:CustomEvent[]=[];edited!.querySelector('input')!.value='typed';
+  document.addEventListener('forma:error',event=>events.push(event as CustomEvent));vi.spyOn(console,'error').mockImplementation(()=>{});
+  activateIslands({C0:compiled(()=>h('section',null,h('input',{value:()=> 'server'}))),C1:compiled(()=>h('section',null,h('input',{value:()=> 'server'})))});
+  expect(events.map(event=>event.detail)).toEqual([
+   {island:'C0',occurrence:0,binding:2,path:'/node[0]/node[1]/@value[2]',code:'FORMA_E_HYDRATE_VALUE'},
+   {island:'C1',occurrence:1,binding:2,path:'/node[0]/node[1]/@value[2]',code:'FORMA_E_HYDRATE_INPUT_TARGET'},
+  ]);expect(wrong!.querySelector('input')!.value).toBe('wrong');expect(edited!.querySelector('input')!.value).toBe('typed');
+ });
  it('never selects a client fallback for an empty SSR host',()=>{
   const [host]=hosts(['']),original=host!,component=vi.fn(()=>h('section',null,h('button',null,'new')));vi.spyOn(console,'error').mockImplementation(()=>{});activateIslands({C0:compiled(component)});
   expect(document.body.firstElementChild).toBe(original);expect(host!.childNodes).toHaveLength(0);expect(host!.getAttribute('data-forma-status')).toBe('error');expect(component).toHaveBeenCalledOnce();
