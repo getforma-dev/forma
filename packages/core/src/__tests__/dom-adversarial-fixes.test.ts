@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from '../dom/__tests__/helpers/compiled-island.js';
 // Defects found by adversarial verification of the 1.3.0 DOM work.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, clearDiagnostics } from '../runtime';
@@ -48,8 +49,9 @@ describe('island teardown removes deferred work (HIGH)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Inter" data-forma-hydrate="interaction"' +
       ' data-forma-status="pending"><span>x</span></div>';
+    installState();
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Inter: hydrateFn });
+    activateIslands(emptyRegistry({ Inter: hydrateFn }));
     const el = document.querySelector('[data-forma-island]') as HTMLElement;
     deactivateIsland(el);
     el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
@@ -65,8 +67,9 @@ describe('island teardown removes deferred work (HIGH)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Vis" data-forma-hydrate="visible"' +
       ' data-forma-status="pending"><span>x</span></div>';
+    installState();
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Vis: hydrateFn });
+    activateIslands(emptyRegistry({ Vis: hydrateFn }));
     expect(observe).toHaveBeenCalledTimes(1);
     deactivateAllIslands(document);
     expect(disconnect).toHaveBeenCalledTimes(1);
@@ -100,3 +103,5 @@ describe('h() dual-use tag defaults to HTML without svg context (MEDIUM)', () =>
     expect(el.namespaceURI).toBe('http://www.w3.org/1999/xhtml');
   });
 });
+
+useFreshDocument();

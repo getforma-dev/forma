@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { activateIslands } from '../activate';
+import { compiled, emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -19,11 +20,12 @@ describe('activateIslands', () => {
         <p>Island 1</p>
       </div>
     `;
+    installState();
 
     const hydrateFnA = vi.fn();
     const hydrateFnB = vi.fn();
 
-    activateIslands({ FormA: hydrateFnA, FormB: hydrateFnB });
+    activateIslands(emptyRegistry({ FormA: hydrateFnA, FormB: hydrateFnB }));
 
     // Both hydrate functions called
     expect(hydrateFnA).toHaveBeenCalledTimes(1);
@@ -35,49 +37,13 @@ describe('activateIslands', () => {
     expect(islands[1]?.getAttribute('data-forma-status')).toBe('active');
   });
 
-  it('passes null props when no props sources exist', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Simple" data-forma-status="pending">
-        <span>No props</span>
-      </div>
-    `;
-
-    const hydrateFn = vi.fn();
-    activateIslands({ Simple: hydrateFn });
-
-    const island = document.querySelector('[data-forma-island]') as HTMLElement;
-    expect(hydrateFn).toHaveBeenCalledWith(island, null);
-  });
-
-  it('loads inline props from data-forma-props attribute', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="WithProps"
-           data-forma-props='{"name":"test","count":42}'
-           data-forma-status="pending">
-        <span>Has props</span>
-      </div>
-    `;
-
-    const hydrateFn = vi.fn();
-    activateIslands({ WithProps: hydrateFn });
-
-    const island = document.querySelector('[data-forma-island]') as HTMLElement;
-    expect(hydrateFn).toHaveBeenCalledWith(island, { name: 'test', count: 42 });
-  });
-
-  it('loads props from shared script block', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="ScriptProps" data-forma-status="pending">
-        <span>Script props</span>
-      </div>
-      <script id="__forma_islands" type="application/json">{"0":{"title":"hello"}}</script>
-    `;
-
-    const hydrateFn = vi.fn();
-    activateIslands({ ScriptProps: hydrateFn });
-
-    const island = document.querySelector('[data-forma-island]') as HTMLElement;
-    expect(hydrateFn).toHaveBeenCalledWith(island, { title: 'hello' });
+  it('passes an empty declared props object to a unary component', () => {
+    document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Simple" data-forma-status="pending"><span>No props</span></div>';
+    installState();
+    const component = vi.fn();
+    activateIslands(emptyRegistry({ Simple: component }));
+    expect(component).toHaveBeenCalledExactlyOnceWith({});
+    expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('active');
   });
 
   it('error in island 0 does not prevent island 1 from activating', () => {
@@ -89,14 +55,15 @@ describe('activateIslands', () => {
         <p>Working</p>
       </div>
     `;
+    installState();
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const workingFn = vi.fn();
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Broken: () => { throw new Error('kaboom'); },
       Working: workingFn,
-    });
+    }));
 
     const islands = document.querySelectorAll('[data-forma-island]');
     expect(islands[0]?.getAttribute('data-forma-status')).toBe('error');
@@ -105,20 +72,15 @@ describe('activateIslands', () => {
     errorSpy.mockRestore();
   });
 
-  it('missing registry entry sets status to error and warns', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Missing" data-forma-status="pending">
-        <p>No handler</p>
-      </div>
-    `;
-
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    activateIslands({});
-
-    expect(document.querySelector('[data-forma-island]')?.getAttribute('data-forma-status')).toBe('error');
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Missing'));
-    warnSpy.mockRestore();
+  it('missing registry entry refuses without changing the host', () => {
+    document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Missing" data-forma-status="pending"><p>No handler</p></div>';
+    installState();
+    const before = document.body.innerHTML;
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    activateIslands(emptyRegistry({}));
+    expect(document.body.innerHTML).toBe(before);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_REGISTRATION'));
+    error.mockRestore();
   });
 
   it('stores dispose function on island root element', () => {
@@ -127,8 +89,9 @@ describe('activateIslands', () => {
         <span>Content</span>
       </div>
     `;
+    installState();
 
-    activateIslands({ Disposable: vi.fn() });
+    activateIslands(emptyRegistry({ Disposable: vi.fn() }));
 
     const root = document.querySelector('[data-forma-island]') as any;
     expect(typeof root.__formaDispose).toBe('function');
@@ -142,6 +105,7 @@ describe('activateIslands', () => {
         <span>Track</span>
       </div>
     `;
+    installState();
 
     const island = document.querySelector('[data-forma-island]')!;
 
@@ -150,7 +114,7 @@ describe('activateIslands', () => {
       statusLog.push(island.getAttribute('data-forma-status')!);
     });
 
-    activateIslands({ StatusTrack: hydrateFn });
+    activateIslands(emptyRegistry({ StatusTrack: hydrateFn }));
 
     // During hydration, status was 'hydrating'
     expect(statusLog).toContain('hydrating');
@@ -162,57 +126,20 @@ describe('activateIslands', () => {
     document.body.innerHTML = `<div>No islands here</div>`;
 
     // Should not throw
-    expect(() => activateIslands({ SomeComponent: vi.fn() })).not.toThrow();
+    expect(() => activateIslands(emptyRegistry({ SomeComponent: vi.fn() }))).not.toThrow();
   });
 });
 
-describe('activateIslands prop sanitization', () => {
-  it('strips __proto__ from inline island props', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Test"
-           data-forma-props='{"__proto__":{"polluted":true},"safe":"ok"}'
-           data-forma-status="pending">
-        <span>Test</span>
-      </div>
-    `;
-    const hydrateFn = vi.fn();
-    activateIslands({ Test: hydrateFn });
-
-    const receivedProps = hydrateFn.mock.calls[0]![1];
-    expect(receivedProps.safe).toBe('ok');
-    expect(receivedProps).not.toHaveProperty('__proto__', { polluted: true });
-    expect(({} as any).polluted).toBeUndefined(); // no global pollution
-  });
-
-  it('strips constructor from inline island props', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Test"
-           data-forma-props='{"constructor":{"bad":true},"ok":1}'
-           data-forma-status="pending">
-        <span>Test</span>
-      </div>
-    `;
-    const hydrateFn = vi.fn();
-    activateIslands({ Test: hydrateFn });
-
-    const receivedProps = hydrateFn.mock.calls[0]![1];
-    expect(receivedProps.ok).toBe(1);
-    expect(receivedProps).not.toHaveProperty('constructor', { bad: true });
-  });
-
-  it('strips prototype from shared script block props', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Test" data-forma-status="pending">
-        <span>Test</span>
-      </div>
-      <script id="__forma_islands" type="application/json">{"0":{"prototype":{"x":1},"valid":"yes"}}</script>
-    `;
-    const hydrateFn = vi.fn();
-    activateIslands({ Test: hydrateFn });
-
-    const receivedProps = hydrateFn.mock.calls[0]![1];
-    expect(receivedProps.valid).toBe('yes');
-    expect(receivedProps).not.toHaveProperty('prototype', { x: 1 });
+describe('activateIslands declared props projection', () => {
+  it.each(['__proto__', 'constructor', 'prototype'])('never forwards undeclared %s keys beside a declared safe field', key => {
+    document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Test" data-forma-status="pending"><span>Test</span></div>';
+    installState([JSON.parse(`{"${key}":{"polluted":true},"safe":"ok"}`)]);
+    const component = vi.fn();
+    activateIslands({ Test: compiled(component, [[{ name: 'safe', type: { kind: 'string' } }]]) });
+    const received = component.mock.calls[0]![0];
+    expect(received).toEqual({ safe: 'ok' });
+    expect(Object.getOwnPropertyNames(received)).toEqual(['safe']);
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 });
 
@@ -222,3 +149,5 @@ describe('activateIslands barrel export', () => {
     expect(typeof domIndex.activateIslands).toBe('function');
   });
 });
+
+useFreshDocument();

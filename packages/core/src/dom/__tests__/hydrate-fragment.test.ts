@@ -1,3 +1,4 @@
+import { compiled, emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { trustedHtml } from '../trusted-html';
 /**
  * Fragments in adoption (FORMA-003, decision brief DR-7 (a)).
@@ -15,7 +16,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createEffect, createSignal, onError } from 'forma/reactive';
 import { h, Fragment, fragment } from '../element';
 import { mount } from '../mount';
-import { activateIslands } from '../activate';
+import { activateIslands, deactivateAllIslands } from '../activate';
 import { createShow } from '../show';
 import { createList } from '../list';
 import { hydrateIsland } from '../hydrate';
@@ -81,15 +82,16 @@ describe('Fragment adoption', () => {
       `<div data-forma-island="${id}" data-forma-component="Pair">` +
       `<span class="n"><!--f:t0-->${id}<!--/f:t0--></span><button class="inc">+</button></div>`,
     ).join('');
+    installState([{ id: 0 }, { id: 1 }]);
 
     activateIslands({
-      Pair: (el) => {
-        const [n, setN] = createSignal(Number(el.getAttribute('data-forma-island')));
+      Pair: compiled((props: { id: number }) => {
+        const [n, setN] = createSignal(props.id);
         return h(Fragment, null,
           h('span', { class: 'n' }, () => String(n())),
           h('button', { class: 'inc', onClick: () => setN(n() + 10) }, '+'),
         );
-      },
+      }, [[{ name: 'id', type: { kind: 'number' } }]]),
     });
 
     const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
@@ -182,14 +184,16 @@ describe('Fragment adoption', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Imp"><button>0</button></div>' +
       '<div data-forma-island="1" data-forma-component="Imp"><button>0</button></div>';
+    installState([{ id: 0 }, { id: 1 }]);
     activateIslands({
-      Imp: (el) => {
+      Imp: compiled((props: { id: number }) => {
+        const el = document.querySelector<HTMLElement>(`[data-forma-island="${props.id}"]`)!;
         const [n, setN] = createSignal(0);
         const button = el.querySelector('button')!;
         button.addEventListener('click', () => setN(n() + 1));
         createEffect(() => { button.textContent = String(n()); });
         return el;
-      },
+      }, [[{ name: 'id', type: { kind: 'number' } }]]),
     });
 
     const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
@@ -206,11 +210,12 @@ describe('Fragment adoption', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Bad"><span>x</span></div>' +
       '<div data-forma-island="1" data-forma-component="Good"><span>y</span></div>';
+    installState();
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    activateIslands({
+    activateIslands(emptyRegistry({
       Bad: () => document.createElement('span'),
       Good: () => h('div', null, h('span', null, 'y')),
-    });
+    }));
     const logged = error.mock.calls.map((call) => String(call[0]));
     error.mockRestore();
 
@@ -225,9 +230,11 @@ describe('Fragment adoption', () => {
     // fragment, which appending emptied. 2.0.1 kept such islands active.
     document.body.innerHTML = [0, 1].map((id) =>
       `<div data-forma-island="${id}" data-forma-component="Many"><p>server ${id}</p></div>`).join('');
+    installState([{ id: 0 }, { id: 1 }]);
     const setters: Array<(v: number) => void> = [];
     activateIslands({
-      Many: (el) => {
+      Many: compiled((props: { id: number }) => {
+        const el = document.querySelector<HTMLElement>(`[data-forma-island="${props.id}"]`)!;
         const fragment = templateMany(trustedHtml('<button>0</button><i>tail</i>'));
         el.append(fragment);
         const [n, setN] = createSignal(0);
@@ -235,7 +242,7 @@ describe('Fragment adoption', () => {
         const button = el.querySelector('button')!;
         createEffect(() => { button.textContent = String(n()); });
         return fragment;
-      },
+      }, [[{ name: 'id', type: { kind: 'number' } }]]),
     });
 
     const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
@@ -257,7 +264,8 @@ describe('Fragment adoption', () => {
       document.body.innerHTML =
         '<div data-forma-island="0" data-forma-component="Detached"><span>x</span></div>' +
         '<div id="app" data-forma-ssr><p>m</p></div><div id="direct" data-forma-ssr><p>d</p></div>';
-      activateIslands({ Detached: () => document.createElement('span') });
+      installState();
+      activateIslands(emptyRegistry({ Detached: () => document.createElement('span') }));
       mount(() => document.createElement('p') as unknown as HTMLElement, '#app');
       hydrateIsland(() => document.createElement('p'), document.getElementById('direct')!);
     } finally {
@@ -271,9 +279,13 @@ describe('Fragment adoption', () => {
       ['FORMA_E_HYDRATE_NODE', 'hydration'],
     ]);
     // A working island reports nothing.
-    document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Fine"><b>ok</b></div>';
+    const nextDocument = document.implementation.createHTMLDocument('positive sibling control');
+    nextDocument.body.innerHTML = '<div data-forma-island="0" data-forma-component="Fine"><b>ok</b></div>';
+    installState(undefined, nextDocument);
     const off2 = onError((err) => received.push([String(err), 'unexpected']));
-    activateIslands({ Fine: (el) => el });
+    activateIslands(emptyRegistry({ Fine: () => {} }), nextDocument);
+    expect(nextDocument.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('active');
+    deactivateAllIslands(nextDocument);
     off2();
     expect(received).toHaveLength(3);
   });
@@ -352,14 +364,18 @@ describe('Fragment adoption', () => {
 
   it('a component that returns nothing still activates (an island that sets up its own effects)', () => {
     document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Imperative"><b>0</b></div>';
-    activateIslands({
-      Imperative: (el) => {
+    installState();
+    activateIslands(emptyRegistry({
+      Imperative: () => {
+        const el = document.querySelector<HTMLElement>('[data-forma-component="Imperative"]')!;
         el.querySelector('b')!.textContent = 'set by the island';
         return undefined;
       },
-    });
+    }));
     const island = document.querySelector('[data-forma-island]')!;
     expect(island.getAttribute('data-forma-status')).toBe('active');
     expect(island.textContent).toBe('set by the island');
   });
 });
+
+useFreshDocument();

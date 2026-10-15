@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 /**
  * Tests for visible hydration trigger in activateIslands().
  */
@@ -9,6 +10,7 @@ let observerCallback: IntersectionObserverCallback;
 let observerInstance: { observe: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> };
 
 beforeEach(() => {
+  vi.stubGlobal('cancelIdleCallback', vi.fn());
   observerInstance = { observe: vi.fn(), disconnect: vi.fn() };
   // Must use function (not arrow) so it can be called with `new`
   const MockIO = vi.fn(function (this: any, cb: IntersectionObserverCallback) {
@@ -34,6 +36,7 @@ function makeIsland(id: number, component: string, trigger?: string): HTMLElemen
   el.setAttribute('data-forma-ssr', '');
   el.innerHTML = '<p>SSR content</p>';
   document.body.appendChild(el);
+  installState();
   return el;
 }
 
@@ -41,7 +44,7 @@ describe('activateIslands visible trigger', () => {
   it('hydrates load-trigger islands immediately', () => {
     const el = makeIsland(1, 'Counter', 'load');
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledOnce();
     expect(el.getAttribute('data-forma-status')).toBe('active');
   });
@@ -49,7 +52,7 @@ describe('activateIslands visible trigger', () => {
   it('hydrates islands with no trigger attribute immediately', () => {
     const el = makeIsland(1, 'Counter');
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledOnce();
     expect(el.getAttribute('data-forma-status')).toBe('active');
   });
@@ -57,7 +60,7 @@ describe('activateIslands visible trigger', () => {
   it('defers visible-trigger islands behind IntersectionObserver', () => {
     const el = makeIsland(1, 'Counter', 'visible');
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     expect(hydrateFn).not.toHaveBeenCalled();
     expect(el.getAttribute('data-forma-status')).toBe('pending');
@@ -67,7 +70,7 @@ describe('activateIslands visible trigger', () => {
   it('hydrates visible island when intersection fires', () => {
     const el = makeIsland(1, 'Counter', 'visible');
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     // Simulate intersection
     observerCallback(
@@ -83,7 +86,7 @@ describe('activateIslands visible trigger', () => {
   it('ignores non-intersecting entries', () => {
     const el = makeIsland(1, 'Counter', 'visible');
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     observerCallback(
       [{ isIntersecting: false, target: el } as unknown as IntersectionObserverEntry],
@@ -97,7 +100,7 @@ describe('activateIslands visible trigger', () => {
   it('defers interaction-trigger islands until user interaction', () => {
     const el = makeIsland(1, 'Counter', 'interaction');
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     // Should NOT hydrate immediately — waits for user interaction
     expect(hydrateFn).not.toHaveBeenCalled();
@@ -115,7 +118,7 @@ describe('activateIslands visible trigger', () => {
 
     const el = makeIsland(1, 'Counter', 'idle');
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     // Should NOT hydrate immediately — waits for idle callback
     expect(hydrateFn).not.toHaveBeenCalled();
@@ -126,12 +129,11 @@ describe('activateIslands visible trigger', () => {
     expect(hydrateFn).toHaveBeenCalledOnce();
     expect(el.getAttribute('data-forma-status')).toBe('active');
 
-    vi.unstubAllGlobals();
   });
 
   it('creates IntersectionObserver with 200px rootMargin', () => {
     makeIsland(1, 'Counter', 'visible');
-    activateIslands({ Counter: vi.fn(() => null) });
+    activateIslands(emptyRegistry({ Counter: vi.fn(() => null) }));
 
     expect(globalThis.IntersectionObserver).toHaveBeenCalledWith(
       expect.any(Function),
@@ -139,3 +141,5 @@ describe('activateIslands visible trigger', () => {
     );
   });
 });
+
+useFreshDocument();
