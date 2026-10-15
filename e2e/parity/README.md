@@ -59,23 +59,38 @@ step. `CARGO_TARGET_DIR` is honoured.
    module, or the module is an error: the browser entry and the served module would not be a pair.
 2. **Serve.** `parity_render typed` loads a synthesized manifest through `load_ir_modules`, binds
    `DynProps` (a harness `PageProps` whose Rust schema is the module's own, and whose value is the
-   state projected by the declared types with a derived struct's codes: `RENDER-402` a non-finite
-   number, `RENDER-403` a date out of range, `RENDER-404` a wrong kind, a missing value or an
-   undeclared enum literal), finalizes and renders each state. The result is the server's own
-   document and headers: its nonce, `strict-dynamic` and Trusted Types policy, and the boot as the
-   route's integrity-checked module. A module the typed path refuses (a load or bind code) is
-   rendered by the walker alone (`SlotData::from_json` + `walk_to_html_counted`) in a minimal
-   document with as strict a script policy, and its reports say `serverPath: low-level` and why.
+   state projected by the declared types, handed to the crate's own `PropValue` implementations
+   wherever they are public: `Option`, `bool`, `String`, `f64` (`RENDER-402` a non-finite number),
+   `Vec` (the crate's row paths and depth limit), enums through `EncodeContext::enumeration`
+   (`RENDER-404` an undeclared literal); the harness keeps a wrong JSON kind or a missing value
+   (`RENDER-404`), dates (`RENDER-403`, mirrored: `SystemTime` cannot reach the ±8.64e15 bounds on
+   every platform) and the derive's object projection. `RENDER-401`, an integer origin beyond
+   ±(2^53 − 1), cannot occur: every JSON number is an f64. It finalizes and renders each state. The
+   result is the server's own document and headers: its nonce, `strict-dynamic` and Trusted Types
+   policy, the root's `data-forma-build` (FORMA-186), and the boot as the route's integrity-checked
+   module. A module the typed path refuses (a load or bind code) fails the run with a
+   `server-refused` report naming the codes, unless corpus.json declares `serverPath: "low-level"`
+   for it; it is then rendered by the walker alone (`SlotData::from_json` +
+   `walk_to_html_counted`) in a minimal document with as strict a script policy. The summary
+   prints `server paths: typed N modules, walker-only M (module: codes)`.
 3. **Browse.** The boot serializes the served root (`[data-forma-ssr]`) before any script touches
-   it; for a page with islands it arms a MutationObserver over that root, imports the production
-   entry, drains records through a microtask and a macrotask, and checks the observer catches one
-   deliberate write (the positive control); then it renders core's twin in a fresh host. Console
-   errors, uncaught errors and policy violations are recorded with the step they happened in.
+   it. For a page with islands it arms a MutationObserver over that root, imports the production
+   entry and drains records through a microtask and a macrotask. Hosts whose `data-forma-hydrate`
+   defers them are activated by driving the trigger, never skipped: `interaction` a pointerdown on
+   the host, `visible` the host scrolled into view and two frames, `idle` an idle callback (work a
+   page schedules beyond that is outside the drain). Then the positive control runs on that same
+   observer while it is still connected: an attribute, a childList and a characterData write to
+   the served root, each of which the observer's own records must contain; those three are set
+   aside by identity and every other record counts. Then it renders core's twin in a fresh host.
+   Console errors, uncaught errors and policy violations are recorded with the step they happened
+   in. A state whose boot does not finish (a blocked script, an early throw) is that state's
+   `error`, and the run goes on.
 4. **Report.** P1 compares the two trees (below). P2 is equal when activation made no mutation
-   record, dispatched no `forma:error` and logged no error, and every island host holds core's
-   disposer afterwards (zero records over hosts that never activated would prove nothing). A P2
-   difference names the record (`mutation` at its DOM path, old and new value) or the activation
-   error (`FORMA_E_HYDRATE_VALUE` at `/node[0]/node[3]`).
+   record, dispatched no `forma:error` and logged no error, the control was seen, and every island
+   host holds core's disposer afterwards: a host that never activated is an `error` naming it and
+   its trigger (zero records over it would prove nothing; a state with no host has nothing to
+   activate). A P2 difference names the record (`mutation` at its DOM path, old and new value) or
+   the activation error (`FORMA_E_HYDRATE_VALUE` at `/node[0]/node[3]`).
 
 ## Generated states
 
@@ -160,7 +175,10 @@ throw.
 `expected-divergent.json` lists the divergences known today, each with the ticket that clears it
 (FORMA-181 checkpoint B and FORMA-182 rules 2 to 7 add theirs as they land) or, for a divergence
 the harness found that has no ticket yet, `finding F<n>`. An entry matches by module, state (or
-`*`), check, kind and, when given, path and a pattern over both values (or over the error). A
+`*`), check, kind, path and a pattern over both values (`server → client`), or for an `error` a
+pattern over its message. Every entry must be pinned, and the list is refused on load otherwise:
+a state index, or `*` only with a path (an error is pinned by its message); a message pattern for
+an error and a value pattern for every other kind, so a changed value is never swallowed. A
 report is `expected-divergent` only when every difference in it is matched. The harness never
 skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
 run as an unexpected pass, so the entry is removed the day its fix lands.

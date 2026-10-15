@@ -9,8 +9,14 @@
  *    before any script has touched it.
  * 2. P2 (pages with islands): a MutationObserver armed over the served root, the module's
  *    production entry imported (its evaluation is `activateIslands` with the compiled
- *    registrations), records drained through a microtask and a macrotask; then the positive
- *    control: the same observer configuration must see one deliberate write.
+ *    registrations), records drained through a microtask and a macrotask. Hosts whose
+ *    `data-forma-hydrate` defers them are activated by driving the trigger (`interaction`: a
+ *    pointerdown on the host; `visible`: the host scrolled into view and two frames; `idle`: an
+ *    idle callback), never skipped, and every host must hold core's disposer afterwards (a host
+ *    that never activates is named). Then the positive control, on that same observer while it is
+ *    still connected: one attribute, one childList and one characterData write to the served root,
+ *    each of which its own records must contain; those three records are then set aside by
+ *    identity, and every other record is a write activation made.
  * 3. P3 (a module that names a setter): the entry's `__parityTransition` called with the next
  *    state's props, a microtask and a macrotask, and the served root serialized again (the adopted
  *    DOM as the islands left it), for comparison with the next state's own server render.
@@ -41,19 +47,24 @@ export function reviveByType(value: unknown, type: { kind: string; element?: unk
   }
 }
 
-/** A mutation record as data: its type, the DOM path of its target from the served root, the values. Runs in the page. */
-export function describeRecord(record: MutationRecord, root: Node): Record<string, unknown> {
+/** A node's DOM path from the served root, by child position (`root > main[node 1] > …`). Runs in the page. */
+export function nodePath(target: Node, root: Node): string {
   const steps: string[] = [];
-  for (let node: Node | null = record.target; node && node !== root; node = node.parentNode) {
+  for (let node: Node | null = target; node && node !== root; node = node.parentNode) {
     const parent: Node | null = node.parentNode;
     if (!parent) { steps.unshift('(detached)'); break; }
     const index = Array.prototype.indexOf.call(parent.childNodes, node) + 1;
     steps.unshift(node.nodeType === 1 ? `${(node as Element).localName}[node ${index}]` : node.nodeType === 3 ? `#text[node ${index}]` : `#comment[node ${index}]`);
   }
+  return ['root', ...steps].join(' > ');
+}
+
+/** A mutation record as data: its type, the DOM path of its target from the served root, the values. Runs in the page. */
+export function describeRecord(record: MutationRecord, root: Node): Record<string, unknown> {
   const target = record.target as Element & CharacterData;
   return {
     type: record.type,
-    path: ['root', ...steps].join(' > '),
+    path: nodePath(record.target, root),
     attribute: record.attributeName,
     oldValue: record.oldValue,
     value: record.type === 'attributes' ? target.getAttribute(record.attributeName!) : record.type === 'characterData' ? target.data : null,
@@ -66,6 +77,7 @@ export const BOOT_SOURCE = `// FORMA-183 parity harness boot (e2e/parity/src/boo
 import { mount } from '${CORE_URL}';
 const canonicalizeDom = ${canonicalizeDom.toString()};
 const reviveByType = ${reviveByType.toString()};
+const nodePath = ${nodePath.toString()};
 const describeRecord = ${describeRecord.toString()};
 const step = { name: 'boot' };
 const logged = [];
@@ -94,21 +106,46 @@ const settle = async () => { await new Promise(resolve => queueMicrotask(resolve
       const records = [];
       const events = [];
       root.addEventListener('forma:error', event => events.push(JSON.stringify(event.detail)));
+      // The observer the zero-write claim rests on. observeDetached is a test seam: it points the
+      // observer at a detached element, which the controls below must then expose.
+      const target = input.observeDetached ? document.createElement('div') : root;
       const observer = new MutationObserver(list => { for (const record of list) records.push(describeRecord(record, root)); });
-      observer.observe(root, { subtree: true, childList: true, attributes: true, characterData: true, attributeOldValue: true, characterDataOldValue: true });
+      observer.observe(target, { subtree: true, childList: true, attributes: true, characterData: true, attributeOldValue: true, characterDataOldValue: true });
       await import('/_parity/entry.mjs');
       await settle();
-      for (const record of observer.takeRecords()) records.push(describeRecord(record, root));
-      observer.disconnect();
-      const control = new MutationObserver(() => {});
-      control.observe(root, { subtree: true, attributes: true });
-      root.setAttribute('data-parity-control', '');
-      const caught = control.takeRecords().length;
-      control.disconnect();
-      root.removeAttribute('data-parity-control');
-      // Hosts whose hydration ran and holds a disposer (core sets it when it starts, removes it on failure).
+      // Deferred hosts are activated by driving their triggers, never skipped. A host holds core's
+      // disposer once its hydration ran (core sets it when hydration starts, removes it on failure).
       const hosts = Array.from(root.querySelectorAll('[data-forma-island]'));
-      p2 = { records, events, caught, hosts: hosts.length, activated: hosts.filter(host => typeof host.__formaDispose === 'function').length };
+      const waiting = () => hosts.filter(host => typeof host.__formaDispose !== 'function');
+      if (waiting().length) {
+        for (const host of waiting()) {
+          const trigger = host.getAttribute('data-forma-hydrate');
+          if (trigger === 'interaction') host.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+          else if (trigger === 'visible') host.scrollIntoView();
+        }
+        await new Promise(resolve => (typeof requestIdleCallback === 'function' ? requestIdleCallback(() => resolve(), { timeout: 1000 }) : setTimeout(resolve, 250)));
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        await settle();
+      }
+      for (const record of observer.takeRecords()) records.push(describeRecord(record, root));
+      // The positive control, on the same observer while it is connected: its own records must hold
+      // each of the three writes; those three are set aside by identity, anything else is a write.
+      const marker = document.createComment('parity-control');
+      root.setAttribute('data-parity-control', '');
+      root.appendChild(marker);
+      marker.data = 'parity-control-written';
+      const control = { attributes: false, childList: false, characterData: false };
+      for (const record of observer.takeRecords()) {
+        if (record.type === 'attributes' && record.target === root && record.attributeName === 'data-parity-control') control.attributes = true;
+        else if (record.type === 'childList' && Array.prototype.includes.call(record.addedNodes, marker)) control.childList = true;
+        else if (record.type === 'characterData' && record.target === marker) control.characterData = true;
+        else records.push(describeRecord(record, root));
+      }
+      observer.disconnect();
+      root.removeAttribute('data-parity-control');
+      marker.remove();
+      const inactive = waiting().map(host => ({ path: nodePath(host, root), trigger: host.getAttribute('data-forma-hydrate') || 'load', component: host.getAttribute('data-forma-component') }));
+      p2 = { records, events, control, hosts: hosts.length, activated: hosts.length - inactive.length, inactive };
     }
     let p3 = null;
     if (input.next !== undefined && p2) {

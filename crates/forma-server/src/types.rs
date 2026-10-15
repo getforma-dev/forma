@@ -124,7 +124,11 @@ pub struct AssetManifest {
     pub writer: String,
     /// Application identity; the same grammar as the worker namespace.
     pub app: String,
-    /// Opaque build identifier. Deployment identity is owned by FORMA-186.
+    /// The build's deployment identity (FORMA-186, DR-29): `@getforma/build` computes
+    /// it from the build's own outputs and compiles it into every bundle, and this
+    /// server writes it on the page's root as `data-forma-build`, where core
+    /// compares it with its bundle's before it activates anything. Opaque here: any
+    /// non-empty string, written escaped.
     pub build: String,
     /// Logical names mapped to emitted filenames.
     pub aliases: HashMap<String, String>,
@@ -141,7 +145,9 @@ pub struct AssetMetadata {
     pub immutable: bool,
     /// Canonical SHA-384 of uncompressed final bytes (`sha384-` and 64 base64 characters).
     pub integrity: String,
-    /// Metadata for a retained asset; retention discovery belongs to FORMA-186.
+    /// A file of the previous release that the build copied in for tabs still open on
+    /// it (FORMA-186, DR-29, L-25). It is served as any immutable asset is, and a
+    /// retained entry that is not immutable is refused at start.
     #[serde(default)]
     pub retained: bool,
 }
@@ -301,6 +307,11 @@ impl AssetManifest {
             if !valid_integrity(&meta.integrity) {
                 return Err(format!(
                     "MANIFEST-103 invalid SHA-384 integrity for {name:?}"
+                ));
+            }
+            if meta.retained && !meta.immutable {
+                return Err(format!(
+                    "MANIFEST-103 retained asset {name:?} must be immutable: a retained file is the previous release's, served as a content-named asset"
                 ));
             }
         }

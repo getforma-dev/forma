@@ -61,8 +61,12 @@ Evidence:
 ## Manifest 2
 
 `version` is 2. `writer` is the build package's base triple. `app` is a required
-application name. `build` currently carries the existing filename-derived build
-identifier (`dev` in watch); FORMA-186 owns the final deployment identity.
+application name. `build` is the deployment identity (FORMA-186, DR-29; L-6 as
+amended by L-56): 16 lowercase hex characters computed from every output of a first
+bundling pass (bundles, `.ir` modules, css, fonts) and the writers' versions,
+compiled into every JavaScript bundle (`__FORMA_BUILD__` and a banner), and `dev` in
+watch. forma-server stamps it on the page's root and core compares it (the other
+FORMA-186 slices).
 
 `aliases` maps logical filenames to output filenames. `assets` maps each output
 filename to `{ immutable, integrity?, retained? }`. The build emits SHA-384/base64
@@ -166,7 +170,7 @@ A listed future owner is not a claim that its contract is complete.
 | Props schema | forma-ir | V3 schema/default load validation (185); typed derive/bind mutation suite remains 102/103. |
 | Markers, escaping/value and URL rules | core | `js_emitter_contract` HTML goldens, core malicious-value/URL and hydration tests. Later declared-props qualification remains separate. |
 | State block/island set/digests | core | Current activation/serialization tests and packed template interactions; declared-props/state contract is still pending, not supplied by manifest 2. |
-| Deployment identity | core | `build` carrier here; final identity, retention/tabs/skew recovery remain 186/188. |
+| Deployment identity | core | The identity is computed and compiled in (`identity.test.ts`); the page's stamp, the compare and retention are the other FORMA-186 slices; the drill, 186/188. |
 | Manifest schema 2 | forma-server | Real build metadata, Rust schema/mode/ref/cache checks, packed minimal/dashboard load and before-bind negative controls (112/P17). |
 | Trusted Types policy names | forma-server | Existing CSP/Trusted Types browser/server tests; 109's full enforcement remains its own work. |
 | Compiler import names | compiler | `supported-surface.test.ts` keeps root core/runtime h imports and excludes removed imports; packed runtime/declaration surface test; 110 removes legacy plugins. |

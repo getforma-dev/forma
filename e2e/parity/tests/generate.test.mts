@@ -230,6 +230,13 @@ test('list keys: each generated array of rows gets unique identities at the key 
     assert.equal(new Set(slugs).size, slugs.length, `state ${index}: unique slugs`);
   }
   assert.ok(KEY_INTEGER_BASES.includes(2 ** 53 - 1) && KEY_INTEGER_BASES.includes(-(2 ** 53 - 1)), 'the safe bounds are key edges');
+  // String keys: unique even where rule 1 makes two edges one text ("\r\n" and "\r"; NUL and U+FFFD).
+  const ruleOne = (text: string) => text.replace(/\r\n?/g, '\n').replace(/\0/g, '\uFFFD');
+  const strings: Schema = [[{ name: 'rows', type: { kind: 'array', element: { kind: 'object', object: 1 } } }], [{ name: 'id', type: { kind: 'string' } }]];
+  for (let index = 0; index < 60; index++) {
+    const ids = (generate(strings, 'seed', index, { keyPaths: [['id']] }).rows as { id: string }[]).map(row => ruleOne(row.id));
+    assert.equal(new Set(ids).size, ids.length, `state ${index}: key texts unique under rule 1`);
+  }
   const unkeyed = generate(schema, 'seed', 4) as { rows: { id: number }[] };
   assert.ok(unkeyed.rows.some(row => !Number.isInteger(row.id)), 'without key paths the field is an ordinary number');
 });

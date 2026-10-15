@@ -25,15 +25,40 @@ export interface ExpectedEntry {
   readonly note: string;
 }
 
-export function readExpected(file = new URL('../expected-divergent.json', import.meta.url)): readonly ExpectedEntry[] {
-  const parsed = JSON.parse(readFileSync(file, 'utf8')) as { entries: ExpectedEntry[] };
+const KINDS: ReadonlySet<string> = new Set([
+  'tag', 'namespace', 'attribute-missing', 'attribute-extra', 'missing', 'extra',
+  'attribute-value', 'attribute-namespace', 'text', 'comment', 'key', 'mutation', 'activation-error', 'error',
+]);
+
+/**
+ * Why an entry cannot be used, or null. An entry names its module, check and kind, the ticket that
+ * clears it and why; a state index, or `*` only together with a path (an error has no path, and is
+ * pinned by its message); and a pattern: the message for `error`, both values for every other kind
+ * (`server → client`), so a changed value is never swallowed by an entry written for another.
+ */
+export function invalidEntry(entry: Partial<ExpectedEntry>): string | null {
+  if (typeof entry.module !== 'string' || !entry.module) return 'it names no module';
+  if (!['P1', 'P2', 'P3'].includes(entry.check as string)) return `its check ${JSON.stringify(entry.check)} is not P1, P2 or P3`;
+  if (typeof entry.kind !== 'string' || !KINDS.has(entry.kind)) return `its kind ${JSON.stringify(entry.kind)} is not a difference kind or error`;
+  if (typeof entry.ticket !== 'string' || !entry.ticket) return 'it names no ticket';
+  if (typeof entry.note !== 'string' || !entry.note) return 'it says nothing of why';
+  const numeric = typeof entry.index === 'number' && Number.isInteger(entry.index) && entry.index >= 0;
+  if (!numeric && entry.index !== '*') return `its index ${JSON.stringify(entry.index)} is neither a state index nor "*"`;
+  if (entry.index === '*' && entry.kind !== 'error' && (typeof entry.path !== 'string' || !entry.path)) return 'index "*" needs a path';
+  if (typeof entry.match !== 'string' || !entry.match) return entry.kind === 'error' ? 'an error entry needs a message pattern (match)' : 'it needs a value pattern (match, over "server → client")';
+  try { new RegExp(entry.match, 'u'); } catch (error) { return `its match is not a pattern: ${error instanceof Error ? error.message : String(error)}`; }
+  return null;
+}
+
+/** The expected list, every entry validated; one invalid entry fails the run, naming it. */
+export function readExpected(file: URL | string = new URL('../expected-divergent.json', import.meta.url)): readonly ExpectedEntry[] {
+  const parsed = JSON.parse(readFileSync(file, 'utf8')) as { entries: Partial<ExpectedEntry>[] };
   if (!Array.isArray(parsed.entries)) throw new Error(`${String(file)}: no entries array`);
-  for (const entry of parsed.entries) {
-    if (!entry.module || entry.index === undefined || !entry.check || !entry.kind || !entry.ticket || !entry.note) {
-      throw new Error(`${String(file)}: an entry needs module, index, check, kind, ticket and note: ${JSON.stringify(entry)}`);
-    }
-  }
-  return parsed.entries;
+  parsed.entries.forEach((entry, i) => {
+    const why = invalidEntry(entry);
+    if (why) throw new Error(`${String(file)}: entry ${i} (${entry.module ?? '?'} ${entry.check ?? '?'} ${entry.kind ?? '?'}) is invalid: ${why}`);
+  });
+  return parsed.entries as ExpectedEntry[];
 }
 
 function covers(entry: ExpectedEntry, report: Report): boolean {

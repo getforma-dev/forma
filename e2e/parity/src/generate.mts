@@ -195,8 +195,11 @@ export const PRIORITY = 10;
 /**
  * Which edge state `index` takes for a field of rank `rank`: inside the priority block first
  * (`(index + rank) mod P`, so every field meets every priority edge within `P` states), then over
- * the rest (`P + (index - P + rank) mod (n - P)`). Two fields of different rank hold different edges
- * in every state below `n` (while there are fewer than `P` of them), and each visits every edge once.
+ * the rest (`P + (index - P + rank) mod (n - P)`). Each field visits every edge once. Two fields of
+ * different rank hold different edges in every state below `n` while their ranks differ modulo
+ * both `P` and `n - P`: with more same-typed fields than the smaller of the two, ranks wrap (the
+ * numbers' remainder after the block is 4 edges, so a fifth number field shares edges with the
+ * first after state 9).
  */
 export function edgeIndex(n: number, index: number, rank: number): number {
   const block = Math.min(PRIORITY, n);

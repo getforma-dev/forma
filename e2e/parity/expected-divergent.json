@@ -37,7 +37,8 @@
       "kind": "attribute-extra",
       "path": "page > section:nth-child(1) > input:nth-child(3)[value]",
       "ticket": "FORMA-182: an empty string is not null (F3)",
-      "note": "A client signal created with '' (value: () => query()) has a zero-length slot default, which SlotData::new_from_defaults leaves Null, so DYN_ATTR omits the attribute; core writes value=\"\". The walker's own DYN_ATTR comment says an empty string is a value, not an absence. Structural. Per the lead, FORMA-182 fixes it with F2; this entry then fails the run as an unexpected pass."
+      "note": "A client signal created with '' (value: () => query()) has a zero-length slot default, which SlotData::new_from_defaults leaves Null, so DYN_ATTR omits the attribute; core writes value=\"\". The walker's own DYN_ATTR comment says an empty string is a value, not an absence. Structural. Per the lead, FORMA-182 fixes it with F2; this entry then fails the run as an unexpected pass.",
+      "match": "^ → $"
     },
     {
       "module": "dynamic-attrs",
@@ -46,7 +47,8 @@
       "kind": "attribute-extra",
       "path": "page > section:nth-child(1) > a:nth-child(4)[href]",
       "ticket": "FORMA-101: DR-1 release B, BUILD-206 a build error (F4)",
-      "note": "href: () => docsHref() cannot be evaluated at compile time. In warning mode the compiler reports BUILD-206 (docs/DIAGNOSTICS.md: the attribute is omitted from the server HTML and appears only on activation), so the two trees can never agree on it: the server has no value to write. DR-1's migration makes strict the only mode in release B (3.0.0, FORMA-101), where BUILD-206 is a build error: then this page does not compile, the corpus fixture must move the attribute behind browserOnly() or drop it, and this entry fails the run as an unexpected pass. Structural, and counted by the stop rule until then."
+      "note": "href: () => docsHref() cannot be evaluated at compile time. In warning mode the compiler reports BUILD-206 (docs/DIAGNOSTICS.md: the attribute is omitted from the server HTML and appears only on activation), so the two trees can never agree on it: the server has no value to write. DR-1's migration makes strict the only mode in release B (3.0.0, FORMA-101), where BUILD-206 is a build error: then this page does not compile, the corpus fixture must move the attribute behind browserOnly() or drop it, and this entry fails the run as an unexpected pass. Structural, and counted by the stop rule until then.",
+      "match": "^ → /docs$"
     },
     {
       "module": "nullish",
@@ -55,7 +57,8 @@
       "kind": "attribute-value",
       "match": "^ → true$",
       "ticket": "FORMA-182: bool-slot attributes (F2)",
-      "note": "Step 1. The island's reactive \"data-ready\": ready (a boolean signal seeded from an optional prop) on a <p>: the walker writes it bare, core writes \"true\" (F2's case)."
+      "note": "Step 1. The island's reactive \"data-ready\": ready (a boolean signal seeded from an optional prop) on a <p>: the walker writes it bare, core writes \"true\" (F2's case).",
+      "path": "page > main:nth-child(1) > p:nth-child(1)[data-ready]"
     },
     {
       "module": "closed-nullish",
@@ -64,7 +67,18 @@
       "kind": "attribute-value",
       "match": "^ → true$",
       "ticket": "FORMA-182: bool-slot attributes (F2)",
-      "note": "Step 1. The same \"data-ready\" binding on the island's occurrences whose seed is true (F2's case)."
+      "note": "Step 1. The same \"data-ready\" binding on the island's occurrences whose seed is true (F2's case).",
+      "path": "page > main:nth-child(1) > p:nth-child(1)[data-ready]"
+    },
+    {
+      "module": "closed-nullish",
+      "index": "*",
+      "check": "P1",
+      "kind": "attribute-value",
+      "match": "^ → true$",
+      "ticket": "FORMA-182: bool-slot attributes (F2)",
+      "note": "Step 1. The same \"data-ready\" binding on the island's occurrences whose seed is true (F2's case).",
+      "path": "page > main:nth-child(1) > p:nth-child(2)[data-ready]"
     },
     {
       "module": "props-contract",
@@ -92,7 +106,8 @@
       "kind": "activation-error",
       "match": "FORMA_E_HYDRATE_STRUCTURE",
       "ticket": "FORMA-181: adoption by canonical key text, checkpoint C (F6)",
-      "note": "Step 1. The forma:error event and the console line of the same refusal (F6)."
+      "note": "Step 1. The forma:error event and the console line of the same refusal (F6).",
+      "path": "root"
     }
   ]
 }
