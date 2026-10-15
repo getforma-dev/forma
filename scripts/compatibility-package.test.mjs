@@ -11,7 +11,7 @@ import { ROOT, json, save, run, stageNpmLock, compatibilityPeer } from './releas
 const publicNames = [
   'COMPILER_WRITER_VERSION', 'DIAGNOSTIC_CATALOGUE', 'FmirContainerError', 'IrEmitContext',
   'baseWriterVersion', 'collectDiagnostics', 'crc32', 'diagnosticEntry', 'dumpFmir',
-  'encodeFmirSections', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'makeDiagnostic', 'readFmirContainer',
+  'encodeFmirSections', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'getSsrEntryProducts', 'makeDiagnostic', 'readFmirContainer',
 ].sort();
 function install(dir, members, artifacts) {
   mkdirSync(dir);
@@ -43,9 +43,12 @@ test('the actual packed compiler exposes documented runtime and declaration entr
     for (const path of ['@getforma/compiler/src/ir-walk', '@getforma/compiler/dist/ir-resolve.js', '@getforma/compiler/package.json']) {
       assert.throws(() => execute(app, `await import(${JSON.stringify(path)});`), error => /ERR_PACKAGE_PATH_NOT_EXPORTED/.test(String(error.stderr)));
     }
-    const privateNames = ['ComponentAnalyzer', 'walkHTree', 'walkCallExpression', 'resolveImports', 'loadModule', 'classifyComponent', 'formaCompiler', 'formaServer'];
+    const privateNames = ['ComponentAnalyzer', 'walkHTree', 'walkCallExpression', 'resolveImports', 'loadModule', 'classifyComponent', 'collectIslandEntryEdits', 'isCoreCall', 'EntryPolicyError', 'formaCompiler', 'formaServer'];
     writeFileSync(join(app, 'surface.mts'), [
-      'import { formaSsrPlugin, generateRealIr, IrEmitContext, readFmirContainer, dumpFmir, type PropsSchema, type Diagnostic } from "@getforma/compiler";',
+      'import { formaSsrPlugin, generateRealIr, getSsrEntryProducts, IrEmitContext, readFmirContainer, dumpFmir, type SsrEntryProduct, type PropsSchema, type Diagnostic } from "@getforma/compiler";',
+      'const products: readonly SsrEntryProduct[] = getSsrEntryProducts({errors: [], warnings: []});',
+      '// @ts-expect-error compiler products and nested definition lists are immutable',
+      'products[0]!.islands.push({name: "forged", mode: "ssr"});',
       'const schema: PropsSchema = [[]]; const ctx = new IrEmitContext(); ctx.setPropsSchema(schema); dumpFmir(ctx.toBinary());',
       ...privateNames.flatMap(name => ['// @ts-expect-error internal or removed API is not published', `import { ${name} } from "@getforma/compiler";`]),
     ].join('\n'));

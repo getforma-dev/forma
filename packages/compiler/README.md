@@ -435,8 +435,9 @@ page, IR output path and SHA-256, the emitted island definitions and
 `browserRequired`. The latter is based on the compiled definition set, including
 conditional islands; an unused registration does not make a static page require
 JavaScript. This transport does not itself remove browser code or publish files.
-The islands-only entry rewrite and build graph/manifest consumption are separate
-implementation checkpoints.
+The islands-only entry rewrite below is a separate compiler checkpoint. Build
+graph/manifest filtering consumes these accepted records; it remains an
+integration gate, not a consequence of calling the accessor.
 
 The accessor refuses failed results or replaced/mutated IR outputs. It returns
 no native records for an explicit Browser-only build; callers must require one
@@ -448,3 +449,48 @@ A build integration may read records from its final guarded publisher, after all
 other validation hooks; commit them together with that cycle's graph and
 manifest. Refused watch cycles retain the previously accepted records and files.
 The compiler exposes no mutable `onStart` metadata callback.
+
+
+### Islands-only browser entries (staged FORMA-105)
+
+A native entry may select its page with a standalone named core import:
+
+```ts
+import { mount, activateIslands } from '@getforma/core';
+import { HomePage } from './HomePage';
+import { Counter } from './Counter';
+
+activateIslands({ Counter });
+mount(HomePage, '#app');
+```
+
+The paired compiler authenticates that import, emits the original native page,
+and omits the mount statement from the browser product. Only definitions
+reachable in the emitted native product remain in the literal activation
+registry; conditional islands still require JavaScript. The wrapper uses the
+original declared component and captured getters. Imports and module
+initialization stay in their original modules; no component is copied or
+signal recreated. Ordinary bundler tree shaking removes unused pure page code.
+
+A separate `entryPoint` may supply the compile-time native mount while
+`clientEntryPoint` is activation-only. If both entries mount a named page, they
+must resolve to the same original declaration, including through aliases or
+barrels. All registration identities and canonical contracts must still match,
+even for unused registrations. Separate inline page functions cannot prove
+that declaration identity; use the activation-only browser shape instead.
+
+`BUILD-611` refuses a used/assigned/exported mount result, nested or multiple
+mounts, indirect mount aliases, namespace mount access, effectful target
+arguments, and ambiguous activation-only Page imports. A named import alias
+(`import { mount as render }`) is supported. User functions merely named
+`mount` are preserved. Empty activation calls may be omitted only as standalone
+top-level statements with pure remaining arguments; required effects must be
+explicit statements outside them. Nonempty activation root arguments and
+surrounding behavior stay intact. Activation inside the removed page mount is
+refused. These errors fail builds with or without strict mode.
+
+A zero-island product records `browserRequired: false`; the publisher must keep
+its explicit SSR mode/IR while omitting final JavaScript/module-preload links.
+The compiler alone does not claim a zero-request route, complete105 acceptance,
+or changed package size limits. Browser routes (`ssr: false`) remain normal
+client mounts and do not use this native entry rewrite.

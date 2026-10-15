@@ -44,6 +44,7 @@ import {createIslandRegistry, type IslandRegistry} from './island-registry';
 import {SourceSnapshot,withSourceSnapshot} from './source-snapshot';
 import {injectIslandMetadata} from './island-product';
 import {recordSsrEntryProduct} from './ssr-product';
+import { EntryPolicyError, inspectEntryMounts } from './entry-policy';
 
 export interface SsrPluginOptions {
   /** Page name (e.g., 'platform-login') -- used for the output .ir filename */
@@ -226,7 +227,7 @@ function generateWithRegistry(entryPointPath: string, registry?: IslandRegistry)
     }
   });
   if (failure) {
-    if (failure instanceof PropsSchemaError) {
+    if (failure instanceof PropsSchemaError || failure instanceof EntryPolicyError) {
       reportDiagnostic({ code: failure.code, file: failure.file, original: true,
         position: { line: failure.line, column: failure.column - 1 }, text: () => failure!.message });
       throw failure;
@@ -252,7 +253,9 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   // 1. Read the entry point file. A .tsx/.jsx entry has its JSX turned into
   // h() calls first, so the Babel AST parser produces CallExpression nodes
   // (not JSXElement): the IR walker only understands h() call trees.
-  const entrySource = transformJsxSource(readSourceFile(entryPointPath), entryPointPath);
+  const originalSource = readSourceFile(entryPointPath);
+  inspectEntryMounts(originalSource, entryPointPath);
+  const entrySource = transformJsxSource(originalSource, entryPointPath);
   const entryDir = dirname(entryPointPath);
 
   // 2. Create ComponentAnalyzer and parse entry point
@@ -594,12 +597,12 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
               const registry=entry?createIslandRegistry(entry):undefined;
               product=entry?generateWithRegistry(entry,registry):null;
               bytes=product?.binary??generatePlaceholderIr(options.page);
-              if(client&&registry)transformed=injectIslandMetadata(client,registry,product);
+              if(client&&registry)transformed=injectIslandMetadata(client,registry,product,entry);
               console.log(`   IR emitted (${product?'real':'placeholder'}): ${options.page}.ir (${bytes.length} bytes${product?`, ${product.islands.length} islands`:''})`);
             });
           } catch(error) {
             fatal=error as Error;
-            if(error instanceof PropsSchemaError)reportDiagnostic({code:error.code,file:error.file,original:true,position:{line:error.line,column:error.column-1},text:()=>error.message});
+            if(error instanceof PropsSchemaError || error instanceof EntryPolicyError)reportDiagnostic({code:error.code,file:error.file,original:true,position:{line:error.line,column:error.column-1},text:()=>error.message});
           }
         });
         const seen=new Set<string>();
@@ -616,7 +619,7 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
       });
       build.onEnd(result=>{
         if(result.errors.length)return;
-        const errors:PartialMessage[]=diagnostics.filter(d=>d.code==='BUILD-610'||(options.strict&&d.strict)).map(d=>({id:d.code,text:`${d.code} ${d.message}`,location:d.file?{file:d.file,line:d.line||1,column:Math.max(0,d.column-1)}:null,notes:[{text:`why: ${d.why}`},{text:`fix: ${d.fix}`}]}));
+        const errors:PartialMessage[]=diagnostics.filter(d=>(d.code==='BUILD-610'||d.code==='BUILD-611')||(options.strict&&d.strict)).map(d=>({id:d.code,text:`${d.code} ${d.message}`,location:d.file?{file:d.file,line:d.line||1,column:Math.max(0,d.column-1)}:null,notes:[{text:`why: ${d.why}`},{text:`fix: ${d.fix}`}]}));
         if(fatal&&!errors.length)errors.push({text:`BUILD-606 IR emission failed for ${options.page}: ${fatal.message}`});
         if(!fatal&&!snapshot.unchanged())errors.push({text:`BUILD-610 sources changed while compiling ${options.page}; retry to publish a coherent browser/IR pair`});
         if(errors.length)return {errors};
