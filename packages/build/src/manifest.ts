@@ -3,12 +3,14 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { BUILD_WRITER_VERSION } from './compatibility.js';
 import type { AssetManifest, AssetMetadata, BuildConfig, RouteManifest } from './types.js';
+import type { EntryProducts } from './entry-products.js';
 
 export function generateManifest(
   config: BuildConfig,
   assets: Record<string, string>,
   staticDependencies: Record<string, string[]> = {},
   graphFiles: ReadonlySet<string> = new Set(),
+  products: EntryProducts = new Map(),
 ): { manifest: AssetManifest; warnings: string[] } {
   const distDir = config.outputDir;
   const BUDGET_THRESHOLD = config.budgetThreshold ?? 200_000;
@@ -28,7 +30,23 @@ export function generateManifest(
   const routes: Record<string, RouteManifest> = {};
 
   for (const [route, mapping] of Object.entries(config.routes)) {
-    const jsFiles = mapping.js.map(
+    // Route ownership is selected from configuration before browser filtering.
+    // Removing a static entry's JS must never remove its native module or mode.
+    const entry = config.entryPoints.find(entry => basename(entry.outfile, '.js') === mapping.js[0]);
+    const serverRendered = config.ssr === true && entry !== undefined && entry.ssr !== false;
+    const product = entry && products.get(entry.outfile);
+    if (serverRendered && (!product || product.mode !== 'ssr')) {
+      throw new Error(`BUILD-817 route ${route} has no accepted native product for its configured SSR owner`);
+    }
+    const staticRoute = serverRendered && product?.browserRequired === false;
+    if (staticRoute && (mapping.js.length !== 1 || config.serverInlined?.includes(entry!.outfile))) {
+      throw new Error(`BUILD-611 static route ${route} cannot request extra scripts or an executable server-inlined owner`);
+    }
+    if (config.ssr && mapping.js.slice(1).some(name => config.entryPoints.some(candidate =>
+      basename(candidate.outfile, '.js') === name && candidate.ssr !== false))) {
+      throw new Error(`BUILD-611 route ${route} selects a native entry outside its primary owner; keep one SSR owner and mark extra browser entries ssr:false`);
+    }
+    const jsFiles = (staticRoute ? [] : mapping.js).map(
       (name) => assets[`${name}.js`] ?? `${name}.js`,
     );
     const cssFiles = mapping.css.map(
@@ -58,8 +76,6 @@ export function generateManifest(
       }
     }
 
-    const entry = config.entryPoints.find(entry => basename(entry.outfile, '.js') === mapping.js[0]);
-    const serverRendered = config.ssr === true && entry !== undefined && entry.ssr !== false;
     const routeEntry: RouteManifest = {
       mode: serverRendered ? 'ssr' : 'browser',
       js: jsFiles,
@@ -124,4 +140,3 @@ export function generateManifest(
   };
   return { manifest, warnings };
 }
-

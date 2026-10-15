@@ -180,6 +180,10 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'The declared page data cannot be represented by the closed props schema; the build fails even without strict mode.',
     'Declare one object parameter using strings, booleans, numbers, Date, string-literal unions, arrays, optional fields and nested object types.'),
 
+  entry('BUILD-611', 'Unsupported islands-only entry or static route',
+    'The selected native entry cannot be rewritten without discarding used results or effects, or its static route mapping requests executable assets; the build fails even without strict mode.',
+    'Use one standalone imported core mount selecting the native page, keep activation outside it, and use an activation-only browser entry when the browser root differs. Static routes must have no extra script entry or module preload.'),
+
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
     "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",

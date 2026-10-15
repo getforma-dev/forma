@@ -290,7 +290,8 @@ describe('--strict in watch mode', () => {
       await change(() => { page('home', [`mount(() => h('main', null, h('div', null, 'fixed')), '#app');`]); });
       await vi.waitFor(() => {
         expect(existsSync(join(outDir, manifest().aliases['home.ir']))).toBe(true);
-        expect(existsSync(join(outDir, manifest().aliases['home.js']))).toBe(true);
+        expect(manifest().routes['/home']).toMatchObject({mode:'ssr',js:[]});
+        expect(manifest().aliases['home.js']).toBeUndefined();
       }, { timeout: 10_000 });
     });
   }, 30_000);

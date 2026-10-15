@@ -161,9 +161,11 @@ MIT
 ## Development staging toward 3.0.0
 
 The checked-in templates now use the declared-props and finalized Pages APIs.
-Minimal keeps its whole-page mount with matching server/browser defaults;
-island state adoption and the broader template redesign remain FORMA-144
-slices 2 and 3.
+Minimal now declares a Counter island over its static home markup and a
+separate empty-props About page. The native handler starts at7 while explicit
+Browser mode starts at0. Source tests pair its emitted contract and browser
+registration; final integrated adoption/zero-network acceptance and slice3's
+release/size qualification remain required.
 
 Source template locks are explicitly identified **seeds** at the coordinated
 package version. They retain every external registry checksum and omit only

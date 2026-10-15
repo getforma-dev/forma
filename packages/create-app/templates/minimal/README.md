@@ -10,7 +10,8 @@ cargo run
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The server listens on
-loopback only. This build declares a Browser route and serves its page shell.
+loopback only. This build explicitly selects Browser routes and serves page shells.
+The home counter starts at0; `/about` shows a simple information page.
 Set `FORMA_PORT` to choose another port (0 asks the OS to assign one). The
 server prints `FORMA_LISTENING` with its address after successfully binding.
 
@@ -32,12 +33,23 @@ page into FMIR. Rust declares the matching `#[derive(PageProps)] HomeProps`
 with `count: u32`, loads the modules, binds `pages.bind::<HomeProps>("home")`
 once and calls `pages.finalize()` before opening the listener.
 
-Each request calls `home.render(&HomeProps { count: 0 }, &ctx)`. View source:
-the heading, paragraphs, buttons and count are already in the HTML. The
-whole-page browser mount currently starts from the same zero. This template
-has not yet moved to an isolated counter island with server state adoption;
-changing only the Rust count is not a promise that the client will retain it
-after activation. That is a separate migration.
+Each native home request calls `home.render(&HomeProps { count: 7 }, &ctx)`.
+The heading, paragraphs and count7 are already in the HTML. `Counter(props)`
+is the only registered island; its local signal starts from the validated
+server props. Increment changes7 to8 and Reset changes it to0. The surrounding
+heading, paragraph and navigation remain server-rendered markup.
+
+The standalone `mount` in the source selects Home for the compiler. Native
+builds remove that invocation from browser JavaScript and retain
+`activateIslands({ Counter })` with the paired metadata. Do not call `mount`
+on a server-marked root yourself. An explicit Browser build keeps ordinary
+mounting with its independent zero default.
+
+`/about` declares no props or interactive regions. Rust binds its empty
+`AboutProps` handle before startup. The native build preserves its module and
+shared stylesheet, but publishes no browser entry or module preload for it.
+It therefore needs no JavaScript to display its content. The inert JSON state
+block is data, not executable code.
 
 Missing or corrupt modules and incompatible declared props stop startup with
 a route and diagnostic code. A request-time failure returns `RenderError`;
@@ -74,6 +86,7 @@ application choice using the manifest identity; see `forma_server::sw`.
 ## Files
 
 - `src/main.rs`: typed startup, handlers, assets and response errors.
-- `admin/src/home/app.tsx`: declared page props and current browser mount.
+- `admin/src/home/app.tsx`: declared page props, Counter island and native root selector.
+- `admin/src/about/app.tsx`: empty-props static page and native root selector.
 - `admin/build.ts`: explicit browser/SSR build selection and CSS entries.
 - `admin/src/styles/app.css`: page styling.

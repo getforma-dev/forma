@@ -1,4 +1,5 @@
 import {readSourceFile} from './source-snapshot';
+import {isCoreCall} from './entry-policy';
 import {realpathSync} from 'node:fs';
 /** Resolve literal activation registrations to original lexical declarations. */
 
@@ -89,11 +90,7 @@ export function createIslandRegistry(entry: string): IslandRegistry {
   const registry: IslandRegistry = {entries:()=>entries,resolve(local,file) { const found = target(local,file); return found ? registered.get(found.identity) : undefined; }};
   const ast = parse(source(entry), {sourceType:'module',plugins:['typescript','jsx']});
   traverse(ast, { CallExpression(path) {
-    if (!t.isIdentifier(path.node.callee)) return;
-    const binding = path.scope.getBinding(path.node.callee.name), declaration = binding?.path.node;
-    if (!t.isImportSpecifier(declaration) || key(declaration.imported) !== 'activateIslands') return;
-    const imported = binding!.path.parentPath?.node;
-    if (!t.isImportDeclaration(imported) || imported.importKind==='type' || declaration.importKind==='type' || !['@getforma/core','formajs'].includes(imported.source.value)) return;
+    if (!isCoreCall(path, 'activateIslands')) return;
     const arg = path.node.arguments[0];
     if (!t.isObjectExpression(arg)) fail(entry, path.node, 'activateIslands needs a literal registry');
     for (const property of arg.properties) {

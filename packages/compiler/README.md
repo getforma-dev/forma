@@ -424,3 +424,102 @@ imports are not package exports. The runtime surface is pinned by
 ## License
 
 MIT
+
+
+### Paired entry product transport (staged FORMA-105)
+
+`formaSsrPlugin` requires esbuild `write: false`. After a successful awaited
+`build()` or `rebuild()`, call `getSsrEntryProducts(result)` on that exact result
+object. Each immutable record identifies the canonical source/browser entry,
+page, IR output path and SHA-256, the emitted island definitions and
+`browserRequired`. The latter is based on the compiled definition set, including
+conditional islands; an unused registration does not make a static page require
+JavaScript. This transport does not itself remove browser code or publish files.
+The islands-only entry rewrite below is a separate compiler checkpoint. Build
+graph/manifest filtering consumes these accepted records; it remains an
+integration gate, not a consequence of calling the accessor.
+
+The accessor refuses failed results or replaced/mutated IR outputs. It returns
+no native records for an explicit Browser-only build; callers must require one
+matching record for every configured SSR entry. A failed native compilation
+cannot use placeholder IR to establish a static policy.
+
+Never publish from an early `onEnd`: a later plugin may still refuse the result.
+A build integration may read records from its final guarded publisher, after all
+other validation hooks; commit them together with that cycle's graph and
+manifest. Refused watch cycles retain the previously accepted records and files.
+The compiler exposes no mutable `onStart` metadata callback.
+
+
+### Islands-only browser entries (staged FORMA-105)
+
+A native entry may select its page with a standalone named core import:
+
+```ts
+import { mount, activateIslands } from '@getforma/core';
+import { HomePage } from './HomePage';
+import { Counter } from './Counter';
+
+activateIslands({ Counter });
+mount(HomePage, '#app');
+```
+
+The paired compiler authenticates that import, emits the original native page,
+and omits the mount statement from the browser product. Only definitions
+reachable in the emitted native product remain in the literal activation
+registry; conditional islands still require JavaScript. The wrapper uses the
+original declared component and captured getters. Imports and module
+initialization stay in their original modules; no component is copied or
+signal recreated. Ordinary bundler tree shaking removes unused pure page code.
+
+A separate `entryPoint` may supply the compile-time native mount while
+`clientEntryPoint` is activation-only. If both entries mount a named page, they
+must resolve to the same original declaration, including through aliases or
+barrels. All registration identities and canonical contracts must still match,
+even for unused registrations. Separate inline page functions cannot prove
+that declaration identity; use the activation-only browser shape instead.
+
+`BUILD-611` refuses a used/assigned/exported mount result, nested or multiple
+mounts, indirect mount aliases, namespace mount access, effectful target
+arguments, and ambiguous activation-only Page imports. A named import alias
+(`import { mount as render }`) is supported. An actual core namespace binding
+may read a statically named non-mount member, including optional access. Dynamic
+members and passing/exporting/aliasing/destructuring the namespace are refused
+because they cannot prove the mount is absent. Erased type-only uses remain
+valid. This conservative check does not apply to arbitrary user objects.
+User functions merely named
+`mount` are preserved. Empty activation calls may be omitted only as standalone
+top-level statements with pure remaining arguments; required effects must be
+explicit statements outside them. Nonempty activation root arguments and
+surrounding behavior stay intact. Activation inside the removed page mount is
+refused. These errors fail builds with or without strict mode.
+
+A zero-island product records `browserRequired: false`; the publisher must keep
+its explicit SSR mode/IR while omitting final JavaScript/module-preload links.
+The compiler alone does not claim a zero-request route, complete105 acceptance,
+or changed package size limits. Browser routes (`ssr: false`) remain normal
+client mounts and do not use this native entry rewrite.
+
+Multiple native entry plugins in one esbuild operation share a private
+compilation coordinator. It waits for every current `onStart` analysis, checks
+that overlapping original source snapshots agree, and composes original-range
+entry edits before any file is loaded. Each contributor's source and resolution
+guards still run before publication; a refused cycle cannot supply partial
+transformation authority. Identical edits may be deduplicated; conflicting
+ranges refuse instead of choosing the first plugin.
+
+Ordinary sequential reuse of an esbuild options object is supported, as are
+concurrent builds with independent options objects and previously completed
+contexts that continue rebuilding. If two setups interleave while reusing the
+same options object, the grouping is ambiguous and fails with `BUILD-611`.
+Use distinct options objects for concurrent setups (and a fresh options object
+after an incomplete failed setup). This coordinator does not add a public
+combined-plugin API.
+
+The coordinator collects adoption hooks from every original registration before
+loading shared modules, then composes those hooks with entry edits in original
+coordinates. Shared helper uses with conflicting writable codecs retain their
+signal tuples but receive no setter authority. Each module receives one hygienic
+hook import, and unchanged native bytes/contracts remain the authority for
+browser registration. This is compiler preparation; the104 adoption transaction
+and final combined browser/packed acceptance remain separate gates.

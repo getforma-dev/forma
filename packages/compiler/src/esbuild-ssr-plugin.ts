@@ -42,7 +42,11 @@ import { readPageProps, PropsSchemaError } from './props-schema';
 import { rootPropsScope } from './props-bindings';
 import {createIslandRegistry, type IslandRegistry} from './island-registry';
 import {SourceSnapshot,withSourceSnapshot} from './source-snapshot';
-import {injectIslandMetadata} from './island-product';
+import {collectIslandEntryEdits} from './island-product';
+import type {SourceEdit} from './source-edits';
+import {joinSsrCompilation,registerSsrPlugin} from './ssr-compilation';
+import {recordSsrEntryProduct} from './ssr-product';
+import { EntryPolicyError, inspectEntryMounts } from './entry-policy';
 
 export interface SsrPluginOptions {
   /** Page name (e.g., 'platform-login') -- used for the output .ir filename */
@@ -225,7 +229,7 @@ function generateWithRegistry(entryPointPath: string, registry?: IslandRegistry)
     }
   });
   if (failure) {
-    if (failure instanceof PropsSchemaError) {
+    if (failure instanceof PropsSchemaError || failure instanceof EntryPolicyError) {
       reportDiagnostic({ code: failure.code, file: failure.file, original: true,
         position: { line: failure.line, column: failure.column - 1 }, text: () => failure!.message });
       throw failure;
@@ -251,7 +255,9 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   // 1. Read the entry point file. A .tsx/.jsx entry has its JSX turned into
   // h() calls first, so the Babel AST parser produces CallExpression nodes
   // (not JSXElement): the IR walker only understands h() call trees.
-  const entrySource = transformJsxSource(readSourceFile(entryPointPath), entryPointPath);
+  const originalSource = readSourceFile(entryPointPath);
+  inspectEntryMounts(originalSource, entryPointPath);
+  const entrySource = transformJsxSource(originalSource, entryPointPath);
   const entryDir = dirname(entryPointPath);
 
   // 2. Create ComponentAnalyzer and parse entry point
@@ -575,55 +581,61 @@ export function generatePlaceholderIr(pageName: string): Uint8Array {
  * caller publishes outputFiles only after the complete build succeeds.
  */
 export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
-  return {
+  const plugin:Plugin = {
     name: 'forma-ssr-ir',
     setup(build) {
       if(build.initialOptions.write!==false)throw new Error('formaSsrPlugin requires esbuild write:false; publish returned outputFiles only after a successful build');
       const entry=options.entryPoint?realpathSync(options.entryPoint):undefined;
       const client=options.clientEntryPoint?realpathSync(options.clientEntryPoint):entry;
-      const points=build.initialOptions.entryPoints;
-      const browserEntries=new Set((Array.isArray(points)?points.map(point=>typeof point==='string'?point:point.in):Object.values(points??{})).map(file=>realpathSync(resolve(build.initialOptions.absWorkingDir??process.cwd(),file))));
-      let snapshot:SourceSnapshot,bytes:Uint8Array|undefined,transformed:string|undefined;
+      const compilation=joinSsrCompilation(build,plugin.setup);
+      let snapshot:SourceSnapshot,bytes:Uint8Array|undefined,product:IrResult|null;
       let diagnostics:Diagnostic[]=[],fatal:Error|undefined;
       build.onStart(()=>{
-        snapshot=new SourceSnapshot();bytes=undefined;transformed=undefined;fatal=undefined;
+        compilation.begin();
+        snapshot=new SourceSnapshot();bytes=undefined;fatal=undefined;product=null;
+        let registry:IslandRegistry|undefined,edits:readonly SourceEdit[]=[];
         const collected=collectDiagnostics(()=>{
           try {
             withSourceSnapshot(snapshot,()=>{
-              const registry=entry?createIslandRegistry(entry):undefined;
-              const product=entry?generateWithRegistry(entry,registry):null;
+              registry=entry?createIslandRegistry(entry):undefined;
+              product=entry?generateWithRegistry(entry,registry):null;
               bytes=product?.binary??generatePlaceholderIr(options.page);
-              if(client&&registry)transformed=injectIslandMetadata(client,registry,product);
+              if(client&&registry)edits=collectIslandEntryEdits(client,registry,product,entry);
               console.log(`   IR emitted (${product?'real':'placeholder'}): ${options.page}.ir (${bytes.length} bytes${product?`, ${product.islands.length} islands`:''})`);
             });
           } catch(error) {
             fatal=error as Error;
-            if(error instanceof PropsSchemaError)reportDiagnostic({code:error.code,file:error.file,original:true,position:{line:error.line,column:error.column-1},text:()=>error.message});
+            if(error instanceof PropsSchemaError || error instanceof EntryPolicyError)reportDiagnostic({code:error.code,file:error.file,original:true,position:{line:error.line,column:error.column-1},text:()=>error.message});
           }
         });
         const seen=new Set<string>();
         diagnostics=collected.diagnostics.filter(d=>{const key=JSON.stringify([d.code,d.file,d.line,d.column,d.message]);if(seen.has(key))return false;seen.add(key);return true;});
+        compilation.complete({snapshot,registry,valid:!fatal&&!!product,entry:client,edits});
         options.onDiagnostics?.(diagnostics,options.page);
       });
       // All compiler reads use the same snapshot, and browser loads use those
       // exact bytes. SSR-only/type-only dependencies join this browser watcher.
-      build.onLoad({filter:/\.[cm]?[jt]sx?$/},args=>{
+      build.onLoad({filter:/\.[cm]?[jt]sx?$/,namespace:'file'},args=>{
         const file=resolve(args.path);
-        if(file!==client&&(browserEntries.has(file)||!snapshot.files.has(file)))return;
+        const captured=compilation.read(file);if(!captured)return;
         const loader=extname(file).slice(1).replace(/^[cm](?=[jt]s$)/,'') as Loader;
-        return {contents:file===client?(transformed??snapshot.files.get(file)??readSourceFile(file)):snapshot.files.get(file),loader,resolveDir:dirname(file),watchFiles:[...snapshot.files.keys(),...snapshot.dependencies],watchDirs:[...snapshot.directories]};
+        return {...captured,loader,resolveDir:dirname(file)};
       });
       build.onEnd(result=>{
         if(result.errors.length)return;
-        const errors:PartialMessage[]=diagnostics.filter(d=>d.code==='BUILD-610'||(options.strict&&d.strict)).map(d=>({id:d.code,text:`${d.code} ${d.message}`,location:d.file?{file:d.file,line:d.line||1,column:Math.max(0,d.column-1)}:null,notes:[{text:`why: ${d.why}`},{text:`fix: ${d.fix}`}]}));
+        const errors:PartialMessage[]=diagnostics.filter(d=>(d.code==='BUILD-610'||d.code==='BUILD-611')||(options.strict&&d.strict)).map(d=>({id:d.code,text:`${d.code} ${d.message}`,location:d.file?{file:d.file,line:d.line||1,column:Math.max(0,d.column-1)}:null,notes:[{text:`why: ${d.why}`},{text:`fix: ${d.fix}`}]}));
         if(fatal&&!errors.length)errors.push({text:`BUILD-606 IR emission failed for ${options.page}: ${fatal.message}`});
-        if(!fatal&&!snapshot.unchanged())errors.push({text:`BUILD-610 sources changed while compiling ${options.page}; retry to publish a coherent browser/IR pair`});
+        if(!fatal&&!compilation.unchanged())errors.push({text:`BUILD-610 sources changed while compiling ${options.page}; retry to publish a coherent browser/IR pair`});
         if(errors.length)return {errors};
+        if(!product||!entry||!client)return {errors:[{text:`BUILD-610 ${options.page} requires a successful native product; a placeholder cannot establish static or island entry policy`}]};
         if(!bytes||!result.outputFiles)return {errors:[{text:`BUILD-606 missing paired output for ${options.page}`}]};
         const contents=bytes;
         const output:OutputFile={path:resolve(options.outDir,`${options.page}.ir`),contents,hash:createHash('sha256').update(contents).digest('hex'),get text(){return Buffer.from(contents).toString('utf8');}};
         result.outputFiles.push(output);
+        recordSsrEntryProduct(result,output,{page:options.page,sourceEntry:entry,browserEntry:client,
+          islands:product.islands.map(island=>({name:island.name,mode:island.contract!.mode}))});
       });
     },
   };
+  return registerSsrPlugin(plugin);
 }

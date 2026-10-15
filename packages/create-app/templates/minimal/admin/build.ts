@@ -6,24 +6,25 @@ await build({
   app: '{{APP_NAME}}',
   entryPoints: [
     { entry: 'src/home/app.tsx', outfile: 'home.js' },
+    { entry: 'src/about/app.tsx', outfile: 'about.js' },
   ],
   cssEntries: [
     { input: 'src/styles/app.css', outfile: 'app.css' },
   ],
   routes: {
     '/': { js: ['home'], css: ['app'] },
+    '/about': { js: ['about'], css: ['app'] },
   },
   outputDir: 'dist',
   ssr: isSsr,
-  // The SSR root of the `home` page. Keyed by page name, the entry's outfile
-  // without `.js`, which is how @getforma/build looks it up; a route key is
-  // never read. The same-file Home(props: HomeProps) root supplies both the
-  // declared props schema and the tree compiled into `home.ir`.
-  ...(isSsr ? { ssrEntryPoints: { home: 'src/home/app.tsx' } } : {}),
-  // Strict mode, which the npm scripts ask for: a construct the compiler
-  // cannot render on the server fails the build, naming its code, file and
-  // line, instead of leaving an empty island in the page. Without the flag,
-  // FORMA_STRICT=1 turns it on.
+  // Keys select native page owners before browser outputs are filtered.
+  // About keeps its typed native module and shared CSS, with no JS in SSR mode.
+  ...(isSsr ? { ssrEntryPoints: {
+    home: 'src/home/app.tsx',
+    about: 'src/about/app.tsx',
+  } } : {}),
+  // Unsupported native source is a mandatory coded refusal. Strict mode also
+  // rejects advisory diagnostics; FORMA_STRICT=1 enables it without the flag.
   ...(process.argv.includes('--strict') ? { strict: true } : {}),
   ...(process.argv.includes('--watch') ? { watch: true } : {}),
 });

@@ -31,6 +31,7 @@ import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { APP_NAME, serviceWorkerSource } from './service-worker.js';
 import { splitGraph, type SplitGraph } from './split-graph.js';
+import { entryProducts, browserEntries, type EntryProduct, type EntryProducts } from './entry-products.js';
 import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
@@ -45,6 +46,7 @@ import {
 
 import type {
   BuildConfig,
+  BuildEntry,
   BuildResult,
   AssetManifest,
   RouteManifest,
@@ -634,6 +636,16 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     }
 
     let graph: SplitGraph | undefined;
+    let products: EntryProducts = new Map();
+    const classify = (result: esbuild.BuildResult, entries: readonly BuildEntry[]) => {
+      if (!result.metafile) throw new Error('BUILD-611 entry result is missing its output graph');
+      const candidates = entryProducts(config, entries, result, compiler?.getSsrEntryProducts);
+      const nextGraph = splitGraph(result.metafile, [...entries], distDir, browserEntries(config, entries, candidates));
+      const outputs = (result.outputFiles ?? []).filter(file => file.path.endsWith('.ir') || nextGraph.files.has(basename(file.path)));
+      const metafile = { ...result.metafile, outputs: Object.fromEntries(Object.entries(result.metafile.outputs)
+        .filter(([file]) => nextGraph.files.has(basename(file)))) };
+      return { candidates, nextGraph, outputs, metafile };
+    };
     const coreGraphs = new Map<string, esbuild.Metafile>();
     let duplicateCore: ReturnType<typeof duplicateCoreDiagnostic>;
     const recordCoreGraph = (key: string, metafile: esbuild.Metafile) => {
@@ -671,7 +683,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       const firstManifest = new Promise<ReturnType<typeof generateManifest>>(resolve => { ready = resolve; });
       const writeDevManifest = (): ReturnType<typeof generateManifest> | undefined => {
         let result: ReturnType<typeof generateManifest>;
-        try { result = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies); }
+        try { result = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies, graph?.files, products); }
         catch (error) {
           if (!(error as Error).message.startsWith('BUILD-817')) throw error;
           console.warn(`Dev manifest not published: ${(error as Error).message}; waiting for valid output`);
@@ -686,16 +698,30 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         return result;
       };
 
-      const acceptedGraphs=new Map<string,SplitGraph>();
-      const publishWatch=(result:esbuild.BuildResult,key:string,nextGraph:SplitGraph)=>{
+      const acceptedGraphs = new Map<string, SplitGraph>();
+      const acceptedProducts = new Map<string, EntryProducts>();
+      // Before the first complete manifest, independent entry results remain
+      // candidates. They become accepted together with that first publication.
+      const initialGraphs = new Map<string, SplitGraph>();
+      const initialProducts = new Map<string, EntryProducts>();
+      const initialCoreGraphs = new Map<string, esbuild.Metafile>();
+      const initialIr: Record<string, string> = {};
+      const publishWatch=(result:esbuild.BuildResult,key:string,entries:readonly BuildEntry[])=>{
         if(result.errors.length||!result.metafile)return false;
-        const nextIr={...irAssets},nextGraphs=new Map(acceptedGraphs);nextGraphs.set(key,nextGraph);
+        let classified: ReturnType<typeof classify>;
+        try { classified = classify(result, entries); }
+        catch (error) { console.error(`   IR not written for ${key}: ${(error as Error).message} (the last good browser/IR pair stays)`); return false; }
+        const { candidates, nextGraph } = classified;
+        const nextIr={...irAssets,...initialIr},nextGraphs=new Map([...acceptedGraphs,...initialGraphs]);nextGraphs.set(key,nextGraph);
+        const nextProducts = new Map([...acceptedProducts,...initialProducts]); nextProducts.set(key,candidates);
+        const combinedProducts = new Map<string, EntryProduct>();
+        for (const current of nextProducts.values()) for (const [name, product] of current) combinedProducts.set(name,product);
         const combined:SplitGraph={assets:{},staticDependencies:{},files:new Set()};
         for(const current of nextGraphs.values()){
           Object.assign(combined.assets,current.assets);Object.assign(combined.staticDependencies,current.staticDependencies);
           for(const file of current.files)combined.files.add(file);
         }
-        const outputs=(result.outputFiles??[]).map(file=>{
+        const outputs=classified.outputs.map(file=>{
           if(!file.path.endsWith('.ir'))return {path:file.path,contents:file.contents};
           const logical=basename(file.path),name=logical.slice(0,-3)+'.'+createHash('sha256').update(file.contents).digest('hex')+'.ir';
           nextIr[logical]=name;return {path:join(distDir,name),contents:file.contents};
@@ -706,7 +732,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           // bytes under a previous URL, even in the unlikely event of a hash collision.
           for(const file of outputs)if(existsSync(file.path)&&!readFileSync(file.path).equals(file.contents))throw new Error(`generation filename collision: ${file.path}`);
           publishOutputFiles(outputs,()=>{
-            try {accepted=generateManifest(config,{...combined.assets,...nextIr,...frameAssets},combined.staticDependencies);}
+            try {accepted=generateManifest(config,{...combined.assets,...nextIr,...frameAssets},combined.staticDependencies,combined.files,combinedProducts);}
             catch(error){
               if(!lastManifest&&(error as Error).message.startsWith('BUILD-817'))return [];
               throw error;
@@ -718,8 +744,17 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           console.error(`   IR not written for ${key}: ${(error as Error).message} (the last good browser/IR pair stays)`);
           return false;
         }
-        Object.assign(irAssets,nextIr);acceptedGraphs.set(key,nextGraph);graph=combined;
-        recordCoreGraph(key,result.metafile);
+        if (accepted) {
+          Object.assign(irAssets,nextIr); graph=combined; products=combinedProducts;
+          acceptedGraphs.clear(); for (const [name,value] of nextGraphs) acceptedGraphs.set(name,value);
+          acceptedProducts.clear(); for (const [name,value] of nextProducts) acceptedProducts.set(name,value);
+          initialGraphs.clear(); initialProducts.clear(); for (const name of Object.keys(initialIr)) delete initialIr[name];
+          for (const [name,value] of initialCoreGraphs) recordCoreGraph(name,value);
+          initialCoreGraphs.clear(); recordCoreGraph(key,classified.metafile);
+        } else {
+          initialGraphs.set(key,nextGraph); initialProducts.set(key,candidates); Object.assign(initialIr,nextIr);
+          initialCoreGraphs.set(key,classified.metafile);
+        }
         for(const file of result.outputFiles??[])if(file.path.endsWith('.ir'))console.log(`   IR rewritten: ${basename(file.path)} in ${Math.round(performance.now()-cycleStarted)} ms`);
         if(accepted){lastManifest=text;ready(accepted);}
         return true;
@@ -738,8 +773,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
               builder.onEnd(result => {
                 firstBuilt();
                 if (result.errors.length || !result.metafile) return;
-                const next=splitGraph(result.metafile,config.entryPoints,distDir);
-                publishWatch(result,'split',next);
+                publishWatch(result,'split',config.entryPoints);
               });
             },
           }],
@@ -757,7 +791,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           metafile: true,
           write: false,
           plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),{name:'forma-paired-publish',setup(builder){
-            builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),splitGraph(result.metafile,[entry],distDir));}finally{firstBuilt();}});
+            builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),[entry]);}finally{firstBuilt();}});
           }}],
         });
         await ctx.watch();
@@ -792,10 +826,10 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     if (config.codeSplitting && config.entryPoints.length) {
       try {
         const result = await esbuild.build(splitOptions);
-        publishOutputFiles(result.outputFiles??[]);
-        if (!result.metafile) throw new Error('Split build did not return its module graph.');
-        metafiles.push(result.metafile);
-        graph = splitGraph(result.metafile, config.entryPoints, distDir);
+        const classified = classify(result, config.entryPoints);
+        publishOutputFiles(classified.outputs);
+        metafiles.push(classified.metafile);
+        graph = classified.nextGraph; products = classified.candidates;
         for (const entry of config.entryPoints) {
           if (config.serverInlined?.includes(entry.outfile)) cpSync(join(distDir, graph.assets[entry.outfile]), join(distDir, entry.outfile));
         }
@@ -828,8 +862,10 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           }
 
           const result = await esbuild.build(buildOptions);
-          publishOutputFiles(result.outputFiles??[]);
-          if (result.metafile) metafiles.push(result.metafile);
+          const classified = classify(result, [entry]);
+          publishOutputFiles(classified.outputs);
+          products = new Map([...products, ...classified.candidates]);
+          metafiles.push(classified.metafile);
         }),
       );
       for (const attempt of attempts) if (attempt.status === 'rejected') buildFailures.push(attempt.reason);
@@ -866,7 +902,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     compressAssets(distDir, new Set(frameFile ? [frameFile] : []));
 
     // ── Manifest generation ───────────────────────────────────────────
-    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies, graph?.files);
+    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products);
     if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
 
     writeFileSync(
