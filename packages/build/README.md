@@ -208,6 +208,52 @@ The build then copies `dist/formajs-frame.global.js` from the
   file on macOS and Windows); any value but `true` or `false` is a config
   error.
 
+### The size report: route classes and ceilings
+
+A production build classifies every route and holds it to its class's
+ceilings (N2; decision brief L-55, DR-35). Sizes are gzip at level 9, a KB
+being 1,000 bytes and a KiB 1,024; Brotli is reported beside them. A route over
+a ceiling fails the build with `BUILD-819`, naming the route, its class and
+the bytes, before anything is written.
+
+| Class | Which routes | Forma's code | All of the route's JavaScript |
+|---|---|---|---|
+| `no-interactive-region` | A server-rendered page with no island, or a route that lists no script | none | none (a service worker counted) |
+| `islands` | A server-rendered page with islands | 25,500 B | 75 KiB (76,800 B), 365 KiB for a canvas |
+| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as `islands` |
+
+Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed
+from the bundler's metafile; the application's own code is outside that
+ceiling. A route's JavaScript is the files the manifest lists for it and the
+generated `sw.js` when the route lists any script (forma-server registers the
+worker only on such pages).
+
+**`canvas`.** A page that hosts many modules and is JavaScript-heavy by design
+declares it on its route:
+
+```ts
+routes: {
+  "/studio": { js: ["studio"], css: ["studio"], canvas: true },
+},
+```
+
+A canvas may ship 365 KiB of JavaScript instead of 75 KiB; Forma's code stays
+under 25,500 B either way, and the declaration gives nothing to a route
+without JavaScript. Only `true` or `false` is accepted (anything else is a
+config error, reported before anything is written). It is provisional public
+configuration at 3.0.0: declare it for a page that really is a canvas, and trim
+or split any other page over 75 KiB.
+
+The report is printed after the bundle summary, returned as
+`BuildResult.sizeReport` (`BuildResult.sizes` is its routes) and written,
+without the build's times, as `size-report.json` beside `manifest.json`: for the
+same sources the same bytes, since the application embeds the directory, and
+forma-server refuses to serve it. The times by phase (`bundle`, `hash`,
+`compress`, `manifest`) are printed and in `BuildResult.sizeReport.times`. With
+`previewFrame`, a frame-document row reports the runtime forma-server inlines
+into every preview document. Watch mode reports nothing: its bytes are not what
+a route ships.
+
 ## What It Does
 
 | Step | What happens |
