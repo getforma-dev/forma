@@ -157,3 +157,22 @@ The dry-run marker is rejected by the publication helper regardless of environme
 A run over the previously published A2 archives is recorded separately from newly
 packed merged-tree candidates; the latter include 117's scripts-off policy changes
 and are not claimed byte-identical to the old release. Neither dry run publishes.
+
+## Staged response contract (FORMA-109)
+
+The DS11 contract records `trustedTypes: "enforced-v1"`. P17 reads the actual
+HTTP and browser-navigation enforcement headers for both packed templates,
+requires the two intended policy names, and records native Trusted Types support,
+all `securitypolicyviolation` events and page errors across positive interaction.
+A passing result requires zero events and errors; separate native browser controls
+prove enforcement actually refuses a raw sink write. Empty `pageerror` alone is
+not evidence of zero CSP reports.
+
+Until FORMA-144 migrates the source templates, packing candidate 3.x removes
+exactly the known `config_script: None,` field from each template's `src/main.rs`.
+Unexpected source or a future major fails before writes. A2 packing leaves source
+untouched; candidate packing restores both source files plus all eight manifests
+and locks on success or failure. This adapter does not migrate applications or
+claim FORMA-144 complete. The recurring restoration test and a new actual packed
+rehearsal document this stage; historical A2 and earlier P17 reports stay unchanged.
+`liveReleaseReady` remains false while the remaining milestone contracts are open.

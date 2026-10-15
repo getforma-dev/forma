@@ -77,7 +77,7 @@ All four patterns work under strict CSP. Internally, string styles are parsed by
 
 **Cause:** A `<script>` tag is missing its `nonce` attribute. This happens if you inject scripts via `innerHTML`, create them with `document.createElement('script')` without setting the nonce.
 
-**Fix:** Use `forma-server`'s `render_page()` which automatically injects nonces on all script tags. If you need to add custom scripts, use the `config_script` field in `PageConfig` — it's rendered inside a nonce-tagged script block.
+**Fix:** Return forma-server's `PageResponse` from a typed `PageHandle::render` call. The renderer draws the nonce and attaches the document policy. Put code in the bundle and pass data as declared props or escaped `config_json`; `render_page`, caller-supplied nonces and `config_script` are removed in the staged 3.x contract. See [the migration guide](../../docs/TRUSTED-TYPES.md).
 
 ### "Refused to apply inline style" on `<style>` tags
 
@@ -239,4 +239,4 @@ Verified by `src/__tests__/docs-truth.test.ts` > "CSP.md's version history ends 
 | 2.0.2 | No CSP-affecting changes since 2.0.1. |
 | 2.0.3 | No CSP-affecting changes since 2.0.2. |
 | 2.1.0 | Trusted Types: what core writes of its own passes `require-trusted-types-for 'script'; trusted-types forma forma-runtime` (its clears use `replaceChildren()`; the runtime's parser re-mints trusted markup through `forma-runtime`, and its diff of that markup writes no `on*` or script `src`), and every raw sink takes `trustedHtml()`, made by core's policy `forma`. Such a page reports only what the application writes as a string, the runtime's `srcdoc` bindings included. See [Trusted Types](#trusted-types). |
-| Unreleased | No CSP-affecting changes since 2.1.0. |
+| Unreleased | Staged 3.x refuses plain strings at raw APIs and refuses `h('script')`; runtime srcdoc bindings report coded refusals. Forma-server enforces both Trusted Types directives without requiring a reporting endpoint. |

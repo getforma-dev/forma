@@ -4,10 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Typed raw boundaries — FORMA-109
+
+- Raw markup APIs require `trustedHtml()` and reject strings and look-alikes before DOM writes or cache shortcuts, in both development and production. This includes `dangerouslySetInnerHTML`, `srcdoc`, `setAttr`, `setHTMLUnsafe`, `template`/`templateMany`, `reconcile`, `mountMarkup` and its update operation. Null/false clears remain supported; `h('script')` is refused.
+- Runtime `data-bind:srcdoc` and row srcdoc interpolation produce a coded diagnostic instead of entering the native sink. Reused rows continue updating ordinary attributes with the same URL/event checks as first render.
+- Browser controls exercise Report-Only and enforced policies, including native refusal, in Chromium, Firefox and WebKit. The shared `forma` mint remains callable by any page script and is not a sanitizer or caller-isolation boundary. See [migration](../../docs/TRUSTED-TYPES.md).
+
 ### Removed — FORMA-110
 
 - Removed `@getforma/core/server`, `@getforma/core/ssr` and `@getforma/core/wasm`, their implementations, and their development warnings. Use authenticated Rust routes, forma-server's native walker and browser `h()` respectively. These subpaths no longer resolve in any export condition or TypeScript resolver.
-- Preserved the 2.x guides in `docs/archive/2026-10-15-legacy-apis/`; the live API and security guides describe the remaining browser runtime. Tierless `reconcile()` and raw-string retirement remain separate work (FORMA-108).
+- Preserved the 2.x guides in `docs/archive/2026-10-15-legacy-apis/`; the live API and security guides describe the remaining browser runtime. Tierless `reconcile()` retirement remains separate work (FORMA-108); raw-string retirement is FORMA-109 below.
 
 
 - FORMA-185 stages the shared development version at `3.0.0-dev` for the FMIR

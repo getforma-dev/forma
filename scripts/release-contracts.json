@@ -11,5 +11,6 @@
     "FORMA-144": "both templates use the milestone's API",
     "FORMA-188": "fixture applications and skew drill",
     "FORMA-191": "release measurements"
-  }
+  },
+  "trustedTypes": "enforced-v1"
 }

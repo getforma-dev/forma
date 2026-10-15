@@ -394,13 +394,19 @@ for (const { mode, header } of MODES) {
       const markup = `<div data-forma-state='{"doc":"bound","title":"neighbor","rows":[{"d":"row","t":"one"}]}'>` +
         `<iframe id="bound-doc" sandbox="" data-bind:srcdoc="doc" data-bind:title="title"></iframe>` +
         `<ul data-list="{rows}"><li><iframe sandbox="" srcdoc="{item.d}" title="{item.t}"></iframe></li></ul>` +
-        `<button id="change-doc" data-on:click="{rows = [{d:'changed',t:'two'}]}">change</button></div>`;
+        `<span id="doc-value" data-text="doc"></span><button id="change-doc" data-on:click="{doc = 'changed'}">document</button>` +
+        `<button id="change-rows" data-on:click="{rows = [{d:'changed',t:'two'}]}">rows</button></div>`;
       runtime.mountMarkup(document.getElementById('live'), runtime.trustedHtml(markup), { tier: 'reviewed', config: { diagnostics: true } });
     });
     await expect(page.locator('#bound-doc')).toHaveAttribute('title', 'neighbor');
     await expect(page.locator('#live ul iframe')).toHaveAttribute('title', 'one');
     await expect(page.locator('#live [srcdoc]')).toHaveCount(0);
+    await expect(page.locator('#doc-value')).toHaveText('bound');
     await page.click('#change-doc');
+    await expect(page.locator('#doc-value')).toHaveText('changed');
+    await expect(page.locator('#bound-doc')).toHaveAttribute('title', 'neighbor');
+    await expect(page.locator('#live [srcdoc]')).toHaveCount(0);
+    await page.click('#change-rows');
     const afterClick = await page.evaluate(() => (window as any).FormaRuntime.getDiagnostics());
     expect(afterClick.filter((d: any) => d.kind !== 'markup-refused'), JSON.stringify(afterClick)).toEqual([]);
     await expect(page.locator('#live ul iframe')).toHaveAttribute('title', 'two');
