@@ -259,6 +259,17 @@ macro_rules! floats {($($ty:ty),*)=>{$(primitive!($ty,Number,|value:&$ty,context
     serde_json::Number::from_f64(*value as f64).map(Value::Number).ok_or_else(||context.error("RENDER-402",path,"number must be finite"))
 });)*};}
 floats!(f32, f64);
+
+fn date_milliseconds(negative: bool, duration: std::time::Duration) -> Option<i64> {
+    // JS Date precision is integer milliseconds. Truncate fractional milliseconds
+    // toward zero on both sides of the epoch, matching this documented wire rule.
+    let millis = duration.as_millis();
+    if millis > 8_640_000_000_000_000 || millis > MAX_SAFE as u128 {
+        return None;
+    }
+    Some(millis as i64 * if negative { -1 } else { 1 })
+}
+
 primitive!(
     std::time::SystemTime,
     Date,
@@ -267,18 +278,15 @@ primitive!(
             Ok(d) => (false, d),
             Err(e) => (true, e.duration()),
         };
-        // JS Date precision is integer milliseconds. Truncate fractional milliseconds
-        // toward zero on both sides of the epoch, matching this documented wire rule.
-        let millis = duration.as_millis();
-        if millis > 8_640_000_000_000_000 || millis > MAX_SAFE as u128 {
-            return Err(context.error(
-                "RENDER-403",
-                path,
-                "date exceeds the valid JavaScript Date range ±8.64e15 milliseconds",
-            ));
-        }
-        let value = millis as i64 * if negative { -1 } else { 1 };
-        Ok(Value::Number(value.into()))
+        date_milliseconds(negative, duration)
+            .map(|value| Value::Number(value.into()))
+            .ok_or_else(|| {
+                context.error(
+                    "RENDER-403",
+                    path,
+                    "date exceeds the valid JavaScript Date range ±8.64e15 milliseconds",
+                )
+            })
     }
 );
 impl<T: PropValue> PropValue for Option<T> {
@@ -336,4 +344,39 @@ pub use serde_json::{Map as JsonMap, Value as JsonValue};
 #[doc(hidden)]
 pub fn child_path(parent: &str, name: &str) -> String {
     field_path(parent, name)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::date_milliseconds;
+    use std::time::Duration;
+
+    #[test]
+    fn date_conversion_checks_both_signed_bounds_without_system_time_limits() {
+        // Some platforms cannot construct SystemTime values at the JS Date
+        // boundary. Exercise the actual conversion before its i64 cast directly.
+        let boundary = 8_640_000_000_000_000;
+        for negative in [false, true] {
+            let sign = if negative { -1 } else { 1 };
+            for (duration, expected) in [
+                (Duration::ZERO, 0),
+                (Duration::from_nanos(999_999), 0),
+                (Duration::from_nanos(1_999_999), 1),
+                (Duration::from_millis(boundary), boundary as i64),
+                (
+                    Duration::from_millis(boundary) + Duration::from_nanos(999_999),
+                    boundary as i64,
+                ),
+            ] {
+                assert_eq!(date_milliseconds(negative, duration), Some(expected * sign));
+            }
+            for duration in [
+                Duration::from_millis(boundary + 1),
+                Duration::from_millis(i64::MAX as u64 + 1),
+                Duration::from_secs(u64::MAX),
+            ] {
+                assert_eq!(date_milliseconds(negative, duration), None);
+            }
+        }
+    }
 }
