@@ -34,7 +34,10 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * createShow/createSwitch tracing out, the duplicate-instance registry
  * development-only) they measure 46,097 and 46,115 B, and both gates are
  * ratcheted to 46,500 B under L-51 (decision brief L-55, 2026-10-15), the
- * growth stated in the CHANGELOG under FORMA-103 and FORMA-104. They are
+ * growth stated in the CHANGELOG under FORMA-103 and FORMA-104. Integrating
+ * FORMA-181 checkpoint C with FORMA-182 value rules measures 46,477 and
+ * 46,504 B. L-58 permits measured +300 B for these reviewed features, so
+ * the gates are now 46,777 and 46,804 B (CHANGELOG, FORMA-181/182). They are
  * ratchets like the runtime gates below, not a budget: the budget is N2,
  * Forma's code per route, which @getforma/build measures and fails
  * (route-size.ts).
@@ -78,7 +81,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 46500,
+    limit: 46777,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {
@@ -88,7 +91,7 @@ export const GATES = [
   },
   {
     entry: 'dist/forma.esm.js',
-    limit: 46500,
+    limit: 46804,
     note: 'CDN browser ESM bundle (self-contained, inlines alien-signals)',
   },
   {
