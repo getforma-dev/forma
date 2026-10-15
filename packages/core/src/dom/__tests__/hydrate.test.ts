@@ -694,14 +694,7 @@ describe('island isolation for throwing bindings', () => {
 
   it('a binding that throws while being built fails only its own island', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending">
-        <p title="x">SSR content stays</p>
-      </div>
-      <div data-forma-island="1" data-forma-component="Working" data-forma-status="pending">
-        <p><!--f:t0-->OK<!--/f:t0--></p>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending"><p title="x">SSR content stays</p></div><div data-forma-island="1" data-forma-component="Working" data-forma-status="pending"><p><!--f:t0-->OK<!--/f:t0--></p></div>`;
     installState();
 
     let setMsg!: (v: string) => void;
@@ -720,7 +713,8 @@ describe('island isolation for throwing bindings', () => {
     expect(document.querySelector('[data-forma-island="0"]')!.getAttribute('data-forma-status')).toBe('error');
     expect(document.querySelector('[data-forma-island="0"] p')!.textContent).toBe('SSR content stays');
 
-    expect(document.querySelector('[data-forma-island="1"]')!.getAttribute('data-forma-status')).toBe('active');
+    expect(document.querySelector('[data-forma-island="1"]')!.getAttribute('data-forma-status')).toBe('pending');
+    expect(typeof (document.querySelector('[data-forma-island="1"]') as any).__formaDispose).toBe('function');
     setMsg('Updated');
     expect(document.querySelector('[data-forma-island="1"] p')!.textContent).toBe('Updated');
 
@@ -729,14 +723,7 @@ describe('island isolation for throwing bindings', () => {
 
   it('a binding that throws on a shared-signal update does not freeze the other island', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Fragile" data-forma-status="pending">
-        <p><!--f:t0-->0<!--/f:t0--></p>
-      </div>
-      <div data-forma-island="1" data-forma-component="Display" data-forma-status="pending">
-        <p><!--f:t0-->0<!--/f:t0--></p>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Fragile" data-forma-status="pending"><p><!--f:t0-->0<!--/f:t0--></p></div><div data-forma-island="1" data-forma-component="Display" data-forma-status="pending"><p><!--f:t0-->0<!--/f:t0--></p></div>`;
     installState();
 
     const [count, setCount] = createSignal(0);
