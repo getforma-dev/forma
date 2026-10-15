@@ -130,11 +130,47 @@ panics rather than failing one case.
   produced and so has no normalizer of its own; the HTML runtime's `data-*`
   binder and `dom-utils/mutate.ts` are outside the plan's table and unchanged.
 
-## Rules 2 to 7: listed, not qualified here
+## Rule 2: numbers in ECMAScript formatting
+
+**Statement.** A finite number written as DOM text or as an attribute value
+is formatted as `Number.prototype.toString` formats it: the shortest digits
+that round-trip; a fixed form when the decimal exponent *n* of the spec's
+algorithm satisfies −6 < *n* ≤ 21, otherwise an exponent with an explicit sign
+(`1e+21`, `1e-7`); −0 is `0`. The lexeme is parsed as a binary64 on both sides
+before formatting, so a lexeme past 2^53 is rounded first; an exact integer
+origin beyond ±(2^53 − 1) is rule 3's refusal, not this rule.
+
+**Why.** Adoption compares text nodes byte for byte. Rust's `Display` never
+writes an exponent (`1e300` prints as 301 digits) and would write `-0`; the
+spec's thresholds give `0.000001`, `1e-7`, `100000000000000000000` and `1e+21`,
+which is what `String(n)` writes in the browser.
+
+**What it does not decide.** NaN and the infinities are not formatted on the
+server: RENDER-402 refuses a non-finite declared number (rule 3's file). There
+is no server-side `toFixed`; a fixed number of digits is the component's, in
+the browser. Design 4 names `toFixed`'s ties-away-from-zero rule for a server
+that gains one; the walker has no such formatter today.
+
+**Implementation.** Rust: `crates/forma-ir/src/slot.rs` > `format_js_number`,
+reached through `SlotValue::to_text` for `DYN_TEXT`, `DYN_ATTR`, control text
+and select values. TypeScript: `String(n)` in `h()`'s number children and
+attribute writers, `childText`, adoption's `text()` and `prepareAttribute`.
+No code changed for this rule; the vectors pin it.
+
+**Vectors.** `crates/forma-ir/tests/fixtures/parity/numbers.json`, section
+`values` (`lexeme`, `expected`): zero and −0, integers, fractions, the
+`0.1 + 0.2` sum, the fixed/exponent boundaries at 1e-6/1e-7 and 1e20/1e21,
+seventeen significant digits, 2^53 and the float that rounds to it, the
+smallest subnormal and the largest finite. Consumers: `crates/forma-ir/src/walker.rs`
+> `value_rule_vectors` > "rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute"
+and `packages/core/src/dom/__tests__/value-rule-2-numbers.test.ts` (the engine
+is the oracle: `String(Number(lexeme))` must equal the vector before any
+writer is checked, so the Rust side is held to the engine).
+
+## Rules 3 to 7: listed, not qualified here
 
 | # | Rule | Where the current behaviour lives |
 |---|---|---|
-| 2 | Numbers in ECMAScript `Number.prototype.toString` formatting | `crates/forma-ir/src/slot.rs` `format_js_number`; `String(n)` on the client |
 | 3 | Integers within ±(2^53 − 1); exact-integer origins refused beyond | `crates/forma-ir/src/props/value.rs` (FORMA-102/103 checked admission) |
 | 4 | Dates as epoch milliseconds, no `Intl` on the server | `crates/forma-ir/src/props/value.rs`; the state envelope |
 | 5 | `null` writes nothing on every side | Walker `DYN_TEXT` (U+200B holder), `h()`, adoption `text()` |

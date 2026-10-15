@@ -6262,4 +6262,114 @@ mod tests {
             }
         }
     }
+
+    // -- FORMA-182 rules 2 to 7: the shared value-rule vectors ---------------
+    //
+    // One JSON file per rule under tests/fixtures/parity/, each read by this
+    // crate and by @getforma/core's suite (packages/core/src/dom/__tests__/
+    // value-rules.test.ts); the compiled shapes of rules 4, 6 and 7 are read
+    // by @getforma/compiler's suite. Every case walks the real opcode stream.
+    mod value_rule_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const NUMBERS: &str = include_str!("../tests/fixtures/parity/numbers.json");
+        const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
+        const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
+        const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
+        const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
+
+        fn cases(file: &str, section: &str) -> Vec<Value> {
+            let all: Value = serde_json::from_str(file).unwrap();
+            all[section].as_array().unwrap().clone()
+        }
+
+        fn field<'a>(case: &'a Value, key: &str) -> &'a str {
+            case[key].as_str().unwrap()
+        }
+
+        /// A DYN_TEXT range as the walker writes it (an empty value is held
+        /// by a zero-width space).
+        fn marker(id: u16, text: &str) -> String {
+            let inner = if text.is_empty() {
+                "\u{200B}".to_string()
+            } else {
+                text.to_string()
+            };
+            format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
+        }
+
+        /// The text a browser shows: marker comments and the empty-range
+        /// zero-width spaces removed.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
+        fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
+            if actual != expected {
+                failures.push(format!(
+                    "{label}: expected {expected:?}, walker wrote {actual:?}"
+                ));
+            }
+        }
+
+        fn finish(failures: Vec<String>) {
+            assert!(
+                failures.is_empty(),
+                "{} disagreeing vector(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        /// A slot value from a vector's JSON value: a string, a number, a
+        /// boolean or null (the shapes the vectors use).
+        fn slot_value(value: &Value) -> SlotValue {
+            match value {
+                Value::Null => SlotValue::Null,
+                Value::Bool(b) => SlotValue::Bool(*b),
+                Value::Number(n) => SlotValue::Number(n.as_f64().unwrap()),
+                Value::String(s) => SlotValue::Text(s.clone()),
+                other => panic!("unsupported vector value {other}"),
+            }
+        }
+
+        #[test]
+        fn rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute() {
+            let mut failures = Vec::new();
+            for case in cases(NUMBERS, "values") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr("title", slot)
+                    .close("span");
+                let want = format!(
+                    "<p>{}</p><span id=\"ok\" title=\"{expected}\"></span>",
+                    marker(slot, expected)
+                );
+                check(
+                    &mut failures,
+                    &format!("numbers/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+    }
 }

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Value rules 2 to 7 — FORMA-182
+
+- Rule 2, numbers in ECMAScript formatting: stated in `docs/parity-rules.md` with the shared vector file `crates/forma-ir/tests/fixtures/parity/numbers.json` (29 lexemes with their `Number.prototype.toString` spelling), read by forma-ir's walker suite and by core's, where the engine is the oracle. No code changed: the walker's `format_js_number` already agrees on every vector.
+
 ### Value rule 1: line endings and NUL — FORMA-182
 
 - `docs/parity-rules.md` states the marker vocabulary and rule 1 (CRLF and CR to LF, NUL to U+FFFD, per value, before ordinary DOM text and attribute writes) and lists rules 2 to 7 with where their behaviour lives today. One shared vector file, `crates/forma-ir/tests/fixtures/parity/normalization.json`, is read by forma-ir's and core's suites. The walker and `@getforma/core` apply the rule in their ordinary writers; transport (props, state, keys) stays exact. The `textarea`, `pre` and `listing` first-token line feed is protected by the walker and the URL guards refuse a NUL anywhere in a URL attribute. Document-head metadata in forma-server and the broader value rules remain open.
