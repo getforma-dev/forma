@@ -46,3 +46,16 @@ test('packed corpus propagates a failing Rust semantic check', () => {
     assert.throws(() => verifyPackedCorpus(manifest, 3), /Command failed/);
   });
 });
+test('packed corpus removes the golden-update variable from the actual Rust child environment', () => {
+  const previous = process.env.UPDATE_GOLDEN;
+  process.env.UPDATE_GOLDEN = '1';
+  try {
+    for (const fmir of [2, 3]) fixture(fmir, source => source.replace(
+      'fn rendered_html_matches_golden() {}',
+      'fn rendered_html_matches_golden() { assert!(std::env::var_os("UPDATE_GOLDEN").is_none()); }',
+    ), manifest => verifyPackedCorpus(manifest, fmir));
+  } finally {
+    if (previous === undefined) delete process.env.UPDATE_GOLDEN;
+    else process.env.UPDATE_GOLDEN = previous;
+  }
+});

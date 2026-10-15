@@ -63,7 +63,10 @@ export function verifyPackedCorpus(manifest, fmir) {
     ...(fmir === 3 ? ['canonical_dumps_match_the_typescript_emitter'] : []),
   ].map(name => fmir === 3 ? `js_emitter_contract::${name}` : name);
   const args = ['test', '--locked', '--manifest-path', manifest, ...target, '--', '--color', 'never'];
-  const options = { env: { ...process.env, UPDATE_GOLDEN: '' } };
+  const env = { ...process.env };
+  // The Rust corpus checks presence, so even an empty value would permit writes.
+  delete env.UPDATE_GOLDEN;
+  const options = { env };
   const listed = run('cargo', [...args, '--list'], ROOT, options).split('\n');
   for (const name of names) assert(listed.includes(`${name}: test`), `packed corpus is missing ${name}`);
   const output = run('cargo', args, ROOT, options);
