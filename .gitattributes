@@ -60,3 +60,5 @@ docs/archive/2026-10-15-pre-native-keys/** -text
 crates/forma-ir/tests/fixtures/parity/*.json text eol=lf
 # FORMA-181 F1: the pre-list-source originals are authenticated by SHA-256.
 docs/archive/2026-10-15-pre-list-source/** -text
+# FORMA-181 F1: tests/list-source.test.ts hashes the live corpus sources against the ledger.
+packages/compiler/tests/fixtures/ir-corpus/list-same-source/*.ts text eol=lf
