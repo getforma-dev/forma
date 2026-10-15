@@ -69,7 +69,7 @@ export function rmrf(dir: string) {
  */
 export function runCli(args: string[], cwd: string, env: Record<string, string> = {}): SpawnSyncReturns<string> {
   if (!fs.existsSync(CLI)) {
-    throw new Error(`${CLI} is missing — run \`npm run build\` first (the "pretest" script does this).`);
+    throw new Error(`${CLI} is missing — run \`npm run build\` first (the test script does this explicitly; install hooks stay disabled).`);
   }
   return spawnSync(process.execPath, [CLI, ...args], {
     cwd,

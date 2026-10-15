@@ -158,10 +158,11 @@ export function replacePlaceholders(dir: string, replacements: Record<string, st
 }
 
 /**
- * Rename every `_gitignore` under `dir` to `.gitignore`. Templates store the
+ * Restore `_gitignore` and `_npmrc` under `dir` to their dotfile names. Templates store the
  * file under the underscore name because `npm pack` renames a real
  * `.gitignore` to `.npmignore`, which would both lose the file and change
- * what the published tarball contains.
+ * what the published tarball contains. npm also excludes real `.npmrc` files
+ * from packages, so the install policy must travel as `_npmrc`.
  *
  * Verified by: tests/scaffold-lib.test.ts > "renames _gitignore at every depth"
  */
@@ -170,8 +171,8 @@ export function restoreGitignores(dir: string) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       restoreGitignores(fullPath);
-    } else if (entry.isFile() && entry.name === '_gitignore') {
-      fs.renameSync(fullPath, path.join(dir, '.gitignore'));
+    } else if (entry.isFile() && (entry.name === '_gitignore' || entry.name === '_npmrc')) {
+      fs.renameSync(fullPath, path.join(dir, `.${entry.name.slice(1)}`));
     }
   }
 }

@@ -13,7 +13,8 @@
 #   exit 0  "not visible yet" (a warning)      no checksum after the last poll;
 #           not a mismatch: compare by hand later
 # CHECK_ATTEMPTS (default 30) and CHECK_INTERVAL in seconds (default 30) bound
-# the wait: 15 minutes. Tested by scripts/test-check-published-crate.sh.
+# the poll count. CHECK_TIMEOUT (default and maximum 900 s) also bounds total
+# wall time, including curl and sleeps. Tested by scripts/test-check-published-crate.sh.
 set -euo pipefail
 
 crate=${1:?usage: check-published-crate.sh <crate> <version> <recorded-sha256>}
@@ -21,6 +22,9 @@ version=${2:?usage: check-published-crate.sh <crate> <version> <recorded-sha256>
 want=${3:-}
 attempts=${CHECK_ATTEMPTS:-30}
 interval=${CHECK_INTERVAL:-30}
+budget=${CHECK_TIMEOUT:-900}
+[[ $budget =~ ^[1-9][0-9]*$ ]] && [ "$budget" -le 900 ] || { echo "CHECK_TIMEOUT must be 1..900 seconds" >&2; exit 1; }
+deadline=$(( $(date +%s) + budget ))
 url="https://crates.io/api/v1/crates/$crate/$version"
 versions_page="https://crates.io/crates/$crate/versions"
 
@@ -32,7 +36,11 @@ fi
 got=""
 i=1
 while [ "$i" -le "$attempts" ]; do
-  body=$(curl -fsS --max-time 20 -H 'User-Agent: getforma-release-ci (github.com/getforma-dev/forma)' "$url" 2>/dev/null) || body=""
+  remaining=$(( deadline - $(date +%s) ))
+  [ "$remaining" -gt 0 ] || break
+  request_timeout=20
+  [ "$remaining" -ge 20 ] || request_timeout=$remaining
+  body=$(curl -fsS --max-time "$request_timeout" -H 'User-Agent: getforma-release-ci (github.com/getforma-dev/forma)' "$url" 2>/dev/null) || body=""
   got=$(printf '%s' "$body" | jq -r '.version.checksum // empty' 2>/dev/null) || got=""
   if [[ $got =~ ^[0-9a-f]{64}$ ]]; then
     break
@@ -40,13 +48,17 @@ while [ "$i" -le "$attempts" ]; do
   got=""
   echo "attempt $i of $attempts: crates.io does not show $crate $version yet"
   if [ "$i" -lt "$attempts" ]; then
-    sleep "$interval"
+    remaining=$(( deadline - $(date +%s) ))
+    [ "$remaining" -gt 0 ] || break
+    pause=$interval
+    [ "$remaining" -ge "$pause" ] || pause=$remaining
+    sleep "$pause"
   fi
   i=$((i + 1))
 done
 
 if [ -z "$got" ]; then
-  echo "::warning title=$crate $version not visible yet::crates.io's API did not show $crate $version after $attempts attempts. This is not a mismatch and nothing needs yanking. Compare by hand later: curl -s -H 'User-Agent: you' $url | jq -r .version.checksum must print $want."
+  echo "::warning title=$crate $version not visible yet::crates.io's API did not show $crate $version within the polling limit ($attempts attempts, $budget seconds). This is not a mismatch and nothing needs yanking. Compare by hand later: curl -s -H 'User-Agent: you' $url | jq -r .version.checksum must print $want."
   exit 0
 fi
 
