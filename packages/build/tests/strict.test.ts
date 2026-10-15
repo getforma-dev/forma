@@ -119,7 +119,7 @@ describe('--strict', () => {
 
   it('uses the required application identity without a legacy unnamed-worker diagnostic', async () => {
     const entries = { home: page('home', [`mount(() => h('main', null, 'clean'), '#app');`]) };
-    const result = await build(config(entries, { strict: true, serviceWorker: 'precache' }));
+    const result = await build(config(entries, { strict: true, serviceWorker: 'on-demand' }));
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest.app).toBe('fixture');
     expect(result.warnings.some((w) => w.startsWith('BUILD-802 '))).toBe(false);

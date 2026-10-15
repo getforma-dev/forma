@@ -60,19 +60,27 @@ With `ssr: true`, an entry can set `ssr: false` to keep only that route browser-
 Watch builds keep stable entry URLs, regenerate chunk mappings, and remove old
 successful-graph chunks after rebuilding instead of accumulating them on disk.
 
-### Optional on-demand asset caching
+### Verified on-demand asset caching
 
-Set `serviceWorker: 'on-demand'` to generate a worker that downloads nothing on
-installation and caches eligible static assets only when the app requests them.
-This preserves lazy imports and avoids cache warmup competing with first paint.
-It accepts only exact content-hashed JS/CSS/WASM files from the build manifest,
-with successful, non-redirected immutable asset responses. HTML, APIs, query
-URLs, unknown assets and private/no-store responses never enter this cache.
-CacheStorage denial and quota errors do not block successful network responses.
-The worker is still registered by the application; generation does not register
-it automatically. Unhashed fonts use the browser HTTP cache. The default remains
-`serviceWorker: 'precache'`, and watch mode always uses the network-only worker.
-Any other `serviceWorker` value is a config error.
+Production builds default to `serviceWorker: 'on-demand'`. Installation downloads
+nothing. The worker's exact URL table comes from the finalized manifest's full
+SHA-384 digests and immutable metadata, including dynamic JS/CSS/WASM chunks.
+It never uses hash-like filename spelling as evidence of immutability.
+
+Both cache hits and network replacements must have eligible immutable response
+metadata and bytes matching that digest. A bad cache entry is evicted best effort
+and refetched with the HTTP cache bypassed; it is never served, even if deletion
+fails. Bad network bytes, unreadable responses or unavailable Web Crypto fail the
+protected fetch. Storage/quota failure still permits a verified network response,
+and a valid cached asset remains available offline. The digest covers decoded,
+uncompressed bytes, including assets delivered with gzip or Brotli.
+
+Navigation, APIs, writes, query URLs, explicit cache-bypass requests, unlisted or
+mutable files, HTML, fonts, the worker and the manifest are not cached by this
+worker. Responses with private/no-store headers, redirects or unsuitable MIME
+are refused for protected assets. The server still opts into registration; merely
+generating a worker does not enable it. `precache` is removed and is a configuration
+error before output changes. Development remains network-only.
 
 ### Per-application workers (`app`)
 
@@ -107,8 +115,7 @@ The existing production cache name is `forma:<app>:<build>`, using the first 12
 hex digits of the current build identifier. Activation removes its own older
 caches and legacy Forma caches, never another named application's caches. It does
 not skip waiting or claim open pages. Development workers stay network-only.
-The final deployment identity and retained-build protocol remain FORMA-186; full
-integrity enforcement remains FORMA-111.
+The final deployment identity and retained-build protocol remain FORMA-186.
 
 Verified by: `packages/build/tests/compatibility.test.ts`,
 `packages/create-app/tests/scaffold.test.ts`, and
