@@ -1,0 +1,8 @@
+{
+  "source": "1e944d6d9f5b2ad45937827d69dffe3577ed7f64",
+  "reader": "3.1.0-dev",
+  "passed": true,
+  "rustDiff": false,
+  "lockBefore": "0ef75ae40bd4d7db11f123bb7fc9abb97b6c1283ef8018866eba315689a9ebbb",
+  "lockAfter": "0ef75ae40bd4d7db11f123bb7fc9abb97b6c1283ef8018866eba315689a9ebbb"
+}

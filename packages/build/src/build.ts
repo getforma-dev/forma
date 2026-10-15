@@ -284,7 +284,7 @@ function validateConfig(config: BuildConfig): void {
   const app: unknown = config.app;
   if (app !== undefined && (typeof app !== 'string' || !APP_NAME.test(app))) {
     problems.push(
-      `app is ${shown(app)}: use 1 to 63 of a-z, 0-9 and -, starting with a letter or digit ` +
+      `BUILD-815 app is ${shown(app)}: use 1 to 63 of a-z, 0-9 and -, starting with a letter or digit ` +
         `(the name forma-server's sw::ServiceWorker::for_app takes)`,
     );
   }
