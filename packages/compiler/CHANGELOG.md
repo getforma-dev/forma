@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed — FORMA-103 entry prerequisite
+
+- Resolve a top-level page declared in its own entry file through the same declared-props path as an imported page. Expression callbacks, single-return blocks and direct references retain the page contract; genuine inline trees remain local. Shadowed or reassigned root identities fail BUILD-610 before emitting an unrelated schema.
+
 ### Declared page props — FORMA-102
 
 - Extract original TypeScript/TSX props before JSX lowering, including relative aliases/re-exports and source positions, into the existing FMIR schema section. No wire layout changes.

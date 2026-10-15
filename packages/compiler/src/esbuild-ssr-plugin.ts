@@ -380,7 +380,7 @@ function emitRealIr(entryPointPath: string): IrResult | null {
   // ── Original code continues for Pattern 1 & 2 (named component) ──
 
   // 3. Resolve the component file path
-  const componentPath = resolveFilePath(entryDir, entryInfo.importPath);
+  const componentPath = entryInfo.localComponent ? entryPointPath : resolveFilePath(entryDir, entryInfo.importPath);
   if (!componentPath) {
     reportPage(
       'BUILD-602',
@@ -412,6 +412,7 @@ function emitRealIr(entryPointPath: string): IrResult | null {
     exportedName,
     {
       loadModule: fsModuleLoader,
+      allowLocal: entryInfo.localComponent === true,
       onUnresolved: (detail) => reportPage(
         'BUILD-602',
         componentPath,
