@@ -15,6 +15,7 @@
 
 import { internalEffect, untrack, createRoot, registerDisposer } from 'forma/reactive';
 import { hydrating } from './hydrate.js';
+import { describingAdoption } from './adoption-description.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
 
 /**
@@ -38,6 +39,9 @@ export function createShow(
   thenFn: () => Node,
   elseFn: () => Node | null = () => null,
 ): DocumentFragment {
+  if (describingAdoption) {
+    return { type: 'show', condition: when, whenTrue: thenFn, whenFalse: elseFn } as unknown as DocumentFragment;
+  }
   if (hydrating) {
     const branch = when() ? thenFn() : elseFn();
     return {
