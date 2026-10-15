@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "sourceCommit": "153972defd480cd6821aa3fbb6d16294550b902f",
+  "recordedAt": "2026-10-15T03:56:25.710585+00:00",
+  "supersedes": "v3-props-reload-qualification.json; every earlier source archive/report remains preserved",
+  "reason": "Windows SystemTime cannot represent the JavaScript Date boundary; preserve unconditional numeric boundary coverage via the same private production conversion",
+  "productionSemantics": "Unchanged duration.as_millis truncation, Date/safe integer bounds before i64 cast, signed output and contextual RENDER-403",
+  "focusedChecks": {
+    "privateDateConversion": 1,
+    "declaredProps": 10,
+    "derivePositiveControl": 1,
+    "deriveRefusals": 23,
+    "typedPages": 7,
+    "clippy": "IR/server all targets/features with warnings denied",
+    "irMsrv": "1.71.0 private Date conversion passed"
+  },
+  "dateCoverage": [
+    "positive/negative Date boundaries",
+    "both-sign sub-millisecond truncation toward zero",
+    "boundary plus fractional millisecond truncates to boundary",
+    "one millisecond beyond rejected",
+    "larger than i64 and maximum Duration rejected before cast",
+    "representable SystemTime values traverse typed render and retain route/path diagnostics"
+  ],
+  "fullCheck": {
+    "sourceCommit": "da10ba06a87aef3093e846fbaab902473ccb7587",
+    "passed": true,
+    "seconds": 162,
+    "laterChanges": "private behavior-preserving date conversion and portability assertions, fresh Cargo packaging helper, evidence; affected checks and exact-source P17 replayed"
+  },
+  "packed": {
+    "passed": true,
+    "checks": 20,
+    "seconds": 61.524,
+    "templates": 2,
+    "restoredSourceFiles": 10
+  },
+  "logSha256": {
+    "windows-date-portability.log": "4be0f90b13b91a75a5fdcdcfe48ed705b7093b82cd16c9970edbd5bf777803f8",
+    "packed-rehearsal-date-portability.log": "7de9ad2c022fc01f4a7a5d4db3d804d543ad32ad11ca266bdee521feca782ce9",
+    "windows-date-msrv.log": "a662acb12098e3e69c3940ff6acb744c19d5b133ed3d05de25b7d95c3c397e78"
+  },
+  "hostedCi": "required on final evidence head; earlier Windows runs correctly failed test construction",
+  "liveReleaseReady": false,
+  "newFuzzOrMutationCampaign": false
+}
