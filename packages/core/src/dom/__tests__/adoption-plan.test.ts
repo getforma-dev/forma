@@ -1,0 +1,229 @@
+import { describe, expect, it, vi } from 'vitest';
+import { AdoptionDom, AdoptionDomError } from '../adoption-plan.js';
+import { SVG_NS, MATHML_NS } from '../namespace.js';
+
+function fixture(html: string) {
+  const doc = document.implementation.createHTMLDocument();
+  doc.body.innerHTML = `<main><section>${html}</section></main><aside></aside>`;
+  return { doc, host: doc.querySelector('section')!, other: doc.querySelector('aside')! };
+}
+function code(run: () => unknown, expected: string) {
+  try { run(); } catch (error) {
+    expect(error).toBeInstanceOf(AdoptionDomError);
+    expect((error as AdoptionDomError).code).toBe(`FORMA_E_HYDRATE_${expected}`);
+    return;
+  }
+  throw new Error(`Expected ${expected}`);
+}
+
+describe('read-only structural cursor', () => {
+  it('consumes static structure, coalesced authored text, attributes and exact marker text without writes', () => {
+    const { host } = fixture('before <span class="label">Hello world</span>\n<!--f:t2-->value<!--/f:t2-->');
+    const initial = host.innerHTML, nodes = [...host.childNodes];
+    const observer = new MutationObserver(() => {});
+    observer.observe(host, { subtree: true, childList: true, characterData: true, attributes: true });
+    const setters = [vi.spyOn(host, 'setAttribute'), vi.spyOn(host, 'appendChild'), vi.spyOn(host, 'removeChild')];
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    cursor.text('before'); cursor.text(' ');
+    const span = cursor.element('SPAN');
+    dom.expectAttribute(span, 'class', 'label');
+    dom.expectAttribute(span, 'title', null);
+    const contents = dom.children(span);
+    contents.text('Hello'); contents.text(' '); contents.text('world'); contents.finish();
+    cursor.text('\n');
+    expect(cursor.textRange('value')).toBe(nodes[4]);
+    cursor.finish(); dom.assertUnchanged();
+    expect(host.innerHTML).toBe(initial); expect([...host.childNodes]).toEqual(nodes);
+    expect(observer.takeRecords()).toEqual([]);
+    setters.forEach(setter => { expect(setter).not.toHaveBeenCalled(); setter.mockRestore(); });
+    observer.disconnect();
+  });
+
+  it('does not skip authored whitespace or silently accept surplus nodes', () => {
+    const { host } = fixture(' <b>bold</b> ');
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    code(() => cursor.element('b'), 'NODE');
+    cursor.text(' '); const b = cursor.element('b');
+    const content = dom.children(b); content.text('bold'); content.finish();
+    code(() => cursor.finish(), 'STRUCTURE');
+    cursor.text(' '); cursor.finish();
+    code(() => dom.children(b).text('other'), 'VALUE');
+    code(() => dom.expectAttribute(b, 'title', 'missing'), 'VALUE');
+  });
+
+  it('does not consume a text prefix as a complete child or replace an incorrect tag', () => {
+    const { host } = fixture('hello<span></span>');
+    const cursor = new AdoptionDom(host).children();
+    cursor.text('hell');
+    code(() => cursor.finish(), 'STRUCTURE');
+    code(() => cursor.element('span'), 'NODE');
+    cursor.text('o');
+    code(() => cursor.element('strong'), 'NODE');
+    expect(host.innerHTML).toBe('hello<span></span>');
+  });
+
+  it('keeps namespace and foreign tag case exact', () => {
+    const { host, doc } = fixture('<svg><clipPath></clipPath><title>SVG</title></svg>');
+    // happy-dom does not assign MathML namespaces while parsing HTML. Build
+    // the real namespaced nodes explicitly; native parser parity is a browser gate.
+    const mathNode = doc.createElementNS(MATHML_NS, 'math');
+    mathNode.append(doc.createElementNS(MATHML_NS, 'mi')); host.append(mathNode);
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    const svg = cursor.element('svg', SVG_NS);
+    const inside = dom.children(svg);
+    code(() => inside.element('clippath', SVG_NS), 'NODE');
+    inside.element('clipPath', SVG_NS);
+    code(() => inside.element('title'), 'NODE');
+    const title = inside.element('title', SVG_NS);
+    dom.children(title).text('SVG'); inside.finish();
+    const math = cursor.element('math', MATHML_NS);
+    dom.children(math).element('mi', MATHML_NS); cursor.finish();
+  });
+
+  it('checks namespaced attributes without confusing a same-spelled unnamespaced value', () => {
+    const { host } = fixture('<svg><use></use></svg>');
+    const use = host.querySelector('use')!;
+    use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#shape');
+    const dom = new AdoptionDom(host);
+    dom.expectAttribute(use, 'href', '#shape', 'http://www.w3.org/1999/xlink');
+    code(() => dom.expectAttribute(use, 'href', '#shape'), 'VALUE');
+    use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#other');
+    code(() => dom.assertUnchanged(), 'VALUE');
+  });
+
+  it('retains authored comments that only share a marker prefix', () => {
+    const { host } = fixture('<!--f:side note--><!--/f:text note-->text<!--tail-->');
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    cursor.text('text'); cursor.finish(); dom.assertUnchanged();
+    expect(host.childNodes).toHaveLength(4);
+  });
+});
+
+describe('native marker occurrence ranges', () => {
+  it('preserves repeated and nested same-source show ranges by opening-node identity', () => {
+    const { host } = fixture('<!--f:s0--><!--f:s0-->yes<!--/f:s0--><!--/f:s0--><!--f:s0--><!--/f:s0-->');
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    const first = cursor.range('s'), second = cursor.range('s'); cursor.finish();
+    expect(first.id).toBe(second.id); expect(first.start).not.toBe(second.start);
+    const outer = dom.within(first), inner = outer.range('s'); outer.finish();
+    const text = dom.within(inner); text.text('yes'); text.finish(); dom.within(second).finish();
+    dom.assertUnchanged();
+  });
+
+  it('scopes repeated text and list ids by actual row/range rather than numeric lookup', () => {
+    const { host } = fixture('<!--f:l1--><li><!--f:t0-->A<!--/f:t0--></li><li><!--f:t0-->B<!--/f:t0--></li><!--/f:l1--><!--f:l1--><!--/f:l1-->');
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    const first = cursor.range('l'), rows = dom.within(first);
+    const a = dom.children(rows.element('li')), b = dom.children(rows.element('li'));
+    expect(a.textRange('A')).not.toBe(b.textRange('B')); a.finish(); b.finish(); rows.finish();
+    dom.within(cursor.range('l')).finish(); cursor.finish();
+  });
+
+  it('accepts empty show/list ranges and the native empty-text sentinel without cleaning it', () => {
+    const { host } = fixture('<!--f:s2--><!--/f:s2--><!--f:l3--><!--/f:l3--><!--f:t65535-->\u200b<!--/f:t65535-->');
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    dom.within(cursor.range('s')).finish(); dom.within(cursor.range('l')).finish();
+    const text = cursor.textRange(''); cursor.finish(); dom.assertUnchanged();
+    expect(text.data).toBe('\u200b');
+  });
+
+  it.each([
+    ['missing close', '<!--f:s0--><b></b>'],
+    ['orphan close', '<!--/f:l1-->'],
+    ['duplicate close', '<!--f:s0--><!--/f:s0--><!--/f:s0-->'],
+    ['crossed kind', '<!--f:s0--><!--f:l1--><!--/f:s0--><!--/f:l1-->'],
+    ['crossed id', '<!--f:s0--><!--/f:s1-->'],
+    ['leading zero', '<!--f:s00--><!--/f:s00-->'],
+    ['out of u16 range', '<!--f:l65536--><!--/f:l65536-->'],
+    ['huge integer', '<!--f:t99999999999999999999999-->x<!--/f:t99999999999999999999999-->'],
+    ['cross-parent close', '<!--f:s0--><div><!--/f:s0--></div>'],
+    ['absent text node', '<!--f:t0--><!--/f:t0-->'],
+    ['element in text range', '<!--f:t0--><b>x</b><!--/f:t0-->'],
+    ['extra content in text range', '<!--f:t0-->x<!--authored--><!--/f:t0-->'],
+  ])('refuses %s without modifying the original range', (_label, html) => {
+    const { host } = fixture(html), before = host.innerHTML, children = [...host.childNodes];
+    code(() => new AdoptionDom(host).children(), 'MARKER');
+    expect(host.innerHTML).toBe(before); expect([...host.childNodes]).toEqual(children);
+  });
+
+  it('refuses an extra duplicated range by cursor exhaustion rather than forbidding legitimate repeated ids', () => {
+    const { host } = fixture('<!--f:s1--><!--/f:s1--><!--f:s1--><!--/f:s1-->');
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    dom.within(cursor.range('s')).finish();
+    code(() => cursor.finish(), 'STRUCTURE');
+  });
+
+  it('does not reinterpret raw or separately owned nested island contents as parent marker syntax', () => {
+    const { host } = fixture('<div class="raw"><!--f:t0--></div><!--f:i3--><article data-forma-island="3"><!--/f:l9--></article><!--/f:i3-->');
+    const dom = new AdoptionDom(host), cursor = dom.children();
+    const raw = cursor.element('div');
+    dom.expectAttribute(raw, 'class', 'raw'); // The raw planner compares markup, without opening a child cursor.
+    const child = dom.within(cursor.range('i')), article = child.element('article'); child.finish(); cursor.finish();
+    code(() => dom.children(article), 'STRUCTURE');
+    article.appendChild(host.ownerDocument.createTextNode('independent child update'));
+    dom.assertUnchanged();
+    // The same malformed marker cannot pass when it belongs to this island's visited tree.
+    code(() => dom.children(raw), 'MARKER');
+  });
+
+  it('refuses borrowing a range or element from another snapshot', () => {
+    const a = fixture('<!--f:s0--><!--/f:s0-->'), b = fixture('<!--f:s0--><!--/f:s0-->');
+    const first = new AdoptionDom(a.host), second = new AdoptionDom(b.host);
+    const range = first.children().range('s');
+    code(() => second.within(range), 'STRUCTURE');
+    code(() => second.expectAttribute(a.host, 'class', null), 'STRUCTURE');
+    code(() => second.expectElement(a.host, 'section'), 'NODE');
+  });
+});
+
+describe('final exact DOM observation recheck', () => {
+  it.each([
+    ['removed host', (host: Element, _other: Element) => host.remove()],
+    ['connected reparenting', (host: Element, other: Element) => other.appendChild(host)],
+    ['connected ancestor reparenting', (host: Element, other: Element) => other.appendChild(host.parentNode!)],
+    ['replaced equivalent child', (host: Element, _other: Element) => (host.firstChild! as ChildNode).replaceWith(host.firstChild!.cloneNode(true))],
+    ['inserted first child', (host: Element, _other: Element) => host.prepend('extra')],
+    ['inserted last child', (host: Element, _other: Element) => host.append('extra')],
+    ['reordered children', (host: Element, _other: Element) => host.prepend(host.lastChild!)],
+  ])('refuses %s even if document membership alone would pass', (_label, change) => {
+    const { host, other } = fixture('<b>A</b><i>B</i>');
+    const dom = new AdoptionDom(host); change(host, other);
+    code(() => dom.assertUnchanged(), 'STRUCTURE');
+  });
+
+  it.each([
+    ['text', (host: Element) => { host.querySelector('b')!.firstChild!.nodeValue = 'changed'; }],
+    ['marker', (host: Element) => { (host.firstChild as Comment).data = 'f:s2'; }],
+    ['attribute', (host: Element) => { host.querySelector('b')!.setAttribute('title', 'changed'); }],
+    ['new attribute', (host: Element) => { host.querySelector('b')!.setAttribute('class', 'added'); }],
+    ['removed attribute', (host: Element) => { host.querySelector('b')!.removeAttribute('title'); }],
+  ])('refuses changed %s while retaining all node identities', (_label, change) => {
+    const { host } = fixture('<!--f:s0--><b title="original">A</b><!--/f:s0-->');
+    const dom = new AdoptionDom(host); change(host);
+    code(() => dom.assertUnchanged(), 'VALUE');
+  });
+
+  it('detects children inserted into an originally empty observed element', () => {
+    const { host } = fixture('<b></b>'); const dom = new AdoptionDom(host);
+    host.firstChild!.appendChild(host.ownerDocument.createTextNode('later'));
+    code(() => dom.assertUnchanged(), 'STRUCTURE');
+  });
+
+  it('refuses initial detached or shadow-root targets without acquiring ownership', () => {
+    const { doc, host } = fixture('original'); host.remove();
+    code(() => new AdoptionDom(host), 'STRUCTURE');
+    const parent = doc.createElement('div'); doc.body.append(parent);
+    parent.attachShadow({ mode: 'open' }).append(host);
+    expect(host.isConnected).toBe(true);
+    code(() => new AdoptionDom(host), 'STRUCTURE');
+  });
+
+  it('validates a deep static tree iteratively without imposing a control-flow depth limit', () => {
+    const { host, doc } = fixture(''); let parent: Element = host;
+    for (let index = 0; index < 300; index++) { const child = doc.createElement('div'); parent.append(child); parent = child; }
+    parent.append('leaf');
+    const dom = new AdoptionDom(host); let cursor = dom.children();
+    for (let index = 0; index < 300; index++) { const child = cursor.element('div'); cursor.finish(); cursor = dom.children(child); }
+    cursor.text('leaf'); cursor.finish(); dom.assertUnchanged();
+  });
+});
