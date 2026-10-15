@@ -93,24 +93,31 @@ test('same-key rerenders dispose old reactive generations; unchanged objects ret
     generations: ['A:0', 'B:0', 'C:1'], after: ['A:0', 'B:0', 'C:1'] });
 });
 
-test('SSR adoption restores form properties and keeps them controlled', async ({ page }) => {
+test('SSR adoption refuses mismatched older properties and keeps matching controls live', async ({ page }) => {
   await page.evaluate(async () => {
     const coreUrl = '/core-regression.mjs';
     const { h, createSignal } = await import(coreUrl);
-    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
+    const { adoptMatching, adoptRefused } = await import('/test-owned-adoption.mjs' as string);
     const root = document.querySelector('#app')!;
     root.setAttribute('data-forma-ssr', '');
-    root.innerHTML = '<form><textarea id="notes" value="Saved notes"></textarea><select id="cycle" value="yearly"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></form>';
-    const [value, setValue] = createSignal('yearly');
-    (window as any).selectMonthly = () => setValue('monthly');
-    adoptInRoot(() => h('form', null,
-      h('textarea', { id: 'notes', value: 'Saved notes' }),
-      h('select', { id: 'cycle', value },
+    root.innerHTML = '<form><textarea id="old-notes" value="Saved notes"></textarea><select id="old-cycle" value="yearly"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></form>';
+    const [oldValue, setOldValue] = createSignal('yearly');
+    adoptRefused(() => h('form', null,
+      h('textarea', { id: 'old-notes', value: 'Saved notes' }),
+      h('select', { id: 'old-cycle', value: oldValue },
         h('option', { value: 'monthly' }, 'Monthly'), h('option', { value: 'yearly' }, 'Yearly')),
-    ), root);
+    ), root, 'FORMA_E_HYDRATE_VALUE');
+    setOldValue('weekly');
+    const matching = document.createElement('section');matching.id='matching';matching.setAttribute('data-forma-ssr','');
+    matching.innerHTML='<form><textarea id="notes">Saved notes</textarea><select id="cycle"><option value="monthly">Monthly</option><option value="yearly" selected>Yearly</option></select></form>';
+    document.body.append(matching);
+    const [value,setValue]=createSignal('yearly');(window as any).selectMonthly=()=>setValue('monthly');
+    adoptMatching(() => h('form', null,
+      h('textarea', { id: 'notes', value: 'Saved notes' }),
+      h('select', { id: 'cycle', value },h('option', { value: 'monthly' }, 'Monthly'),h('option', { value: 'yearly' }, 'Yearly')),
+    ),matching);
   });
-  await expect(page.locator('#notes')).toHaveValue('Saved notes');
-  await expect(page.locator('#cycle')).toHaveValue('yearly');
-  await page.evaluate(() => (window as any).selectMonthly());
-  await expect(page.locator('#cycle')).toHaveValue('monthly');
+  await expect(page.locator('#old-notes')).toHaveValue('');await expect(page.locator('#old-cycle')).toHaveValue('monthly');
+  await expect(page.locator('#notes')).toHaveValue('Saved notes');await expect(page.locator('#cycle')).toHaveValue('yearly');
+  await page.evaluate(() => (window as any).selectMonthly());await expect(page.locator('#cycle')).toHaveValue('monthly');
 });

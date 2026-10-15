@@ -3,7 +3,7 @@ import { emptyRegistry, installState, useFreshDocument } from './helpers/compile
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createSignal, createRoot } from 'forma/reactive';
 import { adoptInRoot } from './helpers/owned-adoption.js';
-import { connect, fixture, prepareAndCommit, expectRefusal } from './helpers/prepared-fixture';
+import { connect, fixture, prepareAndCommit, expectRefusal, refusalAttempt } from './helpers/prepared-fixture';
 import { activateIslands } from '../activate';
 import { hydrateIsland } from '../hydrate';
 import { withAdoptionDescription, describingAdoption, type HydrationDescriptor, type ShowDescriptor } from '../adoption-description';
@@ -72,7 +72,7 @@ describe('strict original marker ranges',()=>{
     dom.release();
   });
   it.each(['<!--f:t0--><span>not text</span><!--/f:t0-->','<!--f:s0--><span>orphan</span>','<!--f:t0--><!--/f:t0-->'])('refuses malformed original marker structure: %s',html=>{
-    const root=fixture('<div>'+html+'</div>');expectRefusal(root,()=>h('div',null),'FORMA_E_HYDRATE_MARKER');
+    const root=fixture('<div>'+html+'</div>');expect(refusalAttempt(root,()=>h('div',null))).toThrow('FORMA_E_HYDRATE_MARKER');
   });
   it('ignores an authored comment that only shares a marker prefix',()=>{
     const root=fixture('<div><!--f:side note--><!--f:t--><!--f:l--><!--f:i--><!--/f:s--><!--f:s0--><span>x</span><!--/f:s0--></div>');
@@ -94,7 +94,7 @@ describe('strict prepared dynamic props',()=>{
     const el=fixture('<input>') as HTMLInputElement,click=vi.fn(),focus=vi.fn();prepareAndCommit(el,()=>h('input',{onClick:click,onFocus:focus}));el.click();el.dispatchEvent(new Event('focus'));expect(click).toHaveBeenCalledOnce();expect(focus).toHaveBeenCalledOnce();
   });
   it('validates static props instead of silently ignoring a mismatch',()=>{
-    const el=fixture('<div class="original"></div>');expectRefusal(el,()=>h('div',{class:'should-not-change',id:'myid','data-x':42}),'FORMA_E_HYDRATE_VALUE');
+    const el=fixture('<div class="original"></div>');expect(refusalAttempt(el,()=>h('div',{class:'should-not-change',id:'myid','data-x':42}))).toThrow('FORMA_E_HYDRATE_VALUE');
   });
   it('creates reactive attribute bindings without rewriting matching initial values',()=>{
     const el=fixture('<div data-state="initial"></div>'),[value,setValue]=createSignal('initial');prepareAndCommit(el,()=>h('div',{'data-state':value}));expect(el.getAttribute('data-state')).toBe('initial');setValue('updated');expect(el.getAttribute('data-state')).toBe('updated');
@@ -145,22 +145,22 @@ describe('strict descriptor preparation',()=>{
   it('handles interleaved elements and reactive text',()=>{
     const el=fixture('<div><span></span><!--f:t0-->dynamic<!--/f:t0--><p></p></div>'),children=Array.from(el.children),[value]=createSignal('dynamic');prepareAndCommit(el,()=>h('div',null,h('span'),value,h('p')));expect(Array.from(el.children)).toEqual(children);expect(el.textContent).toBe('dynamic');
   });
-  it('refuses a tag mismatch without replacing the original element',()=>{const el=fixture('<span></span>');expectRefusal(el,()=>h('div',{class:'replacement'},'Replaced'),'FORMA_E_HYDRATE_NODE');});
-  it('refuses a missing SSR child without inserting a replacement',()=>{const el=fixture('<section></section>');expectRefusal(el,()=>h('section',null,h('div')),'FORMA_E_HYDRATE_NODE');});
+  it('refuses a tag mismatch without replacing the original element',()=>{const el=fixture('<span></span>');expect(refusalAttempt(el,()=>h('div',{class:'replacement'},'Replaced'))).toThrow('FORMA_E_HYDRATE_NODE');});
+  it('refuses a missing SSR child without inserting a replacement',()=>{const el=fixture('<section></section>');expect(refusalAttempt(el,()=>h('section',null,h('div')))).toThrow('FORMA_E_HYDRATE_NODE');});
   it('adopts static string children without touching the server text node',()=>{
     const el=fixture('<div>static textanother string42</div>'),node=el.firstChild;prepareAndCommit(el,()=>h('div',null,'static text','another string',42));expect(el.childNodes).toHaveLength(1);expect(el.firstChild).toBe(node);expect(el.textContent).toBe('static textanother string42');
   });
-  it('refuses differing static text rather than ignoring trailing client children',()=>{const el=fixture('<div>static text</div>');expectRefusal(el,()=>h('div',null,'static text','another string',42),'FORMA_E_HYDRATE_NODE');});
+  it('refuses differing static text rather than ignoring trailing client children',()=>{const el=fixture('<div>static text</div>');expect(refusalAttempt(el,()=>h('div',null,'static text','another string',42))).toThrow('FORMA_E_HYDRATE_NODE');});
   it('adopts falsy children (false, null, undefined) without creating nodes',()=>{const el=fixture('<div></div>');prepareAndCommit(el,()=>h('div',null,false,null,undefined));expect(el.childNodes).toHaveLength(0);});
   it.each(['<!--f:i0--><!--/f:i0-->','<!--f:i0--><!--/f:i0--><!--f:i1--><!--/f:i1-->'])('refuses empty island regions without manufacturing client roots: %s',html=>{
-    const el=fixture('<div>'+html+'</div>');expectRefusal(el,()=>h('div',null,h('div',{class:'alert'},'Error')),'FORMA_E_HYDRATE_NODE');
+    const el=fixture('<div>'+html+'</div>');expect(refusalAttempt(el,()=>h('div',null,h('div',{class:'alert'},'Error')))).toThrow('FORMA_E_HYDRATE_NODE');
   });
   it('does not consume a nested island as the parent component\'s own element',()=>{
     const el=fixture('<div><!--f:i0--><section data-forma-island="1" class="child">from server</section><!--/f:i0--><form></form></div>'),shell=el.querySelector('section');
     expectRefusal(el,()=>h('div',null,h('section',{class:'child'},'from client'),h('form')),'FORMA_E_HYDRATE_NODE');expect(el.querySelector('section')).toBe(shell);
   });
   it.each(['<!--f:t0--><!--/f:t0-->','<!--f:s5--><!--/f:s5-->',''])('refuses missing dynamic text instead of inserting it: %s',html=>{
-    const el=fixture('<div>'+html+'</div>');expectRefusal(el,()=>h('div',null,()=>''),'FORMA_E_HYDRATE_MARKER');
+    const el=fixture('<div>'+html+'</div>');expect(refusalAttempt(el,()=>h('div',null,()=>''))).toThrow('FORMA_E_HYDRATE_MARKER');
   });
   it('preserves the native zero-width empty-text placeholder and binds later text',()=>{
     const el=fixture('<div><!--f:t0-->\u200b<!--/f:t0--></div>'),node=el.childNodes[1] as Text,[value,setValue]=createSignal<string|null>(null);prepareAndCommit(el,()=>h('div',null,()=>value()||''));expect(el.childNodes[1]).toBe(node);expect(node.data).toBe('\u200b');setValue('Error occurred');expect(node.data).toBe('Error occurred');
