@@ -24,9 +24,20 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 /**
  * Gate definitions.
  *
- * The two entries that carry no HTML runtime keep the historical policy —
- * roughly 20% above the measured size, so ordinary growth is visible in review
- * before it trips.
+ * The two entries that carry no HTML runtime kept the historical policy,
+ * roughly 20% above the measured size, until 3.0.0's two accepted contracts
+ * outgrew it: strict adoption (DR-5, FORMA-104: +19,043 B gzip on the core
+ * entry) and the declared island state block (DR-4, FORMA-103: +3,620 B)
+ * took the entry from 29,515 to 47,546 B and the browser ESM bundle from
+ * 28,369 to 47,203 B against gates of 30,000 and 29,000 B. After the safe cuts
+ * of FORMA-021 (C1 to C3: development warnings folded at every site, the
+ * createShow/createSwitch tracing out, the duplicate-instance registry
+ * development-only) they measure 46,097 and 46,115 B, and both gates are
+ * ratcheted to 46,500 B under L-51 (decision brief L-55, 2026-10-15), the
+ * growth stated in the CHANGELOG under FORMA-103 and FORMA-104. They are
+ * ratchets like the runtime gates below, not a budget: the budget is N2,
+ * Forma's code per route, which @getforma/build measures and fails
+ * (route-size.ts).
  *
  * The two RUNTIME bundles are deliberately tighter (~7%). They just absorbed
  * the largest single size change this package has taken: replacing the regex
@@ -40,10 +51,13 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * unremarked, so these two are set close to the measurement on purpose.
  *
  * Until 3.0.0 the two runtime gates are ratchets, not the size target
- * (decision brief L-51: N2 is, gated at 3.0.0): a change that passes one
- * raises it to its new measured size rounded up to the next 500 B, and its
- * CHANGELOG entry states the growth; a change that only refactors never
- * raises one. FORMA-132 (data-fetch's timeout) raised both, 34,000 to 34,500 B
+ * (decision brief L-51: N2 is, gated per route by @getforma/build's size
+ * report at 25,500 B gzip -9 of Forma code, L-55's restatement of DR-35): a
+ * change that passes one raises it to its new measured size rounded up to the
+ * next 500 B, and its CHANGELOG entry states the growth; a change that only
+ * refactors never raises one. FORMA-021's cuts put every runtime IIFE back
+ * under its unchanged gate (41,254, 40,175 and 39,603 B measured against
+ * 41,500, 40,500 and 40,000 B). FORMA-132 (data-fetch's timeout) raised both, 34,000 to 34,500 B
  * and 33,000 to 33,500 B (34,061 and 33,072 B measured). FORMA-028 and
  * FORMA-025 (core 2.1.0) raised them again, to 36,000 and 35,000 B (35,540
  * and 34,542 B measured). FORMA-126 and FORMA-127 (core 2.1.0: trustedHtml(),
@@ -64,7 +78,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 30000,
+    limit: 46500,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {
@@ -74,7 +88,7 @@ export const GATES = [
   },
   {
     entry: 'dist/forma.esm.js',
-    limit: 29000,
+    limit: 46500,
     note: 'CDN browser ESM bundle (self-contained, inlines alien-signals)',
   },
   {

@@ -31,6 +31,13 @@ import { __DEV__ } from '../reactive/dev.js';
 import { isRawHtmlAttr } from '../security/url-safety.js';
 
 declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the two warnings below leave the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
 
 /**
  * Markup vouched for by {@link trustedHtml}: a browser `TrustedHTML` where the
@@ -219,8 +226,7 @@ export function checkRawAttr(name: string, value: unknown): void {
  * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused policy name warns once in development, and the sinks then write strings the page refuses"
  */
 function warnPolicyRefused(name: string): void {
-  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
-    || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
+  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
     warnOnce(
       `${POLICY_REFUSED_CODE} ${name}`,
       `[forma] ${POLICY_REFUSED_CODE}: the page refused the Trusted Types policy "${name}": ` +
@@ -244,8 +250,7 @@ export const INNER_HTML_CHILDREN_CODE = 'FORMA_W_INNER_HTML_CHILDREN';
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "children beside the prop warn once in development, in h() and in adoption, and a falsy prop does not"
  */
 export function warnInnerHtmlChildren(props: Record<string, unknown> | null | undefined, children: unknown[]): void {
-  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
-    || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
+  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
     const inner = props?.dangerouslySetInnerHTML;
     if ((typeof inner === 'function' || (inner != null && inner !== false))
       && children.some((child) => child != null && child !== false && child !== true)) {
