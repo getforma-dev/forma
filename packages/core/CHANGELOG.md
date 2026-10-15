@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Add private scoped enrollment of actual default-equality `createSignal` pairs, compiler-facing tuple/read hooks, checked seed values and batched rollback. Captured, substituted and custom-equality setters cannot be enrolled by these hooks.
 - Stage exact DOM snapshots/marker cursors and shared preparation ownership. Per-row groups dispose independently; public effects/refs stay dormant until publication, and callback failures after commit dispose their island without claiming to undo application writes. The direct-adoption kernel has no compiled signal enrollment authority.
 - Stage lazy h/direct-child/Show/list descriptions. Nested child matching retains each host's original component identity and compares declared values against its private original state, including intrinsic Date epochs; child-mutated props do not replace that baseline. No activation dispatch changes in this checkpoint.
+- Stage the compiler-internal DOM conditional hook: ordinary execution keeps one test read and one selected branch call; private description retains the original readers for the strict walker without evaluating them.
 - Ordinary controls cover instance identity, dormant read cleanup after construction failures and unchanged client signal behavior. The seam is not connected to activation or the DOM walker yet; this checkpoint does not claim read-only adoption or early-input preservation in a page.
 ### Staged whole-page mount retirement — FORMA-105
 
