@@ -10,7 +10,7 @@ import { childText } from '../form-control.js';
 import { prepareAttribute } from '../adoption-attributes.js';
 import { createSignal } from '../../reactive/signal.js';
 import { createRoot } from '../../reactive/root.js';
-import { adoptsWithoutWrite, readVectors, servedRange } from './value-rule-vectors.js';
+import { adoptServed, readVectors, servedRange, WITHOUT_WRITE } from './value-rule-vectors.js';
 
 interface NumberVector { id: string; lexeme: string; expected: string }
 const numbers = readVectors<{ values: NumberVector[] }>('numbers.json');
@@ -36,6 +36,6 @@ describe('rule 2 vectors: numbers in ECMAScript formatting', () => {
 
   it.each(numbers.values)('$id: a served range holding the formatted number adopts the number without a write', async ({ lexeme, expected }) => {
     const doc = document.implementation.createHTMLDocument();
-    await adoptsWithoutWrite(servedRange(doc, expected), () => h('p', null, Number(lexeme)));
+    expect(await adoptServed(servedRange(doc, expected), () => h('p', null, Number(lexeme)))).toEqual(WITHOUT_WRITE);
   });
 });

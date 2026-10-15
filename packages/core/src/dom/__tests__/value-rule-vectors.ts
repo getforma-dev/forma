@@ -4,7 +4,6 @@
  * beside this file. The files are the same ones forma-ir's suite reads, so a
  * vector changed there fails whichever side no longer agrees.
  */
-import { expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { prepareAdoption } from '../adoption.js';
@@ -24,10 +23,17 @@ export function servedRange(doc: Document, text: string): HTMLElement {
   return host;
 }
 
-/** Strict adoption of `build` over `host` succeeds, writes nothing (zero
- * MutationRecords after a macrotask) and keeps the served Text node; `after`
- * runs while the plan is live. */
-export async function adoptsWithoutWrite(host: HTMLElement, build: () => Element, after?: (text: Text) => void): Promise<void> {
+/** What strict adoption of a served range did: the plan's phase, the
+ * MutationRecord types seen until a macrotask after commit, and whether the
+ * served Text node was kept. */
+export interface ServedAdoption { phase: string; records: string[]; retained: boolean }
+
+/** No write: the plan is live, nothing was mutated, the served node stayed. */
+export const WITHOUT_WRITE: ServedAdoption = { phase: 'live', records: [], retained: true };
+
+/** Strictly adopt `build` over `host` and report what it did (compare with
+ * WITHOUT_WRITE); `after` runs while the plan is still live. */
+export async function adoptServed(host: HTMLElement, build: () => Element, after?: (text: Text) => void): Promise<ServedAdoption> {
   const text = host.childNodes[1] as Text;
   const records: MutationRecord[] = [];
   const observer = new MutationObserver(batch => records.push(...batch));
@@ -35,11 +41,10 @@ export async function adoptsWithoutWrite(host: HTMLElement, build: () => Element
   const plan = prepareAdoption(host, build);
   try {
     plan.commit();
-    expect(plan.phase).toBe('live');
     await new Promise(resolve => setTimeout(resolve, 0));
     records.push(...observer.takeRecords());
-    expect(records).toEqual([]);
-    expect(host.childNodes[1]).toBe(text);
+    const seen = { phase: plan.phase, records: records.map(record => record.type), retained: host.childNodes[1] === text };
     after?.(text);
+    return seen;
   } finally { plan.dispose(); observer.disconnect(); }
 }
