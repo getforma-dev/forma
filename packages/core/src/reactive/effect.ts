@@ -21,7 +21,7 @@ import {
 import { setCleanupCollector } from './cleanup.js';
 import { reportError } from './dev.js';
 import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
-import { deferAdoptionEffect } from './adoption-hooks.js';
+import { deferAdoptionEffect, getAdoptionCallbacks, bindAdoptionCallback } from './adoption-hooks.js';
 
 declare const __FORMA_FRAME_BUILD__: boolean | undefined;
 
@@ -164,7 +164,8 @@ export function internalEffect(fn: () => void): () => void {
   // Verified by: src/reactive/__tests__/frame-effect.test.ts > "keeps the frame reader reactive and disposable without linking the unused adoption effect graph"
   if (!(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) && adoptionInternalEffect) return adoptionInternalEffect(fn);
   const events = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionEvents();
-  const run = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : () => withAdoptionEvents(events, fn);
+  const callback = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : bindAdoptionCallback(fn, getAdoptionCallbacks());
+  const run = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : () => withAdoptionEvents(events, callback);
   let firstRun = true;
   const dispose = rawEffect(() => {
     if (firstRun) {
@@ -195,6 +196,8 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   // effects created during a parent re-run (when no root is lexically active) are
   // still owned and disposed.
   const ownerAtCreate = getOwner();
+  const callbacks = getAdoptionCallbacks();
+  const runCallback = bindAdoptionCallback(fn, callbacks);
   const events = getAdoptionEvents();
 
   // This effect owns its nested effects/roots via a reusable child-owner: it is
@@ -216,6 +219,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   let initialError: {error:unknown}|undefined;
 
   const addCleanup = (cb: () => void) => {
+    cb = bindAdoptionCallback(cb, callbacks);
     if (nextCleanupBag !== undefined) {
       nextCleanupBag.push(cb);
       return;
@@ -272,7 +276,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     try {
       // Run the body with this effect's child-owner installed so any nested
       // effects/roots it creates are owned by this generation.
-      const result = withAdoptionEvents(events, () => runWithOwner(childOwner, fn));
+      const result = withAdoptionEvents(events, () => runWithOwner(childOwner, runCallback));
       if (typeof result === 'function') {
         addCleanup(result as () => void);
       }

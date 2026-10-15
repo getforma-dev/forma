@@ -68,7 +68,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   const dom=new AdoptionDom(host);
   const controls=new AdoptionControls(host);
   const children=new Set<ValidatedIsland>();
-  const scopeOptions:PreparationOptions={check:()=>{dom.assertUnchanged();controls.check();for(const child of children)checkIslandClaim(child);},failure:options.failure};
+  const scopeOptions:PreparationOptions={callback:fn=>withAdoptionDescription(fn,false),check:()=>{dom.assertUnchanged();controls.check();for(const child of children)checkIslandClaim(child);},failure:options.failure};
   const scope=options.scope?.(scopeOptions)??new AdoptionLifecycle(scopeOptions);
   const listeners:Listener[]=[];
   let nextBinding=0,initialFailure=false;
