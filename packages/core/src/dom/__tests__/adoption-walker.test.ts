@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { prepareAdoption } from '../adoption.js';
 import { h, fragment } from '../element.js';
+import { createShow } from '../show.js';
 import { createSignal } from '../../reactive/signal.js';
 import { createEffect } from '../../reactive/effect.js';
 import { registerDisposer } from '../../reactive/root.js';
@@ -93,6 +94,61 @@ describe('private prepared descriptor walker',()=>{
     const add=vi.spyOn(host,'addEventListener').mockImplementation((type,listener,options)=>{original(type,listener,options);host.dispatchEvent(new Event('click'));});
     const plan=prepareAdoption(host,()=>h('button',{onClick:click,ref:()=>{throw new Error('ref');}},'click'),{failure});
     plan.commit();expect(plan.phase).toBe('aborted');expect(click).not.toHaveBeenCalled();expect(failure).toHaveBeenCalledOnce();host.dispatchEvent(new Event('click'));expect(click).not.toHaveBeenCalled();add.mockRestore();
+  });
+  it('prepares Show once without writes, disposes its initial owner and keeps later cached branches live',async()=>{
+    const {host,observer}=fixture('<div><!--f:s0--><b><!--f:t0-->1<!--/f:t0--></b><!--/f:s0--></div>');
+    const [visible,setVisible]=createSignal(true),[n,setN]=createSignal(1),read=vi.fn(visible),cleaned=vi.fn();
+    const original=host.querySelector('b')!;
+    const yes=vi.fn(()=>{registerDisposer(cleaned);return h('b',null,n);});
+    const no=vi.fn(()=>h('i',null,n));
+    const plan=prepareAdoption(host,()=>h('div',null,createShow(read,yes,no)));
+    expect(read).toHaveBeenCalledOnce();expect(yes).toHaveBeenCalledOnce();expect(no).not.toHaveBeenCalled();
+    plan.commit();await new Promise(resolve=>setTimeout(resolve,0));expect(observer.takeRecords()).toEqual([]);expect(host.querySelector('b')).toBe(original);
+    setVisible(false);expect(cleaned).toHaveBeenCalledOnce();const falseBranch=host.querySelector('i')!;
+    setN(2);expect(original.textContent).toBe('1');expect(falseBranch.textContent).toBe('2');
+    setVisible(true);const rebuilt=host.querySelector('b')!;expect(rebuilt).not.toBe(original);expect(yes).toHaveBeenCalledTimes(2);
+    setN(3);expect(rebuilt.textContent).toBe('3');expect(falseBranch.textContent).toBe('3');
+    setVisible(false);expect(host.querySelector('i')).toBe(falseBranch);expect(no).toHaveBeenCalledOnce();setVisible(true);expect(host.querySelector('b')).toBe(rebuilt);
+    plan.dispose();setN(4);expect(rebuilt.textContent).toBe('3');expect(falseBranch.textContent).toBe('3');expect(cleaned).toHaveBeenCalledTimes(2);observer.disconnect();
+  });
+  it('validates empty and repeated/nested Show ranges without creating fallback content',()=>{
+    const good=fixture('<svg><!--f:s0--><!--/f:s0--><!--f:s0--><!--f:s0--><circle></circle><!--/f:s0--><!--/f:s0--></svg>');
+    const [on,setOn]=createSignal(false),factory=vi.fn(()=>h('circle',null));
+    const plan=prepareAdoption(good.host,()=>h('svg',null,createShow(on,factory),createShow(()=>true,()=>createShow(()=>true,()=>h('circle',null)))));
+    plan.commit();expect(factory).not.toHaveBeenCalled();expect(good.observer.takeRecords()).toEqual([]);setOn(true);expect(factory).toHaveBeenCalledOnce();expect(good.host.querySelector('circle')!.namespaceURI).toBe('http://www.w3.org/2000/svg');plan.dispose();good.observer.disconnect();
+    for(const html of ['<div><!--f:s0--><b>wrong</b><!--/f:s0--></div>','<div><!--f:s0--><!--/f:s0--></div>']){
+      const bad=fixture(html),before=bad.host.outerHTML,callback=vi.fn();
+      expect(()=>prepareAdoption(bad.host,()=>h('div',null,createShow(()=>true,()=>{createEffect(callback);return h('b',null,'expected');})))).toThrow();
+      expect(callback).not.toHaveBeenCalled();expect(bad.host.outerHTML).toBe(before);expect(bad.observer.takeRecords()).toEqual([]);bad.observer.disconnect();
+    }
+  });
+  it('keeps another live Show update outside an unrelated preparation context',()=>{
+    const first=fixture('<div><!--f:s0--><b>old</b><!--/f:s0--></div>'),second=fixture('<p>wrong</p>'),[on,setOn]=createSignal(true),effect=vi.fn();
+    const plan=prepareAdoption(first.host,()=>h('div',null,createShow(on,()=>h('b',null,'old'),()=>{createEffect(effect);return h('i',null,'new');})));plan.commit();
+    expect(()=>prepareAdoption(second.host,()=>{setOn(false);return h('p',null,'expected');})).toThrow('FORMA_E_HYDRATE_VALUE');
+    expect(first.host.querySelector('i')!.textContent).toBe('new');expect(effect).toHaveBeenCalledOnce();expect(plan.phase).toBe('live');plan.dispose();first.observer.disconnect();second.observer.disconnect();
+  });
+  it('does not move or insert after a Show factory or initial disposer aborts the plan',()=>{
+    for(const fromCleanup of [false,true]){
+      const {host,observer}=fixture('<div><!--f:s0--><b>old</b><!--/f:s0--></div>'),[on,setOn]=createSignal(true);
+      let plan:ReturnType<typeof prepareAdoption>;
+      plan=prepareAdoption(host,()=>h('div',null,createShow(on,()=>{if(fromCleanup)registerDisposer(()=>plan.dispose());return h('b',null,'old');},()=>{if(!fromCleanup)plan.dispose();return h('i',null,'new');})));
+      plan.commit();const before=host.innerHTML;setOn(false);
+      expect(plan.phase).toBe('aborted');expect(host.innerHTML).toBe(before);expect(observer.takeRecords()).toEqual([]);observer.disconnect();
+    }
+  });
+  it('stabilizes a live Show condition changed by its own factory or initial disposer',()=>{
+    for(const fromCleanup of [false,true]){
+      const {host,observer}=fixture('<div><!--f:s0--><b>old</b><!--/f:s0--></div>'),[on,setOn]=createSignal(true);
+      const yes=vi.fn(()=>{if(fromCleanup)registerDisposer(()=>setOn(true));return h('b',null,'old');});
+      const plan=prepareAdoption(host,()=>h('div',null,createShow(on,yes,()=>{if(!fromCleanup)setOn(true);return h('i',null,'new');})));
+      plan.commit();setOn(false);expect(on()).toBe(true);expect(host.querySelector('b')?.textContent).toBe('old');expect(host.querySelector('i')).toBeNull();expect(yes).toHaveBeenCalledTimes(2);expect(plan.phase).toBe('live');plan.dispose();observer.disconnect();
+    }
+  });
+  it('disposes partial live branch construction and keeps existing DOM on a callback failure',()=>{
+    const {host}=fixture('<div><!--f:s0--><b>old</b><!--/f:s0--></div>'),[on,setOn]=createSignal(true),[n,setN]=createSignal(0),failure=vi.fn(),cleanup=vi.fn(),runs=vi.fn();
+    const plan=prepareAdoption(host,()=>h('div',null,createShow(on,()=>h('b',null,'old'),()=>{registerDisposer(cleanup);createEffect(()=>{n();runs();});throw new Error('branch');})),{failure});
+    plan.commit();setOn(false);expect(plan.phase).toBe('aborted');expect(failure).toHaveBeenCalledOnce();expect(cleanup).toHaveBeenCalledOnce();expect(host.querySelector('b')!.textContent).toBe('old');expect(runs).toHaveBeenCalledOnce();setN(1);expect(runs).toHaveBeenCalledOnce();
   });
   it('refuses a nested island before executing its independent component in this private checkpoint',()=>{
     const {host,observer}=fixture('<div><!--f:i0--><b data-forma-island="0">child</b><!--/f:i0--></div>'),child=vi.fn(()=>h('b',null,'child'));
