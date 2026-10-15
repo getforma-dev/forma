@@ -12,6 +12,7 @@ import { AdoptionLifecycle, type PreparationOptions, type PreparedGroup } from '
 import { contentNs, SVG_NS, MATHML_NS, withNamespace } from './namespace.js';
 import { isEventHandlerAttr } from '../security/url-safety.js';
 import { prepareAttribute } from './adoption-attributes.js';
+import { prepareStyle, prepareRaw, type PreparedRaw } from './adoption-content.js';
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import { AdoptionControls, type ControlToken } from './adoption-controls.js';
 import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './hydrate.js';
@@ -100,7 +101,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     control(element,'text',reads.length?collect:collect(),children.length===1&&reads.length===1?reads[0]:undefined);
   }
 
-  function props(element:Element,values:Record<string,unknown>|null):void {
+  function props(element:Element,values:Record<string,unknown>|null,raw:(value:unknown)=>void):void {
     if(!values)return;
     for(const [key,value]of ownProps(values)){
       if(key==='children')continue;
@@ -118,7 +119,12 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         }
         dom.expectAttribute(element,key.toLowerCase(),null);continue;
       }
-      if(key==='style'||key==='dangerouslySetInnerHTML')refuse();
+      if(key==='style'){
+        let binding:ReturnType<typeof prepareStyle>;
+        const initial=typeof value==='function'?scope.observe(value as ()=>unknown,next=>binding.write(next)):value;
+        binding=prepareStyle(element,initial);continue;
+      }
+      if(key==='dangerouslySetInnerHTML'){raw(value);continue;}
       if(isFormControlProperty(element,key)){control(element,key as 'value'|'checked'|'selected',value);continue;}
       if(isEventHandlerAttr(key)){dom.expectAttribute(element,key.toLowerCase(),null);continue;}
       attribute(element,key,value);
@@ -132,11 +138,31 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     // Static holes render nothing. A reactive child is still real ownership,
     // even if it would read empty; never evaluate it to decide this boundary.
     if(valueProp&&desc.children.some(child=>child!=null&&typeof child!=='boolean'&&child!==''))refuse();
-    props(target,desc.props);
-    if(area){if(!valueProp)textarea(target,desc.children);return;}
-    const nested=dom.children(target),inner=contentNs(target);
-    for(const child of desc.children)walk(child,nested,inner);
-    nested.finish();
+    let raw:PreparedRaw|undefined,fallback:PreparedGroup<void>|undefined;
+    const isTemplate=target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='template';
+    const content=isTemplate?(target as HTMLTemplateElement).content:target;
+    const beforeReplace=()=>{
+      const parent=target.parentNode,previous=target.previousSibling,next=target.nextSibling;
+      if(!parent||scope.phase!=='live')refuse();
+      fallback?.dispose();fallback=undefined;
+      deactivateAllIslands(content);
+      // Cleanup is user code. Do not replace a revoked or moved target afterward.
+      if(scope.phase!=='live'||target.parentNode!==parent||target.previousSibling!==previous||target.nextSibling!==next
+        ||(isTemplate&&(target as HTMLTemplateElement).content!==content))refuse();
+    };
+    props(target,desc.props,value=>{
+      let binding:PreparedRaw;
+      const initial=typeof value==='function'?scope.observe(value as ()=>unknown,next=>binding.write(next,beforeReplace)):value;
+      raw=binding=prepareRaw(target,initial);
+    });
+    if(raw?.ownsContent)return;
+    const children=()=>{
+      if(area){if(!valueProp)textarea(target,desc.children);return;}
+      const nested=dom.children(target),inner=contentNs(target);
+      for(const child of desc.children)walk(child,nested,inner);
+      nested.finish();
+    };
+    if(raw)fallback=scope.group(children);else children();
   }
   function fresh(value:unknown):Node|null {
     if(value==null||typeof value==='boolean')return null;
@@ -144,13 +170,15 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     if(value instanceof Node)return value;
     return refuse();
   }
-  function show(desc:ShowDescriptor,cursor:AdoptionCursor,ns:string|null):void {
+  function show(desc:ShowDescriptor,cursor:AdoptionCursor,ns:string|null,observed?:{
+    initial:boolean;description:()=>ShowDescriptor;connect:(write:(next:boolean)=>void)=>void;
+  }):void {
     const range=cursor.range('s');
     let active:PreparedGroup<unknown>,initial=true,current:boolean;
     const cached=new Map<boolean,{fragment:DocumentFragment;owner:PreparedGroup<unknown>}>();
     let owner:PreparedGroup<void>;
     owner=scope.group(()=>{
-      current=scope.observe(()=>!!desc.condition(),next=>{
+      const update=(next:boolean)=>{
         if(next===current)return;
         const parent=range.start.parentNode;
         if(!parent||range.end.parentNode!==parent)refuse();
@@ -164,7 +192,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         if(entering)cached.delete(next);
         else{
           const branch=owner.child(()=>untrack(()=>withNamespace(ns,()=>withAdoptionDescription(
-            ()=>fresh((next?desc.whenTrue:desc.whenFalse)?.()),false,
+            ()=>{const value=observed?.description()??desc;return fresh((next?value.whenTrue:value.whenFalse)?.());},false,
           ))));
           const fragment=host.ownerDocument.createDocumentFragment();
           if(branch.value)fragment.appendChild(branch.value);
@@ -183,10 +211,12 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         else cached.set(current,{fragment,owner:active});
         active=entering.owner;current=next;
         parent.insertBefore(entering.fragment,range.end);
-      });
+      };
+      if(observed){current=observed.initial;observed.connect(update);}
+      else current=scope.observe(()=>!!desc.condition(),update);
       active=scope.group(()=>{
         const inside=dom.within(range);
-        const selected=current?desc.whenTrue:desc.whenFalse;
+        const value=observed?.description()??desc,selected=current?value.whenTrue:value.whenFalse;
         if(selected)walk(construct(selected,ns),inside,ns);
         inside.finish();
       });
@@ -323,12 +353,27 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(cursor.rangeKind()==='t')cursor.textRange(String(value));else cursor.text(String(value));return;
     }
     if(typeof value==='function'){
-      let target:Text|undefined,previous:string;
-      const initial=scope.observe(()=>withNamespace(ns,()=>withAdoptionDescription(value as ()=>unknown)),next=>{
-        const normalized=text(next);if(normalized===previous)return;
-        target!.data=normalized;previous=normalized;
-      });
-      previous=text(initial);target=cursor.textRange(previous);return;
+      scope.group(()=>{
+        type Read={kind:'show';value:boolean;description:ShowDescriptor}|{kind:'text';value:string};
+        let write:(value:Read)=>void;
+        const initial=scope.observe<Read>(()=>{
+          const result=withNamespace(ns,()=>withAdoptionDescription(value as ()=>unknown));
+          if(result&&typeof result==='object'&&(result as ShowDescriptor).type==='show'){
+            const description=result as ShowDescriptor;
+            return {kind:'show',description,value:!!description.condition()};
+          }
+          return {kind:'text',value:text(result)};
+        },next=>write(next));
+        if(initial.kind==='show'){
+          let description=initial.description;
+          show(description,cursor,ns,{initial:initial.value,description:()=>description,connect:update=>{
+            write=next=>{if(next.kind!=='show')refuse();description=next.description;update(next.value);};
+          }});
+        }else{
+          const target=cursor.textRange(initial.value);let previous=initial.value;
+          write=next=>{if(next.kind!=='text')refuse();if(next.value!==previous){target.data=next.value;previous=next.value;}};
+        }
+      });return;
     }
     if(typeof value!=='object')return refuse();
     const description=value as HydrationDescriptor|FragmentDescriptor|ComponentDescription|ShowDescriptor|ListDescriptor;
