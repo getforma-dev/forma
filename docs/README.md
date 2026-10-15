@@ -54,3 +54,14 @@ true.
    does it exist, how do I start, where do I go next. Depth belongs in `docs/`.
    The reason is mechanical: a 35 KB README is not re-read, so its claims are
    never re-checked.
+
+## Since the repository merge (2026-10-15, FORMA-113)
+
+The four repositories above are one: `packages/core` (formajs),
+`packages/compiler` and `packages/build` (forma-tools), `packages/create-app`
+(create-forma-app) and `crates/`. Each package's own `docs/` came with it.
+From forma-tools' documents, [DIAGNOSTICS.md](DIAGNOSTICS.md) (every build
+diagnostic code, what it means for the page and its fix) and
+[HANDOFF-imported-signal-defaults.md](HANDOFF-imported-signal-defaults.md) live
+here; its repository-level documents are in [archive/](archive/). The table of
+repositories above is history until the docs sweep that follows the merge.

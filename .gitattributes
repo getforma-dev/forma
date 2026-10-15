@@ -25,3 +25,8 @@ crates/forma-server/tests/fixtures/modules/** -text
 # and one of them holds a carriage return on purpose (FRAME-103), so checkout
 # must never rewrite their line endings.
 crates/forma-server/tests/fixtures/frame/** -text
+
+# The 0.3.0 worker fixtures are compared byte for byte with the generator's
+# output (packages/build/tests/service-worker.test.ts), so checkout must never
+# rewrite their line endings (Windows runners check text out with CRLF).
+packages/build/tests/fixtures/** -text

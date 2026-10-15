@@ -269,7 +269,7 @@ describe('"Verified by" citations', () => {
     };
     walk(resolve(ROOT, 'src'), /\.(ts|mjs)$/);
     walk(resolve(ROOT, 'scripts'), /\.(ts|mjs)$/);
-    walk(resolve(ROOT, '.github/workflows'), /\.ya?ml$/);
+    walk(resolve(ROOT, '../../.github/workflows'), /\.ya?ml$/);
     found.push(resolve(ROOT, 'tsup.config.ts'));
     return found;
   }

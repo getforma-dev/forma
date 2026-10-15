@@ -1,16 +1,20 @@
 {
-  "name": "forma-tools",
+  "name": "forma-stack",
   "private": true,
+  "description": "The Forma Stack: the npm workspace of its four packages (packages/) beside the Cargo workspace of its three crates (crates/).",
   "workspaces": [
+    "packages/core",
     "packages/compiler",
-    "packages/build"
+    "packages/build",
+    "packages/create-app"
   ],
   "scripts": {
-    "test": "npm run test --workspaces",
+    "build": "npm run build -w packages/compiler && npm run build -w packages/build && npm run build -w packages/core && npm run build -w packages/create-app",
+    "test": "npm test --workspaces",
     "emit:corpus": "npm run emit:corpus -w packages/compiler --",
     "test:e2e": "bash e2e/sync-fixtures.sh && bash e2e/ssr/build.sh && bash e2e/frame/build.sh && npx playwright test",
     "test:e2e:ci": "npx playwright test",
-    "build": "npm run build -w packages/compiler && npm run build -w packages/build"
+    "check": "bash scripts/check.sh"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
@@ -19,6 +23,7 @@
     "tsup": "^8.5.1"
   },
   "overrides": {
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "rollup": "^4.59.0"
   }
 }

@@ -24,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 
 const REPO = resolve(__dirname, '../..');
-const SERVER = join(__dirname, 'server', 'target', 'debug', `forma-e2e-frame${process.platform === 'win32' ? '.exe' : ''}`);
+const SERVER = join(__dirname, '..', 'target', 'debug', `forma-e2e-frame${process.platform === 'win32' ? '.exe' : ''}`);
 const LANE = join(__dirname, 'out', 'lane.json');
 
 /** What the server says of one embedded output at start. */

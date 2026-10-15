@@ -3,14 +3,17 @@ set -euo pipefail
 
 # Sync FormaJS builds into E2E test fixtures.
 # Called automatically by `npm run test:e2e` — no manual copy needed.
+#
+# Since the repository merge (FORMA-113) FormaJS is packages/core of this
+# repository; FORMAJS_DIR may still name another checkout.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
-FORMAJS_DIR="${FORMAJS_DIR:-$(cd "$SCRIPT_DIR/../../formajs" && pwd)}"
+FORMAJS_DIR="${FORMAJS_DIR:-$(cd "$SCRIPT_DIR/../packages/core" && pwd)}"
 
 if [ ! -d "$FORMAJS_DIR" ]; then
   echo "Error: FormaJS directory not found at $FORMAJS_DIR"
-  echo "Set FORMAJS_DIR environment variable to the formajs repo path."
+  echo "Set FORMAJS_DIR environment variable to the formajs checkout path."
   exit 1
 fi
 

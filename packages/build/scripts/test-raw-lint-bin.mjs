@@ -6,7 +6,7 @@
 // the entry is past its end date. Run after `npm run build -w packages/build`;
 // CI runs it on every runner, Windows' .cmd shim included.
 //
-// Usage: node scripts/test-raw-lint-bin.mjs
+// Usage: node packages/build/scripts/test-raw-lint-bin.mjs
 
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const windows = process.platform === 'win32';
 const scratch = mkdtempSync(join(tmpdir(), 'forma-raw-lint-bin-'));
 

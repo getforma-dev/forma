@@ -119,7 +119,7 @@ describe('engines', () => {
     // engines said >=18 while the matrix was 20/22/24 and the dev toolchain
     // could not even install on 18 — an untested promise. The floor's major
     // must be the lowest major the matrix executes.
-    const ci = readFileSync(resolve(ROOT, '.github/workflows/ci.yml'), 'utf8');
+    const ci = readFileSync(resolve(ROOT, '../../.github/workflows/ci.yml'), 'utf8');
     const matrix = /node-version:\s*\[([^\]]+)\]/.exec(ci);
     expect(matrix, 'node-version matrix in ci.yml').not.toBeNull();
     const majors = matrix![1].split(',').map((s) => Number(s.trim()));

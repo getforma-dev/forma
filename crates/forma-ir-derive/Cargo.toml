@@ -1,0 +1,14 @@
+[package]
+name = "forma-ir-derive"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.71"
+license = "MIT"
+description = "Derive macros for forma-ir (`#[derive(PageProps)]`). This version is a placeholder; the first working version ships with Forma 3.0.0."
+repository = "https://github.com/getforma-dev/forma"
+homepage = "https://getforma.dev"
+readme = "README.md"
+include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
+
+[lib]
+proc-macro = true

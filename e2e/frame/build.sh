@@ -1,26 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build the preview-frame e2e lane (FORMA-175): pack @getforma/core from a
-# FormaJS checkout as npm publishes it, install the tarball into the fixture
+# Build the preview-frame e2e lane (FORMA-175): pack @getforma/core from
+# packages/core as npm publishes it, install the tarball into the fixture
 # application (e2e/frame/app) as an application installs it, build that
-# application with THIS repo's @getforma/build (`previewFrame: true`, and
+# application with THIS repository's @getforma/build (`previewFrame: true`, and
 # without it), and build the Rust server (e2e/frame/server) that embeds the
 # output and serves forma-server's `PageResponse::frame` from it, for
 # e2e/frame/frame.spec.ts.
 #
+# Since the repository merge (FORMA-113) everything the lane needs is in this
+# tree: FormaJS is packages/core, the crates are crates/. The two variables may
+# still name other checkouts.
+#
 #   FORMAJS_DIR  FormaJS checkout, already built (e2e/sync-fixtures.sh builds
 #                it); its dist must hold formajs-frame.global.js (core 2.1.0,
-#                FORMA-128). Default: ../formajs beside this repo.
+#                FORMA-128). Default: packages/core.
 #   FORMA_DIR    forma checkout (forma-server's frame.rs, FORMA-125).
-#                Default: ../forma.
+#                Default: this repository.
 #
 # Needs Node, npm and cargo. Every step fails loudly; nothing is skipped.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-FORMAJS_DIR="${FORMAJS_DIR:-$REPO_DIR/../formajs}"
-FORMA_DIR="${FORMA_DIR:-$REPO_DIR/../forma}"
+FORMAJS_DIR="${FORMAJS_DIR:-$REPO_DIR/packages/core}"
+FORMA_DIR="${FORMA_DIR:-$REPO_DIR}"
 
 for dir_var in FORMAJS_DIR FORMA_DIR; do
   if [ ! -d "${!dir_var}" ]; then
@@ -36,7 +40,11 @@ if [ ! -f "$FORMAJS_DIR/dist/formajs-frame.global.js" ]; then
   exit 1
 fi
 if [ ! -f "$FORMA_DIR/crates/forma-server/src/frame.rs" ]; then
-  echo "Error: $FORMA_DIR/crates/forma-server/src/frame.rs not found; FORMA_DIR must be a getforma-dev/forma checkout with the preview frame (FORMA-125)" >&2
+  echo "Error: $FORMA_DIR/crates/forma-server/src/frame.rs not found; FORMA_DIR must hold forma-server with the preview frame (FORMA-125)" >&2
+  exit 1
+fi
+if [ "$FORMA_DIR" != "$REPO_DIR" ]; then
+  echo "Error: server/Cargo.toml depends on this repository's forma-server by path; FORMA_DIR=$FORMA_DIR is another tree" >&2
   exit 1
 fi
 
@@ -61,22 +69,18 @@ npm install --prefix "$SCRIPT_DIR/app" --no-save --no-package-lock --ignore-scri
 echo "core:    $(node -p "require('$SCRIPT_DIR/app/node_modules/@getforma/core/package.json').version") from $(basename "$TARBALL")"
 
 # The build package under test is this working tree's.
-(cd "$REPO_DIR" && npm run build > /dev/null)
+(cd "$REPO_DIR" && npm run build -w packages/compiler -w packages/build > /dev/null)
 
 node "$SCRIPT_DIR/build-app.mjs"
 
-# server/Cargo.toml depends on forma's crates through this link. As in the
-# SSR lane (e2e/ssr/build.sh), cargo fingerprints a path dependency by its
-# files' mtimes, not by where the link points, and the server embeds the
-# output at compile time: rebuild forma's two crates and the server every time.
-ln -sfn "$FORMA_DIR" "$SCRIPT_DIR/server/forma"
-cargo clean --quiet --manifest-path "$SCRIPT_DIR/server/Cargo.toml" \
-  -p forma-ir -p forma-server -p forma-e2e-frame
-# --locked: server/Cargo.lock is the only pin of the crates this lane
-# compiles (forma commits no lockfile). When forma's crates add or change a
-# dependency this fails loudly; refresh the lock by running
-#   cargo build --manifest-path e2e/frame/server/Cargo.toml
-# once without --locked, and commit server/Cargo.lock.
+# server/Cargo.toml depends on this repository's forma-server by path, inside
+# the e2e workspace (e2e/Cargo.toml), whose Cargo.lock is the only pin of the
+# dependencies this lane compiles. The server embeds the output at compile
+# time, so it is rebuilt after build-app.mjs: cargo sees the embedded folder's
+# files change. --locked: when the crates add or change a dependency this fails
+# loudly; refresh the lock by running
+#   cargo generate-lockfile --manifest-path e2e/Cargo.toml
+# and commit e2e/Cargo.lock.
 cargo build --quiet --locked --manifest-path "$SCRIPT_DIR/server/Cargo.toml"
 
-echo "✓ preview-frame e2e lane built: $OUT, $SCRIPT_DIR/server/target/debug/forma-e2e-frame"
+echo "✓ preview-frame e2e lane built: $OUT, $SCRIPT_DIR/../target/debug/forma-e2e-frame"

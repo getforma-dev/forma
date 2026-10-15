@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# R17: one command, from a clean clone, builds every package in both languages
+# and runs every test (FORMA-113; v2 R17, G6). `npm run check` runs it; CI's
+# `check` job runs it on every push and pull request and the target is under
+# ten minutes there. It is the per-merge gate of the four repositories this one
+# replaced, in one place:
+#
+#   Rust    fmt, clippy over every target and feature, the workspace's tests
+#           and docs, the wasm32 build of forma-ir and the wasm exports' doc
+#           tests (forma's CI `test` job)
+#   npm     the four packages built in dependency order and their unit suites
+#           (formajs, forma-tools and create-forma-app's `test` jobs); core's
+#           type check, size gate, packaging lint and probe-anchor check
+#           (formajs's `test`, `package` and `probes-check` jobs); the packed
+#           forma-raw-lint bin as an application installs it (forma-tools)
+#   FMIR    the compiler in this tree emits the corpus committed for forma-ir's
+#           cross-implementation contract, and forma-ir reads it (forma-tools'
+#           `fmir-contract` job, which used to check out another repository)
+#   e2e     the build package's browser test, the full-stack, SSR and
+#           preview-frame lanes (forma-tools' `e2e` job, which used to clone
+#           formajs and forma) and core's own Playwright suite, all in Chromium
+#
+# Needs: Node 20+ with npm, a stable Rust toolchain with rustfmt, clippy and
+# the wasm32-unknown-unknown target, and Playwright's Chromium
+# (`npx playwright install chromium` once; CI installs it before this runs).
+# Not here: the 32-bit, release-profile and MSRV builds, cargo-deny, the
+# Windows legs, the release-workflow lint and the scaffold gate, which are
+# their own CI jobs beside this one, and the three-engine and nightly-probe
+# workflows.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+started=$(date +%s)
+step() { echo; echo "### $* ($(( $(date +%s) - started ))s)"; }
+
+step "npm ci"
+npm ci
+step "npm audit signatures"
+npm audit signatures
+
+step "cargo fmt --all --check"
+cargo fmt --all --check
+step "cargo clippy --workspace --all-targets --all-features -- -D warnings"
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+step "cargo test --workspace"
+cargo test --workspace
+step "cargo doc --workspace --no-deps"
+cargo doc --workspace --no-deps
+step "forma-ir builds for wasm32 with the wasm feature"
+cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
+step "the wasm exports' deprecation reaches a caller"
+cargo test -p forma-ir --doc --features wasm
+
+step "npm run build (compiler, build, core, create-app)"
+npm run build
+step "npm test --workspaces"
+npm test --workspaces
+step "core: typecheck, size gate, packaging lint, probe anchors"
+npm run typecheck -w packages/core
+npm run check:size -w packages/core
+npm run check:pack -w packages/core
+(cd packages/core && node scripts/run-probes.mjs --check)
+step "build: the packed forma-raw-lint bin"
+node packages/build/scripts/test-raw-lint-bin.mjs
+
+step "FMIR contract: this compiler's corpus is the one forma-ir has committed"
+npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"
+cargo test -p forma-ir --test js_emitter_contract
+if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)" ]; then
+  echo "::error::the compiler no longer emits the .ir bytes committed in crates/forma-ir/tests/fixtures/js-emitter:"
+  git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter
+  echo "::error::regenerate the goldens with UPDATE_GOLDEN=1 cargo test -p forma-ir --test js_emitter_contract and commit both in this change."
+  exit 1
+fi
+
+step "e2e lanes: fixtures, the SSR site, the preview frame"
+bash e2e/sync-fixtures.sh
+bash e2e/ssr/build.sh
+bash e2e/frame/build.sh
+step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
+npm run test:browser -w packages/build
+npx playwright test
+npm run test:e2e -w packages/core
+
+echo
+echo "check: every gate passed in $(( $(date +%s) - started ))s"

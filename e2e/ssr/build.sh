@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build the SSR e2e site: compile each case with THIS repo's compiler and build
-# package, render it with forma's Rust walker and page template, and leave the
-# result in e2e/ssr/out/site/ for e2e/ssr/serve.mjs.
+# Build the SSR e2e site: compile each case with THIS repository's compiler and
+# build package, render it with forma's Rust walker and page template, and leave
+# the result in e2e/ssr/out/site/ for e2e/ssr/serve.mjs.
+#
+# Since the repository merge (FORMA-113) everything the lane needs is in this
+# tree: FormaJS is packages/core, the crates are crates/. The two variables may
+# still name other checkouts.
 #
 #   FORMAJS_DIR  FormaJS checkout, already built (e2e/sync-fixtures.sh builds it).
-#                Default: ../formajs beside this repo.
-#   FORMA_DIR    forma checkout (forma-ir, forma-server). Default: ../forma.
+#                Default: packages/core.
+#   FORMA_DIR    forma checkout (forma-ir, forma-server). Default: this repository.
 #
 # Needs Node and cargo. Every step fails loudly; nothing is skipped.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-FORMAJS_DIR="${FORMAJS_DIR:-$REPO_DIR/../formajs}"
-FORMA_DIR="${FORMA_DIR:-$REPO_DIR/../forma}"
+FORMAJS_DIR="${FORMAJS_DIR:-$REPO_DIR/packages/core}"
+FORMA_DIR="${FORMA_DIR:-$REPO_DIR}"
 
 for dir_var in FORMAJS_DIR FORMA_DIR; do
   if [ ! -d "${!dir_var}" ]; then
@@ -31,10 +35,14 @@ if [ ! -f "$FORMAJS_DIR/dist/index.js" ]; then
 fi
 for crate in forma-ir forma-server; do
   if [ ! -f "$FORMA_DIR/crates/$crate/Cargo.toml" ]; then
-    echo "Error: $FORMA_DIR/crates/$crate/Cargo.toml not found; FORMA_DIR must be a getforma-dev/forma checkout" >&2
+    echo "Error: $FORMA_DIR/crates/$crate/Cargo.toml not found; FORMA_DIR must hold forma's crates" >&2
     exit 1
   fi
 done
+if [ "$FORMA_DIR" != "$REPO_DIR" ]; then
+  echo "Error: render/Cargo.toml depends on this repository's crates by path; FORMA_DIR=$FORMA_DIR is another tree" >&2
+  exit 1
+fi
 
 echo "FormaJS: $FORMAJS_DIR ($(git -C "$FORMAJS_DIR" rev-parse --short HEAD 2>/dev/null || echo 'not a git checkout'))"
 echo "forma:   $FORMA_DIR ($(git -C "$FORMA_DIR" rev-parse --short HEAD 2>/dev/null || echo 'not a git checkout'))"
@@ -44,23 +52,16 @@ mkdir -p "$SCRIPT_DIR/node_modules/@getforma"
 ln -sfn "$FORMAJS_DIR" "$SCRIPT_DIR/node_modules/@getforma/core"
 
 # The compiler and build package under test are this working tree's.
-(cd "$REPO_DIR" && npm run build > /dev/null)
+(cd "$REPO_DIR" && npm run build -w packages/compiler -w packages/build > /dev/null)
 
 node "$SCRIPT_DIR/build-cases.mjs"
 
-# render/Cargo.toml depends on forma's crates through this link.
-ln -sfn "$FORMA_DIR" "$SCRIPT_DIR/render/forma"
-# Cargo fingerprints a path dependency by its files' mtimes, not by where the
-# link points: after re-pointing it at an OLDER checkout, cargo would reuse the
-# previous walker and the pages would be rendered by the wrong forma. Rebuild
-# forma's two crates every time (a few seconds) so the walker is FORMA_DIR's.
-cargo clean --quiet --manifest-path "$SCRIPT_DIR/render/Cargo.toml" \
-  -p forma-ir -p forma-server -p forma-e2e-render
-# --locked: render/Cargo.lock is the only pin of the crates this job compiles
-# (forma commits no lockfile). When forma's crates add or change a dependency
-# this fails loudly; refresh the lock by running
-#   cargo build --manifest-path e2e/ssr/render/Cargo.toml
-# once without --locked, and commit render/Cargo.lock.
+# render/Cargo.toml depends on this repository's crates by path, inside the e2e
+# workspace (e2e/Cargo.toml), whose Cargo.lock is the only pin of the
+# dependencies this lane compiles. --locked: when the crates add or change a
+# dependency this fails loudly; refresh the lock by running
+#   cargo generate-lockfile --manifest-path e2e/Cargo.toml
+# and commit e2e/Cargo.lock.
 cargo run --quiet --locked --manifest-path "$SCRIPT_DIR/render/Cargo.toml" -- \
   "$SCRIPT_DIR/cases" "$SCRIPT_DIR/out/build" "$SCRIPT_DIR/out/site"
 

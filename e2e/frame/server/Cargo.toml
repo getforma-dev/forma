@@ -4,11 +4,11 @@
 # (`PreviewFrame::load` at start, the frame route, the host page that frames
 # it), for ../frame.spec.ts.
 #
-# `forma/` is a symlink to a checkout of getforma-dev/forma that ../build.sh
-# creates (FORMA_DIR, default ../../forma from the repo root; in CI the
-# workflow's `forma-checkout`). Path dependencies, not crates.io, as in the
-# SSR lane (../../ssr/render): the lane tests the server this build ships
-# alongside, not a release snapshot.
+# Path dependency on this repository's forma-server (since the repository
+# merge, FORMA-113; before it, a symlink to a checkout of getforma-dev/forma),
+# as in the SSR lane (../../ssr/render): the lane tests the server this build
+# ships alongside, not a release snapshot. A member of the e2e workspace
+# (../../Cargo.toml), which holds the one lock.
 [package]
 name = "forma-e2e-frame"
 version = "0.0.0"
@@ -16,16 +16,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-forma-server = { path = "forma/crates/forma-server" }
+forma-server = { path = "../../../crates/forma-server" }
 axum = "0.8"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
 # `debug-embed`: the debug build embeds the output at compile time, as an
 # application's release binary does, rather than reading the folder at run time.
 rust-embed = { version = "8", features = ["debug-embed"] }
 serde_json = "1"
-
-# Standalone: never a member of any enclosing workspace. `forma/` is excluded
-# because cargo would otherwise adopt path dependencies under this directory as
-# members of this workspace.
-[workspace]
-exclude = ["forma"]

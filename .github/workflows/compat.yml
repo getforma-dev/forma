@@ -1,5 +1,11 @@
 name: Compatibility Check
 
+# Weekly: the newest PUBLISHED @getforma/core still exports every symbol the
+# compiler generates imports of. Compiled output naming another package's API
+# is a dependency, even though nothing in package.json records it. Came from
+# forma-tools' .github at the repository merge (FORMA-113): the published core
+# is installed in a scratch project, outside the workspace, since the workspace
+# links @getforma/core to packages/core.
 on:
   schedule:
     - cron: '0 0 * * 1'  # Every Monday at midnight UTC
@@ -16,10 +22,9 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    # MEASURED: `npm test --workspaces` = 3s locally. The rest is two npm
-    # installs and two `node -e` require checks. Realistic worst case ~3m;
-    # 10 is >3x. This job talks to the npm registry twice, which is the only
-    # thing here that can be slow.
+    # Two npm installs and two `node -e` require checks, then the compiler's
+    # unit suite (3s). Realistic worst case ~3m; 10 is >3x. This job talks to
+    # the npm registry, which is the only thing here that can be slow.
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -29,11 +34,19 @@ jobs:
           cache: npm
 
       - run: npm ci
+
       # Deliberately not from the lockfile: this job exists to check the newest
       # published @getforma/core against what the compiler emits.
-      - run: npm install @getforma/core@latest
+      - name: Install the published @getforma/core in a scratch project
+        run: |
+          mkdir -p "$RUNNER_TEMP/compat"
+          cd "$RUNNER_TEMP/compat"
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund @getforma/core@latest
+          node -p "'core ' + require('@getforma/core/package.json').version"
 
       - name: Verify compiler-generated imports exist in @getforma/core
+        working-directory: ${{ runner.temp }}/compat
         run: |
           node -e "
             const core = require('@getforma/core');
@@ -47,6 +60,7 @@ jobs:
           "
 
       - name: Verify server imports exist in @getforma/core/server
+        working-directory: ${{ runner.temp }}/compat
         run: |
           node -e "
             const server = require('@getforma/core/server');
@@ -60,4 +74,4 @@ jobs:
           "
 
       - name: Run compiler tests
-        run: npm test
+        run: npm test -w packages/compiler
