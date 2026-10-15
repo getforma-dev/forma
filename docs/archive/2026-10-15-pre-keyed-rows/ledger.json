@@ -1,0 +1,94 @@
+{
+  "sourceCommit": "bb6435f4e8ab867cf187a93cc746e0aa1a689313",
+  "reason": "FORMA-181 checkpoint A: the compiler emits FMIR section 0x0006 (key paths) for every proved LIST. Only fixtures whose source contains createList change; HTML and projected state are unchanged because native key rendering (checkpoint B) is not implemented.",
+  "files": {
+    "crates/forma-ir/tests/fixtures/island-emitter/aggregate-fallback.ir": {
+      "before": {
+        "bytes": 471,
+        "sha256": "c8d50a5c08b05a33579931613da42d05e183f2b5ef8185e58ad5384869dc1ce5"
+      },
+      "after": {
+        "bytes": 600,
+        "sha256": "14232aa05e85f9385a68c72d6613ef4b974c377d5c878b60542b40e7d34b5d2c"
+      },
+      "change": "section 6 added; source migrated from a scalar key to an object row keyed by its id (see README.md migration map)"
+    },
+    "crates/forma-ir/tests/fixtures/island-emitter/local-aggregates.ir": {
+      "before": {
+        "bytes": 1384,
+        "sha256": "4ffd7ab6bbde9bb991266bc73656a716c5606220f654d7aefdbbc578640f5502"
+      },
+      "after": {
+        "bytes": 1514,
+        "sha256": "7e95e261b0003e3ebf37d06c1f3b391df63cd17ac487c77410d4ccbd9e5d9efc"
+      },
+      "change": "section 6 added; source migrated from a scalar key to an object row keyed by its id (see README.md migration map)"
+    },
+    "crates/forma-ir/tests/fixtures/island-emitter/local-inputs.ir": {
+      "before": {
+        "bytes": 475,
+        "sha256": "fecd5ccd1d9514637c2c3ab5503482a7788fabe4cc8f6924f0b14d38cfb15d85"
+      },
+      "after": {
+        "bytes": 504,
+        "sha256": "f258a7bf440c5a2a515a9e198108535125705e5830381540ad1de4808bdd2c09"
+      },
+      "change": "section 6 added (one keyed LIST); source unchanged"
+    },
+    "crates/forma-ir/tests/fixtures/island-emitter/rows.ir": {
+      "before": {
+        "bytes": 478,
+        "sha256": "9dfc5904e67de0455c9a784215656fb2873272d0eeef6d8429a5fe97b114f67a"
+      },
+      "after": {
+        "bytes": 503,
+        "sha256": "3084bd15522152007c3568bba0f450a6dfad5b28f951d2e256a1f3c106dd9c99"
+      },
+      "change": "section 6 added (one keyed LIST); source unchanged"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.ir": {
+      "before": {
+        "bytes": 551,
+        "sha256": "7f986f793563480adb51bcf74d1d3652999b30598ac22efd2e1c3dce9f039dc3"
+      },
+      "after": {
+        "bytes": 585,
+        "sha256": "7aa2d7f7ef456b19f012e3600cb116d978c78cae2aa4b220947d978e88c7fb3e"
+      },
+      "change": "section 6 added: two keyed LISTs over the same source, each at its own offset, path [\"id\"]; one string-table entry"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.dump": {
+      "before": {
+        "bytes": 1266,
+        "sha256": "1fa2d95c093537a9ac5bf36184f438659c12fb70e3001f8cc34bdca9883b8ee1"
+      },
+      "after": {
+        "bytes": 1363,
+        "sha256": "07deef490b509c539ca5f4ce5ad8922263c1b8fce0e09de597a941d895f31e5c"
+      },
+      "change": "canonical dump gains the section 6 line and the id string"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html": {
+      "before": {
+        "bytes": 1931,
+        "sha256": "d557fcdb4472a590e718c7bcb613d0dc5ba122cf4aaddfeffcb177967206b5b7"
+      },
+      "after": {
+        "bytes": 1931,
+        "sha256": "d557fcdb4472a590e718c7bcb613d0dc5ba122cf4aaddfeffcb177967206b5b7"
+      },
+      "change": "unchanged (verified byte-identical after regeneration)"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.state.json": {
+      "before": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      },
+      "after": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      },
+      "change": "unchanged (verified byte-identical after regeneration)"
+    }
+  }
+}

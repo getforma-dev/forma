@@ -1,3 +1,4 @@
+import {createListProofs} from './list-proof';
 import {readSourceFile} from './source-snapshot';
 import {realpathSync} from 'node:fs';
 /**
@@ -252,6 +253,7 @@ function generateWithRegistry(entryPointPath: string, registry?: IslandRegistry)
 /** {@link generateRealIr}'s work; throws where the page cannot be emitted. */
 function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult | null {
   entryPointPath=realpathSync(entryPointPath);
+  const listProofs=createListProofs();
   // 1. Read the entry point file. A .tsx/.jsx entry has its JSX turned into
   // h() calls first, so the Babel AST parser produces CallExpression nodes
   // (not JSXElement): the IR walker only understands h() call trees.
@@ -348,6 +350,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
     const propsScope = rootPropsScope({ schema: [[]], parameter: { kind: 'none' } }, emptyFn, entryPointPath, ctx);
     const walkCtx: WalkContext = {
       propsScope,
+      listProof:(file,node)=>listProofs.lowered(file,node),
       islandRegistry,islandSchemas:new Map(),
       sourceFile: entryPointPath,
       fileConstants,
@@ -483,6 +486,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   // 9. Build WalkContext and walk the h() tree
   const walkCtx: WalkContext = {
     propsScope,
+    listProof:(file,node)=>listProofs.lowered(file,node),
     islandRegistry,islandSchemas:new Map(),
     sourceFile: rootPath,
     fileConstants,

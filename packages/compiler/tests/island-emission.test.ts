@@ -61,7 +61,7 @@ describe('declared island writer integration',()=>{
   });
   it('preserves nonempty local aggregate seeds and nested row values without handler fields',()=>{
     const result=emit('local-aggregates','import {Badge} from "./island";export function Page(){return h("main",null,Badge({}));}',
-      'const [shared]=createSignal([{id:3,user:{name:"capture"}}]);export function Badge(){const [data]=createSignal({title:"local",rows:[{id:1,user:{name:"first"},tags:["x","y"]},{id:2,user:{name:"second"},tags:["z"]}]});const [unused]=createSignal({never:"read"});const [empty]=createSignal([]);return h("section",{"data-title":()=>data().title},createList(()=>data().rows,r=>r.id,r=>h("b",{"data-id":r.id},r.user.name,createList(()=>r.tags,t=>t,t=>h("i",null,t)))),createList(shared,r=>r.id,r=>h("b",null,r.user.name)),createList(empty,r=>r.id,r=>h("i",null,r.name)));}');
+      'const [shared]=createSignal([{id:3,user:{name:"capture"}}]);export function Badge(){const [data]=createSignal({title:"local",rows:[{id:1,user:{name:"first"},tags:[{id:"x"},{id:"y"}]},{id:2,user:{name:"second"},tags:[{id:"z"}]}]});const [unused]=createSignal({never:"read"});const [empty]=createSignal([]);return h("section",{"data-title":()=>data().title},createList(()=>data().rows,r=>r.id,r=>h("b",{"data-id":r.id},r.user.name,createList(()=>r.tags,t=>t.id,t=>h("i",null,t.id)))),createList(shared,r=>r.id,r=>h("b",null,r.user.name)),createList(empty,r=>r.id,r=>h("i",null,r.name)));}');
     expect(getSlots(result.binary).every(slot=>slot.source===C.SLOT_SOURCE_CLIENT)).toBe(true);
     expect(getIslands(result.binary)[0]!.slotIds).toEqual([]);
   });
@@ -69,9 +69,11 @@ describe('declared island writer integration',()=>{
     emit('local-inputs','import {Badge} from "./island";export function Page(){const [rows]=createSignal([{id:1,user:{name:"one"}},{id:2,user:{name:"two"}}]);return h("main",null,createList(rows,r=>r.id,r=>Badge({label:r.user.name})));}',
       'export function Badge(p:{label:string}){return h("b",null,p.label);}');
   });
-  it('pairs a declared optional aggregate with a closed fallback and correctly typed scalar rows',()=>{
-    emit('aggregate-fallback','import {Badge} from "./island";export function Page(p:{rows?:string[]}){return h("main",null,Badge({rows:p.rows}));}',
-      'export function Badge(p:{rows?:string[]}){const [rows]=createSignal(p.rows??["fallback"]);return h("section",null,createList(rows,r=>r,r=>h("b",null,r)));}');
+  it('pairs a declared optional aggregate with a closed fallback and keyed object rows',()=>{
+    // FORMA-181: the archived scalar-row form (`rows?:string[]`, `r=>r`) is a BUILD-612
+    // refusal; its unkeyed binary stays a native low-level control in island-emitter/unkeyed/.
+    emit('aggregate-fallback','import {Badge} from "./island";export function Page(p:{rows?:{id:string}[]}){return h("main",null,Badge({rows:p.rows}));}',
+      'export function Badge(p:{rows?:{id:string}[]}){const [rows]=createSignal(p.rows??[{id:"fallback"}]);return h("section",null,createList(rows,r=>r.id,r=>h("b",null,r.id)));}');
   });
   it('folds a closed nested optional projection before choosing a fallback',()=>{
     emit('nested-closed-nullish','import {Badge} from "./island";export function Page(){return h("main",null,Badge({data:{title:null}}),Badge({data:{title:"kept"}}),Badge({data:{}}));}',

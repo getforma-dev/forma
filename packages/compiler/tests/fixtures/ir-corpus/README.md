@@ -10,6 +10,14 @@ These files are never imported by the TypeScript build or by any vitest suite;
 they are read off disk exactly as the plugin reads a real page, so the corpus
 exercises the shipped code path rather than a test-only re-implementation.
 
+## Key paths (FORMA-181 checkpoint A)
+
+`list-same-source` is the only case with `createList`; since checkpoint A its `.ir` carries
+section `0x0006` with both LISTs' offsets and the path `["id"]`, and its `.dump` shows that
+section. Its `.html` and `.state.json` are byte-identical to before (no key is rendered until
+checkpoint B). The previous `.ir`/`.dump` and their hashes are in
+`docs/archive/2026-10-15-pre-keyed-rows/` (`js-emitter/`, `ledger.json`).
+
 ## Current state contract migration (FORMA-103)
 
 The original 87 source/IR/dump/HTML files are frozen in

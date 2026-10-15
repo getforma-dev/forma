@@ -1,0 +1,8 @@
+import { h, mount, createList } from '@getforma/core';
+const todos = () => [{ id: 1, title: 'a', done: false }];
+
+mount(() => (
+  <main>
+    <ul>{createList(todos, (r) => r.id, (r) => <li>{r.title}</li>)}</ul>
+  </main>
+), '#app');

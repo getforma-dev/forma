@@ -78,9 +78,14 @@ describe('declared root slot bindings', () => {
     `export function Page(p: { text: string }) { const [label] = createSignal(p.text.toUpperCase()); return h('p', null, label()); }`,
     `export function Page(p: { text: string }) { let text = p.text; text = 'new'; return h('p', null, text); }`,
     `export function Page(p: { text: string }) { p.text = 'new'; return h('p', null, p.text); }`,
-    `export function Page(p: { text: string }) { return createList(() => p.text, r => r, r => h('p', null, r)); }`,
+    `export function Page(p: { text: string }) { return createList(() => p.text, r => r.id, r => h('p', null, r.id)); }`,
   ])('refuses an unrepresentable binding instead of changing its value: %s', source => {
     expect(() => emit(imports + source)).toThrow(/BUILD-610/);
+  });
+  it('refuses a list keyed by the row itself with BUILD-612 before the list source is examined', () => {
+    // FORMA-181: the archived scalar-key form of the string-source case above
+    // (docs/archive/2026-10-15-pre-keyed-rows/sources/props-bindings-scalar-key.ts).
+    expect(() => emit(imports + `export function Page(p: { text: string }) { return createList(() => p.text, r => r, r => h('p', null, r)); }`)).toThrow(/^BUILD-612 .*\.ts:\d+:\d+: LIST key cannot be the row itself/);
   });
 
   it('does not resolve a shadowed row name as its outer prop alias', () => {

@@ -342,8 +342,10 @@ binding and schema bytes for its digest, as described in 5.4.
 L-7: "Key paths are a required section in a module with keyed rows." Present, and flagged
 required, when any list in the module is keyed; absent otherwise. A `LIST` without an entry is
 unkeyed: the walker writes no `data-forma-key` and adoption applies A2's row-count check
-(FORMA-123); FORMA-106 then makes an unkeyed list a build error on the compiler's side, which is
-not a reader rule.
+(FORMA-123). Since FORMA-181 checkpoint A the compiler emits an entry for every `LIST` it
+produces, at the opcode's exact offset and with the key path proved from the original source
+(BUILD-612 when the key is not a row property path, BUILD-613 when the row has no single stable
+root); a `LIST` without an entry remains a valid low-level reader form, not a loader error.
 
 ```
 count u32

@@ -578,6 +578,52 @@ Core namespace imports may use known non-mount members; optional mount access, d
 
 The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-611/fail/app.tsx) and [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-611/pass/app.tsx) pin original entry positions.
 
+### BUILD-612 List key that is not a property path of its row
+
+**Why.** FORMA-181 (DR-8, L-7): every server-rendered list carries its rows' identity as a key
+path in FMIR section `0x0006`, so the compiler must prove the key from the original source. The
+proof reads the exact source snapshot before JSX lowering and admits a nonempty property path
+of the key callback's own row parameter: `row.id`, `row.user.id`, the string-literal member
+`row['id']`, and an immutable local alias of such a read. Anything else refuses here: the row
+itself (`r => r`), an index or second parameter, a computed member, a call, coercion,
+concatenation or arithmetic, a captured or reassigned binding, a path deeper than 32 segments,
+or a `createList` call that does not resolve to the core import (a local function of that name,
+or an ambiguous lowered position). This refusal is mandatory without strict mode. The legacy
+shape checks keep their precedence: a call missing its row callback, or whose row callback is
+not an inline function with a named parameter, still reports BUILD-107 and ends with BUILD-610.
+
+**Fix.** Key the list with a property path of its row, `(row) => row.id` or
+`(row) => row.user.id`, written inline. A derived or formatted key belongs in the data the
+list reads, as its own field.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-612/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-612/pass/app.tsx) pin the
+original TSX position of the list.
+
+### BUILD-613 List row without one stable owned root
+
+**Why.** FORMA-181 (the row slice of FORMA-139): the key is written on the row's root
+element, so each row callback must return exactly one stable owned Element, proved through
+ordinary lexical helpers and imported components. A transparent Fragment around exactly that
+Element, and a registered child component that itself renders one, are admitted. Text,
+`null`, an empty string, several roots, a conditional (`cond ? <li/> : null`), `createShow` or
+`createList` as the root, a root reached through a spread or computed attribute, or an
+authored `data-forma-key` on the root (reserved for the compiler-written identity) refuse
+here. Conditionals and dynamic ranges inside the stable root remain valid. This refusal is
+mandatory without strict mode.
+
+**Fix.** Return one Element per row, `(row) => h('li', …)` or `<li>…</li>`, and move the
+conditional inside it: `<li>{row.done ? <b>…</b> : null}</li>`. Do not write
+`data-forma-key` yourself.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx) pin the
+original TSX position of the list.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.

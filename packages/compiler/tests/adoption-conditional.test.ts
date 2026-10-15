@@ -37,7 +37,9 @@ async function runtime(f: ReturnType<typeof fixture>) {
 
 describe('original DOM conditional provenance', () => {
   it('records JSX, h, arrow-reader and list-row conditionals while preserving canonical bytes', () => {
-    const f = fixture(`export function Counter(p:{show:boolean;rows:{id:string;live:boolean;name:string}[]}){return h('main',null,p.show?h('b',null,'direct'):null,()=>p.show?h('b',null,'reader'):null,<aside>{p.show?<b>jsx</b>:null}</aside>,createList(()=>p.rows,r=>r.id,r=>r.live?h('li',null,r.name):null));}`);
+    const f = fixture(`export function Counter(p:{show:boolean;rows:{id:string;live:boolean;name:string}[]}){return h('main',null,p.show?h('b',null,'direct'):null,()=>p.show?h('b',null,'reader'):null,<aside>{p.show?<b>jsx</b>:null}</aside>,createList(()=>p.rows,r=>r.id,r=>h('li',null,r.live?h('b',null,r.name):null)));}`);
+    // FORMA-181: the row conditional sits inside the one stable row root. The archived
+    // row-root form is a BUILD-613 refusal (tests/keyed-list-archive.test.ts).
     const island = f.registry.entries()[0]!.island, analysis = island.analyze();
     const before = { schema: canonicalIslandSchema(island.declared.schema, 0), bindings: Buffer.from(encodeBindings('ssr', analysis.bindings)) };
     expect(analysis.adoption!.conditionals).toHaveLength(4);
@@ -86,16 +88,20 @@ describe('original DOM conditional provenance', () => {
     expect([outer.type,second.type,third.type]).toEqual(['show','show','show']); expect(third.whenFalse()).toBe('d');
   });
 
-  it('describes each direct conditional list row without evaluating its test or branch early', async () => {
-    const f = fixture(`export function Counter(p:{rows:{id:string;live:boolean;name:string}[]}){return createList(()=>p.rows,r=>r.id,r=>r.live?h('li',null,r.name):null);}`), r = await runtime(f);
+  it('describes each conditional inside a list row root without evaluating its test or branch early', async () => {
+    // FORMA-181: a keyed row has one stable root, so the conditional is its first child; the
+    // reads it must not perform are unchanged from the archived row-root form.
+    const f = fixture(`export function Counter(p:{rows:{id:string;live:boolean;name:string}[]}){return createList(()=>p.rows,r=>r.id,r=>h('li',null,r.live?h('b',null,r.name):null));}`), r = await runtime(f);
     const reads: string[] = [];
     const row = {id:'a',get live(){reads.push('test');return true},get name(){reads.push('branch');return 'name'}};
     const list = r.withAdoptionDescription(() => r.Counter({rows:[row]}));
-    const conditional = r.withAdoptionDescription(() => list.renderFn(row,()=>0));
+    const root = r.withAdoptionDescription(() => list.renderFn(row,()=>0));
+    expect(root.type).toBe('element'); expect(root.tag).toBe('li'); expect(root.children).toHaveLength(1);
+    const conditional = root.children[0];
     expect(conditional.type).toBe('show'); expect(reads).toEqual([]);
     expect(conditional.condition()).toBe(true); expect(reads).toEqual(['test']);
     const element = r.withAdoptionDescription(() => conditional.whenTrue());
-    expect(element.children).toEqual(['name']); expect(reads).toEqual(['test','branch']);
+    expect(element.tag).toBe('b'); expect(element.children).toEqual(['name']); expect(reads).toEqual(['test','branch']);
   });
 
   it('composes conditional, tuple, writable and direct registered-child edits without eager child execution', async () => {
