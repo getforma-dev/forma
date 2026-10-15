@@ -4,7 +4,7 @@
  * `src/dom/trusted-html.ts` decides development with the build flag itself,
  * so the build folds the warnings away in whatever chunk the module lands in:
  * code-split ESM entries included, where an imported `__DEV__` cannot fold.
- * These tests run the real tsup configs, as deprecated-entries.test.ts does,
+ * These tests run the real tsup configs, as development-build.test.ts does,
  * because the folding is the build's, not the source's.
  */
 import { describe, expect, it } from 'vitest';

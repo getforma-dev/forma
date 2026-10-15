@@ -14,6 +14,10 @@
 //! ```compile_fail
 //! use forma_ir::walker::walk_island_with_limits;
 //! ```
+//! Test features do not expose a fragment renderer either:
+//! ```compile_fail
+//! use forma_ir::parser::test_helpers::walk_island;
+//! ```
 
 // README.md and SECURITY.md both promise "Zero `unsafe` blocks". This is what
 // makes that a compiler-enforced property of the shipped library rather than a
