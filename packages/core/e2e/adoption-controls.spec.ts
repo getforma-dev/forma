@@ -101,3 +101,12 @@ test('external select peers and ordinary implicit defaults remain eligible while
  });
  expect(result).toEqual({implicit:[{edited:false,value:true}],grouped:[{edited:false,value:false}],codes:['FORMA_E_HYDRATE_VALUE','FORMA_E_HYDRATE_VALUE'],other:[{edited:false,value:false}],noImplicit:[{edited:false,value:false},{edited:false,value:false}],allDisabled:[{edited:false,value:browserName==='webkit'}],mutations:0,positive:1});
 });
+for(const codec of [undefined,'string'] as const)test(`color alpha/display-p3 defaults stay untouched with ${codec??'readonly'} binding`,async({page})=>{
+ await serve(page,'<section id="host"><input id="i" type="color" alpha colorspace="display-p3" value="color(display-p3 1 0 0 / 0.5)"></section>');
+ const result=await page.evaluate(async codec=>{
+  const {AdoptionControls,observeMutations}=await import('/control-kernel.mjs' as string),input=document.getElementById('i') as HTMLInputElement;
+  const finishObservation=observeMutations(),before=input.value,controls=new AdoptionControls(document.getElementById('host')!);controls.add({element:input,key:'value',initial:'color(display-p3 1 0 0 / 0.5)',codec});
+  const observed=controls.finish().map(({edited,value}:any)=>({edited,value}));controls.check();const observation=await finishObservation();controls.release();return {observed,before,after:input.value,...observation};
+ },codec);
+ expect(result).toEqual({observed:[{edited:false,value:result.before}],before:result.before,after:result.before,mutations:0,positive:1});
+});

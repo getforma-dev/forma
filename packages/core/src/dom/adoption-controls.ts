@@ -21,7 +21,7 @@ type Snapshot = {
 type Binding = { snapshot: Snapshot; key: Key; initial: Initial; codec?: AdoptionCodec; token: ControlToken };
 type Group = { name: string; form: HTMLFormElement | null; members: HTMLInputElement[] };
 const HTML = 'http://www.w3.org/1999/xhtml';
-const MODEL_ATTRS = new Set(['type','name','value','checked','selected','min','max','step','multiple','size','disabled','readonly','required','maxlength','minlength','pattern','label']);
+const MODEL_ATTRS = new Set(['type','name','value','alpha','colorspace','checked','selected','min','max','step','multiple','size','disabled','readonly','required','maxlength','minlength','pattern','label']);
 function structure(): never { throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE'); }
 function mismatch(): never { throw new AdoptionDomError('FORMA_E_HYDRATE_VALUE'); }
 function target(): never { throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_TARGET'); }
