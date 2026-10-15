@@ -1,0 +1,103 @@
+{
+  "status": "proposed; not accepted by current native reader",
+  "grammar": "FORMA-103-STATE-WIRE.md",
+  "byteOrder": "little-endian",
+  "hash": "SHA-256(binding_bytes || schema_bytes), first8bytes",
+  "vectors": [
+    {
+      "name": "empty",
+      "bindingHex": "010000",
+      "bindingLength": 3,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "0100000101000000",
+      "digestHex": "7ad5ed6729eecb7a",
+      "sectionHex": "0100120000000700030000000100000500000001010000000000",
+      "sectionLength": 26,
+      "meaning": "Empty declared props and no local bindings; one static island contract."
+    },
+    {
+      "name": "two-independent-signals",
+      "bindingHex": "0104001400000001040101000400686974730300000000000045401400000001040101000400686974730300000000000045400600000002020000000006000000020201000000",
+      "bindingLength": 71,
+      "schemaHex": "01010001000400686974730703",
+      "schemaLength": 13,
+      "hashInputHex": "010400140000000104010100040068697473030000000000004540140000000104010100040068697473030000000000004540060000000202000000000600000002020100000001010001000400686974730703",
+      "digestHex": "37db2704955c6774",
+      "sectionHex": "01005e00000007004700000001040014000000010401010004006869747303000000000000454014000000010401010004006869747303000000000000454006000000020200000000060000000202010000000d000000010100010004006869747307030100020009000000030000000000004540",
+      "sectionLength": 117,
+      "meaning": "Two distinct SIGNAL ordinals read one optional hits prop; zero remains zero, null uses42.",
+      "orderedInputSlots": [
+        0
+      ],
+      "coalesceHex": [
+        "13000002000300",
+        "13000002000400"
+      ]
+    },
+    {
+      "name": "repeated-call-input",
+      "bindingHex": "0102000a0000000201010004006c6566740b0000000201010005007269676874",
+      "bindingLength": 32,
+      "schemaHex": "010100020004006c656674020500726967687402",
+      "schemaLength": 20,
+      "hashInputHex": "0102000a0000000201010004006c6566740b0000000201010005007269676874010100020004006c656674020500726967687402",
+      "digestHex": "76bbe12a2bd88a49",
+      "sectionHex": "01003e0000000700200000000102000a0000000201010004006c6566740b000000020101000500726967687414000000010100020004006c6566740205007269676874020000",
+      "sectionLength": 70,
+      "orderedInputSlots": [
+        7,
+        7
+      ],
+      "meaning": "Distinct declared left/right fields may share source slot7; slot IDs are outside the digest."
+    },
+    {
+      "name": "nested-row",
+      "bindingHex": "0101003a000000050101000400726f777301020069640100250000000605004261646765010005006c6162656c0300000200070070726f66696c6504006e616d65",
+      "bindingLength": 65,
+      "schemaHex": "01030001000400726f77730608010002000200696403070070726f66696c65080200010004006e616d6502",
+      "schemaLength": 43,
+      "hashInputHex": "0101003a000000050101000400726f777301020069640100250000000605004261646765010005006c6162656c0300000200070070726f66696c6504006e616d6501030001000400726f77730608010002000200696403070070726f66696c65080200010004006e616d6502",
+      "digestHex": "58559368365294e1",
+      "sectionHex": "0100760000000700410000000101003a000000050101000400726f777301020069640100250000000605004261646765010005006c6162656c0300000200070070726f66696c6504006e616d652b00000001030001000400726f77730608010002000200696403070070726f66696c65080200010004006e616d65020000",
+      "sectionLength": 126,
+      "meaning": "LIST ordinal0 projects each current row profile.name into child label; key id is row identity only."
+    },
+    {
+      "name": "empty-string-fallback",
+      "bindingHex": "0102000f000000010401010005006c6162656c04000006000000020200000000",
+      "bindingLength": 32,
+      "schemaHex": "010100010005006c6162656c0702",
+      "schemaLength": 14,
+      "hashInputHex": "0102000f000000010401010005006c6162656c04000006000000020200000000010100010005006c6162656c0702",
+      "digestHex": "5c6691068cc892b9",
+      "sectionHex": "0100380000000700200000000102000f000000010401010005006c6162656c040000060000000202000000000e000000010100010005006c6162656c07020100020003000000040000",
+      "sectionLength": 73,
+      "meaning": "Explicit empty-string constant differs from Null despite zero legacy slot default bytes.",
+      "coalesceHex": [
+        "13000002000300"
+      ]
+    },
+    {
+      "name": "utf8-no-normalization",
+      "bindingHex": "010000",
+      "bindingLength": 3,
+      "schemaHex": "01010002000300ee80800503000000030065cc810200c3a90400f090808002",
+      "schemaLength": 31,
+      "hashInputHex": "01000001010002000300ee80800503000000030065cc810200c3a90400f090808002",
+      "digestHex": "dbe5e786a457823c",
+      "sectionHex": "01002c0000000700030000000100001f00000001010002000300ee80800503000000030065cc810200c3a90400f0908080020000",
+      "sectionLength": 52,
+      "fieldOrder": [
+        "\ue000",
+        "\ud800\udc00"
+      ],
+      "enumOrder": [
+        "",
+        "e\u0301",
+        "\u00e9"
+      ],
+      "meaning": "Unsigned UTF-8 ordering, empty enum literal admitted, decomposed and precomposed accents remain distinct."
+    }
+  ]
+}
