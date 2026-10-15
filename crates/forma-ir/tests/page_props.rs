@@ -461,3 +461,104 @@ fn raw_identifiers_and_leading_underscores_have_stable_camel_case_names() {
         json!({"type":"example","firstName":"Ada"})
     );
 }
+
+// -- FORMA-182 rules 3 and 4: the shared value-rule vectors ------------------
+//
+// `tests/fixtures/parity/integers.json` and `dates.json` are read here and by
+// @getforma/core's suite (packages/core/src/dom/__tests__/value-rules.test.ts),
+// so the admission boundary has one source of truth on both sides.
+mod value_rule_vectors {
+    use super::*;
+    use serde_json::Value;
+
+    const INTEGERS: &str = include_str!("fixtures/parity/integers.json");
+    const DATES: &str = include_str!("fixtures/parity/dates.json");
+
+    fn cases(file: &str, section: &str) -> Vec<Value> {
+        let all: Value = serde_json::from_str(file).unwrap();
+        all[section].as_array().unwrap().clone()
+    }
+
+    fn finish(failures: Vec<String>) {
+        assert!(
+            failures.is_empty(),
+            "{} disagreeing vector(s):\n{}",
+            failures.len(),
+            failures.join("\n")
+        );
+    }
+
+    #[test]
+    fn integer_vectors_are_admitted_or_refused_in_the_integer_domain() {
+        let m = one(PropType::Number);
+        let mut failures = Vec::new();
+        for case in cases(INTEGERS, "exact") {
+            let id = case["id"].as_str().unwrap();
+            let lexeme = case["lexeme"].as_str().unwrap();
+            let admitted = case["admitted"].as_bool().unwrap();
+            let result = match case["kind"].as_str().unwrap() {
+                "i64" => encode_props(
+                    &m,
+                    &Number {
+                        value: lexeme.parse().unwrap(),
+                    },
+                    "/n",
+                ),
+                "u64" => encode_props(
+                    &m,
+                    &Unsigned {
+                        value: lexeme.parse().unwrap(),
+                    },
+                    "/n",
+                ),
+                other => panic!("unknown integer origin {other}"),
+            };
+            match (result, admitted) {
+                (Ok(value), true) => {
+                    // Exact: the envelope carries the digits, not a rounded f64.
+                    let written = value["value"].to_string();
+                    if written != lexeme {
+                        failures.push(format!(
+                            "integers/exact/{id}: encoded as {written}, expected {lexeme}"
+                        ));
+                    }
+                }
+                (Ok(value), false) => failures.push(format!(
+                    "integers/exact/{id}: admitted as {value}, expected RENDER-401"
+                )),
+                (Err(error), true) => failures.push(format!(
+                    "integers/exact/{id}: refused with {}, expected admission",
+                    error.code()
+                )),
+                (Err(error), false) if error.code() != "RENDER-401" => failures.push(format!(
+                    "integers/exact/{id}: refused with {}, expected RENDER-401",
+                    error.code()
+                )),
+                (Err(_), false) => {}
+            }
+        }
+        for case in cases(INTEGERS, "floatOrigin") {
+            let id = case["id"].as_str().unwrap();
+            let lexeme = case["lexeme"].as_str().unwrap();
+            let value: f64 = lexeme.parse().unwrap();
+            match encode_props(&m, &Float { value }, "/n") {
+                Ok(encoded) => {
+                    // A float origin is admitted whatever its magnitude; the
+                    // envelope's number parses back to the same binary64.
+                    let back = encoded["value"].as_f64().unwrap();
+                    if back != value {
+                        failures.push(format!(
+                            "integers/floatOrigin/{id}: envelope {} does not round-trip {lexeme}",
+                            encoded["value"]
+                        ));
+                    }
+                }
+                Err(error) => failures.push(format!(
+                    "integers/floatOrigin/{id}: refused with {}, expected admission",
+                    error.code()
+                )),
+            }
+        }
+        finish(failures);
+    }
+}

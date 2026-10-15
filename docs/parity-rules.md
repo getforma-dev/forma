@@ -167,11 +167,47 @@ and `packages/core/src/dom/__tests__/value-rule-2-numbers.test.ts` (the engine
 is the oracle: `String(Number(lexeme))` must equal the vector before any
 writer is checked, so the Rust side is held to the engine).
 
-## Rules 3 to 7: listed, not qualified here
+## Rule 3: integers within ±(2^53 − 1), refused beyond
+
+**Statement.** A Rust integer bound for a page (`i8` to `i64`, `u8` to `u64`,
+`isize`, `usize`) is compared in the integer domain before any conversion can
+round it: inside −(2^53 − 1)..=(2^53 − 1) it is encoded exactly and written
+as its decimal digits; beyond, the render refuses with `RENDER-401` instead
+of letting a different integer arrive. A finite float keeps its own admission
+(`RENDER-402`, finite only): an integer-valued float past 2^53 is admitted and
+formatted by rule 2, because its origin carries no exactness claim (design 3,
+lines 86 to 92, separates the two origins; the v2 brief's `u64` example is the
+exact one).
+
+**Why.** 2^53 + 1 would arrive as 9007199254740992: the id a page shows would
+differ from the id the handler had, silently. The client reads the envelope
+with `JSON.parse`, so an admitted integer is a safe integer there and
+`String()` spells the same digits the server wrote.
+
+**Implementation.** Rust: `crates/forma-ir/src/props/value.rs` (the
+`integers!` origins check against `MAX_SAFE` as `i128`; the `floats!` origins
+check finiteness only), then `SlotValue::to_text` writes the digits. The
+client has no admission of its own: the boundary is the server's, and the
+engine's `Number.isSafeInteger` is the oracle the vectors are checked against.
+No code changed for this rule; the vectors pin it.
+
+**Vectors.** `crates/forma-ir/tests/fixtures/parity/integers.json`: `exact`
+(`kind` the Rust origin, `lexeme` the exact decimal, `admitted`) at zero, an
+ordinary id, both limits, both one-over, the `u64` rounding-loss case, `i64`
+and `u64` extremes; `floatOrigin` (`lexeme`, `expected`) for 1e20, 2^53, the
+float that rounds to it and a fraction. Consumers:
+`crates/forma-ir/tests/page_props.rs` > `value_rule_vectors` >
+"integer_vectors_are_admitted_or_refused_in_the_integer_domain" (`encode_props`
+on the origin), `crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
+"rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits", and
+`packages/core/src/dom/__tests__/value-rule-3-integers.test.ts` (the boundary
+equals the safe-integer range; an admitted value survives `JSON.parse` and
+`String()` exactly; a refused one is not a safe integer).
+
+## Rules 4 to 7: listed, not qualified here
 
 | # | Rule | Where the current behaviour lives |
 |---|---|---|
-| 3 | Integers within ±(2^53 − 1); exact-integer origins refused beyond | `crates/forma-ir/src/props/value.rs` (FORMA-102/103 checked admission) |
 | 4 | Dates as epoch milliseconds, no `Intl` on the server | `crates/forma-ir/src/props/value.rs`; the state envelope |
 | 5 | `null` writes nothing on every side | Walker `DYN_TEXT` (U+200B holder), `h()`, adoption `text()` |
 | 6 | A boolean in text is a build error | Not implemented; codes reserved with FORMA-101 |

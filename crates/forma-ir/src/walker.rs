@@ -6371,5 +6371,49 @@ mod tests {
             }
             finish(failures);
         }
+
+        #[test]
+        fn rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits() {
+            // The admission itself is tests/page_props.rs (encode_props on
+            // the integer origin). Here: an admitted value's text is exact,
+            // and a float origin formats by rule 2 whatever its magnitude.
+            let mut failures = Vec::new();
+            for case in cases(INTEGERS, "exact") {
+                if !case["admitted"].as_bool().unwrap() {
+                    continue;
+                }
+                let (id, lexeme) = (field(&case, "id"), field(&case, "lexeme"));
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, lexeme));
+                check(
+                    &mut failures,
+                    &format!("integers/exact/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            for case in cases(INTEGERS, "floatOrigin") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, expected));
+                check(
+                    &mut failures,
+                    &format!("integers/floatOrigin/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
     }
 }
