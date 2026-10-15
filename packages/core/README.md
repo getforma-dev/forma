@@ -66,7 +66,7 @@ Gzipped sizes, measured by `npm run check:size` on the 3.0.0-dev build on 2026-1
 | CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 45.0 KB (46,115 B) | 46,500 B |
 | Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 38.7 KB (39,603 B) | 40,000 B |
 
-The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less: the minimal template's page with its counter as an island loads 25,101 B gzip -9 of Forma code, which `@getforma/build` reports per route and fails over 25,500 B (N2, decision brief L-55). The first and fourth rows grew from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). The gzipped figures are a measurement and rot; the CI limits are not, because a test reads them back out of the gate script.
+The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less: the minimal template's page with its counter as an island loads 25,101 B gzip -9 of Forma code, which `@getforma/build` reports per route and fails over 27,500 B (N2, decision brief L-58). The first and fourth rows grew from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). The gzipped figures are a measurement and rot; the CI limits are not, because a test reads them back out of the gate script.
 
 Verified by `src/__tests__/docs-truth.test.ts` > "the size table quotes the limits the CI gate actually enforces"
 

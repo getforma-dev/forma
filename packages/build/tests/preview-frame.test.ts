@@ -24,6 +24,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { DIAGNOSTIC_CATALOGUE } from '@getforma/compiler';
 
 import { build } from './helpers/named-build';
@@ -217,6 +218,29 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
     const worker = readFileSync(join(dist, 'sw.js'), 'utf8');
     expect(worker).toContain(`/_assets/${result.manifest.aliases['app.js']}`);
     expect(worker).not.toContain('forma-runtime');
+  }, 30_000);
+
+  it('the size report carries a frame-document row: the inlined runtime in raw, gzip -9 and Brotli bytes, printed and written, and no row when previewFrame is off (FORMA-190)', async () => {
+    const { dist, config } = fixture({});
+    const result = await build({ ...config, previewFrame: true });
+    const file = result.manifest.aliases['forma-runtime.js']!;
+    const bytes = readFileSync(join(dist, file));
+    const row = { file, raw: bytes.length, gzip: gzipSync(bytes, { level: 9 }).length, brotli: brotliCompressSync(bytes, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length };
+    expect(result.sizeReport.frame).toEqual(row);
+    // The runtime is the frame document's, not a route's: no route lists it or counts its bytes.
+    for (const each of result.sizes) expect(each.files.map(entry => entry.file)).not.toContain(file);
+    // Printed in the report, and written to the file beside the manifest.
+    const printed = logs.join('\n');
+    expect(printed).toContain(`Frame document   ${file}  ${row.raw.toLocaleString('en-US')} B raw, ${row.gzip.toLocaleString('en-US')} B gzip, ${row.brotli.toLocaleString('en-US')} B Brotli`);
+    expect(JSON.parse(readFileSync(join(dist, 'size-report.json'), 'utf8')).frame).toEqual(row);
+
+    // Off, the report names no frame.
+    logs.length = 0;
+    const off = fixture({});
+    const offResult = await build(off.config);
+    expect(offResult.sizeReport.frame).toBeUndefined();
+    expect(JSON.parse(readFileSync(join(off.dist, 'size-report.json'), 'utf8'))).not.toHaveProperty('frame');
+    expect(logs.join('\n')).not.toContain('Frame document');
   }, 30_000);
 
   it('with previewFrame off or unset the output is byte-identical, names no runtime, and reads no frame runtime', async () => {

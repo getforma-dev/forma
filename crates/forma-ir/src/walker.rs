@@ -6627,6 +6627,349 @@ mod tests {
         }
     }
 
+    // -- FORMA-182 rules 2 to 7: the shared value-rule vectors ---------------
+    //
+    // One JSON file per rule under tests/fixtures/parity/, each read by this
+    // crate and by @getforma/core's per-rule suites (packages/core/src/dom/
+    // __tests__/value-rule-<n>-*.test.ts); the compiled shapes of rules 4, 6
+    // and 7 are read by @getforma/compiler's (packages/compiler/tests/
+    // value-rule-<n>-*.test.ts). Every case walks the real opcode stream.
+    mod value_rule_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const NUMBERS: &str = include_str!("../tests/fixtures/parity/numbers.json");
+        const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
+        const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
+        const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
+        const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
+
+        fn cases(file: &str, section: &str) -> Vec<Value> {
+            let all: Value = serde_json::from_str(file).unwrap();
+            all[section].as_array().unwrap().clone()
+        }
+
+        fn field<'a>(case: &'a Value, key: &str) -> &'a str {
+            case[key].as_str().unwrap()
+        }
+
+        /// A DYN_TEXT range as the walker writes it (an empty value is held
+        /// by a zero-width space).
+        fn marker(id: u16, text: &str) -> String {
+            let inner = if text.is_empty() {
+                "\u{200B}".to_string()
+            } else {
+                text.to_string()
+            };
+            format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
+        }
+
+        /// The text a browser shows: marker comments and the empty-range
+        /// zero-width spaces removed.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
+        fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
+            if actual != expected {
+                failures.push(format!(
+                    "{label}: expected {expected:?}, walker wrote {actual:?}"
+                ));
+            }
+        }
+
+        fn finish(failures: Vec<String>) {
+            assert!(
+                failures.is_empty(),
+                "{} disagreeing vector(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        /// What a vector's JSON value reads as on the page: null is empty,
+        /// a string itself, a number or boolean its JSON spelling.
+        fn vector_text(value: &Value) -> String {
+            match value {
+                Value::Null => String::new(),
+                Value::String(s) => s.clone(),
+                other => other.to_string(),
+            }
+        }
+
+        /// A slot value from a vector's JSON value: a string, a number, a
+        /// boolean or null (the shapes the vectors use).
+        fn slot_value(value: &Value) -> SlotValue {
+            match value {
+                Value::Null => SlotValue::Null,
+                Value::Bool(b) => SlotValue::Bool(*b),
+                Value::Number(n) => SlotValue::Number(n.as_f64().unwrap()),
+                Value::String(s) => SlotValue::Text(s.clone()),
+                other => panic!("unsupported vector value {other}"),
+            }
+        }
+
+        #[test]
+        fn rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute() {
+            let mut failures = Vec::new();
+            for case in cases(NUMBERS, "values") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr("title", slot)
+                    .close("span");
+                let want = format!(
+                    "<p>{}</p><span id=\"ok\" title=\"{expected}\"></span>",
+                    marker(slot, expected)
+                );
+                check(
+                    &mut failures,
+                    &format!("numbers/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits() {
+            // The admission itself is tests/page_props.rs (encode_props on
+            // the integer origin). Here: an admitted value's text is exact,
+            // and a float origin formats by rule 2 whatever its magnitude.
+            let mut failures = Vec::new();
+            for case in cases(INTEGERS, "exact") {
+                if !case["admitted"].as_bool().unwrap() {
+                    continue;
+                }
+                let (id, lexeme) = (field(&case, "id"), field(&case, "lexeme"));
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, lexeme));
+                check(
+                    &mut failures,
+                    &format!("integers/exact/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            for case in cases(INTEGERS, "floatOrigin") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, expected));
+                check(
+                    &mut failures,
+                    &format!("integers/floatOrigin/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_5_null_writes_nothing_as_text_attribute_and_textarea_child() {
+            let mut failures = Vec::new();
+            for case in cases(NULL, "children") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let values = case["children"].as_array().unwrap();
+
+                // Dynamic children: each value in its own range; a Null range
+                // is held by the zero-width space and shows nothing.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("p", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                let rendered = page.render();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic (visible text)"),
+                    &visible(&rendered),
+                    &format!("<p>{expected}</p>"),
+                );
+                // The exact ranges, which the three-engine replay
+                // (packages/core/e2e/value-rules.spec.ts) serves: a Null range
+                // holds only the zero-width space.
+                let ranges: String = slots
+                    .iter()
+                    .zip(values)
+                    .map(|(slot, value)| marker(*slot, &vector_text(value)))
+                    .collect();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic"),
+                    &rendered,
+                    &format!("<p>{ranges}</p>"),
+                );
+                if rendered.contains("null") {
+                    failures.push(format!(
+                        "null/children/{id}: the word null was written: {rendered:?}"
+                    ));
+                }
+
+                // Inside a textarea the same children compose to the value.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("textarea", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} textarea"),
+                    &page.render(),
+                    &format!("<textarea>{expected}</textarea>"),
+                );
+            }
+            for case in cases(NULL, "attribute") {
+                let (id, attribute) = (field(&case, "id"), field(&case, "attribute"));
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Null);
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close("span");
+                check(
+                    &mut failures,
+                    &format!("null/attribute/{id}"),
+                    &page.render(),
+                    "<span id=\"ok\"></span>",
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence() {
+            // The build error itself is the compiler's (BUILD-614). What the
+            // walker writes for the admitted `String(flag)` is DYN_TEXT on the
+            // boolean slot, and an attribute bound to a boolean is bare or
+            // absent.
+            let mut failures = Vec::new();
+            for case in cases(BOOLEAN_TEXT, "nearMissText") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/nearMissText/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            // The mixed idiom `() => ready() && 'Go'`: the compiler gives its
+            // Text slot no default at false and the string at true.
+            for case in cases(BOOLEAN_TEXT, "idiom") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let mut page = Page::new();
+                let slot = page.slot(if expected.is_empty() {
+                    SlotValue::Null
+                } else {
+                    SlotValue::Text(expected.to_string())
+                });
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/idiom/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            // The same attributes core's suite and the three-engine replay
+            // check: a boolean attribute and `class`.
+            for case in cases(BOOLEAN_TEXT, "attribute") {
+                let id = field(&case, "id");
+                let value = case["value"].as_bool().unwrap();
+                let present = case["present"].as_bool().unwrap();
+                for attribute in ["disabled", "class"] {
+                    let mut page = Page::new();
+                    let slot = page.slot(SlotValue::Bool(value));
+                    page.open("input", &[("id", "ok")])
+                        .dyn_attr(attribute, slot)
+                        .close("input");
+                    let want = if present {
+                        format!("<input id=\"ok\" {attribute}></input>")
+                    } else {
+                        "<input id=\"ok\"></input>".to_string()
+                    };
+                    check(
+                        &mut failures,
+                        &format!("boolean-text/attribute/{id} {attribute}"),
+                        &page.render(),
+                        &want,
+                    );
+                }
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_7_a_boolean_condition_selects_the_branch() {
+            // The type refusal itself is the compiler's (BUILD-615); a
+            // compiled SHOW_IF reads a Bool slot, and its range is what core's
+            // suite and the three-engine replay adopt.
+            let mut failures = Vec::new();
+            for case in cases(CONDITIONS, "walker") {
+                let (id, branch) = (field(&case, "id"), field(&case, "branch"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("div", &[])
+                    .show_if(
+                        slot,
+                        |p| {
+                            p.open("b", &[]).text("then").close("b");
+                        },
+                        |p| {
+                            p.open("i", &[]).text("else").close("i");
+                        },
+                    )
+                    .close("div");
+                let inner = if branch == "then" {
+                    "<b>then</b>"
+                } else {
+                    "<i>else</i>"
+                };
+                check(
+                    &mut failures,
+                    &format!("conditions/walker/{id}"),
+                    &page.render(),
+                    &format!("<div><!--f:s{slot}-->{inner}<!--/f:s{slot}--></div>"),
+                );
+            }
+            finish(failures);
+        }
+    }
+
     /// FORMA-181 checkpoint B: keyed rows. Hand-built modules with a real FMIR section
     /// `0x0006`, so the walker's own refusals (RENDER-503) are reached without the
     /// compiler's source proof in front of them, and the unkeyed low-level form is pinned

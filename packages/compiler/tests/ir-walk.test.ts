@@ -1645,10 +1645,13 @@ describe('IR Walk Engine', () => {
       expect(showDefault(binary, 'show:visible')).toBe('true');
     });
 
-    it('writes false when the condition evaluates falsy, including a zero number', () => {
+    it('writes false when the condition evaluates falsy, including a zero number read through !!', () => {
+      // FORMA-182 rule 7: a bare number condition (`count() ? …`) is BUILD-615;
+      // the original is archived in docs/archive/2026-10-15-pre-value-rules and
+      // pinned by value-rules-archive.test.ts. `!!count()` is boolean-typed.
       const { ctx, walkCtx } = withSignals(`const [count] = createSignal(0);`);
       const binary = walkIntoAndEmit(
-        `h('div', null, () => count() ? 'some' : 'none')`,
+        `h('div', null, () => !!count() ? 'some' : 'none')`,
         ctx,
         walkCtx,
       );
