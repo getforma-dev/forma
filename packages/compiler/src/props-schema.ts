@@ -1,5 +1,6 @@
+import {readSourceFile} from './source-snapshot';
 /** Declared page data is read before JSX lowering erases TypeScript annotations. */
-import { readFileSync } from 'node:fs';
+
 import { dirname, relative, resolve } from 'node:path';
 import { parse } from '@babel/parser';
 import * as t from '@babel/types';
@@ -32,9 +33,9 @@ export function readPageProps(file: string, exportedName: string): DeclaredPageP
   const raw: ModuleLoader = (from, specifier) => {
     if (!specifier.startsWith('.')) return null;
     const path = resolveFilePath(dirname(from), specifier);
-    return path ? { path, source: readFileSync(path, 'utf8') } : null;
+    return path ? { path, source: readSourceFile(path) } : null;
   };
-  const found = resolveExportedFunction(readFileSync(file, 'utf8'), file, exportedName, { loadModule: raw, allowLocal: true });
+  const found = resolveExportedFunction(readSourceFile(file), file, exportedName, { loadModule: raw, allowLocal: true });
   if (found.kind !== 'found') throw new PropsSchemaError(file, 1, 1, `cannot resolve declared page: ${found.detail}`);
   return readFunctionProps(found.fn, found.filePath, dirname(resolve(file)));
 }
@@ -90,7 +91,7 @@ class SchemaReader {
   private ast(file: string): t.File {
     let ast = this.asts.get(file);
     if (!ast) {
-      ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
+      ast = parse(readSourceFile(file), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
       this.asts.set(file, ast);
     }
     return ast;

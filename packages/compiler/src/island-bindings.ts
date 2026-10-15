@@ -1,7 +1,8 @@
 /** Resolve semantic binding identities from original component source, before JSX
  * lowering can round an integer literal or erase lexical/type information. */
 import { parse } from '@babel/parser';
-import traverse, { type Binding, type Scope } from '@babel/traverse';
+import _traverse, { type Binding, type Scope } from '@babel/traverse';
+const traverse=(typeof _traverse==='function'?_traverse:(_traverse as any).default) as typeof _traverse;
 import * as t from '@babel/types';
 import { encodeBindings, encodeClosedConstant, type BindingRecord, type BindingValue, type BinaryBindingOperator, type IslandRenderMode, type UnaryBindingOperator } from './fmir-contracts';
 import { resolveExportedFunction, resolveExportedSignal, resolveImportedConstant, returnExpressionOf, type ComponentFunction, type ResolvedExport } from './export-resolver';

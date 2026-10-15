@@ -14,6 +14,11 @@
 
 ## [Unreleased]
 
+### Paired publication — FORMA-103
+
+- Compile watched browser and native output together, including SSR-only and type-only dependencies. Publish immutable JS/chunk and SHA-256 IR generations, then switch the manifest by rename; retain older files for requests holding an earlier manifest.
+- Stage output and rollback failed replacements, validation or final manifest writes. Watch consumers must use manifest aliases, not stable entry or IR filenames. Production still promotes its complete staging directory.
+
 ### Changed — FORMA-112
 
 - Manifest 2 records the numeric writer, application, route modes, aliases and filename-keyed immutable/SHA-384 metadata. The final deployment identity remains FORMA-186 and integrity enforcement remains FORMA-111.

@@ -17,7 +17,6 @@ import { createHash } from 'node:crypto';
 import {
   cpSync,
   mkdirSync,
-  mkdtempSync,
   rmSync,
   readdirSync,
   readFileSync,
@@ -27,13 +26,12 @@ import {
   existsSync,
 } from 'node:fs';
 import { join, extname, basename, dirname, sep } from 'node:path';
-import { tmpdir } from 'node:os';
 import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { APP_NAME, serviceWorkerSource } from './service-worker.js';
 import { splitGraph, type SplitGraph } from './split-graph.js';
-import { createStagingDirectory, replaceDirectory, writeFileAtomic } from './output.js';
+import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
@@ -495,110 +493,13 @@ type SsrPluginFactory = (opts: {
   page: string;
   outDir: string;
   entryPoint?: string;
+  clientEntryPoint?: string;
   strict?: boolean;
   onDiagnostics?: (diagnostics: CompilerDiagnostic[], page: string) => void;
 }) => esbuild.Plugin;
 
 /** What every SSR plugin instance of one build is given besides its page. */
 type SsrPluginShared = Pick<Parameters<SsrPluginFactory>[0], 'strict' | 'onDiagnostics'>;
-
-/**
- * Keep each server-rendered page's FMIR module current in watch mode (N7,
- * L-31). v1 found watch mode rebuilt the bundles but wrote no module, so a
- * page the server renders never changed on an incremental rebuild.
- *
- * Each page gets its own esbuild watcher over its SSR entry (`ssrEntryPoints`,
- * else the browser entry) that writes nothing: it exists to know the page's
- * module graph and to rebuild when a file in it changes, so an edit re-runs
- * the compiler for exactly the pages it touches, including an SSR entry the
- * browser bundle never imports. Packages are left external, as the compiler
- * follows relative imports only. The compiler writes the module into a
- * private directory; it is published into the output by rename, and only when
- * its bytes changed, then `onPublished` updates the manifest. The time from
- * the rebuild's start to the published module is logged per page, for the
- * per-build report (DR-34, FORMA-118).
- *
- * Resolves once every page's first module is published, or has failed:
- * - An esbuild error (a syntax error, an import that does not resolve) keeps
- *   the page's last good module and logs the first error.
- * - A compiler emission failure writes the compiler's placeholder module, as
- *   a production build does; the compiler logs why.
- * - A module that cannot be published is logged, naming the page.
- *
- * Verified by: packages/build/tests/watch-ir.test.ts > "logs a page's module it could not publish, naming the page, and recovers"
- * Verified by: packages/build/tests/watch-ir.test.ts > "rewrites a page's .ir when a component it renders changes, and no other page's"
- * Verified by: packages/build/tests/watch-ir.test.ts > "rewrites a page's .ir when only its SSR entry changes, in a code-splitting build"
- */
-async function watchServerRenderedPages(
-  config: BuildConfig,
-  shared: esbuild.BuildOptions,
-  ssrPlugin: SsrPluginFactory,
-  pluginShared: SsrPluginShared,
-  onPublished: (page: string) => void,
-): Promise<void> {
-  const scratch = mkdtempSync(join(tmpdir(), 'forma-ir-'));
-  process.once('exit', () => rmSync(scratch, { recursive: true, force: true }));
-
-  const firstBuilds: Promise<void>[] = [];
-  for (const entry of config.entryPoints) {
-    if (entry.ssr === false) continue;
-    const page = basename(entry.outfile, '.js');
-    const source = config.ssrEntryPoints?.[page] ?? entry.entry;
-    const emitted = join(scratch, `${page}.ir`);
-    const target = join(config.outputDir, `${page}.ir`);
-    let started = 0;
-    let firstBuilt!: () => void;
-    firstBuilds.push(new Promise<void>((resolve) => { firstBuilt = resolve; }));
-
-    const ctx = await esbuild.context({
-      ...shared,
-      entryPoints: [source],
-      outdir: scratch,
-      write: false,
-      packages: 'external',
-      sourcemap: false,
-      logLevel: 'silent',
-      plugins: [
-        ...(shared.plugins ?? []),
-        { name: 'forma-ir-clock', setup(builder) { builder.onStart(() => { started = performance.now(); }); } },
-        // Under --strict a page with an error is not published: the
-        // compiler's errors reach the publisher below as esbuild errors.
-        ssrPlugin({ page, outDir: scratch, entryPoint: source, ...pluginShared }),
-        {
-          name: 'forma-ir-publish',
-          setup(builder) {
-            builder.onEnd((result) => {
-              try {
-                if (result.errors.length) {
-                  console.warn(`   IR not rewritten for ${page}: ${result.errors[0]!.text} (the last good ${page}.ir stays)`);
-                  return;
-                }
-                if (!existsSync(emitted)) return;
-                const bytes = readFileSync(emitted);
-                rmSync(emitted, { force: true });
-                if (!existsSync(target) || !readFileSync(target).equals(bytes)) {
-                  writeFileAtomic(target, bytes);
-                  console.log(`   IR rewritten: ${page}.ir in ${Math.round(performance.now() - started)} ms`);
-                }
-                onPublished(page);
-              } catch (error) {
-                // This watcher's esbuild logging is off, so an exception left
-                // to esbuild would never be printed: say it here.
-                console.error(`   IR not written for ${page}: ${(error as Error).message}`);
-              } finally {
-                firstBuilt();
-              }
-            });
-          },
-        },
-      ],
-    });
-    // watch() runs the first build itself; waiting for its end (rather than
-    // calling rebuild() first) emits each page once at startup, not twice.
-    await ctx.watch();
-  }
-  await Promise.all(firstBuilds);
-}
 
 // ---------------------------------------------------------------------------
 // Main Build Function
@@ -747,23 +648,23 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       outdir: distDir,
       splitting: true,
       metafile: true,
-      entryNames: config.watch ? '[name]' : '[name].[hash]',
+      write: false,
+      entryNames: '[name].[hash]',
       chunkNames: 'chunk.[hash]',
       assetNames: 'asset.[hash]',
       plugins: [...(shared.plugins ?? []), ...(config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
         page: basename(entry.outfile, '.js'),
         outDir: distDir,
         entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
+        clientEntryPoint: entry.entry,
         ...pluginShared,
       })) : [])],
     };
 
     // ── Build entries ─────────────────────────────────────────────────
     if (config.watch) {
-      // Watch mode. The dev manifest maps each name to itself: the split
-      // graph's files (with code splitting), each server-rendered page's
-      // `.ir`, and with previewFrame the frame's runtime. Whoever changes the
-      // first two rewrites it.
+      // Watch mode publishes immutable data generations before switching the
+      // manifest. A reader holding an earlier manifest keeps its exact URLs.
       const irAssets: Record<string, string> = {};
       let lastManifest = '';
       let ready!: (value: ReturnType<typeof generateManifest>) => void;
@@ -785,63 +686,86 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         return result;
       };
 
-      // Server-rendered pages: each page's module is watched over its SSR
-      // entry's own module graph, apart from the browser bundles (L-31).
-      if (formaSsrPlugin) {
-        await watchServerRenderedPages(config, shared, formaSsrPlugin, pluginShared, (page) => {
-          irAssets[`${page}.ir`] = `${page}.ir`;
-          writeDevManifest();
+      const acceptedGraphs=new Map<string,SplitGraph>();
+      const publishWatch=(result:esbuild.BuildResult,key:string,nextGraph:SplitGraph)=>{
+        if(result.errors.length||!result.metafile)return false;
+        const nextIr={...irAssets},nextGraphs=new Map(acceptedGraphs);nextGraphs.set(key,nextGraph);
+        const combined:SplitGraph={assets:{},staticDependencies:{},files:new Set()};
+        for(const current of nextGraphs.values()){
+          Object.assign(combined.assets,current.assets);Object.assign(combined.staticDependencies,current.staticDependencies);
+          for(const file of current.files)combined.files.add(file);
+        }
+        const outputs=(result.outputFiles??[]).map(file=>{
+          if(!file.path.endsWith('.ir'))return {path:file.path,contents:file.contents};
+          const logical=basename(file.path),name=logical.slice(0,-3)+'.'+createHash('sha256').update(file.contents).digest('hex')+'.ir';
+          nextIr[logical]=name;return {path:join(distDir,name),contents:file.contents};
         });
-      }
+        let accepted:ReturnType<typeof generateManifest>|undefined,text='';
+        try {
+          // Data filenames are generation identities. Never replace accepted
+          // bytes under a previous URL, even in the unlikely event of a hash collision.
+          for(const file of outputs)if(existsSync(file.path)&&!readFileSync(file.path).equals(file.contents))throw new Error(`generation filename collision: ${file.path}`);
+          publishOutputFiles(outputs,()=>{
+            try {accepted=generateManifest(config,{...combined.assets,...nextIr,...frameAssets},combined.staticDependencies);}
+            catch(error){
+              if(!lastManifest&&(error as Error).message.startsWith('BUILD-817'))return [];
+              throw error;
+            }
+            text=JSON.stringify(accepted.manifest,null,2)+'\n';
+            return [{path:join(distDir,'manifest.json'),contents:text}];
+          });
+        } catch(error) {
+          console.error(`   IR not written for ${key}: ${(error as Error).message} (the last good browser/IR pair stays)`);
+          return false;
+        }
+        Object.assign(irAssets,nextIr);acceptedGraphs.set(key,nextGraph);graph=combined;
+        recordCoreGraph(key,result.metafile);
+        for(const file of result.outputFiles??[])if(file.path.endsWith('.ir'))console.log(`   IR rewritten: ${basename(file.path)} in ${Math.round(performance.now()-cycleStarted)} ms`);
+        if(accepted){lastManifest=text;ready(accepted);}
+        return true;
+      };
+      let cycleStarted=performance.now();
+      const clock:esbuild.Plugin={name:'forma-paired-clock',setup(builder){builder.onStart(()=>{cycleStarted=performance.now();});}};
 
       if (config.codeSplitting && config.entryPoints.length) {
-        let previousFiles = new Set<string>();
+        let firstBuilt!:()=>void;const firstBuild=new Promise<void>(resolve=>{firstBuilt=resolve;});
         const ctx = await esbuild.context({
           ...splitOptions,
           write: false,
-          // Not the SSR plugins: the pages' modules are watched above.
-          plugins: [...(shared.plugins ?? []), {
+          plugins: [clock,...(splitOptions.plugins ?? []), {
             name: 'forma-split-manifest',
             setup(builder) {
               builder.onEnd(result => {
+                firstBuilt();
                 if (result.errors.length || !result.metafile) return;
-                recordCoreGraph('split', result.metafile);
-                graph = splitGraph(result.metafile, config.entryPoints, distDir);
-                for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
-                // Only remove outputs belonging to the previous successful
-                // graph. CSS/fonts/IR and failed-build diagnostics stay intact.
-                for (const file of previousFiles) if (!graph.files.has(file)) rmSync(join(distDir, file), { force: true });
-                previousFiles = graph.files;
-                writeDevManifest();
+                const next=splitGraph(result.metafile,config.entryPoints,distDir);
+                publishWatch(result,'split',next);
               });
             },
           }],
         });
-        // Ensure the first complete graph exists before returning a dev manifest.
-        await ctx.rebuild();
         await ctx.watch();
+        await firstBuild;
       } else for (const entry of config.entryPoints) {
+        let firstBuilt!:()=>void;const firstBuild=new Promise<void>(resolve=>{firstBuilt=resolve;});
         const ctx = await esbuild.context({
           ...shared,
-          entryPoints: [entry.entry],
-          outfile: join(distDir, entry.outfile),
+          entryPoints: [{in:entry.entry,out:basename(entry.outfile,'.js')}],
+          outdir: distDir,
+          entryNames: '[name].[hash]',
+          assetNames: 'asset.[hash]',
           metafile: true,
           write: false,
-          plugins: [...(shared.plugins ?? []), {name: 'forma-core-report', setup(builder) {
-            builder.onEnd(result => {
-              if (result.errors.length || !result.metafile) return;
-              for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
-              recordCoreGraph(entry.outfile, result.metafile);
-              writeDevManifest();
-            });
+          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),{name:'forma-paired-publish',setup(builder){
+            builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),splitGraph(result.metafile,[entry],distDir));}finally{firstBuilt();}});
           }}],
         });
-        await ctx.rebuild();
         await ctx.watch();
+        await firstBuild;
       }
 
-      // The dev manifest, with identity mappings (unhashed filenames), so the
-      // server can boot without a production build.
+      // The dev manifest selects a complete retained generation. Old URLs stay
+      // readable for requests already holding an earlier manifest/HTML response.
       const { manifest, warnings } = writeDevManifest() ?? await firstManifest;
       console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
 
@@ -866,6 +790,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     const metafiles: esbuild.Metafile[] = [];
     if (config.codeSplitting && config.entryPoints.length) {
       const result = await esbuild.build(splitOptions);
+      publishOutputFiles(result.outputFiles??[]);
       if (!result.metafile) throw new Error('Split build did not return its module graph.');
       metafiles.push(result.metafile);
       graph = splitGraph(result.metafile, config.entryPoints, distDir);
@@ -879,6 +804,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           entryPoints: [entry.entry],
           outfile: join(distDir, entry.outfile),
           metafile: true,
+          write: false,
         };
 
         if (config.ssr && entry.ssr !== false && formaSsrPlugin) {
@@ -891,12 +817,14 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
               page: pageName,
               outDir: distDir,
               entryPoint: ssrEntryPoint,
+              clientEntryPoint: entry.entry,
               ...pluginShared,
             }),
           ];
         }
 
         const result = await esbuild.build(buildOptions);
+        publishOutputFiles(result.outputFiles??[]);
         if (result.metafile) metafiles.push(result.metafile);
       }),
     );

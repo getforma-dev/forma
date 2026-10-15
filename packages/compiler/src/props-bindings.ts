@@ -1,8 +1,9 @@
+import {readSourceFile} from './source-snapshot';
 /** Root data slots use declared names. Nested reads use FMIR's existing PROP. */
 import * as t from '@babel/types';
 import _traverse, { type Binding } from '@babel/traverse';
 import { parse } from '@babel/parser';
-import { readFileSync } from 'node:fs';
+
 import { readImportBindings } from './export-resolver';
 import { originalPosition } from './diagnostics';
 const traverse = (typeof _traverse === 'function' ? _traverse : (_traverse as any).default) as typeof _traverse;
@@ -217,7 +218,7 @@ function declarations(scope: PropsScope, fn: ComponentFunction, ctx?: IrEmitCont
   }
 }
 export function rootPropsScope(declared: DeclaredPageProps, fn: ComponentFunction, file: string, ctx: IrEmitContext): PropsScope | undefined {
-  const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
+  const ast = parse(readSourceFile(file), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
   const signalImports = new Set([...readImportBindings(ast)].filter(([, binding]) => binding.imported === 'createSignal' && ['@getforma/core', 'formajs'].includes(binding.source)).map(([name]) => name));
   const scope: PropsScope = { schema: ctx.getPropsSchema(), roots: new Map(), aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), views: new Map(), signalImports, unsupported: new Map() };
   indexBindings(scope, fn);
@@ -234,7 +235,7 @@ export function rootPropsScope(declared: DeclaredPageProps, fn: ComponentFunctio
 }
 export function childPropsScope(parent: PropsScope | undefined, fn: ComponentFunction, arg: t.Node | undefined, file: string, ctx?: IrEmitContext): PropsScope | undefined {
   if (!parent) return undefined;
-  const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
+  const ast = parse(readSourceFile(file), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
   const signalImports = new Set([...readImportBindings(ast)].filter(([, binding]) => binding.imported === 'createSignal' && ['@getforma/core', 'formajs'].includes(binding.source)).map(([name]) => name));
   const scope: PropsScope = { ...parent, aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), signalImports, unsupported: new Map() };
   indexBindings(scope, fn);
@@ -256,7 +257,7 @@ export function childPropsScope(parent: PropsScope | undefined, fn: ComponentFun
 
 /** Declared island fields point at this occurrence's prepared input slots. */
 export function islandPropsScope(fn: ComponentFunction, file: string, ctx: IrEmitContext, schemaObject: number, inputs: readonly number[]): PropsScope {
-  const ast = parse(readFileSync(file, 'utf8'), {sourceType:'module',plugins:['typescript',...(/\.[jt]sx$/.test(file)?['jsx' as const]:[])]});
+  const ast = parse(readSourceFile(file), {sourceType:'module',plugins:['typescript',...(/\.[jt]sx$/.test(file)?['jsx' as const]:[])]});
   const signalImports = new Set([...readImportBindings(ast)].filter(([,binding])=>binding.imported==='createSignal'&&['@getforma/core','formajs'].includes(binding.source)).map(([name])=>name));
   const scope: PropsScope = {schema:ctx.getPropsSchema(),roots:new Map(),aliases:new Map(),objects:new Map(),signals:new Map(),file,references:new WeakMap(),bindings:new Map(),views:new Map(),signalImports,unsupported:new Map()};
   indexBindings(scope,fn);

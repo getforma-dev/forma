@@ -243,20 +243,21 @@ describe.each(PAGE_CODES)('$code ($title)', ({ code, strict }) => {
 });
 
 describe('BUILD-606', () => {
-  it('reports a module the plugin cannot write, and still builds without strict', async () => {
+  it('returns paired outputs without touching the filesystem, including a missing output directory', async () => {
     const dir = join(CORPUS, 'BUILD-101', 'pass');
     const lines: string[] = [];
     vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => { lines.push(args.join(' ')); });
     vi.spyOn(console, 'log').mockImplementation(() => {});
     const seen: Diagnostic[] = [];
     const outDir = join(tmpdir(), 'forma-conformance-missing', 'no', 'such', 'dir');
-    await esbuild.build({
+    const result=await esbuild.build({
       entryPoints: [entryOf(dir)], bundle: true, write: false, outdir: tmpdir(), format: 'esm',
       packages: 'external', jsxFactory: 'h', jsxFragment: 'Fragment', logLevel: 'silent',
       plugins: [formaSsrPlugin({ page: 'home', outDir, entryPoint: entryOf(dir), onDiagnostics: (d) => seen.push(...d) })],
     });
-    expect(seen.map((d) => d.code)).toEqual(['BUILD-606']);
-    expect(lines[0]).toMatch(/^ {3}IR: BUILD-606 IR emission failed for home: /);
+    expect(seen.map((d) => d.code)).toEqual([]);
+    expect(lines).toEqual([]);
+    expect(result.outputFiles?.some(file=>file.path===join(outDir,'home.ir'))).toBe(true);
   });
 
   it('reports an emission failure from the compiler itself', () => {

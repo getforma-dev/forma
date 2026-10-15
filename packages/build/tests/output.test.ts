@@ -19,6 +19,7 @@ import {
   renameWithRetry,
   replaceDirectory,
   writeFileAtomic,
+  publishOutputFiles,
   type OutputFs,
 } from '../src/output';
 
@@ -230,5 +231,40 @@ describe('writeFileAtomic', () => {
     expect(() => writeFileAtomic(path, '{"version":2}', { fs, platform: 'linux' })).toThrow('EIO');
     expect(readFileSync(path, 'utf8')).toBe('{"version":1}');
     expect(readdirSync(target).sort()).toEqual(['manifest.json', 'previous.js']);
+  });
+});
+
+describe('paired browser/IR publication',()=>{
+  it('keeps every reader of the old manifest on its old immutable pair until the manifest switch',()=>{
+    const manifest=join(target,'manifest.json');
+    const old={js:'app.old.js',ir:'app.old.ir'},next={js:'app.new.js',ir:'app.new.ir'};
+    writeFileSync(manifest,JSON.stringify(old));
+    writeFileSync(join(target,old.js),'old JS');writeFileSync(join(target,old.ir),'old IR');
+    const observations:string[][]=[];
+    const inspect=()=>{const chosen=JSON.parse(readFileSync(manifest,'utf8'));observations.push([readFileSync(join(target,chosen.js),'utf8'),readFileSync(join(target,chosen.ir),'utf8')]);};
+    const fs:OutputFs={rmSync,cpSync,renameSync(from,to){renameSync(from,to);inspect();}};
+    publishOutputFiles([{path:join(target,next.js),contents:'new JS'},{path:join(target,next.ir),contents:'new IR'}],()=>[{path:manifest,contents:JSON.stringify(next)}],{fs});
+    expect(observations).toEqual([['old JS','old IR'],['old JS','old IR'],['new JS','new IR']]);
+    expect(readFileSync(join(target,old.js),'utf8')).toBe('old JS');expect(readFileSync(join(target,old.ir),'utf8')).toBe('old IR');
+  });
+  it('restores both accepted files after a final manifest rename fails, then recovers',()=>{
+    const js=join(target,'app.js'),ir=join(target,'app.ir'),manifest=join(target,'manifest.json');
+    for(const path of [js,ir,manifest])writeFileSync(path,`old:${path}`);
+    const fs=failing((from,to)=>to===manifest&&from.endsWith('.next')?'EIO':undefined);
+    const files=[{path:js,contents:'new browser'},{path:ir,contents:'new IR'}];
+    expect(()=>publishOutputFiles(files,()=>[{path:manifest,contents:'new manifest'}],{fs,platform:'linux'})).toThrow('EIO');
+    for(const path of [js,ir,manifest])expect(readFileSync(path,'utf8')).toBe(`old:${path}`);
+    expect(readdirSync(root)).toEqual(['dist']);
+    publishOutputFiles(files,()=>[{path:manifest,contents:'new manifest'}]);
+    expect(readFileSync(js,'utf8')).toBe('new browser');expect(readFileSync(ir,'utf8')).toBe('new IR');
+    expect(readFileSync(manifest,'utf8')).toBe('new manifest');
+  });
+  it('rolls back a failed manifest validation and never touches another output',()=>{
+    const js=join(target,'app.js'),ir=join(target,'app.ir');
+    writeFileSync(js,'accepted JS');writeFileSync(ir,'accepted IR');
+    expect(()=>publishOutputFiles([{path:js,contents:'next JS'},{path:ir,contents:'next IR'}],()=>{throw new Error('invalid manifest');})).toThrow('invalid manifest');
+    expect(readFileSync(js,'utf8')).toBe('accepted JS');expect(readFileSync(ir,'utf8')).toBe('accepted IR');
+    expect(readFileSync(join(target,'previous.js'),'utf8')).toBe('previous build');
+    expect(readdirSync(root)).toEqual(['dist']);
   });
 });
