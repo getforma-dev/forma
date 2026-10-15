@@ -2,8 +2,9 @@
 
 This internal contract implements section 6 of
 [the reviewed wire specification](../../../docs/proposals/FORMA-103-STATE-WIRE.md).
-The decoder checkpoint is separate from activation integration: `activateIslands`
-will consume its validated results before scheduling triggers.
+`activateIslands` validates every requested host before scheduling a trigger or
+running a component. Immediately before execution, including deferred execution,
+it rechecks the frozen claim. A refusal leaves host markup and status unchanged.
 
 The compiler emits `__islandRegistration(component, { h, schema, mode })` from
 `@getforma/core`. It is a compiler helper, not an application escape hatch.
@@ -42,5 +43,6 @@ and does not implement that separate adoption transaction.
 The fixed controls are in `src/dom/__tests__/island-state.test.ts`. They include
 100 values for each supported schema kind, numeric/text boundary values, exact
 UTF-8 byte limits, forbidden-key projection, per-entry isolation, frozen claims,
-and zero DOM mutations. Browser timing and complete activation acceptance are
-separate integration gates; these unit results do not claim either one.
+and zero DOM mutations. Activation controls are in `src/dom/__tests__/island-state-activation.test.ts`.
+Browser timing and the complete compiler/build/browser acceptance remain separate
+integration gates; these unit results do not claim either one.
