@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -54,6 +54,22 @@ describe('the shared reader/writer window at the real Cargo.lock boundary', () =
     expect(readFileSync(lock, 'utf8')).toBe(locked('3.1.0'));
   });
 
+  it.each(['Cargo.lock', 'Cargo.toml'])('refuses a dangling nearer %s link while allowing absent and valid nearer links', name => {
+    const {root, nested} = fixture();
+    const content = name === 'Cargo.lock' ? locked('3.1.0') : '[package]\nname="ledger"\n';
+    const ancestor = join(root, name), near = join(root, 'admin', name);
+    writeFileSync(ancestor, content);
+    const check = () => name === 'Cargo.lock' ? checkProjectCompatibility(nested, [{name: '@getforma/build', version: [3, 0, 0]}], true) : resolveAppName(nested);
+    expect(() => check()).not.toThrow();
+    expect(nearestFile(nested, name)).toBe(ancestor);
+    symlinkSync(join(root, 'missing-target'), near, 'file');
+    expect(check).toThrow(`cannot read ${near}`);
+    rmSync(near);
+    symlinkSync(ancestor, near, 'file');
+    expect(() => check()).not.toThrow();
+    expect(nearestFile(nested, name)).toBe(near);
+  });
+
   it('does not take a comment or duplicate renderer table as the chosen version', () => {
     const {nested, lock} = fixture();
     writeFileSync(lock, locked('3.1.0') + '\n[[package]]\nname="forma-server"\nversion="2.9.0"\n');
@@ -93,7 +109,7 @@ describe('stable application identity resolution', () => {
   });
   it('does not infer a name from the output directory or a virtual workspace', () => {
     const {root, nested} = fixture();
-    expect(() => resolveAppName(nested)).toThrow('BUILD-810');
+    expect(() => resolveAppName(nested)).toThrow('BUILD-815');
     writeFileSync(join(root, 'Cargo.toml'), '[workspace]\nmembers=[]\n');
     expect(() => resolveAppName(nested)).toThrow(join(root, 'Cargo.toml'));
     expect(resolveAppName(nested, 'explicit')).toBe('explicit');

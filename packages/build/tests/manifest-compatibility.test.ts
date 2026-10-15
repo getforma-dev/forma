@@ -69,12 +69,12 @@ describe('manifest2 compatibility through real builds', () => {
     expect(existsSync(join(outputDir, 'sentinel'))).toBe(false);
   });
 
-  it('watches Cargo.lock and preserves valid output through incompatible rebuilds and recovery', async () => {
+  it.each([false, true])('watches Cargo.lock and preserves valid output through incompatible rebuilds and recovery with splitting=%s', async codeSplitting => {
     const {root, entry, outputDir} = fixture();
     const lock = join(root, 'Cargo.lock');
     const setServer = (version: string) => writeFileSync(lock, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
     setServer('3.0.0');
-    await watching({app: 'ledger', entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir}, async ({manifest, output}) => {
+    await watching({app: 'ledger', codeSplitting, entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir}, async ({manifest, output}) => {
       await vi.waitFor(() => expect(existsSync(join(outputDir, 'manifest.json')), output()).toBe(true));
       const original = readFileSync(join(outputDir, 'app.js'), 'utf8');
       const originalManifest = readFileSync(join(outputDir, 'manifest.json'), 'utf8');
@@ -106,26 +106,33 @@ describe('manifest2 compatibility through real builds', () => {
 });
 
 describe('SR24 production duplicate core reporting', () => {
-  it.each([false, true])('reports two physical copies even at the same version, with splitting=%s and previewFrame off', async codeSplitting => {
+  it.each([[false, '3.0.0-dev'], [true, '3.0.0-dev'], [false, '3.1.0'], [true, '3.1.0']] as const)('reports two physical copies with splitting=%s, second version=%s and previewFrame off', async (codeSplitting, secondVersion) => {
     const {root, entry, outputDir} = fixture();
     for (const name of ['one', 'two']) {
       mkdirSync(join(root, name));
-      writeFileSync(join(root, name, 'package.json'), JSON.stringify({name: '@getforma/core', version: '3.0.0-dev', type: 'module'}));
+      writeFileSync(join(root, name, 'package.json'), JSON.stringify({name: '@getforma/core', version: name === 'one' ? '3.0.0-dev' : secondVersion, type: 'module'}));
       writeFileSync(join(root, name, 'index.js'), `let value = 0; export function signal() { return ++value; }`);
     }
     writeFileSync(entry, 'import {signal as a} from "./one/index.js"; import {signal as b} from "./two/index.js"; export const values = [a(), b()];');
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const config = {app: 'ledger', codeSplitting, entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir};
     const result = await build(config);
-    const diagnostics = result.diagnostics.filter(d => d.code === 'BUILD-811');
+    const diagnostics = result.diagnostics.filter(d => d.code === 'BUILD-816');
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0].severity).toBe('warning');
+    expect(diagnostics[0].message).toContain('3.0.0-dev');
+    expect(diagnostics[0].message).toContain(secondVersion);
     for (const name of ['one', 'two']) expect(diagnostics[0].message).toContain(join(root, name));
-    expect(warn.mock.calls.flat().filter(line => String(line).startsWith('BUILD-811:'))).toHaveLength(1);
+    expect(warn.mock.calls.flat().filter(line => String(line).startsWith('BUILD-816:'))).toHaveLength(1);
     expect(readFileSync(join(outputDir, result.manifest.aliases['app.js']), 'utf8')).toContain('values');
     writeFileSync(entry, 'import {signal as a} from "./one/index.js"; import {signal as b} from "./one/index.js"; export const values = [a(), b()];');
     const single = await build(config);
-    expect(single.diagnostics.filter(d => d.code === 'BUILD-811')).toEqual([]);
+    expect(single.diagnostics.filter(d => d.code === 'BUILD-816')).toEqual([]);
+    // A second path to one physical package is not an independent runtime.
+    symlinkSync(join(root, 'one'), join(root, 'alias'), process.platform === 'win32' ? 'junction' : 'dir');
+    writeFileSync(entry, 'import {signal as a} from "./one/index.js"; import {signal as b} from "./alias/index.js"; export const values = [a(), b()];');
+    const linked = await build(config);
+    expect(linked.diagnostics.filter(d => d.code === 'BUILD-816')).toEqual([]);
     expect(readFileSync(join(outputDir, single.manifest.aliases['app.js']), 'utf8')).toContain('values');
   });
 });

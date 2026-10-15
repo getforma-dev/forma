@@ -174,7 +174,7 @@ test('malformed second template leaves every source file unchanged during stagin
       const base = join(dir, 'packages/create-app/templates', name);
       mkdirSync(join(base, 'admin'), { recursive: true });
       for (const [file, content] of [
-        ['admin/package.json', '{}\n'], ['admin/package-lock.json', '{"packages":{"":{}}}\n'],
+        ['admin/package.json', '{}\n'], ['admin/package-lock.json', '{"packages":{"":{}}}\n'], ['Cargo.toml', '[dependencies]\nforma-ir = "0.2.2"\n'],
         ['Cargo.lock', '[[package]]\nname = "forma-ir"\nversion = "0.2.2"\n' + (name === 'minimal' ? 'checksum = "original"\n' : '')],
       ]) { const path = join(base, file); writeFileSync(path, content); before.set(path, content); }
     }

@@ -219,12 +219,8 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
 
   // ── 8xx: the build package ───────────────────────────────────────────────
   entry('BUILD-801', 'SSR build without @getforma/compiler',
-    'The build was asked for server-rendered modules but cannot load @getforma/compiler, so it writes none.',
+    'The build was asked for server-rendered modules but cannot load @getforma/compiler, so it stops before writing output.',
     'Install @getforma/compiler (a peer dependency of @getforma/build), or turn `ssr` off.'),
-  entry('BUILD-802', '`serviceWorker` without `app` (deprecated; note)',
-    "The worker is 0.3.0's: its caches are shared by every Forma application on the origin, and it takes over open tabs at once. From 3.0.0 a worker is written only for a named app. A deprecation, not a construct the server cannot render, so --strict does not fail on it.",
-    "Set `app` to the name the server passes to forma-server's `sw::ServiceWorker::for_app`, for caches per application and build and a waiting upgrade.",
-    false),
   // The preview frame's runtime (FORMA-175): `previewFrame: true` copies
   // the frame runtime of the core the bundles import as the manifest's
   // forma-runtime.js, which forma-server's PreviewFrame::load inlines by its
@@ -241,6 +237,9 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-808', 'Server functions were removed',
     'Forma builds browser code; a server function body must never ship as a browser implementation.',
     'Move server-side work to an authenticated Rust route and call that route from the browser.'),
+  entry('BUILD-809', 'Package or renderer compatibility cannot be satisfied',
+    'The installed compiler or resolved forma-server does not accept this writer, or the nearest Cargo.lock cannot establish one unambiguous renderer version.',
+    'Use one compatible package set, upgrade the renderer first within its major, and fix the nearest Cargo.lock before rebuilding.'),
   // The raw-entry lint, forma-raw-lint (FORMA-126, SR8): reported by @getforma/build's
   // bin, never in a build's report. RAW_LINT_CATALOGUE in packages/build/src/raw-lint.ts
   // holds the same entries (packages/build/tests/raw-lint.test.ts keeps them equal).
@@ -260,6 +259,17 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-814', 'Source file the lint cannot read (forma-raw-lint)',
     'The file could not be read or parsed, so the raw entries in it cannot be counted; the lint fails rather than pass a file it did not see.',
     'Fix the syntax error the message names, or leave the file out with --exclude if it is not source.'),
+
+  entry('BUILD-815', 'Application identity is missing or invalid',
+    'Manifest 2 requires a named application. No explicit valid app or already-valid nearest Cargo package name was supplied.',
+    'Set app to the same 1–63 character lowercase letter/digit/hyphen name passed to ServiceWorker::for_app.'),
+  entry('BUILD-816', 'The build contains multiple physical copies of core',
+    'Each physical copy has independent reactive state and Trusted Types initialization, even when the versions and runtime bytes match.',
+    'Deduplicate core, declare it as a library peer, and make every entry resolve one physical package.',
+    false),
+  entry('BUILD-817', 'Manifest references an asset the build did not emit',
+    'A declared SSR route has no compiled module, or a manifest reference has no corresponding output asset.',
+    'Fix the compilation or route configuration before serving this build; a browser route must be explicitly declared.'),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);

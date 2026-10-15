@@ -795,7 +795,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         let result: ReturnType<typeof generateManifest>;
         try { result = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies); }
         catch (error) {
-          if (!(error as Error).message.startsWith('BUILD-812')) throw error;
+          if (!(error as Error).message.startsWith('BUILD-817')) throw error;
           console.warn(`Dev manifest not published: ${(error as Error).message}; waiting for valid output`);
           return undefined;
         }
@@ -821,6 +821,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         let previousFiles = new Set<string>();
         const ctx = await esbuild.context({
           ...splitOptions,
+          write: false,
           // Not the SSR plugins: the pages' modules are watched above.
           plugins: [...(shared.plugins ?? []), {
             name: 'forma-split-manifest',
@@ -829,6 +830,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
                 if (result.errors.length || !result.metafile) return;
                 recordCoreGraph('split', result.metafile);
                 graph = splitGraph(result.metafile, config.entryPoints, distDir);
+                for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
                 // Only remove outputs belonging to the previous successful
                 // graph. CSS/fonts/IR and failed-build diagnostics stay intact.
                 for (const file of previousFiles) if (!graph.files.has(file)) rmSync(join(distDir, file), { force: true });
@@ -847,9 +849,11 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           entryPoints: [entry.entry],
           outfile: join(distDir, entry.outfile),
           metafile: true,
+          write: false,
           plugins: [...(shared.plugins ?? []), {name: 'forma-core-report', setup(builder) {
             builder.onEnd(result => {
               if (result.errors.length || !result.metafile) return;
+              for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
               recordCoreGraph(entry.outfile, result.metafile);
               writeDevManifest();
             });
@@ -956,7 +960,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       JSON.stringify(manifest, null, 2) + '\n',
     );
     console.log(
-      `\nManifest written: ${shownDir}/manifest.json (build_hash: ${manifest.build.slice(0, 12)}...)`,
+      `\nManifest written: ${shownDir}/manifest.json (build: ${manifest.build.slice(0, 12)}...)`,
     );
 
     // ── Service worker generation ─────────────────────────────────────

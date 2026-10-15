@@ -146,3 +146,21 @@ empty shell. CI runs it on Linux and Windows, and again before
 ## License
 
 MIT
+
+## Development staging toward 3.0.0
+
+The checked-in templates keep the A2 consumer pins until FORMA-144 completes the
+final API migration. Release packing stages exact candidate npm and Cargo
+requirements/locks, validates those packed bytes, then restores the source files.
+A source template copied by hand is not that staged release set.
+
+The scaffolder writes a separate application identity into `admin/build.ts`.
+Valid worker names stay unchanged; accepted project names with underscores or
+64 characters use a readable prefix plus a deterministic SHA-256 suffix. This
+preserves accepted CLI names without merging distinct cache namespaces. The
+server's enabled worker must use this `app` value with
+`sw::configure_for_manifest(worker, &manifest)` before binding; templates leave
+workers off. See [compatibility and migration](../../docs/compatibility.md).
+
+Verified by: `tests/scaffold.test.ts`, `scripts/release-template-lock.test.mjs`
+at the repository root, and the exact-artifact P17 template run.

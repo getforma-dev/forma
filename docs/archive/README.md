@@ -25,6 +25,17 @@ it was wrong the first time.
 | [`2026-10-15-legacy-apis/`](2026-10-15-legacy-apis/) | 2026-10-15 | Compiler/build and crate guides, architecture and diagnostics before FORMA-110 removed the Vite plugins, Node RPC/SSR and WASM walker. The live guides describe the remaining native FMIR pipeline. |
 | [`2026-10-15-FMIR-FORMAT-v2.md`](2026-10-15-FMIR-FORMAT-v2.md) | 2026-10-15 | [`FMIR-FORMAT.md`](../FMIR-FORMAT.md) defines v3: new signature, exact writer version, CRC, variable sections and schema metadata. The old fixed-header promise is superseded; legacy modules require rebuilding. |
 
+## FORMA-112 compatibility transition (2026-10-15)
+
+The prior build/compiler/scaffolder guides and diagnostic text are preserved in
+[`2026-10-15-compatibility/`](2026-10-15-compatibility/). Manifest schema 1,
+`build_hash`, logical mappings in `assets`, exact-base writer matching and the
+unnamed-worker bridge are replaced by manifest 2, the major/minor window, aliases,
+metadata and checked worker startup. BUILD-802 is retired; raw-lint810–814 keep
+their meanings, while identity/duplicate-core/missing-output diagnostics use
+815–817. [compatibility.md](../compatibility.md) states the current contract and
+migration; historical release evidence remains unchanged.
+
 ## Retired and corrected claims
 
 | Claim | Where it lived | Retired | Why |

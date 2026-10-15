@@ -36,8 +36,10 @@ served asset tree, read by nothing but a since-removed `@getforma/build` step.)
 The compiler emits [FMIR v3](../../docs/FMIR-FORMAT.md): a 24-byte header,
 a section table, and required bytecode, strings, slots, islands and page props
 schema. CRC-32 covers every byte except its own four-byte field. The writer's
-base major/minor/patch comes from the compiler package version and must match
-forma-ir's base version exactly; `3.0.0-dev` and `3.0.0` both encode `3,0,0`.
+base major/minor/patch comes from the compiler package version. A reader accepts
+its own major and writer minors up to its own; patch numbers do not restrict
+compatibility. `3.0.0-dev` and `3.0.0` both encode `3,0,0`. Upgrade the renderer
+first and follow the [compatibility contract](../../docs/compatibility.md).
 Use aligned compiler and Rust packages and rebuild older `.ir` files. V2 modules
 are refused with a rebuild diagnostic.
 
