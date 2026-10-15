@@ -11,6 +11,7 @@ use crate::format::SlotSource;
 use crate::format::{IrError, IslandTrigger, Opcode};
 use crate::parser::IrModule;
 use crate::slot::{SlotData, SlotValue};
+use crate::text::{normalize_text, normalized_chars};
 use std::fmt;
 
 // ---------------------------------------------------------------------------
@@ -82,6 +83,19 @@ struct WalkState {
     /// Tag name of the element currently being opened — needed to decide
     /// whether a `data:image/svg+xml` URL is in an image context.
     pending_tag_name: String,
+    /// The output length right after an HTML `pre` or `listing` start tag
+    /// closed, while nothing has been written since. The parser drops one
+    /// line feed that is the first content token of those elements, so the
+    /// first text written at exactly this length gets an extra LF when its
+    /// normalized text starts with one. Any serialized token (a marker
+    /// comment, a child element, a closing tag) moves the length past it and
+    /// so consumes the boundary; an empty text or a value-only opcode writes
+    /// nothing and leaves it. Selected by tag spelling, as `TextOnlyTag` is:
+    /// the walker has no namespace stack, and neither SVG nor MathML has an
+    /// element of either name.
+    ///
+    /// Verified by: crates/forma-ir/src/walker.rs > "pre_children_protect_only_an_initial_normalized_line_feed"
+    pre_boundary: Option<usize>,
     /// Output-size budget. Lives on the state (not as a `walk_range`
     /// parameter) so every recursive call sharing the same `out` enforces the
     /// same cumulative budget by construction.
@@ -138,6 +152,7 @@ impl WalkState {
             island_state: StateBuilder::new(),
             pending_tag_close: false,
             pending_tag_name: String::new(),
+            pre_boundary: None,
             max_output_bytes: limits.max_output_bytes,
             list_iterations: 0,
             max_list_iterations: limits.max_list_iterations,
@@ -702,9 +717,18 @@ fn walk_range_impl(
                         write_text_only(out, parent, text, limit)?;
                     }
                 } else {
+                    if state.pre_boundary == Some(out.len())
+                        && normalized_chars(text).next() == Some('\n')
+                    {
+                        // First content token of a `pre`/`listing` starting
+                        // with a line feed: the parser drops one, so write one
+                        // more (the textarea rule, by output position).
+                        push_checked(out, "\n", limit)?;
+                    }
                     push_escaped_html(out, text, limit)?;
                     if let Some(option) = state.option_by_text.as_mut() {
-                        option.text.push_str(text);
+                        // The text as the parser reads it: normalized.
+                        option.text.extend(normalized_chars(text));
                     }
                 }
                 state.nodes += 1;
@@ -754,7 +778,7 @@ fn walk_range_impl(
                     push_u16(out, marker_id, limit)?;
                     push_checked(out, "-->", limit)?;
                     if let Some(option) = state.option_by_text.as_mut() {
-                        option.text.push_str(written);
+                        option.text.extend(normalized_chars(written));
                     }
                 }
                 state.nodes += 1;
@@ -1242,6 +1266,17 @@ fn is_url_attr(name: &str) -> bool {
 /// same way before testing — byte-identical to formajs's `isDangerousUrl`, so
 /// the server emits exactly what the client would have produced.
 fn is_dangerous_url(value: &str, tag: &str) -> bool {
+    // A NUL anywhere in a URL attribute value is refused outright (FORMA-182
+    // review S1): no author writes one, and the normalized U+FFFD it would
+    // become is not ignored by the URL parser, so `java\0script:` would be
+    // written as `java\u{FFFD}script:` and resolved and fetched as a
+    // same-origin relative reference in every engine. The guard therefore
+    // classifies the raw value; for every other character the strip below
+    // makes the raw and normalized views agree.
+    // Verified by: crates/forma-ir/src/walker.rs > "url_attributes_are_checked_as_the_normalized_string_that_is_written"
+    if value.contains('\0') {
+        return true;
+    }
     let normalized: String = value
         .chars()
         .filter(|c| {
@@ -1476,12 +1511,15 @@ struct TextOnlyParent {
 /// Write text into a text-only parent: escaped, with no marker and no
 /// zero-width space, under the textarea's leading-LF rule.
 ///
-/// The parser drops one line feed straight after `<textarea>` (a CR or CRLF is
-/// a line feed by then). A marker used to stand between the tag and the first
-/// line; without one, content that starts with a line break gets one more, so
-/// the parsed value is the value written.
+/// The parser drops one line feed straight after `<textarea>`. A marker used
+/// to stand between the tag and the first line; without one, content that
+/// starts with a line break gets one more, so the parsed value is the value
+/// written. Under rule 1 a leading CR or CRLF is already a line feed when it
+/// is written, so only an initial LF of the normalized text is doubled. An
+/// empty chunk does not consume the boundary.
 ///
 /// Verified by: crates/forma-ir/src/walker.rs > "a_textarea_doubles_a_leading_line_feed"
+/// Verified by: crates/forma-ir/src/walker.rs > "textarea_children_protect_only_an_initial_normalized_line_feed"
 fn write_text_only(
     out: &mut String,
     parent: &mut TextOnlyParent,
@@ -1493,7 +1531,7 @@ fn write_text_only(
     }
     if parent.tag == TextOnlyTag::Textarea
         && !parent.started
-        && (text.starts_with('\n') || text.starts_with('\r'))
+        && normalized_chars(text).next() == Some('\n')
     {
         push_checked(out, "\n", limit)?;
     }
@@ -1554,12 +1592,15 @@ enum SelectWanted {
 
 impl SelectBinding {
     fn new(value: &SlotValue, multiple: bool) -> Self {
+        // Each wanted value is compared with option values that are written
+        // normalized (rule 1), so it is normalized the same way: a requested
+        // NUL matches the option whose attribute the browser reads as U+FFFD.
         let wanted = match value {
             SlotValue::Array(items) if multiple => {
                 SelectWanted::Any(items.iter().map(js_string).collect())
             }
             // `value == null ? '' : String(value)` is exactly `to_text`.
-            other => SelectWanted::One(other.to_text()),
+            other => SelectWanted::One(normalize_text(&other.to_text()).into_owned()),
         };
         SelectBinding {
             wanted,
@@ -1585,7 +1626,7 @@ impl SelectBinding {
 fn js_string(value: &SlotValue) -> String {
     match value {
         SlotValue::Null => "null".to_string(),
-        other => other.to_text(),
+        other => normalize_text(&other.to_text()).into_owned(),
     }
 }
 
@@ -1608,11 +1649,12 @@ enum Prop<'a> {
 }
 
 impl Prop<'_> {
-    /// The client's control text: `value == null ? '' : String(value)`.
+    /// The client's control text: `value == null ? '' : String(value)`, under
+    /// rule 1, since it is compared with and written as DOM text.
     fn control_text(self) -> String {
         match self {
-            Prop::Static(s) => s.to_string(),
-            Prop::Slot(v) => v.to_text(),
+            Prop::Static(s) => normalize_text(s).into_owned(),
+            Prop::Slot(v) => normalize_text(&v.to_text()).into_owned(),
         }
     }
 
@@ -1733,6 +1775,9 @@ fn leave_element(
     if is("select") {
         state.select = None;
     }
+    // `</pre>` is a token too; the length check would already miss, but an
+    // explicit clear keeps the state's meaning local to its element.
+    state.pre_boundary = None;
     if state
         .text_only
         .as_ref()
@@ -1777,7 +1822,12 @@ fn close_start_tag(out: &mut String, state: &mut WalkState, limit: usize) -> Res
             });
         }
     }
-    push_checked(out, ">", limit)
+    push_checked(out, ">", limit)?;
+    let tag = &state.pending_tag_name;
+    if tag.eq_ignore_ascii_case("pre") || tag.eq_ignore_ascii_case("listing") {
+        state.pre_boundary = Some(out.len());
+    }
+    Ok(())
 }
 
 /// End an option whose value is its text, selecting it now if the text
@@ -1924,7 +1974,28 @@ fn push_u16(out: &mut String, value: u16, limit: usize) -> Result<(), IrError> {
     }
 }
 
+/// Append one normalized character, refusing to exceed the output budget by
+/// its actual encoded length: U+FFFD (NUL's replacement) is three bytes, an
+/// astral character four, so a check of `out.len() >= limit` before the push
+/// could overshoot the budget by up to three bytes.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written"
+fn push_char_checked(out: &mut String, ch: char, limit: usize) -> Result<(), IrError> {
+    if out.len().saturating_add(ch.len_utf8()) > limit {
+        return Err(IrError::OutputLimitExceeded { limit });
+    }
+    out.push(ch);
+    Ok(())
+}
+
 /// Escape text for HTML content (`& < >`), within the output budget.
+///
+/// The text is written under rule 1 (`crate::text`): CRLF and CR become LF
+/// and NUL becomes U+FFFD, per value, before escaping. A NUL grows from one
+/// byte to three, which the fast path's worst-case bound (six per input
+/// byte) already covers.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "text_and_dyn_text_write_each_value_normalized"
 fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), IrError> {
     // Fast path: even worst-case expansion fits, so no per-character checks.
     if out
@@ -1932,7 +2003,7 @@ fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), I
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in text.chars() {
+        for ch in normalized_chars(text) {
             match ch {
                 '&' => out.push_str("&amp;"),
                 '<' => out.push_str("&lt;"),
@@ -1942,30 +2013,28 @@ fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), I
         }
         return Ok(());
     }
-    for ch in text.chars() {
+    for ch in normalized_chars(text) {
         match ch {
             '&' => push_checked(out, "&amp;", limit)?,
             '<' => push_checked(out, "&lt;", limit)?,
             '>' => push_checked(out, "&gt;", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
+            _ => push_char_checked(out, ch, limit)?,
         }
     }
     Ok(())
 }
 
 /// Escape text for HTML attribute values (`& " < >`), within the output budget.
+/// Normalized under rule 1 exactly as [`push_escaped_html`] is.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "static_and_dynamic_attributes_write_each_value_normalized"
 fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), IrError> {
     if out
         .len()
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in text.chars() {
+        for ch in normalized_chars(text) {
             match ch {
                 '&' => out.push_str("&amp;"),
                 '"' => out.push_str("&quot;"),
@@ -1976,18 +2045,13 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
         }
         return Ok(());
     }
-    for ch in text.chars() {
+    for ch in normalized_chars(text) {
         match ch {
             '&' => push_checked(out, "&amp;", limit)?,
             '"' => push_checked(out, "&quot;", limit)?,
             '<' => push_checked(out, "&lt;", limit)?,
             '>' => push_checked(out, "&gt;", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
+            _ => push_char_checked(out, ch, limit)?,
         }
     }
     Ok(())
@@ -4841,7 +4905,9 @@ mod tests {
                     let v = p.slot(text("\r\nhello"));
                     p.dyn_text(v);
                 }),
-                "<textarea>\n\r\nhello</textarea>",
+                // Rule 1 (FORMA-182): the CRLF is written as LF, and that
+                // initial LF is the one doubled.
+                "<textarea>\n\nhello</textarea>",
             ),
             (
                 "an empty value first: the first written byte decides",
@@ -5776,5 +5842,424 @@ mod tests {
         let failure = walk_to_html_counted(&module, &slots, limits(24)).unwrap_err();
         assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 24 });
         assert_eq!(failure.counts.list_iterations, 24);
+    }
+
+    // -- FORMA-182 rule 1: the shared normalization vectors ------------------
+    //
+    // One finite JSON file, read by this crate and by @getforma/core's suite
+    // (packages/core/src/dom/__tests__/normalize-text.test.ts), so a vector
+    // changed on one side fails the other. Every case walks the real opcode
+    // stream through `walk_to_html`; nothing here calls a helper directly.
+    // Each test collects every disagreeing vector before failing, so a first
+    // run reports the whole gap, not its first line.
+    mod normalization_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const VECTORS: &str = include_str!("../tests/fixtures/parity/normalization.json");
+
+        fn cases(section: &str) -> Vec<Value> {
+            let all: Value = serde_json::from_str(VECTORS).unwrap();
+            all[section].as_array().unwrap().clone()
+        }
+
+        fn field<'a>(case: &'a Value, key: &str) -> &'a str {
+            case[key].as_str().unwrap()
+        }
+
+        fn children(case: &Value) -> Vec<String> {
+            case["children"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap().to_string())
+                .collect()
+        }
+
+        fn escape_html(text: &str) -> String {
+            text.replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;")
+        }
+
+        fn escape_attr(text: &str) -> String {
+            escape_html(text).replace('"', "&quot;")
+        }
+
+        /// A DYN_TEXT range as the walker writes it: an empty value is held
+        /// by a zero-width space so the browser creates a Text node.
+        fn marker(id: u16, text: &str) -> String {
+            let inner = if text.is_empty() {
+                "\u{200B}".to_string()
+            } else {
+                escape_html(text)
+            };
+            format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
+        }
+
+        /// The text a browser would show for a marker-separated output: the
+        /// marker comments and the empty-range zero-width spaces removed. No
+        /// `children` vector contains a zero-width space of its own.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
+        fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
+            if actual != expected {
+                failures.push(format!(
+                    "{label}: expected {expected:?}, walker wrote {actual:?}"
+                ));
+            }
+        }
+
+        fn finish(failures: Vec<String>) {
+            assert!(
+                failures.is_empty(),
+                "{} disagreeing vector(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        #[test]
+        fn text_and_dyn_text_write_each_value_normalized() {
+            let mut failures = Vec::new();
+            for case in cases("values") {
+                let (id, input, expected) = (
+                    field(&case, "id"),
+                    field(&case, "input"),
+                    field(&case, "expected"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open("p", &[])
+                    .text(input)
+                    .close("p")
+                    .open("p", &[])
+                    .dyn_text(slot)
+                    .close("p");
+                let want = format!(
+                    "<p>{}</p><p>{}</p>",
+                    escape_html(expected),
+                    marker(slot, expected)
+                );
+                check(
+                    &mut failures,
+                    &format!("values/{id} text+dyn_text"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn static_and_dynamic_attributes_write_each_value_normalized() {
+            let mut failures = Vec::new();
+            for case in cases("values") {
+                let (id, input, expected) = (
+                    field(&case, "id"),
+                    field(&case, "input"),
+                    field(&case, "expected"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open("p", &[("title", input), ("id", "ok")])
+                    .close("p")
+                    .open("p", &[("id", "ok")])
+                    .dyn_attr("title", slot)
+                    .close("p");
+                let e = escape_attr(expected);
+                // A static empty value is written as the bare name (the
+                // walker's existing byte-stable shorthand; same DOM value).
+                let static_attr = if expected.is_empty() {
+                    " title".to_string()
+                } else {
+                    format!(" title=\"{e}\"")
+                };
+                let want = format!("<p{static_attr} id=\"ok\"></p><p id=\"ok\" title=\"{e}\"></p>");
+                check(
+                    &mut failures,
+                    &format!("values/{id} attr+dyn_attr"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn adjacent_values_normalize_each_before_composition() {
+            // `['\r', '\n']` is two line feeds and `['\r\n']` is one: the rule
+            // is per authored value, so a normalizer that buffered the output
+            // stream would fold the first case and fail here. Three shapes of
+            // the same children: adjacent TEXT, adjacent DYN_TEXT ranges, and
+            // a static first value before dynamic ones.
+            let mut failures = Vec::new();
+            for case in cases("children") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let values = children(&case);
+
+                let mut page = Page::new();
+                page.open("p", &[]);
+                for value in &values {
+                    page.text(value);
+                }
+                page.close("p");
+                let want = format!("<p>{}</p>", escape_html(expected));
+                check(
+                    &mut failures,
+                    &format!("children/{id} adjacent TEXT"),
+                    &page.render(),
+                    &want,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("p", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                check(
+                    &mut failures,
+                    &format!("children/{id} adjacent DYN_TEXT (visible text)"),
+                    &visible(&page.render()),
+                    &want,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values[1..].iter().map(|v| page.slot(text(v))).collect();
+                page.open("p", &[]).text(&values[0]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                check(
+                    &mut failures,
+                    &format!("children/{id} TEXT then DYN_TEXT (visible text)"),
+                    &visible(&page.render()),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn textarea_children_protect_only_an_initial_normalized_line_feed() {
+            // The parser drops one LF straight after `<textarea>`, so the
+            // writer doubles an initial LF. After normalization that is the
+            // only initial break there is; an empty chunk does not consume
+            // the boundary, and a separate `\r` then `\n` is two values.
+            let mut failures = Vec::new();
+            for case in cases("textarea") {
+                let (id, html) = (field(&case, "id"), field(&case, "html"));
+                let values = children(&case);
+
+                let mut page = Page::new();
+                page.open("textarea", &[]);
+                for value in &values {
+                    page.text(value);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("textarea/{id} static"),
+                    &page.render(),
+                    html,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("textarea", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("textarea/{id} dynamic"),
+                    &page.render(),
+                    html,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn url_attributes_are_checked_as_the_normalized_string_that_is_written() {
+            // The URL policy classifies the raw value: a NUL anywhere in a URL
+            // attribute refuses the write, a CR or CRLF inside a scheme is
+            // refused as before, and an admitted value is written normalized.
+            // The benign sibling attribute stays in both branches (P3).
+            let mut failures = Vec::new();
+            for case in cases("unsafeUrlNearMiss") {
+                let (id, input) = (field(&case, "id"), field(&case, "input"));
+                let attribute = case["attribute"].as_str().unwrap_or("href");
+                let tag = case["tag"].as_str().unwrap_or("a");
+                let refused = case["refused"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open(tag, &[(attribute, input), ("id", "ok")])
+                    .close(tag)
+                    .open(tag, &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close(tag);
+                let want = if refused {
+                    format!("<{tag} id=\"ok\"></{tag}><{tag} id=\"ok\"></{tag}>")
+                } else {
+                    let written = escape_attr(field(&case, "written"));
+                    format!(
+                        "<{tag} {attribute}=\"{written}\" id=\"ok\"></{tag}>\
+                         <{tag} id=\"ok\" {attribute}=\"{written}\"></{tag}>"
+                    )
+                };
+                check(
+                    &mut failures,
+                    &format!("unsafeUrlNearMiss/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn pre_children_protect_only_an_initial_normalized_line_feed() {
+            // `pre` and `listing` share the textarea rule, by output position:
+            // the first content token starting with a normalized LF gets one
+            // more. A DYN_TEXT writes its marker comment first, which the
+            // parser treats as the first token, so the dynamic shape is never
+            // doubled (`htmlDynamic`).
+            let mut failures = Vec::new();
+            for case in cases("pre") {
+                let (id, html, dynamic) = (
+                    field(&case, "id"),
+                    field(&case, "html"),
+                    field(&case, "htmlDynamic"),
+                );
+                let values = children(&case);
+                for tag in ["pre", "listing", "PRE"] {
+                    let mut page = Page::new();
+                    page.open(tag, &[]);
+                    for value in &values {
+                        page.text(value);
+                    }
+                    page.close(tag);
+                    let want = html
+                        .replace("<pre>", &format!("<{tag}>"))
+                        .replace("</pre>", &format!("</{tag}>"));
+                    check(
+                        &mut failures,
+                        &format!("pre/{id} static <{tag}>"),
+                        &page.render(),
+                        &want,
+                    );
+                }
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("pre", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("pre");
+                check(
+                    &mut failures,
+                    &format!("pre/{id} dynamic"),
+                    &page.render(),
+                    dynamic,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn the_pre_boundary_is_consumed_by_any_token_but_not_by_a_value_only_opcode() {
+            // A child element, a conditional's marker and the closing tag of
+            // an inner element are tokens: the LF after them is not the first
+            // content token, so it is written once. PROP writes nothing, so
+            // the boundary survives it. A sibling `pre` starts its own.
+            let mut page = Page::new();
+            page.open("pre", &[])
+                .open("b", &[])
+                .close("b")
+                .text("\nx")
+                .close("pre");
+            assert_eq!(page.render(), "<pre><b></b>\nx</pre>");
+
+            let mut page = Page::new();
+            let shown = page.slot(SlotValue::Bool(true));
+            page.open("pre", &[])
+                .show_if(
+                    shown,
+                    |p| {
+                        p.text("\nx");
+                    },
+                    |_| {},
+                )
+                .close("pre");
+            let rendered = page.render();
+            assert!(rendered.starts_with("<pre><!--f:s"), "{rendered:?}");
+            assert!(rendered.contains("-->\nx<!--/f:s"), "{rendered:?}");
+            assert!(!rendered.contains("\n\n"), "{rendered:?}");
+
+            let mut page = Page::new();
+            let object = page.slot(SlotValue::object(vec![]));
+            let target = page.slot(text(""));
+            page.open("pre", &[])
+                .prop(object, "name", target)
+                .text("\nx")
+                .close("pre")
+                .open("pre", &[])
+                .text("\ny")
+                .close("pre")
+                .open("p", &[])
+                .text("\nz")
+                .close("p");
+            assert_eq!(page.render(), "<pre>\n\nx</pre><pre>\n\ny</pre><p>\nz</p>");
+        }
+
+        #[test]
+        fn the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written() {
+            // A top-level TEXT with no closing tag, so the budget ends inside
+            // the text itself: exactly-at renders, one byte under refuses. The
+            // ten-byte prefix forces the per-character slow path (worst-case
+            // expansion no longer fits). Before this check a three-byte U+FFFD
+            // or four-byte astral character was pushed when `out.len()` was
+            // merely below the limit, overshooting it by up to three bytes.
+            for (input, written) in [
+                ("xxxxxxxxxx\0", "xxxxxxxxxx\u{FFFD}"),
+                ("xxxxxxxxxx😀", "xxxxxxxxxx😀"),
+                ("xxxxxxxxxx&", "xxxxxxxxxx&amp;"),
+                ("xxxxxxxxxx\r\n", "xxxxxxxxxx\n"),
+            ] {
+                let mut page = Page::new();
+                page.text(input);
+                let (module, slots) = page.module_and_slots();
+                let limits = |max_output_bytes| WalkLimits {
+                    max_output_bytes,
+                    ..WalkLimits::default()
+                };
+                let exact = written.len();
+                assert_eq!(
+                    walk_to_html_with_limits(&module, &slots, limits(exact)).as_deref(),
+                    Ok(written),
+                    "{input:?} at its exact budget"
+                );
+                assert_eq!(
+                    walk_to_html_with_limits(&module, &slots, limits(exact - 1)),
+                    Err(IrError::OutputLimitExceeded { limit: exact - 1 }),
+                    "{input:?} one byte under its budget"
+                );
+            }
+        }
     }
 }

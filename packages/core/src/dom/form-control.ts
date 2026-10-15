@@ -1,4 +1,9 @@
-/** Shared live-property writes for client construction and SSR adoption. */
+/** Shared live-property writes for client construction and SSR adoption.
+ * Every string a control receives here is written under rule 1
+ * (`normalizeDomText`), per value, as the walker writes the same control.
+ * Verified by: src/dom/__tests__/normalize-text.test.ts > "live control text and value writes normalize $id" */
+import { normalizeDomText } from './normalize-text.js';
+
 export function isFormControlProperty(el: Element, key: string): boolean {
   if (key === 'value') {
     return el instanceof HTMLInputElement
@@ -19,7 +24,7 @@ export function writeFormControlProperty(el: Element, key: string, value: unknow
   // Reactive textarea children are controlled in3.x. Keep their RCDATA
   // default text and live value coherent, including after a later user edit.
   if (key === 'text') {
-    const area = el as HTMLTextAreaElement, next = value == null ? '' : String(value);
+    const area = el as HTMLTextAreaElement, next = value == null ? '' : normalizeDomText(String(value));
     if (area.defaultValue !== next) area.defaultValue = next;
     if (area.value !== next) area.value = next;
     return;
@@ -27,14 +32,14 @@ export function writeFormControlProperty(el: Element, key: string, value: unknow
   if (key === 'value') {
     const control = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLOptionElement;
     if (control instanceof HTMLSelectElement && control.multiple && Array.isArray(value)) {
-      const selected = new Set(value.map(String));
+      const selected = new Set(value.map(item => normalizeDomText(String(item))));
       for (const option of Array.from(control.options)) {
         const next = selected.has(option.value);
         if (option.selected !== next) option.selected = next;
       }
       return;
     }
-    const next = value == null ? '' : String(value);
+    const next = value == null ? '' : normalizeDomText(String(value));
     // Browsers only allow clearing a file input programmatically.
     if (control instanceof HTMLInputElement && control.type === 'file' && next !== '') return;
     // Keep the existing markup/default-value contract; it is not a substitute
@@ -83,12 +88,14 @@ export function isReactiveTextOnly(children: unknown[]): boolean {
   return reactive;
 }
 
-/** The text of `children`: a function's current result, nothing for nullish and booleans. */
+/** The text of `children`: a function's current result, nothing for nullish
+ * and booleans. Each child is normalized before the join, so a `'\r'` child
+ * followed by a `'\n'` child is two line feeds, as it is on the server. */
 export function childText(children: unknown[]): string {
   let text = '';
   for (const child of children) {
     const value = typeof child === 'function' ? (child as () => unknown)() : child;
-    if (value != null && typeof value !== 'boolean') text += String(value);
+    if (value != null && typeof value !== 'boolean') text += normalizeDomText(String(value));
   }
   return text;
 }

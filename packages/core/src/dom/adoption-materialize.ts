@@ -8,6 +8,7 @@ import { AdoptionDomError } from './adoption-plan.js';
 import { fillElement, h } from './element.js';
 import { contentNs, withNamespace } from './namespace.js';
 import { isReactiveTextOnly } from './form-control.js';
+import { normalizeDomText } from './normalize-text.js';
 
 /** The caller supplies its shared live range coordinators, including ownership,
  * checked replacement, key/index semantics and failure cleanup. No CSR fallback. */
@@ -48,7 +49,8 @@ function materialize(value: unknown, ns: string | null, context: MaterializeCont
     if (value.parentNode) throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');
     return value;
   }
-  if (typeof value === 'string' || typeof value === 'number') return document.createTextNode(String(value));
+  // Verified by: src/dom/__tests__/normalize-text.test.ts > "materialized later text writes $id normalized"
+  if (typeof value === 'string' || typeof value === 'number') return document.createTextNode(normalizeDomText(String(value)));
   if (typeof value === 'function') {
     return context.dynamic(() => describe(value as () => unknown, ns), next => materializeAdoption(next, ns, context));
   }

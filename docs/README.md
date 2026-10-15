@@ -14,7 +14,8 @@ so there is one copy of each and every repo links to it.
 | 4 | [compatibility.md](compatibility.md) | Version window, manifest 2, startup migration and the cross-contract test index | When upgrading packages or changing a boundary |
 | 5 | [DECLARED-PROPS.md](DECLARED-PROPS.md) | Declared TypeScript props, the Rust derive and typed startup/render handles | When migrating a server handler or changing the props contract |
 | 6 | [TRUSTED-TYPES.md](TRUSTED-TYPES.md) | Response/raw API migration, enforced policies and the shared mint boundary | Before upgrading a server or raw-markup caller to 3.x |
-| 7 | [archive/](archive/) | Material that has been retired, with what it was, when it went, and why | When something in a doc contradicts the code and you want to know what happened |
+| 7 | [parity-rules.md](parity-rules.md) | The marker vocabulary and the value rules the walker, `h()` and adoption must agree on, with the shared vector file each rule is tested against | When you change what the walker writes or what the client expects to find |
+| 8 | [archive/](archive/) | Material that has been retired, with what it was, when it went, and why | When something in a doc contradicts the code and you want to know what happened |
 
 `ARCHITECTURE.md` is deliberately the long one. It separates **evidenced**
 claims (which cite a file, a test or a CHANGELOG entry) from reconstructed

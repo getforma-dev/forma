@@ -46,6 +46,9 @@ pub mod props;
 pub mod schema;
 /// Runtime slot values and the dense `SlotData` a page handler populates.
 pub mod slot;
+/// Rule-1 text normalization shared by the walker's ordinary text and
+/// attribute writes (FORMA-182). Crate-private: not part of the API.
+mod text;
 /// The SSR walker: opcode stream plus slot values in, HTML out.
 pub mod walker;
 

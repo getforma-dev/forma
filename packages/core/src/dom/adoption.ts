@@ -18,6 +18,7 @@ import { warnInnerHtmlChildren } from './trusted-html.js';
 import { currentAdoptionDiagnostic, withAdoptionDiagnostic, type AdoptionDiagnostic } from '../reactive/adoption-diagnostics.js';
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import { AdoptionControls, type ControlToken } from './adoption-controls.js';
+import { normalizeDomText } from './normalize-text.js';
 import { checkIslandClaim, isRegisteredIslandComponent, matchAdoptionChild, type ValidatedIsland } from './island-state.js';
 import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './adoption-description.js';
 
@@ -41,9 +42,13 @@ export interface AdoptionOptions {
   errorContext?: (diagnostic:AdoptionDiagnostic)=>void;
 }
 function refuse():never {throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');}
+/** An admitted text expectation or later value, under rule 1: the served DOM
+ * holds the walker's normalized text, so the client's value is compared and
+ * later written the same way. Transport (the props themselves) stays exact.
+ * Verified by: src/dom/__tests__/normalize-text.test.ts > "a served normalized range matches a client value $id without a write" */
 function text(value:unknown):string {
   if(value==null)return '';
-  if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return String(value);
+  if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return normalizeDomText(String(value));
   return refuse();
 }
 function ownProps(props:Record<string,unknown>):[string,unknown][] {
@@ -370,7 +375,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(cursor.rangeKind()==='t')cursor.textRange(text(value));return;
     }
     if(typeof value==='string'||typeof value==='number'){
-      if(cursor.rangeKind()==='t')cursor.textRange(String(value));else cursor.text(String(value));return;
+      if(cursor.rangeKind()==='t')cursor.textRange(text(value));else cursor.text(text(value));return;
     }
     if(typeof value==='function'){
       let owner:PreparedGroup<void>,first=true,snapshot:(()=>ConditionalSnapshot)|undefined;

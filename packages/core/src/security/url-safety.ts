@@ -88,9 +88,19 @@ export function isUrlAttr(name: string): boolean {
  * image-context tags listed above; omitting it selects the strict
  * interpretation, so a call site that forgets to pass one fails safe.
  *
+ * A NUL anywhere in the value is refused outright (FORMA-182 review S1):
+ * no author writes one, and the U+FFFD that rule-1 normalization would turn
+ * it into is not ignored by the URL parser, so `java\0script:` would be
+ * written as `java�script:` and resolved and fetched as a same-origin
+ * relative reference in every engine. Callers pass the raw value here and
+ * write the normalized one; for every other character the strip below makes
+ * the two views agree.
+ *
  * Verified by: src/security/__tests__/url-safety.test.ts > "blocks data:image/svg+xml when no tag is supplied"
+ * Verified by: src/security/__tests__/url-safety.test.ts > "refuses a NUL anywhere in the value, not only in the scheme"
  */
 export function isDangerousUrl(value: string, tag?: string): boolean {
+  if (value.indexOf('\0') !== -1) return true;
   const normalized = value.replace(URL_IGNORED_CHARS_RE, '');
   if (DANGEROUS_SCHEME_RE.test(normalized)) return true;
   if (SVG_DATA_URL_RE.test(normalized)) {

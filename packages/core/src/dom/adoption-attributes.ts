@@ -4,6 +4,7 @@
 import { isEventHandlerAttr, isRawHtmlAttr, isUnsafeAttrWrite } from '../security/url-safety.js';
 import { AdoptionDomError } from './adoption-plan.js';
 import { rawHtml } from './trusted-html.js';
+import { normalizeDomText } from './normalize-text.js';
 
 const XLINK_NS='http://www.w3.org/1999/xlink';
 const ALIASES:Record<string,string>={className:'class',htmlFor:'for',tabIndex:'tabindex'};
@@ -24,8 +25,12 @@ export function prepareAttribute(element:Element,key:string,value:unknown):Prepa
     // Other object values never gain an arbitrary coercion path here.
     if(isRawHtmlAttr(qualified))return String(rawHtml(next,'srcdoc'));
     if(!['string','number','boolean'].includes(typeof next))throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');
-    const result=next===true?'':String(next);
-    return isUnsafeAttrWrite(element.localName,qualified,result)?null:result;
+    // Rule 1 before comparison and cache: the normalized string is the one
+    // compared and written; the URL guard classifies the raw string, so a NUL
+    // anywhere in a URL attribute refuses (the walker does the same).
+    // Verified by: src/dom/__tests__/normalize-text.test.ts > "adoption attribute expectations normalize $id before comparison and later writes"
+    const raw=next===true?'':String(next),result=normalizeDomText(raw);
+    return isUnsafeAttrWrite(element.localName,qualified,raw)?null:result;
   };
   const initial=normalize(value);
   let previous=initial;
