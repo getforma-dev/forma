@@ -118,12 +118,14 @@ describe('component binding identity extraction', () => {
       expect(()=>analyze(`export function Counter(){const [n,setN]=createSignal(1);${statement}return h('p',null,n);}`)).toThrow(/pre-return/);
     }
     const effects = `import {createEffect} from '@getforma/core';`;
-    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>setN(2));return h('p',null,n);}`)).toThrow(/effect writes/);
-    expect(()=>analyze(effects+`export function Counter(p){createEffect(()=>{p.title='changed';});return h('p',null,p.title);}`,['title'])).toThrow(/effect mutates/);
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>setN(2));return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(effects+`export function Counter(p){createEffect(()=>{p.title='changed';});return h('p',null,p.title);}`,['title'])).toThrow(/BUILD-610/);
     expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>{n();});return h('button',{onClick:()=>setN(2)},n);}`)).not.toThrow();
-    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);function bump(){setN(2);}createEffect(()=>bump());return h('p',null,n);}`)).toThrow(/pre-return effect call/);
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);function bump(){setN(2);}createEffect(()=>bump());return h('p',null,n);}`)).toThrow(/BUILD-610/);
     expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);function bump(){setN(2);}createEffect(bump);return h('p',null,n);}`)).toThrow(/literal callback/);
-    expect(()=>analyze(effects+`const [n,setN]=createSignal(1);class Bump{constructor(){setN(2);}}export function Counter(){createEffect(()=>new Bump());return h('p',null,n);}`)).toThrow(/pre-return effect execution/);
+    expect(()=>analyze(effects+`const [n,setN]=createSignal(1);class Bump{constructor(){setN(2);}}export function Counter(){createEffect(()=>new Bump());return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>{createEffect(()=>setN(2));});return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(`const [n,setN]=createSignal(1);const object={get value(){setN(2);return 0;}};export function Counter(){const ignored=object.value;return h('p',null,n);}`)).toThrow(/BUILD-610/);
     expect(()=>analyze(`import {onCleanup} from '@getforma/core';export function Counter(){const [n,setN]=createSignal(1);function dispose(){setN(2);}onCleanup(dispose);return h('button',{onClick:()=>setN?.(3)},n);}`)).not.toThrow();
     const modules: Record<string,string> = {
       './store': head+'export const [count,setCount]=createSignal(1);',
@@ -131,6 +133,10 @@ describe('component binding identity extraction', () => {
     };
     expect(()=>analyzeIslandBindings(head+effects+'import {update} from "./barrel";export function Counter(){createEffect(()=>update(2));return h("p",null,"fixed");}', '/page.ts', 'Counter', {
       props:[],loadModule:(_from,specifier)=>({path:specifier,source:modules[specifier]!}),
-    })).toThrow(/effect writes/);
+    })).toThrow(/BUILD-610/);
+  });
+  it('does not retain canonical captures for harmless unused reads validated before return',()=>{
+    const result=analyze('const [unused,setUnused]=createSignal(1);const [used,setUsed]=createSignal(2);export function Counter(){const ignored=unused();return h("p",null,used);}');
+    expect(result.bindings).toEqual([{kind:'capture',value:2},{kind:'text',value:{kind:'capture',id:0,path:[]}}]);
   });
 });

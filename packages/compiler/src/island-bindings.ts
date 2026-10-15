@@ -354,85 +354,42 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       } else render(fn.body, env, records);
     } finally { activeFunctions.delete(fn); }
   }
-  function getter(node: t.Node, env: Environment, seen = new Set<Binding>()): boolean {
-    if (!t.isIdentifier(node)) return false;
-    const local = env.module.references.get(node);
-    if (!local || seen.has(local)) return false; seen.add(local);
-    const value = env.values.get(local);
-    if (value && typeof value !== 'function' && value.kind === 'signal') return true;
-    const declaration = local.path.node;
-    if (t.isVariableDeclarator(declaration) && t.isIdentifier(declaration.init)) return getter(declaration.init, env, seen);
-    return !!signal(local, env.module, node);
-  }
   function rejectInitializerWrites(node: t.Node, env: Environment): void {
-    // Creating a function does not execute its body. All other initializer
-    // expressions execute before return even if their result is never read.
-    if (t.isFunction(node)) return;
-    if (t.isCallExpression(node) && !(node.arguments.length === 0 && getter(node.callee, env))) fail(env.module, node, 'unsupported pre-return initializer call; native bindings require closed execution');
-    if (t.isNewExpression(node) || t.isOptionalCallExpression(node) || t.isTaggedTemplateExpression(node) || t.isAssignmentExpression(node) || t.isUpdateExpression(node) || t.isAwaitExpression(node) || t.isYieldExpression(node) || t.isUnaryExpression(node,{operator:'delete'})) fail(env.module, node, 'unsupported pre-return initializer execution');
-    for (const key of t.VISITOR_KEYS[node.type] ?? []) {
-      const child = (node as unknown as Record<string,unknown>)[key];
-      for (const value of Array.isArray(child) ? child : [child]) if (value && typeof value === 'object' && 'type' in value) rejectInitializerWrites(value as t.Node,env);
+    // A function or identifier value is read without executing it. Every
+    // other evaluated initializer must belong to the same closed expression
+    // grammar as a native binding; that grammar never invokes accessors,
+    // constructors, arbitrary helpers, optional calls, or nested effects.
+    if (isFunction(node)) return;
+    if (t.isIdentifier(node)) { binding(node, env); return; }
+    const savedIds = new Map(captureIds), savedCount = captures.length;
+    try { expression(node, env); }
+    catch (error) {
+      if (error instanceof PropsSchemaError) fail(env.module, node, `unsupported pre-return execution: ${error.message}`);
+      throw error;
+    } finally {
+      // A harmless unused read must not acquire a canonical capture ordinal.
+      captureIds.clear(); for (const [binding, id] of savedIds) captureIds.set(binding, id);
+      captures.length = savedCount; captureValues.length = savedCount;
     }
-  }
-  function setter(node: t.Node, env: Environment, seen = new Set<Binding>(), exports = new Set<string>()): boolean {
-    if (!t.isIdentifier(node)) return false;
-    if (coreName(node, env.module)) return false;
-    const local = env.module.references.get(node); if (!local || seen.has(local)) return false; seen.add(local);
-    const declaration = local.path.node;
-    if (t.isImportSpecifier(declaration) && declaration.importKind !== 'type') {
-      const statement = local.path.parentPath?.node;
-      if (!t.isImportDeclaration(statement) || statement.importKind === 'type') return false;
-      const loaded = options.loadModule?.(env.module.file, statement.source.value);
-      if (!loaded) return false;
-      return exportedSetter(module(loaded.source, loaded.path), name(declaration.imported)!, exports);
-    }
-    if (!t.isVariableDeclarator(declaration)) return false;
-    if (t.isIdentifier(declaration.init)) return setter(declaration.init, env, seen, exports);
-    return t.isArrayPattern(declaration.id) && declaration.id.elements[1] === local.identifier
-      && t.isCallExpression(declaration.init) && coreName(declaration.init.callee, env.module) === 'createSignal';
-  }
-  function exportedSetter(owner: Module, exported: string, seen: Set<string>): boolean {
-    const key = `${owner.file}\0${exported}`;
-    if (seen.has(key)) return false; seen.add(key);
-    const follow = (specifier: string, requested: string): boolean => {
-      const loaded = options.loadModule?.(owner.file, specifier);
-      return !!loaded && exportedSetter(module(loaded.source, loaded.path), requested, seen);
-    };
-    const local = (requested: string): boolean => {
-      const candidate = owner.scope.getBinding(requested);
-      return !!candidate && setter(candidate.identifier, environment(owner), new Set(), seen);
-    };
-    for (const statement of owner.ast.program.body) {
-      if (t.isExportAllDeclaration(statement) && statement.exportKind !== 'type' && follow(statement.source.value, exported)) return true;
-      if (!t.isExportNamedDeclaration(statement) || statement.exportKind === 'type') continue;
-      if (t.isVariableDeclaration(statement.declaration)) {
-        for (const declaration of statement.declaration.declarations) {
-          if (Object.hasOwn(t.getBindingIdentifiers(declaration.id), exported)) return local(exported);
-        }
-      }
-      for (const specifier of statement.specifiers) {
-        if (t.isExportSpecifier(specifier) && specifier.exportKind !== 'type' && name(specifier.exported) === exported) {
-          return statement.source ? follow(statement.source.value, specifier.local.name) : local(specifier.local.name);
-        }
-      }
-    }
-    return false;
   }
   function rejectBindingWrites(node: t.Node, env: Environment): void {
-    if (t.isFunction(node)) return; // A nested function is a deferred value.
-    if (t.isNewExpression(node) || t.isOptionalCallExpression(node) || t.isTaggedTemplateExpression(node) || t.isAwaitExpression(node) || t.isYieldExpression(node) || t.isUnaryExpression(node,{operator:'delete'})) fail(env.module, node, 'unsupported pre-return effect execution');
-    if (t.isCallExpression(node) && setter(node.callee, env)) fail(env.module, node, 'pre-return effect writes a signal used by native rendering');
-    if (t.isCallExpression(node) && coreName(node.callee, env.module) !== 'createEffect' && !(node.arguments.length === 0 && getter(node.callee, env))) fail(env.module, node, 'unsupported pre-return effect call; helper and external effects cannot prove a stable native seed');
-    if (t.isAssignmentExpression(node) || t.isUpdateExpression(node)) {
-      let target: t.Node = t.isAssignmentExpression(node) ? node.left : node.argument;
-      while (t.isMemberExpression(target)) target = target.object;
-      if (t.isIdentifier(target) && env.module.references.has(target)) fail(env.module, node, 'pre-return effect mutates a lexical binding');
+    if (t.isBlockStatement(node)) { for (const statement of node.body) rejectBindingWrites(statement, env); return; }
+    if (t.isExpressionStatement(node)) { rejectInitializerWrites(node.expression, env); return; }
+    if (t.isVariableDeclaration(node)) {
+      for (const declaration of node.declarations) {
+        if (!t.isIdentifier(declaration.id)) fail(env.module, declaration, 'pre-return effect locals need simple identifiers');
+        if (declaration.init) rejectInitializerWrites(declaration.init, env);
+      }
+      return;
     }
-    for (const key of t.VISITOR_KEYS[node.type] ?? []) {
-      const child = (node as unknown as Record<string, unknown>)[key];
-      for (const value of Array.isArray(child) ? child : [child]) if (value && typeof value === 'object' && 'type' in value) rejectBindingWrites(value as t.Node, env);
+    if (t.isReturnStatement(node)) { if (node.argument) rejectInitializerWrites(node.argument, env); return; }
+    if (t.isEmptyStatement(node) || t.isFunctionDeclaration(node)) return;
+    if (t.isIfStatement(node)) {
+      rejectInitializerWrites(node.test, env); rejectBindingWrites(node.consequent, env);
+      if (node.alternate) rejectBindingWrites(node.alternate, env); return;
     }
+    if (t.isExpression(node)) { rejectInitializerWrites(node, env); return; }
+    fail(env.module, node, 'unsupported pre-return effect statement; execution must be closed');
   }
   function registration(callee: t.Node, env: Environment): string | undefined {
     const localName = name(callee); if (!localName) return undefined;
