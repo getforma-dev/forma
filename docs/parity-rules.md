@@ -101,6 +101,29 @@ that still refuses).
 | Rust | `crate::text::normalized_chars(&str)` (an iterator; crate-private) and `normalize_text(&str) -> Cow<str>` for already-owned strings | `push_escaped_html`, `push_escaped_attr`, `write_text_only` (leading-LF rule on the normalized text), the `pre`/`listing` boundary (`WalkState::pre_boundary`), `Prop::control_text`, `SelectBinding`, option-by-text matching; `is_dangerous_url` refuses a raw NUL |
 | TypeScript | `normalizeDomText(string)` in `packages/core/src/dom/normalize-text.ts` (not a package export; inside the package import `./normalize-text.js`; its consumer beyond the writers is core's adoption, where FORMA-181's `key-text.ts` builds key text) | `createText`; `h()` string children on the single, multiple, reactive scalar and reactive array paths; generic, class and `xlink:` attributes, static and dynamic; `writeFormControlProperty` and `childText`; adoption text and attribute expectations and later writes; the control oracle's expected defaults; the materializer; `isDangerousUrl` refuses a raw NUL |
 
+**Keyed rows (FORMA-181, DR-8).** A `LIST` named by FMIR section `0x0006` is
+keyed: the walker reads each row's value at the key path and writes its
+canonical text as the row root's `data-forma-key`, and core's adoption
+matches rows by that text. The identity domain is a string or a safe
+integer. A string key is `N(s)` of rule 1, applied to the key text (the key
+as data in the state envelope stays exact); a number key must be an integer
+within ±(2^53 − 1) and prints as its decimal integer, `-0` as `0`. So `1` and
+`"1"` are one row, `1` and `"01"` are two, and `"a\r\nb"` and `"a\nb"` are one.
+`null`, booleans, arrays, objects, fractions, infinities and NaN are not
+identities: the walker refuses the render (`RENDER-503`) and core refuses the
+value. The path is read against the row's own fields only (every segment but
+the last an object field, the last an identity; missing, repeated or
+non-object refuses), and two rows of one list execution with the same
+canonical text are duplicates. Rust: `crates/forma-ir/src/keys.rs`
+(`canonical_list_key`, through `text::normalize_text`); TypeScript:
+`packages/core/src/dom/key-text.ts` (`canonicalKeyText`, through
+`normalizeDomText`, plus the unpaired-surrogate refusal a Rust string cannot
+express). Shared vectors: `crates/forma-ir/tests/fixtures/parity/keys.json`
+(`values`, `collisions`, `paths`), read by `crates/forma-ir/src/keys.rs` tests
+and `packages/core/src/dom/__tests__/key-text.test.ts`; the actual
+compiler-to-walker key HTML is pinned by `crates/forma-ir/tests/island_emitter.rs`
+and the `list-same-source` golden of the js-emitter contract.
+
 The output budget counts the bytes actually written: a NUL grows from one byte
 to three, so the escapers check each normalized character's encoded length
 against the limit. Verified by: `crates/forma-ir/src/walker.rs` >

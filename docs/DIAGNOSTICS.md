@@ -590,8 +590,14 @@ concatenation or arithmetic, a captured or reassigned binding, an empty string-l
 (`row['']`), a path deeper than 32 segments, a key callback with more than one return path (its
 body must be an expression, or variable declarations and exactly one `return`), or a
 `createList` call that does not resolve to the core import (a local function of that name, or an
-ambiguous lowered position). Whether a segment must name a declared field of the row's schema
-type is decided with native key rendering and adoption (checkpoints B and C), not here. This
+ambiguous lowered position). A segment is not checked against the row's declared schema type
+here or at render: the proof is lexical, the walker binds data rather than types, and closed
+local rows and signal-seeded rows have no schema at all, so the one rule that covers every
+list is the data-level one the walker applies to each row at render (`RENDER-503`): every
+segment but the last must name a field of the row holding an object, the last a field holding
+a string or a safe integer; a missing field, a field declared twice, a non-object on the way,
+or `null`, a boolean, an array, an object, a fraction, an infinity or NaN at the end refuses
+the whole render (decided at checkpoint B, 2026-10-15). This
 refusal is mandatory without strict mode. The legacy
 shape checks keep their precedence: a call missing its row callback, or whose row callback is
 not an inline function with a named parameter, still reports BUILD-107 and ends with BUILD-610.
@@ -961,6 +967,7 @@ route's Forma code is over the ceiling, leaving no output".
 | --- | --- | --- |
 | RENDER-501 | island snapshot | Declared ordered input mapping or projected value is invalid; includes route, component and field path. No partial page is returned. |
 | RENDER-502 | island snapshot | Complete escaped UTF-8 state envelope exceeds 1,048,576 bytes, including envelope/commas/escapes. Exactly the limit is accepted. |
+| RENDER-503 | keyed list row | FORMA-181 (DR-8): a `LIST` named by FMIR section `0x0006` writes each row's canonical key (`docs/parity-rules.md`, "Keyed rows") as the row root's `data-forma-key`. The render is refused, naming the LIST's bytecode offset, the zero-based row and the key path, when the row's value at the path is missing, declared twice, behind a non-object, or not a string or a safe integer; when two rows of one list execution share a canonical key (both row ordinals are named); when the row renders anything but exactly one root element at its own level; or when that root carries an authored `data-forma-key`. The whole page is refused: no partial list reaches a client that could not adopt it. The walker's `IrError::InvalidListKey` carries the same fields. |
 
 State is captured before an island body runs, so later list-row changes cannot alter an earlier occurrence. Only declared fields are disclosed; absent/null optional object fields are omitted and optional array positions remain null. Final response size includes the state script and all document metadata; exceeding the inherited/request output limit returns the existing `RENDER-301`. Body-only work counts remain available on that error.
 
