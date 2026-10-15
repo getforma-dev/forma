@@ -30,3 +30,6 @@ crates/forma-server/tests/fixtures/frame/** -text
 # output (packages/build/tests/service-worker.test.ts), so checkout must never
 # rewrite their line endings (Windows runners check text out with CRLF).
 packages/build/tests/fixtures/** -text
+
+# Canonical FMIR dumps compare byte-for-byte across Rust and TypeScript.
+crates/forma-ir/tests/fixtures/js-emitter/*.dump text eol=lf
