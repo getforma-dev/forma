@@ -344,7 +344,8 @@ function handleClass(el: Element, _key: string, value: unknown): void {
  * Uses camelCase keys for CSSOM assignment via Object.assign(el.style, ...).
  * This avoids el.style.cssText which is blocked by strict CSP style-src policies.
  */
-function parseCssString(css: string): Record<string, string> {
+/** @internal Source-private shared CSS grammar; not a package export. */
+export function parseCssString(css: string): Record<string, string> {
   const obj: Record<string, string> = {};
   for (const decl of css.split(';')) {
     const colon = decl.indexOf(':');
@@ -361,7 +362,8 @@ function parseCssString(css: string): Record<string, string> {
 }
 
 /** Apply a style object to an element via CSSOM (CSP-safe). */
-function applyStyleObj(el: Element, obj: Record<string, string>, prevKeys: string[]): string[] {
+/** @internal Source-private shared CSSOM writer; not a package export. */
+export function applyStyleObj(el: Element, obj: Record<string, string>, prevKeys: string[]): string[] {
   const style = (el as HTMLElement | SVGElement).style;
   const nextKeys = Object.keys(obj);
   for (const k of prevKeys) {
