@@ -1002,24 +1002,41 @@ invalid. The build fails before replacing the prior output.
 **Fix.** Generate the worker from the completed manifest after final asset bytes
 are written. Do not substitute a filename hash or an abbreviated digest.
 
-### BUILD-819 A route's Forma code is over N2's ceiling
+### BUILD-819 A route is over its size ceiling
 
-What the route loads cold (its `js` files and their `modulepreload` dependencies)
-carries more than 25,500 B gzip -9 of Forma's code, `@getforma/core` and
-`alien-signals` as bundled, plus the identity banner `@getforma/build` writes at the
-top of every JavaScript file (about 30 B gzip for each file the route loads cold),
-attributed from the bundler's metafile (each input's
-share of the file's raw bytes, applied to its compressed size), or a file the
-manifest names for the route was written by no bundling pass, so its Forma code
-cannot be attributed. N2 as restated by decision brief L-55 (DR-35's fallback):
-the ceiling is Forma's code, the application's own is outside it, Brotli is
-reported beside it, and 1 KB is 1,000 B. The build fails before writing its
-output, and the report above the failure shows every route's figures.
+The build classifies every route (DR-35) and holds it to its class's ceilings,
+in gzip -9 bytes with 1 KB = 1,000 B and 1 KiB = 1,024 B (N2, restated by
+decision brief L-55):
 
-**Fix.** Trim what the route imports from `@getforma/core`, or split the route;
-the ceiling is policy, not an option. Verified by
-`packages/build/tests/route-size.test.ts` > "fails the build with BUILD-819 when a
-route's Forma code is over the ceiling, leaving no output".
+| Class | Chosen by | Forma's code | All of the route's JavaScript |
+| --- | --- | --- | --- |
+| `no-interactive-region` | a server-rendered route whose page has no island, or a route that lists no script | none | none: a service worker counted |
+| `islands` | a server-rendered route with at least one island | 25,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
+| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as islands |
+
+Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed from
+the bundler's metafile (each input's share of the file's raw bytes, applied to
+its compressed size), plus the identity banner `@getforma/build` writes at the
+top of every JavaScript file (about 30 B gzip for each file the route loads
+cold); Brotli is reported beside it. A route's JavaScript is the
+`js` files and static `modulepreload` dependencies the manifest lists for it,
+plus the generated `sw.js` when the route lists any script, since forma-server
+writes the worker's registration only on a page that publishes a JavaScript
+entry. The build fails before writing its output, naming each route over a
+ceiling with its class and bytes, and the report above the failure shows every
+route's figures. The same report is written as `size-report.json` beside
+`manifest.json` (forma-server never serves it).
+
+The error also fires when a file the manifest names for the route was written by
+no bundling pass, so its Forma code cannot be attributed.
+
+**Fix.** Trim what the route imports from `@getforma/core` or ships of its own,
+or split the route. A page that hosts many modules (a canvas) is declared with
+`canvas: true` on its route; the ceilings themselves are policy, not an option.
+Verified by `packages/build/tests/route-size.test.ts` > "S7: a route at its
+ceiling passes, a route one byte over fails naming the route and its bytes" and
+"fails the build with BUILD-819 when a route's Forma code is over the ceiling,
+leaving no output".
 
 ### Native island request state
 
