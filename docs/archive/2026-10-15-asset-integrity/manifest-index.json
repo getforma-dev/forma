@@ -112,5 +112,25 @@
     "metadataOnlyEmptyFilePlaceholders": [
       "app.js"
     ]
+  },
+  {
+    "path": "scripts/fixtures/renderer-window/newer/manifest.json",
+    "originalSha256": "2bc876c0c6b0241fab486250f52d3ffd5169bcb5d06138c2701bbf0f77c9b49e",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "scripts/fixtures/renderer-window/patch/manifest.json",
+    "originalSha256": "2bc876c0c6b0241fab486250f52d3ffd5169bcb5d06138c2701bbf0f77c9b49e",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "scripts/fixtures/renderer-window/older/manifest.json",
+    "originalSha256": "2bc876c0c6b0241fab486250f52d3ffd5169bcb5d06138c2701bbf0f77c9b49e",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "scripts/fixtures/renderer-window/same/manifest.json",
+    "originalSha256": "2bc876c0c6b0241fab486250f52d3ffd5169bcb5d06138c2701bbf0f77c9b49e",
+    "metadataOnlyEmptyFilePlaceholders": []
   }
 ]
