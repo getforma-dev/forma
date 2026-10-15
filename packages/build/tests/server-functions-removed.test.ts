@@ -51,7 +51,10 @@ describe.each([false, true])('server functions removed (codeSplitting=%s)', code
   });
   it('rejects a watch edit without shipping its server code and recovers on the next edit', async () => {
     const f = fixture('export const label = "public-before";');
-    await watching({ ...f.config, codeSplitting }, async ({ manifest, output }) => {
+    await watching({ ...f.config, codeSplitting }, async ({ manifest, output, ready, change }) => {
+      // Manifest publication precedes esbuild's initial watch snapshot. Wait for
+      // that snapshot so this edit cannot become the watcher's new baseline.
+      await ready();
       await vi.waitFor(() => {
         expect(manifest().build).toBe('dev');
         expect(readFileSync(join(f.outputDir, 'app.js'), 'utf8')).toContain('public-before');
@@ -59,11 +62,11 @@ describe.each([false, true])('server functions removed (codeSplitting=%s)', code
       const bundle = join(f.outputDir, 'app.js');
       const before = readFileSync(bundle, 'utf8');
       expect(before).toContain('public-before');
-      writeFileSync(f.entry, '"use server"; export const label = "private-after";');
+      await change(() => writeFileSync(f.entry, '"use server"; export const label = "private-after";'));
       await vi.waitFor(() => expect(output()).toContain('BUILD-808'), { timeout: 10_000 });
       // esbuild may remove the old output on an error; it must not publish private code.
       if (existsSync(bundle)) expect(readFileSync(bundle, 'utf8')).toBe(before);
-      writeFileSync(f.entry, 'export const label = "public-recovered";');
+      await change(() => writeFileSync(f.entry, 'export const label = "public-recovered";'));
       await vi.waitFor(() => expect(readFileSync(bundle, 'utf8')).toContain('public-recovered'), { timeout: 10_000 });
       expect(readFileSync(bundle, 'utf8')).not.toContain('private-after');
     });

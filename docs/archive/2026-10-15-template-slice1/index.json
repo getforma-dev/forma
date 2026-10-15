@@ -1,0 +1,90 @@
+[
+  {
+    "path": "packages/create-app/templates/minimal/src/main.rs",
+    "sha256": "527ab0341b29621ae6b26d455b818851907d8fbcefc3d95067b900026ad6d81f"
+  },
+  {
+    "path": "packages/create-app/templates/minimal/Cargo.toml",
+    "sha256": "ad780ef8a150f1fe06316c4f9cc23b37e0c32dd9a682ff72455739387919154f"
+  },
+  {
+    "path": "packages/create-app/templates/minimal/Cargo.lock",
+    "sha256": "0a7026d5d2fe9127c34377848d35f1b57b187de054d84a37a1ef780e2cb7798e"
+  },
+  {
+    "path": "packages/create-app/templates/minimal/admin/package.json",
+    "sha256": "139eee60b76a092d8a65d7667262ba4fa48fa6de6a7e7a343abbe0b895beb6db"
+  },
+  {
+    "path": "packages/create-app/templates/minimal/admin/package-lock.json",
+    "sha256": "7f3b3288283f556b1e7fc40014635da412bb08a589b9c5a325afb782f741fbaf"
+  },
+  {
+    "path": "packages/create-app/templates/minimal/README.md",
+    "sha256": "520742acb75448c7d64b27c0f0d45444f894847228292b0bdb9aea8836746021"
+  },
+  {
+    "path": "packages/create-app/templates/dashboard/src/main.rs",
+    "sha256": "b64ec04e23bc48f330d7ec53500705502773a548091ca6138ff6c364ca906b2b"
+  },
+  {
+    "path": "packages/create-app/templates/dashboard/Cargo.toml",
+    "sha256": "d4e1cc48de34b18e89a10aff737fbfa6d4f7ee7e59d50044f01cb75ee456bb24"
+  },
+  {
+    "path": "packages/create-app/templates/dashboard/Cargo.lock",
+    "sha256": "577460634cbc5e64c3cd20b3f8c7119242310ff7019952740d9fa18ced089b9e"
+  },
+  {
+    "path": "packages/create-app/templates/dashboard/admin/package.json",
+    "sha256": "c13c6a133276615cbfeec7c89eb4fc8ba8c64ed36145e568207334606350025a"
+  },
+  {
+    "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
+    "sha256": "87d9e8dad47f41e752c6eda525c2ac21ca6d50dfc3915498ae884bed9548e66e"
+  },
+  {
+    "path": "packages/create-app/templates/dashboard/README.md",
+    "sha256": "eef3a3a1d92ab7da4bdbce133c79505aef32e74cb0961ecc4f085dadf05d2b15"
+  },
+  {
+    "path": "packages/create-app/templates/minimal/admin/src/home/app.tsx",
+    "sha256": "6e7a5780b61650c29a287052440c464c48a0204ec719eea9811fe9b0de8465be"
+  },
+  {
+    "path": "packages/create-app/templates/minimal/admin/build.ts",
+    "sha256": "942053bbf3f9e5efc555d61b4c1c708c2e29b1fd7a9e8280f008e24f1153857f"
+  },
+  {
+    "path": "scripts/fixtures/candidate-templates/minimal.rs",
+    "sha256": "bc6a57489a2d9e0fd2dd3d02bc5dd16d7decb757045cabcee966e6d23135be54"
+  },
+  {
+    "path": "scripts/fixtures/candidate-templates/dashboard.rs",
+    "sha256": "9572945d0c002c96985480aab621ce477264ffc111380859f7b21ec9188c0a96"
+  },
+  {
+    "path": "scripts/fixtures/candidate-templates/README.md",
+    "sha256": "f3a3d8517477d855f6ae273d1a4b43b1f59b8e59fb4d5d9390e720fe00cda3ae"
+  },
+  {
+    "path": "packages/create-app/README.md",
+    "sha256": "b6af29f67f80a21663e7df641e18c29829b9c63395e67b023eb725b3fe01c15d"
+  },
+  {
+    "path": "packages/create-app/docs/RENDERING-PHASES.md",
+    "sha256": "8262cf27a76e9a719453ffef643636fdbd77ae5c36849011e4915c31813211f7"
+  },
+  {
+    "path": "packages/create-app/docs/TEMPLATES.md",
+    "sha256": "903fa9303208dd6896cb193563e3332c6c4b1a721925cb0c798bae8502da867f"
+  },
+  {
+    "path": "packages/create-app/tests/templates.test.ts",
+    "sha256": "35c31baa469fd709f91c3ee9e2f14ddfb93abe503bc943bb43e72b05f5199701"
+  },
+  {
+    "path": "packages/create-app/CHANGELOG.md",
+    "sha256": "326dbc92027af98c6c5fa264fa1431838c90806f33423be7799212df0806e576"
+  }
+]

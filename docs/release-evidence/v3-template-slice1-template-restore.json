@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "success": true,
+  "before": {
+    "packages/create-app/templates/minimal/src/main.rs": "03f785e271eec6a75b21d870b4302320a552aee763de8c967691e9ea37262998",
+    "packages/create-app/templates/minimal/Cargo.toml": "56ce7681445b85d1a506f43feb31b273919dd997508839fd731d35a27515f871",
+    "packages/create-app/templates/minimal/Cargo.lock": "19c153c557019ea0a21ed741b113181864772d67087a4a7eb0321de8f96c8ec1",
+    "packages/create-app/templates/minimal/admin/package.json": "1fed5df88d434fd4192dd5eee9258b3d37a760f4124813f6bc28d4ebb824eccb",
+    "packages/create-app/templates/minimal/admin/package-lock.json": "f069f5b1f2471746289b9d35efb4f7aeb9c3084c4f254eabf49568661a064f31",
+    "packages/create-app/templates/dashboard/src/main.rs": "8ea57590fdf23205ef3cc4b9a1e92bab0b99094445f4a66248f94b2e11cdb687",
+    "packages/create-app/templates/dashboard/Cargo.toml": "5d5495a91207bbd7f37185047c34e49a0cfef52631a656d53a276947bcce4d20",
+    "packages/create-app/templates/dashboard/Cargo.lock": "89b1fd4feae0fb0bcf50dadadedef60a80d268f03c6ae6bfa57e90f5e708e2f8",
+    "packages/create-app/templates/dashboard/admin/package.json": "6e2f2931cc495532d42e6389a83ea13094ed75854cfe02e9fb6bdd5fe7c9b2c0",
+    "packages/create-app/templates/dashboard/admin/package-lock.json": "6933b09c56c73269f6eb98753d8f02c71178a127fc31060c261328e71fa65722"
+  },
+  "after": {
+    "packages/create-app/templates/minimal/src/main.rs": "03f785e271eec6a75b21d870b4302320a552aee763de8c967691e9ea37262998",
+    "packages/create-app/templates/minimal/Cargo.toml": "56ce7681445b85d1a506f43feb31b273919dd997508839fd731d35a27515f871",
+    "packages/create-app/templates/minimal/Cargo.lock": "19c153c557019ea0a21ed741b113181864772d67087a4a7eb0321de8f96c8ec1",
+    "packages/create-app/templates/minimal/admin/package.json": "1fed5df88d434fd4192dd5eee9258b3d37a760f4124813f6bc28d4ebb824eccb",
+    "packages/create-app/templates/minimal/admin/package-lock.json": "f069f5b1f2471746289b9d35efb4f7aeb9c3084c4f254eabf49568661a064f31",
+    "packages/create-app/templates/dashboard/src/main.rs": "8ea57590fdf23205ef3cc4b9a1e92bab0b99094445f4a66248f94b2e11cdb687",
+    "packages/create-app/templates/dashboard/Cargo.toml": "5d5495a91207bbd7f37185047c34e49a0cfef52631a656d53a276947bcce4d20",
+    "packages/create-app/templates/dashboard/Cargo.lock": "89b1fd4feae0fb0bcf50dadadedef60a80d268f03c6ae6bfa57e90f5e708e2f8",
+    "packages/create-app/templates/dashboard/admin/package.json": "6e2f2931cc495532d42e6389a83ea13094ed75854cfe02e9fb6bdd5fe7c9b2c0",
+    "packages/create-app/templates/dashboard/admin/package-lock.json": "6933b09c56c73269f6eb98753d8f02c71178a127fc31060c261328e71fa65722"
+  }
+}

@@ -20,9 +20,14 @@ test('SR13 missing or unreadable status refuses publication', () => {
   for (const response of [null, {}, { workflow_runs: [] }, { workflow_runs: 'unreadable' }]) assert.throws(() => selectRun(response, sha, repo));
 });
 test('SR13 a skipped or missing R17/probe job cannot be a successful gate', () => {
-  const jobs = [{ name: 'check', status: 'completed', conclusion: 'success', steps: [{ name: "R17's command", conclusion: 'success' }] }, { name: 'release-workflow', status: 'completed', conclusion: 'success' }];
+  const jobs = [{ name: 'check', status: 'completed', conclusion: 'success', steps: [{ name: "R17's command", conclusion: 'success' }] }, ...['release-workflow','candidate-pack','candidate-scaffold (ubuntu-latest)','candidate-scaffold (windows-latest)'].map(name=>({name,status:'completed',conclusion:'success',steps:[{name:name==='candidate-pack'?'Pack committed candidates and record ten-file restoration':'Packed candidate full scaffold suite',conclusion:'success'}]}))];
   checkJobs({ jobs });
   for (const bad of [[], [{ ...jobs[0], conclusion: 'skipped' }, jobs[1]], [{ ...jobs[0], steps: [] }, jobs[1]], [jobs[0]]]) assert.throws(() => checkJobs({ jobs: bad }));
+  for (const name of ['candidate-pack','candidate-scaffold (ubuntu-latest)','candidate-scaffold (windows-latest)']) {
+    assert.throws(()=>checkJobs({jobs:jobs.filter(job=>job.name!==name)}),/did not run/);
+    for(const conclusion of ['skipped','failure','cancelled'])assert.throws(()=>checkJobs({jobs:jobs.map(job=>job.name===name?{...job,conclusion}:job)}),/did not run/);
+    assert.throws(()=>checkJobs({jobs:jobs.map(job=>job.name===name?{...job,steps:[]}:job)}),/step did not execute/);
+  }
 });
 test('a live tag cannot publish mixed A2 versions, dev versions or a partial set', () => {
   const packages = Array.from({ length: 7 }, (_, i) => ({ name: `package-${i}`, version: '3.0.0-alpha.1' }));
@@ -46,7 +51,8 @@ test('version preparation changes seven manifests, exact internal requirements a
   assert.equal(json(join(ROOT, 'packages/core/package.json')).version, before, 'pure preparation must not alter source');
   const dev = versionFiles(ROOT, '3.0.1-dev');
   assert(dev.get('Cargo.toml').includes('3.0.1-dev'));
-  assert(![...dev.keys()].some(p => p.includes('/templates/')), 'development alignment must preserve A2 template pins');
+  assert.match(dev.get('packages/create-app/templates/minimal/Cargo.toml'), /forma-ir = "=3.0.1-dev"/);
+  assert.equal(JSON.parse(dev.get('packages/create-app/template-lock-seeds.json')).version, '3.0.1-dev');
 });
 test('version preparation keeps every Cargo workspace aligned without changing external pins', () => {
   const paths = ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock'];

@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "ticket": "FORMA-144",
+  "slice": 1,
+  "stage": "source-and-seed-boundary",
+  "acceptedDependencySource": "ac7c51bf86a553fd5ce338f8660341c0b4480cd4",
+  "seedClosureSource": {
+    "record": "docs/release-evidence/v3-asset-integrity-set.json",
+    "archive": "getforma-create-app-3.0.0-dev.tgz",
+    "sha256": "7f00b6d8d221dbbf86bce4dbd21fdbb2d475af2e85c79cbbd165433c2393bece"
+  },
+  "archiveEntriesVerified": 22,
+  "externalEntries": {
+    "minimal": {
+      "npmPreserved": 49,
+      "cargoPreserved": 102,
+      "cargoRootPreserved": true,
+      "additionalNpmEntries": 111,
+      "additionalCargoEntries": 0
+    },
+    "dashboard": {
+      "npmPreserved": 106,
+      "cargoPreserved": 102,
+      "cargoRootPreserved": true,
+      "additionalNpmEntries": 33,
+      "additionalCargoEntries": 0
+    }
+  },
+  "qualification": {
+    "createAppTestsPassed": 145,
+    "heavyScaffoldCasesNotRunAtThisCheckpoint": 16,
+    "releaseBoundaryTestsPassed": 27,
+    "workspaceBuilds": [
+      "core",
+      "compiler",
+      "build",
+      "create-app"
+    ],
+    "actualScaffoldCompiler": {
+      "diagnostics": 0,
+      "islands": 0,
+      "serverSlot": "count",
+      "slotType": "number"
+    },
+    "pending": [
+      "actual packed handler count 7 before JavaScript",
+      "unconditional Linux and Windows candidate scaffold jobs",
+      "full gate and fresh DS11/P17",
+      "hosted exact-head CI",
+      "FORMA-144 slices 2 and 3"
+    ]
+  },
+  "liveReleaseReady": false
+}

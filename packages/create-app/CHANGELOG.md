@@ -2,10 +2,17 @@
 
 ## [Unreleased]
 
+### Changed — FORMA-144 slice 1
+
+- Source templates now call the current typed Pages API, bind declared props and finalize before listening. Minimal declares a numeric count in TypeScript and Rust; dashboard remains explicitly browser-rendered.
+- Remove the temporary whole-source packaging adapter. Identified source lock seeds retain external checksums and exact coordinated internal versions; packaging supplies only actual candidate archive hashes and restores every source file. Version preparation supports development, prerelease and stable seeds without fabricated hashes.
+- Whole-page mount remains in this slice. Island state adoption and the broader template redesign are still pending; this is not release publication readiness.
+
+
 ### Changed — FORMA-112
 
 - Scaffold a separate deterministic APP_NAME for manifest 2, preserving all accepted project names and keeping normalized names distinct with a digest suffix.
-- Development source templates retain A2 pins; packing stages the exact npm/Cargo candidate requirements, checksums and new recorded external runtime closure, then restores source bytes. Final template API migration remains FORMA-144.
+- Packing stages exact npm/Cargo candidate requirements, checksums and recorded external runtime closure, then restores source bytes. The subsequent FORMA-144 slice 1 entry above supersedes the temporary A2 source-template policy.
 
 ### Changed
 
@@ -88,8 +95,8 @@ The templates move onto release A2, the bridge to 3.0.0 (published
   longer says the compiler's resolver fixes are unpublished (they shipped in
   0.3.0 on 2026-08-06); `templates/dashboard/README.md`'s measurement table
   no longer says the template pins a compiler.
-  Verified by `tests/templates.test.ts` > "pins frontend dependencies at or above the versions whose fixes it needs"
-  Verified by `tests/templates.test.ts` > "pins @getforma/compiler, which is what emits the IR"
+  Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "pins frontend dependencies at or above the versions whose fixes it needs"
+  Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "pins @getforma/compiler, which is what emits the IR"
 - **Both templates' READMEs say what WebKit logs in a debug build** (the A2
   audit's S6): one console error per page, "… was delivered in report-only
   mode, but does not specify a 'report-to'", because forma-server 0.2.2 sends
@@ -150,14 +157,14 @@ The templates move onto release A2, the bridge to 3.0.0 (published
   `/` answers the handler's 500, with no `RENDER-` text and no shell in the
   body, and the log names `code="RENDER-301"` and `route="/"` (`withServer`
   now captures the server's output).
-  Verified by `tests/templates.test.ts` > "renders every page with try_render or render_browser_shell and sends its PageResponse, so no-store travels with the nonce"
-  Verified by `tests/templates.test.ts` > "uses no API forma-server deprecates, naming config_script only as None in each PageConfig"
+  Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "renders every page with try_render or render_browser_shell and sends its PageResponse, so no-store travels with the nonce"
+  Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "uses no API forma-server deprecates, naming config_script only as None in each PageConfig"
   Verified by `tests/templates.test.ts` > "installs a tracing subscriber and logs each render error through it"
   Verified by `tests/templates.test.ts` > "builds with --strict, and leaves FORMA_STRICT working when the flag is absent"
   Verified by `tests/templates.test.ts` > "registers no service worker, and routes /sw.js to forma-server's retiring worker"
-  Verified by `tests/templates.test.ts` > "loads its IR modules with the strict loader and renders a loaded route with try_render, passing slots"
+  Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "loads its IR modules with the strict loader and renders a loaded route with try_render, passing slots"
   Verified by `tests/templates.test.ts` > "declares its entry browser-rendered (ssr: false), turns no SSR on, and offers no build:ssr script"
-  Verified by `tests/templates.test.ts` > "serves every page through render_browser_shell, by declaration, and loads no IR"
+  Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "serves every page through render_browser_shell, by declaration, and loads no IR"
   Verified by `tests/scaffold.test.ts` > "%s: every page answers no-store with a fresh nonce per fetch, and registers no service worker"
   Verified by `tests/scaffold.test.ts` > "dashboard: serves each page as its browser shell, by declaration (ssr: false)"
   Verified by `tests/scaffold.test.ts` > "minimal: build:ssr is strict: a construct the server cannot render fails the build, naming its code, file and line"
@@ -178,7 +185,7 @@ The templates move onto release A2, the bridge to 3.0.0 (published
   than once, and the scaffold gate counts the esbuild copies `npm ci`
   installs. `docs/TEMPLATES.md`'s regeneration steps now delete the copied
   `package-lock.json` before resolving.
-  Verified by `tests/templates.test.ts` > "locks one copy of each direct npm dependency, the one its own dependencies also use"
+  Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "locks one copy of each direct npm dependency, the one its own dependencies also use"
   Verified by `tests/scaffold.test.ts` > "%s: npm ci, frontend build, cargo check --locked"
 
 ### Fixed
@@ -270,7 +277,7 @@ DR-32 (ticket FORMA-008), and release A1's versions (FORMA-011). The templates
 require and lock `@getforma/core` 2.0.2, `@getforma/build` 0.3.0 and
 `forma-server` 0.2.1; the minimal template also `@getforma/compiler` 0.3.6 and
 `forma-ir` 0.2.1.
-Verified by `tests/templates.test.ts` > "pins frontend dependencies at or above the versions whose fixes it needs"
+Historical verification (archived): `../../docs/archive/2026-10-15-template-slice1/packages/create-app/tests/templates.test.ts` > "pins frontend dependencies at or above the versions whose fixes it needs"
 
 ### Changed
 
