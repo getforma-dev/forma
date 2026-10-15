@@ -77,9 +77,41 @@ export function verifyPackedCorpus(manifest, fmir) {
   const completed = output.split('\n');
   for (const name of names) assert(completed.includes(`test ${name} ... ok`), `packed corpus did not execute ${name}`);
 }
+// Required by the recorded declared-v1 props contract. Never accept an empty
+// Cargo target, a filtered/ignored check or bytes from the source compiler.
+export function verifyPackedPropsTests(manifest) {
+  const names = [
+    'actual_compiler_module_binds_by_declared_names_and_renders_two_list_views',
+    'every_request_checks_numeric_and_date_bounds_with_declared_paths',
+    'bind_errors_stop_startup_before_listener_and_keep_both_source_positions',
+    'unknown_browser_and_ambiguous_pages_refuse_binding',
+    'no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists',
+    'reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot',
+  ];
+  const args = ['test', '--locked', '--manifest-path', manifest, '--test', 'typed_pages', '--', '--color', 'never'];
+  const env = { ...process.env };
+  delete env.UPDATE_GOLDEN;
+  const options = { env };
+  const listed = run('cargo', [...args, '--list'], ROOT, options).split('\n');
+  for (const name of names) assert(listed.includes(`${name}: test`), `packed props are missing ${name}`);
+  const output = run('cargo', args, ROOT, options);
+  process.stdout.write(output);
+  const completed = output.split('\n');
+  for (const name of names) assert(completed.includes(`test ${name} ... ok`), `packed props did not execute ${name}`);
+}
+export function verifyPackedPropsFixtures(compiler, serverCrate) {
+  assert.equal(typeof compiler.generateRealIr, 'function', 'packed compiler lacks its IR emitter');
+  for (const [app, name] of [['app', 'home'], ['empty-app', 'empty'], ['empty-typed-app', 'empty-typed']]) {
+    const entry = join(ROOT, 'packages/compiler/tests/fixtures/props-contract', `${app}.ts`);
+    const emitted = compiler.generateRealIr(entry);
+    assert(emitted?.binary, `${name}: declared props compiler fell back to placeholder`);
+    assert.deepEqual(Buffer.from(emitted.binary), readFileSync(join(serverCrate, 'tests/fixtures/props-contract', `${name}.ir`)), `${name}: emitted declared props differ from packed server fixture`);
+  }
+}
 export async function verify(dir, reportPath) {
   assert(!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN, 'P17 must not have an OIDC credential');
   const started = Date.now(), set = json(join(dir, 'release-set.json'));
+  assert([null, 'declared-v1'].includes(set.contracts.props), 'P17 has no verifier for the recorded props contract');
   for (const p of set.packages) assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file}: wrong packed bytes`);
   const scratch = join(ROOT, `.release-verify-${process.pid}`);
   mkdirSync(scratch);
@@ -148,6 +180,14 @@ export async function verify(dir, reportPath) {
       }
       verifyPackedCorpus(join(scratch, 'crates/forma-ir/Cargo.toml'), set.contracts.fmir);
     });
+    if (set.contracts.props === 'declared-v1') {
+      await test('packed compiler declared props bind and render through packed typed Pages', async () => {
+        const compiler = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
+        const serverCrate = join(scratch, 'crates/forma-server');
+        verifyPackedPropsFixtures(compiler, serverCrate);
+        verifyPackedPropsTests(join(serverCrate, 'Cargo.toml'));
+      });
+    }
     const { chromium } = await import('@playwright/test');
     const browser = await chromium.launch();
     try {
