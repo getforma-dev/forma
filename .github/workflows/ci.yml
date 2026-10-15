@@ -20,7 +20,7 @@ on:
       - 'docs/**'
       - 'LICENSE'
   pull_request:
-    branches: [main, merge/forma-stack]
+    branches: [main, merge/forma-stack, codex/forma-upgrade-review]
   workflow_dispatch:
 
 # One run per ref. A second push to the same branch cancels the first.
@@ -211,6 +211,11 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run build -w packages/compiler -w packages/build
+      # The build suite's package bridge (tests/static-hook-product.test.ts)
+      # copies core's built distribution as the fixture's installed dependency,
+      # as R17's command has it after `npm run build`. Core is built here for
+      # that fixture only; its own suite still runs on Linux.
+      - run: npm run build -w packages/core
       - run: npm test -w packages/compiler -w packages/build
       # SR8 through the package as an application installs it (FORMA-126),
       # through npm's .cmd shim.
