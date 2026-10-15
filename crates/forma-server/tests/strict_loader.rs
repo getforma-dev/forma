@@ -1,7 +1,7 @@
 //! The strict module loader is the default: a bad module for a server-rendered
 //! route stops the server before its port binds, naming route, file and code
-//! (DR-11, Q13; FORMA-121). The lenient loader is deprecated and behaves as at
-//! 0.2.1.
+//! (DR-11, Q13; FORMA-121). Both the typed registry and interim tuple helper
+//! fail closed.
 //!
 //! The fixtures under `tests/fixtures/modules/` are written by
 //! [`fixture_files`] below (run the ignored `regenerate_module_fixtures` to
@@ -270,31 +270,16 @@ fn ir_modules_load_refuses_exactly_what_the_strict_loader_refuses() {
 }
 
 #[test]
-#[allow(deprecated)]
-fn the_deprecated_lenient_loader_behaves_as_at_0_2_1() {
-    // Every bad route degrades to Phase 1 and the rest load: exactly what
-    // 0.2.1's `load_ir_modules` returned for the same files.
-    let manifest = try_load_manifest::<Flipped>().expect("manifest");
-    let (modes, modules) = forma_server::load_ir_modules::<Flipped>(&manifest);
-    for route in ["/magic", "/version", "/section", "/opcode", "/hash"] {
-        assert_eq!(
-            modes.get(route),
-            Some(&RenderMode::Phase1ClientMount),
-            "{route}"
-        );
-        assert!(!modules.contains_key(route), "{route}");
+fn the_final_loader_name_refuses_the_same_bad_modules() {
+    fn sorted(mut errors: Vec<IrLoadError>) -> Vec<IrLoadError> {
+        errors.sort_by(|a, b| a.route.cmp(&b.route));
+        errors
     }
-    {
-        let route = "/";
-        assert_eq!(
-            modes.get(route),
-            Some(&RenderMode::Phase2SsrReconcile),
-            "{route}"
-        );
-        assert!(modules.contains_key(route), "{route}");
-    }
-    assert_eq!(modes.get("/app"), Some(&RenderMode::Phase1ClientMount));
-    assert_eq!(modes.len(), 7);
+    let manifest = try_load_manifest::<Flipped>().unwrap();
+    assert_eq!(
+        sorted(forma_server::load_ir_modules::<Flipped>(&manifest).unwrap_err()),
+        sorted(load_ir_modules_strict::<Flipped>(&manifest).unwrap_err())
+    );
 }
 
 // -- A fixture server: load, then bind ----------------------------------------
@@ -304,8 +289,8 @@ fn the_deprecated_lenient_loader_behaves_as_at_0_2_1() {
 enum Loader {
     /// The default: `load_ir_modules_strict`.
     Default,
-    /// The deprecated `load_ir_modules`.
-    Lenient,
+    /// The final typed page registry.
+    Pages,
 }
 
 #[derive(Debug)]
@@ -319,23 +304,29 @@ enum StartError {
 /// A server's start in the order DR-11 asks for: load every module, then bind
 /// the port, then serve. It answers one connection with the number of pages
 /// it can server-render, and returns.
-fn serve<A: Embed>(
+fn serve<A: Embed + 'static>(
     loader: Loader,
     bind: impl FnOnce() -> std::io::Result<TcpListener>,
 ) -> Result<(), StartError> {
     let manifest = try_load_manifest::<A>().map_err(StartError::Manifest)?;
     let modules = match loader {
-        Loader::Default => {
-            load_ir_modules_strict::<A>(&manifest)
-                .map_err(StartError::Modules)?
-                .1
+        Loader::Default => load_ir_modules_strict::<A>(&manifest)
+            .map_err(StartError::Modules)?
+            .1
+            .len(),
+        Loader::Pages => {
+            let _pages =
+                forma_server::load_ir_modules::<A>(&manifest).map_err(StartError::Modules)?;
+            manifest
+                .routes
+                .values()
+                .filter(|route| route.mode == forma_server::RouteMode::Ssr)
+                .count()
         }
-        #[allow(deprecated)]
-        Loader::Lenient => forma_server::load_ir_modules::<A>(&manifest).1,
     };
     let listener = bind().map_err(StartError::Io)?;
     let (mut stream, _) = listener.accept().map_err(StartError::Io)?;
-    write!(stream, "{} server-rendered pages", modules.len()).map_err(StartError::Io)?;
+    write!(stream, "{} server-rendered pages", modules).map_err(StartError::Io)?;
     Ok(())
 }
 
@@ -382,13 +373,11 @@ fn with_a_bad_module_the_fixture_server_binds_no_port() {
 }
 
 #[test]
-fn the_same_server_binds_and_serves_with_good_modules_or_the_lenient_loader() {
-    // The other side of the test above: this server does bind and answer when
-    // its modules are good, and the deprecated lenient loader starts it even
-    // with the bad ones, serving their routes in Phase 1 (what DR-11 ends).
+fn the_same_server_binds_and_serves_with_good_modules_through_both_strict_loaders() {
+    // Good modules start through either strict public entry point.
     for (set, loader, expected) in [
         ("good", Loader::Default, "1 server-rendered pages"),
-        ("flipped", Loader::Lenient, "1 server-rendered pages"),
+        ("good", Loader::Pages, "1 server-rendered pages"),
     ] {
         let (started, bound) = match set {
             "good" => spawn::<Good>(loader),

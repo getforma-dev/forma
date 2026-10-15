@@ -600,6 +600,14 @@ No page triggers it on purpose: it is tested by an unwritable output directory a
 
 ## BUILD-7xx: A construct adoption does not handle; `browserOnly()` is the way out
 
+### BUILD-610 Invalid declared page props
+
+The page's declared props or their binding expression cannot be represented by the closed FMIR contract. Unsupported types, recursive schemas, unresolved declarations, reassignment, coercion and computed prop expressions fail compilation, including builds without `--strict`. The reported location is the original TypeScript declaration or expression before JSX lowering. No placeholder IR is written.
+
+**Fix.** Declare named, typed object fields using booleans, strings, finite numbers, Date, string-literal enums, arrays, optional/null values and nested objects. Keep props immutable. Pass a computed presentation value as its own declared field. Read nested fields directly; repeated lists can share a declared array.
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/fail/page.tsx) and [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/pass/page.tsx) pin original TSX positions.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** A `.map()` returning elements is not adopted. As a child, the server renders an empty island shell and the rows never appear after activation; in a reactive child (`() => rows.map(…)`), the server renders empty text and after activation the page shows the elements as text (`[object HTMLLIElement]`).
@@ -890,3 +898,27 @@ browser-only explicitly when it does not have server output.
 its last valid manifest until a successful rebuild. Verified by
 `packages/build/tests/strict.test.ts` and
 `packages/build/tests/manifest-compatibility.test.ts`.
+
+## Declared handler diagnostics (FORMA-102)
+
+These codes are returned as structured Rust errors/warnings. Bind errors identify route/property and TypeScript/Rust source positions when available; checked-value errors include the array index in the property path. No listener should open until binds succeed, and a failed render returns no HTML.
+
+| Code | Meaning |
+|---|---|
+| BIND-101 | A declared TypeScript field is absent from Rust, including an optional field. |
+| BIND-102 | Rust and TypeScript field kinds differ. |
+| BIND-103 | Optional Rust data cannot satisfy a required TypeScript field. |
+| BIND-104 | String enum literal sets differ. |
+| BIND-105 | Rust metadata is malformed, recursive or outside the closed schema. |
+| BIND-106 | Declared SERVER roots are missing, duplicated, undeclared, defaulted or mistyped. |
+| BIND-107 | Unknown page/route or logical manifest alias. |
+| BIND-108 | A browser-only or removed route has no SSR contract. |
+| BIND-109 | Logical page alias matches more than one route. |
+| BIND-201 | Extra Rust field: warning; omitted from encoded data. |
+| RENDER-401 | Integer outside JavaScript's exact safe range. |
+| RENDER-402 | Non-finite floating point value. |
+| RENDER-403 | Date outside JavaScript's supported epoch-millisecond range. |
+| RENDER-404 | Value projection does not match the bound closed schema. |
+| RENDER-405 | A changed development module cannot bind to the existing handler; includes BIND causes. |
+
+See [declared props](DECLARED-PROPS.md) for optional-field precedence, safe dates and reload behavior.

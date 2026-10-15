@@ -36,6 +36,8 @@ import {
   type SignalScope,
 } from './signal-scope';
 import { moduleConstantScope, walkHTree, walkCallExpression, type WalkContext } from './ir-walk';
+import { readPageProps, PropsSchemaError } from './props-schema';
+import { rootPropsScope } from './props-bindings';
 
 export interface SsrPluginOptions {
   /** Page name (e.g., 'platform-login') -- used for the output .ir filename */
@@ -212,6 +214,11 @@ export function generateRealIr(entryPointPath: string): IrResult | null {
     }
   });
   if (failure) {
+    if (failure instanceof PropsSchemaError) {
+      reportDiagnostic({ code: failure.code, file: failure.file, original: true,
+        position: { line: failure.line, column: failure.column - 1 }, text: () => failure!.message });
+      throw failure;
+    }
     // A literal past FMIR's 65,535-byte limit was reported where the author
     // wrote it (BUILD-604); the failure it causes needs no second report.
     const code = (failure as { code?: unknown }).code === 'BUILD-604' ? 'BUILD-604' : 'BUILD-606';
@@ -317,7 +324,11 @@ function emitRealIr(entryPointPath: string): IrResult | null {
       );
     }
 
+    const emptyFn = t.arrowFunctionExpression([], entryInfo.inlineMountBody
+      ? t.blockStatement(entryInfo.inlineMountBody) : entryInfo.inlineReturnNode!);
+    const propsScope = rootPropsScope({ schema: [[]], parameter: { kind: 'none' } }, emptyFn, entryPointPath, ctx);
     const walkCtx: WalkContext = {
+      propsScope,
       sourceFile: entryPointPath,
       fileConstants,
       stringConstants,
@@ -425,11 +436,15 @@ function emitRealIr(entryPointPath: string): IrResult | null {
   // it inlines that component, which is what makes a scope the walk learns
   // to inline later work without a matching extractor being written for it.
   const ctx = new IrEmitContext();
+  const declaredProps = readPageProps(componentPath, exportedName);
+  ctx.setPropsSchema(declaredProps.schema);
+  const propsScope = rootPropsScope(declaredProps, componentInfo.fn, rootPath, ctx);
   const signalRegistry = newSignalRegistry();
   const signalScope = enterComponentScope({
     ast: componentInfo.ast,
     fn: componentInfo.fn,
     fnName: exportedName,
+    propSeeds: propsScope ? new Set(propsScope.signals.keys()) : undefined,
     filePath: rootPath,
     constants: stringConstants,
     ctx,
@@ -446,6 +461,7 @@ function emitRealIr(entryPointPath: string): IrResult | null {
 
   // 9. Build WalkContext and walk the h() tree
   const walkCtx: WalkContext = {
+    propsScope,
     sourceFile: rootPath,
     fileConstants,
     stringConstants,
@@ -591,6 +607,9 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
             // up after the compiler — ksx Studio had to delete both byproducts by
             // hand to keep them out of its rust-embed binary.
           } catch (err) {
+            // A declared props contract is mandatory. generateRealIr already
+            // reported its original TypeScript position; do not write a fallback.
+            if (err instanceof PropsSchemaError) return;
             // IR emission failure is non-fatal -- page falls back to Phase 1
             const message = (err as Error).message;
             reportDiagnostic({
@@ -603,9 +622,8 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
         });
 
         options.onDiagnostics?.(diagnostics, options.page);
-        if (!options.strict) return;
         const errors: PartialMessage[] = diagnostics
-          .filter((d) => d.strict)
+          .filter((d) => d.code === 'BUILD-610' || (options.strict && d.strict))
           .map((d) => ({
             id: d.code,
             text: `${d.code} ${d.message}`,

@@ -48,6 +48,8 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
+import { childPropsScope, emitPropText, listPropsScope, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { PropsSchemaError } from './props-schema';
 import {
   enterComponentScope,
   lookupLiteralRows,
@@ -146,6 +148,7 @@ function warnDegraded(
   consequence: string,
   chain?: DiagnosticChainLink[],
 ): void {
+  if (node && 'type' in node) refuseDeclaredFallback(node as t.Node, walkCtx.propsScope);
   reportDiagnostic({
     code,
     file: walkCtx.sourceFile ?? '',
@@ -534,6 +537,8 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
 // ---------------------------------------------------------------------------
 
 export interface WalkContext {
+  /** Declared page/child prop paths; independent from source variable names. */
+  propsScope?: PropsScope;
   /** File-level constant arrays (for Rule 9 static unroll). */
   fileConstants?: Map<string, any[]>;
   /** Resolve a constant array the CURRENT module imports, for the same unroll.
@@ -764,13 +769,16 @@ function inlinedWalkContext(
   link: DiagnosticChainLink,
 ): WalkContext {
   const constants = moduleConstantScope(sub.source, sub.filePath, walkCtx.loadModule);
+  const propsScope = childPropsScope(walkCtx.propsScope, sub.fn, sub.propsArg, sub.filePath);
   return {
     ...walkCtx,
     ...constants,
+    propsScope,
     signalScope: enterComponentScope({
       ast: sub.ast,
       fn: sub.fn,
       fnName: functionName,
+      propSeeds: propsScope ? new Set(propsScope.signals.keys()) : undefined,
       filePath: sub.filePath,
       constants: constants.stringConstants,
       ctx,
@@ -1031,6 +1039,12 @@ export function walkHTree(
       }
 
       const val = prop.value as t.Expression;
+
+      const declaredSlot = propSlot(val, walkCtx.propsScope, ctx, 'attribute');
+      if (declaredSlot !== undefined) {
+        dynAttrs.push({ keyIdx: ctx.addString(key), slotId: declaredSlot });
+        continue;
+      }
 
       // Static literal value -> static attribute pair
       if (isStaticLiteral(val)) {
@@ -1334,6 +1348,7 @@ export function walkCallExpression(
                   ),
                 );
               } catch (err) {
+                if (err instanceof PropsSchemaError) throw err;
                 // ISLAND_START is already in the stream: unwinding past the
                 // matching ISLAND_END would leave the bytecode unbalanced (and
                 // the outer fallback would register a SECOND island for the
@@ -1452,7 +1467,7 @@ export function walkCallExpression(
           if (propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
             const nonStatic = propsArg.properties.find(prop => {
               if (t.isSpreadElement(prop) || !t.isObjectProperty(prop)) return true;
-              return !isStaticLiteral(prop.value as t.Expression);
+              return !isStaticLiteral(prop.value as t.Expression) && !propPath(prop.value, walkCtx.propsScope);
             });
             if (nonStatic) {
               bailOut(
@@ -1497,6 +1512,7 @@ export function walkCallExpression(
           bailOut('BUILD-406', 'has no return statement the compiler can follow to an h() call');
           return;
         } catch (err) {
+          if (err instanceof PropsSchemaError) throw err;
           bailOut('BUILD-406', `failed to compile (${(err as Error).message})`);
           return;
         }
@@ -1612,6 +1628,8 @@ function emitChild(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
+  if (emitPropText(child, walkCtx.propsScope, ctx)) return;
+  if (walkCtx.propsScope && t.isConditionalExpression(child)) { emitTernaryShowIf(child, hName, ctx, walkCtx, childIndex); return; }
   // Rule 12: null, undefined, false → skip
   if (isNullish(child)) return;
 
@@ -1877,6 +1895,8 @@ function addShowSlot(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): number {
+  const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx);
+  if (declaredSlot !== undefined) return declaredSlot;
   const slotName = deriveShowSlotName(cond, walkCtx);
 
   let value: EvalValue | undefined;
@@ -2018,6 +2038,7 @@ function emitCreateShowBranch(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
+  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
   // Unwrap arrow function: () => h('div', ...)
   if (isFunctionExpr(expr)) {
     const fn = expr as t.ArrowFunctionExpression | t.FunctionExpression;
@@ -2202,20 +2223,23 @@ function emitCreateList(
     );
   }
 
-  // Create slots: array slot (server-sourced) and item slot
-  const arraySlotId = ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, SOURCE_SERVER);
-  const itemSlotId = ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, SOURCE_SERVER);
+  // Declared arrays read the root server value; local arrays and their named
+  // debugging/projection slots stay CLIENT-owned. Retain local labels used by
+  // the frozen corpus harness; their names never grant handler binding access.
+  const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
+  const arraySlotId = declaredArray ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
+  const itemSlotId = declaredArray !== undefined ? ctx.addTemporarySlot(TYPE_OBJECT) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
 
   // Scan the body for param.prop member accesses to determine which
   // properties need PROP extraction opcodes.
   const propNames = new Set<string>();
-  collectMemberProps(bodyExpr, paramName, propNames);
+  if (declaredArray === undefined) collectMemberProps(bodyExpr, paramName, propNames);
 
   // Create target slots for each property and build the bindings map
   const bindings = new Map<string, number>();
   const propEntries: Array<{ name: string; strIdx: number; slotId: number }> = [];
   for (const propName of Array.from(propNames)) {
-    const targetSlotId = ctx.addSlot(`list:${base}:${propName}`, TYPE_TEXT, SOURCE_SERVER);
+    const targetSlotId = ctx.addSlot(`list:${base}:${propName}`, TYPE_TEXT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
     bindings.set(`${paramName}.${propName}`, targetSlotId);
     propEntries.push({
       name: propName,
@@ -2245,6 +2269,7 @@ function emitCreateList(
   const listWalkCtx: WalkContext = {
     ...walkCtx,
     listItemBindings: bindings,
+    propsScope: declaredArray !== undefined && walkCtx.propsScope ? listPropsScope(walkCtx.propsScope, mapFn, node.arguments[0]!, itemSlotId) : walkCtx.propsScope,
   };
 
   if (t.isCallExpression(bodyExpr) && t.isIdentifier(bodyExpr.callee) && bodyExpr.callee.name === hName) {
@@ -2513,6 +2538,7 @@ function substituteInExpr(
 // ---------------------------------------------------------------------------
 
 interface ResolvedSubComponent {
+  propsArg?: t.Node;
   /** The h() call expression the component returns, props already substituted. */
   returnNode: t.Expression;
   /** File the component is DECLARED in — the barrel a page imports through is
@@ -2575,6 +2601,7 @@ function resolveSubComponent(
 
   return {
     returnNode,
+    propsArg: callNode.arguments[0],
     filePath: lookup.filePath,
     source: lookup.source,
     ast: lookup.ast,
@@ -2723,6 +2750,8 @@ function emitBranchContent(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
+  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
+  if (t.isConditionalExpression(expr)) { emitTernaryShowIf(expr, hName, ctx, walkCtx, childIndex); return; }
   // String literal → TEXT
   if (t.isStringLiteral(expr)) {
     checkLiteralSize(walkCtx, expr, expr.value, 'text literal');

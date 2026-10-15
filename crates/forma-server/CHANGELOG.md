@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Declared handler props — FORMA-102
+
+- `load_ir_modules` now strictly returns `Pages`; `bind::<P>(page)` verifies a derived handler once, then `PageHandle<P>::render(&props, &ctx)` checks and projects request values into exact declared SERVER roots. The old lenient tuple loader is removed; `load_ir_modules_strict` remains temporarily.
+- Added request title/body-class metadata on `RenderCtx`, source-aware BIND diagnostics, checked-value RENDER-401..404 and RENDER-405 for incompatible debug reloads. A corrupt reload keeps the prior module and its asset snapshot; a valid incompatible schema returns an error.
+- Repeated lists share a declared root array with private CLIENT temporaries. Local state is never handler-filled, extra Rust fields warn and are omitted, and both no-parameter and typed-empty pages bind to an empty derived struct.
+
+
 ### Compatibility — FORMA-112
 
 - Validate schema-2 manifests and module compatibility before startup; use explicit browser/SSR modes and filename-keyed immutable metadata, including retained assets. Enabled service workers require configure_for_manifest and a matching app; failed validation does not seal defaults. Development reload shares the validator and preserves last good state on refusal.

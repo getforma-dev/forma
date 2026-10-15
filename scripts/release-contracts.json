@@ -2,13 +2,12 @@
   "stage": "v3-development",
   "fmir": 3,
   "manifest": 2,
-  "props": null,
+  "props": "declared-v1",
   "stateBlock": null,
   "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
   "liveReleaseReady": false,
   "pending": {
     "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
-    "FORMA-102": "declared props and bind mutation suite",
     "FORMA-144": "both templates use the milestone's API",
     "FORMA-188": "fixture applications and skew drill",
     "FORMA-191": "release measurements"

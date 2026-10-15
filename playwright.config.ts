@@ -1,12 +1,15 @@
 import { defineConfig } from '@playwright/test';
 import { SSR_ORIGIN, SSR_PORT } from './e2e/ssr/origin';
 
+const staticPort = Number(process.env.FORMA_STATIC_E2E_PORT ?? 3457);
+if (!Number.isInteger(staticPort) || staticPort < 1 || staticPort > 65535) throw new Error('invalid FORMA_STATIC_E2E_PORT');
+
 export default defineConfig({
   testDir: 'e2e',
   timeout: 15000,
   retries: 0,
   use: {
-    baseURL: 'http://localhost:3457',
+    baseURL: `http://localhost:${staticPort}`,
     headless: true,
   },
   projects: [
@@ -14,19 +17,19 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npx serve e2e/fixtures -l 3457 --no-clipboard',
-      port: 3457,
-      reuseExistingServer: true,
+      command: `npx serve e2e/fixtures -l ${staticPort} --no-clipboard`,
+      port: staticPort,
+      reuseExistingServer: false,
     },
     // The SSR site built by e2e/ssr/build.sh (compiler + forma walker +
     // FormaJS), served with each page's own headers, for
-    // e2e/ssr/regressions.spec.ts. A server already on the port is reused, so
-    // the spec checks /__site names THIS clone's site (FORMA_SSR_E2E_PORT
-    // gives a clone its own port).
+    // e2e/ssr/regressions.spec.ts. Existing listeners are refused; the spec
+    // also checks /__site names this clone's site. FORMA_SSR_E2E_PORT gives
+    // parallel local checkouts independent ports.
     {
       command: `node e2e/ssr/serve.mjs ${SSR_PORT}`,
       url: `${SSR_ORIGIN}/__site`,
-      reuseExistingServer: true,
+      reuseExistingServer: false,
     },
   ],
 });

@@ -110,11 +110,8 @@ struct Loaded {
 
 /// Load and parse all IR modules from the asset manifest, collecting failures.
 ///
-/// This is the primary implementation; [`load_ir_modules`] discards the errors
-/// and [`load_ir_modules_strict`] and [`IrModules::load`] surface them, so they
-/// can never drift. Only the lenient loader logs a failure, because only it
-/// hides one: the strict loaders hand every failure to their caller, which
-/// refuses to start.
+/// All public loaders surface these failures and refuse startup. There is no
+/// lenient fallback route through this implementation.
 ///
 /// An explicit browser route has no module. An SSR route must declare one;
 /// schema validation refuses a missing declaration before any module reads. A route that DECLARES an `.ir` file which is not
@@ -124,7 +121,6 @@ struct Loaded {
 fn load_from(
     manifest: &AssetManifest,
     read: Read<'_>,
-    log_fallbacks: bool,
 ) -> (HashMap<String, RenderMode>, Vec<Loaded>, Vec<IrLoadError>) {
     let mut render_modes = HashMap::new();
     let mut loaded = Vec::new();
@@ -164,25 +160,7 @@ fn load_from(
                 });
             }
             Err(refusal) => {
-                if log_fallbacks {
-                    match &refusal {
-                        Refusal::NotEmbedded => tracing::warn!(
-                            route = %route_pattern,
-                            ir_file = %ir_filename,
-                            "Manifest declares an IR file that is not embedded — Phase 1 fallback"
-                        ),
-                        Refusal::Parse(e) => tracing::warn!(
-                            route = %route_pattern,
-                            ir_file = %ir_filename,
-                            error = %e,
-                            "Failed to parse IR module — Phase 1 fallback"
-                        ),
-                    }
-                }
                 errors.push(refusal.error(route_pattern, ir_filename));
-                // Insert explicitly so the map is total: every declared route
-                // has a mode, rather than "absent" doing double duty.
-                render_modes.insert(route_pattern.clone(), RenderMode::Phase1ClientMount);
             }
         }
     }
@@ -201,13 +179,12 @@ fn load_from(
 /// [`load_from`] over the embedded files of `A`, as two maps.
 fn load_ir_modules_inner<A: Embed>(
     manifest: &AssetManifest,
-    log_fallbacks: bool,
 ) -> (
     HashMap<String, RenderMode>,
     HashMap<String, IrModule>,
     Vec<IrLoadError>,
 ) {
-    let (render_modes, loaded, errors) = load_from(manifest, &embedded::<A>, log_fallbacks);
+    let (render_modes, loaded, errors) = load_from(manifest, &embedded::<A>);
     let ir_modules = loaded.into_iter().map(|l| (l.route, l.module)).collect();
     (render_modes, ir_modules, errors)
 }
@@ -217,49 +194,13 @@ fn embedded<A: Embed>(name: &str) -> Option<Cow<'static, [u8]>> {
     A::get(name).map(|file| file.data)
 }
 
-/// Load and parse all IR modules from the asset manifest, ignoring failures.
-///
-/// Every failure is logged and represented as `Phase1ClientMount`, so a broken
-/// build degrades instead of refusing to start: a corrupt module's route is
-/// served as an empty shell for the life of the process.
-///
-/// Every valid manifest route has an explicit mode entry, including browser routes.
-/// The schema-2 manifest is validated even through this retiring entry point.
-///
-/// Deprecated: [`load_ir_modules_strict`] is the default loader from
-/// 0.2.2; its removal belongs to FORMA-107. It still degrades broken modules and
-/// logs its deprecation once per process in debug builds.
-#[deprecated(
-    since = "0.2.2",
-    note = "serves a corrupt module's route as an empty shell for the life of the process; \
-            use `load_ir_modules_strict`, the default loader, and refuse to start on its \
-            errors. Removed in 3.0.0"
-)]
-pub fn load_ir_modules<A: Embed>(
+/// Strictly load the page registry. Every declared SSR module must validate before
+/// any handler can bind or the application opens its listener. Browser routes
+/// remain explicit and cannot be bound as server-rendered pages.
+pub fn load_ir_modules<A: Embed + 'static>(
     manifest: &AssetManifest,
-) -> (HashMap<String, RenderMode>, HashMap<String, IrModule>) {
-    log_deprecation_once();
-    let (render_modes, ir_modules, _errors) = load_ir_modules_inner::<A>(manifest, true);
-    (render_modes, ir_modules)
-}
-
-/// The runtime half of `load_ir_modules`' deprecation: one `tracing` warning
-/// per process, in debug builds only.
-///
-/// Verified by: crates/forma-server/tests/load_ir_modules_deprecation.rs > "load_ir_modules_logs_its_deprecation_once_per_process_in_debug_builds"
-fn log_deprecation_once() {
-    #[cfg(debug_assertions)]
-    {
-        use std::sync::atomic::{AtomicBool, Ordering};
-        static LOGGED: AtomicBool = AtomicBool::new(false);
-        if !LOGGED.swap(true, Ordering::Relaxed) {
-            tracing::warn!(
-                "forma_server::load_ir_modules is deprecated: it serves a corrupt module's route \
-                 as an empty shell; use load_ir_modules_strict and refuse to start on its errors. \
-                 Logged once per process, in debug builds."
-            );
-        }
-    }
+) -> Result<crate::Pages, Vec<IrLoadError>> {
+    crate::Pages::load::<A>(manifest)
 }
 
 /// The module loader: every module the manifest declares, parsed and
@@ -297,7 +238,7 @@ fn log_deprecation_once() {
 pub fn load_ir_modules_strict<A: Embed>(
     manifest: &AssetManifest,
 ) -> Result<(HashMap<String, RenderMode>, HashMap<String, IrModule>), Vec<IrLoadError>> {
-    let (render_modes, ir_modules, errors) = load_ir_modules_inner::<A>(manifest, false);
+    let (render_modes, ir_modules, errors) = load_ir_modules_inner::<A>(manifest);
     if errors.is_empty() {
         Ok((render_modes, ir_modules))
     } else {
@@ -322,7 +263,8 @@ pub fn load_ir_modules_strict<A: Embed>(
 ///   as start ([`IrModule::parse`], the strict loader's). A module that fails
 ///   it keeps the previous one, and the failure is logged once per distinct
 ///   file, as a `tracing` warning carrying its `LOAD-1xx` code; the next good
-///   write replaces it. A route the manifest starts naming after start is
+///   write replaces it. An invalid or missing manifest freezes the previous
+///   module and asset snapshot together until a valid manifest returns. A route the manifest starts naming after start is
 ///   loaded on its first `get`; a route the manifest stops naming keeps its
 ///   last module.
 ///
@@ -403,6 +345,12 @@ impl<A: Embed> IrModules<A> {
     pub fn get(&self, route_pattern: &str) -> Option<Arc<IrModule>> {
         self.modules.get(route_pattern, &embedded::<A>)
     }
+
+    /// Atomically pair the module with the validated manifest that named it.
+    /// A refused development write keeps both parts of the previous snapshot.
+    pub(crate) fn snapshot(&self, route: &str) -> Option<(Arc<IrModule>, Arc<AssetManifest>)> {
+        self.modules.snapshot(route, &embedded::<A>)
+    }
 }
 
 impl<A> fmt::Debug for IrModules<A> {
@@ -417,6 +365,8 @@ impl<A> fmt::Debug for IrModules<A> {
 /// its own files.
 struct Modules {
     #[cfg(not(debug_assertions))]
+    manifest: Arc<AssetManifest>,
+    #[cfg(not(debug_assertions))]
     by_route: HashMap<String, Arc<IrModule>>,
     #[cfg(debug_assertions)]
     dev: std::sync::Mutex<dev::Pages>,
@@ -424,12 +374,13 @@ struct Modules {
 
 impl Modules {
     fn load(manifest: &AssetManifest, read: Read<'_>) -> Result<Self, Vec<IrLoadError>> {
-        let (_, loaded, errors) = load_from(manifest, read, false);
+        let (_, loaded, errors) = load_from(manifest, read);
         if !errors.is_empty() {
             return Err(errors);
         }
         #[cfg(not(debug_assertions))]
         let modules = Modules {
+            manifest: Arc::new(manifest.clone()),
             by_route: loaded
                 .into_iter()
                 .map(|l| (l.route, Arc::new(l.module)))
@@ -458,6 +409,20 @@ impl Modules {
         pages.get(route, read)
     }
 
+    fn snapshot(&self, route: &str, read: Read<'_>) -> Option<(Arc<IrModule>, Arc<AssetManifest>)> {
+        #[cfg(not(debug_assertions))]
+        {
+            self.get(route, read)
+                .map(|module| (module, Arc::clone(&self.manifest)))
+        }
+        #[cfg(debug_assertions)]
+        {
+            let mut pages = self.dev.lock().unwrap_or_else(|p| p.into_inner());
+            let module = pages.get(route, read)?;
+            Some((module, pages.manifest_for(route)?))
+        }
+    }
+
     fn routes(&self) -> Vec<String> {
         #[cfg(not(debug_assertions))]
         let mut routes: Vec<String> = self.by_route.keys().cloned().collect();
@@ -482,6 +447,10 @@ mod dev {
     pub(super) struct Pages {
         /// `manifest.json` as last read, parsed or refused.
         manifest: Option<Vec<u8>>,
+        /// Invalid or missing manifest bytes freeze the complete last-good pair.
+        /// Repeated identical refusals must not permit a mutable .ir file reload.
+        manifest_rejected: bool,
+        accepted_manifest: Arc<AssetManifest>,
         /// Each route's module file, as the manifest last named it.
         names: HashMap<String, String>,
         /// Each route's module and what it was loaded from, or why not.
@@ -490,6 +459,7 @@ mod dev {
 
     #[derive(Default)]
     struct Page {
+        manifest: Option<Arc<AssetManifest>>,
         /// The module served, with the file and bytes it was parsed from.
         current: Option<(String, Cow<'static, [u8]>, Arc<IrModule>)>,
         /// The file and bytes last refused, so a broken write is logged once.
@@ -507,16 +477,34 @@ mod dev {
                 .into_iter()
                 .map(|l| {
                     let page = Page {
+                        manifest: Some(Arc::new(manifest.clone())),
                         current: Some((l.ir_file, l.bytes, Arc::new(l.module))),
                         refused: None,
                     };
                     (l.route, page)
                 })
                 .collect();
+            // Preserve the caller's validated startup manifest, including any
+            // explicit route additions. Disk bytes establish the watch baseline,
+            // but an invalid or missing baseline must not permit IR-only reload.
+            let baseline = read("manifest.json").map(Cow::into_owned);
+            let manifest_rejected = match baseline.as_deref() {
+                Some(bytes) => match serde_json::from_slice::<AssetManifest>(bytes) {
+                    Ok(_) => false,
+                    Err(error) => {
+                        tracing::warn!("manifest.json does not parse ({error}); the previous module and assets stay together (development reload)");
+                        true
+                    }
+                },
+                None => {
+                    tracing::warn!("manifest.json is missing; the previous module and assets stay together (development reload)");
+                    true
+                }
+            };
             Pages {
-                // The manifest on disk now is the baseline: a later change to
-                // it is what a `get` looks for.
-                manifest: read("manifest.json").map(Cow::into_owned),
+                accepted_manifest: Arc::new(manifest.clone()),
+                manifest: baseline,
+                manifest_rejected,
                 names,
                 pages,
             }
@@ -531,7 +519,9 @@ mod dev {
         }
 
         pub(super) fn get(&mut self, route: &str, read: Read<'_>) -> Option<Arc<IrModule>> {
-            self.reread_manifest(read);
+            if !self.reread_manifest(read) {
+                return self.current(route);
+            }
             let Some(file) = self.names.get(route).cloned() else {
                 return self.current(route);
             };
@@ -547,6 +537,7 @@ mod dev {
                 // The build wrote back what is served: a later refusal of
                 // the same broken bytes is news again.
                 page.refused = None;
+                page.manifest = Some(Arc::clone(&self.accepted_manifest));
                 return page.current.as_ref().map(|(_, _, m)| Arc::clone(m));
             }
             let attempt = (file.clone(), bytes.as_deref().map(<[u8]>::to_vec));
@@ -562,6 +553,7 @@ mod dev {
                         "Reloaded the IR module the build rewrote (development)"
                     );
                     page.current = Some((file, bytes.unwrap_or_default(), Arc::new(module)));
+                    page.manifest = Some(Arc::clone(&self.accepted_manifest));
                     page.refused = None;
                 }
                 Err(refusal) => {
@@ -579,6 +571,10 @@ mod dev {
             page.current.as_ref().map(|(_, _, m)| Arc::clone(m))
         }
 
+        pub(super) fn manifest_for(&self, route: &str) -> Option<Arc<AssetManifest>> {
+            self.pages.get(route)?.manifest.clone()
+        }
+
         fn current(&self, route: &str) -> Option<Arc<IrModule>> {
             self.pages
                 .get(route)
@@ -588,16 +584,26 @@ mod dev {
 
         /// Take the module names from `manifest.json` when it changed. One the
         /// watch mode publishes is whole (it is replaced by rename); one that
-        /// does not parse keeps the names and is logged once.
-        fn reread_manifest(&mut self, read: Read<'_>) {
+        /// does not validate (or disappears) freezes module reload as well as
+        /// the names/assets. Each distinct refusal is logged once. Restoring
+        /// valid bytes reopens reload, including the exact old manifest bytes.
+        fn reread_manifest(&mut self, read: Read<'_>) -> bool {
             let Some(bytes) = read("manifest.json") else {
-                return;
+                if self.manifest.is_some() || !self.manifest_rejected {
+                    tracing::warn!("manifest.json is missing; the previous module and assets stay together (development reload)");
+                }
+                self.manifest = None;
+                self.manifest_rejected = true;
+                return false;
             };
             if self.manifest.as_deref() == Some(&bytes[..]) {
-                return;
+                return !self.manifest_rejected;
             }
+            self.manifest_rejected = true;
             match serde_json::from_slice::<AssetManifest>(&bytes) {
                 Ok(manifest) => {
+                    self.manifest_rejected = false;
+                    self.accepted_manifest = Arc::new(manifest.clone());
                     self.names = manifest
                         .routes
                         .into_iter()
@@ -608,17 +614,17 @@ mod dev {
                     self.pages.retain(|route, _| self.names.contains_key(route));
                 }
                 Err(e) => tracing::warn!(
-                    "manifest.json does not parse ({e}); the module names stay as they were \
+                    "manifest.json does not parse ({e}); the previous module and assets stay together \
                      (development reload)"
                 ),
             }
             self.manifest = Some(bytes.into_owned());
+            !self.manifest_rejected
         }
     }
 }
 
 #[cfg(test)]
-#[allow(deprecated)] // the lenient loader's 0.2.1 behaviour is pinned here too
 mod tests {
     use super::*;
     use crate::types::RouteAssets;
@@ -681,11 +687,8 @@ mod tests {
         assert_eq!(errors[0].ir_file, "page.deadbeef.ir");
         assert_eq!(errors[0].code(), Some("LOAD-101"));
 
-        // ...and the lenient variant still degrades gracefully, with the map
-        // made total rather than relying on absence.
-        let (render_modes, ir_modules) = load_ir_modules::<Fixtures>(&manifest);
-        assert_eq!(render_modes.get("/"), Some(&RenderMode::Phase1ClientMount));
-        assert!(ir_modules.is_empty());
+        // The final typed registry uses the same strict startup gate.
+        assert_eq!(load_ir_modules::<Fixtures>(&manifest).unwrap_err(), errors);
     }
 
     #[test]

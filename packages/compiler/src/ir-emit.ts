@@ -63,7 +63,7 @@ export class IrEmitContext {
   private keyPaths: KeyPath[] = [];
   private sourcePositions: SourcePosition[] | undefined;
 
-  /** Schema extraction is FORMA-102; every current page has empty object 0. */
+  /** Declared page object zero and its nested object types. */
   setPropsSchema(schema: PropsSchema): void { this.propsSchema = schema; }
   /** FORMA-181 may attach a path without changing LIST operands. */
   addKeyPath(listOffset: number, segments: readonly string[]): void { this.keyPaths.push({ listOffset, segments: [...segments] }); }
@@ -119,9 +119,22 @@ export class IrEmitContext {
   ): number {
     assertEmit(this.slots.length < C.MAX_SLOTS, 'slot count exceeds 65535');
     const id = this.nextSlotId++;
+    // A client debug label must never collide with an exact declared root name.
+    // Only SERVER+schema-name carries a handler binding; client labels do not.
+    if (source === C.SLOT_SOURCE_CLIENT && this.propsSchema[0]!.some(field => field.name === name)) {
+      name = `$slot${id}`;
+      while (this.slots.some(slot => slot.name === name) || this.propsSchema[0]!.some(field => field.name === name)) name = `_${name}`;
+    }
     this.slots.push({ id, name, typeHint, source, defaultBytes });
     if (reference) this.recordSlotRef(id);
     return id;
+  }
+
+  /** A private projection/list scratch slot. Its label has no binding semantics. */
+  addTemporarySlot(typeHint: number): number {
+    let name = `$slot${this.nextSlotId}`;
+    while (this.slots.some(slot => slot.name === name) || this.propsSchema[0]!.some(field => field.name === name)) name = `_${name}`;
+    return this.addSlot(name, typeHint, C.SLOT_SOURCE_CLIENT);
   }
 
   /** Begin capturing slot ids referenced while walking an island subtree. */

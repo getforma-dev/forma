@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Declared page props — FORMA-102
+
+- Extract original TypeScript/TSX props before JSX lowering, including relative aliases/re-exports and source positions, into the existing FMIR schema section. No wire layout changes.
+- Bind exact declared root names to SERVER slots; emit nested reads using PROP, share repeated array inputs, and keep list scratch/local state CLIENT-owned. Preserve separate prop-seeded getter identities for103 activation.
+- BUILD-610 fails even non-strict builds for unsupported declarations, mutable bindings or unrepresentable declared expressions. No placeholder schema or output replaces a refused contract.
+
+
 ### Changed — FORMA-112
 
 - Broaden the intermediate FORMA-185 exact-base check to the reviewed reader window: same major, writer minor at most reader minor, patch independent. Package suffixes remain absent from wire metadata. Frozen fixture bytes and historical expectations are preserved with an explicit window overlay.

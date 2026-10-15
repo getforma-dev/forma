@@ -171,3 +171,106 @@ Local artifacts and logs are retained in `work/FORMA-112/ds11-window-1`,
 `p17-window-1.log`, `full-check-112.log`, `renderer-3.1-final/` and
 `independent-probes-replay/`. Exact-head hosted CI and independent review are
 required separately before merging PR38.
+
+
+## Declared page props and typed handles (FORMA-102)
+
+The original qualification below is preserved for its source. The reload correction
+and current acceptance are recorded in the subsequent section.
+
+`v3-props-set.json` records seven unpublished 3.0.0-dev artifacts from
+`7e5f0c966de04ab7c2b4b7d7b50ac467a037f30e`. The same source's verifier passed
+in 50.501 seconds (`v3-props-p17.json`), including the new `declared-v1` props
+contract. Every packed crate's actual Cargo.lock passed fresh advisories; the
+isolated CLI, both locked templates, registry signatures, browser interaction,
+manifest/worker checks and corrupt/newer module startup refusals passed.
+
+The packed compiler emitted the three declared-props fixture modules byte-for-byte
+as shipped by forma-server. Its six real native typed Pages tests executed:
+name-based binding and two lists, branch values, request bounds, pre-listener bind
+refusal, route selection, empty local lists and last-good reload with a matching
+asset snapshot. The verifier refuses missing, ignored or failing tests, stale
+fixture bytes and placeholder compiler output. The new IR→derive runtime edge and
+its checksum-pinned external closure are added from the recorded candidate graph;
+compatible existing template resolutions stay intact. Both packed templates
+compiled with locked candidate dependencies. `v3-props-template-restore.json`
+proves all ten source template manifests/locks/main files were restored exactly.
+
+`v3-props-qualification.json` records the 131-second complete local gate, focused
+checks, MSRVs, immutable HTML hashes and raw-log hashes. All 14 existing HTML
+goldens remain unchanged. The local-list corpus changes only its seven slot source
+bits to CLIENT plus the CRC; opcode and string bytes are identical. An initial
+browser run reused a parallel checkout's stricter109 runtime on port3456. Its
+failure is preserved as infrastructure evidence; the isolated90-test replay and
+subsequent full gate passed after fixture servers gained explicit port selection
+and refused pre-existing listeners.
+
+The source, compiler, derive, Pages, release closure and verifier slices have
+independent review. Hosted exact-head CI is a separate merge gate. Raw logs and
+seven original archives remain under `work/FORMA-102/tmp/`. This is ordinary
+functional/corpus replay, not a new fuzz or mutation campaign. Final activation,
+renderer budgets/finalization and template API migration remain in their assigned
+tickets. `liveReleaseReady` remains false; no tag or publication occurred.
+
+## Declared props reload correction and repeated packaging
+
+The reload correction artifacts are `v3-props-reload-set.json` from
+`8f7a2aa02398240845681f1c777e4b9dfdcf7eaa`. `v3-props-reload-p17.json` passes
+all 20 checks in 62.502 seconds, including all seven real typed Pages controls and
+both packed templates. Every archive SHA-256 and packed crate VCS commit matches
+that source. All ten template source files were restored and match Git exactly
+(`v3-props-reload-template-restore.json`). The original 7e5f0c9 archives and reports
+remain unchanged; this acceptance supersedes them for the current source.
+
+Independent review found that invalid or missing manifests could still allow an
+edited IR file at the same filename to load under old assets. The new regression
+failed before the fix. The cache now freezes the complete previous pair until a
+valid manifest returns, including identical original bytes after disappearance.
+It also handles an invalid initial disk baseline while retaining caller-added
+startup routes. The lead replayed its original failing reproducer unchanged and
+all eight independent typed Pages controls passed.
+
+The corrected source passed the full local gate in 162 seconds, MSRV 1.85, release
+typed Pages 5/5 and Clippy. A later test-only Windows correction uses Path suffix
+semantics without changing native diagnostic paths; all ten props tests passed.
+The old-head Windows failure is preserved in the independent review directory;
+only new-head hosted CI can qualify the final tree.
+
+The first fresh packing attempt correctly failed: the rebuilt forma-ir archive
+was `749a6613d7c96f597a21d434a3ef4c7d6be5611b045a6dbb1aa8ea165f0060ec`,
+but Cargo 1.93.1's reused packaging index left the dependent lock checksum at
+`19ae3c5ff041656505e3e88bd1a3378202894fdac34f090ed1b54846372cecdc`.
+`v3-props-reload-refused-pack.json` records that refusal; its original archives,
+index, shipped lock and raw log are retained. Packaging now uses a fresh owned
+Cargo target per attempt. It copies archives out and removes only that target.
+The verifier never repairs a candidate lock. The 38 release helper tests include
+same-source reproducibility and changed-source dependent-checksum/VCS controls.
+
+`v3-props-reload-qualification.json` records source boundaries, raw-log hashes
+and unchanged HTML goldens. The known same-file Page entry-selection defect
+fails closed and is explicitly assigned to the approved FORMA-103 entry correction;
+it does not invalidate imported-entry evidence. No application repository,
+package version, tag or live publication changed.
+
+
+## Portable Date boundary qualification
+
+The current exact artifact source is `153972defd480cd6821aa3fbb6d16294550b902f`,
+recorded by `v3-props-date-set.json`. Windows cannot construct a SystemTime at
+the JavaScript Date limit. The typed-render test now uses checked construction;
+a private numeric test exercises the unchanged production conversion on every
+platform, including both signs, sub-millisecond truncation, exact limits, one
+millisecond beyond, and values beyond i64 before casting. No public API or
+accepted value changed. Native source-path assertions also retain portable Path
+semantics after the two earlier Windows failures.
+
+All ten props tests, the positive derive control and 23 compile refusals, seven
+typed Pages controls, the private Date test (also on Rust1.71) and IR/server
+Clippy passed. The
+fresh seven-artifact rehearsal passed all 20 checks in 61.524 seconds, including
+both templates; all ten source template files were restored. See
+`v3-props-date-p17.json`, `v3-props-date-template-restore.json` and
+`v3-props-date-qualification.json`. Earlier archives, successful reports and
+refused attempts remain unchanged. The full 162-second gate remains explicitly
+at its earlier source; this record adds focused and packed checks for the
+private refactor. Hosted exact-head CI, including Windows, is still required.

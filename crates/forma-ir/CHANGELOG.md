@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- FORMA-102: re-export `PageProps` derive for named structs/unit enums, compare the
+  actual FMIR schema by name, and retain a checked module in `props::BoundProps`.
+  Projection omits absent object fields, preserves array positions and excludes
+  extra Rust fields. Checked values enforce safe integers before conversion,
+  finite floats and signed valid-Date milliseconds with route/path diagnostics.
+
+
 ### Compatibility — FORMA-112
 
 - Broaden FMIR reader acceptance to same-major, writer-minor-at-most-reader-minor compatibility; patch is ignored. Preserve historical exact-stage fixtures and add an explicit current expectation table. Shared version pairs exercise the actual header parser.

@@ -223,7 +223,7 @@ fails the build instead of writing the placeholder module (v2 6.3, DR-1; FORMA-1
 Unchanged from v2 (`parser.rs` L131-L180; `ir-emit.ts` L321-L353): `count u16`, then per entry
 `slot_id u16`, `name_str_idx u32`, `type_hint u8` (1-5), `source u8` (0, 1), `default_len u16`,
 default bytes as UTF-8 text per type (`slot.rs` L392-L437). Duplicate ids are refused (`parser.rs`
-L444). FORMA-102 decides how slots relate to the props schema (declared props seed signals; slots
+L444). FORMA-102 maps declared data as described below (declared props seed signals; slots
 stop being named after variables); until it does, the bytecode's operands are slot ids and this
 table stays required (Q6 settled). Every `name_str_idx` indexes strings. Every nonempty default
 must be valid UTF-8 and parse for its slot type at load (`LOAD-103`), rather than becoming Null
@@ -233,6 +233,14 @@ fraction and exponent; Array accepts `[]` (the existing reader's supported array
 has no nonempty default in this ticket. The frozen corpus must confirm default compatibility; this makes the
 old silent fallback an explicit refusal. The number grammar is
 `[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?`, without whitespace; overflow is refused.
+
+#### Declared root bindings (FORMA-102)
+
+Every field of schema object0 has exactly one SERVER slot whose name is that field's exact declared name and whose type hint matches its unwrapped type. SERVER roots carry no default bytes. Typed bind refuses missing, duplicate, undeclared or mistyped SERVER roots (`BIND-106`); handlers never fill CLIENT slots. Root order/IDs are deterministic for an emitted source; compatibility compares names rather than declaration order.
+
+Nested objects use the existing PROP instruction. A list reads its declared array root (or a PROP projection of it) and owns separate CLIENT item/projection scratch slots; two lists over one field share the array but never their mutable row scratch state. Scratch labels have no path-encoding semantics. The optional list-key-path section remains exclusively about row identity, not property binding. No section or opcode layout changes.
+
+Two client signals seeded from the same prop may read the same SERVER value during SSR. They remain separate lexical getter declarations: FORMA-103 must assign distinct mutable activation state, not infer signal identity from the shared server slot.
 
 ### 5.4 Islands (`0x0004`)
 
