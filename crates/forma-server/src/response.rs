@@ -66,9 +66,9 @@ pub struct RenderCounts {
     /// Elements and text nodes the walk wrote (hydration markers and
     /// comments are not nodes).
     pub nodes: usize,
-    /// Bytes of HTML the walk wrote into the page's root, the quantity the
-    /// walker's output budget (`WalkLimits::max_output_bytes`) bounds; the
-    /// document around it is not counted.
+    /// Bytes of HTML the walk wrote into the page's root. State and document
+    /// markup are excluded from this work counter, but the complete response
+    /// is also checked against `WalkLimits::max_output_bytes` before allocation.
     pub bytes: usize,
     /// List rows the walk wrote, across every nesting depth, the quantity
     /// `WalkLimits::max_list_iterations` bounds.

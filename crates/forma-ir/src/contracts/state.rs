@@ -339,11 +339,11 @@ fn invalid(island: u16, path: &[Path<'_>], reason: &'static str) -> IrError {
             }
         }
     }
-    IrError::InvalidIslandState {
+    IrError::InvalidIslandState(Box::new(crate::format::IslandStateViolation {
         island,
         path: name,
         reason,
-    }
+    }))
 }
 fn limit() -> IrError {
     IrError::IslandStateLimitExceeded {

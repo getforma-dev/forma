@@ -205,7 +205,7 @@ fn global_schema(fields: &[(u32, &[u8])]) -> Vec<u8> {
 #[test]
 fn repeated_ordered_input_is_valid_and_contract_schema_must_match_global() {
     let all: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../docs/proposals/FORMA-103-WIRE-VECTORS.json"
+        "../../tests/fixtures/island-contracts/wire-vectors.json"
     ))
     .unwrap();
     let v = all["vectors"]
@@ -649,7 +649,7 @@ fn state_refuses_bad_runtime_values_and_preserves_optional_array_positions() {
     ] {
         let error = counted(&one_state_field(&[3], &[3], 3, false), value).unwrap_err();
         assert!(
-            matches!(error.error, IrError::InvalidIslandState { island: 0, ref path, .. } if path == "$[\"value\"]")
+            matches!(error.error, IrError::InvalidIslandState(ref problem) if problem.island == 0 && problem.path == "$[\"value\"]")
         );
         assert!(error.error.to_string().starts_with("RENDER-501"));
     }
@@ -738,7 +738,7 @@ fn state_projects_only_declared_nested_fields_and_preserves_unused_disclosure() 
     let bad = SlotValue::object(vec![("unused".into(), SlotValue::Number(0.0))]);
     let error = counted(&module, bad).unwrap_err().error;
     assert!(
-        matches!(error, IrError::InvalidIslandState { ref path, .. } if path == "$[\"account\"][\"name\"]")
+        matches!(error, IrError::InvalidIslandState(ref problem) if problem.path == "$[\"account\"][\"name\"]")
     );
 }
 #[test]
@@ -882,12 +882,13 @@ fn nested_island_snapshots_precede_children_and_repeat_ordered_inputs() {
 
 #[test]
 fn archived_precontract_island_requires_rebuild_and_archived_static_still_loads() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/archive/2026-10-15-pre-state-contract-corpus/crates/forma-ir/tests/fixtures/js-emitter");
-    let island = std::fs::read(root.join("barrel-exports.ir")).unwrap();
+    let root =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/island-contracts");
+    let island = std::fs::read(root.join("pre-contract-island.ir")).unwrap();
     assert_eq!(
         IrModule::parse(&island).unwrap_err(),
         IrError::MissingSection(10)
     );
-    let plain = std::fs::read(root.join("static-page.ir")).unwrap();
+    let plain = std::fs::read(root.join("pre-contract-static.ir")).unwrap();
     assert!(IrModule::parse(&plain).is_ok());
 }

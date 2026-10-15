@@ -191,6 +191,8 @@ impl RenderCtx {
 /// | RENDER-301 | [`Budget`](RenderError::Budget) | The walk's output passed `max_output_bytes` |
 /// | RENDER-302 | [`Budget`](RenderError::Budget) | The walk's list rows passed `max_list_iterations` |
 /// | RENDER-303 | [`Budget`](RenderError::Budget) | Lists or control flow nested past the walker's depth |
+/// | RENDER-501 | [`IslandState`](RenderError::IslandState) | Declared island input mapping or value is invalid |
+/// | RENDER-502 | [`IslandState`](RenderError::IslandState) | Escaped island state exceeds one MiB |
 /// | RENDER-399 | [`Fault`](RenderError::Fault) | The render panicked; a defect, not an input |
 ///
 /// A code, once published, keeps its meaning; new causes get new codes.
@@ -251,6 +253,18 @@ pub enum RenderError {
         /// The walker's error.
         cause: IrError,
     },
+    /// RENDER-501 or RENDER-502: no partial state or page is returned.
+    #[non_exhaustive]
+    IslandState {
+        /// Route whose island state was refused.
+        route: String,
+        /// Open island registration names, outermost first.
+        component_path: Vec<String>,
+        /// Body walk work completed before refusal.
+        counts: RenderCounts,
+        /// The invalid field path or fixed state-byte ceiling.
+        cause: IrError,
+    },
     /// RENDER-201: a policy extension was refused; there is no page to send
     /// without its policy.
     #[non_exhaustive]
@@ -308,6 +322,11 @@ impl RenderError {
             RenderError::Binding { .. } => "RENDER-405",
             RenderError::MissingModule { .. } => "RENDER-101",
             RenderError::Walk { .. } => "RENDER-102",
+            RenderError::IslandState { cause, .. } => match cause {
+                IrError::IslandStateLimitExceeded { .. } => "RENDER-502",
+                IrError::InvalidIslandState(_) => "RENDER-501",
+                _ => "RENDER-501",
+            },
             RenderError::Policy { .. } => "RENDER-201",
             RenderError::Nonce { .. } => "RENDER-202",
             RenderError::Budget { cause, .. } => match cause {
@@ -329,6 +348,7 @@ impl RenderError {
             RenderError::Binding { route, .. } => route,
             RenderError::MissingModule { route }
             | RenderError::Walk { route, .. }
+            | RenderError::IslandState { route, .. }
             | RenderError::Policy { route, .. }
             | RenderError::Nonce { route, .. }
             | RenderError::Budget { route, .. }
@@ -340,6 +360,10 @@ impl RenderError {
     pub fn property_path(&self) -> Option<&str> {
         match self {
             Self::Props { cause } => Some(cause.path()),
+            Self::IslandState {
+                cause: IrError::InvalidIslandState(problem),
+                ..
+            } => Some(&problem.path),
             _ => None,
         }
     }
@@ -351,6 +375,7 @@ impl RenderError {
     pub fn component_path(&self) -> &[String] {
         match self {
             RenderError::Walk { component_path, .. }
+            | RenderError::IslandState { component_path, .. }
             | RenderError::Budget { component_path, .. }
             | RenderError::Fault { component_path, .. } => component_path,
             _ => &[],
@@ -361,6 +386,7 @@ impl RenderError {
     pub fn counts(&self) -> Option<RenderCounts> {
         match self {
             RenderError::Walk { counts, .. }
+            | RenderError::IslandState { counts, .. }
             | RenderError::Budget { counts, .. }
             | RenderError::Fault { counts, .. } => Some(*counts),
             _ => None,
@@ -394,7 +420,9 @@ impl fmt::Display for RenderError {
             RenderError::MissingModule { .. } => {
                 write!(f, ": no module or slots to render on the server")
             }
-            RenderError::Walk { cause, .. } | RenderError::Budget { cause, .. } => {
+            RenderError::Walk { cause, .. }
+            | RenderError::IslandState { cause, .. }
+            | RenderError::Budget { cause, .. } => {
                 write!(f, ": {cause}")
             }
             RenderError::Policy { cause, .. } => write!(f, ": {cause}"),
@@ -415,7 +443,9 @@ impl fmt::Display for RenderError {
 impl std::error::Error for RenderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            RenderError::Walk { cause, .. } | RenderError::Budget { cause, .. } => Some(cause),
+            RenderError::Walk { cause, .. }
+            | RenderError::IslandState { cause, .. }
+            | RenderError::Budget { cause, .. } => Some(cause),
             RenderError::Props { cause } => Some(cause),
             RenderError::Binding { errors, .. } => {
                 errors.first().map(|error| error as &dyn std::error::Error)
@@ -540,8 +570,12 @@ fn render(
         cause,
     })?;
 
-    let (ssr_body, counts) = match root {
-        Root::Shell => (None, RenderCounts::default()),
+    let output_limit = match root {
+        Root::Walk { limits, .. } => limits.max_output_bytes,
+        Root::Shell => ctx.limits(WalkLimits::default()).max_output_bytes,
+    };
+    let (ssr_body, island_state, counts) = match root {
+        Root::Shell => (None, None, RenderCounts::default()),
         Root::Walk {
             module,
             slots,
@@ -556,6 +590,7 @@ fn render(
             match walked {
                 Ok(out) => (
                     Some(out.html),
+                    Some(out.island_state),
                     RenderCounts::from_walk(out.counts, walk_time),
                 ),
                 Err(failure) => {
@@ -564,6 +599,13 @@ fn render(
                     let counts = RenderCounts::from_walk(failure.counts, walk_time);
                     let cause = failure.error;
                     return Err(match cause {
+                        IrError::InvalidIslandState(_)
+                        | IrError::IslandStateLimitExceeded { .. } => RenderError::IslandState {
+                            route,
+                            component_path,
+                            counts,
+                            cause,
+                        },
                         IrError::OutputLimitExceeded { .. }
                         | IrError::ListBudgetExceeded { .. }
                         | IrError::ListDepthExceeded { .. }
@@ -591,7 +633,15 @@ fn render(
         }
     };
 
-    let html = crate::template::write_document(config, &nonce, ssr_body.as_deref(), ctx)?;
+    let html = crate::template::write_document(
+        config,
+        &nonce,
+        ssr_body.as_deref(),
+        island_state.as_ref(),
+        ctx,
+        output_limit,
+        counts,
+    )?;
     if let Some(reason) = policy.relaxed() {
         csp::log_relaxation(config.route_pattern, reason);
     }
