@@ -49,6 +49,33 @@ function unpack(file, dest) {
   assert(names.every(n => !n.startsWith('/') && !n.split('/').includes('..')), 'unsafe archive path');
   run('tar', ['-xzf', file, '-C', dest, '--strip-components=1']);
 }
+export function verifyPackedCorpus(manifest, fmir) {
+  assert([2, 3].includes(fmir), 'P17 has no verifier for the recorded FMIR contract');
+  // Immutable A2 packages keep their integration target. V3's fragment walker is
+  // private, so its complete page/fragment corpus lives in the library test module.
+  const target = fmir === 2 ? ['--test', 'js_emitter_contract'] : ['--lib', 'js_emitter_contract'];
+  const names = [
+    'corpus_contains_every_expected_case', 'every_case_parses_as_fmir',
+    'slot_names_are_pairwise_unique', 'slot_ids_are_pairwise_unique',
+    'every_case_walks_to_html', 'every_island_entry_walks_as_a_fragment',
+    'resolution_cases_ship_named_islands_over_named_slots',
+    'corpus_exercises_multibyte_utf8', 'rendered_html_matches_golden',
+    ...(fmir === 3 ? ['canonical_dumps_match_the_typescript_emitter'] : []),
+  ].map(name => fmir === 3 ? `js_emitter_contract::${name}` : name);
+  const args = ['test', '--locked', '--manifest-path', manifest, ...target, '--', '--color', 'never'];
+  const env = { ...process.env };
+  // The Rust corpus checks presence, so even an empty value would permit writes.
+  delete env.UPDATE_GOLDEN;
+  const options = { env };
+  const listed = run('cargo', [...args, '--list'], ROOT, options).split('\n');
+  for (const name of names) assert(listed.includes(`${name}: test`), `packed corpus is missing ${name}`);
+  const output = run('cargo', args, ROOT, options);
+  process.stdout.write(output);
+  // Cargo succeeds for an empty filter or ignored tests. Require each semantic
+  // check to have executed successfully, not merely to exist in the archive.
+  const completed = output.split('\n');
+  for (const name of names) assert(completed.includes(`test ${name} ... ok`), `packed corpus did not execute ${name}`);
+}
 export async function verify(dir, reportPath) {
   assert(!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN, 'P17 must not have an OIDC credential');
   const started = Date.now(), set = json(join(dir, 'release-set.json'));
@@ -118,7 +145,7 @@ export async function verify(dir, reportPath) {
           assert.equal(compiler.dumpFmir(bytes), readFileSync(join(emitted, `${name}.dump`), 'utf8'), `${name}: canonical dump differs from packed reader corpus`);
         }
       }
-      run('cargo', ['test', '--locked', '--manifest-path', join(scratch, 'crates/forma-ir/Cargo.toml'), '--test', 'js_emitter_contract'], ROOT, { stdio: 'inherit' });
+      verifyPackedCorpus(join(scratch, 'crates/forma-ir/Cargo.toml'), set.contracts.fmir);
     });
     const { chromium } = await import('@playwright/test');
     const browser = await chromium.launch();
