@@ -73,7 +73,7 @@ export function versionFiles(root, version) {
     updateRequirements(p, version);
   }
   files.set('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
-  for (const path of ['Cargo.lock', 'e2e/Cargo.lock']) {
+  for (const path of ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock']) {
     let text = read(path);
     text = text.replace(/(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g, `$1${version}"`);
     files.set(path, text);
@@ -265,7 +265,7 @@ export function pack(out, dryRun = false) {
   const recorded = recordPackages(packages, out);
   const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
   save(join(out, 'release-set.json'), {
-    schema: 1, dryRun, tag: dryRun ? 'A2-dry-run' : process.env.GITHUB_REF_NAME,
+    schema: 1, dryRun, tag: dryRun ? `${contracts.stage}-dry-run` : process.env.GITHUB_REF_NAME,
     commit: run('git', ['rev-parse', 'HEAD']).trim(),
     run: process.env.GITHUB_RUN_ID ?? null, toolchain: run('rustc', ['--version']).trim(),
     node: process.version, npm: run('npm', ['--version']).trim(), contracts, packages: recorded,
