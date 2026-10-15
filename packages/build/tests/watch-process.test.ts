@@ -7,6 +7,7 @@ it('stops its owned descendant and closes inherited pipes without stopping anoth
   const group = process.platform !== 'win32';
   const sentinel = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
   const sentinelClosed = once(sentinel, 'close');
+  void sentinelClosed.catch(() => {});
   const child = spawn(process.execPath, ['-e', `
     const {spawn} = require('node:child_process');
     const descendant = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {stdio: ['ignore', 'inherit', 'inherit']});
@@ -14,6 +15,7 @@ it('stops its owned descendant and closes inherited pipes without stopping anoth
     setInterval(() => {}, 1000);
   `], { stdio: ['ignore', 'pipe', 'pipe'], detached: group });
   const closed = once(child, 'close');
+  void closed.catch(() => {});
   let stopped = false;
   try {
     await new Promise<void>((resolve, reject) => {
@@ -29,8 +31,11 @@ it('stops its owned descendant and closes inherited pipes without stopping anoth
     expect(sentinel.signalCode).toBeNull();
     expect(() => process.kill(sentinel.pid!, 0)).not.toThrow();
   } finally {
-    if (!stopped) await stopOwnedWatcher(child, closed, group);
-    sentinel.kill();
-    await sentinelClosed;
+    try {
+      if (!stopped) await stopOwnedWatcher(child, closed, group);
+    } finally {
+      sentinel.kill();
+      await sentinelClosed;
+    }
   }
 }, 15_000);
