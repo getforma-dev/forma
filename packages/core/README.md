@@ -108,7 +108,7 @@ Verified by `src/__tests__/readme-examples.test.ts` > "the intro counter works w
 
 **Three entry points, one engine.** Start with a CDN script tag, graduate to a full build pipeline without rewriting.
 
-**Islands over SPAs.** `activateIslands()` hydrates independent regions of server-rendered HTML — error isolation per island, deferred triggers (`visible`, `idle`, `interaction`), and disposal for module swaps. → [docs/ISLANDS.md](docs/ISLANDS.md)
+**Islands over SPAs.** Compiled `activateIslands()` validates each original SSR region before activation: successful adoption makes zero initial DOM writes, mismatches refuse without repair, and failures remain isolated per island. Deferred triggers (`visible`, `idle`, `interaction`) delay activation; disposal releases owned work. → [docs/ISLANDS.md](docs/ISLANDS.md)
 
 **CSP-safe.** The HTML runtime evaluates expressions with an allowlist AST interpreter. **Zero `eval()`, zero `new Function()`, zero `with()` in every shipped artifact** — there is no opt-in fallback to leave switched on by mistake, because the fallback was deleted. Asserted by `scripts/verify-dist.mjs`, which greps the built files as the last step of `npm run build`, and by a Playwright spec that serves the flagship fixture under a real CSP header.
 
@@ -119,7 +119,7 @@ Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Functi
 
 ### Measured, not asserted
 
-`npm run bench` runs the hot-path suite in `bench/`. The numbers — each with the run-to-run noise floor next to it, so a later comparison can tell a regression from a bad afternoon — live in [docs/PERFORMANCE.md](docs/PERFORMANCE.md). They are happy-dom figures: good for comparing FormaJS against FormaJS, not against a browser.
+`npm run bench` runs the hot-path suite in `bench/`. The numbers — each with the run-to-run noise floor next to it, so a later comparison can tell a regression from a bad afternoon — live in [docs/PERFORMANCE.md](docs/PERFORMANCE.md). They are historical happy-dom figures, not current browser timings. Strict adoption now uses connected, matching fixtures and a different transaction; no new measurement or comparison against the old adoption baseline is claimed.
 
 - **A write that changes nothing does nothing.** An equal-value write never reaches an effect, and costs orders of magnitude less than one that does.
   Benchmarked by: bench/reactive.bench.ts > "write a CHANGING value, effect runs (×500)"
@@ -127,7 +127,7 @@ Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Functi
   Benchmarked by: bench/reactive.bench.ts > "one signal, 100 writes, batched (×30)"
 - **A keyed list update that changes no keys and no order takes the reconciler's fast path**, and costs a fraction of the same rows reordered.
   Benchmarked by: bench/list.bench.ts > "same keys, same order — reconciler fast path"
-- **Hydration beats client rendering.** Adopting server-rendered keyed rows costs less than building the same list client-side, with the HTML parse subtracted from both sides.
+- **The historical adoption baseline was cheaper than its CSR control**, with HTML parsing subtracted. This measured the retired walker; it does not establish the strict transaction's current cost.
   Benchmarked by: bench/hydrate.bench.ts > "1000 rows: parse + adopt by data-forma-key"
 - **The CSP-safe interpreter is faster than the `eval` path it replaced** — and it needs no `unsafe-eval` in your CSP.
   Benchmarked by: bench/expression.bench.ts > "8 count-dependent expressions: write → evaluate → text (×20)"

@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { CDN_URL_ARTIFACTS } from '../../scripts/build-defines.mjs';
 import * as rootEntry from '../index.js';
 import * as tc39 from '../reactive/tc39-compat.js';
@@ -235,6 +236,28 @@ describe('"Verified by" citations', () => {
     'docs/COMPARISONS.md': COMPARISONS_DOC,
   };
 
+  // Strict adoption deliberately retired repairing behavior. Historical audit
+  // citations must retain that evidence, not silently point to an inverse test.
+  const retirementRoot = 'docs/archive/2026-10-15-strict-adoption-retirement';
+  const retirement = JSON.parse(read(`${retirementRoot}/manifest.json`)) as {
+    files: Array<{ original: string; archive: string; sha256: string; bytes: number }>;
+  };
+
+  function historicalTest(file: string): string {
+    const entry = retirement.files.find((item) => item.original === `packages/core/${file}`);
+    if (entry) {
+      const bytes = readFileSync(resolve(ROOT, retirementRoot, entry.archive));
+      expect(bytes.byteLength, `${entry.original}: archived byte length`).toBe(entry.bytes);
+      expect(createHash('sha256').update(bytes).digest('hex'), `${entry.original}: archived SHA256`)
+        .toBe(entry.sha256);
+      return bytes.toString('utf8');
+    }
+    // Whole-page mount was retired separately before the strict-adoption archive.
+    return file === 'src/dom/__tests__/mount.test.ts'
+      ? read('../../docs/archive/2026-10-15-ssr-mount-retirement/mount.test.ts')
+      : read(file);
+  }
+
   it('every citation names a test file that exists and a test that is in it', () => {
     let checked = 0;
     for (const [doc, text] of Object.entries(DOCS)) {
@@ -242,18 +265,14 @@ describe('"Verified by" citations', () => {
         checked += 1;
         let source: string;
         try {
-          // This audit described a removed whole-page mount adapter. Validate its
-          // citation against the exact archived test, not an unrelated new test.
           source = doc === 'docs/archive/2026-08-05-hardening-audit.md'
-            && file === 'src/dom/__tests__/mount.test.ts'
-            ? read('../../docs/archive/2026-10-15-ssr-mount-retirement/mount.test.ts')
-            : read(file!);
-        } catch {
-          throw new Error(`${doc}: cited test file does not exist: ${file}`);
+            ? historicalTest(file!) : read(file!);
+        } catch (error) {
+          throw new Error(`${doc}: cannot resolve cited test file ${file}`, { cause: error });
         }
-        // Preserve the archived audit's original channel/diagnostic claims.
-        // Follow those exact citations to their current stricter regression;
-        // current docs receive no alias and must name their actual test.
+        // These pre-FORMA-103 names were already mapped by the state migration.
+        // Where strict adoption later changed the fixture, resolve the mapping
+        // inside its authenticated archived source. Current docs get no aliases.
         const historicalNames: Record<string, string> = {
           'emits srcdoc but warns that escaping does not neutralize it':
             'srcdoc requires trustedHtml and strings are refused before the sink',
@@ -418,6 +437,7 @@ describe('coverage figures', () => {
   it('the island coverage figure matches the island test files', () => {
     const dir = resolve(ROOT, 'src/dom/__tests__');
     const present = new Set(readdirSync(dir));
+    // Count literal test declarations; it.each expands into more runtime cases.
     let cases = 0;
     for (const name of ISLAND_TEST_FILES) {
       const file = `${name}.test.ts`;

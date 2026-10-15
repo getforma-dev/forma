@@ -134,10 +134,11 @@ branch reads:
 
 The file under `dist/dev/` is built from the same sources with the same
 options as its production twin, except that `__DEV__` is `true`, so it keeps
-the warnings a production build drops: hydration mismatches, props the
-renderer drops, the `FORMA_W_DEPRECATED_` codes
+the warnings a production build drops: props the renderer drops, raw-content
+ambiguity and the `FORMA_W_DEPRECATED_` codes
 ([STABILITY.md](STABILITY.md#development-builds)). The type declarations are
-shared, so TypeScript sees one package either way.
+shared, so TypeScript sees one package either way. Strict hydration refusals
+and typed raw-sink violations remain enforced and reported in both builds.
 
 Whether a resolver asks for the condition is its own convention, and two ask
 by default where you might not expect it: **Vitest** and **Bun's bundler**.
