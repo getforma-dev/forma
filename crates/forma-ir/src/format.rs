@@ -234,6 +234,20 @@ pub enum IrError {
         /// The byte budget that was exceeded.
         limit: usize,
     },
+    /// An executed island's declared request state cannot be projected.
+    InvalidIslandState {
+        /// Static island identifier.
+        island: u16,
+        /// Declared field/index path within its props.
+        path: String,
+        /// Stable reason for refusing the snapshot.
+        reason: &'static str,
+    },
+    /// The complete escaped state envelope exceeds its fixed byte ceiling.
+    IslandStateLimitExceeded {
+        /// Maximum complete envelope bytes.
+        limit: usize,
+    },
     /// Total LIST item iterations exceeded the walker's per-render budget.
     /// Distinct from [`IrError::ListDepthExceeded`], which bounds *nesting*.
     ListBudgetExceeded {
@@ -378,6 +392,16 @@ impl fmt::Display for IrError {
             }
             IrError::OutputLimitExceeded { limit } => {
                 write!(f, "rendered output exceeded the limit of {limit} bytes")
+            }
+            IrError::InvalidIslandState {
+                island,
+                path,
+                reason,
+            } => {
+                write!(f, "RENDER-501: island {island} {path}: {reason}")
+            }
+            IrError::IslandStateLimitExceeded { limit } => {
+                write!(f, "RENDER-502: island state exceeded {limit} encoded bytes")
             }
             IrError::ListBudgetExceeded { max } => {
                 write!(f, "total LIST iterations exceeded the budget of {max}")

@@ -1029,6 +1029,110 @@ pub mod test_helpers {
         ])
     }
 
+    /// Explicit declared-contract builder for native scalar/string-array tests.
+    ///
+    /// This is fixture shorthand, not a compiler: SERVER slot tuples declare
+    /// page fields of their named scalar type (Array means string[] here), and
+    /// each island tuple declares the ordered fields named by its input slots.
+    /// More complex schemas use build_ir_sections directly. The original
+    /// build_minimal_ir remains unchanged for old-module refusal controls.
+    pub fn build_declared_fixture(
+        strings: &[&str],
+        slots: &[(u16, u32, u8, u8, &[u8])],
+        opcodes: &[u8],
+        islands: &[(u16, u8, u8, u32, u32, &[u16])],
+    ) -> Vec<u8> {
+        if islands.is_empty() {
+            return build_minimal_ir(strings, slots, opcodes, islands);
+        }
+        fn kind(hint: u8) -> Vec<u8> {
+            match hint {
+                1 => vec![2],
+                2 => vec![1],
+                3 => vec![3],
+                4 => vec![6, 2],
+                _ => panic!("fixture requires an explicit non-scalar schema"),
+            }
+        }
+        fn fields(out: &mut Vec<u8>, declarations: &[(u32, Vec<u8>)]) {
+            out.extend(to_u16(declarations.len()));
+            for (name, kind) in declarations {
+                out.extend(name.to_le_bytes());
+                out.extend(0u32.to_le_bytes());
+                out.extend(1u32.to_le_bytes());
+                out.extend(1u32.to_le_bytes());
+                out.extend(kind);
+            }
+        }
+        let mut page = Vec::new();
+        for &(_, name, hint, source, _) in slots {
+            if source == 0 && !page.iter().any(|(prior, _)| *prior == name) {
+                page.push((name, kind(hint)));
+            }
+        }
+        let mut schema = to_u16(islands.len() + 1).to_vec();
+        fields(&mut schema, &page);
+        let mut island_table = to_u16(islands.len()).to_vec();
+        let mut records = Vec::new();
+        for (index, &(id, trigger, _, name, offset, inputs)) in islands.iter().enumerate() {
+            let declared = inputs
+                .iter()
+                .map(|id| {
+                    let &(_, name, hint, _, _) = slots
+                        .iter()
+                        .find(|slot| slot.0 == *id)
+                        .expect("declared fixture slot");
+                    (name, kind(hint))
+                })
+                .collect::<Vec<_>>();
+            fields(&mut schema, &declared);
+            let mut record = id.to_le_bytes().to_vec();
+            record.extend([trigger, 0]);
+            record.extend(name.to_le_bytes());
+            record.extend(offset.to_le_bytes());
+            record.extend(to_u16(index + 1));
+            record.push(8);
+            record.extend([id as u8; 8]); // Deterministic opaque identity, not a producer hash claim.
+            record.extend(to_u16(inputs.len()));
+            for input in inputs {
+                record.extend(input.to_le_bytes());
+            }
+            island_table.extend(to_u16(record.len()));
+            island_table.extend(record);
+            let mut canonical = vec![1, 1, 0];
+            canonical.extend(to_u16(declared.len()));
+            let mut sorted = declared.iter().collect::<Vec<_>>();
+            sorted.sort_by_key(|(name, _)| strings[*name as usize]);
+            for (name, kind) in sorted {
+                let name = strings[*name as usize].as_bytes();
+                canonical.extend(to_u16(name.len()));
+                canonical.extend(name);
+                canonical.extend(kind);
+            }
+            let mut record = id.to_le_bytes().to_vec();
+            record.extend(4u32.to_le_bytes());
+            record.extend([1, 0, 0, 0]);
+            record.extend(to_u32(canonical.len()));
+            record.extend(canonical);
+            records.push((id, record));
+        }
+        records.sort_by_key(|(id, _)| *id);
+        let mut contracts = to_u16(records.len()).to_vec();
+        for (_, record) in records {
+            contracts.extend(to_u32(record.len()));
+            contracts.extend(record);
+        }
+        contracts.extend([0, 0]);
+        build_ir_sections(&[
+            (1, 1, opcodes),
+            (2, 1, &build_string_table(strings)),
+            (3, 1, &build_slot_table(slots)),
+            (4, 1, &island_table),
+            (5, 1, &schema),
+            (10, 1, &contracts),
+        ])
+    }
+
     /// Build a v3 module from arbitrary sections, for fault injection and protocol tests.
     pub fn build_ir_sections(sections: &[(u16, u16, &[u8])]) -> Vec<u8> {
         let mut buf = Vec::new();
@@ -1249,7 +1353,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_text(1));
         opcodes.push(0x0C); // ISLAND_END
         opcodes.extend_from_slice(&1u16.to_le_bytes());
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["Counter", "Hello"],
             &[],
             &opcodes,
@@ -1263,7 +1367,7 @@ mod tests {
         let entry = &module.islands.entries()[0];
         assert_eq!(entry.id, 1);
         assert_eq!(entry.trigger, IslandTrigger::Load);
-        assert_eq!(entry.schema_object, 0xffff);
+        assert_eq!(entry.schema_object, 1);
         assert_eq!(entry.name_str_idx, 0);
         assert_eq!(module.strings.get(entry.name_str_idx).unwrap(), "Counter");
     }
@@ -1520,7 +1624,7 @@ mod tests {
         opcodes.extend_from_slice(&3u16.to_le_bytes());
         opcodes.push(0x0C);
         opcodes.extend_from_slice(&3u16.to_le_bytes());
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["Comp", "title"],
             &[(4, 1, 0x01, 0x00, &[])],
             &opcodes,
