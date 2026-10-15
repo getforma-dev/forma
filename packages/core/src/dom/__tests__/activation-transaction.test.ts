@@ -1,10 +1,10 @@
-import{describe,it,expect,vi,afterEach}from'vitest';
-import{activateIslands,deactivateAllIslands,deactivateIsland}from'../activate.js';
-import{h}from'../element.js';
-import{compiled,installState,useFreshDocument}from'./helpers/compiled-island.js';
-import{createEffect}from'../../reactive/effect.js';
-import{createSignal}from'../../reactive/signal.js';
-import{__adoptionSignal,__adoptionWritable}from'../../reactive/adoption-hooks.js';
+import {describe,it,expect,vi,afterEach} from 'vitest';
+import {activateIslands,deactivateAllIslands,deactivateIsland} from '../activate.js';
+import {h} from '../element.js';
+import {compiled,installState,useFreshDocument} from './helpers/compiled-island.js';
+import {createEffect} from '../../reactive/effect.js';
+import {createSignal} from '../../reactive/signal.js';
+import {__adoptionSignal,__adoptionWritable} from '../../reactive/adoption-hooks.js';
 afterEach(()=>vi.restoreAllMocks());
 function hosts(contents:string[]){document.body.innerHTML=contents.map((content,i)=>`<section data-forma-island="${i}" data-forma-component="C${i}" data-forma-status="pending" data-forma-ssr>${content}</section>`).join('');installState(contents.map(()=>({})));return [...document.querySelectorAll<HTMLElement>('section')];}
 describe('compiled activation transaction',()=>{
