@@ -1,12 +1,12 @@
 # Parity rules: the marker vocabulary and the value rules
 
 **Status:** rule 1 is stated and implemented for the body/DOM slice (FORMA-182,
-checkpoint 2), and rules 2 to 5 are stated with their shared vectors; the
-marker vocabulary below describes what the walker writes today. Rules 6 and 7
-are listed with where their current behaviour lives; this document does not
-claim they are qualified, and FORMA-182 is not complete while they, the
-namespace-vector relocation, `renderBoth` (FORMA-184) and the ticket's
-large-scale qualification remain open.
+checkpoint 2), and rules 2 to 6 are stated with their shared vectors; the
+marker vocabulary below describes what the walker writes today. Rule 7 is
+listed with where its current behaviour lives; this document does not claim it
+is qualified, and FORMA-182 is not complete while it, the namespace-vector
+relocation, `renderBoth` (FORMA-184) and the ticket's large-scale
+qualification remain open.
 
 **Why one document.** Three implementations produce or consume the same tree:
 the Rust walker (`crates/forma-ir/src/walker.rs`) writes HTML, `h()` in
@@ -303,12 +303,113 @@ on a fresh element).
 `checked`, `selected`) and the raw sinks keep their own typed handling and
 are not vectors here.
 
-## Rules 6 and 7: listed, not qualified here
+## Rule 6: a boolean in text is a build error
+
+**Statement.** A text position whose value the compiler can prove is
+boolean-typed is a build error, `BUILD-614`: a declared boolean prop
+(optional included), a signal whose literal default is a boolean, a closed
+boolean (an aggregate or list-row field, a module-level `const` initialized
+with `true` or `false`), or an expression whose every result is a boolean
+(`!x`, a comparison, `&&`, `||` or a ternary of booleans), read eagerly or
+through a getter, as a child or as a `createShow` or ternary branch. Admitted:
+
+- `String(flag)`. On a non-optional declared boolean it binds `DYN_TEXT` to
+  the boolean slot itself and the walker writes `true` or `false`, the word
+  `String()` gives; on a boolean signal it folds to the word. On an optional
+  declared boolean it stays `BUILD-610`: the browser would write `undefined`
+  where the server writes nothing.
+- A boolean literal as a child or a branch: nothing on both sides.
+- A mixed expression whose boolean result stands for "nothing"
+  (`ready() && 'Go'`). Eagerly it folds, to nothing at a boolean; through a
+  getter the server writes an empty range when its default is the boolean and
+  the string otherwise, and the browser writes the same.
+
+On every client path a boolean text value writes nothing: `h()`, strict
+adoption's expectation and adoption's later writes. As an attribute value a
+boolean follows the presence table on both sides, `class` included: `true`
+writes the bare attribute, `false` omits it as `null` does (rule 5).
+
+**Why.** DR-9: a boolean text was `true` or `false` from the walker and
+adoption and nothing from `h()`. The vectors found where that reached a
+page: a boolean signal, a negation or a comparison read through a getter was
+served as the word; the idiom `() => ready() && 'Go'` at `false` was served
+as `false`; a `true` literal in a ternary branch was served as `true`; and
+core's adoption expected and later wrote the word, so an adopted page showed
+`false` where a fresh `h()` showed nothing (first failures in
+`work/FORMA-182-rules/first-failures/`: `compiler-rule-6.log`,
+`core-rule-6.log`, `core-e2e-rule-6.log`). A declared boolean already wrote
+nothing on both sides, which agreed but hid the author's mistake: the text
+shows nothing whatever the value. Refusing at build time is what design 4's
+decision 2 asks ("rejects … booleans in text").
+
+**Implementation.** Compiler: `packages/compiler/src/value-rules.ts`
+(`valueKind`, `moduleBoolean`, `refuseBooleanText`); `props-bindings.ts` >
+`emitPropText` (a declared boolean refused after the read's own checks;
+`String(flag)` admitted); `closed-bindings.ts` > `emitClosedText`;
+`ir-walk.ts` > `emitChild` and `emitBranchContent` (signals, expressions,
+module constants, the idiom's empty default, the `true` literal), and
+`evalNode` folds `String()` of a boolean. `BUILD-614` is catalogued in
+`diagnostics.ts` and `docs/DIAGNOSTICS.md` with its conformance pair
+(`packages/compiler/tests/fixtures/conformance/BUILD-614/`: the refused
+`() => done()` and its near miss `() => String(done())`). Rust: no change; a
+`Bool` slot read as `DYN_TEXT` writes the word, which the near miss relies on.
+Core: `packages/core/src/dom/adoption.ts` > `text()` maps a boolean to the
+empty string, as it already did `null`.
+
+**Vectors.** `crates/forma-ir/tests/fixtures/parity/boolean-text.json`:
+`compiledText` (twenty-five page shapes, each refused with its code or built
+with no diagnostic and the visible text `writes` under its defaults),
+`nearMissText` (the word for `true` and `false`), `idiom` (`() => ready() &&
+'Go'` at each default) and `attribute` (the presence table). Consumers:
+`packages/compiler/tests/value-rule-6-boolean-text.test.ts`, the `BUILD-614`
+pair in `packages/compiler/tests/diagnostics-conformance.test.ts`,
+`crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
+"rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence"
+(the word, the idiom's ranges, `disabled` and `class` presence),
+`packages/core/src/dom/__tests__/value-rule-6-boolean-text.test.ts`
+(`String(flag)` static and reactive, the browser-only drop of a bare boolean,
+the presence table on every writer, the idiom fresh and adopted with its later
+writes), and `packages/core/e2e/value-rules.spec.ts` in the three engines (the
+word and the idiom's ranges and the presence table adopted without a write; a
+control shows the word the walker used to serve for the idiom at `false`
+refused). Mutation probes `el/static-class-true-word` and
+`adoption/boolean-text-word` are caught by the core suite.
+
+**Migration.** A page that reads a boolean as text no longer builds; the fix
+is `String(flag)` or a conditional. Two compiler tests read one
+(`tests/props-bindings.test.ts`, `tests/ssr-emission.test.ts`); they were
+migrated and their original sources archived in
+`docs/archive/2026-10-15-pre-value-rules/`, where
+`packages/compiler/tests/value-rules-archive.test.ts` pins each refusal.
+Applications are counted with FORMA-192's read-only runs. The FMIR corpus
+(`crates/forma-ir/tests/fixtures/js-emitter`) and the declared-props fixtures
+are byte-identical.
+
+## Rule 7: listed, not qualified here
 
 | # | Rule | Where the current behaviour lives |
 |---|---|---|
-| 6 | A boolean in text is a build error | Not implemented; codes reserved with FORMA-101 |
-| 7 | Conditions are boolean-typed | Not implemented; codes reserved with FORMA-101 |
+| 7 | Conditions are boolean-typed | Not implemented; code reserved with FORMA-101 |
+
+## Proposals (not implemented)
+
+Changes the rules point at that need a broader decision than one rule's
+vectors; each is written here instead of as code.
+
+### ARIA states written as `"true"` and `"false"`
+
+Design 4's attribute table writes ARIA's state attributes (`aria-pressed`,
+`aria-expanded`, `aria-checked`, …) as the words `"true"` and `"false"`, which
+is what ARIA reads: an absent `aria-pressed` means "not a toggle button", not
+"not pressed". Today both sides follow the presence table for every
+attribute, `aria-*` included, so they agree with each other but `aria-pressed:
+false` omits the attribute. Changing it touches the walker's `DYN_ATTR`, the
+compiler's static boolean attributes, `h()`'s attribute writers and
+adoption's expectations at once, changes what existing pages render, and
+needs its own vectors (each ARIA state and its tokens, `aria-hidden` and the
+`true`/`false`/`mixed` tri-states). Proposed: a `aria` section in a new
+vector file, the four writers changed in one coordinated pull request, and a
+CHANGELOG entry that names it a rendering change.
 
 FORMA-026's SVG and MathML namespace vectors stay at
 `packages/core/src/__tests__/vectors/namespaces.json` until their relocation is

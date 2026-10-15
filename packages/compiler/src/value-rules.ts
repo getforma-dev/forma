@@ -1,0 +1,132 @@
+/**
+ * Value rule 6, the compiler's half (FORMA-182; docs/parity-rules.md;
+ * decision brief DR-9, design 4's decision 2).
+ *
+ * Rule 6, BUILD-614: a text position whose value is boolean-typed is a build
+ * error. `h()` writes nothing for a boolean child whatever its value, while
+ * the walker writes `true` or `false` for a boolean slot, so a boolean bound
+ * as text either breaks parity or shows nothing in the browser: the author
+ * meant the word (`String(flag)`) or a conditional.
+ *
+ * It refuses only what the compiler can prove from the source: a declared or
+ * closed type, a signal's literal default, a module-level boolean `const`, or
+ * the operator that produces the value. What it cannot type is left to the
+ * existing paths (BUILD-301).
+ *
+ * Verified by: packages/compiler/tests/value-rule-6-boolean-text.test.ts and
+ * the BUILD-614 pair in packages/compiler/tests/diagnostics-conformance.test.ts.
+ */
+import * as t from '@babel/types';
+import { parse } from '@babel/parser';
+import { nestedScopeBindings } from './component-analyzer.js';
+import { originalPosition } from './diagnostics';
+import { PropsSchemaError } from './props-schema';
+import { readSourceFile } from './source-snapshot';
+import type { SignalDefault } from './signal-scope';
+
+/** What the compiler can prove about a value's type. */
+export type ValueKind = 'boolean' | 'other' | 'unknown';
+
+/** Names a classified expression can read. */
+export interface KindEnvironment {
+  /** The default of a scalar or aggregate signal in lexical scope. */
+  signal(name: string): SignalDefault | undefined;
+  /** A module-level constant's value (string or boolean); undefined when unknown. */
+  constant(name: string): unknown;
+}
+
+const COMPARISON = new Set(['==', '!=', '===', '!==', '<', '<=', '>', '>=', 'instanceof', 'in']);
+
+function combine(a: ValueKind, b: ValueKind): ValueKind {
+  if (a === 'boolean' && b === 'boolean') return 'boolean';
+  return a === 'other' || b === 'other' ? 'other' : 'unknown';
+}
+
+/**
+ * The kind of value `node` produces. A getter (`() => …`) is read through.
+ * `a && b`, `a || b`, `a ?? b` and `c ? a : b` are boolean only when both
+ * results are: `ready() && 'Go'` is a string or `false`, so it is not.
+ */
+export function valueKind(node: t.Node | null | undefined, env: KindEnvironment): ValueKind {
+  if (!node) return 'unknown';
+  if (t.isTSAsExpression(node) || t.isTSSatisfiesExpression(node) || t.isTSNonNullExpression(node)
+    || t.isTSTypeAssertion(node) || t.isParenthesizedExpression(node)) return valueKind(node.expression, env);
+  if ((t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) && node.params.length === 0) {
+    const body = t.isBlockStatement(node.body)
+      ? node.body.body.length === 1 && t.isReturnStatement(node.body.body[0]) ? node.body.body[0].argument : undefined
+      : node.body;
+    return valueKind(body, env);
+  }
+  if (t.isBooleanLiteral(node)) return 'boolean';
+  if (t.isStringLiteral(node) || t.isNumericLiteral(node) || t.isBigIntLiteral(node) || t.isNullLiteral(node)
+    || t.isTemplateLiteral(node)) return 'other';
+  if (t.isUnaryExpression(node)) return node.operator === '!' || node.operator === 'delete' ? 'boolean' : 'other';
+  if (t.isBinaryExpression(node)) return COMPARISON.has(node.operator) ? 'boolean' : 'other';
+  if (t.isLogicalExpression(node)) return combine(valueKind(node.left, env), valueKind(node.right, env));
+  if (t.isConditionalExpression(node)) return combine(valueKind(node.consequent, env), valueKind(node.alternate, env));
+  if (t.isCallExpression(node) && t.isIdentifier(node.callee)) {
+    if (node.arguments.length === 0) {
+      const signal = env.signal(node.callee.name);
+      if (signal) return signal.type === 'bool' ? 'boolean' : 'other';
+    } else if (node.arguments.length === 1 && !t.isSpreadElement(node.arguments[0])) {
+      if (node.callee.name === 'Boolean') return 'boolean';
+      if (node.callee.name === 'String' || node.callee.name === 'Number') return 'other';
+    }
+  }
+  if (t.isIdentifier(node)) {
+    if (node.name === 'undefined') return 'other';
+    const value = env.constant(node.name);
+    if (value !== undefined) return typeof value === 'boolean' ? 'boolean' : 'other';
+  }
+  return 'unknown';
+}
+
+/** Whether closed values (an aggregate field, a LIST row field) are boolean-typed: booleans, absent allowed, at least one. */
+export function closedKind(values: readonly unknown[]): ValueKind {
+  if (values.some(value => value !== null && typeof value !== 'boolean')) return 'other';
+  return values.some(value => typeof value === 'boolean') ? 'boolean' : 'other';
+}
+
+const moduleBooleans = new Map<string, { source: string; values: Map<string, boolean> }>();
+
+/**
+ * A module-level `const NAME = true | false` of `file` (export-wrapped or not,
+ * through `as const`), unless the name is also bound in a nested scope (the
+ * same conservative shadowing guard the string constants use).
+ */
+export function moduleBoolean(file: string | undefined, name: string): boolean | undefined {
+  if (!file) return undefined;
+  let source: string;
+  try { source = readSourceFile(file); } catch { return undefined; }
+  let entry = moduleBooleans.get(file);
+  if (!entry || entry.source !== source) {
+    const values = new Map<string, boolean>();
+    try {
+      const ast = parse(source, { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
+      for (const statement of ast.program.body) {
+        const declaration = t.isExportNamedDeclaration(statement) ? statement.declaration : statement;
+        if (!t.isVariableDeclaration(declaration) || declaration.kind !== 'const') continue;
+        for (const declarator of declaration.declarations) {
+          let init: t.Node | null | undefined = declarator.init;
+          while (init && (t.isTSAsExpression(init) || t.isTSSatisfiesExpression(init) || t.isParenthesizedExpression(init))) init = init.expression;
+          if (t.isIdentifier(declarator.id) && t.isBooleanLiteral(init)) values.set(declarator.id.name, init.value);
+        }
+      }
+      for (const shadowed of nestedScopeBindings(ast)) values.delete(shadowed);
+    } catch { /* an unparseable module proves nothing */ }
+    entry = { source, values };
+    moduleBooleans.set(file, entry);
+  }
+  return entry.values.get(name);
+}
+
+function refuse(code: 'BUILD-614', file: string, node: t.Node, detail: string): never {
+  const at = originalPosition(file, node.loc?.start ?? { line: 1, column: 0 });
+  throw new PropsSchemaError(file, at.line, at.column, detail, code);
+}
+
+/** Rule 6: `what` reads a boolean into a text position. */
+export function refuseBooleanText(file: string, node: t.Node, what: string): never {
+  refuse('BUILD-614', file, node,
+    `${what} is a boolean in text: the browser writes nothing for it whatever its value, and the server would write "true" or "false"; write String(flag) for the word, or createShow or a ternary for content`);
+}

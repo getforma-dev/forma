@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Value rule 6: a boolean in text is a build error — FORMA-182
+
+- New mandatory code `BUILD-614` (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 6): a text position whose value is provably boolean-typed fails the build, strict mode or not: a declared boolean prop (optional included; it used to write nothing), a signal whose default is a boolean (it was served as `true`/`false`), a closed boolean (aggregate or list-row field, a module-level `const` of `true`/`false`), or an expression that can only be a boolean (`!x`, a comparison), read eagerly or through a getter, as a child or a `createShow`/ternary branch. Conformance pair in `tests/fixtures/conformance/BUILD-614/`.
+- `String(flag)` is the admitted near miss: on a non-optional declared boolean it binds `DYN_TEXT` to the boolean slot (the walker writes the word); the evaluator folds `String()` of a boolean, so `() => String(done())` builds where it was refused. `String()` of an optional declared boolean stays `BUILD-610`.
+- The idiom `() => ready() && 'Go'` at a boolean default gets an empty slot default (an empty range) instead of the word `false`, and a `true` literal in a ternary branch writes nothing instead of `true`, matching `h()`.
+- Migrated `tests/props-bindings.test.ts` (a trailing declared boolean child) and `tests/ssr-emission.test.ts` (a boolean signal read as text to name its slot); the originals are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-614` refusals by `tests/value-rules-archive.test.ts`. The FMIR corpus and the declared-props fixtures are byte-identical.
+
 ### Keyed rows, checkpoint A: original key-path proof and section 6 — FORMA-181
 
 - Prove every server-rendered list's key from the original source before JSX lowering: a nonempty property path of the row parameter (`row.id`, `row.user.id`, `row['id']`, an immutable alias) with one stable owned Element as the row root, resolved through lexical helpers, imported aliases and registered children. Emit FMIR section `0x0006` with one entry per emitted LIST at its exact opcode offset, including repeated helper sites and nested lists.

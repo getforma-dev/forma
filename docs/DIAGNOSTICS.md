@@ -630,6 +630,31 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/
 [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx) pin the
 original TSX position of the list.
 
+### BUILD-614 Boolean in text
+
+**Why.** FORMA-182, value rule 6 ([parity rules](parity-rules.md)): `h()` writes nothing for a
+boolean child whatever its value, while the walker writes `true` or `false` for a boolean slot,
+so a boolean read into text either breaks parity between the server's HTML and the browser's
+DOM or shows nothing at all. The compiler refuses a text position whose value it can prove is
+boolean: a declared boolean prop (optional included), a signal whose default is a boolean, a
+closed boolean (an aggregate field, a list-row field, a module-level `const` initialized with
+`true` or `false`), or an expression that can only be a boolean (`!ready()`, `count() > 0`, `a()
+&& b()` of booleans), read eagerly or through a getter, as a child or as a `createShow` or
+ternary branch. A boolean literal child writes nothing on both sides and is admitted. A mixed
+expression whose boolean result stands for nothing (`ready() && 'Go'`) is admitted: eagerly it
+folds, and through a getter the server writes an empty range when its default is the boolean,
+as the browser does. This refusal is mandatory without strict mode.
+
+**Fix.** Write the word with `String(flag)`: on a non-optional declared boolean it binds the
+text to the boolean slot (the walker writes the word `String()` gives), and on a boolean signal
+it folds to the same word. For content, use `createShow(() => flag(), …)` or a ternary.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/pass/app.tsx) pin the
+original TSX position of the text.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.

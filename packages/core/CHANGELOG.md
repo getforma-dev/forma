@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Value rule 6: a boolean in text writes nothing — FORMA-182
+
+- Strict adoption maps a boolean text value to the empty string, as `h()` does (`docs/parity-rules.md`, rule 6): a reactive child returning `false` or `true` over a served range used to be expected, and later written, as the word, so an adopted page showed `false` where a fresh render showed nothing, and the empty range the walker now serves for `() => ready() && 'Go'` at `false` was refused with `FORMA_E_HYDRATE_VALUE`. Verified by `src/dom/__tests__/value-rule-6-boolean-text.test.ts` and `e2e/value-rules.spec.ts` in three engines; mutation probe `adoption/boolean-text-word`.
+
 ### Value rule 5: `null` writes nothing — FORMA-182
 
 - `h()`'s `class`/`className` writer follows the attribute presence table, static and reactive (`docs/parity-rules.md`, rule 5): `null`, `undefined` and `false` remove the attribute, `true` writes it bare, anything else its string. A reactive class getter returning `null`, `undefined` or `false` used to throw inside its effect and leave the previous class standing, and a static `class: true` wrote `class="true"`; the walker omits the attribute in the first case and writes it bare in the second. Verified by `src/dom/__tests__/value-rule-5-null.test.ts` and `e2e/value-rules.spec.ts` in three engines.

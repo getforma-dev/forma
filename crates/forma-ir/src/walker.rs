@@ -6277,6 +6277,7 @@ mod tests {
         const NUMBERS: &str = include_str!("../tests/fixtures/parity/numbers.json");
         const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
         const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
+        const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
 
         fn cases(file: &str, section: &str) -> Vec<Value> {
             let all: Value = serde_json::from_str(file).unwrap();
@@ -6496,6 +6497,72 @@ mod tests {
                     &page.render(),
                     "<span id=\"ok\"></span>",
                 );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence() {
+            // The build error itself is the compiler's (BUILD-614). What the
+            // walker writes for the admitted `String(flag)` is DYN_TEXT on the
+            // boolean slot, and an attribute bound to a boolean is bare or
+            // absent.
+            let mut failures = Vec::new();
+            for case in cases(BOOLEAN_TEXT, "nearMissText") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/nearMissText/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            // The mixed idiom `() => ready() && 'Go'`: the compiler gives its
+            // Text slot no default at false and the string at true.
+            for case in cases(BOOLEAN_TEXT, "idiom") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let mut page = Page::new();
+                let slot = page.slot(if expected.is_empty() {
+                    SlotValue::Null
+                } else {
+                    SlotValue::Text(expected.to_string())
+                });
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/idiom/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            // The same attributes core's suite and the three-engine replay
+            // check: a boolean attribute and `class`.
+            for case in cases(BOOLEAN_TEXT, "attribute") {
+                let id = field(&case, "id");
+                let value = case["value"].as_bool().unwrap();
+                let present = case["present"].as_bool().unwrap();
+                for attribute in ["disabled", "class"] {
+                    let mut page = Page::new();
+                    let slot = page.slot(SlotValue::Bool(value));
+                    page.open("input", &[("id", "ok")])
+                        .dyn_attr(attribute, slot)
+                        .close("input");
+                    let want = if present {
+                        format!("<input id=\"ok\" {attribute}></input>")
+                    } else {
+                        "<input id=\"ok\"></input>".to_string()
+                    };
+                    check(
+                        &mut failures,
+                        &format!("boolean-text/attribute/{id} {attribute}"),
+                        &page.render(),
+                        &want,
+                    );
+                }
             }
             finish(failures);
         }

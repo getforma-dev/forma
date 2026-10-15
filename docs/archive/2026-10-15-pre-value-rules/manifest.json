@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "55098f83d42dd4b0d04a3b4c2c3c3440b0f4aa3f",
+  "role": "Pre-FORMA-182 rules 6 and 7 originals: the inline test sources that the value rules migrate because they now refuse (a boolean in text, BUILD-614; a condition that is not boolean-typed, BUILD-615). Byte-exact; never regenerated to make a new implementation pass.",
+  "sha256": {
+    "sources/declared-page.app.ts": {
+      "bytes": 99,
+      "sha256": "7a016d3041a3b8fd19d6b0bfeff4c7c511928eaac0f958d58a1ead40e2e90343"
+    },
+    "sources/props-bindings-declared-boolean-child.page.ts": {
+      "bytes": 246,
+      "sha256": "0f397efad30a4fc547ba17de82367a1e4a79373236f41e02fe0e8a02786f0b08"
+    },
+    "sources/ssr-emission-inline-mount-boolean-child.app.ts": {
+      "bytes": 300,
+      "sha256": "7cc1d13b2d55c12a3cba35d8d381458e5b24920fbe6b8fa1c86cd58cb3023e72"
+    }
+  }
+}

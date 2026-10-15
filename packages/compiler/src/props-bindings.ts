@@ -30,9 +30,9 @@ export interface PropsScope {
   signalImports: Set<string>;
   unsupported: Map<string, t.Node>;
 }
-function invalid(scope: PropsScope, node: t.Node, message: string): never {
+function invalid(scope: PropsScope, node: t.Node, message: string, code: 'BUILD-610' | 'BUILD-614' = 'BUILD-610'): never {
   const at = originalPosition(scope.file, node.loc?.start ?? { line: 1, column: 0 });
-  throw new PropsSchemaError(scope.file, at.line, at.column, message);
+  throw new PropsSchemaError(scope.file, at.line, at.column, message, code);
 }
 function unwrap(node: t.Node, readGetter=true): t.Node {
   if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node) || t.isParenthesizedExpression(node)) return unwrap(node.expression,readGetter);
@@ -317,14 +317,35 @@ export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source
   return scope;
 }
 
-/** Boolean children are omitted by core's h(), for direct and reactive reads. */
+/**
+ * A declared read in a text position. A declared boolean, optional or not, is
+ * BUILD-614 (value rule 6, docs/parity-rules.md): core's h() writes nothing for
+ * a boolean child, the walker would write the word. `String(flag)` on a
+ * non-optional declared boolean is the admitted near miss: DYN_TEXT on the
+ * boolean slot itself, which the walker writes as the word String() gives.
+ * Every other String() or Number() of a declared prop stays BUILD-610.
+ */
 export function emitPropText(node: t.Node, scope: PropsScope | undefined, ctx: IrEmitContext): boolean {
-  const path = propPath(node, scope);
-  const slot = propSlot(node, scope, ctx, 'text');
+  const word = scope ? stringOfDeclaredBoolean(node, scope) : undefined;
+  const path = word ? undefined : propPath(node, scope);
+  // The read's own refusals (an optional intermediate, an aggregate) come first.
+  const slot = propSlot(word ?? node, scope, ctx, 'text');
   if (slot === undefined) return false;
-  if (path && scope && inner(propType(path, scope, node)).kind === 'boolean') return true;
+  if (path && scope && inner(propType(path, scope, node)).kind === 'boolean') {
+    invalid(scope, node, `declared boolean ${path.filter(part => !part.startsWith('\0')).join('.') || 'prop'} is a boolean in text: the browser writes nothing for it whatever its value, and the server would write "true" or "false"; write String(flag) for the word, or createShow or a ternary for content`, 'BUILD-614');
+  }
   ctx.emit(C.OP_DYN_TEXT); ctx.emitU16(slot); ctx.emitU16(ctx.nextMarker());
   return true;
+}
+
+/** The argument of `String(x)` (read through a getter) when x is a non-optional declared boolean. */
+function stringOfDeclaredBoolean(node: t.Node, scope: PropsScope): t.Node | undefined {
+  const call = unwrap(node);
+  if (!t.isCallExpression(call) || !t.isIdentifier(call.callee) || call.callee.name !== 'String') return undefined;
+  const argument = call.arguments[0];
+  if (call.arguments.length !== 1 || !argument || t.isSpreadElement(argument) || t.isArgumentPlaceholder(argument)) return undefined;
+  const path = propPath(argument, scope);
+  return path && propType(path, scope, argument).kind === 'boolean' ? argument : undefined;
 }
 
 function containsDeclared(node: t.Node, scope: PropsScope): boolean {

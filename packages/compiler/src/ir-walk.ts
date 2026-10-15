@@ -54,6 +54,7 @@ import { childPropsScope, islandPropsScope, emitPropText, listPropsScope, listIt
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
+import { moduleBoolean, refuseBooleanText, valueKind, type KindEnvironment } from './value-rules';
 import {
   enterComponentScope,
   lookupSignal,
@@ -328,6 +329,25 @@ function evalEnv(walkCtx: WalkContext): EvalEnv {
   };
 }
 
+/** What value rules 6 and 7 can read to type an expression (value-rules.ts). */
+function kindEnv(walkCtx: WalkContext): KindEnvironment {
+  return {
+    signal: (name) => lookupSignal(walkCtx.signalScope, name)?.default,
+    constant: (name) => walkCtx.stringConstants?.get(name) ?? moduleBoolean(walkCtx.sourceFile, name),
+  };
+}
+
+/**
+ * Value rule 6 (docs/parity-rules.md): refuse a text value whose every result
+ * is a boolean (BUILD-614). A boolean literal is not refused: it writes nothing
+ * on both sides.
+ */
+function refuseBooleanTextKind(node: t.Node, walkCtx: WalkContext): void {
+  const value = t.isArrowFunctionExpression(node) || t.isFunctionExpression(node) ? getEffectiveBody(node) : node;
+  if (value && t.isBooleanLiteral(value)) return;
+  if (valueKind(node, kindEnv(walkCtx)) === 'boolean') refuseBooleanText(walkCtx.sourceFile ?? '', node, `text ${describeNode(node)}`);
+}
+
 /** JS truthiness of an evaluated value. */
 function isTruthy(val: EvalValue): boolean {
   if (val === null) return false;
@@ -445,9 +465,11 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
   // Explicit cast: String(expr) / Number(expr). Pages write these around a
   // signal read to pin the type; without folding them the cast alone was
   // enough to turn an otherwise evaluable value into an empty attribute.
-  // Only a string or number operand folds: `String(null)` is "null" in JS but
-  // `null` is also how this evaluator spells "absent", and guessing between
-  // the two would put the wrong text on the page.
+  // Only a string or number operand folds, and a boolean one for String():
+  // `String(null)` is "null" in JS but `null` is also how this evaluator spells
+  // "absent", and guessing between the two would put the wrong text on the
+  // page. `String(flag)` is value rule 6's admitted way to write a boolean's
+  // word (docs/parity-rules.md), the same on both sides.
   if (
     t.isCallExpression(node)
     && t.isIdentifier(node.callee)
@@ -456,6 +478,7 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
     && t.isExpression(node.arguments[0]!)
   ) {
     const inner = evalNode(node.arguments[0] as t.Expression, env);
+    if (typeof inner === 'boolean' && node.callee.name === 'String') return String(inner);
     if (typeof inner !== 'string' && typeof inner !== 'number') return undefined;
     return node.callee.name === 'String' ? String(inner) : Number(inner);
   }
@@ -1673,6 +1696,7 @@ function emitChild(
   ) {
     const binding = lookupSignal(walkCtx.signalScope, child.callee.name);
     if (binding) {
+      if (binding.default.type === 'bool') refuseBooleanText(walkCtx.sourceFile ?? '', child, `signal ${child.callee.name}()`);
       ctx.recordSlotRef(binding.slotId);
       const markerId = ctx.nextMarker();
       ctx.emit(OP_DYN_TEXT);
@@ -1699,6 +1723,10 @@ function emitChild(
   // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a String() cast child instead of islanding it as a component"
   const folded = evalNode(child, evalEnv(walkCtx));
   if (folded !== undefined) {
+    // Rule 6: a value that can only be a boolean shows nothing in the browser
+    // whatever it is (`!ready()`, `count() > 0`): BUILD-614. A mixed idiom
+    // (`ready() && 'Go'`) folds to nothing below when its value is a boolean.
+    if (typeof folded === 'boolean') refuseBooleanTextKind(child, walkCtx);
     // A folded null or boolean emits NOTHING, because that is what the client
     // does with one: `h()` drops `null`, `true` and `false` children outright
     // (packages/core/src/dom/element.ts). Rendering "true" server-side would put text on the page
@@ -1746,9 +1774,11 @@ function emitChild(
     const binding = signalName ? lookupSignal(walkCtx.signalScope, signalName) : undefined;
     let slotId: number;
     if (binding) {
+      if (binding.default.type === 'bool') refuseBooleanText(walkCtx.sourceFile ?? '', arrowOrFunc, `signal ${binding.name}()`);
       slotId = binding.slotId;
       ctx.recordSlotRef(slotId);
     } else {
+      refuseBooleanTextKind(arrowOrFunc, walkCtx);
       // Computed scalar text must have a closed native value. Refuse unknown
       // runtime expressions instead of manufacturing an empty default.
       const evaluated = tryEvalExprDefault(arrowOrFunc, evalEnv(walkCtx));
@@ -1785,11 +1815,14 @@ function emitChild(
         );
         refuseIsland(walkCtx, arrowOrFunc);
       }
+      // A mixed idiom at a boolean default (`() => ready() && 'Go'` with
+      // ready false) is the "nothing" case: h() writes nothing for it, so the
+      // server writes an empty range, not the word (rule 6).
       slotId = ctx.addSlot(
         textSlotName(childIndex, walkCtx),
         TYPE_TEXT,
         SOURCE_CLIENT,
-        defaultBytesFor(evaluated),
+        defaultBytesFor(typeof evaluated === 'boolean' ? null : evaluated),
       );
     }
     const markerId = ctx.nextMarker();
@@ -1811,6 +1844,11 @@ function emitChild(
       ctx.emitU16(markerId);
       return;
     }
+  }
+
+  // A module-level boolean const read as text (rule 6).
+  if (t.isIdentifier(child) && moduleBoolean(walkCtx.sourceFile, child.name) !== undefined) {
+    refuseBooleanText(walkCtx.sourceFile ?? '', child, `module constant ${child.name}`);
   }
 
   // Rule 11: Anything else → ISLAND_START / ISLAND_END
@@ -2746,8 +2784,8 @@ function emitBranchContent(
     return;
   }
 
-  // null/undefined/false → skip
-  if (isNullish(expr)) return;
+  // null/undefined/false → skip; a true literal writes nothing either (rule 6)
+  if (isNullish(expr) || t.isBooleanLiteral(expr)) return;
 
   // h() call → walk
   if (
@@ -2783,11 +2821,14 @@ function emitBranchContent(
     );
     refuseIsland(walkCtx, expr);
   }
+  // Rule 6: a boolean-only value is BUILD-614; a mixed one at a boolean
+  // default writes an empty range, as h() writes nothing for it.
+  if (typeof evaluated === 'boolean') refuseBooleanTextKind(expr, walkCtx);
   const slotId = ctx.addSlot(
     textSlotName(childIndex, walkCtx),
     TYPE_TEXT,
     SOURCE_CLIENT,
-    defaultBytesFor(evaluated),
+    defaultBytesFor(typeof evaluated === 'boolean' ? null : evaluated),
   );
   const markerId = ctx.nextMarker();
   ctx.emit(OP_DYN_TEXT);

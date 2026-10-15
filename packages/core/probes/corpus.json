@@ -50,6 +50,14 @@
   "note": "a null, undefined or false class is written as its word instead of removed (FORMA-182 rule 5)"
  },
  {
+  "id": "el/static-class-true-word",
+  "file": "src/dom/element.ts",
+  "tags": [],
+  "find": "    const v = value === true ? '' : normalizeDomText(String(value));",
+  "replace": "    const v = normalizeDomText(String(value));",
+  "note": "a static class: true is written as class=\"true\" instead of the bare attribute the walker writes (FORMA-182 rule 6)"
+ },
+ {
   "id": "el/generic-url-guard-off",
   "file": "src/dom/element.ts",
   "tags": [
@@ -2496,5 +2504,13 @@
   "find": "      if (isRawHtmlAttr(attrName)) {\n",
   "replace": "      if (isRawHtmlAttr(attrName) && attrName === 'never') {\n",
   "note": "data-bind:srcdoc runs in an unreviewed mount and writes a document the strip never saw, from a value the module chose (formajs#35's review, S2). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported\""
+ },
+ {
+  "id": "adoption/boolean-text-word",
+  "file": "src/dom/adoption.ts",
+  "tags": [],
+  "find": "  if(value==null||typeof value==='boolean')return '';\n  if(typeof value==='string'||typeof value==='number')return normalizeDomText(String(value));",
+  "replace": "  if(value==null)return '';\n  if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return normalizeDomText(String(value));",
+  "note": "adoption expects and later writes the word of a boolean text value where h() and the walker write nothing (FORMA-182 rule 6)"
  }
 ]

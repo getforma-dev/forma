@@ -21,8 +21,10 @@ function vectors<T>(name: string): T {
 /** A DYN_TEXT range as the walker writes it: an empty value is held by one U+200B. */
 const range = (id: number, text: string): string => `<!--f:t${id}-->${text === '' ? '​' : text}<!--/f:t${id}-->`;
 
-/** A value as it crosses into the page: JSON has no undefined and no lexeme-exact number. */
-type Wire = { s: string } | { n: string } | { b: boolean } | { absent: 'null' | 'undefined' };
+/** A value as it crosses into the page: JSON has no undefined and no lexeme-exact number;
+ * `word` is String(flag), `and` the idiom `flag && then`. */
+type Wire = { s: string } | { n: string } | { b: boolean } | { absent: 'null' | 'undefined' }
+  | { word: boolean } | { and: boolean; then: string };
 
 /** What adoption builds: one element, its props and its children, each static or a getter. */
 interface Build { tag: string; props?: Record<string, Wire>; children?: Wire[]; reactive: boolean }
@@ -46,7 +48,8 @@ function adopt(page: Page, build: Build) {
     const { h, Fragment } = await import('/adoption-core.mjs' as string);
     const { adoptMatching } = await import('/test-owned-adoption.mjs' as string);
     const value = (wire: Wire): unknown => 's' in wire ? wire.s : 'n' in wire ? Number(wire.n) : 'b' in wire ? wire.b
-      : wire.absent === 'null' ? null : undefined;
+      : 'word' in wire ? String(wire.word) : 'and' in wire ? wire.and && wire.then
+        : wire.absent === 'null' ? null : undefined;
     const bind = (wire: Wire): unknown => (build.reactive ? () => value(wire) : value(wire));
     const app = document.querySelector('#app')!;
     const nodes = (): Node[] => {
@@ -176,3 +179,48 @@ for (const { id, attribute } of nulls.attribute) {
     expect(seen).toEqual([null, null, 'y', 'y', null, null, 'z', 'z']);
   });
 }
+
+// -- Rule 6: a boolean in text is a build error --------------------------------
+interface NearMissVector { id: string; value: boolean; expected: string }
+interface IdiomVector { id: string; ready: boolean; expected: string }
+interface PresenceVector { id: string; value: boolean; present: boolean; expected?: string }
+const booleans = vectors<{ nearMissText: NearMissVector[]; idiom: IdiomVector[]; attribute: PresenceVector[] }>('boolean-text.json');
+for (const { id, value, expected } of booleans.nearMissText) {
+  for (const reactive of [false, true]) {
+    test(`rule 6 ${id} (${reactive ? 'reactive' : 'static'}): String(flag)'s word in the walker's range adopts without a write`, async ({ page }) => {
+      await serve(page, `<p>${range(0, expected)}</p>`);
+      expect(await adopt(page, { tag: 'p', children: [{ word: value }], reactive })).toEqual({ text: expected, ...written });
+    });
+  }
+}
+for (const { id, ready, expected } of booleans.idiom) {
+  test(`rule 6 idiom ${id}: \`flag && 'Go'\` through a getter adopts the walker's range without a write`, async ({ page }) => {
+    await serve(page, `<p>${range(0, expected)}</p>`);
+    expect(await adopt(page, { tag: 'p', children: [{ and: ready, then: 'Go' }], reactive: true })).toEqual({ text: expected, ...written });
+  });
+}
+for (const { id, value, present } of booleans.attribute) {
+  for (const attribute of ['disabled', 'class']) {
+    for (const reactive of [false, true]) {
+      test(`rule 6 ${id} ${attribute} (${reactive ? 'reactive' : 'static'}): the walker's presence adopts without a write`, async ({ page }) => {
+        await serve(page, present ? `<input id="ok" ${attribute}></input>` : '<input id="ok"></input>');
+        expect(await adopt(page, { tag: 'input', props: { id: { s: 'ok' }, [attribute]: { b: value } }, reactive }))
+          .toEqual({ text: '', ...written });
+      });
+    }
+  }
+}
+
+test('rule 6 control: the word the walker wrote for the idiom at false before rule 6 is refused, not adopted', async ({ page }) => {
+  // The compiler gave `() => ready() && 'Go'`'s slot the default "false"; h()
+  // writes nothing for it, so strict adoption refuses the served word.
+  await serve(page, `<p>${range(0, 'false')}</p>`);
+  const kept = await page.evaluate(async () => {
+    const { h, Fragment } = await import('/adoption-core.mjs' as string);
+    const { adoptRefused } = await import('/test-owned-adoption.mjs' as string);
+    const ready = false as boolean;
+    adoptRefused(() => h(Fragment, null, h('p', null, () => ready && 'Go')), '#app', 'FORMA_E_HYDRATE_VALUE');
+    return document.querySelector('p')!.textContent;
+  });
+  expect(kept).toBe('false');
+});
