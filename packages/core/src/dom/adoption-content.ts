@@ -82,7 +82,9 @@ export function prepareStyle(element: Element, initial: unknown): PreparedStyle 
       const normalized = normalizedStyle(mirror);
       if (normalized === previous) return;
       keys = applyDeclarations(element, fields, keys);
-      previous = normalized;
+      // Invalid CSS assignments may preserve the previous live declaration.
+      // Cache the actual result so a later explicit clear cannot be skipped.
+      previous = normalizedStyle(element);
     },
   };
 }
