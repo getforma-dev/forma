@@ -74,6 +74,10 @@ The [3.0 migration guide](../../docs/UPGRADING-3.0.md) covers startup, request m
 Asset serving, opt-in checked service-worker configuration and the named preview frame retain their existing APIs. See their module documentation and [release runbook](../../docs/RELEASING.md).
 
 
+## The deployment identity
+
+Every page's root carries `data-forma-build="<the manifest's build>"`, on a server-rendered page and on a browser shell alike, escaped as an attribute value. `@getforma/build` computes that identity from the build's own outputs and compiles it into every bundle; `@getforma/core` compares the two before it activates anything and, on a mismatch, leaves the page inert. A manifest listing a `retained` asset that is not `immutable` is refused at start (`MANIFEST-103`).
+
 ## Asset integrity
 
 Schema2 manifests require a full canonical `sha384-` digest for every asset, including retained files. Build metadata hashes the final uncompressed bytes. Missing or malformed digests refuse startup with MANIFEST-103 and the filename. Every external script, stylesheet and modulepreload tag carries that digest and `crossorigin="anonymous"`; script tags and modulepreloads keep their existing nonce. Inline request JSON, branding CSS and registration code remain nonce-protected.
