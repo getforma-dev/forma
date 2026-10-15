@@ -78,8 +78,13 @@ it('keeps actual package/IR/manifest bytes on refusal and publishes a recovered 
   await watcher.change(()=>writeFileSync(join(f.src,'shared.ts'),sharedSource.replace('Field({initial:p.initial})','Field({initial:unknownRuntime()})')));
   await vi.waitFor(()=>expect(watcher.output()).toContain('BUILD-610'));
   expect(readFileSync(join(f.dist,'manifest.json'))).toEqual(manifestBytes);for(const [file,bytes] of old)expect(readFileSync(join(f.dist,file))).toEqual(bytes);
-  await watcher.change(()=>writeFileSync(join(f.src,'shared.ts'),sharedSource+'\n// coherent recovered source'));
-  const recovered=watcher.manifest() as AssetManifest;paired(f,recovered);execute(f,recovered);
+  await watcher.change(()=>{
+   writeFileSync(join(f.src,'shared.ts'),sharedSource+'\n// coherent recovered source');
+   const page=join(f.src,'a-page.ts');writeFileSync(page,readFileSync(page,'utf8').replace('a-native','a-recovered'));
+  });
+  const recovered=await vi.waitFor(()=>{const current=watcher.manifest() as AssetManifest;expect(current.routes['/a'].ir).not.toBe(accepted.routes['/a'].ir);return current;});
+  expect(readFileSync(join(f.dist,'manifest.json'))).not.toEqual(manifestBytes);
+  paired(f,recovered);execute(f,recovered);
   for(const [file,bytes] of old)expect(readFileSync(join(f.dist,file))).toEqual(bytes);
  });
 },20000);
