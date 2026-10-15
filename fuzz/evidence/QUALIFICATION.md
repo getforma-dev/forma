@@ -3,8 +3,14 @@
 Codex recovered the interrupted worker's adapter and corrected its incomplete test fixture
 and output-bound assertions. Five ordinary stable replay tests pass, covering every committed
 regression adapter, all fourteen real compiler modules, all 67 reviewed rule fixtures, bounded
-slot decoding, and malformed/oversized inputs. The full implementation remains subject to
-independent production review and the workspace gate.
+slot decoding, and malformed/oversized inputs. The full workspace gate subsequently
+passed in 154 seconds. Independent production review approved the reader/emitter contract
+at `2c7fe98`. A separate Codex lead who did not author the adapter independently
+reviewed the adapter, four targets, stable harness and workflow, and reran all five
+stable replay tests. The final workflow correction was approved at `95f2902`; review
+and replay evidence are preserved in the recovery workspace under
+`work/review-FORMA-185-production/fuzz-adapter-review.md` and
+`fuzz-adapter-independent-replay.log`.
 
 The local ASan qualification used nightly-2026-10-01 (rustc1.101.0-nightly), cargo-fuzz0.13.2
 and libfuzzer-sys0.4.13. All four targets completed 25,000 cases without a production finding.
@@ -35,6 +41,13 @@ Separately, temporarily disabling CRC refusal caused `reviewed_v3_fixture_codes_
 to fail. The original implementation was restored in a finally block and the same test passed;
 logs `crc-mutation-rejected.log` and `crc-mutation-restored.log` preserve the P6 evidence.
 
+The workflow correction fetches dependencies with `cargo fetch --locked`, executes
+cargo-fuzz offline and checks the committed fuzz lockfile SHA256 before and after.
+All four ASan targets subsequently built offline with an unchanged lockfile; no fuzz
+execution or minimization was resumed during this ordinary build check. Actionlint,
+supply-chain lint and all five stable replay tests passed.
+
 Remaining qualification: complete the deferred minimization/replay qualification only when
-resumed, review the production implementation independently, and observe the nightly GitHub
-workflow after it is present on the repository's default branch. No tag or publication occurred.
+resumed, and observe the nightly GitHub
+workflow after it is present on the repository's default branch. Hosted platform CI is
+separate from the completed local workspace gate. No tag or publication occurred.

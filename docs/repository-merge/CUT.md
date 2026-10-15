@@ -1,9 +1,10 @@
-# FORMA-113 cut plan — DO NOT EXECUTE FROM THE REHEARSAL
+# FORMA-113 repository cut plan
 
-The history merge is prepared on `merge/forma-stack`. Keep its PR draft until
-the lead coordinates the actual cut. This document is a reviewed command plan;
-no command below has pushed a tag, published a package, changed a setting, or
-merged main during the rehearsal.
+The history merge is prepared on `merge/forma-stack`. The founder authorized the
+source cut on 2026-10-14: independently review and merge PR28, with a merge commit
+only, then PR29. The original rehearsal was non-publishing. Preserve its evidence
+and record actual cut actions separately; a source merge does not authorize a
+release tag or imply that the future 3.0.0 publication gates have passed.
 
 ## Before the cut
 
@@ -21,19 +22,29 @@ merged main during the rehearsal.
    a local warm run is not that measurement. `npm run check` is the R17
    command; separate jobs retain MSRV, targets, Windows, release/security,
    scaffold and three-engine coverage.
-4. Founder registry work: re-point all four npm trusted publishers to
-   `getforma-dev/forma`, the exact FORMA-187 workflow filename and `npm-publish` environment.
+4. Before the first unified prerelease, add all four npm trusted publishers for
+   `getforma-dev/forma`, workflow filename `release.yml`, and the `npm-publish` environment.
+   Explicitly enable **Allow npm publish**. Keep the old maintenance publishers.
+   Current npm supports up to ten entries and expires an entry if it is not used
+   for its first successful publish within two days, so add it near that first
+   prerelease rather than at the source merge. See the
+   [current registry requirements](https://docs.npmjs.com/trusted-publishers/).
    The three crates must likewise name `crates-publish` in their trusted
    publisher registrations when the new workflow adds that environment
    (the earlier registrations omitted environments). Inspect all seven
    registrations against the final workflow; naming only the four npm entries
    is insufficient if crate environment names still need updating.
    Verify tag-limited environments/rulesets and the agreed six-month
-   maintenance publishing route. Do not assume the registry supports multiple
-   trusted-publisher entries: confirm the actual settings allow the agreed
-   maintenance route before disabling the old one. The derive 0.0.0 placeholder
+   maintenance publishing route. Inspect the crates.io registrations before
+   changing them and preserve the maintenance workflow's registration without
+   an environment constraint. The derive 0.0.0 placeholder
    is already published with trusted publishing; no new token is needed here.
    M1's manual approval gate was explicitly declined.
+
+   These are first-live-publication gates. FORMA-187 keeps `liveReleaseReady`
+   false until the milestone contract checks are implemented; no trial package
+   upload or API token is needed for the source cut. GitHub environments and
+   the additive `v*` tag policy can be configured through authenticated `gh`.
 
 ## Preserve the reference graph
 

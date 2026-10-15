@@ -102,8 +102,7 @@ Two gates are worth understanding rather than just running:
 **Skipped checks that are by design.** On a pull request or a push, a CI job
 shows "skipped" only when a job it needs has failed: `test-32bit`,
 `test-release` and `msrv` need `test`, so a red `test` skips them, and they run
-once it is green. `release.yml` runs only for a release tag (`ir-v*`,
-`server-v*`), never on a pull request. A job skipped for any other reason is a
+once it is green. `release.yml` runs only for a release tag (`v*`), never on a pull request. A job skipped for any other reason is a
 defect in the workflow (FORMA-179).
 
 ## Tests
@@ -143,27 +142,9 @@ The workspace CHANGELOG summarises a release and links to both.
 
 ## Releasing
 
-A tag starts `.github/workflows/release.yml`: `ir-v<version>` releases
-forma-ir, `server-v<version>` releases forma-server. The comment at the top of
-the workflow says what each job does; only `publish` holds the credential, and
-it publishes only bytes the run packed, recorded and built.
-
-**Push `server-v*` only after the `ir-v*` run has published.** forma-server's
-packaged crate resolves forma-ir from crates.io, not from this workspace. A
-server tag pushed before forma-ir is on crates.io fails at `pack` ("no matching
-package named forma-ir"). A forma-ir release landing while a server run is
-between `pack` and `publish` makes the re-packaged crate differ from the
-recorded one, so nothing publishes; landing in the seconds inside
-`cargo publish`, it changes the uploaded crate's `Cargo.lock`, which only the
-checksum check after the upload reports. Waiting for the `ir-v*` run avoids
-all three.
-
-After `cargo publish`, the workflow compares crates.io's checksum of the
-version with the recorded one. "not visible yet" is a warning: compare by hand
-later, as it says. "differs from the recorded crate" means the version shipped
-with other bytes than the ones verified: yank it on crates.io's web page for
-the crate's versions, signed in as the owner (the trusted-publishing token
-cannot yank, and the account keeps no API token), and release a new version.
+All crates and npm packages release together through the merged repository.
+See [the release runbook](../docs/RELEASING.md). The `ir-v*` and `server-v*`
+procedures survive only in the historical maintenance branches.
 
 ## Pull requests
 

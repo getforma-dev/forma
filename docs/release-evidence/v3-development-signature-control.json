@@ -1,0 +1,81 @@
+{
+  "helper": "scripts/audit-release-signatures.mjs",
+  "node": "v24.22.0",
+  "npm": "11.19.1",
+  "controls": [
+    {
+      "name": "unprojected real npm rejects unpublished exact candidate edge",
+      "passed": true
+    },
+    {
+      "name": "projected real npm validates external signature and authenticates all three candidates",
+      "passed": true,
+      "inventory": {
+        "localCandidates": [
+          {
+            "name": "@getforma/build",
+            "version": "3.0.0-dev",
+            "location": "node_modules/@getforma/build",
+            "file": "getforma-build-3.0.0-dev.tgz",
+            "sha256": "c3b58113c84edc18d4e90a011ef47f892b3597e20e9731ba541f0fe39fcb42c4"
+          },
+          {
+            "name": "@getforma/compiler",
+            "version": "3.0.0-dev",
+            "location": "node_modules/@getforma/compiler",
+            "file": "getforma-compiler-3.0.0-dev.tgz",
+            "sha256": "6708962549c226f3836f447b904107fa0e66ddfb9f900f1f8f947f57ceee686e"
+          },
+          {
+            "name": "@getforma/core",
+            "version": "3.0.0-dev",
+            "location": "node_modules/@getforma/core",
+            "file": "getforma-core-3.0.0-dev.tgz",
+            "sha256": "4928d477767b182145c94fff8ee8c79cd63c9ba4a614071256b4375b2665f94a"
+          }
+        ],
+        "registryDependencies": [
+          {
+            "name": "forma-signature-control-external",
+            "version": "1.0.0",
+            "location": "node_modules/@getforma/compiler/node_modules/forma-signature-control-external",
+            "resolved": "http://127.0.0.1:59566/external-1.0.0.tgz",
+            "integrity": "sha512-oMDBwzycJ+aQgEAJUd8WxK0AwFB30oES7leoYdSebihmak7t3PN7YgROKABV10Y22eej/qXJFz4DBsHx4vRQoQ=="
+          },
+          {
+            "name": "forma-signature-control-external",
+            "version": "2.0.0",
+            "location": "node_modules/forma-signature-control-external",
+            "resolved": "http://127.0.0.1:59566/external-2.0.0.tgz",
+            "integrity": "sha512-5+/WQ+iODmtSRZSD6jnYE7mr3Qwk70FfAL8ylVYFWo0CIGxw/1Gc4N0tppeb3was3F/0vDoMOBKJiEfIby3hIw=="
+          }
+        ]
+      }
+    },
+    {
+      "name": "projected real npm rejects malformed external signature",
+      "passed": true,
+      "diagnostic": "EINTEGRITYSIGNATURE"
+    }
+  ],
+  "registryRequests": [
+    "/npm",
+    "/npm",
+    "/external-2.0.0.tgz",
+    "/external-1.0.0.tgz",
+    "/-/npm/v1/keys",
+    "/forma-signature-control-external",
+    "/@getforma%2fcompiler",
+    "/@getforma%2fcore",
+    "/forma-signature-control-external",
+    "/-/npm/v1/keys",
+    "/forma-signature-control-external",
+    "/forma-signature-control-external",
+    "/npm",
+    "/npm",
+    "/-/npm/v1/keys",
+    "/forma-signature-control-external",
+    "/forma-signature-control-external"
+  ],
+  "passed": true
+}

@@ -23,17 +23,21 @@ Both direct and counted walks use the same budgets; an uncaught panic fails the 
 Run from the repository root:
 
 ```sh
-cargo test -p forma-ir --test fuzz_regressions
+cargo test --locked -p forma-ir --test fuzz_regressions
 python3 fuzz/seed-corpus.py
 cd fuzz
 cargo install cargo-fuzz --version 0.13.2 --locked
-cargo fuzz run parse_body --sanitizer address -- -max_total_time=1200 -timeout=10 -rss_limit_mb=2048 -max_len=65536
+cargo fetch --locked
+CARGO_NET_OFFLINE=true cargo fuzz run parse_body --sanitizer address -- -max_total_time=1200 -timeout=10 -rss_limit_mb=2048 -max_len=65536
 ```
 
 `rust-toolchain.toml` pins `nightly-2026-10-01`; libfuzzer-sys and cargo-fuzz are pinned too.
 The scheduled workflow runs all four targets for twenty minutes each under AddressSanitizer,
-retains the growing corpus in the cache and uploads finding artifacts. PRs replay every
-committed regression and frozen module on stable, without installing nightly.
+retains the growing corpus in the cache and uploads finding artifacts. Because cargo-fuzz
+0.13.2 has no `--locked` option, CI first fetches with `cargo fetch --locked`, then runs
+with `CARGO_NET_OFFLINE=true` and verifies the committed fuzz lockfile's SHA256 before
+and after execution. AddressSanitizer uses the pinned standard library without `--build-std`.
+PRs replay every committed regression and frozen module on stable, without installing nightly.
 
 A panic, sanitizer report, exceeded resource budget, invalid accepted structure or lossy dump
 is a finding. An ordinary parse/render error is not. Minimize a finding with `cargo fuzz tmin`,
