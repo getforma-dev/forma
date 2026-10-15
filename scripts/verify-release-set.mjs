@@ -9,6 +9,8 @@ import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
+import { verifyPackedTemplateSources } from './release-template-sources.mjs';
+import { verifyMinimalIsland, verifyStaticTemplate } from './release-template-islands.mjs';
 import { withOwnedServer } from './owned-server.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
@@ -228,8 +230,11 @@ export async function verify(dir, reportPath) {
   assert([null, 'declared-v1'].includes(set.contracts.props), 'P17 has no verifier for the recorded props contract');
   assert([undefined, null, 'finalized-v1'].includes(set.contracts.boundRender), 'P17 has no verifier for the recorded bound rendering contract');
   assert([undefined, null, 'sha384-v1'].includes(set.contracts.assetIntegrity), 'P17 has no verifier for the recorded asset integrity contract');
-  assert([undefined, null, 'declared-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
-  if (set.contracts.sourceTemplates === 'declared-v1') assert.equal(set.contracts.boundRender, 'finalized-v1');
+  assert([undefined, null, 'declared-v1', 'islands-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
+  assert([undefined, null, 'declared-v1'].includes(set.contracts.stateBlock), 'P17 has no verifier for the recorded state block contract');
+  const islandTemplates = set.contracts.sourceTemplates === 'islands-v1';
+  if (set.contracts.sourceTemplates) assert.equal(set.contracts.boundRender, 'finalized-v1');
+  if (islandTemplates) assert.equal(set.contracts.stateBlock, 'declared-v1', 'islands templates require declared state');
   if (set.contracts.assetIntegrity === 'sha384-v1') assert.equal(set.contracts.manifest, 2, 'asset integrity requires schema2');
   if (set.contracts.boundRender === 'finalized-v1') assert.equal(set.contracts.props, 'declared-v1', 'finalized rendering requires the declared props checks');
   for (const p of set.packages) assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file}: wrong packed bytes`);
@@ -246,13 +251,8 @@ export async function verify(dir, reportPath) {
         writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[workspace]\n');
       }
     }
-    if (set.contracts.sourceTemplates === 'declared-v1') await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {
-      assert(/^[a-f0-9]{40}$/.test(set.commit), 'source record must name an exact commit');
-      for (const relative of ['minimal/src/main.rs', 'dashboard/src/main.rs', 'minimal/admin/src/home/app.tsx']) {
-        const original = run('git', ['show', `${set.commit}:packages/create-app/templates/${relative}`], ROOT, {encoding:'buffer'});
-        assert.deepEqual(readFileSync(join(cli, 'templates', relative)), original, `${relative}: packed source differs`);
-      }
-      assert(!existsSync(join(cli, 'template-lock-seeds.json')), 'source-only seed identity leaked into the package');
+    if (set.contracts.sourceTemplates) await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {
+      report.sourceEquality = verifyPackedTemplateSources(cli, set.commit, set.contracts.sourceTemplates);
     });
     await test('fresh advisories over every exact shipped crate lock', async () => {
       for (const p of set.packages.filter(p => p.registry === 'crates')) {
@@ -317,7 +317,7 @@ export async function verify(dir, reportPath) {
       });
     }
     if (set.contracts.assetIntegrity === 'sha384-v1') await test('packed reader requires full digests on every public document path', async () => verifyPackedIntegrityTests(join(scratch, 'crates/forma-server/Cargo.toml')));
-    const { chromium } = await import('@playwright/test');
+    const { chromium, firefox, webkit } = await import('@playwright/test');
     const browser = await chromium.launch();
     try {
       if (set.contracts.assetIntegrity === 'sha384-v1') {
@@ -374,7 +374,7 @@ export async function verify(dir, reportPath) {
           writeFileSync(join(project, 'Cargo.lock'), lock);
           const patch = '\n[workspace]\n\n[patch.crates-io]\n' + present.map(n => `${n} = { path = ${JSON.stringify(join(scratch, 'crates', n))} }`).join('\n') + '\n';
           writeFileSync(join(project, 'Cargo.toml'), readFileSync(join(project, 'Cargo.toml'), 'utf8') + patch);
-          const port = set.contracts.sourceTemplates === 'declared-v1' ? null : await freePort(), main = join(project, 'src/main.rs');
+          const port = set.contracts.sourceTemplates ? null : await freePort(), main = join(project, 'src/main.rs');
           const source = readFileSync(main, 'utf8');
           if (port !== null) {
             const listener = template === 'minimal' ? '127.0.0.1:3000' : '{host}:3000';
@@ -414,18 +414,22 @@ export async function verify(dir, reportPath) {
               }
               if (template === 'minimal') {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
-                await page.locator('.count').filter({ hasText: 'Count: 1' }).waitFor();
+                await page.locator('.count span').filter({ hasText: islandTemplates ? /^8$/ : /^1$/ }).waitFor();
               } else {
                 await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
                 await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
               }
-              const assertActivated = async () => assert.equal(await page.locator('[data-forma-status="pending"], [data-forma-status="hydrating"], [data-forma-status="error"]').count(), 0, 'island did not activate after load');
-              await assertActivated();
-              // Real DOM negative control: the gate must reject the runtime's actual marker.
-              await page.evaluate(() => { const el = document.createElement('div'); el.id = 'p17-pending-probe'; el.setAttribute('data-forma-status', 'pending'); document.body.append(el); });
-              await assert.rejects(assertActivated, /did not activate/);
-              await page.locator('#p17-pending-probe').evaluate(el => el.remove());
-              await assertActivated();
+              // Historical activation removed status markers. Strict adoption keeps
+              // the original DOM; its separate held-module observer proves success.
+              if (!islandTemplates || template === 'dashboard') {
+                const assertActivated = async () => assert.equal(await page.locator('[data-forma-status="pending"], [data-forma-status="hydrating"], [data-forma-status="error"]').count(), 0, 'island did not activate after load');
+                await assertActivated();
+                // Real DOM negative control: the gate must reject the runtime's actual marker.
+                await page.evaluate(() => { const el = document.createElement('div'); el.id = 'p17-pending-probe'; el.setAttribute('data-forma-status', 'pending'); document.body.append(el); });
+                await assert.rejects(assertActivated, /did not activate/);
+                await page.locator('#p17-pending-probe').evaluate(el => el.remove());
+                await assertActivated();
+              }
               // Native violation events are queued; collect them after positive interaction.
               const observation = await page.evaluate(() => new Promise(resolve => setTimeout(() => resolve({
                 nativeTrustedTypes: typeof globalThis.trustedTypes?.isHTML === 'function',
@@ -437,6 +441,18 @@ export async function verify(dir, reportPath) {
               report.tests.push({ name: `${template}: served policy and zero CSP violations during positive browser interaction`, passed: true,
                 trustedTypesContract: set.contracts.trustedTypes ?? null, servedPolicy, browserPolicy, ...observation, pageErrors: errors });
             } finally { await page.close(); }
+            if (template === 'minimal' && islandTemplates) {
+              const manifest = json(join(admin, 'dist/manifest.json'));
+              assert.match(html.replace(/<!--[\s\S]*?-->/g, ''), /Count:\s*<span[^>]*>7<\/span>/, 'original handler count is missing before JavaScript');
+              for (const [engine, launcher] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
+                const actual = engine === 'chromium' ? browser : await launcher.launch();
+                try {
+                  const island = await verifyMinimalIsland(actual, origin, manifest);
+                  const staticRoute = await verifyStaticTemplate(actual, origin, manifest);
+                  report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, island, staticRoute });
+                } finally { if (actual !== browser) await actual.close(); }
+              }
+            }
             if (set.contracts.assetIntegrity === 'sha384-v1') {
               const manifest = json(join(admin, 'dist/manifest.json'));
               const entry = manifest.routes['/'].js.at(-1);

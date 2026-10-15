@@ -121,9 +121,9 @@ jobs:
         run: bash scripts/check-advisories.sh
       - name: Verify registry signatures and provenance of locked dependencies
         run: npm audit signatures
-      - name: Install the locked Chromium runner
+      - name: Install the locked three-engine runners
         timeout-minutes: 5
-        run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
       - name: P17 packed corpus and both templates
         run: |
           mkdir "$RUNNER_TEMP/p17"

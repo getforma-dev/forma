@@ -505,6 +505,9 @@ jobs:
       - run: npm audit signatures
       - name: Portable commands and owned listener controls
         run: node --test scripts/owned-server.test.mjs scripts/portable-command.test.mjs
+      - name: Install locked three-engine template runners
+        timeout-minutes: 8
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
       - name: Packed candidate full scaffold suite
         env:
           RECORD_SHA256: ${{ needs.candidate-pack.outputs.record-sha256 }}
@@ -576,6 +579,9 @@ jobs:
           restore-keys: published-registry-${{ runner.os }}-
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
+      - name: Install locked three-engine template runners
+        timeout-minutes: 8
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
       - name: Published CLI full scaffold suite
         run: node --input-type=module -e "import {preparePublished} from './scripts/published-scaffold.mjs'; import {runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; const tmp=process.env.RUNNER_TEMP; runCandidate(await preparePublished(join(tmp,'published scaffold')),join(tmp,'published-scaffold-report.json'));"
       - name: Preserve registry scaffold evidence
