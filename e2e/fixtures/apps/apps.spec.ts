@@ -18,7 +18,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type Page } from '@playwright/test';
 
 const HERE = __dirname;
 const OUT = join(HERE, 'out');
@@ -77,101 +77,26 @@ async function start(name: string): Promise<Running> {
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'));
 const verifier = () => import(pathToFileURL(join(HERE, 'lib', 'verify-page.mjs')).href);
 
-/** Every listed tile counts: one press adds one to the count the server sent (7 stays 7 until it is pressed; 1001 likewise). */
-function tileBehaviour(ids: number[]): Behaviour {
-  return {
-    interact: async (page) => {
-      const before = await Promise.all(ids.map(async (id) => Number(await page.locator(`[data-tile="${id}"] .tile-count`).textContent())));
-      for (const id of ids) await page.locator(`[data-tile="${id}"] .tile-more`).click();
-      for (const [index, id] of ids.entries()) await expect(page.locator(`[data-tile="${id}"] .tile-count`)).toHaveText(String(before[index] + 1));
-      // The switch shows and hides its marker without touching the count.
-      await page.locator(`[data-tile="${ids[0]}"] .tile-switch`).click();
-      await expect(page.locator(`[data-tile="${ids[0]}"] .tile-on`)).toBeVisible();
-      return `${ids.length} tiles counted`;
-    },
-  };
-}
+/** The extra checks' titles, read from lib/behaviours.mjs so the runner can name them before it imports the module. */
+const EXTRA_TITLES: Record<string, string[]> = (() => {
+  const source = readFileSync(join(HERE, 'lib', 'behaviours.mjs'), 'utf8');
+  const titles: Record<string, string[]> = {};
+  let current = '';
+  for (const line of source.split('\n')) {
+    const application = /^  (\w+): \[/.exec(line);
+    if (application) { current = application[1]; titles[current] = []; continue; }
+    const name = /^      name: '(.*)',$/.exec(line);
+    if (name && current) titles[current].push(name[1]);
+  }
+  return titles;
+})();
 
-/** What each page does once its island runs, and which of its requests wait for activation (lib/verify-page.mjs). */
 type Behaviour = { hold?: string[]; interact?: (page: Page) => Promise<unknown> };
-const BEHAVIOURS: Record<string, Behaviour> = {
-  'ledger /household': {
-    // The island fetches the workspace at activation: held until adoption is judged.
-    hold: ['/api/v1/instance'],
-    interact: async (page) => {
-      await expect(page.locator('#arrival-status')).toHaveText('The workspace is ready.');
-      await expect(page.locator('#arrival-retry')).toHaveCount(0);
-      return 'status moved to ready';
-    },
-  },
-  'fauth /t/:slug/login': {
-    interact: async (page) => {
-      await page.locator('#oauth-google').click();
-      await expect(page.locator('#oauth-chosen')).toHaveText('Continuing with Google');
-      // Sign up: the name field and the other button appear, the sign-in only controls go.
-      await page.locator('#tl-toggle').click();
-      await expect(page.locator('#auth-subtitle')).toHaveText('Create your account');
-      await expect(page.locator('#tl-name')).toBeVisible();
-      await expect(page.locator('#tl-submit-up')).toHaveText('Create account');
-      await expect(page.locator('#tl-submit-in')).toHaveCount(0);
-      await expect(page.locator('#tl-forgot')).toHaveCount(0);
-      await page.locator('#tl-toggle').click();
-      await expect(page.locator('#tl-submit-in')).toBeVisible();
-      await expect(page.locator('#tl-forgot')).toBeVisible();
-      // A visitor's own fields are the island's: typing, revealing, submitting empty.
-      await page.locator('#tl-password').fill('hunter2');
-      await page.locator('#tl-reveal').click();
-      await expect(page.locator('#tl-password')).toHaveAttribute('type', 'text');
-      await page.locator('#tl-submit-in').click();
-      await expect(page.locator('#auth-failure')).toHaveText('Enter your email address.');
-      return 'oauth, mode toggle, reveal and failure';
-    },
-  },
-  'fauth /platform/onboarding': {
-    interact: async (page) => {
-      await page.locator('#ob-workspace').fill('Rivera Labs');
-      await expect(page.locator('#ob-echo')).toHaveText('Rivera Labs');
-      await expect(page.locator('#ob-google')).toBeVisible();
-      await expect(page.locator('#ob-github')).toHaveCount(0);
-      await page.locator('#ob-submit').click();
-      await expect(page.locator('#ob-pressed')).toBeVisible();
-      return 'workspace form';
-    },
-  },
-  'fauth /platform/benchmark': {
-    interact: async (page) => {
-      await page.locator('#bm-query').fill('timeout');
-      await expect(page.locator('#bm-summary')).toHaveText('Showing 3 results for "timeout", by score.');
-      await page.locator('#bm-failures').click();
-      await expect(page.locator('#bm-filtered')).toBeVisible();
-      await expect(page.locator('#bm-failures')).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.locator('#bm-table')).toHaveClass(/failures-only/);
-      return 'filter bar and toolbar';
-    },
-  },
-  'bench /pages/300': tileBehaviour([0]),
-  'bench /pages/1500': tileBehaviour([0, 9]),
-  'bench /pages/10000': tileBehaviour([0, 4]),
-  'bench /pages/15000': tileBehaviour([0, 49]),
-  'bench /pages/20000': tileBehaviour([0, 4]),
-  'bench /pages/islands-100': tileBehaviour(Array.from({ length: 100 }, (_, index) => index)),
-  'ksx /check': {
-    interact: async (page) => {
-      await page.locator('#count-frame').click();
-      await expect(page.locator('#frames-seen')).toHaveText('1002');
-      await expect(page.locator('#quiet-line')).toHaveCount(0);
-      await expect(page.locator('#feed-line')).toHaveText('Receiving frames.');
-      // One key lights every chip it drives, on every slot at once (the screen's point).
-      await page.keyboard.press('g');
-      await expect(page.locator('.chip.lit')).toHaveCount(2);
-      await expect(page.locator('#echo-last')).toHaveText('Last key: G');
-      await expect(page.locator('#echo-count')).toHaveText('Chips lit: 2');
-      await page.keyboard.press('w');
-      await expect(page.locator('.chip.lit')).toHaveCount(1);
-      return 'frame counter and live echo';
-    },
-  },
-};
+/** What each page does once its island runs, and the checks about its other branches (lib/behaviours.mjs, shared with P17). */
+const behaviours = () => import(pathToFileURL(join(HERE, 'lib', 'behaviours.mjs')).href) as Promise<{
+  BEHAVIOURS: Record<string, Behaviour>;
+  EXTRAS: Record<string, { name: string; run: (context: { browser: Browser; origin: string }) => Promise<void> }[]>;
+}>;
 
 for (const name of APPS) {
   const app = INDEX.apps[name];
@@ -193,11 +118,11 @@ for (const name of APPS) {
     });
 
     for (const [route, page] of Object.entries(app.routes)) {
-      const cases: { label: string; path: string; expectation: Expectation; behaviour: Behaviour }[] = [
-        { label: route, path: page.path ?? route, expectation: page, behaviour: BEHAVIOURS[`${name} ${route}`] ?? {} },
-        ...(page.variants ?? []).map((variant) => ({ label: `${route} (${variant.name})`, path: variant.path, expectation: variant, behaviour: {} as Behaviour })),
+      const cases: { label: string; path: string; expectation: Expectation; main: boolean }[] = [
+        { label: route, path: page.path ?? route, expectation: page, main: true },
+        ...(page.variants ?? []).map((variant) => ({ label: `${route} (${variant.name})`, path: variant.path, expectation: variant, main: false })),
       ];
-      for (const { label, path, expectation, behaviour } of cases) {
+      for (const { label, path, expectation, main } of cases) {
         test(`${label}: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values`, async ({ browser }) => {
           const context = await browser.newContext({ javaScriptEnabled: false });
           try {
@@ -213,6 +138,7 @@ for (const name of APPS) {
 
         test(`${label}: adoption writes nothing, every island keeps its server values, and then the islands work`, async ({ browser }) => {
           const { verifyIslandPage } = await verifier();
+          const behaviour: Behaviour = main ? ((await behaviours()).BEHAVIOURS[`${name} ${route}`] ?? {}) : {};
           const manifest = readJson(join(OUT, name, 'dist', 'manifest.json'));
           const states = expectation.state ?? {};
           const hosts: Record<string, number> = {};
@@ -236,103 +162,27 @@ for (const name of APPS) {
   });
 }
 
-test.describe('fixture application ledger: a failing workspace', () => {
-  let server: Running;
-  test.beforeAll(async () => { server = await start('ledger'); });
-  test.afterAll(async () => { await server?.stop(); });
-
-  test('/household: a failed load names the attempt, keeps the snapshot, and Retry recovers', async ({ browser }) => {
-    const context = await browser.newContext();
-    try {
-      const tab = await context.newPage();
-      let calls = 0;
-      await tab.route('**/api/v1/instance', async (route) => {
-        calls += 1;
-        if (calls === 1) await route.fulfill({ status: 503, body: 'down' });
-        else await route.continue();
+for (const name of APPS) {
+  // The checks about a page's other branches and what its handler does not trust (lib/behaviours.mjs).
+  test.describe(`fixture application ${name}: other branches`, () => {
+    let server: Running;
+    test.beforeAll(async () => { server = await start(name); });
+    test.afterAll(async () => { await server?.stop(); });
+    test('every extra check in lib/behaviours.mjs is run by name', async () => {
+      const { EXTRAS } = await behaviours();
+      expect([...(EXTRA_TITLES[name] ?? [])].sort()).toEqual((EXTRAS[name] ?? []).map((each) => each.name).sort());
+    });
+    // Test titles are fixed at collection time, so the extras are named in the index and run by name.
+    for (const title of EXTRA_TITLES[name] ?? []) {
+      test(title, async ({ browser }) => {
+        const { EXTRAS } = await behaviours();
+        const extra = EXTRAS[name].find((each) => each.name === title);
+        expect(extra, `lib/behaviours.mjs has no extra check named ${title}`).toBeTruthy();
+        await extra!.run({ browser, origin: server.origin });
       });
-      await tab.goto(new URL('/household', server.origin).href);
-      await expect(tab.locator('#arrival-status')).toHaveText('The workspace could not load (attempt 1). This snapshot is not live.');
-      await expect(tab.locator('#arrival-cash')).toHaveText('$12,345.67');
-      await tab.locator('#arrival-retry').click();
-      await expect(tab.locator('#arrival-status')).toHaveText('The workspace is ready.');
-      await expect(tab.locator('#arrival-retry')).toHaveCount(0);
-      expect(calls).toBe(2);
-    } finally { await context.close(); }
+    }
   });
-});
-
-test.describe('fixture application fauth: the tenant is data, never markup', () => {
-  let server: Running;
-  test.beforeAll(async () => { server = await start('fauth'); });
-  test.afterAll(async () => { await server?.stop(); });
-
-  test('/t/quote/login: a tenant named with script and markup renders as text and runs nothing', async ({ browser }) => {
-    const context = await browser.newContext();
-    try {
-      const tab = await context.newPage();
-      const errors: string[] = [];
-      tab.on('pageerror', (error) => errors.push(error.message));
-      const violations: string[] = [];
-      await tab.addInitScript(() => document.addEventListener('securitypolicyviolation', (e) => (globalThis as { __v?: string[] }).__v = [...((globalThis as { __v?: string[] }).__v ?? []), e.effectiveDirective]));
-      await tab.goto(new URL('/t/quote/login', server.origin).href);
-      await expect(tab.locator('#tenant-name')).toHaveText('";alert(1);//</script><b>bold</b>');
-      expect(await tab.locator('#tenant-name b').count()).toBe(0);
-      expect(await tab.locator('title').textContent()).toContain('";alert(1);//');
-      // The page still works after the hostile name: the document was not cut short.
-      await tab.locator('#tl-toggle').click();
-      await expect(tab.locator('#auth-subtitle')).toHaveText('Create your account');
-      expect(errors).toEqual([]);
-      expect(await tab.evaluate(() => (globalThis as { __v?: string[] }).__v ?? [])).toEqual(violations);
-    } finally { await context.close(); }
-  });
-
-  test('/t/unknown/login: an unknown tenant is a 404, not a page', async ({ request }) => {
-    const response = await request.get(new URL('/t/unknown/login', server.origin).href);
-    expect(response.status()).toBe(404);
-  });
-
-  test('/t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch', async ({ browser }) => {
-    const context = await browser.newContext();
-    try {
-      const tab = await context.newPage();
-      await tab.goto(new URL('/t/lockbox/login', server.origin).href);
-      await expect(tab.locator('#oauth-google')).toHaveCount(0);
-      await expect(tab.locator('#oauth-github')).toHaveCount(0);
-      await expect(tab.locator('#tl-toggle')).toHaveCount(0);
-      await expect(tab.locator('#invite-notice')).toBeVisible();
-    } finally { await context.close(); }
-  });
-});
-
-test.describe('fixture application ksx: the other branch of every condition', () => {
-  let server: Running;
-  test.beforeAll(async () => { server = await start('ksx'); });
-  test.afterAll(async () => { await server?.stop(); });
-
-  test('/check?state=empty: with no controller the empty section replaces the chips, and the roster is empty', async ({ browser }) => {
-    const context = await browser.newContext({ javaScriptEnabled: false });
-    try {
-      const tab = await context.newPage();
-      await tab.goto(new URL('/check?state=empty', server.origin).href);
-      await expect(tab.locator('#empty h2')).toHaveText('No controller is ready to test');
-      await expect(tab.locator('#chips')).toHaveCount(0);
-      await expect(tab.locator('#roster li')).toHaveCount(0);
-    } finally { await context.close(); }
-  });
-
-  test('/check: the roster and the chips are the nested payload read through paths and rows', async ({ browser }) => {
-    const context = await browser.newContext({ javaScriptEnabled: false });
-    try {
-      const tab = await context.newPage();
-      await tab.goto(new URL('/check', server.origin).href);
-      await expect(tab.locator('#roster li')).toHaveCount(2);
-      await expect(tab.locator('#roster li').nth(1)).toContainText('DualSense');
-      await expect(tab.locator('#chips li')).toHaveCount(6);
-      await expect(tab.locator('.chip[data-control="dpad.up"]')).toHaveAttribute('data-keys', 'W ArrowUp');
-    } finally { await context.close(); }
-  });
-});
+}
 
 test.describe('fixtures the closed type set and N2 refuse', () => {
   const negative = (INDEX as unknown as { negative: { name: string; entry: string; code: string; message: string; file?: string }[] }).negative;

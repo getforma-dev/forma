@@ -4,6 +4,12 @@ import { writeFileSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { json, save, run, ROOT } from './release-set.mjs';
+import { releaseNotesLine } from './release-measurements.mjs';
+
+/** P17's measurement step in one line of the Release's notes (FORMA-188); nothing when P17 took none. */
+export function measurementsNotes(report) {
+  return report.measurements ? `\n${releaseNotesLine(report.measurements)}\n` : '';
+}
 
 export function changelogEntry(changelog, version) {
   // Match the entire version token: a stable tag must not select an alpha entry.
@@ -35,7 +41,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const entry = changelogEntry(changelog, version);
   record.changelog = entry;
   const rows = set.packages.map(p => `| ${p.name} | ${p.version} | \`${p.sha256}\` |`).join('\n');
-  let notes = `${entry}\n\nCommit: \`${set.commit}\` · run: ${set.run} · CI: ${record.ciRun}\n\n| Package | Version | SHA-256 |\n|---|---|---|\n${rows}\n\nContract versions: \`${JSON.stringify(set.contracts)}\`\n\nTag-event run to record: ${record.elapsedSeconds.toFixed(1)} seconds; target 1800 seconds. Full measurements and DS11 hashes are in the attached JSON.\n`;
+  let notes = `${entry}\n\nCommit: \`${set.commit}\` · run: ${set.run} · CI: ${record.ciRun}\n\n| Package | Version | SHA-256 |\n|---|---|---|\n${rows}\n\nContract versions: \`${JSON.stringify(set.contracts)}\`\n\nTag-event run to record: ${record.elapsedSeconds.toFixed(1)} seconds; target 1800 seconds. Full measurements and DS11 hashes are in the attached JSON.\n${measurementsNotes(report)}`;
   const recordPath = join(dir, 'release-record.json'), notesPath = join(dir, 'release-notes.md');
   save(recordPath, record); writeFileSync(notesPath, notes);
   // Existence is queried through an API whose non-404 failures remain failures. Reruns edit

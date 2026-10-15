@@ -9,11 +9,12 @@
   "pending": {
     "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
     "FORMA-144": "slice 2 integrated packed adoption/static-route acceptance and slice 3 final release cleanup",
-    "FORMA-188": "fixture applications and skew drill",
+    "FORMA-188": "the skew drill's call in P17 over the fixture applications (FORMA-186's lane)",
     "FORMA-191": "release measurements"
   },
   "trustedTypes": "enforced-v1",
   "boundRender": "finalized-v1",
   "assetIntegrity": "sha384-v1",
-  "sourceTemplates": "islands-v1"
+  "sourceTemplates": "islands-v1",
+  "fixtureApps": "declared-v1"
 }
