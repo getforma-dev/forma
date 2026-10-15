@@ -140,7 +140,21 @@ export class AdoptionLifecycle implements AdoptionSink {
         this.readers.push({ flags: getActiveSub()!, group: owner });
         try { initial = read(); } catch (cause) { failed = true; error = cause; }
       } else if (this.state === 'live' && owner.alive) {
-        try { write(read()); } catch (cause) { this.fail(cause, 'FORMA_E_HYDRATE_VALUE'); }
+        // A live branch factory/cleanup can write the condition currently
+        // being observed. Match createEffect's bounded self-write handling;
+        // initial preparation still reads exactly once and never loops.
+        const node=getActiveSub() as {flags:number}|undefined;
+        let runs=0;
+        try{
+          do{
+            if(node)node.flags&=~32;
+            const next=read();
+            if(this.state!=='live'||!owner.alive)break;
+            write(next);
+            if(this.state!=='live'||!owner.alive||!node||(node.flags&32)===0)break;
+            if(++runs>=100){node.flags&=~32;throw new AdoptionScopeError('FORMA_E_HYDRATE_VALUE');}
+          }while(true);
+        }catch(cause){this.fail(cause,'FORMA_E_HYDRATE_VALUE');}
       } else this.invalidated = true;
     }));
     this.own(dispose, owner);

@@ -128,6 +128,23 @@ describe('private prepared descriptor walker',()=>{
     expect(()=>prepareAdoption(second.host,()=>{setOn(false);return h('p',null,'expected');})).toThrow('FORMA_E_HYDRATE_VALUE');
     expect(first.host.querySelector('i')!.textContent).toBe('new');expect(effect).toHaveBeenCalledOnce();expect(plan.phase).toBe('live');plan.dispose();first.observer.disconnect();second.observer.disconnect();
   });
+  it('does not move or insert after a Show factory or initial disposer aborts the plan',()=>{
+    for(const fromCleanup of [false,true]){
+      const {host,observer}=fixture('<div><!--f:s0--><b>old</b><!--/f:s0--></div>'),[on,setOn]=createSignal(true);
+      let plan:ReturnType<typeof prepareAdoption>;
+      plan=prepareAdoption(host,()=>h('div',null,createShow(on,()=>{if(fromCleanup)registerDisposer(()=>plan.dispose());return h('b',null,'old');},()=>{if(!fromCleanup)plan.dispose();return h('i',null,'new');})));
+      plan.commit();const before=host.innerHTML;setOn(false);
+      expect(plan.phase).toBe('aborted');expect(host.innerHTML).toBe(before);expect(observer.takeRecords()).toEqual([]);observer.disconnect();
+    }
+  });
+  it('stabilizes a live Show condition changed by its own factory or initial disposer',()=>{
+    for(const fromCleanup of [false,true]){
+      const {host,observer}=fixture('<div><!--f:s0--><b>old</b><!--/f:s0--></div>'),[on,setOn]=createSignal(true);
+      const yes=vi.fn(()=>{if(fromCleanup)registerDisposer(()=>setOn(true));return h('b',null,'old');});
+      const plan=prepareAdoption(host,()=>h('div',null,createShow(on,yes,()=>{if(!fromCleanup)setOn(true);return h('i',null,'new');})));
+      plan.commit();setOn(false);expect(on()).toBe(true);expect(host.querySelector('b')?.textContent).toBe('old');expect(host.querySelector('i')).toBeNull();expect(yes).toHaveBeenCalledTimes(2);expect(plan.phase).toBe('live');plan.dispose();observer.disconnect();
+    }
+  });
   it('disposes partial live branch construction and keeps existing DOM on a callback failure',()=>{
     const {host}=fixture('<div><!--f:s0--><b>old</b><!--/f:s0--></div>'),[on,setOn]=createSignal(true),[n,setN]=createSignal(0),failure=vi.fn(),cleanup=vi.fn(),runs=vi.fn();
     const plan=prepareAdoption(host,()=>h('div',null,createShow(on,()=>h('b',null,'old'),()=>{registerDisposer(cleanup);createEffect(()=>{n();runs();});throw new Error('branch');})),{failure});

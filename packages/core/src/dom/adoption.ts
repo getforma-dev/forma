@@ -112,9 +112,16 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
           if(branch.value)fragment.appendChild(branch.value);
           entering={fragment,owner:branch};
         }
+        if(initial)active.dispose();
+        // Factories and cleanup are application callbacks now. Disposal or
+        // range relocation during either callback revokes the pending move.
+        if(scope.phase!=='live'||range.start.parentNode!==parent||range.end.parentNode!==parent)refuse();
+        let checked=range.start.nextSibling;
+        for(const node of leaving){if(checked!==node)refuse();checked=node.nextSibling;}
+        if(checked!==range.end)refuse();
         const fragment=host.ownerDocument.createDocumentFragment();
         for(const node of leaving)fragment.appendChild(node);
-        if(initial){active.dispose();initial=false;}
+        if(initial)initial=false;
         else cached.set(current,{fragment,owner:active});
         active=entering.owner;current=next;
         parent.insertBefore(entering.fragment,range.end);
