@@ -1,5 +1,5 @@
 /**
- * The raw-HTML development warnings (FORMA-126) in the bytes the build emits.
+ * The raw-HTML refusals (FORMA-109) in the bytes the build emits.
  *
  * `src/dom/trusted-html.ts` decides development with the build flag itself,
  * so the build folds the warnings away in whatever chunk the module lands in:
@@ -13,18 +13,16 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import rawConfig from '../../../tsup.config';
-import { INNER_HTML_CHILDREN_CODE, POLICY_REFUSED_CODE, RAW_STRING_CODES, RUNTIME_SRCDOC_CODE } from '../trusted-html';
+import { INNER_HTML_CHILDREN_CODE, POLICY_REFUSED_CODE, RAW_HTML_CODES, RUNTIME_SRCDOC_CODE } from '../trusted-html';
 
 const configs = rawConfig as Options[];
 
-/** What only the raw-sink development warnings carry, and a refused policy's. */
+/** Stable refusal markers must survive every production bundling. */
 const RAW_MARKS = [
-  ...Object.values(RAW_STRING_CODES).map(([code]) => code),
-  'was given a plain string',
-  POLICY_REFUSED_CODE,
+  ...Object.values(RAW_HTML_CODES).map(([code]) => code),
 ];
-/** What only h()'s own development warnings carry: h('script'), and children beside dangerouslySetInnerHTML. */
-const SCRIPT_MARK = 'FORMA_W_SCRIPT_ELEMENT';
+/** Script construction refusal is also unconditional. */
+const SCRIPT_MARK = 'FORMA_E_SCRIPT_ELEMENT';
 const CHILDREN_MARK = INNER_HTML_CHILDREN_CODE;
 /** What only the runtime's srcdoc bindings' development warning carries. */
 const RUNTIME_MARK = RUNTIME_SRCDOC_CODE;
@@ -68,24 +66,25 @@ async function buildAll(entries: string[], overrides: Options = {}): Promise<Rec
  * script warning).
  */
 const BUILDS: ReadonlyArray<{ name: string; entries: string[]; marks: string[] }> = [
-  { name: 'code-split ESM', entries: ['index', 'runtime'], marks: [...RAW_MARKS, SCRIPT_MARK, CHILDREN_MARK, RUNTIME_MARK] },
-  { name: 'browser ESM bundle', entries: ['forma.esm'], marks: [...RAW_MARKS, SCRIPT_MARK, CHILDREN_MARK] },
+  { name: 'code-split ESM', entries: ['index', 'runtime'], marks: [...RAW_MARKS, SCRIPT_MARK, RUNTIME_MARK] },
+  { name: 'browser ESM bundle', entries: ['forma.esm'], marks: [...RAW_MARKS, SCRIPT_MARK] },
   { name: 'runtime IIFE', entries: ['formajs-runtime'], marks: [...RAW_MARKS, RUNTIME_MARK] },
 ];
 
-describe('the raw-HTML warnings in a production build (the real tsup configs)', () => {
-  it('a production build carries none of the raw-HTML warnings, in any artifact', { timeout: 180_000 }, async () => {
-    for (const { name, entries } of BUILDS) {
+describe('raw-HTML refusals survive the production build (the real tsup configs)', () => {
+  it('production artifacts retain refusal codes and strip development-only warnings', { timeout: 180_000 }, async () => {
+    for (const { name, entries, marks } of BUILDS) {
       const files = await buildAll(entries);
       const all = Object.values(files).join('\n');
-      for (const mark of [...RAW_MARKS, SCRIPT_MARK, CHILDREN_MARK, RUNTIME_MARK]) expect(all, `${name}: ${mark}`).not.toContain(mark);
+      for (const mark of marks) expect(all, `${name}: ${mark}`).toContain(mark);
+      for (const mark of [POLICY_REFUSED_CODE, CHILDREN_MARK, 'FORMA_W_RAW_', 'FORMA_W_SCRIPT_ELEMENT']) expect(all, `${name}: ${mark}`).not.toContain(mark);
       // The typed path itself is there: the build dropped the warnings only.
       expect(all, name).toContain('createPolicy');
       expect(all, name).toContain('@getforma/core#trusted-types');
     }
   });
 
-  it('a build without the production flag keeps the warnings', { timeout: 180_000 }, async () => {
+  it('a build without the production flag also retains every refusal', { timeout: 180_000 }, async () => {
     // The control for the test above: nothing replacing `__FORMA_DEV_BUILD__`
     // is a build of the source's own behaviour, warnings and all.
     for (const { name, entries, marks } of BUILDS) {

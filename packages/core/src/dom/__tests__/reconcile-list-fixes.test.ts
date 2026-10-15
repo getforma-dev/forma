@@ -1,3 +1,4 @@
+import { trustedHtml } from '../trusted-html';
 // DOM 1.3.0: reconciler per-container cache (F1) + duplicate keys >= 32 (F2).
 import { describe, it, expect } from 'vitest';
 import { createReconciler, type ReconcilerConfig } from '../reconcile';
@@ -25,8 +26,8 @@ describe('reconciler per-container HTML cache (F1)', () => {
     b.innerHTML = '<div data-forma-id="seed-b">seed-b</div>';
 
     const html = '<div data-forma-id="row-1">hello</div>';
-    reconcile(a, html);
-    reconcile(b, html);
+    reconcile(a, trustedHtml(html));
+    reconcile(b, trustedHtml(html));
 
     expect(a.querySelector('[data-forma-id="row-1"]')).not.toBeNull();
     expect(b.querySelector('[data-forma-id="row-1"]')).not.toBeNull();
@@ -42,9 +43,9 @@ describe('reconciler per-container HTML cache (F1)', () => {
     document.body.append(a);
     a.innerHTML = '<div data-forma-id="s">s</div>';
     const html = '<div data-forma-id="row">x</div>';
-    reconcile(a, html);
+    reconcile(a, trustedHtml(html));
     const firstNode = a.querySelector('[data-forma-id="row"]');
-    reconcile(a, html); // identical → fast path, same node kept
+    reconcile(a, trustedHtml(html)); // identical → fast path, same node kept
     expect(a.querySelector('[data-forma-id="row"]')).toBe(firstNode);
     a.remove();
   });

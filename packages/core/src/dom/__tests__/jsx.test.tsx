@@ -141,14 +141,14 @@ describe('JSX', () => {
     expect((jsxEl as HTMLElement).outerHTML).toBe(hEl.outerHTML);
   });
 
-  it('the raw props take trustedHtml() as well as a string (FORMA-126)', () => {
-    // The JSX typings take both forms (src/jsx.d.ts); `npm run typecheck`
-    // compiles this file, so a typing that refused either fails there.
+  it('raw JSX props accept only trustedHtml()', () => {
+    // A typed positive and a compile-time/runtime negative share the actual JSX path.
     const typed = <div dangerouslySetInnerHTML={{ __html: trustedHtml('<b>typed</b>') }} /> as HTMLElement;
-    const plain = <div dangerouslySetInnerHTML={{ __html: '<i>plain</i>' }} /> as HTMLElement;
+    // @ts-expect-error 3.x has no string raw overload.
+    expect(() => <div dangerouslySetInnerHTML={{ __html: '<i>plain</i>' }} />).toThrow('FORMA_E_RAW_INNER_HTML');
     const frame = <iframe sandbox="" srcdoc={trustedHtml('<p>doc</p>')} /> as HTMLIFrameElement;
     expect(typed.innerHTML).toBe('<b>typed</b>');
-    expect(plain.innerHTML).toBe('<i>plain</i>');
+
     expect(frame.getAttribute('srcdoc')).toBe('<p>doc</p>');
   });
 });

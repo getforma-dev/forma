@@ -1,3 +1,4 @@
+import { trustedHtml } from '../dom/trusted-html';
 /**
  * Reconciler tests.
  *
@@ -41,7 +42,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       // Container should have the child element
@@ -67,7 +68,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       const children = container.querySelectorAll('[data-forma-id]');
@@ -89,14 +90,14 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       const before = container.querySelector('[data-forma-id="card-1"]');
       expect(before).not.toBeNull();
 
       // Reconcile again with same HTML
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       const after = container.querySelector('[data-forma-id="card-1"]');
@@ -116,7 +117,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       // Mutate state: click the button to increment count
@@ -130,7 +131,7 @@ describe('reconciler', () => {
       expect(display?.textContent).toBe('1');
 
       // Reconcile same HTML again (same state shape)
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       // State should survive — count should still be 1, not reset to 0
@@ -154,7 +155,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, htmlV1);
+      reconcile(container, trustedHtml(htmlV1));
       await waitForEffects();
 
       const before = container.querySelector('[data-forma-id="card-1"]');
@@ -162,7 +163,7 @@ describe('reconciler', () => {
       const disposersBefore = (before as any).__formaDisposers;
 
       // Reconcile with attribute change (class added)
-      reconcile(container, htmlV2);
+      reconcile(container, trustedHtml(htmlV2));
       await waitForEffects();
 
       const after = container.querySelector('[data-forma-id="card-1"]');
@@ -200,7 +201,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, htmlV1);
+      reconcile(container, trustedHtml(htmlV1));
       await waitForEffects();
 
       const el = container.querySelector('[data-forma-id="card-1"]');
@@ -209,7 +210,7 @@ describe('reconciler', () => {
       expect(Array.isArray(disposersBefore)).toBe(true);
 
       // Reconcile with different state keys (year -> rating)
-      reconcile(container, htmlV2);
+      reconcile(container, trustedHtml(htmlV2));
       await waitForEffects();
 
       const elAfter = container.querySelector('[data-forma-id="card-1"]');
@@ -241,7 +242,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, htmlV1);
+      reconcile(container, trustedHtml(htmlV1));
       await waitForEffects();
 
       const before = container.querySelector('[data-forma-id="slot-1"]');
@@ -249,7 +250,7 @@ describe('reconciler', () => {
       expect(before!.getAttribute('data-module')).toBe('movie-card');
 
       // Reconcile with different module
-      reconcile(container, htmlV2);
+      reconcile(container, trustedHtml(htmlV2));
       await waitForEffects();
 
       const after = container.querySelector('[data-forma-id="slot-1"]');
@@ -292,13 +293,13 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, htmlBefore);
+      reconcile(container, trustedHtml(htmlBefore));
       await waitForEffects();
 
       expect(container.querySelectorAll('[data-forma-id]').length).toBe(1);
 
       // Add a second child
-      reconcile(container, htmlAfter);
+      reconcile(container, trustedHtml(htmlAfter));
       await waitForEffects();
 
       const children = container.querySelectorAll('[data-forma-id]');
@@ -329,7 +330,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, htmlBefore);
+      reconcile(container, trustedHtml(htmlBefore));
       await waitForEffects();
 
       const removedEl = container.querySelector('[data-forma-id="b"]');
@@ -337,7 +338,7 @@ describe('reconciler', () => {
       expect(container.querySelectorAll('[data-forma-id]').length).toBe(2);
 
       // Remove second child
-      reconcile(container, htmlAfter);
+      reconcile(container, trustedHtml(htmlAfter));
       await waitForEffects();
 
       expect(container.querySelectorAll('[data-forma-id]').length).toBe(1);
@@ -377,7 +378,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, htmlOriginal);
+      reconcile(container, trustedHtml(htmlOriginal));
       await waitForEffects();
 
       // Capture references before reorder
@@ -386,7 +387,7 @@ describe('reconciler', () => {
       const refC = container.querySelector('[data-forma-id="c"]');
 
       // Reorder: C, A, B
-      reconcile(container, htmlReordered);
+      reconcile(container, trustedHtml(htmlReordered));
       await waitForEffects();
 
       const children = container.querySelectorAll('[data-forma-id]');
@@ -420,7 +421,7 @@ describe('reconciler', () => {
       `;
 
       // First reconcile — mount and let data-list render its children
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       const listEl = container.querySelector('[data-list]');
@@ -436,7 +437,7 @@ describe('reconciler', () => {
 
       // Reconcile again with same HTML — list children should be untouched
       // (the reconciler should skip directive-owned subtrees)
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       const itemsAfter = listEl!.querySelectorAll('li');
@@ -459,7 +460,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, html);
+      reconcile(container, trustedHtml(html));
       await waitForEffects();
 
       const stateEl = container.querySelector('[data-forma-state]');
@@ -483,7 +484,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, html2);
+      reconcile(container, trustedHtml(html2));
       await waitForEffects();
 
       const stateEls = container.querySelectorAll('[data-forma-state]');
@@ -522,7 +523,7 @@ describe('reconciler', () => {
         txt: ['data-text'],
       });
 
-      reconcile(container, staticHtml);
+      reconcile(container, trustedHtml(staticHtml));
       await waitForEffects();
 
       const scope = container.querySelector('[data-forma-state]')!;
@@ -547,7 +548,7 @@ describe('reconciler', () => {
         btn: ['data-on:click'],
       });
 
-      reconcile(container, connectedHtml);
+      reconcile(container, trustedHtml(connectedHtml));
       await waitForEffects();
       await waitForEffects();
 
@@ -578,11 +579,11 @@ describe('reconciler', () => {
       mount(container);
       await waitForEffects();
 
-      reconcile(container, `
+      reconcile(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <p data-forma-id="p1">Hello <strong data-forma-id="s1">world</strong> today</p>
         </div>
-      `);
+      `));
       await waitForEffects();
 
       const p = container.querySelector('[data-forma-id="p1"]')!;
@@ -601,11 +602,11 @@ describe('reconciler', () => {
       mount(container);
       await waitForEffects();
 
-      reconcile(container, `
+      reconcile(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <p data-forma-id="p1"><strong data-forma-id="s1">world</strong></p>
         </div>
-      `);
+      `));
       await waitForEffects();
 
       const p = container.querySelector('[data-forma-id="p1"]')!;
@@ -622,11 +623,11 @@ describe('reconciler', () => {
       mount(container);
       await waitForEffects();
 
-      reconcile(container, `
+      reconcile(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <p data-forma-id="p1">Greetings <strong data-forma-id="s1">world</strong> and friends</p>
         </div>
-      `);
+      `));
       await waitForEffects();
 
       const p = container.querySelector('[data-forma-id="p1"]')!;
@@ -646,11 +647,11 @@ describe('reconciler', () => {
       mount(container);
       await waitForEffects();
 
-      reconcile(container, `
+      reconcile(container, trustedHtml(`
         <div data-forma-state='{"name":"Alice"}'>
           <span data-forma-id="s1" data-text="name">Bob</span>
         </div>
-      `);
+      `));
       await waitForEffects();
 
       const span = container.querySelector('[data-forma-id="s1"]')!;
@@ -671,12 +672,12 @@ describe('reconciler', () => {
       mount(container);
       await waitForEffects();
 
-      reconcile(container, `
+      reconcile(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <div data-forma-id="a1">Old</div>
           <div data-forma-id="a2">Fresh replacement</div>
         </div>
-      `);
+      `));
       await waitForEffects();
 
       const a2 = container.querySelector('[data-forma-id="a2"]:not([data-forma-leaving])');
@@ -696,11 +697,11 @@ describe('reconciler', () => {
 
       const leavingEl = container.querySelector('[data-forma-leaving]')!;
 
-      reconcile(container, `
+      reconcile(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <div data-forma-id="a1">Keep</div>
         </div>
-      `);
+      `));
       await waitForEffects();
 
       // Leaving element should still be in DOM (transition owns its removal),

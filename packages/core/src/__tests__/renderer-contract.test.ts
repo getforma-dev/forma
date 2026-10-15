@@ -683,6 +683,14 @@ describe('renderer contract: namespaces match the parsed server markup (shared v
 
   describe.each(NS_VECTORS.map((v) => [v.name, v] as const))('%s', (_name, vector) => {
     it('h(), building each child with its parent known, gives every element the namespace the parser gives it, with the same markup', () => {
+      // The frozen namespace vector remains a parser reference; v3's h()
+      // cannot construct script elements, including within SVG.
+      const containsScript = ([tag, , ...children]: NsTree): boolean =>
+        tag.toLowerCase() === 'script' || children.some((c) => Array.isArray(c) && containsScript(c as NsTree));
+      if (containsScript(vector.tree)) {
+        expect(() => builtWithParent(vector.tree)).toThrow('FORMA_E_SCRIPT_ELEMENT');
+        return;
+      }
       const built = builtWithParent(vector.tree) as unknown as Element;
       const namespaces = [built, ...Array.from(built.querySelectorAll('*'))].map((el) => `${el.localName}:${el.namespaceURI}`);
       expect(namespaces).toEqual(vector.namespaces.map((e) => {

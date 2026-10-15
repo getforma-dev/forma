@@ -12,12 +12,11 @@
 type MaybeReactive<T> = T | (() => T);
 
 /**
- * Markup for a raw sink: a string, or what `trustedHtml()` returns (its
+ * Markup for a raw sink: only what `trustedHtml()` returns (its
  * `TrustedHtml` type, restated here structurally because this file is copied
- * into dist/ as it is and cannot import from the source tree). 3.0.0 drops the
- * string (DR-19).
+ * into dist/ as it is and cannot import from the source tree).
  */
-type RawMarkup = string | { readonly __formaTrustedHtml: true };
+type RawMarkup = { readonly __formaTrustedHtml: true };
 
 declare global {
   namespace JSX {

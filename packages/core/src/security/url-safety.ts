@@ -125,9 +125,9 @@ export function isUnsafeAttrWrite(tag: string, name: string, value: string): boo
  * attribute and then parses the result as a document, so an escaped payload
  * still executes. They are supported (a sandboxed `<iframe srcdoc>` is a
  * legitimate pattern) but treated as a trusted-content sink like
- * `dangerouslySetInnerHTML`, and flagged with a dev-only warning.
+ * `dangerouslySetInnerHTML`: callers must provide TrustedHtml.
  *
- * Verified by: src/dom/__tests__/element-url-safety.test.ts > "emits srcdoc but warns that escaping does not neutralize it"
+ * Verified by: src/dom/__tests__/element-url-safety.test.ts > "srcdoc requires trustedHtml and strings are refused before the sink"
  */
 export const RAW_HTML_ATTRS = new Set(['srcdoc']);
 

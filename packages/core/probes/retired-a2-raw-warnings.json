@@ -1,0 +1,55 @@
+{
+  "reason": "FORMA-109 removed the A2 warning-and-write bridges. These historical probes are archived unchanged; no v3 mutation run or qualification is claimed. Ordinary typed-refusal tests cover the replacement boundaries.",
+  "probes": [
+    {
+      "id": "trusted/string-warning-silent",
+      "file": "src/dom/trusted-html.ts",
+      "tags": [
+        "correctness"
+      ],
+      "find": "  if (isTrustedHtml(value)) return htmlOf(value);\n  warnRawString(sink);\n",
+      "replace": "  if (isTrustedHtml(value)) return htmlOf(value);\n",
+      "note": "a string given to a raw sink is written with no development warning, so the 2.x bridge says nothing before 3.0.0 refuses it (L-18, DR-19). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a string to each raw sink still renders, and warns once with the sink's code in development\""
+    },
+    {
+      "id": "trusted/script-warning-silent",
+      "file": "src/dom/element.ts",
+      "tags": [
+        "correctness"
+      ],
+      "find": "    warnScriptElement(tagName);\n",
+      "replace": "",
+      "note": "h('script') builds a script element with no development warning before 3.0.0 refuses it (DR-19, FORMA-109). Verified by: src/dom/__tests__/trusted-html.test.ts > \"h('script') warns once in development and still builds the element\""
+    },
+    {
+      "id": "trusted/look-alike-silent",
+      "file": "src/dom/trusted-html.ts",
+      "tags": [
+        "correctness"
+      ],
+      "find": "  if (isTrustedHtml(value)) return htmlOf(value);\n  warnRawString(sink);\n",
+      "replace": "  if (isTrustedHtml(value)) return htmlOf(value);\n  if (typeof value === 'string') warnRawString(sink);\n",
+      "note": "a look-alike object or a String object at a raw sink is written untyped with no development warning (formajs#29 review N1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a look-alike object or a String object is written as before and warns as a string does\""
+    },
+    {
+      "id": "trusted/runtime-bind-srcdoc-silent",
+      "file": "src/runtime.ts",
+      "tags": [
+        "correctness"
+      ],
+      "find": "          warnRuntimeSrcdoc(attrName);\n",
+      "replace": "",
+      "note": "data-bind:srcdoc writes a document from an expression with no development warning (formajs#29 review S3). Verified by: src/__tests__/runtime-srcdoc.test.ts > \"data-bind:srcdoc writes its string and warns once with the runtime code\""
+    },
+    {
+      "id": "trusted/runtime-row-srcdoc-silent",
+      "file": "src/runtime.ts",
+      "tags": [
+        "correctness"
+      ],
+      "find": "          warnRuntimeSrcdoc(attr.name);\n",
+      "replace": "",
+      "note": "a list row's srcdoc writes a document from row data with no development warning (formajs#29 review S3). Verified by: src/__tests__/runtime-srcdoc.test.ts > \"a list row's srcdoc writes its string and warns once with the runtime code\""
+    }
+  ]
+}
