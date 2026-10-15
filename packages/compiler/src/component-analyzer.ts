@@ -19,6 +19,7 @@ import _traverse, { type NodePath } from '@babel/traverse';
 import type { ModuleLoader } from './module-loader';
 import { originalPosition, reportDiagnostic } from './diagnostics.js';
 import { PropsSchemaError } from './props-schema';
+import { isCoreCall, refuseEntry } from './entry-policy';
 import {
   readImportBindings,
   resolveExportedFunction,
@@ -164,14 +165,16 @@ export class ComponentAnalyzer {
 
     // Step 2: Find mount(() => Component(), '#app') call
     let result: EntryPointInfo | null = null;
+    let sawMount = false;
 
     traverse(ast, {
       CallExpression(path) {
         // Match mount(...)
-        if (!t.isIdentifier(path.node.callee) || path.node.callee.name !== 'mount') {
+        if (!isCoreCall(path, 'mount')) {
           return;
         }
 
+        sawMount = true;
         const args = path.node.arguments;
         if (args.length < 1) return;
 
@@ -253,6 +256,10 @@ export class ComponentAnalyzer {
       return result;
     }
 
+    // An explicit but unsupported mount cannot silently select another Page
+    // through the activation-only fallback and discard its argument effects.
+    if (sawMount) return null;
+
     // Step 3: Fallback — activateIslands({ ... }) pattern.
     // Collect island component names from the registry object, then find
     // the Page component import that isn't an island.
@@ -262,12 +269,13 @@ export class ComponentAnalyzer {
 
     // The SSR root is the imported component whose name ends with "Page"
     // and is NOT one of the island components in the registry.
-    for (const [name, importPath] of importMap) {
-      if (!islandNames.has(name) && name.endsWith('Page') && importPath.startsWith('.')) {
-        return { componentName: name, importPath, islandNames, importMap, importBindings };
-      }
+    const pages = [...importMap].filter(([name, importPath]) => !islandNames.has(name)
+      && name.endsWith('Page') && importPath.startsWith('.') && importBindings.get(name)?.kind !== 'type');
+    if (pages.length > 1) refuseEntry(filename, ast.program, 'multiple Page imports make the activation-only native root ambiguous; provide an explicit compile-time core mount');
+    if (pages.length === 1) {
+      const [componentName, importPath] = pages[0]!;
+      return { componentName, importPath, islandNames, importMap, importBindings };
     }
-
     return null;
   }
 
@@ -280,20 +288,19 @@ export class ComponentAnalyzer {
 
     traverse(ast, {
       CallExpression(path) {
-        if (!t.isIdentifier(path.node.callee) || path.node.callee.name !== 'activateIslands') {
+        if (!isCoreCall(path, 'activateIslands')) {
           return;
         }
         const args = path.node.arguments;
         if (args.length < 1 || !t.isObjectExpression(args[0])) return;
 
         for (const prop of (args[0] as T.ObjectExpression).properties) {
-          if (t.isObjectProperty(prop) && t.isIdentifier(prop.key)) {
-            islandNames.add(prop.key.name);
-          } else if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
-            islandNames.add((prop.value as T.Identifier).name);
+          // Native Page selection excludes the actual registered local binding,
+          // not its public registry key (which may use a different name).
+          if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
+            islandNames.add(prop.value.name);
           }
         }
-        path.stop();
       },
     });
 

@@ -20,9 +20,13 @@ struct Assets;
 struct HomeProps {
     count: u32,
 }
+#[derive(PageProps)]
+struct AboutProps {}
+
 struct AppState {
     manifest: forma_server::AssetManifest,
     home: Option<PageHandle<HomeProps>>,
+    about: Option<PageHandle<AboutProps>>,
 }
 
 #[tokio::main]
@@ -69,6 +73,19 @@ async fn main() {
             std::process::exit(1);
         }
     };
+    let about_page = match manifest.route("/about").map(|route| route.mode) {
+        Some(RouteMode::Ssr) => Some(pages.bind::<AboutProps>("about").unwrap_or_else(|errors| {
+            for error in errors {
+                eprintln!("{error}");
+            }
+            std::process::exit(1);
+        })),
+        Some(RouteMode::Browser) => None,
+        None => {
+            eprintln!("missing declared route /about");
+            std::process::exit(1);
+        }
+    };
     pages.finalize().unwrap_or_else(|errors| {
         for error in errors {
             eprintln!("{error}");
@@ -85,10 +102,12 @@ async fn main() {
     let state = Arc::new(AppState {
         manifest,
         home: home_page,
+        about: about_page,
     });
 
     let app = Router::new()
         .route("/", get(home))
+        .route("/about", get(about))
         .route("/favicon.ico", get(favicon))
         .route("/sw.js", get(sw::serve_sw::<Assets>))
         .route("/_assets/{*filename}", get(assets::serve_asset::<Assets>))
@@ -121,10 +140,52 @@ async fn home(State(state): State<Arc<AppState>>) -> Response {
     // Route mode is fixed at startup; an SSR failure never selects a shell.
     let ctx = RenderCtx::new().with_title("Home");
     let rendered = match &state.home {
-        Some(home) => home.render(&HomeProps { count: 0 }, &ctx),
+        Some(home) => home.render(&HomeProps { count: 7 }, &ctx),
         None => render_browser_shell(
             &PageConfig {
                 title: "Home",
+                route_pattern: route,
+                manifest: &state.manifest,
+                config_json: None,
+                body_class: None,
+                personality_css: None,
+                body_prefix: None,
+            },
+            &ctx,
+        ),
+    };
+    match rendered {
+        // A `PageResponse` sends the HTML with the policy for its nonce,
+        // `Cache-Control: no-store` (the nonce is this response's alone) and
+        // the document security headers.
+        Ok(page) => page.into_response(),
+        // Forma logs nothing: count failures by code and route here, and
+        // answer with your own error page. The error stays in the log, never
+        // in the response, and no empty shell takes the page's place.
+        Err(error) => {
+            tracing::error!(code = error.code(), route = error.route(), "{error}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [
+                    (header::CACHE_CONTROL, "no-store"),
+                    (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
+                ],
+                "Internal Server Error",
+            )
+                .into_response()
+        }
+    }
+}
+
+async fn about(State(state): State<Arc<AppState>>) -> Response {
+    let route = "/about";
+    // Route mode is fixed at startup; an SSR failure never selects a shell.
+    let ctx = RenderCtx::new().with_title("About");
+    let rendered = match &state.about {
+        Some(about) => about.render(&AboutProps {}, &ctx),
+        None => render_browser_shell(
+            &PageConfig {
+                title: "About",
                 route_pattern: route,
                 manifest: &state.manifest,
                 config_json: None,

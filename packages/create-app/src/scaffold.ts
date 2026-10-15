@@ -18,7 +18,8 @@ export const TEMPLATES = ['dashboard', 'minimal'];
  * These strings are documentation, and a user picks a template from them, so
  * every feature named here has to be one the template actually has. The
  * dashboard was advertised as "Live dashboard with islands" while neither
- * template calls `activateIslands` — it is a client-mounted app.
+ * template called `activateIslands` at that time. The feature claim now
+ * follows each current template rather than its historical description.
  *
  * Verified by: tests/templates.test.ts > "advertises only features the template actually has"
  */
@@ -29,7 +30,7 @@ export const TEMPLATE_INFO: Record<string, { title: string; description: string 
   },
   minimal: {
     title: 'minimal',
-    description: 'Clean slate — Rust server + a single JSX page, with Phase 2 SSR wired up',
+    description: 'Rust server + typed SSR, a Counter island and a static page',
   },
 };
 

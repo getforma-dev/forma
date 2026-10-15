@@ -14,6 +14,12 @@
 
 ## [Unreleased]
 
+### Static SSR entry products — FORMA-105
+
+- Consume exact-result compiler products before publishing browser/native output. Keep the configured native route owner and IR when its reachable island set is empty; publish no JS or module preload for that route.
+- Retain active static/dynamic chunk closures, CSS/font resources and explicit non-static inlined resources. Watch commits candidate metadata only with the manifest and preserves old generation URLs through static/island transitions and failed publication.
+- Refuse contradictory extra native/script or server-inlined static route mappings with `BUILD-611`.
+
 ### Paired publication — FORMA-103
 
 - Compile watched browser and native output together, including SSR-only and type-only dependencies. Publish immutable JS/chunk and SHA-256 IR generations, then switch the manifest by rename; retain older files for requests holding an earlier manifest.

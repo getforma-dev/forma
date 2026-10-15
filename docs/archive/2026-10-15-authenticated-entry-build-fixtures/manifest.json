@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "c0fd9029811605a78a50ca149880a0b43baa0749",
+  "files": [
+    {
+      "path": "packages/build/tests/code-splitting.test.ts",
+      "sha256": "613f6bccb266f748922f7d84e8168911717d209b6abe1c2c1f83f2c34129e2e8",
+      "bytes": 10297
+    },
+    {
+      "path": "packages/build/tests/watch-ir.test.ts",
+      "sha256": "2fd77aa3877e22bbc70f6988c2a732bc30737299d41aeb427ee2115df6af1678",
+      "bytes": 13881
+    }
+  ]
+}
