@@ -31,6 +31,14 @@ export interface AdoptionRange {
   readonly start: Comment;
   readonly end: Comment;
 }
+/** One exact initial row piece; text offsets can share a parser-coalesced node.
+ * No split or marker insertion occurs while these observations are captured. */
+export interface AdoptionPiece {
+  readonly node:Node;
+  readonly from:number;
+  readonly to:number;
+  readonly text:string|null;
+}
 type Position = { node: Node; parent: Node | null; previous: Node | null; next: Node | null };
 type Attribute = { namespace: string | null; local: string; value: string };
 type ObservedNode = Position & {
@@ -191,6 +199,23 @@ export class AdoptionCursor {
   isIslandBoundary(): boolean {
     const node = this.current();
     return !!node && (node.nodeType === 1 && (node as Element).hasAttribute('data-forma-island') || this.dom.rangeAt(node)?.kind === 'i');
+  }
+
+  /** Retain exactly what this operation consumed, including authored comments
+   * skipped while walking and partial/static Text shared by adjacent rows. */
+  capture<T>(visit:()=>T):{value:T;pieces:readonly AdoptionPiece[]} {
+    const start=this.next,offset=this.offset,value=visit(),pieces:AdoptionPiece[]=[];
+    let node=start,from=offset;
+    while(node!==this.next){
+      if(!node)refuse('FORMA_E_HYDRATE_STRUCTURE');
+      const data=node.nodeType===3?(node as Text).data:null;
+      pieces.push({node,from,to:data?.length??0,text:data});node=node.nextSibling;from=0;
+    }
+    if(node&&this.offset>from){
+      if(node.nodeType!==3)refuse('FORMA_E_HYDRATE_STRUCTURE');
+      pieces.push({node,from,to:this.offset,text:(node as Text).data});
+    }
+    return {value,pieces};
   }
 
   /** Single-element row checkpoint; range rows will retain their own spans. */
