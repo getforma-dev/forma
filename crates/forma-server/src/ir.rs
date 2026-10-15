@@ -572,7 +572,7 @@ mod tests {
                         f.to_string(),
                         crate::AssetMetadata {
                             immutable: false,
-                            integrity: None,
+                            integrity: "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb".into(),
                             retained: false,
                         },
                     )
@@ -714,10 +714,10 @@ mod reload_tests {
             })
             .collect();
         let mut assets = serde_json::Map::new();
-        assets.insert("app.js".into(), serde_json::json!({"immutable":false}));
+        assets.insert("app.js".into(), serde_json::json!({"immutable":false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"}));
         for route in routes.values() {
             if let Some(ir) = route.get("ir").and_then(|v| v.as_str()) {
-                assets.insert(ir.into(), serde_json::json!({"immutable":false}));
+                assets.insert(ir.into(), serde_json::json!({"immutable":false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"}));
             }
         }
         serde_json::json!({"version": 2, "writer":"3.0.0", "app":"ledger", "build": "dev", "aliases":{}, "assets": assets, "routes": routes})

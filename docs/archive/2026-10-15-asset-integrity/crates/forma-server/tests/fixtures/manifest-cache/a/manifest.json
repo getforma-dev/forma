@@ -1,0 +1,1 @@
+{"version": 2, "writer": "3.0.0", "app": "ledger", "build": "fixture", "aliases": {}, "assets": {"chunk-SPLITXYZ.js": {"immutable": true}, "old-retained.js": {"immutable": true, "retained": true}, "looks.aaaaaaaa.js": {"immutable": false}, "page.ir": {"immutable": true}}, "routes": {}}

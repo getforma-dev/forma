@@ -17,3 +17,8 @@ Development reload keeps module and asset snapshots paired. Invalid/missing mani
 Unwinding faults during the typed request boundary become RENDER-399, and a later request can render. **`panic = "abort"` terminates the process and all in-flight requests instead.** Audit the application's deployment profile during migration; the previously inventoried fAuth A2 profile uses abort and requires its assigned application review. This library change does not alter that application's profile.
 
 See [declared props](DECLARED-PROPS.md), [server API](../crates/forma-server/README.md) and [diagnostic codes](DIAGNOSTICS.md). Application migration and rollback remain handler-by-handler work in their assigned tickets; this repository change does not claim those applications are already upgraded.
+
+
+## Full asset digests
+
+Rebuild schema2 manifests with complete canonical SHA-384 metadata before starting the reader. Every asset requires `integrity`, including retained files; a filename hash is not a substitute. Manually constructed Browser manifests follow the same checks. External script, stylesheet and modulepreload tags now include integrity and anonymous crossorigin attributes while retaining their existing nonces. Inline bodies remain nonce-protected. A typed preload no longer present in the response's accepted manifest returns RENDER-104, so development reloads must refresh that table rather than emitting an unchecked reference.

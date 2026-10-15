@@ -182,6 +182,7 @@ impl RenderCtx {
 /// | Code | Variant | Cause |
 /// |---|---|---|
 /// | RENDER-101 | [`MissingModule`](RenderError::MissingModule) | The config has no module or no slots to render |
+/// | RENDER-104 | [`Manifest`](RenderError::Manifest) | Invalid manifest or referenced integrity |
 /// | RENDER-103 | [`RouteMode`](RenderError::RouteMode) | A shell route is absent or not Browser |
 /// | RENDER-406 | [`Unfinalized`](RenderError::Unfinalized) | Required startup finalization is incomplete |
 /// | RENDER-102 | [`Walk`](RenderError::Walk) | The walk refused the module or its data |
@@ -196,6 +197,14 @@ impl RenderCtx {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderError {
+    /// RENDER-104: manifest or referenced resource integrity is invalid.
+    #[non_exhaustive]
+    Manifest {
+        /// The requested route.
+        route: String,
+        /// Manifest validation failure or the resource whose integrity is unavailable.
+        message: String,
+    },
     /// RENDER-103: a browser shell requires an explicitly declared browser route.
     #[non_exhaustive]
     RouteMode {
@@ -292,6 +301,7 @@ impl RenderError {
     /// The stable code, such as `RENDER-301`.
     pub fn code(&self) -> &'static str {
         match self {
+            RenderError::Manifest { .. } => "RENDER-104",
             RenderError::RouteMode { .. } => "RENDER-103",
             RenderError::Unfinalized { .. } => "RENDER-406",
             RenderError::Props { cause } => cause.code(),
@@ -312,7 +322,9 @@ impl RenderError {
     /// The route pattern the render was for.
     pub fn route(&self) -> &str {
         match self {
-            RenderError::RouteMode { route } | RenderError::Unfinalized { route } => route,
+            RenderError::Manifest { route, .. }
+            | RenderError::RouteMode { route }
+            | RenderError::Unfinalized { route } => route,
             RenderError::Props { cause } => cause.route(),
             RenderError::Binding { route, .. } => route,
             RenderError::MissingModule { route }
@@ -364,6 +376,7 @@ impl fmt::Display for RenderError {
             write!(f, " in {}", path.join(" > "))?;
         }
         match self {
+            RenderError::Manifest { message, .. } => write!(f, ": {message}"),
             RenderError::RouteMode { .. } => {
                 write!(f, ": route is not explicitly browser-rendered")
             }
@@ -455,6 +468,13 @@ pub fn render_browser_shell(
             route: config.route_pattern.into(),
         });
     }
+    config
+        .manifest
+        .validate()
+        .map_err(|message| RenderError::Manifest {
+            route: config.route_pattern.into(),
+            message,
+        })?;
     render_guarded(config, ctx, CspNonce::try_generate, Root::Shell)
 }
 
@@ -571,7 +591,7 @@ fn render(
         }
     };
 
-    let html = crate::template::write_document(config, &nonce, ssr_body.as_deref(), ctx);
+    let html = crate::template::write_document(config, &nonce, ssr_body.as_deref(), ctx)?;
     if let Some(reason) = policy.relaxed() {
         csp::log_relaxation(config.route_pattern, reason);
     }

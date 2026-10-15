@@ -1,1 +1,62 @@
-{"version":2,"writer":"3.0.0","app":"props-contract","build":"fixture","aliases":{"home.ir":"home.ir","empty.ir":"empty.ir","empty-typed.ir":"empty-typed.ir"},"assets":{"home.ir":{"immutable":false},"empty.ir":{"immutable":false},"empty-typed.ir":{"immutable":false}},"routes":{"/":{"mode":"ssr","ir":"home.ir","js":[],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0},"/client":{"mode":"browser","js":[],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0},"/empty":{"mode":"ssr","ir":"empty.ir","js":[],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0},"/empty-typed":{"mode":"ssr","ir":"empty-typed.ir","js":[],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0}}}
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "props-contract",
+  "build": "fixture",
+  "aliases": {
+    "home.ir": "home.ir",
+    "empty.ir": "empty.ir",
+    "empty-typed.ir": "empty-typed.ir"
+  },
+  "assets": {
+    "home.ir": {
+      "immutable": false,
+      "integrity": "sha384-up8/OZmbTnxIrrHn6fgqlxTOawNo/D7TfEPRkRxu70rtAoazRCm34T4af/G0eF4V"
+    },
+    "empty.ir": {
+      "immutable": false,
+      "integrity": "sha384-HrGCph/bULVxh72/+64TwCkv5fRq8ErNOprAgw0llawBXCc89KCePoqFdKE2Xxv1"
+    },
+    "empty-typed.ir": {
+      "immutable": false,
+      "integrity": "sha384-25XpuGVcp8kd0d9ID9me48KrbRWLaCpkJkLyeUbXQfdBWNllDqc5jl4hY04M1XFl"
+    }
+  },
+  "routes": {
+    "/": {
+      "mode": "ssr",
+      "ir": "home.ir",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    },
+    "/client": {
+      "mode": "browser",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    },
+    "/empty": {
+      "mode": "ssr",
+      "ir": "empty.ir",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    },
+    "/empty-typed": {
+      "mode": "ssr",
+      "ir": "empty-typed.ir",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    }
+  }
+}

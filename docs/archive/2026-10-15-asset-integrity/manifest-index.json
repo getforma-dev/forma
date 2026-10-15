@@ -1,0 +1,116 @@
+[
+  {
+    "path": "crates/forma-server/test_fixtures/manifest.json",
+    "originalSha256": "8cbc22a05e67d2cbae6fc3d3679a787a34268f3dc4ed6166ce1bb179c6081511",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/preloads/good/manifest.json",
+    "originalSha256": "77be9471f2a4c4178554f221ab3365604fb595adaf73ff814b3ad453859d99b0",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "admin.E5F6A7B8.js",
+      "chunk.ADMIN001.js",
+      "chunk.HOMEONLY.js",
+      "chunk.LAZY0001.js",
+      "chunk.SHARED01.js",
+      "home.A1B2C3D4.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/preloads/foreign/manifest.json",
+    "originalSha256": "d02d6b300333c48fbf834fee4cf769d4955337efb00231e3cc90144949c68cf5",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "chunk.SHARED01.js",
+      "home.A1B2C3D4.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/empty/manifest.json",
+    "originalSha256": "1b00660440b1bfe65e8f763d53ca63f7ab81271c71bafc7492f0faf93a9293dc",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/no-entry/manifest.json",
+    "originalSha256": "40135b982760fb732a2059084a5274931ba654f628f09db8c56bccaccc02e952",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "app.11111111.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/comment/manifest.json",
+    "originalSha256": "1b00660440b1bfe65e8f763d53ca63f7ab81271c71bafc7492f0faf93a9293dc",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/cr/manifest.json",
+    "originalSha256": "5bb08deb56321781878616cab7007c8eb1e624f2b220cc9b5ad767e82d8e0bfd",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "app.11111111.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/terminator/manifest.json",
+    "originalSha256": "1b00660440b1bfe65e8f763d53ca63f7ab81271c71bafc7492f0faf93a9293dc",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/nul-byte/manifest.json",
+    "originalSha256": "5bb08deb56321781878616cab7007c8eb1e624f2b220cc9b5ad767e82d8e0bfd",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "app.11111111.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/not-utf8/manifest.json",
+    "originalSha256": "1b00660440b1bfe65e8f763d53ca63f7ab81271c71bafc7492f0faf93a9293dc",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/good/manifest.json",
+    "originalSha256": "5bb08deb56321781878616cab7007c8eb1e624f2b220cc9b5ad767e82d8e0bfd",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/frame/not-embedded/manifest.json",
+    "originalSha256": "1b00660440b1bfe65e8f763d53ca63f7ab81271c71bafc7492f0faf93a9293dc",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "forma-runtime.0a1b2c3d.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/manifest-cache/a/manifest.json",
+    "originalSha256": "31bcd1720571f5f30038fab3f7f2775682dc9ef51017efebcb978bb9ff17b0cb",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/manifest-cache/b/manifest.json",
+    "originalSha256": "c1c536cce0b2e3623a983ccf200602a1049219498029480ae8e8629020c996eb",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/props-contract/manifest.json",
+    "originalSha256": "5091edc2338ce98fb556eec6fe073385ea3d5ee2e84899c6288be67aaa9c18d0",
+    "metadataOnlyEmptyFilePlaceholders": []
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/truncated/manifest.json",
+    "originalSha256": "81d8ef56895c7e629766430250740568babdf4092d6886b52a1ab9b7ddfb77e6",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "app.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/good/manifest.json",
+    "originalSha256": "ada557babe56e46655821721542320617ce3f64b84c9d6102fa269e0aff21816",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "app.js"
+    ]
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/manifest.json",
+    "originalSha256": "1b07edbb175465a2f27e2e8d9b353fd499f67db633e04163eccd4f611ac30ad7",
+    "metadataOnlyEmptyFilePlaceholders": [
+      "app.js"
+    ]
+  }
+]

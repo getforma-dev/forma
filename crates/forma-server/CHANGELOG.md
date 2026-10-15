@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Require canonical full SHA-384 metadata for every schema2 asset; emit SRI on external scripts, stylesheets and modulepreloads while retaining nonces. Invalid Browser manifests or unavailable preload digests refuse with RENDER-104.
+
 ### Bound rendering and startup completion — FORMA-107
 
 - Add repairable `Pages::finalize`: every declared SSR route must have a verified handler before rendering; successful completion seals all registry clones. Debug route topology changes require restart while compatible module/asset snapshots still reload.

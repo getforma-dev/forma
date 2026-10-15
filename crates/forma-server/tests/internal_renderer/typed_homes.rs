@@ -82,7 +82,7 @@ fn head_and_nonce(page: PageResponse) -> (String, String) {
 }
 
 fn preload(nonce: &str, file: &str) -> String {
-    format!("<link rel=\"modulepreload\" nonce=\"{nonce}\" href=\"/_assets/{file}\">\n")
+    format!("<link rel=\"modulepreload\" nonce=\"{nonce}\" href=\"/_assets/{file}\" integrity=\"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb\" crossorigin=\"anonymous\">\n")
 }
 
 #[test]
@@ -178,7 +178,7 @@ fn styled_manifest() -> AssetManifest {
         app: "ledger".into(),
         aliases: HashMap::new(),
         build: "h".into(),
-        assets: HashMap::new(),
+        assets: super::fixture_assets(&routes),
         routes,
     }
 }
@@ -214,8 +214,8 @@ fn head_links_are_written_escaped_in_the_head_in_the_order_added() {
         .expect("renders");
         let (head, nonce) = head_and_nonce(page);
         let expected = format!(
-            "<link rel=\"stylesheet\" href=\"/_assets/s.2.css\">\n\
-             <link rel=\"modulepreload\" nonce=\"{nonce}\" href=\"/_assets/app.1.js\">\n\
+            "<link rel=\"stylesheet\" href=\"/_assets/s.2.css\" integrity=\"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb\" crossorigin=\"anonymous\">\n\
+             <link rel=\"modulepreload\" nonce=\"{nonce}\" href=\"/_assets/app.1.js\" integrity=\"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb\" crossorigin=\"anonymous\">\n\
              <link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">\n\
              <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">\n\
              <link rel=\"alternate\" href=\"/feed?a=1&amp;b=&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;\" \

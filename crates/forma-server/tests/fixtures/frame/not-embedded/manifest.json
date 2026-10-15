@@ -8,7 +8,8 @@
   },
   "assets": {
     "forma-runtime.0a1b2c3d.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
     }
   },
   "routes": {}

@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "ledger",
+  "build": "fixture",
+  "aliases": {},
+  "assets": {
+    "app.a1b2c3d4.js": {
+      "immutable": true
+    },
+    "style.css": {
+      "immutable": false
+    }
+  },
+  "routes": {}
+}
