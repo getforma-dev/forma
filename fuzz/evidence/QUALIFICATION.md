@@ -3,8 +3,10 @@
 Codex recovered the interrupted worker's adapter and corrected its incomplete test fixture
 and output-bound assertions. Five ordinary stable replay tests pass, covering every committed
 regression adapter, all fourteen real compiler modules, all 67 reviewed rule fixtures, bounded
-slot decoding, and malformed/oversized inputs. The full implementation remains subject to
-independent production review and the workspace gate.
+slot decoding, and malformed/oversized inputs. The full workspace gate subsequently
+passed in 154 seconds. Independent production review approved the reader/emitter contract
+at `2c7fe98`; that reviewer authored the initial fuzz adapter, so the adapter itself is
+excluded from the independent review claim.
 
 The local ASan qualification used nightly-2026-10-01 (rustc1.101.0-nightly), cargo-fuzz0.13.2
 and libfuzzer-sys0.4.13. All four targets completed 25,000 cases without a production finding.
@@ -36,5 +38,6 @@ to fail. The original implementation was restored in a finally block and the sam
 logs `crc-mutation-rejected.log` and `crc-mutation-restored.log` preserve the P6 evidence.
 
 Remaining qualification: complete the deferred minimization/replay qualification only when
-resumed, review the production implementation independently, and observe the nightly GitHub
-workflow after it is present on the repository's default branch. No tag or publication occurred.
+resumed, obtain independent review of the fuzz adapter, and observe the nightly GitHub
+workflow after it is present on the repository's default branch. Hosted platform CI is
+separate from the completed local workspace gate. No tag or publication occurred.
