@@ -1,8 +1,8 @@
 /**
  * renderBoth, Forma-internal (FORMA-183; Q11's default, D9): one corpus module at one state
  * through the server and through core in a real browser, by the same pipeline as the suite
- * (`suite.mts`), and its reports: P1 and, for a page with islands, P2. FORMA-184 owns the public
- * `renderBoth(component, state)` form; this is the harness's CLI.
+ * (`suite.mts`), and its reports: P1 and, for a page with islands, P2. The internal
+ * `renderBoth(component, state)` utility lives in test-utils.mts; this is the harness's CLI.
  *
  *   node e2e/parity/src/render-both.mts --module nested-islands [--state 3] [--seed forma-183]
  *                                       [--browser chromium|firefox|webkit] [--low-level]

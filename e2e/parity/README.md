@@ -249,3 +249,24 @@ The key check against the expected key text (`data-forma-key` is lifted from the
 expected text per row is FORMA-181's `canonicalKeyText` once rows are mapped to their list), the
 switch to blocking (when step 1's expected list is empty for P1 and P2), and step 3's fixture
 applications (FORMA-188).
+
+## Render one component at an explicit state (Forma-internal)
+
+`src/test-utils.mts` exports `renderBoth(component, state, options?)` for tests in this repository.
+The component is a name from `corpus.json` or a `CorpusEntry` source descriptor; the helper compiles
+that entry and renders the exact JSON state through the typed Rust renderer and core in a browser.
+It returns the P1 report, including `server.tree`, `client.tree`, native HTML and any first difference
+or refusal. It does not apply expected-divergent exemptions. The suite separately checks P2 and P3.
+
+```ts
+import { renderBoth } from './src/test-utils.mts';
+const report = await renderBoth('nested-islands', {
+  panelClass: 'panel', badgeTitle: 'a specific regression',
+});
+assert.equal(report.verdict, 'equal');
+assert.deepEqual(report.server.tree, report.client.tree);
+```
+
+Chromium is the default; `options.engine` selects another engine and `options.browser` reuses a
+caller-owned browser without closing it. The helper closes browsers it creates, including on
+failure. `renderBoth` is not a supported `@getforma/core` export (Q11, L-57, FORMA-184).
