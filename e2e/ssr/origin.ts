@@ -5,4 +5,5 @@
  * machine at once; give each its own port with FORMA_SSR_E2E_PORT.
  */
 export const SSR_PORT = Number(process.env.FORMA_SSR_E2E_PORT || 3458);
+if (!Number.isInteger(SSR_PORT) || SSR_PORT < 1 || SSR_PORT > 65535) throw new Error('invalid FORMA_SSR_E2E_PORT');
 export const SSR_ORIGIN = `http://127.0.0.1:${SSR_PORT}`;
