@@ -40,6 +40,9 @@ npm audit --omit=dev
 step "npm audit signatures"
 npm audit signatures
 
+step "FMIR shared constants are current"
+node scripts/generate-fmir-constants.mjs --check
+
 step "cargo fmt --all --check"
 cargo fmt --all --check
 step "cargo clippy --locked --workspace --all-targets --all-features -- -D warnings"
@@ -69,9 +72,9 @@ step "FMIR contract: this compiler's corpus is the one forma-ir has committed"
 npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"
 cargo test --locked -p forma-ir --test js_emitter_contract
 if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)" ]; then
-  echo "::error::the compiler no longer emits the .ir bytes committed in crates/forma-ir/tests/fixtures/js-emitter:"
+  echo "::error::the compiler no longer emits the .ir bytes and canonical .dump texts committed in crates/forma-ir/tests/fixtures/js-emitter:"
   git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter
-  echo "::error::regenerate the goldens with UPDATE_GOLDEN=1 cargo test --locked -p forma-ir --test js_emitter_contract and commit both in this change."
+  echo "::error::Review and regenerate the .ir/.dump corpus against docs/FMIR-FORMAT.md; the existing .html goldens must continue to match."
   exit 1
 fi
 

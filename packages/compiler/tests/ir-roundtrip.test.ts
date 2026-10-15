@@ -1,3 +1,5 @@
+import { SIGNATURE } from '../src/fmir-constants';
+import { COMPILER_WRITER_VERSION, readFmirContainer } from '../src/fmir';
 /**
  * IR Roundtrip Validation Tests
  *
@@ -61,11 +63,11 @@ describe('IR roundtrip validation', () => {
     expect(s.opcodeOffset + s.opcodeSize).toBeLessThanOrEqual(binary.length);
     expect(s.islandTableOffset + s.islandTableSize).toBeLessThanOrEqual(binary.length);
 
-    // Sections must start at or after byte 48 (header + section table)
-    expect(s.stringTableOffset).toBeGreaterThanOrEqual(48);
-    expect(s.slotTableOffset).toBeGreaterThanOrEqual(48);
-    expect(s.opcodeOffset).toBeGreaterThanOrEqual(48);
-    expect(s.islandTableOffset).toBeGreaterThanOrEqual(48);
+    // Sections must start at or after byte 88 (header + section table)
+    expect(s.stringTableOffset).toBeGreaterThanOrEqual(88);
+    expect(s.slotTableOffset).toBeGreaterThanOrEqual(88);
+    expect(s.opcodeOffset).toBeGreaterThanOrEqual(88);
+    expect(s.islandTableOffset).toBeGreaterThanOrEqual(88);
 
     // Sections must tile the file end to end with no gap and no overlap.
     expect([
@@ -74,12 +76,13 @@ describe('IR roundtrip validation', () => {
       [s.slotTableOffset, s.slotTableSize],
       [s.islandTableOffset, s.islandTableSize],
     ]).toEqual([
-      [48, s.opcodeSize],
-      [48 + s.opcodeSize, s.stringTableSize],
-      [48 + s.opcodeSize + s.stringTableSize, s.slotTableSize],
-      [48 + s.opcodeSize + s.stringTableSize + s.slotTableSize, s.islandTableSize],
+      [88, s.opcodeSize],
+      [88 + s.opcodeSize, s.stringTableSize],
+      [88 + s.opcodeSize + s.stringTableSize, s.slotTableSize],
+      [88 + s.opcodeSize + s.stringTableSize + s.slotTableSize, s.islandTableSize],
     ]);
-    expect(s.islandTableOffset + s.islandTableSize).toBe(binary.length);
+    expect(s.schemaOffset).toBe(s.islandTableOffset + s.islandTableSize);
+    expect(s.schemaOffset + s.schemaSize).toBe(binary.length);
   });
 
   it('string table is readable and contains exactly the interned entries', () => {
@@ -133,13 +136,13 @@ describe('IR roundtrip validation', () => {
       }
     }
 
-    it('produces a valid FMIR v2 header and non-trivial content', () => {
+    it('produces a valid FMIR v3 header and non-trivial content', () => {
       const { binary } = compileFixture();
       const view = new DataView(binary.buffer, binary.byteOffset, binary.byteLength);
 
-      expect(String.fromCharCode(binary[0]!, binary[1]!, binary[2]!, binary[3]!)).toBe('FMIR');
-      expect(view.getUint16(4, true)).toBe(2); // version
-      expect(view.getUint16(6, true)).toBe(0); // flags
+      expect(Array.from(binary.slice(0, 8))).toEqual(Array.from(SIGNATURE));
+      expect(readFmirContainer(binary).writer).toEqual(COMPILER_WRITER_VERSION);
+      expect(view.getUint16(22, true)).toBe(0); // reserved
       // Real content, not a ~136-byte placeholder.
       expect(binary.length).toBeGreaterThan(200);
     });
@@ -154,7 +157,7 @@ describe('IR roundtrip validation', () => {
         ['Slots', s.slotTableOffset, s.slotTableSize],
         ['Islands', s.islandTableOffset, s.islandTableSize],
       ] as Array<[string, number, number]>) {
-        expect(offset, `${name} section start`).toBeGreaterThanOrEqual(48);
+        expect(offset, `${name} section start`).toBeGreaterThanOrEqual(88);
         expect(offset + size, `${name} section end`).toBeLessThanOrEqual(binary.length);
       }
 
@@ -274,7 +277,7 @@ describe('IR roundtrip validation', () => {
         id: 0,
         name: 'StatusPanel',
         trigger: 0x01,   // Load
-        propsMode: 0x01, // Inline
+        schemaObject: 0xffff, // reserved until schema extraction
       });
       // Exactly the slots referenced inside the island span.
       expect(tableIslands[0]!.slotIds).toEqual([
@@ -301,8 +304,8 @@ describe('IR roundtrip validation', () => {
     const binary = generatePlaceholderIr('test-page');
 
     // Valid FMIR magic + version
-    expect(Array.from(binary.slice(0, 4))).toEqual([0x46, 0x4d, 0x49, 0x52]); // 'FMIR'
-    expect(readU16LE(binary, 4)).toBe(2);
+    expect(Array.from(binary.slice(0, 8))).toEqual(Array.from(SIGNATURE));
+    expect(readFmirContainer(binary).writer).toEqual(COMPILER_WRITER_VERSION);
 
     expect(getStrings(binary)).toEqual(['div', 'id', 'app', 'data-forma-page', 'test-page']);
     expect(parseOpcodeList(binary)).toEqual([
@@ -314,7 +317,7 @@ describe('IR roundtrip validation', () => {
     assertBinaryInvariants(binary);
 
     // OPEN_TAG: 1 + 4 + 2 + 2*(4+4) = 23 bytes; CLOSE_TAG: 1 + 4 = 5 bytes.
-    expect(readU32LE(binary, 20)).toBe(23 + 5);
+    expect(readSections(binary).opcodeSize).toBe(23 + 5);
   });
 
   it('placeholder IR names the page it was generated for', () => {

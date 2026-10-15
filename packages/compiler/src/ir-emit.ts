@@ -1,8 +1,8 @@
 /**
  * Forma Compiler - FMIR Binary Buffer
  *
- * IrEmitContext accumulates the four FMIR sections — bytecode, interned
- * strings, slots and islands — and serializes them into the binary format the
+ * IrEmitContext accumulates FMIR v3 bytecode, strings, slots, islands,
+ * props schema and optional key paths/source positions — and serializes them into the binary format the
  * Rust-side walker reads to produce HTML.
  *
  * It is a buffer, not a compiler: the AST → opcode translation lives entirely
@@ -11,30 +11,17 @@
  * subtrees stay as client-side JS behind ISLAND_START/ISLAND_END markers.
  */
 
-// ---------------------------------------------------------------------------
-// Slot type hints and sources
-// ---------------------------------------------------------------------------
-
-/**
- * The `type_hint` and `source` bytes an FMIR slot entry carries.
- *
- * They live beside the encoder that writes them so the walker, the signal-scope
- * pass and any future producer read one definition. Three copies of these
- * numbers used to exist (ir-walk.ts, esbuild-ssr-plugin.ts, and the plugin's
- * "must match ir-walk.ts" comment), which is exactly how the inline-mount path
- * came to hand a numeric signal a TYPE_TEXT slot.
- *
- * The values are frozen by the Rust reader's `SlotType`
- * (forma/crates/forma-ir/src/slot.rs) — changing one changes the wire format.
- */
-export const SLOT_TYPE_TEXT   = 0x01;
-export const SLOT_TYPE_BOOL   = 0x02;
-export const SLOT_TYPE_NUMBER = 0x03;
-export const SLOT_TYPE_ARRAY  = 0x04;
-export const SLOT_TYPE_OBJECT = 0x05;
-
-export const SLOT_SOURCE_SERVER = 0x00;
-export const SLOT_SOURCE_CLIENT = 0x01;
+import * as C from './fmir-constants.js';
+import { encodeFmirSections, dumpFmir, type FmirSection } from './fmir.js';
+import {
+  assertEmit, uint, encodePropsSchema, encodeKeyPaths, encodeSourcePositions, validateBytecode,
+  type PropsSchema, type KeyPath, type SourcePosition,
+} from './fmir-payload.js';
+export {
+  SLOT_TYPE_TEXT, SLOT_TYPE_BOOL, SLOT_TYPE_NUMBER, SLOT_TYPE_ARRAY, SLOT_TYPE_OBJECT,
+  SLOT_SOURCE_SERVER, SLOT_SOURCE_CLIENT,
+} from './fmir-constants.js';
+export type { PropsSchema, SchemaField, SchemaType, KeyPath, SourcePosition } from './fmir-payload.js';
 
 /**
  * The error the encoder throws for an entry past FMIR's u16 length prefix: the
@@ -66,11 +53,28 @@ export class IrEmitContext {
   private islands: Array<{
     id: number;
     trigger: number;
-    propsMode: number;
+    schemaObject: number;
     nameStrIdx: number;
     slotIds: number[];
     byteOffset: number;
   }> = [];
+
+  private propsSchema: PropsSchema = [[]];
+  private keyPaths: KeyPath[] = [];
+  private sourcePositions: SourcePosition[] | undefined;
+
+  /** Schema extraction is FORMA-102; every current page has empty object 0. */
+  setPropsSchema(schema: PropsSchema): void { this.propsSchema = schema; }
+  /** FORMA-181 may attach a path without changing LIST operands. */
+  addKeyPath(listOffset: number, segments: readonly string[]): void { this.keyPaths.push({ listOffset, segments: [...segments] }); }
+  /** Optional diagnostics, using 1-based UTF-16 columns. */
+  setSourcePositions(positions: readonly SourcePosition[]): void { this.sourcePositions = [...positions]; }
+  setIslandSchemaObject(islandId: number, schemaObject: number): void {
+    const island = this.islands.find(i => i.id === islandId);
+    assertEmit(island, `unknown island ${islandId}`); island.schemaObject = schemaObject;
+  }
+  /** Lossless canonical diagnostic dump, shared with forma-ir. */
+  dump(): string { return dumpFmir(this.toBinary()); }
 
   /** Stack of slot-id capture sets for island subtree walks.
    *  Every set on the stack records each referenced slot, so an outer
@@ -87,6 +91,7 @@ export class IrEmitContext {
   addString(s: string): number {
     const existing = this.stringMap.get(s);
     if (existing !== undefined) return existing;
+    assertEmit(this.strings.length < C.MAX_STRINGS, 'string count exceeds 1048576');
     const idx = this.strings.length;
     this.strings.push(s);
     this.stringMap.set(s, idx);
@@ -108,10 +113,11 @@ export class IrEmitContext {
   addSlot(
     name: string,
     typeHint: number,
-    source: number = SLOT_SOURCE_CLIENT,
+    source: number = C.SLOT_SOURCE_CLIENT,
     defaultBytes: Uint8Array = new Uint8Array(0),
     reference: boolean = true,
   ): number {
+    assertEmit(this.slots.length < C.MAX_SLOTS, 'slot count exceeds 65535');
     const id = this.nextSlotId++;
     this.slots.push({ id, name, typeHint, source, defaultBytes });
     if (reference) this.recordSlotRef(id);
@@ -159,6 +165,7 @@ export class IrEmitContext {
 
   /** Get a fresh marker id for DYN_TEXT. */
   nextMarker(): number {
+    uint(this.nextMarkerId, 0xffff, 'DYN_TEXT marker id');
     return this.nextMarkerId++;
   }
 
@@ -168,26 +175,30 @@ export class IrEmitContext {
   }
 
   /** Register a new island entry. */
-  addIsland(name: string, trigger: number, propsMode: number, slotIds: number[], byteOffset: number): number {
+  addIsland(name: string, trigger: number, slotIds: number[], byteOffset: number, schemaObject: number = 0xffff): number {
+    assertEmit(this.islands.length < C.MAX_ISLANDS, 'island count exceeds 4096');
     const id = this.nextIslandCounter++;
     const nameStrIdx = this.addString(name);
-    this.islands.push({ id, trigger, propsMode, nameStrIdx, slotIds, byteOffset });
+    this.islands.push({ id, trigger, schemaObject, nameStrIdx, slotIds: [...slotIds], byteOffset });
     return id;
   }
 
   /** Emit a raw byte. */
   emit(byte: number): void {
-    this.opcodes.push(byte & 0xff);
+    uint(byte, 255, 'byte');
+    this.opcodes.push(byte);
   }
 
   /** Emit u16 little-endian. */
   emitU16(val: number): void {
+    uint(val, 0xffff, 'u16 operand');
     this.opcodes.push(val & 0xff);
     this.opcodes.push((val >>> 8) & 0xff);
   }
 
   /** Emit u32 little-endian. */
   emitU32(val: number): void {
+    uint(val, 0xffffffff, 'u32 operand');
     this.opcodes.push(val & 0xff);
     this.opcodes.push((val >>> 8) & 0xff);
     this.opcodes.push((val >>> 16) & 0xff);
@@ -201,79 +212,36 @@ export class IrEmitContext {
 
   /** Patch a u32 at a previous position (for back-patching body lengths). */
   patchU32(pos: number, val: number): void {
+    uint(pos, Math.max(0, this.opcodes.length - 4), 'patch offset');
+    assertEmit(pos + 4 <= this.opcodes.length, 'patch exceeds bytecode');
+    uint(val, 0xffffffff, 'u32 operand');
     this.opcodes[pos] = val & 0xff;
     this.opcodes[pos + 1] = (val >>> 8) & 0xff;
     this.opcodes[pos + 2] = (val >>> 16) & 0xff;
     this.opcodes[pos + 3] = (val >>> 24) & 0xff;
   }
 
-  /** Build the complete FMIR binary. */
+  /** Build the complete canonical FMIR v3 binary. */
   toBinary(): Uint8Array {
-    // Encode slot table FIRST — it may intern slot name strings via addString(),
-    // so the string table must be encoded after all strings are registered.
-    const slotTableBytes = this.encodeSlotTable();
-    // Encode string table (now includes any strings added by slot encoding)
-    const stringTableBytes = this.encodeStringTable();
-    // Opcode stream
-    const opcodeBytes = new Uint8Array(this.opcodes);
-    // Island table
-    const islandTableBytes = this.encodeIslandTable();
-
-    // Data start offset = header (16) + section table (32)
-    const dataStart = 48;
-
-    // Data layout: [bytecode][strings][slots][islands]
-    // Section table order must match Rust parser: 0=Bytecode, 1=Strings, 2=Slots, 3=Islands
-    const opcodeOffset = dataStart;
-    const opcodeSize = opcodeBytes.length;
-
-    const stringTableOffset = opcodeOffset + opcodeSize;
-    const stringTableSize = stringTableBytes.length;
-
-    const slotTableOffset = stringTableOffset + stringTableSize;
-    const slotTableSize = slotTableBytes.length;
-
-    const islandTableOffset = slotTableOffset + slotTableSize;
-    const islandTableSize = islandTableBytes.length;
-
-    const totalSize = islandTableOffset + islandTableSize;
-    const buf = new Uint8Array(totalSize);
-    const view = new DataView(buf.buffer);
-
-    // --- Header (16 bytes) ---
-    // Magic: "FMIR"
-    buf[0] = 0x46; // 'F'
-    buf[1] = 0x4d; // 'M'
-    buf[2] = 0x49; // 'I'
-    buf[3] = 0x52; // 'R'
-    // Version: 2 (u16 LE)
-    view.setUint16(4, 2, true);
-    // Flags: 0 (u16 LE)
-    view.setUint16(6, 0, true);
-    // Source hash: 0 (u64 LE) -- 8 bytes at offset 8
-    // Already zeroed
-
-    // --- Section Table (32 bytes, starting at offset 16) ---
-    // Section 0: Bytecode (offset 16)
-    view.setUint32(16, opcodeOffset, true);
-    view.setUint32(20, opcodeSize, true);
-    // Section 1: Strings (offset 24)
-    view.setUint32(24, stringTableOffset, true);
-    view.setUint32(28, stringTableSize, true);
-    // Section 2: Slots (offset 32)
-    view.setUint32(32, slotTableOffset, true);
-    view.setUint32(36, slotTableSize, true);
-    // Section 3: Islands (offset 40)
-    view.setUint32(40, islandTableOffset, true);
-    view.setUint32(44, islandTableSize, true);
-
-    // --- Data sections ---
-    buf.set(opcodeBytes, opcodeOffset);
-    buf.set(stringTableBytes, stringTableOffset);
-    buf.set(slotTableBytes, slotTableOffset);
-    buf.set(islandTableBytes, islandTableOffset);
-
-    return buf;
+    const slotTable = this.encodeSlotTable(); // Intern slot names before strings.
+    const schema = encodePropsSchema(this.propsSchema, s => this.addString(s));
+    const islands = this.encodeIslandTable();
+    const bytecode = new Uint8Array(this.opcodes);
+    const starts = validateBytecode(bytecode, this.strings.length,
+      new Set(this.slots.map(s => s.id)), new Map(this.islands.map(i => [i.id, i.byteOffset])));
+    const keys = this.keyPaths.length ? encodeKeyPaths(this.keyPaths, starts, s => this.addString(s)) : undefined;
+    const positions = this.sourcePositions === undefined ? undefined
+      : encodeSourcePositions(this.sourcePositions, starts, s => this.addString(s));
+    const sections: FmirSection[] = [
+      { id: C.SECTION_BYTECODE, flags: C.SECTION_REQUIRED, bytes: bytecode },
+      { id: C.SECTION_STRINGS, flags: C.SECTION_REQUIRED, bytes: this.encodeStringTable() },
+      { id: C.SECTION_SLOTS, flags: C.SECTION_REQUIRED, bytes: slotTable },
+      { id: C.SECTION_ISLANDS, flags: C.SECTION_REQUIRED, bytes: islands },
+      { id: C.SECTION_PROPS_SCHEMA, flags: C.SECTION_REQUIRED, bytes: schema },
+    ];
+    if (keys) sections.push({ id: C.SECTION_KEY_PATHS, flags: C.SECTION_REQUIRED, bytes: keys });
+    if (positions) sections.push({ id: C.SECTION_SOURCE_POSITIONS, flags: 0, bytes: positions });
+    return encodeFmirSections(sections);
   }
 
   /** Encode the string table section. */
@@ -288,7 +256,7 @@ export class IrEmitContext {
       // The per-string length prefix is a u16 — a longer string would
       // silently wrap via setUint16 and desynchronize the whole table for
       // the Rust parser. Fail hard instead of emitting a corrupt binary
-      // (generateRealIr catches this and falls back to placeholder IR).
+      // The caller receives BUILD-604; it must not truncate the prefix.
       if (encoded.length > 0xffff) {
         throw literalTooLong(
           `FMIR string table entry is ${encoded.length} UTF-8 bytes — exceeds the 65535-byte u16 length limit (string starts with ${JSON.stringify(s.slice(0, 40))}...)`,
@@ -298,6 +266,7 @@ export class IrEmitContext {
       totalSize += 2 + encoded.length; // u16 len + bytes
     }
 
+    assertEmit(totalSize <= C.MAX_MODULE_SIZE, 'section exceeds module size ceiling');
     const buf = new Uint8Array(totalSize);
     const view = new DataView(buf.buffer);
 
@@ -323,6 +292,18 @@ export class IrEmitContext {
     // Each entry: slot_id(u16) + name_str_idx(u32) + type_hint(u8) + source(u8) + default_len(u16) + default_bytes
     let totalSize = 2; // count
     for (const slot of this.slots) {
+      assertEmit(slot.typeHint >= C.SLOT_TYPE_TEXT && slot.typeHint <= C.SLOT_TYPE_OBJECT && Number.isInteger(slot.typeHint), `invalid slot type ${slot.typeHint}`);
+      assertEmit(slot.source === C.SLOT_SOURCE_SERVER || slot.source === C.SLOT_SOURCE_CLIENT, `invalid slot source ${slot.source}`);
+      if (slot.defaultBytes.length) {
+        let value: string;
+        try { value = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(slot.defaultBytes); }
+        catch { throw Object.assign(new Error(`FMIR: slot '${slot.name}' default is not UTF-8`), { code: 'BUILD-606' }); }
+        const valid = slot.typeHint === C.SLOT_TYPE_TEXT
+          || (slot.typeHint === C.SLOT_TYPE_BOOL && (value === 'true' || value === 'false'))
+          || (slot.typeHint === C.SLOT_TYPE_NUMBER && /^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$/.test(value) && Number.isFinite(Number(value)))
+          || (slot.typeHint === C.SLOT_TYPE_ARRAY && value === '[]');
+        assertEmit(valid, `slot '${slot.name}' default does not parse for type ${slot.typeHint}`);
+      }
       // default_len is a u16 — larger defaults would silently wrap and
       // corrupt the slot table (see the matching guard in encodeStringTable).
       if (slot.defaultBytes.length > 0xffff) {
@@ -333,6 +314,7 @@ export class IrEmitContext {
       totalSize += 2 + 4 + 1 + 1 + 2 + slot.defaultBytes.length; // 10 + default_bytes.length
     }
 
+    assertEmit(totalSize <= C.MAX_MODULE_SIZE, 'section exceeds module size ceiling');
     const buf = new Uint8Array(totalSize);
     const view = new DataView(buf.buffer);
     view.setUint16(0, this.slots.length, true);
@@ -353,43 +335,44 @@ export class IrEmitContext {
   }
 
   /** Get registered island entries (for build.ts to generate client registry). */
-  getIslands(): Array<{ id: number; name: string; trigger: number; propsMode: number; slotIds: number[] }> {
+  getIslands(): Array<{ id: number; name: string; trigger: number; slotIds: number[] }> {
     return this.islands.map(i => ({
       id: i.id,
       name: this.strings[i.nameStrIdx] || `island_${i.id}`,
       trigger: i.trigger,
-      propsMode: i.propsMode,
       slotIds: i.slotIds,
     }));
   }
 
-  /** Encode the island table section (with slot_ids). */
+  /** Length-prefixed v3 islands. Digest emission is reserved for FORMA-105. */
   private encodeIslandTable(): Uint8Array {
-    // count(u16) + entries
-    // Per entry: id(u16) + trigger(u8) + props_mode(u8) + name_str_idx(u32) + byte_offset(u32) + slot_count(u16) + [slot_id(u16)]
-    let totalSize = 2; // count
+    const declaredSlots = new Set(this.slots.map(slot => slot.id));
+    let totalSize = 2;
     for (const island of this.islands) {
-      totalSize += 2 + 1 + 1 + 4 + 4 + 2 + (island.slotIds?.length ?? 0) * 2;
+      assertEmit(Number.isInteger(island.trigger) && island.trigger >= C.TRIGGER_LOAD && island.trigger <= C.TRIGGER_IDLE, 'invalid island trigger');
+      uint(island.schemaObject, 0xffff, 'island schema object');
+      assertEmit(island.schemaObject === 0xffff || island.schemaObject < this.propsSchema.length, 'island schema object out of bounds');
+      uint(island.byteOffset, 0xffffffff, 'island byte offset');
+      const length = 17 + island.slotIds.length * 2;
+      assertEmit(length <= 0xffff, 'island entry exceeds u16 length (at most 32759 slot ids)');
+      for (const id of island.slotIds) assertEmit(declaredSlots.has(id), `island references undeclared slot ${id}`);
+      totalSize += 2 + length;
     }
-
-    const buf = new Uint8Array(totalSize);
-    const view = new DataView(buf.buffer);
+    assertEmit(totalSize <= C.MAX_MODULE_SIZE, 'island section exceeds module size ceiling');
+    const buf = new Uint8Array(totalSize), view = new DataView(buf.buffer);
     view.setUint16(0, this.islands.length, true);
-
     let pos = 2;
     for (const island of this.islands) {
+      view.setUint16(pos, 17 + island.slotIds.length * 2, true); pos += 2;
       view.setUint16(pos, island.id, true); pos += 2;
-      buf[pos] = island.trigger; pos += 1;
-      buf[pos] = island.propsMode; pos += 1;
+      buf[pos++] = island.trigger; buf[pos++] = 0;
       view.setUint32(pos, island.nameStrIdx, true); pos += 4;
       view.setUint32(pos, island.byteOffset, true); pos += 4;
-      const slotIds = island.slotIds ?? [];
-      view.setUint16(pos, slotIds.length, true); pos += 2;
-      for (const slotId of slotIds) {
-        view.setUint16(pos, slotId, true); pos += 2;
-      }
+      view.setUint16(pos, island.schemaObject, true); pos += 2;
+      buf[pos++] = 0; // digest_len; FORMA-105 owns the content and validation.
+      view.setUint16(pos, island.slotIds.length, true); pos += 2;
+      for (const slot of island.slotIds) { view.setUint16(pos, slot, true); pos += 2; }
     }
-
     return buf;
   }
 }

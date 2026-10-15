@@ -69,7 +69,7 @@ mount(() => (
     });
 
     expect(diagnostics).toEqual([]);
-    expect(islands.map((i) => [i.name, i.trigger, i.propsMode, i.slotIds])).toEqual([['Chart', 1, 1, []]]);
+    expect(islands.map((i) => [i.name, i.trigger, i.slotIds])).toEqual([['Chart', 1, []]]);
     // The props are static: no slot, so nothing collides in the page's slot namespace.
     expect(slots).toEqual([]);
     const start = ops.indexOf('ISLAND_START Chart#0');

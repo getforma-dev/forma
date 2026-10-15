@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-185 stages the shared development version at `3.0.0-dev` for the FMIR
+  compiler/reader contract. This is not a publication: CDN examples and support
+  history still name the latest shipped core release. The documentation gate
+  distinguishes the explicit `-dev` staging suffix from a release version.
+
 ### Changed
 
 - FORMA-117: pin the runtime dependency `alien-signals` to exactly 3.1.2. Upgrades require an explicit reviewed dependency change.

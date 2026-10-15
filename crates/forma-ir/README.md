@@ -47,6 +47,18 @@ returns a `WalkFailure` with the counts reached and the component path, the
 islands open where the walk stopped. It catches a panic inside the walk as
 `IrError::Panicked`, while the application unwinds on panic.
 
+## FMIR v3 development
+
+The development set is `3.0.0-dev`. Modules carry a 24-byte signature/version/length/CRC
+header and a variable section table; the reader accepts its own exact base version `3.0.0`.
+V2 modules require rebuilding. `IrModule::parse` validates every bytecode string reference,
+props schemas, key paths and optional source positions before rendering; `IrError::code()`
+provides stable `LOAD-` diagnostics. See [`FMIR-FORMAT.md`](../../docs/FMIR-FORMAT.md)
+for the maintained contract and [`CHANGELOG.md`](CHANGELOG.md) for the breaking changes.
+
+`dump::dump_ir` is a lossless canonical text representation shared with the compiler. It
+includes every section, including unknown optional bytes and island extensions.
+
 ## When You Need This
 
 - **Building your own server** (not Axum) — parse IR and generate HTML yourself
@@ -64,7 +76,6 @@ If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server
 - Recursion depth limited to 64; list nesting limited to 4 levels
 - Per-render output cap (default 8 MiB) and LIST iteration budget (default 50,000), both configurable via `WalkLimits` — a small module plus a large request array cannot force a multi-gigabyte allocation
 - Parser rejects declared table counts the section cannot hold, and structurally validates the opcode stream once at load
-- Comment content escaped (`--` → `&#45;&#45;`); a comment cannot self-close
 - Island props JSON is escaped so it cannot terminate or re-open its `<script>` element — read it with `JSON.parse`, never by string-matching
 - `#![forbid(unsafe_code)]` on the crate root — zero `unsafe` is compiler-enforced, not asserted
 - XSS payload verification and malformed-input handling covered by the test suite

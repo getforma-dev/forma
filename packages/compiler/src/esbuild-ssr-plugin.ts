@@ -13,6 +13,7 @@ import { join, dirname } from 'node:path';
 import { parse } from '@babel/parser';
 import * as t from '@babel/types';
 import { IrEmitContext } from './ir-emit';
+import { OP_OPEN_TAG, OP_CLOSE_TAG } from './fmir-constants.js';
 import { ComponentAnalyzer } from './component-analyzer';
 import { readImportBindings, resolveExportedFunction, type ImportBinding } from './export-resolver';
 import { fsModuleLoader, loadComponentSource, resolveFilePath, transformJsxSource } from './module-loader';
@@ -71,7 +72,7 @@ const PARSE_OPTS = {
 
 export interface IrResult {
   binary: Uint8Array;
-  islands: Array<{ id: number; name: string; trigger: number; propsMode: number; slotIds: number[] }>;
+  islands: ReturnType<IrEmitContext['getIslands']>;
 }
 
 /**
@@ -518,7 +519,7 @@ export function generatePlaceholderIr(pageName: string): Uint8Array {
   const pageValIdx = ctx.addString(pageName);
 
   // OPEN_TAG "div" with 2 static attrs: id="app" data-forma-page="{pageName}"
-  ctx.emit(0x01); // OP_OPEN_TAG
+  ctx.emit(OP_OPEN_TAG);
   ctx.emitU32(divIdx);
   ctx.emitU16(2); // 2 attributes
   ctx.emitU32(idKeyIdx);
@@ -527,7 +528,7 @@ export function generatePlaceholderIr(pageName: string): Uint8Array {
   ctx.emitU32(pageValIdx);
 
   // CLOSE_TAG "div"
-  ctx.emit(0x02); // OP_CLOSE_TAG
+  ctx.emit(OP_CLOSE_TAG);
   ctx.emitU32(divIdx);
 
   return ctx.toBinary();

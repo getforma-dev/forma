@@ -20,7 +20,9 @@ it was wrong the first time.
 
 ## Retired documents
 
-*(none yet — this directory was created 2026-08-05 with the docs restructure)*
+| File | Retired | Replacement and reason |
+|---|---|---|
+| [`2026-10-15-FMIR-FORMAT-v2.md`](2026-10-15-FMIR-FORMAT-v2.md) | 2026-10-15 | [`FMIR-FORMAT.md`](../FMIR-FORMAT.md) defines v3: new signature, exact writer version, CRC, variable sections and schema metadata. The old fixed-header promise is superseded; legacy modules require rebuilding. |
 
 ## Retired and corrected claims
 

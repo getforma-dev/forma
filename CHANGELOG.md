@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### FMIR v3 development staging (FORMA-185)
+
+The seven package versions are aligned at `3.0.0-dev` so the compiler and Rust reader can
+compare their exact base version `3.0.0`; nothing is tagged or published. Templates retain
+their audited A2 pins until their own migration ticket. FORMA-112 owns the full release contract.
+
+The v3 writer and reader land together: a 24-byte signature/version/length/CRC header,
+variable sections, typed props schema/key-path/source-position metadata, shared generated
+constants, stable load codes and lossless canonical dumps. Six unused opcode values and
+PropsMode are removed. All bytecode string references fail at load. V2 modules require a
+rebuild. The fourteen HTML goldens are unchanged; real emission, independent fault fixtures,
+loader-before-bind checks, stable fuzz replay and a pinned nightly fuzz workflow cover the change.
+
+### Unified release workflow (FORMA-187)
+
 - FORMA-187: prepare the unified seven-package release pipeline, exact-commit CI
   gate, packed template/corpus verification, two minimal publishing jobs and
   compatibility record. A2 dry runs remain non-publishing; milestone contract

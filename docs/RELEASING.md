@@ -65,6 +65,17 @@ no pending island and refusal of corrupt IR before binding. These are explicit
 local substitutions; the shipped template uses registry URLs/checksums.
 Unpublished candidates have no registry signatures yet: DS11 SHA-256 authenticates
 their bytes, while `npm audit signatures` checks their registry dependencies.
+
+npm determines signature eligibility from each dependency's requirement, so an exact
+peer requirement can make an unpublished local candidate look like a registry package.
+P17 therefore audits a separate copy of the installed tree: only candidates authenticated
+against DS11 become local npm workspaces. Their inactive development dependencies are
+omitted from that audit copy so workspace semantics cannot invent new dependency edges.
+Runtime, peer and optional requirements stay unchanged. The helper compares the complete
+external package inventory, dependency edges and manifest bytes before auditing it, then
+runs npm's normal signature verifier. Every registry error remains a failure. The report
+lists each audited external location, version, URL and integrity, plus each candidate's
+DS11 digest. The original installation and lock used for build/browser tests are unchanged.
 Future contract owners extend this same P17 job; they must not weaken exact version
 checks to make the A2 skeleton pass.
 
@@ -114,6 +125,21 @@ then uploads the JSON record; a missing record fails the job. G6's measurement s
 at GitHub's tag-triggered workflow `created_at` (including queue time) and ends after
 GitHub acknowledges the release write. Actions does not expose exact tag-push
 network ingestion latency; the recorded timing basis states this limitation.
+
+## Current development integration
+
+The current seven-package set is staged at `3.0.0-dev` and the contract record names
+FMIR v3. P17 compares the packed compiler's writer triple and canonical dumps with
+the packed reader's actual version and frozen corpus. Version preparation updates
+all three Cargo locks (root, e2e and fuzz) without changing external resolutions.
+
+The source templates still carry their A2 Cargo requirements and API usage; FORMA-144
+owns their milestone migration. Packing may stage candidate checksums, but that does
+not make those source requirements compatible with v3. A current-development dry run
+is labeled `v3-development-dry-run`, and a template refusal remains a failed P17 result.
+Do not weaken its locked checks or describe that result as complete template acceptance.
+`liveReleaseReady` stays false while the remaining milestone contracts are pending.
+The archived A2 dry-run evidence continues to describe the original published set.
 
 ## Local dry run
 

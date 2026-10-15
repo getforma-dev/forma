@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
+import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 
 async function freePort() {
   const server = net.createServer();
@@ -90,9 +91,13 @@ export async function verify(dir, reportPath) {
       const lockHash = digest(join(cli, 'package-lock.json'));
       run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], cli, { stdio: 'inherit' });
       assert.equal(digest(join(cli, 'package-lock.json')), lockHash, 'npm changed the packed CLI runtime lock');
+      const signatures = auditCandidateSignatures(cli, set.packages, dir);
+      report.tests.push({ name: 'packed CLI registry signatures', passed: true, ...signatures });
     });
     await test('packed compiler emits the frozen corpus read by packed forma-ir', async () => {
-      const { generateRealIr } = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
+      const compiler = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
+      const { generateRealIr } = compiler;
+      assert([2, 3].includes(set.contracts.fmir), 'P17 has no verifier for the recorded FMIR contract');
       const corpus = join(ROOT, 'packages/compiler/tests/fixtures/ir-corpus');
       const emitted = join(scratch, 'crates/forma-ir/tests/fixtures/js-emitter');
       const cases = readdirSync(corpus, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name);
@@ -104,6 +109,14 @@ export async function verify(dir, reportPath) {
         const bytes = result.binary;
         assert(bytes, `${name}: compiler result has no IR bytes`);
         assert.deepEqual(Buffer.from(bytes), readFileSync(join(emitted, `${name}.ir`)), `${name}: emitted bytes differ from packed reader corpus`);
+        if (set.contracts.fmir === 3) {
+          assert.equal(typeof compiler.readFmirContainer, 'function', 'packed v3 compiler lacks its container reader');
+          assert.equal(typeof compiler.dumpFmir, 'function', 'packed v3 compiler lacks its canonical dump');
+          const reader = set.packages.find(p => p.name === 'forma-ir');
+          const expectedVersion = reader.version.split('-')[0].split('.').map(Number);
+          assert.deepEqual(compiler.readFmirContainer(bytes).writer, expectedVersion, `${name}: writer does not match packed Rust reader`);
+          assert.equal(compiler.dumpFmir(bytes), readFileSync(join(emitted, `${name}.dump`), 'utf8'), `${name}: canonical dump differs from packed reader corpus`);
+        }
       }
       run('cargo', ['test', '--locked', '--manifest-path', join(scratch, 'crates/forma-ir/Cargo.toml'), '--test', 'js_emitter_contract'], ROOT, { stdio: 'inherit' });
     });
@@ -119,7 +132,8 @@ export async function verify(dir, reportPath) {
           save(join(admin, 'package.json'), staged.manifest); save(join(admin, 'package-lock.json'), staged.lock);
           const npmHash = digest(join(admin, 'package-lock.json'));
           run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin, { stdio: 'inherit' });
-          run('npm', ['audit', 'signatures'], admin, { stdio: 'inherit' });
+          const signatures = auditCandidateSignatures(admin, set.packages, dir);
+          report.tests.push({ name: `${template}: registry signatures and DS11 candidate authentication`, passed: true, ...signatures });
           for (const p of set.packages.filter(p => p.registry === 'npm' && p.name !== '@getforma/create-app')) {
             const manifest = join(admin, 'node_modules', p.name, 'package.json');
             if (existsSync(manifest)) assert.equal(json(manifest).version, p.version, `${template} installed another ${p.name}`);

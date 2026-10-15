@@ -77,7 +77,7 @@ pub mod frame;
 /// Typed homes for the page's head: manifest preloads and head links.
 pub mod head;
 /// Loading and version-checking the per-route `.ir` modules at startup.
-pub mod ir_compat;
+pub mod ir;
 /// Raw HTML: the one named type for markup written unescaped.
 pub mod raw;
 /// The render that returns its failure: `try_render`, `render_browser_shell`.
@@ -98,12 +98,14 @@ pub use csp::{
     build_csp_header, generate_csp_nonce, CspNonce, InvalidNonce, NonceError, PolicyError,
     PolicyExtensions,
 };
+/// Parser errors and their authoritative `code()` method.
+pub use forma_ir::IrError;
 /// Re-exported: [`RenderCtx::with_limits`] takes it.
 pub use forma_ir::WalkLimits;
 pub use frame::{FrameError, PreviewFrame, FRAME_RUNTIME_ASSET};
 pub use head::{HeadLink, HeadLinkError, ModulePreloads};
 #[allow(deprecated)]
-pub use ir_compat::{load_ir_modules, load_ir_modules_strict, IrLoadError, IrModules};
+pub use ir::{load_ir_modules, load_ir_modules_strict, IrLoadError, IrModules};
 pub use raw::RawHtml;
 pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};

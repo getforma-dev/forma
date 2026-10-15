@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- Embed the compiler package's base version when bundling, so a build/watch
+  runner outside the installed package still emits the correct FMIR writer version.
+
+### Changed
+- **FMIR v3 (FORMA-185).** The writer now emits the 24-byte signature/version/length/CRC header and the indexed section table, with required bytecode, strings, slots, v3 islands and page props schema. Writer versions use this package's actual base major/minor/patch and must match forma-ir exactly; prerelease suffixes are omitted. Rebuild v2 modules with the aligned stack. The 14 HTML goldens are unchanged.
+- `IrEmitContext` rejects invalid operand references, reserved opcodes, out-of-range lengths/counts and invalid slot defaults before returning a binary. PropsMode is removed; `addIsland` now takes `(name, trigger, slotIds, byteOffset, schemaObject?)`.
+
+### Added
+- Typed schema, key-path and optional source-position encoding APIs, plus lossless `dumpFmir` diagnostics shared with the Rust reader. AST schema/key extraction remains FORMA-102/FORMA-181 work.
+- One generated Rust/TypeScript constants table, exact independent example tests, v3 fault checks and canonical `.dump` files beside the regenerated corpus. `npm run check` verifies generated constants and corpus parity.
+
 ## [0.3.7] - 2026-10-14
 
 Release A2, the bridge to 3.0.0: additive, with deprecations. Released with

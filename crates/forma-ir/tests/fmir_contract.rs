@@ -1,128 +1,92 @@
-//! Executable form of `docs/FMIR-FORMAT.md`.
-//!
-//! The document makes four promises that are frozen across every future FMIR
-//! version — magic at offset 0, u16 LE version at offset 4, a 16-byte header
-//! plus a 32-byte section table, and section data starting at offset 48. ksx
-//! Studio already byte-guards the first two (`assert_eq!(&bytes[0..6],
-//! b"FMIR\x02\x00")`) against a contract that, until that document existed,
-//! was published nowhere.
-//!
-//! This file is what makes those promises testable from the consumer's side:
-//! it reads the bytes exactly as an external guard would, with no help from
-//! the parser.
-
-use forma_ir::parser::test_helpers::build_minimal_ir;
-use forma_ir::{IrError, IrModule, HEADER_SIZE, IR_VERSION, MAGIC, SECTION_TABLE_SIZE};
-
-/// A minimal but complete module: one string, one slot, one TEXT opcode.
-fn sample_module_bytes() -> Vec<u8> {
-    let opcodes = {
-        let mut b = vec![0x04]; // TEXT
-        b.extend_from_slice(&0u32.to_le_bytes());
-        b
-    };
-    build_minimal_ir(&["hi"], &[(0, 0, 0x01, 0x00, b"")], &opcodes, &[])
-}
+//! Executable byte-layout contract for docs/FMIR-FORMAT.md.
+use forma_ir::format::{crc32, reader_version};
+use forma_ir::parser::test_helpers::{build_minimal_ir, restamp};
+use forma_ir::{
+    IrModule, HEADER_SIZE, IR_VERSION, SECTION_ENTRY_SIZE, SIGNATURE, TABLE_PREFIX_SIZE,
+};
 
 #[test]
-fn frozen_magic_and_version_position() {
-    // docs/FMIR-FORMAT.md §1. These four bytes and the two after them are the
-    // only thing a reader may inspect before it knows the version.
-    assert_eq!(MAGIC, b"FMIR");
-    assert_eq!(IR_VERSION, 2);
-
-    let bytes = sample_module_bytes();
-    assert_eq!(&bytes[0..4], MAGIC, "magic must be at offset 0");
-    assert_eq!(
-        u16::from_le_bytes([bytes[4], bytes[5]]),
-        IR_VERSION,
-        "version must be a u16 LE at offset 4"
-    );
-
-    // The exact guard ksx Studio compiles into its test suite.
-    assert_eq!(&bytes[0..6], b"FMIR\x02\x00");
-}
-
-#[test]
-fn frozen_header_and_section_table_sizes() {
-    // docs/FMIR-FORMAT.md §2: 16-byte header, 32-byte section table, section
-    // data at 48.
-    assert_eq!(HEADER_SIZE, 16);
-    assert_eq!(SECTION_TABLE_SIZE, 32);
-    assert_eq!(HEADER_SIZE + SECTION_TABLE_SIZE, 48);
-
-    let bytes = sample_module_bytes();
-    // Section 0 (bytecode) is the first payload, so its declared offset is
-    // where section data begins.
-    let bytecode_offset = u32::from_le_bytes(bytes[16..20].try_into().unwrap());
-    assert_eq!(
-        bytecode_offset as usize, 48,
-        "section data must start at offset 48"
-    );
-}
-
-#[test]
-fn frozen_section_order_is_bytecode_strings_slots_islands() {
-    // docs/FMIR-FORMAT.md §2.2. Descriptors are (offset u32, size u32) pairs
-    // in a fixed order, so the payloads appear in that order too.
-    let bytes = sample_module_bytes();
-    let descriptor = |i: usize| -> (u32, u32) {
-        let base = HEADER_SIZE + i * 8;
-        (
-            u32::from_le_bytes(bytes[base..base + 4].try_into().unwrap()),
-            u32::from_le_bytes(bytes[base + 4..base + 8].try_into().unwrap()),
-        )
-    };
-
-    let mut cursor = 48u32;
-    for i in 0..4 {
-        let (offset, size) = descriptor(i);
+fn frozen_header_layout_matches_document_and_package_version() {
+    let bytes = include_bytes!("fixtures/fmir-v3/PASS-good-a.ir");
+    let m = IrModule::parse(bytes).unwrap();
+    assert_eq!(IR_VERSION, 3);
+    assert_eq!(HEADER_SIZE, 24);
+    assert_eq!(SIGNATURE, [0x89, 0x46, 0x4d, 0x49, 0x0d, 0x0a, 0x1a, 0x0a]);
+    assert_eq!(&bytes[..8], &SIGNATURE);
+    for (i, expected) in reader_version().iter().enumerate() {
         assert_eq!(
-            offset,
-            cursor,
-            "section {i} does not follow section {}",
-            i - 1
+            u16::from_le_bytes([bytes[8 + i * 2], bytes[9 + i * 2]]),
+            *expected
         );
-        cursor += size;
     }
-    assert_eq!(cursor as usize, bytes.len(), "sections must tile the file");
-}
-
-#[test]
-fn reserved_flags_fail_closed() {
-    // docs/FMIR-FORMAT.md §2.1: an unknown flag bit is a hard error, so a
-    // reader that predates an extension refuses the file rather than
-    // mis-parsing it.
-    let mut bytes = sample_module_bytes();
-    bytes[6] = 0x01;
+    assert_eq!(m.header.body_len as usize, bytes.len() - HEADER_SIZE);
+    assert_eq!(m.header.crc, crc32(&[&bytes[..18], &bytes[22..]]));
+    assert_eq!(&bytes[22..24], &[0, 0]);
+    let doc = include_str!("../../../docs/FMIR-FORMAT.md");
+    let layout = doc
+        .split("## 3. Header (24 bytes)")
+        .nth(1)
+        .unwrap()
+        .split("```")
+        .nth(1)
+        .unwrap();
+    let rows: Vec<_> = layout
+        .lines()
+        .filter_map(|line| {
+            let mut cols = line.split_whitespace();
+            let offset = cols.next()?.parse::<usize>().ok()?;
+            let size = cols.next()?.parse::<usize>().ok()?;
+            Some((offset, size, cols.next().unwrap_or_default()))
+        })
+        .collect();
     assert_eq!(
-        IrModule::parse(&bytes).unwrap_err(),
-        IrError::UnsupportedFlags(1)
+        rows,
+        [
+            (0, 8, "signature:"),
+            (8, 6, "writer"),
+            (14, 4, "body_len"),
+            (18, 4, "crc"),
+            (22, 2, "reserved:")
+        ]
     );
 }
-
 #[test]
-fn a_different_version_is_rejected_outright() {
-    // docs/FMIR-FORMAT.md §4: there is no compatibility window. A v3 file is
-    // refused by a v2 reader, which is what makes "recompile everything
-    // together" the contract rather than a suggestion.
-    let mut bytes = sample_module_bytes();
-    bytes[4..6].copy_from_slice(&3u16.to_le_bytes());
+fn variable_sections_tile_exactly_and_reserved_fields_fail_closed() {
+    let mut bytes = build_minimal_ir(&[], &[], &[], &[]);
+    let module = IrModule::parse(&bytes).unwrap();
+    assert_eq!(TABLE_PREFIX_SIZE, 4);
+    assert_eq!(SECTION_ENTRY_SIZE, 12);
+    assert_eq!(module.sections.sections.len(), 5);
     assert_eq!(
-        IrModule::parse(&bytes).unwrap_err(),
-        IrError::UnsupportedVersion(3)
+        module.sections.sections[0].offset as usize,
+        HEADER_SIZE + TABLE_PREFIX_SIZE + 5 * SECTION_ENTRY_SIZE
     );
+    assert_eq!(
+        module.sections.sections.last().map(|s| s.offset + s.size),
+        Some(bytes.len() as u32)
+    );
+    bytes[26] = 1;
+    restamp(&mut bytes);
+    assert_eq!(IrModule::parse(&bytes).unwrap_err().code(), "LOAD-103");
+    bytes[26] = 0;
+    bytes[22] = 1;
+    restamp(&mut bytes);
+    assert_eq!(IrModule::parse(&bytes).unwrap_err().code(), "LOAD-103");
 }
-
 #[test]
-fn the_documented_consumer_guard_compiles_and_passes() {
-    // docs/FMIR-FORMAT.md §5, verbatim. If this stops working the document is
-    // wrong, not the caller.
-    let ir_bytes = sample_module_bytes();
-
-    assert_eq!(&ir_bytes[0..4], MAGIC);
-    assert_eq!(u16::from_le_bytes([ir_bytes[4], ir_bytes[5]]), IR_VERSION,);
-    let module = IrModule::parse(&ir_bytes).expect("sample module parses");
-    assert_eq!(module.header.version, IR_VERSION);
-    assert_eq!(module.header.flags, 0);
+fn legacy_and_different_patch_are_rebuild_errors() {
+    let mut legacy = vec![0; 48];
+    legacy[..4].copy_from_slice(b"FMIR");
+    legacy[4] = 2;
+    let err = IrModule::parse(&legacy).unwrap_err();
+    assert_eq!(err.code(), "LOAD-102");
+    assert!(err.to_string().contains("header version 2"));
+    assert!(err.to_string().contains("rebuild"));
+    let mut bytes = build_minimal_ir(&[], &[], &[], &[]);
+    bytes[12] = 1;
+    restamp(&mut bytes);
+    let err = IrModule::parse(&bytes).unwrap_err();
+    assert_eq!(err.code(), "LOAD-108");
+    assert!(err.to_string().contains("3.0.1"));
+    assert!(err.to_string().contains("3.0.0"));
 }

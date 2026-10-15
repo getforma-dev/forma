@@ -2,6 +2,9 @@
 
 **Status:** living document. First written 2026-08-05, against `forma`
 `fix/hardening-pass`, `formajs` and `forma-tools` `fix/ksx-dogfood-findings`.
+The repository inventory and FMIR v2 discussion below describe that historical
+baseline. The merged workspace now uses the maintained
+[FMIR v3 contract](FMIR-FORMAT.md); use it for current binary layout and loader rules.
 
 **Audience:** an engineer joining tomorrow who will change one of these four
 repos. Read §1 and §2 once, then keep §3 open while you work — §3 is the part

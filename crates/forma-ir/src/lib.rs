@@ -29,6 +29,8 @@
 pub mod format;
 /// Bounds-checked parsing and one-shot structural validation of an FMIR file.
 pub mod parser;
+/// Typed props schema, key paths and source positions carried by FMIR v3.
+pub mod schema;
 /// Runtime slot values and the dense `SlotData` a page handler populates.
 pub mod slot;
 /// The SSR walker: opcode stream plus slot values in, HTML out.
@@ -49,6 +51,11 @@ pub mod fault_injection {
     pub const FAULT_TRIGGER: &str = "\u{0}forma-test-fault\u{0}";
 }
 
+/// Internal property-test adapters; absent from ordinary dependency builds.
+#[cfg(any(test, feature = "__fuzzing"))]
+#[doc(hidden)]
+pub mod fuzz_support;
+
 /// Human-readable text dump of a module, for debugging and diffing.
 #[cfg(feature = "dump")]
 pub mod dump;
@@ -60,9 +67,9 @@ mod deprecations;
 
 // Re-exports for convenience
 pub use format::{
-    IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, PropsMode, SectionDescriptor,
-    SectionTable, SlotEntry, SlotSource, SlotType, HEADER_SIZE, IR_VERSION, MAGIC,
-    SECTION_TABLE_SIZE,
+    IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, SectionDescriptor, SectionTable,
+    SlotEntry, SlotSource, SlotType, HEADER_SIZE, IR_VERSION, SECTION_ENTRY_SIZE, SIGNATURE,
+    TABLE_PREFIX_SIZE,
 };
 pub use parser::{IrModule, IslandTableParsed, SlotTable, StringTable};
 pub use slot::{json_to_slot_value, SlotData, SlotValue};

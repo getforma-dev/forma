@@ -4,9 +4,12 @@
 //! and returns a typed, indexed collection.
 
 use crate::format::{
-    le_u16, le_u32, IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, PropsMode, SectionTable,
-    SlotEntry, SlotSource, SlotType, HEADER_SIZE, SECTION_TABLE_SIZE,
+    le_u16, le_u32, limit, IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, SectionTable,
+    SlotEntry, SlotSource, SlotType, HEADER_SIZE, MAX_ISLANDS, MAX_STRINGS, SECTION_BYTECODE,
+    SECTION_ISLANDS, SECTION_KEY_PATHS, SECTION_PROPS_SCHEMA, SECTION_REQUIRED, SECTION_SLOTS,
+    SECTION_SOURCE_POSITIONS, SECTION_STRINGS,
 };
+use crate::schema::{self, Cursor, KeyPath, PropsSchema, SourcePosition};
 
 // ---------------------------------------------------------------------------
 // StringTable
@@ -31,6 +34,7 @@ impl StringTable {
         }
 
         let count = le_u32(&data[0..4]) as usize;
+        limit("strings", count, MAX_STRINGS)?;
         // Guard against a declared count that the section cannot possibly
         // hold. The old `count > data.len()` guard compared entries against
         // *bytes*: a string costs 2 bytes on disk (an empty string's u16
@@ -39,10 +43,8 @@ impl StringTable {
         // string — and `Vec::with_capacity` OOM aborts the process rather
         // than returning an error. `data.len() >= 4` is guaranteed above.
         //
-        // NOTE: this rejects impossible counts; it does not cap expansion. A
-        // 100 MB section with count = 49,999,998 still passes and legitimately
-        // reserves ~1.1 GB. Bounded parser memory would need a maximum
-        // section-size policy at a higher layer, not this guard.
+        // FMIR v3 also caps the string count above and total module bytes in
+        // IrHeader::parse; this check independently rejects impossible counts.
         let max_entries = (data.len() - 4) / 2;
         if count > max_entries {
             return Err(IrError::BufferTooShort {
@@ -83,6 +85,11 @@ impl StringTable {
             offset += str_len;
         }
 
+        if offset != data.len() {
+            return Err(IrError::TrailingBytes {
+                section: SECTION_STRINGS,
+            });
+        }
         Ok(StringTable { strings })
     }
 
@@ -114,7 +121,7 @@ impl StringTable {
 
 /// Parsed slot table — an indexed collection of slot entries.
 ///
-/// Binary format (v2): `count(u16)`, then `count` variable-length entries of
+/// Binary format (unchanged from v2): `count(u16)`, then `count` variable-length entries of
 /// `[slot_id(u16), name_str_idx(u32), type_hint(u8), source(u8), default_len(u16), default_bytes([u8; default_len])]`.
 /// Minimum entry size: 10 bytes (when default_len = 0).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -122,7 +129,7 @@ pub struct SlotTable {
     slots: Vec<SlotEntry>,
 }
 
-/// Minimum size of a single v2 slot entry in bytes (without default data).
+/// Minimum size of a single slot entry in bytes (without default data).
 /// slot_id(2) + name_str_idx(4) + type_hint(1) + source(1) + default_len(2) = 10
 const SLOT_ENTRY_MIN_SIZE: usize = 10;
 
@@ -175,6 +182,7 @@ impl SlotTable {
             }
             let default_bytes = data[offset..offset + default_len].to_vec();
             offset += default_len;
+            validate_default(slot_id, type_hint, &default_bytes)?;
 
             slots.push(SlotEntry {
                 slot_id,
@@ -185,6 +193,11 @@ impl SlotTable {
             });
         }
 
+        if offset != data.len() {
+            return Err(IrError::TrailingBytes {
+                section: SECTION_SLOTS,
+            });
+        }
         Ok(SlotTable { slots })
     }
 
@@ -204,88 +217,117 @@ impl SlotTable {
     }
 }
 
+/// Validate only defaults supported by the frozen walker semantics.
+fn validate_default(id: u16, kind: SlotType, bytes: &[u8]) -> Result<(), IrError> {
+    if bytes.is_empty() {
+        return Ok(());
+    }
+    let text = std::str::from_utf8(bytes).map_err(|e| IrError::InvalidUtf8(e.to_string()))?;
+    let valid = match kind {
+        SlotType::Text => true,
+        SlotType::Bool => matches!(text, "true" | "false"),
+        SlotType::Number => decimal(text) && text.parse::<f64>().is_ok_and(|n| n.is_finite()),
+        SlotType::Array => text == "[]",
+        SlotType::Object => false,
+    };
+    if valid {
+        Ok(())
+    } else {
+        Err(IrError::InvalidDefault(id))
+    }
+}
+fn decimal(text: &str) -> bool {
+    let b = text.as_bytes();
+    let mut p = 0;
+    if matches!(b.get(p), Some(b'+' | b'-')) {
+        p += 1;
+    }
+    let mut digits = 0;
+    while b.get(p).is_some_and(u8::is_ascii_digit) {
+        p += 1;
+        digits += 1;
+    }
+    if b.get(p) == Some(&b'.') {
+        p += 1;
+        while b.get(p).is_some_and(u8::is_ascii_digit) {
+            p += 1;
+            digits += 1;
+        }
+    }
+    if digits == 0 {
+        return false;
+    }
+    if matches!(b.get(p), Some(b'e' | b'E')) {
+        p += 1;
+        if matches!(b.get(p), Some(b'+' | b'-')) {
+            p += 1;
+        }
+        let start = p;
+        while b.get(p).is_some_and(u8::is_ascii_digit) {
+            p += 1;
+        }
+        if p == start {
+            return false;
+        }
+    }
+    p == b.len()
+}
+
 // ---------------------------------------------------------------------------
 // IslandTableParsed
 // ---------------------------------------------------------------------------
 
-/// Parsed island table — an indexed collection of island entries.
+/// Parsed FMIR v3 island table, including opaque digest and trailing extension bytes.
 ///
-/// Binary format: `count(u16)`, then `count` variable-length entries of
-/// `[id(u16), trigger(u8), props_mode(u8), name_str_idx(u32), byte_offset(u32), slot_count(u16), [slot_id(u16) x slot_count]]`.
+/// Each entry has a u16 byte length, id/trigger/reserved/name/bytecode-offset,
+/// schema-object reference, a length-prefixed digest and a counted slot-id list.
+/// `docs/FMIR-FORMAT.md` specifies the exact bounded record layout.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IslandTableParsed {
     islands: Vec<IslandEntry>,
 }
 
-/// Minimum size of a single island entry in bytes (without slot_ids).
-/// id(2) + trigger(1) + props_mode(1) + name_str_idx(4) + byte_offset(4) + slot_count(2) = 14
-const ISLAND_ENTRY_MIN_SIZE: usize = 14;
-
 impl IslandTableParsed {
-    /// Parse an island table from its section data.
+    /// Parse bounded v3 island records, retaining unknown trailing entry bytes.
     pub fn parse(data: &[u8]) -> Result<Self, IrError> {
-        if data.len() < 2 {
-            return Err(IrError::BufferTooShort {
-                expected: 2,
-                actual: data.len(),
-            });
-        }
-
-        let count = le_u16(&data[0..2]) as usize;
-        // See StringTable::parse — an IslandEntry is 14 bytes on disk but
-        // ~40 bytes in memory. `data.len() >= 2` guaranteed above.
-        let max_entries = (data.len() - 2) / ISLAND_ENTRY_MIN_SIZE;
-        if count > max_entries {
-            return Err(IrError::BufferTooShort {
-                expected: 2usize.saturating_add(count.saturating_mul(ISLAND_ENTRY_MIN_SIZE)),
-                actual: data.len(),
-            });
-        }
+        let mut r = Cursor::new(data);
+        let count = r.u16()? as usize;
+        limit("islands", count, MAX_ISLANDS)?;
+        r.bound(count, 19)?;
         let mut islands = Vec::with_capacity(count);
-        let mut offset = 2;
-
         for _ in 0..count {
-            // Minimum: id(2) + trigger(1) + props_mode(1) + name_str_idx(4) + byte_offset(4) + slot_count(2) = 14
-            if offset + ISLAND_ENTRY_MIN_SIZE > data.len() {
-                return Err(IrError::BufferTooShort {
-                    expected: offset + ISLAND_ENTRY_MIN_SIZE,
-                    actual: data.len(),
-                });
+            let entry_len = r.u16()? as usize;
+            let mut e = Cursor::new(r.take(entry_len)?);
+            let id = e.u16()?;
+            let trigger = IslandTrigger::from_byte(e.u8()?)?;
+            if e.u8()? != 0 {
+                return Err(IrError::ReservedBits { field: "island" });
             }
-
-            let id = le_u16(&data[offset..offset + 2]);
-            let trigger = IslandTrigger::from_byte(data[offset + 2])?;
-            let props_mode = PropsMode::from_byte(data[offset + 3])?;
-            let name_str_idx = le_u32(&data[offset + 4..offset + 8]);
-            let byte_offset = le_u32(&data[offset + 8..offset + 12]);
-            let slot_count = le_u16(&data[offset + 12..offset + 14]) as usize;
-            offset += ISLAND_ENTRY_MIN_SIZE;
-
-            // Read slot_ids
-            let needed = slot_count * 2;
-            if offset + needed > data.len() {
-                return Err(IrError::BufferTooShort {
-                    expected: offset + needed,
-                    actual: data.len(),
-                });
-            }
+            let name_str_idx = e.u32()?;
+            let byte_offset = e.u32()?;
+            let schema_object = e.u16()?;
+            let digest_len = e.u8()? as usize;
+            let digest = e.take(digest_len)?.to_vec();
+            let slot_count = e.u16()? as usize;
+            e.bound(slot_count, 2)?;
             let mut slot_ids = Vec::with_capacity(slot_count);
             for _ in 0..slot_count {
-                slot_ids.push(le_u16(&data[offset..offset + 2]));
-                offset += 2;
+                slot_ids.push(e.u16()?);
             }
-
+            let extension = e.take(e.remaining())?.to_vec();
             islands.push(IslandEntry {
                 id,
                 trigger,
-                props_mode,
                 name_str_idx,
                 byte_offset,
+                schema_object,
+                digest,
                 slot_ids,
+                extension,
             });
         }
-
-        Ok(IslandTableParsed { islands })
+        r.finish(SECTION_ISLANDS)?;
+        Ok(Self { islands })
     }
 
     /// Number of islands in the table.
@@ -318,7 +360,7 @@ const NO_INDEX: u32 = u32::MAX;
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct IrModule {
-    /// Parsed 16-byte file header.
+    /// Parsed and integrity-checked v3 header.
     pub header: IrHeader,
     /// The module's string table — every name, literal and attribute value.
     pub strings: StringTable,
@@ -328,6 +370,16 @@ pub struct IrModule {
     pub opcodes: Vec<u8>,
     /// The module's island declarations.
     pub islands: IslandTableParsed,
+    /// Section descriptors, including unknown optional sections.
+    pub sections: SectionTable,
+    /// Declared props schema; object zero is the page's props.
+    pub schema: PropsSchema,
+    /// List key paths, in bytecode order.
+    pub key_paths: Vec<KeyPath>,
+    /// Optional component source positions.
+    pub source_positions: Vec<SourcePosition>,
+    /// Complete original encoding retained for canonical dumps and lossless roundtrips.
+    raw: Vec<u8>,
     /// Dense `slot_id` → index into `slots.entries()`, `NO_INDEX` if absent.
     /// Replaces a linear scan per DYN_TEXT/DYN_ATTR/SHOW_IF/LIST opcode.
     slot_index: Vec<u32>,
@@ -340,68 +392,69 @@ pub struct IrModule {
 impl IrModule {
     /// Parse a complete FMIR binary into a validated `IrModule`.
     pub fn parse(data: &[u8]) -> Result<Self, IrError> {
-        // 1. Parse header (first 16 bytes).
         let header = IrHeader::parse(data)?;
-
-        // 2. Parse section table (next 32 bytes, starting at HEADER_SIZE).
-        if data.len() < HEADER_SIZE + SECTION_TABLE_SIZE {
-            return Err(IrError::BufferTooShort {
-                expected: HEADER_SIZE + SECTION_TABLE_SIZE,
-                actual: data.len(),
-            });
-        }
         let section_table = SectionTable::parse(&data[HEADER_SIZE..])?;
-
-        // 3. Validate all section bounds against the file length.
         section_table.validate(data.len())?;
-
-        // Section indices: 0=Bytecode, 1=Strings, 2=Slots, 3=Islands
-        let sec_bytecode = &section_table.sections[0];
-        let sec_strings = &section_table.sections[1];
-        let sec_slots = &section_table.sections[2];
-        let sec_islands = &section_table.sections[3];
-
-        // 4. Parse string table.
-        let string_data = &data[sec_strings.offset as usize
-            ..(sec_strings.offset as usize + sec_strings.size as usize)];
-        let strings = StringTable::parse(string_data)?;
-
-        // 5. Parse slot table.
-        let slot_data =
-            &data[sec_slots.offset as usize..(sec_slots.offset as usize + sec_slots.size as usize)];
-        let slots = SlotTable::parse(slot_data)?;
-
-        // 6. Extract opcode stream (just clone into Vec<u8>).
-        let opcodes = data[sec_bytecode.offset as usize
-            ..(sec_bytecode.offset as usize + sec_bytecode.size as usize)]
-            .to_vec();
-
-        // 7. Parse island table.
-        let island_data = &data[sec_islands.offset as usize
-            ..(sec_islands.offset as usize + sec_islands.size as usize)];
-        let islands = IslandTableParsed::parse(island_data)?;
-
-        // 8. Build dense id → index maps. Insert-if-vacant preserves the
-        //    first-match semantics of the linear scans these replace, so a
-        //    module with duplicate ids (rejected below) can never render
-        //    differently through the index than it did through `find`.
+        for section in &section_table.sections {
+            if !(SECTION_BYTECODE..=SECTION_SOURCE_POSITIONS).contains(&section.id)
+                && section.flags & SECTION_REQUIRED != 0
+            {
+                return Err(IrError::UnknownRequiredSection {
+                    id: section.id,
+                    writer: header.writer,
+                });
+            }
+        }
+        for id in SECTION_BYTECODE..=SECTION_PROPS_SCHEMA {
+            if section_table.get(id).is_none() {
+                return Err(IrError::MissingSection(id));
+            }
+        }
+        let payload = |id| -> Result<&[u8], IrError> {
+            let section = section_table.get(id).ok_or(IrError::MissingSection(id))?;
+            let start = section.offset as usize;
+            data.get(start..start + section.size as usize)
+                .ok_or(IrError::InvalidSection)
+        };
+        let strings = StringTable::parse(payload(SECTION_STRINGS)?)?;
+        let slots = SlotTable::parse(payload(SECTION_SLOTS)?)?;
+        let islands = IslandTableParsed::parse(payload(SECTION_ISLANDS)?)?;
+        let schema = PropsSchema::parse(payload(SECTION_PROPS_SCHEMA)?, &strings)?;
+        let opcodes = payload(SECTION_BYTECODE)?.to_vec();
         let slot_index = build_id_index(slots.entries().iter().map(|e| e.slot_id));
         let island_index = build_id_index(islands.entries().iter().map(|e| e.id));
-
-        let module = IrModule {
+        let mut module = Self {
             header,
             strings,
             slots,
-            opcodes,
             islands,
+            schema,
+            opcodes,
             slot_index,
             island_index,
+            sections: section_table.clone(),
+            key_paths: Vec::new(),
+            source_positions: Vec::new(),
+            raw: data.to_vec(),
         };
-
-        // 9. Run cross-table and structural validation.
-        module.validate()?;
-
+        let starts = module.validation_starts()?;
+        if section_table.get(SECTION_KEY_PATHS).is_some() {
+            module.key_paths =
+                schema::key_paths(payload(SECTION_KEY_PATHS)?, &module.strings, &starts)?;
+        }
+        if section_table.get(SECTION_SOURCE_POSITIONS).is_some() {
+            module.source_positions = schema::source_positions(
+                payload(SECTION_SOURCE_POSITIONS)?,
+                &module.strings,
+                &starts,
+            )?;
+        }
         Ok(module)
+    }
+
+    /// Original bytes, including unknown optional sections and island extensions.
+    pub fn raw_bytes(&self) -> &[u8] {
+        &self.raw
     }
 
     /// Look up a slot table entry by `slot_id` in O(1).
@@ -426,6 +479,10 @@ impl IrModule {
     /// stay cheap and so malformed IR fails at load rather than rendering
     /// mystery HTML on some later request.
     pub fn validate(&self) -> Result<(), IrError> {
+        self.validation_starts().map(|_| ())
+    }
+
+    fn validation_starts(&self) -> Result<Vec<(u32, Opcode)>, IrError> {
         let str_count = self.strings.len();
 
         // Validate all slot name_str_idx values are within string table bounds,
@@ -483,10 +540,25 @@ impl IrModule {
             }
         }
 
-        // Structural pass over the bytecode.
-        self.scan_region(0, self.opcodes.len(), 0)?;
-
-        Ok(())
+        let mut starts = Vec::new();
+        self.scan_region(0, self.opcodes.len(), 0, &mut starts)?;
+        for island in self.islands.entries() {
+            if starts
+                .binary_search_by_key(&island.byte_offset, |(o, _)| *o)
+                .is_err()
+            {
+                return Err(IrError::IslandOffsetMismatch {
+                    island_id: island.id,
+                    byte_offset: island.byte_offset,
+                });
+            }
+            if island.schema_object != 0xffff
+                && island.schema_object as usize >= self.schema.objects.len()
+            {
+                return Err(IrError::InvalidSchema("island object index out of range"));
+            }
+        }
+        Ok(starts)
     }
 
     /// Linearly decode `opcodes[start..end]`, requiring that it tiles exactly
@@ -503,144 +575,91 @@ impl IrModule {
     /// legal sibling sequence (`else_len = 0`, `body_len = 0`) is structurally
     /// indistinguishable from a legitimate module, so no length check can
     /// reject it. Closing that class needs module integrity — the FMIR header
-    /// already reserves `source_hash` at bytes 8..16 and the JS compiler
-    /// leaves it zero; populating and verifying it is a coordinated
-    /// compiler + runtime change, filed separately.
-    fn scan_region(&self, start: usize, end: usize, depth: usize) -> Result<(), IrError> {
-        if depth > MAX_VALIDATION_DEPTH {
-            return Err(IrError::RecursionLimitExceeded);
-        }
+    /// protects accidental corruption with a CRC. A writer can restamp a wrong
+    /// module, so corpus/parity tests remain necessary for compiler defects.
+    fn scan_region(
+        &self,
+        start: usize,
+        end: usize,
+        depth: usize,
+        starts: &mut Vec<(u32, Opcode)>,
+    ) -> Result<(), IrError> {
+        limit("control-flow depth", depth, MAX_VALIDATION_DEPTH)?;
         let ops = &self.opcodes;
         let mut pos = start;
-        // Range-local, like the walker's: a TRY_START and its FALLBACK are
-        // emitted in the same region by construction.
-        let mut fallback_stack: Vec<usize> = Vec::new();
-
         while pos < end {
             let op_start = pos;
-            let opcode = Opcode::from_byte(ops[pos])?;
+            let op = Opcode::from_byte(ops[pos])?;
+            starts.push((pos as u32, op));
             pos += 1;
-
-            match opcode {
+            match op {
                 Opcode::OpenTag | Opcode::VoidTag => {
-                    let attr_count = read_u16_at(ops, pos + 4, end)? as usize;
-                    pos = bounded(pos, 6 + attr_count * 8, end, op_start)?;
-                }
-                Opcode::CloseTag
-                | Opcode::Text
-                | Opcode::Comment
-                | Opcode::ListItemKey
-                | Opcode::DynText => {
-                    if opcode == Opcode::DynText {
-                        self.check_slot(read_u16_at(ops, pos, end)?)?;
+                    self.strings.get(read_u32_at(ops, pos, end)?)?;
+                    let n = read_u16_at(ops, pos + 4, end)? as usize;
+                    let next = bounded(pos, 6 + n * 8, end, op_start)?;
+                    for i in 0..n {
+                        self.strings.get(read_u32_at(ops, pos + 6 + i * 8, end)?)?;
+                        self.strings.get(read_u32_at(ops, pos + 10 + i * 8, end)?)?;
                     }
+                    pos = next;
+                }
+                Opcode::CloseTag | Opcode::Text => {
+                    self.strings.get(read_u32_at(ops, pos, end)?)?;
+                    pos = bounded(pos, 4, end, op_start)?;
+                }
+                Opcode::DynText => {
+                    self.check_slot(read_u16_at(ops, pos, end)?)?;
                     pos = bounded(pos, 4, end, op_start)?;
                 }
                 Opcode::DynAttr => {
+                    self.strings.get(read_u32_at(ops, pos, end)?)?;
                     self.check_slot(read_u16_at(ops, pos + 4, end)?)?;
                     pos = bounded(pos, 6, end, op_start)?;
                 }
                 Opcode::IslandStart => {
-                    // An ISLAND_START whose id is absent from the island table
-                    // renders its `<!--f:iN-->` markers but no
-                    // `data-forma-*` attributes, so the client never hydrates
-                    // it and nothing anywhere reports why. Reject at load.
-                    let island_id = read_u16_at(ops, pos, end)?;
-                    if self.island_entry(island_id).is_none() {
-                        return Err(IrError::UnknownIslandId(island_id));
+                    let id = read_u16_at(ops, pos, end)?;
+                    if self.island_entry(id).is_none() {
+                        return Err(IrError::UnknownIslandId(id));
                     }
                     pos = bounded(pos, 2, end, op_start)?;
                 }
                 Opcode::IslandEnd => {
                     pos = bounded(pos, 2, end, op_start)?;
                 }
-                Opcode::ShowElse => {
-                    // Stray SHOW_ELSE: the walker tolerates it as a no-op.
-                }
-                Opcode::Preload => {
-                    pos = bounded(pos, 5, end, op_start)?;
-                }
+                Opcode::ShowElse => {} // Historical stray separator is a no-op.
                 Opcode::Prop => {
                     self.check_slot(read_u16_at(ops, pos, end)?)?;
+                    self.strings.get(read_u32_at(ops, pos + 2, end)?)?;
                     self.check_slot(read_u16_at(ops, pos + 6, end)?)?;
                     pos = bounded(pos, 8, end, op_start)?;
                 }
                 Opcode::ShowIf => {
                     self.check_slot(read_u16_at(ops, pos, end)?)?;
-                    let then_len = read_u32_at(ops, pos + 2, end)? as usize;
-                    let else_len = read_u32_at(ops, pos + 6, end)? as usize;
-                    let then_start = bounded(pos, 10, end, op_start)?;
-                    let then_end = bounded(then_start, then_len, end, op_start)?;
-                    // The SHOW_ELSE marker byte must itself be inside the
-                    // region — a SHOW_IF at the tail must not index a byte its
-                    // parent never granted.
-                    if then_end >= end || ops[then_end] != Opcode::ShowElse as u8 {
-                        return Err(IrError::MalformedControlFlow { pos: then_end });
+                    let tl = read_u32_at(ops, pos + 2, end)? as usize;
+                    let el = read_u32_at(ops, pos + 6, end)? as usize;
+                    let ts = bounded(pos, 10, end, op_start)?;
+                    let te = bounded(ts, tl, end, op_start)?;
+                    if te >= end || ops[te] != Opcode::ShowElse as u8 {
+                        return Err(IrError::MalformedControlFlow { pos: te });
                     }
-                    let else_start = then_end + 1;
-                    let else_end = bounded(else_start, else_len, end, op_start)?;
-                    self.scan_region(then_start, then_end, depth + 1)?;
-                    self.scan_region(else_start, else_end, depth + 1)?;
-                    pos = else_end;
-                }
-                Opcode::Switch => {
-                    self.check_slot(read_u16_at(ops, pos, end)?)?;
-                    let case_count = read_u16_at(ops, pos + 2, end)? as usize;
-                    let mut header_pos = bounded(pos, 4, end, op_start)?;
-                    let mut lens =
-                        Vec::with_capacity(case_count.min(end.saturating_sub(header_pos) / 8));
-                    for _ in 0..case_count {
-                        let body_len = read_u32_at(ops, header_pos + 4, end)? as usize;
-                        lens.push(body_len);
-                        header_pos = bounded(header_pos, 8, end, op_start)?;
-                    }
-                    let mut body_pos = header_pos;
-                    for body_len in lens {
-                        let case_end = bounded(body_pos, body_len, end, op_start)?;
-                        self.scan_region(body_pos, case_end, depth + 1)?;
-                        body_pos = case_end;
-                    }
-                    pos = body_pos;
+                    let es = te + 1;
+                    let ee = bounded(es, el, end, op_start)?;
+                    self.scan_region(ts, te, depth + 1, starts)?;
+                    starts.push((te as u32, Opcode::ShowElse));
+                    self.scan_region(es, ee, depth + 1, starts)?;
+                    pos = ee;
                 }
                 Opcode::List => {
                     self.check_slot(read_u16_at(ops, pos, end)?)?;
                     self.check_slot(read_u16_at(ops, pos + 2, end)?)?;
-                    let body_len = read_u32_at(ops, pos + 4, end)? as usize;
-                    let body_start = bounded(pos, 8, end, op_start)?;
-                    let body_end = bounded(body_start, body_len, end, op_start)?;
-                    self.scan_region(body_start, body_end, depth + 1)?;
-                    pos = body_end;
-                }
-                Opcode::TryStart => {
-                    let fallback_len = read_u32_at(ops, pos, end)? as usize;
-                    pos = bounded(pos, 4, end, op_start)?;
-                    fallback_stack.push(fallback_len);
-                }
-                Opcode::Fallback => {
-                    // The fallback body is skipped, exactly as the walker
-                    // skips it — Phase 2 always renders the main body, so
-                    // those bytes are never executed and are not scanned.
-                    //
-                    // A FALLBACK with no open TRY_START is rejected rather
-                    // than tolerated: the walker would leave `pos` where it
-                    // is and walk the fallback body as though it were main
-                    // content, which is a wrong page rendered silently.
-                    match fallback_stack.pop() {
-                        Some(skip) => pos = bounded(pos, skip, end, op_start)?,
-                        None => return Err(IrError::MalformedControlFlow { pos: op_start }),
-                    }
+                    let len = read_u32_at(ops, pos + 4, end)? as usize;
+                    let bs = bounded(pos, 8, end, op_start)?;
+                    let be = bounded(bs, len, end, op_start)?;
+                    self.scan_region(bs, be, depth + 1, starts)?;
+                    pos = be;
                 }
             }
         }
-
-        // A TRY_START whose FALLBACK never arrives leaves the region's main
-        // body unbounded: the walker renders it, but nothing marks where the
-        // try block ended, so a compiler that truncated the block ships a page
-        // missing its fallback with no diagnostic.
-        if let Some(_unmatched) = fallback_stack.pop() {
-            return Err(IrError::MalformedControlFlow { pos: end });
-        }
-
         Ok(())
     }
 
@@ -682,7 +701,7 @@ impl IrModule {
 
 /// Maximum control-flow nesting depth accepted by the structural validator.
 /// Matches the walker's `MAX_RECURSION_DEPTH`.
-const MAX_VALIDATION_DEPTH: usize = 64;
+const MAX_VALIDATION_DEPTH: usize = crate::format::MAX_CONTROL_DEPTH;
 
 /// Build a dense id → index map, keeping the FIRST entry for any duplicate id
 /// so the map agrees with the linear `find` it replaces.
@@ -748,7 +767,9 @@ fn read_u32_at(ops: &[u8], pos: usize, end: usize) -> Result<u32, IrError> {
 // panicking says so at the line that built it. Never in a consumer's build.
 #[allow(clippy::panic, clippy::unwrap_used, clippy::expect_used)]
 pub mod test_helpers {
-    use crate::format::{HEADER_SIZE, SECTION_TABLE_SIZE};
+    use crate::format::{
+        crc32, reader_version, HEADER_SIZE, SECTION_ENTRY_SIZE, SIGNATURE, TABLE_PREFIX_SIZE,
+    };
 
     /// Narrow to `u16`, panicking rather than silently truncating.
     ///
@@ -799,16 +820,19 @@ pub mod test_helpers {
 
     /// Build valid island table binary data with slot_ids support.
     ///
-    /// Tuple: `(id, trigger, props_mode, name_str_idx, byte_offset, slot_ids)`
+    /// Tuple: `(id, trigger, obsolete_mode, name_str_idx, byte_offset, slot_ids)`
     pub fn build_island_table(entries: &[(u16, u8, u8, u32, u32, &[u16])]) -> Vec<u8> {
         let mut buf = Vec::new();
         buf.extend_from_slice(&to_u16(entries.len()));
-        for &(id, trigger, props_mode, name_str_idx, byte_offset, slot_ids) in entries {
+        for &(id, trigger, _obsolete_mode, name_str_idx, byte_offset, slot_ids) in entries {
+            buf.extend_from_slice(&to_u16(17 + 2 * slot_ids.len()));
             buf.extend_from_slice(&id.to_le_bytes());
             buf.push(trigger);
-            buf.push(props_mode);
+            buf.push(0);
             buf.extend_from_slice(&name_str_idx.to_le_bytes());
             buf.extend_from_slice(&byte_offset.to_le_bytes());
+            buf.extend_from_slice(&0xffffu16.to_le_bytes());
+            buf.push(0); // no digest until FORMA-105
             buf.extend_from_slice(&to_u16(slot_ids.len()));
             for &slot_id in slot_ids.iter() {
                 buf.extend_from_slice(&slot_id.to_le_bytes());
@@ -948,12 +972,12 @@ pub mod test_helpers {
 
     // -- Full-file builder --------------------------------------------------
 
-    /// Build a minimal valid FMIR v2 binary file for testing.
+    /// Build a minimal valid FMIR v3 binary file for testing.
     ///
     /// * `strings` -- list of string table entries
     /// * `slots` -- list of `(slot_id, name_str_idx, type_hint_byte, source_byte, default_bytes)` tuples
     /// * `opcodes` -- raw opcode bytes (already assembled)
-    /// * `islands` -- list of `(id, trigger_byte, props_mode_byte, name_str_idx, byte_offset, slot_ids)` tuples
+    /// * `islands` -- list of `(id, trigger_byte, obsolete_mode_byte, name_str_idx, byte_offset, slot_ids)` tuples
     pub fn build_minimal_ir(
         strings: &[&str],
         slots: &[(u16, u32, u8, u8, &[u8])],
@@ -964,46 +988,46 @@ pub mod test_helpers {
         let slot_section = build_slot_table(slots);
         let island_section = build_island_table(islands);
 
-        // Section layout: header(16) + section_table(32) = 48 bytes before first section.
-        let data_start = HEADER_SIZE + SECTION_TABLE_SIZE;
+        build_ir_sections(&[
+            (1, 1, opcodes),
+            (2, 1, &string_section),
+            (3, 1, &slot_section),
+            (4, 1, &island_section),
+            (5, 1, &[1, 0, 0, 0]),
+        ])
+    }
 
-        // Order of sections in the file: bytecode, strings, slots, islands
-        let bytecode_offset = data_start;
-        let bytecode_size = opcodes.len();
-
-        let string_offset = bytecode_offset + bytecode_size;
-        let string_size = string_section.len();
-
-        let slot_offset = string_offset + string_size;
-        let slot_size = slot_section.len();
-
-        let island_offset = slot_offset + slot_size;
-        let island_size = island_section.len();
-
-        // Build header
+    /// Build a v3 module from arbitrary sections, for fault injection and protocol tests.
+    pub fn build_ir_sections(sections: &[(u16, u16, &[u8])]) -> Vec<u8> {
         let mut buf = Vec::new();
-        buf.extend_from_slice(b"FMIR");
-        buf.extend_from_slice(&2u16.to_le_bytes()); // version
-        buf.extend_from_slice(&0u16.to_le_bytes()); // flags
-        buf.extend_from_slice(&0u64.to_le_bytes()); // source_hash
-
-        // Build section table (4 sections: bytecode, strings, slots, islands)
-        buf.extend_from_slice(&to_u32(bytecode_offset));
-        buf.extend_from_slice(&to_u32(bytecode_size));
-        buf.extend_from_slice(&to_u32(string_offset));
-        buf.extend_from_slice(&to_u32(string_size));
-        buf.extend_from_slice(&to_u32(slot_offset));
-        buf.extend_from_slice(&to_u32(slot_size));
-        buf.extend_from_slice(&to_u32(island_offset));
-        buf.extend_from_slice(&to_u32(island_size));
-
-        // Append section data
-        buf.extend_from_slice(opcodes);
-        buf.extend_from_slice(&string_section);
-        buf.extend_from_slice(&slot_section);
-        buf.extend_from_slice(&island_section);
-
+        buf.extend_from_slice(&SIGNATURE);
+        for v in reader_version() {
+            buf.extend_from_slice(&v.to_le_bytes());
+        }
+        buf.extend_from_slice(&[0; 10]); // body length, CRC, reserved
+        buf.extend_from_slice(&to_u16(sections.len()));
+        buf.extend_from_slice(&[0; 2]);
+        let mut offset = HEADER_SIZE + TABLE_PREFIX_SIZE + SECTION_ENTRY_SIZE * sections.len();
+        for &(id, flags, bytes) in sections {
+            buf.extend_from_slice(&id.to_le_bytes());
+            buf.extend_from_slice(&flags.to_le_bytes());
+            buf.extend_from_slice(&to_u32(offset));
+            buf.extend_from_slice(&to_u32(bytes.len()));
+            offset += bytes.len();
+        }
+        for &(_, _, bytes) in sections {
+            buf.extend_from_slice(bytes);
+        }
+        restamp(&mut buf);
         buf
+    }
+
+    /// Restamp length and checksum after a deliberate structural mutation.
+    pub fn restamp(buf: &mut [u8]) {
+        let body_len = to_u32(buf.len() - HEADER_SIZE);
+        buf[14..18].copy_from_slice(&body_len);
+        let checksum = crc32(&[&buf[..18], &buf[22..]]);
+        buf[18..22].copy_from_slice(&checksum.to_le_bytes());
     }
 }
 
@@ -1015,7 +1039,7 @@ pub mod test_helpers {
 mod tests {
     use super::test_helpers::*;
     use super::*;
-    use crate::format::{IrError, IslandTrigger, PropsMode, SlotSource, SlotType};
+    use crate::format::{IrError, IslandTrigger, SlotSource, SlotType};
 
     // -- StringTable tests --------------------------------------------------
 
@@ -1072,7 +1096,7 @@ mod tests {
     fn parse_slot_table() {
         let data = build_slot_table(&[
             (1, 0, 0x01, 0x00, &[]), // slot_id=1, name_str_idx=0, type=Text, source=Server, no default
-            (2, 1, 0x03, 0x01, &[0x42]), // slot_id=2, name_str_idx=1, type=Number, source=Client, 1-byte default
+            (2, 1, 0x03, 0x01, b"7"), // slot_id=2, name_str_idx=1, type=Number, source=Client, 1-byte default
         ]);
         let table = SlotTable::parse(&data).unwrap();
 
@@ -1089,7 +1113,7 @@ mod tests {
         assert_eq!(entries[1].name_str_idx, 1);
         assert_eq!(entries[1].type_hint, SlotType::Number);
         assert_eq!(entries[1].source, SlotSource::Client);
-        assert_eq!(entries[1].default_bytes, vec![0x42]);
+        assert_eq!(entries[1].default_bytes, b"7");
     }
 
     #[test]
@@ -1113,7 +1137,7 @@ mod tests {
         let entry = &table.entries()[0];
         assert_eq!(entry.id, 1);
         assert_eq!(entry.trigger, IslandTrigger::Visible);
-        assert_eq!(entry.props_mode, PropsMode::Inline);
+        assert_eq!(entry.schema_object, 0xffff);
         assert_eq!(entry.name_str_idx, 5);
         assert_eq!(entry.slot_ids, Vec::<u16>::new());
     }
@@ -1128,7 +1152,7 @@ mod tests {
         let entry = &table.entries()[0];
         assert_eq!(entry.id, 0);
         assert_eq!(entry.trigger, IslandTrigger::Load);
-        assert_eq!(entry.props_mode, PropsMode::Inline);
+        assert_eq!(entry.schema_object, 0xffff);
         assert_eq!(entry.slot_ids, vec![0, 1]);
     }
 
@@ -1151,7 +1175,7 @@ mod tests {
         let data = build_minimal_ir(&["div"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
 
-        assert_eq!(module.header.version, 2);
+        assert_eq!(module.header.writer, crate::format::reader_version());
         assert_eq!(module.strings.get(0).unwrap(), "div");
         assert_eq!(module.strings.len(), 1);
         assert_eq!(module.slots.len(), 0);
@@ -1207,7 +1231,7 @@ mod tests {
         let entry = &module.islands.entries()[0];
         assert_eq!(entry.id, 1);
         assert_eq!(entry.trigger, IslandTrigger::Load);
-        assert_eq!(entry.props_mode, PropsMode::Inline);
+        assert_eq!(entry.schema_object, 0xffff);
         assert_eq!(entry.name_str_idx, 0);
         assert_eq!(module.strings.get(entry.name_str_idx).unwrap(), "Counter");
     }
@@ -1219,30 +1243,23 @@ mod tests {
         let err = IrModule::parse(data).unwrap_err();
         match err {
             IrError::BufferTooShort {
-                expected: 16,
+                expected: 24,
                 actual: 6,
             } => {}
-            other => panic!("expected BufferTooShort(16, 6), got {other:?}"),
+            other => panic!("expected BufferTooShort(24, 6), got {other:?}"),
         }
     }
 
     #[test]
     fn parse_ir_rejects_bad_section_bounds() {
-        // Build a valid file, then corrupt a section descriptor so it extends past EOF.
-        let opcodes = encode_text(0);
-        let mut data = build_minimal_ir(&["x"], &[], &opcodes, &[]);
-
-        // Corrupt section 3 (island table) size to be huge.
-        // Section table starts at offset 16. Section 3 is at 16 + 3*8 = 40.
-        // Size field is at offset 44 (40 + 4).
-        let big_size: u32 = 99999;
-        data[44..48].copy_from_slice(&big_size.to_le_bytes());
-
-        let err = IrModule::parse(&data).unwrap_err();
-        match err {
-            IrError::SectionOutOfBounds { section: 3, .. } => {}
-            other => panic!("expected SectionOutOfBounds for section 3, got {other:?}"),
-        }
+        let mut data = build_minimal_ir(&["x"], &[], &encode_text(0), &[]);
+        // Fourth descriptor's length, at entry offset 28+3*12+8.
+        data[72..76].copy_from_slice(&99999u32.to_le_bytes());
+        restamp(&mut data);
+        assert_eq!(
+            IrModule::parse(&data).unwrap_err(),
+            IrError::SectionsDoNotTile
+        );
     }
 
     #[test]
@@ -1362,9 +1379,17 @@ mod tests {
 
     #[test]
     fn island_table_rejects_count_the_section_cannot_hold() {
-        let data = 65535u16.to_le_bytes().to_vec();
-        let err = IslandTableParsed::parse(&data).unwrap_err();
-        assert!(matches!(err, IrError::BufferTooShort { .. }));
+        let count = 4096u16.to_le_bytes();
+        assert!(matches!(
+            IslandTableParsed::parse(&count),
+            Err(IrError::BufferTooShort { .. })
+        ));
+        assert_eq!(
+            IslandTableParsed::parse(&4097u16.to_le_bytes())
+                .unwrap_err()
+                .code(),
+            "LOAD-107"
+        );
     }
 
     // -- Cross-table validation (F-12 / F-16) -------------------------------

@@ -48,6 +48,24 @@ test('version preparation changes seven manifests, exact internal requirements a
   assert(dev.get('Cargo.toml').includes('3.0.1-dev'));
   assert(![...dev.keys()].some(p => p.includes('/templates/')), 'development alignment must preserve A2 template pins');
 });
+test('version preparation keeps every Cargo workspace aligned without changing external pins', () => {
+  const paths = ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock'];
+  const originals = new Map(paths.map(path => [path, readFileSync(join(ROOT, path), 'utf8')]));
+  const blocks = text => text.split(/(?=\[\[package\]\])/);
+  const isInternal = block => /^name = "forma-(?:ir|ir-derive|server)"$/m.test(block);
+  for (const version of ['3.0.1-dev', '3.0.0-alpha.1', '3.0.0']) {
+    const files = versionFiles(ROOT, version);
+    for (const [path, original] of originals) {
+      const prepared = files.get(path);
+      assert.equal(typeof prepared, 'string', `${path}: version preparation must include this workspace`);
+      const local = blocks(prepared).filter(isInternal);
+      assert(local.length, `${path}: fixture must contain an internal package`);
+      for (const block of local) assert.equal(/^version = "([^"]+)"$/m.exec(block)?.[1], version, path);
+      assert.deepEqual(blocks(prepared).filter(block => !isInternal(block)), blocks(original).filter(block => !isInternal(block)), `${path}: external versions, dependencies and checksums must remain byte-identical`);
+      assert.equal(readFileSync(join(ROOT, path), 'utf8'), original, 'versionFiles must stay pure');
+    }
+  }
+});
 test('version preparation remains valid under the actual internal dependency guard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-version-guard-'));
   try {

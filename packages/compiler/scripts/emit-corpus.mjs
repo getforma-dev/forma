@@ -12,7 +12,7 @@
  * the emitter's own mental model.
  *
  * Usage:
- *   npm run emit:corpus                # -> packages/compiler/ir-corpus/
+ *   npm run emit:corpus                # -> crates/forma-ir/tests/fixtures/js-emitter/
  *   npm run emit:corpus -- <out-dir>   # -> <out-dir>/
  */
 
@@ -20,11 +20,11 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { generateRealIr } from '../dist/index.js';
+import { generateRealIr, dumpFmir } from '../dist/index.js';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const CORPUS_DIR = resolve(scriptDir, '../tests/fixtures/ir-corpus');
-const DEFAULT_OUT_DIR = resolve(scriptDir, '../ir-corpus');
+const DEFAULT_OUT_DIR = resolve(scriptDir, '../../../crates/forma-ir/tests/fixtures/js-emitter');
 
 /** Island names the emitter mints when it does NOT understand a construct: an
  *  unresolvable subtree becomes `island_<id>` and a createList it cannot walk
@@ -100,6 +100,7 @@ for (const name of cases) {
   }
 
   writeFileSync(join(outDir, `${name}.ir`), result.binary);
+  writeFileSync(join(outDir, `${name}.dump`), dumpFmir(result.binary));
   const islands = result.islands.length === 0
     ? 'no islands'
     : result.islands.map((i) => `${i.id}:${i.name}`).join(', ');

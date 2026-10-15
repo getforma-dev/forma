@@ -19,7 +19,8 @@ export {
   type DiagnosticChainLink,
   type DiagnosticEntry,
 } from './diagnostics.js';
-export { IrEmitContext } from './ir-emit.js';
+export { IrEmitContext, type PropsSchema, type SchemaField, type SchemaType, type KeyPath, type SourcePosition } from './ir-emit.js';
+export { dumpFmir, readFmirContainer, encodeFmirSections, crc32, baseWriterVersion, COMPILER_WRITER_VERSION, FmirContainerError, type WriterVersion, type FmirSection } from './fmir.js';
 export {
   ComponentAnalyzer,
   type AnalyzerLookupOptions,

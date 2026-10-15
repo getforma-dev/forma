@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "commit": "f7d99761ff6fe6e9e76528c09cfd8ced92ced914",
+  "passed": false,
+  "tests": [
+    {
+      "name": "forma-ir: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "b361b75313605694af44383ecc37b9f44d2317dc413d4c6be949c7c6d6ee26af",
+      "auditLockSha256": "b361b75313605694af44383ecc37b9f44d2317dc413d4c6be949c7c6d6ee26af"
+    },
+    {
+      "name": "forma-ir-derive: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "9826fa539d088720e7ab52950d2afb86a8d65a433225973359a0abe8e8bb9121",
+      "auditLockSha256": "9826fa539d088720e7ab52950d2afb86a8d65a433225973359a0abe8e8bb9121"
+    },
+    {
+      "name": "forma-server: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "ffa3b101aca66cf481a23e5e4356fd44eb03bafcbbafba632c61064fe4a83072",
+      "auditLockSha256": "930edf02959408b8d34ec512188d2c0cbad7044a4255e3ffe0d2ab4a88a321df"
+    },
+    {
+      "name": "fresh advisories over every exact shipped crate lock",
+      "passed": true,
+      "seconds": 2.738
+    },
+    {
+      "name": "packed CLI has an isolated, locked runtime dependency installation",
+      "passed": true,
+      "seconds": 0.346
+    },
+    {
+      "name": "packed compiler emits the frozen corpus read by packed forma-ir",
+      "passed": true,
+      "seconds": 5.487
+    }
+  ],
+  "pending": {
+    "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+    "FORMA-112": "manifest 2 and runtime version-pair rejection",
+    "FORMA-102": "declared props and bind mutation suite",
+    "FORMA-144": "both templates use the milestone's API",
+    "FORMA-188": "fixture applications and skew drill",
+    "FORMA-191": "release measurements"
+  },
+  "signatures": "registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256",
+  "templates": [],
+  "elapsedSeconds": 11.239
+}

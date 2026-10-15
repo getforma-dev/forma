@@ -73,18 +73,7 @@ export const MAX_RESOLVE_DEPTH = 3;
 // Opcodes
 // ---------------------------------------------------------------------------
 
-const OP_OPEN_TAG    = 0x01;
-const OP_CLOSE_TAG   = 0x02;
-const OP_VOID_TAG    = 0x03;
-const OP_TEXT        = 0x04;
-const OP_DYN_TEXT    = 0x05;
-const OP_DYN_ATTR    = 0x06;
-const OP_SHOW_IF     = 0x07;
-const OP_SHOW_ELSE   = 0x08;
-const OP_LIST         = 0x0A;
-const OP_ISLAND_START = 0x0B;
-const OP_ISLAND_END   = 0x0C;
-const OP_PROP         = 0x12;
+import { OP_OPEN_TAG, OP_CLOSE_TAG, OP_VOID_TAG, OP_TEXT, OP_DYN_TEXT, OP_DYN_ATTR, OP_SHOW_IF, OP_SHOW_ELSE, OP_LIST, OP_ISLAND_START, OP_ISLAND_END, OP_PROP } from './fmir-constants.js';
 
 // ---------------------------------------------------------------------------
 // Slot Type Hints (defined beside the encoder that writes them — ir-emit.ts)
@@ -1322,7 +1311,7 @@ export function walkCallExpression(
             } else {
               // Register island and emit ISLAND_START
               const byteOffset = ctx.opcodeLen();
-              const id = ctx.addIsland(componentName, 0x01, 0x01, [], byteOffset);
+              const id = ctx.addIsland(componentName, 0x01, [], byteOffset);
               ctx.emit(OP_ISLAND_START);
               ctx.emitU16(id);
 
@@ -2823,8 +2812,8 @@ function emitIsland(ctx: IrEmitContext, name?: string): void {
   const byteOffset = ctx.opcodeLen();
   // addIsland increments nextIslandCounter and registers the island in the table.
   // Use the returned id for the fallback name to avoid double-increment.
-  // trigger: 0x01 = Load, propsMode: 0x01 = Inline (must match Rust IslandTrigger/PropsMode enums)
-  const id = ctx.addIsland(name || `island_${ctx.peekNextIslandId()}`, 0x01, 0x01, [], byteOffset);
+  // trigger: 0x01 = Load; v3 removes PropsMode from the wire
+  const id = ctx.addIsland(name || `island_${ctx.peekNextIslandId()}`, 0x01, [], byteOffset);
   ctx.emit(OP_ISLAND_START);
   ctx.emitU16(id);
 
@@ -2937,10 +2926,10 @@ function emitBrowserOnlyIsland(
   }
 
   // The host: the empty shell every island root has. trigger 0x01 = Load,
-  // propsMode 0x01 = Inline; no slot ids, so the walker writes no props of
+  // No slot ids, so the walker writes no props of
   // its own beside the static ones.
   const byteOffset = ctx.opcodeLen();
-  const id = ctx.addIsland(componentName, 0x01, 0x01, [], byteOffset);
+  const id = ctx.addIsland(componentName, 0x01, [], byteOffset);
   ctx.emit(OP_ISLAND_START);
   ctx.emitU16(id);
   const tagIdx = ctx.addString('div');

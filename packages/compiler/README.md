@@ -149,6 +149,26 @@ which returns `{ binary, islands }`. (Through 0.2.0 the plugin also dropped a
 `<page>.islands.json` sidecar into the output directory — build metadata in the
 served asset tree, read by nothing but a since-removed `@getforma/build` step.)
 
+### FMIR v3 compatibility
+
+The compiler emits [FMIR v3](../../docs/FMIR-FORMAT.md): a 24-byte header,
+a section table, and required bytecode, strings, slots, islands and page props
+schema. CRC-32 covers every byte except its own four-byte field. The writer's
+base major/minor/patch comes from the compiler package version and must match
+forma-ir's base version exactly; `3.0.0-dev` and `3.0.0` both encode `3,0,0`.
+Use aligned compiler and Rust packages and rebuild older `.ir` files. V2 modules
+are refused with a rebuild diagnostic.
+
+`dumpFmir(binary)` exports the same lossless canonical text as Rust's `dump_ir`,
+including section flags, unknown optional payloads and island extension bytes.
+`IrEmitContext` also exposes `setPropsSchema`, `addKeyPath`,
+`setSourcePositions` and `setIslandSchemaObject` for format producers. Current
+AST compilation emits empty page schema object 0, unkeyed lists and no source
+positions until the corresponding schema/key extraction work lands. The
+existing HTML output and slot bridge remain unchanged. Island registration is
+`addIsland(name, trigger, slotIds, byteOffset, schemaObject?)`; PropsMode is no
+longer part of the API or wire format.
+
 ### Build diagnostics
 
 The compiler renders what it can prove and defers the rest to the client. The

@@ -25,6 +25,12 @@ const README = read('README.md');
 const SECURITY = read('SECURITY.md');
 const CSP = read('CSP.md');
 const CHANGELOG = read('CHANGELOG.md');
+// A -dev staging set has not been published. CDN and support docs must continue
+// to name the last actual release; ordinary release versions retain the old gate.
+const shippedVersion = pkg.version.endsWith('-dev')
+  ? /^## \[([0-9]+\.[0-9]+\.[0-9]+)\]/m.exec(CHANGELOG)?.[1]
+  : pkg.version;
+if (!shippedVersion) throw new Error('CHANGELOG.md must identify the last shipped version');
 const CONTRIBUTING = read('CONTRIBUTING.md');
 const LEDGER = read('docs/archive/2026-08-05-hardening-audit.md');
 const PERFORMANCE = read('docs/PERFORMANCE.md');
@@ -63,7 +69,7 @@ describe('version pins', () => {
     const pinned = [README, RUNTIME_DOC, CDN_DOC].join('\n');
     const pins = [...pinned.matchAll(/@getforma\/core@([\d.]+)/g)].map((m) => m[1]);
     expect(pins.length, 'the docs should still contain concrete pins').toBeGreaterThan(0);
-    for (const pin of pins) expect(pin).toBe(pkg.version);
+    for (const pin of pins) expect(pin).toBe(shippedVersion);
   });
 
   it("the runtime header's CDN pin is the current package version", () => {
@@ -73,12 +79,12 @@ describe('version pins', () => {
     const runtime = read('src/runtime.ts');
     const pins = [...runtime.matchAll(/@getforma\/core@([\d.]+)/g)].map((m) => m[1]);
     expect(pins.length, 'src/runtime.ts should still carry its CDN usage example').toBe(1);
-    expect(pins[0]).toBe(pkg.version);
+    expect(pins[0]).toBe(shippedVersion);
   });
 
   it('the changelog has an Unreleased section above the newest release', () => {
     const unreleased = CHANGELOG.indexOf('## [Unreleased]');
-    const newest = CHANGELOG.indexOf(`## [${pkg.version}]`);
+    const newest = CHANGELOG.indexOf(`## [${shippedVersion}]`);
     expect(unreleased, 'CHANGELOG.md needs an ## [Unreleased] heading').toBeGreaterThan(-1);
     expect(newest).toBeGreaterThan(unreleased);
   });
@@ -96,15 +102,15 @@ describe('version pins', () => {
     expect(rows.length, 'the table should still have rows').toBeGreaterThan(2);
     expect(rows.at(-1), 'the newest row describes a build nobody can install yet').toBe('Unreleased');
     expect(
-      rows.at(-2)!.endsWith(pkg.version),
-      `CSP.md's last released row ("${rows.at(-2)}") must end at ${pkg.version}`,
+      rows.at(-2)!.endsWith(shippedVersion),
+      `CSP.md's last released row ("${rows.at(-2)}") must end at ${shippedVersion}`,
     ).toBe(true);
   });
 
   it('SECURITY.md supports the version that is actually shipping', () => {
     // The table listed only 1.0.x while 1.5.0 was on npm, so a reporter reading
     // it concluded the current release was out of support.
-    const [major, minor] = pkg.version.split('.');
+    const [major, minor] = shippedVersion.split('.');
     const table = SECURITY.slice(SECURITY.indexOf('## Supported Versions'));
     expect(table).toContain(`${major}.${minor}.x`);
   });

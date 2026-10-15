@@ -10,7 +10,7 @@
 //! rust-embed reads the bytes compiled in and nothing on disk can change
 //! them; what a release build does instead (no read after start) is pinned
 //! on the release profile by
-//! `ir_compat::reload_tests::a_release_build_reads_nothing_per_request_and_a_debug_build_rereads`.
+//! `ir::reload_tests::a_release_build_reads_nothing_per_request_and_a_debug_build_rereads`.
 #![cfg(debug_assertions)]
 // `config_script` is a field every 0.2.x literal names.
 #![allow(deprecated)]
@@ -163,9 +163,9 @@ fn an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_prev
         }
         let logged = warnings.0.lock().expect("lock").clone();
         assert_eq!(logged.len(), 1, "{logged:?}");
-        assert_eq!(logged[0].0, "LOAD-103");
+        assert_eq!(logged[0].0, "LOAD-104");
         assert!(
-            logged[0].1.contains("route /: IR file page.ir: LOAD-103"),
+            logged[0].1.contains("route /: IR file page.ir: LOAD-104"),
             "{logged:?}"
         );
 

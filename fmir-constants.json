@@ -1,0 +1,155 @@
+{
+  "signature": [
+    137,
+    70,
+    77,
+    73,
+    13,
+    10,
+    26,
+    10
+  ],
+  "layout": {
+    "HEADER_SIZE": 24,
+    "TABLE_PREFIX_SIZE": 4,
+    "SECTION_ENTRY_SIZE": 12,
+    "IR_VERSION": 3
+  },
+  "limits": {
+    "MAX_MODULE_SIZE": 16777216,
+    "MAX_SECTIONS": 64,
+    "MAX_STRINGS": 1048576,
+    "MAX_SLOTS": 65535,
+    "MAX_ISLANDS": 4096,
+    "MAX_SCHEMA_ITEMS": 1024,
+    "MAX_TYPE_DEPTH": 16,
+    "MAX_KEY_SEGMENTS": 32,
+    "MAX_CONTROL_DEPTH": 64,
+    "MAX_LIST_DEPTH": 4
+  },
+  "crc": {
+    "CRC_POLYNOMIAL": 3988292384,
+    "CRC_CHECK_VALUE": 3421780262
+  },
+  "sections": {
+    "SECTION_BYTECODE": 1,
+    "SECTION_STRINGS": 2,
+    "SECTION_SLOTS": 3,
+    "SECTION_ISLANDS": 4,
+    "SECTION_PROPS_SCHEMA": 5,
+    "SECTION_KEY_PATHS": 6,
+    "SECTION_SOURCE_POSITIONS": 7,
+    "SECTION_BUILD_IDENTITY": 8,
+    "SECTION_DEPLOYMENT": 9
+  },
+  "flags": {
+    "SECTION_REQUIRED": 1
+  },
+  "slot_types": {
+    "SLOT_TYPE_TEXT": 1,
+    "SLOT_TYPE_BOOL": 2,
+    "SLOT_TYPE_NUMBER": 3,
+    "SLOT_TYPE_ARRAY": 4,
+    "SLOT_TYPE_OBJECT": 5
+  },
+  "slot_sources": {
+    "SLOT_SOURCE_SERVER": 0,
+    "SLOT_SOURCE_CLIENT": 1
+  },
+  "island_triggers": {
+    "TRIGGER_LOAD": 1,
+    "TRIGGER_VISIBLE": 2,
+    "TRIGGER_INTERACTION": 3,
+    "TRIGGER_IDLE": 4
+  },
+  "schema_types": {
+    "SCHEMA_BOOLEAN": 1,
+    "SCHEMA_STRING": 2,
+    "SCHEMA_NUMBER": 3,
+    "SCHEMA_DATE": 4,
+    "SCHEMA_ENUM": 5,
+    "SCHEMA_ARRAY": 6,
+    "SCHEMA_OPTIONAL": 7,
+    "SCHEMA_OBJECT": 8
+  },
+  "reserved_opcodes": [
+    9,
+    13,
+    14,
+    15,
+    16,
+    17
+  ],
+  "load_codes": {
+    "LOAD_101": "LOAD-101",
+    "LOAD_102": "LOAD-102",
+    "LOAD_103": "LOAD-103",
+    "LOAD_104": "LOAD-104",
+    "LOAD_105": "LOAD-105",
+    "LOAD_106": "LOAD-106",
+    "LOAD_107": "LOAD-107",
+    "LOAD_108": "LOAD-108"
+  },
+  "opcodes": [
+    {
+      "name": "OP_OPEN_TAG",
+      "value": 1,
+      "operands": "str_idx:u32 attr_count:u16 attrs:(key:u32,val:u32)[]"
+    },
+    {
+      "name": "OP_CLOSE_TAG",
+      "value": 2,
+      "operands": "str_idx:u32"
+    },
+    {
+      "name": "OP_VOID_TAG",
+      "value": 3,
+      "operands": "str_idx:u32 attr_count:u16 attrs:(key:u32,val:u32)[]"
+    },
+    {
+      "name": "OP_TEXT",
+      "value": 4,
+      "operands": "str_idx:u32"
+    },
+    {
+      "name": "OP_DYN_TEXT",
+      "value": 5,
+      "operands": "slot_id:u16 marker_id:u16"
+    },
+    {
+      "name": "OP_DYN_ATTR",
+      "value": 6,
+      "operands": "attr_str_idx:u32 slot_id:u16"
+    },
+    {
+      "name": "OP_SHOW_IF",
+      "value": 7,
+      "operands": "slot_id:u16 then_len:u32 else_len:u32 then:bytes SHOW_ELSE else:bytes"
+    },
+    {
+      "name": "OP_SHOW_ELSE",
+      "value": 8,
+      "operands": ""
+    },
+    {
+      "name": "OP_LIST",
+      "value": 10,
+      "operands": "slot_id:u16 item_slot_id:u16 body_len:u32 body:bytes"
+    },
+    {
+      "name": "OP_ISLAND_START",
+      "value": 11,
+      "operands": "island_id:u16"
+    },
+    {
+      "name": "OP_ISLAND_END",
+      "value": 12,
+      "operands": "island_id:u16"
+    },
+    {
+      "name": "OP_PROP",
+      "value": 18,
+      "operands": "src_slot_id:u16 prop_str_idx:u32 target_slot_id:u16"
+    }
+  ]
+}

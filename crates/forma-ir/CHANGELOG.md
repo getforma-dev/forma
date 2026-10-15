@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### FMIR v3 (FORMA-185)
+
+- Replace the v2 container with the reviewed 24-byte header and CRC over all bytes except the
+  stored CRC field; enforce exact Cargo base-version triples and a 16 MiB module ceiling.
+- Parse variable sections, bounded acyclic props schemas, island schema/digest fields, list key
+  paths and optional source positions. Validate every string index during load and expose
+  non-exhaustive `IrError::code()` diagnostics. V2 inputs return a rebuild error.
+- Remove the six reserved opcode variants and PropsMode. Preserve the compiler corpus's HTML.
+- Share generated constants with the TypeScript writer. Canonical dumps retain every section's
+  bytes; reviewed fixtures, boundary tests and stable fuzz replay pin the contract.
+
+
 ### Changed
 - **The list-walk time gate (`tests/list_scaling.rs`) compares 100 and 3,200
   rows, bounded at 64x** (A2 audit F17b, FORMA-180): it compared 100 and
