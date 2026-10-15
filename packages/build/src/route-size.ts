@@ -399,7 +399,7 @@ export function formatSizeReport(report: SizeReport): string[] {
       `   ${route}  ${kind}` +
         `  Forma ${bytes(size.forma.gzip)} of ${bytes(size.ceilings.forma)} B` +
         `  JavaScript ${bytes(size.javascript.gzip)} of ${bytes(size.ceilings.javascript)} B` +
-        `  (Brotli ${bytes(size.forma.brotli)} and ${bytes(size.javascript.brotli)})` +
+        `  (Brotli: Forma ${bytes(size.forma.brotli)}, JavaScript ${bytes(size.javascript.brotli)})` +
         `  ${size.files.map((file) => file.file).join(' ')}` +
         (over.length > 0 ? `  OVER: ${over.join(', ')}` : ''),
     );
