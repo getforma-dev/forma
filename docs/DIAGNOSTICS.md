@@ -1011,8 +1011,8 @@ decision brief L-55):
 | Class | Chosen by | Forma's code | All of the route's JavaScript |
 | --- | --- | --- | --- |
 | `no-interactive-region` | a server-rendered route whose page has no island, or a route that lists no script | none | none: a service worker counted |
-| `islands` | a server-rendered route with at least one island | 25,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
-| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as islands |
+| `islands` | a server-rendered route with at least one island | 27,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
+| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 27,500 B | as islands |
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed from
 the bundler's metafile (each input's share of the file's raw bytes, applied to

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — N2 is 27,500 B (L-58)
+
+- The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
+  **27,500 B gzip -9**, up from 25,500 B: the founder's decision L-58 (decision
+  brief commit `f27cce6`), one ceiling for all routes, 1 KB = 1,000 B. An island
+  holding a client `createList` loads 26,366 B of Forma code (FORMA-188's
+  `negative/list-island`), over the old figure and under the new. `BUILD-819`,
+  `size-report.json` (`ceilings.forma`, each route's `ceilings.forma`) and the
+  printed report read the constant; the page and canvas JavaScript ceilings (75
+  and 365 KiB) are unchanged. Not configurable.
+
 ## Unreleased — the size report with route classes and ceilings (FORMA-190)
 
 - **One report, extended.** The size report of FORMA-021 now classifies each
