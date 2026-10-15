@@ -2,7 +2,7 @@
  * SSR regression fixtures across the whole stack (FORMA-001, stage 0).
  *
  * Each case in e2e/ssr/cases/ is compiled by THIS repo's compiler and build
- * package, rendered by forma's Rust walker through `forma_server::render_page`,
+ * package, rendered by forma's Rust walker through the public typed Pages API,
  * and adopted in Chromium by the FormaJS checkout under test (e2e/ssr/build.sh;
  * served by e2e/ssr/serve.mjs with each page's own CSP). The tests read the
  * parsed DOM, live control values and FormData before JavaScript, after
@@ -17,7 +17,7 @@
  * (a precondition fails before the marker); only the named defect is an
  * expected failure; and when the fix lands, the unexpected pass turns CI red
  * until that one line is removed. FORMA-002 and FORMA-003 have flipped theirs
- * (each now says "Fixed by"); generic-state is still expected to fail.
+ * (each now says "Fixed by"); generic-state is now delivered by FORMA-103.
  *
  * The table "every case is server-rendered and activates" adds the shared
  * controls (the walker's HTML, activation, Phase 1, no console errors), and
@@ -31,7 +31,7 @@ import { SSR_ORIGIN as ORIGIN } from './origin';
 
 /** Every case under e2e/ssr/cases/, and how its page reports activation. */
 const CASES = {
-  'generic-state': 'mount',
+  'generic-state': 'island',
   'root-fragment': 'mount',
   'textarea-child': 'mount',
   'textarea-value': 'mount',
@@ -48,8 +48,8 @@ const SETTLE = { timeout: 2_000 };
 
 test.use({ baseURL: ORIGIN });
 
-// Playwright reuses whatever server already answers on the SSR port, which may
-// be another clone's, built from another FormaJS or forma. Refuse to test it.
+// Playwright refuses existing listeners; independently verify the served
+// site belongs to this clone and this build.
 test.beforeAll(async () => {
   const answer = await fetch(`${ORIGIN}/__site`).then((r) => r.json() as Promise<{ site: string; built: boolean }>);
   expect(answer.site, `the server on ${ORIGIN} serves another clone's site; stop it or set FORMA_SSR_E2E_PORT`)
@@ -178,7 +178,7 @@ test.describe('every case is server-rendered and activates', () => {
   }
 });
 
-// ── Generic state on the mount() path (audit verification: v1 run 1) ──────
+// ── Generic state through a declared island (audit verification: v1 run 1) ──────
 
 test.describe('generic-state', () => {
   test('generic-state: the walker renders the server value 7 before JavaScript', async ({ browser, page }) => {
@@ -191,19 +191,16 @@ test.describe('generic-state', () => {
     await held.activate();
   });
 
-  test('generic-state: the server value 7 survives activation', async ({ page }) => {
+  test('generic-state: the server value 7 survives activation and remains writable', async ({ page }) => {
     const held = await openHeld(page, 'generic-state');
     await expect(page.locator('#count')).toHaveText('7');
     await held.activate();
 
-    // Expected to fail until release B gives server state a channel to the
-    // signals (FORMA-103, DR-4) and adoption stops writing on its first run
-    // (FORMA-104, DR-5); whichever makes it pass removes this line. Today the
-    // first effect run writes the client default 0 over the server's 7. (DR-6,
-    // FORMA-105, ends mount() adoption of a server page; this case then moves
-    // into an island.)
-    test.fail();
+    // FORMA-103 supplies the declared count before the original signal runs.
+    // No wrapper reads attributes or seeds values by local variable name.
     await expect(page.locator('#count')).toHaveText('7', SETTLE);
+    await page.click('#increment');
+    await expect(page.locator('#count')).toHaveText('8', SETTLE);
   });
 });
 
@@ -429,7 +426,7 @@ test.describe('ledger-arrival', () => {
     await noJs.close();
   });
 
-  test('ledger-arrival: seeding keeps the server values through activation, and Retry runs', async ({ page }) => {
+  test('ledger-arrival: declared state keeps the server values through activation, and Retry runs', async ({ page }) => {
     const errors = watchErrors(page);
     const held = await openHeld(page, 'ledger-arrival');
     await expect(page.locator('#arrival-title')).toHaveText('Fixture Household');
@@ -463,7 +460,13 @@ test.describe('browser-only', () => {
     await expect(noJs.page.locator('#report-summary')).toHaveText('Revenue rose in every region.');
     const host = noJs.page.locator('[data-forma-component="Chart"]');
     await expect(host).toHaveAttribute('data-forma-status', 'pending');
-    await expect(host).toHaveAttribute('data-forma-props', JSON.stringify({ title: 'Sales', points: 3 }));
+    await expect(host).not.toHaveAttribute('data-forma-props');
+    await expect(host).toHaveAttribute('data-forma-state', '0');
+    const block = noJs.page.locator('head > script[type="application/json"][data-island-state]');
+    await expect(block).toHaveCount(1);
+    const state = JSON.parse((await block.textContent())!);
+    expect(state).toEqual({ v: 1, s: [], i: [{ h: await host.getAttribute('data-forma-h'), p: { title: 'Sales', points: 3 } }] });
+    expect(state.i[0].h).toMatch(/^[0-9a-f]{16}$/);
     expect(await host.evaluate((el) => el.childNodes.length), 'the host is empty').toBe(0);
     await expect(noJs.page.locator('#chart')).toHaveCount(0);
     await noJs.close();

@@ -1,5 +1,4 @@
-// Declared SSR props preserve the existing explicit island seed bridge while
-// FORMA-103 owns automatic browser state decoding and activation.
+// Native-declared props initialize the original component-local signals.
 import { h, createShow, createSignal } from '@getforma/core';
 export type ArrivalProps = {
   arrivalTitle: string; arrivalCash: string; arrivalStatus: string; arrivalSummary: boolean;
@@ -7,16 +6,6 @@ export type ArrivalProps = {
 export const defaultArrival: ArrivalProps = {
   arrivalTitle: 'Household', arrivalCash: '$0.00', arrivalStatus: 'pending', arrivalSummary: false,
 };
-export function seedArrival(props: Record<string, unknown> | null): ArrivalProps {
-  return {
-    arrivalTitle: typeof props?.arrivalTitle === 'string' ? props.arrivalTitle : defaultArrival.arrivalTitle,
-    arrivalCash: typeof props?.arrivalCash === 'string' ? props.arrivalCash : defaultArrival.arrivalCash,
-    arrivalStatus: typeof props?.arrivalStatus === 'string' ? props.arrivalStatus : defaultArrival.arrivalStatus,
-    arrivalSummary: typeof props?.arrivalSummary === 'boolean' ? props.arrivalSummary : defaultArrival.arrivalSummary,
-  };
-}
-let loadCurrent: () => Promise<void> = async () => {};
-export async function loadWorkspace(): Promise<void> { await loadCurrent(); }
 export function Arrival(props: ArrivalProps) {
   const [arrivalTitle] = createSignal(props.arrivalTitle);
   const [arrivalCash] = createSignal(props.arrivalCash);
@@ -24,7 +13,7 @@ export function Arrival(props: ArrivalProps) {
   const [arrivalStatus, setArrivalStatus] = createSignal(props.arrivalStatus);
   const [retryVisible, setRetryVisible] = createSignal(false);
   let attempts = 0;
-  loadCurrent = async () => {
+  async function loadWorkspace() {
     attempts += 1;
     setRetryVisible(false);
     try {
@@ -35,9 +24,9 @@ export function Arrival(props: ArrivalProps) {
       setArrivalStatus(`The workspace could not load (attempt ${attempts}). This snapshot is not live.`);
       setRetryVisible(true);
     }
-  };
+  }
   return (
-    <section class="arrival">
+    <section class="arrival" ref={() => { void loadWorkspace(); }}>
       <h1 id="arrival-title">{() => arrivalTitle()}</h1>
       {createShow(
         () => arrivalSummary(),
