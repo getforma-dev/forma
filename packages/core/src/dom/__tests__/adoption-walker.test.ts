@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { prepareAdoption } from '../adoption.js';
 import { h, fragment } from '../element.js';
 import { createShow } from '../show.js';
+import { __islandRegistration } from '../island-state.js';
 import { createSignal } from '../../reactive/signal.js';
 import { createEffect } from '../../reactive/effect.js';
 import { registerDisposer } from '../../reactive/root.js';
@@ -157,8 +158,9 @@ describe('private prepared descriptor walker',()=>{
     const plan=prepareAdoption(host,()=>h('div',null,createShow(on,()=>h('b',null,'old'),()=>{registerDisposer(cleanup);createEffect(()=>{n();runs();});throw new Error('branch');})),{failure});
     plan.commit();setOn(false);expect(plan.phase).toBe('aborted');expect(failure).toHaveBeenCalledOnce();expect(cleanup).toHaveBeenCalledOnce();expect(host.querySelector('b')!.textContent).toBe('old');expect(runs).toHaveBeenCalledOnce();setN(1);expect(runs).toHaveBeenCalledOnce();
   });
-  it('refuses a nested island before executing its independent component in this private checkpoint',()=>{
+  it('refuses a registered nested island without its checked host before executing the independent component',()=>{
     const {host,observer}=fixture('<div><!--f:i0--><b data-forma-island="0">child</b><!--/f:i0--></div>'),child=vi.fn(()=>h('b',null,'child'));
+    __islandRegistration(child,{h:'0123456789abcdef',schema:[[]],mode:0});
     expect(()=>prepareAdoption(host,()=>h('div',null,h(child,null)))).toThrow('FORMA_E_HYDRATE_STRUCTURE');expect(child).not.toHaveBeenCalled();expect(observer.takeRecords()).toEqual([]);observer.disconnect();
   });
 });

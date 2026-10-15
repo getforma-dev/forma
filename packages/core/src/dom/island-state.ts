@@ -41,6 +41,11 @@ const HASH = /^[0-9a-f]{16}$/;
 const stateEncoder = new TextEncoder();
 const forbidden = new Set(['__proto__', 'constructor', 'prototype']);
 const registrations = new WeakMap<(...args: never[]) => unknown, Registration>();
+const registeredComponents = new WeakSet<(...args: never[]) => unknown>();
+/** @internal Identity only; per-host checked registration retains all authority. */
+export function isRegisteredIslandComponent(component:(...args:never[])=>unknown):boolean {
+  return registeredComponents.has(component);
+}
 const own = (value: object, name: PropertyKey): boolean => Object.prototype.hasOwnProperty.call(value, name);
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 function refuse(code: IslandStateCode, detail: string): never { throw new IslandStateError(code, detail); }
@@ -63,6 +68,7 @@ export function __islandRegistration<P extends object>(
   const schema = copySchema(metadata.schema);
   const hydrate: IslandHydrateFn = (_host, props) => component(props as P);
   registrations.set(hydrate, { hydrate, component, h: metadata.h, schema, mode: metadata.mode });
+  registeredComponents.add(component);
   return hydrate;
 }
 
