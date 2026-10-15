@@ -4,6 +4,8 @@
 //! populated `SlotData`, walks the opcode stream linearly, and produces an
 //! HTML string suitable for embedding in the page.
 
+pub use crate::contracts::state::IslandState;
+use crate::contracts::state::StateBuilder;
 #[cfg(feature = "tracing")]
 use crate::format::SlotSource;
 use crate::format::{IrError, IslandTrigger, Opcode};
@@ -19,32 +21,15 @@ use std::fmt;
 struct IslandPending {
     id: u16,
     component_name: String,
-    inline_props: Option<String>,
+    occurrence: usize,
+    hash: String,
     trigger: IslandTrigger,
 }
 
-/// Serialized-JSON size above which inline island props are spilled into
-/// the shared `__forma_islands` block instead of a `data-forma-props`
-/// attribute.
-///
-/// Matches the client's documented guidance ("inline for small props, < 1KB;
-/// the script block for larger props"). Measured on the *JSON*, before HTML
-/// attribute escaping — a string-heavy payload inflates roughly 1.8x on the
-/// wire because every `"` becomes `&quot;`, so the attribute this bounds is
-/// closer to 2 KiB in the worst case.
-///
-/// The spill needs no client change: `loadIslandProps`
-/// (`@getforma/core`, src/dom/activate.ts) reads `data-forma-props` first and
-/// falls back to the shared block, and the walker emits exactly one channel
-/// per island so that precedence never has two answers to choose between.
-///
-/// An internal fragment render (`walk_island`) never spills — it cannot legally emit
-/// a second `__forma_islands` block — so an over-size fragment keeps its props
-/// inline.
-///
-/// Verified by: crates/forma-ir/src/walker.rs > "inline_props_over_the_ceiling_spill_to_the_shared_block"
-/// Verified by: crates/forma-ir/src/walker.rs > "island_fragment_keeps_over_size_props_inline"
-pub const INLINE_PROPS_MAX_BYTES: usize = 1024;
+// Historical ceilings appear only in legacy test fixtures awaiting explicit
+// state-contract migration; there is no inline/spill channel in production.
+#[cfg(test)]
+const INLINE_PROPS_MAX_BYTES: usize = 1024;
 
 /// Default cap on the HTML a single walk may produce.
 ///
@@ -94,8 +79,8 @@ struct WalkState {
     pending_island: Option<IslandPending>,
     /// Pending list-item key to inject on the next OPEN_TAG/VOID_TAG.
     pending_list_key: Option<String>,
-    /// Accumulated props for ScriptTag mode, keyed by island id.
-    script_tag_props: std::collections::BTreeMap<u16, serde_json::Value>,
+    /// Checked, owned snapshots in execution order, separate from body HTML.
+    island_state: StateBuilder,
     /// True when an OpenTag or VoidTag has been opened but the `>` has not
     /// been written yet. DYN_ATTR opcodes may still append attributes.
     pending_tag_close: bool,
@@ -125,11 +110,6 @@ struct WalkState {
     /// entries before its enclosing row unwinds. The `Vec` keeps its capacity
     /// between rows, so steady-state pushes do not allocate.
     slot_journal: Vec<(u16, SlotValue)>,
-    /// When true, fragment islands inline their props on the
-    /// root instead of accumulating into the shared `__forma_islands` block.
-    /// Set for fragment renders, where a shared block would be dropped on
-    /// return (or, if emitted, would duplicate the page's own block).
-    force_inline_props: bool,
     /// The text-only element (`textarea`, `title`, `style`, `script`) the
     /// walk is inside, if any. Inside one, no hydration marker is written; see
     /// [`TextOnlyTag`].
@@ -160,14 +140,13 @@ impl WalkState {
             list_depth: 0,
             pending_island: None,
             pending_list_key: None,
-            script_tag_props: std::collections::BTreeMap::new(),
+            island_state: StateBuilder::new(),
             pending_tag_close: false,
             pending_tag_name: String::new(),
             max_output_bytes: limits.max_output_bytes,
             list_iterations: 0,
             max_list_iterations: limits.max_list_iterations,
             slot_journal: Vec::new(),
-            force_inline_props: false,
             text_only: None,
             pending_control: PendingControl::None,
             select: None,
@@ -258,7 +237,6 @@ pub fn walk_to_html_with_limits(
     let mut slots_mut = slots.clone();
     slots_mut.apply_module_constants(module);
     walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
-    finish_page(&mut out, &state)?;
     Ok(out)
 }
 
@@ -273,28 +251,12 @@ fn initial_capacity(opcodes_len: usize) -> usize {
     opcodes_len.saturating_mul(4).min(1 << 20)
 }
 
-/// After a whole-page walk: the `__forma_islands` block for ScriptTag props.
-fn finish_page(out: &mut String, state: &WalkState) -> Result<(), IrError> {
-    if !state.script_tag_props.is_empty() {
-        let json =
-            serde_json::to_string(&state.script_tag_props).unwrap_or_else(|_| "{}".to_string());
-        push_checked(
-            out,
-            "<script id=\"__forma_islands\" type=\"application/json\">",
-            state.max_output_bytes,
-        )?;
-        push_json_script_body(out, &json, state.max_output_bytes)?;
-        push_checked(out, "</script>", state.max_output_bytes)?;
-    }
-    Ok(())
-}
-
 /// What a walk wrote, or what it had reached when it stopped.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct WalkCounts {
     /// Elements and text nodes written from the module's opcodes. Hydration
-    /// markers, comments and the `__forma_islands` data block are not nodes.
+    /// markers and comments are not nodes. State is counted by the server.
     pub nodes: usize,
     /// Bytes of HTML written: what [`WalkLimits::max_output_bytes`] bounds.
     pub bytes: usize,
@@ -309,6 +271,9 @@ pub struct WalkCounts {
 pub struct WalkOutput {
     /// The page's HTML, as [`walk_to_html_with_limits`] writes it.
     pub html: String,
+    /// Declared inputs captured at each executed ISLAND_START. The server
+    /// places this envelope once in the head before sending body HTML.
+    pub island_state: IslandState,
     /// What the walk wrote.
     pub counts: WalkCounts,
 }
@@ -380,8 +345,7 @@ pub fn walk_to_html_counted(
     // where the walk was and how much it had written. Nothing they hold is
     // used again except to read those counts.
     let walked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
-        finish_page(&mut out, &state)
+        walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)
     }));
     let counts = WalkCounts {
         nodes: state.nodes,
@@ -389,7 +353,22 @@ pub fn walk_to_html_counted(
         list_iterations: state.list_iterations,
     };
     let error = match walked {
-        Ok(Ok(())) => return Ok(WalkOutput { html: out, counts }),
+        Ok(Ok(())) => match state.island_state.finish() {
+            Ok(island_state) => {
+                return Ok(WalkOutput {
+                    html: out,
+                    island_state,
+                    counts,
+                })
+            }
+            Err(error) => {
+                return Err(WalkFailure {
+                    error,
+                    component_path: Vec::new(),
+                    counts,
+                })
+            }
+        },
         Ok(Err(error)) => error,
         Err(payload) => IrError::Panicked {
             message: panic_message(payload.as_ref()),
@@ -424,44 +403,6 @@ fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
     }
 }
 
-/// Append a JSON document as the body of a `<script type="application/json">`
-/// data block, escaped so it cannot terminate or re-open the enclosing
-/// element.
-///
-/// Escaping `<` is total: `<` cannot appear in JSON outside a string literal,
-/// and `<` is a valid JSON string escape, so `JSON.parse` yields
-/// byte-identical *values*. It simultaneously kills `</script`, `<!--` and
-/// `<script`. The previous `</` → `<\/` replace only covered the first of
-/// those: a payload containing `<!--` followed later by `<script` drives a
-/// spec-compliant tokenizer into the *script-data-double-escaped* state, in
-/// which our own trailing `</script>` no longer closes the element and the
-/// entire rest of the page is swallowed as script text.
-///
-/// `>` is escaped for symmetry and U+2028/U+2029 as defence in depth — those
-/// two are not needed for a `JSON.parse(textContent)` consumer, only if the
-/// payload is ever inlined as JS source instead of as a data block.
-///
-/// HYDRATION CONTRACT: the `__forma_islands` payload is JSON with `<`/`>`
-/// escaped as `<`/`>`. Consumers MUST decode it with `JSON.parse`
-/// (which undoes the escapes) and MUST NOT string-match the raw script text.
-fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(), IrError> {
-    for ch in json.chars() {
-        match ch {
-            '<' => push_checked(out, "\\u003c", limit)?,
-            '>' => push_checked(out, "\\u003e", limit)?,
-            '\u{2028}' => push_checked(out, "\\u2028", limit)?,
-            '\u{2029}' => push_checked(out, "\\u2029", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
-        }
-    }
-    Ok(())
-}
-
 /// Walk a single island's content and produce an HTML string.
 ///
 /// This internal fragment path has no supported caller (DR-10). It finds
@@ -479,12 +420,9 @@ fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(
 /// emitted: they live outside the root element and survive an `outerHTML`
 /// swap, so re-emitting them would duplicate them.
 ///
-/// Props are always inlined on the root as `data-forma-props`, even for an
-/// island whose props would spill to the shared block. A fragment must be self-contained:
-/// emitting a second `__forma_islands` block would duplicate a DOM id and,
-/// because the injected copy precedes the SSR one in document order, would
-/// shadow it for every other ScriptTag island on the page. The client already
-/// reads `data-forma-props` first, so this needs no JS change.
+/// This internal diagnostic fragment returns body HTML only; it is not a
+/// supported page-response path. The complete counted walk returns the state
+/// envelope required to activate its occurrence markers.
 #[allow(dead_code)] // Internal fragment path; no supported caller since the WASM walker retired.
 pub(crate) fn walk_island(
     module: &IrModule,
@@ -539,23 +477,16 @@ pub(crate) fn walk_island_with_limits(
     //    its data-forma-* attributes and would never hydrate.
     let mut out = String::with_capacity(256);
     let mut state = WalkState::new(limits);
-    // Applies to nested islands inside this one as well, so a ScriptTag island
-    // nested in the fragment keeps its props instead of losing them on return.
-    state.force_inline_props = true;
     let mut slots_mut = slots.clone();
     slots_mut.apply_module_constants(module);
 
     let component_name = module.strings.get(entry.name_str_idx)?.to_string();
-    let inline_props = if entry.slot_ids.is_empty() {
-        None
-    } else {
-        let props = build_island_props(module, &slots_mut, &entry.slot_ids);
-        Some(serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string()))
-    };
+    let (occurrence, hash) = state.island_state.snapshot(module, entry, &slots_mut)?;
     state.pending_island = Some(IslandPending {
         id: island_id,
         component_name,
-        inline_props,
+        occurrence,
+        hash,
         trigger: entry.trigger,
     });
 
@@ -914,27 +845,15 @@ fn walk_range_impl(
                 if let Some(entry) = module.island_entry(island_id) {
                     let component_name = strings.get(entry.name_str_idx)?.to_string();
 
-                    // Build props JSON from the island's slot_ids
-                    let inline_props = if entry.slot_ids.is_empty() {
-                        None
-                    } else {
-                        let props = build_island_props(module, slots, &entry.slot_ids);
-                        let json =
-                            serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string());
-                        if json.len() > INLINE_PROPS_MAX_BYTES && !state.force_inline_props {
-                            state
-                                .script_tag_props
-                                .insert(island_id, serde_json::Value::Object(props));
-                            None
-                        } else {
-                            Some(json)
-                        }
-                    };
+                    // Capture ordered declared inputs before the island body or
+                    // its surrounding list can mutate scratch/row slots.
+                    let (occurrence, hash) = state.island_state.snapshot(module, entry, slots)?;
 
                     state.pending_island = Some(IslandPending {
                         id: island_id,
                         component_name,
-                        inline_props,
+                        occurrence,
+                        hash,
                         trigger: entry.trigger,
                     });
                 } else {
@@ -1247,58 +1166,6 @@ fn walk_range_impl(
 }
 
 // ---------------------------------------------------------------------------
-// Island props helpers
-// ---------------------------------------------------------------------------
-
-/// Build a JSON object from the island's slot_ids, looking up names from
-/// the slot table and values from the current SlotData.
-///
-/// DUPLICATE-NAME RULE: two of the island's slots can carry the same name (the
-/// compiler derives some names per-element, not per-module). The first one in
-/// `slot_ids` order wins, matching [`IrModule::slot_id_by_name`] and
-/// [`SlotData::from_json`]; a plain `insert` made the LAST one win here, so the
-/// island's props disagreed with every other name lookup in the crate and one
-/// of the two values vanished with no diagnostic.
-///
-/// Verified by: crates/forma-ir/src/walker.rs > "island_props_keep_the_first_slot_for_a_duplicated_name"
-fn build_island_props(
-    module: &IrModule,
-    slots: &SlotData,
-    slot_ids: &[u16],
-) -> serde_json::Map<String, serde_json::Value> {
-    let mut map = serde_json::Map::new();
-    for &slot_id in slot_ids {
-        // Look up slot name from the slot table (O(1) index)
-        if let Some(entry) = module.slot_entry(slot_id) {
-            if let Ok(name) = module.strings.get(entry.name_str_idx) {
-                if map.contains_key(name) {
-                    #[cfg(feature = "tracing")]
-                    tracing::warn!(
-                        slot_id = slot_id,
-                        name = name,
-                        "Island declares two slots with the same name — keeping the first, \
-                         the later value is not reachable from the props object"
-                    );
-                    continue;
-                }
-                let value = slots.get(slot_id).to_json();
-                map.insert(name.to_string(), value);
-            }
-        } else {
-            // `IrModule::validate` rejects this at parse time; keep the branch
-            // observable in case a module reaches the walker unvalidated,
-            // since a silently dropped prop means the island's SSR props
-            // disagree with what the client expects.
-            #[cfg(feature = "tracing")]
-            tracing::warn!(
-                slot_id = slot_id,
-                "Island references a slot id that is not in the slot table — prop dropped"
-            );
-        }
-    }
-    map
-}
-
 // ---------------------------------------------------------------------------
 // Offset arithmetic
 // ---------------------------------------------------------------------------
@@ -1520,11 +1387,11 @@ fn emit_open_tag(
         push_checked(out, " data-forma-hydrate=\"", limit)?;
         push_checked(out, trigger_str, limit)?;
         push_checked(out, "\"", limit)?;
-        if let Some(ref props_json) = island.inline_props {
-            push_checked(out, " data-forma-props=\"", limit)?;
-            push_escaped_attr(out, props_json, limit)?;
-            push_checked(out, "\"", limit)?;
-        }
+        push_checked(out, " data-forma-state=\"", limit)?;
+        push_checked(out, &island.occurrence.to_string(), limit)?;
+        push_checked(out, "\" data-forma-h=\"", limit)?;
+        push_checked(out, &island.hash, limit)?;
+        push_checked(out, "\"", limit)?;
     }
 
     // Inject pending list-item key

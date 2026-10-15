@@ -3,6 +3,7 @@ mod bindings;
 mod constant;
 mod flow;
 mod schema;
+pub(crate) mod state;
 use crate::format::{
     limit, IrError, SlotSource, MAX_CONTRACT_BYTES, MAX_ISLANDS, MAX_SLOTS,
     SECTION_ISLAND_CONTRACTS,
