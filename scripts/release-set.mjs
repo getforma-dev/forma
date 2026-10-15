@@ -170,6 +170,9 @@ export function pack(out, dryRun = false) {
   const originals = stageTemplates(ROOT, preliminary, out);
   try { run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages/create-app')); }
   finally { for (const [path, bytes] of originals) writeFileSync(path, bytes); }
+  const cli = packages.find(p => p.name === '@getforma/create-app');
+  const packedPaths = run('tar', ['-tzf', join(out, `getforma-create-app-${cli.version}.tgz`)]);
+  for (const template of ['minimal', 'dashboard']) assert(packedPaths.includes(`package/templates/${template}/admin/_npmrc`), `${template}: packed install policy missing`);
   const recorded = recordPackages(packages, out);
   const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
   save(join(out, 'release-set.json'), {

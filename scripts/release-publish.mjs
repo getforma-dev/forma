@@ -21,11 +21,12 @@ export function verifyIdentity(set, dir) {
     assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file} changed`);
   }
 }
-export async function registryStatus(p, dir, request = fetch) {
+export async function registryStatus(p, dir, request = fetch, timeout = 20_000) {
+  assert(timeout > 0, `${p.name}: registry verification deadline expired`);
   const url = p.registry === 'crates'
     ? `https://crates.io/api/v1/crates/${p.name}/${p.version}`
     : `https://registry.npmjs.org/${encodeURIComponent(p.name)}/${p.version}`;
-  const response = await request(url, { headers: { 'User-Agent': 'getforma-release-ci' }, signal: AbortSignal.timeout(20_000) });
+  const response = await request(url, { headers: { 'User-Agent': 'getforma-release-ci' }, signal: AbortSignal.timeout(timeout) });
   if (response.status === 404) return 'missing';
   assert(response.ok, `${p.name}: registry status unreadable (${response.status}); refusing to publish`);
   const data = await response.json();
@@ -36,6 +37,18 @@ export async function registryStatus(p, dir, request = fetch) {
     assert.equal(data.dist?.integrity, `sha512-${digest(join(dir, p.file), 'sha512', 'base64')}`, `${p.name}@${p.version} already exists with different bytes`);
   }
   return 'present';
+}
+// The same deadline bounds each request and sleep; no extra request is allowed after it.
+export async function waitForPackage(p, dir, milliseconds, { request = fetch, now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+  const deadline = now() + milliseconds;
+  while (true) {
+    const remaining = deadline - now();
+    assert(remaining > 0, `${p.name}: uploaded version not verifiable before deadline`);
+    if (await registryStatus(p, dir, request, Math.min(20_000, remaining)) === 'present') return;
+    const rest = deadline - now();
+    assert(rest > 0, `${p.name}: uploaded version not verifiable before deadline`);
+    await sleep(Math.min(10_000, rest));
+  }
 }
 export async function main() {
   const dir = resolve(process.argv[2] ?? '');
@@ -70,19 +83,10 @@ export async function main() {
   // Fixed deadline, hard failure if the newly uploaded bytes cannot be verified. The official
   // cargo workspace publisher already waits for dependency availability in topological order.
   const deadline = Date.now() + 15 * 60_000;
-  for (const p of crates) {
-    while (await registryStatus(p, dir) === 'missing') {
-      assert(Date.now() < deadline, `${p.name}: uploaded version did not become verifiable within 15 minutes`);
-      await new Promise(resolve => setTimeout(resolve, Math.min(10_000, deadline - Date.now())));
-    }
-  }
+  for (const p of crates) await waitForPackage(p, dir, deadline - Date.now());
   for (const p of registry === 'npm' ? pending.filter(p => p.registry === 'npm') : []) {
     run('npm', ['publish', join(dir, p.file), '--ignore-scripts', '--provenance', '--access', 'public', '--tag', p.version.includes('-') ? 'next' : 'latest'], ROOT, { stdio: 'inherit' });
-    const npmDeadline = Date.now() + 5 * 60_000;
-    while (await registryStatus(p, dir) === 'missing') {
-      assert(Date.now() < npmDeadline, `${p.name}: uploaded version not verifiable within five minutes`);
-      await new Promise(resolve => setTimeout(resolve, 5_000));
-    }
+    await waitForPackage(p, dir, 5 * 60_000);
   }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch(e => { console.error(`release-publish: ${e.message}`); process.exitCode = 1; });

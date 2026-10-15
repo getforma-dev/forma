@@ -22,3 +22,6 @@ e2e/ssr/out/
 # The preview-frame e2e lane's output: the packed core, the builds, lane.json
 # (e2e/frame/build.sh). e2e/frame/app/node_modules is covered by node_modules/.
 e2e/frame/out/
+
+# P17 owns and removes these temporary packed-template checkouts.
+/.release-verify-*/

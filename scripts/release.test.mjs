@@ -4,8 +4,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, copyFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { selectRun, checkJobs } from './check-release-ci.mjs';
-import { registryStatus } from './release-publish.mjs';
-import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, versionFiles, digest, run, json } from './release-set.mjs';
+import { registryStatus, waitForPackage } from './release-publish.mjs';
+import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, digest, run, json } from './release-set.mjs';
 
 const sha = 'a'.repeat(40), repo = 'getforma-dev/forma';
 const goodRun = { id: 100, head_sha: sha, head_branch: 'main', event: 'push', path: '.github/workflows/ci.yml', repository: { full_name: repo }, status: 'completed', conclusion: 'success', run_number: 7, run_attempt: 1 };
@@ -113,5 +113,33 @@ test('partial-release rerun accepts only byte-identical existing packages; netwo
     const crate = { registry: 'crates', name: 'forma-ir', version: '3.0.0', sha256: 'd'.repeat(64) };
     assert.equal(await registryStatus(crate, dir, mock(200, { version: { checksum: crate.sha256, yanked: false } })), 'present');
     await assert.rejects(registryStatus(crate, dir, mock(200, { version: { checksum: crate.sha256, yanked: true } })));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('registry polling never starts a request after its fixed deadline', async () => {
+  let clock = 0, calls = 0;
+  const options = { now: () => clock, sleep: async ms => { clock += ms; }, request: async () => { calls++; clock += 400; return { status: 404 }; } };
+  await assert.rejects(waitForPackage({ name: 'test', registry: 'crates', version: '1.0.0' }, '/', 1000, options), /deadline/);
+  assert.equal(calls, 1);
+  assert.equal(clock, 1000);
+  calls = 0;
+  await assert.rejects(waitForPackage({ name: 'test' }, '/', 0, options), /deadline/);
+  assert.equal(calls, 0);
+});
+
+test('malformed second template leaves every source file unchanged during staging', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-stage-test-'));
+  const before = new Map();
+  try {
+    for (const name of ['minimal', 'dashboard']) {
+      const base = join(dir, 'packages/create-app/templates', name);
+      mkdirSync(join(base, 'admin'), { recursive: true });
+      for (const [file, content] of [
+        ['admin/package.json', '{}\n'], ['admin/package-lock.json', '{"packages":{"":{}}}\n'],
+        ['Cargo.lock', '[[package]]\nname = "forma-ir"\nversion = "0.2.2"\n' + (name === 'minimal' ? 'checksum = "original"\n' : '')],
+      ]) { const path = join(base, file); writeFileSync(path, content); before.set(path, content); }
+    }
+    assert.throws(() => stageTemplates(dir, [{ registry: 'crates', name: 'forma-ir', version: '3.0.0', sha256: 'a'.repeat(64) }], dir), /missing checksum/);
+    for (const [path, content] of before) assert.equal(readFileSync(path, 'utf8'), content);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

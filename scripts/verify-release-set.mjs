@@ -63,6 +63,24 @@ export async function verify(dir, reportPath) {
         writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[workspace]\n');
       }
     }
+    await test('fresh advisories over every exact shipped crate lock', async () => {
+      for (const p of set.packages.filter(p => p.registry === 'crates')) {
+        const crate = join(scratch, p.path), manifest = join(crate, 'Cargo.toml'), lock = join(crate, 'Cargo.lock');
+        const shippedLockSha256 = digest(lock);
+        // Registry checksums for unpublished internal packages cannot resolve before upload.
+        // Patch only those packages to the DS11 source and preserve all third-party locks.
+        const text = readFileSync(lock, 'utf8');
+        const present = CRATES.filter(n => n !== p.name && text.includes(`name = "${n}"`));
+        if (present.length) {
+          writeFileSync(lock, stageCargoLock(text, set.packages, true));
+          writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[patch.crates-io]\n' + present.map(n => `${n} = { path = ${JSON.stringify(join(scratch, 'crates', n))} }`).join('\n') + '\n');
+        }
+        const auditLockSha256 = digest(lock);
+        run('bash', ['scripts/check-advisories.sh', manifest], ROOT, { stdio: 'inherit' });
+        assert.equal(digest(lock), auditLockSha256, `${p.name}: advisory check changed the recorded graph`);
+        report.tests.push({ name: `${p.name}: packed Cargo.lock advisories`, passed: true, shippedLockSha256, auditLockSha256 });
+      }
+    });
     // npm may keep prompts beside the create-app workspace rather than hoisting it. The
     // packed CLI still needs this third-party runtime dependency from the committed lock.
     const cliDependencies = join(ROOT, 'packages/create-app/node_modules');
@@ -122,6 +140,7 @@ export async function verify(dir, reportPath) {
             const html = await response.text();
             assert(!html.includes('<div id="app"></div>') || template === 'dashboard', 'minimal SSR is an empty shell');
             const page = await browser.newPage();
+            page.setDefaultTimeout(15_000);
             const errors = []; page.on('pageerror', e => errors.push(e.message));
             try {
               await page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 });
@@ -129,7 +148,7 @@ export async function verify(dir, reportPath) {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count').filter({ hasText: 'Count: 1' }).waitFor();
               } else {
-                await page.getByRole('button', { name: 'Deployments', exact: true }).click();
+                await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
                 await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
               }
               assert.equal(await page.locator('[data-forma-state="pending"], [data-forma-island-state="pending"]').count(), 0, 'island remains pending after load');
