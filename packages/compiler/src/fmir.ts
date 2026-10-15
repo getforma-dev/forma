@@ -96,7 +96,8 @@ export function readFmirContainer(bytes: Uint8Array, reader: WriterVersion = COM
     requireRule(id > lastId, C.LOAD_103, 'section ids duplicate or unordered');
     requireRule((flags & ~C.SECTION_REQUIRED) === 0, C.LOAD_103, 'reserved section flags');
     requireRule(offset === end && offset + length <= bytes.length, C.LOAD_103, 'sections do not tile');
-    requireRule((id >= C.SECTION_BYTECODE && id <= C.SECTION_SOURCE_POSITIONS) || flags === 0, C.LOAD_106, `unknown required section ${id}; writer ${writer.join('.')}; reader ${reader.join('.')}`);
+    requireRule((id >= C.SECTION_BYTECODE && id <= C.SECTION_SOURCE_POSITIONS) || id === C.SECTION_ISLAND_CONTRACTS || flags === 0, C.LOAD_106, `unknown required section ${id}; writer ${writer.join('.')}; reader ${reader.join('.')}`);
+    if (id === C.SECTION_ISLAND_CONTRACTS) requireRule(flags === C.SECTION_REQUIRED, C.LOAD_103, 'island contracts must be a required section');
     sections.push({ id, flags, offset, length, bytes: bytes.subarray(offset, offset + length) });
     lastId = id; end = offset + length;
   }
