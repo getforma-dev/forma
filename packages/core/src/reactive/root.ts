@@ -108,7 +108,7 @@ export function disposeOwner(owner: Owner): void {
 
 function createRootImpl<T>(fn: (dispose: () => void) => T, owned: boolean): T {
   const scope: RootScope = { disposers: [], scopeDispose: null };
-  const parentRoot = owned ? currentRoot : null;
+  const parentOwner = owned ? currentOwner : null;
 
   rootStack.push(currentRoot);
   currentRoot = scope;
@@ -157,9 +157,10 @@ function createRootImpl<T>(fn: (dispose: () => void) => T, owned: boolean): T {
     runTeardown();
   };
 
-  // Auto-register with parent root so child dies when parent dies (Solid-style)
-  if (parentRoot) {
-    parentRoot.disposers.push(dispose);
+  // An effect rerun has an owner even after its lexical root has returned.
+  // Attach to that generation so its partial roots get userland cleanup too.
+  if (parentOwner) {
+    parentOwner.disposers.push(dispose);
   }
 
   let result: T;

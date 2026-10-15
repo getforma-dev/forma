@@ -16,6 +16,7 @@
 
 import { createSignal, internalEffect, untrack, createRoot, registerDisposer, __DEV__ } from '../reactive';
 import { hydrating } from './hydrate.js';
+import { describingAdoption } from './adoption-description.js';
 import { deactivateIsland, hasScheduledOrActiveIslands } from './activate.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
 
@@ -524,7 +525,7 @@ export function createList<T>(
   renderFn: (item: T, index: () => number) => HTMLElement,
   options?: CreateListOptions,
 ): DocumentFragment {
-  if (hydrating) {
+  if (describingAdoption || hydrating) {
     return { type: 'list', items, keyFn, renderFn, options } as unknown as DocumentFragment;
   }
 
