@@ -17,7 +17,7 @@ jobs:
     name: check (${{ matrix.sample }})
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 10
       matrix:
         sample: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     permissions:
@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: 98aa7909cf75065f0492dc2c39f1b2b7f79ba4b7
+          ref: ef48ce81036ac7f43c2b8dd741a0bb983ac314ce
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
