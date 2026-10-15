@@ -195,16 +195,19 @@ function declarations(scope: PropsScope, fn: ComponentFunction, ctx?: IrEmitCont
         scope.objects.set(declaration.id.name, scope.objects.get(declaration.init.name)!);
       } else {
         const path = propPath(declaration.init, scope);
-        if (path) scope.aliases.set(declaration.id.name, path);
+        const initial=unwrap(declaration.init,false);
+        const callable=t.isArrowFunctionExpression(initial)||t.isFunctionExpression(initial)
+          ||t.isIdentifier(initial)&&localName(initial,scope)&&scope.signals.has(initial.name);
+        if (path) (callable?scope.signals:scope.aliases).set(declaration.id.name, path);
         else if (containsDeclared(declaration.init, scope)) scope.unsupported.set(declaration.id.name, declaration.init);
       }
     } else if (t.isArrayPattern(declaration.id) && t.isIdentifier(declaration.id.elements[0]) && t.isCallExpression(declaration.init)
       && t.isIdentifier(declaration.init.callee) && scope.signalImports.has(declaration.init.callee.name)
       && !scope.references.has(declaration.init.callee) && declaration.init.arguments[0]) {
-      const initial = unwrap(declaration.init.arguments[0]);
-      let path = propPath(initial, scope);
+      const initial = unwrap(declaration.init.arguments[0],false);
+      let path = propPath(initial, scope, false);
       if (!path && ctx && t.isLogicalExpression(initial) && initial.operator === '??') {
-        const sourcePath = propPath(initial.left, scope);
+        const sourcePath = propPath(initial.left, scope, false);
         if (sourcePath) {
           const sourceType = propType(sourcePath, scope, initial.left), targetType = inner(sourceType);
           const fallback = closedExpression(initial.right, scope.file);

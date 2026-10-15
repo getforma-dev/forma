@@ -1317,7 +1317,7 @@ export function walkCallExpression(
       let schemaObject = schemas.get(registered.identity);
       if (schemaObject === undefined) { schemaObject = ctx.appendPropsSchema(registered.declared.schema); schemas.set(registered.identity, schemaObject); }
       const inputs = islandInputs(ctx, schemaObject, node.arguments[0], walkCtx.propsScope, walkCtx.sourceFile!, walkCtx.stringConstants,
-        name => lookupSignal(walkCtx.signalScope, name)?.default.default,node=>closedBinding(node,ctx,closedEnv(walkCtx)));
+        name => lookupSignal(walkCtx.signalScope, name)?.default.default,node=>closedBinding(node,ctx,closedEnv(walkCtx),false));
       let sub: ResolvedSubComponent | null = null;
       let scope: PropsScope | undefined;
       if (registered.mode === 'ssr') {

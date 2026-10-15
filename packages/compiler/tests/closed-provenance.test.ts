@@ -52,3 +52,13 @@ it('refuses a prop-seeded getter as a member object and requires nullable aliase
   expect(()=>compile('export function Page(p:{data?:{name:string}}){const data=p.data;return h("main",null,Badge({label:data.name}));}')).toThrow(/BUILD-610.*optional declared/);
   expect(compile('export function Page(p:{data:{name:string}}){const [data]=createSignal(p.data);return h("main",null,Badge({label:data().name}));}')?.islands).toHaveLength(1);
 });
+
+it.each(['get','()=>get()'])('keeps callable alias provenance for %s',initializer=>{
+  expect(()=>compile(`export function Page(p:{data:{name:string}}){const [get]=createSignal(p.data);const alias=${initializer};return h("main",null,Badge({label:alias.name}));}`)).toThrow(/BUILD-610/);
+  expect(compile(`export function Page(p:{data:{name:string}}){const [get]=createSignal(p.data);const alias=${initializer};return h("main",null,Badge({label:alias().name}));}`)?.islands).toHaveLength(1);
+});
+it('keeps actual value aliases and rejects eager callable inputs or initializers',()=>{
+  expect(compile('export function Page(p:{data:{name:string}}){const [get]=createSignal(p.data);const value=get();return h("main",null,Badge({label:value.name}));}')?.islands).toHaveLength(1);
+  expect(()=>compile('export function Page(p:{label:string}){const [get]=createSignal(p.label);const alias=get;return h("main",null,Badge({label:alias}));}')).toThrow(/BUILD-610/);
+  expect(()=>compile('export function Page(p:{label:string}){const [get]=createSignal(p.label);const [other]=createSignal(get);return h("main",null,Badge({label:other()}));}')).toThrow(/BUILD-610/);
+});
