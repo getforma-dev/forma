@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), a Cargo pre-release version on crates.io that plain requirements exclude. Part of the seven-package set 3.0.0-alpha.1; bound rendering and `Pages::finalize` (FORMA-107), declared handler props (FORMA-102), `PageResponse` only and Trusted Types enforced (FORMA-109), asset integrity and manifest 2 (FORMA-111, 112), FMIR v3 loading (FORMA-185) and the removals (FORMA-110) below are the alpha's gates. The deployment identity and the skew behaviour (FORMA-186) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
+
 - Require canonical full SHA-384 metadata for every schema2 asset; emit SRI on external scripts, stylesheets and modulepreloads while retaining nonces. Invalid Browser manifests or unavailable preload digests refuse with RENDER-104.
 
 ### Bound rendering and startup completion — FORMA-107

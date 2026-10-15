@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), a Cargo pre-release version on crates.io that plain requirements exclude. Part of the seven-package set 3.0.0-alpha.1; the FMIR v3 reader with its seeded-bug qualification (FORMA-185), the compatibility window (FORMA-112), `PageProps` (FORMA-102) and the removals (FORMA-110) below are the alpha's gates. The conformance and hostile corpora (FORMA-139, 108) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
+
 - FORMA-102: re-export `PageProps` derive for named structs/unit enums, compare the
   actual FMIR schema by name, and retain a checked module in `props::BoundProps`.
   Projection omits absent object fields, preserves array positions and excludes

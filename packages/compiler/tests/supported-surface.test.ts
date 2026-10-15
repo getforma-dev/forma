@@ -16,7 +16,14 @@ it('exposes native FMIR compilation without the retired plugin APIs or Vite peer
   expect(compiler.formaSsrPlugin).toBeTypeOf('function');
   expect(compiler.generateRealIr).toBeTypeOf('function');
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  expect(pkg.peerDependencies).toEqual({ esbuild: '>=0.17.0', '@getforma/core': '^3.0.0 || =3.0.0-dev' });
+  // The core peer is the compatibility window the version script writes (scripts/release-set.mjs,
+  // compatibilityPeer): the current minor's caret, plus the exact coordinated pre-release or
+  // -dev version when the set carries a suffix, since carets exclude pre-releases.
+  const [major, minor] = pkg.version.split('.');
+  const window = `^${major}.${minor}.0`;
+  const corePeer = pkg.version.includes('-') ? `${window} || =${pkg.version}` : window;
+  expect(pkg.version).toMatch(/^3\.\d+\.\d+(?:-(?:dev|(?:alpha|beta|rc)\.[1-9]\d*))?$/);
+  expect(pkg.peerDependencies).toEqual({ esbuild: '>=0.17.0', '@getforma/core': corePeer });
 });
 
 it('preserves runtime h() and the root core import while emitting a native FMIR module', async () => {
