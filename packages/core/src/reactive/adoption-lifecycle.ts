@@ -1,6 +1,6 @@
 /** Private, unprivileged ownership kernel shared by direct and compiled adoption. */
 import { effect as rawEffect, getActiveSub } from 'alien-signals';
-import { withAdoptionSink, type AdoptionSink, type DeferredEffect } from './adoption-hooks.js';
+import { withAdoptionSink, type AdoptionSink, type DeferredEffect, type AdoptionCodec } from './adoption-hooks.js';
 import { openBatch, closeBatchWithoutRoot } from './batch.js';
 import { createUnownedRoot, registerDisposer } from './root.js';
 import { reportError } from './dev.js';
@@ -27,6 +27,7 @@ export interface PreparedGroup<T> {
   readonly value: T;
   readonly alive: boolean;
   run<U>(fn: () => U): U;
+  child<U>(fn: () => U): PreparedGroup<U>;
   dispose(): void;
 }
 export interface PreparationOptions {
@@ -76,18 +77,41 @@ export class AdoptionLifecycle implements AdoptionSink {
     return result;
   }
 
+  /** Postcommit regions create fresh ordinary reactive owners, never another
+   * preparation sink. Catch setup inside the root so partial construction and
+   * late work after synchronous callback failure are still disposed. */
+  private runLive<T>(fn: () => T): T {
+    this.require('live');
+    const owner=this.currentGroup;
+    let result!:T, error:unknown, failed=false, dispose!:()=>void;
+    withAdoptionSink(undefined,()=>withAdoptionEffectFailure(
+      cause=>this.fail(cause,'FORMA_E_HYDRATE_EFFECT'),
+      ()=>createUnownedRoot(rootDispose=>{
+        dispose=rootDispose;
+        try{result=fn();}catch(cause){failed=true;error=cause;}
+      }),
+    ));
+    this.own(dispose,owner);
+    if(failed){this.fail(error,'FORMA_E_HYDRATE_EFFECT');throw error;}
+    if(this.state==='aborted'||!owner.alive)throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
+    return result;
+  }
+
   group<T>(fn: () => T): PreparedGroup<T> {
-    this.require('preparing');
-    const child = group();
-    child.parent = this.currentGroup;
+    if(this.state!=='preparing'&&this.state!=='live')throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
+    this.require(this.state);
+    const child=group();
+    child.parent=this.currentGroup;
     this.currentGroup.children.add(child);
-    const run = <U>(build: () => U): U => {
-      const previous = this.currentGroup;
-      this.currentGroup = child;
-      try { return this.run(build); } finally { this.currentGroup = previous; }
+    const enter=<U>(build:()=>U):U=>{
+      const previous=this.currentGroup;this.currentGroup=child;
+      try{return build();}finally{this.currentGroup=previous;}
     };
-    const value = run(fn);
-    return { value, get alive() { return child.alive; }, run, dispose: () => this.disposeGroup(child) };
+    const run=<U>(build:()=>U):U=>enter(()=>this.state==='live'?this.runLive(build):this.run(build));
+    const value=run(fn);
+    return {value,get alive(){return child.alive;},run,
+      child:<U>(build:()=>U)=>enter(()=>this.group(build)),
+      dispose:()=>this.disposeGroup(child)};
   }
 
   private disposeGroup(owner: PreparationGroup): void {
@@ -116,7 +140,21 @@ export class AdoptionLifecycle implements AdoptionSink {
         this.readers.push({ flags: getActiveSub()!, group: owner });
         try { initial = read(); } catch (cause) { failed = true; error = cause; }
       } else if (this.state === 'live' && owner.alive) {
-        try { write(read()); } catch (cause) { this.fail(cause, 'FORMA_E_HYDRATE_VALUE'); }
+        // A live branch factory/cleanup can write the condition currently
+        // being observed. Match createEffect's bounded self-write handling;
+        // initial preparation still reads exactly once and never loops.
+        const node=getActiveSub() as {flags:number}|undefined;
+        let runs=0;
+        try{
+          do{
+            if(node)node.flags&=~32;
+            const next=read();
+            if(this.state!=='live'||!owner.alive)break;
+            write(next);
+            if(this.state!=='live'||!owner.alive||!node||(node.flags&32)===0)break;
+            if(++runs>=100){node.flags&=~32;throw new AdoptionScopeError('FORMA_E_HYDRATE_VALUE');}
+          }while(true);
+        }catch(cause){this.fail(cause,'FORMA_E_HYDRATE_VALUE');}
       } else this.invalidated = true;
     }));
     this.own(dispose, owner);
@@ -124,6 +162,9 @@ export class AdoptionLifecycle implements AdoptionSink {
     if (this.state === 'aborted' || !owner.alive) throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
     return initial;
   }
+
+  /** Read-only codec lookup; direct adoption never grants writeback authority. */
+  inputCodec(_read:()=>unknown):AdoptionCodec|undefined { return undefined; }
 
   /** Unprivileged direct adoption can observe, but can never seed an early edit. */
   queueEdit(_read: () => unknown, _value: unknown): void {

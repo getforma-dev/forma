@@ -1,7 +1,7 @@
 /**
  * THE SHARED RENDERER CONTRACT.
  *
- * FormaJS writes attributes and text through five browser code paths, and
+ * FormaJS writes attributes and text through six browser code paths, and
  * every one of them must uphold the same guarantees:
  *
  *   1. `src/dom/element.ts`  — `h()` with static props
@@ -9,6 +9,7 @@
  *   3. `src/dom/hydrate.ts`  — `applyDynamicProps()` / `adoptNode()` (adoption)
  *   4. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
  *   5. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
+ *   6. `src/dom/adoption-attributes.ts` — the private prepared postcommit writer
  *
  * Historically each guarantee was asserted thoroughly on exactly ONE of them.
  * That single habit produced 7 of the 25 code defects in
@@ -37,6 +38,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { h } from '../dom/element';
 import { applyDynamicProps, adoptNode } from '../dom/hydrate';
+import { prepareAdoption } from '../dom/adoption';
+import { prepareAttribute } from '../dom/adoption-attributes';
 import { mount, unmount } from '../runtime';
 import { URL_ATTRS } from '../security/url-safety';
 import { compileHandler, runHandler } from '../expr/index';
@@ -240,6 +243,30 @@ const SINKS: Sink[] = [
       }),
   },
   {
+    name: 'prepared-adopt',
+    programmaticNames: true,
+    declarative: true,
+    objectValues: false,
+    write: (tag, name, value) => {
+      const el = document.createElement(tag);
+      host().appendChild(el);
+      el.setAttribute(BENIGN_ATTR, BENIGN_VALUE);
+      // Exercise the exact private postcommit attribute writer. Form-control
+      // planning is separately gated; these rows concern the attribute sink.
+      prepareAttribute(el, name, null).write(value);
+      return el;
+    },
+    writeText: (tag, text) => {
+      const el = parse(`<${tag}><!--f:t0-->\u200B<!--/f:t0--></${tag}>`);
+      const [read, set] = createSignal('');
+      const plan = prepareAdoption(el, () => h(tag, null, read));
+      disposers.push(() => plan.dispose());
+      plan.commit();
+      set(text);
+      return el;
+    },
+  },
+  {
     name: 'data-bind',
     programmaticNames: false,
     declarative: true,
@@ -320,6 +347,7 @@ describe('renderer contract: the table covers every sink', () => {
       'h-static',
       'h-reactive',
       'adopt',
+      'prepared-adopt',
       'data-bind',
       '$el.setAttribute',
     ]);
@@ -340,6 +368,7 @@ describe('renderer contract: the table covers every sink', () => {
     const DOM_SINK_FILES = [
       'src/dom/element.ts',
       'src/dom/hydrate.ts',
+      'src/dom/adoption-attributes.ts',
       'src/runtime.ts',
       'src/expr/interp.ts',
       'src/expr/allowlist.ts',

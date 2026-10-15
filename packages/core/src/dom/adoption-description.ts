@@ -1,9 +1,9 @@
 /** Private construction mode. Description does not allocate or change DOM. */
 export let describingAdoption = false;
 
-export function withAdoptionDescription<T>(build: () => T): T {
+export function withAdoptionDescription<T>(build: () => T, describe = true): T {
   const previous = describingAdoption;
-  describingAdoption = true;
+  describingAdoption = describe;
   try { return build(); } finally { describingAdoption = previous; }
 }
 

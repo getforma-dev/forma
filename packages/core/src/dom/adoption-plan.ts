@@ -7,7 +7,7 @@ const HTML_NS = 'http://www.w3.org/1999/xhtml';
 type MarkerKind = 't' | 's' | 'l' | 'i';
 type Marker = { kind: MarkerKind; id: number; closing: boolean };
 type Code = 'FORMA_E_HYDRATE_NODE' | 'FORMA_E_HYDRATE_MARKER'
-  | 'FORMA_E_HYDRATE_STRUCTURE' | 'FORMA_E_HYDRATE_VALUE';
+  | 'FORMA_E_HYDRATE_STRUCTURE' | 'FORMA_E_HYDRATE_VALUE' | 'FORMA_E_HYDRATE_LIST_COUNT';
 
 export class AdoptionDomError extends Error {
   constructor(readonly code: Code) { super(`[forma] ${code}`); this.name = 'AdoptionDomError'; }
@@ -30,6 +30,14 @@ export interface AdoptionRange {
   readonly id: number;
   readonly start: Comment;
   readonly end: Comment;
+}
+/** One exact initial row piece; text offsets can share a parser-coalesced node.
+ * No split or marker insertion occurs while these observations are captured. */
+export interface AdoptionPiece {
+  readonly node:Node;
+  readonly from:number;
+  readonly to:number;
+  readonly text:string|null;
 }
 type Position = { node: Node; parent: Node | null; previous: Node | null; next: Node | null };
 type Attribute = { namespace: string | null; local: string; value: string };
@@ -59,6 +67,7 @@ export class AdoptionDom {
   private readonly ancestry: Position[] = [];
   private readonly parsed = new Set<Node>();
   private readonly ranges = new Map<Comment, AdoptionRange>();
+  private released = false;
 
   constructor(readonly host: Element) {
     this.document = host.ownerDocument;
@@ -85,8 +94,13 @@ export class AdoptionDom {
     }
   }
 
+  /** Commit/refusal ends the snapshot lifetime; live regions retain only their own nodes. */
+  release(): void {
+    this.released = true; this.nodes.clear(); this.ancestry.length = 0; this.parsed.clear(); this.ranges.clear();
+  }
+
   assertUnchanged(): void {
-    if (this.host.ownerDocument !== this.document || !this.document.contains(this.host)
+    if (this.released || this.host.ownerDocument !== this.document || !this.document.contains(this.host)
       || this.ancestry.some(item => !samePosition(item))) refuse('FORMA_E_HYDRATE_STRUCTURE');
     for (const item of this.nodes.values()) {
       const node = item.node;
@@ -116,6 +130,9 @@ export class AdoptionDom {
     if (!this.nodes.has(element)) refuse('FORMA_E_HYDRATE_STRUCTURE');
     if (element.getAttributeNS(namespace, local) !== value) refuse('FORMA_E_HYDRATE_VALUE');
   }
+
+  /** A component root consumes the original host itself, never its siblings. */
+  root(): AdoptionCursor { return new AdoptionCursor(this, this.host, this.host.nextSibling); }
 
   children(parent: Node = this.host): AdoptionCursor {
     this.parse(parent);
@@ -177,6 +194,37 @@ export class AdoptionCursor {
     while (this.next !== this.end && this.next?.nodeType === 8 && !marker(this.next)) this.next = this.next.nextSibling;
     return this.next === this.end ? null : this.next;
   }
+
+  /** Nested claim matching happens before its independently owned component runs. */
+  isIslandBoundary(): boolean {
+    const node = this.current();
+    return !!node && (node.nodeType === 1 && (node as Element).hasAttribute('data-forma-island') || this.dom.rangeAt(node)?.kind === 'i');
+  }
+
+  /** Retain exactly what this operation consumed, including authored comments
+   * skipped while walking and partial/static Text shared by adjacent rows. */
+  capture<T>(visit:()=>T):{value:T;pieces:readonly AdoptionPiece[]} {
+    const start=this.next,offset=this.offset,value=visit(),pieces:AdoptionPiece[]=[];
+    let node=start,from=offset;
+    while(node!==this.next){
+      if(!node)refuse('FORMA_E_HYDRATE_STRUCTURE');
+      const data=node.nodeType===3?(node as Text).data:null;
+      pieces.push({node,from,to:data?.length??0,text:data});node=node.nextSibling;from=0;
+    }
+    if(node&&this.offset>from){
+      if(node.nodeType!==3)refuse('FORMA_E_HYDRATE_STRUCTURE');
+      pieces.push({node,from,to:this.offset,text:(node as Text).data});
+    }
+    return {value,pieces};
+  }
+
+  /** Single-element row checkpoint; range rows will retain their own spans. */
+  elementHead(): Element {
+    const node=this.current();
+    if(this.offset||!node||node.nodeType!==1)refuse('FORMA_E_HYDRATE_NODE');
+    return node as Element;
+  }
+  immediatelyAfter(node:Node):boolean { return this.offset===0&&this.next===node.nextSibling; }
 
   element(tag: string, namespace: string | null = null): Element {
     const node = this.current();

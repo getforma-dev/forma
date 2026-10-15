@@ -48,6 +48,18 @@ describe('actual local signal authority', () => {
     expect(() => new AdoptionScope(checked)).toThrow('FORMA_E_ISLAND_IDENTITY');
   });
 
+  it('exposes a codec only for the exact live local wrapper in its preparing scope',()=>{
+    const owner=scope(),foreign=scope(),captured=createSignal('outside');
+    const values=owner.run(()=>{
+      const local=text();
+      return {local,capture:__adoptionWritable(captured[0],captured[0],'string',0)};
+    });
+    expect(owner.inputCodec(values.local.read)).toBe('string');
+    expect(owner.inputCodec(values.local.pair[0])).toBeUndefined();expect(owner.inputCodec(values.capture)).toBeUndefined();
+    expect(foreign.inputCodec(values.local.read)).toBeUndefined();expect(values.local.pair[0]()).toBe('server');
+    publish(owner);expect(owner.inputCodec(values.local.read)).toBeUndefined();owner.abort();expect(owner.inputCodec(values.local.read)).toBeUndefined();
+  });
+
   it('retains tuple and getter identities without rereading the initializer', () => {
     const target = scope(), initializer = vi.fn(() => 'initial');
     target.run(() => {

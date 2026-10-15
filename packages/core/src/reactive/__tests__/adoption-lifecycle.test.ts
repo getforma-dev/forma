@@ -19,6 +19,17 @@ afterEach(() => {
 });
 
 describe('unprivileged shared preparation', () => {
+  it('owns postcommit child groups independently and disposes partial late construction after failure',()=>{
+    const failure=vi.fn(),value=scope({failure}),parent=value.group(()=>{}),[n,setN]=createSignal(0),runs=vi.fn(),cleanup=vi.fn();
+    publish(value);
+    const child=parent.child(()=>{createEffect(()=>{n();runs();});registerDisposer(cleanup);});
+    expect(runs).toHaveBeenCalledOnce();setN(1);expect(runs).toHaveBeenCalledTimes(2);child.dispose();setN(2);expect(runs).toHaveBeenCalledTimes(2);expect(cleanup).toHaveBeenCalledOnce();
+    const late=vi.fn(),lateCleanup=vi.fn();
+    expect(()=>parent.child(()=>{createEffect(()=>{throw new Error('live child');});createEffect(()=>{n();late();});registerDisposer(lateCleanup);})).toThrow('FORMA_E_HYDRATE_STRUCTURE');
+    expect(value.phase).toBe('aborted');expect(failure).toHaveBeenCalledOnce();expect(late).toHaveBeenCalledOnce();expect(lateCleanup).toHaveBeenCalledOnce();setN(3);expect(late).toHaveBeenCalledOnce();
+    expect(()=>parent.child(()=>{})).toThrow('FORMA_E_HYDRATE_STRUCTURE');
+  });
+
   it('can adopt an untouched reader without a 103 token but never grants compiler hook seed authority', () => {
     const value = scope(), write = vi.fn();
     const pair = value.run(() => __adoptionSignal(1, createSignal('original')));
