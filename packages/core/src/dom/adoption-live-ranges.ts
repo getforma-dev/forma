@@ -27,11 +27,14 @@ export function liveRanges(scope:AdoptionLifecycle,document:Document,removeChild
             if(scope.phase!=='live'||!owner.alive||start.parentNode!==parent||end.parentNode!==parent)refuse();
             const now=contents();if(now.length!==before.length||now.some((node,index)=>node!==before[index]))refuse();
           };
-          const value=read(),nextShown=Boolean(value);
-          if(truthiness&&active&&shown===nextShown){check();return;}
+          let nextShown:boolean|undefined;
+          if(truthiness){nextShown=Boolean(read());if(active&&shown===nextShown){check();return;}}
+          // The selected expression can construct owned work while it is
+          // described. Keep that read and its conversion in the candidate,
+          // rather than the outer observer's automatically retired generation.
           const next=truthiness
-            ?owner.child(()=>untrack(()=>materialize(nextShown)))
-            :owner.trackedChild(()=>materialize(value));
+            ?owner.child(()=>untrack(()=>materialize(nextShown!)))
+            :owner.trackedChild(()=>materialize(read()));
           if(next.value?.parentNode)refuse();check();
           active?.dispose();check();
           for(const node of before)if(node.nodeType===1){removeChildren(node as HTMLElement);check();}

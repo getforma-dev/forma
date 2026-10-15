@@ -56,4 +56,10 @@ describe('owned fresh ranges after publication',()=>{
   host.append(ranges.dynamic(value,external=>external?outside:h('b',null,'old')));const original=host.firstElementChild;setValue(true);expect(plan.phase).toBe('aborted');expect(host.firstElementChild).toBe(original);expect(outside.parentNode).toBe(host.parentNode);expect(outside.textContent).toBe('outside');expect(failure).toHaveBeenCalledOnce();
  });
 
+ it('owns work created while reading the selected expression until the next candidate begins',()=>{
+  const {host,plan,ranges,failure}=fixture(),[value,setValue]=createSignal(1),events:string[]=[];
+  host.append(ranges.dynamic(()=>{const next=value();events.push('read'+next);registerDisposer(()=>events.push('cleanup'+next));if(next===2)throw new Error('read candidate');return next;},item=>h('b',null,item)));const original=host.firstElementChild;
+  setValue(2);expect(events.indexOf('read2')).toBeLessThan(events.indexOf('cleanup1'));expect(events.filter(event=>event==='cleanup1')).toHaveLength(1);expect(events.filter(event=>event==='cleanup2')).toHaveLength(1);expect(host.firstElementChild).toBe(original);expect(host.textContent).toBe('1');expect(failure).toHaveBeenCalledOnce();expect(plan.phase).toBe('aborted');
+ });
+
 });
