@@ -29,6 +29,7 @@ if (!Number.isInteger(PORT_BASE) || PORT_BASE < 0 || PORT_BASE > 65500) throw ne
 
 interface Expectation {
   state?: Record<string, unknown>;
+  statePrefix?: Record<string, unknown[]>;
   serverValues?: { selector: string; text: string }[];
 }
 interface Variant extends Expectation { name: string; path: string }
@@ -38,6 +39,7 @@ interface PageEntry extends Expectation {
   entry: string;
   kind: string;
   islands: string[];
+  shape?: { consumer: string; targetNodes: number | null; islands: number };
   variants?: Variant[];
 }
 interface AppEntry { css: string; routes: Record<string, PageEntry> }
@@ -74,6 +76,21 @@ async function start(name: string): Promise<Running> {
 
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'));
 const verifier = () => import(pathToFileURL(join(HERE, 'lib', 'verify-page.mjs')).href);
+
+/** Every listed tile counts: one press adds one to the count the server sent (7 stays 7 until it is pressed; 1001 likewise). */
+function tileBehaviour(ids: number[]): Behaviour {
+  return {
+    interact: async (page) => {
+      const before = await Promise.all(ids.map(async (id) => Number(await page.locator(`[data-tile="${id}"] .tile-count`).textContent())));
+      for (const id of ids) await page.locator(`[data-tile="${id}"] .tile-more`).click();
+      for (const [index, id] of ids.entries()) await expect(page.locator(`[data-tile="${id}"] .tile-count`)).toHaveText(String(before[index] + 1));
+      // The switch shows and hides its marker without touching the count.
+      await page.locator(`[data-tile="${ids[0]}"] .tile-switch`).click();
+      await expect(page.locator(`[data-tile="${ids[0]}"] .tile-on`)).toBeVisible();
+      return `${ids.length} tiles counted`;
+    },
+  };
+}
 
 /** What each page does once its island runs, and which of its requests wait for activation (lib/verify-page.mjs). */
 type Behaviour = { hold?: string[]; interact?: (page: Page) => Promise<unknown> };
@@ -132,6 +149,12 @@ const BEHAVIOURS: Record<string, Behaviour> = {
       return 'filter bar and toolbar';
     },
   },
+  'bench /pages/300': tileBehaviour([0]),
+  'bench /pages/1500': tileBehaviour([0, 9]),
+  'bench /pages/10000': tileBehaviour([0, 4]),
+  'bench /pages/15000': tileBehaviour([0, 49]),
+  'bench /pages/20000': tileBehaviour([0, 4]),
+  'bench /pages/islands-100': tileBehaviour(Array.from({ length: 100 }, (_, index) => index)),
   'ksx /check': {
     interact: async (page) => {
       await page.locator('#count-frame').click();
@@ -192,12 +215,15 @@ for (const name of APPS) {
           const { verifyIslandPage } = await verifier();
           const manifest = readJson(join(OUT, name, 'dist', 'manifest.json'));
           const states = expectation.state ?? {};
+          const hosts: Record<string, number> = {};
+          for (const island of page.islands) hosts[island] = (hosts[island] ?? 0) + 1;
           const result = await verifyIslandPage(browser, server.origin, route, manifest, {
             path,
             expected: {
               serverValues: expectation.serverValues ?? [],
-              state: Object.fromEntries(Object.entries(states).map(([component, each]) => [component, [each]])),
-              hosts: Object.fromEntries(Object.keys(states).map((component) => [component, 1])),
+              state: expectation.state ? Object.fromEntries(Object.entries(states).map(([component, each]) => [component, [each]])) : undefined,
+              statePrefix: expectation.statePrefix,
+              hosts,
             },
             hold: behaviour.hold ?? [],
             interact: behaviour.interact ?? (async (tab: Page) => (await tab.locator('[data-forma-island]').count())),
@@ -348,4 +374,29 @@ test.describe('fixtures the closed type set and N2 refuse', () => {
     const bytes = Number(/loads ([\d,]+) B gzip -9 of Forma code/.exec(result.message)?.[1]?.replaceAll(',', ''));
     expect(bytes).toBeGreaterThan(25_500);
   });
+});
+
+test.describe('fixture application bench: the consumers\' heaviest pages', () => {
+  const bench = INDEX.apps.bench;
+  let server: Running;
+  test.beforeAll(async () => { server = await start('bench'); });
+  test.afterAll(async () => { await server?.stop(); });
+
+  for (const [route, page] of Object.entries(bench?.routes ?? {})) {
+    test(`${route} (${page.shape?.consumer}): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB`, async ({ request }) => {
+      const response = await request.get(new URL(route, server.origin).href);
+      expect(response.status()).toBe(200);
+      const counts = /nodes=(\d+); bytes=(\d+); list=(\d+)/.exec(response.headers()['x-fixture-counts'] ?? '');
+      expect(counts, 'the server reports the walker\'s counts').toBeTruthy();
+      const nodes = Number(counts![1]);
+      const target = page.shape?.targetNodes;
+      if (target) expect(Math.abs(nodes - target) / target, `${nodes} nodes against ${target}`).toBeLessThan(0.03);
+      const html = await response.text();
+      expect(html.match(/data-forma-island="/g)?.length).toBe(page.shape?.islands);
+      const envelope = /<script type="application\/json" data-island-state>([^<]*)<\/script>/.exec(html);
+      expect(envelope, 'one inert state envelope').toBeTruthy();
+      expect(envelope![1].length).toBeLessThan(1024 * 1024);
+      expect(JSON.parse(envelope![1]).i.length).toBe(page.shape?.islands);
+    });
+  }
 });

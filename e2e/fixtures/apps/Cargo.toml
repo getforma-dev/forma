@@ -38,3 +38,7 @@ path = "src/bin/fauth.rs"
 [[bin]]
 name = "fixture-ksx"
 path = "src/bin/ksx.rs"
+
+[[bin]]
+name = "fixture-bench"
+path = "src/bin/bench.rs"
