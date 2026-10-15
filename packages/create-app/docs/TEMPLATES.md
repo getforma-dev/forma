@@ -14,7 +14,7 @@ checksums. Only the known Forma runtime package entries omit checksums: a
 commit cannot include the checksum of the archive containing that commit.
 The marker is outside the distributed `templates/` tree and is never packed.
 
-Use `scripts/release-set.mjs prepare <version>` from the repository root to
+Use `scripts/release-set.mjs version <version>` from the repository root to
 prepare development, alpha, beta or stable versions. It validates both seeds
 before producing changes, keeps exact internal requirements coordinated and
 preserves external records. Do not delete locks or resolve a fresh graph to

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEMPLATES, validateProjectName } from '../src/scaffold';
-import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer } from './helpers';
+import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -250,18 +250,22 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     // SR2: every package the lockfile installed carries the npm registry's
     // signature, checked against the registry's published keys, and every
     // attestation it carries verifies.
-    const signatures = run('npm', ['audit', 'signatures'], admin);
+    const signatures = auditSignatures(admin);
     expect(signatures.status, signatures.stdout + signatures.stderr).toBe(0);
 
-    // One esbuild in the installed tree, shared by the template, @getforma/build
-    // and tsx. `npm query` lists every physical copy (FORMA-165).
+    // Every physical esbuild must be exactly the sealed lock's recorded copy.
+    // Historical external pins remain intact; the current build/compiler closure
+    // may carry its own reviewed version, never an unrecorded fresh resolution.
     const esbuild = run('npm', ['query', '#esbuild'], admin);
     expect(esbuild.status, esbuild.stderr).toBe(0);
     const esbuildCopies = (JSON.parse(esbuild.stdout) as Array<{ location: string; version: string }>).map(
       (node) => `${node.location.replace(/\\/g, '/')}@${node.version}`,
     );
-    expect(esbuildCopies, 'npm installed more than one esbuild').toHaveLength(1);
-    expect(esbuildCopies[0]).toMatch(/^node_modules\/esbuild@/);
+    const lockedEsbuild = Object.entries<{ version: string }>(JSON.parse(npmLock.toString()).packages)
+      .filter(([location]) => /(?:^|\/)node_modules\/esbuild$/.test(location))
+      .map(([location, node]) => `${location}@${node.version}`);
+    expect(esbuildCopies.sort(), 'npm installed an unrecorded esbuild copy').toEqual(lockedEsbuild.sort());
+    expect(lockedEsbuild.some(copy => copy.startsWith('node_modules/esbuild@'))).toBe(true);
 
     const build = run('npm', ['run', 'build'], admin);
     expect(build.status, build.stdout + build.stderr).toBe(0);
@@ -350,22 +354,22 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const ir = fs.readFileSync(irPath);
     fs.writeFileSync(irPath, ir.subarray(0, 40));
     const refused = await runRefusingServer(dest, name);
-    expect(refused.accepted, `the server bound 127.0.0.1:3000 with a corrupt module:\n${refused.output}`).toBe(false);
+    expect(refused.accepted, `the server announced a listener with a corrupt module:\n${refused.output}`).toBe(false);
     expect(refused.code, `the server was still running with a corrupt module:\n${refused.output}`).not.toBeNull();
     expect(refused.code, refused.output).not.toBe(0);
     expect(refused.output).toContain('LOAD-');
     expect(refused.output).toContain('route /');
     fs.writeFileSync(irPath, ir);
 
-    // A render that fails: a one-byte output budget makes try_render return
+    // A render that fails: a one-byte bound output budget makes the handle return
     // RENDER-301 for `/`.
     const mainPath = path.join(dest, 'src', 'main.rs');
     const main = fs.readFileSync(mainPath, 'utf8');
     const failing = main.replace(
-      'let ctx = RenderCtx::new();',
-      'let ctx = RenderCtx::new().with_limits(forma_server::WalkLimits { max_output_bytes: 1, ..Default::default() });',
+      'pages.bind::<HomeProps>("home")',
+      'pages.bind_with::<HomeProps>("home", forma_server::Limits { max_output_bytes: 1, ..Default::default() })',
     );
-    expect(failing, 'main.rs has no `let ctx = RenderCtx::new();` to give a budget').not.toBe(main);
+    expect(failing, 'main.rs has no typed home binding to give a budget').not.toBe(main);
     fs.writeFileSync(mainPath, failing);
     const rebuild = run('cargo', ['build', '--locked'], dest);
     expect(rebuild.status, rebuild.stderr).toBe(0);
@@ -424,6 +428,43 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const fromEnvOut = fromEnv.stdout + fromEnv.stderr;
     expect(fromEnv.status, fromEnvOut).not.toBe(0);
     expect(fromEnvOut).toContain('BUILD-701');
+  }, 900_000);
+
+  it('minimal: declared count reaches SSR and invalid bindings refuse before listening', async () => {
+    const name = 'e2e-typed-props';
+    expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
+    const dest = path.join(tmp, name), admin = path.join(dest, 'admin');
+    const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
+    expect(install.status, install.stderr).toBe(0);
+    const build = run('npm', ['run', 'build:ssr'], admin);
+    expect(build.status, build.stdout + build.stderr).toBe(0);
+    const mainPath = path.join(dest, 'src', 'main.rs'), original = fs.readFileSync(mainPath, 'utf8');
+    const replace = (source: string, from: string, to: string) => {
+      expect(source, `missing fixture boundary: ${from}`).toContain(from);
+      return source.replace(from, to);
+    };
+    const compile = (source: string) => {
+      fs.writeFileSync(mainPath, source);
+      const result = run('cargo', ['build', '--locked'], dest);
+      expect(result.status, result.stderr).toBe(0);
+    };
+    try {
+      compile(replace(original, 'HomeProps { count: 0 }', 'HomeProps { count: 7 }'));
+      await withServer(dest, name, (body, response) => {
+        expect(response.status).toBe(200);
+        expect(body.replace(/<!--[\s\S]*?-->/g, '')).toMatch(/Count:\s*<span[^>]*>7<\/span>/);
+      }); // Raw HTTP only: slice 2 owns adopting this value during activation.
+      const missing = replace(replace(original, 'count: u32,', 'other: u32,'), 'HomeProps { count: 0 }', 'HomeProps { other: 0 }');
+      const wrong = replace(replace(original, 'count: u32,', 'count: String,'), 'HomeProps { count: 0 }', 'HomeProps { count: "0".into() }');
+      const unbound = replace(original, 'let home_page = match', 'pages.finalize().unwrap_or_else(|errors| { for error in errors { eprintln!("{error}"); } std::process::exit(1); });\n    let home_page = match');
+      for (const [source, code] of [[missing, 'BIND-101'], [wrong, 'BIND-102'], [unbound, 'BIND-110']]) {
+        compile(source!);
+        const refused = await runRefusingServer(dest, name);
+        expect(refused.accepted, refused.output).toBe(false);
+        expect(refused.code, refused.output).not.toBeNull(); expect(refused.code, refused.output).not.toBe(0);
+        expect(refused.output).toContain(code!);
+      }
+    } finally { fs.writeFileSync(mainPath, original); }
   }, 900_000);
 
   it('dashboard: serves each page as its browser shell, by declaration (ssr: false)', async () => {

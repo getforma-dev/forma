@@ -20,9 +20,14 @@ test('SR13 missing or unreadable status refuses publication', () => {
   for (const response of [null, {}, { workflow_runs: [] }, { workflow_runs: 'unreadable' }]) assert.throws(() => selectRun(response, sha, repo));
 });
 test('SR13 a skipped or missing R17/probe job cannot be a successful gate', () => {
-  const jobs = [{ name: 'check', status: 'completed', conclusion: 'success', steps: [{ name: "R17's command", conclusion: 'success' }] }, { name: 'release-workflow', status: 'completed', conclusion: 'success' }];
+  const jobs = [{ name: 'check', status: 'completed', conclusion: 'success', steps: [{ name: "R17's command", conclusion: 'success' }] }, ...['release-workflow','candidate-pack','candidate-scaffold (ubuntu-latest)','candidate-scaffold (windows-latest)'].map(name=>({name,status:'completed',conclusion:'success',steps:[{name:'Packed candidate full scaffold suite',conclusion:'success'}]}))];
   checkJobs({ jobs });
   for (const bad of [[], [{ ...jobs[0], conclusion: 'skipped' }, jobs[1]], [{ ...jobs[0], steps: [] }, jobs[1]], [jobs[0]]]) assert.throws(() => checkJobs({ jobs: bad }));
+  for (const name of ['candidate-pack','candidate-scaffold (ubuntu-latest)','candidate-scaffold (windows-latest)']) {
+    assert.throws(()=>checkJobs({jobs:jobs.filter(job=>job.name!==name)}),/did not run/);
+    for(const conclusion of ['skipped','failure','cancelled'])assert.throws(()=>checkJobs({jobs:jobs.map(job=>job.name===name?{...job,conclusion}:job)}),/did not run/);
+    if(name.startsWith('candidate-scaffold'))assert.throws(()=>checkJobs({jobs:jobs.map(job=>job.name===name?{...job,steps:[]}:job)}),/step did not execute/);
+  }
 });
 test('a live tag cannot publish mixed A2 versions, dev versions or a partial set', () => {
   const packages = Array.from({ length: 7 }, (_, i) => ({ name: `package-${i}`, version: '3.0.0-alpha.1' }));

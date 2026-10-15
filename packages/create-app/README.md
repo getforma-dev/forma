@@ -1,7 +1,7 @@
 # @getforma/create-app
 
 [![npm version](https://img.shields.io/npm/v/@getforma/create-app.svg)](https://www.npmjs.com/package/@getforma/create-app)
-[![CI](https://github.com/getforma-dev/create-forma-app/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/create-forma-app/actions/workflows/ci.yml)
+[![CI](https://github.com/getforma-dev/forma/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/forma/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeScript frontend, fully wired.
@@ -86,15 +86,24 @@ whoever writes the next template.
 ## Development
 
 ```bash
-npm test        # structural tests — builds the CLI first via `pretest`
+npm test        # structural tests — builds the CLI explicitly first
 npx tsc --noEmit
 ```
 
-The real gate is opt-in because it needs a network and a Rust toolchain:
+The candidate gate needs a network and a Rust toolchain. From the repository
+root, build and commit the source, then use a fresh artifact/work directory:
 
 ```bash
-FORMA_SCAFFOLD_E2E=1 npx vitest run
+npm run build
+node scripts/candidate-scaffold.mjs pack /absolute/path/to/candidate-artifacts
+# Use the record SHA-256 printed by pack and this checkout's full Git commit.
+node scripts/candidate-scaffold.mjs run /absolute/path/to/candidate-artifacts RECORD_SHA256 COMMIT /absolute/path/to/candidate-work /absolute/path/to/report.json
 ```
+
+CI always runs the full candidate suite on Linux and Windows. The separate
+registry lane runs the actual published CLI when all seven coordinated versions
+exist. Missing or skipped candidate jobs fail the release gate. The source lock
+seeds are never passed directly to an unpublished registry installation.
 
 That scaffolds each template into a temp directory, installs from the
 template's lockfile with `npm ci`, builds the frontend, runs
@@ -109,8 +118,10 @@ worker, and leave `/sw.js` to forma-server's retiring worker. It also runs
 construct the server cannot render fails the minimal template's strict build,
 and that the minimal server refuses to start on a truncated module and
 answers a failed render with its own 500, carrying neither the error nor an
-empty shell. CI runs it on Linux and Windows, and again before
-`npm publish`.
+empty shell. A distinct handler value of 7 must appear in raw SSR HTML;
+missing/wrong props and unbound routes must stop before a listener opens.
+Slice 2 owns adopting a differing server value during browser activation.
+The gate requires all 17 heavy controls plus the structural suite, with no skips.
 
 | Document | What it is |
 |---|---|

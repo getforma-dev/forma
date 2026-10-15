@@ -164,7 +164,21 @@ async fn main() {
         .map(|h| h.trim().to_string())
         .filter(|h| !h.is_empty())
         .unwrap_or_else(|| "127.0.0.1".to_string());
-    let addr = format!("{host}:3000");
+    // Port zero asks the OS for an available port; useful for isolated tests.
+    let port = match std::env::var("FORMA_PORT") {
+        Ok(value) if !value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit()) => {
+            value.parse::<u16>().unwrap_or_else(|_| {
+                eprintln!("FORMA_PORT must be an integer from 0 to 65535");
+                std::process::exit(1);
+            })
+        }
+        Err(std::env::VarError::NotPresent) => 3000,
+        _ => {
+            eprintln!("FORMA_PORT must be an integer from 0 to 65535");
+            std::process::exit(1);
+        }
+    };
+    let addr = format!("{host}:{port}");
 
     // Loopback (127.x.x.x, ::1, optionally bracketed) is quiet; anything else warns.
     let bare_host = host.trim_start_matches('[').trim_end_matches(']');
@@ -173,17 +187,16 @@ async fn main() {
         .map(|ip| ip.is_loopback())
         .unwrap_or(bare_host == "localhost");
 
-    if is_loopback {
-        println!("\n  FormaOps Dashboard running at http://localhost:3000\n");
-    } else {
+    if !is_loopback {
         eprintln!("\n  WARNING: FORMA_HOST={host} — the dashboard is reachable from your network.");
         eprintln!("  The /api/* routes have no authentication; anyone who can reach this");
         eprintln!("  machine can read them. Unset FORMA_HOST to serve on localhost only.\n");
-        println!("\n  FormaOps Dashboard running at http://{host}:3000\n");
     }
 
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .unwrap_or_else(|e| panic!("Failed to bind to {addr}: {e}"));
+    // Emit readiness only while this process owns the successfully bound socket.
+    println!("FORMA_LISTENING http://{}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.expect("Server error");
 }

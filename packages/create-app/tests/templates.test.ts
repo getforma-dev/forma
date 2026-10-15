@@ -363,7 +363,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
       .split('\n')
       .filter((l) => !l.trim().startsWith('//'))
       .join('\n');
-    expect(code).toContain('127.0.0.1');
+    expect(code.includes('127.0.0.1') || code.includes('Ipv4Addr::LOCALHOST')).toBe(true);
     expect(code).not.toContain('0.0.0.0');
   });
 

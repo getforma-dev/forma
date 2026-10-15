@@ -16,12 +16,16 @@ export function selectRun(response, sha, repository) {
 }
 export function checkJobs(response) {
   assert(Array.isArray(response?.jobs) && response.jobs.length, 'unreadable CI jobs');
-  for (const required of ['check', 'release-workflow']) {
+  for (const required of ['check', 'release-workflow', 'candidate-pack', 'candidate-scaffold (ubuntu-latest)', 'candidate-scaffold (windows-latest)']) {
     const job = response.jobs.find(j => j.name === required);
     assert(job && job.status === 'completed' && job.conclusion === 'success', `CI job ${required} did not run successfully`);
   }
   const check = response.jobs.find(j => j.name === 'check');
   assert(check.steps?.some(s => s.conclusion === 'success' && /one command|R17/i.test(s.name)), 'R17/probes step did not execute');
+  for (const name of ['candidate-scaffold (ubuntu-latest)', 'candidate-scaffold (windows-latest)']) {
+    const job = response.jobs.find(j => j.name === name);
+    assert(job.steps?.some(s => s.conclusion === 'success' && s.name === 'Packed candidate full scaffold suite'), `${name}: full scaffold step did not execute`);
+  }
   for (const job of response.jobs) assert(['success', 'skipped'].includes(job.conclusion), `CI job ${job.name}: ${job.conclusion}`);
 }
 async function get(path) {

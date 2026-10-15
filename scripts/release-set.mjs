@@ -8,6 +8,7 @@ import { dirname, resolve, join, basename, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
+import { commandInvocation } from './portable-command.mjs';
 import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template-lock-seeds.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -18,7 +19,8 @@ export const json = path => JSON.parse(readFileSync(path, 'utf8'));
 export const save = (path, data) => writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
 export const digest = (path, algorithm = 'sha256', encoding = 'hex') => createHash(algorithm).update(readFileSync(path)).digest(encoding);
 export function run(command, args, cwd = ROOT, options = {}) {
-  return execFileSync(command, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 * 1024 * 1024, ...options });
+  const invocation = commandInvocation(command, args);
+  return execFileSync(invocation.command, invocation.args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 * 1024 * 1024, ...options });
 }
 export function setVersions(root = ROOT) {
   const metadata = JSON.parse(run('cargo', ['metadata', '--no-deps', '--format-version', '1'], root));

@@ -15,7 +15,9 @@ cd admin && npm ci && npm run build && cd ..
 cargo run
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Set `FORMA_PORT` to choose
+another port (0 asks the OS to assign one); `FORMA_LISTENING` reports the bound
+address. Loopback remains the default.
 
 `admin/package-lock.json` and `Cargo.lock` pin the versions this template was
 built and tested with. `npm ci` installs exactly those and never rewrites the
@@ -149,73 +151,30 @@ flowchart TB
 
 ---
 
-## Phase 1 by design
+## Browser rendering by declaration
 
-This template is **client-rendered**, and that is a decision rather than an
-oversight. The server sends `<div id="app"></div>` plus a script tag; a nonce'd
-`personality_css` rule paints the dark background immediately so there is no
-white flash, and the layout appears once the JS runs.
+Every dashboard route is explicitly Browser: `build.ts` declares `ssr: false`,
+`main.rs` uses `render_browser_shell`, and no `build:ssr` command is offered.
+The client loads the existing mock `/api/*` data and renders the page. The
+server finalizes its route registry before listening, so adding an unbound SSR
+route refuses startup rather than silently serving a shell.
 
-Turning SSR on here makes the page worse, and it is worth understanding why,
-because the same rule decides how *your* pages will behave:
+An SSR migration would define a page's TypeScript props, supply matching Rust
+`PageProps`, bind its `PageHandle<Props>` once, and render those values per
+request. The compiler reads source; it cannot execute a browser fetch to
+obtain server data. The build scripts enable strict mode, so unsupported SSR
+constructs fail with code, file and location. Silent placeholder output is
+not the current template contract.
 
-- The FMIR compiler walks source, it does not run it. It can translate literal
-  JSX and a component call it can follow and prove; it cannot translate a
-  `.map()` over data that does not exist yet, a component handed a value only
-  the running program knows, or a dynamic tag. Anything it cannot translate
-  becomes an island placeholder — an empty `<div data-forma-island="…">` with
-  no content, which for the anonymous ones (`island_7`) has no registry entry
-  either, so nothing can hydrate it.
-- This dashboard renders data fetched at runtime from its own `/api/*` routes,
-  on every page: `.map()` over a fetched array, `<StatCard value={m.value}/>`,
-  `<StatusBadge status={d.status}/>`. That is the shape that cannot be proven.
-- Serve it as Phase 2 and FormaJS tries to adopt a DOM whose content is
-  missing. Measured on this template: **14 of the 16 Playwright tests fail**,
-  against 16/16 passing in Phase 1.
+The minimal template demonstrates declared props and actual FMIR rendering.
+It still mounts the whole browser page with a matching initial count; island
+state adoption remains a separate migration. See the maintained
+[rendering guide](https://github.com/getforma-dev/forma/blob/main/packages/create-app/docs/RENDERING-PHASES.md)
+and [compiler contract](https://github.com/getforma-dev/forma/blob/main/packages/compiler/README.md).
 
-**Measurements, dated — the numbers move with the compiler, the rule does not.**
-
-| Measured | Compiler | IR emitted | Named signal slots | Islands | Playwright, Phase 2 |
-|---|---|---|---|---|---|
-| earlier | published `@getforma/compiler` 0.2.0 (what this template pinned then; it pins no compiler since its pages are browser-rendered by declaration) | 605 B of empty shells | — | all anonymous | 2 of 16 |
-| 2026-08-06 | `forma-tools` `[Unreleased]` — the resolver fixes, published that day as `@getforma/compiler` 0.3.0 | 14856 B | 3 of 90 | 64, of which **27 named** (`Icon` ×15, `StatCard` ×4, `ProgressBar` ×3, `StatusBadge` ×2, `UserAvatar`, `RequestVolumeChart`, `formatDuration`) and 37 anonymous | 2 of 16 |
-
-The second row is the interesting one. Those compiler fixes are real
-defects — `.tsx` pages no longer compile to a placeholder, components imported
-by a page file resolve, islands carry their real names — and the sidebar, top
-bar and layout genuinely arrive as server-rendered markup. The page *content*
-still does not, because it is not knowable at compile time, and the Playwright
-number does not move. Fixing resolution was necessary and is not sufficient.
-
-So the browser route is a declaration on both sides: `build.ts` declares the
-dashboard's entry `ssr: false`, `main.rs` serves every page through
-`render_browser_shell`, and there is no `build:ssr` script to reach for by
-mistake. The server never walks a module here, so no failed server render can
-quietly become a client-mounted page. If you do wire SSR up yourself for a
-page, declare its props, bind a `PageHandle<Props>` once and call
-`pages.finalize()` before listening. `handle.render(&props, &ctx)` returns a
-coded `RenderError`, which it logs through the `tracing` subscriber `main.rs`
-installs and answers with an error page.
-
-The build scripts pass `--strict`, which `build.ts` maps to `@getforma/build`'s
-`strict: true`. It changes nothing while no page is server-rendered; once one
-is, a construct the compiler cannot render on the server fails the build with
-its code, file and line instead of becoming an empty island.
-
-**Want to see Phase 2 working?** Scaffold the `minimal` template
-(`npx @getforma/create-app my-app --template minimal`). It declares `HomeProps { count: number }`; `npm run build:ssr` emits real IR
-and the typed Rust handler supplies the count before JavaScript. The current
-whole-page mount starts at the same default; island state adoption remains a
-separate migration.
-
-**Want the rule rather than the anecdote?** The numbers above were measured
-against this template as shipped, with the compiler version its `package.json`
-pins. The underlying rule — what the compiler can and cannot prove, and how to
-build a page that server-renders — is written up in
-[RENDERING-PHASES.md](https://github.com/getforma-dev/create-forma-app/blob/main/docs/RENDERING-PHASES.md),
-and the authoritative list of translatable constructs is *What renders
-server-side* in
-[the compiler's README](https://github.com/getforma-dev/forma-tools/blob/main/packages/compiler/README.md).
+The old compiler 0.2/0.3 dashboard measurements describe the 2026-08-06 build,
+not today's compiler. Their original table and interpretation are preserved
+in the [dated source archive](https://github.com/getforma-dev/forma/blob/main/docs/archive/2026-10-15-template-slice1/packages/create-app/templates/dashboard/README.md).
 
 ---
 

@@ -94,10 +94,25 @@ async fn main() {
         .route("/_assets/{*filename}", get(assets::serve_asset::<Assets>))
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    // Port zero asks the OS for an available port; useful for isolated tests.
+    let port = match std::env::var("FORMA_PORT") {
+        Ok(value) if !value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit()) => {
+            value.parse::<u16>().unwrap_or_else(|_| {
+                eprintln!("FORMA_PORT must be an integer from 0 to 65535");
+                std::process::exit(1);
+            })
+        }
+        Err(std::env::VarError::NotPresent) => 3000,
+        _ => {
+            eprintln!("FORMA_PORT must be an integer from 0 to 65535");
+            std::process::exit(1);
+        }
+    };
+    let listener = tokio::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, port))
         .await
         .unwrap();
-    tracing::info!("Listening on http://127.0.0.1:3000");
+    // Emit readiness only while this process owns the successfully bound socket.
+    println!("FORMA_LISTENING http://{}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
 

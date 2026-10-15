@@ -11,6 +11,8 @@ cargo run
 
 Open [http://localhost:3000](http://localhost:3000). The server listens on
 loopback only. This build declares a Browser route and serves its page shell.
+Set `FORMA_PORT` to choose another port (0 asks the OS to assign one). The
+server prints `FORMA_LISTENING` with its address after successfully binding.
 
 The distributed `admin/package-lock.json` and `Cargo.lock` pin the exact
 archives tested with this template. `npm ci` preserves the npm lock. Cargo's

@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
+import { withOwnedServer } from './owned-server.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
@@ -20,6 +21,14 @@ async function freePort() {
   return port;
 }
 async function server(binary, cwd, port, visit, refusal = false) {
+  if (port === null) {
+    const result = await withOwnedServer(binary, [], cwd, visit, { refusal: Boolean(refusal) });
+    if (refusal) {
+      const expected = Array.isArray(refusal) ? refusal : ['LOAD-'];
+      assert(!result.accepted && result.code !== null && result.code !== 0 && expected.every(text => result.output.includes(text)), `server did not refuse before binding: ${result.output}`);
+    }
+    return result;
+  }
   const child = spawn(binary, [], { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
   let output = '', exited = false, code;
   child.stdout.on('data', d => { output += d; }); child.stderr.on('data', d => { output += d; });
@@ -219,6 +228,8 @@ export async function verify(dir, reportPath) {
   assert([null, 'declared-v1'].includes(set.contracts.props), 'P17 has no verifier for the recorded props contract');
   assert([undefined, null, 'finalized-v1'].includes(set.contracts.boundRender), 'P17 has no verifier for the recorded bound rendering contract');
   assert([undefined, null, 'sha384-v1'].includes(set.contracts.assetIntegrity), 'P17 has no verifier for the recorded asset integrity contract');
+  assert([undefined, null, 'declared-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
+  if (set.contracts.sourceTemplates === 'declared-v1') assert.equal(set.contracts.boundRender, 'finalized-v1');
   if (set.contracts.assetIntegrity === 'sha384-v1') assert.equal(set.contracts.manifest, 2, 'asset integrity requires schema2');
   if (set.contracts.boundRender === 'finalized-v1') assert.equal(set.contracts.props, 'declared-v1', 'finalized rendering requires the declared props checks');
   for (const p of set.packages) assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file}: wrong packed bytes`);
@@ -235,6 +246,14 @@ export async function verify(dir, reportPath) {
         writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[workspace]\n');
       }
     }
+    if (set.contracts.sourceTemplates === 'declared-v1') await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {
+      assert(/^[a-f0-9]{40}$/.test(set.commit), 'source record must name an exact commit');
+      for (const relative of ['minimal/src/main.rs', 'dashboard/src/main.rs', 'minimal/admin/src/home/app.tsx']) {
+        const original = run('git', ['show', `${set.commit}:packages/create-app/templates/${relative}`], ROOT, {encoding:'buffer'});
+        assert.deepEqual(readFileSync(join(cli, 'templates', relative)), original, `${relative}: packed source differs`);
+      }
+      assert(!existsSync(join(cli, 'template-lock-seeds.json')), 'source-only seed identity leaked into the package');
+    });
     await test('fresh advisories over every exact shipped crate lock', async () => {
       for (const p of set.packages.filter(p => p.registry === 'crates')) {
         const crate = join(scratch, p.path), manifest = join(crate, 'Cargo.toml'), lock = join(crate, 'Cargo.lock');
@@ -355,13 +374,15 @@ export async function verify(dir, reportPath) {
           writeFileSync(join(project, 'Cargo.lock'), lock);
           const patch = '\n[workspace]\n\n[patch.crates-io]\n' + present.map(n => `${n} = { path = ${JSON.stringify(join(scratch, 'crates', n))} }`).join('\n') + '\n';
           writeFileSync(join(project, 'Cargo.toml'), readFileSync(join(project, 'Cargo.toml'), 'utf8') + patch);
-          const port = await freePort(), main = join(project, 'src/main.rs');
+          const port = set.contracts.sourceTemplates === 'declared-v1' ? null : await freePort(), main = join(project, 'src/main.rs');
           const source = readFileSync(main, 'utf8');
-          const listener = template === 'minimal' ? '127.0.0.1:3000' : '{host}:3000';
-          assert(source.includes(listener), 'template listener changed; update P17 adapter');
-          writeFileSync(main, source.replaceAll(listener, `127.0.0.1:${port}`));
+          if (port !== null) {
+            const listener = template === 'minimal' ? '127.0.0.1:3000' : '{host}:3000';
+            assert(source.includes(listener), 'historical template listener changed; update P17 adapter');
+            writeFileSync(main, source.replaceAll(listener, `127.0.0.1:${port}`));
+          }
           run('cargo', ['build', '--locked'], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
-          const binary = join(scratch, 'target/debug', name);
+          const binary = join(scratch, 'target/debug', process.platform === 'win32' ? `${name}.exe` : name);
           await server(binary, project, port, async (response, origin) => {
             assert.equal(response.status, 200);
             const enforced = set.contracts.trustedTypes === 'enforced-v1';
@@ -424,6 +445,24 @@ export async function verify(dir, reportPath) {
               report.tests.push({ name: `${template}: browser blocks changed actual entry bytes using packed server SRI`, passed: true, observations });
             }
           });
+          if (template === 'minimal' && set.contracts.sourceTemplates === 'declared-v1') {
+            const original = readFileSync(main, 'utf8');
+            const changed = original.replace('home.render(&HomeProps { count: 0 }, &ctx)', 'home.render(&HomeProps { count: 7 }, &ctx)');
+            assert.notEqual(changed, original, 'count7 control must use the actual typed handler');
+            try {
+              writeFileSync(main, changed);
+              run('cargo', ['build', '--locked'], project, {stdio:'inherit',env:{...process.env,CARGO_TARGET_DIR:join(scratch,'target')}});
+              await server(binary, project, port, async response => {
+                assert.equal(response.status, 200);
+                const body = (await response.text()).replace(/<!--[\s\S]*?-->/g, '');
+                assert.match(body, /Count:\s*<span[^>]*>7<\/span>/, 'handler count did not reach the raw HTTP document');
+              });
+              report.tests.push({name:'minimal: typed handler count7 reaches actual SSR before JavaScript',passed:true,serverCount:7,clientActivationChecked:false});
+            } finally {
+              writeFileSync(main, original);
+              run('cargo', ['build', '--locked'], project, {stdio:'inherit',env:{...process.env,CARGO_TARGET_DIR:join(scratch,'target')}});
+            }
+          }
           if (template === 'minimal') {
             const manifest = json(join(admin, 'dist/manifest.json'));
             const ir = join(admin, 'dist', manifest.routes['/'].ir);
