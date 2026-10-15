@@ -183,7 +183,7 @@ report is `expected-divergent` only when every difference in it is matched. The 
 skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
 run as an unexpected pass, so the entry is removed the day its fix lands.
 
-The entries today (F1 to F4 found at step 0 and assigned by the lead; F2's step-1 cases, F5 and F6 found at step 1):
+The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
@@ -191,7 +191,7 @@ The entries today (F1 to F4 found at step 0 and assigned by the lead; F2's step-
 | F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`, and at step 1 `nullish` and `closed-nullish` `p[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
 | F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
-| F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | a finding, reported to the lead (no ticket yet) |
+| F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | FORMA-016: core's `createShow` takes a string or number branch as a text node |
 | F6 | `aggregate-fallback`: a keyed row whose string key holds CR or NUL; the walker writes the rule-1 key text, core's adoption compares the raw key (`String(key)`) and refuses the island | P2 mutation and activation error | FORMA-181, checkpoint C (adoption by `canonicalKeyText`) |
 
 F4 can never become equal: the server has no value to write. In warning mode the compiler reports
@@ -230,7 +230,7 @@ holder-ambiguous positions; every module on the typed path. Locally 72 s for the
 Chromium (about 70 ms a state); on CI's `e2e-engines` jobs step 1 at 10 states runs in 34 s in
 Firefox and in WebKit. CI's figure for the per-merge job at 100 states is in the ticket. The new entries: F2's case in
 `nullish` and `closed-nullish`; F5, `props-contract`'s `createShow` branch that returns a string
-(core throws, the walker renders the text; a finding); F6, `aggregate-fallback`'s keys that hold CR
+(core throws, the walker renders the text; FORMA-016); F6, `aggregate-fallback`'s keys that hold CR
 or NUL (adoption compares the raw key, not the rule-1 key text; FORMA-181 checkpoint C).
 
 ## The stop rule
