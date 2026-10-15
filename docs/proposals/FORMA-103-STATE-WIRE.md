@@ -169,6 +169,7 @@ kind 04 SHOW: value, then:block, else:block
 kind 05 LIST: value, key_count:u8, key_segment:text[key_count], body:block
 kind 06 CHILD: registration_name:text, field_count:u16,
                (field_name:text, value)[field_count]
+kind 07 CAPTURE: constant
 ```
 
 Mode01 has exactly an empty block (`record_count=0`); any record in it is
@@ -200,6 +201,48 @@ bindings. A registered nested island contributes CHILD with its registration
 key and call's field expressions; its own internal bindings belong to its own
 contract and are not inlined into its parent's contract.
 
+CAPTURE records form a contiguous prefix of the outermost native block, before
+any other record. They are forbidden in nested blocks, after a non-CAPTURE, and
+in browserOnly mode. Their ordinals are a third namespace, independent of
+SIGNAL and LIST. CAPTURE_READ can have zero path segments; subsequent segments
+project from the captured value, with the same1024-segment bound. Every capture
+must be read. Traverse the remaining program in semantic preorder (SIGNAL
+initializer, output value, condition then then/else, LIST source then body, CHILD
+fields in canonical name order), and each expression's operands left to right.
+The first encounters of capture ids must be exactly0,1,... in prefix order.
+Thus hoisting the records does not make their numbering depend on which runtime
+branch happens to execute. A captured getter reused in both branches remains
+one capture and is available to both.
+
+The writer resolves a capture to the actual lexical declaration/import/export
+binding, following aliases and re-exports. Two uses of one binding share a
+capture ordinal; two distinct bindings retain two ordinals even with identical
+closed initial values. Constant equality, variable spelling and module slot
+names are never identity keys. Import alias names do not enter the bytes. Only
+getters actually read by this component's semantic native bindings or local
+initializers become captures; unrelated module globals and event-only reads
+do not. The prefix stores each resolved initializer as bounded closed data
+using the constant grammar, with no source path, variable name or handler key.
+
+A capture preserves the existing runtime getter and global/shared signal
+identity.103 never seeds, reassigns or recreates that binding per island.
+"Read-only capture" describes103's ownership, not a ban on existing setters or
+client event handlers. Shared-store request serialization remains deferred and
+`s` is empty. If another client action has changed a capture before activation,
+103 does not reset it to the metadata's initial value;104's adoption comparison
+handles resulting DOM/value mismatch. CAPTURE_READ is never a component-local
+writable seed identity. Compiler runtime metadata distinguishes its kind and
+actual getter from the local SIGNAL getter/setter pair, even if their ordinal
+numbers coincide.
+
+An unresolved/reassigned capture binding, unresolved import/re-export cycle or
+initializer outside bounded closed data is BUILD-610 at the actual use with the
+original declaration/import location when available. It does not become an
+empty/default slot or a handler property. Existing literal-seeded module-level
+and imported getter behavior remains admitted. Native invalid/unused/duplicate
+ordinal usage, misplaced capture declarations and malformed constants are
+LOAD-103; named count/depth/byte ceilings are LOAD-107.
+
 Signal ids are the zero-based preorder ordinal of SIGNAL records across this
 component program; list ids are the equivalent LIST ordinals. Their namespaces
 are separate. The second `createSignal(p.hits)` is a new SIGNAL even if its
@@ -220,6 +263,7 @@ value := tag:u8, payload
   04 NULLISH: source:value, fallback:constant
   05 UNARY: operator:u8, operand:value
   06 BINARY: operator:u8, left:value, right:value
+  07 CAPTURE_READ: capture_id:u16, segment_count:u16, segment:text[segment_count]
 
 constant := tag:u8, payload
   00 null
@@ -236,7 +280,7 @@ binary operators: 01 +, 02 -, 03 *, 04 /, 05 %, 06 **,
                   0d &&, 0e ||
 ```
 
-PROP has at least one segment and resolves against root schema zero. SIGNAL_READ
+PROP has at least one segment and resolves against root schema zero. SIGNAL_READ, CAPTURE_READ
 and ROW_READ may have zero segments (read the value). Path length is at most
 1024, separate from the 32-segment list key ceiling. Value-expression nesting is
 at most 64; every variable-sized value consumes an enclosing bounded record.
@@ -272,8 +316,8 @@ Unknown calls/coercions/dynamic property names are not encoded as opaque source
 text. If a rendered island binding cannot be represented, it fails BUILD-610
 with the original location. Event-handler bodies, setters' event-time updates,
 effects unrelated to rendering, static tags/text/attributes, CSS, trigger choice
-and declaration locations do not enter these bytes. SIGNAL initializers do,
-including unused local signals; text and dynamic attribute names/values do;
+and declaration locations do not enter these bytes. SIGNAL initializers and actually used captured binding initializers do,
+including unused local signals but excluding unrelated module captures; text and dynamic attribute names/values do;
 SHOW conditions and both branch bindings do; LIST sources, key paths and body
 bindings do; nested island prop mappings do. A literal participates when it is
 part of one of those expressions, not merely static markup.
@@ -442,7 +486,8 @@ The compiler's private registration factory receives props before component
 execution/createSignal. Each lexical SIGNAL ordinal creates its own getter/
 setter pair; one prop can seed two independently mutable signals. For104,
 associate a writable getter with its actual setter through compiler-known
-signal identity/closure metadata. Never infer a setter from a prop name or shared
+signal identity/closure metadata. CAPTURE_READ remains explicitly a capture of
+an existing getter, not that local writable seed identity. Never infer a setter from a prop name or shared
 source slot.104 may consume a validated island only after state preflight; its
 separate adoption transaction retains the stricter zero-write success rule.
 
@@ -457,10 +502,11 @@ contract-qualified corpus deliberately, and distinguish intentional state/head/
 host-marker changes from unchanged visible content. Native checks run with
 UPDATE_GOLDEN absent.
 
-`FORMA-103-WIRE-VECTORS.json` contains eight proposed exact byte vectors (empty,
+`FORMA-103-WIRE-VECTORS.json` contains eleven proposed exact byte vectors (empty,
 two signals, repeated inputs, nested row mapping, empty-string fallback and
 UTF-8 ordering without normalization, recursive aggregate constants and
-browserOnly mode). Python constructs the vectors and Node
+browserOnly mode, one reused captured binding, two distinct equal-initial-value
+bindings, and aliases of one imported capture). Python constructs the vectors and Node
 independently agrees on hash/length/section boundaries in retained scratch
 logs. These are spec vectors, not evidence that the current native reader
 accepts the new grammar. The native dump/parser replay follows approval.
@@ -469,7 +515,8 @@ The paired checkpoint must cover exact bytes/hash for empty props and two
 signals reading one optional prop; equal schemas with different source/global
 ids; enum/name UTF-8 ordering; duplicate input slots; nested/renamed inputs;
 list iteration and nested islands; all COALESCE ownership/type failures and
-0/false/empty semantics; malformed lengths/tags/count boundaries; old-reader
+0/false/empty semantics; captured getter reuse versus equal-value distinct
+bindings and import aliases; malformed lengths/tags/count boundaries; old-reader
 required-section refusal; new-reader old-island refusal. These are fixed
 functional regressions, not a new fuzz campaign. Actual SSR→browser checks add
 the ticket's100 deterministic values/schema, all declaration disclosure tests,

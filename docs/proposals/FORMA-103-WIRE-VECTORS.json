@@ -133,6 +133,55 @@
       "sectionLength": 36,
       "nativeModeSameSchemaDigest": "278ea789a13accf1",
       "meaning": "Ordinary browser-only body expressions are excluded; explicit mode and declared schema still determine identity."
+    },
+    {
+      "name": "one-capture-two-uses",
+      "bindingHex": "010003000a0000000703000000000000f03f0600000002070000000006000000020700000000",
+      "bindingLength": 38,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "010003000a0000000703000000000000f03f06000000020700000000060000000207000000000101000000",
+      "digestHex": "a0066f7375e72064",
+      "sectionHex": "010035000000070026000000010003000a0000000703000000000000f03f06000000020700000000060000000207000000000500000001010000000000",
+      "sectionLength": 61,
+      "semanticBindings": [
+        "moduleBindingA",
+        "moduleBindingA"
+      ],
+      "meaning": "The same actual getter is reused; its closed initial value is not a handler seed."
+    },
+    {
+      "name": "two-distinct-equal-captures",
+      "bindingHex": "010004000a0000000703000000000000f03f0a0000000703000000000000f03f0600000002070000000006000000020701000000",
+      "bindingLength": 52,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "010004000a0000000703000000000000f03f0a0000000703000000000000f03f06000000020700000000060000000207010000000101000000",
+      "digestHex": "bdebe9ab51b51a43",
+      "sectionHex": "010043000000070034000000010004000a0000000703000000000000f03f0a0000000703000000000000f03f06000000020700000000060000000207010000000500000001010000000000",
+      "sectionLength": 75,
+      "semanticBindings": [
+        "moduleBindingA",
+        "moduleBindingB"
+      ],
+      "meaning": "Equal initial constants never merge distinct actual lexical/import getter bindings."
+    },
+    {
+      "name": "import-aliases-one-capture",
+      "bindingHex": "010003000a0000000703000000000000f03f0600000002070000000006000000020700000000",
+      "bindingLength": 38,
+      "schemaHex": "0101000000",
+      "schemaLength": 5,
+      "hashInputHex": "010003000a0000000703000000000000f03f06000000020700000000060000000207000000000101000000",
+      "digestHex": "a0066f7375e72064",
+      "sectionHex": "010035000000070026000000010003000a0000000703000000000000f03f06000000020700000000060000000207000000000500000001010000000000",
+      "sectionLength": 61,
+      "semanticBindings": [
+        "import {count as left} from ./signals",
+        "import {count as right} from ./signals"
+      ],
+      "sameDigestAs": "one-capture-two-uses",
+      "meaning": "Both aliases resolve to one exported getter; alias spelling is absent from canonical bytes."
     }
   ]
 }
