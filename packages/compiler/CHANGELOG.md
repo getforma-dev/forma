@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Rule 6's attribute table: findings F2 and F3 — FORMA-182
+
+- **Rendered output changes with no source change.** A static `true` attribute is bare only on an HTML boolean attribute (`HTML_BOOLEAN_ATTRIBUTES` in `src/value-rules.ts`, core's list); on any other it is the word, `data-live="true"`, `class="true"`, where it was bare (F2). A reactive boolean still lands in a `TYPE_BOOL` slot, which the walker now writes by the same rule.
+- An attribute whose server value is the empty string is written as a static `name=""` (F3): a signal created with `''` bound to an attribute (`value: () => query()`, `value: query`) or a value that evaluates to `''`. A client slot cannot carry an empty default (zero default bytes read as null), so the server used to drop the attribute where `h()` writes it. The js-emitter `dynamic-attrs` module regenerates; `tests/ssr-render.test.ts`'s stated limit "omits an attribute whose value evaluates to the empty string" became "writes an attribute whose server value is the empty string".
+- Tests: `tests/value-rule-6-attributes.test.ts` (the shared `compiled` shapes and the boolean set), `tests/attribute-values-archive.test.ts` (the archived corpus outputs and their ledger).
+
 ### Value rule 7: conditions are boolean-typed — FORMA-182
 
 - **Breaking: a condition that is not boolean-typed no longer builds (`BUILD-615`).** A `createShow` condition or a ternary test the compiler can prove is not a boolean fails the build, strict mode or not (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 7): a declared prop of another type (an optional boolean is admitted), a signal whose default is a number, a string or `null`, a closed value of another type (an aggregate, an aggregate or list-row field, a module-level `const`), a non-boolean literal, or a mix such as `a() && count()` or `name() || 'x'`. The common shapes are `createShow(() => count(), …)`, `createShow(count, …)` (a getter passed itself is now read as its call), a ternary on a `null`-default signal (`() => user() ? a : b`) and on a string signal (`() => name() ? …`). Fix: compare explicitly, `count() > 0`, `user() !== null`, `name() !== ''`, or `!!x`. A condition the compiler cannot type keeps `BUILD-302`. Conformance pair in `tests/fixtures/conformance/BUILD-615/`.

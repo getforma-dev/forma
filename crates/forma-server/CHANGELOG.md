@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Attribute values — FORMA-182
+
+- Pages render through forma-ir's attribute table (rule 6, finding F2): a `true` on a non-boolean attribute is written as `name="true"` (`tests/typed_pages.rs` asserts `data-enabled="true"` on a keyed row where it asserted the bare name).
+
 ### Keyed list rows — FORMA-181
 
 - `RenderError::code()` reports `RENDER-503` for a walk refused by forma-ir's `IrError::InvalidListKey` (a keyed row without a usable identity, a duplicate key, a row without one root): a new cause with its own code, still carried by `RenderError::Walk` with the route, component path and counts. Every other walk refusal stays `RENDER-102`.

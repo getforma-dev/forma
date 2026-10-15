@@ -25,6 +25,14 @@
  */
 
 import { getSlots, readSections, readStringTable, readU16LE, readU32LE, type Slot } from './fmir';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+/** Rule 6's attribute table: a `true` is bare only on these (the shared vector
+ *  file's list, which the walker and core read too). */
+const BOOLEAN_ATTRIBUTES: ReadonlySet<string> = new Set((JSON.parse(readFileSync(
+  resolve(__dirname, '../../../../crates/forma-ir/tests/fixtures/parity/attributes.json'), 'utf8',
+)) as { booleanAttributes: string[] }).booleanAttributes);
 
 const OP_OPEN_TAG     = 0x01;
 const OP_CLOSE_TAG    = 0x02;
@@ -149,11 +157,12 @@ export function renderDefaults(binary: Uint8Array, options: RenderOptions = {}):
           pos += 6;
           if (!pendingTagClose) break;
           // An HTML boolean attribute is ON whenever it is present: absent for
-          // false/null, bare for true. An empty string is a VALUE (`value=""`),
-          // not an absence.
+          // false/null, bare for true; any other attribute takes the word
+          // "true" (rule 6's attribute table, as the walker). An empty string
+          // is a VALUE (`value=""`), not an absence.
           if (value.kind === 'null') break;
           if (value.kind === 'bool') {
-            if (value.value) out += ` ${key}`;
+            if (value.value) out += BOOLEAN_ATTRIBUTES.has(key) ? ` ${key}` : ` ${key}="true"`;
             break;
           }
           out += ` ${key}="${escapeAttr(value.value)}"`;

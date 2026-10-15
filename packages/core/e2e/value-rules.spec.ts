@@ -183,8 +183,7 @@ for (const { id, attribute } of nulls.attribute) {
 // -- Rule 6: a boolean in text is a build error --------------------------------
 interface NearMissVector { id: string; value: boolean; expected: string }
 interface IdiomVector { id: string; ready: boolean; expected: string }
-interface PresenceVector { id: string; value: boolean; present: boolean; expected?: string }
-const booleans = vectors<{ nearMissText: NearMissVector[]; idiom: IdiomVector[]; attribute: PresenceVector[] }>('boolean-text.json');
+const booleans = vectors<{ nearMissText: NearMissVector[]; idiom: IdiomVector[] }>('boolean-text.json');
 for (const { id, value, expected } of booleans.nearMissText) {
   for (const reactive of [false, true]) {
     test(`rule 6 ${id} (${reactive ? 'reactive' : 'static'}): String(flag)'s word in the walker's range adopts without a write`, async ({ page }) => {
@@ -199,15 +198,17 @@ for (const { id, ready, expected } of booleans.idiom) {
     expect(await adopt(page, { tag: 'p', children: [{ and: ready, then: 'Go' }], reactive: true })).toEqual({ text: expected, ...written });
   });
 }
-for (const { id, value, present } of booleans.attribute) {
-  for (const attribute of ['disabled', 'class']) {
-    for (const reactive of [false, true]) {
-      test(`rule 6 ${id} ${attribute} (${reactive ? 'reactive' : 'static'}): the walker's presence adopts without a write`, async ({ page }) => {
-        await serve(page, present ? `<input id="ok" ${attribute}></input>` : '<input id="ok"></input>');
-        expect(await adopt(page, { tag: 'input', props: { id: { s: 'ok' }, [attribute]: { b: value } }, reactive }))
-          .toEqual({ text: '', ...written });
-      });
-    }
+// Rule 6's attribute table (findings F2, F3): presence only on an HTML boolean
+// attribute, the value's string everywhere else, `true` as "true", "" a value.
+interface AttributeVector { id: string; attribute: string; value: boolean | string | null; html: string; dom: string | null }
+const wireOf = (value: boolean | string | null): Wire => value === null ? { absent: 'null' } : typeof value === 'boolean' ? { b: value } : { s: value };
+for (const { id, attribute, value, html } of vectors<{ values: AttributeVector[] }>('attributes.json').values) {
+  for (const reactive of [false, true]) {
+    test(`rule 6 attribute ${id} (${reactive ? 'reactive' : 'static'}): the walker's ${html.trim() || 'omission'} adopts without a write`, async ({ page }) => {
+      await serve(page, `<input id="ok"${html}>`);
+      expect(await adopt(page, { tag: 'input', props: { id: { s: 'ok' }, [attribute]: wireOf(value) }, reactive }))
+        .toEqual({ text: '', ...written });
+    });
   }
 }
 

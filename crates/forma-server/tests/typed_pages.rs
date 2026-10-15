@@ -197,9 +197,11 @@ fn actual_compiler_module_binds_by_declared_names_and_renders_two_list_views() {
     // FORMA-181 checkpoint B: both lists are keyed by `id` (FMIR section 6), so every row root
     // carries its key, the static attributes first and the dynamic ones after it; the two
     // lists iterate the same rows, and each list execution is its own duplicate scope.
+    // `data-enabled` is not an HTML boolean attribute, so a true row writes the word
+    // `h()` writes (FORMA-182 rule 6's attribute table, finding F2).
     assert_eq!(html.matches("<b data-forma-key=").count(), 2, "{html}");
     for row in [
-        "<label data-forma-key=\"7\" data-enabled><!--f:t9-->First &lt;row&gt;",
+        "<label data-forma-key=\"7\" data-enabled=\"true\"><!--f:t9-->First &lt;row&gt;",
         "<label data-forma-key=\"8\"><!--f:t9-->Second",
         "<b data-forma-key=\"7\"><!--f:t10-->7<!--/f:t10--></b>",
         "<b data-forma-key=\"8\"><!--f:t10-->8<!--/f:t10--></b>",

@@ -5,6 +5,7 @@ import { isEventHandlerAttr, isRawHtmlAttr, isUnsafeAttrWrite } from '../securit
 import { AdoptionDomError } from './adoption-plan.js';
 import { rawHtml } from './trusted-html.js';
 import { normalizeDomText } from './normalize-text.js';
+import { BOOLEAN_ATTRS } from './element.js';
 
 const XLINK_NS='http://www.w3.org/1999/xlink';
 const ALIASES:Record<string,string>={className:'class',htmlFor:'for',tabIndex:'tabindex'};
@@ -29,7 +30,8 @@ export function prepareAttribute(element:Element,key:string,value:unknown):Prepa
     // compared and written; the URL guard classifies the raw string, so a NUL
     // anywhere in a URL attribute refuses (the walker does the same).
     // Verified by: src/dom/__tests__/normalize-text.test.ts > "adoption attribute expectations normalize $id before comparison and later writes"
-    const raw=next===true?'':String(next),result=normalizeDomText(raw);
+    // Rule 6's attribute table: `true` is bare only on an HTML boolean attribute.
+    const raw=next===true&&BOOLEAN_ATTRS.has(qualified)?'':String(next),result=normalizeDomText(raw);
     return isUnsafeAttrWrite(element.localName,qualified,raw)?null:result;
   };
   const initial=normalize(value);

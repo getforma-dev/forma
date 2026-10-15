@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Rule 6's attribute table: findings F2 and F3 — FORMA-182
+
+- **Rendered output changes with no source change.** `true` is bare only on an HTML boolean attribute (`BOOLEAN_ATTRS`, now exported from `src/dom/element.ts` for adoption); on any other attribute it is the word `"true"` on every writer: `h()`'s static path wrote it bare (`aria-hidden: true` gave `aria-hidden=""`, which ARIA reads as no value; `class: true` gave `class=""`), and adoption expected and wrote it bare (FORMA-188's `aria-pressed=""`), where `h()`'s reactive path and now the walker write `"true"` (`docs/parity-rules.md`, rule 6's attribute table). Verified by `src/dom/__tests__/value-rule-6-attributes.test.ts` and `e2e/value-rules.spec.ts` in three engines; `element.test.ts` and `hydrate-svg.test.ts` migrated from the bare expectation; probes `el/static-class-true-bare`, `el/static-true-bare`, `adoption/true-bare-off-boolean-set`.
+
 ### Value rule 6: a boolean in text writes nothing — FORMA-182
 
 - **Rendered output changes with no source change:** strict adoption maps a boolean text value to the empty string, as `h()` does (`docs/parity-rules.md`, rule 6). A reactive child returning `false` or `true` over a served range used to be expected, and later written, as the word, so an adopted page showed `false` where a fresh render showed nothing, and the empty range the walker now serves for `() => ready() && 'Go'` at `false` was refused with `FORMA_E_HYDRATE_VALUE`. A page compiled by an earlier compiler, which served the word there, is now refused at that idiom: compiler and core move together in 3.0.0. Verified by `src/dom/__tests__/value-rule-6-boolean-text.test.ts` and `e2e/value-rules.spec.ts` in three engines; mutation probe `adoption/boolean-text-word`.

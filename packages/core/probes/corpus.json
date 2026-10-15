@@ -45,17 +45,17 @@
   "id": "el/class-null-written",
   "file": "src/dom/element.ts",
   "tags": [],
-  "find": "    const v = raw == null || raw === false ? null : raw === true ? '' : normalizeDomText(String(raw));",
+  "find": "    const v = raw == null || raw === false ? null : normalizeDomText(String(raw));",
   "replace": "    const v = normalizeDomText(String(raw));",
   "note": "a null, undefined or false class is written as its word instead of removed (FORMA-182 rule 5)"
  },
  {
-  "id": "el/static-class-true-word",
+  "id": "el/static-class-true-bare",
   "file": "src/dom/element.ts",
   "tags": [],
-  "find": "    const v = value === true ? '' : normalizeDomText(String(value));",
-  "replace": "    const v = normalizeDomText(String(value));",
-  "note": "a static class: true is written as class=\"true\" instead of the bare attribute the walker writes (FORMA-182 rule 6)"
+  "find": "    const v = normalizeDomText(String(value));",
+  "replace": "    const v = value === true ? '' : normalizeDomText(String(value));",
+  "note": "a static class: true is written bare instead of the word \"true\" the walker writes (FORMA-182 rule 6's attribute table, F2)"
  },
  {
   "id": "el/generic-url-guard-off",
@@ -81,19 +81,19 @@
   "tags": [
    "security"
   ],
-  "find": "  if (isEventHandlerAttr(key)) {\n    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
-  "replace": "  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
+  "find": "  if (isEventHandlerAttr(key)) {\n    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  checkRawAttr(key, value);\n\n  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,",
+  "replace": "  checkRawAttr(key, value);\n\n  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,",
   "note": "h() static path writes ONCLICK as an inline handler"
  },
  {
-  "id": "el/static-true-as-string",
+  "id": "el/static-true-bare",
   "file": "src/dom/element.ts",
   "tags": [
    "contract"
   ],
-  "find": "  if (value === true) {\n    el.setAttribute(key, '');\n    return;\n  }",
-  "replace": "  if (value === true) {\n    el.setAttribute(key, 'true');\n    return;\n  }",
-  "note": "h() static true writes name=\"true\" instead of a bare attribute"
+  "find": "  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,\n  // docs/parity-rules.md: the walker writes the same), else the value's string.\n  const raw = String(value), strVal = normalizeDomText(raw);",
+  "replace": "  if (value === true) {\n    el.setAttribute(key, '');\n    return;\n  }\n  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,\n  // docs/parity-rules.md: the walker writes the same), else the value's string.\n  const raw = String(value), strVal = normalizeDomText(raw);",
+  "note": "h() static true writes a bare non-boolean attribute where the walker writes \"true\" (FORMA-182 rule 6's attribute table, F2)"
  },
  {
   "id": "el/static-url-guard-off",
@@ -2512,5 +2512,13 @@
   "find": "  if(value==null||typeof value==='boolean')return '';\n  if(typeof value==='string'||typeof value==='number')return normalizeDomText(String(value));",
   "replace": "  if(value==null)return '';\n  if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return normalizeDomText(String(value));",
   "note": "adoption expects and later writes the word of a boolean text value where h() and the walker write nothing (FORMA-182 rule 6)"
+ },
+ {
+  "id": "adoption/true-bare-off-boolean-set",
+  "file": "src/dom/adoption-attributes.ts",
+  "tags": [],
+  "find": "next===true&&BOOLEAN_ATTRS.has(qualified)?''",
+  "replace": "next===true?''",
+  "note": "adoption expects and writes a bare data-*/aria-* attribute for true where the walker and h() write \"true\" (FORMA-182 rule 6's attribute table, F2)"
  }
 ]

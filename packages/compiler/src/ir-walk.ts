@@ -54,7 +54,7 @@ import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listProp
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
-import { closedKind, moduleLiteral, refuseBooleanText, refuseConditionType, valueKind, type KindEnvironment } from './value-rules';
+import { closedKind, HTML_BOOLEAN_ATTRIBUTES, moduleLiteral, refuseBooleanText, refuseConditionType, valueKind, type KindEnvironment } from './value-rules';
 import {
   enterComponentScope,
   lookupSignal,
@@ -93,10 +93,12 @@ const SOURCE_SERVER = SLOT_SOURCE_SERVER;
 const SOURCE_CLIENT = SLOT_SOURCE_CLIENT;
 
 /** Convert a static literal to its string representation for an attribute value. */
-function staticLiteralToAttrString(expr: t.Expression): string | null {
+function staticLiteralToAttrString(expr: t.Expression, key: string): string | null {
   if (t.isStringLiteral(expr)) return expr.value;
   if (t.isNumericLiteral(expr)) return String(expr.value);
-  if (t.isBooleanLiteral(expr)) return expr.value ? '' : null;
+  // Rule 6's attribute table: `true` is bare on an HTML boolean attribute and
+  // the word "true" on any other, as h() writes it (finding F2).
+  if (t.isBooleanLiteral(expr)) return expr.value ? (HTML_BOOLEAN_ATTRIBUTES.has(key) ? '' : 'true') : null;
   if (t.isNullLiteral(expr)) return null;
   return null;
 }
@@ -373,13 +375,27 @@ function evalToText(val: EvalValue): string {
  * leaves such a slot Null, which renders as an omitted attribute and empty text.
  * That is the right answer for null and for a value that could not be evaluated;
  * it is also, unavoidably, what an EMPTY STRING default has to encode, because
- * the slot entry has no way to distinguish "" from absent. An attribute whose
- * value evaluates to "" is therefore omitted server-side where the client writes
- * `attr=""` — a documented boundary of the binary format, not a walker choice.
+ * the slot entry has no way to distinguish "" from absent. In text the two
+ * render alike (the empty holder); an attribute whose server value is "" is
+ * therefore not bound to a slot but written as a static `attr=""`
+ * (emptyServerValue below; FORMA-182 finding F3).
  */
 function defaultBytesFor(val: EvalValue | undefined): Uint8Array {
   if (val === undefined || val === null) return new Uint8Array(0);
   return new TextEncoder().encode(String(val));
+}
+
+/**
+ * Whether a client signal's server value is the empty string. Its slot cannot
+ * say so (zero default bytes are "no default", which the walker reads as
+ * null and omits), so an attribute bound to it is written as a static
+ * `name=""`, as are attributes whose value evaluates to "" (FORMA-182 finding
+ * F3, rule 6's attribute table): a client slot is never filled on the server,
+ * so its default is the value the server writes.
+ * Verified by: packages/compiler/tests/value-rule-6-attributes.test.ts
+ */
+function emptyServerValue(value: SignalDefault): boolean {
+  return value.type === 'text' && value.default === '';
 }
 
 /**
@@ -1110,6 +1126,10 @@ export function walkHTree(
       // Reuse lexical provenance so a same-spelled local is never an outer
       // signal merely because the legacy signal scope can find that name.
       const directSignal = t.isIdentifier(val) ? closedEnv(walkCtx).signal(val) : undefined;
+      if (directSignal && emptyServerValue(directSignal.default)) {
+        staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        continue;
+      }
       if (directSignal) {
         const slotId = directSignal.slotId;
         ctx.recordSlotRef(slotId);
@@ -1119,7 +1139,7 @@ export function walkHTree(
 
       // Static literal value -> static attribute pair
       if (isStaticLiteral(val)) {
-        const strVal = staticLiteralToAttrString(val);
+        const strVal = staticLiteralToAttrString(val, key);
         if (strVal !== null) {
           checkLiteralSize(walkCtx, val, strVal, `value of attribute '${key}' on <${tag}>`);
           const keyIdx = ctx.addString(key);
@@ -1168,11 +1188,19 @@ export function walkHTree(
         const sigName = extractSignalName(fn);
         const binding = sigName ? lookupSignal(walkCtx.signalScope, sigName) : undefined;
         let slotId: number;
+        if (binding && emptyServerValue(binding.default)) {
+          staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+          continue;
+        }
         if (binding) {
           slotId = binding.slotId;
           ctx.recordSlotRef(slotId);
         } else {
           const evaluated = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          if (evaluated === '') {
+            staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+            continue;
+          }
           if (evaluated !== undefined && evaluated !== null) {
             checkLiteralSize(walkCtx, fn, String(evaluated), `value of attribute '${key}' on <${tag}>`);
           }
@@ -1220,6 +1248,10 @@ export function walkHTree(
       // so. That is what stripped the tooltips off ksx's controls.
       // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a concatenated attribute value into an SSR default"
       const evaluated = evalNode(val, evalEnv(walkCtx));
+      if (evaluated === '') {
+        staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        continue;
+      }
       if (evaluated !== undefined && evaluated !== null) {
         checkLiteralSize(walkCtx, val, String(evaluated), `value of attribute '${key}' on <${tag}>`);
       }
