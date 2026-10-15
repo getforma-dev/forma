@@ -1,5 +1,7 @@
 /** Private compiler/state handshake. No DOM writes or component calls occur here. */
 import type { IslandHydrateFn } from './activate.js';
+import { AdoptionDomError } from './adoption-plan.js';
+import type { ComponentDescription } from './adoption-description.js';
 
 export type IslandSchemaType =
   | { readonly kind: 'boolean' | 'string' | 'number' | 'date' }
@@ -13,7 +15,10 @@ export interface IslandRegistrationMetadata {
   readonly schema: IslandSchema;
   readonly mode: 0 | 1;
 }
-interface Registration extends IslandRegistrationMetadata { readonly hydrate: IslandHydrateFn }
+interface Registration extends IslandRegistrationMetadata {
+  readonly hydrate: IslandHydrateFn;
+  readonly component: (...args: never[]) => unknown;
+}
 export interface ValidatedIsland {
   readonly host: HTMLElement;
   readonly occurrence: number;
@@ -57,7 +62,7 @@ export function __islandRegistration<P extends object>(
   }
   const schema = copySchema(metadata.schema);
   const hydrate: IslandHydrateFn = (_host, props) => component(props as P);
-  registrations.set(hydrate, { hydrate, h: metadata.h, schema, mode: metadata.mode });
+  registrations.set(hydrate, { hydrate, component, h: metadata.h, schema, mode: metadata.mode });
   return hydrate;
 }
 
@@ -311,4 +316,83 @@ export function preflightIslands(registry: Record<string, (...args: never[]) => 
     }
   }
   return results;
+}
+
+function mismatch(): never { throw new AdoptionDomError('FORMA_E_HYDRATE_VALUE'); }
+function data(value: object, key: string | number, required = false): unknown {
+  const field = Object.getOwnPropertyDescriptor(value, key);
+  if (!field) { if (required) mismatch(); return undefined; }
+  if (!('value' in field)) mismatch();
+  return field.value;
+}
+
+/**
+ * Declared data only: do not invoke accessors, inspect extras or stringify.
+ * The admitted compiler grammar supplies plain data and decoded Dates. This
+ * is not a trap-free inspector for arbitrary hand-written Proxy arguments;
+ * JavaScript descriptor reflection itself may invoke a Proxy trap.
+ */
+function sameProps(input: unknown, expected: Record<string, unknown>, schema: IslandSchema): void {
+  type Work = { kind: 'value'; left: unknown; right: unknown; type: IslandSchemaType }
+    | { kind: 'object'; left: Record<string, unknown>; right: Record<string, unknown>; fields: IslandSchema[number]; index: number }
+    | { kind: 'array'; left: unknown[]; right: unknown[]; type: IslandSchemaType; length: number; index: number };
+  if (input === null || input === undefined) input = Object.create(null);
+  if (!object(input)) mismatch();
+  const pending: Work[] = [{ kind: 'object', left: input, right: expected, fields: schema[0]!, index: 0 }];
+  let count = 0;
+  while (pending.length) {
+    const work = pending.pop()!;
+    if (work.kind === 'object') {
+      if (work.index === work.fields.length) continue;
+      const field = work.fields[work.index++]!;
+      pending.push(work, { kind: 'value', left: data(work.left, field.name), right: data(work.right, field.name), type: field.type });
+      continue;
+    }
+    if (work.kind === 'array') {
+      if (work.index === work.length) continue;
+      const index = work.index++;
+      pending.push(work, { kind: 'value', left: data(work.left, index, true), right: data(work.right, index, true), type: work.type });
+      continue;
+    }
+    if (++count > MAX_STATE_BYTES) mismatch();
+    let { type } = work;
+    const { left, right } = work;
+    if (type.kind === 'optional' && (left === null || left === undefined) && (right === null || right === undefined)) continue;
+    while (type.kind === 'optional') type = type.inner;
+    switch (type.kind) {
+      case 'object':
+        if (!object(left) || !object(right)) mismatch();
+        pending.push({ kind: 'object', left, right, fields: schema[type.object]!, index: 0 }); break;
+      case 'array': {
+        if (!Array.isArray(left) || !Array.isArray(right)) mismatch();
+        const length = data(right, 'length') as number;
+        if (data(left, 'length') !== length) mismatch();
+        pending.push({ kind: 'array', left, right, type: type.element, length, index: 0 }); break;
+      }
+      case 'date': {
+        // Calling the intrinsic bypasses arbitrary instance getTime overrides.
+        let epoch: number;
+        try { epoch = Date.prototype.getTime.call(left); }
+        catch { mismatch(); }
+        if (!Number.isFinite(epoch!) || epoch! !== right) mismatch();
+        break;
+      }
+      default: if (left !== right) mismatch();
+    }
+  }
+}
+
+/**
+ * Private planner match against the exact host's original state. Components may
+ * mutate handed-out props, including Date internals; the original envelope is
+ * retained privately and is never exposed to this caller or any component.
+ */
+export function matchAdoptionChild(host: Element, description: ComponentDescription, value: ValidatedIsland): void {
+  checkIslandClaim(value);
+  if (value.host !== host || description.component !== value.registration.component || description.args.length > 1) {
+    throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');
+  }
+  const entry = readDocument(validatedDocuments.get(value)!).entries[value.occurrence];
+  if (!entry) refuse('FORMA_E_ISLAND_STATE', 'original child state is unavailable');
+  sameProps(description.args[0], entry.p, value.registration.schema);
 }

@@ -23,6 +23,7 @@ export type { IslandHydrateFn, ReconcileResult, ListTransitionHooks, CreateListO
 // Compiler-internal registry metadata; application code uses activateIslands.
 export { __islandRegistration } from './dom/island-state';
 export { __adoptionSignal, __adoptionWritable } from './reactive/adoption-hooks';
+export { __adoptionChild } from './dom/adoption-description';
 // The browser-only marker (DR-1, L-1): one name, so a search finds every use.
 export { browserOnly } from './dom/browser-only';
 // The raw-HTML entry (DR-19, L-37): one name, so a search finds every use.

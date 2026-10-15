@@ -10,6 +10,7 @@
 
 import { internalEffect, __DEV__ } from 'forma/reactive';
 import { hydrating } from './hydrate.js';
+import { describingAdoption, __adoptionChild } from './adoption-description.js';
 import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import {
@@ -992,6 +993,7 @@ export function h(
   // Function component: call with merged props + children
   if (typeof tag === 'function' && tag !== Fragment) {
     const mergedProps = { ...(props ?? {}), children };
+    if (describingAdoption) return __adoptionChild(undefined, tag, [mergedProps]) as HTMLElement;
     return tag(mergedProps) as unknown as HTMLElement;
   }
 
@@ -1001,7 +1003,7 @@ export function h(
   // match to anything.
   // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text after mount() adoption"
   if (tag === Fragment) {
-    if (hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
+    if (describingAdoption || hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
     const frag = document.createDocumentFragment();
     for (const child of children) {
       appendChild(frag, child);
@@ -1013,7 +1015,7 @@ export function h(
   const tagName = tag as string;
   refuseScriptElement(tagName);
 
-  if (hydrating) {
+  if (describingAdoption || hydrating) {
     return { type: 'element', tag: tagName, props: props ?? null, children } as unknown as HTMLElement;
   }
 
@@ -1144,7 +1146,7 @@ export function fillElement<E extends Element>(
  * ```
  */
 export function fragment(...children: unknown[]): DocumentFragment {
-  if (hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
+  if (describingAdoption || hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
   const frag = document.createDocumentFragment();
   for (const child of children) {
     appendChild(frag, child);
