@@ -4,20 +4,18 @@
  * The identity domain this lane owns is a string or a safe integer: `-0` prints as `0`, `"01"`
  * stays distinct from `1`, and a string with an unpaired UTF-16 surrogate is refused before any
  * replacement could lose identity. The string normalization itself (line-ending folding and NUL
- * replacement) is FORMA-182's shared `normalizeDomText` in `./normalize-text`; this lane does not
- * implement an independent normalizer. `normalizeDomTextSeam` is the seam 182 wires to that helper
- * and is a trivial identity placeholder until then. `__tests__/key-text.test.ts` pins the
- * placeholder on 182's vectors, so wiring the helper in fails that test until its expectations
- * are reviewed and updated.
+ * replacement) is FORMA-182's shared `normalizeDomText` in `./normalize-text`, rule 1 of
+ * `docs/parity-rules.md`: a string key passes through it after the surrogate check and before
+ * nothing else. This module does not implement an independent normalizer;
+ * `__tests__/key-text.test.ts` asserts that against the source and runs 182's shared vectors
+ * (`crates/forma-ir/tests/fixtures/parity/normalization.json`) through `canonicalKeyText`.
  *
- * Nothing at checkpoint A renders or adopts a key: this module serves the checkpoint B/C vectors
- * and key adoption (the compiler never computes key text).
+ * The native walker computes the same text (`crate::text::normalize_text` on the row's value at
+ * the list's key path) and writes it as the row root's `data-forma-key`; adoption (checkpoint C)
+ * compares the browser's decoded attribute against this text. The compiler never computes key
+ * text.
  */
-
-/** FORMA-182 seam. Identity until the shared `normalizeDomText` is supplied. */
-export function normalizeDomTextSeam(text: string): string {
-  return text;
-}
+import { normalizeDomText } from './normalize-text.js';
 
 /** A high surrogate not followed by a low one, or a low surrogate not preceded by a high one. */
 const UNPAIRED_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
@@ -34,7 +32,7 @@ export function canonicalKeyText(value: unknown): string {
   }
   if (typeof value === 'string') {
     if (UNPAIRED_SURROGATE.test(value)) throw new RangeError('list key string has an unpaired surrogate');
-    return normalizeDomTextSeam(value);
+    return normalizeDomText(value);
   }
   throw new TypeError('list key must be a string or a safe integer');
 }
