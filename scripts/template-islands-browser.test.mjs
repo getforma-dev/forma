@@ -51,7 +51,7 @@ test('static template observation preserves markup and stylesheet with no execut
 });
 test('static template observation rejects a script even if it performs no writes',async()=>{
   await fixture({script:'export {};',staticScript:true},async(browser,origin)=>{
-    await assert.rejects(verifyStaticTemplate(browser,origin,manifest),/executable or preloaded code/);
+    await assert.rejects(verifyStaticTemplate(browser,origin,manifest),/executable inventory|executable or preloaded code/);
   });
 });
 test('static template observation refuses contradictory accepted route metadata',async()=>{
@@ -67,5 +67,11 @@ test('template observation refuses an inline rewrite that precedes the held modu
 test('template observation retains parser-time inventory when an early inline script removes itself',async()=>{
   await fixture({earlyScript:"document.querySelector('.count span').textContent='7';document.currentScript.remove();"},async(browser,origin)=>{
     await assert.rejects(verifyMinimalIsland(browser,origin,manifest),/executable inventory/);
+  });
+});
+
+test('static observation refuses a self-removing inline executable seen during parsing',async()=>{
+  await fixture({earlyScript:"globalThis.__unexpectedStaticExecution=true;document.currentScript.remove();"},async(browser,origin)=>{
+    await assert.rejects(verifyStaticTemplate(browser,origin,manifest),/static executable inventory/);
   });
 });

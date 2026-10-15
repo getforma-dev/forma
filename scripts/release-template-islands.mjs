@@ -52,6 +52,23 @@ async function noErrors(observed) {
   return violations;
 }
 
+async function requireExecutableInventory(page, entryURL = null) {
+  await page.evaluate(expected => {
+    const inventory = globalThis.__formaTemplateScriptInventory;
+    for (const change of inventory.inventory.takeRecords()) for (const node of change.addedNodes) inventory.record(node);
+    inventory.inventory.disconnect();
+    const executable = script => script.type !== 'application/json';
+    const current = [...document.querySelectorAll('script')].filter(executable);
+    const observed = [...inventory.seen].filter(executable);
+    if (expected === null) {
+      if (current.length || observed.length) throw new Error('static executable inventory is not empty');
+    } else if (current.length !== 1 || observed.length !== 1 || current[0] !== observed[0]
+      || current[0].type !== 'module' || current[0].src !== expected || current[0].textContent.trim()) {
+      throw new Error('executable inventory is not exactly the held manifest module');
+    }
+  }, entryURL);
+}
+
 /** Hold the actual entry before execution, then observe the complete adoption. */
 export async function verifyMinimalIsland(browser, origin, manifest, expectedCount = 7, { timeout = 15_000 } = {}) {
   assert.equal(manifest.routes['/']?.mode, 'ssr');
@@ -70,17 +87,8 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
     await page.waitForFunction(() => document.readyState !== 'loading');
     assert(requested, 'actual minimal module was not requested before observation');
     assert.deepEqual(observed.requests.filter(request => request.type === 'script').map(request => request.url), [entry], 'an additional executable script was requested before observation');
-    const before = await page.evaluate(({count, entryURL}) => {
-      const inventory = globalThis.__formaTemplateScriptInventory;
-      for (const change of inventory.inventory.takeRecords()) for (const node of change.addedNodes) inventory.record(node);
-      inventory.inventory.disconnect();
-      const executable = script => script.type !== 'application/json';
-      const current = [...document.querySelectorAll('script')].filter(executable);
-      const observed = [...inventory.seen].filter(executable);
-      if (current.length !== 1 || observed.length !== 1 || current[0] !== observed[0]
-        || current[0].type !== 'module' || current[0].src !== entryURL || current[0].textContent.trim()) {
-        throw new Error('executable inventory is not exactly the held manifest module');
-      }
+    await requireExecutableInventory(page, entry);
+    const before = await page.evaluate(count => {
       const host = document.querySelector('[data-forma-island][data-forma-component="Counter"]');
       const blocks = document.querySelectorAll('script[data-island-state]');
       if (!host || blocks.length !== 1) throw new Error('missing original Counter host/state');
@@ -98,7 +106,7 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
       observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true });
       globalThis.__formaTemplateAdoption = { nodes, host, observer, records };
       return { count: entry.p.count, hash: entry.h, nodes: nodes.length };
-    }, {count:expectedCount, entryURL:entry});
+    }, expectedCount);
     release();
     await settle(page);
     const adoption = await page.evaluate(() => {
@@ -139,6 +147,7 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
   try {
     const response = await page.goto(new URL(route, origin).href, { waitUntil: 'networkidle' });
     const csp = await policy(response); await settle(page);
+    await requireExecutableInventory(page);
     assert.equal(await page.locator('h1').textContent(), 'About this app');
     assert.equal(await page.locator('link[rel="stylesheet"]').count(), owner.css.length);
     assert.equal(await page.locator('script[src],script:not([type="application/json"]),link[rel="modulepreload"]').count(), 0, 'static route contains executable or preloaded code');
