@@ -27,7 +27,8 @@ async function server(binary, cwd, port, visit, refusal = false) {
   try {
     for (let attempt = 0; attempt < 150; attempt++) {
       if (exited) {
-        assert(refusal && code !== 0 && /LOAD-/.test(output), `server exited unexpectedly: ${output}`);
+        const expected = Array.isArray(refusal) ? refusal : ['LOAD-'];
+        assert(refusal && code !== 0 && expected.every(text => output.includes(text)), `server exited unexpectedly: ${output}`);
         return;
       }
       let response;
@@ -167,6 +168,19 @@ export async function verify(dir, reportPath) {
           }
           run('npm', ['run', template === 'minimal' ? 'build:ssr' : 'build'], admin, { stdio: 'inherit' });
           assert.equal(digest(join(admin, 'package-lock.json')), npmHash, 'npm changed the candidate lock');
+          if (set.contracts.manifest === 2) {
+            const manifest = json(join(admin, 'dist/manifest.json'));
+            const buildVersion = set.packages.find(p => p.name === '@getforma/build').version.split('-')[0];
+            assert.equal(manifest.version, 2); assert.equal(manifest.writer, buildVersion);
+            assert.equal(manifest.app, name); assert.equal(manifest.routes['/'].mode, template === 'minimal' ? 'ssr' : 'browser');
+            for (const [file, metadata] of Object.entries(manifest.assets)) {
+              assert.equal(typeof metadata.immutable, 'boolean', `${template}: ${file} has no cache metadata`);
+              assert.equal(metadata.integrity, `sha384-${digest(join(admin, 'dist', file), 'sha384', 'base64')}`, `${template}: ${file} digest is not its uncompressed bytes`);
+              assert(!/\.(?:br|gz)$/.test(file), 'compression sidecars must not be primary manifest assets');
+            }
+            for (const file of Object.values(manifest.aliases)) assert(manifest.assets[file], `${template}: alias lacks metadata`);
+            report.tests.push({ name: `${template}: packed manifest 2 identity, modes, aliases and uncompressed SHA-384`, passed: true });
+          }
           // Substitute just the candidate crate sources, never the registry's already-published
           // version. The dependency graph and all third-party checksums stay locked.
           let lock = readFileSync(join(project, 'Cargo.lock'), 'utf8');
@@ -211,10 +225,47 @@ export async function verify(dir, reportPath) {
           if (template === 'minimal') {
             const manifest = json(join(admin, 'dist/manifest.json'));
             const ir = join(admin, 'dist', manifest.routes['/'].ir);
-            const bytes = readFileSync(ir); writeFileSync(ir, bytes.subarray(0, 12));
-            await server(binary, project, port, async () => {}, true);
-            writeFileSync(ir, bytes);
-            report.tests.push({ name: 'packed loader refuses a corrupt module before binding', passed: true });
+            const bytes = readFileSync(ir);
+            try {
+              writeFileSync(ir, bytes.subarray(0, 12));
+              await server(binary, project, port, async () => {}, true);
+              report.tests.push({ name: 'packed loader refuses a corrupt module before binding', passed: true });
+              if (set.contracts.manifest === 2) {
+                const compiler = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
+                const container = compiler.readFmirContainer(bytes), future = [...container.writer]; future[1]++;
+                writeFileSync(ir, compiler.encodeFmirSections(container.sections, future));
+                await server(binary, project, port, async () => {}, ['LOAD-108', future.join('.'), container.writer.join('.')]);
+                report.tests.push({ name: 'packed loader refuses a newer-minor module before binding, naming both versions', passed: true });
+              }
+            } finally { writeFileSync(ir, bytes); }
+          }
+          if (set.contracts.manifest === 2) {
+            const manifestPath = join(admin, 'dist/manifest.json'), bytes = readFileSync(manifestPath);
+            const manifest = JSON.parse(bytes), reader = set.packages.find(p => p.name === 'forma-server').version.split('-')[0];
+            const future = reader.split('.').map(Number); future[1]++;
+            for (const [change, expected] of [
+              [{ version: 1 }, ['MANIFEST-101']],
+              [{ app: undefined }, ['schema-1']],
+              [{ writer: future.join('.') }, ['MANIFEST-102', future.join('.'), reader]],
+            ]) {
+              try {
+                save(manifestPath, { ...manifest, ...change });
+                await server(binary, project, port, async () => {}, expected);
+              } finally { writeFileSync(manifestPath, bytes); }
+            }
+            report.tests.push({ name: `${template}: packed manifest schema/app/writer refused before binding`, passed: true });
+            const off = 'sw::configure(sw::ServiceWorker::off())';
+            const mainSource = readFileSync(main, 'utf8'); assert(mainSource.includes(off), 'template worker startup changed; update P17 adapter');
+            writeFileSync(main, mainSource.replace(off, `sw::configure_for_manifest(sw::ServiceWorker::for_app(${JSON.stringify(name)}).unwrap().enabled(), &manifest)`));
+            run('cargo', ['build', '--locked'], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
+            // A matching enabled worker can start; only the manifest app changes
+            // for the refusal. The candidate server code and binary stay identical.
+            await server(binary, project, port, async response => assert.equal(response.status, 200));
+            try {
+              save(manifestPath, { ...manifest, app: 'p17-other' });
+              await server(binary, project, port, async () => {}, [name, 'p17-other']);
+            } finally { writeFileSync(manifestPath, bytes); writeFileSync(main, mainSource); }
+            report.tests.push({ name: `${template}: packed checked worker accepts matching app and refuses mismatch before binding`, passed: true });
           }
           report.templates.push({ template, npmLockSha256: npmHash, packedPackages: set.packages.map(p => `${p.name}@${p.version}`) });
         });

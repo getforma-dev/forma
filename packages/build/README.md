@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@getforma/build)](https://www.npmjs.com/package/@getforma/build)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Production build pipeline for [FormaJS](https://github.com/getforma-dev/formajs) applications. Handles esbuild bundling, CSS generation, content hashing, Brotli/gzip compression, asset manifest generation, SSR IR emission — all from a single config.
+Production build pipeline for [FormaJS](https://github.com/getforma-dev/forma) applications. Handles esbuild bundling, CSS generation, content hashing, Brotli/gzip compression, asset manifest generation, SSR IR emission — all from a single config.
 
 **This replaces writing your own build script.** It provides content hashing and optional native Rust SSR from one config.
 
@@ -26,11 +26,12 @@ npm install -D @getforma/compiler
 import { build } from "@getforma/build";
 
 await build({
+  app: "my-app",
   entryPoints: [
     { entry: "src/app.tsx", outfile: "app.js" },
   ],
   routes: {
-    "/": { js: ["app"], css: ["app"] },
+    "/": { js: ["app"], css: [] },
   },
   outputDir: "dist",
 });
@@ -50,9 +51,9 @@ Set `codeSplitting: true` to share one runtime across entries and preserve nativ
 `manifest.assets` includes entries and chunks, while each route's `modulepreload`
 contains only transitive static imports. Servers can preload those files without
 fetching lazy tools. `total_size_br` includes static dependencies but not deferred
-imports. Servers with legacy lowercase-hex hash detection should allow immutable
-caching for these exact manifest-listed production files; development stays
-network-only. `serverInlined` copies retain valid relative imports but are not
+imports. Manifest 2 records `immutable: true` for production graph assets,
+including uppercase esbuild hashes; forma-server reads that metadata rather than
+guessing from filenames. Development files have `immutable: false`. `serverInlined` copies retain valid relative imports but are not
 standalone scripts, so split ESM should normally be served as external modules.
 
 With `ssr: true`, an entry can set `ssr: false` to keep only that route browser-only.
@@ -75,37 +76,69 @@ Any other `serviceWorker` value is a config error.
 
 ### Per-application workers (`app`)
 
-Name the application, with the same string its server passes to forma-server
-0.2.2's `sw::ServiceWorker::for_app`:
+Every manifest names its application. Set `app` explicitly, or omit it only when
+the nearest `Cargo.toml` has a package name already matching
+`[a-z0-9][a-z0-9-]{0,62}`. Invalid or missing names fail before output writes
+(`BUILD-815`). The build never normalizes an inferred Cargo name. The scaffolder
+uses a separate deterministic application name for otherwise valid project names
+containing underscores or more than 63 characters.
 
 ```ts
 await build({ ...config, app: 'ledger', serviceWorker: 'on-demand' });
 ```
 
+An enabled server worker must be configured against the validated manifest before
+binding the listener:
+
 ```rust
-forma_server::sw::configure(forma_server::sw::ServiceWorker::for_app("ledger")?.enabled())?;
+let manifest = forma_server::assets::try_load_manifest::<Assets>()?;
+forma_server::sw::configure_for_manifest(
+    forma_server::sw::ServiceWorker::for_app("ledger")?.enabled(),
+    &manifest,
+)?;
 ```
 
-With `app`, the production worker (either mode) follows forma-server's
-cache-name contract (FORMA-130, DR-25):
+A different manifest `app` is refused, naming both values. `sw::configure` remains
+the off-worker convenience; it refuses an enabled worker without a manifest.
+Reading the manifest does not seal the default worker setting. This startup call
+is a source migration for applications enabling a worker.
 
-- its cache is `forma:<app>:<build>`, `<build>` being the first 12 hex digits of
-  the build hash, so each application and each build has its own;
-- on activation it deletes only Forma's v1 cache names (`forma-dev`, `forma-`
-  and 12 hex, either with `-on-demand-v1`) and its own application's older
-  caches, never another application's (`forma:<other>:…`) or anything else;
-- it never skips waiting and claims no page: a new build's worker waits until
-  no tab uses the previous build's (a reload alone does not end that), so an
-  open tab keeps its cache; it then deletes the previous build's cache.
+The existing production cache name is `forma:<app>:<build>`, using the first 12
+hex digits of the current build identifier. Activation removes its own older
+caches and legacy Forma caches, never another named application's caches. It does
+not skip waiting or claim open pages. Development workers stay network-only.
+The final deployment identity and retained-build protocol remain FORMA-186; full
+integrity enforcement remains FORMA-111.
 
-`app` is 1 to 63 of `a-z`, `0-9` and `-`, starting with a letter or digit;
-anything else is a config error naming it. forma-server serves this worker only
-to an application that enables it; otherwise `/sw.js` is forma-server's
-retiring worker, which deletes the same caches and unregisters. Without `app`,
-the worker is 0.3.0's (shared `forma-` names, immediate takeover), kept for a
-server not yet on forma-server 0.2.2; setting `serviceWorker` without `app` is
-deprecated and warns once per build (`BUILD-802`), because from 3.0.0 a worker
-is written only for a named `app`. The development worker ignores `app`.
+Verified by: `packages/build/tests/compatibility.test.ts`,
+`packages/create-app/tests/scaffold.test.ts`, and
+`crates/forma-server/tests/manifest_compatibility.rs`.
+
+### Compatibility before output writes
+
+The compiler peers on core and the build optionally peers on the compiler at
+`^3.y.0`. Coordinated prereleases add only their exact version. An incompatible
+required compiler/core peer fails installation. npm may warn or accept an
+optional build/compiler conflict, including a silent recorded-lock `npm ci`;
+`build()` therefore checks an installed compiler itself and refuses skew before
+writing output. Browser builds without a compiler remain supported; SSR requires
+one (`BUILD-801`).
+
+The build parses the nearest `Cargo.lock` from its working directory. The resolved
+server must share the writer's major and have at least its minor, for both the
+manifest writer and any SSR compiler. Patch numbers do not narrow the window.
+Missing lockfiles warn; malformed, unreadable or ambiguous locks fail. A lock
+without forma-server fails SSR and warns for a standalone browser build. Upgrade
+the renderer first. Watch mode rechecks lock changes and preserves the last valid
+bundle when they fail. See [the compatibility contract](../../docs/compatibility.md).
+
+Every production build also reports multiple physical copies of core (`BUILD-816`),
+even when their versions match and `previewFrame` is off. One package reached by
+symlinks is one copy. This uses retained bundler inputs and real package roots;
+it cannot identify core hidden inside an arbitrary prebundled third-party file.
+
+Verified by: `packages/build/tests/manifest-compatibility.test.ts` and
+`scripts/compatibility-package.test.mjs` (actual packed code and installs).
 
 ### The preview frame's runtime (`previewFrame`)
 
@@ -113,7 +146,7 @@ forma-server's preview frame (`PageResponse::frame`, FORMA-125) renders content
 nobody reviewed in an opaque-origin document whose one script is core's frame
 runtime, written inline and allowed by its SHA-256 hash. It finds that runtime
 the way it finds every asset: `PreviewFrame::load` reads the manifest's
-`assets["forma-runtime.js"]` from the embedded output at start, and refuses to
+`aliases["forma-runtime.js"]` from the embedded output at start, and refuses to
 start the frame without it (FRAME-101). An application that serves the frame
 turns the setting on:
 
@@ -126,7 +159,7 @@ The build then copies `dist/formajs-frame.global.js` from the
 `forma-runtime.<hash>.js`, and names it in the manifest:
 
 ```json
-"assets": { "app.js": "app.1797a84b.js", "forma-runtime.js": "forma-runtime.e7a8cc12.js" }
+"aliases": { "app.js": "app.1797a84b.js", "forma-runtime.js": "forma-runtime.e7a8cc12.js" }
 ```
 
 - **The core the bundles import, so the preview renders a module with the
@@ -140,7 +173,8 @@ The build then copies `dist/formajs-frame.global.js` from the
   pnpm-installed core, by its real path. When the bundles import cores whose
   frame runtimes differ (entries from two packages, each with its own core,
   or a library bundling its own), the build refuses rather than pick one
-  (`BUILD-807`); one version installed twice is one core. When the bundles
+  (`BUILD-807`). Equal frame bytes may be copied once, but independent
+  physical core copies still produce `BUILD-816`. When the bundles
   import no core, it copies the one installed where the build runs (the
   working directory, as Node finds a package). The entries must bundle at
   start, in watch mode too.
@@ -177,10 +211,10 @@ The build then copies `dist/formajs-frame.global.js` from the
 | **CSS** | Runs Tailwind CLI or concatenates CSS files |
 | **Hash** | SHA-256 content hash appended to filenames (`app.a1b2c3d4.js`) |
 | **Compress** | Brotli (level 11) + gzip (level 9) for `.js` and `.css` |
-| **Manifest** | Writes `manifest.json` mapping source filenames → hashed filenames |
+| **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode writes in place and replaces `manifest.json` and `sw.js` by rename, so a server reading them mid-rebuild never sees half a file |
+| **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 ## Configuration
 
@@ -188,7 +222,8 @@ The build then copies `dist/formajs-frame.global.js` from the
 import { build, type BuildConfig } from "@getforma/build";
 
 const config: BuildConfig = {
-  // Required
+  // Required (app may instead come from a valid nearest Cargo package name)
+  app: "my-app",
   entryPoints: [
     { entry: "src/home/app.tsx", outfile: "home.js" },
     { entry: "src/dashboard/app.tsx", outfile: "dashboard.js" },
@@ -248,29 +283,43 @@ had to delete by hand — see the CHANGELOG.)
 
 ## Asset Manifest
 
-The manifest maps source filenames to content-hashed filenames:
+Manifest 2 separates logical aliases from metadata keyed by emitted filename.
+Every route declares `ssr` or `browser`; an SSR route without a module fails the
+build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
 
 ```json
 {
-  "version": 1,
-  "build_hash": "sha256-of-all-asset-names",
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "ledger",
+  "build": "example-build-identifier",
+  "aliases": {"home.js": "home.a1b2c3d4.js", "home.ir": "home.a1b2c3d4.ir"},
   "assets": {
-    "home.js": "home.a1b2c3d4.js",
-    "home.css": "home.e5f6g7h8.css",
-    "home.ir": "home.m3n4o5p6.ir"
+    "home.a1b2c3d4.js": {"immutable": true},
+    "home.a1b2c3d4.ir": {"immutable": true}
   },
   "routes": {
-    "/": {
-      "js": ["home.a1b2c3d4.js"],
-      "css": ["home.e5f6g7h8.css"],
-      "ir": "home.m3n4o5p6.ir",
-      "total_size_br": 45230
-    }
+    "/": {"mode": "ssr", "js": ["home.a1b2c3d4.js"], "css": [],
+      "fonts": [], "ir": "home.a1b2c3d4.ir", "total_size_br": 0,
+      "budget_warn_threshold": 200000}
   }
 }
 ```
 
-The Rust server (`forma-server`) reads this manifest to serve assets with correct cache headers and resolve hashed filenames.
+The actual build includes `integrity: "sha384-<base64>"` for each asset, computed
+from its final uncompressed bytes. Compression sidecars, the manifest and the
+worker are excluded. Integrity enforcement is FORMA-111; emission alone does not
+provide that enforcement. `build` retains the previous filename-derived algorithm
+(and `dev` during watch); FORMA-186 owns the final deployment identity.
+
+forma-server validates the schema, writer window, app, references and route modes
+before loading modules. It resolves logical names through `aliases` and reads
+cache immutability from metadata, including retained entries. Schema 1 and missing
+`app` are refused. Rebuild assets with the aligned 3.x package set.
+
+Verified by: `packages/build/tests/manifest-compatibility.test.ts`,
+`crates/forma-server/tests/manifest_compatibility.rs`, and
+`crates/forma-server/tests/manifest_cache.rs`.
 
 ### Watch mode is a development build
 

@@ -1,5 +1,5 @@
 /** Install ranges, build guards and runtime readers share the same numeric window. */
-import { readFileSync, statSync } from 'node:fs';
+import { lstatSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { parse } from 'smol-toml';
 import metadata from '../package.json';
@@ -25,11 +25,19 @@ export function acceptsWriter(reader: Version, writer: Version): boolean {
 export function nearestFile(start: string, name: string): string | undefined {
   for (let directory = resolve(start);; directory = dirname(directory)) {
     const file = join(directory, name);
-    try {
-      if (!statSync(file).isFile()) throw new Error(`${file} is not a file`);
-      return file;
-    } catch (error) {
+    let exists = false;
+    try { lstatSync(file); exists = true; }
+    catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error(`BUILD-809 cannot read ${file}: ${(error as Error).message}`);
+    }
+    if (exists) {
+      try {
+        if (!statSync(file).isFile()) throw new Error('path is not a file');
+        return file;
+      } catch (error) {
+        // A present dangling link is an unreadable nearest file, not absence.
+        throw new Error(`BUILD-809 cannot read ${file}: ${(error as Error).message}`);
+      }
     }
     if (dirname(directory) === directory) return undefined;
   }
@@ -79,7 +87,7 @@ export function checkProjectCompatibility(
 /** An explicit application ID wins; only an already-valid Cargo name is inferred. */
 export function resolveAppName(start: string, explicit?: string): string {
   if (explicit !== undefined) {
-    if (!APP_NAME.test(explicit)) throw new Error('BUILD-810 app must use 1 to 63 lowercase letters, digits or hyphens, starting with a letter or digit');
+    if (!APP_NAME.test(explicit)) throw new Error('BUILD-815 app must use 1 to 63 lowercase letters, digits or hyphens, starting with a letter or digit');
     return explicit;
   }
   const manifest = nearestFile(start, 'Cargo.toml');
@@ -88,7 +96,7 @@ export function resolveAppName(start: string, explicit?: string): string {
     const name = object(cargo.package) ? cargo.package.name : undefined;
     if (typeof name === 'string' && APP_NAME.test(name)) return name;
   }
-  throw new Error(`BUILD-810 configure app explicitly: no valid application name in ${manifest ?? `a Cargo.toml above ${resolve(start)}`}; use the same app as forma-server's ServiceWorker::for_app`);
+  throw new Error(`BUILD-815 configure app explicitly: no valid application name in ${manifest ?? `a Cargo.toml above ${resolve(start)}`}; use the same app as forma-server's ServiceWorker::for_app`);
 }
 
 /** npm may override an optional peer conflict; the build still refuses it. */

@@ -81,7 +81,7 @@ export function generateManifest(
       }
     }
 
-    if (serverRendered && !routeEntry.ir) throw new Error(`BUILD-812 route ${route} declares SSR but its compiled module is missing; fix compilation before serving this build`);
+    if (serverRendered && !routeEntry.ir) throw new Error(`BUILD-817 route ${route} declares SSR but its compiled module is missing; fix compilation before serving this build`);
     routes[route] = routeEntry;
 
     // Budget warning
@@ -110,7 +110,7 @@ export function generateManifest(
   for (const entry of config.cssEntries ?? []) if (metadata[entry.outfile]) aliases[entry.outfile] ??= entry.outfile;
   for (const route of Object.values(routes)) {
     for (const file of [...route.js, ...(route.modulepreload ?? []), ...route.css, ...route.fonts, ...(route.ir ? [route.ir] : [])]) {
-      if (!metadata[file]) throw new Error(`BUILD-812 manifest references missing asset ${file}`);
+      if (!metadata[file]) throw new Error(`BUILD-817 manifest references missing asset ${file}`);
     }
   }
   const manifest: AssetManifest = {

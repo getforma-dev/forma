@@ -80,10 +80,10 @@ can be counted in strict mode: the number of BUILD-403 entries.
 ## Notes
 
 A note is printed as every diagnostic is, but strict mode never fails on it.
-They are BUILD-504, a construct DR-1's published subset admits (its reads
-are reported where they are), and the deprecations, whose old paths keep
-working in A2: BUILD-802 (the old islands option). The raw-entry lint's BUILD-813, an allowlist
-entry that lists nothing, is a note too: the lint's run does not fail on it.
+They are BUILD-504, a construct DR-1's published subset admits, and the raw-entry
+lint's BUILD-813 for an allowlist entry listing nothing. BUILD-816 is a production
+build warning, also nonfatal under strict mode. BUILD-802 is retired: unnamed
+applications now fail identity validation (BUILD-815).
 
 ## Families
 
@@ -716,23 +716,13 @@ Reported at, in [its fixture](../packages/compiler/tests/fixtures/conformance/BU
 
 ### BUILD-801 SSR build without @getforma/compiler
 
-**Why.** The build was asked for server-rendered modules but cannot load @getforma/compiler, so it writes none.
+**Why.** The build was asked for server-rendered modules but cannot load @getforma/compiler, so it stops before output writes.
 
 **Fix.** Install @getforma/compiler (a peer dependency of @getforma/build), or turn `ssr` off.
 
-**In strict mode.** An error.
+**In strict mode.** Always an error, with or without strict mode. Browser-only builds without the optional compiler remain supported.
 
-Printed by the build itself as `Warning: BUILD-801 @getforma/compiler not available for SSR. Skipping IR emission.` (`packages/build/tests/strict-compiler.test.ts` > "reports SSR without @getforma/compiler with its code, and fails it under --strict").
-
-### BUILD-802 `serviceWorker` without `app` (deprecated; note)
-
-**Why.** The worker is 0.3.0's: its caches are shared by every Forma application on the origin, and it takes over open tabs at once. From 3.0.0 a worker is written only for a named app. A deprecation, not a construct the server cannot render, so --strict does not fail on it.
-
-**Fix.** Set `app` to the name the server passes to forma-server's `sw::ServiceWorker::for_app`, for caches per application and build and a waiting upgrade.
-
-**In strict mode.** A note: never an error.
-
-Printed by the build itself, once per `build()`, as `Warning: BUILD-802 serviceWorker is set without app: …` and in `BuildResult.warnings` (FORMA-130); in the report as a note (`packages/build/tests/strict.test.ts` > "reports BUILD-802 (serviceWorker without app) as a note --strict does not fail on").
+Verified by: `packages/build/tests/strict-compiler.test.ts` > "refuses missing compiler for SSR before writes, while browser-only output remains supported".
 
 ### BUILD-805 Preview frame runtime missing from @getforma/core
 
@@ -793,6 +783,24 @@ were removed in 3.0.0; shipping their bodies in a browser bundle is unsafe.
 checks browser and SSR entry graphs before replacing output, and again on watch
 rebuilds. Reported by `packages/build/tests/server-functions-removed.test.ts`.
 
+### BUILD-809 Package or renderer compatibility cannot be satisfied
+
+**Why.** The installed compiler is incompatible with the build, the resolved
+forma-server does not accept an emitted writer, or the nearest Cargo.lock is
+malformed or ambiguous. No lock warns; a lock without forma-server warns for a
+browser-only build and fails SSR. npm optional-peer warnings cannot enforce this
+boundary by themselves.
+
+**Fix.** Use compatible packages and upgrade the renderer first. The refusal
+names both versions, the lockfile and the minimum renderer minor where relevant.
+Repair the nearest lock instead of bypassing it with a farther one.
+
+**In strict mode.** Compatibility refusals are always errors. Missing-lock warnings
+remain warnings. Initial refusal precedes writes; watch refusal preserves the last
+valid output. Verified by `packages/build/tests/compatibility.test.ts`,
+`packages/build/tests/manifest-compatibility.test.ts`, and the real installed
+3.2-build/3.1-compiler control in `scripts/compatibility-package.test.mjs`.
+
 ### BUILD-810 Raw entry not on the allowlist (forma-raw-lint)
 
 **Why.** The source uses one of INV1's and INV2's exits (raw HTML, a typed raw home or a Trusted Types relaxation), and the allowlist names no owner and end date for it (SR8).
@@ -842,3 +850,43 @@ Printed once per entry (`packages/build/tests/raw-lint.test.ts` > "BUILD-813: an
 **In the lint.** An error: the run exits 1. esbuild parses TypeScript and JavaScript (a `.js` file is also tried as JSX and TypeScript), and an HTML file's inline scripts (the rest of the HTML file is still read); a Rust file is tokenized, which does not fail. A path that cannot be read, or a symbolic link that leads nowhere or loops, is one too, unless its name says it is not source; `--exclude` and the skipped names are applied before anything is read.
 
 Printed with esbuild's message and position (`packages/build/tests/raw-lint.test.ts` > "BUILD-814: a file esbuild cannot parse fails the run at its line, and so does an inline script").
+
+### BUILD-815 Application identity is missing or invalid
+
+**Why.** Manifest 2 needs a valid application name. There is neither an explicit
+`app` nor an already-valid nearest Cargo package name.
+
+**Fix.** Set `app` to 1–63 lowercase letters, digits or hyphens, starting with a
+letter or digit, and use that name for the enabled server worker.
+
+**In strict mode.** Always an error before writes. Verified by
+`packages/build/tests/compatibility.test.ts` (explicit/fallback/missing/invalid
+identity) and the scaffold application-name collision tests.
+
+### BUILD-816 The build contains multiple physical copies of core
+
+**Why.** Each physical core copy owns independent reactive state and Trusted Types
+initialization, even when versions and bytes match. The diagnostic includes real
+paths, versions and contributing entries.
+
+**Fix.** Deduplicate core, make libraries declare it as a peer, and resolve every
+entry to one physical package. One root reached by symlinks is not a second copy.
+
+**In strict mode.** A warning. It is checked in production, with or without the
+preview frame. Verified by `packages/build/tests/manifest-compatibility.test.ts`
+> "reports two physical copies with splitting=%s, second version=%s and previewFrame off".
+The check cannot identify a copy hidden in an arbitrary prebundled third-party
+file that no longer identifies its core package.
+
+### BUILD-817 Manifest references an asset the build did not emit
+
+**Why.** A declared SSR route has no compiled module, or a referenced script,
+stylesheet, font, preload or IR file is missing from the final output.
+
+**Fix.** Correct compilation or route configuration. Declare a route as
+browser-only explicitly when it does not have server output.
+
+**In strict mode.** Always an error. Production staging is discarded; watch keeps
+its last valid manifest until a successful rebuild. Verified by
+`packages/build/tests/strict.test.ts` and
+`packages/build/tests/manifest-compatibility.test.ts`.

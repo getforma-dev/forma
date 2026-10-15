@@ -23,7 +23,7 @@ export function duplicateCoreDiagnostic(graphs: readonly Metafile[]): BuildDiagn
     return `${root} (${version}; entries: ${[...entries].sort().join(', ')})`;
   });
   return {
-    code: 'BUILD-811', severity: 'warning', page: '', file: '', line: 0, column: 0,
+    code: 'BUILD-816', severity: 'warning', page: '', file: '', line: 0, column: 0,
     message: `The build contains ${roots.size} physical copies of @getforma/core: ${copies.join('; ')}`,
     why: 'Each copy has independent reactive state and Trusted Types policy initialization, even when their versions match.',
     fix: 'Deduplicate core, use it as a library peer dependency, and make every entry resolve one physical package.',

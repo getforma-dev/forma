@@ -67,6 +67,24 @@ describe('FMIR v3 wire contract', () => {
       else expect(read).toThrow(`writer ${baseWriterVersion(writer).join('.')} is outside reader ${baseWriterVersion(reader).join('.')}`);
     }
   });
+  it('preserves the exact-stage fixture table and uses the shared window overlay', () => {
+    const rows = (name: string) => readFileSync(resolve(fixtures, name), 'utf8').trim().split('\n').slice(1).map(line => line.split('\t'));
+    const historical = new Map(rows('index.tsv').map(([name, expected]) => [name, expected]));
+    const changes: string[] = [];
+    for (const [name, expected] of rows('window-expectations.tsv')) {
+      if (historical.get(name) !== expected) changes.push(name);
+      // The diagnostic container reader validates header/table sections. Rust's
+      // production loader additionally validates each payload and opcode operand.
+      if (name.startsWith('LOAD-108-') || expected === 'PASS') {
+        if (expected === 'PASS') {
+          const bytes = fixture(name), module = readFmirContainer(bytes);
+          expect(encodeFmirSections(module.sections, module.writer), name).toEqual(bytes);
+        } else expect(() => readFmirContainer(fixture(name)), name).toThrow(expected);
+      }
+    }
+    expect(changes).toEqual(['LOAD-108-writer-3.0.1.ir']);
+    expect(historical.get(changes[0])).toBe('LOAD-108');
+  });
   it('pins streaming CRC and skips rather than zero-fills its field', () => {
     expect(crc32(enc.encode('123456789'))).toBe(C.CRC_CHECK_VALUE);
     expect(crc32(enc.encode('123'), enc.encode('456789'))).toBe(0xcbf43926);

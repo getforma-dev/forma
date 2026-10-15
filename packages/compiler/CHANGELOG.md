@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed — FORMA-112
+
+- Broaden the intermediate FORMA-185 exact-base check to the reviewed reader window: same major, writer minor at most reader minor, patch independent. Package suffixes remain absent from wire metadata. Frozen fixture bytes and historical expectations are preserved with an explicit window overlay.
+- Declare core as a compatibility peer. Publish the documented compilation/emission/diagnostic entrypoints; AST walkers, resolvers and module-loader helpers are internal. Packed runtime and declaration checks cover this surface.
+
 ### Removed — FORMA-110
 
 - Removed `formaCompiler`, `formaServer`, `compileFormaJSX` and `transformServerFunctions`, their compiled-template URL guard and the Vite peer dependency. The supported compiler emits native FMIR through `formaSsrPlugin`/`generateRealIr`; browser bundles retain runtime `h()` and the root `@getforma/core` import.
