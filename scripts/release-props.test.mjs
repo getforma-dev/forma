@@ -20,7 +20,7 @@ function fixture(change, visit) {
     const manifest = join(dir, 'Cargo.toml');
     writeFileSync(manifest, '[package]\nname = "forma-release-props-fixture"\nversion = "0.0.0"\nedition = "2021"\n[workspace]\n');
     let tests = cases.map(name => `#[test] fn ${name}() { assert!(std::env::var_os("UPDATE_GOLDEN").is_none()); }`).join('\n');
-    tests += '\nmod reload { #[test] fn reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot() {} }';
+    tests += '\nmod reload { #[test] fn reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot() {} #[test] fn rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery() {} }';
     writeFileSync(join(dir, 'src/lib.rs'), '');
     writeFileSync(join(dir, 'tests/typed_pages.rs'), change(tests));
     run('cargo', ['generate-lockfile', '--offline', '--manifest-path', manifest], dir);
