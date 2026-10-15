@@ -1136,7 +1136,7 @@ function cloneWithTemplateData(template: Element, item: unknown, mount?: MountCt
 }
 
 /**
- * Update an existing cloned element's text nodes with new item data.
+ * Update an existing cloned element's text and safe attributes with new item data.
  * Uses the cached original template patterns from the WeakMap.
  */
 function updateTemplateData(el: Element, item: unknown): void {
@@ -1146,6 +1146,11 @@ function updateTemplateData(el: Element, item: unknown): void {
     const compiled = templateTexts.get(node);
     if (compiled) {
       node.textContent = evaluateCompiledTemplate(compiled, item);
+    }
+  }
+  for (const node of [el, ...Array.from(el.querySelectorAll('*'))]) {
+    for (const { attr, compiled } of templateAttrs.get(node) ?? []) {
+      applyTemplateAttribute(node, attr, compiled, item);
     }
   }
 }
@@ -1511,6 +1516,15 @@ function applyShowVisibility(
   );
 }
 
+function applyTemplateAttribute(node: Element, attr: string, compiled: CompiledTemplate, item: unknown): void {
+  const value = evaluateCompiledTemplate(compiled, item);
+  if (isUnsafeAttrBinding(attr, value, node.tagName.toLowerCase())) {
+    node.removeAttribute(attr);
+  } else {
+    node.setAttribute(attr, value);
+  }
+}
+
 function cloneAttributeTemplates(el: Element, item: unknown, mount?: MountCtx): void {
   const all = [el, ...Array.from(el.querySelectorAll('*'))];
   for (const node of all) {
@@ -1527,12 +1541,7 @@ function cloneAttributeTemplates(el: Element, item: unknown, mount?: MountCtx): 
         }
         const compiled = compileTemplate(attr.value);
         entries.push({ attr: attr.name, compiled });
-        const value = evaluateCompiledTemplate(compiled, item);
-        if (isUnsafeAttrBinding(attr.name, value, node.tagName.toLowerCase())) {
-          node.removeAttribute(attr.name);
-        } else {
-          node.setAttribute(attr.name, value);
-        }
+        applyTemplateAttribute(node, attr.name, compiled, item);
       }
     }
     if (entries.length > 0) {

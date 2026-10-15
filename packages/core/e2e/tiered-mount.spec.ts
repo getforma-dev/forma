@@ -10,9 +10,10 @@ import { test, expect, type Page } from '@playwright/test';
  */
 
 type Runtime = {
-  mountMarkup(root: Element, markup: string, options: unknown): { grantsUsed(): unknown; unmount(): void };
+  trustedHtml(markup: string): unknown;
+  mountMarkup(root: Element, markup: unknown, options: unknown): { grantsUsed(): unknown; unmount(): void };
   getDiagnostics(): Array<{ kind: string; code: string; grant?: string }>;
-  reconcile(container: Element, html: string): void;
+  reconcile(container: Element, html: unknown): void;
 };
 
 async function bare(page: Page): Promise<void> {
@@ -38,9 +39,9 @@ test("an event's target outside the root is refused: a light-DOM child slotted i
     shadow.innerHTML = '<div id="shadow-root"></div>';
     FormaRuntime.mountMarkup(
       shadow.getElementById('shadow-root')!,
-      `<div data-forma-state='{"seen":"none"}'>` +
+      FormaRuntime.trustedHtml(`<div data-forma-state='{"seen":"none"}'>` +
         `<div data-on:click="{seen = $event.target.getAttribute('data-secret') ?? 'no secret'}"><slot></slot>` +
-        `<button id="own">own</button></div><p id="seen" data-text="{seen}">-</p></div>`,
+        `<button id="own">own</button></div><p id="seen" data-text="{seen}">-</p></div>`),
       { tier: 'reviewed', grants: {} },
     );
   });
@@ -60,9 +61,9 @@ test('a selector that reads past the element needs dom: the browser matches it a
     const root = document.getElementById('root')!;
     const handle = FormaRuntime.mountMarkup(
       root,
-      `<div data-forma-state='{}'>` +
+      FormaRuntime.trustedHtml(`<div data-forma-state='{}'>` +
         `<p id="q" data-text="{$el.closest('div').querySelector('[data-secret^=&quot;s3&quot;] span') ? 'read' : 'none'}">initial</p>` +
-        `<p id="local" data-text="{$el.closest('div').querySelectorAll('span').length}">initial</p><p><span></span></p></div>`,
+        `<p id="local" data-text="{$el.closest('div').querySelectorAll('span').length}">initial</p><p><span></span></p></div>`),
       { tier: 'reviewed', grants: g },
     );
     const out = [document.getElementById('q')!.textContent, document.getElementById('local')!.textContent];
@@ -87,9 +88,9 @@ test("SR16 and SR31 in a browser: $el.closest('body') reaches nothing, and an un
     const { FormaRuntime } = window as unknown as { FormaRuntime: Runtime };
     FormaRuntime.mountMarkup(
       document.getElementById('root')!,
-      `<div data-forma-state='{}'><div data-fetch="POST /api/transfer → done |error:failed"></div>` +
+      FormaRuntime.trustedHtml(`<div data-forma-state='{}'><div data-fetch="POST /api/transfer → done |error:failed"></div>` +
         `<p id="reach" data-text="{$el.closest('body') ? 'reached' : 'confined'}">initial</p>` +
-        `<p id="failed" data-text="{failed}">-</p></div>`,
+        `<p id="failed" data-text="{failed}">-</p></div>`),
       { tier: 'reviewed', grants: {} },
     );
   });
@@ -103,8 +104,8 @@ test("SR16 and SR31 in a browser: $el.closest('body') reaches nothing, and an un
     document.body.appendChild(second);
     FormaRuntime.mountMarkup(
       second,
-      `<div data-forma-state='{}'><div data-fetch="GET /api/items → items |error:failed2"></div>` +
-        `<p id="items" data-text="{items?.error}">-</p><p id="failed2" data-text="{failed2}">-</p></div>`,
+      FormaRuntime.trustedHtml(`<div data-forma-state='{}'><div data-fetch="GET /api/items → items |error:failed2"></div>` +
+        `<p id="items" data-text="{items?.error}">-</p><p id="failed2" data-text="{failed2}">-</p></div>`),
       { tier: 'reviewed', grants: { fetch: { paths: ['/api/'] } } },
     );
   });
@@ -120,10 +121,10 @@ test('the production build has no grant report and reconcile() warns nothing', a
   const report = await page.evaluate(() => {
     const { FormaRuntime } = window as unknown as { FormaRuntime: Runtime };
     const handle = FormaRuntime.mountMarkup(document.getElementById('root')!,
-      `<div data-forma-state='{}'><p data-text="{$el.closest('section').id}">-</p></div>`, { tier: 'reviewed' });
+      FormaRuntime.trustedHtml(`<div data-forma-state='{}'><p data-text="{$el.closest('section').id}">-</p></div>`), { tier: 'reviewed' });
     const other = document.createElement('div');
     document.body.appendChild(other);
-    FormaRuntime.reconcile(other, `<div data-forma-state='{"n":1}'><p id="n" data-text="{n}">-</p></div>`);
+    FormaRuntime.reconcile(other, FormaRuntime.trustedHtml(`<div data-forma-state='{"n":1}'><p id="n" data-text="{n}">-</p></div>`));
     return handle.grantsUsed();
   });
   expect(report).toBeNull();
@@ -142,7 +143,7 @@ test("SR16 in 2.x: with data-forma-mount=\"manual\" on the runtime's script, onl
   const result = await page.evaluate(async () => {
     const { FormaRuntime } = window as unknown as { FormaRuntime: Runtime & { mount(el: Element): void } };
     FormaRuntime.mountMarkup(document.getElementById('root')!,
-      `<div data-forma-state='{"w":3}'><p id="inside" data-text="{w}">-</p></div>`, { tier: 'reviewed', grants: {} });
+      FormaRuntime.trustedHtml(`<div data-forma-state='{"w":3}'><p id="inside" data-text="{w}">-</p></div>`), { tier: 'reviewed', grants: {} });
     const inject = (id: string) => document.body.insertAdjacentHTML('beforeend',
       `<div data-forma-state='{"n":2}'><p id="${id}" data-text="{n}">raw</p></div>`);
     inject('outside');
@@ -151,7 +152,7 @@ test("SR16 in 2.x: with data-forma-mount=\"manual\" on the runtime's script, onl
     inject('later');
     await new Promise((r) => setTimeout(r, 100));
     const refused: string[] = [];
-    for (const call of [() => FormaRuntime.mount(document.body), () => FormaRuntime.reconcile(document.createElement('div'), '<p></p>')]) {
+    for (const call of [() => FormaRuntime.mount(document.body), () => FormaRuntime.reconcile(document.createElement('div'), FormaRuntime.trustedHtml('<p></p>'))]) {
       try { call(); } catch (err) { refused.push(String((err as { code?: string }).code)); }
     }
     const text = (id: string) => document.getElementById(id)!.textContent;
@@ -174,7 +175,7 @@ test("closest() without dom never tests an element outside the root: an outside 
     const root = document.getElementById('root')!;
     const ask = (prefix: string): string | null => {
       const handle = FormaRuntime.mountMarkup(root,
-        `<div data-forma-state='{}'><p id="out" data-text="{$el.closest('[data-secret^=&quot;${prefix}&quot;]') ? 'HIT' : 'MISS'}">INIT</p></div>`,
+        FormaRuntime.trustedHtml(`<div data-forma-state='{}'><p id="out" data-text="{$el.closest('[data-secret^=&quot;${prefix}&quot;]') ? 'HIT' : 'MISS'}">INIT</p></div>`),
         { tier: 'reviewed', grants: {} });
       const answer = document.getElementById('out')!.textContent;
       handle.unmount();
@@ -210,10 +211,10 @@ test('$dispatch of an activation event needs navigate: nothing navigates, submit
     const outcomes: string[] = [];
     for (const type of ['click', 'auxclick', 'DOMActivate', 'submit', 'reset']) {
       const handle = FormaRuntime.mountMarkup(root,
-        `<div data-forma-state='{}'><a id="a" href="#navigated-${type}" data-on:mouseover="{$dispatch('${type}')}">a</a>` +
+        FormaRuntime.trustedHtml(`<div data-forma-state='{}'><a id="a" href="#navigated-${type}" data-on:mouseover="{$dispatch('${type}')}">a</a>` +
         `<form id="f" action="about:blank" target="sink"><input id="t" name="q" value="v">` +
         `<button id="s" type="submit" data-on:mouseover="{$dispatch('${type}')}">s</button>` +
-        `<button id="r" type="reset" data-on:mouseover="{$dispatch('${type}')}">r</button></form></div>`,
+        `<button id="r" type="reset" data-on:mouseover="{$dispatch('${type}')}">r</button></form></div>`),
         { tier: 'reviewed', grants: {} });
       (document.getElementById('t') as HTMLInputElement).value = 'changed';
       for (const id of ['a', 's', 'r']) document.getElementById(id)!.dispatchEvent(new Event('mouseover'));

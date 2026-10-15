@@ -5,9 +5,8 @@ import { fileURLToPath } from 'node:url';
  * Core under Trusted Types, in a real browser (FORMA-126, FORMA-127; decision
  * brief DR-19, DR-20).
  *
- * forma-server 0.2.2 sends `require-trusted-types-for 'script'; trusted-types
- * forma forma-runtime` as Content-Security-Policy-Report-Only, and the release
- * after enforces it. Every page here is served with exactly that policy, once
+ * The A2 server sent `require-trusted-types-for 'script'; trusted-types
+ * forma forma-runtime` as Content-Security-Policy-Report-Only, and forma-server3.x enforces it. Every page here is served with exactly that policy, once
  * Report-Only and once enforced, and every `securitypolicyviolation` the page
  * fires is collected. Core's own test pages, and every raw sink given
  * `trustedHtml()`, must raise none: core writes no string to an HTML sink of
@@ -335,44 +334,6 @@ test.describe('the controls: the policy is live in this engine', () => {
     expect(errors).toEqual([]);
   });
 
-  test("under Report-Only a string given to core's raw sink is reported and still renders, as 2.x promises", async ({ page }) => {
-    await underTrustedTypes(page, MODES[0].header);
-    await page.goto('/tt-sinks.html');
-    await page.evaluate(async () => {
-      const core = await import('/tt-core.mjs' as string);
-      const el = document.createElement('div');
-      document.body.append(el);
-      core.setHTMLUnsafe(el, '<i id="legacy">legacy</i>');
-    });
-    await expect(page.locator('#legacy')).toHaveText('legacy');
-    await expect.poll(() => violations(page)).toEqual([
-      { directive: 'require-trusted-types-for', disposition: 'report', sample: expect.stringContaining('<i id="legacy">') },
-    ]);
-  });
-
-  test("under Report-Only a string reconcile()'s diff writes a changed onclick and srcdoc as 2.0 did, and each string is reported", async ({ page }) => {
-    // formajs#29's second review (R1): the diff of a string keeps 2.0.3's
-    // behaviour (L-18); only trusted markup's diff leaves on* unwritten.
-    const { errors } = await underTrustedTypes(page, MODES[0].header);
-    await page.goto('/tt-sinks.html');
-    const out = await page.evaluate(() => {
-      const runtime = (window as unknown as { FormaRuntime: { reconcile(el: Element, html: unknown): void } }).FormaRuntime;
-      const live = document.getElementById('live')!;
-      const framed = (doc: string, handler: string) =>
-        `<div data-forma-id="f"><iframe sandbox="" srcdoc="&lt;p&gt;${doc}&lt;/p&gt;"></iframe>` +
-        `<button onclick="${handler}()">x</button></div>`;
-      runtime.reconcile(live, framed('one', 'a'));
-      runtime.reconcile(live, framed('two', 'b'));
-      return [live.querySelector('iframe')!.getAttribute('srcdoc'), live.querySelector('button')!.getAttribute('onclick')];
-    });
-    expect(out).toEqual(['<p>two</p>', 'b()']);
-    // Four string writes: the first parse, the second parse, the srcdoc and the onclick.
-    await expect.poll(async () => (await violations(page)).map((v) => `${v.directive} ${v.disposition}`)).toEqual(
-      Array(4).fill('require-trusted-types-for report'),
-    );
-    expect(errors).toEqual([]);
-  });
-
   test('enforced, a string written to innerHTML is refused and raises one violation', async ({ page }) => {
     await underTrustedTypes(page, MODES[1].header);
     await page.goto('/tt-sinks.html');
@@ -392,4 +353,82 @@ test.describe('the controls: the policy is live in this engine', () => {
       { directive: 'require-trusted-types-for', disposition: 'enforce', sample: expect.stringContaining('<b id="plain">') },
     ]);
   });
+});
+
+for (const { mode, header } of MODES) {
+  test(`library raw refusals precede native sinks and cache shortcuts (${mode})`, async ({ page }) => {
+    const { errors } = await underTrustedTypes(page, header);
+    await page.goto('/tt-sinks.html');
+    const out = await page.evaluate(async () => {
+      const core = await import('/tt-core.mjs' as string);
+      const runtime = (window as any).FormaRuntime;
+      const raw = '<p>ordinary fixture</p>';
+      const el = document.createElement('div');
+      const calls = [
+        () => core.h('div', { dangerouslySetInnerHTML: { __html: raw } }),
+        () => core.h('iframe', { srcdoc: raw }),
+        () => core.setAttr(document.createElement('iframe'), { srcdoc: raw }),
+        () => core.setHTMLUnsafe(el, raw),
+        () => core.template(raw), () => core.templateMany(raw),
+        () => runtime.reconcile(el, raw),
+        () => runtime.mountMarkup(el, raw, { tier: 'reviewed' }),
+        () => core.h('ScRiPt'),
+      ];
+      // Populate both cache kinds with reviewed content before trying the raw twin.
+      core.template(core.trustedHtml(raw)); runtime.reconcile(el, runtime.trustedHtml(raw));
+      const refused = calls.map(call => { try { call(); return 'accepted'; } catch (error) { return String(error); } });
+      return { refused, html: el.innerHTML };
+    });
+    const codes = ['FORMA_E_RAW_INNER_HTML', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_RAW_SET_HTML', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_RAW_RECONCILE', 'FORMA_E_MOUNT_ARGS', 'FORMA_E_SCRIPT_ELEMENT'];
+    out.refused.forEach((error, index) => expect(error).toContain(codes[index]!));
+    expect(out.html).toBe('<p>ordinary fixture</p>');
+    expect(await violations(page)).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+
+  test(`runtime srcdoc bindings report their code without a native TypeError (${mode})`, async ({ page }) => {
+    const { errors } = await underTrustedTypes(page, header);
+    await page.goto('/tt-sinks.html');
+    await page.evaluate(() => {
+      const runtime = (window as any).FormaRuntime;
+      const markup = `<div data-forma-state='{"doc":"bound","title":"neighbor","rows":[{"d":"row","t":"one"}]}'>` +
+        `<iframe id="bound-doc" sandbox="" data-bind:srcdoc="doc" data-bind:title="title"></iframe>` +
+        `<ul data-list="{rows}"><li><iframe sandbox="" srcdoc="{item.d}" title="{item.t}"></iframe></li></ul>` +
+        `<button id="change-doc" data-on:click="{rows = [{d:'changed',t:'two'}]}">change</button></div>`;
+      runtime.mountMarkup(document.getElementById('live'), runtime.trustedHtml(markup), { tier: 'reviewed', config: { diagnostics: true } });
+    });
+    await expect(page.locator('#bound-doc')).toHaveAttribute('title', 'neighbor');
+    await expect(page.locator('#live ul iframe')).toHaveAttribute('title', 'one');
+    await expect(page.locator('#live [srcdoc]')).toHaveCount(0);
+    await page.click('#change-doc');
+    const afterClick = await page.evaluate(() => (window as any).FormaRuntime.getDiagnostics());
+    expect(afterClick.filter((d: any) => d.kind !== 'markup-refused'), JSON.stringify(afterClick)).toEqual([]);
+    await expect(page.locator('#live ul iframe')).toHaveAttribute('title', 'two');
+    await expect(page.locator('#live [srcdoc]')).toHaveCount(0);
+    const diagnostics = await page.evaluate(() => (window as any).FormaRuntime.getDiagnostics());
+    expect(diagnostics.filter((d: any) => d.code === 'FORMA_E_RUNTIME_SRCDOC').length).toBeGreaterThanOrEqual(2);
+    expect(diagnostics.some((d: any) => d.code === 'FORMA_E_RUNTIME_SRCDOC' && d.expr.includes('data-bind:srcdoc'))).toBe(true);
+    expect(diagnostics.some((d: any) => d.code === 'FORMA_E_RUNTIME_SRCDOC' && d.expr.includes('row srcdoc'))).toBe(true);
+    expect(errors).toEqual([]);
+    expect(await violations(page)).toEqual([]);
+  });
+}
+
+test('the shared forma mint is callable by page scripts while duplicate named policy creation is refused', async ({ page, browserName }) => {
+  await underTrustedTypes(page, MODES[1].header);
+  await page.goto('/tt-sinks.html');
+  const result = await page.evaluate(async () => {
+    const core = await import('/tt-core.mjs' as string);
+    core.trustedHtml('<p>initialize</p>');
+    const tt = (window as any).trustedTypes;
+    if (!tt) return { native: false };
+    const reg = (globalThis as any)[Symbol.for('@getforma/core#trusted-types')];
+    const minted = reg.forma('<p>from shared mint</p>');
+    let duplicate = false;
+    try { tt.createPolicy('forma', { createHTML: (value: string) => value }); } catch { duplicate = true; }
+    return { native: true, minted: tt.isHTML(minted), duplicate };
+  });
+  test.info().annotations.push({ type: 'native-trusted-types', description: String(result.native) });
+  if (browserName === 'chromium') expect(result.native).toBe(true);
+  if (result.native) expect(result).toEqual({ native: true, minted: true, duplicate: true });
 });
