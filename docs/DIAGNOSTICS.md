@@ -932,3 +932,10 @@ See [declared props](DECLARED-PROPS.md) for optional-field precedence, safe date
 | BIND-112 | startup/reload | Route names/modes changed; restart and bind the new topology. |
 | RENDER-103 | browser shell | Route is absent or is not explicitly Browser. |
 | RENDER-406 | typed render | Registry has not successfully finalized; no response is produced. |
+
+### BUILD-818 Worker metadata cannot authenticate an asset
+
+A protected immutable JS/CSS/WASM filename or its full canonical SHA-384 digest is
+invalid. Generate the worker from the completed manifest after final asset bytes
+are written. Do not substitute a filename hash or an abbreviated digest. The build
+fails before replacing the prior output.

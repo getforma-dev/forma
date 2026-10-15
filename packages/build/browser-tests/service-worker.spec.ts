@@ -68,7 +68,7 @@ test('a controlled page upgrades its old worker and reads rebuilt CSS/JS on ever
     await expect(page.locator('main')).toHaveText('before-change');
     await expect(page.locator('main')).toHaveCSS('color', 'rgb(255, 0, 0)');
 
-    worker = serviceWorkerSource('forma-dev', [], true);
+    worker = serviceWorkerSource({app: 'fixture', build: 'dev', assets: {}, development: true});
     await page.evaluate(async () => {
       const changed = new Promise<void>((resolve) => navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true }));
       await (await navigator.serviceWorker.getRegistration())!.update();
