@@ -17,6 +17,7 @@ import { build } from './helpers/named-build';
 import {
   FORMA_CODE_CEILING_GZIP,
   formatRouteSizes,
+  identityBannerBytes,
   isFormaInput,
   packageNameOf,
   routeSizeFailure,
@@ -81,6 +82,9 @@ function fixture(corePad = padding(CORE_PAD, 1)) {
   return { root, dist, config };
 }
 
+// The identity banner (a block comment with a 16-hex id) and the newline esbuild writes after a banner.
+const BANNER_BYTES = '/*forma-build:'.length + 16 + '*/\n'.length;
+
 const gzip9 = (buffer: Buffer) => gzipSync(buffer, { level: 9 }).length;
 const brotli11 = (buffer: Buffer) => brotliCompressSync(buffer, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length;
 
@@ -122,8 +126,13 @@ describe('the size report per route (FORMA-021)', () => {
     // A route with no Forma code reports none; a route with no JavaScript is 0.
     const about = byRoute['/about'];
     expect(about.files).toHaveLength(1);
-    expect(about.forma).toEqual({ raw: 0, gzip: 0, brotli: 0 });
-    expect(about.application.gzip).toBe(about.gzip);
+    // ...except the identity banner Forma's build writes at the top of every JavaScript
+    // file (FORMA-186): the ruling is that it is Forma's code, so even a route with none of
+    // core's bytes carries it in its figure, and nothing else of the file.
+    expect(about.forma.raw).toBe(BANNER_BYTES);
+    expect(about.forma.gzip).toBeGreaterThan(0);
+    expect(about.forma.gzip).toBeLessThan(about.gzip); // the rest of the file is the application's
+    expect(about.application.gzip).toBe(about.gzip - about.forma.gzip);
     expect(byRoute['/static']).toMatchObject({ files: [], raw: 0, gzip: 0, brotli: 0, forma: { raw: 0, gzip: 0, brotli: 0 }, over: false });
 
     // The build printed the same figures, one line per route, under the ceiling.
@@ -163,6 +172,22 @@ describe('the size report per route (FORMA-021)', () => {
     expect(printed).toContain('1,001 B of 1,101 B gzip');
     expect(printed).toMatch(/\/ .*OVER by 1 B/);
     expect(printed).not.toMatch(/\/about.*OVER/);
+  });
+
+  it('counts the identity banner at the top of a file as Forma\'s code, and a comment anywhere else as nobody\'s', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'forma-route-size-banner-'));
+    temporary.push(dir);
+    const write = (name: string, text: string) => { writeFileSync(join(dir, name), text); return join(dir, name); };
+    const banner = '/*forma-build:5f0c9a1e7d2b4c86*/';
+    expect(identityBannerBytes(write('banner.js', `${banner}\nexport const a=1;`))).toBe(banner.length + 1);
+    expect(identityBannerBytes(write('no-newline.js', `${banner}export const a=1;`))).toBe(banner.length);
+    // Only the exact header the build writes: not another comment, not a short or upper-case id,
+    // not the banner further down a file.
+    expect(identityBannerBytes(write('other.js', '/*a comment*/\nexport const a=1;'))).toBe(0);
+    expect(identityBannerBytes(write('short.js', '/*forma-build:5f0c9a1e*/\n'))).toBe(0);
+    expect(identityBannerBytes(write('upper.js', '/*forma-build:5F0C9A1E7D2B4C86*/\n'))).toBe(0);
+    expect(identityBannerBytes(write('later.js', `export const a=1;\n${banner}\n`))).toBe(0);
+    expect(identityBannerBytes(join(dir, 'missing.js'))).toBe(0);
   });
 
   it('counts the bytes of @getforma/core and alien-signals as Forma\'s, wherever they are installed, and nothing else', () => {

@@ -250,6 +250,14 @@ pub(crate) fn write_document(
         ctx.head_links(),
     );
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
+    // The root names the build the manifest names (FORMA-186, DR-29): core compares it
+    // with the identity compiled into the bundle before it activates anything. The
+    // manifest is data, so it is escaped as any attribute value is, and no render input
+    // can set or override it.
+    let build_attr = format!(
+        " data-forma-build=\"{}\"",
+        escape_html(&config.manifest.build)
+    );
 
     // Every byte of the completed document, including state tags/envelope,
     // counts against the same response limit. Charge before allocating/copying
@@ -272,10 +280,12 @@ pub(crate) fn write_document(
         parts.body_class_attr.as_str(),
         ">\n",
         parts.body_prefix.as_str(),
+        "<div id=\"app\"",
+        build_attr.as_str(),
         if ssr_body.is_some() {
-            "<div id=\"app\" data-forma-ssr>"
+            " data-forma-ssr>"
         } else {
-            "<div id=\"app\"></div>"
+            "></div>"
         },
         ssr_body.unwrap_or(""),
         if ssr_body.is_some() { "</div>" } else { "" },
@@ -389,7 +399,10 @@ mod tests {
             slots: None,
         });
 
-        assert!(page.html.contains("<div id=\"app\"></div>"));
+        // The root carries the build's identity (FORMA-186); the manifest's build here is "test".
+        assert!(page
+            .html
+            .contains("<div id=\"app\" data-forma-build=\"test\"></div>"));
         // Check that the #app div does NOT have the SSR attribute
         assert!(!page.html.contains("<div id=\"app\" data-forma-ssr>"));
     }
@@ -415,7 +428,65 @@ mod tests {
 
         assert!(page.html.contains("data-forma-ssr"));
         assert!(page.html.contains("<p>hello</p>"));
-        assert!(page.html.contains("<div id=\"app\" data-forma-ssr>"));
+        assert!(page.html.contains(
+            "<div id=\"app\" data-forma-build=\"test\" data-forma-ssr><p>hello</p></div>"
+        ));
+    }
+
+    /// The deployment identity (FORMA-186, DR-29) is the manifest's `build`, written
+    /// on the root of a server-rendered page and of a browser shell, once, escaped
+    /// as any attribute value is: a manifest is data, never markup.
+    ///
+    /// Verified by: crates/forma-server/src/template.rs > "the_root_carries_the_manifests_build_escaped_on_both_forms"
+    #[test]
+    fn the_root_carries_the_manifests_build_escaped_on_both_forms() {
+        let mut manifest = empty_manifest();
+        manifest.build = "5f0c9a1e7d2b4c86".into();
+        let ir = hello_ir_module();
+        let slots = SlotData::new(0);
+        for (mode, ir_module, slots) in [
+            (RenderMode::Phase1ClientMount, None, None),
+            (RenderMode::Phase2SsrReconcile, Some(&ir), Some(&slots)),
+        ] {
+            let page = render_parts(&PageConfig {
+                title: "Identity",
+                route_pattern: "/test",
+                manifest: &manifest,
+                config_json: None,
+                body_class: None,
+                personality_css: None,
+                body_prefix: None,
+                render_mode: mode,
+                ir_module,
+                slots,
+            });
+            assert_eq!(
+                page.html.matches("data-forma-build=").count(),
+                1,
+                "exactly one stamp: {}",
+                page.html
+            );
+            assert!(page
+                .html
+                .contains("<div id=\"app\" data-forma-build=\"5f0c9a1e7d2b4c86\""));
+        }
+        manifest.build = "a\"b<c>&d".into();
+        let page = render_parts(&PageConfig {
+            title: "Identity",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+        assert!(page
+            .html
+            .contains("data-forma-build=\"a&quot;b&lt;c&gt;&amp;d\""));
+        assert!(!page.html.contains("a\"b<c>"));
     }
 
     #[test]

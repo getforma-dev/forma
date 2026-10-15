@@ -780,9 +780,10 @@ fn typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_po
     bind_empty(&pages);
     pages.finalize().unwrap();
     let parts = page.render(&props(), &ctx).unwrap().into_parts_unchecked();
-    assert!(parts
-        .html
-        .contains(&format!("{prefix}<div id=\"app\" data-forma-ssr>")));
+    assert!(parts.html.contains(&format!(
+        "{prefix}<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
+        manifest.build
+    )));
     assert!(parts.html.contains("@media (width < 600px)"));
     assert!(parts.html.contains(r"<\/style><img src=x>"));
     assert!(!parts.html.contains("</style><img"));
@@ -837,7 +838,10 @@ fn only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize()
     let page = forma_server::render_browser_shell(&shell("/client"), &RenderCtx::new())
         .unwrap()
         .into_parts_unchecked();
-    assert!(page.html.contains("<div id=\"app\"></div>"));
+    assert!(page.html.contains(&format!(
+        "<div id=\"app\" data-forma-build=\"{}\"></div>",
+        manifest.build
+    )));
     assert!(!page.html.contains("data-forma-ssr"));
     assert!(page
         .headers

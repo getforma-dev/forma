@@ -349,7 +349,9 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(body).toContain('data-forma-ssr');
       expect(body).toContain(`<h1>${name}</h1>`);
       expect(body).toContain('class="lede"');
-      expect(body).not.toContain('<div id="app"></div>');
+      // The root names its build (FORMA-186), so an empty shell is any `<div id="app" ...></div>`.
+      expect(body).toMatch(/<div id="app" data-forma-build="[^"]+" data-forma-ssr>/);
+      expect(body).not.toMatch(/<div id="app"[^>]*><\/div>/);
     });
   }, 900_000);
 
@@ -548,7 +550,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
         const res = await get(route);
         const body = await res.text();
         expect(res.status, route).toBe(200);
-        expect(body, route).toContain('<div id="app"></div>');
+        expect(body, route).toMatch(/<div id="app" data-forma-build="[^"]+"><\/div>/);
         expect(body, route).not.toContain('data-forma-ssr');
         // The CSP has to carry a nonce, and the same nonce has to be on the
         // script tag the shell carries, or the page cannot run at all.
@@ -711,7 +713,8 @@ globalThis.__formaBrowserEntry = 'browser-entry-only-sentinel';`);
         expect(build.status, build.stdout + build.stderr).toBe(0);
         const cargo = run('cargo', ['build', '--locked'], dest);
         expect(cargo.status, cargo.stderr).toBe(0);
-        const root = script === 'build:ssr' ? '<div id="app" data-forma-ssr>' : '<div id="app"></div>';
+        // Every root names its build (FORMA-186): the server-rendered form and the empty shell alike.
+        const root = script === 'build:ssr' ? /<div id="app" data-forma-build="[^"]+" data-forma-ssr>/ : /<div id="app" data-forma-build="[^"]+"><\/div>/;
 
         await withServer(dest, name, async (_body, _res, get) => {
           for (const route of pages) {
@@ -727,7 +730,7 @@ globalThis.__formaBrowserEntry = 'browser-entry-only-sentinel';`);
               const html = await res.text();
               if (script !== 'build:ssr' || route !== '/about') expect(html, `${where}: the HTML does not carry its own nonce`).toContain(`nonce="${nonce}"`);
               else expect(html, `${where}: static route emitted executable code`).not.toMatch(/<script(?![^>]*type="application\/json")[\s>]/);
-              expect(html, `${where}: rendered by the wrong path`).toContain(root);
+              expect(html, `${where}: rendered by the wrong path`).toMatch(root);
               // DR-25: the worker is off, so no page registers one.
               expect(html, `${where}: the page registers a service worker`).not.toMatch(/serviceWorker\.register/);
               nonces.push(nonce!);
