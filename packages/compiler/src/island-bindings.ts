@@ -4,7 +4,7 @@ import { parse } from '@babel/parser';
 import traverse, { type Binding, type Scope } from '@babel/traverse';
 import * as t from '@babel/types';
 import { encodeBindings, encodeClosedConstant, type BindingRecord, type BindingValue, type BinaryBindingOperator, type IslandRenderMode, type UnaryBindingOperator } from './fmir-contracts';
-import { resolveExportedFunction, resolveExportedSignal, returnExpressionOf, type ComponentFunction, type ResolvedExport } from './export-resolver';
+import { resolveExportedFunction, resolveExportedSignal, resolveImportedConstant, returnExpressionOf, type ComponentFunction, type ResolvedExport } from './export-resolver';
 import type { ModuleLoader } from './module-loader';
 import { PropsSchemaError } from './props-schema';
 import * as C from './fmir-constants';
@@ -14,6 +14,8 @@ export interface IslandBindingOptions {
   mode?: IslandRenderMode;
   loadModule?: ModuleLoader;
   islands?: ReadonlySet<string>;
+  /** Production resolves registry entries to actual lexical/import declarations. */
+  registration?: (file: string, localName: string) => string | undefined;
   childFields?: (name: string, file: string) => readonly { name: string; optional: boolean }[];
 }
 /** Source associations are compilation bookkeeping, never part of canonical bytes. */
@@ -30,6 +32,7 @@ interface Environment {
   values: Map<Binding, DeferredValue>;
   objects: Map<Binding, Map<string, DeferredValue>>;
   functions: Set<t.Node>;
+  staticRows: Set<Binding>;
 }
 type DeferredValue = BindingValue | (() => BindingValue);
 function resolved(value: DeferredValue): BindingValue { return typeof value === 'function' ? value() : value; }
@@ -119,7 +122,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     return found.declarations.get(found.name)!;
   }
   function environment(mod: Module, parent?: Environment): Environment {
-    return { module: mod, values: new Map(parent?.values), objects: new Map(parent?.objects), functions: new Set(parent?.functions) };
+    return { module: mod, values: new Map(parent?.values), objects: new Map(parent?.objects), functions: new Set(parent?.functions), staticRows: new Set(parent?.staticRows) };
   }
   function binding(node: t.Node, env: Environment): Binding {
     const result = env.module.references.get(node);
@@ -149,6 +152,28 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         activeValues.add(local);
         try { return data(declaration.init, environment(moduleOf.get(local) ?? env.module, env), depth + 1); }
         finally { activeValues.delete(local); }
+      }
+      if (t.isImportSpecifier(declaration)) {
+        activeValues.add(local);
+        try {
+          const found = resolveImportedConstant(env.module.ast, env.module.file, node.name, {
+            loadModule: options.loadModule,
+            readConstants(source, file) {
+              const owner = module(source, file), values = new Map<string, unknown[]>();
+              for (const [name, entry] of Object.entries(owner.scope.bindings)) {
+                const declaration = entry.path.node;
+                if (t.isVariableDeclarator(declaration) && declaration.init && t.isArrayExpression(unwrap(declaration.init))) {
+                  // Only the requested table is required to be closed; an
+                  // unrelated runtime table cannot poison this module scan.
+                  try { immutable(entry, owner, declaration); const value = data(declaration.init, environment(owner), depth + 1); if (Array.isArray(value)) values.set(name, value); } catch (error) { if (!(error instanceof PropsSchemaError)) throw error; }
+                }
+              }
+              return values;
+            },
+          });
+          if (found.kind === 'found') return found.value;
+          fail(env.module, node, `unresolved closed table ${node.name}`);
+        } finally { activeValues.delete(local); }
       }
       fail(env.module, node, `binding ${node.name} is not closed constant data`);
     }
@@ -305,10 +330,81 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
               locals.push({ ordinal, getter: getter.name, setter: t.isIdentifier(setter) ? setter.name : undefined, file: env.module.file, start: declaration.start ?? 0, end: declaration.end ?? 0 });
             }
           } else if (t.isReturnStatement(statement)) { if (statement.argument) render(statement.argument, env, records); return; }
-          else if (!t.isExpressionStatement(statement) && !t.isFunctionDeclaration(statement) && !t.isEmptyStatement(statement) && !t.isTSTypeAliasDeclaration(statement) && !t.isTSInterfaceDeclaration(statement)) fail(env.module, statement, 'unsupported native component control flow');
+          else if (t.isExpressionStatement(statement)) {
+            const value = unwrap(statement.expression);
+            if (t.isStringLiteral(value)) continue;
+            if (t.isCallExpression(value) && ['createEffect', 'onCleanup'].includes(coreName(value.callee, env.module) ?? '')) {
+              rejectBindingWrites(value, env); continue;
+            }
+            fail(env.module, statement, 'unsupported pre-return expression or mutation; native bindings must keep their described initial value');
+          } else if (!t.isFunctionDeclaration(statement) && !t.isEmptyStatement(statement) && !t.isTSTypeAliasDeclaration(statement) && !t.isTSInterfaceDeclaration(statement)) fail(env.module, statement, 'unsupported native component control flow');
         }
       } else render(fn.body, env, records);
     } finally { activeFunctions.delete(fn); }
+  }
+  function setter(node: t.Node, env: Environment, seen = new Set<Binding>(), exports = new Set<string>()): boolean {
+    if (!t.isIdentifier(node)) return false;
+    if (coreName(node, env.module)) return false;
+    const local = env.module.references.get(node); if (!local || seen.has(local)) return false; seen.add(local);
+    const declaration = local.path.node;
+    if (t.isImportSpecifier(declaration) && declaration.importKind !== 'type') {
+      const statement = local.path.parentPath?.node;
+      if (!t.isImportDeclaration(statement) || statement.importKind === 'type') return false;
+      const loaded = options.loadModule?.(env.module.file, statement.source.value);
+      if (!loaded) return false;
+      return exportedSetter(module(loaded.source, loaded.path), name(declaration.imported)!, exports);
+    }
+    if (!t.isVariableDeclarator(declaration)) return false;
+    if (t.isIdentifier(declaration.init)) return setter(declaration.init, env, seen, exports);
+    return t.isArrayPattern(declaration.id) && declaration.id.elements[1] === local.identifier
+      && t.isCallExpression(declaration.init) && coreName(declaration.init.callee, env.module) === 'createSignal';
+  }
+  function exportedSetter(owner: Module, exported: string, seen: Set<string>): boolean {
+    const key = `${owner.file}\0${exported}`;
+    if (seen.has(key)) return false; seen.add(key);
+    const follow = (specifier: string, requested: string): boolean => {
+      const loaded = options.loadModule?.(owner.file, specifier);
+      return !!loaded && exportedSetter(module(loaded.source, loaded.path), requested, seen);
+    };
+    const local = (requested: string): boolean => {
+      const candidate = owner.scope.getBinding(requested);
+      return !!candidate && setter(candidate.identifier, environment(owner), new Set(), seen);
+    };
+    for (const statement of owner.ast.program.body) {
+      if (t.isExportAllDeclaration(statement) && statement.exportKind !== 'type' && follow(statement.source.value, exported)) return true;
+      if (!t.isExportNamedDeclaration(statement) || statement.exportKind === 'type') continue;
+      if (t.isVariableDeclaration(statement.declaration)) {
+        for (const declaration of statement.declaration.declarations) {
+          if (Object.hasOwn(t.getBindingIdentifiers(declaration.id), exported)) return local(exported);
+        }
+      }
+      for (const specifier of statement.specifiers) {
+        if (t.isExportSpecifier(specifier) && specifier.exportKind !== 'type' && name(specifier.exported) === exported) {
+          return statement.source ? follow(statement.source.value, specifier.local.name) : local(specifier.local.name);
+        }
+      }
+    }
+    return false;
+  }
+  function rejectBindingWrites(node: t.Node, env: Environment): void {
+    if (t.isCallExpression(node) && setter(node.callee, env)) fail(env.module, node, 'pre-return effect writes a signal used by native rendering');
+    if (t.isAssignmentExpression(node) || t.isUpdateExpression(node)) {
+      let target: t.Node = t.isAssignmentExpression(node) ? node.left : node.argument;
+      while (t.isMemberExpression(target)) target = target.object;
+      if (t.isIdentifier(target) && env.module.references.has(target)) fail(env.module, node, 'pre-return effect mutates a lexical binding');
+    }
+    for (const key of t.VISITOR_KEYS[node.type] ?? []) {
+      const child = (node as unknown as Record<string, unknown>)[key];
+      for (const value of Array.isArray(child) ? child : [child]) if (value && typeof value === 'object' && 'type' in value) rejectBindingWrites(value as t.Node, env);
+    }
+  }
+  function registration(callee: t.Node, env: Environment): string | undefined {
+    const localName = name(callee); if (!localName) return undefined;
+    const local = env.module.references.get(callee);
+    // A function-local namesake is never the module's registered component.
+    if (local && !local.scope.path.isProgram()) return undefined;
+    return options.registration ? options.registration(env.module.file, localName)
+      : options.islands?.has(localName) ? localName : undefined;
   }
   function branch(node: t.Node | undefined, env: Environment): BindingRecord[] {
     const records: BindingRecord[] = []; if (!node) return records;
@@ -336,8 +432,8 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     return undefined;
   }
   function child(callee: t.Node, fields: Map<string, DeferredValue>, env: Environment, records: BindingRecord[]): void {
-    const componentName = name(callee)!;
-    if (options.islands?.has(componentName)) {
+    const componentName = registration(callee, env);
+    if (componentName) {
       const declared = options.childFields?.(componentName, env.module.file);
       if (!declared) fail(env.module, callee, `missing declared child schema for ${componentName}`);
       const canonical = [...declared].sort((a, b) => Buffer.compare(Buffer.from(a.name, 'utf8'), Buffer.from(b.name, 'utf8')));
@@ -357,13 +453,38 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     for (const field of properties) {
       if (!t.isObjectProperty(field) || field.computed) fail(env.module, field, 'native attributes need literal named fields');
       const key = name(field.key); if (key === undefined) fail(env.module, field, 'native attribute name is unknown');
-      if (/^on/i.test(key) || key === 'ref' || scalar(unwrap(field.value))) continue;
+      if (/^on/i.test(key) || key === 'ref' || scalar(unwrap(field.value)) || staticRowRead(field.value, env)) continue;
       records.push({ kind: 'attribute', name: key, value: expression(field.value, env) });
     }
+  }
+  function staticRowRead(node: t.Node, env: Environment): boolean {
+    node = unwrap(node);
+    if (!t.isMemberExpression(node)) return false;
+    let root: t.Node = node.object;
+    while (t.isMemberExpression(root)) root = root.object;
+    if (!t.isIdentifier(root)) return false;
+    const local = env.module.references.get(root);
+    if (!local || !env.staticRows.has(local)) return false;
+    const value = expression(node, env);
+    if (value.kind !== 'constant') fail(env.module, node, 'static map row did not resolve to closed data');
+    return true;
   }
   function render(node: t.Node, env: Environment, records: BindingRecord[]): void {
     node = unwrap(node);
     if (scalar(node) || t.isJSXText(node)) { if (t.isNumericLiteral(node)) data(node, env); return; }
+    if (staticRowRead(node, env)) return;
+    if (t.isSpreadElement(node) && t.isCallExpression(node.argument) && t.isMemberExpression(node.argument.callee) && !node.argument.callee.computed && t.isIdentifier(node.argument.callee.property, { name: 'map' })) {
+      const call = node.argument, callback = call.arguments[0];
+      if (call.arguments.length !== 1 || !isFunction(callback) || callback.params.length !== 1 || !t.isIdentifier(callback.params[0])) fail(env.module, node, 'static map needs one explicit row callback');
+      const rows = data(node.argument.callee.object, env); encodeClosedConstant(rows);
+      if (!Array.isArray(rows)) fail(env.module, node, 'static map needs a closed array');
+      for (const row of rows) {
+        const nested = environment(env.module, env), parameter = binding(callback.params[0], nested);
+        nested.values.set(parameter, { kind: 'constant', value: row }); nested.staticRows.add(parameter);
+        functionBody(callback, nested, records);
+      }
+      return;
+    }
     if (t.isJSXExpressionContainer(node)) { if (!t.isJSXEmptyExpression(node.expression)) render(node.expression, env, records); return; }
     if (isFunction(node)) { functionBody(node, environment(env.module, env), records); return; }
     if (t.isJSXFragment(node)) { for (const item of node.children) render(item, env, records); return; }
@@ -410,7 +531,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         records.push({ kind: 'list', value, key: keyPath.path, body }); return;
       }
       if (t.isIdentifier(node.callee)) {
-        if (node.arguments.length === 0 && !options.islands?.has(node.callee.name)) {
+        if (node.arguments.length === 0 && !registration(node.callee, env)) {
           const helper = component(node.callee, env);
           if (helper) { functionBody(helper.fn, environment(helper.module, env), records); return; }
           records.push({ kind: 'text', value: expression(node, env) }); return;
