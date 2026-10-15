@@ -58,7 +58,11 @@ the concatenated output would fold the first case and is wrong.
 **What it never touches.** Declared props, the state envelope, keys as data,
 constants, source strings, schema and binding bytes, digests and signal values
 stay exact: the component still receives `label === '\0'`; only its rendered
-text is U+FFFD. Trusted raw HTML, `srcdoc`, style objects and CSS strings,
+text is U+FFFD. A list key is the same: the row's key field stays exact in the
+state envelope and in the component's data, and only the key *text*, the
+row identity written as `data-forma-key` and compared by adoption, is `N` of a
+string key, because the browser parses that attribute under this rule (see
+"Keyed rows" below). Trusted raw HTML, `srcdoc`, style objects and CSS strings,
 script and JSON sinks, DOM `Node` children, and attribute and tag names are not
 routed through the helper; their typed guards are unchanged.
 

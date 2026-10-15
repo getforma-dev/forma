@@ -1,8 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { canonicalKeyText } from '../key-text';
 import { normalizeDomText } from '../normalize-text';
+
+// The shared helper, observed: a pass-through spy, so every vector below still runs the real
+// rule 1, and the delegation test can tell `normalizeDomText`'s own result from a look-alike
+// normalizer that the source check could miss.
+vi.mock('../normalize-text', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../normalize-text')>();
+  return { ...actual, normalizeDomText: vi.fn(actual.normalizeDomText) };
+});
 
 interface ValueVector { id: string; input: string; expected: string }
 const PARITY = resolve(__dirname, '../../../../../crates/forma-ir/tests/fixtures/parity');
@@ -33,6 +41,19 @@ describe('FORMA-182 key text seam (FORMA-181)', () => {
     expect(canonicalKeyText('a\r\nb')).toBe('a\nb');
     expect(canonicalKeyText('a\rb')).toBe('a\nb');
     expect(canonicalKeyText('a\0b')).toBe('a�b');
+  });
+  it('returns normalizeDomText\'s own result for a string key, after the surrogate check and for nothing else', () => {
+    const shared = vi.mocked(normalizeDomText);
+    shared.mockClear();
+    shared.mockReturnValueOnce('the shared helper\'s text');
+    expect(canonicalKeyText('a\r\nb')).toBe('the shared helper\'s text');
+    expect(shared).toHaveBeenCalledTimes(1);
+    expect(shared).toHaveBeenCalledWith('a\r\nb');
+    shared.mockClear();
+    expect(canonicalKeyText(7)).toBe('7');
+    expect(() => canonicalKeyText('\uD800')).toThrow(RangeError);
+    expect(() => canonicalKeyText(null)).toThrow(TypeError);
+    expect(shared).not.toHaveBeenCalled();
   });
   it('carries no independent normalizer of its own and imports the shared one', () => {
     const source = readFileSync(resolve(__dirname, '../key-text.ts'), 'utf8');
