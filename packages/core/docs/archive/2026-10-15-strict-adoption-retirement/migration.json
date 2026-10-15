@@ -277,7 +277,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate-fragment.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "a root Fragment binds its click handler and reactive text under a caller-owned adoption root",
         "the fragment() helper is adopted like a JSX Fragment",
@@ -294,11 +294,84 @@
         "a root createShow or createList is adopted against the container's children",
         "a component that returns nothing still activates (an island that sets up its own effects)"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance.",
+      "case_map": [
+        {
+          "original": "a root Fragment binds its click handler and reactive text under a caller-owned adoption root",
+          "current": "a root Fragment binds its click handler and reactive text under a caller-owned adoption root",
+          "disposition": "Public caller-owned Fragment positive retained with SSR marker unchanged, original identities and all interaction/value assertions."
+        },
+        {
+          "original": "the fragment() helper is adopted like a JSX Fragment",
+          "current": "the fragment() helper is adopted like a JSX Fragment",
+          "disposition": "Public fragment() positive unchanged."
+        },
+        {
+          "original": "a Fragment at an island root is adopted, each island on its own",
+          "current": "compiled island Fragment roots refuse while the public facade adopts independent ranges",
+          "disposition": "Compiled Fragment roots explicitly refuse NODE under the single-owned-element producer rule; original hosts/claims/nodes preserved. Separate unmarked caller-owned public ranges retain all original two-counter interactions and identities, with no metadata or setter-authority bypass."
+        },
+        {
+          "original": "a nested Fragment is adopted in place and the siblings after it stay aligned",
+          "current": "a nested Fragment is adopted in place and the siblings after it stay aligned",
+          "disposition": "Fixture now contains actual dynamic button markers and matching go 0 value; all nested Fragment alignment, sibling identity and updates unchanged."
+        },
+        {
+          "original": "a Fragment branch of createShow is adopted between the show markers",
+          "current": "a Fragment branch of createShow is adopted between the show markers",
+          "disposition": "Public multi-node Fragment Show branch and all toggles unchanged."
+        },
+        {
+          "original": "a tag mismatch rebuilds a Fragment child from its descriptor",
+          "current": "a tag mismatch refuses a Fragment child with zero writes and preserves the server subtree",
+          "disposition": "Original stale p versus section/Fragment mismatch refuses NODE with zero writes, original identity and no button; later signal writes remain inert."
+        },
+        {
+          "original": "an island that returns its own element stays active and keeps updating",
+          "current": "an imperative island returning its own element refuses without running its deferred effect",
+          "disposition": "Archived imperative addEventListener/own-Element return is refused STRUCTURE. Original four clicks remain; deferred effects run zero times and server buttons/text remain. Manual external listener is not claimed as managed or rolled back."
+        },
+        {
+          "original": "an island that returns a detached DOM node is marked error with its code, its sibling unaffected",
+          "current": "an island that returns a detached DOM node is marked error with its code, its sibling unaffected",
+          "disposition": "Unsupported detached Node is STRUCTURE; sibling success has no status attribute. Original error-isolation and server HTML assertions retained."
+        },
+        {
+          "original": "an island that appends a fragment into its element and returns it, now empty, stays active",
+          "current": "an imperative append-and-return fragment is refused and its deferred effect never runs",
+          "disposition": "Archived imperative append/emptied Fragment return is refused STRUCTURE; attempted caller mutation is explicitly distinguished from adoption. Original setter sequence remains, deferred effects never run, original p nodes persist; no claim of zero user-authored writes."
+        },
+        {
+          "original": "onError receives FORMA_E_HYDRATE_NODE from activateIslands, caller-owned adoption and hydrateIsland()",
+          "current": "onError receives FORMA_E_HYDRATE_STRUCTURE from activateIslands, caller-owned adoption and hydrateIsland()",
+          "disposition": "All three actual entry paths retain code/source reporting; unsupported Node classification is STRUCTURE. Positive sibling now returns its genuine matching descriptor instead of undefined."
+        },
+        {
+          "original": "caller-owned direct adoption logs a detached-node refusal and stops effects when its caller disposes",
+          "current": "caller-owned direct adoption logs a detached-node refusal and stops effects when its caller disposes",
+          "disposition": "Caller disposal and idempotence preserved; refusal occurs before deferred effects (zero runs rather than one). DOM, marker and diagnostic retained."
+        },
+        {
+          "original": "hydrateIsland called directly with a detached node logs the code and keeps the server DOM",
+          "current": "hydrateIsland called directly with a detached node logs the code and keeps the server DOM",
+          "disposition": "Public return target, retained SSR marker/DOM and detached-Node diagnostic preserved; classification STRUCTURE."
+        },
+        {
+          "original": "a root createShow or createList is adopted against the container's children",
+          "current": "a root createShow or createList is adopted against the container's children",
+          "disposition": "Public root Show/List range positive unchanged, including toggles, list updates, listeners and row identity."
+        },
+        {
+          "original": "a component that returns nothing still activates (an island that sets up its own effects)",
+          "current": "an imperative component that writes then returns nothing is refused, never marked active",
+          "disposition": "Archived imperative write then undefined returns explicit STRUCTURE/error. Original b identity and attempted direct caller write retained as failure evidence, never accepted activation."
+        }
+      ],
+      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log."
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate-svg.test.ts",
-      "status": "pending",
+      "status": "migrated-with-retained-integration-failures",
       "original_named_cases": [
         "adopts a server-rendered inline SVG with no DOM write and no re-created node",
         "adopts the inline SVG of every island in place, each on its own",
@@ -311,7 +384,60 @@
         "creates MathML the server did not render in the MathML namespace",
         "writes nothing where the server already holds the value, and still writes every change"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance.",
+      "case_map": [
+        {
+          "original": "adopts a server-rendered inline SVG with no DOM write and no re-created node",
+          "current": "adopts a server-rendered inline SVG with no DOM write and no re-created node",
+          "disposition": "Exact zero initial MutationRecords replaces SSR-marker removal; SVG/path identities and all three attribute updates retained."
+        },
+        {
+          "original": "adopts the inline SVG of every island in place, each on its own",
+          "current": "adopts the inline SVG of every island in place, each on its own",
+          "disposition": "Compiled registration/state retained; success leaves no status attribute or writes. Both islands and all independent path updates retained; activation integrated at855/7195."
+        },
+        {
+          "original": "adopts case-sensitive SVG tags such as clipPath and linearGradient in place",
+          "current": "adopts case-sensitive SVG tags such as clipPath and linearGradient in place",
+          "disposition": "Zero initial writes; case-sensitive clipPath/linearGradient identities and live height retained."
+        },
+        {
+          "original": "binds a reactive SVG title by the element without writing, and it stays in the SVG namespace",
+          "current": "refuses missing SVG text markers, then binds a marked title without writing and keeps its namespace",
+          "disposition": "Original markerless SVG title explicitly refuses MARKER with zero writes; then actual text-marker fixture retains same title and all three live values."
+        },
+        {
+          "original": "adopts a list of 40 SVG rows without re-creating one, and keeps them through updates",
+          "current": "adopts a list of 40 SVG rows without re-creating one, and keeps them through updates",
+          "disposition": "All forty row identities, reversal, removal and radius updates retained; initial row movement is forbidden, exact zero records."
+        },
+        {
+          "original": "rebuilds a mismatched SVG child in the SVG namespace, title and a included",
+          "current": "refuses mismatched SVG children without repair, then creates later Show content in SVG",
+          "disposition": "Original circle-vs-title/a input refuses NODE with zero writes and exact original nodes; separate matching empty Show later creates title/a/path with original SVG assertions."
+        },
+        {
+          "original": "rebuilds a mismatched SVG list row in the SVG namespace",
+          "current": "refuses a mismatched SVG list row without replacing either server row",
+          "disposition": "Original keyed g-vs-a row mismatch refuses NODE; both original rows and namespaces remain unchanged."
+        },
+        {
+          "original": "creates the content of a foreignObject in the HTML namespace",
+          "current": "refuses missing foreignObject content and creates later content in the HTML namespace",
+          "disposition": "Original missing foreignObject/content refuses NODE with zero writes; matching empty Shows later create both cases, retaining HTMLAnchorElement and every namespace assertion. Nested link namespace failure remains explicit."
+        },
+        {
+          "original": "creates MathML the server did not render in the MathML namespace",
+          "current": "refuses missing MathML and creates later MathML in its namespace with live token text",
+          "disposition": "Original missing MathML refuses NODE with zero writes; matching empty Show later creates exact MathML tree and live x\u2192y token."
+        },
+        {
+          "original": "writes nothing where the server already holds the value, and still writes every change",
+          "current": "writes nothing where the server already holds the value, and still writes every change",
+          "disposition": "Zero initial writes replaces marker removal; href, aria, disabled and exact later write assertions unchanged."
+        }
+      ],
+      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log."
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate.test.ts",
@@ -422,7 +548,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/list-adoption-count.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row",
         "a server region with no rows and a client array with items fails the island and inserts nothing",
@@ -444,7 +570,105 @@
         "an island failed by the row count keeps no handler or binding that adoption attached before the list",
         "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance.",
+      "case_map": [
+        {
+          "original": "marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row",
+          "current": "marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row",
+          "disposition": "All three parameterized shorter/longer/empty cases retain exact rows/nodes, later inertness, one code, component/count diagnostics and sibling behavior; success status absent. Mutation observer permits only error attribute on original compiled host."
+        },
+        {
+          "original": "a server region with no rows and a client array with items fails the island and inserts nothing",
+          "current": "a server region with no rows and a client array with items fails the island and inserts nothing",
+          "disposition": "Empty region/nonempty items remains refusal; adds strict mutation gate."
+        },
+        {
+          "original": "equal counts adopt 40 unkeyed rows in place by index, as before, and keep reconciling",
+          "current": "equal counts adopt 40 unkeyed rows in place by index, as before, and keep reconciling",
+          "disposition": "All forty unkeyed row identities, first/last clicks, reversal/removal retained; activation integrated at855/7195."
+        },
+        {
+          "original": "rows that carry data-forma-key keep matching by key when the counts differ",
+          "current": "keyed initial count mismatch refuses without removing or replacing any server row",
+          "disposition": "Original keyed a,b,c versus a,c mismatch now refuses LIST_COUNT and preserves all three original nodes; no initial keyed repair."
+        },
+        {
+          "original": "a mismatched list inside a show branch fails its island",
+          "current": "a mismatched list inside a show branch fails its island",
+          "disposition": "Nested Show/list mismatch remains same coded refusal and exact subtree."
+        },
+        {
+          "original": "the migration: an empty server region adopts an empty array, and rows filled after activation render",
+          "current": "the migration: an empty server region adopts an empty array, and rows filled after activation render",
+          "disposition": "Equal empty region remains successful; all three later list updates retained."
+        },
+        {
+          "original": "an island whose only server content is an empty list region is rendered in the browser, not checked",
+          "current": "a bare empty server list refuses nonempty initial items without a CSR fallback",
+          "disposition": "Bare list markers/nonempty items now LIST_COUNT refusal, exact marker HTML and no inserted p; no CSR fallback."
+        },
+        {
+          "original": "the coded message counts a single row or item in the singular",
+          "current": "the coded message reports known client items and unconsumed DOM without inventing server row counts",
+          "disposition": "7195 preserves LIST_COUNT, known client singular/plural count and precise unconsumed DOM extent. General logical server row counts cannot be inferred for empty/multi-node/shared-Text rows. Original assertions retained in archive."
+        },
+        {
+          "original": "an island failed by the row count answers no click on the nodes adoption built fresh before the list",
+          "current": "initial tag drift refuses before creating missing rows or Show content, and leaves all handlers inert",
+          "disposition": "Original early tag drift now NODE before any repairs; exact complete nodes/HTML retained, absent repair nodes and original row click inert."
+        },
+        {
+          "original": "a failing island's ref that writes a shared signal does not detach another island's new list row",
+          "current": "a refused island never runs its ref and leaves another island's later list row owned",
+          "disposition": "Failed ref is deferred and cannot change sibling rows; explicit subsequent setRows retains original r0 identity and original two-row listener assertions."
+        },
+        {
+          "original": "a failing island's ref that writes a shared signal does not detach another island's new show branch",
+          "current": "a refused island never runs its ref and leaves another island's later Show branch owned",
+          "disposition": "Failed ref cannot open sibling Show; explicit subsequent setOpen retains original new-branch click assertion."
+        },
+        {
+          "original": "a failing caller-owned adoption whose ref writes a shared signal does not detach a Browser mount root's new row",
+          "current": "a failing caller-owned adoption whose ref writes a shared signal does not detach a Browser mount root's new row",
+          "disposition": "Public failed ref cannot alter Browser mount rows; explicit later external update preserves original r0 and both original clicks."
+        },
+        {
+          "original": "a failing island's ref that writes a shared signal does not detach a client-rendered mount() root's new row",
+          "current": "a failing island's ref that writes a shared signal does not detach a client-rendered mount() root's new row",
+          "disposition": "Compiled failed ref cannot alter client mount rows; explicit later update preserves original r0 and both clicks."
+        },
+        {
+          "original": "a failing caller-owned adoption whose ref writes a shared signal leaves another island's new row its handler",
+          "current": "a failing caller-owned adoption whose ref writes a shared signal leaves another island's new row its handler",
+          "disposition": "Public failed ref cannot alter successful compiled island rows; explicit later update preserves original r0 and original click assertions."
+        },
+        {
+          "original": "another island's row created while a failing island adopts keeps its reactive binding",
+          "current": "another island's later row keeps its reactive binding after a refused adoption",
+          "disposition": "Initial live row fixture now has actual text markers. Failed ref leaves one row; explicit later update creates r1 and all three original tag/value updates remain."
+        },
+        {
+          "original": "a node the failing island builds outside every island during the walk (a portal of its own) is detached with it",
+          "current": "a refused island never runs the ref that would create a portal outside every island",
+          "disposition": "Failed preparation never executes the portal-producing ref; original outside node stays empty and no handler is created."
+        },
+        {
+          "original": "hydrateIsland() called directly keeps no binding it adopted before the list failed",
+          "current": "hydrateIsland() called directly keeps no binding it adopted before the list failed",
+          "disposition": "Initial span fixture gains actual text markers so failure is genuinely LIST_COUNT, now asserted explicitly. Caller root remains alive; all three later label writes inert and explicit disposal retained."
+        },
+        {
+          "original": "an island failed by the row count keeps no handler or binding that adoption attached before the list",
+          "current": "an island failed by the row count keeps no handler or binding that adoption attached before the list",
+          "disposition": "Both spans gain actual text markers. Original Bad/Good listener isolation and all three text updates retained; successful host status absent."
+        },
+        {
+          "original": "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows",
+          "current": "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows",
+          "disposition": "All three actual API paths keep original LIST_COUNT code/source, logging, exact server HTML and return/disposer assertions."
+        }
+      ],
+      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log."
     },
     {
       "original": "packages/core/src/dom/__tests__/list-disposal.test.ts",
@@ -537,7 +761,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/namespace-resolution.test.ts",
-      "status": "pending",
+      "status": "migrated-with-retained-integration-failures",
       "original_named_cases": [
         "a title or an a passed to h() before its svg parent exists stays HTML, and is SVG inside svg()",
         "a foreignObject's or desc's content is HTML when built there: an eager child, a reactive child, and content built outside svg()",
@@ -553,7 +777,75 @@
         "what adoption creates inside an SVG is built in SVG from the start: a ref on it is called once",
         "adoption creates what the server left out of a desc or an mtext in HTML, and an svg in SVG anywhere"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance.",
+      "case_map": [
+        {
+          "original": "a title or an a passed to h() before its svg parent exists stays HTML, and is SVG inside svg()",
+          "current": "a title or an a passed to h() before its svg parent exists stays HTML, and is SVG inside svg()",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "a foreignObject's or desc's content is HTML when built there: an eager child, a reactive child, and content built outside svg()",
+          "current": "a foreignObject's or desc's content is HTML when built there: an eager child, a reactive child, and content built outside svg()",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "a function child inside an svg builds in the SVG namespace on every run",
+          "current": "a function child inside an svg builds in the SVG namespace on every run",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "a helper inside an svg renders its content once",
+          "current": "a helper inside an svg renders its content once",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "a createShow inside an svg renders each branch once, in SVG, inside svg() from its first render and on every toggle",
+          "current": "a createShow inside an svg renders each branch once, in SVG, inside svg() from its first render and on every toggle",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "without svg(), a createShow inside an svg renders its first branch, built before the svg existed, in HTML, and every later branch in SVG",
+          "current": "without svg(), a createShow inside an svg renders its first branch, built before the svg existed, in HTML, and every later branch in SVG",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "list rows inside an svg are SVG when first rendered inside svg(), and when added or moved later without it",
+          "current": "list rows inside an svg are SVG when first rendered inside svg(), and when added or moved later without it",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "createSwitch cases inside an svg are SVG, each rendered once, cached cases included",
+          "current": "createSwitch cases inside an svg are SVG, each rendered once, cached cases included",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "a portal into an svg, and mount() into an svg, create SVG elements",
+          "current": "a portal into an svg, and mount() into an svg, create SVG elements",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "h() creates math and its elements in the MathML namespace, and HTML inside a token element, as the parser does",
+          "current": "h() creates math and its elements in the MathML namespace, and HTML inside a token element, as the parser does",
+          "disposition": "Ordinary CSR namespace behavior and assertions unchanged."
+        },
+        {
+          "original": "a show branch the server left empty, the branches it toggles to, and fresh keyed rows",
+          "current": "matching show and list ranges retain identity, then later branches and fresh rows use SVG",
+          "disposition": "Initial Show and two keyed rows now match exact server data; zero initial records/all identities added. Original three toggles, new c row, ordering and SVG assertions remain."
+        },
+        {
+          "original": "what adoption creates inside an SVG is built in SVG from the start: a ref on it is called once",
+          "current": "refuses initial SVG tag drift with no ref, then runs one ref for later SVG creation",
+          "disposition": "Original circle mismatch refuses NODE, runs no ref and makes no writes; matching empty Show later creates SVG title/a and invokes original ref exactly once."
+        },
+        {
+          "original": "adoption creates what the server left out of a desc or an mtext in HTML, and an svg in SVG anywhere",
+          "current": "refuses missing integration-point content, then creates later HTML and nested SVG in the proper namespace",
+          "disposition": "Original missing integration-point content refuses NODE with zero writes; namespace-correct server scaffolding avoids happy-dom MathML parser limitation. Matching empty Shows later create exact HTML a, MathML mglyph and nested SVG/title. Nested title namespace failure remains explicit."
+        }
+      ],
+      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log."
     },
     {
       "original": "packages/core/src/dom/__tests__/owned-adoption.test.ts",
@@ -599,7 +891,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/props-loading.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "loads declared scalar and array props from the first head state block",
         "refuses absent state instead of manufacturing null props",
@@ -609,11 +901,15 @@
       ],
       "disposition": "All original named and parameterized cases retained. Components now return exact matching descriptors; synthetic SSR indentation removed where absent from descriptors. Successful activation is private: original pending status is retained, with actual disposal/reactive behavior asserted. Props, frozen state, imported captures, trigger preflight, detached-host refusal and sibling isolation assertions are preserved.",
       "validation": "Root replay on strict activation855: all three suites pass alongside unchanged import-graph controls (40 cases across four files); log work/review-FORMA-104/tmp/strict-state-and-import-parser.log.",
-      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled."
+      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled.",
+      "independent_review": "Recover_history read complete3d7 diff/fulltests/helper;40/40 replay and44-original archive Git/SHA/length authentication passed. Evidence retained-tests-evidence/3d7-authentication.json.",
+      "original_parameterized_cases": [
+        "refuses the removed %s props channel instead of silently decoding it [inline, shared]"
+      ]
     },
     {
       "original": "packages/core/src/dom/__tests__/shared-signals-across-islands.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "signal change in island A causes reactive update in island B",
         "shared store with multiple signals across three islands",
@@ -623,11 +919,12 @@
       ],
       "disposition": "All original named and parameterized cases retained. Components now return exact matching descriptors; synthetic SSR indentation removed where absent from descriptors. Successful activation is private: original pending status is retained, with actual disposal/reactive behavior asserted. Props, frozen state, imported captures, trigger preflight, detached-host refusal and sibling isolation assertions are preserved.",
       "validation": "Root replay on strict activation855: all three suites pass alongside unchanged import-graph controls (40 cases across four files); log work/review-FORMA-104/tmp/strict-state-and-import-parser.log.",
-      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled."
+      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled.",
+      "independent_review": "Recover_history read complete3d7 diff/fulltests/helper;40/40 replay and44-original archive Git/SHA/length authentication passed. Evidence retained-tests-evidence/3d7-authentication.json."
     },
     {
       "original": "packages/core/src/dom/__tests__/island-state-activation.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "validates every requested props object before the first component runs",
         "rechecks a later immediate host after an earlier component changes its markers",
@@ -643,7 +940,254 @@
         "refuses a detached later immediate host before mode %s component execution [0, 1]",
         "refuses a detached deferred %s host without component or DOM writes [visible, idle, interaction]"
       ],
-      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled."
+      "case_mapping": "All titles preserved one-to-one; no case removed, skipped or disabled.",
+      "independent_review": "Recover_history read complete3d7 diff/fulltests/helper;40/40 replay and44-original archive Git/SHA/length authentication passed. Evidence retained-tests-evidence/3d7-authentication.json."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-isolation.test.ts",
+      "status": "independently-reviewed",
+      "case_map": [
+        {
+          "original": "refuses the %s legacy block without using it as fallback",
+          "current": "refuses the %s legacy block without using it as fallback"
+        },
+        {
+          "original": "ignores a body block when the first head block supplies valid declared props",
+          "current": "ignores a body block when the first head block supplies valid declared props"
+        },
+        {
+          "original": "disposes effects created before a failing island threw",
+          "current": "disposes effects created before a failing island threw"
+        },
+        {
+          "original": "keeps a successful island reactive and disposable",
+          "current": "keeps a successful island reactive and disposable"
+        },
+        {
+          "original": "refuses a shadow-only host even when the shadow root is explicitly passed",
+          "current": "refuses a shadow-only host even when the shadow root is explicitly passed"
+        },
+        {
+          "original": "an explicit light-DOM subtree shares original document authority",
+          "current": "an explicit light-DOM subtree shares original document authority"
+        },
+        {
+          "original": "sanitizePropsDeep strips forbidden keys at every depth",
+          "current": "sanitizePropsDeep strips forbidden keys at every depth"
+        },
+        {
+          "original": "sanitizePropsDeep terminates on cyclic props",
+          "current": "sanitizePropsDeep terminates on cyclic props"
+        },
+        {
+          "original": "island activation projects only declared safe fields at every depth for both instances",
+          "current": "island activation projects only declared safe fields at every depth for both instances"
+        },
+        {
+          "original": "standalone sanitization still strips props nested 10,000 deep",
+          "current": "standalone sanitization still strips props nested 10,000 deep"
+        }
+      ],
+      "disposition": "Original trigger/timer/disposal/props/isolation assertions retained. Successful components now describe their exact SSR host; pending status is unchanged by successful activation. Failed preparation runs no public effects. Resetting public status cannot grant new activation authority. Handwritten addEventListener positive migrated to managed h listener with original no-duplication click assertion.",
+      "independent_review": "Root read all six source deltas from25f7; full composed729eab core run2333 cases: these six suites pass. Two unrelated new list-test type errors and remaining namespace/policy failures retained in work/review-FORMA-104/tmp/activation-7195-full-independent.log and activation-7195-types-independent.log."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-reactivate.test.ts",
+      "status": "independently-reviewed",
+      "case_map": [
+        {
+          "original": "does not re-run a load island when activateIslands is called twice",
+          "current": "does not re-run a load island when activateIslands is called twice"
+        },
+        {
+          "original": "does not attach duplicate handlers on re-activation",
+          "current": "does not attach duplicate handlers on re-activation"
+        },
+        {
+          "original": "re-activates a freshly re-rendered island (status reset to pending)",
+          "current": "does not grant a second activation by resetting the public status attribute"
+        },
+        {
+          "original": "does not double-register a visible-trigger observer on re-invocation",
+          "current": "does not double-register a visible-trigger observer on re-invocation"
+        }
+      ],
+      "disposition": "Original trigger/timer/disposal/props/isolation assertions retained. Successful components now describe their exact SSR host; pending status is unchanged by successful activation. Failed preparation runs no public effects. Resetting public status cannot grant new activation authority. Handwritten addEventListener positive migrated to managed h listener with original no-duplication click assertion.",
+      "independent_review": "Root read all six source deltas from25f7; full composed729eab core run2333 cases: these six suites pass. Two unrelated new list-test type errors and remaining namespace/policy failures retained in work/review-FORMA-104/tmp/activation-7195-full-independent.log and activation-7195-types-independent.log."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-visible.test.ts",
+      "status": "independently-reviewed",
+      "case_map": [
+        {
+          "original": "hydrates load-trigger islands immediately",
+          "current": "hydrates load-trigger islands immediately"
+        },
+        {
+          "original": "hydrates islands with no trigger attribute immediately",
+          "current": "hydrates islands with no trigger attribute immediately"
+        },
+        {
+          "original": "defers visible-trigger islands behind IntersectionObserver",
+          "current": "defers visible-trigger islands behind IntersectionObserver"
+        },
+        {
+          "original": "hydrates visible island when intersection fires",
+          "current": "hydrates visible island when intersection fires"
+        },
+        {
+          "original": "ignores non-intersecting entries",
+          "current": "ignores non-intersecting entries"
+        },
+        {
+          "original": "defers interaction-trigger islands until user interaction",
+          "current": "defers interaction-trigger islands until user interaction"
+        },
+        {
+          "original": "defers idle-trigger islands behind requestIdleCallback",
+          "current": "defers idle-trigger islands behind requestIdleCallback"
+        },
+        {
+          "original": "creates IntersectionObserver with 200px rootMargin",
+          "current": "creates IntersectionObserver with 200px rootMargin"
+        }
+      ],
+      "disposition": "Original trigger/timer/disposal/props/isolation assertions retained. Successful components now describe their exact SSR host; pending status is unchanged by successful activation. Failed preparation runs no public effects. Resetting public status cannot grant new activation authority. Handwritten addEventListener positive migrated to managed h listener with original no-duplication click assertion.",
+      "independent_review": "Root read all six source deltas from25f7; full composed729eab core run2333 cases: these six suites pass. Two unrelated new list-test type errors and remaining namespace/policy failures retained in work/review-FORMA-104/tmp/activation-7195-full-independent.log and activation-7195-types-independent.log."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate.test.ts",
+      "status": "independently-reviewed",
+      "case_map": [
+        {
+          "original": "discovers all [data-forma-island] elements and activates them",
+          "current": "discovers all [data-forma-island] elements and activates them"
+        },
+        {
+          "original": "passes an empty declared props object to a unary component",
+          "current": "passes an empty declared props object to a unary component"
+        },
+        {
+          "original": "error in island 0 does not prevent island 1 from activating",
+          "current": "error in island 0 does not prevent island 1 from activating"
+        },
+        {
+          "original": "missing registry entry refuses without changing the host",
+          "current": "missing registry entry refuses without changing the host"
+        },
+        {
+          "original": "stores dispose function on island root element",
+          "current": "stores dispose function on island root element"
+        },
+        {
+          "original": "transitions status through pending -> hydrating -> active",
+          "current": "retains the original status attribute throughout successful activation"
+        },
+        {
+          "original": "handles no islands gracefully",
+          "current": "handles no islands gracefully"
+        },
+        {
+          "original": "never forwards undeclared %s keys beside a declared safe field",
+          "current": "never forwards undeclared %s keys beside a declared safe field"
+        },
+        {
+          "original": "exports activateIslands from dom/index",
+          "current": "exports activateIslands from dom/index"
+        }
+      ],
+      "disposition": "Original trigger/timer/disposal/props/isolation assertions retained. Successful components now describe their exact SSR host; pending status is unchanged by successful activation. Failed preparation runs no public effects. Resetting public status cannot grant new activation authority. Handwritten addEventListener positive migrated to managed h listener with original no-duplication click assertion.",
+      "independent_review": "Root read all six source deltas from25f7; full composed729eab core run2333 cases: these six suites pass. Two unrelated new list-test type errors and remaining namespace/policy failures retained in work/review-FORMA-104/tmp/activation-7195-full-independent.log and activation-7195-types-independent.log."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-triggers.test.ts",
+      "status": "independently-reviewed",
+      "case_map": [
+        {
+          "original": "calls requestIdleCallback when available",
+          "current": "calls requestIdleCallback when available"
+        },
+        {
+          "original": "falls back to setTimeout(200) when requestIdleCallback is unavailable",
+          "current": "falls back to setTimeout(200) when requestIdleCallback is unavailable"
+        },
+        {
+          "original": "transitions status pending -> hydrating -> active for idle trigger",
+          "current": "retains the pending attribute before, during and after successful activation for idle trigger"
+        },
+        {
+          "original": "does NOT hydrate immediately",
+          "current": "does NOT hydrate immediately"
+        },
+        {
+          "original": "hydrates on pointerdown event",
+          "current": "hydrates on pointerdown event"
+        },
+        {
+          "original": "hydrates on focusin event",
+          "current": "hydrates on focusin event"
+        },
+        {
+          "original": "listeners are cleaned up after hydration (no double-hydrate)",
+          "current": "listeners are cleaned up after hydration (no double-hydrate)"
+        },
+        {
+          "original": "focusin after pointerdown does not double-hydrate",
+          "current": "focusin after pointerdown does not double-hydrate"
+        },
+        {
+          "original": "pointerdown after focusin does not double-hydrate",
+          "current": "pointerdown after focusin does not double-hydrate"
+        },
+        {
+          "original": "transitions status pending -> hydrating -> active for interaction trigger",
+          "current": "retains the pending attribute before, during and after successful activation for interaction trigger"
+        }
+      ],
+      "disposition": "Original trigger/timer/disposal/props/isolation assertions retained. Successful components now describe their exact SSR host; pending status is unchanged by successful activation. Failed preparation runs no public effects. Resetting public status cannot grant new activation authority. Handwritten addEventListener positive migrated to managed h listener with original no-duplication click assertion.",
+      "independent_review": "Root read all six source deltas from25f7; full composed729eab core run2333 cases: these six suites pass. Two unrelated new list-test type errors and remaining namespace/policy failures retained in work/review-FORMA-104/tmp/activation-7195-full-independent.log and activation-7195-types-independent.log."
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/deactivate.test.ts",
+      "status": "independently-reviewed",
+      "case_map": [
+        {
+          "original": "calls the dispose function stored on the island element",
+          "current": "calls the dispose function stored on the island element"
+        },
+        {
+          "original": "is idempotent \u2014 double disposal does not throw",
+          "current": "is idempotent \u2014 double disposal does not throw"
+        },
+        {
+          "original": "does nothing for an element without __formaDispose",
+          "current": "does nothing for an element without __formaDispose"
+        },
+        {
+          "original": "stops effects from running after disposal",
+          "current": "stops effects from running after disposal"
+        },
+        {
+          "original": "disposes all active islands under the given root",
+          "current": "disposes all active islands under the given root"
+        },
+        {
+          "original": "defaults to document when no root is provided",
+          "current": "defaults to document when no root is provided"
+        },
+        {
+          "original": "skips islands that are not active (error, pending, disposed)",
+          "current": "skips islands that are not active (error, pending, disposed)"
+        }
+      ],
+      "disposition": "Original trigger/timer/disposal/props/isolation assertions retained. Successful components now describe their exact SSR host; pending status is unchanged by successful activation. Failed preparation runs no public effects. Resetting public status cannot grant new activation authority. Handwritten addEventListener positive migrated to managed h listener with original no-duplication click assertion.",
+      "independent_review": "Root read all six source deltas from25f7; full composed729eab core run2333 cases: these six suites pass. Two unrelated new list-test type errors and remaining namespace/policy failures retained in work/review-FORMA-104/tmp/activation-7195-full-independent.log and activation-7195-types-independent.log."
+    },
+    {
+      "original": "packages/core/probes/corpus.json",
+      "status": "retired-anchors-pending-independent-review",
+      "disposition": "54 probes for removed hydration implementation archived verbatim with explicit dispositions. All255 still-applicable JSON entries retained unchanged. No new mutation definitions or runs, no equivalent exemptions, no old detection-rate claim.",
+      "mapping": "probes/retired-strict-adoption.json"
     }
   ]
 }
