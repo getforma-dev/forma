@@ -197,6 +197,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   let nextCleanupBag: (() => void)[] | undefined;
   let disposed = false;
   let firstRun = true;
+  let initialError: {error:unknown}|undefined;
 
   const addCleanup = (cb: () => void) => {
     if (nextCleanupBag !== undefined) {
@@ -270,7 +271,10 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
       } else if (nextCleanup !== undefined) {
         cleanup = nextCleanup;
       }
-      if (initialThrow && initial) { cleanCurrentRun(); throw e; }
+      // Let the engine return its disposer even when the first reader throws.
+      // A caught construction error must not leave a subscribed failed effect.
+      // Verified by: src/dom/__tests__/reviewer-adoption-caught-construction.test.ts > "a caught initial h reader failure unsubscribes its failed binding and preserves its live owner"
+      if (initialThrow && initial) { initialError={error:e}; return false; }
       if (failure) { failure(e); return false; }
       else reportError(e, 'effect');
     } finally {
@@ -315,6 +319,8 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     // Dispose nested effects/roots this effect owns, then run its own cleanups.
     cleanCurrentRun();
   };
+
+  if(initialError){wrappedDispose();throw initialError.error;}
 
   // Register this effect's disposer with the owner active at creation (a root, or
   // a parent effect's child-owner).
