@@ -171,7 +171,9 @@ recorded in the ticket, and the step in force at a release in its GitHub Release
 
 **Step 0, 2026-10-15:** 14 modules, 23 states; P1 19 equal and 4 expected-divergent (findings F1
 to F4), P2 14 equal over the 5 island pages (every host activated, zero records); 2 structural
-classes (both in `dynamic-attrs`); about 3 s of harness time on a laptop once the builds exist.
+classes (both in `dynamic-attrs`); 0 holder-ambiguous positions. On CI's `parity` job the run takes
+4.3 s with a warm Rust cache and 14.5 s cold (building the example dominates); the whole job,
+installs and builds included, took 1m22s.
 
 ## The stop rule
 
