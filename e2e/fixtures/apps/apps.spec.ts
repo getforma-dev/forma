@@ -18,6 +18,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 const HERE = __dirname;
@@ -199,8 +200,25 @@ test.describe('activation is required, not assumed', () => {
     const { verifyIslandPage } = await verifier();
     const { BEHAVIOURS } = await behaviours();
     const interact = BEHAVIOURS['ksx /check (no controller)'].interact;
+    const page = INDEX.apps.ksx.routes['/check'];
+    const variant = page.variants!.find(each => each.name === 'no controller')!;
+    const expected = {
+      serverValues: variant.serverValues,
+      state: Object.fromEntries(Object.entries(variant.state!).map(([component, state]) => [component, [state]])),
+      hosts: Object.fromEntries(page.islands.map(component => [component, 1])),
+    };
+    const options = { path: variant.path, expected, interact, timeout: 3000 };
+    const active = await verifyIslandPage(browser, server.origin, '/check', manifest(), options);
+    expect(active.interacted, 'the paired control must reach the live variant behaviour').toBeTruthy();
     // The held script is answered with an empty module: the hosts are in the HTML and nothing ran.
-    await expect(verifyIslandPage(browser, server.origin, '/check', manifest(), { path: '/check?state=empty', interact, scriptBody: '', timeout: 3000 })).rejects.toThrow();
+    let failure: Error | undefined;
+    try {
+      await verifyIslandPage(browser, server.origin, '/check', manifest(), { ...options, scriptBody: '' });
+    } catch (error) { failure = error as Error; }
+    const message = stripVTControlCharacters(failure?.message ?? '');
+    expect(message).toContain('toHaveText');
+    expect(message).toContain('#frames-seen');
+    expect(message).toContain('1002');
   });
 });
 
