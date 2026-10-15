@@ -384,3 +384,36 @@ migration. No application tree, release tag or registry publication changed.
 FORMA-103 activation and the recorded 185/188/191 qualifications remain separate;
 `liveReleaseReady` stays false. Earlier passing packages and failed local-gate
 logs remain preserved under `work/FORMA-107/`.
+
+## Asset and worker integrity (FORMA-111)
+
+The seven `3.0.0-dev` candidates at
+`ac7c51bf86a553fd5ce338f8660341c0b4480cd4` passed 31 packed P17 checks in
+66.053 seconds. `v3-asset-integrity-set.json` and its SHA256 record identify the
+exact archives; `v3-asset-integrity-p17.json` records the observations. All ten
+source template files were restored byte-for-byte after candidate staging.
+
+Both actual packed templates emit manifest SHA-384 on external scripts,
+stylesheets and modulepreloads with anonymous crossorigin and retained nonces.
+Their served enforced Trusted Types policy remains intact. A harmless replacement
+entry is blocked with SRI and executes in the paired control that removes only
+SRI. Missing, null, short and wrong-algorithm digests refuse startup before bind.
+The packed Rust public-path controls are required by name and must execute.
+
+The same packed build package passes six cache/network integrity controls and
+six lifecycle controls: altered cached entry recovery, a dynamic chunk without a
+script tag, altered network refusal, verified offline cache, decoded gzip/brotli
+bytes, waiting across old tabs and alternating instances, rollback/upgrade, and
+retirement using the actual packed Rust worker response. Other applications and
+unrelated caches remain. The native worker harness is Chromium-specific because
+it uses CDP to distinguish the HTTP cache from CacheStorage; it does not claim a
+Firefox/WebKit worker replay. Actual packed-server SRI/CSP checks are separate
+from the worker fixture's HTTP server.
+
+The full repository gate passed in 146 seconds at the same source. The initial
+run's missing BUILD-818 catalogue entry is preserved and corrected; the rerun
+passes. Independent lead review approved the Rust/worker implementations,
+fixture archives, browser controls and verifier helpers. Final artifact
+review and hosted CI remain merge gates. No application, tag or publication was
+changed. The source A2 templates and pending FORMA-185/144/188/191 qualifications
+remain explicit; `liveReleaseReady` is still false.
