@@ -295,3 +295,40 @@ and archives are retained under `work/FORMA-109/`. No application migration,
 release tag, registry publication, new fuzz campaign or broad payload campaign
 was performed. Application and fixture qualification in 152/188, remaining release
 contracts and measurements are still separate; liveReleaseReady remains false.
+
+## Finalized typed rendering (FORMA-107)
+
+`v3-bound-render-set.json` records seven unpublished 3.0.0-dev archives from
+`858666fcfde5476c48fe997d3bcf48e805bc2078`. The packed verifier passed all 22
+checks in 49.928 seconds (`v3-bound-render-p17.json`), including both actual
+candidate templates, declared handler schemas, all 16 external typed Pages
+controls, enforced browser policy, and locked package/signature checks. The
+source includes the portable date-conversion boundary control; its numeric
+bounds are tested independently of each operating system's SystemTime range.
+All ten original A2 template files were restored byte for byte, as recorded in
+`v3-bound-render-template-restore.json`.
+
+The public SSR path is load, bind, finalize, then PageHandle::render. Finalization
+remains repairable until every SSR route is bound and seals all registry clones
+on success. The independent concurrent-bind control proves a comparison already
+in progress cannot register after finalization. Per-page limits remain immutable
+unless explicitly overridden for a request. The typed request boundary preserves
+escaped JSON, branding CSS and RawHtml; Browser shells require an explicit
+Browser route. Reload refuses topology changes and retains the complete accepted
+module/asset pair, including simultaneous edits to a mutable module filename.
+
+`v3-bound-render-qualification.json` records the complete 156-second local gate,
+source-portability replays and raw-log hashes. In the release timing control,
+60,000 rows produce zero walked iterations: the walker refuses in 31.958µs,
+while the entire typed call takes 111.967ms. These measure different scopes;
+checked data conversion is not included in walker time. No end-to-end latency
+below 1ms is claimed. The archive source precedes its evidence commit; exact-head
+hosted CI remains a separate merge gate.
+
+The candidate-only template adapter authenticates both exact historical source
+hashes before selecting reviewed 3.0.x/finalized-v1 sources and restores all ten
+files after success or failure. FORMA-144 still owns the eventual source-template
+migration. No application tree, release tag or registry publication changed.
+FORMA-103 activation and the recorded 185/188/191 qualifications remain separate;
+`liveReleaseReady` stays false. Earlier passing packages and failed local-gate
+logs remain preserved under `work/FORMA-107/`.

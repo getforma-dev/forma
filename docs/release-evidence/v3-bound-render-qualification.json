@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "sourceCommit": "858666fcfde5476c48fe997d3bcf48e805bc2078",
+  "recordedAt": "2026-10-15T03:56:15.414693+00:00",
+  "liveReleaseReady": false,
+  "contracts": {
+    "stage": "v3-development",
+    "fmir": 3,
+    "manifest": 2,
+    "props": "declared-v1",
+    "stateBlock": null,
+    "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+    "liveReleaseReady": false,
+    "pending": {
+      "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+      "FORMA-144": "both templates use the milestone's API",
+      "FORMA-188": "fixture applications and skew drill",
+      "FORMA-191": "release measurements"
+    },
+    "trustedTypes": "enforced-v1",
+    "boundRender": "finalized-v1"
+  },
+  "packed": {
+    "passed": true,
+    "tests": 22,
+    "seconds": 49.928,
+    "templates": 2,
+    "artifacts": 7,
+    "restoredTemplateFiles": 10,
+    "ds11RecordSha256": "10290cd8ed5ac7657bced2152771a38759b7400724b0700c4d00cc39839516ee",
+    "setFile": "v3-bound-render-set.json",
+    "p17File": "v3-bound-render-p17.json",
+    "restorationFile": "v3-bound-render-template-restore.json"
+  },
+  "fullCheck": {
+    "passed": true,
+    "seconds": 156,
+    "log": "check-107-third.log",
+    "source": "1027bdc862ef236eec74692b8a5a4dc430fc4621",
+    "laterChanges": "Portable diagnostic-path assertions and checked SystemTime construction, a private unchanged duration-conversion helper with platform-independent numeric boundary coverage, dependency evidence and ancestry. No encoding behavior changed. Focused controls and exact-source P17 replayed afterward."
+  },
+  "checks": {
+    "releaseTypedPages": 13,
+    "ssrBrowserControls": 33,
+    "actualCompilerCases": 9,
+    "releaseIntegrationControls": 21,
+    "serverMsrv": "1.85",
+    "serverChecks": "All targets/features Clippy, rustdoc with warnings denied, debug and release suites, actual 3.1 reader startup fixture."
+  },
+  "timing": {
+    "rows": 60000,
+    "walkedIterations": 0,
+    "release": {
+      "walkerMicroseconds": 31.958,
+      "wholeTypedCallMilliseconds": 111.967
+    },
+    "debug": {
+      "walkerMicroseconds": 57.834,
+      "wholeTypedCallMilliseconds": 374.546
+    },
+    "scope": "Walker refusal and end-to-end typed render are separate measurements. Checked props conversion and document assembly are not included in walker time. No total latency below 1ms is claimed."
+  },
+  "independentReview": "Lead approved the public API, repairable finalization, shared registry sealing, typed extension points, immutable reload snapshots, combined topology refusal controls and source staging. A bounded independent concurrency test was incorporated. Final package authentication and exact-head hosted CI remain separate merge gates.",
+  "scope": "Only normal implementation and existing or narrow functional controls. No application tree, tag or registry publication changed. Source A2 templates are unchanged; the hash-authenticated candidate-only adapter is temporary until FORMA-144. FORMA-103 activation and remaining FORMA-185/188/191 qualification are separate.",
+  "generatedFixtures": "Two historically stale e2e JS bundles were saved outside the checkout after the full gate and restored to committed bytes; current built runtime artifacts were consumed by tests.",
+  "preservedAttempts": [
+    "packed-107 + pack-107.log preliminary source archives",
+    "packed-107-final + p17-107-final.json at1027bdc; 22 checks passed in53.928s",
+    "check-107.log shared109 frame-size refusal; check-107-second.log old raw-string browser fixture refusal"
+  ],
+  "logSha256": {
+    "check-107-third.log": "15d823436545b7973a84ad5e82a79db39e8ff67370f3880fc026a9360be4d20c",
+    "final-typed-pages-release.log": "6c4f6eb1fb536351c67db589e3c6481fab741e0cb97ac21ab3f2f8103fdc7083",
+    "typed-limit-release-timing.log": "2e0ef9a88338977e1cc2581a25e8569cdcf6603499b2c63cefb740f3ee09f163",
+    "typed-limit-debug-timing.log": "2b61e4b388b7618a895337850323c0d76d07af0d6d11cff63b78c1cce7977c56",
+    "renderer-window.log": "8bf63aebc189f55afeba1380b06f5757678fe71687ee79aa319774e2af611457",
+    "release-integration-tests.log": "d86a489f3d7bc112f5bb6801eac247e59029920af9df083b05a5f695c8429374",
+    "candidate-minimal-compile.log": "c02dbbc495be08e6e406d2a323e684fcf00db9a75d23d5c59735cf814f65abb5",
+    "candidate-dashboard-compile.log": "38962c3aa8ae52f3b0ce764fe42a4c814cabaab4dff4d8dbd727a3e3208134ac",
+    "props-compile-portable.log": "272728257ff742ab171d925d7ed69b5e69a83fb083e8fdb8ee1043da4468a871",
+    "date-portability-integrated.log": "bc2887553632cbd8821727f80bccc0580d57167a42cb6345f0665a862138f062",
+    "typed-pages-final-portability.log": "f4e10c994f6e8f376a3be22aad6b0544c3cdccce6ad4847cb9b2c0dea5270908",
+    "pack-107-acceptance.log": "ecdaaf5072d7a4c77f83dcfc387b3a78f9659c8cb502d56c76a807893dc31496",
+    "p17-107-acceptance.log": "6b442554a1034a5881fd20df85bb0b4f42bb50f14ef84e31a79876ea964a13e5"
+  }
+}
