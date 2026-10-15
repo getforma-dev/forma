@@ -2,20 +2,27 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stopOwnedWatcher } from './helpers/watch';
 
 const roots: string[] = [];
-afterEach(() => roots.splice(0).forEach(root => rmSync(root, {recursive: true, force: true})));
+afterEach(() => roots.splice(0).forEach(root => rmSync(root, {recursive: true, force: true, maxRetries: 10, retryDelay: 100})));
 
 it('registers existing and missing ancestor metadata even when its first watched build is refused', async () => {
   const root = mkdtempSync(join(tmpdir(), 'forma-watch-guard-')); roots.push(root);
   const nested = join(root, 'admin'); mkdirSync(nested);
   const ancestor = join(root, 'Cargo.lock'), nearer = join(nested, 'Cargo.lock');
-  const lock = (path: string, version: string) => writeFileSync(path, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
+  const lock = (path: string, version: string) => {
+    // These cases change complete versions. An in-place truncate/write can let
+    // onStart correctly refuse an empty intermediate file instead of this version.
+    const next = `${path}.next`;
+    writeFileSync(next, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
+    renameSync(next, path);
+  };
   lock(ancestor, '2.9.0');
   const runner = join(root, 'runner.mjs'), outputFile = join(root, 'result.js');
   const guard = fileURLToPath(new URL('../src/compatibility-watch.ts', import.meta.url));
@@ -34,6 +41,8 @@ it('registers existing and missing ancestor metadata even when its first watched
   });
   const group = process.platform !== 'win32';
   const child = spawn(process.execPath, [runner], {stdio: ['ignore', 'pipe', 'pipe'], detached: group});
+  const closed = once(child, 'close');
+  void closed.catch(() => {});
   let output = '';
   child.stdout.on('data', bytes => { output += bytes; });
   child.stderr.on('data', bytes => { output += bytes; });
@@ -59,11 +68,6 @@ it('registers existing and missing ancestor metadata even when its first watched
     await change(() => lock(ancestor, '3.0.0'));
     expect(readFileSync(outputFile, 'utf8')).toContain('ok = true');
   } finally {
-    if (child.exitCode === null) {
-      const exited = once(child, 'exit');
-      if (group && child.pid !== undefined) process.kill(-child.pid, 'SIGTERM');
-      else child.kill('SIGTERM');
-      await exited;
-    }
+    await stopOwnedWatcher(child, closed, group);
   }
 }, 30_000);

@@ -163,6 +163,8 @@ inlining — they used to be three copies that disagreed.
 | `export { Button } from 'some-ui-kit'` | No — the compiler follows relative imports only, never package code. Warns. |
 | A circular re-export chain | No — resolution stops and warns |
 
+Named root components may live in the entry file itself. `mount(() => Page({count: 0}), '#app')`, a direct `mount(Page, '#app')`, and a callback containing only `return Page(...)` use Page's declared props contract, whether Page is exported or local. The browser call's defaults do not replace the server handler's declared values. A shadowed or reassigned root reference fails BUILD-610. A genuine inline `mount(() => h(...))` retains its own empty handler contract and local state.
+
 Anything in the "No" rows warns at build time naming the file, the construct
 and the consequence. A root page that cannot be resolved falls back to
 **placeholder IR** — `<div id="app"></div>`, no slots, no islands — so the page

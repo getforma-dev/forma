@@ -14,10 +14,11 @@
 import { parse } from '@babel/parser';
 import type * as T from '@babel/types';
 import * as t from '@babel/types';
-import _traverse from '@babel/traverse';
+import _traverse, { type NodePath } from '@babel/traverse';
 
 import type { ModuleLoader } from './module-loader';
-import { reportDiagnostic } from './diagnostics.js';
+import { originalPosition, reportDiagnostic } from './diagnostics.js';
+import { PropsSchemaError } from './props-schema';
 import {
   readImportBindings,
   resolveExportedFunction,
@@ -38,6 +39,8 @@ export interface EntryPointInfo {
   componentName: string;
   /** The import path for the component (e.g., './OnboardingPage'). */
   importPath: string;
+  /** A lexical top-level component declared in the entry file itself. */
+  localComponent?: boolean;
   /** Names of components registered in activateIslands({...}).
    *  These must NOT be inlined — they emit ISLAND_START/ISLAND_END. */
   islandNames?: Set<string>;
@@ -80,6 +83,8 @@ export interface ComponentInfo {
  * module export under this name?".
  */
 export interface AnalyzerLookupOptions {
+  /** Only a lexical same-file root may resolve an unexported declaration. */
+  allowLocal?: boolean;
   /** Follows `export … from './x'` re-exports across files. Without it those
    *  forms are reported to `onUnresolved` instead of being followed. */
   loadModule?: ModuleLoader;
@@ -130,6 +135,33 @@ export class ComponentAnalyzer {
       importMap.set(local, binding.source);
     }
 
+    // Resolve the actual lexical reference, not an import-map name that a
+    // callback may shadow. Only top-level local functions become named roots;
+    // genuine inline trees retain the callback's own scope.
+    const namedRoot = (name: string, reference: NodePath): EntryPointInfo | null => {
+      const binding = reference.scope.getBinding(name);
+      const program = reference.scope.getProgramParent();
+      const rootBinding = program.getBinding(name);
+      const refuse = (detail: string): never => {
+        const at = originalPosition(filename, reference.node.loc?.start ?? { line: 1, column: 0 });
+        throw new PropsSchemaError(filename, at.line, at.column, detail);
+      };
+      if (rootBinding && binding !== rootBinding) refuse(`mounted component ${name} is shadowed; use an unambiguous top-level page reference`);
+      if (binding && binding.scope !== program) refuse(`mounted component ${name} is shadowed or callback-local; use an unambiguous top-level page reference`);
+      if (!binding) return null;
+      const importPath = importMap.get(name);
+      if (importPath && (importPath.startsWith('.') || importPath.startsWith('/'))) {
+        if (!binding.constant) refuse(`mounted component ${name} is reassigned`);
+        return { componentName: name, importPath };
+      }
+      const declaration = binding.path.node;
+      const localFunction = t.isFunctionDeclaration(declaration) || (t.isVariableDeclarator(declaration)
+        && (t.isArrowFunctionExpression(declaration.init) || t.isFunctionExpression(declaration.init)));
+      if (!localFunction) return null;
+      if (!binding.constant) refuse(`mounted component ${name} is reassigned; its declared contract cannot select the later function`);
+      return { componentName: name, importPath: '', localComponent: true };
+    };
+
     // Step 2: Find mount(() => Component(), '#app') call
     let result: EntryPointInfo | null = null;
 
@@ -150,29 +182,15 @@ export class ComponentAnalyzer {
         if (t.isArrowFunctionExpression(firstArg) && t.isCallExpression(firstArg.body)) {
           const innerCall = firstArg.body;
           if (t.isIdentifier(innerCall.callee)) {
-            const componentName = innerCall.callee.name;
-            const importPath = importMap.get(componentName);
-            // Only a RELATIVE import is a component file this compiler can
-            // open. `mount(() => h('div', …), '#app')` matched here too and
-            // sent the plugin looking for a file called 'formajs', which fails
-            // — and a failure at this step drops the WHOLE page to placeholder
-            // IR. It is an inline mount; Pattern 3 below is where it belongs.
-            // Verified by: packages/compiler/tests/ssr-emission.test.ts > "treats an expression-bodied mount as an inline mount"
-            if (importPath && (importPath.startsWith('.') || importPath.startsWith('/'))) {
-              result = { componentName, importPath };
-              path.stop();
-            }
+            result = namedRoot(innerCall.callee.name, path.get('arguments.0.body.callee') as NodePath);
+            if (result) path.stop();
           }
         }
 
         // Pattern 2: mount(Component, '#app') — direct reference
         if (!result && t.isIdentifier(firstArg)) {
-          const componentName = firstArg.name;
-          const importPath = importMap.get(componentName);
-          if (importPath && (importPath.startsWith('.') || importPath.startsWith('/'))) {
-            result = { componentName, importPath };
-            path.stop();
-          }
+          result = namedRoot(firstArg.name, path.get('arguments.0') as NodePath);
+          if (result) path.stop();
         }
 
         // Pattern 3: mount(() => { ...statements; return JSX; }, '#app')
@@ -184,6 +202,10 @@ export class ComponentAnalyzer {
         ) {
           for (const stmt of firstArg.body.body) {
             if (t.isReturnStatement(stmt) && stmt.argument) {
+              if (firstArg.body.body.length === 1 && t.isCallExpression(stmt.argument) && t.isIdentifier(stmt.argument.callee)) {
+                result = namedRoot(stmt.argument.callee.name, path.get('arguments.0.body.body.0.argument.callee') as NodePath);
+                if (result) { path.stop(); break; }
+              }
               result = {
                 componentName: '__inline__',
                 importPath: '',
@@ -198,9 +220,8 @@ export class ComponentAnalyzer {
         }
 
         // Pattern 3b: mount(() => <expr>, '#app') — an expression-bodied arrow
-        // that Pattern 1 did not claim, because the thing it calls is not an
-        // imported component: `mount(() => h('div', …), '#app')` or a page
-        // component declared in the entry file itself. The arrow's body IS the
+        // that Pattern 1 did not claim, because the thing it calls is not a
+        // named component: `mount(() => h('div', …), '#app')`. The arrow's body IS the
         // tree; the entry file is the module scope it resolves against.
         // Verified by: packages/compiler/tests/ssr-emission.test.ts > "treats an expression-bodied mount as an inline mount"
         if (
@@ -291,9 +312,8 @@ export class ComponentAnalyzer {
    * nothing and the whole page fell back to placeholder IR.
    * Verified by: packages/compiler/tests/component-analyzer.test.ts > "resolves the specifier export shape esbuild emits for .tsx"
    *
-   * A non-exported top-level declaration is deliberately NOT accepted: the
-   * name got here through an `import`, and a binding the entry cannot import
-   * must not be server-rendered as though it could.
+   * A non-exported declaration is accepted only for a lexical same-file root
+   * selected by entry analysis. An imported name must still be exported.
    *
    * Returns null when the name cannot be followed to a function; the reason
    * goes to `options.onUnresolved` rather than nowhere.
@@ -306,7 +326,7 @@ export class ComponentAnalyzer {
   ): ComponentInfo | null {
     const lookup = resolveExportedFunction(source, filename, functionName, {
       loadModule: options.loadModule,
-      allowLocal: false,
+      allowLocal: options.allowLocal ?? false,
       allowNested: false,
     });
 

@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "passed": true,
+  "mode": "candidate",
+  "commit": "bfb722c42e717a689ede68e3dc7171b081c63448",
+  "recordSha256": "5e005932f002b42691e874312877ad3a64a78c62f2d5bf3eff40a39f8c8da655",
+  "platform": "darwin",
+  "cases": {
+    "total": 162,
+    "heavy": 17,
+    "required": [
+      "minimal: npm ci, frontend build, cargo check --locked",
+      "minimal: no locked crate needs a newer Rust than the template declares",
+      "minimal: a user's own cargo update keeps every crate within the template's rust-version",
+      "minimal: every page answers no-store with a fresh nonce per fetch, and registers no service worker",
+      "dashboard: npm ci, frontend build, cargo check --locked",
+      "dashboard: no locked crate needs a newer Rust than the template declares",
+      "dashboard: a user's own cargo update keeps every crate within the template's rust-version",
+      "dashboard: every page answers no-store with a fresh nonce per fetch, and registers no service worker",
+      "minimal: build:ssr emits real IR, not a placeholder",
+      "minimal: a corrupt module stops the server before it binds, and a failed render answers 500, with neither its error nor a shell",
+      "minimal: build:ssr is strict: a construct the server cannot render fails the build, naming its code, file and line",
+      "dashboard: serves each page as its browser shell, by declaration (ssr: false)",
+      "minimal scaffolded as tracing, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it",
+      "dashboard scaffolded as serde, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it",
+      "minimal: build:ssr reads ssrEntryPoints by page name",
+      "cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses",
+      "minimal: declared count reaches SSR and invalid bindings refuse before listening"
+    ]
+  },
+  "observations": [
+    {
+      "name": "dashboard: esbuild inventory",
+      "installed": [
+        "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "node_modules/esbuild@0.28.2"
+      ],
+      "consumers": {
+        "@getforma/build": "node_modules/@getforma/build/node_modules/esbuild@0.28.1"
+      },
+      "optionalOmitted": []
+    },
+    {
+      "name": "minimal: esbuild inventory",
+      "installed": [
+        "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "node_modules/esbuild@0.28.2"
+      ],
+      "consumers": {
+        "@getforma/build": "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "@getforma/compiler": "node_modules/esbuild@0.28.2"
+      },
+      "optionalOmitted": [
+        "node_modules/@getforma/compiler/node_modules/esbuild@0.28.1"
+      ]
+    }
+  ]
+}

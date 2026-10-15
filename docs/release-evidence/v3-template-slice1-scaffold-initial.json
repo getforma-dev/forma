@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "passed": false,
+  "mode": "candidate",
+  "commit": "30a13ed28289dae82013bc9173e804f317538a7d",
+  "recordSha256": "c1a1878e006eb2fa196634c71279e28493291028dc10f4726f5d44a7aebecbf1",
+  "platform": "darwin"
+}

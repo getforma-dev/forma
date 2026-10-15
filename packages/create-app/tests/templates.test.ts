@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEMPLATES, TEMPLATE_INFO } from '../src/scaffold';
-import { REPO_ROOT, TEMPLATES_DIR, listFiles, run } from './helpers';
+import { REPO_ROOT, TEMPLATES_DIR, listFiles, run, runCli, mkTmpDir, rmrf } from './helpers';
+import { collectDiagnostics, generateRealIr } from '../../compiler/src/index';
+import { getSlots } from '../../compiler/tests/helpers/fmir';
 
 /**
  * Structural assertions about the template sources.
@@ -42,8 +44,11 @@ function cargoDeps(template: string): string[] {
     .map((l) => l.split('=')[0]!.trim());
 }
 
-/** forma-server 0.2.0's declared rust-version, which the templates hold to. */
+/** The templates preserve their existing consumer toolchain floor. */
 const RUST_FLOOR = '1.85';
+const SOURCE_VERSION = readJson('..', 'package.json').version;
+const INTERNAL_NPM = new Set(['@getforma/core', '@getforma/compiler', '@getforma/build']);
+const INTERNAL_CRATES = new Set(['forma-ir', 'forma-ir-derive', 'forma-server']);
 
 /** The `[[package]]` entries of a Cargo.lock, as name/version/source/checksum/dependencies. */
 function cargoLockPackages(template: string) {
@@ -243,7 +248,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
     for (const [name, range] of Object.entries(direct)) {
       const locked = lock.packages[`node_modules/${name}`]?.version;
       expect(locked, `${name} is not in the lockfile`).toBeTruthy();
-      expect(satisfiesCaret(locked, range), `${name}@${locked} is outside ${range}`).toBe(true);
+      expect(range.startsWith('=') ? locked === range.slice(1) : satisfiesCaret(locked, range), `${name}@${locked} is outside ${range}`).toBe(true);
     }
 
     // Every downloaded package comes from the public registry with a sha512
@@ -253,27 +258,29 @@ describe.each(TEMPLATES)('%s template', (template) => {
       if (key === '' || entry.inBundle) continue;
       expect(entry.link, `${key} is a link`).toBeUndefined();
       expect(entry.resolved, `${key} resolves elsewhere`).toMatch(/^https:\/\/registry\.npmjs\.org\//);
-      expect(entry.integrity, `${key} has no sha512 integrity`).toMatch(/^sha512-/);
+      if (/^node_modules\/@getforma\/(core|compiler|build)$/.test(key)) {
+        expect(entry.version).toBe(SOURCE_VERSION);
+        expect(entry.integrity, 'only the identified source seed may omit internal archive hashes').toBeUndefined();
+      } else expect(entry.integrity, `${key} has no sha512 integrity`).toMatch(/^sha512-/);
     }
   });
 
-  it('locks one copy of each direct npm dependency, the one its own dependencies also use', () => {
-    // A template range that excludes the version a dependency of the template
-    // requires makes npm nest a second copy under that dependency. With
-    // `esbuild ^0.25.0` beside @getforma/build 0.3.0's `^0.28.1` and tsx's
-    // `~0.28.0`, a scaffolded app installed three esbuild copies, 0.25.12 and
-    // 0.28.2 twice, each with its platform binary: most of each lockfile's
-    // growth (FORMA-165).
+  it('keeps direct npm resolutions and authenticates candidate runtime copies against the workspace lock', () => {
     const pkg = readJson(template, 'admin', 'package.json');
     const lock = readJson(template, 'admin', 'package-lock.json');
-    const direct = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
-    const copies = (name: string) =>
-      Object.keys(lock.packages).filter((key) => key === `node_modules/${name}` || key.endsWith(`/node_modules/${name}`));
-    expect(direct.length).toBeGreaterThan(0);
-    expect(
-      direct.filter((name) => copies(name).length !== 1).map((name) => `${name}: ${copies(name).join(', ')}`),
-      'a direct dependency is locked more than once: align its range with what its dependents require',
-    ).toEqual([]);
+    const workspace = JSON.parse(fs.readFileSync(path.resolve(REPO_ROOT, '../../package-lock.json'), 'utf8'));
+    for (const name of Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })) {
+      expect(lock.packages[`node_modules/${name}`], `${name}: missing direct resolution`).toBeDefined();
+      const copies = Object.keys(lock.packages).filter(key => key.endsWith(`/node_modules/${name}`));
+      for (const key of copies) {
+        // Candidate closure additions come from recorded workspace bytes;
+        // the older direct template resolution is deliberately preserved.
+        expect(key).toMatch(/^node_modules\/@getforma\/(compiler|build)\/node_modules\/esbuild$/);
+        for (const field of ['version', 'resolved', 'integrity']) {
+          expect(lock.packages[key][field], `${key}: ${field}`).toBe(workspace.packages[`node_modules/${name}`][field]);
+        }
+      }
+    }
   });
 
   it('ships a Cargo.lock that locks its crates from crates.io under its placeholder name', () => {
@@ -302,11 +309,14 @@ describe.each(TEMPLATES)('%s template', (template) => {
       const ref = roots[0]!.refs.find((r) => r.split(' ')[0] === crate);
       const locked = ref?.split(' ')[1] ?? packages.find((p) => p.name === crate && p.source)?.version;
       expect(locked, `${crate} is not locked`).toBeTruthy();
-      expect(satisfiesCaret(locked!, cargoCaret(requirement)), `${crate}@${locked} is outside "${requirement}"`).toBe(true);
+      expect(requirement.startsWith('=') ? locked === requirement.slice(1) : satisfiesCaret(locked!, cargoCaret(requirement)), `${crate}@${locked} is outside "${requirement}"`).toBe(true);
     }
     for (const p of packages.filter((q) => q.source !== undefined)) {
       expect(p.source, `${p.name} comes from elsewhere`).toBe('registry+https://github.com/rust-lang/crates.io-index');
-      expect(p.checksum, `${p.name} has no checksum`).toMatch(/^[0-9a-f]{64}$/);
+      if (INTERNAL_CRATES.has(p.name!)) {
+        expect(p.version).toBe(SOURCE_VERSION);
+        expect(p.checksum, 'internal source seed checksum is sealed at pack time').toBeUndefined();
+      } else expect(p.checksum, `${p.name} has no checksum`).toMatch(/^[0-9a-f]{64}$/);
     }
   });
 
@@ -353,11 +363,11 @@ describe.each(TEMPLATES)('%s template', (template) => {
       .split('\n')
       .filter((l) => !l.trim().startsWith('//'))
       .join('\n');
-    expect(code).toContain('127.0.0.1');
+    expect(code.includes('127.0.0.1') || code.includes('Ipv4Addr::LOCALHOST')).toBe(true);
     expect(code).not.toContain('0.0.0.0');
   });
 
-  it('renders every page with try_render or render_browser_shell and sends its PageResponse, so no-store travels with the nonce', () => {
+  it('renders every page with a typed handle or render_browser_shell and sends its PageResponse, so no-store travels with the nonce', () => {
     // The nonce in a page's policy is drawn per render and only matches that
     // render's HTML, and a cached copy would replay one nonce to every
     // visitor. A PageResponse writes the policy, `Cache-Control: no-store` and
@@ -368,7 +378,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
     const main = stripComments(
       fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8'),
     );
-    expect(main.match(/\b(?:try_render|render_browser_shell)\(/g)?.length ?? 0).toBeGreaterThan(0);
+    expect(main.match(/\b(?:render|render_browser_shell)\(/g)?.length ?? 0).toBeGreaterThan(0);
     expect(main).toMatch(/Ok\(page\) => page\.into_response\(\)/);
     // No page leaves any other way, and none builds the policy or the cache
     // header by hand.
@@ -378,7 +388,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
     // A failed render comes back as a RenderError, which the handler answers
     // with its own response rather than a panic (DR-11): a 500 that is never
     // cached or sniffed, the one place a template writes a cache header.
-    expect(main).not.toMatch(/(?:try_render|render_browser_shell)\([^;]*?\)\s*\.(?:unwrap|expect)\(/);
+    expect(main).not.toMatch(/(?:render|render_browser_shell)\([^;]*?\)\s*\.(?:unwrap|expect)\(/);
     const errorArms = main.match(/Err\(error\) => \{[\s\S]*?\.into_response\(\)\s*\}/g) ?? [];
     expect(errorArms.length, 'no Err(error) arm answering a failed render').toBeGreaterThan(0);
     for (const arm of errorArms) {
@@ -390,31 +400,13 @@ describe.each(TEMPLATES)('%s template', (template) => {
     expect(pages).not.toMatch(/content-security-policy|CONTENT_SECURITY_POLICY|CACHE_CONTROL/i);
   });
 
-  it('uses no API forma-server deprecates, naming config_script only as None in each PageConfig', () => {
-    // A new application starts on the bridge's own API, so its move to 3.0.0
-    // is one commit (v2 13.3). The scaffold gate holds the compiler to it: a
-    // template build that warns `use of deprecated` fails. Every 0.2.x
-    // PageConfig literal has to name `config_script` (DR-18), so that one
-    // name is allowed, at each literal alone, and only as None.
-    const main = stripComments(
-      fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src', 'main.rs'), 'utf8'),
-    );
-    for (const deprecated of [
-      /\brender_page\(/,
-      /\brender_page_with_nonce\(/,
-      /\bload_manifest::</,
-      /\bload_ir_modules::</,
-      /\bPageOutput\b/,
-      /\.headers\(\)/,
-    ]) {
-      expect(main).not.toMatch(deprecated);
-    }
-    const literals = main.match(/\bPageConfig \{/g)?.length ?? 0;
-    expect(literals).toBeGreaterThan(0);
-    expect(main.match(/#\[allow\(deprecated\)\]\s*let \w+ = PageConfig \{/g)?.length ?? 0).toBe(literals);
-    expect(main.match(/allow\(deprecated\)/g)?.length ?? 0).toBe(literals);
-    expect(main.match(/\bconfig_script: None,/g)?.length ?? 0).toBe(literals);
-    expect(main.match(/\bconfig_script:/g)?.length ?? 0).toBe(literals);
+  it('uses the current typed loader and no removed renderer or script APIs', () => {
+    const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src/main.rs'), 'utf8'));
+    expect(main).toContain('load_ir_modules::<Assets>');
+    expect(main).toContain('pages.finalize()');
+    expect(main.indexOf('pages.finalize()')).toBeLessThan(main.indexOf('tokio::net::TcpListener::bind'));
+    expect(main).not.toMatch(/\b(?:try_render|render_page|render_page_with_nonce|load_ir_modules_strict|PageOutput|SlotData|RenderMode|config_script)\b/);
+    expect(main).not.toMatch(/allow\(deprecated\)/);
   });
 
   it('installs a tracing subscriber and logs each render error through it', () => {
@@ -463,23 +455,12 @@ describe.each(TEMPLATES)('%s template', (template) => {
     expect(main).toContain('.route("/sw.js", get(sw::serve_sw::<Assets>))');
   });
 
-  it('pins frontend dependencies at or above the versions whose fixes it needs', () => {
+  it('pins internal frontend dependencies to the coordinated source version', () => {
     const pkg = readJson(template, 'admin', 'package.json');
     const all = { ...pkg.dependencies, ...pkg.devDependencies };
-    // core 2.1.0 (release A2): the bridge the templates are written for. Its
-    // own writes pass Trusted Types, so forma-server 0.2.2's Report-Only
-    // policy (a development build sends it) reports none of them; a list
-    // whose client array differs in count from the server's rows fails the
-    // island instead of deleting rows; and the expression budgets are per
-    // task. Below it the templates' pages are not what forma-server 0.2.2
-    // reports on, and 2.0.x warns nothing in development.
-    expect(all['@getforma/core']).toBe('^2.1.0');
-    // build 0.3.1 (release A2): the templates' scripts pass --strict, which
-    // 0.3.0 ignores (a construct the server cannot render would pass), and
-    // the dashboard's entry declares ssr: false, which 0.3.1 honours; its
-    // production output is swapped in whole, so a failed build leaves the
-    // last good dist/ for rust-embed.
-    expect(all['@getforma/build']).toBe('^0.3.1');
+    for (const name of INTERNAL_NPM) if (all[name]) expect(all[name]).toBe(`=${SOURCE_VERSION}`);
+    expect(all['@getforma/core']).toBe(`=${SOURCE_VERSION}`);
+    expect(all['@getforma/build']).toBe(`=${SOURCE_VERSION}`);
     expect(pkg.engines?.node).toBe('>=20.19.0');
   });
 
@@ -519,22 +500,33 @@ describe('the published package', () => {
     for (const template of TEMPLATES) {
       expect(files).toContain(`templates/${template}/Cargo.lock`);
       expect(files).toContain(`templates/${template}/admin/package-lock.json`);
+      expect(files).not.toContain('template-lock-seeds.json');
     }
   });
 });
 
 describe('minimal template', () => {
-  it('keeps its SSR root as literal JSX inside the mount callback', () => {
-    // The FMIR compiler walks source; a component tag or a JSX-returning
-    // helper degrades to an island placeholder with no content, which is the
-    // difference between real IR and a 605-byte shell.
-    const app = fs.readFileSync(
-      path.join(TEMPLATES_DIR, 'minimal', 'admin', 'src', 'home', 'app.tsx'),
-      'utf8',
-    );
-    expect(app).toMatch(/mount\(\(\) => \{[\s\S]*return \(/);
-    // No capitalised JSX tags — those are component tags.
-    expect(app).not.toMatch(/<[A-Z]/);
+  it('compiles the actual scaffolded local page with one declared SERVER count and no islands', () => {
+    const dir = mkTmpDir('forma-template-props-');
+    try {
+      const created = runCli(['declared-page', '--template', 'minimal'], dir);
+      expect(created.status, created.stderr).toBe(0);
+      const { result, diagnostics } = collectDiagnostics(() => generateRealIr(path.join(dir, 'declared-page/admin/src/home/app.tsx')));
+      expect(diagnostics).toEqual([]);
+      expect(result).not.toBeNull();
+      expect(result!.islands).toEqual([]);
+      expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint])).toEqual([['count', 3]]);
+    } finally { rmrf(dir); }
+  });
+  it('declares the same count prop in its page and Rust handler, with matching initial browser state', () => {
+    const app = fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/admin/src/home/app.tsx'), 'utf8');
+    const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/src/main.rs'), 'utf8'));
+    expect(app).toMatch(/type HomeProps = \{ count: number \}/);
+    expect(app).toContain('function Home(props: HomeProps)');
+    expect(app).toContain('createSignal(props.count)');
+    expect(app).toContain("mount(() => Home({ count: 0 }), '#app')");
+    expect(main).toMatch(/#\[derive\(PageProps\)\]\s*struct HomeProps \{\s*count: u32,/);
+    expect(main).toContain('home.render(&HomeProps { count: 0 }, &ctx)');
   });
 
   it('keys its SSR entry points by page name, as @getforma/build reads them', () => {
@@ -563,36 +555,19 @@ describe('minimal template', () => {
     }
   });
 
-  it('pins @getforma/compiler, which is what emits the IR', () => {
-    const pkg = readJson('minimal', 'admin', 'package.json');
-    // 0.3.0 resolves components exported the way esbuild emits them, so a .tsx
-    // page no longer compiles to an empty div; it also gives every slot family
-    // a page-unique name and gives show branches and dynamic text their SSR
-    // defaults, so the server stops rendering the wrong branch. 0.3.7 (release
-    // A2) reports every construct it cannot represent with a code, file and
-    // line, which is what build 0.3.1's --strict fails on: under --strict
-    // build 0.3.1 refuses an SSR build with a compiler below 0.3.7, so the two
-    // move together.
-    expect(pkg.devDependencies['@getforma/compiler']).toBe('^0.3.7');
+  it('pins the compiler to the coordinated source version', () => {
+    expect(readJson('minimal', 'admin', 'package.json').devDependencies['@getforma/compiler']).toBe(`=${SOURCE_VERSION}`);
   });
 
-  it('loads its IR modules with the strict loader and renders a loaded route with try_render, passing slots', () => {
-    const main = stripComments(
-      fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal', 'src', 'main.rs'), 'utf8'),
-    );
-    // A module the build declared that is missing or corrupt stops the server
-    // at start, naming route, file and code (DR-11).
-    expect(main).toContain('load_ir_modules_strict::<Assets>');
-    // try_render needs BOTH ir_module and slots, and returns RENDER-101
-    // without them; under render_page, `slots: None` silently made the
-    // dashboard's SSR dead.
-    expect(main).toContain('slots: slots.as_ref()');
-    expect(main).toContain('SlotData::new_from_defaults');
-    // The route's mode is the build's, read at start: a route with a module
-    // renders on the server, and a browser shell is served only for a route
-    // built without one, never in place of a failed render.
-    expect(main).toMatch(/RenderMode::Phase2SsrReconcile => try_render\(/);
-    expect(main).toMatch(/RenderMode::Phase1ClientMount => render_browser_shell\(/);
+  it('binds declared props once, finalizes before listening, and never falls back after an SSR failure', () => {
+    const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/src/main.rs'), 'utf8'));
+    expect(main).toContain('load_ir_modules::<Assets>');
+    expect(main).toContain('pages.bind::<HomeProps>("home")');
+    expect(main).toMatch(/Some\(RouteMode::Ssr\) => Some\(pages\.bind/);
+    expect(main).toContain('Some(RouteMode::Browser) => None');
+    expect(main).toContain('Some(home) => home.render(&HomeProps { count: 0 }, &ctx)');
+    expect(main).toContain('None => render_browser_shell(');
+    expect(main.indexOf('pages.finalize()')).toBeLessThan(main.indexOf('tokio::net::TcpListener::bind'));
   });
 
   it('styles through a CSS entry rather than style attributes', () => {
@@ -633,14 +608,12 @@ describe('dashboard template', () => {
     expect(pkg.devDependencies['@getforma/compiler']).toBeUndefined();
   });
 
-  it('serves every page through render_browser_shell, by declaration, and loads no IR', () => {
-    const main = stripComments(
-      fs.readFileSync(path.join(TEMPLATES_DIR, 'dashboard', 'src', 'main.rs'), 'utf8'),
-    );
+  it('validates and finalizes browser routes before serving explicit browser shells', () => {
+    const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, 'dashboard/src/main.rs'), 'utf8'));
     expect(main).toContain('render_browser_shell(&config, &RenderCtx::new())');
-    expect(main).not.toContain('try_render');
-    expect(main).toContain('ir_module: None');
-    expect(main).not.toContain('load_ir_modules');
+    expect(main).toContain('load_ir_modules::<Assets>');
+    expect(main).toContain('pages.finalize()');
+    expect(main).not.toMatch(/\b(?:try_render|ir_module|SlotData)\b/);
   });
 
   it('routes every page and every documented API endpoint', () => {
