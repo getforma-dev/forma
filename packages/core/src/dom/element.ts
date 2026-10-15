@@ -1038,7 +1038,10 @@ export function fillElement<E extends Element>(
   el: E,
   props: Record<string, unknown> | null | undefined,
   children: unknown[],
-  resolveChildren?: () => { children: unknown[]; target: Element | DocumentFragment },
+  resolveChildren?: () => {
+    children: unknown[]; target: Element | DocumentFragment;
+    textReader?: (read: () => string) => () => string;
+  },
 ): E {
   // Children beside dangerouslySetInnerHTML: h() renders the markup, then
   // them, until the markup next changes; ./ssr and adoption keep the markup.
@@ -1097,7 +1100,8 @@ export function fillElement<E extends Element>(
   // native C++ call that combines both operations.
   const childLen = children.length;
   if (el instanceof HTMLTextAreaElement && isReactiveTextOnly(children)) {
-    internalEffect(() => writeFormControlProperty(el, 'text', childText(children)));
+    const read = resolved?.textReader?.(() => childText(children)) ?? (() => childText(children));
+    internalEffect(() => writeFormControlProperty(el, 'text', read()));
   } else if (childLen === 1) {
     const only = children[0];
     if (typeof only === 'string') {

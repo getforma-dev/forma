@@ -20,6 +20,9 @@ const noRanges: MaterializeContext = {
   list: () => { throw new Error('unexpected list adapter'); },
   dynamic: () => { throw new Error('unexpected dynamic adapter'); },
   show: () => { throw new Error('unexpected Show adapter'); },
+  // Construction-only controls below do not claim lifecycle ordering; the
+  // later integration controls use the actual liveRanges owner adapter.
+  reader: (_target, read) => read,
 };
 function owned<T>(build: () => T): T { return createRoot(dispose => { disposers.push(dispose); return build(); }); }
 function build(read: () => unknown, ns: string | null = null, context = noRanges): Node | null {
@@ -274,6 +277,44 @@ describe('private live descriptor materialization', () => {
     try {
       setNext(true); expect(plan.phase).toBe('aborted'); expect(failure).toHaveBeenCalledOnce();
       expect(host.querySelector('i')).toBe(old); expect(host.innerHTML).toBe(before); expect(foreign.parentNode).toBe(external); expect(observer.takeRecords()).toEqual([]);
+    } finally { observer.disconnect(); }
+  });
+
+  it('owns all composed textarea readers as one candidate before changing live or default text', () => {
+    const [value, setValue] = createSignal(1), order: string[] = [], sentinel = new Error('later textarea reader');
+    const { host, plan, failure } = liveFixture(() => h('textarea', null,
+      () => { const n = value(); order.push('first ' + n); registerDisposer(() => order.push('clean first ' + n)); return 'a' + n; },
+      ':',
+      () => { const n = value(); order.push('last ' + n); registerDisposer(() => order.push('clean last ' + n)); if (n === 2) { order.push('throw'); throw sentinel; } return 'b' + n; },
+    ));
+    const area = host.querySelector('textarea')!, text = area.firstChild, before = area.outerHTML, observer = new MutationObserver(() => {});
+    observer.observe(area, { childList: true, characterData: true, attributes: true, subtree: true }); order.length = 0;
+    try {
+      setValue(2); expect(plan.phase).toBe('aborted'); expect(failure.mock.calls[0]![0]).toBe(sentinel);
+      expect(order.slice(0, 3)).toEqual(['first 2', 'last 2', 'throw']);
+      expect(order.indexOf('clean first 1')).toBeGreaterThan(2); expect(order.indexOf('clean last 1')).toBeGreaterThan(2);
+      expect(area.value).toBe('a1:b1'); expect(area.defaultValue).toBe('a1:b1'); expect(area.firstChild).toBe(text); expect(area.outerHTML).toBe(before); expect(observer.takeRecords()).toEqual([]);
+    } finally { observer.disconnect(); }
+  });
+
+  it('keeps the ordinary scalar Text node while retiring its reader only after the next value succeeds', () => {
+    const [value, setValue] = createSignal(1), order: string[] = [];
+    const { host, failure } = liveFixture(() => h('span', null, () => { const n = value(); order.push('read ' + n); registerDisposer(() => order.push('clean ' + n)); return n; }));
+    const span = host.querySelector('span')!, text = span.firstChild; order.length = 0;
+    setValue(2); expect(span.firstChild).toBe(text); expect(text!.textContent).toBe('2'); expect(order).toEqual(['read 2', 'clean 1']); expect(failure).not.toHaveBeenCalled();
+  });
+
+  it('stops the shared element writer when previous-reader cleanup detaches its target', () => {
+    const [value, setValue] = createSignal(1); let target: Element;
+    const { host, plan, failure } = liveFixture(() => h('div', null, () => {
+      const n = value(); if (n === 1) registerDisposer(() => target.remove()); return h('b', null, n);
+    }));
+    target = host.querySelector('div')!; const original = target.firstChild, before = target.innerHTML;
+    const observer = new MutationObserver(() => {}); observer.observe(host, { childList: true, subtree: true });
+    try {
+      setValue(2); expect(plan.phase).toBe('aborted'); expect(failure).toHaveBeenCalledOnce();
+      expect(target.parentNode).toBeNull(); expect(target.firstChild).toBe(original); expect(target.innerHTML).toBe(before);
+      const writes = observer.takeRecords(); expect(writes).toHaveLength(1); expect([...writes[0]!.removedNodes]).toEqual([target]); expect(writes[0]!.addedNodes).toHaveLength(0);
     } finally { observer.disconnect(); }
   });
 });

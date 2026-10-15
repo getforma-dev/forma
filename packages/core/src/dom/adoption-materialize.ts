@@ -7,6 +7,7 @@ import {
 import { AdoptionDomError } from './adoption-plan.js';
 import { fillElement, h } from './element.js';
 import { contentNs, withNamespace } from './namespace.js';
+import { isReactiveTextOnly } from './form-control.js';
 
 /** The caller supplies its shared live range coordinators, including ownership,
  * checked replacement, key/index semantics and failure cleanup. No CSR fallback. */
@@ -15,6 +16,7 @@ export interface MaterializeContext {
     render: (item: unknown, index: () => number) => Node | null): DocumentFragment;
   dynamic(read: () => unknown, materialize: (value: unknown) => Node | null): DocumentFragment;
   show(condition: () => unknown, materialize: (shown: boolean) => Node | null): DocumentFragment;
+  reader<T>(target: Element | DocumentFragment, read: () => T): () => T;
 }
 
 function describe<T>(read: () => T, ns: string | null): T {
@@ -23,11 +25,12 @@ function describe<T>(read: () => T, ns: string | null): T {
 
 /** A real element keeps its parent identity, so its ordinary child writer can
  * retain scalar Text nodes. Movable Fragment roots instead need real anchors. */
-function child(value: unknown, ns: string | null, context: MaterializeContext, movable: boolean): unknown {
-  if (typeof value === 'function' && !movable) {
-    return () => child(describe(value as () => unknown, ns), ns, context, false);
+function child(value: unknown, ns: string | null, context: MaterializeContext, target?: Element, aggregate = false): unknown {
+  if (typeof value === 'function' && target) {
+    const read = () => child(describe(value as () => unknown, ns), ns, context, target, aggregate);
+    return aggregate ? read : context.reader(target, read);
   }
-  if (Array.isArray(value)) return value.map(item => child(item, ns, context, movable));
+  if (Array.isArray(value)) return value.map(item => child(item, ns, context, target, aggregate));
   if (value == null || typeof value === 'boolean' || typeof value === 'string' || typeof value === 'number') return value;
   return materializeAdoption(value, ns, context);
 }
@@ -58,9 +61,13 @@ function materialize(value: unknown, ns: string | null, context: MaterializeCont
       return fillElement(element, desc.props, desc.children, () => {
         const inner = contentNs(element);
         const template = element.namespaceURI === 'http://www.w3.org/1999/xhtml' && element.localName === 'template';
+        // All textarea readers contribute to one controlled property. They
+        // must succeed together before any prior reader generation is retired.
+        const aggregate = element instanceof HTMLTextAreaElement && isReactiveTextOnly(desc.children);
         return {
-          children: desc.children.map(value => child(value, inner, context, template)),
+          children: desc.children.map(value => child(value, inner, context, template ? undefined : element, aggregate)),
           target: template ? (element as HTMLTemplateElement).content : element,
+          textReader: aggregate ? (read: () => string) => context.reader(element, read) : undefined,
         };
       });
     }
