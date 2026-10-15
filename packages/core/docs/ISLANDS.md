@@ -5,7 +5,7 @@ literal `activateIslands({ Counter })` registry entry to its schema, mode and
 identity digest; applications do not construct this metadata themselves.
 
 ```tsx
-import { activateIslands, createSignal } from "@getforma/core";
+import { activateIslands, createSignal, h } from "@getforma/core";
 
 function Counter(props: { initial: number }) {
   const [count, setCount] = createSignal(props.initial);
@@ -92,7 +92,7 @@ The client island seeds a signal from `props.items` and passes it to
 `createList`:
 
 ```tsx
-import { activateIslands, createSignal, createList } from "@getforma/core";
+import { activateIslands, createSignal, createList, h } from "@getforma/core";
 
 function TrackList(props: { items: { id: number; name: string }[] }) {
   const [items] = createSignal(props.items);
@@ -291,7 +291,7 @@ marker for a subtree that renders in the browser alone (one name, so a search
 finds every use):
 
 ```tsx
-import { activateIslands, browserOnly } from "@getforma/core";
+import { activateIslands, browserOnly, h } from "@getforma/core";
 
 // chart.tsx: declared once, at the top level of a module.
 export const Chart = browserOnly((props: { title: string }) =>
