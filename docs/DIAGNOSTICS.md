@@ -932,6 +932,8 @@ See [declared props](DECLARED-PROPS.md) for optional-field precedence, safe date
 | BIND-112 | startup/reload | Route names/modes changed; restart and bind the new topology. |
 | RENDER-103 | browser shell | Route is absent or is not explicitly Browser. |
 | RENDER-104 | document assets | Manifest or referenced resource integrity is invalid; no unchecked tag is emitted. |
+| RENDER-105 | static SSR | Declared islands, executable request configuration or effective module preloads require a JavaScript entry; no response is produced. |
+| LOAD-109 | startup/reload | A parsed island module is paired with an empty SSR JavaScript list. Startup refuses; debug reload retains the prior valid module/manifest pair. |
 | RENDER-406 | typed render | Registry has not successfully finalized; no response is produced. |
 
 ### BUILD-818 Worker metadata cannot authenticate an asset

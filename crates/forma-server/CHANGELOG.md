@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Staged static SSR policy — FORMA-105
+
+- Refuse island modules paired with an empty SSR JavaScript list at startup/reload (LOAD-109); keep the prior valid module and manifest together, including unchanged-IR and same-byte recovery transitions.
+- Refuse static manifest preloads (MANIFEST-103), executable request configuration and effective request preloads (RENDER-105). Keep CSS/fonts, inert state, strict headers and exact full-response limits.
+- Register enabled workers only from pages with JS entries; preserve worker serving and scoped off-mode retirement. Compiler/browser/template integration remains pending for overall105 acceptance.
+
 - Require canonical full SHA-384 metadata for every schema2 asset; emit SRI on external scripts, stylesheets and modulepreloads while retaining nonces. Invalid Browser manifests or unavailable preload digests refuse with RENDER-104.
 
 ### Bound rendering and startup completion — FORMA-107

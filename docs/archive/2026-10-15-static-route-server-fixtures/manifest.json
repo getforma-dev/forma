@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "a7956ad826be6c6ec83d201aa8320793924b74a3",
+  "files": [
+    {
+      "source": "crates/forma-server/tests/island_state.rs",
+      "archive": "island_state.rs",
+      "bytes": 4352,
+      "sha256": "8c2c0dec78d5e98f36c64f63e810c0829a0ed29fbd57c8d4aa889660e524e7ef"
+    },
+    {
+      "source": "crates/forma-server/tests/service_worker_on.rs",
+      "archive": "service_worker_on.rs",
+      "bytes": 5120,
+      "sha256": "a5958bbedbad7a73ac4618f00339e6b20f886d7810cc35c7a1b236fb88da457c"
+    },
+    {
+      "source": "crates/forma-server/tests/typed_pages.rs",
+      "archive": "typed_pages.rs",
+      "bytes": 33347,
+      "sha256": "c31783e6428b9512e9fd12438e16748f87f66b6fda04f3ace337ad50b522bc91"
+    }
+  ]
+}
