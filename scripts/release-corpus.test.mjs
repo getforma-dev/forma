@@ -20,7 +20,9 @@ function fixture(fmir, change, visit) {
     mkdirSync(join(dir, 'src')); mkdirSync(join(dir, 'tests'));
     const manifest = join(dir, 'Cargo.toml');
     writeFileSync(manifest, '[package]\nname = "forma-release-corpus-fixture"\nversion = "0.0.0"\nedition = "2021"\n[workspace]\n');
-    let tests = cases.slice(0, fmir === 2 ? 9 : 10).map(name => `#[test] fn ${name}() {}`).join('\n');
+    let tests = cases.slice(0, fmir === 2 ? 9 : 10)
+      .map(name => fmir === 3 && name === 'resolution_cases_ship_named_islands_over_named_slots' ? 'resolution_cases_ship_named_contracts_and_client_defaults' : name)
+      .map(name => `#[test] fn ${name}() {}`).join('\n');
     if (change) tests = change(tests);
     writeFileSync(join(dir, 'src/lib.rs'), fmir === 2 ? '' : `#[cfg(test)] mod js_emitter_contract {\n${tests}\n}`);
     if (fmir === 2) writeFileSync(join(dir, 'tests/js_emitter_contract.rs'), tests);
@@ -58,4 +60,13 @@ test('packed corpus removes the golden-update variable from the actual Rust chil
     if (previous === undefined) delete process.env.UPDATE_GOLDEN;
     else process.env.UPDATE_GOLDEN = previous;
   }
+});
+
+test('packed corpus requires the resolution semantic check for its recorded wire version', () => {
+  const oldName = 'resolution_cases_ship_named_islands_over_named_slots';
+  const currentName = 'resolution_cases_ship_named_contracts_and_client_defaults';
+  for (const fmir of [2, 3]) fixture(fmir, source => source.replace(
+    fmir === 2 ? oldName : currentName,
+    fmir === 2 ? currentName : oldName,
+  ), manifest => assert.throws(() => verifyPackedCorpus(manifest, fmir), /packed corpus is missing/));
 });
