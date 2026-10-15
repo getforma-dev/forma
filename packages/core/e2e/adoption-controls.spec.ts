@@ -110,3 +110,16 @@ for(const codec of [undefined,'string'] as const)test(`color alpha/display-p3 de
  },codec);
  expect(result).toEqual({observed:[{edited:false,value:result.before}],before:result.before,after:result.before,mutations:0,positive:1});
 });
+test('literal initialization preserves early control edits without granting reactive seed authority',async({page})=>{
+ await serve(page,'<section id="host"><input id="text" value="saved"><input id="check" type="checkbox" checked><textarea id="area">saved notes</textarea></section>');
+ await page.locator('#text').fill('user text');await page.locator('#check').uncheck();await page.locator('#area').fill('user notes');await page.locator('#area').focus();
+ const result=await page.evaluate(async()=>{
+  const {AdoptionControls,observeMutations}=await import('/control-kernel.mjs' as string),get=(id:string)=>document.getElementById(id)!,area=get('area') as HTMLTextAreaElement;area.setSelectionRange(1,4,'backward');
+  const finishObservation=observeMutations(),controls=new AdoptionControls(get('host'));controls.add({element:get('text'),key:'value',initial:'saved',kind:'initial'});controls.add({element:get('check'),key:'checked',initial:true,kind:'initial'});controls.add({element:area,key:'text',initial:'saved notes',kind:'initial'});
+  const observed=controls.finish().map(({kind,edited,value}:any)=>({kind,edited,value}));controls.check();controls.release();
+  const bad=new AdoptionControls(get('host'));bad.add({element:get('text'),key:'value',initial:'wrong',kind:'initial'});let mismatch='';try{bad.finish();}catch(error){mismatch=(error as any).code;}bad.release();
+  const readonly=new AdoptionControls(get('host'));readonly.add({element:get('text'),key:'value',initial:'saved'});let refused='';try{readonly.finish();}catch(error){refused=(error as any).code;}readonly.release();
+  const observation=await finishObservation();return{observed,mismatch,refused,focus:document.activeElement===area,selection:[area.selectionStart,area.selectionEnd,area.selectionDirection],values:[(get('text') as HTMLInputElement).value,(get('check') as HTMLInputElement).checked,area.value],...observation};
+ });
+ expect(result).toEqual({observed:[{kind:'initial',edited:true,value:'user text'},{kind:'initial',edited:true,value:false},{kind:'initial',edited:true,value:'user notes'}],mismatch:'FORMA_E_HYDRATE_VALUE',refused:'FORMA_E_HYDRATE_INPUT_TARGET',focus:true,selection:[1,4,'backward'],values:['user text',false,'user notes'],mutations:0,positive:1});
+});
