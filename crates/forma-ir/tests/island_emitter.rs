@@ -6,6 +6,7 @@ fn render(name: &str, props: Value) -> (String, Value) {
     let bytes: &[u8] = match name {
         "repeated" => include_bytes!("fixtures/island-emitter/repeated.ir"),
         "nullish" => include_bytes!("fixtures/island-emitter/nullish.ir"),
+        "closed-nullish" => include_bytes!("fixtures/island-emitter/closed-nullish.ir"),
         "rows" => include_bytes!("fixtures/island-emitter/rows.ir"),
         "aggregate" => include_bytes!("fixtures/island-emitter/aggregate.ir"),
         "browser" => include_bytes!("fixtures/island-emitter/browser.ir"),
@@ -22,7 +23,10 @@ fn render(name: &str, props: Value) -> (String, Value) {
 fn repeated_fields_keep_the_ordered_input_mapping() {
     let (html, state) = render("repeated", json!({"title":"shared"}));
     assert_eq!(html.matches("shared").count(), 3);
-    assert_eq!(state["i"][0]["p"], json!({"left":"shared","right":"shared"}));
+    assert_eq!(
+        state["i"][0]["p"],
+        json!({"left":"shared","right":"shared"})
+    );
     assert_eq!(state["s"], json!([]));
     assert!(!html.contains("data-forma-props"));
 }
@@ -33,7 +37,10 @@ fn declared_coalesce_only_replaces_null_and_keeps_original_input_state() {
     assert!(!empty.contains("fallback"));
     assert!(!empty.contains("data-ready"));
     assert!(empty.contains('0'));
-    assert_eq!(state["i"][0]["p"], json!({"label":"","count":0,"ready":false}));
+    assert_eq!(
+        state["i"][0]["p"],
+        json!({"label":"","count":0,"ready":false})
+    );
     let (missing, state) = render("nullish", json!({}));
     assert!(missing.contains("fallback"));
     assert!(missing.contains("42"));
@@ -42,10 +49,27 @@ fn declared_coalesce_only_replaces_null_and_keeps_original_input_state() {
 }
 
 #[test]
+fn closed_optional_inputs_fold_before_native_coalesce_type_validation() {
+    let (html, state) = render("closed-nullish", json!({}));
+    assert_eq!(html.matches("fallback").count(), 2);
+    assert_eq!(html.matches("42").count(), 2);
+    assert_eq!(html.matches("data-ready").count(), 2);
+    assert_eq!(state["i"][0]["p"], json!({}));
+    assert_eq!(state["i"][1]["p"], json!({}));
+    assert_eq!(
+        state["i"][2]["p"],
+        json!({"label":"","count":0,"ready":false})
+    );
+}
+
+#[test]
 fn repeated_list_entries_snapshot_the_current_nested_row() {
-    let (html, state) = render("rows", json!({"rows":[
-        {"id":1,"user":{"name":"first"}}, {"id":2,"user":{"name":"second"}}
-    ]}));
+    let (html, state) = render(
+        "rows",
+        json!({"rows":[
+            {"id":1,"user":{"name":"first"}}, {"id":2,"user":{"name":"second"}}
+        ]}),
+    );
     assert_eq!(state["i"].as_array().unwrap().len(), 2);
     assert_eq!(state["i"][0]["p"], json!({"label":"first"}));
     assert_eq!(state["i"][1]["p"], json!({"label":"second"}));
@@ -57,7 +81,10 @@ fn repeated_list_entries_snapshot_the_current_nested_row() {
 #[test]
 fn closed_aggregate_projection_preserves_array_positions_and_strips_extras() {
     let (_, state) = render("aggregate", json!({}));
-    assert_eq!(state["i"][0]["p"], json!({"data":{"names":["first",null,"last"]}}));
+    assert_eq!(
+        state["i"][0]["p"],
+        json!({"data":{"names":["first",null,"last"]}})
+    );
 }
 
 #[test]

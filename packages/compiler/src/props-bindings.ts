@@ -193,9 +193,17 @@ function declarations(scope: PropsScope, fn: ComponentFunction, ctx?: IrEmitCont
           const source = propSlot(initial.left, scope, ctx)!;
           if (sourceType.kind !== 'optional') path = sourcePath;
           else {
-            const value = ctx.addConstantSlot(fallback, schemaHint(targetType));
-            const target = ctx.addTemporarySlot(schemaHint(targetType));
-            ctx.emit(C.OP_COALESCE); ctx.emitU16(source); ctx.emitU16(value); ctx.emitU16(target);
+            const closed = ctx.constantSlot(source);
+            let target: number;
+            if (closed) {
+              // A literal null input has no native T provenance. Fold it here;
+              // an optional schema annotation cannot manufacture that provenance.
+              target = closed.value === null ? ctx.addConstantSlot(fallback, schemaHint(targetType)) : source;
+            } else {
+              const value = ctx.addConstantSlot(fallback, schemaHint(targetType));
+              target = ctx.addTemporarySlot(schemaHint(targetType));
+              ctx.emit(C.OP_COALESCE); ctx.emitU16(source); ctx.emitU16(value); ctx.emitU16(target);
+            }
             const key = `\0coalesce:${target}`;
             scope.views.set(key, {slot:target,type:targetType}); path = [key];
           }

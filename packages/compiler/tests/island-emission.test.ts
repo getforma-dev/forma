@@ -36,6 +36,15 @@ describe('declared island writer integration',()=>{
       'export function Badge(p:{label:string}){return h("b",null,p.label);}');
     expect(getIslands(result.binary)).toHaveLength(1);expect(getIslands(result.binary)[0]!.slotIds).toHaveLength(1);
   });
+  it('folds closed omitted and null inputs while retaining zero false and empty inputs',()=>{
+    const result=emit('closed-nullish','import {Badge} from "./island";export function Page(){return h("main",null,Badge({}),Badge({label:null,count:null,ready:null}),Badge({label:"",count:0,ready:false}));}',
+      'export function Badge(p:{label?:string;count?:number;ready?:boolean}){const [label]=createSignal(p.label??"fallback");const [count]=createSignal(p.count??42);const [ready]=createSignal(p.ready??true);return h("p",{"data-ready":ready},label,count);}');
+    expect(result.islands).toHaveLength(3);
+  });
+  it('refuses registered recursion through the same declaration or an imported alias',()=>{
+    for(const alias of [false,true])expect(()=>emit('recursive','import {Badge} from "./island";export function Page(){return Badge({label:"loop"});}',
+      `${alias?'import {Badge as Again} from "./island";':''}export function Badge(p:{label:string}){return h("p",null,${alias?'Again':'Badge'}({label:p.label}));}`)).toThrow(/BUILD-610.*recursive registered island/);
+  });
   it('preserves closed aggregate call inputs and omits optional absent fields from projected state',()=>{
     const result=emit('aggregate','import {Badge} from "./island";export function Page(){return h("main",null,Badge({data:{names:["first",null,"last"],ignored:"strip"}}));}',
       'export function Badge(p:{data:{names:(string|null)[]};note?:string}){return h("b",null,"fixed");}');
@@ -45,6 +54,11 @@ describe('declared island writer integration',()=>{
     const result=emit('browser','import {Badge} from "./island";export function Page(p:{label:string}){return h("main",null,Badge({label:p.label}));}',
       'export const Badge=browserOnly((p:{label:string})=>window.arbitrary(p));');
     expect(result.islands[0]!.contract?.mode).toBe('browserOnly');
+  });
+  it('emits the typed roundtrip contract for independent native-to-browser state controls',()=>{
+    const fields="label:string;value:number;date:Date;mode:'a'|'b';maybe?:string;list:(number|null)[];nested:{active:boolean}";
+    emit('roundtrip',`import {Badge} from "./island";export function Page(p:{${fields}}){return h("main",null,Badge(p));}`,
+      `export function Badge(p:{${fields}}){return h("p",null,p.label,p.value);}`);
   });
   it('refuses missing or incompatible declared input and numeric Date impostors',()=>{
     for(const args of ['{}','{label:2}'])expect(()=>emit('bad','import {Badge} from "./island";export function Page(){return Badge('+args+');}',
