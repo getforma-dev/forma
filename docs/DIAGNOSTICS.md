@@ -675,8 +675,11 @@ boolean, and a page whose condition is a number or a string only imitates what t
 another type (an optional boolean is admitted: absent reads as false on both sides), a signal
 whose literal default is a number, a string or `null`, a closed value (an aggregate or list-row
 field, a module-level `const`) of another type, a literal, or an expression whose result is not
-always a boolean (`a() && count()`, `name() || 'x'`). A signal getter passed itself
-(`createShow(count, …)`) is read as its call. A boolean signal, a negation, a comparison,
+always a boolean (`a() && count()`, `name() || 'x'`). A signal getter passed to `createShow`
+itself (`createShow(count, …)`) is read as its call, since `createShow` calls it; a getter named
+without its call anywhere else in a condition (`() => open ? a : b`, `() => open`,
+`ready() && open`) is a function, always truthy in the browser, and is refused with a message
+naming the missing call. A boolean signal, a negation, a comparison,
 `Boolean(x)`, `&&` and `||` of booleans, and a module-level boolean `const` are admitted, and
 `Boolean(x)` and the module `const` are folded, so the server renders the branch the browser
 takes. A condition the compiler cannot type at all stays BUILD-302. This refusal is mandatory

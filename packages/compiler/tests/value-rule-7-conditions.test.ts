@@ -16,6 +16,7 @@ afterEach(cleanup);
 describe('rule 7 vectors: conditions are boolean-typed', () => {
   it.each(conditions.compiledCondition.filter(vector => vector.code !== null))('$id refuses with $code', vector => {
     expect(() => emitDeclaredPage(conditionPage(vector))).toThrow(refusal(vector.code));
+    if (vector.message) expect(() => emitDeclaredPage(conditionPage(vector))).toThrow(vector.message);
   });
 
   it.each(conditions.compiledCondition.filter(vector => vector.code === null))('$id builds a SHOW_IF on a boolean slot and shows the branch the browser shows', vector => {

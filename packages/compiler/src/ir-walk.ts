@@ -54,7 +54,7 @@ import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listProp
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
-import { closedKind, moduleLiteral, refuseBooleanText, refuseConditionType, valueKind, type KindEnvironment } from './value-rules';
+import { closedKind, moduleLiteral, refuseBooleanText, refuseConditionType, refuseUncalledGetter, valueKind, type KindEnvironment } from './value-rules';
 import {
   enterComponentScope,
   lookupSignal,
@@ -1901,6 +1901,29 @@ function deriveShowSlotName(cond: t.Node | null | undefined, walkCtx: WalkContex
 }
 
 /**
+ * A signal getter named in a condition without its call, where the condition's
+ * value is the function itself: the condition, an operand of `!`, `&&`, `||`,
+ * `??` or a comparison, a ternary's test, or the body of a parameterless
+ * getter. Branch values and call arguments are not conditions and are not read.
+ * Verified by: packages/compiler/tests/value-rule-7-conditions.test.ts
+ */
+function uncalledGetter(node: t.Node | null | undefined, walkCtx: WalkContext): t.Identifier | undefined {
+  if (!node) return undefined;
+  if (t.isIdentifier(node)) return closedEnv(walkCtx).signal(node) ? node : undefined;
+  if (t.isTSAsExpression(node) || t.isTSSatisfiesExpression(node) || t.isTSNonNullExpression(node)
+    || t.isTSTypeAssertion(node) || t.isParenthesizedExpression(node)) return uncalledGetter(node.expression, walkCtx);
+  if ((t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) && node.params.length === 0) {
+    return uncalledGetter(getEffectiveBody(node), walkCtx);
+  }
+  if (t.isUnaryExpression(node)) return uncalledGetter(node.argument, walkCtx);
+  if (t.isLogicalExpression(node) || t.isBinaryExpression(node)) {
+    return uncalledGetter(node.left, walkCtx) ?? uncalledGetter(node.right, walkCtx);
+  }
+  if (t.isConditionalExpression(node)) return uncalledGetter(node.test, walkCtx);
+  return undefined;
+}
+
+/**
  * Mint the TYPE_BOOL slot a SHOW_IF selects its branch with, carrying the
  * branch the CLIENT would take on first paint as its SSR default.
  *
@@ -1922,12 +1945,21 @@ function addShowSlot(
   cond: t.Node | null | undefined,
   ctx: IrEmitContext,
   walkCtx: WalkContext,
+  createShowArgument = false,
 ): number {
   // Value rule 7 (docs/parity-rules.md): a condition must be boolean-typed.
   // What the compiler can prove is not boolean (a declared, closed or signal
   // type, a literal, an operator's result) is BUILD-615; what it cannot type
   // keeps the BUILD-302 path below.
   const file = walkCtx.sourceFile ?? '', refuse = (): never => refuseConditionType(file, cond!, `condition ${describeNode(cond!)}`);
+  // createShow calls its first argument, so a getter passed itself
+  // (`createShow(open, …)`) is read as `open()` below. Anywhere else a signal
+  // getter named without its call (a ternary's `open ? a : b`, `() => open`,
+  // `ready() && open`) is a function, always truthy in the browser: BUILD-615
+  // naming the missing call.
+  const passedGetter = createShowArgument && cond && t.isIdentifier(cond) && closedEnv(walkCtx).signal(cond) ? cond : undefined;
+  const uncalled = passedGetter ? undefined : uncalledGetter(cond, walkCtx);
+  if (uncalled) refuseUncalledGetter(file, uncalled, uncalled.name);
   const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx);
   if (declaredSlot !== undefined) {
     if (declaredKind(cond, walkCtx.propsScope) !== 'boolean') refuse();
@@ -1937,10 +1969,8 @@ function addShowSlot(
   if (closed && closedKind(closed.values) !== 'boolean') refuse();
   const closedSlotId = closed ? closedSlot(cond, ctx, closedEnv(walkCtx)) : undefined;
   if (closedSlotId !== undefined) return closedSlotId;
-  // A scalar signal getter passed itself (`createShow(open, …)`) is read as
-  // its call, as createShow calls it.
-  const read = cond && t.isIdentifier(cond) && lookupSignal(walkCtx.signalScope, cond.name)
-    ? t.callExpression(t.identifier(cond.name), []) : cond;
+  // A scalar signal getter passed to createShow itself is read as its call.
+  const read = passedGetter ? t.callExpression(t.identifier(passedGetter.name), []) : cond;
   if (read && valueKind(read, kindEnv(walkCtx)) === 'other') refuse();
   const slotName = deriveShowSlotName(cond, walkCtx);
 
@@ -2044,7 +2074,7 @@ function emitCreateShow(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
-  const slotId = addShowSlot(node.arguments[0], ctx, walkCtx);
+  const slotId = addShowSlot(node.arguments[0], ctx, walkCtx, true);
 
   ctx.emit(OP_SHOW_IF);
   ctx.emitU16(slotId);

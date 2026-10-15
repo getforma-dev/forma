@@ -156,3 +156,11 @@ export function refuseConditionType(file: string, node: t.Node, what: string): n
   refuse('BUILD-615', file, node,
     `${what} is not boolean-typed: the server would pick the branch by truthiness, which the page only imitates; compare explicitly (count() > 0, name() !== '', item() !== null)`);
 }
+
+/** Rule 7: a condition names the signal getter `name` without calling it. A
+ *  function is always truthy, so the browser always takes the first branch
+ *  whatever the signal holds. */
+export function refuseUncalledGetter(file: string, node: t.Node, name: string): never {
+  refuse('BUILD-615', file, node,
+    `condition reads the signal getter ${name} without calling it: a function is always truthy, so the browser always takes the first branch; call it, ${name}()`);
+}

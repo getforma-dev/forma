@@ -452,8 +452,12 @@ a boolean (`a() && count()`, `name() || 'x'`). Admitted: a declared boolean
 (optional included: absent reads as `false` on both sides), a boolean signal, a
 closed boolean, a boolean literal, `!x` and `!!x`, a comparison, `Boolean(x)`
 (now folded as `!!x` is), and `&&` or `||` of booleans. A scalar signal getter
-passed itself (`createShow(open, …)`) is read as its call, so a number getter
-is refused and a boolean one folds. A module-level boolean `const` is now folded in a
+passed to `createShow` itself (`createShow(open, …)`) is read as its call,
+since `createShow` calls it, so a number getter is refused and a boolean one
+folds. Anywhere else a getter named without its call (`() => open ? a : b`,
+`() => open`, `ready() && open`, `!open`) is the function itself, always truthy
+in the browser whatever the signal holds: `BUILD-615`, naming the missing call
+(`call it, open()`). A module-level boolean `const` is now folded in a
 condition, so the server renders the branch the browser takes (it used to be
 `BUILD-302`, the `else` branch whatever the value). A condition the compiler
 cannot type at all keeps `BUILD-302`: the server renders the `else` branch
