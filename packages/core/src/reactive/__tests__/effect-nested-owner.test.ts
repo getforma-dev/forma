@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { createSignal } from '../signal';
 import { createEffect } from '../effect';
-import { createRoot } from '../root';
+import { createRoot, createUnownedRoot, registerDisposer } from '../root';
 import { onCleanup } from '../cleanup';
 
 const COLON = String.fromCharCode(58);
@@ -63,5 +63,28 @@ describe('nested effect ownership (1.1.0)', () => {
       setI(2);
       expect(inner).toEqual([0, 1, 2]);
     });
+  });
+
+  it('cleans owned roots per effect generation while an explicit unowned root survives', () => {
+    const [get, set] = createSignal(0), [inner, setInner] = createSignal(0);
+    const cleaned: number[] = [], seen: number[] = [], independent: number[] = [];
+    let stopIndependent = () => {};
+    const stop = createEffect(() => {
+      const generation = get();
+      createRoot(() => {
+        registerDisposer(() => cleaned.push(generation));
+        createEffect(() => { seen.push(generation * 10 + inner()); });
+      });
+      if (!generation) createUnownedRoot(dispose => {
+        stopIndependent = dispose;
+        createEffect(() => { independent.push(inner()); });
+      });
+    });
+    set(1); setInner(1); stop(); setInner(2);
+    expect(cleaned).toEqual([0, 1]);
+    expect(seen).toEqual([0, 10, 11]);
+    expect(independent).toEqual([0, 1, 2]);
+    stopIndependent(); setInner(3);
+    expect(independent).toEqual([0, 1, 2]);
   });
 });

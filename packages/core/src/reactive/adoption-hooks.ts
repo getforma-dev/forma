@@ -36,6 +36,10 @@ export function __adoptionWritable<T>(read: () => T, get: SignalGetter<T>, codec
 }
 
 /** @internal Public effects stay dormant while the private planner constructs. */
-export function deferAdoptionEffect(start: DeferredEffect): (() => void) | undefined {
-  return active?.deferEffect?.(start);
+export function deferAdoptionEffect(
+  fn: () => void | (() => void),
+  start: (fn: () => void | (() => void), fail: (error: unknown) => void) => () => void,
+): (() => void) | undefined {
+  // The optional call avoids allocating a deferred starter for ordinary effects.
+  return active?.deferEffect?.(fail => start(fn, fail));
 }

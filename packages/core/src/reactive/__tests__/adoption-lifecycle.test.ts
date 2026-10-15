@@ -204,6 +204,30 @@ describe('honest post-commit callback failures', () => {
     expect(parentCleanup).toHaveBeenCalledOnce(); expect(childCleanup).toHaveBeenCalledTimes(2);
   });
 
+  it('drains late roots and returned cleanup after a nested failure without rerunning the aborted parent', () => {
+    const failure = vi.fn(), value = scope({ failure });
+    const [trigger, setTrigger] = createSignal(0), [later, setLater] = createSignal(0);
+    const parent = vi.fn(), late = vi.fn(), rootCleanup = vi.fn(), returnedCleanup = vi.fn();
+    value.run(() => createEffect(() => {
+      const n = trigger(); parent();
+      if (!n) return;
+      createEffect(() => { throw new Error('nested live failure'); });
+      createRoot(() => {
+        createEffect(() => { later(); late(); });
+        registerDisposer(rootCleanup);
+      });
+      setTrigger(n + 1);
+      return returnedCleanup;
+    }));
+    publish(value); setTrigger(1);
+    expect(value.phase).toBe('aborted'); expect(failure).toHaveBeenCalledOnce();
+    expect(parent).toHaveBeenCalledTimes(2); expect(late).toHaveBeenCalledOnce();
+    expect(rootCleanup).toHaveBeenCalledOnce(); expect(returnedCleanup).toHaveBeenCalledOnce();
+    setLater(1); setTrigger(4); value.abort();
+    expect(parent).toHaveBeenCalledTimes(2); expect(late).toHaveBeenCalledOnce();
+    expect(rootCleanup).toHaveBeenCalledOnce(); expect(returnedCleanup).toHaveBeenCalledOnce();
+  });
+
   it('restores ordinary effect error handling after a deferred callback finishes', () => {
     const failure = vi.fn(), value = scope({ failure }), errors: unknown[] = [];
     value.run(() => createEffect(() => {})); publish(value);

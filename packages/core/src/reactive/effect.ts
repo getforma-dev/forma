@@ -163,7 +163,7 @@ export function internalEffect(fn: () => void): () => void {
 }
 
 export function createEffect(fn: () => void | (() => void)): () => void {
-  return deferAdoptionEffect(fail => createEffectNow(fn, fail)) ?? createEffectNow(fn, adoptionFailure);
+  return deferAdoptionEffect(fn, createEffectNow) ?? createEffectNow(fn, adoptionFailure);
 }
 
 function createEffectNow(fn: () => void | (() => void), failure?: (error: unknown) => void): () => void {
@@ -186,7 +186,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   let cleanupBag: (() => void)[] | undefined;
   let nextCleanup: (() => void) | undefined;
   let nextCleanupBag: (() => void)[] | undefined;
-  let failed = false;
+  let disposed = false;
 
   const addCleanup = (cb: () => void) => {
     if (nextCleanupBag !== undefined) {
@@ -203,7 +203,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     nextCleanup = cb;
   };
 
-  const runOnce = () => {
+  const cleanCurrentRun = () => {
     // Dispose the previous generation of nested effects/roots (running their
     // cleanups) FIRST — children before parents, matching wrappedDispose so the
     // teardown order is consistent between the re-run and dispose paths and a
@@ -222,6 +222,10 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
       releaseArray(cleanupBag);
       cleanupBag = undefined;
     }
+  };
+
+  const runOnce = () => {
+    cleanCurrentRun();
 
     nextCleanup = undefined;
     nextCleanupBag = undefined;
@@ -255,11 +259,15 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
       } else if (nextCleanup !== undefined) {
         cleanup = nextCleanup;
       }
-      if (failure) { failed = true; failure(e); }
+      if (failure) { failure(e); return false; }
       else reportError(e, 'effect');
     } finally {
       setCleanupCollector(prevCollector);
       adoptionFailure = previousFailure;
+      // A nested callback can abort this island while this body is still on
+      // the stack. JavaScript then continues the body: drain roots/effects and
+      // cleanups created AFTER wrappedDispose's first synchronous teardown.
+      if (disposed) cleanCurrentRun();
     }
   };
 
@@ -273,13 +281,12 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     let reentrantRuns = 0;
     do {
       if (node) node.flags &= ~PENDING; // clear before running so we detect a fresh set
-      runOnce();
-      if (failed) break;
+      if (runOnce() === false || disposed) break;
       if (node === undefined || (node.flags & PENDING) === 0) break;
       if (++reentrantRuns >= MAX_REENTRANT_RUNS) {
         node.flags &= ~PENDING;
         const error = new Error(`createEffect exceeded ${MAX_REENTRANT_RUNS} self-triggered re-runs (cycle?)`);
-        if (failure) { failed = true; failure(error); }
+        if (failure) failure(error);
         else reportError(error, 'effect');
         break;
       }
@@ -289,22 +296,12 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   const dispose = rawEffect(safeFn);
 
   // Wrap dispose to also run final cleanups
-  let disposed = false;
   const wrappedDispose = () => {
     if (disposed) return;
     disposed = true;
     dispose();
     // Dispose nested effects/roots this effect owns, then run its own cleanups.
-    disposeOwner(childOwner);
-    if (cleanup !== undefined) {
-      runCleanup(cleanup);
-      cleanup = undefined;
-    }
-    if (cleanupBag !== undefined) {
-      runCleanups(cleanupBag);
-      releaseArray(cleanupBag);
-      cleanupBag = undefined;
-    }
+    cleanCurrentRun();
   };
 
   // Register this effect's disposer with the owner active at creation (a root, or
