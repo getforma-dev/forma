@@ -171,3 +171,40 @@ Local artifacts and logs are retained in `work/FORMA-112/ds11-window-1`,
 `p17-window-1.log`, `full-check-112.log`, `renderer-3.1-final/` and
 `independent-probes-replay/`. Exact-head hosted CI and independent review are
 required separately before merging PR38.
+
+
+## Declared page props and typed handles (FORMA-102)
+
+`v3-props-set.json` records seven unpublished 3.0.0-dev artifacts from
+`7e5f0c966de04ab7c2b4b7d7b50ac467a037f30e`. The same source's verifier passed
+in 50.501 seconds (`v3-props-p17.json`), including the new `declared-v1` props
+contract. Every packed crate's actual Cargo.lock passed fresh advisories; the
+isolated CLI, both locked templates, registry signatures, browser interaction,
+manifest/worker checks and corrupt/newer module startup refusals passed.
+
+The packed compiler emitted the three declared-props fixture modules byte-for-byte
+as shipped by forma-server. Its six real native typed Pages tests executed:
+name-based binding and two lists, branch values, request bounds, pre-listener bind
+refusal, route selection, empty local lists and last-good reload with a matching
+asset snapshot. The verifier refuses missing, ignored or failing tests, stale
+fixture bytes and placeholder compiler output. The new IR→derive runtime edge and
+its checksum-pinned external closure are added from the recorded candidate graph;
+compatible existing template resolutions stay intact. Both packed templates
+compiled with locked candidate dependencies. `v3-props-template-restore.json`
+proves all ten source template manifests/locks/main files were restored exactly.
+
+`v3-props-qualification.json` records the 131-second complete local gate, focused
+checks, MSRVs, immutable HTML hashes and raw-log hashes. All 14 existing HTML
+goldens remain unchanged. The local-list corpus changes only its seven slot source
+bits to CLIENT plus the CRC; opcode and string bytes are identical. An initial
+browser run reused a parallel checkout's stricter109 runtime on port3456. Its
+failure is preserved as infrastructure evidence; the isolated90-test replay and
+subsequent full gate passed after fixture servers gained explicit port selection
+and refused pre-existing listeners.
+
+The source, compiler, derive, Pages, release closure and verifier slices have
+independent review. Hosted exact-head CI is a separate merge gate. Raw logs and
+seven original archives remain under `work/FORMA-102/tmp/`. This is ordinary
+functional/corpus replay, not a new fuzz or mutation campaign. Final activation,
+renderer budgets/finalization and template API migration remain in their assigned
+tickets. `liveReleaseReady` remains false; no tag or publication occurred.

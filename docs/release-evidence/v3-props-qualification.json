@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "sourceCommit": "7e5f0c966de04ab7c2b4b7d7b50ac467a037f30e",
+  "recordedAt": "2026-10-15T03:14:24.940735+00:00",
+  "fullCheck": {
+    "passed": true,
+    "seconds": 131,
+    "log": "full-check-isolated.log"
+  },
+  "checks": {
+    "compilerTests": 704,
+    "typedPagesDebug": 6,
+    "typedPagesRelease": 5,
+    "deriveCompileRefusals": 23,
+    "releaseHelpers": 38,
+    "workflowControls": 32,
+    "requirementControls": 12,
+    "serverMsrv": "1.85",
+    "irMsrv": "1.71",
+    "packedP17Seconds": 50.501
+  },
+  "corpus": {
+    "nativeTests": 10,
+    "unchangedHtml": {
+      "crates/forma-ir/tests/fixtures/js-emitter/barrel-exports.html": "c1019f6e39303420e76442e6ed0f242116f6cf21d00cef4bd038bba2eec0db5a",
+      "crates/forma-ir/tests/fixtures/js-emitter/create-show.html": "73ef5ed8f286dbbd9a64f8d4ae2e3b6eda6e8c0c9b5e535d65559d9d455480df",
+      "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.html": "5a3defb5e64931e777fa7203d1e5cfefd33307b994156bef88aaca30af887043",
+      "crates/forma-ir/tests/fixtures/js-emitter/dynamic-text.html": "8dee4992ae5b09d67f2e48a63d0704d0ab775987a4376de75efcac9cfc930240",
+      "crates/forma-ir/tests/fixtures/js-emitter/eager-concat.html": "8c149184f99c5c5eadf69a2c28fafe72b15b47222a4a77c42bf79ca80c8f1a6f",
+      "crates/forma-ir/tests/fixtures/js-emitter/imported-const-table.html": "0379be201848cabc154f0fb60561e54d70745c246e1c4b5e9c6af8f648d2623a",
+      "crates/forma-ir/tests/fixtures/js-emitter/imported-signal-defaults.html": "0a3155c03bb6dc097e458d16269bbd0e4ef106956acc175dbea8564d80019512",
+      "crates/forma-ir/tests/fixtures/js-emitter/jsx-page.html": "6a53c52e0e22a886d1456f3d0776e410555c965f21158df51882e4a3ee5240bb",
+      "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html": "d557fcdb4472a590e718c7bcb613d0dc5ba122cf4aaddfeffcb177967206b5b7",
+      "crates/forma-ir/tests/fixtures/js-emitter/nested-islands.html": "2db6b28f996f3ee52ba04dbe2ef6e68655061747d68c79b2d31892cf46461524",
+      "crates/forma-ir/tests/fixtures/js-emitter/static-page.html": "cdbb309eff6a49c96fc5b730121d7e652b7139115f91e910d71cfcbce75ad905",
+      "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.html": "a737db33c0550c1e475c17345d449e6071a0f48778204ca0695e4685afa9e8be",
+      "crates/forma-ir/tests/fixtures/js-emitter/ternary-asymmetric.html": "51ae2c1ec7d297c6a0111d6d81cfb0a5a4ddbe022e0b3f6bcf8836f45da89adc",
+      "crates/forma-ir/tests/fixtures/js-emitter/unicode-emoji.html": "adabb95eca835d1f308b2606991a4384e9b397830f093a5e4b698d005daad83a"
+    },
+    "changedBinaryAndDump": "list-same-source: only seven CLIENT source bits and CRC; identical opcode/string bytes"
+  },
+  "contaminatedAttempt": {
+    "log": "full-check.log",
+    "reason": "Parallel109 core fixture server was reused on3456. Its raw-string refusal messages are absent from102 source/dist. Owner confirmed the collision; isolated core replay passed90/90. Browser configs now refuse existing listeners and accept per-checkout ports. Entire R17 subsequently passed."
+  },
+  "logSha256": {
+    "full-check.log": "c002bb1693d1af477e440a608ee65c87c18037a57effced6b7f6c500056c50c7",
+    "core-browser-replay.log": "3700b541a08bec19b1d87cd2970f5fb141707343b45d455106a92bf2135782f1",
+    "full-check-isolated.log": "6597bbf1d0e50774ecbc480ef7c996e8922045afe8f0d951adaddd096cda9bc8",
+    "compiler-final.log": "4d01685175c32822ae1d51bdf626268f692549523ae15073afea1db338aaf684",
+    "typed-pages-release.log": "10195364180339c3548f728f5a5540692109e10ccdb94ea7f47fb7f1b25246bb",
+    "server-msrv.log": "14547d761ff1782ed37644e9c86261e05b92a31870f8a037171c3b1d84f12ed8",
+    "release-helpers.log": "d460895926902287f71a1dea4eea4839e79ee77e447dd08fdeb8699dcdb748b9",
+    "release-workflow.log": "9136b95f3218cf4d10f9353bfc64172de2322639ea96b4f2741119ff459805f6",
+    "requirement-guard.log": "de8bc0b06beb5bec769c33cd5b49bc33f5a8a441923b2ba033bd2417673faeb0",
+    "actionlint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "packed-rehearsal.log": "5ef269f4b7f84eff30c7ebb957d1dbd330517e1966b3ae0e950da75db98e1b2c"
+  },
+  "liveReleaseReady": false,
+  "newFuzzOrMutationCampaign": false
+}
