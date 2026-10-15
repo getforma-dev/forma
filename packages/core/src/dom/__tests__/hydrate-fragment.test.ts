@@ -24,6 +24,7 @@ import { templateMany } from '../template';
 
 afterEach(() => {
   document.body.innerHTML = '';
+  vi.restoreAllMocks();
 });
 
 /** Server HTML for the verification run 1 page: a root Fragment. */
@@ -48,7 +49,7 @@ describe('Fragment adoption', () => {
     // Adopted in place: the server's nodes, not new ones.
     expect(document.getElementById('note')).toBe(span);
     expect(document.getElementById('go')).toBe(button);
-    expect(app.hasAttribute('data-forma-ssr')).toBe(false);
+    expect(app.hasAttribute('data-forma-ssr')).toBe(true);
     expect(span.textContent).toBe('hello');
 
     button.click();
@@ -77,13 +78,15 @@ describe('Fragment adoption', () => {
     expect(app.childNodes).toHaveLength(2);
   });
 
-  it('a Fragment at an island root is adopted, each island on its own', () => {
+  it('compiled island Fragment roots refuse while the public facade adopts independent ranges', () => {
     document.body.innerHTML = [0, 1].map((id) =>
       `<div data-forma-island="${id}" data-forma-component="Pair">` +
       `<span class="n"><!--f:t0-->${id}<!--/f:t0--></span><button class="inc">+</button></div>`,
     ).join('');
     installState([{ id: 0 }, { id: 1 }]);
 
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const server = Array.from(document.querySelectorAll('span, button'));
     activateIslands({
       Pair: compiled((props: { id: number }) => {
         const [n, setN] = createSignal(props.id);
@@ -96,21 +99,42 @@ describe('Fragment adoption', () => {
 
     const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
     const text = () => islands.map((i) => i.querySelector('.n')!.textContent);
-    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual(['active', 'active']);
+    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual(['error', 'error']);
     expect(text()).toEqual(['0', '1']);
 
     islands[0]!.querySelector<HTMLButtonElement>('.inc')!.click();
-    expect(text()).toEqual(['10', '1']);
-    islands[1]!.querySelector<HTMLButtonElement>('.inc')!.click();
-    expect(text()).toEqual(['10', '11']);
-    islands[0]!.querySelector<HTMLButtonElement>('.inc')!.click();
-    expect(text()).toEqual(['20', '11']);
+    expect(text()).toEqual(['0', '1']);
+    expect(Array.from(document.querySelectorAll('span, button'))).toEqual(server);
+    expect(error.mock.calls.filter(call => String(call[0]).includes('FORMA_E_HYDRATE_STRUCTURE'))).toHaveLength(2);
+    // Separate caller-owned, unmarked containers exercise the public range API.
+    // The refused compiled hosts retain their claims, status and original nodes.
+    const publicRoot = document.createElement('section');
+    publicRoot.innerHTML = [0, 1].map(id => `<div><span class="n"><!--f:t0-->${id}<!--/f:t0--></span><button class="inc">+</button></div>`).join('');
+    document.body.append(publicRoot);
+    const ranges = Array.from(publicRoot.children);
+    const rangeNodes = Array.from(publicRoot.querySelectorAll('span, button'));
+    for (const [id, container] of ranges.entries()) {
+      adoptInRoot(() => {
+        const [n, setN] = createSignal(id);
+        return h(Fragment, null, h('span', { class: 'n' }, () => String(n())),
+          h('button', { class: 'inc', onClick: () => setN(n() + 10) }, '+'));
+      }, container);
+    }
+    const rangeText = () => ranges.map(container => container.querySelector('.n')!.textContent);
+    ranges[0]!.querySelector<HTMLButtonElement>('.inc')!.click();
+    expect(rangeText()).toEqual(['10', '1']);
+    ranges[1]!.querySelector<HTMLButtonElement>('.inc')!.click();
+    expect(rangeText()).toEqual(['10', '11']);
+    ranges[0]!.querySelector<HTMLButtonElement>('.inc')!.click();
+    expect(rangeText()).toEqual(['20', '11']);
+    expect(Array.from(publicRoot.querySelectorAll('span, button'))).toEqual(rangeNodes);
+    expect(text()).toEqual(['0', '1']);
     expect(islands.map((i) => i.querySelectorAll('span').length)).toEqual([1, 1]);
   });
 
   it('a nested Fragment is adopted in place and the siblings after it stay aligned', () => {
     document.body.innerHTML =
-      '<div id="app" data-forma-ssr><section><b>a</b><!--f:t0-->x<!--/f:t0--><i>c</i><button>go</button></section></div>';
+      '<div id="app" data-forma-ssr><section><b>a</b><!--f:t0-->x<!--/f:t0--><i>c</i><button><!--f:t1-->go 0<!--/f:t1--></button></section></div>';
     const app = document.getElementById('app')!;
     const section = app.querySelector('section')!;
     const bold = section.querySelector('b')!;
@@ -161,49 +185,58 @@ describe('Fragment adoption', () => {
     expect(app.querySelector('em')?.textContent).toBe('closed');
   });
 
-  it('a tag mismatch rebuilds a Fragment child from its descriptor', () => {
+  it('a tag mismatch refuses a Fragment child with zero writes and preserves the server subtree', () => {
     document.body.innerHTML = '<div id="app" data-forma-ssr><p>stale</p></div>';
     const app = document.getElementById('app')!;
+    const p = app.firstChild;
+    const before = app.innerHTML;
     const [count, setCount] = createSignal(0);
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const observer = new MutationObserver(() => {});
+    observer.observe(app, { subtree: true, childList: true, attributes: true, characterData: true });
     adoptInRoot(() => h('section', null,
-      h(Fragment, null, h('button', { onClick: () => setCount(count() + 1) }, () => `n=${count()}`)),
-    ), app);
-    warn.mockRestore();
-
-    const button = app.querySelector('section > button') as HTMLButtonElement;
-    expect(app.querySelector('p')).toBeNull();
-    expect(button.textContent).toBe('n=0');
-    button.click();
-    expect(button.textContent).toBe('n=1');
+      h(Fragment, null, h('button', { onClick: () => setCount(count() + 1) }, () => `n=${count()}`))), app);
+    expect(observer.takeRecords()).toEqual([]); observer.disconnect();
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_NODE');
+    expect(app.innerHTML).toBe(before);
+    expect(app.firstChild).toBe(p);
+    expect(app.querySelector('button')).toBeNull();
+    setCount(1);
+    expect(app.innerHTML).toBe(before);
   });
 
-  it('an island that returns its own element stays active and keeps updating', () => {
+  it('an imperative island returning its own element refuses without running its deferred effect', () => {
     // 2.0.1's imperative pattern: wire the server DOM by hand, return `el`.
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Imp"><button>0</button></div>' +
       '<div data-forma-island="1" data-forma-component="Imp"><button>0</button></div>';
     installState([{ id: 0 }, { id: 1 }]);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalButtons = Array.from(document.querySelectorAll('button'));
+    let runs = 0;
     activateIslands({
       Imp: compiled((props: { id: number }) => {
         const el = document.querySelector<HTMLElement>(`[data-forma-island="${props.id}"]`)!;
         const [n, setN] = createSignal(0);
         const button = el.querySelector('button')!;
         button.addEventListener('click', () => setN(n() + 1));
-        createEffect(() => { button.textContent = String(n()); });
+        createEffect(() => { runs++; button.textContent = String(n()); });
         return el;
       }, [[{ name: 'id', type: { kind: 'number' } }]]),
     });
 
     const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
     const buttons = islands.map((i) => i.querySelector('button')!);
-    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual(['active', 'active']);
+    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual(['error', 'error']);
+    expect(buttons).toEqual(originalButtons);
+    expect(error.mock.calls.filter(call => String(call[0]).includes('FORMA_E_HYDRATE_STRUCTURE'))).toHaveLength(2);
     buttons[0]!.click();
     buttons[0]!.click();
     buttons[1]!.click();
     buttons[0]!.click();
-    expect(buttons.map((b) => b.textContent)).toEqual(['3', '1']);
+    // The component's manual addEventListener is outside managed APIs; no effect may run.
+    expect(runs).toBe(0);
+    expect(buttons.map((b) => b.textContent)).toEqual(['0', '0']);
   });
 
   it('an island that returns a detached DOM node is marked error with its code, its sibling unaffected', () => {
@@ -220,17 +253,20 @@ describe('Fragment adoption', () => {
     error.mockRestore();
 
     const statuses = Array.from(document.querySelectorAll('[data-forma-island]'), (el) => el.getAttribute('data-forma-status'));
-    expect(statuses).toEqual(['error', 'active']);
-    expect(logged.filter((line) => line.includes('FORMA_E_HYDRATE_NODE') && line.includes('"Bad"'))).toHaveLength(1);
+    expect(statuses).toEqual(['error', null]);
+    expect(logged.filter((line) => line.includes('FORMA_E_HYDRATE_STRUCTURE') && line.includes('"Bad"'))).toHaveLength(1);
     expect(document.querySelector('[data-forma-island="0"]')!.innerHTML).toBe('<span>x</span>');
   });
 
-  it('an island that appends a fragment into its element and returns it, now empty, stays active', () => {
-    // The templateMany pattern: build, append into `el`, wire, return the
-    // fragment, which appending emptied. 2.0.1 kept such islands active.
+  it('an imperative append-and-return fragment is refused and its deferred effect never runs', () => {
+    // Preserve the archived imperative input: returning its emptied fragment
+    // is now a strict refusal, and deferred effects never acquire ownership.
     document.body.innerHTML = [0, 1].map((id) =>
       `<div data-forma-island="${id}" data-forma-component="Many"><p>server ${id}</p></div>`).join('');
     installState([{ id: 0 }, { id: 1 }]);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalParagraphs = Array.from(document.querySelectorAll('p'));
+    let runs = 0;
     const setters: Array<(v: number) => void> = [];
     activateIslands({
       Many: compiled((props: { id: number }) => {
@@ -240,21 +276,26 @@ describe('Fragment adoption', () => {
         const [n, setN] = createSignal(0);
         setters.push(setN);
         const button = el.querySelector('button')!;
-        createEffect(() => { button.textContent = String(n()); });
+        createEffect(() => { runs++; button.textContent = String(n()); });
         return fragment;
       }, [[{ name: 'id', type: { kind: 'number' } }]]),
     });
 
     const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
-    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual(['active', 'active']);
+    expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual(['error', 'error']);
     setters[0]!(5);
     setters[1]!(7);
     setters[0]!(6);
-    expect(islands.map((i) => i.querySelector('button')!.textContent)).toEqual(['6', '7']);
-    expect(islands[0]!.textContent).toBe('server 06tail');
+    // Imperative append is an attempted component side effect, not successful adoption.
+    // The strict planner refuses; it does not bless those appended nodes or run effects.
+    expect(error.mock.calls.filter(call => String(call[0]).includes('FORMA_E_HYDRATE_STRUCTURE'))).toHaveLength(2);
+    expect(runs).toBe(0);
+    expect(Array.from(document.querySelectorAll('p'))).toEqual(originalParagraphs);
+    expect(islands.map((i) => i.querySelector('button')!.textContent)).toEqual(['0', '0']);
+    expect(islands[0]!.textContent).toBe('server 00tail');
   });
 
-  it('onError receives FORMA_E_HYDRATE_NODE from activateIslands, caller-owned adoption and hydrateIsland()', () => {
+  it('onError receives FORMA_E_HYDRATE_STRUCTURE from activateIslands, caller-owned adoption and hydrateIsland()', () => {
     const received: Array<[string, string | undefined]> = [];
     const off = onError((err, info) => {
       received.push([String((err as { code?: unknown }).code), info?.source]);
@@ -274,17 +315,17 @@ describe('Fragment adoption', () => {
     }
 
     expect(received).toEqual([
-      ['FORMA_E_HYDRATE_NODE', 'hydration'],
-      ['FORMA_E_HYDRATE_NODE', 'hydration'],
-      ['FORMA_E_HYDRATE_NODE', 'hydration'],
+      ['FORMA_E_HYDRATE_STRUCTURE', 'hydration'],
+      ['FORMA_E_HYDRATE_STRUCTURE', 'hydration'],
+      ['FORMA_E_HYDRATE_STRUCTURE', 'hydration'],
     ]);
     // A working island reports nothing.
     const nextDocument = document.implementation.createHTMLDocument('positive sibling control');
     nextDocument.body.innerHTML = '<div data-forma-island="0" data-forma-component="Fine"><b>ok</b></div>';
     installState(undefined, nextDocument);
     const off2 = onError((err) => received.push([String(err), 'unexpected']));
-    activateIslands(emptyRegistry({ Fine: () => {} }), nextDocument);
-    expect(nextDocument.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('active');
+    activateIslands(emptyRegistry({ Fine: () => h('div', null, h('b', null, 'ok')) }), nextDocument);
+    expect(nextDocument.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBeNull();
     deactivateAllIslands(nextDocument);
     off2();
     expect(received).toHaveLength(3);
@@ -310,13 +351,13 @@ describe('Fragment adoption', () => {
     expect(typeof dispose).toBe('function');
     expect(app.hasAttribute('data-forma-ssr')).toBe(true);
     expect(app.innerHTML).toBe(before);
-    expect(logged.filter((line) => line.includes('FORMA_E_HYDRATE_NODE'))).toHaveLength(1);
-    // Public hydration reports the error; the caller explicitly disposes its root.
-    expect(runs).toBe(1);
+    expect(logged.filter((line) => line.includes('FORMA_E_HYDRATE_STRUCTURE'))).toHaveLength(1);
+    // Validation refuses before deferred effects; the caller still owns its root.
+    expect(runs).toBe(0);
     dispose!();
     setN(1);
     setN(2);
-    expect(runs).toBe(1);
+    expect(runs).toBe(0);
     dispose!();
     expect(app.innerHTML).toBe(before);
   });
@@ -332,7 +373,7 @@ describe('Fragment adoption', () => {
     expect(result).toBe(app);
     expect(app.hasAttribute('data-forma-ssr')).toBe(true);
     expect(app.innerHTML).toBe(before);
-    expect(logged.filter((line) => line.includes('FORMA_E_HYDRATE_NODE'))).toHaveLength(1);
+    expect(logged.filter((line) => line.includes('FORMA_E_HYDRATE_STRUCTURE'))).toHaveLength(1);
   });
 
   it("a root createShow or createList is adopted against the container's children", () => {
@@ -363,9 +404,11 @@ describe('Fragment adoption', () => {
     expect(document.querySelector('#list li')).toBe(serverRows[1]);
   });
 
-  it('a component that returns nothing still activates (an island that sets up its own effects)', () => {
+  it('an imperative component that writes then returns nothing is refused, never marked active', () => {
     document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Imperative"><b>0</b></div>';
     installState();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const original = document.querySelector('b');
     activateIslands(emptyRegistry({
       Imperative: () => {
         const el = document.querySelector<HTMLElement>('[data-forma-component="Imperative"]')!;
@@ -374,7 +417,9 @@ describe('Fragment adoption', () => {
       },
     }));
     const island = document.querySelector('[data-forma-island]')!;
-    expect(island.getAttribute('data-forma-status')).toBe('active');
+    expect(island.getAttribute('data-forma-status')).toBe('error');
+    expect(error.mock.calls[0]?.[0]).toContain('FORMA_E_HYDRATE_STRUCTURE');
+    expect(island.querySelector('b')).toBe(original);
     expect(island.textContent).toBe('set by the island');
   });
 });
