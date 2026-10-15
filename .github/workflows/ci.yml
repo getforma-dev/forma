@@ -160,6 +160,57 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # The parity harness over its corpus (FORMA-183, DR-9; e2e/parity/README.md):
+  # every corpus module at its states through the server's typed path, its
+  # document parsed in Chromium against core's render of the same state (P1),
+  # and the production entry's activation over it making zero mutation records
+  # (P2), with e2e/parity/expected-divergent.json applied. It fails on an
+  # unexpected difference, refusal or error, or on an expected difference that
+  # no longer occurs. Non-blocking until step 1's expected list is empty for P1
+  # and P2; then the run joins scripts/check.sh and this job is removed. The
+  # harness's own tests already run, blocking, inside `check`.
+  parity:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    # MEASURED locally: step 0 (14 modules, 23 states) runs in 2 to 3 s once the
+    # builds exist; npm ci, the four builds, the Rust example and the Chromium
+    # install dominate. 20 bounds a cold cache on a slow runner.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          # The harness is TypeScript run by Node's type stripping (Node 24).
+          node-version-file: .node-version
+          cache: npm
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: parity
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium
+      - name: Install chromium and its system packages
+        timeout-minutes: 10
+        run: npx playwright install --with-deps chromium
+      - name: Parity over the corpus
+        run: node e2e/parity/src/run.mts --report "$RUNNER_TEMP/parity/report.jsonl"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: parity-report
+          path: ${{ runner.temp }}/parity/
+          if-no-files-found: warn
+          retention-days: 14
+
   # The npm packages on every Node line they support. The lowest entry here is
   # what packages/core's `engines.node` may claim: a floor no job executes is an
   # untested promise. Keep them in step.

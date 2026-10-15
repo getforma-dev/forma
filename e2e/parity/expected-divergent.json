@@ -1,0 +1,52 @@
+{
+  "note": "Known divergences (FORMA-183; e2e/parity/README.md, 'Expected divergence'). Each entry is run, must still occur (an entry that matches nothing fails the run as an unexpected pass, so it is removed the day its fix lands) and names the ticket that clears it; 'finding' entries were found by the harness at step 0 on 2026-10-15 and reported to the lead without a ticket yet. FORMA-181 checkpoint B and FORMA-182 rules 2 to 7 add their own entries here as they land.",
+  "entries": [
+    {
+      "module": "list-same-source",
+      "index": 0,
+      "check": "P1",
+      "kind": "error",
+      "match": "items is not a function",
+      "ticket": "finding F1 (no ticket yet)",
+      "note": "The corpus source passes a plain array to createList (createList(todos, ...)); core 3.0's createList takes an accessor (items: () => T[]) and throws, while the compiler accepts the array and emits the list. Either the corpus source or the compiler's acceptance is wrong; core's render cannot be compared until one changes."
+    },
+    {
+      "module": "jsx-page",
+      "index": 0,
+      "check": "P1",
+      "kind": "attribute-value",
+      "path": "page > main:nth-child(1) > span:nth-child(3)[data-live]",
+      "match": "^ → true$",
+      "ticket": "finding F2 (no ticket yet)",
+      "note": "A reactive true on a non-boolean attribute (data-live: () => live()): the walker writes it bare (DYN_ATTR over a bool slot), core's reactive generic path writes String(true), \"true\"; core's static path writes it bare. Adoption accepts the server's \"\" (P2 equal)."
+    },
+    {
+      "module": "sub-component-scopes",
+      "index": 0,
+      "check": "P1",
+      "kind": "attribute-value",
+      "path": "page > main:nth-child(1) > article:nth-child(3)[data-ready]",
+      "match": "^ → true$",
+      "ticket": "finding F2 (no ticket yet)",
+      "note": "The same as jsx-page's data-live: 'data-ready': () => ready(), walker bare, core \"true\"."
+    },
+    {
+      "module": "dynamic-attrs",
+      "index": 0,
+      "check": "P1",
+      "kind": "attribute-extra",
+      "path": "page > section:nth-child(1) > input:nth-child(3)[value]",
+      "ticket": "finding F3 (no ticket yet)",
+      "note": "A client signal created with '' (value: () => query()) has a zero-length slot default, which SlotData::new_from_defaults leaves Null, so DYN_ATTR omits the attribute; core writes value=\"\". The walker's own DYN_ATTR comment says an empty string is a value, not an absence. Structural."
+    },
+    {
+      "module": "dynamic-attrs",
+      "index": 0,
+      "check": "P1",
+      "kind": "attribute-extra",
+      "path": "page > section:nth-child(1) > a:nth-child(4)[href]",
+      "ticket": "finding F4 (by design, BUILD-206; no ticket)",
+      "note": "href: () => docsHref() cannot be evaluated at compile time; the compiler warns BUILD-206 and the attribute is omitted server-side, as the fixture's own comment says it is meant to be. Structural, and counted by the stop rule; a strict build would refuse the page."
+    }
+  ]
+}

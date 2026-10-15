@@ -167,3 +167,14 @@ test('the report carries module, seed, index, verdict, the first difference and 
   const refused = makeReport({ module: 'home', seed: 's', index: 1, check: 'P1', verdict: 'server-refused', refusal: { code: 'RENDER-402', path: 'rows[0].id' } }, null);
   assert.equal(summarize(refused), 'P1 home#1 server-refused: RENDER-402 at rows[0].id');
 });
+
+test('a path counts element siblings only, as CSS does, so it selects the node in DevTools whatever text or comments precede it', () => {
+  const server = el('p', {}, [text('hello '), comment('authored'), el('b', { class: 'x' }, []), text(' and '), el('i', {}, [text('one')])]);
+  const client = el('p', {}, [text('hello '), comment('authored'), el('b', { class: 'y' }, []), text(' and '), el('i', {}, [text('two')])]);
+  assert.deepEqual(both(server, client).differences, [
+    { kind: 'attribute-value', path: 'p > b:nth-child(1)[class]', server: 'x', client: 'y' },
+    { kind: 'text', path: 'p > i:nth-child(2) > #text', server: 'one', client: 'two' },
+  ]);
+  const keyed = stripTransport(el('ul', {}, [comment('f:l0'), text('\n'), el('li', { 'data-forma-key': 'a' }, []), comment('/f:l0')]));
+  assert.deepEqual(keyed.keys, { 'ul > li:nth-child(1)': 'a' }, 'removing transport never changes a position');
+});

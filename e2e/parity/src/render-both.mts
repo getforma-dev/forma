@@ -1,95 +1,69 @@
 /**
- * renderBoth, Forma-internal (FORMA-183 first slice; Q11's default, D9): one module at one
- * generated state through the real walker and through core in a real browser, and the P1 report.
- * FORMA-184 owns the public `renderBoth(component, state)` form; this is the harness's CLI.
+ * renderBoth, Forma-internal (FORMA-183; Q11's default, D9): one corpus module at one state
+ * through the server and through core in a real browser, by the same pipeline as the suite
+ * (`suite.mts`), and its reports: P1 and, for a page with islands, P2. FORMA-184 owns the public
+ * `renderBoth(component, state)` form; this is the harness's CLI.
  *
  *   node e2e/parity/src/render-both.mts --module nested-islands [--state 3] [--seed forma-183]
- *                                       [--engine chromium|firefox|webkit] [--json] [--emit-vector <file>]
+ *                                       [--engine chromium|firefox|webkit] [--low-level]
+ *                                       [--json] [--emit-vector <file>]
  *
  * Exit status: 0 equal, 1 different, 2 the server refused the state or the harness failed.
- *
- * The first slice renders the server side through the low-level path (slot JSON by slot name;
- * the typed path through `Pages::bind` is FORMA-183's second slice) and checks P1 only.
+ * Expected divergences are not applied here: renderBoth shows what the state does.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import type { Browser } from '@playwright/test';
-import { bundlePage, launch, renderInBrowser, type Engine, type PageComponent } from './browser.mts';
-import { compareTrees, makeReport, stripTransport, summarize, type CanonNode, type Report } from './compare.mts';
-import { generate, type Json } from './generate.mts';
-import { describeModule, renderStates, REPO } from './server.mts';
+import { launch, type Engine } from './browser.mts';
+import { summarize, type Report } from './compare.mts';
+import { check, prepare, readCorpus, type Timings } from './suite.mts';
 
-export interface CorpusEntry {
-  readonly name: string;
-  /** Repository-relative `.ir` of the module. */
-  readonly ir: string;
-  readonly page: PageComponent;
-  /** `page`: the whole page is the comparison root; `islands`: the same, with islands inside. */
-  readonly kind: 'page' | 'islands';
-  readonly note?: string;
-}
-
-export function readCorpus(): readonly CorpusEntry[] {
-  const file = new URL('../corpus.json', import.meta.url);
-  const parsed = JSON.parse(readFileSync(file, 'utf8')) as { modules: CorpusEntry[] };
-  if (!Array.isArray(parsed.modules) || parsed.modules.length === 0) throw new Error(`${file.pathname}: no modules`);
-  return parsed.modules;
-}
+export { readCorpus, type CorpusEntry } from './suite.mts';
 
 export interface RenderBothOptions {
   readonly module: string;
   readonly index: number;
   readonly seed: string;
   readonly engine: Engine;
+  /** Force the low-level walker path instead of the typed one. */
+  readonly lowLevel?: boolean;
   /** A browser to reuse across calls; without one, renderBoth launches its own and closes it. */
   readonly browser?: Browser;
   /**
-   * Test seam, never set by the CLI: rewrites the walker's HTML before the browser parses it,
+   * Test seam, never set by the CLI: rewrites the server's document before the browser parses it,
    * standing in for a seeded walker change (the ticket's acceptance test: a walker change that
    * alters one attribute's text fails P1 naming the fixture, the state and the node).
    */
   readonly alterServerHtml?: (html: string) => string;
 }
 
-/** The low-level path's state: object 0's fields by name, which is how the walker's slot table names declared roots. */
-function slotJson(state: Json): Json {
-  return state;
-}
-
-export async function renderBoth(options: RenderBothOptions): Promise<Report> {
+/** Every report of one module at one state: P1, then P2 when the page has islands. */
+export async function renderBothReports(options: RenderBothOptions): Promise<Report[]> {
   const corpus = readCorpus();
   const entry = corpus.find(module => module.name === options.module);
   if (!entry) throw new Error(`corpus.json has no module ${options.module}; modules: ${corpus.map(module => module.name).join(', ')}`);
-  const ir = resolve(REPO, entry.ir);
-  const described = describeModule(ir);
-  const state = generate(described.schema, options.seed, options.index, { module: entry.name });
-  const base = { module: entry.name, seed: options.seed, index: options.index, check: 'P1' as const, serverPath: 'low-level' as const, state };
-  const [rendered] = renderStates(ir, [slotJson(state)]);
-  if (!rendered) throw new Error('parity_render returned no entry');
-  if ('error' in rendered) {
-    return makeReport({ ...base, verdict: 'server-refused', refusal: { code: 'WALK', message: rendered.error, path: rendered.componentPath?.join(' > ') } }, null);
-  }
-  const html = options.alterServerHtml ? options.alterServerHtml(rendered.html) : rendered.html;
+  const plan = await prepare(entry, { seed: options.seed, states: options.index + 1, indices: [options.index] });
+  if (!plan.indices.length) throw new Error(`${entry.name} declares no page props: its one state is 0`);
   const browser = options.browser ?? await launch(options.engine);
+  const timings: Timings = { prepare: 0, launch: 0, server: 0, browser: 0 };
   try {
-    const bundle = await bundlePage(entry.page);
-    const both = await renderInBrowser({ browser, component: entry.page, bundle, html, state: rendered.state, props: state, schema: described.schema });
-    // The two containers are the harness's own; the page's nodes are their children, compared
-    // under one neutral root so paths read `page > section:nth-child(1) > …`.
-    const asPage = (tree: CanonNode): CanonNode => (tree.kind === 'element' ? { ...tree, tag: 'page', attrs: {} } : tree);
-    const server = stripTransport(asPage(both.served), 'page');
-    const client = stripTransport(asPage(both.twin), 'page');
-    const comparison = compareTrees(server.tree, client.tree);
-    const report = makeReport({ ...base, server: { tree: server.tree, html, keys: server.keys }, client: { tree: client.tree } }, comparison);
-    if (both.pageErrors.length || both.consoleErrors.length) {
-      return { ...report, verdict: 'error', error: `page errors: ${[...both.pageErrors, ...both.consoleErrors].join('; ')}` };
-    }
-    return report;
+    return await check([plan], {
+      seed: options.seed, states: options.index + 1, indices: [options.index], browser,
+      ...(options.lowLevel ? { lowLevel: true } : {}),
+      ...(options.alterServerHtml ? { alterServerHtml: options.alterServerHtml } : {}),
+    }, timings);
   } finally {
     if (!options.browser) await browser.close();
   }
+}
+
+/** The P1 report of one module at one state. */
+export async function renderBoth(options: RenderBothOptions): Promise<Report> {
+  const reports = await renderBothReports(options);
+  const p1 = reports.find(report => report.check === 'P1');
+  if (!p1) throw new Error(`${options.module}#${options.index}: no P1 report`);
+  return p1;
 }
 
 async function main(): Promise<number> {
@@ -99,28 +73,30 @@ async function main(): Promise<number> {
       state: { type: 'string', default: '0' },
       seed: { type: 'string', default: 'forma-183' },
       engine: { type: 'string', default: 'chromium' },
+      'low-level': { type: 'boolean', default: false },
       json: { type: 'boolean', default: false },
       'emit-vector': { type: 'string' },
     },
   });
   if (!values.module) {
-    process.stderr.write(`usage: render-both --module <name> [--state n] [--seed s] [--engine chromium|firefox|webkit] [--json] [--emit-vector file]\nmodules: ${readCorpus().map(m => m.name).join(', ')}\n`);
+    process.stderr.write(`usage: render-both --module <name> [--state n] [--seed s] [--engine chromium|firefox|webkit] [--low-level] [--json] [--emit-vector file]\nmodules: ${readCorpus().map(m => m.name).join(', ')}\n`);
     return 2;
   }
   const engine = values.engine as Engine;
   if (!['chromium', 'firefox', 'webkit'].includes(engine)) throw new Error(`unknown engine ${engine}`);
-  const started = performance.now();
   const index = Number(values.state);
   if (!Number.isInteger(index) || index < 0) throw new Error(`--state must be a non-negative integer, got ${values.state}`);
-  const report = await renderBoth({ module: values.module, index, seed: values.seed!, engine });
+  const started = performance.now();
+  const reports = await renderBothReports({ module: values.module, index, seed: values.seed!, engine, lowLevel: values['low-level']! });
   const elapsed = Math.round(performance.now() - started);
-  process.stdout.write(`${summarize(report)} [${elapsed} ms]\n`);
-  if (values.json) process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  for (const report of reports) process.stdout.write(`${summarize(report)} (${report.serverPath ?? 'no'} server path) [${elapsed} ms]\n`);
+  if (values.json) process.stdout.write(`${JSON.stringify(reports, null, 2)}\n`);
   if (values['emit-vector']) {
-    writeFileSync(values['emit-vector'], `${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(values['emit-vector'], `${JSON.stringify(reports, null, 2)}\n`);
     process.stdout.write(`vector written to ${values['emit-vector']}\n`);
   }
-  return report.verdict === 'equal' ? 0 : report.verdict === 'different' ? 1 : 2;
+  if (reports.every(report => report.verdict === 'equal')) return 0;
+  return reports.some(report => report.verdict === 'error' || report.verdict === 'server-refused') ? 2 : 1;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

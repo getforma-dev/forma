@@ -133,13 +133,18 @@ export const DATE_EDGES: readonly number[] = [0, -1, 1, 8.64e15, -8.64e15, 1_792
 
 export const ARRAY_LENGTH_EDGES: readonly number[] = [0, 1, 2, 3, 32];
 
-/** Values the typed API must refuse (not parity cases: the typed path's refusal table, FORMA-183's second slice). */
-export const REFUSALS: readonly { readonly type: SchemaType['kind']; readonly value: number; readonly code: string }[] = [
-  { type: 'number', value: Number.NaN, code: 'RENDER-402' },
-  { type: 'number', value: Number.POSITIVE_INFINITY, code: 'RENDER-402' },
-  { type: 'number', value: Number.NEGATIVE_INFINITY, code: 'RENDER-402' },
+/**
+ * Values the typed API must refuse, in wire form (JSON carries no NaN or infinity, so those travel
+ * as `{"$number": ...}`, which the server harness's `DynProps` reads): not parity cases, but the
+ * table that checks the typed path refuses each with its code, at the value's declared path.
+ */
+export const REFUSALS: readonly { readonly type: 'number' | 'date'; readonly value: Json; readonly code: string }[] = [
+  { type: 'number', value: { $number: 'NaN' }, code: 'RENDER-402' },
+  { type: 'number', value: { $number: 'Infinity' }, code: 'RENDER-402' },
+  { type: 'number', value: { $number: '-Infinity' }, code: 'RENDER-402' },
   { type: 'date', value: 8.64e15 + 1, code: 'RENDER-403' },
   { type: 'date', value: -8.64e15 - 1, code: 'RENDER-403' },
+  { type: 'date', value: { $number: 'NaN' }, code: 'RENDER-403' },
 ];
 
 // ---------------------------------------------------------------------------

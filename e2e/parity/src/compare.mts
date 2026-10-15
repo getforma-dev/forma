@@ -45,10 +45,20 @@ export interface Stripped {
   readonly keys: Readonly<Record<string, string>>;
 }
 
-/** A CSS-like path from the compared root: `tag:nth-child(n)` per level, `#text` / `#comment` leaves. */
+/**
+ * A CSS path from the compared root: `tag:nth-child(n)` per level, where `n` counts element
+ * siblings only, as CSS does (so the path selects the node in DevTools whatever text or comments
+ * precede it, and removing transport comments never changes it); `#text` / `#comment` leaves.
+ */
 function childPath(parent: string, node: CanonNode, position: number): string {
   const step = node.kind === 'element' ? `${node.tag}:nth-child(${position})` : node.kind === 'text' ? '#text' : '#comment';
   return parent ? `${parent} > ${step}` : step;
+}
+
+/** Each child's position among its element siblings (1-based); 0 for a text or comment. */
+function positions(children: readonly CanonNode[]): number[] {
+  let elements = 0;
+  return children.map(child => (child.kind === 'element' ? ++elements : 0));
 }
 
 export function stripTransport(root: CanonNode, rootPath = ''): Stripped {
@@ -95,7 +105,8 @@ export function stripTransport(root: CanonNode, rootPath = ''): Stripped {
       }
       joined.push(child);
     }
-    const children = joined.map((child, index) => strip(child, childPath(path, child, index + 1)));
+    const at = positions(joined);
+    const children = joined.map((child, index) => strip(child, childPath(path, child, at[index]!)));
     return { kind: 'element', ns: node.ns, tag: node.tag, attrs, children };
   };
   const tree = strip(root, rootPath || (root.kind === 'element' ? root.tag : ''));
@@ -108,7 +119,9 @@ export function stripTransport(root: CanonNode, rootPath = ''): Stripped {
 
 export type DiffKind =
   | 'tag' | 'namespace' | 'attribute-missing' | 'attribute-extra' | 'missing' | 'extra'
-  | 'attribute-value' | 'text' | 'comment' | 'key';
+  | 'attribute-value' | 'text' | 'comment' | 'key'
+  // P2: a mutation record during activation, and an activation error (console or forma:error).
+  | 'mutation' | 'activation-error';
 /** A difference in what nodes exist; the stop rule (e2e/parity/README.md, 'The stop rule') counts these. */
 export const STRUCTURAL_KINDS: ReadonlySet<DiffKind> = new Set(['tag', 'namespace', 'attribute-missing', 'attribute-extra', 'missing', 'extra']);
 
@@ -164,22 +177,23 @@ export function compareTrees(server: CanonNode, client: CanonNode, options: Comp
     }
     // Two cursors: a text present on one side only is a text-versus-empty value difference,
     // not a structural one, and the cursors stay aligned on the elements around it.
+    const ap = positions(a.children), ep = positions(e.children);
     let i = 0, j = 0;
     while (i < a.children.length || j < e.children.length) {
       const sc = a.children[i], cc = e.children[j];
       if (sc && sc.kind === 'text' && (!cc || cc.kind !== 'text')) {
-        differences.push({ kind: 'text', path: childPath(path, sc, i + 1), server: sc.text, client: '' });
+        differences.push({ kind: 'text', path: childPath(path, sc, ap[i]!), server: sc.text, client: '' });
         i++;
         continue;
       }
       if (cc && cc.kind === 'text' && (!sc || sc.kind !== 'text')) {
-        differences.push({ kind: 'text', path: childPath(path, cc, j + 1), server: '', client: cc.text });
+        differences.push({ kind: 'text', path: childPath(path, cc, ep[j]!), server: '', client: cc.text });
         j++;
         continue;
       }
-      if (sc && cc) walk(sc, cc, childPath(path, sc, i + 1));
-      else if (sc) differences.push({ kind: 'missing', path: childPath(path, sc, i + 1), server: summary(sc) });
-      else if (cc) differences.push({ kind: 'extra', path: childPath(path, cc, j + 1), client: summary(cc) });
+      if (sc && cc) walk(sc, cc, childPath(path, sc, ap[i]!));
+      else if (sc) differences.push({ kind: 'missing', path: childPath(path, sc, ap[i]!), server: summary(sc) });
+      else if (cc) differences.push({ kind: 'extra', path: childPath(path, cc, ep[j]!), client: summary(cc) });
       i++;
       j++;
     }
@@ -228,6 +242,12 @@ export interface Report {
   readonly refusal?: { readonly code: string; readonly path?: string; readonly message?: string };
   readonly error?: string;
   readonly state?: unknown;
+  /** P2: island hosts on the page, and how many hold core's disposer after activation. */
+  readonly activation?: { readonly hosts: number; readonly activated: number };
+  /** The typed path's bind or load refusals, when the low-level path rendered in its place. */
+  readonly bind?: readonly { readonly code: string; readonly path: string; readonly message: string }[];
+  /** P1, when not equal: the compiler's diagnostics for the module's page, which often explain a difference. */
+  readonly compiler?: readonly string[];
 }
 
 export function makeReport(
@@ -260,7 +280,7 @@ export function summarize(report: Report): string {
   if (report.verdict === 'server-refused') return `${head}: ${report.refusal?.code ?? '?'} at ${report.refusal?.path ?? '?'}`;
   if (report.verdict === 'error') return `${head}: ${report.error ?? '?'}`;
   const first = report.first;
-  if (!first) return head;
+  if (!first) return report.error ? `${head}: ${report.error}` : head;
   return `${head}: ${first.kind} at ${first.path} server=${short(first.server)} client=${short(first.client)}` +
     ` (${report.count} difference${report.count === 1 ? '' : 's'}, ${report.structural} structural)`;
 }

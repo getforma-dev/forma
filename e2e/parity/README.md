@@ -4,38 +4,75 @@ One tree, three implementations: the Rust walker writes HTML, `h()` in `@getform
 DOM, strict adoption compares them. This lane keeps them equal by test: for every corpus module
 and generated state, the server's HTML parsed by a real browser against core's render of the same
 state (P1), adoption making zero mutation records (P2), a transition equal to a fresh server
-render (P3). It lands non-blocking and is ratcheted up; this file says what is here now and the
-rules it runs by.
+render (P3, not yet). It runs non-blocking in CI and is ratcheted up; this file says what is here
+now and the rules it runs by.
 
-## What is here (first slice)
+## What is here
 
 | File | What |
 |---|---|
-| `src/generate.mts` | A props schema (FMIR section `0x0005`, the closed set) and a seed give a state, deterministically, edge-first: `generate(schema, seed, index)`. |
+| `src/generate.mts` | A props schema (FMIR section `0x0005`, the closed set) and a seed give a state, deterministically, edge-first: `generate(schema, seed, index)`. Also the typed path's refusal table. |
 | `src/compare.mts` | The canonical tree, `stripTransport`, `compareTrees`, the structural class, the report and its one-line summary. |
 | `src/dom-canon.mts` | The browser-side serializer, evaluated in the page. |
-| `src/server.mts` | Drives `crates/forma-server/examples/parity_render.rs`: `describe` (the module's schema, islands and slots) and `render` (states through the real walker). |
-| `src/browser.mts` | Chromium (Firefox, WebKit by flag): the served page under a strict script policy with Trusted Types enforced, core's twin built in the same Document, both trees serialized. No port is opened: every URL is fulfilled by `page.route`. |
-| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state through both sides, the P1 report. Forma-internal; FORMA-184 owns the public form. |
+| `src/server.mts` | Drives `crates/forma-server/examples/parity_render.rs` (built once by cargo, then run directly): `describe`, the low-level `render`, and `typed`, the application's path for a batch of modules. |
+| `src/manifest.mts` | A schema-2 manifest around one module, with the boot as the route's script and SHA-384 integrity for both. |
+| `src/bundle.mts` | The twin (the page function) and the production entry (`app.ts` through the compiler's `formaSsrPlugin`, as `@getforma/build` builds a page); the entry's `.ir` must be the committed module. |
+| `src/boot.mts` | The one script the served document loads: serializes the served root, runs P2, renders and serializes the twin. |
+| `src/browser.mts` | One Chromium page, a fresh Document per state, every URL fulfilled by `page.route` (no port). |
+| `src/suite.mts` | The pipeline: prepare, serve, browse, report. |
+| `src/expected.mts`, `expected-divergent.json` | Known divergences as data, and the unexpected-pass rule. |
+| `src/run.mts` | The suite over the corpus: totals, structural classes, wall time by phase, the verdict. |
+| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 owns the public form. |
 | `corpus.json` | Step 0: the 14 js-emitter modules. |
-| `tests/` | `node --test`: the generator and the comparison on hand-written pairs; the serializer against Chromium's parser; the server half over committed modules; `renderBoth` end to end, including a walker output with one attribute altered, which must fail P1 naming the module, the state and the node. |
+| `tests/` | `node --test`: the generator, the comparison and the expected list on hand-written cases; the serializer against Chromium's parser; the server half, including the typed path and its refusal table; `renderBoth` and the suite end to end, including seeded server changes that P1 and P2 must report. |
 
 ## Run
 
 ```bash
-# what scripts/check.sh runs (needs `npm run build`, cargo and Playwright's Chromium)
+# the harness's own tests, as scripts/check.sh runs them (needs `npm run build`, cargo and
+# Playwright's Chromium)
 npx tsc --noEmit -p e2e/parity
 node --test "e2e/parity/tests/*.test.mts"
 
-# one module at one state; exit 0 equal, 1 different, 2 refused or harness error
-node e2e/parity/src/render-both.mts --module nested-islands --state 3
-node e2e/parity/src/render-both.mts --module create-show --json
-node e2e/parity/src/render-both.mts --module nested-islands --state 3 --emit-vector /tmp/v.json
+# the suite over the corpus, as CI's non-blocking `parity` job runs it; exit 0 when every
+# difference is expected and every expected difference occurred
+node e2e/parity/src/run.mts [--states 10] [--seed forma-183] [--module nested-islands ...]
+                            [--engine chromium|firefox|webkit] [--low-level] [--report out.jsonl]
+
+# one module at one state: P1, and P2 for a page with islands; exit 0 equal, 1 different,
+# 2 refused or harness error
+node e2e/parity/src/render-both.mts --module nested-islands --state 3 [--json] [--emit-vector v.json]
 ```
 
 The `.mts` files run directly on Node 24 (`.node-version`) by type stripping; `scripts/check.sh`
-refuses a Node without it rather than skipping the step. `CARGO_TARGET_DIR` is honoured for the
-Rust side.
+refuses a Node without it rather than skipping the step. `CARGO_TARGET_DIR` is honoured.
+
+## One state, end to end
+
+1. **Prepare.** `parity_render describe` gives the module's declared schema; `generate` gives the
+   state. The twin bundle is the page function; the production entry is the module's `app.ts`
+   through `formaSsrPlugin`, whose evaluation is `activateIslands` with the compiled registrations
+   (`__islandRegistration(component, {h, schema, mode})`). Its `.ir` must equal the committed
+   module, or the module is an error: the browser entry and the served module would not be a pair.
+2. **Serve.** `parity_render typed` loads a synthesized manifest through `load_ir_modules`, binds
+   `DynProps` (a harness `PageProps` whose Rust schema is the module's own, and whose value is the
+   state projected by the declared types with a derived struct's codes: `RENDER-402` a non-finite
+   number, `RENDER-403` a date out of range, `RENDER-404` a wrong kind, a missing value or an
+   undeclared enum literal), finalizes and renders each state. The result is the server's own
+   document and headers: its nonce, `strict-dynamic` and Trusted Types policy, and the boot as the
+   route's integrity-checked module. A module the typed path refuses (a load or bind code) is
+   rendered by the walker alone (`SlotData::from_json` + `walk_to_html_counted`) in a minimal
+   document with as strict a script policy, and its reports say `serverPath: low-level` and why.
+3. **Browse.** The boot serializes the served root (`[data-forma-ssr]`) before any script touches
+   it; for a page with islands it arms a MutationObserver over that root, imports the production
+   entry, drains records through a microtask and a macrotask, and checks the observer catches one
+   deliberate write (the positive control); then it renders core's twin in a fresh host. Console
+   errors, uncaught errors and policy violations are recorded with the step they happened in.
+4. **Report.** P1 compares the two trees (below). P2 is equal when activation made no mutation
+   record, dispatched no `forma:error` and logged no error, and every island host holds core's
+   disposer afterwards (zero records over hosts that never activated would prove nothing). A P2
+   difference names the record (`mutation` at its DOM path, old and new value) or the activation
+   error (`FORMA_E_HYDRATE_VALUE` at `/node[0]/node[3]`).
 
 ## Generated states
 
@@ -53,9 +90,9 @@ A generated state is one value assignment for a declared props schema (FORMA-102
   (`crates/forma-ir/tests/fixtures/parity/normalization.json`: a vector added there joins the
   domain without a code change). Numbers: `0`, `-0`, `±1`, `±(2^53 - 1)`, `2^53`, `1e21`, `1e-7`,
   fractions, `MAX_VALUE`, the subnormal; never NaN or an infinity (the server refuses them, and a
-  refusal is not a parity case). Dates: epoch `0`, `±1`, `±8.64e15`, a fixed 2026 instant.
-  Booleans alternate; enums take every variant in order; optionals are present on even states and
-  absent on odd; arrays take lengths 0, 1, 2, 3 and 32 first.
+  refusal is not a parity case; they are in the refusal table). Dates: epoch `0`, `±1`,
+  `±8.64e15`, a fixed 2026 instant. Booleans alternate; enums take every variant in order;
+  optionals are present on even states and absent on odd; arrays take lengths 0, 1, 2, 3 and 32.
 - **Wire JSON.** An absent optional field is an omitted key, an absent optional element is `null`,
   a date is epoch milliseconds; the browser side revives dates by the schema.
 
@@ -71,18 +108,31 @@ nothing itself (rule 1 is the writers' job on both sides). A `<template>`'s iner
 compared under a `#content` pseudo-child, so a template filled live differs from a parsed one.
 
 A difference names its kind (`tag`, `namespace`, `attribute-missing`, `attribute-extra`,
-`missing`, `extra` are structural; `attribute-value`, `text`, `comment`, `key` are values), its
-path from the compared root (`page > main:nth-child(1) > div:nth-child(1) > span:nth-child(2)[title]`,
-what a developer pastes into DevTools) and both values. The report carries the module, the seed,
-the state index, the verdict (`equal`, `different`, `expected-divergent`, `server-refused`,
-`error`), the first difference, the counts, both canonical trees and the server's HTML. A page
-error or console error during the render is an `error`, never a pass.
+`missing`, `extra` are structural; `attribute-value`, `text`, `comment`, `key` are values; P2 adds
+`mutation` and `activation-error`), its path from the compared root
+(`page > main:nth-child(1) > div:nth-child(1) > span:nth-child(2)[title]`, where `nth-child`
+counts element siblings as CSS does, so the path selects the node in DevTools) and both values.
+The report carries the module, the seed, the state index, the verdict (`equal`, `different`,
+`expected-divergent`, `server-refused`, `error`), the server path, the first difference, the
+counts, both canonical trees, the server's document and, when P1 is not equal, the compiler's
+diagnostics for the page (BUILD-206 often explains an attribute the server omits). A page error,
+console error or policy violation during the render is an `error`, never a pass.
+
+## Expected divergence
+
+`expected-divergent.json` lists the divergences known today, each with the ticket that clears it
+(FORMA-181 checkpoint B and FORMA-182 rules 2 to 7 add theirs as they land) or, for a divergence
+the harness found that has no ticket yet, `finding F<n>`. An entry matches by module, state (or
+`*`), check, kind and, when given, path and a pattern over both values (or over the error). A
+report is `expected-divergent` only when every difference in it is matched. The harness never
+skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
+run as an unexpected pass, so the entry is removed the day its fix lands.
 
 ## The corpus and its ratchet
 
 | Step | Modules | States each | When |
 |---|---|---|---|
-| 0 | the 14 js-emitter modules | 10 for `nested-islands`, the one module with declared page props; 1 for the other 13 (their source state) | this ticket, non-blocking |
+| 0 | the 14 js-emitter modules | 10 for `nested-islands`, the one module with declared page props; 1 for the other 13 (their source state) | now, non-blocking |
 | 1 | + the props-contract page (nine fields, every type) and the 11 island-emitter fixtures | 10 | before the switch to blocking |
 | 2 | the same | 100 | after the switch, measured |
 | 3 | + FORMA-188's fixture applications and consumer-shaped pages, as they land (nothing is copied out of an application repository: L-54, DR-34) | 100 | FORMA-188 |
@@ -93,17 +143,23 @@ props are rendered at their source state on both sides, not "generated". Each st
 count, states per module, measured wall time, P1/P2/P3 counts and expected-divergent entries are
 recorded in the ticket, and the step in force at a release in its GitHub Release.
 
+**Step 0, 2026-10-15:** 14 modules, 23 states; P1 19 equal and 4 expected-divergent (findings F1
+to F4), P2 14 equal over the 5 island pages (every host activated, zero records); 2 structural
+classes (both in `dynamic-attrs`); about 3 s of harness time on a laptop once the builds exist.
+
 ## The stop rule
 
 A **structural class** is the set of structural differences sharing (module, path without its
-`:nth-child` positions, kind): a hundred states dropping the same element are one class. Once
-FORMA-182's rules 2 to 7, FORMA-181's checkpoints B and C and the first walker and core fixes from
-this harness have landed, more than **five** structural classes on step 1's corpus sends DR-9's
-deferred template cloning to the founder as a decision rather than being absorbed; at five or
-fewer, each class is a ticket against the walker or core.
+`:nth-child` positions, kind): a hundred states dropping the same element are one class. Every
+run prints the classes over all P1 differences, expected or not. Once FORMA-182's rules 2 to 7,
+FORMA-181's checkpoints B and C and the first walker and core fixes from this harness have landed,
+more than **five** structural classes on step 1's corpus sends DR-9's deferred template cloning to
+the founder as a decision rather than being absorbed; at five or fewer, each class is a ticket
+against the walker or core.
 
 ## Not here yet
 
-The typed server path (`Pages::bind` with a harness `PageProps` built from the module's own
-schema) and the manifest it needs, P2 and P3, the suite over the corpus (`run.mts`),
-`expected-divergent.json`, the non-blocking CI job and the measured time.
+P3 (a transition through a module-exported setter named in `corpus.json`; modules without one
+report `P3: no-setter`), the key check against the expected key text (with FORMA-181 checkpoint
+B), step 1 of the corpus, `--engine` runs in Firefox and WebKit per release, the ratchet to 100
+states, and the switch to blocking.
