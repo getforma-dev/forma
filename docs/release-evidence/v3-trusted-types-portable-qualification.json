@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "sourceCommit": "2110f01b745b2caea767b277fad39c486fce7aad",
+  "recordedAt": "2026-10-15T03:57:06.623349+00:00",
+  "liveReleaseReady": false,
+  "supersedes": "v3-trusted-types-qualification.json for current source only; all original archives and reports remain unchanged",
+  "change": {
+    "commit": "153972defd480cd6821aa3fbb6d16294550b902f",
+    "description": "Private behavior-preserving date-duration conversion extraction, unconditional signed numeric bounds tests and checked construction of platform SystemTime in the typed Pages test. A Windows fixture panic exposed that the operating system cannot represent the old out-of-range timestamp.",
+    "independentReviewPassed": true,
+    "localFocusedTests": {
+      "privateDateConversion": 1,
+      "typedPages": 7
+    },
+    "priorFailureLog": "ci-38678153954-windows-rust.log"
+  },
+  "priorQualification": "v3-trusted-types-qualification.json records the complete 159-second gate and all FORMA-109 native/browser/type/size checks; no FORMA-109 production behavior changed in this follow-up.",
+  "packed": {
+    "passed": true,
+    "tests": 22,
+    "seconds": 59.826,
+    "artifacts": 7,
+    "templates": 2,
+    "restoredSourceFiles": 10,
+    "ds11RecordSha256": "b60a13fcbaa6e8b3eae448a64726e4efb0dd25b34a6f0bf51908e6dbc9eccd14",
+    "policyObservations": [
+      {
+        "name": "minimal: served policy and zero CSP violations during positive browser interaction",
+        "passed": true,
+        "trustedTypesContract": "enforced-v1",
+        "servedPolicy": "default-src 'none'; script-src 'nonce-2ANzxwC+PKC39Fb6TtdhHtUxhJRqSrsEkz0ZHxaq2bg=' 'strict-dynamic' 'self'; style-src 'nonce-2ANzxwC+PKC39Fb6TtdhHtUxhJRqSrsEkz0ZHxaq2bg=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "browserPolicy": "default-src 'none'; script-src 'nonce-hS4PpFYwqsH4XX++G2EXsSkrKLMXgg3OKKyi4lFdngw=' 'strict-dynamic' 'self'; style-src 'nonce-hS4PpFYwqsH4XX++G2EXsSkrKLMXgg3OKKyi4lFdngw=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "nativeTrustedTypes": true,
+        "violations": [],
+        "pageErrors": []
+      },
+      {
+        "name": "dashboard: served policy and zero CSP violations during positive browser interaction",
+        "passed": true,
+        "trustedTypesContract": "enforced-v1",
+        "servedPolicy": "default-src 'none'; script-src 'nonce-8G2fTR9ej1UgYoXkf9F5G68InvKVZ2LHNHhK9H1J5Fk=' 'strict-dynamic' 'self'; style-src 'nonce-8G2fTR9ej1UgYoXkf9F5G68InvKVZ2LHNHhK9H1J5Fk=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "browserPolicy": "default-src 'none'; script-src 'nonce-4lHknNcDTOKkHxvYrIY5KcHKpK5+5k5HayUqmhToLO8=' 'strict-dynamic' 'self'; style-src 'nonce-4lHknNcDTOKkHxvYrIY5KcHKpK5+5k5HayUqmhToLO8=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "nativeTrustedTypes": true,
+        "violations": [],
+        "pageErrors": []
+      }
+    ]
+  },
+  "contracts": {
+    "stage": "v3-development",
+    "fmir": 3,
+    "manifest": 2,
+    "props": "declared-v1",
+    "stateBlock": null,
+    "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+    "liveReleaseReady": false,
+    "pending": {
+      "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+      "FORMA-144": "both templates use the milestone's API",
+      "FORMA-188": "fixture applications and skew drill",
+      "FORMA-191": "release measurements"
+    },
+    "trustedTypes": "enforced-v1"
+  },
+  "logSha256": {
+    "portable-date-private.log": "4f0e2bdbebf467824b7e72b3f46b0f7de20c26382cd1bd3535a468b037eea209",
+    "portable-date-typed-pages.log": "143b5c21a60b3cd9c146580b9f5ef582417876ea1dea9aa39edb2a36cbed7902",
+    "pack-trusted-types-4.log": "c563a86c73483bae99f8cc81c413805d52cbb05a778fea42119ea50c20ed8299",
+    "p17-trusted-types-4.log": "32169ff0e5da9df422a1211cc5360d6c71ff97cbbe3d4dc7ff2dc83ddf82f2c7",
+    "ci-38678153954-windows-rust.log": "79bf686a7a6754cd6c862e41ff81b34a13e3f51e402107622c9cd8e97e313c5f"
+  },
+  "remaining": "Final documentation ancestry and exact-head hosted CI are separate from this exact production artifact source. No tag, publication or application migration."
+}

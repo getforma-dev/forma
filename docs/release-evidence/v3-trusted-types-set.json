@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "dryRun": true,
+  "tag": "v3-development-dry-run",
+  "commit": "1c032095ec072ea8cd41f3b604cd6892024aa048",
+  "run": null,
+  "toolchain": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+  "node": "v24.22.0",
+  "npm": "11.19.1",
+  "contracts": {
+    "stage": "v3-development",
+    "fmir": 3,
+    "manifest": 2,
+    "props": "declared-v1",
+    "stateBlock": null,
+    "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+    "liveReleaseReady": false,
+    "pending": {
+      "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+      "FORMA-144": "both templates use the milestone's API",
+      "FORMA-188": "fixture applications and skew drill",
+      "FORMA-191": "release measurements"
+    },
+    "trustedTypes": "enforced-v1"
+  },
+  "packages": [
+    {
+      "registry": "crates",
+      "name": "forma-ir",
+      "version": "3.0.0-dev",
+      "path": "crates/forma-ir",
+      "file": "forma-ir-3.0.0-dev.crate",
+      "sha256": "df85b536eb08152d4d9c6a9e9d55b5da23c0d9dd030fddba49e93e24face2319"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-ir-derive",
+      "version": "3.0.0-dev",
+      "path": "crates/forma-ir-derive",
+      "file": "forma-ir-derive-3.0.0-dev.crate",
+      "sha256": "b93f88bceff1e3bb206604ebce7956c91ef1a421a42acbae719bd63576a2d3b9"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-server",
+      "version": "3.0.0-dev",
+      "path": "crates/forma-server",
+      "file": "forma-server-3.0.0-dev.crate",
+      "sha256": "936afc3198ce46c8978f6192993e1107a756ca559b9d638f15f2b34365c13187"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/core",
+      "version": "3.0.0-dev",
+      "path": "packages/core",
+      "file": "getforma-core-3.0.0-dev.tgz",
+      "sha256": "7c472492835f67ba319c49f317fef80bb05d52906c4d4b19264187d701f60867"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/compiler",
+      "version": "3.0.0-dev",
+      "path": "packages/compiler",
+      "file": "getforma-compiler-3.0.0-dev.tgz",
+      "sha256": "2b8f4b0e6542875b6d280e2194e5abf9780508239fd88a564997c1a2f00b62e0"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/build",
+      "version": "3.0.0-dev",
+      "path": "packages/build",
+      "file": "getforma-build-3.0.0-dev.tgz",
+      "sha256": "f422f178d38a920765322e7f123cce44fa20829fa2f41baf4507050762d975ed"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/create-app",
+      "version": "3.0.0-dev",
+      "path": "packages/create-app",
+      "file": "getforma-create-app-3.0.0-dev.tgz",
+      "sha256": "0c607362ab28ba616b966efa84e09d2323dc8692f9c54c2d0b94eda879fb858f"
+    }
+  ]
+}
