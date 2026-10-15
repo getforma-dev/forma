@@ -1,3 +1,4 @@
+import type {ListProof,ListSite} from './list-proof';
 import {closedBinding,closedSlot,closedHint,closedListRows,emitClosedText,type ClosedEnvironment,type ClosedRows} from './closed-bindings';
 /**
  * Forma Compiler - IR Walk Engine
@@ -593,6 +594,10 @@ export interface WalkContext {
    *  carry the resolved component's own path so a warning points at the file
    *  the author has to edit, not the page that included it. */
   sourceFile?: string;
+  /** Original lexical LIST site retained through JSX lowering; `prove()` runs after the
+   *  legacy BUILD-107 shape checks. Absent (undefined) only in low-level callers that walk
+   *  without original source; the SSR plugin always supplies it. */
+  listProof?: (file:string,node:t.CallExpression)=>ListSite|undefined;
   /** Resolve a sub-component call to its source file and function name.
    *
    *  `fromFile` is the file the CALL appears in, and the resolver must read
@@ -1286,12 +1291,17 @@ export function walkCallExpression(
     return;
   }
 
+  // Original identity also handles imported core aliases after JSX lowering.
+  // Resolving the site does not prove it: the proof runs inside emitCreateList
+  // after the legacy BUILD-107 shape checks.
+  const listSite=walkCtx.listProof?.(walkCtx.sourceFile!,node);
   // Check if this is a createList call
   if (
+    listSite ||
     t.isIdentifier(node.callee)
     && node.callee.name === 'createList'
   ) {
-    emitCreateList(node, hName, ctx, walkCtx);
+    emitCreateList(node, hName, ctx, walkCtx, listSite);
     return;
   }
 
@@ -2075,7 +2085,7 @@ function deriveBindingName(node: t.Node | null | undefined): string | null {
  *
  * Pattern: createList(dataSignal, keyFn, mapFn)
  *   dataSignal: identifier or arrow returning an array
- *   keyFn: (item) => string key — ignored for SSR
+ *   keyFn: (item) => item.path — proved in original source and carried in section6
  *   mapFn: (item) => h(...) — the template to render for each item
  *
  * Slot naming: each list derives a base name from its data source
@@ -2109,6 +2119,7 @@ function emitCreateList(
   hName: string,
   ctx: IrEmitContext,
   walkCtx: WalkContext,
+  site?: ListSite,
 ): void {
   /** Unsupported native list forms refuse the whole build. */
   const bailOut = (why: string, fix: string): void => {
@@ -2158,6 +2169,19 @@ function emitCreateList(
     return;
   }
 
+  // The legacy shape checks above keep their BUILD-107 precedence. A call of
+  // the old shape must then be an exact original core createList site whose
+  // key is a row property path (BUILD-612) and whose row returns one stable
+  // owned Element (BUILD-613); the proved path goes into section 6 below.
+  let proof: ListProof | undefined;
+  if (walkCtx.listProof) {
+    if (!site) {
+      const at=originalPosition(walkCtx.sourceFile!,node.loc?.start??{line:1,column:0});
+      throw new PropsSchemaError(walkCtx.sourceFile!,at.line,at.column,'LIST call has no exact original core identity','BUILD-612');
+    }
+    proof = site.prove();
+  }
+
   // Unique per-page base name for this list's slots (see doc comment above):
   // source-derived, else map-param-derived, else positional. Deduped on the
   // BASE, not on each slot name, so one list's three slots stay a matched set.
@@ -2199,6 +2223,8 @@ function emitCreateList(
     });
   }
 
+  // One metadata entry per emitted occurrence, including repeated helper sites.
+  if(proof)ctx.addKeyPath(ctx.opcodeLen(),proof.key);
   // Emit LIST header: opcode + array_slot + item_slot + body_len(placeholder)
   ctx.emit(OP_LIST);
   ctx.emitU16(arraySlotId);

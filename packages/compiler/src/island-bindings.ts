@@ -1,3 +1,4 @@
+import {createListProofs} from './list-proof';
 /** Resolve semantic binding identities from original component source, before JSX
  * lowering can round an integer literal or erase lexical/type information. */
 import { parse } from '@babel/parser';
@@ -71,6 +72,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
   const locals: LocalSignalIdentity[] = [];
   const adoption: AdoptionSources = { tuples: [], reads: [], children: [], conditionals: [], rows: [], modules: new Map() };
   let nextSignal = 0, nextRow = 0;
+  const listProofs=createListProofs(options.loadModule);
   const signalInitializers = new Map<number, BindingValue>();
   const activeFunctions = new Set<t.Node>(), activeValues = new Set<Binding>();
 
@@ -711,8 +713,12 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         records.push({ kind: 'show', value: expression(node.arguments[0], env), then: branch(node.arguments[1], env), else: branch(node.arguments[2], env) }); return;
       }
       if (core === 'createList') {
+        const site=listProofs.original(env.module.file,env.module.source,node);
         const [source, key, map] = node.arguments;
         if (!source || !key || !isFunction(key) || !isFunction(map) || !t.isIdentifier(key.params[0]) || !t.isIdentifier(map.params[0])) fail(env.module, node, 'createList needs named key and row callbacks');
+        // The legacy callback-shape refusal above keeps its precedence; the original
+        // key-path and row-root proof (BUILD-612/613) runs on a call of the old shape.
+        const proof=site.prove();
         const ordinal = nextRow++, nested = environment(env.module, env), keyEnv = environment(env.module, env);
         const rowBinding = binding(map.params[0], nested);
         nested.values.set(rowBinding, { kind: 'row', id: ordinal, path: [] });
@@ -720,6 +726,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         keyEnv.values.set(binding(key.params[0], keyEnv), { kind: 'row', id: ordinal, path: [] });
         const keyReturn = returnExpressionOf(key); if (!keyReturn) fail(env.module, key, 'list key has no return');
         const keyPath = expression(keyReturn, keyEnv); if (keyPath.kind !== 'row' || keyPath.id !== ordinal) fail(env.module, key, 'list key must be a literal row path');
+        if(keyPath.path.length!==proof.key.length||keyPath.path.some((part,i)=>part!==proof.key[i]))throw new PropsSchemaError(env.module.file,node.loc?.start.line??1,(node.loc?.start.column??0)+1,'original LIST path disagrees with canonical row binding','BUILD-612');
         const value = expression(source, env), body: BindingRecord[] = []; adoption.rows.push({id:ordinal,source:value}); functionBody(map, nested, body);
         records.push({ kind: 'list', value, key: keyPath.path, body }); return;
       }

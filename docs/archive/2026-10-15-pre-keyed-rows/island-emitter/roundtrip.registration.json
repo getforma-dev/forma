@@ -1,0 +1,72 @@
+{
+  "h": "bb9c723d6f192712",
+  "schema": [
+    [
+      {
+        "name": "date",
+        "type": {
+          "kind": "date"
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "string"
+        }
+      },
+      {
+        "name": "list",
+        "type": {
+          "kind": "array",
+          "element": {
+            "kind": "optional",
+            "inner": {
+              "kind": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "maybe",
+        "type": {
+          "kind": "optional",
+          "inner": {
+            "kind": "string"
+          }
+        }
+      },
+      {
+        "name": "mode",
+        "type": {
+          "kind": "enum",
+          "variants": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      {
+        "name": "nested",
+        "type": {
+          "kind": "object",
+          "object": 1
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "number"
+        }
+      }
+    ],
+    [
+      {
+        "name": "active",
+        "type": {
+          "kind": "boolean"
+        }
+      }
+    ]
+  ],
+  "mode": 0
+}

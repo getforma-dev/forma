@@ -22,6 +22,7 @@ it was wrong the first time.
 
 | File | Retired | Replacement and reason |
 |---|---|---|
+| [`2026-10-15-pre-keyed-rows/`](2026-10-15-pre-keyed-rows/) | 2026-10-15 | The native `island-emitter` fixtures, the `list-same-source` contract corpus outputs and the inline test sources from before FORMA-181 checkpoint A proved list key paths and emitted FMIR section `0x0006`. Four native binaries and one corpus case were regenerated with a before/after ledger; row-root conditionals and scalar keys became BUILD-613/BUILD-612 refusals, and the archived sources stay executable as refusal evidence. |
 | [`2026-10-15-declared-props/`](2026-10-15-declared-props/) | 2026-10-15 | Server guide and FMIR format before FORMA-102 replaced the lenient loader and caller-supplied slots with declared props and typed page handles. [`DECLARED-PROPS.md`](../DECLARED-PROPS.md) describes the current contract. |
 | [`2026-10-15-legacy-apis/`](2026-10-15-legacy-apis/) | 2026-10-15 | Compiler/build and crate guides, architecture and diagnostics before FORMA-110 removed the Vite plugins, Node RPC/SSR and WASM walker. The live guides describe the remaining native FMIR pipeline. |
 | [`2026-10-15-islands-only-e2e/`](2026-10-15-islands-only-e2e/) | 2026-10-15 | The SSR e2e lane before FORMA-105's entry contract: conditional entries, whole-page adoption by `mount()`, Phase 1 from the server route's bundle, activation observed as `data-forma-status="active"`. The live lane (`e2e/ssr/`, [`e2e/README.md`](../../e2e/README.md)) uses the one entry shape `BUILD-611` accepts, islands only, an explicit Browser route for Phase 1, and strict activation's contract. |
@@ -131,6 +132,7 @@ source and log are preserved in `work/FORMA-103/tmp/same-file-entry/` and
 the unchanged inline path. No historical FMIR fixture or report was replaced.
 
 - [Pre-state-contract corpus](2026-10-15-pre-state-contract-corpus/README.md): immutable compiler inputs, emitted bytes/dumps/HTML and native corpus at FORMA-103 wire start; old island modules become explicit refusal inputs.
+- [Pre-keyed-rows originals](2026-10-15-pre-keyed-rows/README.md): the native island-emitter directory, the list-same-source corpus outputs and the inline sources from before FORMA-181 checkpoint A, with the migration map and the regeneration ledger.
 ## FORMA-144 source-template migration — 2026-10-15
 
 [The slice 1 archive](2026-10-15-template-slice1/README.md) preserves the A2
