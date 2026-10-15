@@ -48,7 +48,9 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
-import { childPropsScope, emitPropText, listPropsScope, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { childPropsScope, islandPropsScope, emitPropText, listPropsScope, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { islandInputs } from './island-inputs';
+import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
 import {
   enterComponentScope,
@@ -539,6 +541,8 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
 export interface WalkContext {
   /** Declared page/child prop paths; independent from source variable names. */
   propsScope?: PropsScope;
+  islandRegistry?: IslandRegistry;
+  islandSchemas?: Map<string, number>;
   /** File-level constant arrays (for Rule 9 static unroll). */
   fileConstants?: Map<string, any[]>;
   /** Resolve a constant array the CURRENT module imports, for the same unroll.
@@ -767,9 +771,10 @@ function inlinedWalkContext(
   functionName: string,
   visited: Set<string>,
   link: DiagnosticChainLink,
+  declaredScope?: PropsScope,
 ): WalkContext {
   const constants = moduleConstantScope(sub.source, sub.filePath, walkCtx.loadModule);
-  const propsScope = childPropsScope(walkCtx.propsScope, sub.fn, sub.propsArg, sub.filePath);
+  const propsScope = declaredScope ?? childPropsScope(walkCtx.propsScope, sub.fn, sub.propsArg, sub.filePath, ctx);
   return {
     ...walkCtx,
     ...constants,
@@ -1286,6 +1291,39 @@ export function walkCallExpression(
   // Rule 10: Sub-component calls
   if (t.isIdentifier(node.callee)) {
     const componentName = node.callee.name;
+    const registered = !walkCtx.propsScope?.references.has(node.callee)
+      ? walkCtx.islandRegistry?.resolve(componentName, walkCtx.sourceFile!) : undefined;
+    if (registered) {
+      const analysis = registered.analyze();
+      const schemas = walkCtx.islandSchemas ??= new Map();
+      let schemaObject = schemas.get(registered.identity);
+      if (schemaObject === undefined) { schemaObject = ctx.appendPropsSchema(registered.declared.schema); schemas.set(registered.identity, schemaObject); }
+      const inputs = islandInputs(ctx, schemaObject, node.arguments[0], walkCtx.propsScope, walkCtx.sourceFile!, walkCtx.stringConstants,
+        name => lookupSignal(walkCtx.signalScope, name)?.default.default);
+      let sub: ResolvedSubComponent | null = null;
+      let scope: PropsScope | undefined;
+      if (registered.mode === 'ssr') {
+        const resolved = walkCtx.resolveComponent?.(componentName, walkCtx.sourceFile);
+        if (resolved) sub = resolveSubComponent(resolved.source, resolved.path ?? registered.file, resolved.functionName, node, walkCtx.loadModule, true);
+        if (!sub || !t.isCallExpression(sub.returnNode)) {
+          const at = originalPosition(walkCtx.sourceFile!, node.loc?.start ?? {line:1,column:0});
+          throw new PropsSchemaError(walkCtx.sourceFile!, at.line, at.column, `registered island ${registered.name} needs a native element/control-flow root; use browserOnly for a client-only body`);
+        }
+        scope = islandPropsScope(sub.fn, sub.filePath, ctx, schemaObject, inputs);
+      }
+      const id = ctx.addIsland(registered.name, 0x01, inputs, ctx.opcodeLen(), schemaObject);
+      ctx.setIslandContract(id, registered.mode, analysis.bindings);
+      ctx.emit(OP_ISLAND_START); ctx.emitU16(id);
+      if (sub) {
+        const visited = new Set(walkCtx.visited); visited.add(componentName);
+        walkCallExpression(sub.returnNode as t.CallExpression, hName, ctx,
+          inlinedWalkContext(walkCtx, ctx, sub, componentName, visited, chainLink(walkCtx,componentName,node), scope));
+      } else {
+        const div=ctx.addString('div');ctx.emit(OP_OPEN_TAG);ctx.emitU32(div);ctx.emitU16(0);ctx.emit(OP_CLOSE_TAG);ctx.emitU32(div);
+      }
+      ctx.emit(OP_ISLAND_END); ctx.emitU16(id);
+      return;
+    }
 
     /**
      * A component declared `const X = browserOnly(Impl)` (L-1): emitted as a
@@ -1304,7 +1342,7 @@ export function walkCallExpression(
     // This check must come before resolveComponent to prevent depth-0 inlining.
     // When resolvable, we walk the full component h() tree between ISLAND_START
     // and ISLAND_END so the Rust walker renders real SSR content inside islands.
-    if (walkCtx.islandNames?.has(componentName)) {
+    if (!walkCtx.islandRegistry && walkCtx.islandNames?.has(componentName)) {
       let reason = 'could not be resolved to a source file (the compiler follows relative imports only)';
       if (walkCtx.resolveComponent) {
         try {
@@ -2575,6 +2613,7 @@ function resolveSubComponent(
   functionName: string,
   callNode: t.CallExpression,
   loadModule?: ModuleLoader,
+  preserveDeclared = false,
 ): ResolvedSubComponent | null {
   const lookup = resolveExportedFunction(source, filePath, functionName, {
     loadModule,
@@ -2592,7 +2631,7 @@ function resolveSubComponent(
 
   // Apply prop substitutions from the call arguments
   // Pattern: Alert({ message: 'Saved', variant: 'success' })
-  if (callNode.arguments.length > 0) {
+  if (!preserveDeclared && callNode.arguments.length > 0) {
     const propsArg = callNode.arguments[0];
     if (propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
       substituteProps(returnNode, paramNode, propsArg);

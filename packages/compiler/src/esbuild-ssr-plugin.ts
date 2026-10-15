@@ -38,6 +38,7 @@ import {
 import { moduleConstantScope, walkHTree, walkCallExpression, type WalkContext } from './ir-walk';
 import { readPageProps, PropsSchemaError } from './props-schema';
 import { rootPropsScope } from './props-bindings';
+import {createIslandRegistry} from './island-registry';
 
 export interface SsrPluginOptions {
   /** Page name (e.g., 'platform-login') -- used for the output .ir filename */
@@ -251,6 +252,7 @@ function emitRealIr(entryPointPath: string): IrResult | null {
     reportPage('BUILD-601', entryPointPath, (where) => `could not find mount() call in ${where}`);
     return null;
   }
+  const islandRegistry=createIslandRegistry(entryPointPath);
 
   // Follows imports so a signal declared in a store module folds on this
   // page. One per page — its caches make the expensive work per-module, not
@@ -329,6 +331,7 @@ function emitRealIr(entryPointPath: string): IrResult | null {
     const propsScope = rootPropsScope({ schema: [[]], parameter: { kind: 'none' } }, emptyFn, entryPointPath, ctx);
     const walkCtx: WalkContext = {
       propsScope,
+      islandRegistry,islandSchemas:new Map(),
       sourceFile: entryPointPath,
       fileConstants,
       stringConstants,
@@ -463,6 +466,7 @@ function emitRealIr(entryPointPath: string): IrResult | null {
   // 9. Build WalkContext and walk the h() tree
   const walkCtx: WalkContext = {
     propsScope,
+    islandRegistry,islandSchemas:new Map(),
     sourceFile: rootPath,
     fileConstants,
     stringConstants,

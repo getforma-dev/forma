@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { resolveFilePath } from '../src/module-loader';
 import { analyzeIslandBindings } from '../src/island-bindings';
 import { encodeBindings } from '../src/fmir-contracts';
 const head = `import {h,createSignal,createShow,createList} from '@getforma/core';\n`;
@@ -58,7 +62,7 @@ describe('component binding identity extraction', () => {
     expect(()=>analyze(`export function Counter(p){return h('p',null,()=>Number(p.text));}`,['text'])).toThrow(/BUILD-610/);
   });
   it('follows lexical shadowing and refuses reassigned aliases rather than stale seeds', () => {
-    expect(()=>analyze(`export function Counter(){const [a,setA]=createSignal(1);let alias=a;alias=unknown;return h('p',null,alias);}`)).toThrow(/reassigned/);
+    expect(()=>analyze(`export function Counter(){const [a,setA]=createSignal(1);let alias=a;alias=unknown;return h('p',null,alias);}`)).toThrow(/BUILD-610/);
     const result = analyze(`const [n,setN]=createSignal(9);export function Counter(){const [n,setLocal]=createSignal(1);return h('p',null,n);}`);
     expect(result.captures).toHaveLength(0);
     expect(result.bindings.map(x=>x.kind)).toEqual(['signal','text']);
@@ -92,5 +96,47 @@ describe('component binding identity extraction', () => {
     expect(()=>analyze('export function Counter({title}){return h("p",null,()=>title());}',['title'])).toThrow(/actual signal getter/);
     const imported = analyzeIslandBindings(head + 'import {Label} from "./label";export function Counter(){return Label();}', '/page.ts', 'Counter', {props:[],loadModule:()=>({path:'/label.ts',source:head+'export function Label(){const [n,setN]=createSignal(1);return h("p",null,n);}'})});
     expect(imported.bindings.map(x=>x.kind)).toEqual(['signal','text']);
+  });
+  it('preserves the original imported table corpus as static expanded markup', () => {
+    const file = fileURLToPath(new URL('./fixtures/ir-corpus/imported-const-table/picker.ts', import.meta.url));
+    const result = analyzeIslandBindings(readFileSync(file, 'utf8'), file, 'KeyPicker', {props:[], loadModule:(from,specifier)=>{
+      const target = resolveFilePath(dirname(from), specifier);
+      return target ? {path:target,source:readFileSync(target,'utf8')} : null;
+    }});
+    expect(result.bindings).toEqual([{kind:'capture',value:'A'},{kind:'attribute',name:'data-selected',value:{kind:'capture',id:0,path:[]}}]);
+    expect(result.captures).toHaveLength(1);
+  });
+  it('uses lexical component identity when a local helper shadows a registered spelling', () => {
+    const source = head + 'export function Counter(){function Badge(){const [n,s]=createSignal(1);return h("b",null,n);}return Badge();}';
+    const result = analyzeIslandBindings(source, '/page.ts', 'Counter', {props:[],islands:new Set(['Badge']),childFields:()=>{throw new Error('shadow must not consult registry');}});
+    expect(result.bindings.map(x=>x.kind)).toEqual(['signal','text']);
+    const other = analyzeIslandBindings(head+'function Badge(){return h("b",null,"static");}export function Counter(){return Badge();}', '/other.ts', 'Counter', {props:[],islands:new Set(['Badge']),registration:()=>undefined});
+    expect(other.bindings).toEqual([]);
+  });
+  it('refuses pre-return writes while allowing event handlers and unrelated registered effects', () => {
+    for (const statement of ['setN(2);','const alias=setN;alias(2);','external();','const ignored=setN(2);','const ignored=external();','const ignored=setN?.(2);','const ignored=setN`tag`;']) {
+      expect(()=>analyze(`export function Counter(){const [n,setN]=createSignal(1);${statement}return h('p',null,n);}`)).toThrow(/pre-return/);
+    }
+    const effects = `import {createEffect} from '@getforma/core';`;
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>setN(2));return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(effects+`export function Counter(p){createEffect(()=>{p.title='changed';});return h('p',null,p.title);}`,['title'])).toThrow(/BUILD-610/);
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>{n();});return h('button',{onClick:()=>setN(2)},n);}`)).not.toThrow();
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);function bump(){setN(2);}createEffect(()=>bump());return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);function bump(){setN(2);}createEffect(bump);return h('p',null,n);}`)).toThrow(/literal callback/);
+    expect(()=>analyze(effects+`const [n,setN]=createSignal(1);class Bump{constructor(){setN(2);}}export function Counter(){createEffect(()=>new Bump());return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>{createEffect(()=>setN(2));});return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(`const [n,setN]=createSignal(1);const object={get value(){setN(2);return 0;}};export function Counter(){const ignored=object.value;return h('p',null,n);}`)).toThrow(/BUILD-610/);
+    expect(()=>analyze(`import {onCleanup} from '@getforma/core';export function Counter(){const [n,setN]=createSignal(1);function dispose(){setN(2);}onCleanup(dispose);return h('button',{onClick:()=>setN?.(3)},n);}`)).not.toThrow();
+    const modules: Record<string,string> = {
+      './store': head+'export const [count,setCount]=createSignal(1);',
+      './barrel': 'export {setCount as update} from "./store";',
+    };
+    expect(()=>analyzeIslandBindings(head+effects+'import {update} from "./barrel";export function Counter(){createEffect(()=>update(2));return h("p",null,"fixed");}', '/page.ts', 'Counter', {
+      props:[],loadModule:(_from,specifier)=>({path:specifier,source:modules[specifier]!}),
+    })).toThrow(/BUILD-610/);
+  });
+  it('does not retain canonical captures for harmless unused reads validated before return',()=>{
+    const result=analyze('const [unused,setUnused]=createSignal(1);const [used,setUsed]=createSignal(2);export function Counter(){const ignored=unused();return h("p",null,used);}');
+    expect(result.bindings).toEqual([{kind:'capture',value:2},{kind:'text',value:{kind:'capture',id:0,path:[]}}]);
   });
 });

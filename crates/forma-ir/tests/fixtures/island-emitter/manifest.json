@@ -1,0 +1,25 @@
+{
+  "generator": "packages/compiler/tests/island-emission.test.ts",
+  "files": {
+    "aggregate.ir": {
+      "bytes": 444,
+      "sha256": "df5353a99d14bf7ef12935c42f17b0ad3fd470aae9543d44358a4253e4cdbb84"
+    },
+    "browser.ir": {
+      "bytes": 297,
+      "sha256": "c1b57e4939c57e22bba167e7903c543b17cd9f97416158e4df3e475175b41447"
+    },
+    "nullish.ir": {
+      "bytes": 734,
+      "sha256": "a54af73a0bd883c387f6d322e8ab4830cdbf90155a45b29b4ce5429db4387898"
+    },
+    "repeated.ir": {
+      "bytes": 412,
+      "sha256": "2093d47caf249d9c65d069917a60668c6eafb2dafc4971e971faba0a7fd8095b"
+    },
+    "rows.ir": {
+      "bytes": 478,
+      "sha256": "9dfc5904e67de0455c9a784215656fb2873272d0eeef6d8429a5fe97b114f67a"
+    }
+  }
+}
