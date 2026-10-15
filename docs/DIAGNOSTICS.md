@@ -636,6 +636,64 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/
 [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx) pin the
 original TSX position of the list.
 
+### BUILD-614 Boolean in text
+
+**Why.** FORMA-182, value rule 6 ([parity rules](parity-rules.md)): `h()` writes nothing for a
+boolean child whatever its value, while the walker writes `true` or `false` for a boolean slot,
+so a boolean read into text either breaks parity between the server's HTML and the browser's
+DOM or shows nothing at all. The compiler refuses a text position whose value it can prove is
+boolean: a declared boolean prop (optional included), a signal whose default is a boolean, a
+closed boolean (an aggregate field, a list-row field, a module-level `const` initialized with
+`true` or `false`), or an expression that can only be a boolean (`!ready()`, `count() > 0`, `a()
+&& b()` of booleans), read eagerly or through a getter, as a child or as a `createShow` or
+ternary branch. A boolean literal child writes nothing on both sides and is admitted. A mixed
+expression whose boolean result stands for nothing (`ready() && 'Go'`) is admitted: eagerly it
+folds, and through a getter the server writes an empty range when its default is the boolean,
+as the browser does. This refusal is mandatory without strict mode.
+
+**Fix.** The message gives the form that builds for its source. Write the word with
+`String(flag)` on a non-optional declared boolean (it binds the text to the boolean slot, which
+the walker writes as the word `String()` gives), on a boolean signal, and on an expression the
+compiler evaluates (they fold to the same word). On an optional declared boolean (`String()`
+would print `undefined` when it is absent), a closed value or a module `const` (`String()` of
+those is not folded), write the word with a ternary, `() => (flag ? 'yes' : 'no')`. For
+content, use `createShow(() => flag(), …)` or a ternary.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/pass/app.tsx) pin the
+original TSX position of the text.
+
+### BUILD-615 Condition that is not boolean-typed
+
+**Why.** FORMA-182, value rule 7 ([parity rules](parity-rules.md)): the walker picks a
+`SHOW_IF` branch by the condition's value, with ECMAScript truthiness for anything that is not a
+boolean, and a page whose condition is a number or a string only imitates what the author meant
+(React's `{count && …}` printing `0` is the shape kept out). The compiler refuses a
+`createShow` condition or a ternary test it can prove is not boolean-typed: a declared prop of
+another type (an optional boolean is admitted: absent reads as false on both sides), a signal
+whose literal default is a number, a string or `null`, a closed value (an aggregate or list-row
+field, a module-level `const`) of another type, a literal, or an expression whose result is not
+always a boolean (`a() && count()`, `name() || 'x'`). A signal getter passed to `createShow`
+itself (`createShow(count, …)`) is read as its call, since `createShow` calls it; a getter named
+without its call anywhere else in a condition (`() => open ? a : b`, `() => open`,
+`ready() && open`) is a function, always truthy in the browser, and is refused with a message
+naming the missing call. A boolean signal, a negation, a comparison,
+`Boolean(x)`, `&&` and `||` of booleans, and a module-level boolean `const` are admitted, and
+`Boolean(x)` and the module `const` are folded, so the server renders the branch the browser
+takes. A condition the compiler cannot type at all stays BUILD-302. This refusal is mandatory
+without strict mode.
+
+**Fix.** Compare explicitly so the condition is a boolean: `() => count() > 0`,
+`() => name() !== ''`, `() => item() !== null`, or `!!x` when truthiness is what is meant.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/pass/app.tsx) pin the
+original TSX position of the condition.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
@@ -944,24 +1002,41 @@ invalid. The build fails before replacing the prior output.
 **Fix.** Generate the worker from the completed manifest after final asset bytes
 are written. Do not substitute a filename hash or an abbreviated digest.
 
-### BUILD-819 A route's Forma code is over N2's ceiling
+### BUILD-819 A route is over its size ceiling
 
-What the route loads cold (its `js` files and their `modulepreload` dependencies)
-carries more than 25,500 B gzip -9 of Forma's code, `@getforma/core` and
-`alien-signals` as bundled, plus the identity banner `@getforma/build` writes at the
-top of every JavaScript file (about 30 B gzip for each file the route loads cold),
-attributed from the bundler's metafile (each input's
-share of the file's raw bytes, applied to its compressed size), or a file the
-manifest names for the route was written by no bundling pass, so its Forma code
-cannot be attributed. N2 as restated by decision brief L-55 (DR-35's fallback):
-the ceiling is Forma's code, the application's own is outside it, Brotli is
-reported beside it, and 1 KB is 1,000 B. The build fails before writing its
-output, and the report above the failure shows every route's figures.
+The build classifies every route (DR-35) and holds it to its class's ceilings,
+in gzip -9 bytes with 1 KB = 1,000 B and 1 KiB = 1,024 B (N2, restated by
+decision brief L-55):
 
-**Fix.** Trim what the route imports from `@getforma/core`, or split the route;
-the ceiling is policy, not an option. Verified by
-`packages/build/tests/route-size.test.ts` > "fails the build with BUILD-819 when a
-route's Forma code is over the ceiling, leaving no output".
+| Class | Chosen by | Forma's code | All of the route's JavaScript |
+| --- | --- | --- | --- |
+| `no-interactive-region` | a server-rendered route whose page has no island, or a route that lists no script | none | none: a service worker counted |
+| `islands` | a server-rendered route with at least one island | 25,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
+| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as islands |
+
+Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed from
+the bundler's metafile (each input's share of the file's raw bytes, applied to
+its compressed size), plus the identity banner `@getforma/build` writes at the
+top of every JavaScript file (about 30 B gzip for each file the route loads
+cold); Brotli is reported beside it. A route's JavaScript is the
+`js` files and static `modulepreload` dependencies the manifest lists for it,
+plus the generated `sw.js` when the route lists any script, since forma-server
+writes the worker's registration only on a page that publishes a JavaScript
+entry. The build fails before writing its output, naming each route over a
+ceiling with its class and bytes, and the report above the failure shows every
+route's figures. The same report is written as `size-report.json` beside
+`manifest.json` (forma-server never serves it).
+
+The error also fires when a file the manifest names for the route was written by
+no bundling pass, so its Forma code cannot be attributed.
+
+**Fix.** Trim what the route imports from `@getforma/core` or ships of its own,
+or split the route. A page that hosts many modules (a canvas) is declared with
+`canvas: true` on its route; the ceilings themselves are policy, not an option.
+Verified by `packages/build/tests/route-size.test.ts` > "S7: a route at its
+ceiling passes, a route one byte over fails naming the route and its bytes" and
+"fails the build with BUILD-819 when a route's Forma code is over the ceiling,
+leaving no output".
 
 ### BUILD-820 The previous release for retention is not usable
 
