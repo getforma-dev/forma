@@ -200,7 +200,9 @@ export class AdoptionLifecycle implements AdoptionSink {
   }
 
   deferEffect(start: DeferredEffect): (() => void) | undefined {
-    return this.state === 'preparing' ? this.defer(start, 'FORMA_E_HYDRATE_EFFECT') : undefined;
+    // This sink can remain on the stack after synchronous caller disposal.
+    // Refuse stale construction rather than falling through to an ordinary effect.
+    return this.defer(start, 'FORMA_E_HYDRATE_EFFECT');
   }
   deferRef(callback: () => void): () => void {
     return this.defer(() => { callback(); return () => {}; }, 'FORMA_E_HYDRATE_REF');
