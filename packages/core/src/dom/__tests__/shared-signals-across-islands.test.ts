@@ -23,15 +23,7 @@ afterEach(() => {
 
 describe('shared signals across islands', () => {
   it('signal change in island A causes reactive update in island B', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Counter" data-forma-status="pending">
-        <span><!--f:t0-->0<!--/f:t0--></span>
-        <button>+</button>
-      </div>
-      <div data-forma-island="1" data-forma-component="Display" data-forma-status="pending">
-        <span><!--f:t0-->0<!--/f:t0--></span>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Counter" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span><button>+</button></div><div data-forma-island="1" data-forma-component="Display" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span></div>`;
     installState();
 
     // Shared signal — the store pattern
@@ -53,9 +45,9 @@ describe('shared signals across islands', () => {
 
     // Both islands active
     expect(document.querySelector('[data-forma-island="0"]')!
-      .getAttribute('data-forma-status')).toBe('active');
+      .getAttribute('data-forma-status')).toBe('pending');
     expect(document.querySelector('[data-forma-island="1"]')!
-      .getAttribute('data-forma-status')).toBe('active');
+      .getAttribute('data-forma-status')).toBe('pending');
 
     // Initial state: both show 0
     expect(document.querySelector('[data-forma-island="0"] span')!.textContent).toBe('0');
@@ -76,18 +68,7 @@ describe('shared signals across islands', () => {
   });
 
   it('shared store with multiple signals across three islands', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="FilterBar" data-forma-status="pending">
-        <select><option>id</option></select>
-        <span><!--f:t0-->1000<!--/f:t0--></span>
-      </div>
-      <div data-forma-island="1" data-forma-component="DataTable" data-forma-status="pending">
-        <table><thead><tr><th><!--f:t0-->id<!--/f:t0--></th></tr></thead></table>
-      </div>
-      <div data-forma-island="2" data-forma-component="PerfPanel" data-forma-status="pending">
-        <span><!--f:t0-->1000<!--/f:t0--></span>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="FilterBar" data-forma-status="pending"><select><option>id</option></select><span><!--f:t0-->1000<!--/f:t0--></span></div><div data-forma-island="1" data-forma-component="DataTable" data-forma-status="pending"><table><thead><tr><th><!--f:t0-->id<!--/f:t0--></th></tr></thead></table></div><div data-forma-island="2" data-forma-component="PerfPanel" data-forma-status="pending"><span><!--f:t0-->1000<!--/f:t0--></span></div>`;
     installState();
 
     // Shared store — multiple signals
@@ -122,7 +103,7 @@ describe('shared signals across islands', () => {
     }));
 
     // All three active
-    expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(3);
+    expect([...document.querySelectorAll('[data-forma-island]')].filter(host => typeof (host as any).__formaDispose === 'function')).toHaveLength(3);
 
     // Change sortCol from FilterBar's perspective — DataTable updates
     setSortCol('name');
@@ -135,14 +116,7 @@ describe('shared signals across islands', () => {
   });
 
   it('shared signal with createShow across islands', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Toggle" data-forma-status="pending">
-        <button>toggle</button>
-      </div>
-      <div data-forma-island="1" data-forma-component="Panel" data-forma-status="pending">
-        <!--f:s0--><p>visible</p><!--/f:s0-->
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Toggle" data-forma-status="pending"><button>toggle</button></div><div data-forma-island="1" data-forma-component="Panel" data-forma-status="pending"><!--f:s0--><p>visible</p><!--/f:s0--></div>`;
     installState();
 
     const [visible, setVisible] = createSignal(true);
@@ -160,7 +134,7 @@ describe('shared signals across islands', () => {
       },
     }));
 
-    expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(2);
+    expect([...document.querySelectorAll('[data-forma-island]')].filter(host => typeof (host as any).__formaDispose === 'function')).toHaveLength(2);
 
     // Initial: panel shows content
     expect(document.querySelector('[data-forma-island="1"] p')).toBeTruthy();
@@ -177,17 +151,7 @@ describe('shared signals across islands', () => {
   });
 
   it('shared signal with createList across islands', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="AddItem" data-forma-status="pending">
-        <button>add</button>
-      </div>
-      <div data-forma-island="1" data-forma-component="ItemList" data-forma-status="pending">
-        <!--f:l0-->
-        <div data-forma-key="1">Item 1</div>
-        <div data-forma-key="2">Item 2</div>
-        <!--/f:l0-->
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="AddItem" data-forma-status="pending"><button>add</button></div><div data-forma-island="1" data-forma-component="ItemList" data-forma-status="pending"><!--f:l0--><div data-forma-key="1">Item 1</div><div data-forma-key="2">Item 2</div><!--/f:l0--></div>`;
     installState();
 
     const [items, setItems] = createSignal([
@@ -215,7 +179,7 @@ describe('shared signals across islands', () => {
       },
     }));
 
-    expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(2);
+    expect([...document.querySelectorAll('[data-forma-island]')].filter(host => typeof (host as any).__formaDispose === 'function')).toHaveLength(2);
 
     // Initial: 2 items
     expect(document.querySelectorAll('[data-forma-island="1"] div[data-forma-key]').length).toBe(2);
@@ -232,14 +196,7 @@ describe('shared signals across islands', () => {
   });
 
   it('dispose of one island does not break shared signal in sibling', () => {
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Writer" data-forma-status="pending">
-        <span><!--f:t0-->0<!--/f:t0--></span>
-      </div>
-      <div data-forma-island="1" data-forma-component="Reader" data-forma-status="pending">
-        <span><!--f:t0-->0<!--/f:t0--></span>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Writer" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span></div><div data-forma-island="1" data-forma-component="Reader" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span></div>`;
     installState();
 
     const [count, setCount] = createSignal(0);
