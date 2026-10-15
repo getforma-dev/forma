@@ -37,3 +37,18 @@ it('retains explicit own data that shadows an inherited name',()=>{
 it('refuses prototype-setting literal syntax without changing the closed wire codec',()=>{
   expect(()=>compile('export function Page(){const [data]=createSignal({__proto__:{label:"inherited"}});return h("main",null,Badge({label:data().label}));}')).toThrow(/BUILD-610.*prototype-setting/);
 });
+it('refuses a bare aggregate getter as the object of a plain member read',()=>{
+  expect(()=>compile('export function Page(){const [data]=createSignal({user:{name:"one"}});return h("main",null,Badge({label:data.user.name}));}')).toThrow(/BUILD-610.*getter must be called/);
+  expect(()=>compile('export function Page(){const [data]=createSignal({user:{name:"one"}});return h("main",null,Badge({label:(data as any).user.name}));}')).toThrow(/BUILD-610.*getter must be called/);
+  expect(compile('export function Page(){const [data]=createSignal({user:{name:"one"}});return h("main",null,Badge({label:data().user.name}));}')?.islands).toHaveLength(1);
+});
+it('refuses unknown optional intermediate props but preserves a required object path',()=>{
+  expect(()=>compile('export function Page(p:{data?:{name:string}}){return h("main",null,Badge({label:p.data.name}));}')).toThrow(/BUILD-610.*optional declared/);
+  expect(compile('export function Page(p:{data:{name:string}}){return h("main",null,Badge({label:p.data.name}));}')?.islands).toHaveLength(1);
+  expect(()=>compile('export function Page(p:{data?:{flag:boolean}}){return h("main",null,p.data.flag);}')).toThrow(/BUILD-610.*optional declared/);
+});
+it('refuses a prop-seeded getter as a member object and requires nullable aliases to be checked',()=>{
+  expect(()=>compile('export function Page(p:{data:{name:string}}){const [data]=createSignal(p.data);return h("main",null,Badge({label:data.name}));}')).toThrow(/BUILD-610.*getter must be called/);
+  expect(()=>compile('export function Page(p:{data?:{name:string}}){const data=p.data;return h("main",null,Badge({label:data.name}));}')).toThrow(/BUILD-610.*optional declared/);
+  expect(compile('export function Page(p:{data:{name:string}}){const [data]=createSignal(p.data);return h("main",null,Badge({label:data().name}));}')?.islands).toHaveLength(1);
+});
