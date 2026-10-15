@@ -187,35 +187,42 @@ export class AdoptionControls {
     if(codec!=='string'||(tag==='select'&&(item.element as HTMLSelectElement).multiple))return target();
     return item.value;
   }
-  finish():readonly ControlObservation[] {
+  /** Reports only the opaque binding that failed; group/topology failures have
+   * no binding authority. Reporting cannot replace the original refusal. */
+  finish(onFailure?:(token:ControlToken,error:unknown)=>void):readonly ControlObservation[] {
     if(!this.host)structure();this.check();if(this.observations)return this.observations;
     const defaults=this.mirror(false),expected=this.mirror(true);
+    const at=<T>(binding:Binding,read:()=>T):T=>{
+      try{return read();}catch(error){
+        try{onFailure?.(binding.token,error);}finally{throw error;}
+      }
+    };
     // WebKit's parser and native detached construction disagree for an
     // implicit single-select winner inside a disabled optgroup. No captured
     // property can distinguish that parser default from an early edit. Refuse
     // only selection observations affected by the two competing candidates.
-    for(const binding of this.bindings) {
+    for(const binding of this.bindings) at(binding,()=>{
       const clone=defaults.get(binding.snapshot.element)!;
       const select=clone.localName==='select'?clone as HTMLSelectElement:binding.key==='selected'?clone.closest('select'):null;
-      if(!select||select.multiple||select.size>1)continue;
+      if(!select||select.multiple||select.size>1)return;
       const options=Array.from(select.options);
-      if(options.some(option=>option.hasAttribute('selected')))continue;
+      if(options.some(option=>option.hasAttribute('selected')))return;
       const first=options.find(option=>!option.disabled);
       const enabled=options.find(option=>!option.disabled&&!(option.parentElement?.localName==='optgroup'&&(option.parentElement as HTMLOptGroupElement).disabled));
       if(first&&enabled&&first!==enabled&&(clone===select||clone===first||clone===enabled))mismatch();
-    }
+    });
     // Never report/seed an early edit until every server default is validated.
-    for(const binding of this.bindings) {
+    for(const binding of this.bindings) at(binding,()=>{
       const a=this.observed(defaults.get(binding.snapshot.element)!,binding.key),b=this.observed(expected.get(binding.snapshot.element)!,binding.key);
       if(Array.isArray(a)&&Array.isArray(b)?!same(a,b):!Object.is(a,b))mismatch();
-    }
-    const result=this.bindings.map(binding=>{
+    });
+    const result=this.bindings.map(binding=>at(binding,()=>{
       const baseline=this.observed(defaults.get(binding.snapshot.element)!,binding.key),live=this.live(binding);
       const edited=(Array.isArray(baseline)&&Array.isArray(live)?!same(baseline,live):!Object.is(baseline,live))||(binding.snapshot.type==='file'&&binding.snapshot.files.length>0);
       // Literal initialization has no reader or seed authority. The owner must
       // preserve its edit; reactive readers still require a reversible codec.
       return Object.freeze({token:binding.token,kind:binding.kind,edited,value:edited&&binding.kind==='binding'?this.converted(binding):this.rawValue(binding)});
-    });
+    }));
     this.observations=Object.freeze(result);return this.observations;
   }
   check():void {
