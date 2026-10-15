@@ -131,8 +131,8 @@ function exprToText(node: t.Node): string {
 /**
  * Report a construct the walker could not translate into IR.
  *
- * Every path that emits a fallback island shell, drops a child, or mints an
- * anonymous slot instead of the thing the author wrote goes through here. The
+ * Legacy construct diagnostics go through here before unsupported native
+ * island paths raise BUILD-610. The
  * failure mode these replace is the one that cost the most in the field: the
  * compiler quietly emitted a placeholder and the wrong page shipped (see the
  * ksx dogfood ledger, findings #9 and #10). A diagnostic therefore always
@@ -261,9 +261,9 @@ function describeNode(node: t.Node): string {
   return `a ${node.type}`;
 }
 
-/** The consequence shared by every construct that becomes a client-side island. */
+/** The consequence shared by unsupported native island constructs. */
 const ISLAND_CONSEQUENCE =
-  'emitted as an empty island shell, so it renders nothing server-side and only appears once the client bundle hydrates';
+  'refused with BUILD-610 because it cannot produce a declared native island contract';
 
 /**
  * Extract signal name from a simple signal-call arrow: () => signalName()
@@ -1358,11 +1358,11 @@ export function walkCallExpression(
     };
 
     /**
-     * Every bail-out below defers the component to client-side rendering,
-     * unless it is declared browser-only, which is the island it asked for.
+     * Every bail-out below refuses native emission. Registered browser-only
+     * components have already taken the declared contract path above.
      * Core's control-flow components (FORMA-016) and a bare browserOnly()
      * call are reported under their own codes, whichever bail-out they reach;
-     * what is emitted does not change.
+     * the build still ends with the source-located BUILD-610 refusal.
      */
     const bailOut = (code: string, why: string, fix?: string, chain?: DiagnosticChainLink[]): void => {
       const gap = componentName === 'browserOnly' ? 'BUILD-707' : ADOPTION_GAPS.get(componentName);
@@ -1418,7 +1418,7 @@ export function walkCallExpression(
           return;
         }
 
-        // Check if call-site props contain non-static values → bail to island
+        // Refuse unsupported non-static props before legacy static substitution
         if (node.arguments.length > 0) {
           const propsArg = node.arguments[0];
           if (propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
@@ -1476,7 +1476,7 @@ export function walkCallExpression(
       }
     }
 
-    // Resolution failed or not available → island. A package import is told
+    // Resolution failed or is unavailable. A package import is told
     // apart from a name the compiler cannot find; the line is the same.
     const binding = walkCtx.importOf?.(componentName, walkCtx.sourceFile);
     const fromPackage = binding !== undefined && binding !== null
@@ -1484,12 +1484,12 @@ export function walkCallExpression(
     bailOut(
       fromPackage ? 'BUILD-401' : 'BUILD-402',
       'could not be resolved to a source file',
-      'the compiler follows relative imports only; package imports and dynamic references always stay client-side',
+      'use a resolvable relative component import or register a declared browserOnly component',
     );
     return;
   }
 
-  // Rule 11: Unknown call expression → island
+  // Rule 11: Unknown native call expressions refuse emission
   const gap = isBrowserOnlyCall(node.callee) ? 'BUILD-707' : adoptionGapCode(node);
   if (gap === 'BUILD-707') {
     warnDegraded(
@@ -2100,7 +2100,7 @@ function emitCreateList(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
-  /** Every bail-out below renders the whole list as an empty client island. */
+  /** Unsupported native list forms refuse the whole build. */
   const bailOut = (why: string, fix: string): void => {
     warnDegraded(walkCtx, 'BUILD-107', node, `createList(...) ${why}`, `the whole list is ${ISLAND_CONSEQUENCE} — ${fix}`);
     refuseIsland(walkCtx,node, 'createList');
@@ -2566,7 +2566,7 @@ function resolveSubComponent(
  *   function Badge({ label })  → the destructured local, including `{ label = 'x' }`
  *
  * Only static literals are substituted, which is all that can reach here:
- * walkCallExpression bails to an island before inlining when any call-site prop
+ * walkCallExpression refuses this path before inlining when any call-site prop
  * is non-static. The tree is mutated in place — resolveSubComponent parses the
  * component source per call, so it is private to this walk.
  *

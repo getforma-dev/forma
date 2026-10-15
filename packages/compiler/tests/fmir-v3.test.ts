@@ -210,7 +210,7 @@ describe('FMIR v3 payload emission', () => {
     const truncated = listContext(); truncated.patchU32(5, 1); expect(() => truncated.toBinary()).toThrow(/truncated/);
     expect(() => truncated.emitU16(65536)).toThrow(/u16/);
     expect(() => truncated.emitU32(-1)).toThrow(/u32/);
-    const island = new IrEmitContext(); island.addSlot('value', 1); const id=island.addIsland('Counter', 1, new Array(32760).fill(0), 0);
+    const island = new IrEmitContext(); island.addSlot('value', 1); const id=island.addIsland('Counter', 1, new Array(32760).fill(0), 0, 0);
     expect(() => island.toBinary()).toThrow(/no declared contract/);
     island.setIslandContract(id,'ssr',[]);
     expect(() => island.toBinary()).toThrow(/input count must equal/);
