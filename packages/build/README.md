@@ -721,3 +721,11 @@ What it cannot see, and review must:
 ## License
 
 MIT
+
+The recurring Chromium worker checks run the real `build()` output, including a
+lazy module without a script tag. They verify cache replacement, network refusal,
+offline reads and gzip/brotli decoding, then exercise two tabs through alternating
+deployments, upgrade, rollback and retirement using `forma-server`'s actual
+off-worker response. The release rehearsal injects its unpacked build package into
+the same harness and requires every named observation. Its HTTP-cache clearing is
+limited to the fresh browser context so HTTP caching cannot mask CacheStorage.

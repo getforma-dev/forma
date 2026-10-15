@@ -51,10 +51,12 @@ function harness(development = false) {
       listeners.get(type)?.({ waitUntil: (p: Promise<unknown>) => { done = p; } });
       await done;
     },
-    request: (path = PATH, options: RequestInit = {}) => {
+    request: (path = PATH, options: RequestInit = {}, navigation = false) => {
+      const request = new Request(new URL(path, self.location.origin), options);
+      if (navigation) Object.defineProperty(request, 'mode', {value: 'navigate'});
       let result: Promise<Response> | undefined;
       listeners.get('fetch')!({
-        request: new Request(new URL(path, self.location.origin), options),
+        request,
         respondWith: (p: Promise<Response>) => { result = p; },
         waitUntil: (p: Promise<unknown>) => { pending.push(p); },
       });
@@ -110,6 +112,18 @@ describe('verified production worker', () => {
     w.put.mockRejectedValueOnce(new Error('quota')); expect(await (await w.request()!).text()).toBe(CONTENT); await w.settle();
     w.put.mockImplementationOnce(() => new Promise(() => {})); expect(await (await w.request()!).text()).toBe(CONTENT);
   });
+  it('does not wait for a stuck eviction before returning verified network bytes', async () => {
+    const w = harness(); w.seed(response('different')); w.remove.mockImplementation(() => new Promise(() => {}));
+    expect(await (await w.request()!).text()).toBe(CONTENT); expect(w.fetch).toHaveBeenCalledOnce();
+  });
+  it('never reads a second application cache or returns an unreadable own entry', async () => {
+    const w = harness(); w.seed(response(), 'forma:other:old');
+    expect(await (await w.request()!).text()).toBe(CONTENT); await w.settle();
+    expect(w.fetch).toHaveBeenCalledOnce(); expect(w.storage.open).toHaveBeenCalledWith(OWN);
+    const unreadable = response(); vi.spyOn(unreadable, 'clone').mockImplementation(() => { throw new Error('unreadable cached body'); });
+    w.seed(unreadable); expect(await (await w.request()!).text()).toBe(CONTENT);
+    expect(w.fetch).toHaveBeenCalledTimes(2);
+  });
   it('fails protected requests closed when Web Crypto is unavailable or hashing rejects', async () => {
     const w = harness(); w.seed(response()); w.self.crypto = undefined;
     await expect(w.request()).rejects.toThrow('FORMA_E_SW_INTEGRITY');
@@ -148,6 +162,7 @@ describe('verified production worker', () => {
     const w = harness();
     for (const path of ['/', '/api/data', '/_assets/unknown.js', PATH + '?v=1', 'https://other.test' + PATH]) expect(w.request(path), path).toBeUndefined();
     for (const options of [{ method: 'POST' }, { cache: 'no-store' }, { cache: 'reload' }] as RequestInit[]) expect(w.request(PATH, options)).toBeUndefined();
+    expect(w.request(PATH, {}, true)).toBeUndefined();
     expect(w.fetch).not.toHaveBeenCalled(); expect(w.storage.open).not.toHaveBeenCalled();
   });
 });
