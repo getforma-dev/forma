@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- FORMA-187: prepare the unified seven-package release pipeline, exact-commit CI
+  gate, packed template/corpus verification, two minimal publishing jobs and
+  compatibility record. A2 dry runs remain non-publishing; milestone contract
+  hooks must be completed before the first `v3.0.0-alpha.1` release.
+
 ### The repository merge (FORMA-113)
 
 formajs, forma-tools and create-forma-app were merged into this repository
