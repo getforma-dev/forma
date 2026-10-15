@@ -337,6 +337,23 @@ export function recordPackages(packages, out) {
     return { ...p, file, sha256: digest(join(out, file)) };
   });
 }
+// Cargo's local packaging registry can retain an old checksum when the same
+// unpublished version is repacked after source edits. Each attempt owns a fresh
+// target; never clear or trust a shared build/package target.
+export function packCargoWorkspace(root, packages, out, { dryRun = false, offline = false } = {}) {
+  const target = mkdtempSync(join(tmpdir(), 'forma-release-package-'));
+  const lockBefore = digest(join(root, 'Cargo.lock'));
+  try {
+    run('cargo', ['package', '--workspace', '--no-verify', '--locked', '--target-dir', target,
+      ...(dryRun ? ['--allow-dirty'] : []), ...(offline ? ['--offline'] : [])], root);
+    assert.equal(digest(join(root, 'Cargo.lock')), lockBefore, 'cargo packaging changed committed lock');
+    for (const p of packages.filter(p => p.registry === 'crates')) {
+      const file = `${p.name}-${p.version}.crate`;
+      copyFileSync(join(target, 'package', file), join(out, file));
+    }
+  } finally { rmSync(target, { recursive: true, force: true }); }
+}
+
 export function pack(out, dryRun = false) {
   mkdirSync(out, { recursive: true });
   const packages = setVersions();
@@ -346,10 +363,7 @@ export function pack(out, dryRun = false) {
   }
   const policy = readFileSync(join(ROOT, 'SECURITY.md'), 'utf8');
   assert(/FMIR is a \*\*trusted input\*\*/.test(policy) && /Only run IR produced by a compiler you trust/.test(policy), 'SR41: SECURITY.md must state the trusted compiler boundary (SA4)');
-  const lockBefore = digest(join(ROOT, 'Cargo.lock'));
-  run('cargo', ['package', '--workspace', '--no-verify', '--locked', ...(dryRun ? ['--allow-dirty'] : [])]);
-  assert.equal(digest(join(ROOT, 'Cargo.lock')), lockBefore, 'cargo packaging changed committed lock');
-  for (const p of packages.filter(p => p.registry === 'crates')) copyFileSync(join(ROOT, 'target/package', `${p.name}-${p.version}.crate`), join(out, `${p.name}-${p.version}.crate`));
+  packCargoWorkspace(ROOT, packages, out, { dryRun });
   copyFileSync(join(ROOT, 'Cargo.lock'), join(out, 'Cargo.lock'));
   for (const name of NPM.slice(0, 3)) run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages', name));
   const preliminary = recordPackages(packages.filter(p => p.name !== '@getforma/create-app'), out);

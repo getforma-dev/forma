@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { selectRun, checkJobs } from './check-release-ci.mjs';
 import { registryStatus, waitForPackage } from './release-publish.mjs';
-import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, digest, run, json } from './release-set.mjs';
+import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, digest, run, json, packCargoWorkspace } from './release-set.mjs';
 
 const sha = 'a'.repeat(40), repo = 'getforma-dev/forma';
 const goodRun = { id: 100, head_sha: sha, head_branch: 'main', event: 'push', path: '.github/workflows/ci.yml', repository: { full_name: repo }, status: 'completed', conclusion: 'success', run_number: 7, run_attempt: 1 };
@@ -84,10 +84,10 @@ test('version preparation remains valid under the actual internal dependency gua
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
-test('Cargo packages unpublished interdependent crates and repacks byte-identically from the same commit and lock', () => {
+test('Cargo repacks identical source deterministically and changed source with fresh predecessor checksums', () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-cargo-package-'));
   try {
-    writeFileSync(join(dir, '.gitignore'), '/target/\n');
+    writeFileSync(join(dir, '.gitignore'), '/target/\n/out-*/\n');
     writeFileSync(join(dir, 'Cargo.toml'), '[workspace]\nmembers = ["first", "second"]\nresolver = "2"\n');
     for (const name of ['first', 'second']) {
       mkdirSync(join(dir, name, 'src'), { recursive: true });
@@ -99,14 +99,30 @@ test('Cargo packages unpublished interdependent crates and repacks byte-identica
     run('git', ['init', '-q'], dir); run('git', ['add', '.'], dir);
     run('git', ['-c', 'user.name=Forma release test', '-c', 'user.email=release-test@example.invalid', 'commit', '-qm', 'fixture'], dir);
     const lock = digest(join(dir, 'Cargo.lock'));
-    run('cargo', ['package', '--workspace', '--no-verify', '--locked', '--offline'], dir);
-    const first = ['first', 'second'].map(n => digest(join(dir, 'target/package', `forma-release-test-${n}-3.0.0-alpha.1.crate`)));
-    const packedLock = run('tar', ['-xOf', join(dir, 'target/package/forma-release-test-second-3.0.0-alpha.1.crate'), 'forma-release-test-second-3.0.0-alpha.1/Cargo.lock']);
-    const predecessor = packedLock.split(/(?=\[\[package\]\])/).find(block => /^name = "forma-release-test-first"$/m.test(block));
-    assert.equal(/^checksum = "([^"]+)"/m.exec(predecessor ?? '')?.[1], first[0], 'dependent crate must pin the newly packed predecessor, not an existing registry version');
-    run('cargo', ['package', '--workspace', '--no-verify', '--locked', '--offline'], dir);
-    assert.deepEqual(['first', 'second'].map(n => digest(join(dir, 'target/package', `forma-release-test-${n}-3.0.0-alpha.1.crate`))), first);
-    assert.equal(digest(join(dir, 'Cargo.lock')), lock);
+    const packages = ['first', 'second'].map(n => ({ registry: 'crates', name: `forma-release-test-${n}`, version: '3.0.0-alpha.1' }));
+    const packed = suffix => {
+      const out = join(dir, `out-${suffix}`); mkdirSync(out);
+      packCargoWorkspace(dir, packages, out, { offline: true });
+      const hashes = packages.map(p => digest(join(out, `${p.name}-${p.version}.crate`)));
+      const second = packages[1];
+      const archive = join(out, `${second.name}-${second.version}.crate`);
+      const packedLock = run('tar', ['-xOf', archive, `${second.name}-${second.version}/Cargo.lock`]);
+      const predecessor = packedLock.split(/(?=\[\[package\]\])/).find(block => /^name = "forma-release-test-first"$/m.test(block));
+      assert.equal(/^checksum = "([^"]+)"/m.exec(predecessor ?? '')?.[1], hashes[0], 'dependent crate must pin the actual newly packed predecessor');
+      const vcs = JSON.parse(run('tar', ['-xOf', archive, `${second.name}-${second.version}/.cargo_vcs_info.json`]));
+      assert.equal(vcs.git.sha1, run('git', ['rev-parse', 'HEAD'], dir).trim(), 'packed provenance must identify the source commit');
+      assert.equal(vcs.path_in_vcs, 'second');
+      assert.equal(digest(join(dir, 'Cargo.lock')), lock, 'source lock must remain unchanged');
+      return hashes;
+    };
+    const first = packed('one');
+    assert.deepEqual(packed('same'), first);
+    writeFileSync(join(dir, 'first/src/lib.rs'), 'pub fn value() -> u8 { 2 }\n');
+    run('git', ['add', 'first/src/lib.rs'], dir);
+    run('git', ['-c', 'user.name=Codex', '-c', 'user.email=codex@openai.com', 'commit', '-qm', 'change predecessor source'], dir);
+    const changed = packed('changed');
+    assert.notEqual(changed[0], first[0], 'the source change must produce a different predecessor archive');
+    assert.notEqual(changed[1], first[1], 'the dependent must carry the new predecessor checksum and source provenance');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 test('template Cargo.lock staging preserves third-party resolutions and never invents checksums', () => {
