@@ -360,9 +360,13 @@ which already visits every opcode start; `LOAD-103` otherwise); offsets unique a
 `segment_count` is 1-32; every segment index names a string. At most one entry names each
 LIST; a LIST without an entry is unkeyed. Count is u32 so the 65,535 limit does not silently
 restrict a bytecode section that can hold more LISTs. All these structural failures are
-`LOAD-103`; the 32-segment ceiling is `LOAD-107`. FORMA-181 consumes this decoded metadata: at render its walker reads the row's value at the path and writes it as the
-row root's `data-forma-key` (DR-8; v2 6.5), replacing the never-emitted `LIST_ITEM_KEY` whose
-static operand could not key rows (the historical v2 contract). Encoding the path beside the `LIST` instead of in its
+`LOAD-103`; the 32-segment ceiling is `LOAD-107`. FORMA-181 consumes this decoded metadata: at render its walker reads the row's value at the path and writes its canonical text
+(a string under value rule 1, or a safe integer in decimal; `docs/parity-rules.md`, "Keyed
+rows") as the row root's `data-forma-key` (DR-8; v2 6.5), replacing the never-emitted
+`LIST_ITEM_KEY` whose static operand could not key rows (the historical v2 contract). A row
+whose value at the path is missing or not an identity, a key two rows of one list execution
+share, or a row without exactly one root element refuses the whole render (`RENDER-503`,
+`docs/DIAGNOSTICS.md`); a `LIST` without an entry writes no key and renders as before. Encoding the path beside the `LIST` instead of in its
 operands keeps `LIST`'s encoding unchanged (the ticket's rule) and lets the section be absent in
 modules with no lists.
 

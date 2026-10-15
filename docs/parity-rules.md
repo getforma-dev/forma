@@ -33,6 +33,15 @@ A `textarea` whose content starts with a line feed has it doubled, because the
 parser drops the first one. Verified by: `crates/forma-ir/src/walker.rs` >
 "a_textarea_doubles_a_leading_line_feed".
 
+The U+200B holder is a property of the wire, not only of the walker: a dynamic
+text whose value is empty and one whose value is U+200B are written as the same
+bytes, `<!--f:tN-->` U+200B `<!--/f:tN-->`, so a reader of the HTML cannot tell
+them apart. The parity harness (FORMA-183) therefore matches a holder against
+client text `""` or U+200B and counts every holder it compares as
+`holderAmbiguous` in its report (`e2e/parity/README.md`). Whether the walker
+should write a U+200B value distinguishably from the holder is open, for rule
+5's owner (FORMA-182).
+
 ## Rule 1: line endings and NUL
 
 **Statement.** Define `N(s)` on a string: replace each CRLF pair with one LF,
@@ -58,7 +67,11 @@ the concatenated output would fold the first case and is wrong.
 **What it never touches.** Declared props, the state envelope, keys as data,
 constants, source strings, schema and binding bytes, digests and signal values
 stay exact: the component still receives `label === '\0'`; only its rendered
-text is U+FFFD. Trusted raw HTML, `srcdoc`, style objects and CSS strings,
+text is U+FFFD. A list key is the same: the row's key field stays exact in the
+state envelope and in the component's data, and only the key *text*, the
+row identity written as `data-forma-key` and compared by adoption, is `N` of a
+string key, because the browser parses that attribute under this rule (see
+"Keyed rows" below). Trusted raw HTML, `srcdoc`, style objects and CSS strings,
 script and JSON sinks, DOM `Node` children, and attribute and tag names are not
 routed through the helper; their typed guards are unchanged.
 
@@ -100,6 +113,33 @@ that still refuses).
 |---|---|---|
 | Rust | `crate::text::normalized_chars(&str)` (an iterator; crate-private) and `normalize_text(&str) -> Cow<str>` for already-owned strings | `push_escaped_html`, `push_escaped_attr`, `write_text_only` (leading-LF rule on the normalized text), the `pre`/`listing` boundary (`WalkState::pre_boundary`), `Prop::control_text`, `SelectBinding`, option-by-text matching; `is_dangerous_url` refuses a raw NUL |
 | TypeScript | `normalizeDomText(string)` in `packages/core/src/dom/normalize-text.ts` (not a package export; inside the package import `./normalize-text.js`; its consumer beyond the writers is core's adoption, where FORMA-181's `key-text.ts` builds key text) | `createText`; `h()` string children on the single, multiple, reactive scalar and reactive array paths; generic, class and `xlink:` attributes, static and dynamic; `writeFormControlProperty` and `childText`; adoption text and attribute expectations and later writes; the control oracle's expected defaults; the materializer; `isDangerousUrl` refuses a raw NUL |
+
+**Keyed rows (FORMA-181, DR-8).** A `LIST` named by FMIR section `0x0006` is
+keyed: the walker reads each row's value at the key path and writes its
+canonical text as the row root's `data-forma-key` (checkpoint B), and core's
+adoption is to match rows by that text (checkpoint C; until then core's
+existing list adoption compares the attribute with its own key in order). The identity domain is a string or a safe
+integer. A string key is `N(s)` of rule 1, applied to the key text (the key
+as data in the state envelope stays exact); a number key must be an integer
+within ±(2^53 − 1) and prints as its decimal integer, `-0` as `0`. So `1` and
+`"1"` are one row, `1` and `"01"` are two, and `"a\r\nb"` and `"a\nb"` are one.
+`null`, booleans, arrays, objects, fractions, infinities and NaN are not
+identities: the walker refuses the render (`RENDER-503`) and core refuses the
+value. The path is read against the row's own fields only (every segment but
+the last an object field, the last an identity; missing, repeated or
+non-object refuses), and two rows of one list execution with the same
+canonical text are duplicates. Rust: `crates/forma-ir/src/keys.rs`
+(`canonical_list_key`, through `text::normalize_text`); TypeScript:
+`packages/core/src/dom/key-text.ts` (`canonicalKeyText`, through
+`normalizeDomText`, plus the unpaired-surrogate refusal a Rust string cannot
+express). Shared vectors: `crates/forma-ir/tests/fixtures/parity/keys.json`
+(`values`, `collisions`, `paths`), read by `crates/forma-ir/src/keys.rs` tests
+and `packages/core/src/dom/__tests__/key-text.test.ts`; the walker's row
+guard (one balanced root per row, a registered child's envelope, duplicate
+scopes per list execution, the refusals) by `crates/forma-ir/src/walker.rs` >
+`keyed_rows`; the actual compiler-to-walker key HTML by
+`crates/forma-ir/tests/island_emitter.rs` (`keyed_shapes_*` and the other
+keyed fixtures) and the `list-same-source` golden of the js-emitter contract.
 
 The output budget counts the bytes actually written: a NUL grows from one byte
 to three, so the escapers check each normalized character's encoded length

@@ -38,6 +38,10 @@ mod contracts;
 /// On-disk FMIR layout: header, section table, opcodes, and the table entry
 /// types. See `docs/FMIR-FORMAT.md` for the stability contract.
 pub mod format;
+/// Canonical row identity for keyed lists (FORMA-181): the key domain, the
+/// path read and the text written as `data-forma-key`. Crate-private; the
+/// shared vectors are `tests/fixtures/parity/keys.json`.
+mod keys;
 /// Bounds-checked parsing and one-shot structural validation of an FMIR file.
 pub mod parser;
 /// Derived page contracts, schema comparison and checked value encoding.
@@ -82,9 +86,9 @@ pub use props::PageProps;
 
 // Re-exports for convenience
 pub use format::{
-    IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, SectionDescriptor, SectionTable,
-    SlotEntry, SlotSource, SlotType, HEADER_SIZE, IR_VERSION, SECTION_ENTRY_SIZE, SIGNATURE,
-    TABLE_PREFIX_SIZE,
+    IrError, IrHeader, IslandEntry, IslandTrigger, ListKeyReason, ListKeyViolation, Opcode,
+    SectionDescriptor, SectionTable, SlotEntry, SlotSource, SlotType, HEADER_SIZE, IR_VERSION,
+    SECTION_ENTRY_SIZE, SIGNATURE, TABLE_PREFIX_SIZE,
 };
 pub use parser::{IrModule, IslandTableParsed, SlotTable, StringTable};
 pub use slot::{json_to_slot_value, SlotData, SlotValue};

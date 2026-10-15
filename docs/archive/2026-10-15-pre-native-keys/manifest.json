@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "330b65a5443c61676969eaa089e3aaa2c914d054",
+  "role": "Pre-FORMA-181 checkpoint B original: the list-same-source js-emitter contract golden as rendered before the walker wrote data-forma-key on keyed rows. Byte-exact; never regenerated to make a new implementation pass.",
+  "sha256": {
+    "js-emitter/list-same-source.html": {
+      "bytes": 1931,
+      "sha256": "d557fcdb4472a590e718c7bcb613d0dc5ba122cf4aaddfeffcb177967206b5b7"
+    }
+  }
+}

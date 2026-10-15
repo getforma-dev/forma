@@ -7,6 +7,10 @@
 - Every page's root names the build the manifest names: `<div id="app" data-forma-build="<manifest.build>" data-forma-ssr>` for a server-rendered page, `<div id="app" data-forma-build="<manifest.build>"></div>` for a browser shell. `@getforma/core` compares it with the identity `@getforma/build` compiled into the bundle before it activates anything (a later FORMA-186 slice); a page from an older server has no attribute and is unchecked. The value is the manifest's `build`, escaped as any attribute value is; no render input can set or override it. The preview-frame document is not stamped.
 - A manifest that lists a `retained` asset that is not `immutable` is refused at start (`MANIFEST-103`): a retained file is the previous release's, served as any content-named asset (`serve_asset` is unchanged: it already serves what the manifest marks immutable as immutable).
 
+### Keyed list rows — FORMA-181
+
+- `RenderError::code()` reports `RENDER-503` for a walk refused by forma-ir's `IrError::InvalidListKey` (a keyed row without a usable identity, a duplicate key, a row without one root): a new cause with its own code, still carried by `RenderError::Walk` with the route, component path and counts. Every other walk refusal stays `RENDER-102`.
+
 ### Staged static SSR policy — FORMA-105
 
 - Refuse island modules paired with an empty SSR JavaScript list at startup/reload (LOAD-109); keep the prior valid module and manifest together, including unchanged-IR and same-byte recovery transitions.

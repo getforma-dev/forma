@@ -1166,6 +1166,42 @@ pub mod test_helpers {
         buf
     }
 
+    /// Add FMIR section `0x0006` (key paths) to a module built by one of the
+    /// builders above: one `(LIST byte offset, segment string indexes)` entry
+    /// per keyed LIST, in ascending offset order, as the compiler writes it.
+    /// Every other section is kept byte for byte.
+    pub fn with_key_paths(ir: &[u8], paths: &[(u32, &[u32])]) -> Vec<u8> {
+        let table = &ir[HEADER_SIZE..];
+        let count = u16::from_le_bytes([table[0], table[1]]) as usize;
+        let mut sections: Vec<(u16, u16, &[u8])> = (0..count)
+            .map(|index| {
+                let entry = &table[TABLE_PREFIX_SIZE + index * SECTION_ENTRY_SIZE..];
+                let field = |at: usize| u32::from_le_bytes(entry[at..at + 4].try_into().unwrap());
+                let (offset, size) = (field(4) as usize, field(8) as usize);
+                (
+                    u16::from_le_bytes([entry[0], entry[1]]),
+                    u16::from_le_bytes([entry[2], entry[3]]),
+                    &ir[offset..offset + size],
+                )
+            })
+            .collect();
+        let mut payload = to_u32(paths.len()).to_vec();
+        for (offset, segments) in paths {
+            payload.extend_from_slice(&offset.to_le_bytes());
+            payload.push(u8::try_from(segments.len()).unwrap());
+            for segment in *segments {
+                payload.extend_from_slice(&segment.to_le_bytes());
+            }
+        }
+        assert!(
+            sections.iter().all(|(id, _, _)| *id != 6),
+            "the module already has a key-path section"
+        );
+        let at = sections.partition_point(|(id, _, _)| *id < 6);
+        sections.insert(at, (6, 1, &payload));
+        build_ir_sections(&sections)
+    }
+
     /// Restamp length and checksum after a deliberate structural mutation.
     pub fn restamp(buf: &mut [u8]) {
         let body_len = to_u32(buf.len() - HEADER_SIZE);

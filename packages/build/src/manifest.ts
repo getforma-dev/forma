@@ -11,13 +11,17 @@ export function generateManifest(
   staticDependencies: Record<string, string[]> = {},
   graphFiles: ReadonlySet<string> = new Set(),
   products: EntryProducts = new Map(),
+  identity?: string,
 ): { manifest: AssetManifest; warnings: string[] } {
   const distDir = config.outputDir;
   const BUDGET_THRESHOLD = config.budgetThreshold ?? 200_000;
   const warnings: string[] = [];
 
-  // Build hash: SHA-256 of all hashed filenames sorted and joined
-  const buildHash = createHash('sha256')
+  // The manifest's `build` is the deployment identity (FORMA-186, DR-29): the
+  // build computes it before it names anything and compiles it into the
+  // bundles (identity.ts). A caller that has none, the manifest's own unit
+  // tests, gets the hash of the hashed filenames this field held before.
+  const buildHash = identity ?? createHash('sha256')
     .update(Object.values(assets).sort().join(','))
     .digest('hex');
 
