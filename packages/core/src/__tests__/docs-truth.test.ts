@@ -242,7 +242,12 @@ describe('"Verified by" citations', () => {
         checked += 1;
         let source: string;
         try {
-          source = read(file!);
+          // This audit described a removed whole-page mount adapter. Validate its
+          // citation against the exact archived test, not an unrelated new test.
+          source = doc === 'docs/archive/2026-08-05-hardening-audit.md'
+            && file === 'src/dom/__tests__/mount.test.ts'
+            ? read('../../docs/archive/2026-10-15-ssr-mount-retirement/mount.test.ts')
+            : read(file!);
         } catch {
           throw new Error(`${doc}: cited test file does not exist: ${file}`);
         }

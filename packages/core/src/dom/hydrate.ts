@@ -1428,8 +1428,8 @@ export function isHydrateError(err: unknown): err is Error {
  * status would otherwise be its only trace), and passed to the `onError`
  * handlers with the source `'hydration'`, for an application's error reporting.
  *
- * Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "onError receives FORMA_E_HYDRATE_NODE from activateIslands, mount() and hydrateIsland()"
- * Verified by: src/dom/__tests__/list-adoption-count.test.ts > "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, mount() and hydrateIsland(), and each keeps the server rows"
+ * Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "onError receives FORMA_E_HYDRATE_NODE from activateIslands, caller-owned adoption and hydrateIsland()"
+ * Verified by: src/dom/__tests__/list-adoption-count.test.ts > "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows"
  */
 export function reportHydrateError(err: Error, where = ''): void {
   console.error(err.message + where);
@@ -1455,7 +1455,7 @@ export function reportHydrateError(err: Error, where = ''): void {
  * `data-forma-ssr`, and `target` is returned. It does not throw in 2.x.
  *
  * Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "hydrateIsland called directly with a detached node logs the code and keeps the server DOM"
- * Verified by: src/dom/__tests__/list-adoption-count.test.ts > "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, mount() and hydrateIsland(), and each keeps the server rows"
+ * Verified by: src/dom/__tests__/list-adoption-count.test.ts > "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows"
  *
  * @param component  A function that builds the UI (calls h(), createShow, etc.)
  * @param target     The container element with `data-forma-ssr` attribute
@@ -1541,7 +1541,7 @@ export function hydrateIslandOrFail(component: () => unknown, target: Element): 
   // Verified by: src/dom/__tests__/list-adoption-count.test.ts > "an island failed by the row count keeps no handler or binding that adoption attached before the list"
   // Verified by: src/dom/__tests__/list-adoption-count.test.ts > "an island failed by the row count answers no click on the nodes adoption built fresh before the list"
   // Verified by: src/dom/__tests__/list-adoption-count.test.ts > "hydrateIsland() called directly keeps no binding it adopted before the list failed"
-  // Verified by: src/dom/__tests__/list-adoption-count.test.ts > "a failing mount() whose ref writes a shared signal does not detach a second mount() root's new row"
+  // Verified by: src/dom/__tests__/list-adoption-count.test.ts > "a failing caller-owned adoption whose ref writes a shared signal does not detach a Browser mount root's new row"
   // Verified by: src/dom/__tests__/list-adoption-count.test.ts > "a failing island's ref that writes a shared signal does not detach another island's new list row"
   const attached: Element[] = [];
   const outer = recordListeners(attached);
@@ -1581,7 +1581,7 @@ function adopt(descriptor: unknown, target: Element): void {
     // A root that is a range of nodes rather than one element (a Fragment, or
     // a show or list region with no wrapping element) is adopted against the
     // container's children, where the server rendered it.
-    // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text after mount() adoption"
+    // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text under a caller-owned adoption root"
     // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a Fragment at an island root is adopted, each island on its own"
     adoptChildren([descriptor], target, target.firstChild, null);
   } else if (

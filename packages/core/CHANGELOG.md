@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Staged whole-page mount retirement — FORMA-105
+
+- `mount()` refuses a `data-forma-ssr` target with `FORMA_E_MOUNT_SSR` before component/root/effect/listener creation or DOM writes. Ordinary Browser mounting, explicit browserOnly islands and public caller-owned `hydrateIsland()` are retained.
+- Adoption-specific regression tests now call the retained public hydrator under explicit roots; the old mount/fallback assertions are archived exactly. Strict island adoption (FORMA-104), compiler static/entry selection and the template successor remain separate integration gates.
+
 ### Typed raw boundaries — FORMA-109
 
 - Raw markup APIs require `trustedHtml()` and reject strings and look-alikes before DOM writes or cache shortcuts, in both development and production. This includes `dangerouslySetInnerHTML`, `srcdoc`, `setAttr`, `setHTMLUnsafe`, `template`/`templateMany`, `reconcile`, `mountMarkup` and its update operation. Null/false clears remain supported; `h('script')` is refused.

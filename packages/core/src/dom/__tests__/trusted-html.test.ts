@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSignal } from 'forma/reactive';
 import { h } from '../element';
 import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 import { template, templateMany } from '../template';
 import { createReconciler } from '../reconcile';
 import { setHTMLUnsafe } from '../../dom-utils/mutate';
@@ -420,7 +421,7 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     sim = enforceTrustedTypes();
     document.body.innerHTML = trustedHtml('<div id="app" data-forma-ssr><article></article></div>') as unknown as string;
     const [inner, setInner] = createSignal<{ __html: TrustedHtml } | null>({ __html: trustedHtml('<b>one</b>') });
-    mount(() => h('article', { dangerouslySetInnerHTML: () => inner() }), '#app');
+    adoptInRoot(() => h('article', { dangerouslySetInnerHTML: () => inner() }), '#app');
     const article = document.querySelector('article')!;
     expect(article.innerHTML).toBe('<b>one</b>');
     setInner(null);
@@ -436,7 +437,7 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     document.body.innerHTML = trustedHtml('<div id="app" data-forma-ssr><article></article></div>') as unknown as string;
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const raw = '<b>x</b>' as unknown as TrustedHtml;
-    expect(() => mount(() => h('article', { dangerouslySetInnerHTML: () => ({ __html: raw }) }), '#app')).toThrow('FORMA_E_RAW_INNER_HTML');
+    expect(() => adoptInRoot(() => h('article', { dangerouslySetInnerHTML: () => ({ __html: raw }) }), '#app')).toThrow('FORMA_E_RAW_INNER_HTML');
     expect(document.querySelector('#app article')!.innerHTML).toBe('');
     expect(() => h('article', { dangerouslySetInnerHTML: () => ({ __html: raw }) })).toThrow('FORMA_E_RAW_INNER_HTML');
     expect(sim.violations).toEqual([]);
@@ -450,7 +451,7 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     document.body.innerHTML = trustedHtml('<div id="app" data-forma-ssr><article><b>old</b></article></div>') as unknown as string;
     const [inner, setInner] = createSignal<{ __html: TrustedHtml }>({ __html: trustedHtml('<b>old</b>') });
     const client = h('article', { dangerouslySetInnerHTML: () => inner() });
-    mount(() => h('article', { dangerouslySetInnerHTML: () => inner() }), '#app');
+    adoptInRoot(() => h('article', { dangerouslySetInnerHTML: () => inner() }), '#app');
     const adopted = document.querySelector('#app article')!;
     vi.spyOn(console, 'error').mockImplementation(() => {});
     setInner({ __html: '<b>new</b>' as unknown as TrustedHtml });
@@ -468,7 +469,7 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
       '<div id="app" data-forma-ssr><div><iframe srcdoc="&lt;p&gt;a&lt;/p&gt;"></iframe></div></div>',
     ) as unknown as string;
     const [doc, setDoc] = createSignal<TrustedHtml>(trustedHtml('<p>a</p>'));
-    mount(() => h('div', null, h('iframe', { srcdoc: () => doc() })), '#app');
+    adoptInRoot(() => h('div', null, h('iframe', { srcdoc: () => doc() })), '#app');
     const frame = document.querySelector('iframe')!;
     // Adoption writes nothing where the server agrees.
     expect(frame.getAttribute('srcdoc')).toBe('<p>a</p>');

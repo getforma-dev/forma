@@ -13,7 +13,7 @@ import { emptyRegistry, installState, useFreshDocument } from './helpers/compile
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createSignal } from 'forma/reactive';
 import { h } from '../element';
-import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 import { activateIslands } from '../activate';
 import { createList } from '../list';
 
@@ -54,12 +54,12 @@ describe('adopting inline SVG', () => {
     const [d, setD] = createSignal('M0 0L10 10');
 
     const writes = writesDuring(app, () => {
-      mount(() => h('button', { id: 'close' },
+      adoptInRoot(() => h('button', { id: 'close' },
         h('svg', { viewBox: '0 0 10 10' }, h('title', null, 'Close'), h('path', { d: () => d() })),
       ), app);
     });
 
-    // The only write is mount() removing data-forma-ssr from its container.
+    // The only write is direct hydration removing data-forma-ssr from its container.
     expect(writes).toEqual(['attributes:div:data-forma-ssr']);
     expect(app.querySelector('svg')).toBe(svg);
     expect(svg.querySelector('title')).toBe(title);
@@ -127,7 +127,7 @@ describe('adopting inline SVG', () => {
     const [height, setHeight] = createSignal('5');
 
     const writes = writesDuring(app, () => {
-      mount(() => h('svg', { viewBox: '0 0 10 10' },
+      adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
         h('defs', null,
           h('clipPath', { id: 'clip' }, h('rect', { width: '10', height: () => height() })),
           h('linearGradient', { id: 'fade' }, h('stop', { offset: '0' }), h('stop', { offset: '1' })),
@@ -152,7 +152,7 @@ describe('adopting inline SVG', () => {
     const [label, setLabel] = createSignal('Close');
 
     const writes = writesDuring(app, () => {
-      mount(() => h('svg', { viewBox: '0 0 10 10' }, h('title', null, () => label()), h('path', { d: 'M0 0L10 10' })), app);
+      adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' }, h('title', null, () => label()), h('path', { d: 'M0 0L10 10' })), app);
     });
 
     expect(writes).toEqual(['attributes:div:data-forma-ssr']);
@@ -175,7 +175,7 @@ describe('adopting inline SVG', () => {
     const [r, setR] = createSignal('1');
 
     const records = recordsDuring(app, () => {
-      mount(() => h('svg', { viewBox: '0 0 400 10' },
+      adoptInRoot(() => h('svg', { viewBox: '0 0 400 10' },
         h('g', null, createList(items, (item) => item.id, (item) =>
           h('circle', { 'data-forma-key': String(item.id), cx: String(item.id * 10), r: () => r() }))),
       ), app);
@@ -210,7 +210,7 @@ describe('what adoption creates inside SVG and MathML', () => {
     const app = document.getElementById('app')!;
     const svg = app.querySelector('svg')!;
 
-    mount(() => h('svg', { viewBox: '0 0 10 10' },
+    adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
       h('title', null, 'Close'),
       h('a', { href: '#close' }, h('path', { d: 'M0 0L10 10' })),
     ), app);
@@ -229,7 +229,7 @@ describe('what adoption creates inside SVG and MathML', () => {
     const app = document.getElementById('app')!;
     const keptRow = app.querySelector('[data-forma-key="b"]')!;
 
-    mount(() => h('svg', null, createList(() => ['a', 'b'], (k) => k, (k) => k === 'a'
+    adoptInRoot(() => h('svg', null, createList(() => ['a', 'b'], (k) => k, (k) => k === 'a'
       ? h('a', { 'data-forma-key': k, href: '#a' }, h('title', null, 'A'))
       : h('g', { 'data-forma-key': k }))), app);
 
@@ -251,7 +251,7 @@ describe('what adoption creates inside SVG and MathML', () => {
     const foreignObject = app.querySelector('#kept foreignObject')!;
     const content = () => h('foreignObject', { width: '10', height: '10' }, h('div', null, h('a', { href: '#more' }, 'more')));
 
-    mount(() => h('div', null,
+    adoptInRoot(() => h('div', null,
       h('svg', { id: 'kept', viewBox: '0 0 10 10' }, content()),
       h('svg', { id: 'empty', viewBox: '0 0 10 10' }, content()),
     ), app);
@@ -271,7 +271,7 @@ describe('what adoption creates inside SVG and MathML', () => {
     const p = document.getElementById('formula')!;
     const [x, setX] = createSignal('x');
 
-    mount(() => h('p', { id: 'formula' }, h('math', null, h('mi', null, () => x()), h('mo', null, '+'), h('mn', null, '1'))), app);
+    adoptInRoot(() => h('p', { id: 'formula' }, h('math', null, h('mi', null, () => x()), h('mo', null, '+'), h('mn', null, '1'))), app);
 
     expect(app.querySelector('#formula')).toBe(p);
     expect(Array.from(p.querySelectorAll('*'), (el) => `${el.localName}:${el.namespaceURI}`)).toEqual(
@@ -292,7 +292,7 @@ describe('reactive attributes at adoption', () => {
     const [disabled, setDisabled] = createSignal(true);
 
     const writes = writesDuring(app, () => {
-      mount(() => h('a', { id: 'link', href: () => href(), className: () => 'on', 'aria-busy': () => busy() },
+      adoptInRoot(() => h('a', { id: 'link', href: () => href(), className: () => 'on', 'aria-busy': () => busy() },
         h('button', { id: 'b', disabled: () => disabled() }, 'go')), app);
     });
     expect(writes).toEqual(['attributes:div:data-forma-ssr']);

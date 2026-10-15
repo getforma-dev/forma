@@ -7,7 +7,7 @@ import { trustedHtml } from '../trusted-html';
  * place. Before this fix `h(Fragment)` built a detached DocumentFragment even
  * while hydrating, and hydrateIsland treated that non-descriptor as success:
  * it removed data-forma-ssr, adopted nothing, and the page stayed inert. These
- * tests adopt Fragments at a mount() root, at an island root, nested inside an
+ * tests adopt Fragments under a caller-owned root, at an island root, nested inside an
  * element and as a show branch, and pin that a value adoption cannot match is
  * a failure, not a silent success.
  */
@@ -15,7 +15,7 @@ import { trustedHtml } from '../trusted-html';
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createEffect, createSignal, onError } from 'forma/reactive';
 import { h, Fragment, fragment } from '../element';
-import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 import { activateIslands, deactivateAllIslands } from '../activate';
 import { createShow } from '../show';
 import { createList } from '../list';
@@ -34,13 +34,13 @@ function serverPage(): HTMLElement {
 }
 
 describe('Fragment adoption', () => {
-  it('a root Fragment binds its click handler and reactive text after mount() adoption', () => {
+  it('a root Fragment binds its click handler and reactive text under a caller-owned adoption root', () => {
     const app = serverPage();
     const span = document.getElementById('note')!;
     const button = document.getElementById('go')!;
     const [note, setNote] = createSignal('hello');
 
-    const unmount = mount(() => h(Fragment, null,
+    const dispose = adoptInRoot(() => h(Fragment, null,
       h('span', { id: 'note' }, () => note()),
       h('button', { id: 'go', onClick: () => setNote('bye') }, 'go'),
     ), app);
@@ -59,7 +59,7 @@ describe('Fragment adoption', () => {
     expect(span.textContent).toBe('bye');
     expect(app.querySelectorAll('span')).toHaveLength(1);
 
-    unmount();
+    dispose();
   });
 
   it('the fragment() helper is adopted like a JSX Fragment', () => {
@@ -67,7 +67,7 @@ describe('Fragment adoption', () => {
     const span = document.getElementById('note')!;
     const [note, setNote] = createSignal('hello');
 
-    mount(() => fragment(
+    adoptInRoot(() => fragment(
       h('span', { id: 'note' }, () => note()),
       h('button', { id: 'go', onClick: () => setNote('bye') }, 'go'),
     ), app);
@@ -118,7 +118,7 @@ describe('Fragment adoption', () => {
     const [label, setLabel] = createSignal('x');
     const [clicks, setClicks] = createSignal(0);
 
-    mount(() => h('section', null,
+    adoptInRoot(() => h('section', null,
       h(Fragment, null,
         h('b', { onClick: () => setLabel('from b') }, 'a'),
         () => label(),
@@ -145,7 +145,7 @@ describe('Fragment adoption', () => {
     const serverButton = app.querySelector('button')!;
     const [open, setOpen] = createSignal(true);
 
-    mount(() => h('div', null,
+    adoptInRoot(() => h('div', null,
       createShow(open,
         () => h(Fragment, null, h('span', null, 'one'), h('button', { onClick: () => setOpen(false) }, 'off')),
         () => h('em', null, 'closed'),
@@ -167,7 +167,7 @@ describe('Fragment adoption', () => {
     const [count, setCount] = createSignal(0);
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    mount(() => h('section', null,
+    adoptInRoot(() => h('section', null,
       h(Fragment, null, h('button', { onClick: () => setCount(count() + 1) }, () => `n=${count()}`)),
     ), app);
     warn.mockRestore();
@@ -254,7 +254,7 @@ describe('Fragment adoption', () => {
     expect(islands[0]!.textContent).toBe('server 06tail');
   });
 
-  it('onError receives FORMA_E_HYDRATE_NODE from activateIslands, mount() and hydrateIsland()', () => {
+  it('onError receives FORMA_E_HYDRATE_NODE from activateIslands, caller-owned adoption and hydrateIsland()', () => {
     const received: Array<[string, string | undefined]> = [];
     const off = onError((err, info) => {
       received.push([String((err as { code?: unknown }).code), info?.source]);
@@ -266,7 +266,7 @@ describe('Fragment adoption', () => {
         '<div id="app" data-forma-ssr><p>m</p></div><div id="direct" data-forma-ssr><p>d</p></div>';
       installState();
       activateIslands(emptyRegistry({ Detached: () => document.createElement('span') }));
-      mount(() => document.createElement('p') as unknown as HTMLElement, '#app');
+      adoptInRoot(() => document.createElement('p') as unknown as HTMLElement, '#app');
       hydrateIsland(() => document.createElement('p'), document.getElementById('direct')!);
     } finally {
       error.mockRestore();
@@ -290,16 +290,16 @@ describe('Fragment adoption', () => {
     expect(received).toHaveLength(3);
   });
 
-  it('mount() of a detached DOM node keeps the server DOM, logs the code, disposes its effects and does not throw', () => {
+  it('caller-owned direct adoption logs a detached-node refusal and stops effects when its caller disposes', () => {
     const app = serverPage();
     const before = app.innerHTML;
     const [n, setN] = createSignal(0);
     let runs = 0;
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    let unmount: (() => void) | undefined;
+    let dispose: (() => void) | undefined;
     expect(() => {
-      unmount = mount(() => {
+      dispose = adoptInRoot(() => {
         createEffect(() => { n(); runs++; });
         return document.createElement('p') as unknown as HTMLElement;
       }, app);
@@ -307,17 +307,18 @@ describe('Fragment adoption', () => {
     const logged = error.mock.calls.map((call) => String(call[0]));
     error.mockRestore();
 
-    expect(typeof unmount).toBe('function');
+    expect(typeof dispose).toBe('function');
     expect(app.hasAttribute('data-forma-ssr')).toBe(true);
     expect(app.innerHTML).toBe(before);
     expect(logged.filter((line) => line.includes('FORMA_E_HYDRATE_NODE'))).toHaveLength(1);
-    // The component's effect ran once and was disposed with the root.
+    // Public hydration reports the error; the caller explicitly disposes its root.
     expect(runs).toBe(1);
+    dispose!();
     setN(1);
     setN(2);
     expect(runs).toBe(1);
-    unmount!();
-    expect(app.innerHTML).toBe('');
+    dispose!();
+    expect(app.innerHTML).toBe(before);
   });
 
   it('hydrateIsland called directly with a detached node logs the code and keeps the server DOM', () => {
@@ -343,11 +344,11 @@ describe('Fragment adoption', () => {
     const [items, setItems] = createSignal(['a', 'b']);
     const clicked: string[] = [];
 
-    mount(() => createShow(on,
+    adoptInRoot(() => createShow(on,
       () => h('button', { id: 'toggle', onClick: () => setOn(false) }, 'on'),
       () => h('em', null, 'off'),
     ) as unknown as HTMLElement, '#show');
-    mount(() => createList(items, (x) => x, (x) => h('li', { onClick: () => clicked.push(x) }, x)) as unknown as HTMLElement, '#list');
+    adoptInRoot(() => createList(items, (x) => x, (x) => h('li', { onClick: () => clicked.push(x) }, x)) as unknown as HTMLElement, '#list');
 
     // The server's nodes are bound, not replaced.
     toggleButton.click();

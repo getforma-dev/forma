@@ -952,3 +952,14 @@ are written. Do not substitute a filename hash or an abbreviated digest.
 | RENDER-502 | island snapshot | Complete escaped UTF-8 state envelope exceeds 1,048,576 bytes, including envelope/commas/escapes. Exactly the limit is accepted. |
 
 State is captured before an island body runs, so later list-row changes cannot alter an earlier occurrence. Only declared fields are disclosed; absent/null optional object fields are omitted and optional array positions remain null. Final response size includes the state script and all document metadata; exceeding the inherited/request output limit returns the existing `RENDER-301`. Body-only work counts remain available on that error.
+
+### FORMA_E_MOUNT_SSR Whole-page SSR mount is retired
+
+The DOM `mount()` target carries `data-forma-ssr`. The call throws before
+component/root/effect/listener creation and does not change the target or its
+contents, including an empty server-marked root. Use declared
+`activateIslands({ Counter })` for SSR interaction. Browser routes and explicit
+`browserOnly` islands remain supported. Public direct `hydrateIsland()` remains
+a separate caller-owned API; it does not regain compiled registration authority.
+This is a staged FORMA-105 boundary pending the compiler, FORMA-104 adoption and
+template successor integration.

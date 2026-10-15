@@ -132,8 +132,8 @@ they build is theirs: it keeps its listeners and its bindings if this island
 fails. Adoption's own bindings still run when they are created. This holds
 for any adoption that fails part-way. Nodes adoption had already replaced or
 added before the failing list (a tag mismatch, a keyed row the server did not
-render) stay as it left them. `mount()` and `hydrateIsland()` keep
-`data-forma-ssr` on the container and do not throw, as for
+render) stay as it left them. Public `hydrateIsland()` keeps
+`data-forma-ssr` on the container and does not throw, as for
 `FORMA_E_HYDRATE_NODE` below. Equal counts adopt every row in place, and after
 adoption the list reconciles by key as usual. This check is the bridge until the
 server writes keys for every list (decision brief DR-8).
@@ -155,12 +155,31 @@ Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "an island failed 
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "hydrateIsland() called directly keeps no binding it adopted before the list failed"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing island's ref that writes a shared signal does not detach another island's new list row"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing island's ref that writes a shared signal does not detach another island's new show branch"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing mount() whose ref writes a shared signal does not detach a second mount() root's new row"
+Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing caller-owned adoption whose ref writes a shared signal does not detach a Browser mount root's new row"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing island's ref that writes a shared signal does not detach a client-rendered mount() root's new row"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "another island's row created while a failing island adopts keeps its reactive binding"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "the migration: an empty server region adopts an empty array, and rows filled after activation render"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "an island whose only server content is an empty list region is rendered in the browser, not checked"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, mount() and hydrateIsland(), and each keeps the server rows"
+Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows"
+
+
+### Browser mounting and retained direct hydration
+
+`mount()` now throws `FORMA_E_MOUNT_SSR` when its target has
+`data-forma-ssr`, including an empty marked target. It runs no component, creates
+no reactive root or effects, attaches no listeners and changes no DOM. Normal
+Browser mounting and explicit `browserOnly` islands remain supported. Use
+compiler-declared `activateIslands({ Counter })` for SSR interaction.
+
+The public `hydrateIsland()` API remains available for caller-owned direct
+hydration; it has no compiled state/setter authority. The current adoption
+behavior described below remains staged until FORMA-104. This mount removal
+alone does not claim zero-write successful adoption or a complete FORMA-105
+product. Old mount adoption and fallback expectations are preserved in
+[the retirement archive](../../../docs/archive/2026-10-15-ssr-mount-retirement/README.md).
+
+Verified by `src/dom/__tests__/mount.test.ts` > "refuses a marked %s root by %s before component/root/effects/listeners or DOM writes"
+Verified by `src/dom/__tests__/mount.test.ts` > "keeps reactive updates and disposes bindings with idempotent unmount"
 
 ### Server data flow
 
@@ -177,7 +196,7 @@ same signals and ordinary keyed reconciliation.
 ## What adoption does with Fragments, form controls, `textarea`, `title` and SVG
 
 **Fragments.** A component may return a Fragment (`<>…</>`, `h(Fragment, …)`
-or `fragment(…)`) at a `mount()` root, at an island root, inside an element or
+or `fragment(…)`) under a caller-owned `hydrateIsland()` root, at an island root, inside an element or
 as a `createShow` branch. The server renders a Fragment's children in place, so
 adoption walks them in place: their handlers and bindings attach to the
 server's nodes. A root `createShow` or `createList` with no wrapping element is
@@ -190,19 +209,19 @@ activates as usual. A node built while hydrating that is not part of the
 server's HTML cannot be adopted. The server's DOM stays as served, and the
 error `FORMA_E_HYDRATE_NODE` is logged in every build and passed to `onError`
 handlers with the source `'hydration'`. `activateIslands` marks that island
-`error` and carries on with the others. `mount()` and
-`hydrateIsland()` keep `data-forma-ssr` on the container and do not throw;
-`mount()` also disposes the effects the component created. A component that
+`error` and carries on with the others. Public `hydrateIsland()` keeps
+`data-forma-ssr` on the container and does not throw. Its caller owns the reactive
+root and must dispose the component's effects when finished. A component that
 returns nothing (an island that sets up its own effects) still activates.
 
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a root Fragment binds its click handler and reactive text after mount() adoption"
+Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a root Fragment binds its click handler and reactive text under a caller-owned adoption root"
 Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a Fragment at an island root is adopted, each island on its own"
 Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a root createShow or createList is adopted against the container's children"
 Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an island that returns its own element stays active and keeps updating"
 Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an island that returns a detached DOM node is marked error with its code, its sibling unaffected"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "mount() of a detached DOM node keeps the server DOM, logs the code, disposes its effects and does not throw"
+Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "caller-owned direct adoption logs a detached-node refusal and stops effects when its caller disposes"
 Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an island that appends a fragment into its element and returns it, now empty, stays active"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "onError receives FORMA_E_HYDRATE_NODE from activateIslands, mount() and hydrateIsland()"
+Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "onError receives FORMA_E_HYDRATE_NODE from activateIslands, caller-owned adoption and hydrateIsland()"
 
 **Form controls.** What a user enters between first paint and activation is
 kept. For a bound `value`, `checked` or `selected`, adoption first compares the
@@ -320,7 +339,7 @@ Verified by `src/dom/__tests__/browser-only.test.ts` > "called as a component, r
 
 ---
 
-## What adoption skips today
+## Earlier adoption qualification (compiler 0.3.7)
 
 Adoption has no handling for the constructs below, so a server-rendered page
 that uses one is not adopted as written (FORMA-016). Since compiler 0.3.7 each
@@ -328,11 +347,13 @@ is reported at build time with its code, file and line, and `@getforma/build`'s
 strict mode makes it an error; the way out is to render the subtree in the
 browser with `browserOnly()`, or to write it as a construct the server renders.
 
-What each one does, measured in Chromium on a `mount()` root built with
-compiler 0.3.7 and activated by this runtime, with a counter button after the
-construct:
+The table records earlier Chromium measurements on a `mount()` root built
+with compiler 0.3.7, with a counter button after the construct. That whole-page
+mount path is now refused before execution. These historical observations are
+not a fresh qualification of direct hydration or the pending FORMA-104
+transaction:
 
-| Construct | What a server-rendered page gets today | Build code | Instead |
+| Construct | Earlier observed behavior | Build code | Instead |
 |---|---|---|---|
 | A plain array child: `{rows.map(r => <li>…</li>)}` without `createList` | The server renders an empty island shell nothing registers; adoption skips the array, so the rows never appear. The rest of the page activates | `BUILD-701` | `createList(rows, keyFn, (r) => …)`, or `...CONST.map(…)` over a module-level const |
 | The same in a reactive child: `{() => rows.map(r => <li>…</li>)}` | The server renders empty text; after activation the page shows the elements as text, `[object HTMLLIElement],[object HTMLLIElement]`. The rest of the page activates | `BUILD-701` | The same |

@@ -1173,29 +1173,9 @@
   "tags": [
    "correctness"
   ],
-  "find": "      return withNamespace(contentNs(target), component);",
-  "replace": "      return component();",
+  "find": "    return withNamespace(contentNs(target), component);",
+  "replace": "    return component();",
   "note": "mount() into an svg element builds an a as HTML. Verified by: src/dom/__tests__/namespace-resolution.test.ts > \"a portal into an svg, and mount() into an svg, create SVG elements\""
- },
- {
-  "id": "mount/detached-node-leaks-effects",
-  "file": "src/dom/mount.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (failure) {\n      disposeRoot();",
-  "replace": "    if (failure) {",
-  "note": "a mount() that adopted nothing leaves the component's effects running"
- },
- {
-  "id": "mount/detached-node-throws",
-  "file": "src/dom/mount.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "        if (!isHydrateError(err)) throw err;\n        failure = err;",
-  "replace": "        throw err;",
-  "note": "mount() throws for a detached node, aborting the rest of the page's module (FORMA-003 B1)"
  },
  {
   "id": "mutate/setAttr-true-branch",
@@ -2566,8 +2546,8 @@
   "tags": [
    "security"
   ],
-  "find": "    target.replaceChildren();\n    target.appendChild(dom);",
-  "replace": "    target.innerHTML = '';\n    target.appendChild(dom);",
+  "find": "  target.replaceChildren();\n  target.appendChild(dom);",
+  "replace": "  target.innerHTML = '';\n  target.appendChild(dom);",
   "note": "mount() empties its container by writing a string to innerHTML, which a page requiring Trusted Types reports or refuses (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
  },
  {
@@ -2576,8 +2556,8 @@
   "tags": [
    "security"
   ],
-  "find": "      target.replaceChildren();\n    } else {",
-  "replace": "      target.innerHTML = '';\n    } else {",
+  "find": "    disposeRoot();\n    target.replaceChildren();",
+  "replace": "    disposeRoot();\n    target.innerHTML = '';",
   "note": "the function mount() returns empties the container by writing a string to innerHTML (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
  },
  {

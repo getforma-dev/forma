@@ -1,7 +1,7 @@
 import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createSignal, createRoot } from 'forma/reactive';
-import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 import { activateIslands } from '../activate';
 import {
   hydrating,
@@ -1585,7 +1585,7 @@ describe('complex hydration scenarios', () => {
     const [showPwd, setShowPwd] = createSignal(false);
     let formSubmitted = false;
 
-    const unmount = mount(
+    const dispose = adoptInRoot(
       () => h('div', { class: 'page' },
         h('form', {
           class: 'auth-form',
@@ -1637,7 +1637,7 @@ describe('complex hydration scenarios', () => {
     expect(formSubmitted).toBe(true);
     expect(ssrSubmitBtn.textContent).toContain('Creating...');
 
-    unmount();
+    dispose();
   });
 
   it('hydration with createShow conditional content', () => {
@@ -1649,7 +1649,7 @@ describe('complex hydration scenarios', () => {
     let oauthClicked = false;
     let submitClicked = false;
 
-    const unmount = mount(
+    const dispose = adoptInRoot(
       () => h('div', null,
         createShow(
           () => true,
@@ -1672,7 +1672,7 @@ describe('complex hydration scenarios', () => {
     (submitBtn as HTMLElement).click();
     expect(submitClicked).toBe(true);
 
-    unmount();
+    dispose();
   });
 });
 

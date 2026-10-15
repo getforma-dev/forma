@@ -19,6 +19,7 @@ import { createList } from '../list';
 import { createSwitch } from '../switch';
 import { createPortal } from '../portal';
 import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const XHTML = 'http://www.w3.org/1999/xhtml';
@@ -261,7 +262,7 @@ describe('what adoption builds inside an SVG is SVG (FORMA-026)', () => {
     const warn = console.warn;
     console.warn = () => {};
     try {
-      mount(() => h('svg', { viewBox: '0 0 10 10' },
+      adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
         h('g', { id: 'show' }, createShow(on, () => h('title', null, 'On'), () => h('a', { href: '#off' }, 'Off'))),
         h('g', { id: 'rows' }, createList(keys, (k) => k, (k) => h('a', { 'data-forma-key': k, href: `#${k}` }, h('title', null, k)))),
       ) as unknown as HTMLElement, app);
@@ -293,7 +294,7 @@ describe('adoption at the parser\'s HTML integration points (FORMA-026)', () => 
     const warn = console.warn;
     console.warn = () => {};
     try {
-      mount(() => h('svg', { viewBox: '0 0 10 10' },
+      adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
         h('g', null, h('title', { ref: (el: Element) => refs.push(el) }, 'T'), h('a', { href: '#x' })),
       ) as unknown as HTMLElement, app);
     } finally {
@@ -313,7 +314,7 @@ describe('adoption at the parser\'s HTML integration points (FORMA-026)', () => 
     const warn = console.warn;
     console.warn = () => {};
     try {
-      mount(() => h('div', null,
+      adoptInRoot(() => h('div', null,
         h('svg', null, h('desc', { id: 'd' }, h('a', { href: '#d' }, 'd'))),
         h('math', null,
           h('mtext', { id: 't' }, h('a', { href: '#t' }, 't'), h('mglyph')),
