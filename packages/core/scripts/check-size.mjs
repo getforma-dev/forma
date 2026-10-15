@@ -32,7 +32,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * 28,369 to 47,203 B against gates of 30,000 and 29,000 B. After the safe cuts
  * of FORMA-021 (C1 to C3: development warnings folded at every site, the
  * createShow/createSwitch tracing out, the duplicate-instance registry
- * development-only) they measure 46,099 and 46,108 B, and both gates are
+ * development-only) they measure 46,097 and 46,115 B, and both gates are
  * ratcheted to 46,500 B under L-51 (decision brief L-55, 2026-10-15), the
  * growth stated in the CHANGELOG under FORMA-103 and FORMA-104. They are
  * ratchets like the runtime gates below, not a budget: the budget is N2,
@@ -56,7 +56,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * change that passes one raises it to its new measured size rounded up to the
  * next 500 B, and its CHANGELOG entry states the growth; a change that only
  * refactors never raises one. FORMA-021's cuts put every runtime IIFE back
- * under its unchanged gate (41,297, 40,171 and 39,646 B measured against
+ * under its unchanged gate (41,254, 40,175 and 39,603 B measured against
  * 41,500, 40,500 and 40,000 B). FORMA-132 (data-fetch's timeout) raised both, 34,000 to 34,500 B
  * and 33,000 to 33,500 B (34,061 and 33,072 B measured). FORMA-028 and
  * FORMA-025 (core 2.1.0) raised them again, to 36,000 and 35,000 B (35,540

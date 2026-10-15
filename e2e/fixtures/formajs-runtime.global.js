@@ -25,12 +25,14 @@ var FormaRuntime = (() => {
     getScopes: () => getScopes,
     initRuntime: () => initRuntime,
     mount: () => mount,
+    mountMarkup: () => mountMarkup,
     reconcile: () => reconcile,
     resetScope: () => resetScope,
     setDebug: () => setDebug,
     setDiagnostics: () => setDiagnostics,
     setDirectiveMap: () => setDirectiveMap,
     setScopeValue: () => setScopeValue,
+    trustedHtml: () => trustedHtml,
     unmount: () => unmount,
     yieldToMain: () => yieldToMain
   });
@@ -338,14 +340,6 @@ var FormaRuntime = (() => {
   }
 
   // src/reactive/dev.ts
-  var __DEV__ = !1, INSTANCE_KEY = /* @__PURE__ */ Symbol.for("@getforma/core#instances");
-  function registerInstance() {
-    let host = globalThis, registry = host[INSTANCE_KEY] ?? (host[INSTANCE_KEY] = { count: 0, warned: !1 });
-    registry.count += 1, registry.count > 1 && !registry.warned && (registry.warned = !0, console.warn(
-      `[forma] Duplicate @getforma/core instance detected (${registry.count} copies loaded). Signals, the owner tree, the component registry and the island registry are per-copy, so state created through one copy is invisible to the other. Usual causes: mixing \`import\` and \`require\` of @getforma/core in one process, or loading '@getforma/core' alongside '@getforma/core/runtime-hardened' or '@getforma/core/browser', which bundle their own private copy of the core.`
-    ));
-  }
-  registerInstance();
   var _errorHandlers = /* @__PURE__ */ new Set();
   function reportError(error, source) {
     for (let handler of _errorHandlers)
@@ -353,11 +347,34 @@ var FormaRuntime = (() => {
         handler(error, source ? { source } : {});
       } catch {
       }
-    __DEV__ && console.error(`[forma] ${source ?? "Unknown"} error:`, error);
+  }
+
+  // src/reactive/adoption-hooks.ts
+  var active;
+  function recordAdoptionSignal(get, set) {
+    active?.capture?.(get, set);
+  }
+  var callbacks;
+  function withAdoptionCallbacks(runner, fn) {
+    let previous = callbacks;
+    callbacks = runner;
+    try {
+      return fn();
+    } finally {
+      callbacks = previous;
+    }
+  }
+  function getAdoptionCallbacks() {
+    return callbacks;
+  }
+  function bindAdoptionCallback(fn, runner) {
+    return () => {
+      let current = runner ?? callbacks;
+      return current ? withAdoptionCallbacks(current, () => current(fn)) : fn();
+    };
   }
 
   // src/reactive/signal.ts
-  var signalNames = /* @__PURE__ */ new WeakMap();
   function applySignalSet(s, v, equals) {
     if (typeof v != "function") {
       if (!equals) {
@@ -380,10 +397,8 @@ var FormaRuntime = (() => {
     });
   }
   function createSignal(initialValue, options) {
-    let s = signal(initialValue), getter = s;
-    __DEV__ && options?.name && signalNames.set(getter, options.name);
-    let eq = options?.equals;
-    return [getter, (v) => applySignalSet(s, v, eq)];
+    let s = signal(initialValue), getter = s, eq = options?.equals, setter = (v) => applySignalSet(s, v, eq);
+    return eq || recordAdoptionSignal(getter, setter), [getter, setter];
   }
 
   // src/reactive/root.ts
@@ -395,18 +410,30 @@ var FormaRuntime = (() => {
     return currentOwner !== null;
   }
 
+  // src/reactive/adoption-events.ts
+  var active2;
+  function withAdoptionEvents(wrap, build) {
+    let previous = active2;
+    active2 = wrap;
+    try {
+      return build();
+    } finally {
+      active2 = previous;
+    }
+  }
+  var getAdoptionEvents = () => active2;
+
   // src/reactive/effect.ts
-  var POOL_SIZE = 32;
-  var pool = [];
-  for (let i = 0; i < POOL_SIZE; i++) pool.push([]);
+  var adoptionInternalEffect;
   function internalEffect(fn) {
-    let firstRun = !0, dispose = effect(() => {
+    if (adoptionInternalEffect) return adoptionInternalEffect(fn);
+    let events = getAdoptionEvents(), callback = bindAdoptionCallback(fn, getAdoptionCallbacks()), run2 = () => withAdoptionEvents(events, callback), firstRun = !0, dispose = effect(() => {
       if (firstRun) {
-        firstRun = !1, fn();
+        firstRun = !1, run2();
         return;
       }
       try {
-        fn();
+        run2();
       } catch (e) {
         reportError(e, "binding");
       }
@@ -483,12 +510,74 @@ var FormaRuntime = (() => {
   function isUnsafeAttrWrite(tag, name, value2) {
     return isEventHandlerAttr(name) ? !0 : isUrlAttr(name) && isDangerousUrl(value2, tag);
   }
+  var RAW_HTML_ATTRS = /* @__PURE__ */ new Set(["srcdoc"]);
+  function isRawHtmlAttr(name) {
+    return RAW_HTML_ATTRS.has(name.toLowerCase());
+  }
   var SAFE_ATTR_NAME_RE = /^[A-Za-z_:][-A-Za-z0-9_:.]*$/;
   function isSafeAttrName(name) {
     return SAFE_ATTR_NAME_RE.test(name);
   }
 
+  // src/dom/trusted-html.ts
+  var REGISTRY_KEY = /* @__PURE__ */ Symbol.for("@getforma/core#trusted-types");
+  function registry() {
+    let host = globalThis;
+    return host[REGISTRY_KEY] ??= Object.assign(/* @__PURE__ */ Object.create(null), {
+      minted: /* @__PURE__ */ new WeakMap(),
+      warned: /* @__PURE__ */ new Set()
+    });
+  }
+  function factory() {
+    let tt = globalThis.trustedTypes;
+    return tt && typeof tt.createPolicy == "function" && typeof tt.isHTML == "function" ? tt : void 0;
+  }
+  function createPolicy(name) {
+    let tt = factory();
+    if (!tt) return null;
+    try {
+      return tt.createPolicy(name, { createHTML: (input) => input });
+    } catch {
+      return null;
+    }
+  }
+  function formaMint() {
+    let reg = registry();
+    if (reg.forma === void 0) {
+      let forma = createPolicy("forma");
+      reg.forma = forma && ((markup) => forma.createHTML(markup));
+    }
+    return reg.forma;
+  }
+  function trustedHtml(markup) {
+    let html = String(markup), mint = formaMint();
+    if (mint) return mint(html);
+    let standIn = Object.freeze({ toString: () => html, toJSON: () => html });
+    return registry().minted.set(standIn, html), standIn;
+  }
+  function isTrustedHtml(value2) {
+    if (typeof value2 != "object" || value2 === null) return !1;
+    if (registry().minted.has(value2)) return !0;
+    let tt = factory();
+    return !!tt && tt.isHTML(value2);
+  }
+  function htmlOf(value2) {
+    return registry().minted.get(value2) ?? value2;
+  }
+  function rawHtml(value2, sink) {
+    if (isTrustedHtml(value2)) return htmlOf(value2);
+    throw new TypeError(`[forma] ${RAW_HTML_CODES[sink]}: ${sink} requires trustedHtml()`);
+  }
+  var RAW_HTML_CODES = {
+    innerHTML: "FORMA_E_RAW_INNER_HTML",
+    setHTMLUnsafe: "FORMA_E_RAW_SET_HTML",
+    template: "FORMA_E_RAW_TEMPLATE",
+    reconcile: "FORMA_E_RAW_RECONCILE",
+    srcdoc: "FORMA_E_RAW_SRCDOC"
+  }, RUNTIME_SRCDOC_CODE = "FORMA_E_RUNTIME_SRCDOC";
+
   // src/dom/activate.ts
+  var activationPhase = /* @__PURE__ */ new WeakMap();
   var scheduledOrActiveIslands = 0;
   function untrackIsland(el) {
     el.__formaTracked && (delete el.__formaTracked, scheduledOrActiveIslands--);
@@ -497,6 +586,8 @@ var FormaRuntime = (() => {
     return scheduledOrActiveIslands > 0;
   }
   function deactivateIsland(el) {
+    let previous = activationPhase.get(el);
+    activationPhase.set(el, "disposed");
     let observer = el.__formaObserver;
     observer && (observer.disconnect(), delete el.__formaObserver);
     let interactionHandler = el.__formaInteractionHandler;
@@ -504,7 +595,7 @@ var FormaRuntime = (() => {
     let idleCancel = el.__formaIdleCancel;
     idleCancel && (idleCancel(), delete el.__formaIdleCancel), delete el.__formaScheduled, untrackIsland(el), el.__formaDisposed = !0;
     let dispose = el.__formaDispose;
-    typeof dispose == "function" && (dispose(), delete el.__formaDispose, el.setAttribute("data-forma-status", "disposed"));
+    typeof dispose == "function" && (dispose(), delete el.__formaDispose, previous === "live" && el.setAttribute("data-forma-status", "disposed"));
   }
 
   // src/dom/list.ts
@@ -542,6 +633,11 @@ var FormaRuntime = (() => {
     }
     deactivateIslandsIn(node), parent.removeChild(node);
   }
+  var REPLACES_ROW = /* @__PURE__ */ Symbol("forma.replacesRow");
+  function updateRowNode(parent, node, item, updateFn) {
+    let next = updateFn(node, item);
+    return updateFn[REPLACES_ROW] && next instanceof Node && next !== node ? (deactivateIslandsIn(node), parent.replaceChild(next, node), next) : node;
+  }
   function reconcileSmall(parent, oldItems, newItems, oldNodes, keyFn, createFn, updateFn, beforeNode, hooks) {
     let oldLen = oldItems.length, newLen = newItems.length, oldKeys = new Array(oldLen);
     for (let i = 0; i < oldLen; i++)
@@ -567,10 +663,8 @@ var FormaRuntime = (() => {
         }
       if (allSameOrder) {
         let nodes = new Array(newLen);
-        for (let i = 0; i < newLen; i++) {
-          let node = oldNodes[i];
-          updateFn(node, newItems[i]), nodes[i] = node;
-        }
+        for (let i = 0; i < newLen; i++)
+          nodes[i] = updateRowNode(parent, oldNodes[i], newItems[i], updateFn);
         return { nodes, items: newItems };
       }
     }
@@ -585,7 +679,7 @@ var FormaRuntime = (() => {
       let node, isNew = !1;
       if (oldIndices[i] === -1)
         node = createFn(newItems[i]), isNew = !0;
-      else if (node = oldNodes[oldIndices[i]], updateFn(node, newItems[i]), lisFlags[i]) {
+      else if (node = updateRowNode(parent, oldNodes[oldIndices[i]], newItems[i], updateFn), lisFlags[i]) {
         newNodes[i] = node, nextSibling = node;
         continue;
       }
@@ -635,10 +729,8 @@ var FormaRuntime = (() => {
         }
       if (allSameOrder) {
         let nodes = new Array(newLen);
-        for (let i = 0; i < newLen; i++) {
-          let node = oldNodes[i];
-          updateFn(node, newItems[i]), nodes[i] = node;
-        }
+        for (let i = 0; i < newLen; i++)
+          nodes[i] = updateRowNode(parent, oldNodes[i], newItems[i], updateFn);
         return { nodes, items: newItems };
       }
     }
@@ -653,13 +745,46 @@ var FormaRuntime = (() => {
       let node, isNew = !1;
       if (oldIndices[i] === -1)
         node = createFn(newItems[i]), isNew = !0;
-      else if (node = oldNodes[oldIndices[i]], updateFn(node, newItems[i]), lisFlags[i]) {
+      else if (node = updateRowNode(parent, oldNodes[oldIndices[i]], newItems[i], updateFn), lisFlags[i]) {
         newNodes[i] = node, nextSibling = node;
         continue;
       }
       nextSibling ? parent.insertBefore(node, nextSibling) : parent.appendChild(node), isNew && hooks?.onInsert?.(node), newNodes[i] = node, nextSibling = node;
     }
     return { nodes: newNodes, items: newItems };
+  }
+
+  // src/dom/runtime-parser.ts
+  function runtimeParser(value2) {
+    let reg = registry();
+    if (reg.runtime === void 0) {
+      let runtime = createPolicy("forma-runtime");
+      reg.runtime = runtime && ((trusted) => {
+        let tt = factory();
+        if (!tt || typeof trusted != "object" || trusted === null || !tt.isHTML(trusted)) return null;
+        let html = runtime.createHTML(String(trusted).trim()), parsed = /* @__PURE__ */ new WeakSet();
+        return {
+          html,
+          parse(context) {
+            let content;
+            if (context) {
+              let range = context.ownerDocument.createRange();
+              range.selectNodeContents(context), content = range.createContextualFragment(html);
+            } else {
+              let tpl = document.createElement("template");
+              tpl.innerHTML = html, content = tpl.content;
+            }
+            for (let frame of content.querySelectorAll("iframe")) parsed.add(frame);
+            return content;
+          },
+          srcdoc(el) {
+            let doc = parsed.has(el) ? el.getAttribute("srcdoc") : null;
+            return doc === null ? null : runtime.createHTML(doc);
+          }
+        };
+      });
+    }
+    return reg.runtime ? reg.runtime(value2) : null;
   }
 
   // src/dom/reconcile.ts
@@ -695,10 +820,17 @@ var FormaRuntime = (() => {
     return sameShape(liveKeys, newKeys) ? "PRESERVE" : "RESET";
   }
   var _parseTemplate = null;
-  function parseHTML(html) {
+  function parseHTML(html, context) {
+    if (context) {
+      let range = context.ownerDocument.createRange();
+      return range.selectNodeContents(context), range.createContextualFragment(html);
+    }
     return _parseTemplate || (_parseTemplate = document.createElement("template")), _parseTemplate.innerHTML = html, _parseTemplate.content;
   }
-  function patchAttributes(liveEl, newEl) {
+  function isScriptAttr(el, name) {
+    return isEventHandlerAttr(name) || el.localName === "script" && /^(?:src|href|xlink:href)$/i.test(name);
+  }
+  function patchAttributes(liveEl, newEl, trusted, parser) {
     let bindTargets = getBindTargets(liveEl), hasDataShow = liveEl.hasAttribute("data-show"), hasDataModel = liveEl.hasAttribute("data-model"), liveHasClassDirectives = !1, liveAttrs = liveEl.attributes;
     for (let i = 0; i < liveAttrs.length; i++)
       if (liveAttrs[i].name.startsWith("data-class:")) {
@@ -709,7 +841,14 @@ var FormaRuntime = (() => {
     for (let i = 0; i < newAttrs.length; i++) {
       let attr = newAttrs[i];
       if (attr.name === "style" && hasDataShow || attr.name === "class" && liveHasClassDirectives || (attr.name === "value" || attr.name === "checked") && hasDataModel || bindTargets.has(attr.name)) continue;
-      liveEl.getAttribute(attr.name) !== attr.value && liveEl.setAttribute(attr.name, attr.value);
+      if (liveEl.getAttribute(attr.name) !== attr.value) {
+        if (trusted && isScriptAttr(liveEl, attr.name)) {
+          liveEl.removeAttribute(attr.name);
+          continue;
+        }
+        let minted = parser && attr.name === "srcdoc" ? parser.srcdoc(newEl) : null;
+        liveEl.setAttribute(attr.name, minted ?? attr.value);
+      }
     }
     for (let i = liveAttrs.length - 1; i >= 0; i--) {
       let attr = liveAttrs[i];
@@ -758,7 +897,7 @@ var FormaRuntime = (() => {
     }
     return null;
   }
-  function diffChildren(liveParent, newParent, config) {
+  function diffChildren(liveParent, newParent, config, trusted, parser) {
     if (ownsSubtree(liveParent)) return;
     patchTextNodes(liveParent, newParent);
     let liveChildren = Array.from(liveParent.children), newChildren = Array.from(newParent.children), liveKeyed = /* @__PURE__ */ new Map(), liveUnkeyed = [];
@@ -784,10 +923,10 @@ var FormaRuntime = (() => {
         if (usedLiveElements.add(liveMatch), liveMatch.hasAttribute("data-forma-state") && newChild.hasAttribute("data-forma-state"))
           switch (determineScopeMode(liveMatch, newChild)) {
             case "PRESERVE":
-              patchAttributes(liveMatch, newChild), diffChildren(liveMatch, newChild, config);
+              patchAttributes(liveMatch, newChild, trusted, parser), diffChildren(liveMatch, newChild, config, trusted, parser);
               break;
             case "RESET":
-              config.unmountScope(liveMatch), patchAttributes(liveMatch, newChild), replaceInnerContent(liveMatch, newChild), config.mountScope(liveMatch);
+              config.unmountScope(liveMatch), patchAttributes(liveMatch, newChild, trusted, parser), replaceInnerContent(liveMatch, newChild), config.mountScope(liveMatch);
               break;
             case "REPLACE": {
               config.unmountScope(liveMatch);
@@ -797,7 +936,7 @@ var FormaRuntime = (() => {
             }
           }
         else
-          patchAttributes(liveMatch, newChild), diffChildren(liveMatch, newChild, config);
+          patchAttributes(liveMatch, newChild, trusted, parser), diffChildren(liveMatch, newChild, config, trusted, parser);
         ensurePosition(liveParent, liveMatch, newChild, newChildren);
       } else {
         let clone = newChild.cloneNode(!0), insertionRef = findInsertionPoint(liveParent, newChild, newChildren);
@@ -855,53 +994,59 @@ var FormaRuntime = (() => {
   function createReconciler(config) {
     let lastHtmlByContainer = /* @__PURE__ */ new WeakMap();
     return function(container, html) {
-      let trimmed = html.trim();
-      if (trimmed && !(lastHtmlByContainer.get(container) === trimmed && container.hasChildNodes())) {
-        lastHtmlByContainer.set(container, trimmed), config.disconnectObserver();
-        try {
-          if (!container.hasChildNodes() || container.children.length === 0) {
-            container.innerHTML = trimmed, config.batch(() => {
-              let scopes = container.querySelectorAll("[data-forma-state]");
-              for (let scope of Array.from(scopes))
-                config.mountScope(scope);
-            });
-            return;
-          }
-          let fragment = parseHTML(trimmed), templateContainer = document.createElement("div");
-          templateContainer.appendChild(fragment);
-          let liveKeys = /* @__PURE__ */ new Set();
-          for (let child of Array.from(container.children)) {
-            if (child.hasAttribute("data-forma-leaving")) continue;
-            let key = child.getAttribute("data-forma-id");
-            key && liveKeys.add(key);
-          }
-          let hasOverlap = !1;
-          if (liveKeys.size > 0)
-            for (let child of Array.from(templateContainer.children)) {
-              let key = child.getAttribute("data-forma-id");
-              if (key && liveKeys.has(key)) {
-                hasOverlap = !0;
-                break;
-              }
-            }
-          if (liveKeys.size > 0 && !hasOverlap) {
-            config.batch(() => {
-              let liveScopes = container.querySelectorAll("[data-forma-state]");
-              for (let scope of Array.from(liveScopes))
-                config.unmountScope(scope);
-              container.innerHTML = trimmed;
-              let newScopes = container.querySelectorAll("[data-forma-state]");
-              for (let scope of Array.from(newScopes))
-                config.mountScope(scope);
-            });
-            return;
-          }
-          config.batch(() => {
-            diffChildren(container, templateContainer, config);
+      rawHtml(html, "reconcile");
+      let trusted = !0, parser = runtimeParser(html), trimmed = String(html).trim();
+      if (!trimmed || lastHtmlByContainer.get(container) === trimmed && container.hasChildNodes()) return;
+      let markup = parser ? parser.html : trimmed, strip = config.strip, parse2 = () => {
+        let fragment = parser ? parser.parse(strip ? container : void 0) : parseHTML(markup, strip ? container : void 0);
+        return strip && strip(fragment), fragment;
+      }, write = () => {
+        strip ? container.replaceChildren(parse2()) : container.innerHTML = markup;
+      };
+      config.disconnectObserver();
+      try {
+        if (!container.hasChildNodes() || container.children.length === 0) {
+          write(), lastHtmlByContainer.set(container, trimmed), config.batch(() => {
+            let scopes = container.querySelectorAll("[data-forma-state]");
+            for (let scope of Array.from(scopes))
+              config.mountScope(scope);
           });
-        } finally {
-          config.reconnectObserver();
+          return;
         }
+        let fragment = parse2(), templateContainer = document.createElement("div");
+        for (let child of Array.from(fragment.childNodes)) templateContainer.appendChild(child);
+        let liveKeys = /* @__PURE__ */ new Set();
+        for (let child of Array.from(container.children)) {
+          if (child.hasAttribute("data-forma-leaving")) continue;
+          let key = child.getAttribute("data-forma-id");
+          key && liveKeys.add(key);
+        }
+        let hasOverlap = !1;
+        if (liveKeys.size > 0)
+          for (let child of Array.from(templateContainer.children)) {
+            let key = child.getAttribute("data-forma-id");
+            if (key && liveKeys.has(key)) {
+              hasOverlap = !0;
+              break;
+            }
+          }
+        if (liveKeys.size > 0 && !hasOverlap) {
+          config.batch(() => {
+            let liveScopes = container.querySelectorAll("[data-forma-state]");
+            for (let scope of Array.from(liveScopes))
+              config.unmountScope(scope);
+            strip ? container.replaceChildren(...Array.from(templateContainer.childNodes)) : container.innerHTML = markup, lastHtmlByContainer.set(container, trimmed);
+            let newScopes = container.querySelectorAll("[data-forma-state]");
+            for (let scope of Array.from(newScopes))
+              config.mountScope(scope);
+          });
+          return;
+        }
+        config.batch(() => {
+          diffChildren(container, templateContainer, config, trusted, parser);
+        }), lastHtmlByContainer.set(container, trimmed);
+      } finally {
+        config.reconnectObserver();
       }
     };
   }
@@ -927,6 +1072,7 @@ var FormaRuntime = (() => {
     MAX_OBJECT_KEYS: 24,
     MAX_ARRAY_ELEMENTS: 64,
     STEP_BUDGET: 1e5,
+    ALLOC_BUDGET: 25e4,
     MAX_ARRAY_LENGTH: 1e6,
     MAX_STRING_LENGTH: 1048576,
     MAX_REPEAT_COUNT: 1e4,
@@ -943,8 +1089,8 @@ var FormaRuntime = (() => {
       Object.assign(/* @__PURE__ */ Object.create(null), members)
     );
   }
-  function hostObject(kind, target, label) {
-    return brand({ kind, label, target, maxArgs: 0 });
+  function hostObject(kind, target, label, bound) {
+    return brand(bound ? { kind, label, target, maxArgs: 0, bound } : { kind, label, target, maxArgs: 0 });
   }
   function hostNamespace(label, members) {
     return brand({ kind: "namespace", label, target: null, members: sealedTable(members), maxArgs: 0 });
@@ -1121,7 +1267,14 @@ var FormaRuntime = (() => {
     querySelector: "element",
     querySelectorAll: "elementList",
     getBoundingClientRect: "rect"
-  }), RECT_KEYS = ["x", "y", "width", "height", "top", "right", "bottom", "left"], EVENT_READ_PROPS = /* @__PURE__ */ new Set([
+  }), RECT_KEYS = ["x", "y", "width", "height", "top", "right", "bottom", "left"], ELEMENT_METHOD_GRANT = table({
+    click: "navigate"
+  }), ELEMENT_SELECTOR_METHODS = /* @__PURE__ */ new Set([
+    "closest",
+    "matches",
+    "querySelector",
+    "querySelectorAll"
+  ]), EVENT_READ_PROPS = /* @__PURE__ */ new Set([
     "altKey",
     "button",
     "clientX",
@@ -1878,21 +2031,203 @@ var FormaRuntime = (() => {
     for (let stmt of stmts) walkStmt(stmt, 0);
   }
 
+  // src/expr/selector.ts
+  var ESCAPE = /\\(?:[0-9a-f]{1,6}[ \t\n\f\r]?|[\s\S])/gi, ATTRIBUTE = /\[(?:[^\]"'\\]|"[^"]*"|'[^']*')*\]/g, NTH = /:nth-(?:last-)?(?:child|of-type)\(\s*(?:odd|even|[+-]?\d*n(?:\s*[+-]\s*\d+)?|[+-]?\d+)\s*\)/gi, LIST_OPEN = /:(?:not|is|where)\(/gi, NOT_LOCAL = /::|:host\b|:scope\b|[^\w\-#.*:,\u0001)\u0080-\uffff]/i, EMPTY = /^,|[,\u0001],|,$|,\)|\u0001\)/;
+  function isLocalSelector(selector) {
+    if (selector.length === 0 || selector.length > 1024) return !1;
+    let s = selector.replace(ESCAPE, "a").replace(ATTRIBUTE, "a").replace(NTH, "").replace(LIST_OPEN, "").replace(/\s*,\s*/g, ",").replace(/\u0001\s+/g, "").replace(/\s+\)/g, ")").trim();
+    if (s === "" || NOT_LOCAL.test(s) || EMPTY.test(s)) return !1;
+    let depth = 0;
+    for (let c of s)
+      if (c === "") depth++;
+      else if (c === ")" && --depth < 0) return !1;
+    return depth === 0;
+  }
+
+  // src/expr/cost.ts
+  var isArray = Array.isArray, keysOf = Object.keys, valuesOf = Object.values, log2 = Math.log2, max = Math.max, min = Math.min, toNumber = Number, toText = String, NONE = [], costly = RegExp.prototype.exec.bind(/[^\x00-\xff\u2000-\u20cf\u2100-\u2125]/), nonAscii = RegExp.prototype.exec.bind(/[^\x00-\x7f]/), middle = RegExp.prototype.test.bind(/[\u0100-\u024f\u0300-\u0fff\u1e00-\u1eff\u2e80-\u9fff\uac00-\ud7af\ud83c-\ud83e]/), GROW = 1 / 128, READ = 1 / 128, FLAT = 8, PARSE = 1 / 8, len = (v) => typeof v == "string" || isArray(v) ? v.length : 0, MAX_TEXT = LIMITS.MAX_STRING_LENGTH, alike = (r, v, room2) => {
+    let n = 0;
+    if (typeof v == "string" && v.length > 127 && isArray(r))
+      for (let e of r) {
+        if (n > room2) break;
+        typeof e == "string" && e.length === v.length && (n += v.length * READ);
+      }
+    return n;
+  }, count = (v) => max(0, toNumber(v) || 0), size = (v, room2) => {
+    if (typeof v == "string" || isArray(v)) return v.length;
+    let n = 0;
+    if (typeof v == "object" && v) {
+      for (let key in v)
+        if (++n > room2) break;
+    }
+    return n || 1;
+  };
+  function weigh(root, room2, depth = -1) {
+    if (typeof root != "object" || root === null)
+      return depth >= 0 ? 0 : typeof root == "string" ? root.length : typeof root == "number" ? 3 : 1;
+    let total = 0, todo = [root], depths = [depth];
+    for (; todo.length > 0 && total <= room2; ) {
+      let v = todo.pop(), d = depths.pop(), kids = NONE;
+      if (isArray(v))
+        d && (total += v.length, kids = v);
+      else if (!(d >= 0))
+        if (typeof v == "string")
+          total += v.length;
+        else if (typeof v == "object" && v) {
+          for (let k of keysOf(v)) total += k.length + 1;
+          kids = valuesOf(v);
+        } else
+          total += typeof v == "number" ? 3 : 1;
+      if (total <= room2)
+        for (let k of kids)
+          (d < 0 || d > 1 && isArray(k)) && (todo.push(k), depths.push(d - 1));
+    }
+    return total;
+  }
+  var grow = (r, args) => {
+    let what = toText(args[0]), by = toText(args[1]), times = (token) => by.split(token).length - 1;
+    return max(0, by.length + times("$&") * what.length + (times("$`") + times("$'")) * len(r) - what.length);
+  }, DATA_ARGS = /* @__PURE__ */ new Set([
+    "Array.isArray",
+    "Boolean",
+    "Number.isFinite",
+    "Number.isInteger",
+    "Number.isNaN",
+    "Array.from",
+    "Object.entries",
+    "Object.keys",
+    "Object.values",
+    "array.concat",
+    "array.includes",
+    "array.indexOf",
+    "array.lastIndexOf"
+  ]), COSTS = /* @__PURE__ */ Object.create(null);
+  function rows(cost, names) {
+    for (let name of names.split(" ")) COSTS[name] = cost;
+  }
+  rows((r) => len(r), "array.filter array.flatMap array.map array.reverse array.slice string.concat");
+  rows((r) => len(r) / 64, "string.endsWith string.slice string.startsWith string.substring");
+  rows((r) => len(r) / 32, "string.includes string.indexOf string.lastIndexOf");
+  rows((r) => len(r) / 16, "string.trim string.trimEnd string.trimStart");
+  rows((r, _, room2) => {
+    let n = len(r);
+    if (n > MAX_TEXT) return 1 / 0;
+    let first = n / 32 > room2 ? null : costly(r);
+    return first ? n / 16 > room2 || middle(first[0]) ? n / 16 : n / 2 : n / 32;
+  }, "string.toLowerCase");
+  rows((r, _, room2) => {
+    let n = len(r);
+    return n > MAX_TEXT ? 1 / 0 : n / 16 > room2 ? n / 16 : costly(r) ? n : nonAscii(r) ? n / 2 : n / 16;
+  }, "string.toUpperCase");
+  rows((r, a, room2) => len(r) / 16 + weigh(a[1], room2) + alike(r, a[0], room2), "array.includes array.indexOf array.lastIndexOf");
+  rows((r) => len(r), "array.every array.reduce array.some");
+  rows((r, a) => {
+    let n = len(r);
+    for (let x of a) n += isArray(x) ? x.length : 1;
+    return n;
+  }, "array.concat");
+  rows((r, a) => max(len(r), count(a[0])), "string.padEnd string.padStart");
+  rows((_, a, room2) => 16 * size(a[0], room2 / 16), "Object.entries Object.keys Object.values");
+  rows((r, a, room2) => weigh(r, room2, (a[0] === void 0 ? 1 : count(a[0])) + 1), "array.flat");
+  rows((r, a, room2) => weigh(r, room2) + len(r) * (a[0] === void 0 ? 1 : toText(a[0]).length), "array.join");
+  rows((r, a, room2) => {
+    let per = 3 * len(r);
+    if (a[0] === void 0 && isArray(r))
+      for (let e of r) {
+        if (per > room2) break;
+        isArray(e) ? per += weigh(e, room2) : typeof e == "string" && (per += e.length * READ);
+      }
+    return per * log2(len(r) + 1);
+  }, "array.sort");
+  rows((r, a) => len(r) * count(a[0]), "string.repeat");
+  rows((r, a) => len(r) + grow(r, a), "string.replace");
+  rows((r, a) => len(r) + (len(r) + 1) * grow(r, a), "string.replaceAll");
+  rows((r, a) => {
+    let n = len(r), by = a[0] === void 0 ? n : toText(a[0]).length, pieces = (by ? n / by : n) + 1;
+    return n / 32 + (a[1] === void 0 ? pieces : min(pieces, toNumber(a[1]) >>> 0));
+  }, "string.split");
+  rows((_, a, room2) => {
+    let x = a[0];
+    if (typeof x == "string" || isArray(x)) return len(x);
+    let text = weigh(x, room2);
+    return text > room2 ? text : text + count(x?.length);
+  }, "Array.from");
+  Object.freeze(COSTS);
+
   // src/expr/interp.ts
   var OBJECT_PROTO = Object.getPrototypeOf({}), stepBudget = LIMITS.STEP_BUDGET;
   function setStepBudget(n) {
     stepBudget = Number.isFinite(n) && n > 0 ? Math.min(n, 1e7) : LIMITS.STEP_BUDGET;
   }
-  function makeCtx(scope) {
-    return { scope, frame: null, steps: 0, budget: stepBudget };
+  var cur = null;
+  function makeCtx(scope, meter2) {
+    let base = cur ?? meter2, steps = base ? base.steps : 0, cost = base ? base.cost : 0;
+    return { scope, frame: null, steps, budget: scope.budget ?? stepBudget, cost, stepsBefore: steps > 0, unitsBefore: cost > 0, meter: meter2 ?? cur?.meter ?? null };
+  }
+  function running() {
+    return cur !== null;
+  }
+  function enter(ctx) {
+    let outer = cur;
+    return cur = ctx, outer;
+  }
+  function leave(ctx, outer, meter2) {
+    cur = outer;
+    let base = outer ?? meter2;
+    base && (base.steps = ctx.steps, base.cost = ctx.cost);
+  }
+  function over(err, defer) {
+    return err.defer = defer, err;
   }
   function step(ctx, at) {
     if (++ctx.steps > ctx.budget)
-      throw exprError("FORMA_E_BUDGET", `expression exceeded its ${ctx.budget}-step budget`, at);
+      throw over(exprError("FORMA_E_BUDGET", `expression exceeded its ${ctx.budget}-step budget`, at), ctx.stepsBefore);
+  }
+  var NAMES = /* @__PURE__ */ Object.create(null);
+  function room(ctx) {
+    return Math.min(LIMITS.ALLOC_BUDGET - ctx.cost, ctx.meter?.cap ?? 1 / 0);
+  }
+  function charge(ctx, units, what, at) {
+    let spent = ctx.cost, m = ctx.meter, cap = m?.cap ?? 1 / 0;
+    if (!(units >= 0 && units <= cap && (ctx.cost += units) <= LIMITS.ALLOC_BUDGET)) {
+      ctx.cost = spent, units > 0 && cap < 1 / 0 && (m.lost = (m.lost ?? 0) + Math.min(units, cap));
+      let err = exprError("FORMA_E_BUDGET", `${what} would exceed the ${LIMITS.ALLOC_BUDGET}-unit allocation budget`, at);
+      throw over(err, units <= LIMITS.ALLOC_BUDGET && (units > cap || ctx.unitsBefore));
+    }
+  }
+  function preflight(ctx, name, recv, args, at) {
+    if (typeof recv == "string")
+      for (let a of args) charge(ctx, typeof a == "string" ? a.length / 32 : weigh(a, room(ctx)), name, at);
+    else if (!DATA_ARGS.has(name))
+      for (let a of args) charge(ctx, weigh(a, room(ctx)), name, at);
+    let cost = Object.hasOwn(COSTS, name) ? COSTS[name] : null;
+    cost && charge(ctx, cost(recv, args, room(ctx)), name, at);
+  }
+  function coerce(ctx, v, at) {
+    typeof v == "object" && v !== null && charge(ctx, weigh(v, room(ctx)), "converting a value to text", at);
+  }
+  function grow2(ctx, v, at) {
+    typeof v == "string" && v.length > 511 && charge(ctx, v.length * GROW, "building a string", at);
+  }
+  function copied(ctx, node, v, at) {
+    typeof v == "string" && v.length > 12 && (node.k === "Template" || node.k === "Binary" && node.op === "+") && charge(ctx, FLAT + Math.min(v.length, 512) / 32, "copying a string just built", at);
+  }
+  function parse(ctx, v, at) {
+    typeof v == "string" && v.length > 31 && charge(ctx, v.length * PARSE, "converting a string to a number", at);
+  }
+  function scan(ctx, op, l, r, at) {
+    let strict = op === "===" || op === "!==", equality = strict || op === "==" || op === "!=";
+    if (!(op === "-" || op === "*" || op === "/" || op === "%") && typeof l == "string" && typeof r == "string") {
+      let n = equality && l.length !== r.length ? 0 : Math.min(l.length, r.length);
+      return n > 127 && charge(ctx, n * READ, "comparing strings", at), n > 0;
+    }
+    return !strict && !(equality && (l == null || r == null)) && (parse(ctx, l, at), parse(ctx, r, at)), !1;
   }
   function safeKey(raw, at) {
     if (typeof raw == "symbol")
       throw exprError("FORMA_E_KEY_DENIED", "a symbol cannot be used as a property key", at);
+    if (typeof raw == "object" && raw !== null && weigh(raw, MAX_KEY_LENGTH) > MAX_KEY_LENGTH)
+      throw exprError("FORMA_E_KEY_DENIED", "property name is too long", at);
     let key = typeof raw == "string" ? raw : String(raw);
     if (key.length > MAX_KEY_LENGTH)
       throw exprError("FORMA_E_KEY_DENIED", "property name is too long", at);
@@ -1953,8 +2288,15 @@ var FormaRuntime = (() => {
       );
     return desc.value;
   }
-  function wrapElement(v, label) {
-    return v == null ? void 0 : hostObject("element", v, label);
+  function reach(from, v, label, at) {
+    if (v == null) return;
+    let bound = from.bound;
+    if (bound && (v === bound.root || !bound.root.contains(v))) {
+      if (!bound.dom)
+        throw exprError("FORMA_E_GRANT_DOM", `${label} is outside the mount root (no dom grant)`, at);
+      bound.use("dom");
+    }
+    return hostObject("element", v, label, bound);
   }
   function hostRead(host, key, at) {
     let target = host.target;
@@ -1962,13 +2304,13 @@ var FormaRuntime = (() => {
       case "element": {
         if (Object.hasOwn(ELEMENT_HOST_PROPS, key)) {
           let as = ELEMENT_HOST_PROPS[key], value2 = Reflect.get(target, key);
-          return as === "element" ? wrapElement(value2, `${host.label}.${key}`) : as === "elementList" ? toElementList(value2, `${host.label}.${key}`) : value2 == null ? void 0 : hostObject(as, value2, `${host.label}.${key}`);
+          return as === "element" ? reach(host, value2, `${host.label}.${key}`, at) : as === "elementList" ? toElementList(host, value2, `${host.label}.${key}`, at) : value2 == null ? void 0 : hostObject(as, value2, `${host.label}.${key}`, host.bound);
         }
         if (ELEMENT_READ_PROPS.has(key)) return Reflect.get(target, key);
         throw ELEMENT_METHODS.has(key) ? exprError("FORMA_E_PROPERTY_DENIED", `${host.label}.${key} is a method, not a value \u2014 call it`, at) : exprError("FORMA_E_PROPERTY_DENIED", `${host.label}.${key} is not on the element allowlist`, at);
       }
       case "event": {
-        if (EVENT_HOST_PROPS.has(key)) return wrapElement(Reflect.get(target, key), `${host.label}.${key}`);
+        if (EVENT_HOST_PROPS.has(key)) return reach(host, Reflect.get(target, key), `${host.label}.${key}`, at);
         if (EVENT_READ_PROPS.has(key)) return Reflect.get(target, key);
         throw EVENT_METHODS.has(key) ? exprError("FORMA_E_PROPERTY_DENIED", `${host.label}.${key} is a method, not a value \u2014 call it`, at) : exprError("FORMA_E_PROPERTY_DENIED", `${host.label}.${key} is not on the event allowlist`, at);
       }
@@ -1990,7 +2332,7 @@ var FormaRuntime = (() => {
       }
       case "refs": {
         let el = target.get(key);
-        return el === void 0 ? void 0 : hostObject("element", el, `$refs.${key}`);
+        return reach(host, el, `$refs.${key}`, at);
       }
       case "namespace":
       case "fn": {
@@ -2008,11 +2350,11 @@ var FormaRuntime = (() => {
       }
     }
   }
-  function toElementList(value2, label) {
+  function toElementList(from, value2, label, at) {
     let list = value2;
     if (!list || typeof list.length != "number") return [];
     let n = Math.min(list.length, LIMITS.MAX_ARRAY_LENGTH), out = [];
-    for (let i = 0; i < n; i++) out.push(hostObject("element", list[i], `${label}[${i}]`));
+    for (let i = 0; i < n; i++) out.push(reach(from, list[i], `${label}[${i}]`, at));
     return out;
   }
   function resolveIdent(name, ctx, at) {
@@ -2041,10 +2383,6 @@ var FormaRuntime = (() => {
       let n = Number(args[0]);
       if (!(n >= 0) || n > LIMITS.MAX_REPEAT_COUNT)
         throw exprError("FORMA_E_BUDGET", `repeat() is capped at ${LIMITS.MAX_REPEAT_COUNT}`, at);
-    } else if (method === "padStart" || method === "padEnd") {
-      let n = Number(args[0]);
-      if (!(n >= 0) || n > LIMITS.MAX_STRING_LENGTH)
-        throw exprError("FORMA_E_BUDGET", "pad length is too large", at);
     } else if (method === "flat") {
       let n = args.length === 0 ? 1 : Number(args[0]);
       if (!Number.isFinite(n) || n < 0 || n > LIMITS.MAX_FLAT_DEPTH)
@@ -2068,7 +2406,11 @@ var FormaRuntime = (() => {
     let value2 = evalExpr(node, ctx);
     if (isHost(value2) && value2.kind === "fn") {
       let fn = value2.target, arity = Math.min(value2.maxArgs, maxParams);
-      return (...jsArgs) => (step(ctx, at), Reflect.apply(fn, void 0, jsArgs.slice(0, arity)));
+      return (...jsArgs) => {
+        step(ctx, at);
+        let args = jsArgs.slice(0, arity);
+        return preflight(ctx, value2.label, void 0, args, at), Reflect.apply(fn, void 0, args);
+      };
     }
     throw exprError(
       "FORMA_E_CALL_DENIED",
@@ -2091,11 +2433,8 @@ var FormaRuntime = (() => {
     if (callee.k === "Identifier") {
       let target = resolveIdent(callee.name, ctx, callee.i);
       if (isHost(target) && target.kind === "fn") {
-        let args2 = node.args.map((a) => evalArg(a, ctx));
-        return checkResultSize(
-          Reflect.apply(target.target, void 0, args2.slice(0, target.maxArgs)),
-          at
-        );
+        let args2 = node.args.map((a) => evalArg(a, ctx)).slice(0, target.maxArgs);
+        return preflight(ctx, target.label, void 0, args2, at), checkResultSize(Reflect.apply(target.target, void 0, args2), at);
       }
       throw exprError(
         "FORMA_E_CALL_DENIED",
@@ -2119,7 +2458,15 @@ var FormaRuntime = (() => {
     let callbackParams = Object.hasOwn(HOF_CALLBACK_PARAMS, method) ? HOF_CALLBACK_PARAMS[method] : null, args = [];
     node.args.forEach((argNode, index) => {
       index === 0 && callbackParams !== null ? args.push(makeCallback(argNode, ctx, callbackParams, at)) : args.push(evalArg(argNode, ctx));
-    }), guardArgs(method, args, at);
+    }), kind === "string" && (method === "at" || method === "charAt" || method === "charCodeAt") && copied(ctx, callee.object, recv, at);
+    let names = NAMES[kind] ??= /* @__PURE__ */ Object.create(null);
+    if (preflight(ctx, names[method] ??= `${kind}.${method}`, recv, args, at), guardArgs(method, args, at), method === "flatMap" && typeof args[0] == "function") {
+      let cb = args[0];
+      args[0] = (...a) => {
+        let out = cb(...a);
+        return Array.isArray(out) && charge(ctx, out.length, "flatMap", at), out;
+      };
+    }
     let receiver = ARRAY_COPY_FIRST.has(method) ? recv.slice() : recv;
     return checkResultSize(Reflect.apply(tbl[method], receiver, args), at);
   }
@@ -2140,28 +2487,47 @@ var FormaRuntime = (() => {
         at
       );
   }
+  function guardGrants(host, bound, method, args, at) {
+    if (Object.hasOwn(ELEMENT_METHOD_GRANT, method)) {
+      let grant = ELEMENT_METHOD_GRANT[method];
+      if (!(grant === "navigate" ? bound.navigate : bound.dom))
+        throw exprError(grant === "navigate" ? "FORMA_E_GRANT_NAVIGATE" : "FORMA_E_GRANT_DOM", `${host.label}.${method}() (no ${grant} grant)`, at);
+      bound.use(grant);
+    }
+    if (ELEMENT_SELECTOR_METHODS.has(method) && !isLocalSelector(String(args[0] ?? ""))) {
+      if (!bound.dom)
+        throw exprError("FORMA_E_GRANT_DOM", `${host.label}.${method}() reads past the element (no dom grant)`, at);
+      bound.use("dom");
+    }
+  }
+  function closestWithin(el, root, selector) {
+    if (el === root || !root.contains(el)) return null;
+    for (let n = el; n !== null && n !== root; n = n.parentElement)
+      if (n.matches(selector)) return n;
+    return null;
+  }
   function callHostMethod(host, method, argNodes, ctx, at) {
     let args = argNodes.map((a) => evalArg(a, ctx));
     if (host.kind === "namespace" || host.kind === "fn") {
       let members = host.members, fn2 = members && Object.hasOwn(members, method) ? members[method] : void 0;
       if (typeof fn2 != "function")
         throw exprError("FORMA_E_METHOD_DENIED", `${host.label}.${method} is not on the allowlist`, at);
-      return checkResultSize(Reflect.apply(fn2, void 0, args), at);
+      return preflight(ctx, `${host.label}.${method}`, void 0, args, at), checkResultSize(Reflect.apply(fn2, void 0, args), at);
     }
     let allowed = host.kind === "element" ? ELEMENT_METHODS : host.kind === "event" ? EVENT_METHODS : host.kind === "classList" ? CLASSLIST_METHODS : host.kind === "style" ? STYLE_METHODS : null;
     if (!allowed || !allowed.has(method))
       throw exprError("FORMA_E_METHOD_DENIED", `${host.label}.${method}() is not on the allowlist`, at);
-    if (host.kind === "style" && method === "setProperty" && STYLE_DENY_PROPS.has(String(args[0])))
+    if (preflight(ctx, `${host.label}.${method}`, void 0, args, at), host.kind === "style" && method === "setProperty" && STYLE_DENY_PROPS.has(String(args[0])))
       throw exprError("FORMA_E_METHOD_DENIED", `style.setProperty("${String(args[0])}") is not available`, at);
-    host.kind === "element" && ATTR_WRITE_METHODS.has(method) && guardAttrWrite(host, method, args, at);
+    host.kind === "element" && ATTR_WRITE_METHODS.has(method) && guardAttrWrite(host, method, args, at), host.kind === "element" && host.bound && guardGrants(host, host.bound, method, args, at);
     let target = host.target, fn = Reflect.get(target, method);
     if (typeof fn != "function")
       throw exprError("FORMA_E_METHOD_DENIED", `${host.label}.${method}() is unavailable here`, at);
-    let result = Reflect.apply(fn, target, args);
+    let result = host.kind === "element" && method === "closest" && host.bound && !host.bound.dom ? closestWithin(target, host.bound.root, String(args[0] ?? "")) : Reflect.apply(fn, target, args);
     if (host.kind === "element" && Object.hasOwn(ELEMENT_METHOD_RESULT, method)) {
       let as = ELEMENT_METHOD_RESULT[method];
-      if (as === "element") return wrapElement(result, `${host.label}.${method}()`);
-      if (as === "elementList") return toElementList(result, `${host.label}.${method}()`);
+      if (as === "element") return reach(host, result, `${host.label}.${method}()`, at);
+      if (as === "elementList") return toElementList(host, result, `${host.label}.${method}()`, at);
       let rect = result, plain = {};
       for (let k of RECT_KEYS) plain[k] = Number(rect?.[k] ?? 0);
       return plain;
@@ -2178,10 +2544,10 @@ var FormaRuntime = (() => {
         let out = node.quasis[0] ?? "";
         for (let i = 0; i < node.exprs.length; i++) {
           let value2 = evalExpr(node.exprs[i], ctx);
-          if (out += value2 == null ? "" : stringify(value2, node.i), out += node.quasis[i + 1] ?? "", out.length > LIMITS.MAX_STRING_LENGTH)
+          if (coerce(ctx, value2, node.i), out += value2 == null ? "" : stringify(value2, node.i), out += node.quasis[i + 1] ?? "", out.length > LIMITS.MAX_STRING_LENGTH)
             throw exprError("FORMA_E_BUDGET", "the resulting string is too large", node.i);
         }
-        return out;
+        return grow2(ctx, out, node.i), out;
       }
       case "ArrayLit":
         return node.elements.map((e) => evalExpr(e, ctx));
@@ -2194,7 +2560,7 @@ var FormaRuntime = (() => {
       case "Unary": {
         if (node.op === "typeof") return typeof evalExpr(node.arg, ctx);
         let v = evalExpr(node.arg, ctx);
-        return node.op === "!" ? !v : node.op === "-" ? -v : +v;
+        return node.op === "!" ? !v : (coerce(ctx, v, node.i), parse(ctx, v, node.i), node.op === "-" ? -v : +v);
       }
       case "Logical": {
         let left = evalExpr(node.left, ctx);
@@ -2204,7 +2570,7 @@ var FormaRuntime = (() => {
         return evalExpr(node.test, ctx) ? evalExpr(node.then, ctx) : evalExpr(node.else, ctx);
       case "Binary": {
         let l = evalExpr(node.left, ctx), r = evalExpr(node.right, ctx), op = node.op;
-        switch (op) {
+        switch (op !== "===" && op !== "!==" && !((op === "==" || op === "!=") && (l == null || r == null || typeof l == typeof r)) && (coerce(ctx, l, node.i), coerce(ctx, r, node.i)), op !== "+" && scan(ctx, op, l, r, node.i) && (copied(ctx, node.left, l, node.i), copied(ctx, node.right, r, node.i)), op) {
           case "===":
             return l === r;
           case "!==":
@@ -2226,8 +2592,8 @@ var FormaRuntime = (() => {
           case "+": {
             if (isHost(l) || isHost(r))
               throw exprError("FORMA_E_PROPERTY_DENIED", "a host value cannot be concatenated", node.i);
-            let sum = l + r;
-            return checkResultSize(sum, node.i);
+            let sum = checkResultSize(l + r, node.i);
+            return grow2(ctx, sum, node.i), sum;
           }
           case "-":
             return l - r;
@@ -2245,7 +2611,7 @@ var FormaRuntime = (() => {
         return safeRead(evalExpr(node.object, ctx), node.key, node.i, node.optional);
       case "Computed": {
         let obj = evalExpr(node.object, ctx);
-        return obj == null ? void 0 : safeRead(obj, evalExpr(node.key, ctx), node.i, node.optional);
+        return obj == null ? void 0 : (copied(ctx, node.object, obj, node.i), safeRead(obj, evalExpr(node.key, ctx), node.i, node.optional));
       }
       case "Call":
         return evalCall(node, ctx);
@@ -2285,6 +2651,8 @@ var FormaRuntime = (() => {
     if (kind === "object" || kind === "array") {
       if (kind === "array" && key === "length")
         throw exprError("FORMA_E_ASSIGN_DENIED", "array length is not writable", at);
+      if (kind === "array" && /^\d+$/.test(key) && Number(key) >= LIMITS.ALLOC_BUDGET && Number(key) >= recv.length)
+        throw exprError("FORMA_E_BUDGET", `array index ${key} would grow the array past ${LIMITS.ALLOC_BUDGET} elements`, at);
       let desc = Object.getOwnPropertyDescriptor(recv, key);
       if (desc && !Object.hasOwn(desc, "value"))
         throw exprError("FORMA_E_ASSIGN_DENIED", `"${key}" is an accessor property`, at);
@@ -2293,12 +2661,14 @@ var FormaRuntime = (() => {
     }
     throw exprError("FORMA_E_ASSIGN_DENIED", `cannot assign to a property of a ${describeKind(recv)} value`, at);
   }
-  function applyOp(op, current, operand) {
-    switch (op) {
+  function applyOp(ctx, at, op, current, operand) {
+    switch (op !== "=" && (coerce(ctx, current, at), coerce(ctx, operand, at)), op !== "=" && op !== "+=" && (parse(ctx, current, at), parse(ctx, operand, at)), op) {
       case "=":
         return operand;
-      case "+=":
-        return current + operand;
+      case "+=": {
+        let sum = checkResultSize(current + operand, at);
+        return grow2(ctx, sum, at), sum;
+      }
       case "-=":
         return current - operand;
       case "*=":
@@ -2325,14 +2695,14 @@ var FormaRuntime = (() => {
               target.i
             );
           let current2 = stmt.op === "=" ? void 0 : resolveIdent(target.name, ctx, target.i);
-          setter(applyOp(stmt.op, current2, evalExpr(stmt.value, ctx)));
+          setter(applyOp(ctx, target.i, stmt.op, current2, evalExpr(stmt.value, ctx)));
           return;
         }
         let recv = evalExpr(target.object, ctx);
         if (recv == null)
           throw exprError("FORMA_E_ASSIGN_DENIED", "cannot assign to a property of null", target.i);
-        let key = target.k === "Member" ? target.key : safeKey(evalExpr(target.key, ctx), target.i), current = stmt.op === "=" ? void 0 : safeRead(recv, key, target.i, !1);
-        writeMember(recv, safeKey(key, target.i), applyOp(stmt.op, current, evalExpr(stmt.value, ctx)), target.i);
+        let key = target.k === "Member" ? target.key : safeKey(evalExpr(target.key, ctx), target.i), current = stmt.op === "=" ? void 0 : safeRead(recv, key, target.i, !1), value2 = applyOp(ctx, target.i, stmt.op, current, evalExpr(stmt.value, ctx));
+        isHost(recv) && coerce(ctx, value2, target.i), writeMember(recv, safeKey(key, target.i), value2, target.i);
         return;
       }
       case "Update": {
@@ -2345,7 +2715,7 @@ var FormaRuntime = (() => {
               `"${target.name}" is not a writable state key in this scope`,
               target.i
             );
-          setter(resolveIdent(target.name, ctx, target.i) + delta);
+          setter(applyOp(ctx, target.i, "+=", resolveIdent(target.name, ctx, target.i), delta));
           return;
         }
         let recv = evalExpr(target.object, ctx);
@@ -2355,7 +2725,7 @@ var FormaRuntime = (() => {
           target.k === "Member" ? target.key : evalExpr(target.key, ctx),
           target.i
         );
-        writeMember(recv, key, safeRead(recv, key, target.i, !1) + delta, target.i);
+        writeMember(recv, key, applyOp(ctx, target.i, "+=", safeRead(recv, key, target.i, !1), delta), target.i);
         return;
       }
       case "If":
@@ -2414,27 +2784,38 @@ var FormaRuntime = (() => {
       throw isExprError(err) && cacheSet(programCache, source, { ok: !1, error: err }), err;
     }
   }
-  function evaluateExpression(node, scope) {
-    return evalExpr(node, makeCtx(scope));
+  function evaluateExpression(node, scope, meter2, text) {
+    let ctx = makeCtx(scope, meter2), outer = enter(ctx);
+    try {
+      let value2 = evalExpr(node, ctx);
+      return text && charge(ctx, text(value2, room(ctx)), "converting the result to text", -1), value2;
+    } finally {
+      leave(ctx, outer, meter2);
+    }
   }
-  function runHandler(stmts, scope) {
-    runProgram(stmts, makeCtx(scope));
+  function runHandler(stmts, scope, meter2) {
+    let ctx = makeCtx(scope, meter2), outer = enter(ctx);
+    try {
+      runProgram(stmts, ctx);
+    } finally {
+      leave(ctx, outer, meter2);
+    }
   }
 
   // src/runtime.ts
   function isUnsafeAttrBinding(name, value2, tag) {
     return !!(isEventHandlerAttr(name) || isUrlAttr(name) && isDangerousUrl(value2, tag));
   }
-  var _refetchRegistry = /* @__PURE__ */ new Map();
-  function $refetch(id) {
-    let fn = _refetchRegistry.get(id);
+  var _refetchRegistry = /* @__PURE__ */ new Map(), FETCH_TIMEOUT_MS = 3e4;
+  function $refetch(id, registry2 = _refetchRegistry) {
+    let fn = registry2.get(id);
     fn ? fn() : _debug && dbg(`$refetch: no data-fetch with id "${id}" found`);
   }
   function createChildScope(parent, locals) {
     let localGetters = /* @__PURE__ */ Object.create(null);
     for (let key of Object.keys(locals))
       localGetters[key] = () => locals[key];
-    return {
+    let child = {
       getters: new Proxy(parent.getters, {
         get(target, prop) {
           return prop in localGetters ? localGetters[prop] : target[prop];
@@ -2445,6 +2826,7 @@ var FormaRuntime = (() => {
       }),
       setters: parent.setters
     };
+    return parent.mount && (child.mount = parent.mount, child.budget = parent.budget), child;
   }
   var _debug = !1, _diagnosticsEnabled = !0;
   function dbg(...args) {
@@ -2485,27 +2867,17 @@ var FormaRuntime = (() => {
     }
     return config;
   }
-  function reportDiagnostic(kind, expr, reason, code = "FORMA_E_UNSUPPORTED") {
-    if (!_diagnosticsEnabled) return;
-    let key = `${kind}|${reason}|${expr}`, now = Date.now(), existing = diagnostics.get(key);
+  function reportDiagnostic(kind, expr, reason, code = "FORMA_E_UNSUPPORTED", mount2, grant) {
+    if (kind !== "grant-denied" && kind !== "markup-refused" && !(mount2 ? mount2.diagnostics : _diagnosticsEnabled)) return;
+    let key = mount2 ? `${kind}|${mount2.id}|${reason}|${expr}` : `${kind}|${reason}|${expr}`, now = Date.now(), existing = diagnostics.get(key);
     if (existing) {
       existing.count += 1, existing.lastSeenAt = now;
       return;
     }
-    diagnostics.set(key, {
-      kind,
-      expr,
-      reason,
-      code,
-      count: 1,
-      firstSeenAt: now,
-      lastSeenAt: now
-    }), console.warn(`[FormaJS] ${reason}: ${expr}`);
+    let detail = { kind, expr, reason, code, count: 1 };
+    mount2 && (detail.mount = mount2.name, detail.tier = mount2.tier), grant && (detail.grant = grant), diagnostics.set(key, { ...detail, firstSeenAt: now, lastSeenAt: now }), console.warn(`[FormaJS] ${reason}: ${expr}`);
     try {
-      if (typeof window < "u") {
-        let detail = { kind, expr, reason, code, count: 1 };
-        window.dispatchEvent(new CustomEvent("formajs:diagnostic", { detail }));
-      }
+      typeof window < "u" && window.dispatchEvent(new CustomEvent("formajs:diagnostic", { detail: { ...detail } }));
     } catch {
     }
   }
@@ -2513,6 +2885,106 @@ var FormaRuntime = (() => {
   typeof runtimeConfig.exprBudget == "number" && setStepBudget(runtimeConfig.exprBudget);
   typeof runtimeConfig.diagnostics == "boolean" && (_diagnosticsEnabled = runtimeConfig.diagnostics);
   var _autoContainment = runtimeConfig.autoContainment === !0;
+  function readMountSwitch() {
+    return typeof document > "u" ? !1 : document.currentScript?.getAttribute("data-forma-mount") === "manual" ? !0 : document.querySelector('script[data-forma-mount="manual"]') !== null;
+  }
+  var _manualMount = readMountSwitch();
+  function assertTierless(what) {
+    if (_manualMount)
+      throw mountError(
+        "FORMA_E_MOUNT_MANUAL",
+        `${what} binds with every power, and this page mounts only through mountMarkup() (data-forma-mount="manual")`
+      );
+  }
+  var FETCH_METHODS = /* @__PURE__ */ new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
+  function mountError(code, message) {
+    let err = new TypeError(`[forma] ${code}: ${message}`);
+    return err.code = code, err;
+  }
+  var tieredRoots = /* @__PURE__ */ new WeakMap(), tieredCount = 0, mountSeq = 0;
+  function ownerOf(node) {
+    if (tieredCount === 0) return null;
+    for (let n = node; n; n = n.parentNode ?? (n.nodeType === 11 ? n.host ?? null : null)) {
+      let ctx = tieredRoots.get(n);
+      if (ctx) return ctx;
+    }
+    return null;
+  }
+  function ownedBelow(el, top) {
+    if (tieredCount === 0) return !1;
+    for (let n = el; n && n !== top; n = n.parentNode)
+      if (tieredRoots.has(n)) return !0;
+    return !1;
+  }
+  function parsePrefix(raw) {
+    if (typeof raw == "string" && raw.startsWith("/") && !raw.startsWith("//"))
+      return { origin: null, path: raw };
+    if (typeof raw == "string" && /^https?:\/\//i.test(raw))
+      try {
+        let u = new URL(raw);
+        return { origin: u.origin, path: u.pathname };
+      } catch {
+      }
+    throw mountError("FORMA_E_MOUNT_ARGS", `fetch.paths: ${String(raw)}`);
+  }
+  function resolveGrants(tier, grants) {
+    if (tier === "unreviewed") {
+      if (grants !== void 0)
+        throw mountError("FORMA_E_MOUNT_ARGS", "an unreviewed mount takes no grants");
+      return { fetch: null, dom: !1, navigate: !1 };
+    }
+    if (grants === void 0)
+      return {
+        fetch: { any: !0, methods: FETCH_METHODS, prefixes: [], cookies: !0, timeoutMs: FETCH_TIMEOUT_MS },
+        dom: !0,
+        navigate: !0
+      };
+    if (typeof grants != "object" || grants === null)
+      throw mountError("FORMA_E_MOUNT_ARGS", "grants must be an object");
+    let fetchRule = null, f = grants.fetch;
+    if (f !== void 0) {
+      if (typeof f != "object" || f === null || !Array.isArray(f.paths))
+        throw mountError("FORMA_E_MOUNT_ARGS", "a fetch grant needs paths");
+      let methods = f.methods ?? ["GET"];
+      for (let m of methods)
+        if (!FETCH_METHODS.has(m)) throw mountError("FORMA_E_MOUNT_ARGS", `fetch.methods: ${String(m)}`);
+      let timeoutMs = f.timeoutMs ?? FETCH_TIMEOUT_MS;
+      if (!(typeof timeoutMs == "number" && timeoutMs > 0 && timeoutMs <= FETCH_TIMEOUT_MS))
+        throw mountError("FORMA_E_MOUNT_ARGS", `fetch.timeoutMs: 1 to ${FETCH_TIMEOUT_MS}`);
+      fetchRule = {
+        any: !1,
+        methods: new Set(methods),
+        prefixes: f.paths.map(parsePrefix),
+        cookies: f.cookies === !0,
+        timeoutMs
+      };
+    }
+    return { fetch: fetchRule, dom: grants.dom === !0, navigate: grants.navigate === !0 };
+  }
+  function underPrefix(path, prefix) {
+    return prefix.endsWith("/") ? path.startsWith(prefix) : path === prefix || path.startsWith(prefix + "/");
+  }
+  function fetchVerdict(rule, method, raw) {
+    if (!rule) return { ok: !1, reason: "the mount grants no fetch" };
+    let url = null;
+    try {
+      url = new URL(raw, document.baseURI);
+    } catch {
+      url = null;
+    }
+    let sameOrigin = url !== null && url.origin === location.origin, path = url === null ? raw : sameOrigin ? url.pathname : url.origin + url.pathname;
+    if (rule.any) return { ok: !0, credentials: "same-origin", timeoutMs: rule.timeoutMs, path, cookies: sameOrigin };
+    if (!rule.methods.has(method)) return { ok: !1, reason: `the fetch grant does not allow ${method}` };
+    if (url === null || url.protocol !== "https:" && url.protocol !== "http:")
+      return { ok: !1, reason: `the fetch grant does not cover ${raw}` };
+    if (/%2f|%5c|\\/i.test(url.pathname))
+      return { ok: !1, reason: `the path of ${raw} hides a separator in an escape` };
+    if (!rule.prefixes.some((p) => (p.origin === null ? sameOrigin : url.origin === p.origin) && underPrefix(url.pathname, p.path))) return { ok: !1, reason: `the fetch grant does not cover ${path}` };
+    let cookies = rule.cookies && sameOrigin;
+    return { ok: !0, credentials: rule.cookies ? "same-origin" : "omit", timeoutMs: rule.timeoutMs, path, cookies };
+  }
+  var noUse = () => {
+  };
   function getScheduler() {
     let candidate = globalThis?.scheduler;
     if (candidate && (typeof candidate.yield == "function" || typeof candidate.postTask == "function"))
@@ -2643,7 +3115,7 @@ var FormaRuntime = (() => {
     }
     return result;
   }
-  function cloneWithTemplateData(template, item) {
+  function cloneWithTemplateData(template, item, mount2) {
     let clone = template.cloneNode(!0), walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
     for (; walker.nextNode(); ) {
       let node = walker.currentNode, text = node.textContent ?? "";
@@ -2652,7 +3124,7 @@ var FormaRuntime = (() => {
         templateTexts.set(node, compiled), node.textContent = evaluateCompiledTemplate(compiled, item);
       }
     }
-    return cloneAttributeTemplates(clone, item), clone;
+    return cloneAttributeTemplates(clone, item, mount2), clone;
   }
   function updateTemplateData(el, item) {
     let walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -2660,8 +3132,11 @@ var FormaRuntime = (() => {
       let node = walker.currentNode, compiled = templateTexts.get(node);
       compiled && (node.textContent = evaluateCompiledTemplate(compiled, item));
     }
+    for (let node of [el, ...Array.from(el.querySelectorAll("*"))])
+      for (let { attr, compiled } of templateAttrs.get(node) ?? [])
+        applyTemplateAttribute(node, attr, compiled, item);
   }
-  var templateAttrs = /* @__PURE__ */ new WeakMap(), DIRECTIVE_ATTR_PREFIXES = [
+  var templateAttrs = /* @__PURE__ */ new WeakMap(), RUNTIME_SRCDOC_REASON = `${RUNTIME_SRCDOC_CODE}: srcdoc is refused; use h() with trustedHtml()`, DIRECTIVE_ATTR_PREFIXES = [
     "data-list",
     "data-show",
     "data-text",
@@ -2714,12 +3189,12 @@ var FormaRuntime = (() => {
     if (durations.length === 0 && delays.length === 0) return 0;
     if (durations.length === 0) return Math.max(...delays, 0);
     if (delays.length === 0) return Math.max(...durations, 0);
-    let len = Math.max(durations.length, delays.length), max = 0;
-    for (let i = 0; i < len; i++) {
+    let len2 = Math.max(durations.length, delays.length), max2 = 0;
+    for (let i = 0; i < len2; i++) {
       let d = durations[i % durations.length] ?? 0, delay = delays[i % delays.length] ?? 0;
-      d + delay > max && (max = d + delay);
+      d + delay > max2 && (max2 = d + delay);
     }
-    return max;
+    return max2;
   }
   function resolveTransitionDurationMs(el, explicitMs) {
     if (typeof explicitMs == "number") return explicitMs;
@@ -2744,7 +3219,7 @@ var FormaRuntime = (() => {
   }
   function parseTransitionSpec(el) {
     if (!(el.hasAttribute("data-transition") || Array.from(el.attributes).some((a) => a.name.startsWith("data-transition:")))) return null;
-    let base = parseClassTokensAndDuration(el.getAttribute("data-transition")).classes, enter = parseClassTokensAndDuration(el.getAttribute("data-transition:enter")), leave = parseClassTokensAndDuration(el.getAttribute("data-transition:leave")), enterFrom = splitClassTokens(
+    let base = parseClassTokensAndDuration(el.getAttribute("data-transition")).classes, enter2 = parseClassTokensAndDuration(el.getAttribute("data-transition:enter")), leave2 = parseClassTokensAndDuration(el.getAttribute("data-transition:leave")), enterFrom = splitClassTokens(
       el.getAttribute("data-transition:enter-from") ?? el.getAttribute("data-transition:enter-start")
     ), enterTo = splitClassTokens(
       el.getAttribute("data-transition:enter-to") ?? el.getAttribute("data-transition:enter-end")
@@ -2752,12 +3227,12 @@ var FormaRuntime = (() => {
       el.getAttribute("data-transition:leave-from") ?? el.getAttribute("data-transition:leave-start")
     ), leaveTo = splitClassTokens(
       el.getAttribute("data-transition:leave-to") ?? el.getAttribute("data-transition:leave-end")
-    ), durationBoth = parseDurationTokenMs(el.getAttribute("data-transition:duration") ?? ""), enterDuration = parseDurationTokenMs(el.getAttribute("data-transition:duration-enter") ?? "") ?? enter.durationMs ?? durationBoth ?? void 0, leaveDuration = parseDurationTokenMs(el.getAttribute("data-transition:duration-leave") ?? "") ?? leave.durationMs ?? durationBoth ?? void 0;
+    ), durationBoth = parseDurationTokenMs(el.getAttribute("data-transition:duration") ?? ""), enterDuration = parseDurationTokenMs(el.getAttribute("data-transition:duration-enter") ?? "") ?? enter2.durationMs ?? durationBoth ?? void 0, leaveDuration = parseDurationTokenMs(el.getAttribute("data-transition:duration-leave") ?? "") ?? leave2.durationMs ?? durationBoth ?? void 0;
     return {
-      enter: uniqueTokens([...base, ...enter.classes]),
+      enter: uniqueTokens([...base, ...enter2.classes]),
       enterFrom: uniqueTokens(enterFrom),
       enterTo: uniqueTokens(enterTo),
-      leave: uniqueTokens([...base, ...leave.classes]),
+      leave: uniqueTokens([...base, ...leave2.classes]),
       leaveFrom: uniqueTokens(leaveFrom),
       leaveTo: uniqueTokens(leaveTo),
       enterDurationMs: enterDuration,
@@ -2884,16 +3359,28 @@ var FormaRuntime = (() => {
       }
     );
   }
-  function cloneAttributeTemplates(el, item) {
+  function applyTemplateAttribute(node, attr, compiled, item) {
+    let value2 = evaluateCompiledTemplate(compiled, item);
+    isUnsafeAttrBinding(attr, value2, node.tagName.toLowerCase()) ? node.removeAttribute(attr) : node.setAttribute(attr, value2);
+  }
+  function cloneAttributeTemplates(el, item, mount2) {
     let all = [el, ...Array.from(el.querySelectorAll("*"))];
     for (let node of all) {
       let entries = [];
       for (let attr of Array.from(node.attributes))
         if (!isDirectiveAttr(attr.name) && attr.value.includes("{item")) {
+          if (isRawHtmlAttr(attr.name)) {
+            reportDiagnostic(
+              "markup-refused",
+              `row ${attr.name}="${attr.value}"`,
+              RUNTIME_SRCDOC_REASON,
+              RUNTIME_SRCDOC_CODE,
+              mount2
+            ), node.removeAttribute(attr.name);
+            continue;
+          }
           let compiled = compileTemplate(attr.value);
-          entries.push({ attr: attr.name, compiled });
-          let value2 = evaluateCompiledTemplate(compiled, item);
-          isUnsafeAttrBinding(attr.name, value2, node.tagName.toLowerCase()) ? node.removeAttribute(attr.name) : node.setAttribute(attr.name, value2);
+          entries.push({ attr: attr.name, compiled }), applyTemplateAttribute(node, attr.name, compiled, item);
         }
       entries.length > 0 && templateAttrs.set(node, entries);
     }
@@ -2902,7 +3389,36 @@ var FormaRuntime = (() => {
     let scoped = cache.get(scope);
     return scoped || (scoped = /* @__PURE__ */ new Map(), cache.set(scope, scoped)), scoped;
   }
-  var EXPR_FAILED = /* @__PURE__ */ Symbol("forma-expression-failed");
+  var EXPR_FAILED = /* @__PURE__ */ Symbol("forma-expression-failed"), meter = { steps: 0, cost: 0, cap: 1 / 0, lost: 0 }, meterEvent = null, armed = !1, deferred = !1, [retries, setRetries] = createSignal(0), staleCells = /* @__PURE__ */ new Set();
+  function begin(e) {
+    e !== meterEvent && !running() && (meter.steps = meter.cost = meter.lost = 0, meter.cap = 1 / 0, meterEvent = e), spend();
+  }
+  function spend() {
+    armed || (armed = !0, setTimeout(nextTask));
+  }
+  function nextTask() {
+    if (armed = !1, meter.steps = meter.cost = meter.lost = 0, meter.cap = 1 / 0, meterEvent = null, !deferred) return;
+    deferred = !1;
+    let cells = [...staleCells];
+    staleCells.clear(), batch(() => {
+      setRetries((n) => n + 1);
+      for (let cell of cells) cell();
+    });
+  }
+  var WAITING_CAP = 1e4, WAITING_ALLOWANCE = 5e4;
+  function later() {
+    retries(), deferred = !0, meter.cap = meter.lost > WAITING_ALLOWANCE ? 0 : WAITING_CAP, spend();
+  }
+  var asText = (v, room2) => typeof v == "object" && v !== null && !isHost(v) ? weigh(v, room2) : 0;
+  function converts(el, scope, what, value2) {
+    try {
+      return spend(), evaluateExpression(NOTHING, scope, meter, (_, room2) => asText(value2, room2)), !0;
+    } catch (err) {
+      if (!isExprError(err)) throw err;
+      return err.defer ? later() : reportExprFailure(el, what, err, scope.mount), !1;
+    }
+  }
+  var NOTHING = compileExpression("0"), placed = (v, room2) => typeof v == "string" ? v.length * GROW : asText(v, room2);
   function stripBraces(raw) {
     let trimmed = raw.trim();
     if (!trimmed.startsWith("{")) return trimmed;
@@ -2915,11 +3431,14 @@ var FormaRuntime = (() => {
     console.error(`[FormaJS] ${what} not evaluated${where}: ${expr}
   ${err.code}: ${err.message}${head}`);
   }
-  function reportExprFailure(el, expr, err) {
-    logExprFailure(el, expr, err, "expression"), reportDiagnostic("expression-unsupported", expr, err.message, err.code), el?.setAttribute("data-forma-expr-error", "unsupported");
+  function reportExprFailure(el, expr, err, mount2) {
+    logExprFailure(el, expr, err, "expression"), reportFailure("expression-unsupported", expr, err, mount2), el?.setAttribute("data-forma-expr-error", "unsupported");
   }
-  function reportHandlerFailure(el, expr, err) {
-    logExprFailure(el, expr, err, "handler"), reportDiagnostic("handler-unsupported", expr, err.message, err.code), el?.setAttribute("data-forma-handler-error", "unsupported");
+  function reportHandlerFailure(el, expr, err, mount2) {
+    logExprFailure(el, expr, err, "handler"), reportFailure("handler-unsupported", expr, err, mount2), el?.setAttribute("data-forma-handler-error", "unsupported");
+  }
+  function reportFailure(kind, expr, err, mount2) {
+    err.code === "FORMA_E_GRANT_DOM" || err.code === "FORMA_E_GRANT_NAVIGATE" ? reportDiagnostic("grant-denied", expr, err.message, err.code, mount2, err.code === "FORMA_E_GRANT_DOM" ? "dom" : "navigate") : reportDiagnostic(kind, expr, err.message, err.code, mount2);
   }
   function buildEvaluator(expr, scope, el) {
     let cleaned = stripBraces(expr), cache = getScopeCache(scopeExpressionCache, scope), cached = cache.get(cleaned);
@@ -2929,9 +3448,9 @@ var FormaRuntime = (() => {
       compiled = compileExpression(cleaned);
     } catch (err) {
       if (!isExprError(err)) throw err;
-      return reportExprFailure(el, cleaned, err), null;
+      return reportExprFailure(el, cleaned, err, scope.mount), null;
     }
-    let run2 = () => evaluateExpression(compiled, scope);
+    let run2 = (text) => (spend(), evaluateExpression(compiled, scope, meter, text));
     return cache.set(cleaned, run2), run2;
   }
   function buildHandler(expr, scope, el) {
@@ -2942,19 +3461,19 @@ var FormaRuntime = (() => {
       program = compileHandler(cleaned);
     } catch (err) {
       if (!isExprError(err)) throw err;
-      reportHandlerFailure(el, cleaned, err);
+      reportHandlerFailure(el, cleaned, err, scope.mount);
       let failed = { handler: () => {
       }, supported: !1 };
       return cache.set(cleaned, failed), failed;
     }
     let eventLocals = { $event: void 0, event: void 0 }, eventScope = createChildScope(scope, eventLocals), result = { handler: (e) => {
-      let outer = eventLocals.$event, wrapped = hostObject("event", e, "$event");
-      eventLocals.$event = wrapped, eventLocals.event = wrapped;
+      let outer = eventLocals.$event, wrapped = hostObject("event", e, "$event", scope.mount?.bound);
+      eventLocals.$event = wrapped, eventLocals.event = wrapped, begin(e);
       try {
-        batch(() => runHandler(program, eventScope));
+        batch(() => runHandler(program, eventScope, meter));
       } catch (err) {
         if (!isExprError(err)) throw err;
-        reportHandlerFailure(e.currentTarget ?? el, cleaned, err);
+        reportHandlerFailure(e.currentTarget ?? el, cleaned, err, scope.mount);
       } finally {
         eventLocals.$event = outer, eventLocals.event = outer;
       }
@@ -2976,7 +3495,7 @@ var FormaRuntime = (() => {
       Object.hasOwn(state2, key) && delete state2[key];
     return state2;
   }
-  function initScope(stateEl) {
+  function initScope(stateEl, mount2) {
     let raw = stateEl.getAttribute("data-forma-state") ?? "{}", state2 = parseState(raw), keys = Object.keys(state2);
     _debug && (dbg("initScope: parsed", keys.length, "keys:", keys.join(", ")), keys.length === 0 && dbg("initScope: WARNING \u2014 empty state! Raw attribute:", raw.slice(0, 200)));
     let getters = /* @__PURE__ */ Object.create(null), setters = /* @__PURE__ */ Object.create(null);
@@ -2984,14 +3503,23 @@ var FormaRuntime = (() => {
       let [get, set] = createSignal(initial);
       getters[key] = get, setters[key] = set;
     }
-    let refetchHost = hostFn("$refetch", (id) => $refetch(String(id)), 1);
-    return getters.$refetch = () => refetchHost, { getters, setters };
+    let registry2 = mount2 ? mount2.refetch : _refetchRegistry, refetchHost = hostFn("$refetch", (id) => $refetch(String(id), registry2), 1);
+    getters.$refetch = () => refetchHost;
+    let scope = { getters, setters };
+    return mount2 && (scope.mount = mount2, scope.budget = mount2.budget), scope;
   }
+  var ACTIVATION_EVENTS = /* @__PURE__ */ new Set(["click", "auxclick", "domactivate", "submit", "reset"]);
   function bindElement(el, scope, disposers) {
     let elMagics = {
-      $el: hostObject("element", el, "$el"),
+      $el: hostObject("element", el, "$el", scope.mount?.bound),
       $dispatch: hostFn("$dispatch", (name, detail) => {
-        el.dispatchEvent(new CustomEvent(String(name), {
+        let type = String(name), mount2 = scope.mount;
+        if (mount2 && ACTIVATION_EVENTS.has(type.toLowerCase())) {
+          if (!mount2.bound.navigate)
+            throw exprError("FORMA_E_GRANT_NAVIGATE", `$dispatch('${type}') (no navigate grant)`);
+          mount2.bound.use("navigate");
+        }
+        el.dispatchEvent(new CustomEvent(type, {
           bubbles: !0,
           composed: !0,
           // crosses Shadow DOM boundaries (important for <forma-stage>)
@@ -3000,17 +3528,17 @@ var FormaRuntime = (() => {
       }, 2)
     };
     scope = createChildScope(scope, elMagics), el.hasAttribute("data-forma-expr-error") && el.removeAttribute("data-forma-expr-error"), el.hasAttribute("data-forma-handler-error") && el.removeAttribute("data-forma-handler-error");
-    let evaluator = (expression) => {
+    let evaluator = (expression, text) => {
       let fn = buildEvaluator(expression, scope, el);
       return fn ? () => {
         try {
-          return fn();
+          return fn(text);
         } catch (err) {
           if (!isExprError(err)) throw err;
-          return reportExprFailure(el, stripBraces(expression), err), EXPR_FAILED;
+          return err.defer ? later() : reportExprFailure(el, stripBraces(expression), err, scope.mount), EXPR_FAILED;
         }
       } : () => EXPR_FAILED;
-    }, known = getDirectives(el), computedAttr = !known || known.has("data-computed") ? el.getAttribute("data-computed") : null;
+    }, known = scope.mount ? null : getDirectives(el), computedAttr = !known || known.has("data-computed") ? el.getAttribute("data-computed") : null;
     if (computedAttr) {
       let parts = computedAttr.split(/;\s*(?=\w+\s*=[^=])/);
       for (let part of parts) {
@@ -3027,7 +3555,7 @@ var FormaRuntime = (() => {
                 return { ok: !0, v: evaluate() };
               } catch (err) {
                 if (!isExprError(err)) throw err;
-                return { ok: !1, e: err };
+                return err.defer && (later(), staleCells.add(cell)), { ok: !1, e: err };
               }
             });
             scope.getters[name] = () => {
@@ -3042,7 +3570,7 @@ var FormaRuntime = (() => {
     }
     let textExpr = !known || known.has("data-text") ? el.getAttribute("data-text") : null;
     if (textExpr) {
-      let evaluate = evaluator(textExpr), dispose = internalEffect(() => {
+      let evaluate = evaluator(textExpr, asText), dispose = internalEffect(() => {
         let value2 = evaluate();
         value2 !== EXPR_FAILED && setElementTextFast(el, toTextValue(value2));
       });
@@ -3089,7 +3617,7 @@ var FormaRuntime = (() => {
       if (getter && setter) {
         let input = el, tag = input.tagName, dispose = internalEffect(() => {
           let val = getter();
-          if (val === EXPR_FAILED) return;
+          if (val === EXPR_FAILED || !converts(el, scope, prop, val)) return;
           let type = input.type;
           if (type === "checkbox") {
             input.checked = !!val;
@@ -3107,7 +3635,8 @@ var FormaRuntime = (() => {
             input.value = String(val ?? "");
         });
         disposers.push(dispose);
-        let event = input.type === "checkbox" || input.type === "radio" || tag === "SELECT" ? "change" : "input", onModelInput = () => {
+        let event = input.type === "checkbox" || input.type === "radio" || tag === "SELECT" ? "change" : "input", onModelInput = (e) => {
+          begin(e);
           let type = input.type;
           if (type === "checkbox")
             setter(input.checked);
@@ -3158,7 +3687,18 @@ var FormaRuntime = (() => {
         });
         disposers.push(dispose);
       } else if (name.startsWith("data-bind:")) {
-        let attrName = name.slice(10), evaluate = evaluator(attr.value), dispose = internalEffect(() => {
+        let attrName = name.slice(10);
+        if (isRawHtmlAttr(attrName)) {
+          reportDiagnostic(
+            "markup-refused",
+            `${name}="${attr.value}"`,
+            scope.mount?.tier === "unreviewed" ? "srcdoc binding is refused in an unreviewed mount" : RUNTIME_SRCDOC_REASON,
+            scope.mount?.tier === "unreviewed" ? "FORMA_E_UNREVIEWED_SRCDOC" : RUNTIME_SRCDOC_CODE,
+            scope.mount
+          ), el.removeAttribute(attrName);
+          continue;
+        }
+        let evaluate = evaluator(attr.value, asText), dispose = internalEffect(() => {
           let val = evaluate();
           if (val === EXPR_FAILED) return;
           if (val == null || val === !1) {
@@ -3182,17 +3722,19 @@ var FormaRuntime = (() => {
         } catch {
         }
         let dispose = internalEffect(() => {
-          try {
-            localStorage.setItem(key, JSON.stringify(getter()));
-          } catch {
-          }
+          let value2 = getter();
+          if (converts(el, scope, prop, value2))
+            try {
+              localStorage.setItem(key, JSON.stringify(value2));
+            } catch {
+            }
         });
         disposers.push(dispose);
       }
     }
     let listExpr = !known || known.has("data-list") ? el.getAttribute("data-list") : null;
     if (listExpr) {
-      let evaluate = evaluator(listExpr), templateEl = el.children[0];
+      let templateEl = el.children[0];
       if (templateEl) {
         let disposeCloneBindings2 = function(node) {
           let el2 = node;
@@ -3205,7 +3747,7 @@ var FormaRuntime = (() => {
             delete el2.__formaDisposers;
           }
         }, createBoundClone2 = function(item, index) {
-          let clone = cloneWithTemplateData(template, item), childScope = createChildScope(scope, { item, index }), itemDisposers = [];
+          let clone = cloneWithTemplateData(template, item, scope.mount), childScope = createChildScope(scope, { item, index }), itemDisposers = [];
           bindElement(clone, childScope, itemDisposers);
           for (let desc of Array.from(clone.querySelectorAll("*")))
             bindElement(desc, childScope, itemDisposers);
@@ -3221,7 +3763,18 @@ var FormaRuntime = (() => {
         var disposeCloneBindings = disposeCloneBindings2, createBoundClone = createBoundClone2, updateBoundClone = updateBoundClone2;
         let template = templateEl.cloneNode(!0);
         el.removeChild(templateEl);
-        let keyAttr = template.getAttribute("data-key"), keyProp = keyAttr ? keyAttr.replace(RE_STRIP_ITEM_BRACES, "").trim() : null, listTransition = parseTransitionSpec(el), oldItems = [], oldNodes = [], listHooks = listTransition ? {
+        let keyAttr = template.getAttribute("data-key"), keyProp = keyAttr ? keyAttr.replace(RE_STRIP_ITEM_BRACES, "").trim() : null, fields = [...template.outerHTML.matchAll(/\{item\.?(\w*)\}/g)].map((m) => m[1]);
+        keyProp && fields.push(keyProp);
+        let evaluate = evaluator(listExpr, (items, room2) => {
+          let n = 0;
+          if (Array.isArray(items))
+            for (let item of items)
+              for (let f of fields) {
+                if (n > room2) return n;
+                n += placed(f ? item?.[f] : item, room2);
+              }
+          return n;
+        }), listTransition = parseTransitionSpec(el), oldItems = [], oldNodes = [], listHooks = listTransition ? {
           onInsert: (node) => {
             let htmlEl = node;
             if (!htmlEl.setAttribute) return;
@@ -3308,16 +3861,43 @@ var FormaRuntime = (() => {
           let [ge, se] = createSignal(null);
           scope.getters[errorTarget] = ge, scope.setters[errorTarget] = se;
         }
-        let doFetch = () => {
-          loadingTarget && scope.setters[loadingTarget](!0), fetch(url, { method }).then((r) => r.json()).then((data) => {
-            setTarget(data), loadingTarget && scope.setters[loadingTarget](!1);
-          }).catch((err) => {
-            errorTarget && scope.setters[errorTarget](err.message), loadingTarget && scope.setters[loadingTarget](!1);
+        let mount2 = scope.mount, verdict = mount2 ? fetchVerdict(mount2.fetch, method, url) : null;
+        if (verdict && !verdict.ok)
+          reportDiagnostic("grant-denied", fetchExpr, verdict.reason, "FORMA_E_GRANT_FETCH", mount2, "fetch"), el.setAttribute("data-forma-expr-error", "unsupported"), errorTarget && scope.setters[errorTarget](`data-fetch denied: ${verdict.reason}`);
+        else {
+          let timeoutMs = verdict ? verdict.timeoutMs : FETCH_TIMEOUT_MS, inflight = /* @__PURE__ */ new Set(), doFetch = () => {
+            loadingTarget && scope.setters[loadingTarget](!0);
+            let ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), timeoutMs), stop = () => {
+              clearTimeout(timer), ctrl.abort();
+            };
+            inflight.add(stop);
+            let init = { method, signal: ctrl.signal };
+            verdict && (init.credentials = verdict.credentials, mount2.used && (mount2.used.methods.add(method), mount2.used.paths.add(verdict.path), verdict.cookies && (mount2.used.cookies = !0))), fetch(url, init).then((r) => {
+              if (verdict && !r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);
+              return r.json();
+            }).then((data) => {
+              inflight.has(stop) && (setTarget(data), loadingTarget && scope.setters[loadingTarget](!1));
+            }).catch((err) => {
+              inflight.has(stop) && (errorTarget && scope.setters[errorTarget](
+                ctrl.signal.aborted ? `data-fetch timed out after ${timeoutMs} ms` : err.message
+              ), loadingTarget && scope.setters[loadingTarget](!1));
+            }).finally(() => {
+              clearTimeout(timer), inflight.delete(stop);
+            });
+          };
+          disposers.push(() => {
+            for (let stop of inflight) stop();
+            inflight.clear();
           });
-        }, fetchId = el.getAttribute("data-fetch-id");
-        if (fetchId && (_refetchRegistry.set(fetchId, doFetch), disposers.push(() => _refetchRegistry.delete(fetchId))), doFetch(), interval && interval > 0) {
-          let id = setInterval(doFetch, interval);
-          disposers.push(() => clearInterval(id));
+          let fetchId = el.getAttribute("data-fetch-id");
+          if (fetchId) {
+            let registry2 = mount2 ? mount2.refetch : _refetchRegistry;
+            registry2.set(fetchId, doFetch), disposers.push(() => registry2.delete(fetchId));
+          }
+          if (doFetch(), interval && interval > 0) {
+            let id = setInterval(doFetch, interval);
+            disposers.push(() => clearInterval(id));
+          }
         }
       }
     }
@@ -3359,28 +3939,32 @@ var FormaRuntime = (() => {
         if (entry.startsWith(prefix)) return !0;
     return !1;
   }
-  function mountScope(root) {
+  function mountScope(root, mount2 = null) {
+    if (mount2 === null && _manualMount || ownerOf(root) !== mount2) return;
     if (root.__formaDisposers) {
       _debug && dbg("mountScope: SKIPPED (already mounted)");
       return;
     }
-    let scope = initScope(root), disposers = [], refsMap = /* @__PURE__ */ new Map(), refEls = root.querySelectorAll("[data-ref]");
+    let scope = initScope(root, mount2), disposers = [], refsMap = /* @__PURE__ */ new Map(), refEls = root.querySelectorAll("[data-ref]");
     for (let i = 0; i < refEls.length; i++) {
-      let el = refEls[i], name = el.getAttribute("data-ref");
+      let el = refEls[i];
+      if (ownedBelow(el, root)) continue;
+      let name = el.getAttribute("data-ref");
       name && refsMap.set(name, el);
     }
     let rootRefName = root.getAttribute("data-ref");
     rootRefName && refsMap.set(rootRefName, root);
-    let refsHost = hostObject("refs", refsMap, "$refs");
+    let refsHost = hostObject("refs", refsMap, "$refs", mount2?.bound);
     scope.getters.$refs = () => refsHost, bindElement(root, scope, disposers);
-    let boundCount = 0, selector = buildDirectiveSelector(), scanAll = selector === null, targets = scanAll ? root.querySelectorAll("*") : root.querySelectorAll(selector);
+    let boundCount = 0, selector = mount2 ? null : buildDirectiveSelector(), scanAll = selector === null, targets = scanAll ? root.querySelectorAll("*") : root.querySelectorAll(selector);
     for (let i = 0; i < targets.length; i++) {
       let el = targets[i];
-      el.parentNode !== null && (scanAll && !hasDirective(el) || (bindElement(el, scope, disposers), boundCount++));
+      el.parentNode !== null && (scanAll && !hasDirective(el) || ownedBelow(el, root) || (bindElement(el, scope, disposers), boundCount++));
     }
     root.__formaDisposers = disposers, root.__formaScope = scope, root.__formaInitialState = root.getAttribute("data-forma-state") ?? "{}", _debug && dbg("mountScope: DONE \u2014", boundCount, "elements bound,", disposers.length, "disposers", selector ? "(targeted)" : "(full scan)");
   }
-  function unmountScope(root) {
+  function unmountScope(root, mount2 = null) {
+    if (ownerOf(root) !== mount2) return;
     let disposers = root.__formaDisposers;
     if (disposers) {
       for (let d of disposers)
@@ -3450,7 +4034,7 @@ var FormaRuntime = (() => {
     _observer && (_observer.disconnect(), _observer = null);
   }
   function initRuntime() {
-    _autoContainment && applyContainmentHints(document, { skipIfAlreadySet: !0 });
+    assertTierless("initRuntime()"), _autoContainment && applyContainmentHints(document, { skipIfAlreadySet: !0 });
     let stateRoots = document.querySelectorAll("[data-forma-state]");
     _debug && dbg("initRuntime: found", stateRoots.length, "scope(s)");
     for (let root of Array.from(stateRoots))
@@ -3462,10 +4046,10 @@ var FormaRuntime = (() => {
     let stateRoots = document.querySelectorAll("[data-forma-state]");
     for (let root of Array.from(stateRoots))
       unmountScope(root);
-    clearExpressionCache();
+    clearExpressionCache(), staleCells.clear(), meter.steps = meter.cost = meter.lost = 0, meter.cap = 1 / 0;
   }
   function mount(el) {
-    el.hasAttribute("data-forma-state") && mountScope(el);
+    assertTierless("mount()"), el.hasAttribute("data-forma-state") && mountScope(el);
     let descendants = el.querySelectorAll("[data-forma-state]");
     for (let desc of Array.from(descendants))
       mountScope(desc);
@@ -3476,7 +4060,7 @@ var FormaRuntime = (() => {
     for (let desc of Array.from(descendants))
       unmountScope(desc);
   }
-  typeof document < "u" && (document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", initRuntime) : initRuntime());
+  typeof document < "u" && !_manualMount && (document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", initRuntime) : initRuntime());
   function setDebug(on) {
     _debug = on;
   }
@@ -3525,29 +4109,139 @@ var FormaRuntime = (() => {
     });
   }
   var _reconciler = null;
+  function disconnectObserver() {
+    _observer && _observer.disconnect();
+  }
+  function reconnectObserver() {
+    if (_observer) {
+      let target = document.body || document.documentElement;
+      target && _observer.observe(target, {
+        childList: !0,
+        subtree: !0,
+        attributes: !0,
+        attributeFilter: ["data-forma-state"]
+      });
+    }
+  }
   function getReconciler() {
     return _reconciler || (_reconciler = createReconciler({
-      mountScope,
-      unmountScope,
-      disconnectObserver() {
-        _observer && _observer.disconnect();
-      },
-      reconnectObserver() {
-        if (_observer) {
-          let target = document.body || document.documentElement;
-          target && _observer.observe(target, {
-            childList: !0,
-            subtree: !0,
-            attributes: !0,
-            attributeFilter: ["data-forma-state"]
-          });
-        }
-      },
+      mountScope: (el) => mountScope(el),
+      unmountScope: (el) => unmountScope(el),
+      disconnectObserver,
+      reconnectObserver,
       batch
     })), _reconciler;
   }
   function reconcile(container, html) {
-    getReconciler()(container, html);
+    assertTierless("reconcile()"), getReconciler()(container, html);
+  }
+  function refuseUnreviewed(content, mount2, live) {
+    let code = null, refuse = (el, what, found) => {
+      code = found, reportDiagnostic(
+        "markup-refused",
+        el.outerHTML.slice(0, 200),
+        `unreviewed markup renders no ${what}: ${live ? "one reached the document after the strip; removed, and the markup refused" : "removed"}`,
+        code,
+        mount2
+      );
+    };
+    for (let link2 of Array.from(content.querySelectorAll("link")))
+      refuse(link2, "<link>", "FORMA_E_UNREVIEWED_LINK"), link2.remove();
+    for (let el of Array.from(content.querySelectorAll("[srcdoc]")))
+      refuse(el, "srcdoc", "FORMA_E_UNREVIEWED_SRCDOC"), el.removeAttribute("srcdoc");
+    for (let nested of Array.from(content.querySelectorAll("template")))
+      code = refuseUnreviewed(nested.content, mount2, live) ?? code;
+    return code;
+  }
+  function mountMarkup(root, markup, options) {
+    if (!root || typeof root != "object" || root.nodeType !== 1)
+      throw mountError("FORMA_E_MOUNT_ARGS", "the root must be an element");
+    if (!isTrustedHtml(markup))
+      throw mountError("FORMA_E_MOUNT_ARGS", "the markup must be trustedHtml()");
+    let tier = options?.tier;
+    if (tier !== "compiled" && tier !== "reviewed" && tier !== "unreviewed")
+      throw mountError("FORMA_E_MOUNT_ARGS", "options.tier must be 'compiled', 'reviewed' or 'unreviewed'");
+    if (tier === "unreviewed" && globalThis.origin !== "null")
+      throw mountError("FORMA_E_MOUNT_ORIGIN", "an unreviewed mount renders only in an opaque-origin frame");
+    if (tieredRoots.has(root)) throw mountError("FORMA_E_MOUNT_TWICE", "this root is already mounted; update() its handle");
+    let granted = resolveGrants(tier, options.grants), config = options.config ?? {}, budget = LIMITS.STEP_BUDGET;
+    if (config.exprBudget !== void 0) {
+      if (!(typeof config.exprBudget == "number" && Number.isFinite(config.exprBudget) && config.exprBudget > 0))
+        throw mountError("FORMA_E_MOUNT_ARGS", "config.exprBudget");
+      budget = Math.min(config.exprBudget, 1e7);
+    }
+    let id = ++mountSeq, used = null, ctx = {
+      id,
+      root,
+      tier,
+      name: config.name ?? (root.id ? `#${root.id}` : `mount-${id}`),
+      fetch: granted.fetch,
+      budget,
+      diagnostics: config.diagnostics !== !1,
+      containment: config.autoContainment === !0,
+      bound: {
+        root,
+        dom: granted.dom,
+        navigate: granted.navigate,
+        use: used ? (grant) => {
+          used[grant] = !0;
+        } : noUse
+      },
+      refetch: /* @__PURE__ */ new Map(),
+      used
+    };
+    for (let scope of Array.from(root.querySelectorAll("[data-forma-state]"))) unmountScope(scope);
+    tieredRoots.set(root, ctx), tieredCount++, root.replaceChildren();
+    let reconcileInto = createReconciler({
+      mountScope: (el) => mountScope(el, ctx),
+      unmountScope: (el) => unmountScope(el, ctx),
+      disconnectObserver,
+      reconnectObserver,
+      batch,
+      // Unreviewed markup is parsed once, in the root's context, stripped on
+      // those nodes, and written as nodes (see refuseUnreviewed).
+      strip: tier === "unreviewed" ? (fragment) => {
+        refuseUnreviewed(fragment, ctx, !1);
+      } : void 0
+    }), disposeAll = () => {
+      for (let scope of Array.from(root.querySelectorAll("[data-forma-state]"))) unmountScope(scope, ctx);
+    }, clear = () => {
+      disposeAll(), root.replaceChildren();
+    }, render = (html) => {
+      if (!String(html).trim()) {
+        clear();
+        return;
+      }
+      if (reconcileInto(root, html), tier === "unreviewed") {
+        let reached = refuseUnreviewed(root, ctx, !0);
+        if (reached)
+          throw clear(), mountError(reached, `${ctx.name}: unreviewed markup reached the document unstripped; the root was cleared`);
+      }
+      ctx.containment && applyContainmentHints(root, { skipIfAlreadySet: !0 });
+    }, live = !0, alive = () => {
+      if (!live) throw mountError("FORMA_E_MOUNT_GONE", `${ctx.name} was unmounted`);
+    };
+    try {
+      render(markup);
+    } catch (err) {
+      throw tieredRoots.delete(root), tieredCount--, err;
+    }
+    return {
+      root,
+      tier,
+      name: ctx.name,
+      update(next) {
+        if (alive(), !isTrustedHtml(next))
+          throw mountError("FORMA_E_MOUNT_ARGS", "the markup must be trustedHtml()");
+        render(next);
+      },
+      unmount() {
+        live && (live = !1, disposeAll(), root.replaceChildren(), ctx.refetch.clear(), tieredRoots.delete(root), tieredCount--);
+      },
+      grantsUsed() {
+        return null;
+      }
+    };
   }
   return __toCommonJS(runtime_exports);
 })();

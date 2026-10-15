@@ -97,6 +97,9 @@ describe('development-only text in the built artifacts (FORMA-021)', () => {
       for (const [text, source] of DEVELOPMENT_ONLY) expect(code, `${entries[0]}: ${source}`).not.toContain(text);
       for (const text of REMOVED) expect(code, `${entries[0]}: ${text}`).not.toContain(text);
       expect(code, `${entries[0]}: the registry`).not.toContain('registerInstance');
+      // No guard survives in the IIFEs either, which have no Rollup pass to
+      // fold a binding: the identifier is gone, so every site folded in esbuild.
+      expect(code, `${entries[0]}: a __DEV__ binding or guard`).not.toMatch(/\b__DEV__\d*\b/);
     }
   });
 });

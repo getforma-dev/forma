@@ -43,8 +43,10 @@ function isDev(): boolean {
  * none of. So every development warning is guarded at its site by the same
  * expression over `__FORMA_DEV_BUILD__`, with this export as the raw-source
  * fallback (FORMA-021 C1): in `signal.ts`, `store.ts`, `element.ts`,
- * `list.ts`, `trusted-html.ts` and the instance registry below. No warning
- * text reaches a production artifact, whatever chunk the module lands in.
+ * `list.ts`, `trusted-html.ts`, the instance registry and `reportError`'s
+ * console fallback below. No warning text, and no `__DEV__` binding or
+ * guard, reaches a production artifact, whatever chunk the module lands in:
+ * the export itself is dropped as unused from every production bundle.
  *
  * Two details this expression depends on, both load-bearing:
  *
@@ -164,8 +166,10 @@ export function reportError(error: unknown, source?: string): void {
   // `__DEV__`, not `isDev()`: calling isDev() here re-read process.env.NODE_ENV
   // on every reported error, which is exactly the runtime dev-detection that
   // makes dist builds noisy when NODE_ENV is unset. Registered handlers above
-  // still receive every error in every build.
-  if (__DEV__) {
+  // still receive every error in every build. Guarded at the site in the
+  // folding shape, like every other development statement (FORMA-021 C1), so
+  // no `__DEV__` binding or call survives in the runtime IIFEs either.
+  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
     console.error(`[forma] ${source ?? 'Unknown'} error:`, error);
   }
 }

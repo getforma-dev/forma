@@ -8,12 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - **Every development warning is folded out of every production artifact (C1).**
   The warnings of `h()` (a dropped prop), `createStore` (a prototype-polluting
-  key), `createList` (a duplicate key, a non-array) and `createSignal`'s debug
-  name are now guarded at their sites by the build flag, in the shape esbuild
+  key), `createList` (a duplicate key, a non-array), `createSignal`'s debug
+  name, the instance registry and `reportError`'s console fallback are now guarded at their sites by the build flag, in the shape esbuild
   folds while parsing, instead of by an imported `__DEV__` constant that esbuild
   never inlines and that Rollup folds only inside one chunk. The code-split
   entries (`dist/index.js` and its chunks) shipped ten such guards with their
-  warning bodies, dead but paid for. The development build (the `development`
+  warning bodies, dead but paid for, and the runtime IIFEs a `__DEV__` binding; no production artifact binds `__DEV__` now. The development build (the `development`
   condition) keeps every warning; `scripts/verify-dist.mjs` now checks the
   texts themselves, present in the development twin's graph and absent from
   each production file, where it used to look for a `__DEV__` binding.
@@ -30,8 +30,8 @@ All notable changes to this project will be documented in this file.
   copies gets no console line from core (`docs/CDN-AND-EXPORTS.md`).
 - **Measured** (`npm run check:size`, gzip; the Counter route at gzip -9 by
   `@getforma/build`'s model of the minimal template's page): core entry 47,546
-  to 46,099 B, browser ESM 47,203 to 46,108 B, HTML runtime 41,648 to 41,297 B,
-  hardened runtime 40,509 to 40,171 B, frame runtime 39,997 to 39,646 B, the
+  to 46,097 B, browser ESM 47,203 to 46,115 B, HTML runtime 41,648 to 41,254 B,
+  hardened runtime 40,509 to 40,175 B, frame runtime 39,997 to 39,603 B, the
   Counter route 25,759 to 25,101 B (Brotli 23,004 to 22,482 B). The three runtime
   gates (41,500, 40,500, 40,000 B) are unchanged and pass again.
 - **The core and browser-ESM gates ratchet to 46,500 B each** (L-51; decision
