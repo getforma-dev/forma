@@ -1,0 +1,32 @@
+{
+  "rule": 3,
+  "title": "Integers within plus or minus (2^53 - 1), refused beyond (FORMA-182; DR-9 rule 3, design 4 rule 3, design 3 lines 86-92)",
+  "contract": "A Rust integer bound for a page (i8 to i64, u8 to u64, isize, usize) is compared in the integer domain before any conversion: inside -(2^53 - 1)..=(2^53 - 1) it is encoded exactly and written as its decimal digits; beyond, the render refuses it with RENDER-401 instead of letting it arrive rounded. A finite float keeps its own admission (RENDER-402, finite only): an integer-valued float past 2^53 is admitted and formatted by rule 2, because its origin carries no exactness claim. The client reads the envelope with JSON.parse, so an admitted integer is a safe integer there and String() spells the same digits.",
+  "consumers": [
+    "crates/forma-ir/tests/page_props.rs > integer_vectors_are_admitted_or_refused_in_the_integer_domain (encode_props on i64 and u64 origins, f64 origins)",
+    "crates/forma-ir/src/walker.rs > value_rule_vectors (an admitted integer as DYN_TEXT)",
+    "packages/core/src/dom/__tests__/value-rule-3-integers.test.ts (Number.isSafeInteger and BigInt as the oracle; JSON.parse round trip; h() text)"
+  ],
+  "note": "Hand-enumerated. `kind` names the Rust origin type the vector is encoded from; `lexeme` is the exact decimal, never a JSON number, so no reader rounds it before the check.",
+  "exact": [
+    { "id": "zero", "kind": "i64", "lexeme": "0", "admitted": true },
+    { "id": "ordinary-id", "kind": "i64", "lexeme": "1234567890123", "admitted": true },
+    { "id": "negative-ordinary", "kind": "i64", "lexeme": "-42", "admitted": true },
+    { "id": "positive-limit", "kind": "i64", "lexeme": "9007199254740991", "admitted": true },
+    { "id": "negative-limit", "kind": "i64", "lexeme": "-9007199254740991", "admitted": true },
+    { "id": "unsigned-limit", "kind": "u64", "lexeme": "9007199254740991", "admitted": true },
+    { "id": "positive-over", "kind": "i64", "lexeme": "9007199254740992", "admitted": false },
+    { "id": "negative-over", "kind": "i64", "lexeme": "-9007199254740992", "admitted": false },
+    { "id": "unsigned-over", "kind": "u64", "lexeme": "9007199254740992", "admitted": false },
+    { "id": "rounding-loss", "kind": "u64", "lexeme": "9007199254740993", "admitted": false },
+    { "id": "i64-min", "kind": "i64", "lexeme": "-9223372036854775808", "admitted": false },
+    { "id": "i64-max", "kind": "i64", "lexeme": "9223372036854775807", "admitted": false },
+    { "id": "u64-max", "kind": "u64", "lexeme": "18446744073709551615", "admitted": false }
+  ],
+  "floatOrigin": [
+    { "id": "integer-valued-float-past-safe", "lexeme": "1e20", "expected": "100000000000000000000" },
+    { "id": "two-to-fifty-three-as-float", "lexeme": "9007199254740992", "expected": "9007199254740992" },
+    { "id": "float-rounded-before-admission", "lexeme": "9007199254740993", "expected": "9007199254740992" },
+    { "id": "fraction-is-not-an-integer", "lexeme": "2.5", "expected": "2.5" }
+  ]
+}

@@ -32,7 +32,7 @@ Rust toolchain with `rustfmt` and `clippy`. Its steps, for when you want one of 
 | The packed `forma-raw-lint` bin, as an application installs it | `node packages/build/scripts/test-raw-lint-bin.mjs` |
 | The FMIR contract: this compiler emits the corpus forma-ir has committed, and forma-ir reads it | `npm run emit:corpus -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"`, then `cargo test -p forma-ir --lib js_emitter_contract`; the fixtures must be unchanged |
 | The browser lanes (Chromium): the build package's worker upgrade, the full-stack, SSR and preview-frame lanes, core's own suite | `npm run test:browser -w packages/build`, `npm run test:e2e` (see [`e2e/README.md`](e2e/README.md)), `npm run test:e2e -w packages/core` |
-| The parity harness's own tests (FORMA-183): state generator, comparison, serializer, `renderBoth` (Node 24's type stripping) | `npx tsc --noEmit -p e2e/parity`, `node --test "e2e/parity/tests/*.test.mts"` (see [`e2e/parity/README.md`](e2e/parity/README.md)) |
+| The parity harness's own tests (FORMA-183): state generator, comparison, serializer, server half, `renderBoth` and the suite (Node 24's type stripping); the corpus run itself is CI's non-blocking `parity` job | `npx tsc --noEmit -p e2e/parity`, `node --test "e2e/parity/tests/*.test.mts"`; the corpus: `node e2e/parity/src/run.mts` (see [`e2e/parity/README.md`](e2e/parity/README.md)) |
 
 CI adds, beside that command, what needs another toolchain, target or
 operating system: the crates where `usize` is 32 bits, forma-server with the

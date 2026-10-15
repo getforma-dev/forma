@@ -109,6 +109,10 @@
 
 ## [Unreleased]
 
+### Value rules 6 and 7 are mandatory refusals in the report — FORMA-182
+
+- The diagnostics report and `result.diagnostics` label `BUILD-614` (a boolean in text) and `BUILD-615` (a condition that is not boolean-typed) `error` with or without `--strict`, as they do `BUILD-610` to `BUILD-613`. The compiler refuses both whatever the mode, so a default build already failed on them, but its report and `--diagnostics-json` called them `warning`. Verified by `tests/strict.test.ts` > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are".
+
 ### Static SSR entry products — FORMA-105
 
 - Consume exact-result compiler products before publishing browser/native output. Keep the configured native route owner and IR when its reachable island set is empty; publish no JS or module preload for that route.
