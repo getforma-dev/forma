@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### SSR e2e lane on the 3.0.0 entry contract (FORMA-105)
+
+- The SSR e2e cases (`e2e/ssr/cases/`) use the one entry shape `BUILD-611` accepts: a standalone literal registry and a standalone top-level `mount()`. Their conditional entries (`if (islands) activateIslands(...) else mount(...)`) were the pre-3.0.0 shape and refused compilation once the entry policy landed; `mount()` no longer adopts a server-marked root, so each case's interactive subtree is an island seeded from declared props and `root-fragment` is a static page that serves no script (DR-6).
+- `e2e/ssr/build-cases.mjs` declares each case twice, as an application does: route `/` server-rendered and route `/csr` an explicit Browser route (`ssr: false`) of the same entry, which keeps the mount for the client-rendered comparison; it also checks that a page with islands ships exactly its own script and a page with none ships no script. The Rust renderer renders `/csr` from the real manifest.
+- `e2e/ssr/regressions.spec.ts` observes activation as core documents it since strict activation (FORMA-104): no DOM write on success, so no host in `error`, no `forma:error` event, then behaviour. The pre-3.0.0 lane is archived under `docs/archive/2026-10-15-islands-only-e2e/`.
+
 ### Removed — FORMA-110
 
 - Removed core's server functions, Node SSR and WASM entry points; the compiler's Vite plugins and their standalone transforms; and the WASM walker feature, build step, manifest field and server bootstrap. Browser islands continue to use `h()` and native Rust SSR remains supported.
