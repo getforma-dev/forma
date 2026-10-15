@@ -1,21 +1,13 @@
-//! `PageResponse`: the page response that always carries `no-store`, the
-//! policy and the document headers (DR-17, SR5, SR6; FORMA-124).
-//!
-//! Everything here goes through the public API a handler uses: render, turn
-//! the page into a `PageResponse`, and let axum's `IntoResponse` write it.
-//! The policy guarantees are asserted on every path that makes one (`Path`):
-//! the bridge from the deprecated `render_page`, `try_render`, and
-//! `render_browser_shell`.
-// The bridge from `render_page` (deprecated in 0.2.2) is one of the paths.
-#![allow(deprecated)]
+//! PageResponse sends HTML, no-store and its nonce-bound policy together.
+//! Existing policy/property cases exercise the retained SSR and browser-shell paths.
 
 use axum::body::to_bytes;
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use forma_server::csp::{build_csp_header, PolicyExtensions};
 use forma_server::{
-    render_browser_shell, render_page, try_render, AssetManifest, CspNonce, PageConfig,
-    PageResponse, PolicyError, RenderCtx, RenderError, RenderMode, RouteAssets,
+    render_browser_shell, try_render, AssetManifest, CspNonce, PageConfig, PageResponse,
+    PolicyError, RenderCtx, RenderError, RenderMode, RouteAssets,
 };
 use std::collections::HashMap;
 
@@ -48,36 +40,34 @@ fn manifest() -> AssetManifest {
 }
 
 /// A page through the A2 bridge: render, then the typed response.
-#[allow(deprecated)] // `config_script` is a field every 0.2.x literal names
 fn page(manifest: &AssetManifest, extensions: &PolicyExtensions) -> PageResponse {
-    render_page(&PageConfig {
-        title: "Home",
-        route_pattern: "/",
-        manifest,
-        config_script: None,
-        config_json: None,
-        body_class: None,
-        personality_css: Some("body{margin:0}"),
-        body_prefix: None,
-        render_mode: RenderMode::Phase1ClientMount,
-        ir_module: None,
-        slots: None,
-    })
-    .into_page_response(extensions)
+    render_browser_shell(
+        &PageConfig {
+            title: "Home",
+            route_pattern: "/",
+            manifest,
+            config_json: None,
+            body_class: None,
+            personality_css: Some("body{margin:0}"),
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        },
+        &RenderCtx::new().with_policy(extensions.clone()),
+    )
     .expect("a page with valid extensions becomes a response")
 }
 
 /// Every public way to make a `PageResponse`.
 #[derive(Debug, Clone, Copy)]
 enum Path {
-    /// `render_page(..).into_page_response(..)`, the bridge for 0.2.1 code.
-    Bridge,
     /// `try_render`, on a module that renders `<p>hello</p>`.
     TryRender,
     /// `render_browser_shell`.
     Shell,
 }
-const PATHS: [Path; 3] = [Path::Bridge, Path::TryRender, Path::Shell];
+const PATHS: [Path; 2] = [Path::TryRender, Path::Shell];
 
 /// A page with `extensions` along `path`, or the extension it refused.
 fn make(
@@ -98,7 +88,6 @@ fn make(
         title: "Home",
         route_pattern: "/",
         manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: Some("body{margin:0}"),
@@ -114,7 +103,6 @@ fn make(
         Err(other) => panic!("{path:?}: only the policy may fail here, got {other}"),
     };
     match path {
-        Path::Bridge => render_page(&config).into_page_response(extensions),
         Path::TryRender => policy(try_render(&config, &ctx)),
         Path::Shell => policy(render_browser_shell(&config, &ctx)),
     }
@@ -329,55 +317,6 @@ fn an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy() {
     let page = page(&manifest, &extensions);
     let parts = page.into_parts_unchecked();
     assert!(parts.html.starts_with("<!DOCTYPE html>"));
-}
-
-#[test]
-#[allow(deprecated)] // the bridge's input is the deprecated `PageOutput`
-fn into_page_response_refuses_a_policy_edited_as_text() {
-    // The bridge rebuilds the policy from the nonce. A `csp` the caller
-    // edited would be dropped, whether the edit widened the policy (blocked
-    // in the browser, far from this call) or tightened it (lost silently), so
-    // it is refused here, naming the way to express it.
-    let manifest = manifest();
-    let render = || {
-        render_page(&PageConfig {
-            title: "Home",
-            route_pattern: "/",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
-        })
-    };
-    for edit in [
-        // GateWASM's console, widening
-        |csp: &mut String| {
-            *csp = csp.replace("img-src 'self' data:", "img-src 'self' data: https:")
-        },
-        // Generative UI, widening
-        |csp: &mut String| csp.push_str("; frame-src blob:"),
-        // tightening
-        |csp: &mut String| csp.push_str("; upgrade-insecure-requests"),
-        // whitespace alone is still an edit
-        |csp: &mut String| csp.push(' '),
-    ] {
-        let mut page = render();
-        edit(&mut page.csp);
-        let error = page
-            .into_page_response(&PolicyExtensions::new())
-            .expect_err("an edited policy is refused");
-        assert_eq!(error.directive(), "content-security-policy");
-        assert!(error.reason().contains("PolicyExtensions"), "{error}");
-    }
-    // Unedited, it converts.
-    assert!(render()
-        .into_page_response(&PolicyExtensions::new())
-        .is_ok());
 }
 
 // -- SR5's property ---------------------------------------------------------
@@ -754,7 +693,6 @@ fn a_page_response_counts_its_walk() {
             title: "Home",
             route_pattern: "/",
             manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -765,25 +703,24 @@ fn a_page_response_counts_its_walk() {
         }
     }
 
-    let ssr = render_page(&config(
-        &manifest,
-        &slots,
-        RenderMode::Phase2SsrReconcile,
-        Some(&module),
-    ))
-    .into_page_response(&PolicyExtensions::new())
+    let ssr = try_render(
+        &config(
+            &manifest,
+            &slots,
+            RenderMode::Phase2SsrReconcile,
+            Some(&module),
+        ),
+        &RenderCtx::new(),
+    )
     .expect("page");
     // The walk wrote `<p>hello</p>`: its bytes, not the document's.
     assert_eq!(ssr.counts().bytes, "<p>hello</p>".len());
 
     // A shell walks nothing, and says so.
-    let shell = render_page(&config(
-        &manifest,
-        &slots,
-        RenderMode::Phase1ClientMount,
-        None,
-    ))
-    .into_page_response(&PolicyExtensions::new())
+    let shell = render_browser_shell(
+        &config(&manifest, &slots, RenderMode::Phase1ClientMount, None),
+        &RenderCtx::new(),
+    )
     .expect("page");
     assert_eq!(shell.counts().bytes, 0);
     assert_eq!(shell.counts().walk_time, std::time::Duration::ZERO);

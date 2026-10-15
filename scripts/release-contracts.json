@@ -11,7 +11,6 @@
     "FORMA-102": "declared props and bind mutation suite",
     "FORMA-144": "both templates use the milestone's API",
     "FORMA-188": "fixture applications and skew drill",
-    "FORMA-191": "release measurements",
-    "FORMA-112": "manifest 2/window implemented; final exact-artifact packed validation pending"
+    "FORMA-191": "release measurements"
   }
 }

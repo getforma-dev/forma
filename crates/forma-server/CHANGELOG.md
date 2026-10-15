@@ -8,6 +8,12 @@
 - Added request title/body-class metadata on `RenderCtx`, source-aware BIND diagnostics, checked-value RENDER-401..404 and RENDER-405 for incompatible debug reloads. A corrupt reload keeps the prior module and its asset snapshot; a valid incompatible schema returns an error.
 - Repeated lists share a declared root array with private CLIENT temporaries. Local state is never handler-filled, extra Rust fields warn and are omitted, and both no-parameter and typed-empty pages bind to an empty derived struct.
 
+### Response and raw boundaries — FORMA-109
+
+- Remove `PageOutput`, `render_page`, `render_page_with_nonce` and `PageConfig::config_script`. Retained checked renderers return only `PageResponse`; HTML leaves separately only through the named `into_parts_unchecked` exit. `try_render` remains for typed-handle integration until FORMA-107.
+- Require `PageConfig::body_prefix: Option<&RawHtml>` and remove the string-provenance registry and RAW-101 bridge warning. Keep the single reviewed `RawHtml::trusted` constructor.
+- Enforce both Trusted Types directives for strict pages and named frames in every build without requiring a reporting endpoint. The typed route relaxation removes only those directives from enforcement and retains Report-Only; SR8 governs owner/date metadata. Existing frame overrides, document headers, nonce generation and escaped JSON remain.
+
 
 ### Compatibility — FORMA-112
 

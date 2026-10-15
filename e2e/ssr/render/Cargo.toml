@@ -1,5 +1,5 @@
 # The Rust half of the SSR e2e lane: renders each built case with forma's REAL
-# walker and page template (`forma_server::render_page`), exactly as a Forma
+# walker and page template (`forma_server::try_render`), exactly as a Forma
 # handler does, and writes the page and its response headers to disk for the
 # static server in ../serve.mjs.
 #

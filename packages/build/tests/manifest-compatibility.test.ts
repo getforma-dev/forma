@@ -74,24 +74,30 @@ describe('manifest2 compatibility through real builds', () => {
     const lock = join(root, 'Cargo.lock');
     const setServer = (version: string) => writeFileSync(lock, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
     setServer('3.0.0');
-    await watching({app: 'ledger', codeSplitting, entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir}, async ({manifest, output}) => {
+    await watching({app: 'ledger', codeSplitting, entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir}, async ({manifest, output, ready, change}) => {
+      await ready();
       await vi.waitFor(() => expect(existsSync(join(outputDir, 'manifest.json')), output()).toBe(true));
       const original = readFileSync(join(outputDir, 'app.js'), 'utf8');
       const originalManifest = readFileSync(join(outputDir, 'manifest.json'), 'utf8');
-      setServer('2.9.0');
+      await change(() => setServer('2.9.0'));
       await vi.waitFor(() => expect(output()).toContain('incompatible with forma-server 2.9.0'), {timeout: 10_000});
       expect(readFileSync(join(outputDir, 'app.js'), 'utf8')).toBe(original);
       expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).toBe(originalManifest);
-      writeFileSync(entry, 'export const message = "changed while refused";');
-      setServer('3.1.0');
+      await change(() => writeFileSync(entry, 'export const message = "changed while refused";'));
+      expect(readFileSync(join(outputDir, 'app.js'), 'utf8')).toBe(original);
+      expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).toBe(originalManifest);
+      await change(() => setServer('3.1.0'));
       await vi.waitFor(() => expect(readFileSync(join(outputDir, 'app.js'), 'utf8')).toContain('changed while refused'), {timeout: 10_000});
       expect(manifest().writer).toBe('3.0.0');
       const recovered = readFileSync(join(outputDir, 'app.js'), 'utf8');
-      setServer('4.0.0');
+      await change(() => setServer('4.0.0'));
       await vi.waitFor(() => expect(output()).toContain('incompatible with forma-server 4.0.0'), {timeout: 10_000});
       expect(readFileSync(join(outputDir, 'app.js'), 'utf8')).toBe(recovered);
-      setServer('3.0.99');
-      writeFileSync(entry, 'export const message = "patch recovery";');
+      const recoveredManifest = readFileSync(join(outputDir, 'manifest.json'), 'utf8');
+      await change(() => writeFileSync(entry, 'export const message = "patch recovery";'));
+      expect(readFileSync(join(outputDir, 'app.js'), 'utf8')).toBe(recovered);
+      expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).toBe(recoveredManifest);
+      await change(() => setServer('3.0.99'));
       await vi.waitFor(() => expect(readFileSync(join(outputDir, 'app.js'), 'utf8')).toContain('patch recovery'), {timeout: 10_000});
       expect(manifest().assets['app.js'].immutable).toBe(false);
       expect(manifest().assets['app.js'].integrity).toBe(`sha384-${createHash('sha384').update(readFileSync(join(outputDir, 'app.js'))).digest('base64')}`);

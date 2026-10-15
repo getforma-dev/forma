@@ -27,9 +27,8 @@
 //!
 //! The strict policy's `default-src 'none'` closes nested frames, media and
 //! prefetches, and `object-src` and `base-uri 'none'` stay. Trusted Types are
-//! reported, not enforced, to no endpoint (an unreviewed document's
-//! violations are not the application's reports), so, as on any page
-//! without one, in development builds only.
+//! enforced in every build. The frame names no reporting endpoint: an unreviewed
+//! document's reports do not belong to the application's reporting service.
 //!
 //! **What stays open, the residuals:**
 //!

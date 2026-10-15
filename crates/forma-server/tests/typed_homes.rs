@@ -6,7 +6,6 @@
 //!
 //! Every guarantee is asserted on both renders that take a `RenderCtx`
 //! (`Path`): `try_render` and `render_browser_shell`.
-// `config_script` is a field every 0.2.x literal names.
 #![allow(deprecated)]
 
 use forma_ir::parser::test_helpers::{
@@ -53,7 +52,6 @@ fn config<'a>(
         title: "Homes",
         route_pattern: route,
         manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css,
