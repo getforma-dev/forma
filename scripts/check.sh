@@ -18,8 +18,13 @@
 #   e2e     the build package's browser test, the full-stack, SSR and
 #           preview-frame lanes (forma-tools' `e2e` job, which used to clone
 #           formajs and forma) and core's own Playwright suite, all in Chromium
+#   parity  the parity harness's own tests (FORMA-183, e2e/parity/): the state
+#           generator, the comparison, the serializer against Chromium's
+#           parser and renderBoth end to end; the corpus run joins this script
+#           when it turns blocking
 #
-# Needs: Node 20+ with npm, a stable Rust toolchain with rustfmt, clippy and
+# Needs: Node 24 with npm (`.node-version`; the parity harness's TypeScript runs
+# by Node's type stripping), a stable Rust toolchain with rustfmt, clippy and
 # Playwright's Chromium
 # (`npx playwright install chromium` once; CI installs it before this runs).
 # Not here: the 32-bit, release-profile and MSRV builds, cargo-deny, the
@@ -90,6 +95,13 @@ npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs
 npx playwright test
 npm run test:e2e -w packages/core
+
+step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
+# The harness is TypeScript run by Node itself. A Node without type stripping
+# fails here, by name, rather than skipping the step (TESTING.md P7).
+node -e 'if (!process.features.typescript) { console.error(`::error::the parity harness needs a Node that strips types (.node-version: 24); this is ${process.version}`); process.exit(1); }'
+npx tsc --noEmit -p e2e/parity
+node --test "e2e/parity/tests/*.test.mts"
 
 echo
 echo "check: every gate passed in $(( $(date +%s) - started ))s"
