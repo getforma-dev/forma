@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "initialHead": "188a5725efe497cd8c61dbaf737b004c14176e5e",
+  "initialRun": 38686430679,
+  "failures": [
+    {
+      "job": "node (22)",
+      "test": "server-functions-removed.test.ts",
+      "cause": "Source edit raced initial watcher snapshot after manifest publication. Uses existing ready()/change() synchronization; assertions retained."
+    },
+    {
+      "job": "check",
+      "test": "compatibility-watch.test.ts",
+      "cause": "In-place truncate/write briefly exposed empty Cargo.lock; parser correctly refused it. Complete-version fixture writes now use adjacent temporary file and atomic rename, plus reviewed owned-tree close helper."
+    }
+  ],
+  "productionChanges": false,
+  "packedArtifactSourceUnchanged": "bfb722c42e717a689ede68e3dc7171b081c63448",
+  "verification": {
+    "node22BuildSuitePassed": 238,
+    "node24BuildSuitePassed": 238
+  },
+  "hostedRerun": "required at followup head"
+}

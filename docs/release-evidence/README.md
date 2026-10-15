@@ -471,3 +471,13 @@ current whole-page mount starts at 0. Slice 3 owns final template/release cleanu
 and the deduplication decision. FORMA-144 remains open, other pending milestone
 qualifications remain recorded, and `liveReleaseReady` remains false. Nothing
 was tagged or published.
+
+The first hosted run at `188a572` passed candidate packing and the Linux
+candidate suite, then exposed two older watch-test races in Node22 and `check`.
+`v3-template-slice1-watch-followup.json` records them. One fixture now awaits
+initial registration and completed cycles through the existing helper; the
+other publishes its intended complete Cargo versions atomically and awaits
+owned process-tree closure. Every existing refusal/recovery assertion and
+separate malformed-metadata control remains. Both full build suites pass
+238/238 on Node22 and Node24 after the test-only correction. These changes do
+not alter packaged production bytes; final hosted acceptance is still required.
