@@ -288,10 +288,6 @@ pub fn asset_security_headers() -> &'static [(axum::http::HeaderName, axum::http
 }
 
 /// Asset manifest loaded from `manifest.json` in the embedded dist directory.
-// Its `wasm` field and that field's type are deprecated; the derives below
-// name both, and the allow keeps those generated uses quiet. A caller's own
-// use still warns.
-#[allow(deprecated)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct AssetManifest {
     /// Manifest schema version.
@@ -302,19 +298,6 @@ pub struct AssetManifest {
     pub assets: HashMap<String, String>,
     /// Route pattern → the assets that route needs.
     pub routes: HashMap<String, RouteAssets>,
-    /// The WASM walker, when the build ships one. When it is set, a page whose
-    /// route has an `.ir` module gets a nonced `window.__FORMA_WASM__` script
-    /// naming the loader, the binary and the module; that injection goes in
-    /// 3.0.0 with this field.
-    #[deprecated(
-        since = "0.2.2",
-        note = "the WASM walker is deprecated: @getforma/core/wasm, forma-ir's `wasm` feature \
-                and the build's `wasm` key go in 3.0.0, and with them this field and the \
-                `window.__FORMA_WASM__` script it adds to the page. Islands re-render with \
-                @getforma/core's `h()`. Removed in 3.0.0"
-    )]
-    #[serde(default)]
-    pub wasm: Option<WasmAssets>,
 }
 
 /// Per-route asset references.
@@ -334,22 +317,6 @@ pub struct RouteAssets {
     /// has one (Phase 2).
     #[serde(default)]
     pub ir: Option<String>,
-}
-
-/// WASM asset references: the WASM walker's loader and binary, from the
-/// manifest's `wasm` entry.
-#[deprecated(
-    since = "0.2.2",
-    note = "the WASM walker is deprecated: @getforma/core/wasm, forma-ir's `wasm` feature \
-            and the build's `wasm` key go in 3.0.0, and with them `AssetManifest::wasm` and \
-            this type. Islands re-render with @getforma/core's `h()`. Removed in 3.0.0"
-)]
-#[derive(Debug, Clone, Deserialize)]
-pub struct WasmAssets {
-    /// The JS glue module wasm-bindgen emits.
-    pub loader: String,
-    /// The `.wasm` binary itself.
-    pub binary: String,
 }
 
 impl AssetManifest {

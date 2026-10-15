@@ -54,7 +54,6 @@ fn render_page_logs_its_deprecation_once_per_process_in_debug_builds() {
         build_hash: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
-        wasm: None,
     };
     let config = PageConfig {
         title: "Old",

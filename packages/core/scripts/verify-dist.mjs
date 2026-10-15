@@ -223,34 +223,6 @@ for (const rel of [`${DEV_OUT_DIR}/index.js`, `${DEV_OUT_DIR}/index.cjs`]) {
 }
 
 // ---------------------------------------------------------------------------
-// 3b. The deprecated entries' warnings are development-only
-// ---------------------------------------------------------------------------
-// `./server`, `./wasm` and `./ssr` log a coded deprecation the first time they
-// load in a development build (src/deprecated.ts). Each call sits behind a
-// condition the production define folds to `false`, so the build drops it and
-// its import. If a code survives into a production artifact, the fold broke
-// and the published bytes changed. The development twins must keep it: that
-// warning is what they are for.
-for (const rel of jsArtifacts()) {
-  if (!isDevelopment(rel) && read(rel).includes('FORMA_W_DEPRECATED_')) {
-    fail(`${rel} contains a FORMA_W_DEPRECATED_ warning: the development-only deprecation was not folded away`);
-  }
-}
-for (const [entry, code] of [
-  ['server', 'FORMA_W_DEPRECATED_SERVER'],
-  ['wasm', 'FORMA_W_DEPRECATED_WASM'],
-  ['ssr/index', 'FORMA_W_DEPRECATED_SSR'],
-]) {
-  for (const ext of ['js', 'cjs']) {
-    const rel = `${DEV_OUT_DIR}/${entry}.${ext}`;
-    if (!existsSync(resolve(ROOT, rel))) continue; // reported by section 1
-    if (!collectGraph(rel, ROOT).files.some((file) => read(file).includes(code))) {
-      fail(`${rel} does not log ${code}: the development build lost the deprecation warning`);
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // 3c. The raw-HTML warnings are development-only
 // ---------------------------------------------------------------------------
 // A value that is not trustedHtml() given to a raw sink, the runtime's srcdoc

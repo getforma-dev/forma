@@ -25,10 +25,6 @@ FormaJS handles this in two ways:
 
 Verified by `src/dom/__tests__/element-url-safety.test.ts` > "drops ONCLICK-cased string props instead of writing an inline handler"
 
-> **Streaming SSR caveat:** the JS streaming renderer's Suspense swap scripts (`renderToStream` / `getSwapScript` / `getSwapTag`) are emitted **without** a `nonce` — the functions take no nonce parameter at all — so under a strict `script-src 'nonce-…'` policy they are blocked and out-of-order Suspense content will not swap in. Until nonce threading lands, either use non-streaming SSR under strict CSP, or allow these scripts explicitly. Do not add `'unsafe-inline'` as a workaround.
->
-> Verified by `src/__tests__/docs-truth.test.ts` > "the streaming swap scripts really do lack a nonce, as the caveat says"
-
 **Styles:** The `h()` function applies styles via the CSSOM API (`Object.assign(el.style, ...)`) instead of `el.style.cssText` or `setAttribute('style', ...)`. CSSOM property assignment is not blocked by CSP — only string-based style injection is.
 
 ---
@@ -79,7 +75,7 @@ All four patterns work under strict CSP. Internally, string styles are parsed by
 
 ### "Refused to execute inline script"
 
-**Cause:** A `<script>` tag is missing its `nonce` attribute. This happens if you inject scripts via `innerHTML`, create them with `document.createElement('script')` without setting the nonce, or use streaming SSR (see the caveat above).
+**Cause:** A `<script>` tag is missing its `nonce` attribute. This happens if you inject scripts via `innerHTML`, create them with `document.createElement('script')` without setting the nonce.
 
 **Fix:** Use `forma-server`'s `render_page()` which automatically injects nonces on all script tags. If you need to add custom scripts, use the `config_script` field in `PageConfig` — it's rendered inside a nonce-tagged script block.
 

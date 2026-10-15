@@ -3,134 +3,16 @@
 [![npm](https://img.shields.io/npm/v/@getforma/compiler)](https://www.npmjs.com/package/@getforma/compiler)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Compiler and build plugins for [FormaJS](https://github.com/getforma-dev/formajs). Transforms `h()` calls into pre-compiled templates for faster rendering, handles `"use server"` function transforms, and emits FMIR binary for Rust SSR.
+FMIR compiler for [Forma](https://github.com/getforma-dev/forma). Emits binary modules for native Rust SSR while browser bundles keep runtime `h()`.
 
-**This is an optimization layer — FormaJS works without it.** Add the compiler when you want faster initial renders or Rust-based SSR.
+Add the compiler for Rust SSR; browser-only applications run without it.
+
+The Vite plugins (`formaCompiler`, `formaServer`), `compileFormaJSX` and `transformServerFunctions` were removed in 3.0.0. Use `@getforma/build` and authenticated Rust routes. [The old plugin documentation](../../docs/archive/2026-10-15-legacy-apis/packages/compiler/README.md) is archived.
 
 ## Install
 
 ```bash
 npm install -D @getforma/compiler
-```
-
-## Vite Plugin — `formaCompiler`
-
-> **Deprecated: unsupported, and removed in 3.0.0.** Its compiled output does
-> not behave like runtime `h()`, which is what FormaJS documents and tests.
-> Probes against `@getforma/core` 2.0.1 found that:
->
-> - an island hydrated over server-rendered markup gets no handlers or updates, with no error;
-> - a signal getter passed as a child renders as its source text;
-> - `style` objects are dropped;
-> - `null` and `false` values render as text;
-> - some sibling text children make the compiled code throw.
->
-> None of the stack's applications uses it. Remove the plugin, since FormaJS
-> runs without it. To build an application, use `@getforma/build`, which keeps
-> runtime `h()`. The plugin logs this once when it is created.
->
-> Until 3.0.0 the plugin does not bypass core's attribute guard. An element
-> carrying any of the following is left to runtime `h()`, which checks it on
-> the first render and on every update:
->
-> - a URL attribute (`href`, `src`, `action`, `formaction`, `xlink:href`, `poster`, `background`, `data`) whose value is not a literal;
-> - such an attribute whose literal value has a scheme (`javascript:`, `https:`);
-> - an `on…` attribute that is not an `onX` listener (`ONCLICK`, `onclick`).
-> - a tag or attribute name that is not well formed (`'href '`, `'x onclick'`), which runtime `h()` rejects.
->
-> Literal relative URLs (`/about`, `#top`) still compile into the template.
-
-Transforms `h()` calls into `template()` + `cloneNode()` at build time. Instead of creating DOM elements one by one at runtime, the browser clones a pre-built template — significantly faster for complex component trees.
-
-```ts
-// vite.config.ts
-import { defineConfig } from "vite";
-import { formaCompiler } from "@getforma/compiler";
-
-export default defineConfig({
-  plugins: [formaCompiler()],
-});
-```
-
-**Before (runtime):**
-```ts
-h("div", { class: "card" },
-  h("h2", null, "Title"),
-  h("p", null, () => description()),
-)
-```
-
-**After (compiled):**
-```ts
-const _tmpl = template("<div class='card'><h2>Title</h2><p></p></div>");
-const _root = _tmpl.cloneNode(true);
-createEffect(() => { _root.querySelector("p").textContent = description(); });
-```
-
-The compiled module imports `template` and `createEffect` from
-`@getforma/core`, so that package must resolve in your project. Your own
-imports are left as written.
-
-### Options
-
-```ts
-formaCompiler({
-  // Default: ["**/*.ts", "**/*.tsx"] — .js/.jsx are NOT transformed unless listed
-  include: ["src/**/*.tsx"],
-  // Default: ["**/node_modules/**"]
-  exclude: ["**/generated/**"],
-})
-```
-
-Patterns are matched against the module id with `\` normalized to `/` and any
-Vite query suffix (`?v=hash`) dropped. A `**` segment matches any number of path
-segments (including none) and `*` matches within one segment. A file is
-transformed only if it matches an include pattern, no exclude pattern, and
-imports from `formajs` / `forma/`.
-
-## Server Functions — `formaServer`
-
-> **Deprecated: removed in 3.0.0, together with server functions.** No
-> application of the Forma stack uses them. The plugin logs this once when it
-> is created. `transformServerFunctions`, the transform it runs (also exported),
-> logs `BUILD-901` on its first call in a process.
-
-Transforms functions with the `"use server"` directive into RPC stubs (client build) or registered endpoints (server build).
-
-```ts
-// vite.config.ts
-import { defineConfig } from "vite";
-import { formaCompiler, formaServer } from "@getforma/compiler";
-
-export default defineConfig({
-  plugins: [
-    formaCompiler(),
-    formaServer({ mode: "client" }), // or "server"
-  ],
-});
-```
-
-**Source:**
-```ts
-async function createTodo(text: string) {
-  "use server";
-  return db.insert("todos", { text });
-}
-```
-
-**Client output:**
-```ts
-import { $$serverFunction } from "@getforma/core/server";
-const createTodo = $$serverFunction("/rpc/createTodo_a1b2c3");
-```
-
-**Server output:**
-```ts
-import { registerServerFunction } from "@getforma/core/server";
-async function createTodo(text: string) {
-  return db.insert("todos", { text });
-}
-registerServerFunction("/rpc/createTodo_a1b2c3", createTodo);
 ```
 
 ## esbuild SSR Plugin — `formaSsrPlugin`
@@ -499,14 +381,11 @@ whole pipeline (analyzer + walker + emitter) and returns `{ binary, islands }`.
 | Scenario | Need compiler? |
 |----------|---------------|
 | Learning FormaJS, building prototypes | No |
-| Production app with Vite | No: the Vite plugins are deprecated and unsupported (removed in 3.0.0); FormaJS runs without them |
-| `"use server"` functions (RPC) | Deprecated: removed in 3.0.0 with `formaServer` |
 | Rust SSR with `forma-server` | Yes — emits FMIR binary |
 | HTML Runtime (`data-*` directives) | No — runtime handles everything |
 
 ## Peer Dependencies
 
-- `vite >=5.0.0` (optional — for Vite plugins)
 - `esbuild >=0.17.0` (optional — for esbuild SSR plugin)
 
 ## Part of the Forma Stack
@@ -523,7 +402,7 @@ whole pipeline (analyzer + walker + emitter) and returns `{ binary, islands }`.
 
 | Package | Description |
 |---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser, walker, WASM exports |
+| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser and native HTML walker |
 | [forma-server](https://crates.io/crates/forma-server) | Axum middleware — SSR page rendering, asset serving, CSP headers |
 
 ### Full Framework

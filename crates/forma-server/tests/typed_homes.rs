@@ -175,7 +175,6 @@ fn styled_manifest() -> AssetManifest {
         build_hash: "h".into(),
         assets: HashMap::new(),
         routes,
-        wasm: None,
     }
 }
 

@@ -1,5 +1,7 @@
 # Performance
 
+The retired Node renderer measurements are preserved in the [pre-removal record](archive/2026-10-15-legacy-apis/PERFORMANCE.md). Remaining measurements retain their original run metadata; this removal is not a new benchmark run.
+
 The product thesis is fine-grained surgical updates and small fast bundles. The
 bundle half is gated in CI by `scripts/check-size.mjs`. This document is the
 other half: a re-runnable benchmark suite over the hot paths, and the numbers it
@@ -262,22 +264,6 @@ XSS, on the only attributes that can carry one. For reference, the two name
 predicates are ~12 ns each (`isEventHandlerAttr`, `isUrlAttr`), and
 `handleGenericAttr` already hoists the name lookup out of the reactive closure so
 it is paid once per binding rather than once per run.
-
-### 4. SSR `renderToString` — +3.6% to +6.4%
-
-| benchmark | before | after | change |
-| --- | ---: | ---: | ---: |
-| 10 cards (~3 KB) | 43.4 µs | 45.6 µs | +5.1% |
-| 100 cards (~31 KB) | 419.2 µs | 443.0 µs | +5.7% |
-| 1000 cards (~316 KB) | 5.434 ms | 5.718 ms | +5.2% |
-| 5000 cards (~1.6 MB) | 29.451 ms | 31.332 ms | +6.4% |
-| 1000 cards, none URL-bearing *(control)* | 5.312 ms | 5.503 ms | +3.6% |
-
-`renderAttr` now runs `isEventHandlerAttr` + `isSafeAttrName` on every attribute
-and `isDangerousUrl` on URL ones. The cost is flat in tree size (no algorithmic
-change) and it is a per-request cost. **Worth it** — this is the boundary where
-attacker-controlled prop names and values become markup, and 5% of render time is
-the cheapest possible place to stop them.
 
 ### 5. Hydration adoption — +7% to +8%
 
@@ -672,28 +658,5 @@ _5 runs × 60–600 samples · node v20.16.0 · win32 x64 · fix/ksx-dogfood-fin
 | 10 effects on one signal: write (×500) | 360.6 µs | 725.3 µs | 721 ns | 10.9% |
 | 100 effects on one signal: write (×50) | 384.0 µs | 457.4 µs | 7.68 µs | 11.4% |
 | 1000 effects on one signal: write (×5) | 416.2 µs | 603.0 µs | 83.24 µs | 8.3% |
-
-#### bench/ssr.bench.ts — renderToString: reactive props and children
-
-| benchmark | median | p95 | per op | run-to-run spread |
-| --- | ---: | ---: | ---: | ---: |
-| 500 list items, plain values | 391.6 µs | 910.8 µs | — | 56.4% |
-| 500 list items, every prop and child a getter | 409.1 µs | 1.177 ms | — | 58.4% |
-
-#### bench/ssr.bench.ts — renderToString: tree size sweep
-
-| benchmark | median | p95 | per op | run-to-run spread |
-| --- | ---: | ---: | ---: | ---: |
-| 10 cards (~3 KB of HTML) | 46.1 µs | 81.3 µs | — | 58.5% |
-| 100 cards (~31 KB of HTML) | 458.1 µs | 961.0 µs | — | 59.0% |
-| 1000 cards (~316 KB of HTML) | 6.028 ms | 9.253 ms | — | 53.0% |
-| 5000 cards (~1597 KB of HTML) | 32.220 ms | 68.418 ms | — | 49.9% |
-
-#### bench/ssr.bench.ts — renderToString: URL-attribute guard cost
-
-| benchmark | median | p95 | per op | run-to-run spread |
-| --- | ---: | ---: | ---: | ---: |
-| 1000 cards, one href each | 5.810 ms | 9.523 ms | — | 49.0% |
-| 1000 cards, same attrs, none URL-bearing (control) | 5.707 ms | 10.186 ms | — | 51.9% |
 
 <!-- BENCH:END -->

@@ -1390,6 +1390,7 @@ mod tests {
         );
         assert!(!script.contains("unsafe-inline"));
         assert!(!script.contains("unsafe-eval"));
+        assert!(!csp.contains("wasm-unsafe-eval"));
 
         // Style ELEMENTS stay nonce-locked...
         let style = directive(&csp, "style-src").expect("style-src");

@@ -82,9 +82,7 @@ can be counted in strict mode: the number of BUILD-403 entries.
 A note is printed as every diagnostic is, but strict mode never fails on it.
 They are BUILD-504, a construct DR-1's published subset admits (its reads
 are reported where they are), and the deprecations, whose old paths keep
-working in A2: BUILD-802 to BUILD-804 (build options and the wasm-pack step;
-a build that still sets `wasm` passes in strict mode) and BUILD-901 (the
-compiler's `transformServerFunctions`). The raw-entry lint's BUILD-813, an allowlist
+working in A2: BUILD-802 (the old islands option). The raw-entry lint's BUILD-813, an allowlist
 entry that lists nothing, is a note too: the lint's run does not fail on it.
 
 ## Families
@@ -99,7 +97,6 @@ entry that lists nothing, is a note too: the lint's run does not fail on it.
 | BUILD-6xx | The page module: a placeholder, or a literal too long |
 | BUILD-7xx | A construct adoption does not handle; `browserOnly()` is the way out |
 | BUILD-8xx | The build package (reported by `@getforma/build`), its raw-entry lint included (BUILD-810 to BUILD-814) |
-| BUILD-9xx | The compiler's own deprecated entry points (logged when called) |
 
 ## The codes
 
@@ -737,46 +734,6 @@ Printed by the build itself as `Warning: BUILD-801 @getforma/compiler not availa
 
 Printed by the build itself, once per `build()`, as `Warning: BUILD-802 serviceWorker is set without app: …` and in `BuildResult.warnings` (FORMA-130); in the report as a note (`packages/build/tests/strict.test.ts` > "reports BUILD-802 (serviceWorker without app) as a note --strict does not fail on").
 
-### BUILD-803 `wasm` in the config (deprecated; note)
-
-**Why.** The `wasm` key goes in 3.0.0 with the WASM walker (forma-ir's `wasm` feature and `@getforma/core/wasm`). The old path keeps working in A2, so strict mode does not fail a build that still sets it.
-
-**Fix.** Remove `wasm` from the config: islands re-render in the browser with h(), and forma-server renders pages.
-
-**In strict mode.** A note: never an error.
-
-Printed by the build itself (FORMA-131), on the console and in `BuildResult.warnings`; in the report as a note (`packages/build/tests/wasm-deprecation.test.ts` > "a strict build that still sets wasm passes, with BUILD-803 and BUILD-804 as notes in its report (FORMA-119)").
-
-### BUILD-804 The wasm-pack step ran (deprecated; note)
-
-**Why.** The wasm-pack step goes in 3.0.0: forma_ir.js, forma_ir_bg.wasm and the manifest's wasm entry go with the WASM walker. It still runs and ships the walker in A2, so strict mode does not fail on it.
-
-**Fix.** Remove `wasm` from the config.
-
-**In strict mode.** A note: never an error.
-
-Printed by the build itself (FORMA-131), on the console and in `BuildResult.warnings`; in the report as a note (`packages/build/tests/wasm-deprecation.test.ts` > "a strict build that still sets wasm passes, with BUILD-803 and BUILD-804 as notes in its report (FORMA-119)").
-
-### The preview frame's runtime: BUILD-805 to BUILD-807
-
-`previewFrame: true` (FORMA-175) copies the `dist/formajs-frame.global.js`
-of the `@getforma/core` the bundles import into the output, byte for byte,
-as `forma-runtime.<hash>.js`, named in the manifest under
-`assets["forma-runtime.js"]`, where forma-server's `PreviewFrame::load` reads
-it at start, inlines it into the preview frame and allows it by its SHA-256
-hash (FORMA-125, FORMA-128). Which core: before anything is written, each
-entry is bundled in memory with the bundles' own esbuild options
-(`formaAlias`, whose target esbuild resolves from its working directory;
-tsconfig `paths`; symbolic links followed), and each file it loads is mapped
-to its package, a core being a directory whose package.json is named
-`@getforma/core`; when the bundles import none, the core installed where the
-build runs. The build checks the runtime as forma-server does (FRAME-101 to
-FRAME-103) and refuses before it writes anything, in watch mode too, so the
-previous output stays as it was. Each code fails the build with or without
-strict mode; the error carries the diagnostic (`error.diagnostics`), and a
-`diagnosticsJson` report, when asked for, holds it alone, as no page was
-compiled.
-
 ### BUILD-805 Preview frame runtime missing from @getforma/core
 
 **Why.** `previewFrame` is on, and the @getforma/core the bundles import has no dist/formajs-frame.global.js (it ships from core 2.1.0), or no core is found: there is no runtime to copy, and forma-server would refuse to start the frame (FRAME-101).
@@ -823,6 +780,18 @@ scan misses are in the package README
 ([`packages/build/README.md`](../packages/build/README.md#raw-entry-lint-forma-raw-lint)).
 The run exits 0 when it passes, 1 on a BUILD-810, BUILD-811 or BUILD-814,
 and 2 on a BUILD-812 or a usage error.
+
+### BUILD-808 Removed server function directive
+
+**Why.** A source module contains a `"use server"` directive. Server functions
+were removed in 3.0.0; shipping their bodies in a browser bundle is unsafe.
+
+**Fix.** Move server-side work to an authenticated Rust route and call it with
+`fetch`. Comments and ordinary string values are permitted.
+
+**In strict mode.** Always an error, also when strict mode is off. The build
+checks browser and SSR entry graphs before replacing output, and again on watch
+rebuilds. Reported by `packages/build/tests/server-functions-removed.test.ts`.
 
 ### BUILD-810 Raw entry not on the allowlist (forma-raw-lint)
 
@@ -873,15 +842,3 @@ Printed once per entry (`packages/build/tests/raw-lint.test.ts` > "BUILD-813: an
 **In the lint.** An error: the run exits 1. esbuild parses TypeScript and JavaScript (a `.js` file is also tried as JSX and TypeScript), and an HTML file's inline scripts (the rest of the HTML file is still read); a Rust file is tokenized, which does not fail. A path that cannot be read, or a symbolic link that leads nowhere or loops, is one too, unless its name says it is not source; `--exclude` and the skipped names are applied before anything is read.
 
 Printed with esbuild's message and position (`packages/build/tests/raw-lint.test.ts` > "BUILD-814: a file esbuild cannot parse fails the run at its line, and so does an inline script").
-
-## BUILD-9xx: The compiler's own deprecated entry points (logged when called)
-
-### BUILD-901 `transformServerFunctions` called (deprecated; note)
-
-**Why.** The "use server" transform goes in 3.0.0 with server functions and `@getforma/core/server` (DR-22). Logged once per process when it is called; `@getforma/build` never calls it, so it is never in a build's report.
-
-**Fix.** Serve the call from a route in the application's Rust server.
-
-**In strict mode.** A note: never an error.
-
-Logged by `transformServerFunctions` on its first call in a process (FORMA-131; `packages/compiler/tests/server-transform-deprecation.test.ts` > "transformServerFunctions logs BUILD-901 once, naming 3.0.0"). Never in a build's report: `@getforma/build` does not call it.

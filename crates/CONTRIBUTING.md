@@ -135,7 +135,7 @@ comment stops the next reader checking.
 
 ## Crate structure
 
-- `crates/forma-ir/` — FMIR binary parser, HTML walker, WASM exports
+- `crates/forma-ir/` — FMIR binary parser and native HTML walker
 - `crates/forma-server/` — Axum middleware: page rendering, assets, CSP
 
 Each crate has its own README (published to crates.io) and its own CHANGELOG.

@@ -31,7 +31,6 @@ import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import rawConfig from '../../tsup.config';
 import { DEV_CONDITION, DEV_OUT_DIR } from '../../scripts/build-defines.mjs';
-import { DEPRECATIONS } from '../deprecated';
 
 const ROOT = process.cwd();
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8'));
@@ -148,11 +147,8 @@ describe('resolving @getforma/core with and without the development condition (N
     expect(esm.instances).toBe(1);
     // __DEV__ is true: a signal keeps its debug name only in development.
     expect(esm.name).toBe('probe');
-    // FORMA-131's deprecations reach the consumer, each once, with its code.
-    expect([...esm.warns].sort()).toEqual(
-      ['FORMA_W_DEPRECATED_SERVER', 'FORMA_W_DEPRECATED_SSR', 'FORMA_W_DEPRECATED_WASM']
-        .map((code) => `[forma] ${code}: ${DEPRECATIONS[code as keyof typeof DEPRECATIONS]}`),
-    );
+    // Retired entry points no longer load or log warnings.
+    expect(esm.warns).toEqual([]);
 
     // The same through require(), which the condition selects for too.
     const cjs = runNode([DEV_CONDITION], capturingWarnings(`
@@ -162,7 +158,7 @@ describe('resolving @getforma/core with and without the development condition (N
       const core = require('@getforma/core');
       const [named] = core.createSignal(0, { name: 'probe' });
     `) + `console.log(JSON.stringify({ instances: ${INSTANCES}, name: core.getSignalName(named) ?? null, warns: warns.length }));`);
-    expect(cjs).toEqual({ instances: 1, name: 'probe', warns: 3 });
+    expect(cjs).toEqual({ instances: 1, name: 'probe', warns: 0 });
   });
 
   it('a process resolving without the condition loads one copy of core, and it is the production build', () => {

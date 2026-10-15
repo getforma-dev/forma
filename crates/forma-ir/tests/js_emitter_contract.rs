@@ -64,9 +64,10 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use forma_ir::parser::test_helpers::walk_island;
 use forma_ir::{
-    walk_island, walk_to_html, IrError, IrModule, SlotData, SlotTable, SlotType, SlotValue,
-    StringTable, HEADER_SIZE,
+    walk_to_html, IrError, IrModule, SlotData, SlotTable, SlotType, SlotValue, StringTable,
+    HEADER_SIZE,
 };
 
 /// Every case the corpus is required to contain.

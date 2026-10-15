@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Removed — FORMA-110
+
+- Removed `formaCompiler`, `formaServer`, `compileFormaJSX` and `transformServerFunctions`, their compiled-template URL guard and the Vite peer dependency. The supported compiler emits native FMIR through `formaSsrPlugin`/`generateRealIr`; browser bundles retain runtime `h()` and the root `@getforma/core` import.
+- Retired `BUILD-901` with its transform. Catalogued the build's new mandatory `BUILD-808` refusal for `"use server"` directives. Old plugin documentation is archived at the repository root.
+
+
 - Embed the compiler package's base version when bundling, so a build/watch
   runner outside the installed package still emits the correct FMIR writer version.
 

@@ -462,7 +462,7 @@ fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(
 
 /// Walk a single island's content and produce an HTML string.
 ///
-/// This is the fragment rendering entry point for WASM re-renders. It finds
+/// This internal fragment path has no supported caller (DR-10). It finds
 /// the island by `island_id` in the module's island table, seeks to its
 /// `byte_offset` in the opcode stream, and walks from after the ISLAND_START
 /// opcode until the matching ISLAND_END opcode.
@@ -483,12 +483,18 @@ fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(
 /// because the injected copy precedes the SSR one in document order, would
 /// shadow it for every other ScriptTag island on the page. The client already
 /// reads `data-forma-props` first, so this needs no JS change.
-pub fn walk_island(module: &IrModule, slots: &SlotData, island_id: u16) -> Result<String, IrError> {
+#[allow(dead_code)] // Internal fragment path; no supported caller since the WASM walker retired.
+pub(crate) fn walk_island(
+    module: &IrModule,
+    slots: &SlotData,
+    island_id: u16,
+) -> Result<String, IrError> {
     walk_island_with_limits(module, slots, island_id, WalkLimits::default())
 }
 
 /// [`walk_island`] with explicit resource budgets.
-pub fn walk_island_with_limits(
+#[allow(dead_code)]
+pub(crate) fn walk_island_with_limits(
     module: &IrModule,
     slots: &SlotData,
     island_id: u16,
@@ -1282,9 +1288,8 @@ fn build_island_props(
 
 /// `base + len`, rejected if it overflows or leaves the enclosing region.
 ///
-/// Plain `+` on `usize` cannot wrap on 64-bit but can on wasm32, where
-/// `usize` is 32 bits — and this crate ships a WASM build whose `render()` /
-/// `render_island()` entry points take arbitrary bytes fetched at runtime.
+/// Plain `+` on `usize` can overflow on a 32-bit target. The parser accepts
+/// arbitrary bytes, so the offset must be checked before indexing.
 fn bounded_offset(base: usize, len: usize, limit: usize) -> Result<usize, IrError> {
     base.checked_add(len)
         .filter(|e| *e <= limit)
@@ -5595,7 +5600,7 @@ mod tests {
 
     #[test]
     fn the_context_rules_hold_in_an_island_fragment() {
-        // `walk_island` is the WASM re-render path; it must write what the
+        // The internal fragment path must write what the
         // full page writes for the same island (P2).
         let mut page = Page::new();
         let body = page.slot(text("hello"));

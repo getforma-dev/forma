@@ -14,7 +14,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createSignal } from 'forma/reactive';
 import { h, svg } from '../element';
-import { renderToString, sh } from '../../ssr/render.js';
 
 const XLINK_NS = 'http://www.w3.org/1999/xlink';
 const SVG_PAYLOAD = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>';
@@ -140,13 +139,12 @@ describe('h() URL attribute safety', () => {
     expect(svg(() => h('use', { 'xlink:href': '#icon' })).getAttributeNS(XLINK_NS, 'href')).toBe('#icon');
   });
 
-  it('drops exactly what the SSR renderer drops, so hydration cannot re-add it', () => {
+  it('drops dangerous URLs from client-created elements', () => {
     for (const [tag, attr, value] of [
       ['a', 'href', 'javascript:alert(1)'],
       ['object', 'data', 'data:text/html,<script>alert(1)</script>'],
       ['iframe', 'src', SVG_PAYLOAD],
     ] as const) {
-      expect(renderToString(sh(tag, { [attr]: value }))).not.toContain(value);
       expect(h(tag, { [attr]: value }).getAttribute(attr)).toBeNull();
     }
   });

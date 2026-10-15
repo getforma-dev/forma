@@ -42,7 +42,6 @@ fn an_enabled_application_s_pages_register_the_worker() {
         build_hash: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
-        wasm: None,
     };
     #[allow(deprecated)]
     let page = render_page(&PageConfig {

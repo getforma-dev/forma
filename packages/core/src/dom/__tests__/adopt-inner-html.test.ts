@@ -16,7 +16,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSignal, onError } from 'forma/reactive';
 import { h } from '../element';
 import { mount } from '../mount';
-import { renderToString, sh } from '../../ssr/render';
 import { INNER_HTML_CHILDREN_CODE, trustedHtml, type TrustedHtml } from '../trusted-html';
 
 const REGISTRY = Symbol.for('@getforma/core#trusted-types');
@@ -40,8 +39,8 @@ type Inner = { __html: string | TrustedHtml } | null;
 const SERVERS = [
   { name: 'the walker (element empty)', html: () => '<article id="doc"></article>' },
   {
-    name: './ssr (markup rendered)',
-    html: (markup: string) => renderToString(sh('article', { id: 'doc', dangerouslySetInnerHTML: { __html: markup } })),
+    name: 'server HTML fixture (markup rendered)',
+    html: (markup: string) => `<article id="doc">${markup}</article>`,
   },
 ] as const;
 
@@ -141,7 +140,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     // prop as absent (the `cond && { __html }` pattern among them), so the
     // children are the content; adoption threw, or wiped them, instead.
     const props = { id: 'doc', dangerouslySetInnerHTML: value };
-    const server = renderToString(sh('article', props, sh('button', { id: 'b' }, 'go')));
+    const server = '<article id="doc"><button id="b">go</button></article>';
     expect(server).toBe('<article id="doc"><button id="b">go</button></article>');
     let clicks = 0;
     const client = h('article', props, h('button', null, 'go'));

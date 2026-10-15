@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Removed — FORMA-110
+
+- Removed the `wasm` configuration key, `wasm-pack` invocation, walker artifact copying and `manifest.wasm`; retired their `BUILD-803`/`BUILD-804` deprecations. Native Rust rendering and browser island updates remain supported.
+- Added `BUILD-808`: module/function `"use server"` directives fail regardless of strict mode, including imported modules, separate SSR entries and watch rebuilds. Initial rejection preserves previous output; comments and ordinary string values remain valid. The optional diagnostics report includes the source position and Rust-route migration.
+
+
 ### Changed
 
 - FORMA-117: CSS builds require a locally installed `@tailwindcss/cli`; a missing CLI fails before replacing output and never falls back to fetching `npx`.

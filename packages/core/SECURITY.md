@@ -15,8 +15,6 @@ FormaJS v1.0.0+ uses subpath exports to segment capabilities by trust level:
 | `@getforma/core/runtime-hardened` | HTML Runtime (tree-shaken bundling) | Identical source and identical guarantee; a second bundling, kept because two documented CDN URLs point at it |
 | `@getforma/core/http` | `createFetch`, `createSSE`, `createWebSocket` | Network access (intentional) |
 | `@getforma/core/storage` | `createLocalStorage`, `createIndexedDB` | Browser storage access (intentional) |
-| `@getforma/core/server` (deprecated, removed in 3.0.0) | `$$serverFunction`, `handleRPC` | Network + `process.env` (server-side) |
-| `@getforma/core/wasm` (deprecated, removed in 3.0.0) | `renderLocal`, `renderIsland` | Loads and instantiates a WASM module from `window.__FORMA_WASM__` |
 
 The root entry's "no network" row is a real boundary, not a convention: `fetch`, `WebSocket` and the storage APIs live only behind their subpaths and are absent from the root barrel.
 
@@ -52,7 +50,7 @@ Verified by: `src/__tests__/runtime-srcdoc.test.ts` > "data-bind:srcdoc writes i
 
 ### There is no `new Function` in the HTML Runtime
 
-Expressions in `data-*` attributes are evaluated by an **allowlist AST interpreter** (`src/expr/`): lexer, precedence-climbing parser, validator, tree-walking interpreter. Every shipped artifact — `dist/runtime.js`, `dist/runtime.cjs`, the three classic-script builds (the `FormaRuntime` global, its hardened twin, and the preview frame's script, which defines no global), the hardened pair, and the SSR/Node path — contains **zero `eval`, zero `new Function` and zero `with()`**. There is no opt-in switch, because there is no fallback to switch on: `setUnsafeEval()`, `isUnsafeEvalAllowed()` and `data-forma-unsafe-eval` were removed along with the code they guarded.
+Expressions in `data-*` attributes are evaluated by an **allowlist AST interpreter** (`src/expr/`): lexer, precedence-climbing parser, validator, tree-walking interpreter. Every shipped artifact — `dist/runtime.js`, `dist/runtime.cjs`, the three classic-script builds (the `FormaRuntime` global, its hardened twin, and the preview frame's script, which defines no global), the hardened pair, and the Node-compatible runtime build — contains **zero `eval`, zero `new Function` and zero `with()`**. There is no opt-in switch, because there is no fallback to switch on: `setUnsafeEval()`, `isUnsafeEvalAllowed()` and `data-forma-unsafe-eval` were removed along with the code they guarded.
 
 `scripts/verify-dist.mjs` greps every built artifact as the last step of `npm run build`, so this is asserted on the bytes that ship rather than inferred from the source.
 
@@ -212,15 +210,6 @@ Verified by: `src/__tests__/failure-semantics.test.ts` > "a genuine runtime bug 
 
 `@getforma/core/http` uses the browser's native `fetch` API for `createFetch`, `createSSE`, and `createWebSocket`. This is opt-in — it is not included in the main `@getforma/core` entry point.
 
-### `process.env` in the server module
-
-`@getforma/core/server` reads `process.env.NODE_ENV` to determine whether to expose internal error messages in RPC responses (dev mode only). Production mode returns generic error messages.
-
-### Published bundles are readable
-
-All dist output is syntax-minified only: constant folding and dead-branch removal, with identifiers and line structure preserved. Nothing is mangled onto a single line, so supply-chain scanners do not see "obfuscated code". Syntax minification is what makes the build-time `__DEV__` flag real — without it esbuild leaves it as a variable nothing folds, and dev warnings survive into a production process.
-
-Verified by: `src/__tests__/build-config.test.ts` > "enables syntax minification everywhere so the build-time flags fold"
 
 ## Security Hardening (v0.5.0 – 2.0.0)
 
@@ -228,7 +217,6 @@ Verified by: `src/__tests__/build-config.test.ts` > "enables syntax minification
 - **`findBlockedMethod`** (0.7.0, removed): a static scan for `constructor`, `__proto__`, `eval` and `Function` in expression text, including bracket concatenation. Removed with the evaluator it guarded; a string scan cannot see `items[k]` where `k` arrives from server JSON, and the allowlist interpreter checks the evaluated key instead.
 - **Allowlist AST expression interpreter** (unreleased): replaced the regex parser and the `new Function` fallback outright — see *Supply Chain Security Notes* above.
 - **SSR `escapeAttr` + scheme detection** (1.0.10): Escapes `<`, `>`, `'`, `"`, `&`. `isDangerousUrl` blocks `javascript:`, `vbscript:` and `data:text/html` in URL-bearing attributes, **normalizing away the whitespace/control characters browsers ignore in a scheme**, so `java\tscript:` is caught too. Attribute names are validated and `on*` handler attributes are dropped case-insensitively. Applies to the `data-bind:*` and `data-list` runtime sinks in both builds.
-- **SSR swap script** (0.7.0): the JSON embedded in a Suspense swap script has `<`, `>`, U+2028 and U+2029 replaced with their unicode escapes, so a payload cannot close the script block.
 - **CSP parser operator precedence** (0.7.1): Fixed to match JavaScript semantics (addition before comparison, AND before OR).
 - **RPC argument sanitization + CSRF mitigation + authorization hook** (1.4.0): see the RPC section below.
 - **Client/SSR sink parity, `data:image/svg+xml` context rule, store prototype guard, tag-name validation** (unreleased): see the URL scheme posture below and `CHANGELOG.md`.
@@ -245,17 +233,13 @@ Verified by: `src/security/__tests__/url-safety.test.ts` > "allows data:image/sv
 Verified by: `src/security/__tests__/url-safety.test.ts` > "blocks data:image/svg+xml for document-context sinks"
 Verified by: `src/security/__tests__/url-safety.test.ts` > "blocks data:image/svg+xml when no tag is supplied"
 
-### Island props vs. RPC arguments — NOT equivalent
-
-Both channels strip `__proto__`, `constructor` and `prototype`, and since DR-21 both do it at every depth; they differ only in where:
+### Island props
 
 - **Island props** (inline `data-forma-props` and the shared `__forma_islands` block) are stripped **at every depth while they are parsed**, before any island sees them, with no opt-out. A nested pollution key never reaches an island, so a deep merge of its props (`createStore`, a deep-merge helper, an `Object.assign` chain) cannot carry one into a prototype. The pass is iterative with a `WeakSet`, so deep and cyclic payloads are safe. `sanitizePropsDeep(props)` stays exported for props that reach an island some other way.
-- **RPC arguments** are sanitized **recursively, with no opt-in**, before the server function is invoked — iteratively, so a deeply nested body cannot overflow the stack.
 
 Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "island activation strips forbidden keys at every depth, inline and shared, with no opt-out"
 Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "island props nested 10,000 deep are parsed and stripped"
 Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "sanitizePropsDeep strips forbidden keys at every depth"
-Verified by: `src/server/__tests__/rpc-deep-strip.test.ts` > "strips forbidden keys at a depth that overflows a recursive walk"
 
 ### Store prototype-pollution guard
 
@@ -266,26 +250,10 @@ Verified by: `src/server/__tests__/rpc-deep-strip.test.ts` > "strips forbidden k
 Verified by: `src/state/__tests__/store-proto-hijack.test.ts` > "setState with a __proto__ key does not replace the store prototype"
 Verified by: `src/state/__tests__/store-proto-hijack.test.ts` > "assigning __proto__ directly on the proxy does not replace the prototype"
 
-## RPC / server functions (`@getforma/core/server`)
-
-Deprecated, and removed in 3.0.0 with server functions: serve the call from a
-route in the application's Rust server ([STABILITY.md](docs/STABILITY.md#deprecated-entry-points)).
-
-`handleRPC` executes registered `"use server"` functions. Its protections and their limits:
-
-- **Argument sanitization**: RPC arguments are recursively stripped of `__proto__`, `constructor`, and `prototype` keys before the function is invoked, so a malicious payload cannot pollute `Object.prototype` even if the server function deep-merges its input. The walk is iterative, so a deeply nested body cannot overflow the stack and kill the process.
-- **CSRF mitigation (`createRPCMiddleware`)**: requires the `X-Forma-RPC: 1` custom header (which forces a CORS preflight and cannot be attached by a cross-site HTML form) and a `application/json` content type. Requests missing either are rejected (403 / 415) before any function runs.
-- **Error barrier**: `createRPCMiddleware` answers with a 500 rather than producing an unhandled promise rejection, which under Node's default `--unhandled-rejections=throw` would terminate the process.
-
-  Verified by: `src/server/__tests__/rpc-deep-strip.test.ts` > "degrades to 500 instead of rejecting when request handling throws"
-
-- **Authorization is the deployment's responsibility.** `handleRPC` performs **no authentication or authorization by itself.** Install a guard — globally via `setRPCGuard((endpoint, args, ctx) => …)` or per call/middleware via the `authorize` option — to authenticate the caller and authorize the endpoint. Without a guard, any client that can reach the endpoint can invoke any registered function.
-
 ## Known gaps
 
 Stated here rather than left for a reader to discover:
 
-- **Streaming SSR under strict CSP.** `renderToStream` / `getSwapScript` / `getSwapTag` emit Suspense swap scripts **without a `nonce`**, so a strict `script-src 'nonce-…'` policy blocks them and out-of-order content never swaps in. Use non-streaming SSR under strict CSP. Do not add `'unsafe-inline'` as a workaround.
 - **An expression is still code under T1** — the grammar bounds what it can reach, not the fact that it runs. See *Residual risks* above.
 
 ## Supported Versions

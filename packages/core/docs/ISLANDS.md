@@ -116,13 +116,11 @@ logged in every build.
 
 `sanitizePropsDeep` (the same pass) stays exported for props that reach an
 island some other way, and calling it on activation props is a harmless no-op.
-RPC arguments (`@getforma/core/server`) are stripped recursively too.
 
 Verified by `src/dom/__tests__/activate-isolation.test.ts` > "island activation strips forbidden keys at every depth, inline and shared, with no opt-out"
 Verified by `src/dom/__tests__/activate-isolation.test.ts` > "island props nested 10,000 deep are parsed and stripped"
 Verified by `src/dom/__tests__/props-loading.test.ts` > "props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS"
 Verified by `src/dom/__tests__/activate-isolation.test.ts` > "sanitizePropsDeep strips forbidden keys at every depth"
-Verified by `src/server/__tests__/rpc-deep-strip.test.ts` > "strips forbidden keys at a depth that overflows a recursive walk"
 
 ### Server-rendered lists
 

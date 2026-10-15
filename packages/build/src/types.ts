@@ -99,15 +99,6 @@ export interface BuildConfig {
   ssr?: boolean;
   /** SSR entry points for IR emission (page name -> entry path) */
   ssrEntryPoints?: Record<string, string>;
-  /**
-   * WASM crate configuration: runs `wasm-pack` on the crate and ships the
-   * WASM walker.
-   *
-   * @deprecated Removed in 3.0.0 with the WASM walker (forma-ir's `wasm`
-   * feature and `@getforma/core/wasm`); a build that sets it warns BUILD-803.
-   * Islands re-render in the browser with `h()`.
-   */
-  wasm?: { crateDir: string };
   /** Enable watch mode */
   watch?: boolean;
   /** Budget threshold in bytes (Brotli-compressed), default 200_000 */
@@ -154,8 +145,6 @@ export interface AssetManifest {
   build_hash: string;
   assets: Record<string, string>;
   routes: Record<string, RouteManifest>;
-  /** @deprecated Written only by the deprecated `wasm` config key; removed in 3.0.0. */
-  wasm?: { loader: string; binary: string };
 }
 
 /** One link of a composition chain, from the page down (BUILD-403). */
