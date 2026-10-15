@@ -145,7 +145,7 @@ function indexBindings(scope: PropsScope, fn: ComponentFunction): void {
     },
     ReferencedIdentifier(path) {
       const binding = path.scope.getBinding(path.node.name);
-      if (binding) scope.references.set(path.node, binding);
+      if (binding && t.isIdentifier(path.node)) scope.references.set(path.node, binding);
     },
   });
 }
