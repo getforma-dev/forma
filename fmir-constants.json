@@ -25,7 +25,15 @@
     "MAX_TYPE_DEPTH": 16,
     "MAX_KEY_SEGMENTS": 32,
     "MAX_CONTROL_DEPTH": 64,
-    "MAX_LIST_DEPTH": 4
+    "MAX_LIST_DEPTH": 4,
+    "MAX_CONTRACT_BYTES": 1048576,
+    "MAX_BINDING_RECORDS": 65535,
+    "MAX_VALUE_DEPTH": 64,
+    "MAX_PROP_PATH_SEGMENTS": 1024,
+    "MAX_CONSTANT_NODES": 65535,
+    "MAX_CONSTANT_DEPTH": 1024,
+    "MAX_CONSTANT_ARRAY_ELEMENTS": 65535,
+    "MAX_ISLAND_STATE_BYTES": 1048576
   },
   "crc": {
     "CRC_POLYNOMIAL": 3988292384,
@@ -40,7 +48,8 @@
     "SECTION_KEY_PATHS": 6,
     "SECTION_SOURCE_POSITIONS": 7,
     "SECTION_BUILD_IDENTITY": 8,
-    "SECTION_DEPLOYMENT": 9
+    "SECTION_DEPLOYMENT": 9,
+    "SECTION_ISLAND_CONTRACTS": 10
   },
   "flags": {
     "SECTION_REQUIRED": 1
@@ -150,6 +159,11 @@
       "name": "OP_PROP",
       "value": 18,
       "operands": "src_slot_id:u16 prop_str_idx:u32 target_slot_id:u16"
+    },
+    {
+      "name": "OP_COALESCE",
+      "value": 19,
+      "operands": "source_slot:u16 fallback_slot:u16 destination_slot:u16"
     }
   ]
 }

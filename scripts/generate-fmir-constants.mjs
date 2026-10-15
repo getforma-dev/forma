@@ -19,7 +19,7 @@ for (const op of table.opcodes) {
   ts += `export const ${op.name} = ${op.value};\n`;
   rs += `/// ${op.operands || 'No operands'}.\npub const ${op.name}: u8 = ${op.value};\n`;
 }
-rs += `/// Operand shapes for the twelve assigned opcodes.\npub const OPCODE_OPERANDS: &[(u8, &str)] = &[\n${table.opcodes.map(op => `    (${op.value}, ${JSON.stringify(op.operands)}),`).join("\n")}\n];\n`;
+rs += `/// Operand shapes for the assigned opcodes.\npub const OPCODE_OPERANDS: &[(u8, &str)] = &[\n${table.opcodes.map(op => `    (${op.value}, ${JSON.stringify(op.operands)}),`).join("\n")}\n];\n`;
 ts += `export const OPCODE_OPERANDS = ${JSON.stringify(Object.fromEntries(table.opcodes.map(op => [op.value, op.operands])), null, 2)} as const;\n`;
 ts += `export const RESERVED_OPCODES: readonly number[] = ${JSON.stringify(table.reserved_opcodes)};\n`;
 rs += `/// Reserved opcode bytes, never reassigned.\npub const RESERVED_OPCODES: [u8; ${table.reserved_opcodes.length}] = [${table.reserved_opcodes.join(', ')}];\n`;

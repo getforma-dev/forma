@@ -14,6 +14,14 @@ export const MAX_TYPE_DEPTH = 16;
 export const MAX_KEY_SEGMENTS = 32;
 export const MAX_CONTROL_DEPTH = 64;
 export const MAX_LIST_DEPTH = 4;
+export const MAX_CONTRACT_BYTES = 1048576;
+export const MAX_BINDING_RECORDS = 65535;
+export const MAX_VALUE_DEPTH = 64;
+export const MAX_PROP_PATH_SEGMENTS = 1024;
+export const MAX_CONSTANT_NODES = 65535;
+export const MAX_CONSTANT_DEPTH = 1024;
+export const MAX_CONSTANT_ARRAY_ELEMENTS = 65535;
+export const MAX_ISLAND_STATE_BYTES = 1048576;
 export const CRC_POLYNOMIAL = 3988292384;
 export const CRC_CHECK_VALUE = 3421780262;
 export const SECTION_BYTECODE = 1;
@@ -25,6 +33,7 @@ export const SECTION_KEY_PATHS = 6;
 export const SECTION_SOURCE_POSITIONS = 7;
 export const SECTION_BUILD_IDENTITY = 8;
 export const SECTION_DEPLOYMENT = 9;
+export const SECTION_ISLAND_CONTRACTS = 10;
 export const SECTION_REQUIRED = 1;
 export const SLOT_TYPE_TEXT = 1;
 export const SLOT_TYPE_BOOL = 2;
@@ -65,6 +74,7 @@ export const OP_LIST = 10;
 export const OP_ISLAND_START = 11;
 export const OP_ISLAND_END = 12;
 export const OP_PROP = 18;
+export const OP_COALESCE = 19;
 export const OPCODE_OPERANDS = {
   "1": "str_idx:u32 attr_count:u16 attrs:(key:u32,val:u32)[]",
   "2": "str_idx:u32",
@@ -77,6 +87,7 @@ export const OPCODE_OPERANDS = {
   "10": "slot_id:u16 item_slot_id:u16 body_len:u32 body:bytes",
   "11": "island_id:u16",
   "12": "island_id:u16",
-  "18": "src_slot_id:u16 prop_str_idx:u32 target_slot_id:u16"
+  "18": "src_slot_id:u16 prop_str_idx:u32 target_slot_id:u16",
+  "19": "source_slot:u16 fallback_slot:u16 destination_slot:u16"
 } as const;
 export const RESERVED_OPCODES: readonly number[] = [9,13,14,15,16,17];
