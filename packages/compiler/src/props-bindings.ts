@@ -130,6 +130,11 @@ export function propSlot(node: t.Node | null | undefined, scope: PropsScope | un
   let slot = scope.views.get(path[0]!)?.slot ?? scope.roots.get(path[0]!);
   if (slot === undefined) invalid(scope, node, `missing declared root binding ${path[0]}`);
   for (let i = 1; i < path.length; i++) {
+    const closed=ctx.constantSlot(slot);
+    if(closed) {
+      if(closed.value===null)invalid(scope,node,'plain property access through a known null or absent value would throw');
+      if(typeof closed.value==='object'&&!Object.hasOwn(closed.value,path[i]!)&&path[i]! in Object.prototype)invalid(scope,node,'inherited object properties are not closed own data');
+    }
     const target = ctx.addTemporarySlot(hint(propType(path.slice(0, i + 1), scope, node)));
     ctx.emit(C.OP_PROP); ctx.emitU16(slot); ctx.emitU32(ctx.addString(path[i]!)); ctx.emitU16(target);
     ctx.recordClosedProjection(slot,path[i]!,target);

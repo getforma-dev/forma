@@ -190,6 +190,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       for (const field of node.properties) {
         if (!t.isObjectProperty(field) || field.computed) fail(env.module, field, 'closed object needs explicit data fields');
         const key = name(field.key); if (key === undefined || Object.hasOwn(result, key)) fail(env.module, field, 'closed object field must be named and unique');
+        if(key==='__proto__')fail(env.module,field,'prototype-setting object literal fields are not closed own data');
         result[key] = data(field.value, env, depth + 1);
       }
       return result;

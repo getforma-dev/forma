@@ -138,6 +138,7 @@ fn closed_nested_optional_projection_folds_without_inventing_native_type() {
     assert!(html.contains("kept"));
     assert_eq!(state["i"][0]["p"], json!({"data":{}}));
     assert_eq!(state["i"][1]["p"], json!({"data":{"title":"kept"}}));
+    assert_eq!(state["i"][2]["p"], json!({"data":{}}));
 }
 
 #[test]

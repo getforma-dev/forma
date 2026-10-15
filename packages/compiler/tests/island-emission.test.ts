@@ -74,7 +74,7 @@ describe('declared island writer integration',()=>{
       'export function Badge(p:{rows?:string[]}){const [rows]=createSignal(p.rows??["fallback"]);return h("section",null,createList(rows,r=>r,r=>h("b",null,r)));}');
   });
   it('folds a closed nested optional projection before choosing a fallback',()=>{
-    emit('nested-closed-nullish','import {Badge} from "./island";export function Page(){return h("main",null,Badge({data:{title:null}}),Badge({data:{title:"kept"}}));}',
+    emit('nested-closed-nullish','import {Badge} from "./island";export function Page(){return h("main",null,Badge({data:{title:null}}),Badge({data:{title:"kept"}}),Badge({data:{}}));}',
       'export function Badge(p:{data:{title?:string}}){const [title]=createSignal(p.data.title??"fallback");return h("b",null,title);}');
   });
   it('keeps browserOnly expressions outside native execution with declared state',()=>{

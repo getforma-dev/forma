@@ -40,7 +40,7 @@ export function closedBinding(node:t.Node|null|undefined,ctx:IrEmitContext,env:C
   }
   const identifier=t.isIdentifier(node)?node:t.isCallExpression(node)&&node.arguments.length===0&&t.isIdentifier(node.callee)?node.callee:undefined;
   if(identifier) {
-    const row=env.rows?.get(identifier);if(row)return row;
+    const row=env.rows?.get(identifier);if(row){if(t.isCallExpression(node))fail(env,node,'a LIST row value is not a callable signal getter');return row;}
     const signal=env.signal(identifier);
     if(signal?.default.type==='aggregate')return {values:[signal.default.default],slot:()=>signal.slotId};
     return undefined;
@@ -50,9 +50,11 @@ export function closedBinding(node:t.Node|null|undefined,ctx:IrEmitContext,env:C
     const key=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
     if(key===undefined)fail(env,node,'closed aggregate reads require a literal property name');
     const values=source.values.map(value=>{
-      if(value===null)return null;
+      if(value===null)fail(env,node,'plain property access through a known null or absent value would throw');
       if(typeof value!=='object'||Array.isArray(value))fail(env,node,'closed aggregate property read needs an object');
-      return Object.hasOwn(value,key)?(value as Record<string,unknown>)[key]:null;
+      if(Object.hasOwn(value,key))return (value as Record<string,unknown>)[key];
+      if(key in Object.prototype)fail(env,node,'inherited object properties are not closed own data');
+      return null;
     });
     return {values,slot:()=>{
       const hint=closedHint(values,env,node),sourceSlot=source.slot();
