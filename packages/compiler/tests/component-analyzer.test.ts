@@ -104,11 +104,9 @@ describe('parseEntryPoint', () => {
     });
   });
 
-  it('treats a mount of a locally-declared component as an inline mount', () => {
-    // There is no component FILE to open — the component is right here. This
-    // used to return null, which drops the whole page to placeholder IR; the
-    // arrow's body is the tree, and the entry file is the scope it resolves
-    // against.
+  it('selects a lexical local component as a named root', () => {
+    // A local page has its own declared contract just like an imported page;
+    // entry analysis keeps the reference so schema extraction sees that function.
     const source = `
       import { mount } from 'formajs';
       function LocalComponent() { return null; }
@@ -116,8 +114,9 @@ describe('parseEntryPoint', () => {
     `;
     const result = analyzer.parseEntryPoint(source, 'app.ts');
     expect(result).not.toBeNull();
-    expect(result!.componentName).toBe('__inline__');
-    expect(result!.inlineReturnNode!.type).toBe('CallExpression');
+    expect(result!.componentName).toBe('LocalComponent');
+    expect(result!.localComponent).toBe(true);
+    expect(result!.inlineReturnNode).toBeUndefined();
   });
 
   it('does not treat a PACKAGE import as a component file', () => {

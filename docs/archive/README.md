@@ -117,3 +117,13 @@ why it was wrong the first time.
 - `2026-10-15-bound-render/forma-server-README.md`: exact pre-FORMA-107 staged102/109 README, archived by Codex when finalization, bind limits and the bound-only render API replaced the interim SSR bridge.
 
 - [Schema2 test manifests before mandatory SHA-384](2026-10-15-asset-integrity/README.md): exact prior metadata and hashes; original FMIR/document byte fixtures remain unchanged.
+
+## FORMA-103 local entry correction (2026-10-15)
+
+The compiler's resolver table already admitted named same-file components, but
+entry selection treated them as an anonymous inline mount with an empty props
+schema. A declared prop read then failed BUILD-610. The current compiler guide
+now states the corrected named-root behavior explicitly. The original failing
+source and log are preserved in `work/FORMA-103/tmp/same-file-entry/` and
+`same-file-entry.log`; ordinary regression tests cover the corrected roots and
+the unchanged inline path. No historical FMIR fixture or report was replaced.
