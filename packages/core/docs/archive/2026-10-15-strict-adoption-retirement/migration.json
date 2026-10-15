@@ -5,55 +5,56 @@
       "original": "packages/core/CHANGELOG.md",
       "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer qualification and size/packed acceptance remain explicitly open.",
+      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer integration is documented after its independent review; size/packed acceptance remains explicitly open.",
       "validation": "2e610050 full ten-file source review; root24 documentation/probe controls pass at the integrated checkpoint. Author independently authenticated351 citations, unchanged numerical table rows and byte-identical released changelog suffix. Two production comment edits are AST-identical after comment removal."
     },
     {
       "original": "packages/core/README.md",
       "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer qualification and size/packed acceptance remain explicitly open.",
+      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer integration is documented after its independent review; size/packed acceptance remains explicitly open.",
       "validation": "2e610050 full ten-file source review; root24 documentation/probe controls pass at the integrated checkpoint. Author independently authenticated351 citations, unchanged numerical table rows and byte-identical released changelog suffix. Two production comment edits are AST-identical after comment removal."
     },
     {
       "original": "packages/core/bench/hydrate.bench.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "All 15 benchmark declarations/shapes/presets retained. Strict fixtures connect/remove the original host each cycle, exact slot defaults start at zero plus slot index, and guards require zero writes/refusals plus page/list later liveness. Validation smoke ran one selected 200-iteration adoption benchmark with all fixture guards; no comparable performance claim. Archived detached repairing-path measurements are historical."
+      "disposition": "All 15 benchmark declarations/shapes/presets retained. Strict fixtures connect/remove the original host each cycle, exact slot defaults start at zero plus slot index, and guards require zero writes/refusals plus page/list later liveness. Validation smoke ran one selected 200-iteration adoption benchmark with all fixture guards; no comparable performance claim. Archived detached repairing-path measurements are historical.",
+      "validation": "Independent9d334 source/archive/AST review preserves8151originalbytes,15declarations,threepage/twolistshapes and allpresets. Finite smoke of exactbenchmarksource with coherent89aruntime passesall5fixtureguards, registersall15declarations and leavesbodyempty; zero timediterations. Historical incomplete9dbarrel and scratchpreparation failures preserved. Report work/FORMA-104/retirement-tests-evidence/BENCH-LEDGER-REVIEW.md."
     },
     {
       "original": "packages/core/docs/API.md",
       "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer qualification and size/packed acceptance remain explicitly open.",
+      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer integration is documented after its independent review; size/packed acceptance remains explicitly open.",
       "validation": "2e610050 full ten-file source review; root24 documentation/probe controls pass at the integrated checkpoint. Author independently authenticated351 citations, unchanged numerical table rows and byte-identical released changelog suffix. Two production comment edits are AST-identical after comment removal."
     },
     {
       "original": "packages/core/docs/CDN-AND-EXPORTS.md",
       "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer qualification and size/packed acceptance remain explicitly open.",
+      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer integration is documented after its independent review; size/packed acceptance remains explicitly open.",
       "validation": "2e610050 full ten-file source review; root24 documentation/probe controls pass at the integrated checkpoint. Author independently authenticated351 citations, unchanged numerical table rows and byte-identical released changelog suffix. Two production comment edits are AST-identical after comment removal."
     },
     {
       "original": "packages/core/docs/ISLANDS.md",
       "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer qualification and size/packed acceptance remain explicitly open.",
+      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer integration is documented after its independent review; size/packed acceptance remains explicitly open.",
       "validation": "2e610050 full ten-file source review; root24 documentation/probe controls pass at the integrated checkpoint. Author independently authenticated351 citations, unchanged numerical table rows and byte-identical released changelog suffix. Two production comment edits are AST-identical after comment removal."
     },
     {
       "original": "packages/core/docs/PERFORMANCE.md",
       "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer qualification and size/packed acceptance remain explicitly open.",
+      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer integration is documented after its independent review; size/packed acceptance remains explicitly open.",
       "validation": "2e610050 full ten-file source review; root24 documentation/probe controls pass at the integrated checkpoint. Author independently authenticated351 citations, unchanged numerical table rows and byte-identical released changelog suffix. Two production comment edits are AST-identical after comment removal."
     },
     {
       "original": "packages/core/docs/STABILITY.md",
       "status": "independently-reviewed",
       "original_named_cases": [],
-      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer qualification and size/packed acceptance remain explicitly open.",
+      "disposition": "Current documentation describes strict zero-write preparation, private activation state, exact defaults and typed boundaries; historical measurements and released changelog remain preserved. The archived hardening audit resolves changed test citations to authenticated originals. Namespace/materializer integration is documented after its independent review; size/packed acceptance remains explicitly open.",
       "validation": "2e610050 full ten-file source review; root24 documentation/probe controls pass at the integrated checkpoint. Author independently authenticated351 citations, unchanged numerical table rows and byte-identical released changelog suffix. Two production comment edits are AST-identical after comment removal."
     },
     {
@@ -74,9 +75,9 @@
         "the namespace vectors: the parser, h() and adoption agree on every element and on the markup",
         "content built inside an svg is SVG and rendered once: a createShow branch, list rows, switch cases, a portal; a foreignObject holds HTML",
         "a reactive dangerouslySetInnerHTML is adopted as content, follows its signal through null and back, and matches client rendering",
-        "a falsy static dangerouslySetInnerHTML is no prop: the server\\",
+        "a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and their handlers work",
         "markup the server wrote in a form the browser serialises differently is adopted without one DOM write, and typed text survives",
-        "a reactive dangerouslySetInnerHTML whose first value is null keeps the server\\"
+        "a reactive dangerouslySetInnerHTML whose first value is null keeps the server's fallback child, bound, until markup arrives"
       ],
       "disposition": "All21 original native cases across the two suites are mapped in browser-case-mapping.json; one readonly/literal boundary case added. Historical initial repair becomes explicit coded refusal retaining all original nodes/live edits; matching positive controls retain later behavior. Three CSR case bodies remain byte-identical. Namespace/raw/iframe/focus/selection/FormData and observer positive controls remain.",
       "case_map": [
@@ -579,7 +580,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate-svg.test.ts",
-      "status": "migrated-with-retained-integration-failures",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "adopts a server-rendered inline SVG with no DOM write and no re-created node",
         "adopts the inline SVG of every island in place, each on its own",
@@ -592,7 +593,7 @@
         "creates MathML the server did not render in the MathML namespace",
         "writes nothing where the server already holds the value, and still writes every change"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance.",
+      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance. The two recorded later namespace failures are now corrected by the reviewed descriptor materializer and its actual wiring; their original failing logs remain preserved.",
       "case_map": [
         {
           "original": "adopts a server-rendered inline SVG with no DOM write and no re-created node",
@@ -645,7 +646,8 @@
           "disposition": "Zero initial writes replaces marker removal; href, aria, disabled and exact later write assertions unchanged."
         }
       ],
-      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log."
+      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log.",
+      "validation": "Original matching namespace controls retained unchanged; root26/26 namespace+wiring cases pass after23abd. Four separately authenticated strict compiler/native products pass12/12 in three engines with exact414/438/372/508-byte IR, source/HTML/state/dump equality and zero initial mutations. Original low-level bare-literal audit retains BUILD302 strict refusal; no admission claimed from emitted IR alone."
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate.test.ts",
@@ -973,7 +975,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/namespace-resolution.test.ts",
-      "status": "migrated-with-retained-integration-failures",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "a title or an a passed to h() before its svg parent exists stays HTML, and is SVG inside svg()",
         "a foreignObject's or desc's content is HTML when built there: an eager child, a reactive child, and content built outside svg()",
@@ -989,7 +991,7 @@
         "what adoption creates inside an SVG is built in SVG from the start: a ref on it is called once",
         "adoption creates what the server left out of a desc or an mtext in HTML, and an svg in SVG anywhere"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance.",
+      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance. The two recorded later namespace failures are now corrected by the reviewed descriptor materializer and its actual wiring; their original failing logs remain preserved.",
       "case_map": [
         {
           "original": "a title or an a passed to h() before its svg parent exists stays HTML, and is SVG inside svg()",
@@ -1057,7 +1059,8 @@
           "disposition": "Original missing integration-point content refuses NODE with zero writes; namespace-correct server scaffolding avoids happy-dom MathML parser limitation. Matching empty Shows later create exact HTML a, MathML mglyph and nested SVG/title. Nested title namespace failure remains explicit."
         }
       ],
-      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log."
+      "independent_review": "Root read all2b01/978625/3d2/7195 deltas and complete56-case mapping; composed729eab full2333 run confirms56/58 four-suite cases pass, with exact2 namespace positives retained failing. Count/Fragment diagnostics now integrated. Evidence activation-7195-full-independent.log.",
+      "validation": "Original matching namespace controls retained unchanged; root26/26 namespace+wiring cases pass after23abd. Four separately authenticated strict compiler/native products pass12/12 in three engines with exact414/438/372/508-byte IR, source/HTML/state/dump equality and zero initial mutations. Original low-level bare-literal audit retains BUILD302 strict refusal; no admission claimed from emitted IR alone."
     },
     {
       "original": "packages/core/src/dom/__tests__/owned-adoption.test.ts",

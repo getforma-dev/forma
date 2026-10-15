@@ -435,9 +435,9 @@ markup, wherever it can know it.
   - ordinary client-rendered control flow.
 
   Strict initial adoption validates existing namespaces without creating or
-  repairing nodes. Later fresh materialization still has two known namespace
-  qualification failures; the completed ordinary CSR controls below are not a
-  claim that all strict-adoption update paths are qualified.
+  repairing nodes. Later branches and rows resolve child namespaces from the
+  constructed parent, including nested HTML inside SVG `foreignObject` and SVG
+  inside MathML `annotation-xml`. These paths have separate adoption controls.
 - **A child passed to `h()` is built before its parent exists.** In
   `h("svg", null, h("title", null, "Close"))` the `title` is created first, as
   HTML. Build a hand-written SVG tree with such a tag inside `svg()`, which
