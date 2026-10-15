@@ -15,6 +15,9 @@ function fixture() {
   const root = mkdtempSync(join(tmpdir(), 'forma-split-')); temporary.push(root);
   const src = join(root, 'src'); const dist = join(root, 'dist'); mkdirSync(src);
   writeFileSync(join(root, 'package.json'), '{"type":"module"}');
+  const core = join(root, 'node_modules', '@getforma', 'core'); mkdirSync(core, {recursive: true});
+  writeFileSync(join(core, 'package.json'), '{"name":"@getforma/core","type":"module","exports":"./index.js"}');
+  writeFileSync(join(core, 'index.js'), 'export const h=()=>{}; export const mount=()=>{};');
   writeFileSync(join(src, 'shared.ts'), 'export const singleton = { value: "one runtime" };');
   writeFileSync(join(src, 'later.ts'), 'import { singleton } from "./shared"; export const later = singleton; export const label = "LAZY_FINANCIAL_TOOL";');
   writeFileSync(join(src, 'phone.ts'), 'import { singleton } from "./shared"; export const first = singleton; export const open = () => import("./later");');
@@ -68,19 +71,22 @@ describe('Opt-in ESM code splitting', () => {
   });
   it('still emits genuine SSR IR for each configured page while splitting the browser graph', async () => {
     const { src, dist, config } = fixture();
-    writeFileSync(join(src, 'phone-ssr.tsx'), 'mount(() => <main><h1>Phone arrival</h1></main>, "#app");');
-    writeFileSync(join(src, 'desktop-ssr.tsx'), 'mount(() => <main><h1>Desktop arrival</h1></main>, "#app");');
+    writeFileSync(join(src, 'phone-ssr.tsx'), 'import {h,mount} from "@getforma/core"; mount(() => <main><h1>Phone arrival</h1></main>, "#app");');
+    writeFileSync(join(src, 'desktop-ssr.tsx'), 'import {h,mount} from "@getforma/core"; mount(() => <main><h1>Desktop arrival</h1></main>, "#app");');
     const result = await build({ ...config, ssr: true, ssrEntryPoints: { phone: join(src, 'phone-ssr.tsx'), desktop: join(src, 'desktop-ssr.tsx') } });
     for (const [route, text] of [['/phone', 'Phone arrival'], ['/desktop', 'Desktop arrival']]) {
       const file = result.manifest.routes[route].ir; expect(file).toBeDefined();
+      expect(result.manifest.routes[route]).toMatchObject({mode: 'ssr', js: []});
       const ir = readFileSync(join(dist, file!)); expect(readFmirContainer(ir).writer).toEqual([3, 0, 0]); expect(ir.toString()).toContain(text);
     }
   });
   it('keeps private browser-decrypted routes Phase 1 in a mixed SSR application', async () => {
     const { src, dist, config } = fixture();
-    writeFileSync(join(src, 'phone-ssr.tsx'), 'mount(() => <main>SSR phone shell</main>, "#app");');
+    writeFileSync(join(src, 'phone-ssr.tsx'), 'import {h,mount} from "@getforma/core"; mount(() => <main>SSR phone shell</main>, "#app");');
     const result = await build({ ...config, entryPoints: config.entryPoints.map(entry => ({ ...entry, ...(entry.outfile === 'desktop.js' ? { ssr: false } : {}) })), ssr: true, ssrEntryPoints: { phone: join(src, 'phone-ssr.tsx') } });
     expect(result.manifest.routes['/phone'].ir).toBeDefined(); expect(result.manifest.routes['/desktop'].ir).toBeUndefined();
+    expect(result.manifest.routes['/phone']).toMatchObject({mode: 'ssr', js: []});
+    expect(result.manifest.routes['/desktop'].js).toHaveLength(1);
     expect(readdirSync(dist).filter(file => file.endsWith('.ir'))).toHaveLength(1);
   });
   it('switches the watched graph while retaining files referenced by an older manifest', async () => {

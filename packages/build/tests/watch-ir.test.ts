@@ -185,6 +185,8 @@ describe('watch mode rewrites the FMIR modules of the pages a change touches (N7
     // The SSR entry is a separate file the browser bundle never imports, so
     // only a watcher over the SSR entry's own graph sees an edit to it.
     const { src, dist, config } = site();
+    // Its selected native declaration is independent; no different browser root may mount.
+    writeFileSync(join(src, 'about.ts'), 'export {};\n');
     writeFileSync(join(src, 'about-ssr.ts'), `import { h, mount } from 'formajs';\nmount(() => h('main', { id: 'app' }, h('h1', null, 'About, server-rendered')), '#app');\n`);
     await watching({ ...config, codeSplitting: true, ssrEntryPoints: { about: join(src, 'about-ssr.ts') } }, async ({ manifest }) => {
       await vi.waitFor(() => expect(manifest().routes['/about'].ir).toMatch(/^about\.[0-9a-f]{64}\.ir$/), { timeout: 10_000 });
