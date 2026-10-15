@@ -412,7 +412,7 @@ with no diagnostic and the visible text `writes` under its defaults),
 `packages/compiler/tests/value-rule-6-boolean-text.test.ts`, the `BUILD-614`
 pair in `packages/compiler/tests/diagnostics-conformance.test.ts`,
 `crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
-"rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence"
+"rule_6_the_string_near_miss_writes_the_boolean_word_and_the_idiom_its_range"
 (the word, the idiom's ranges, `disabled` and `class` presence),
 `packages/core/src/dom/__tests__/value-rule-6-boolean-text.test.ts`
 (`String(flag)` static and reactive, the browser-only drop of a bare boolean,

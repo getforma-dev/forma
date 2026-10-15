@@ -941,11 +941,15 @@ fn walk_range_impl(
                     let value = match slots.get(slot_id) {
                         // An HTML boolean attribute is ON whenever it is
                         // present, so the old `disabled="false"` meant
-                        // DISABLED. Absent for false/null, bare for true —
-                        // byte-for-byte what `renderAttr` in @getforma/core
-                        // produces for the same value.
+                        // DISABLED: absent for false/null, bare for true. Any
+                        // other attribute takes the word `h()` writes for
+                        // true, `data-live="true"` (FORMA-182 finding F2,
+                        // docs/parity-rules.md rule 6's attribute table).
                         SlotValue::Bool(false) | SlotValue::Null => None,
-                        SlotValue::Bool(true) => Some(AttrValue::Bare),
+                        SlotValue::Bool(true) if is_html_boolean_attribute(attr_name) => {
+                            Some(AttrValue::Bare)
+                        }
+                        SlotValue::Bool(true) => Some(AttrValue::Valued("true")),
                         other => {
                             text = other.to_text();
                             // An empty string is a value, not an absence:
@@ -1635,6 +1639,39 @@ enum AttrValue<'a> {
     Bare,
     /// Write `key="escaped"`, including when `value` is empty.
     Valued(&'a str),
+}
+
+/// Core's HTML boolean attribute set (`BOOLEAN_ATTRS` in
+/// packages/core/src/dom/element.ts): the attributes a `true` writes bare.
+/// Matched as written, as core matches its prop keys.
+/// Verified by: crates/forma-ir/src/walker.rs > "rule_6_attribute_values_follow_one_table"
+const HTML_BOOLEAN_ATTRIBUTES: [&str; 22] = [
+    "async",
+    "autofocus",
+    "autoplay",
+    "checked",
+    "controls",
+    "default",
+    "defer",
+    "disabled",
+    "formnovalidate",
+    "hidden",
+    "ismap",
+    "loop",
+    "multiple",
+    "muted",
+    "nomodule",
+    "novalidate",
+    "open",
+    "playsinline",
+    "readonly",
+    "required",
+    "reversed",
+    "selected",
+];
+
+fn is_html_boolean_attribute(name: &str) -> bool {
+    HTML_BOOLEAN_ATTRIBUTES.contains(&name)
 }
 
 /// Emit one attribute, dropping it entirely if it is unsafe.
@@ -6621,6 +6658,7 @@ mod tests {
         const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
         const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
         const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
+        const ATTRIBUTES: &str = include_str!("../tests/fixtures/parity/attributes.json");
 
         fn cases(file: &str, section: &str) -> Vec<Value> {
             let all: Value = serde_json::from_str(file).unwrap();
@@ -6845,11 +6883,11 @@ mod tests {
         }
 
         #[test]
-        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence() {
+        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_the_idiom_its_range() {
             // The build error itself is the compiler's (BUILD-614). What the
             // walker writes for the admitted `String(flag)` is DYN_TEXT on the
-            // boolean slot, and an attribute bound to a boolean is bare or
-            // absent.
+            // boolean slot. An attribute bound to a boolean follows rule 6's
+            // attribute table, read by rule_6_attribute_values_follow_one_table.
             let mut failures = Vec::new();
             for case in cases(BOOLEAN_TEXT, "nearMissText") {
                 let (id, expected) = (field(&case, "id"), field(&case, "expected"));
@@ -6882,28 +6920,51 @@ mod tests {
                     &format!("<p>{}</p>", marker(slot, expected)),
                 );
             }
-            // The same attributes core's suite and the three-engine replay
-            // check: a boolean attribute and `class`.
-            for case in cases(BOOLEAN_TEXT, "attribute") {
-                let id = field(&case, "id");
-                let value = case["value"].as_bool().unwrap();
-                let present = case["present"].as_bool().unwrap();
-                for attribute in ["disabled", "class"] {
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_6_attribute_values_follow_one_table() {
+            // Findings F2 and F3: presence only for the HTML boolean set; any
+            // other attribute is the value's string, `true` the word and `""`
+            // a value; false and Null omit it.
+            let mut failures = Vec::new();
+            for case in cases(ATTRIBUTES, "values") {
+                let (id, attribute, html) = (
+                    field(&case, "id"),
+                    field(&case, "attribute"),
+                    field(&case, "html"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(slot_value(&case["value"]));
+                page.open("input", &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close("input");
+                check(
+                    &mut failures,
+                    &format!("attributes/values/{id}"),
+                    &page.render(),
+                    &format!("<input id=\"ok\"{html}></input>"),
+                );
+            }
+            // The walker's boolean set is the vector's: each member is bare for
+            // true, and a name beside each (its `data-` twin) is the word.
+            for name in cases(ATTRIBUTES, "booleanAttributes") {
+                let name = name.as_str().unwrap();
+                for (attribute, want) in [
+                    (name.to_string(), format!(" {name}")),
+                    (format!("data-{name}"), format!(" data-{name}=\"true\"")),
+                ] {
                     let mut page = Page::new();
-                    let slot = page.slot(SlotValue::Bool(value));
+                    let slot = page.slot(SlotValue::Bool(true));
                     page.open("input", &[("id", "ok")])
-                        .dyn_attr(attribute, slot)
+                        .dyn_attr(&attribute, slot)
                         .close("input");
-                    let want = if present {
-                        format!("<input id=\"ok\" {attribute}></input>")
-                    } else {
-                        "<input id=\"ok\"></input>".to_string()
-                    };
                     check(
                         &mut failures,
-                        &format!("boolean-text/attribute/{id} {attribute}"),
+                        &format!("attributes/booleanAttributes/{attribute}"),
                         &page.render(),
-                        &want,
+                        &format!("<input id=\"ok\"{want}></input>"),
                     );
                 }
             }

@@ -1,0 +1,48 @@
+{
+  "rule": 6,
+  "title": "Booleans and empty strings as attribute values, one table (FORMA-182 findings F2 and F3; DR-9 rule 6's attribute half, the attribute table of design 4 rule 5)",
+  "contract": "An attribute named in `booleanAttributes` (core's HTML boolean set) follows presence: true writes it bare, false and null omit it. Every other attribute (data-*, aria-*, class, title, …) is written as the value's string: true is the word \"true\", a string is itself, the empty string included (`title=\"\"`), and false and null omit it. The same on every writer: the walker's DYN_ATTR over a slot, the compiler's static attributes, h() static and reactive, and adoption's expectations and later writes. A value the compiler knows at build time to be the empty string is written by the server, not dropped: a client slot cannot hold an empty default (zero default bytes mean no default, which the walker reads as null), so the compiler writes such an attribute as a static `name=\"\"`. Names are matched as written, lower-case.",
+  "consumers": [
+    "crates/forma-ir/src/walker.rs > value_rule_vectors (DYN_ATTR over each `values` slot; the walker's boolean set equals `booleanAttributes`)",
+    "packages/compiler/tests/value-rule-6-attributes.test.ts (each `compiled` shape builds without a diagnostic and its attribute reads `dom` under the defaults; the compiler's boolean set equals `booleanAttributes`)",
+    "packages/core/src/dom/__tests__/value-rule-6-attributes.test.ts (h() static and reactive, adoption's expectation and later writes, for each `values` entry; core's boolean set equals `booleanAttributes`)",
+    "packages/core/e2e/value-rules.spec.ts (each `values` entry served as the walker writes it, parsed by the three engines and strictly adopted without a write, static and reactive)"
+  ],
+  "note": "Hand-enumerated. In `values`, `value` is the slot's value (a JSON boolean, string or null), `html` the attribute exactly as the walker writes it after the tag name (empty when it is omitted) and `dom` the attribute's value in the DOM (null when absent). In `compiled`, `tag` defaults to `p`, `setup` is a module-level statement and `value` the attribute's source expression; `dom` is what the attribute reads under the slot defaults. F2: a reactive `true` on a non-boolean attribute was bare from the walker and \"true\" from core. F3: a client signal defaulting to '' was dropped by the walker where core writes `value=\"\"`.",
+  "booleanAttributes": ["async", "autofocus", "autoplay", "checked", "controls", "default", "defer", "disabled", "formnovalidate", "hidden", "ismap", "loop", "multiple", "muted", "nomodule", "novalidate", "open", "playsinline", "readonly", "required", "reversed", "selected"],
+  "values": [
+    {"id": "boolean-attribute-true", "attribute": "disabled", "value": true, "html": " disabled", "dom": ""},
+    {"id": "boolean-attribute-false", "attribute": "disabled", "value": false, "html": "", "dom": null},
+    {"id": "hidden-true", "attribute": "hidden", "value": true, "html": " hidden", "dom": ""},
+    {"id": "hidden-false", "attribute": "hidden", "value": false, "html": "", "dom": null},
+    {"id": "data-true", "attribute": "data-live", "value": true, "html": " data-live=\"true\"", "dom": "true"},
+    {"id": "data-false", "attribute": "data-live", "value": false, "html": "", "dom": null},
+    {"id": "aria-true", "attribute": "aria-pressed", "value": true, "html": " aria-pressed=\"true\"", "dom": "true"},
+    {"id": "aria-false", "attribute": "aria-pressed", "value": false, "html": "", "dom": null},
+    {"id": "class-true", "attribute": "class", "value": true, "html": " class=\"true\"", "dom": "true"},
+    {"id": "title-true", "attribute": "title", "value": true, "html": " title=\"true\"", "dom": "true"},
+    {"id": "title-empty-string", "attribute": "title", "value": "", "html": " title=\"\"", "dom": ""},
+    {"id": "data-empty-string", "attribute": "data-query", "value": "", "html": " data-query=\"\"", "dom": ""},
+    {"id": "title-null", "attribute": "title", "value": null, "html": "", "dom": null},
+    {"id": "title-text", "attribute": "title", "value": "calm", "html": " title=\"calm\"", "dom": "calm"}
+  ],
+  "compiled": [
+    {"id": "static-true-boolean-attribute", "attribute": "disabled", "value": "true", "dom": ""},
+    {"id": "static-true-data", "attribute": "data-live", "value": "true", "dom": "true"},
+    {"id": "static-true-class", "attribute": "class", "value": "true", "dom": "true"},
+    {"id": "static-false-data", "attribute": "data-live", "value": "false", "dom": null},
+    {"id": "reactive-true-boolean-attribute", "setup": "const [on] = createSignal(true);", "attribute": "hidden", "value": "() => on()", "dom": ""},
+    {"id": "reactive-true-data", "setup": "const [live] = createSignal(true);", "attribute": "data-live", "value": "() => live()", "dom": "true"},
+    {"id": "reactive-true-aria", "setup": "const [pressed] = createSignal(true);", "attribute": "aria-pressed", "value": "() => pressed()", "dom": "true"},
+    {"id": "reactive-false-data", "setup": "const [live] = createSignal(false);", "attribute": "data-live", "value": "() => live()", "dom": null},
+    {"id": "evaluated-true-data", "setup": "const [count] = createSignal(2);", "attribute": "data-some", "value": "() => count() > 0", "dom": "true"},
+    {"id": "signal-empty-string", "setup": "const [query] = createSignal('');", "attribute": "title", "value": "() => query()", "dom": ""},
+    {"id": "signal-getter-empty-string", "setup": "const [query] = createSignal('');", "attribute": "title", "value": "query", "dom": ""},
+    {"id": "input-value-empty-string", "tag": "input", "setup": "const [query] = createSignal('');", "attribute": "value", "value": "() => query()", "dom": ""},
+    {"id": "evaluated-empty-string", "setup": "const [on] = createSignal(false);", "attribute": "title", "value": "() => on() ? 'x' : ''", "dom": ""},
+    {"id": "concatenated-empty-string", "setup": "const [name] = createSignal('');", "attribute": "title", "value": "'' + name()", "dom": ""},
+    {"id": "evaluated-null", "setup": "const [on] = createSignal(false);", "attribute": "title", "value": "() => on() ? 'x' : null", "dom": null},
+    {"id": "signal-null-default", "setup": "const [maybe] = createSignal(null);", "attribute": "title", "value": "() => maybe()", "dom": null},
+    {"id": "signal-text", "setup": "const [tone] = createSignal('calm');", "attribute": "title", "value": "() => tone()", "dom": "calm"}
+  ]
+}
