@@ -35,13 +35,23 @@ fn home(page: &PageHandle<HomeProps>) -> Result<forma_server::PageResponse, form
 
 `PageHandle::render` checks and projects declared props by name and returns `Result<PageResponse, RenderError>`. The handler chooses/logs its error response. No failed render becomes an empty shell. See [declared props](../../docs/DECLARED-PROPS.md) for field/type/source diagnostics. Extra Rust fields warn and never enter the rendered data.
 
+## Staged static SSR policy — FORMA-105
+
+An explicit SSR route with an empty `js` list is static. It must retain its valid IR association and have no declared islands or module preloads. Missing `js` metadata is not an empty list. Island modules without a JavaScript entry fail startup with LOAD-109; malformed static preload declarations fail manifest validation with MANIFEST-103. Debug reload checks the pair even when the IR bytes are unchanged and preserves the last good module **and** asset manifest on refusal.
+
+Static SSR still emits its native body, CSS/fonts, strict response headers and one inert `application/json` state envelope. It refuses `with_config_json` and an effective request module-preload table with RENDER-105, including a stale table naming a valid retained asset. `config_json` is an executable, nonced assignment to `window.__FORMA_CONFIG__`; it is not silently dropped or reinterpreted as inert data. JS-enabled SSR and explicit Browser routes retain that API. Complete escaped-response limits remain unchanged.
+
+Worker registration is emitted only on pages with a published JS entry. A static-only app may enable worker serving, but its pages do not newly install a worker. The endpoint and off-mode retirement remain available; already controlled clients can perform browser-managed worker update checks independently. Fresh-context zero-JS navigation and retirement of a previously installed worker are separate qualifications.
+
+`RawHtml` remains explicitly reviewed markup. The framework does not parse or sanitize it here: an application that adds executable raw markup cannot claim zero-JS qualification. This native/server slice is staged; compiler entry filtering, whole-page mount retirement, actual browser network checks and template integration are still required before overall105 acceptance. No size limit or release gate is relaxed.
+
 ## Limits and request metadata
 
 `Limits` is the existing `WalkLimits` type: 8 MiB of complete response HTML and 50,000 total list iterations by default. `RenderCtx::new()` inherits the handle's limits. `with_limits` overrides both budgets for one request; struct-update from `page.limits()` changes one. Zero remains restrictive. A list longer than its remaining budget fails before its first row; output and list failures report counts reached with RENDER-301/302. Fixed structural/depth ceilings remain. The final length includes escaped head/config metadata, state JSON and its tags, and body markup; the final document allocation occurs only after this check. `RenderCounts.bytes` continues to report body-walk bytes for diagnostics.
 
 Counts report nodes, walked bytes, list rows and **walker time**. The time excludes checked props conversion and document assembly. Measure the complete handle call separately when deciding whether to move a cloned handle and owned props into the runtime's blocking pool. Forma starts no threads.
 
-RenderCtx preserves the document's typed homes: title/body class, policy extensions, head links and manifest preloads; `with_config_json(Value)` writes escaped JSON, `with_personality_css` applies the existing style-end-tag escaping, and `with_body_prefix(RawHtml::trusted(...))` writes explicitly reviewed markup. Plain-string prefixes, handler scripts and caller-supplied nonces are unavailable. Raw entries remain subject to the application's reviewed allowlist.
+RenderCtx preserves the document's typed homes: title/body class, policy extensions, head links and manifest preloads; `with_config_json(Value)` writes a nonced assignment of escaped JSON on JS-enabled SSR or Browser routes, `with_personality_css` applies the existing style-end-tag escaping, and `with_body_prefix(RawHtml::trusted(...))` writes explicitly reviewed markup. Plain-string prefixes, handler scripts and caller-supplied nonces are unavailable. Raw entries remain subject to the application's reviewed allowlist.
 
 ## Response and explicit browser mode
 

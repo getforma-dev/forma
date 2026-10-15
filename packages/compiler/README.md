@@ -424,3 +424,27 @@ imports are not package exports. The runtime surface is pinned by
 ## License
 
 MIT
+
+
+### Paired entry product transport (staged FORMA-105)
+
+`formaSsrPlugin` requires esbuild `write: false`. After a successful awaited
+`build()` or `rebuild()`, call `getSsrEntryProducts(result)` on that exact result
+object. Each immutable record identifies the canonical source/browser entry,
+page, IR output path and SHA-256, the emitted island definitions and
+`browserRequired`. The latter is based on the compiled definition set, including
+conditional islands; an unused registration does not make a static page require
+JavaScript. This transport does not itself remove browser code or publish files.
+The islands-only entry rewrite and build graph/manifest consumption are separate
+implementation checkpoints.
+
+The accessor refuses failed results or replaced/mutated IR outputs. It returns
+no native records for an explicit Browser-only build; callers must require one
+matching record for every configured SSR entry. A failed native compilation
+cannot use placeholder IR to establish a static policy.
+
+Never publish from an early `onEnd`: a later plugin may still refuse the result.
+A build integration may read records from its final guarded publisher, after all
+other validation hooks; commit them together with that cycle's graph and
+manifest. Refused watch cycles retain the previously accepted records and files.
+The compiler exposes no mutable `onStart` metadata callback.

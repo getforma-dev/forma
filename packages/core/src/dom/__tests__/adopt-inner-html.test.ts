@@ -15,7 +15,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSignal, onError } from 'forma/reactive';
 import { h } from '../element';
-import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 import { INNER_HTML_CHILDREN_CODE, trustedHtml, type TrustedHtml } from '../trusted-html';
 
 const REGISTRY = Symbol.for('@getforma/core#trusted-types');
@@ -47,7 +47,7 @@ const SERVERS = [
 /** Serve `server` in #app and adopt `component` over it; return the adopted element. */
 function adopt(server: string, component: () => unknown): Element {
   document.body.innerHTML = `<div id="app" data-forma-ssr>${server}</div>`;
-  mount(component as () => HTMLElement, '#app');
+  adoptInRoot(component as () => HTMLElement, '#app');
   return document.getElementById('doc')!;
 }
 
@@ -114,10 +114,10 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     const observer = new MutationObserver(() => {});
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
     const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml('<b>A</b><i>B</i>') });
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
+    adoptInRoot(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
     const records = observer.takeRecords();
     observer.disconnect();
-    // The only write is mount() removing data-forma-ssr from its container.
+    // The only write is direct hydration removing data-forma-ssr from its container.
     expect(records.map((r) => `${r.type}:${(r.target as Element).id}:${r.attributeName ?? ''}`)).toEqual(['attributes:app:data-forma-ssr']);
     expect(document.querySelector('#doc b')).toBe(serverChild);
     // And a change is still written.
@@ -141,7 +141,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     const serverChild = document.querySelector('#doc b');
     const observer = new MutationObserver(() => {});
     observer.observe(document.getElementById('doc')!, { subtree: true, childList: true, attributes: true, characterData: true });
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<b>A</b>') } }, h('span', null, 'kid')), '#app');
+    adoptInRoot(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<b>A</b>') } }, h('span', null, 'kid')), '#app');
     expect(observer.takeRecords()).toEqual([]);
     observer.disconnect();
     expect(document.querySelector('#doc b')).toBe(serverChild);
@@ -188,7 +188,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     const observer = new MutationObserver(() => {});
     observer.observe(doc, { subtree: true, childList: true, attributes: true, characterData: true });
     const [inner, setInner] = createSignal<Inner>({ __html: trustedHtml(markup) });
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
+    adoptInRoot(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
     expect(observer.takeRecords()).toEqual([]);
     observer.disconnect();
     expect(doc.firstChild).toBe(firstNode);
@@ -201,7 +201,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     document.body.innerHTML = '<div id="app" data-forma-ssr><article id="doc"><label>Name <input id="name"></label></article></div>';
     const input = document.getElementById('name') as HTMLInputElement;
     input.value = 'typed before activation';
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<label>Name <input id=name></label>') } }), '#app');
+    adoptInRoot(() => h('article', { id: 'doc', dangerouslySetInnerHTML: { __html: trustedHtml('<label>Name <input id=name></label>') } }), '#app');
     expect(document.getElementById('name')).toBe(input);
     expect(input.value).toBe('typed before activation');
   });

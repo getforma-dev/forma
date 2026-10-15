@@ -43,6 +43,7 @@ import { rootPropsScope } from './props-bindings';
 import {createIslandRegistry, type IslandRegistry} from './island-registry';
 import {SourceSnapshot,withSourceSnapshot} from './source-snapshot';
 import {injectIslandMetadata} from './island-product';
+import {recordSsrEntryProduct} from './ssr-product';
 
 export interface SsrPluginOptions {
   /** Page name (e.g., 'platform-login') -- used for the output .ir filename */
@@ -583,15 +584,15 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
       const client=options.clientEntryPoint?realpathSync(options.clientEntryPoint):entry;
       const points=build.initialOptions.entryPoints;
       const browserEntries=new Set((Array.isArray(points)?points.map(point=>typeof point==='string'?point:point.in):Object.values(points??{})).map(file=>realpathSync(resolve(build.initialOptions.absWorkingDir??process.cwd(),file))));
-      let snapshot:SourceSnapshot,bytes:Uint8Array|undefined,transformed:string|undefined;
+      let snapshot:SourceSnapshot,bytes:Uint8Array|undefined,transformed:string|undefined,product:IrResult|null;
       let diagnostics:Diagnostic[]=[],fatal:Error|undefined;
       build.onStart(()=>{
-        snapshot=new SourceSnapshot();bytes=undefined;transformed=undefined;fatal=undefined;
+        snapshot=new SourceSnapshot();bytes=undefined;transformed=undefined;fatal=undefined;product=null;
         const collected=collectDiagnostics(()=>{
           try {
             withSourceSnapshot(snapshot,()=>{
               const registry=entry?createIslandRegistry(entry):undefined;
-              const product=entry?generateWithRegistry(entry,registry):null;
+              product=entry?generateWithRegistry(entry,registry):null;
               bytes=product?.binary??generatePlaceholderIr(options.page);
               if(client&&registry)transformed=injectIslandMetadata(client,registry,product);
               console.log(`   IR emitted (${product?'real':'placeholder'}): ${options.page}.ir (${bytes.length} bytes${product?`, ${product.islands.length} islands`:''})`);
@@ -619,10 +620,13 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
         if(fatal&&!errors.length)errors.push({text:`BUILD-606 IR emission failed for ${options.page}: ${fatal.message}`});
         if(!fatal&&!snapshot.unchanged())errors.push({text:`BUILD-610 sources changed while compiling ${options.page}; retry to publish a coherent browser/IR pair`});
         if(errors.length)return {errors};
+        if(!product||!entry||!client)return {errors:[{text:`BUILD-610 ${options.page} requires a successful native product; a placeholder cannot establish static or island entry policy`}]};
         if(!bytes||!result.outputFiles)return {errors:[{text:`BUILD-606 missing paired output for ${options.page}`}]};
         const contents=bytes;
         const output:OutputFile={path:resolve(options.outDir,`${options.page}.ir`),contents,hash:createHash('sha256').update(contents).digest('hex'),get text(){return Buffer.from(contents).toString('utf8');}};
         result.outputFiles.push(output);
+        recordSsrEntryProduct(result,output,{page:options.page,sourceEntry:entry,browserEntry:client,
+          islands:product.islands.map(island=>({name:island.name,mode:island.contract!.mode}))});
       });
     },
   };

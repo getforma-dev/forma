@@ -1,0 +1,83 @@
+{
+  "sourceCommit": "9c3159c422ba6e23c26cb6cd7713f4fed84d0752",
+  "files": [
+    {
+      "source": "packages/core/src/dom/__tests__/mount.test.ts",
+      "archive": "mount.test.ts",
+      "bytes": 4447,
+      "sha256": "8775b8deae665986f68436991d6417b062443c62c8aeb6785f32db0d31b89184"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/hydrate-fragment.test.ts",
+      "archive": "hydrate-fragment.test.ts",
+      "bytes": 17025,
+      "sha256": "78af6b3c7627968c572078832f9b369e21bd1d1f252301b9541bd2a801f0f7a3"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/list-adoption-count.test.ts",
+      "archive": "list-adoption-count.test.ts",
+      "bytes": 25869,
+      "sha256": "8dcd7ea8ec448f7193c1c8a9e7f84a59bc8e8c6a9be06ff04482f42477e163f0"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/adopt-inner-html.test.ts",
+      "archive": "adopt-inner-html.test.ts",
+      "bytes": 15097,
+      "sha256": "5f806a5d774c839788d19bb3e451086b86e1cfded5f439d23d182d93d9351e92"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/hydrate-svg.test.ts",
+      "archive": "hydrate-svg.test.ts",
+      "bytes": 15371,
+      "sha256": "b1a770119136fa4c7b73684262391b6d6a82324e497746d0abd9dd6b0e6de6d2"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/trusted-html.test.ts",
+      "archive": "trusted-html.test.ts",
+      "bytes": 30631,
+      "sha256": "d86796211a992617a9ced3f6767ffd150349b3c9c2e22081f0d6378876082509"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/form-control-adoption.test.ts",
+      "archive": "form-control-adoption.test.ts",
+      "bytes": 20408,
+      "sha256": "a4cfde503f0524490d41307870c9b859d5d27d007ed9b9a838cf06c75c93646a"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/namespace-resolution.test.ts",
+      "archive": "namespace-resolution.test.ts",
+      "bytes": 16170,
+      "sha256": "ac56774e4760aa837819d66c78d4442b310bd99c9cea0f156a817c854a08f199"
+    },
+    {
+      "source": "packages/core/src/dom/__tests__/hydrate.test.ts",
+      "archive": "hydrate.test.ts",
+      "bytes": 74913,
+      "sha256": "b8af9763d69636425dd6c80f255d7a48c96ceefab55c770edf7bb0726ef4814b"
+    },
+    {
+      "source": "packages/core/e2e/adoption.spec.ts",
+      "archive": "adoption.spec.ts",
+      "bytes": 41342,
+      "sha256": "ff950baf7aebd62312d0808be6d2c0b43c7b82f1df1301147f9b947175370a19"
+    },
+    {
+      "source": "packages/core/e2e/core-regressions.spec.ts",
+      "archive": "core-regressions.spec.ts",
+      "bytes": 5866,
+      "sha256": "3cb98b4afb78e98ee448a74bfbf3208152fce4d1f169be6246d36e798849c5f2"
+    },
+    {
+      "source": "packages/core/e2e/trusted-types.spec.ts",
+      "archive": "trusted-types.spec.ts",
+      "bytes": 23104,
+      "sha256": "187400d357a8834c47a2e71ed966f616dcd12b8811a13712c859084bc4d1860c"
+    },
+    {
+      "source": "packages/core/e2e/development-build.spec.ts",
+      "archive": "development-build.spec.ts",
+      "bytes": 6953,
+      "sha256": "cfd0d75dca51fc5e43623d9d963a4a5ef1583939e8536012b10f4135f17fe90c"
+    }
+  ]
+}

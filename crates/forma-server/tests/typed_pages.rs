@@ -750,10 +750,25 @@ fn typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_po
         .with_config_json(data.clone())
         .with_personality_css(css)
         .with_body_prefix(forma_server::RawHtml::trusted(prefix));
-    let parts = handle()
-        .render(&props(), &ctx)
-        .unwrap()
-        .into_parts_unchecked();
+    // Executable request configuration belongs to a JS-enabled route. This
+    // document-metadata fixture models its additional module as an empty file;
+    // actual resource bytes and browser enforcement have separate integrity tests.
+    let mut manifest = try_load_manifest::<Assets>().unwrap();
+    manifest.routes.get_mut("/").unwrap().js = vec!["config.js".into()];
+    manifest.assets.insert(
+        "config.js".into(),
+        forma_server::AssetMetadata {
+            immutable: false,
+            integrity: "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
+                .into(),
+            retained: false,
+        },
+    );
+    let pages = load_ir_modules::<Assets>(&manifest).unwrap();
+    let page = pages.bind::<Handler>("home").unwrap();
+    bind_empty(&pages);
+    pages.finalize().unwrap();
+    let parts = page.render(&props(), &ctx).unwrap().into_parts_unchecked();
     assert!(parts
         .html
         .contains(&format!("{prefix}<div id=\"app\" data-forma-ssr>")));

@@ -16,7 +16,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { createRoot, createSignal } from 'forma/reactive';
 import { h } from '../element';
-import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -52,7 +52,7 @@ describe('adoption keeps what the user entered before activation', () => {
     byId<HTMLInputElement>('s').value = 'Typed too';
     const [value, setValue] = createSignal('Saved');
 
-    mount(() => h('form', null,
+    adoptInRoot(() => h('form', null,
       h('input', { id: 't', name: 't', value: () => value() }),
       h('input', { id: 's', value: 'Static' }),
     ), app);
@@ -82,7 +82,7 @@ describe('adoption keeps what the user entered before activation', () => {
     const [agree, setAgree] = createSignal(true);
     const [choice, setChoice] = createSignal('x');
 
-    mount(() => h('div', null,
+    adoptInRoot(() => h('div', null,
       h('input', { type: 'checkbox', id: 'c', checked: () => agree() }),
       h('input', { type: 'radio', name: 'r', value: 'x', id: 'rx', checked: () => choice() === 'x' }),
       h('input', { type: 'radio', name: 'r', value: 'y', id: 'ry', checked: () => choice() === 'y' }),
@@ -109,7 +109,7 @@ describe('adoption keeps what the user entered before activation', () => {
       byId<HTMLSelectElement>('s').value = 'c';
       const [choice, setChoice] = createSignal('b');
 
-      const unmount = mount(() => h('form', null,
+      const dispose = adoptInRoot(() => h('form', null,
         h('select', { id: 's', name: 's', value: () => choice() },
           h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B'), h('option', { value: 'c' }, 'C')),
       ), app);
@@ -121,7 +121,7 @@ describe('adoption keeps what the user entered before activation', () => {
       expect(select.value).toBe('a');
       setChoice('b');
       expect(select.value).toBe('b');
-      unmount();
+      dispose();
     }
   });
 
@@ -130,7 +130,7 @@ describe('adoption keeps what the user entered before activation', () => {
     // An older server's HTML selects the first option: the bug FORMA-002 fixes on the server.
     expect(byId<HTMLSelectElement>('s').value).toBe('a');
 
-    mount(() => h('form', null,
+    adoptInRoot(() => h('form', null,
       h('select', { id: 's', name: 's', value: () => 'b' },
         h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')),
     ), app);
@@ -151,7 +151,7 @@ describe('adoption keeps what the user entered before activation', () => {
     const [values, setValues] = createSignal(['a', 'c']);
     const [pick, setPick] = createSignal('x');
 
-    mount(() => h('div', null,
+    adoptInRoot(() => h('div', null,
       h('select', { id: 'm', multiple: true, value: () => values() },
         h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B'), h('option', { value: 'c' }, 'C')),
       h('select', { id: 'o' },
@@ -175,7 +175,7 @@ describe('adoption keeps what the user entered before activation', () => {
       byId<HTMLTextAreaElement>('n').value = 'Typed';
       const [notes, setNotes] = createSignal('Saved');
 
-      const unmount = mount(() => h('textarea', { id: 'n', value: () => notes() }), app);
+      const dispose = adoptInRoot(() => h('textarea', { id: 'n', value: () => notes() }), app);
 
       const textarea = byId<HTMLTextAreaElement>('n');
       expect(textarea.value).toBe('Typed');
@@ -183,7 +183,7 @@ describe('adoption keeps what the user entered before activation', () => {
       expect(textarea.value).toBe('Cleared');
       setNotes('Saved');
       expect(textarea.value).toBe('Saved');
-      unmount();
+      dispose();
     }
   });
 });
@@ -201,7 +201,7 @@ describe('adoption writes nothing the server already rendered', () => {
     const done = recordMutations(app);
     const [value, setValue] = createSignal('Saved');
 
-    mount(() => h('form', null,
+    adoptInRoot(() => h('form', null,
       h('input', { id: 't', value: () => value() }),
       h('input', { type: 'checkbox', id: 'c', checked: () => true }),
       h('select', { id: 's', value: () => 'b' }, h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B')),
@@ -228,7 +228,7 @@ describe('adoption writes nothing the server already rendered', () => {
   it('repairs an untouched control the server rendered with another value', () => {
     const app = serve('<div><input id="t" value="Old"><input type="checkbox" id="c"><textarea id="ta">old</textarea><div><title id="tt">Old</title></div></div>');
 
-    mount(() => h('div', null,
+    adoptInRoot(() => h('div', null,
       h('input', { id: 't', value: () => 'New' }),
       h('input', { type: 'checkbox', id: 'c', checked: () => true }),
       h('textarea', { id: 'ta' }, () => 'new'),
@@ -249,7 +249,7 @@ describe('textarea and title text is bound by the element', () => {
     const done = recordMutations(app.querySelector('form')!);
     const [text, setText] = createSignal('hello');
 
-    mount(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app);
+    adoptInRoot(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app);
     await Promise.resolve();
 
     const textarea = byId<HTMLTextAreaElement>('ta');
@@ -272,7 +272,7 @@ describe('textarea and title text is bound by the element', () => {
     expect(textarea.value).toBe(legacy('hello'));
     const [text, setText] = createSignal('hello');
 
-    mount(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app);
+    adoptInRoot(() => h('form', null, h('textarea', { id: 'ta', name: 'ta' }, () => text())), app);
 
     expect(textarea.value).toBe('hello');
     expect(textarea.defaultValue).toBe('hello');
@@ -290,7 +290,7 @@ describe('textarea and title text is bound by the element', () => {
     textarea.value = 'typed';
     const [text, setText] = createSignal('hello');
 
-    mount(() => h('textarea', { id: 'ta' }, () => text()), app);
+    adoptInRoot(() => h('textarea', { id: 'ta' }, () => text()), app);
 
     expect(textarea.value).toBe('typed');
     // The default (what a form reset restores) no longer carries marker text.
@@ -311,7 +311,7 @@ describe('textarea and title text is bound by the element', () => {
     edited.value = 'typed';
     const done = recordMutations(app.firstElementChild!);
 
-    mount(() => h('div', null,
+    adoptInRoot(() => h('div', null,
       h('textarea', { id: 'edited' }, () => literal),
       h('textarea', { id: 'untouched' }, () => literal),
     ), app);
@@ -334,7 +334,7 @@ describe('textarea and title text is bound by the element', () => {
     legacyArea.value = 'typed';
     disagree.value = 'typed too';
 
-    mount(() => h('div', null,
+    adoptInRoot(() => h('div', null,
       h('textarea', { id: 'legacy' }, () => literal),
       h('textarea', { id: 'disagree' }, () => 'Client text'),
     ), app);
@@ -352,7 +352,7 @@ describe('textarea and title text is bound by the element', () => {
     textarea.value = 'typed';
     const [text, setText] = createSignal('');
 
-    mount(() => h('textarea', { id: 'ta' }, () => text()), app);
+    adoptInRoot(() => h('textarea', { id: 'ta' }, () => text()), app);
 
     expect(textarea.value).toBe('typed');
     expect(textarea.defaultValue).toBe('');
@@ -368,7 +368,7 @@ describe('textarea and title text is bound by the element', () => {
       byId<HTMLTextAreaElement>('ta').textContent = serverText;
       const [x, setX] = createSignal('v');
 
-      const unmount = mount(() => h('textarea', { id: 'ta' }, 'Note: ', () => x()), app);
+      const dispose = adoptInRoot(() => h('textarea', { id: 'ta' }, 'Note: ', () => x()), app);
 
       const textarea = byId<HTMLTextAreaElement>('ta');
       expect(textarea.value).toBe('Note: v');
@@ -377,7 +377,7 @@ describe('textarea and title text is bound by the element', () => {
       expect(textarea.value).toBe('Note: w');
       setX('v');
       expect(textarea.value).toBe('Note: v');
-      unmount();
+      dispose();
     }
   });
 
@@ -387,7 +387,7 @@ describe('textarea and title text is bound by the element', () => {
       byId('tt').textContent = serverText;
       const [title, setTitle] = createSignal('Page');
 
-      const unmount = mount(() => h('div', null, h('title', { id: 'tt' }, 'Docs: ', () => title())), app);
+      const dispose = adoptInRoot(() => h('div', null, h('title', { id: 'tt' }, 'Docs: ', () => title())), app);
 
       const el = byId('tt');
       expect(el.textContent).toBe('Docs: Page');
@@ -396,7 +396,7 @@ describe('textarea and title text is bound by the element', () => {
       setTitle('Page');
       expect(el.textContent).toBe('Docs: Page');
       expect(el.childNodes).toHaveLength(1);
-      unmount();
+      dispose();
     }
   });
 
@@ -418,7 +418,7 @@ describe('textarea and title text is bound by the element', () => {
     // Server-rendered and adopted (Phase 2)
     const app = serve('<textarea id="ta">Hello Ann</textarea>');
     const [text, setText] = createSignal('Hello Ann');
-    mount(() => h('textarea', { id: 'ta' }, () => text()), app);
+    adoptInRoot(() => h('textarea', { id: 'ta' }, () => text()), app);
     const textarea = byId<HTMLTextAreaElement>('ta');
     setText('Hello Bo');
     // Untouched, the value follows its default.
@@ -454,7 +454,7 @@ describe('option values', () => {
 
     // Adopted: the server wrote no value attribute for a nullish value.
     const app = serve('<form><select name="s"><option>Alpha</option><option>Beta</option></select></form>');
-    mount(() => h('form', null,
+    adoptInRoot(() => h('form', null,
       h('select', { name: 's' },
         h('option', { value: () => undefined }, 'Alpha'),
         h('option', { value: () => null }, 'Beta')),

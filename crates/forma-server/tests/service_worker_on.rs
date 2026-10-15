@@ -29,7 +29,7 @@ fn setup() {
 }
 
 #[test]
-fn an_enabled_application_s_pages_register_the_worker() {
+fn an_enabled_application_s_js_pages_register_the_worker() {
     setup();
     let manifest = AssetManifest {
         version: 2,
@@ -37,13 +37,15 @@ fn an_enabled_application_s_pages_register_the_worker() {
         app: "ledger".into(),
         aliases: HashMap::new(),
         build: "test".to_string(),
-        assets: HashMap::new(),
+        assets: forma_server::assets::try_load_manifest::<Fixtures>()
+            .unwrap()
+            .assets,
         routes: [(
             "/".into(),
             forma_server::RouteAssets {
                 mode: forma_server::RouteMode::Browser,
                 modulepreload: vec![],
-                js: vec![],
+                js: vec!["app.a1b2c3d4.js".into()],
                 css: vec![],
                 fonts: vec![],
                 ir: None,

@@ -30,8 +30,8 @@ fn manifest() -> Vec<u8> {
             .encode(ring::digest::digest(&ring::digest::SHA384, &module()))
     );
     json!({"version":2,"writer":"3.0.0","app":"state-fixture","build":"fixture",
-        "aliases":{"home.ir":"home.ir"},"assets":{"home.ir":{"immutable":false,"integrity":digest}},
-        "routes":{"/state":{"mode":"ssr","ir":"home.ir","js":[],"css":[],"fonts":[],"modulepreload":[],"total_size_br":0,"budget_warn_threshold":0}}}).to_string().into_bytes()
+        "aliases":{"home.ir":"home.ir"},"assets":{"home.ir":{"immutable":false,"integrity":digest},"app.js":{"immutable":false,"integrity":format!("sha384-{}", base64::engine::general_purpose::STANDARD.encode(ring::digest::digest(&ring::digest::SHA384, b"export {};")))}},
+        "routes":{"/state":{"mode":"ssr","ir":"home.ir","js":["app.js"],"css":[],"fonts":[],"modulepreload":[],"total_size_br":0,"budget_warn_threshold":0}}}).to_string().into_bytes()
 }
 struct Files;
 impl Embed for Files {
@@ -39,6 +39,7 @@ impl Embed for Files {
         let bytes = match path {
             "manifest.json" => manifest(),
             "home.ir" => module(),
+            "app.js" => b"export {};".to_vec(),
             _ => return None,
         };
         Some(EmbeddedFile {
@@ -47,7 +48,9 @@ impl Embed for Files {
         })
     }
     fn iter() -> impl Iterator<Item = Cow<'static, str>> {
-        ["manifest.json", "home.ir"].into_iter().map(Cow::Borrowed)
+        ["manifest.json", "home.ir", "app.js"]
+            .into_iter()
+            .map(Cow::Borrowed)
     }
 }
 #[derive(PageProps)]
