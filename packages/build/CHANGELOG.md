@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
 ## [3.0.0-alpha.1] - 2026-10-15
 
 The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.3.1. Part of the seven-package set 3.0.0-alpha.1; the verified production workers (FORMA-111), manifest 2 and the start-time checks (FORMA-112) and the removals (FORMA-110) below are the alpha's gates. The per-build size report with route classes (FORMA-190) and the restated N2 ceiling (L-55: 25,500 B gzip per route) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
