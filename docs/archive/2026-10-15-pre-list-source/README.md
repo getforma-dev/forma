@@ -1,7 +1,7 @@
 # Pre-F1 list source (FORMA-183 finding F1, fixed under FORMA-181)
 
 Frozen from `49c614619d1a43f92620b532fa046182d8026952` (the integration branch) before the
-compiler began refusing a `createList` source it can prove is not a function (BUILD-614).
+compiler began refusing a `createList` source it can prove is not a function (BUILD-616).
 `manifest.json` authenticates each file by byte count and SHA-256; nothing here is edited to
 make a new implementation pass.
 
@@ -21,7 +21,7 @@ make a new implementation pass.
 and `.state.json` are byte-identical, because the function source compiles to the same module.
 
 The archived page stays executable evidence:
-- `packages/compiler/tests/list-source-archive.test.ts` compiles it and asserts BUILD-614 at its
+- `packages/compiler/tests/list-source-archive.test.ts` compiles it and asserts BUILD-616 at its
   first list;
 - the parity harness's error-verdict test renders it as the twin core cannot build
   (`e2e/parity/tests/render-both.test.mts`).

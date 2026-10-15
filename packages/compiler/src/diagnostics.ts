@@ -189,8 +189,8 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-613', 'List row without one stable owned root',
     'The row callback does not return exactly one stable Element (text, nothing, several roots, a conditional or control-flow root, or an authored `data-forma-key`), so the row identity has no root to live on; the build fails even without strict mode.',
     'Return one Element per row, `(row) => h(\'li\', …)` or `<li>…</li>` (a Fragment around exactly one Element, or a registered child rendering one, is admitted); put conditionals inside that root and leave `data-forma-key` to the compiler.'),
-  entry('BUILD-614', 'List source that is not a function',
-    'Core calls a list\'s source to read its rows, and this one is provably not a function (a literal, a binding to one, a getter\'s returned value or a field of it, or a field its parameter type declares as data), so the page would fail in the browser with `items is not a function`; the build fails even without strict mode.',
+  entry('BUILD-616', 'List source that is not a function',
+    'Core calls a list\'s source to read its rows, and this one is provably not a function (a literal, a binding to one, a provably data-valued getter result or field, or a field its parameter type declares as data), so the page would fail in the browser with `items is not a function`; the build fails even without strict mode.',
     'Pass the getter itself or a function returning the rows: `createList(rows, …)` with `const [rows] = createSignal([...])`, `createList(() => p.rows, …)`, or `const todos = () => [...]`.'),
 
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────

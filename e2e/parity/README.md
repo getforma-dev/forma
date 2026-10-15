@@ -102,7 +102,7 @@ carries the module, the seed, the state index, the verdict (`equal`, `different`
 count, both canonical trees and the server's HTML. A page error or console error during the
 render, or a twin core cannot build, is an `error`, never a pass and never a throw. (Its test
 renders the archived pre-F1 `list-same-source` page, whose list source core cannot call, through
-`renderBoth`'s `page` seam; the corpus page itself passes a function since BUILD-614.)
+`renderBoth`'s `page` seam; the corpus page itself passes a function since BUILD-616.)
 
 ## The corpus and its ratchet
 

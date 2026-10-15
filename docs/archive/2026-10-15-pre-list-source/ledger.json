@@ -1,6 +1,6 @@
 {
   "sourceCommit": "49c614619d1a43f92620b532fa046182d8026952",
-  "reason": "F1: core 3.0 createList calls its source; the compiler now refuses a source it can prove is not a function (BUILD-614), and the corpus case that passed an array is migrated to a function source. Only the source text changes; every compiled output of the case is byte-identical.",
+  "reason": "F1: core 3.0 createList calls its source; the compiler now refuses a source it can prove is not a function (BUILD-616), and the corpus case that passed an array is migrated to a function source. Only the source text changes; every compiled output of the case is byte-identical.",
   "files": {
     "packages/compiler/tests/fixtures/ir-corpus/list-same-source/page.ts": {
       "archived": "sources/list-same-source/page.ts",
@@ -10,7 +10,7 @@
       },
       "after": {
         "bytes": 1203,
-        "sha256": "66774db0e95ff61474adb3aedb6cdb508fcecc33ad9599675a3a0cbf381a9461"
+        "sha256": "7706da3dfdf3741393b92f6d80c14a4a9e061fdaa6bcf76613481dbc15c7e2a2"
       },
       "change": "the list source is a function, `const todos = () => [...]`, instead of the array itself; the rows are the same"
     },

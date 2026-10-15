@@ -1,6 +1,6 @@
 import { h, createList } from 'formajs';
 
-// A list source is a function core calls to read the rows (BUILD-614 refuses a plain array:
+// A list source is a function core calls to read the rows (BUILD-616 refuses a plain array:
 // core 3.0's createList calls it, FORMA-183 finding F1). The original, which passed the array
 // itself, is archived in docs/archive/2026-10-15-pre-list-source/.
 const todos = () => [

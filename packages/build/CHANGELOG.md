@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased — BUILD-614 is mandatory (FORMA-181, FORMA-183 finding F1)
+## Unreleased — BUILD-616 is mandatory (FORMA-181, FORMA-183 finding F1)
 
-- The compiler's new BUILD-614 (a `createList` source that is provably not a function) is an
+- The compiler's new BUILD-616 (a `createList` source that is provably not a function) is an
   error in every mode, like BUILD-610 to BUILD-613.
 
 ## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)

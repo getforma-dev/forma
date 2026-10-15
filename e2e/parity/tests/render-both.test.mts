@@ -60,7 +60,7 @@ test('a walker output with one attribute\'s text altered fails P1 naming the fix
 });
 
 test('a twin core cannot build is the report\'s error verdict, not a throw', async () => {
-  // F1 (BUILD-614): the corpus source now passes a function; the archived original passed the
+  // F1 (BUILD-616): the corpus source now passes a function; the archived original passed the
   // array itself, which core's createList calls, so it stays this test's twin that cannot build.
   const report = await run('list-same-source', 0, undefined, {
     file: 'docs/archive/2026-10-15-pre-list-source/sources/list-same-source/page.ts', exportName: 'ListPage', props: 'none',

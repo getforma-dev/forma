@@ -1,5 +1,5 @@
 /**
- * BUILD-614: a list source that is not a function (FORMA-183's parity harness, finding F1).
+ * BUILD-616: a list source that is not a function (FORMA-183's parity harness, finding F1).
  *
  * Core's `createList(items, key, row)` calls `items()` to read the rows. The native module never
  * evaluates a page list's source (its array is a named slot), so a plain array compiled and then
@@ -29,7 +29,7 @@ function compile(files:Record<string,string>) {
 const page=(declarations:string,source:string)=>({'app.tsx':`${head}${declarations}
 mount(()=><ul>{createList(${source},(r:Row)=>r.id,(r:Row)=><li>{r.label}</li>)}</ul>,'#app');`});
 
-describe('BUILD-614: a list source core cannot call', () => {
+describe('BUILD-616: a list source core cannot call', () => {
  it.each<[string,string,string]>([
   ['a local const array',`const rows=[{id:'a',label:'A'}];`,'rows'],
   ['an array literal',``,`[{id:'a',label:'A'}]`],
@@ -39,7 +39,7 @@ describe('BUILD-614: a list source core cannot call', () => {
   ["a computed getter's value",`const rows=createComputed(()=>[{id:'a',label:'A'}]);`,'rows()'],
  ])('refuses %s at the list, and its function near miss compiles', (_label, declarations, source) => {
   const refused=compile(page(declarations,source));
-  expect(refused.failure).toMatchObject({code:'BUILD-614',line:4});
+  expect(refused.failure).toMatchObject({code:'BUILD-616',line:4});
   expect(String(refused.failure.message)).toMatch(/LIST source is .*, not a function: core calls it to read the rows/);
   const near=compile(page(`const rows=()=>[{id:'a',label:'A'}];`,'rows'));
   expect(near.failure).toBeUndefined();
@@ -50,14 +50,14 @@ describe('BUILD-614: a list source core cannot call', () => {
   const app=(name:string)=>`${head}import {${name}} from './data';
 mount(()=><ul>{createList(${name},(r:Row)=>r.id,(r:Row)=><li>{r.label}</li>)}</ul>,'#app');`;
   const data=`export const rows=[{id:'a',label:'A'}];\nexport const read=()=>rows;\n`;
-  expect(compile({'app.tsx':app('rows'),'data.ts':data}).failure).toMatchObject({code:'BUILD-614',line:4});
+  expect(compile({'app.tsx':app('rows'),'data.ts':data}).failure).toMatchObject({code:'BUILD-616',line:4});
   expect(compile({'app.tsx':app('read'),'data.ts':data}).failure).toBeUndefined();
  });
 
  it('refuses a page field its parameter type declares as an array, and admits the getter form', () => {
   const app=(source:string)=>`${head}function Page(p:{rows:Row[]}) {return <ul>{createList(${source},(r:Row)=>r.id,(r:Row)=><li>{r.label}</li>)}</ul>;}
 mount(()=>Page({rows:[{id:'a',label:'A'}]}),'#app');`;
-  expect(compile({'app.tsx':app('p.rows')}).failure).toMatchObject({code:'BUILD-614',line:3});
+  expect(compile({'app.tsx':app('p.rows')}).failure).toMatchObject({code:'BUILD-616',line:3});
   expect(compile({'app.tsx':app('()=>p.rows')}).failure).toBeUndefined();
  });
 
@@ -66,7 +66,7 @@ mount(()=>Page({rows:[{id:'a',label:'A'}]}),'#app');`;
 activateIslands({Board});
 mount(()=>Board({rows:[{id:'a',label:'A'}]}),'#app');`;
   const refused=compile({'app.tsx':app('p.rows')});
-  expect(refused.failure?.code ?? String(refused.failure?.message)).toMatch(/BUILD-614/);
+  expect(refused.failure?.code ?? String(refused.failure?.message)).toMatch(/BUILD-616/);
   expect(compile({'app.tsx':app('()=>p.rows')}).failure).toBeUndefined();
  });
 
@@ -78,6 +78,26 @@ mount(()=>Board({rows:[{id:'a',label:'A'}]}),'#app');`;
    [``,`()=>[{id:'a',label:'A'}]`],
    [``,`function(){return [{id:'a',label:'A'}];}`],
   ]) expect(compile(page(declarations!,source!)).failure, source).toBeUndefined();
+ });
+
+ it.each<[string,string,string]>([
+  ['a function stored in a signal', `const [rows]=createSignal(()=>[{id:'a',label:'A'}]);`, 'rows()'],
+  ['a function returned by a computed getter', `const rows=createComputed(()=>()=>[{id:'a',label:'A'}]);`, 'rows()'],
+  ['a function field stored in a signal', `const [data]=createSignal({rows:()=>[{id:'a',label:'A'}]});`, 'data().rows'],
+  ['a nested function field stored in a signal', `const [data]=createSignal({nested:{rows:()=>[{id:'a',label:'A'}]}});`, 'data().nested.rows'],
+  ['an opaque signal value', `declare function initial():any;const [rows]=createSignal(initial());`, 'rows()'],
+  ['an opaque computed value', `declare function initial():any;const rows=createComputed(()=>initial());`, 'rows()'],
+  ['a function shadowing undefined', `const undefined=()=>[{id:'a',label:'A'}];`, 'undefined'],
+ ])('admits %s without assuming a getter returns data', (_label, declarations, source) => {
+  const result=compile(page(declarations,source));
+  expect(result.failure).toBeUndefined();
+  expect(result.binary).toBeInstanceOf(Uint8Array);
+ });
+
+ it.each(['export let rows:any=[];rows=()=>[{id:"a",label:"A"}];', 'let rows:any=[];rows=()=>[{id:"a",label:"A"}];export {rows};'])('does not classify a mutable export by its stale initializer: %s', data => {
+  const result=compile({...page('import {rows} from "./data";', 'rows'), 'data.ts':data});
+  expect(result.failure).toBeUndefined();
+  expect(result.binary).toBeInstanceOf(Uint8Array);
  });
 });
 
@@ -99,8 +119,8 @@ describe('archived pre-F1 list source', () => {
    if(entry.archived)expect(manifest.sha256[entry.archived]!.sha256,path).toBe(entry.before.sha256);
   }
  });
- it('compiles the archived page to BUILD-614 at its first list', () => {
+ it('compiles the archived page to BUILD-616 at its first list', () => {
   vi.spyOn(console,'warn').mockImplementation(()=>{});
-  expect(()=>generateRealIr(join(ARCHIVE,'sources/list-same-source/app.ts'))).toThrow(/^BUILD-614 .*page\.ts:14:\d+: LIST source is an array, not a function/);
+  expect(()=>generateRealIr(join(ARCHIVE,'sources/list-same-source/app.ts'))).toThrow(/^BUILD-616 .*page\.ts:14:\d+: LIST source is an array, not a function/);
  });
 });
