@@ -10,7 +10,7 @@ struct Files;
 
 fn valid() -> Value {
     json!({"version":2,"writer":"3.0.0","app":"ledger","build":"fixture",
-        "aliases":{"home.js":"chunk-X.js"},"assets":{"chunk-X.js":{"immutable":true}},
+        "aliases":{"home.js":"chunk-X.js"},"assets":{"chunk-X.js":{"immutable":true,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"}},
         "routes":{"/":{"mode":"browser","js":["chunk-X.js"],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0}}})
 }
 fn load(value: &Value) -> Result<AssetManifest, String> {

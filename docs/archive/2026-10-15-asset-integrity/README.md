@@ -1,0 +1,3 @@
+# Manifest metadata before mandatory integrity
+
+These are the exact current schema2 test manifests before FORMA-111 required full SHA-384. Their IR and historical document byte fixtures remain unchanged. `manifest-index.json` records the original SHA256 values and files deliberately absent from metadata-only/negative fixtures. Current metadata hashes actual adjacent uncompressed fixture bytes when present; deliberately absent assets use the digest of the empty placeholder and remain absent, preserving their negative/metadata-only purpose. These historical manifests are archived evidence, not accepted v3 inputs.

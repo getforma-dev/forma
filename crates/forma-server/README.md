@@ -62,3 +62,10 @@ The old `try_render`, tuple loader, public IrModules/RenderMode, PageOutput, ren
 The [3.0 migration guide](../../docs/UPGRADING-3.0.md) covers startup, request metadata, limits and deployment profiles.
 
 Asset serving, opt-in checked service-worker configuration and the named preview frame retain their existing APIs. See their module documentation and [release runbook](../../docs/RELEASING.md).
+
+
+## Asset integrity
+
+Schema2 manifests require a full canonical `sha384-` digest for every asset, including retained files. Build metadata hashes the final uncompressed bytes. Missing or malformed digests refuse startup with MANIFEST-103 and the filename. Every external script, stylesheet and modulepreload tag carries that digest and `crossorigin="anonymous"`; script tags and modulepreloads keep their existing nonce. Inline request JSON, branding CSS and registration code remain nonce-protected.
+
+Browser rendering revalidates a manually constructed manifest. A missing/invalid digest or a typed preload absent from the current manifest refuses the response with RENDER-104. A development preload table must be replaced when its files leave the accepted snapshot. The public-path controls in `tests/asset_integrity.rs` cover exact tag attributes, both rendering modes, canonical digest refusals and stale preload references. Resource byte verification in the optional worker is separate from tag SRI, including dynamically imported chunks that have no tag.
