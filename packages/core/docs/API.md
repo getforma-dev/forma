@@ -496,6 +496,7 @@ The sections above cover application APIs with non-obvious semantics.
 | State | `createStore`, `createHistory`, `persist(source, key, options?)` — mirrors a `[get, set]` pair into `localStorage` |
 | Islands | `activateIslands`, `hydrateIsland`, `deactivateIsland`, `deactivateAllIslands`, `sanitizePropsDeep`, `browserOnly(component)` — a component that renders in the browser alone ([ISLANDS.md](ISLANDS.md#browser-only-components-browseronly)) |
 | Compiler internal | `__islandRegistration(component, metadata)` — generated registration with canonical schema, digest and render mode; [internal state contract](ISLAND-STATE.md), not an application bypass |
+| Compiler internal, staged | `__adoptionSignal(site, pair)` and `__adoptionWritable(read, getter, codec, site)` retain actual component-local signal identities for the private FORMA-104 preparation seam. They are passthrough outside that scope; compiler emission and the DOM adoption transaction are not integrated yet. |
 | Events | `createBus`, `delegate(container, selector, event, handler)`, `onKey(combo, handler, options?)` |
 | DOM utils | `$`, `$$`, `addClass`, `removeClass`, `toggleClass`, `setStyle`, `setAttr`, `setText`, `setHTMLUnsafe`, `closest`, `children`, `siblings`, `parent`, `nextSibling`, `prevSibling`, `onResize`, `onIntersect`, `onMutation` |
 | Raw HTML | `trustedHtml(markup)` — the one raw-HTML entry, which every raw sink takes ([below](#trustedhtml-the-one-raw-entry)) |
