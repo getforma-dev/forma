@@ -1,0 +1,196 @@
+{
+  "originals": 21,
+  "current": 22,
+  "extra": "Matching edited readonly refusal versus explicit literal initialization, zero writes/focus/selection/FormData.",
+  "cases": [
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "a root Fragment from the server is interactive under caller-owned direct adoption",
+      "current": "a root Fragment from the server is interactive under caller-owned direct adoption",
+      "unchangedBody": false,
+      "originalSha256": "f13dfeb207c12c3a2a58c47f0e55ae988b4e234d16bd1645c562306ef3892ecb",
+      "currentSha256": "453b578d34f90d47dfb20ad30c9eab45357fcddb5d08c54556bb08d614d36009",
+      "mapping": "Root Fragment keeps original nodes and live handlers; successful SSR marker remains unchanged."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "what the user entered before activation survives adoption, and later updates still apply",
+      "current": "edited public controls and mismatched legacy defaults refuse without changing what the user entered",
+      "unchangedBody": false,
+      "originalSha256": "3e9a25efc5d50eae426576b069c4881a36099956eeb8a15416d4f87c7acbaa12",
+      "currentSha256": "5b7d7e10540e294618d4e6554e70538e9cdde8c4a200c48dce8088bfe62d51b9",
+      "mapping": "Original edited controls plus legacy textarea preserve live values/focus/FormData and exact original nodes on VALUE; old repair/subsequent binding retired. A separate new control proves matching edited readonly INPUT_TARGET versus literal initial preservation."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "an untouched page whose server agrees with the client is adopted without one DOM write",
+      "current": "an untouched page whose server agrees with the client is adopted without one DOM write",
+      "unchangedBody": false,
+      "originalSha256": "784789947f944c9f3a5efa685708df0d40e4ed98358736df9882b1d8ce77fdc0",
+      "currentSha256": "ad241ec915b49e7d470c88f42ab66f63b80bd209d3400ede5109ef4d00562cb2",
+      "mapping": "Untouched controls/title keep FormData and zero DOM writes through a task, with positive observer control."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "an older server's marker text and unselected select are repaired at adoption",
+      "current": "an older server's marker text and unselected select refuse without repair",
+      "unchangedBody": false,
+      "originalSha256": "3b4b0ce15fde67df786dbad4f8d6cc8fa92865acfc38657f4ae59a05ba89ece4",
+      "currentSha256": "443a7c2cfa0a8f9a175acbef5194981cf0e96d89e10a083937190003123dccb2",
+      "mapping": "Legacy RCDATA markers and select default repair replaced by VALUE with exact originals and inert subsequent signals; matching title/control positives retained elsewhere."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike",
+      "current": "after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike",
+      "unchangedBody": false,
+      "originalSha256": "8c55c28d3bde745d7cca02e85a5440730230dda48a50ab2c925cbac601c0a398",
+      "currentSha256": "2c325f9727a3ff5eb52459c56dcbee7e04e7d9acd98765ef2d9ecf9d606a9a0c",
+      "mapping": "Reactive textarea later controls both live/default values, matching current ordinary CSR; original user edit sequence preserved."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "a component that returns a DOM node is adopted as itself or reported, and never aborts the module",
+      "current": "components returning real DOM nodes are refused without replacing originals or aborting the module",
+      "unchangedBody": false,
+      "originalSha256": "3c68baa33c349f786a2afbcd4489142ced2461611fef9e35e81f07d44de3deac",
+      "currentSha256": "1151325c405c984fda679612452eefa3509350865eaeba61912a340d0db3c6ec",
+      "mapping": "Real DOM/template component returns now STRUCTURE rather than implicit adoption; original module continuation, inert failed effects and server content preserved. Manual user addEventListener is not claimed to be auto-removed."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "an option bound to undefined submits its text, client-rendered and adopted",
+      "current": "an option bound to undefined submits its text, client-rendered and adopted",
+      "unchangedBody": false,
+      "originalSha256": "199e1926827bed439484e4acb8fa38e8f89160852037905c531ad7d8b38aa2e4",
+      "currentSha256": "e03efee26b5ba3ee5b6c0a8b5851e54aff9dac8eb537bfa532f77e7f2cf87998",
+      "mapping": "Nullish option values retain exact native FormData positive."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "an inline SVG icon is adopted without one DOM write; its title stays SVG and a bound path updates in place",
+      "current": "an inline SVG icon is adopted without one DOM write; its title stays SVG and a bound path updates in place",
+      "unchangedBody": false,
+      "originalSha256": "c60b4d9da3e262759d211bdebaef0a873a844ac2a745b0cf689dd7268d4092e9",
+      "currentSha256": "5cc6f1918df4720a8befe8b68b9c5af8bfbc4df8963edbe9483964084d09e299",
+      "mapping": "SVG identity, namespaces/accessibility and exact later path mutation retained; zero initial writes."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "SVG and MathML are adopted in place, and what adoption must create inside them gets their namespace",
+      "current": "SVG and MathML refuse missing or differing originals, then matching native trees update in place",
+      "unchangedBody": false,
+      "originalSha256": "b9a013e4fa22f80a66f4206e85dd48e9d50a67c0e2032e04d2fda49f0bfd4c8a",
+      "currentSha256": "a4fe933967412ba361f9a83b7a781f06241e3424788e7c5817cf89ed73e28d83",
+      "mapping": "Original missing/mismatched MathML/SVG becomes MARKER refusal; matching companion preserves all namespace/identity/live math assertions. Later namespace creation remains in Show/List/switch/portal case."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "a bound iframe src the server already rendered is not set again, so the frame is not reloaded",
+      "current": "a bound iframe src the server already rendered is not set again, so the frame is not reloaded",
+      "unchangedBody": false,
+      "originalSha256": "2431eb4706da946a05872a4993b9a9a7ab3f99be7c7d598a56ed85202220cf5e",
+      "currentSha256": "20bc272f22fca9e88c8303633168364d1739134cf76fcd5f3cfa6338da6d5610",
+      "mapping": "Existing iframe src does not reload; later genuine navigation remains."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "a list whose client array differs in count from the server rows leaves the island error with its code and removes no node",
+      "current": "a list whose client array differs in count from the server rows leaves the island error with its code and removes no node",
+      "unchangedBody": false,
+      "originalSha256": "9aca2c128a830b06e9de2b737dc5e9f70fb04ac60091c26e56b8a9410b8288ec",
+      "currentSha256": "16698f17f0d4d0a5b95fc273c3ee423e16d672b7d3c9d438d17958e14e1eafc2",
+      "mapping": "Fewer/more List retain exact markup, coded refusal, one status write/owner and no node removal; equal neighbor now zero writes and internally live. New diagnostic reports exact DOM extent, not inferred row count."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "the namespace vectors: the parser, h() and adoption agree on every element and on the markup",
+      "current": "the namespace vectors: the parser, h() and adoption agree on every element and on the markup",
+      "unchangedBody": false,
+      "originalSha256": "2d73396f2bab5ac5aaf029cc9de482bbf34175bad03ba6437f72dcaf6cf93de4",
+      "currentSha256": "6ca451b8a8cb8966f8a423d60a12af7f77f70b7b81a08b188303ace30e275e80",
+      "mapping": "All namespace vectors and script refusals unchanged; parser/CSR/adopter equality retained; zero writes includes macrotask and positive observer."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "content built inside an svg is SVG and rendered once: a createShow branch, list rows, switch cases, a portal; a foreignObject holds HTML",
+      "current": "content built inside an svg is SVG and rendered once: a createShow branch, list rows, switch cases, a portal; a foreignObject holds HTML",
+      "unchangedBody": false,
+      "originalSha256": "fc8c135584424f51cff8756b9d09a22687eed4a68427d633d31666be231ac834",
+      "currentSha256": "33f6cee458f03de34896cb588f268e82b6763491024b0c0e60175c0644682b33",
+      "mapping": "Initial Show/List server markup now matches client; all later branches/rows/switch/portal/foreignObject namespace/render-count assertions retained."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "a reactive dangerouslySetInnerHTML is adopted as content, follows its signal through null and back, and matches client rendering",
+      "current": "a reactive dangerouslySetInnerHTML is adopted as content, follows its signal through null and back, and matches client rendering",
+      "unchangedBody": false,
+      "originalSha256": "84cf1efc0c7a4deb86654b8842870f17ba69432d929c069139165f3d6c631810",
+      "currentSha256": "e59eb3927c2c9b4bce4bacb193a11f911314bc9a5615a67799a0e8d507e8da8e",
+      "mapping": "Empty server/raw initial mismatch preserved as VALUE; matching positive keeps original A→B→null→A→C CSR equality and failed owner inert."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and their handlers work",
+      "current": "a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and their handlers work",
+      "unchangedBody": false,
+      "originalSha256": "4a12e969ec14539f4c997688060d4c4d6d2807d3594af4b40cea486666659c25",
+      "currentSha256": "7e45e902381acee5045f9ff6ab5d7ef5c3b1caad1bd5eabe2cf986b09fd51c52",
+      "mapping": "Falsy raw undefined/null/false fallback children and handlers retained."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "markup the server wrote in a form the browser serialises differently is adopted without one DOM write, and typed text survives",
+      "current": "markup the server wrote in a form the browser serialises differently is adopted without one DOM write, and typed text survives",
+      "unchangedBody": false,
+      "originalSha256": "36fa646393b53a5f6b2efcc450f4917aa13792938320ec63a666663852f35fcf",
+      "currentSha256": "b9e740ae0bd292b22e29c2b61a87348d66427f3f8b44ee14190b931ca3ac7eae",
+      "mapping": "All21 noncanonical raw variants unchanged; identity and edited input preserved, zero writes through task and positive observer."
+    },
+    {
+      "path": "packages/core/e2e/adoption.spec.ts",
+      "original": "a reactive dangerouslySetInnerHTML whose first value is null keeps the server's fallback child, bound, until markup arrives",
+      "current": "a reactive dangerouslySetInnerHTML whose first value is null keeps the server's fallback child, bound, until markup arrives",
+      "unchangedBody": false,
+      "originalSha256": "862175ad8d2ce3aa926b2f3ad1af9aa2771d61c732c5ff6366503b07a4b8e001",
+      "currentSha256": "d14774a11188de424ea36e818107bfcf7723fae175550b2667f30503db56acdc",
+      "mapping": "Raw null fallback remains reactive and later replacement works."
+    },
+    {
+      "path": "packages/core/e2e/core-regressions.spec.ts",
+      "original": "controlled input, textarea, checkbox and non-first selections survive real user edits",
+      "current": "controlled input, textarea, checkbox and non-first selections survive real user edits",
+      "unchangedBody": true,
+      "originalSha256": "ca60f95be563299c004950289a7d9a94e469374bbafae681b9d128f210ea069a",
+      "currentSha256": "ca60f95be563299c004950289a7d9a94e469374bbafae681b9d128f210ea069a",
+      "mapping": "Original CSR case body byte-identical."
+    },
+    {
+      "path": "packages/core/e2e/core-regressions.spec.ts",
+      "original": "multiple select changes update the browser live selection collection",
+      "current": "multiple select changes update the browser live selection collection",
+      "unchangedBody": true,
+      "originalSha256": "c1f326ac3aebd9f4c1610f066e0db7949afcda0102339ddc5424acb19e9b054b",
+      "currentSha256": "c1f326ac3aebd9f4c1610f066e0db7949afcda0102339ddc5424acb19e9b054b",
+      "mapping": "Original CSR case body byte-identical."
+    },
+    {
+      "path": "packages/core/e2e/core-regressions.spec.ts",
+      "original": "same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM",
+      "current": "same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM",
+      "unchangedBody": true,
+      "originalSha256": "45aab1709a0e0e1b47388eaf91d315b400f863434a9f6089efcf035dd8a433b1",
+      "currentSha256": "45aab1709a0e0e1b47388eaf91d315b400f863434a9f6089efcf035dd8a433b1",
+      "mapping": "Original CSR case body byte-identical."
+    },
+    {
+      "path": "packages/core/e2e/core-regressions.spec.ts",
+      "original": "SSR adoption restores form properties and keeps them controlled",
+      "current": "SSR adoption refuses mismatched older properties and keeps matching controls live",
+      "unchangedBody": false,
+      "originalSha256": "cf67e797081a9f561c0a4f05adf51bc40260a94e691cd9235c94862f073fc695",
+      "currentSha256": "49255f3eb5867a1a9abb05e500d627056f7f18f3b9982d69e4736990e60d9af3",
+      "mapping": "Original mismatched properties become VALUE with exact DOM; matching separate controls retain later update positive."
+    }
+  ]
+}
