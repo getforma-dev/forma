@@ -23,15 +23,26 @@ import { reportError } from './dev.js';
 import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
 import { deferAdoptionEffect } from './adoption-hooks.js';
 
+declare const __FORMA_FRAME_BUILD__: boolean | undefined;
+
 // A live adopted callback's nested effects inherit its failure boundary. This
 // is dynamically scoped around execution and restored even when it throws.
 let adoptionFailure: ((error: unknown) => void) | undefined;
+// Only actual adoption consumers install the heavy reader implementation.
+// Ordinary runtime entries can invoke this context without retaining it.
+// Verified by: src/reactive/__tests__/effect-dependency.test.ts > "keeps the ordinary runtime reader reactive without retaining the public effect implementation"
+let adoptionInternalEffect: ((fn: () => void) => () => void) | undefined;
 
 /** @internal A committed ref may construct effects owned by the same island. */
 export function withAdoptionEffectFailure<T>(failure: (error: unknown) => void, fn: () => T): T {
   const previous = adoptionFailure;
+  const previousReader = adoptionInternalEffect;
   adoptionFailure = failure;
-  try { return fn(); } finally { adoptionFailure = previous; }
+  adoptionInternalEffect = reader => createEffectNow(reader, failure, true);
+  try { return fn(); } finally {
+    adoptionFailure = previous;
+    adoptionInternalEffect = previousReader;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -147,9 +158,13 @@ export function internalEffect(fn: () => void): () => void {
   // Adopted live readers can construct nodes, listeners and nested work. Reuse
   // the effect generation owner/failure boundary while retaining initial throw.
   // Verified by: src/dom/__tests__/reviewer-events-internal-generation.test.ts > "revokes removed public h function-child listeners and their callback resources on each generation"
-  if (adoptionFailure) return createEffectNow(fn, adoptionFailure, true);
-  const events = getAdoptionEvents();
-  const run = () => withAdoptionEvents(events, fn);
+  // The frame has no adopted regions; keep its ordinary reader independent
+  // of the adoption-only effect owner and event context. Undefined flags keep
+  // raw-source tooling on the normal path.
+  // Verified by: src/reactive/__tests__/frame-effect.test.ts > "keeps the frame reader reactive and disposable without linking the unused adoption effect graph"
+  if (!(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) && adoptionInternalEffect) return adoptionInternalEffect(fn);
+  const events = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionEvents();
+  const run = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : () => withAdoptionEvents(events, fn);
   let firstRun = true;
   const dispose = rawEffect(() => {
     if (firstRun) {
@@ -188,6 +203,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
   // ordinary CSR DOM path uses internalEffect without a child-owner. Adopted
   // internal bindings use this owner too, since readers can construct callbacks.
   const childOwner: Owner = createChildOwner();
+  const internalReader = failure ? (reader: () => void) => createEffectNow(reader, failure, true) : undefined;
 
   // Most effects have zero or one cleanup. Track the single-cleanup case
   // without array allocation; only promote to pooled array when needed.
@@ -249,7 +265,9 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     // keeps the zero/one-cleanup case allocation-free.
     const prevCollector = setCleanupCollector(addCleanup);
     const previousFailure = adoptionFailure;
+    const previousReader = adoptionInternalEffect;
     adoptionFailure = failure;
+    adoptionInternalEffect = internalReader;
 
     try {
       // Run the body with this effect's child-owner installed so any nested
@@ -280,6 +298,7 @@ function createEffectNow(fn: () => void | (() => void), failure?: (error: unknow
     } finally {
       setCleanupCollector(prevCollector);
       adoptionFailure = previousFailure;
+      adoptionInternalEffect = previousReader;
       // A nested callback can abort this island while this body is still on
       // the stack. JavaScript then continues the body: drain roots/effects and
       // cleanups created AFTER wrappedDispose's first synchronous teardown.

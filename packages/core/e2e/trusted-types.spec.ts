@@ -220,12 +220,22 @@ for (const { mode, header, disposition } of MODES) {
         // content through the raw sink, A → null → A, never an attribute.
         const island = document.createElement('div');
         island.setAttribute('data-forma-ssr', '');
-        island.append(document.createElement('article'));
+        const originalArticle = document.createElement('article');
+        const originalBold = document.createElement('b');
+        originalBold.textContent = 'A';
+        originalArticle.append(originalBold);
+        island.append(originalArticle);
         document.body.append(island);
         const [adoptedHtml, setAdoptedHtml] = createSignal({ __html: trustedHtml('<b>A</b>') });
         const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
+        const writes: MutationRecord[] = [];
+        const observer = new MutationObserver(batch => writes.push(...batch));
+        observer.observe(island, { subtree: true, attributes: true, characterData: true, childList: true });
         const disposeAdoption = adoptInRoot(() => h('article', { dangerouslySetInnerHTML: () => adoptedHtml() }), island);
         const article = island.querySelector('article')!;
+        await new Promise(resolve => setTimeout(resolve, 0));
+        out.adoptionCommit = { sameNodes: article === originalArticle && article.firstChild === originalBold, writes: writes.length + observer.takeRecords().length };
+        observer.disconnect();
         const adopted = [article.innerHTML];
         setAdoptedHtml(null);
         adopted.push(article.innerHTML);
@@ -264,6 +274,7 @@ for (const { mode, header, disposition } of MODES) {
         again: ['<i>two</i>', '<p>c</p>'],
         others: ['<u>u</u>', 't', 2],
         unmounted: 0,
+        adoptionCommit: { sameNodes: true, writes: 0 },
         adopted: ['<b>A</b>', '', '<b>A</b>', 'false'],
         empty: '1',
         diff: '1b',

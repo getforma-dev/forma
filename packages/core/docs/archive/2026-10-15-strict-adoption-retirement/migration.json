@@ -15,9 +15,9 @@
     },
     {
       "original": "packages/core/bench/hydrate.bench.ts",
-      "status": "pending",
+      "status": "migrated-pending-independent-review",
       "original_named_cases": [],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 15 benchmark declarations/shapes/presets retained. Strict fixtures connect/remove the original host each cycle, exact slot defaults start at zero plus slot index, and guards require zero writes/refusals plus page/list later liveness. Validation smoke ran one selected 200-iteration adoption benchmark with all fixture guards; no comparable performance claim. Archived detached repairing-path measurements are historical."
     },
     {
       "original": "packages/core/docs/API.md",
@@ -92,18 +92,18 @@
     },
     {
       "original": "packages/core/e2e/trusted-types.spec.ts",
-      "status": "pending",
+      "status": "migrated-pending-native-review",
       "original_named_cases": [
         "the shared registry holds no policy object, and its forma-runtime handle mints nothing from a string (enforced)",
         "under Report-Only a string written to innerHTML raises one report and still renders",
         "enforced, a string written to innerHTML is refused and raises one violation",
         "the shared forma mint is callable by page scripts while duplicate named policy creation is refused"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Only the adopted raw-content fixture now contains matching original A markup built with DOM calls. All Report-Only/enforced raw sink, violation, transition and no-pageerror expectations remain; added original article/bold identity and callback-retained zero-write commit proof. Native replay pending coherent build."
     },
     {
       "original": "packages/core/src/__tests__/hydration-observability.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "conditional rendering: client render shows visible branch",
         "conditional rendering: hydration descriptor initialBranch matches client visible branch",
@@ -111,19 +111,19 @@
         "createShow during hydration returns ShowDescriptor not HydrationDescriptor",
         "h() during hydration returns HydrationDescriptor not a DOM element"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/__tests__/index-surface.test.ts",
-      "status": "pending",
+      "status": "retained-unchanged-pending-integration",
       "original_named_cases": [
         "the subpaths pinned here are exactly the ones package.json publishes"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Exact public exports remain unchanged; retired repairing helpers were private and never in this surface. Replay with final integrated core."
     },
     {
       "original": "packages/core/src/__tests__/renderer-contract.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "lists exactly the sinks this contract claims to cover",
         "every module that writes an attribute is represented in SINKS",
@@ -141,11 +141,12 @@
         "the vectors cover SVG, its HTML integration points, a name h() did not know, and MathML",
         "h(), building each child with its parent known, gives every element the namespace the parser gives it, with the same markup"
       ],
-      "disposition": "Removed retired applyDynamicProps/adoptNode row and non-writing hydrate.ts sink entry. All hostile/safe URL, handler/name, boolean and text vectors now run through actual prepareAdoption+commit and later signal update; existing direct helper-only prepared row is upgraded to the real pipeline. Retired arbitrary object-coercion positives are replaced with eight URL attribute STRUCTURE refusals before any toString call. Typed srcdoc, raw/CSS special sinks and honest writer inventory remain; no new NON_SINK exemption."
+      "disposition": "Removed retired applyDynamicProps/adoptNode row and non-writing hydrate.ts sink entry. All hostile/safe URL, handler/name, boolean and text vectors now run through actual prepareAdoption+commit and later signal update; existing direct helper-only prepared row is upgraded to the real pipeline. Retired arbitrary object-coercion positives are replaced with eight URL attribute STRUCTURE refusals before any toString call. Typed srcdoc, raw/CSS special sinks and honest writer inventory remain; no new NON_SINK exemption.",
+      "independent_review": "work/FORMA-104/retirement-tests-evidence: exact fa352 source deltas, 41 authenticated original files, 354 authored + 7 independent boundary controls passed."
     },
     {
       "original": "packages/core/src/dom/__tests__/adopt-inner-html.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "A \u2192 null \u2192 A shows A again, client-rendered and adopted",
         "A \u2192 false \u2192 A shows A again, client-rendered and adopted",
@@ -156,11 +157,12 @@
         "a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives",
         "adoption refuses strings and look-alikes before writing, then accepts a trusted recovery"
       ],
-      "disposition": "All31 expanded controls retained: historical empty static/reactive raw repair cases become two explicit VALUE refusals with original identity, zero initial/later writes; null/false recovery loops now start from matching original markup; success leaves SSR attribute; later untyped failure aborts adoption while ordinary CSR recovery remains positive. The once-per-registry raw-plus-children warning is preserved on a matching fixture and required production fix d3537cc; original migrated warning failure is retained."
+      "disposition": "All31 expanded controls retained: historical empty static/reactive raw repair cases become two explicit VALUE refusals with original identity, zero initial/later writes; null/false recovery loops now start from matching original markup; success leaves SSR attribute; later untyped failure aborts adoption while ordinary CSR recovery remains positive. The once-per-registry raw-plus-children warning is preserved on a matching fixture and required production fix d3537cc; original migrated warning failure is retained.",
+      "independent_review": "work/FORMA-104/retirement-tests-evidence: exact fa352 source deltas, 41 authenticated original files, 354 authored + 7 independent boundary controls passed."
     },
     {
       "original": "packages/core/src/dom/__tests__/form-control-adoption.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-integration-and-review",
       "original_named_cases": [
         "keeps text typed into an input before activation, then follows later updates",
         "keeps a checkbox and a radio choice the user changed before activation",
@@ -181,11 +183,31 @@
         "after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike",
         "an option bound to undefined or null submits its text, client-rendered and adopted"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 18 original named controls retained and mapped. Public edited reactive readers explicitly refuse INPUT_TARGET without invented setter authority; older mismatched defaults/marker text explicitly refuse VALUE with unchanged node identity and zero writes. Literal initialization, matching unedited controls, composed textarea, later live/default updates, FormData and nullish option positives remain. Compiled writable seeding positives remain in adoption-control-bindings.test.ts. Matching HTML title assertions are still enabled and currently blocked by the retained RCDATA production gap (three failures), not changed to refusals.",
+      "case_map": {
+        "keeps text typed into an input before activation, then follows later updates": "refuses an edited public reactive input and leaves its later updates inert",
+        "keeps a checkbox and a radio choice the user changed before activation": "refuses edited public checkbox and radio readers without changing either choice",
+        "keeps a select option the user picked before activation, with or without selected in the server HTML": "refuses edited public selection and mismatched older defaults without repair",
+        "selects the bound option of an untouched select from an older server": "refuses an untouched older select whose selected default disagrees",
+        "keeps a multiple select's edited selection and an option's selected binding": "refuses edited public multiple-select and option readers without changing selection",
+        "keeps text typed into a textarea's value form before activation, from either server output": "refuses edited public textarea readers and older mismatched defaults",
+        "adoption writes nothing when the server and the client agree": "adoption writes nothing when the server and the client agree",
+        "repairs an untouched control the server rendered with another value": "refuses mismatched control defaults without repairing any sibling",
+        "binds a marker-free textarea by the element and writes nothing when it agrees": "binds a marker-free textarea by the element and writes nothing when it agrees",
+        "accepts a textarea with marker text from an older server and removes the markers": "refuses older textarea marker text without stripping or binding it",
+        "keeps text typed into a marker-carrying textarea before activation": "refuses a marker-carrying textarea while preserving its edited live value",
+        "keeps server text that only looks like marker text, edited or not, without a write": "keeps server text that only looks like marker text, edited or not, without a write",
+        "cleans an older server's markers around a literal marker exactly, and leaves a disagreeing edited default alone": "refuses older markers around literal marker text and preserves both edited defaults",
+        "adopts an empty value from an older server, written as a zero-width space between markers, as empty": "refuses an older zero-width-space marker value without clearing it",
+        "binds a textarea with static and reactive text, from either server output": "binds matching composed textarea text and refuses older marker-bearing output",
+        "binds a title's reactive text by the element, with or without marker text": "binds matching title text by the element and refuses older marker-bearing output",
+        "after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike": "after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike",
+        "an option bound to undefined or null submits its text, client-rendered and adopted": "an option bound to undefined or null submits its text, client-rendered and adopted"
+      }
     },
     {
       "original": "packages/core/src/dom/__tests__/form-control.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "initializes static and reactive selects after their options, before ref",
         "writes textarea live values, overriding initial children",
@@ -208,11 +230,12 @@
         "updates selected properties after the user changes an option": "updates selected properties after the user changes an option",
         "uses live properties for adopted static and reactive form controls": "uses live properties for adopted static and reactive form controls",
         "binds an adopted select after missing option children are constructed": "refuses an adopted select with missing options without constructing them"
-      }
+      },
+      "independent_review": "work/FORMA-104/retirement-tests-evidence: exact fa352 source deltas, 41 authenticated original files, 354 authored + 7 independent boundary controls passed."
     },
     {
       "original": "packages/core/src/dom/__tests__/h-function-components.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "calls the function with merged props including children",
         "passes children array in props when called with null props",
@@ -222,7 +245,7 @@
         "does NOT generate hydration descriptors \u2014 returns real DOM even during hydration mode",
         "nested function components work: h(Outer) where Outer returns h(Inner)"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/dom/__tests__/helpers/owned-adoption.ts",
@@ -232,7 +255,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate-cleanup.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "hydrated event listeners fire before cleanup",
         "after cleanup(el), event listeners no longer fire",
@@ -249,7 +272,8 @@
         "shares AbortController with element.ts (same Symbol.for key)": "keeps ordinary h listener cleanup independent of an adopted owner",
         "cleanup is idempotent \u2014 calling twice does not throw": "owner disposal is idempotent",
         "element can receive new listeners after cleanup": "element can receive a new adopted owner after disposal"
-      }
+      },
+      "independent_review": "work/FORMA-104/retirement-tests-evidence: exact fa352 source deltas, 41 authenticated original files, 354 authored + 7 independent boundary controls passed."
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate-fragment.test.ts",
@@ -291,7 +315,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/hydrate.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "exports hydrateIsland from dom/index",
         "defaults to false",
@@ -394,7 +418,7 @@
         "a binding that throws while being built fails only its own island",
         "a binding that throws on a shared-signal update does not freeze the other island"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/dom/__tests__/list-adoption-count.test.ts",
@@ -424,7 +448,7 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/list-disposal.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-integration-and-review",
       "original_named_cases": [
         "item effects are disposed when item is removed from list",
         "all item effects are disposed when parent root is disposed",
@@ -441,11 +465,27 @@
         "moves the count to the element that replaced an empty island shell",
         "does not double-count an island that activateIslands is called on twice"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All original 14 controls retained. Activated fixture now describes its exact original span/text instead of returning undefined. Old automatic empty-shell replacement becomes explicit compiled BrowserOnly mode, retaining count transfer/disposal. Added separate empty SSR shell NODE refusal and zero retained count. Existing row teardown, animation, double-deactivation, scheduled-island, HMR, and ordinary CSR controls retained. Runtime activation integration pending.",
+      "case_map": {
+        "item effects are disposed when item is removed from list": "item effects are disposed when item is removed from list",
+        "all item effects are disposed when parent root is disposed": "all item effects are disposed when parent root is disposed",
+        "deactivates an island inside a removed row": "deactivates an island inside a removed row",
+        "deactivates an island that IS the removed row element": "deactivates an island that IS the removed row element",
+        "defers island deactivation until an animated row is actually removed": "defers island deactivation until an animated row is actually removed",
+        "deactivates a scheduled island that never hydrated inside a removed row": "deactivates a scheduled island that never hydrated inside a removed row",
+        "does not scan a removed row when no island has ever been activated": "does not scan a removed row when no island has ever been activated",
+        "scans every removed row while an island is live": "scans every removed row while an island is live",
+        "still deactivates a live island after a different island was deactivated": "still deactivates a live island after a different island was deactivated",
+        "still deactivates a live island after the same island was deactivated twice": "still deactivates a live island after the same island was deactivated twice",
+        "stops scanning once every island has been deactivated with deactivateAllIslands": "stops scanning once every island has been deactivated with deactivateAllIslands",
+        "stops scanning after an island whose hydrate function threw": "stops scanning after an island whose hydrate function threw",
+        "moves the count to the element that replaced an empty island shell": "moves the count to the replacement of an explicit BrowserOnly island",
+        "does not double-count an island that activateIslands is called on twice": "does not double-count an island that activateIslands is called on twice"
+      }
     },
     {
       "original": "packages/core/src/dom/__tests__/list-hydration.test.ts",
-      "status": "pending",
+      "status": "independently-reviewed-pending-activation",
       "original_named_cases": [
         "returns ListDescriptor when hydrating=true",
         "returns DocumentFragment when hydrating=false",
@@ -474,11 +514,11 @@
         "removes a duplicate data-forma-key row instead of leaving a ghost",
         "adopts a list that is a show branch with no wrapper element"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All 139 original declarations across four suites map to retained behavior or explicit strict replacements in direct-fixtures-evidence/assertion-mapping.json. Original 121660 bytes authenticated, all current files/helper source-read, complete expected observability markup retained. Root combined replay passes185 with only two unchanged old activation-isolation cases pending activation/status/fixture migration; no skips or aliases."
     },
     {
       "original": "packages/core/src/dom/__tests__/multi-island-integration.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-integration-and-review",
       "original_named_cases": [
         "two islands: both interactive, handlers fire, reactive text updates",
         "single island: click handler fires and updates reactive text",
@@ -486,7 +526,14 @@
         "island failure recovery: broken island, page remains usable",
         "broken island preserves SSR content while sibling gets dispose function"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "All five original controls retained. Synthetic inter-element indentation is removed to match exact compact native output; all original semantic children, markers and values remain. Successful SSR status stays at original pending while real disposer/interaction/update checks prove internal live phase. Failure status and sibling isolation unchanged. Runtime activation integration pending.",
+      "case_map": {
+        "two islands: both interactive, handlers fire, reactive text updates": "two islands: both interactive, handlers fire, reactive text updates",
+        "single island: click handler fires and updates reactive text": "single island: click handler fires and updates reactive text",
+        "island with list + show: adoption + subsequent reconciliation": "island with list + show: adoption + subsequent reconciliation",
+        "island failure recovery: broken island, page remains usable": "island failure recovery: broken island, page remains usable",
+        "broken island preserves SSR content while sibling gets dispose function": "broken island preserves SSR content while sibling gets dispose function"
+      }
     },
     {
       "original": "packages/core/src/dom/__tests__/namespace-resolution.test.ts",
@@ -510,15 +557,18 @@
     },
     {
       "original": "packages/core/src/dom/__tests__/owned-adoption.test.ts",
-      "status": "pending",
+      "status": "migrated-pending-integration-and-review",
       "original_named_cases": [
         "forwards a thrown component error unchanged and disposes its caller root"
       ],
-      "disposition": "Preserve applicable behavioral/security controls; explicitly map retired repair/private-helper expectations to the strict contract before acceptance."
+      "disposition": "Connected the original target so component execution is eligible; exact original thrown error and node/SSR attribute identity remain. Deferred user effect now runs zero times before initial failure; an explicit disposer proves partial ownership is released once.",
+      "case_map": {
+        "forwards a thrown component error unchanged and disposes its caller root": "forwards a thrown component error unchanged and disposes its caller root"
+      }
     },
     {
       "original": "packages/core/src/dom/__tests__/trusted-html.test.ts",
-      "status": "migrated-pending-independent-review",
+      "status": "independently-reviewed",
       "original_named_cases": [
         "trustedHtml() returns a TrustedHTML from the forma policy where the browser has Trusted Types",
         "without Trusted Types it returns a frozen stand-in that core recognises",
@@ -544,7 +594,8 @@
         "a refused policy name warns once in development, and the sinks then write strings the page refuses",
         "an element named trustedTypes is not Trusted Types"
       ],
-      "disposition": "All existing typed policy/sink vectors retained. Initial raw fixture now matches requested markup; later untyped raw/srcdoc aborts the adopted owner and keeps previous DOM; ordinary CSR still recovers with the same trusted markup. Trusted Types simulation and all violation assertions remain unchanged."
+      "disposition": "All existing typed policy/sink vectors retained. Initial raw fixture now matches requested markup; later untyped raw/srcdoc aborts the adopted owner and keeps previous DOM; ordinary CSR still recovers with the same trusted markup. Trusted Types simulation and all violation assertions remain unchanged.",
+      "independent_review": "work/FORMA-104/retirement-tests-evidence: exact fa352 source deltas, 41 authenticated original files, 354 authored + 7 independent boundary controls passed."
     }
   ]
 }

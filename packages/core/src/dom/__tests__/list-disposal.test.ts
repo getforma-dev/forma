@@ -1,5 +1,6 @@
-import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
+import { compiled, emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { h } from '../element.js';
 import { createList, reconcileList } from '../list';
 import { activateIslands, deactivateAllIslands, deactivateIsland } from '../activate';
 import { createSignal } from '../../reactive/signal';
@@ -139,12 +140,12 @@ function countIslandScans(fn: () => void): number {
  * Hand-assembling an element with a `__formaDispose` property would exercise
  * the subtree walk without exercising the count that decides whether to walk at
  * all — and would therefore keep passing if the count never incremented.
- * `activateIslands` (and, through it, `hydrateIslandRoot`) is the only way an
+ * `activateIslands` (and, through it, strict preparation) is the only way an
  * island acquires anything to tear down, which is exactly why the count is a
  * sound proxy for "a row might contain one".
  *
- * The shell carries text so `hydrateIsland` adopts it instead of taking the CSR
- * fallback, which replaces the element.
+ * The component describes the exact original span and text. A mode-0 shell
+ * never takes a CSR fallback, even when it is empty.
  */
 function activateIslandIn(
   container: HTMLElement,
@@ -154,7 +155,7 @@ function activateIslandIn(
 ): HTMLElement {
   const island = mountOriginal(container, id);
   if (trigger) island.setAttribute('data-forma-hydrate', trigger);
-  activateIslands(emptyRegistry({ Widget: () => { registerDisposer(() => onDispose(id)); } }), container);
+  activateIslands(emptyRegistry({ Widget: () => { registerDisposer(() => onDispose(id)); return h('span', null, 'ssr'); } }), container);
   return island;
 }
 
@@ -401,21 +402,20 @@ describe('the scheduled-or-active island count', () => {
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('moves the count to the element that replaced an empty island shell', () => {
+  it('moves the count to the replacement of an explicit BrowserOnly island', () => {
     const warns = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const holder = document.createElement('div');
     const shell = mountOriginal(holder, 1);
     shell.textContent = '';
 
     let disposed = false;
-    activateIslands(emptyRegistry({
-      Widget: () => {
+    activateIslands({
+      Widget: compiled(() => {
         registerDisposer(() => { disposed = true; });
-        // An EMPTY shell takes hydrateIsland's CSR fallback, which replaces the
-        // shell with the component's own root element.
+        // Replacement is permitted only by explicit BrowserOnly registration.
         return document.createElement('article');
-      },
-    }), holder);
+      }, [[]], 1),
+    }, holder);
     warns.mockRestore();
 
     const replacement = holder.querySelector('article') as HTMLElement;
@@ -428,6 +428,23 @@ describe('the scheduled-or-active island count', () => {
     deactivateIsland(replacement);
     expect(disposed).toBe(true);
     expect(scansForPlainRowRemoval()).toBe(0);
+  });
+
+  it('refuses an empty SSR shell without replacing it or retaining a scan count', () => {
+    const holder = document.createElement('div');
+    const shell = mountOriginal(holder, 1);
+    shell.textContent = '';
+    const original = shell.outerHTML;
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      activateIslands(emptyRegistry({ Widget: () => h('article') }), holder);
+      expect(holder.firstElementChild).toBe(shell);
+      expect(shell.getAttribute('data-forma-status')).toBe('error');
+      expect(shell.outerHTML.replace(' data-forma-status="error"', '')).toBe(original);
+      expect(holder.querySelector('article')).toBeNull();
+      expect((shell as any).__formaDispose).toBeUndefined();
+      expect(scansForPlainRowRemoval()).toBe(0);
+    } finally { errors.mockRestore(); }
   });
 
   it('does not double-count an island that activateIslands is called on twice', () => {

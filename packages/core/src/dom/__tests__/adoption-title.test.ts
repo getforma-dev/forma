@@ -1,7 +1,7 @@
-import{describe,it,expect,vi}from'vitest';
-import{prepareAdoption}from'../adoption.js';
-import{h}from'../element.js';
-import{createSignal}from'../../reactive/signal.js';
+import {describe,it,expect,vi} from 'vitest';
+import {prepareAdoption} from '../adoption.js';
+import {h} from '../element.js';
+import {createSignal} from '../../reactive/signal.js';
 function fixture(value:string){const doc=document.implementation.createHTMLDocument();doc.body.innerHTML='<section><title id="tt"></title></section>';doc.querySelector('title')!.textContent=value;return doc.body.firstElementChild!;}
 describe('read-only HTML title preparation',()=>{
  it('adopts exact marker-free composed title text once with no writes, then updates and disposes',async()=>{

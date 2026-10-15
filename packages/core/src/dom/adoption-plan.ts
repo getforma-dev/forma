@@ -10,7 +10,7 @@ type Code = 'FORMA_E_HYDRATE_NODE' | 'FORMA_E_HYDRATE_MARKER'
   | 'FORMA_E_HYDRATE_STRUCTURE' | 'FORMA_E_HYDRATE_VALUE' | 'FORMA_E_HYDRATE_LIST_COUNT';
 
 export class AdoptionDomError extends Error {
-  constructor(readonly code: Code) { super(`[forma] ${code}`); this.name = 'AdoptionDomError'; }
+  constructor(readonly code: Code, detail?:string) { super(`[forma] ${code}${detail ? `: ${detail}` : ''}`); this.name = 'AdoptionDomError'; }
 }
 function refuse(code: Code): never { throw new AdoptionDomError(code); }
 
@@ -228,6 +228,12 @@ export class AdoptionCursor {
   rangeKind():MarkerKind|undefined { const node=this.current();return node?this.dom.rangeAt(node)?.kind:undefined; }
 
   get atEnd():boolean { return this.next===this.end&&this.offset===0; }
+
+  /** Diagnostic DOM extent only; nodes are not inferred list rows. */
+  remainder():string {
+    let count=0;for(let node=this.next;node&&node!==this.end;node=node.nextSibling)count++;
+    return count ? `${count} unconsumed top-level DOM node${count===1?'':'s'}${this.offset?` (first Text consumed through offset ${this.offset})`:''}` : 'no unconsumed DOM nodes';
+  }
 
   /** Retain exactly what this operation consumed, including authored comments
    * skipped while walking and partial/static Text shared by adjacent rows. */
