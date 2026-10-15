@@ -1957,7 +1957,15 @@ function addShowSlot(
   // getter named without its call (a ternary's `open ? a : b`, `() => open`,
   // `ready() && open`) is a function, always truthy in the browser: BUILD-615
   // naming the missing call.
-  const passedGetter = createShowArgument && cond && t.isIdentifier(cond) && closedEnv(walkCtx).signal(cond) ? cond : undefined;
+  // Type assertions, non-null assertions and parentheses preserve the getter
+  // passed at runtime. Do not unwrap a function body: () => open returns the
+  // getter instead of calling it and must still take the refusal below.
+  let argument = cond;
+  while (argument && (t.isTSAsExpression(argument) || t.isTSSatisfiesExpression(argument)
+    || t.isTSNonNullExpression(argument) || t.isTSTypeAssertion(argument)
+    || t.isParenthesizedExpression(argument))) argument = argument.expression;
+  const passedGetter = createShowArgument && argument && t.isIdentifier(argument)
+    && closedEnv(walkCtx).signal(argument) ? argument : undefined;
   const uncalled = passedGetter ? undefined : uncalledGetter(cond, walkCtx);
   if (uncalled) refuseUncalledGetter(file, uncalled, uncalled.name);
   const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx);
