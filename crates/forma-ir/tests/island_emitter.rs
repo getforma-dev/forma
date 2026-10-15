@@ -17,6 +17,7 @@ fn render(name: &str, props: Value) -> (String, Value) {
         "aggregate-fallback" => include_bytes!("fixtures/island-emitter/aggregate-fallback.ir"),
         "aggregate" => include_bytes!("fixtures/island-emitter/aggregate.ir"),
         "browser" => include_bytes!("fixtures/island-emitter/browser.ir"),
+        "keyed-shapes" => include_bytes!("fixtures/island-emitter/keyed-shapes.ir"),
         // FORMA-181: the four list fixtures as they were before section 6 (unkeyed/README.md).
         "unkeyed/rows" => include_bytes!("fixtures/island-emitter/unkeyed/rows.ir"),
         "unkeyed/local-inputs" => include_bytes!("fixtures/island-emitter/unkeyed/local-inputs.ir"),
@@ -46,6 +47,7 @@ fn key_paths(name: &str) -> Vec<(u32, Vec<String>)> {
         "local-inputs" => include_bytes!("fixtures/island-emitter/local-inputs.ir"),
         "local-aggregates" => include_bytes!("fixtures/island-emitter/local-aggregates.ir"),
         "aggregate-fallback" => include_bytes!("fixtures/island-emitter/aggregate-fallback.ir"),
+        "keyed-shapes" => include_bytes!("fixtures/island-emitter/keyed-shapes.ir"),
         _ => panic!("not a keyed fixture"),
     };
     let module = parse(name, bytes);
@@ -246,6 +248,7 @@ fn refusal(name: &str, props: Value) -> String {
     let bytes: &[u8] = match name {
         "rows" => include_bytes!("fixtures/island-emitter/rows.ir"),
         "aggregate-fallback" => include_bytes!("fixtures/island-emitter/aggregate-fallback.ir"),
+        "keyed-shapes" => include_bytes!("fixtures/island-emitter/keyed-shapes.ir"),
         _ => panic!("not a keyed declared-props fixture"),
     };
     let module = parse(name, bytes);
@@ -437,4 +440,91 @@ fn keyed_fixtures_refuse_duplicate_missing_and_non_identity_keys_as_render_503()
         .unwrap();
     assert_eq!(failure.counts.list_iterations, 1);
     assert_eq!(failure.component_path, Vec::<String>::new());
+}
+
+/// The page props of `keyed-shapes`: two groups keyed by `user.id`, each with its own `items`
+/// list keyed by `id` (both groups use item key 1), and `hr` marks keyed by `id`.
+fn keyed_shapes_props(groups: Value, marks: Value) -> Value {
+    json!({"groups": groups, "marks": marks})
+}
+
+/// FORMA-181 checkpoint B, actual compiler output: a nested key path (`g.user.id`), a keyed
+/// list inside each keyed row (`g.items`, its own duplicate scope per outer row), a VOID row
+/// root (`hr`) carrying the key beside its dynamic attribute, and a registered child outside
+/// the lists. Source: packages/compiler/tests/island-emission.test.ts > "emits keyed rows with
+/// a nested key path, a nested keyed list and a VOID row root".
+#[test]
+fn keyed_shapes_compiler_output_writes_every_rows_key_on_its_own_root() {
+    let paths = key_paths("keyed-shapes");
+    let names: Vec<Vec<String>> = paths.iter().map(|(_, path)| path.clone()).collect();
+    assert_eq!(
+        names,
+        [
+            vec!["user".to_string(), "id".to_string()],
+            vec!["id".to_string()],
+            vec!["id".to_string()]
+        ]
+    );
+    let props = keyed_shapes_props(
+        json!([
+            {"id":"g1","user":{"id":10},"items":[{"id":1,"label":"a"},{"id":2,"label":"b"}]},
+            {"id":"g2","user":{"id":20},"items":[{"id":1,"label":"c"}]}
+        ]),
+        json!([{"id":1},{"id":2}]),
+    );
+    let (html, _) = render("keyed-shapes", props);
+    assert_eq!(
+        html,
+        concat!(
+            "<main><!--f:l0-->",
+            "<section data-forma-key=\"10\" data-g=\"g1\"><!--f:l4-->",
+            "<p data-forma-key=\"1\"><!--f:t0-->a<!--/f:t0--></p>",
+            "<p data-forma-key=\"2\"><!--f:t0-->b<!--/f:t0--></p>",
+            "<!--/f:l4--></section>",
+            "<section data-forma-key=\"20\" data-g=\"g2\"><!--f:l4-->",
+            "<p data-forma-key=\"1\"><!--f:t0-->c<!--/f:t0--></p>",
+            "<!--/f:l4--></section>",
+            "<!--/f:l0--><!--f:l1-->",
+            "<hr data-forma-key=\"1\" data-n=\"1\"><hr data-forma-key=\"2\" data-n=\"2\">",
+            "<!--/f:l1--><!--f:i0--><b data-forma-island=\"0\" data-forma-component=\"Badge\" data-forma-status=\"pending\" data-forma-hydrate=\"load\" data-forma-state=\"0\" data-forma-h=\"b234ea7503d2b4c8\"><!--f:t1-->badge<!--/f:t1--></b><!--/f:i0--></main>"
+        )
+    );
+}
+
+/// The same compiled module refuses each list's duplicate within one execution of that list,
+/// naming that LIST's own offset, the second row and the path.
+#[test]
+fn keyed_shapes_compiler_output_refuses_a_duplicate_in_the_list_execution_that_has_it() {
+    let paths = key_paths("keyed-shapes");
+    let (groups, items, marks) = (paths[0].0, paths[1].0, paths[2].0);
+    let group = |user: u32, ids: &[u32]| {
+        let items: Vec<Value> = ids
+            .iter()
+            .map(|id| json!({"id": id, "label": "x"}))
+            .collect();
+        json!({"id": format!("g{user}"), "user": {"id": user}, "items": items})
+    };
+    let cases = [
+        (
+            json!([group(10, &[1]), group(20, &[2, 1, 2])]),
+            json!([]),
+            format!("RENDER-503: LIST at bytecode offset {items}, row 2, key path `id`: the row repeats the key row 0 already rendered"),
+        ),
+        (
+            json!([group(10, &[1]), group(10, &[2])]),
+            json!([]),
+            format!("RENDER-503: LIST at bytecode offset {groups}, row 1, key path `user.id`: the row repeats the key row 0 already rendered"),
+        ),
+        (
+            json!([]),
+            json!([{"id":3},{"id":3}]),
+            format!("RENDER-503: LIST at bytecode offset {marks}, row 1, key path `id`: the row repeats the key row 0 already rendered"),
+        ),
+    ];
+    for (groups, marks, expected) in cases {
+        assert_eq!(
+            refusal("keyed-shapes", keyed_shapes_props(groups, marks)),
+            expected
+        );
+    }
 }

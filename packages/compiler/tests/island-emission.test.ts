@@ -75,6 +75,15 @@ describe('declared island writer integration',()=>{
     emit('aggregate-fallback','import {Badge} from "./island";export function Page(p:{rows?:{id:string}[]}){return h("main",null,Badge({rows:p.rows}));}',
       'export function Badge(p:{rows?:{id:string}[]}){const [rows]=createSignal(p.rows??[{id:"fallback"}]);return h("section",null,createList(rows,r=>r.id,r=>h("b",null,r.id)));}');
   });
+  it('emits keyed rows with a nested key path, a nested keyed list and a VOID row root',()=>{
+    // FORMA-181 checkpoint B: the native walker writes data-forma-key on each of these rows
+    // (crates/forma-ir/tests/island_emitter.rs > keyed_shapes_*); one section-6 entry per LIST.
+    const result=emit('keyed-shapes','import {Badge} from "./island";export function Page(p:{groups:{id:string;user:{id:number};items:{id:number;label:string}[]}[];marks:{id:number}[]}){return h("main",null,createList(()=>p.groups,g=>g.user.id,g=>h("section",{"data-g":g.id},createList(()=>g.items,i=>i.id,i=>h("p",null,i.label)))),createList(()=>p.marks,m=>m.id,m=>h("hr",{"data-n":m.id})),Badge({label:"badge"}));}',
+      'export function Badge(p:{label:string}){return h("b",null,p.label);}');
+    const keyPaths=readFmirContainer(result.binary).sections.find(section=>section.id===C.SECTION_KEY_PATHS);
+    expect(keyPaths).toBeDefined();
+    expect(new DataView(keyPaths!.bytes.buffer,keyPaths!.bytes.byteOffset).getUint32(0,true)).toBe(3);
+  });
   it('folds a closed nested optional projection before choosing a fallback',()=>{
     emit('nested-closed-nullish','import {Badge} from "./island";export function Page(){return h("main",null,Badge({data:{title:null}}),Badge({data:{title:"kept"}}),Badge({data:{}}));}',
       'export function Badge(p:{data:{title?:string}}){const [title]=createSignal(p.data.title??"fallback");return h("b",null,title);}');
