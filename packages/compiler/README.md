@@ -482,7 +482,12 @@ that declaration identity; use the activation-only browser shape instead.
 `BUILD-611` refuses a used/assigned/exported mount result, nested or multiple
 mounts, indirect mount aliases, namespace mount access, effectful target
 arguments, and ambiguous activation-only Page imports. A named import alias
-(`import { mount as render }`) is supported. User functions merely named
+(`import { mount as render }`) is supported. An actual core namespace binding
+may read a statically named non-mount member, including optional access. Dynamic
+members and passing/exporting/aliasing/destructuring the namespace are refused
+because they cannot prove the mount is absent. Erased type-only uses remain
+valid. This conservative check does not apply to arbitrary user objects.
+User functions merely named
 `mount` are preserved. Empty activation calls may be omitted only as standalone
 top-level statements with pure remaining arguments; required effects must be
 explicit statements outside them. Nonempty activation root arguments and

@@ -163,4 +163,29 @@ describe('authenticated islands-only entry policy',()=>{
   } finally {await ctx.dispose();}
  });
 
+ it('excludes actual registered component aliases when selecting an activation-only Page',async()=>{
+  const f=fixture();writeFileSync(f.entry,'import {activateIslands} from "@getforma/core";import {Page as MainPage} from "./page";import {Badge as CounterPage} from "./island";activateIslands({PublicCounter:CounterPage});');
+  const result=await compile(f);expect(getSsrEntryProducts(result)[0]).toMatchObject({browserRequired:true,islands:[{name:'PublicCounter',mode:'ssr'}]});
+  expect(Object.keys(execute(result).calls[0].registry)).toEqual(['PublicCounter']);
+ });
+ it('does not infer a native page from the registration alias alone',async()=>{
+  const f=fixture();writeFileSync(f.entry,'import {activateIslands} from "@getforma/core";import {Badge as CounterPage} from "./island";activateIslands({PublicCounter:CounterPage});');
+  await expect(compile(f)).rejects.toThrow(/BUILD-610.*successful native product/);
+ });
+
+ it.each([
+  'const {mount:render}=core;render(Page,"#extra")',
+  'const another=core;another.mount(Page,"#extra")',
+  'core[globalThis.member](Page,"#extra")',
+  'globalThis.namespace=core',
+  'export {core}',
+ ])('refuses an unprovable core namespace escape or dynamic member: %s',async(extra)=>{
+  const f=fixture();writeFileSync(f.entry,'import * as core from "@getforma/core";'+readFileSync(f.entry,'utf8')+extra+';');
+  await expect(compile(f)).rejects.toThrow(/BUILD-611/);
+ });
+ it('preserves known non-mount namespace members and erased namespace/mount type references',async()=>{
+  const f=fixture();writeFileSync(f.entry,'import * as core from "@getforma/core";'+readFileSync(f.entry,'utf8')+'type Core=typeof core;type Mount=typeof mount;globalThis.value=core?.["h"]("known");');
+  const actual=execute(await compile(f));expect(actual.value).toEqual(['known']);expect(actual.calls).toHaveLength(1);
+ });
+
 });

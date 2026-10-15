@@ -35,31 +35,41 @@ export interface EntryMount {
 export function inspectEntryMounts(source: string, file: string): EntryMount | undefined {
   const ast = parse(source, { sourceType: 'module', plugins: ['typescript', 'jsx'] });
   const mounts: EntryMount[] = [];
+  const erased = (reference: NodePath): boolean => !!reference.findParent(parent =>
+    t.isTSType(parent.node) || (t.isExportNamedDeclaration(parent.node) && parent.node.exportKind === 'type')
+    || (t.isExportSpecifier(parent.node) && parent.node.exportKind === 'type'));
   traverse(ast, {
     ImportDeclaration(path) {
       if (path.node.importKind === 'type' || !['@getforma/core', 'formajs'].includes(path.node.source.value)) return;
       for (const specifier of path.node.specifiers) {
+        if (t.isImportNamespaceSpecifier(specifier)) {
+          const binding = path.scope.getBinding(specifier.local.name);
+          for (const reference of binding?.referencePaths ?? []) {
+            if (erased(reference)) continue;
+            const member = reference.parentPath?.node;
+            if (!binding?.constant || !(t.isMemberExpression(member) || t.isOptionalMemberExpression(member))
+              || member.object !== reference.node) refuseEntry(file, reference.node,
+              'a core namespace may only use known non-mount members in a native entry; do not alias, destructure, export or pass the namespace');
+            const name = member.computed ? (t.isStringLiteral(member.property) ? member.property.value : undefined)
+              : (t.isIdentifier(member.property) ? member.property.name : undefined);
+            if (name === undefined) refuseEntry(file, member,
+              'dynamic core namespace access may reach mount; use a statically named non-mount member or a named core import');
+            if (name === 'mount') refuseEntry(file, member,
+              'the compile-time mount needs a named core import (an import alias is supported), not a namespace member');
+          }
+          continue;
+        }
         if (!t.isImportSpecifier(specifier) || specifier.importKind === 'type') continue;
         const name = t.isIdentifier(specifier.imported) ? specifier.imported.name : specifier.imported.value;
         if (name !== 'mount') continue;
         const binding = path.scope.getBinding(specifier.local.name);
         for (const reference of binding?.referencePaths ?? []) {
+          if (erased(reference)) continue;
           if (!binding?.constant || !reference.parentPath?.isCallExpression()
             || reference.parentPath.node.callee !== reference.node) refuseEntry(file, reference.node,
             'the core mount import must be called directly as the compile-time root; do not alias, pass, export or optionally call it');
         }
       }
-    },
-    MemberExpression(path) {
-      if (!t.isIdentifier(path.node.object)) return;
-      const binding = path.scope.getBinding(path.node.object.name), imported = binding?.path.node;
-      const owner = binding?.path.parentPath?.node;
-      if (!t.isImportNamespaceSpecifier(imported) || !t.isImportDeclaration(owner)
-        || !['@getforma/core', 'formajs'].includes(owner.source.value)) return;
-      const name = path.node.computed ? (t.isStringLiteral(path.node.property) ? path.node.property.value : undefined)
-        : (t.isIdentifier(path.node.property) ? path.node.property.name : undefined);
-      if (name === 'mount') refuseEntry(file, path.node,
-        'the compile-time mount needs a named core import (an import alias is supported), not a namespace member');
     },
     CallExpression(path) {
       if (isCoreCall(path, 'activateIslands') && path.findParent(parent => parent.isCallExpression() && isCoreCall(parent, 'mount'))) {

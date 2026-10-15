@@ -574,6 +574,8 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/
 
 **Fix.** Use one standalone imported core `mount(Page, '#app')` or `mount(() => Page(), '#app')` as a compile-time native root. Keep activation outside that invocation. If the browser entry has a different root, make it activation-only; do not assign/export the removed mount result. Move required argument effects outside an omitted empty activation call. A static route must have no extra script entry or module preload.
 
+Core namespace imports may use known non-mount members; optional mount access, dynamic members and namespace escape through alias/destructuring/arguments/export refuse. Erased type-only uses and unrelated user objects are unaffected.
+
 The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-611/fail/app.tsx) and [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-611/pass/app.tsx) pin original entry positions.
 
 ### BUILD-701 Plain array child (`.map()` without createList)
