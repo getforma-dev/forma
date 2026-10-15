@@ -5,6 +5,7 @@
   "props": "declared-v1",
   "stateBlock": null,
   "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+  "version": "3.0.0",
   "milestones": {
     "alpha": {
       "plan": "M2",

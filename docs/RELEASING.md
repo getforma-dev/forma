@@ -50,8 +50,11 @@ The lint (`ruby scripts/check-release-workflow.rb --self-test`) checks the
 contract's shape beside the workflow: exactly `alpha`, `beta`, `rc`, `final` in
 order (C1); each with a plan milestone and non-empty gates whose keys are tickets
 and whose entries carry a `done`/`pending` status and a scope (C2); no gate in
-two milestones (C3); no global switch (C4). Its self-test seeds eleven contract
-violations beside the thirty-two workflow ones, and its last line names the
+two milestones (C3); no global switch (C4); the one release version the gates
+are written for, `version`, which the resolver asserts against the tag's base
+version so a `v3.1.0-alpha.1` cannot pass 3.0.0's gates (C5). Its self-test
+seeds thirteen contract violations beside the thirty-two workflow ones, and its
+last line names the
 milestones that may publish today. The GitHub Release names the milestone, where
 it went on npm (`next` for a pre-release, `latest` for the final) and every gate
 still open before the later milestones (`releaseNotes` in

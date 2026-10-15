@@ -24,6 +24,18 @@ test('milestone gate: the checked-in contract lets the alpha publish; beta, rc a
   assert.throws(() => releaseMilestone(contracts(), '3.0.0-dev'), /development version/);
   assert.equal(milestoneOf('3.0.0-dev'), null); assert.equal(milestoneOf('3.0.0-alpha.1'), 'alpha'); assert.equal(milestoneOf('3.0.0-rc.2'), 'rc'); assert.equal(milestoneOf('3.1.0'), 'final');
   assert.deepEqual(MILESTONES, ['alpha', 'beta', 'rc', 'final']);
+  // The contract is written for 3.0.0: a later version's pre-release cannot ride on its gates.
+  assert.equal(contracts().version, '3.0.0');
+  for (const version of ['3.1.0-alpha.1', '3.0.1-alpha.1', '4.0.0']) assert.throws(() => releaseMilestone(contracts(), version), /gates 3\.0\.0, not/);
+  assert.throws(() => releaseMilestone(seededContract(c => { delete c.version; }), '3.0.0-alpha.1'), /names no release version/);
+  assert.throws(() => releaseMilestone(seededContract(c => { c.version = '3.0.0-alpha.1'; }), '3.0.0-alpha.1'), /names no release version/);
+  // Pre-release counters start at 1: -alpha.0 is not a version, so it names no milestone.
+  for (const version of ['3.0.0-alpha.0', '3.0.0-beta.0', '3.0.0-rc.0', '3.0.0-alpha.01']) {
+    assert.equal(SEMVER.test(version), false, version);
+    assert.throws(() => milestoneOf(version), /not a release version/);
+  }
+  const seven = Array.from({ length: 7 }, (_, i) => ({ name: `package-${i}`, version: '3.0.0-alpha.0' }));
+  assert.throws(() => assertReleaseSet(seven, 'v3.0.0-alpha.0'), /release requires/);
 });
 test('milestone gate: an open gate in the milestone or any earlier one refuses; a malformed contract refuses every milestone', () => {
   assert.throws(() => assertMilestoneReady(seededContract(c => { c.milestones.alpha.gates['FORMA-185'].status = 'pending'; }), '3.0.0-alpha.1'), /FORMA-185 \(alpha\)/);

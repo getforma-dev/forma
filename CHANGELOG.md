@@ -35,7 +35,8 @@ loader-before-bind checks, stable fuzz replay and a pinned nightly fuzz workflow
   gate of its milestone and the earlier ones is done, checked in pack, P17, both publish jobs
   and the record. The alpha's gates (110, 185, 112, 102, 107, 109, 111, 144 slice 1) are done;
   the later milestones' are pending. The GitHub Release names the milestone and the pending
-  list. The SR43 lint checks the contract's shape with eleven seeded violations. Pre-releases
+  list; the contract's `version` (3.0.0) is asserted against the tag's base version. The SR43
+  lint checks the contract's shape with thirteen seeded violations. Pre-releases
   publish on npm `next` and as Cargo pre-release versions (`npmPublishArgs`, `cargoPublishArgs`,
   tested). `docs/release/ALPHA-RUNBOOK.md` is the alpha day's ordered runbook.
 

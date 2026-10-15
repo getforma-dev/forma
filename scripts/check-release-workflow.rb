@@ -129,6 +129,7 @@ def contract_violations(contracts)
   out = []
   return ['C0 contract file must be a mapping'] unless contracts.is_a?(Hash)
   out << 'C4 a global publish switch (liveReleaseReady, pending) cannot stand beside the milestones' if contracts.key?('liveReleaseReady') || contracts.key?('pending')
+  out << 'C5 the contract must name the one release version its gates are written for (X.Y.Z, 3.0.0 or later)' unless contracts['version'].is_a?(String) && contracts['version'].match?(/\A(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\z/) && contracts['version'].split('.').first.to_i >= 3
   milestones = contracts['milestones']
   return out + ['C1 contract must name exactly alpha, beta, rc and final, in that order'] unless milestones.is_a?(Hash) && milestones.keys == MILESTONES
   seen = {}
@@ -155,6 +156,8 @@ if ARGV.include?('--self-test') && errors.empty?
   contract_seeds = [
     ['global ready switch', 'C4', ->(c) { c['liveReleaseReady'] = true }],
     ['legacy pending list', 'C4', ->(c) { c['pending'] = {} }],
+    ['missing release version', 'C5', ->(c) { c.delete('version') }],
+    ['pre-release as the contract version', 'C5', ->(c) { c['version'] = '3.0.0-alpha.1' }],
     ['milestone removed', 'C1', ->(c) { c['milestones'].delete('beta') }],
     ['milestone added', 'C1', ->(c) { c['milestones']['ga'] = c['milestones']['final'] }],
     ['milestones out of order', 'C1', ->(c) { m = c['milestones']; c['milestones'] = { 'final' => m['final'], 'alpha' => m['alpha'], 'beta' => m['beta'], 'rc' => m['rc'] } }],

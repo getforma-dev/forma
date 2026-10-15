@@ -14,7 +14,8 @@ import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const NPM = ['core', 'compiler', 'build', 'create-app'];
 export const CRATES = ['forma-ir', 'forma-ir-derive', 'forma-server'];
-export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.(?:0|[1-9]\d*)))?$/;
+// Pre-release counters start at 1: the first alpha is -alpha.1, never -alpha.0.
+export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.[1-9]\d*))?$/;
 export const json = path => JSON.parse(readFileSync(path, 'utf8'));
 export const save = (path, data) => writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
 export const digest = (path, algorithm = 'sha256', encoding = 'hex') => createHash(algorithm).update(readFileSync(path)).digest(encoding);
@@ -60,6 +61,10 @@ export function releaseMilestone(contracts, version) {
   assert(name, `${version} is a development version; no milestone publishes it`);
   assert(contracts?.milestones && typeof contracts.milestones === 'object' && !Array.isArray(contracts.milestones), 'contract file names no milestones');
   assert(!('liveReleaseReady' in contracts) && !('pending' in contracts), 'contract file may not carry a global publish switch beside its milestones');
+  // The gates are written for one release: a later version's pre-release cannot pass them.
+  assert(/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(contracts.version ?? ''), 'contract file names no release version');
+  const base = version.split('-')[0];
+  assert.equal(base, contracts.version, `the contract gates ${contracts.version}, not ${base}; write the next release's contract first`);
   const order = MILESTONES.indexOf(name);
   const blocking = [], later = {}, seen = new Set();
   MILESTONES.forEach((milestone, i) => {
