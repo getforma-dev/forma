@@ -40,6 +40,14 @@ let slots = SlotData::from_json(r#"{"count": 42}"#, &module)?;
 let html = walker::walk_to_html(&module, &slots)?;
 ```
 
+`SlotData::from_json` resolves known slot names from a JSON object and leaves
+missing values at their defaults. Its numeric values are IEEE-754 `f64`: decimal
+parsing is correctly rounded and preserves serialized finite `f64` bits,
+including negative zero. It does not provide arbitrary-precision integers;
+integers beyond the exactly representable range may round. Declared page props
+use the typed bounds below. The island-state Serialize9 contract subsequently
+normalizes negative zero to zero.
+
 `walk_to_html_counted(&module, &slots, limits)` writes the same HTML and also
 returns what it wrote (`WalkCounts`: nodes, bytes, list rows); on failure it
 returns a `WalkFailure` with the counts reached and the component path, the

@@ -348,6 +348,11 @@ impl SlotData {
     ///
     /// Unknown JSON keys (not in the slot table) are silently ignored.
     /// Starts from slot table defaults so missing keys retain their defaults.
+    /// JSON numbers become IEEE-754 `f64` values. Decimal spellings use
+    /// correctly rounded parsing, so finite `f64` values serialized to JSON
+    /// preserve their bits, including negative zero. This does not make all
+    /// integers above 2^53 exact. Island state serialization subsequently
+    /// canonicalizes negative zero to zero under the Serialize9 contract.
     pub fn from_json(json_str: &str, module: &IrModule) -> Result<Self, IrError> {
         let parsed: serde_json::Value =
             serde_json::from_str(json_str).map_err(|e| IrError::JsonParseError(e.to_string()))?;
