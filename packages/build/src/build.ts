@@ -33,8 +33,9 @@ import { APP_NAME, serviceWorkerSource } from './service-worker.js';
 import { splitGraph, type SplitGraph } from './split-graph.js';
 import { entryProducts, browserEntries, type EntryProduct, type EntryProducts } from './entry-products.js';
 import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
+import { computeIdentity, DEV_IDENTITY, identityBanner, type IdentityFile } from './identity.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
-import { formatRouteSizes, routeSizeFailure, routeSizes } from './route-size.js';
+import { REPORT_CEILINGS, formatSizeReport, frameSize, routeSizeFailure, routeSizes, serializeSizeReport, workerSize, type BuildTimes, type SizeReport } from './route-size.js';
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
   DiagnosticsCollector,
@@ -56,6 +57,29 @@ import type {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Run a bundling pass whose output is only read, without the SSR plugin's two
+ * kinds of line: "IR emitted" (console.log) and "IR: <code> ..." diagnostics
+ * (console.warn). The plugin prints them each time it compiles a page, and the
+ * identity's first pass (FORMA-186) compiles every page once more than the
+ * build reports. Only those lines are dropped, and one wrapper serves any
+ * number of passes running at once in a process, so nothing else is lost.
+ */
+let quietPasses = 0;
+let consoleOriginals: { log: typeof console.log; warn: typeof console.warn } | undefined;
+async function withoutIrChatter<T>(run: () => Promise<T>): Promise<T> {
+  if (quietPasses++ === 0) {
+    const original = (consoleOriginals = { log: console.log, warn: console.warn });
+    const drop = (args: unknown[], pattern: RegExp) => typeof args[0] === 'string' && pattern.test(args[0]);
+    console.log = (...args: unknown[]) => { if (!drop(args, /^\s+IR emitted \(/)) original.log.apply(console, args); };
+    console.warn = (...args: unknown[]) => { if (!drop(args, /^\s+IR: /)) original.warn.apply(console, args); };
+  }
+  try { return await run(); }
+  finally {
+    if (--quietPasses === 0) { console.log = consoleOriginals!.log; console.warn = consoleOriginals!.warn; consoleOriginals = undefined; }
+  }
+}
 
 /** Hash a file and return an 8-char hex prefix. */
 function contentHash(filePath: string): string {
@@ -352,6 +376,14 @@ function validateConfig(config: BuildConfig): void {
         );
       }
     }
+    // A JavaScript config is not type checked: a string here would read as on.
+    // Verified by: packages/build/tests/route-size.test.ts > "refuses a canvas that is not a boolean before writing anything"
+    const canvas: unknown = mapping?.canvas;
+    if (canvas !== undefined && typeof canvas !== 'boolean') {
+      problems.push(
+        `routes['${route}'].canvas is ${shown(canvas)}: use true to declare the route a canvas (365 KiB of JavaScript instead of 75 KiB, N2), or leave it out`,
+      );
+    }
   }
 
   // The JSON report is a build-time record, not an asset: inside outputDir it
@@ -414,12 +446,16 @@ function printBundleSummary(metafiles: esbuild.Metafile[], assets: Record<string
 // Service Worker Generation
 // ---------------------------------------------------------------------------
 
-function generateServiceWorker(
+/** The worker's source: production, from the finished manifest; watch mode's network-only worker. */
+function workerSourceFor(
   config: BuildConfig,
   manifest: Pick<AssetManifest, 'app' | 'build' | 'assets'>,
   excludedFiles: string[] = [],
-): void {
-  const source = serviceWorkerSource({ ...manifest, development: config.watch === true, excludedFiles });
+): string {
+  return serviceWorkerSource({ ...manifest, development: config.watch === true, excludedFiles });
+}
+
+function generateServiceWorker(config: BuildConfig, source: string): void {
   writeFileAtomic(join(config.outputDir, 'sw.js'), source);
   console.log(`   SW generated: dist/sw.js (${config.watch ? 'network-only development' : 'verified on-demand assets'})`);
 }
@@ -455,11 +491,29 @@ const WATCH_RESOLUTION: Pick<esbuild.BuildOptions, 'conditions' | 'define'> = {
 };
 
 /**
+ * What compiling the deployment identity in adds to the esbuild options
+ * (FORMA-186, DR-29; L-6 as amended by L-56): the constant core compares the
+ * page's `data-forma-build` with, and, in a production build, a banner that
+ * puts the identity in every JavaScript output so that every deploy renames
+ * every bundle. Watch mode's identity is the constant `dev` and has no banner:
+ * a development build renames nothing.
+ * Verified by: packages/build/tests/identity.test.ts > "compiles the identity into the bundle as the constant core reads"
+ * Verified by: packages/build/tests/identity.test.ts > "watch mode's identity is dev, in the manifest and in the bundle, with no banner"
+ */
+function identityOptions(config: BuildConfig, identity?: string): Pick<esbuild.BuildOptions, 'define' | 'banner'> {
+  if (identity === undefined) return {};
+  return {
+    define: { ...(config.watch ? WATCH_RESOLUTION.define : {}), __FORMA_BUILD__: JSON.stringify(identity) },
+    ...(config.watch ? {} : { banner: { js: identityBanner(identity) } }),
+  };
+}
+
+/**
  * The esbuild options every bundle of a build shares. previewFrame's reading
  * of which core the bundles import (preview-frame.ts) bundles each entry in
  * memory with these same options, so its answer is the bundles'.
  */
-function sharedOptions(config: BuildConfig, compatibility?: () => void): Partial<esbuild.BuildOptions> {
+function sharedOptions(config: BuildConfig, compatibility?: () => void, identity?: string): Partial<esbuild.BuildOptions> {
   return {
     plugins: [serverDirectiveGuard(), ...(compatibility ? [compatibilityGuard(process.cwd(), compatibility)] : [])],
     bundle: true,
@@ -481,8 +535,9 @@ function sharedOptions(config: BuildConfig, compatibility?: () => void): Partial
     jsx: 'transform',
     jsxFactory: 'h',
     jsxFragment: 'Fragment',
-    // Watch mode is a development build (FORMA-169); production adds nothing.
+    // Watch mode is a development build (FORMA-169).
     ...(config.watch ? WATCH_RESOLUTION : {}),
+    ...identityOptions(config, identity),
   };
 }
 
@@ -590,6 +645,17 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
   const distDir = config.outputDir;
   const createdDir = !existsSync(distDir);
 
+  // The production build's times, by phase (N7, FORMA-190): wall-clock
+  // milliseconds from here to each mark, for the printed report and the
+  // result; the size-report.json file holds none.
+  const phases: BuildTimes['phases'] = { bundle: 0, hash: 0, compress: 0, manifest: 0 };
+  let lap = performance.now();
+  const mark = (phase: keyof BuildTimes['phases']): void => {
+    const now = performance.now();
+    phases[phase] = Math.round(now - lap);
+    lap = now;
+  };
+
   // ── Clean output directory (watch mode; a staging directory is new) ──
   rmSync(distDir, { recursive: true, force: true });
   mkdirSync(distDir, { recursive: true });
@@ -616,7 +682,9 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     const frameAssets: Record<string, string> = frame ? { [FRAME_RUNTIME_ASSET]: FRAME_RUNTIME_ASSET } : {};
 
     // ── esbuild shared config ─────────────────────────────────────────
-    const shared = sharedOptions(config, compatibility);
+    // Without the deployment identity: the first pass bundles with these, and
+    // `shared` below (the same options plus the identity) is what is built.
+    const base = sharedOptions(config, compatibility);
 
     // ── Lazy-load SSR plugin only when needed ─────────────────────────
     let formaSsrPlugin: SsrPluginFactory | undefined;
@@ -655,8 +723,20 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       if (next && next.message !== duplicateCore?.message) console.warn(`${next.code}: ${next.message}`);
       duplicateCore = next;
     };
-    const splitOptions: esbuild.BuildOptions = {
-      ...shared,
+    // The SSR plugin instances of a build, one per server-rendered entry.
+    const ssrPluginsFor = (entries: readonly BuildEntry[], options: SsrPluginShared) =>
+      config.ssr && formaSsrPlugin ? entries.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
+        page: basename(entry.outfile, '.js'),
+        outDir: distDir,
+        entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
+        clientEntryPoint: entry.entry,
+        ...options,
+      })) : [];
+    // One shared graph (`codeSplitting`), or one bundle per entry; both passes
+    // of a production build, and watch mode's split build, take their options
+    // from these.
+    const splitOptionsFor = (options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
+      ...options,
       entryPoints: config.entryPoints.map(entry => ({ in: entry.entry, out: basename(entry.outfile, '.js') })),
       outdir: distDir,
       splitting: true,
@@ -665,14 +745,66 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       entryNames: '[name].[hash]',
       chunkNames: 'chunk.[hash]',
       assetNames: 'asset.[hash]',
-      plugins: [...(shared.plugins ?? []), ...(config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
-        page: basename(entry.outfile, '.js'),
-        outDir: distDir,
-        entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
-        clientEntryPoint: entry.entry,
-        ...pluginShared,
-      })) : [])],
-    };
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin)],
+    });
+    const entryOptionsFor = (entry: BuildEntry, options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
+      ...options,
+      entryPoints: [entry.entry],
+      outfile: join(distDir, entry.outfile),
+      metafile: true,
+      write: false,
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin)],
+    });
+
+    // ── The deployment identity (FORMA-186, DR-29; L-6 as amended by L-56) ──
+    // Computed first, from every output of a bundling pass that has no
+    // identity: the files the build would publish (browser-facing bundles and
+    // the `.ir` modules), the css entries and fonts already in staging, and the
+    // writers' versions. Nothing is written or published from this pass, and
+    // its diagnostics are dropped: the real pass reports them. The previous
+    // release's dist/ is never read here, so retention cannot move it.
+    // A failure here is not reported here: the real pass fails the same way and
+    // reports through the collector, so the JSON report and `--strict` behave as
+    // they always did; the error surfaces below if the real pass did not.
+    // Verified by: packages/build/tests/identity.test.ts > "is equal for identical inputs including the compiled .ir modules, built in two directories"
+    // Verified by: packages/build/tests/identity.test.ts > "changes with one changed source byte that changes an output, and not with an edit that changes none"
+    let identity = DEV_IDENTITY;
+    let firstPassFailure: unknown;
+    if (!config.watch) {
+      try {
+        const quietBase = { ...base, logLevel: 'silent' as const };
+        const noDiagnostics: SsrPluginShared = { onDiagnostics: () => {} };
+        const files: IdentityFile[] = [];
+        const take = (outputs: readonly esbuild.OutputFile[]) => {
+          for (const file of outputs) files.push({ name: basename(file.path), bytes: file.contents });
+        };
+        await withoutIrChatter(async () => {
+          if (config.codeSplitting && config.entryPoints.length) {
+            take(classify(await esbuild.build(splitOptionsFor(quietBase, noDiagnostics)), config.entryPoints).outputs);
+          } else {
+            const results = await Promise.all(config.entryPoints.map(async entry =>
+              classify(await esbuild.build(entryOptionsFor(entry, quietBase, noDiagnostics)), [entry]).outputs));
+            for (const outputs of results) take(outputs);
+          }
+        });
+        for (const name of readdirSync(distDir)) {
+          if (name === FRAME_RUNTIME_ASSET || !statSync(join(distDir, name)).isFile()) continue;
+          files.push({ name, bytes: readFileSync(join(distDir, name)) });
+        }
+        identity = computeIdentity({
+          writers: [
+            { name: '@getforma/build', version: BUILD_WRITER_VERSION },
+            ...(config.ssr && compiler ? [{ name: '@getforma/compiler', version: compiler.COMPILER_WRITER_VERSION as readonly [number, number, number] }] : []),
+          ],
+          files,
+        });
+      } catch (error) {
+        firstPassFailure = error;
+        identity = '0'.repeat(16);
+      }
+    }
+    const shared = sharedOptions(config, compatibility, identity);
+    const splitOptions = splitOptionsFor(shared, pluginShared);
 
     // ── Build entries ─────────────────────────────────────────────────
     if (config.watch) {
@@ -805,7 +937,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
 
       // Generate a dev service worker so /sw.js doesn't 404
-      generateServiceWorker(config, { app: config.app!, assets: {}, build: 'dev' });
+      generateServiceWorker(config, workerSourceFor(config, { app: config.app!, assets: {}, build: 'dev' }));
 
       // The pages' first compilation; each rebuild replaces its page's own.
       const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
@@ -819,6 +951,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         // Watch mode is a development build, unminified and inline-mapped:
         // its bytes are not what a route ships, so there is no report.
         sizes: [],
+        sizeReport: { version: 1, ceilings: REPORT_CEILINGS, routes: [] },
       };
     }
 
@@ -841,31 +974,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     } else {
       const attempts = await Promise.allSettled(
         config.entryPoints.map(async (entry) => {
-          const buildOptions: esbuild.BuildOptions = {
-            ...shared,
-            entryPoints: [entry.entry],
-            outfile: join(distDir, entry.outfile),
-            metafile: true,
-            write: false,
-          };
-
-          if (config.ssr && entry.ssr !== false && formaSsrPlugin) {
-            const pageName = basename(entry.outfile, '.js');
-            const ssrEntryPoint =
-              config.ssrEntryPoints?.[pageName] ?? entry.entry;
-            buildOptions.plugins = [
-              ...(buildOptions.plugins || []),
-              formaSsrPlugin({
-                page: pageName,
-                outDir: distDir,
-                entryPoint: ssrEntryPoint,
-                clientEntryPoint: entry.entry,
-                ...pluginShared,
-              }),
-            ];
-          }
-
-          const result = await esbuild.build(buildOptions);
+          const result = await esbuild.build(entryOptionsFor(entry, shared, pluginShared));
           const classified = classify(result, [entry]);
           publishOutputFiles(classified.outputs);
           products = new Map([...products, ...classified.candidates]);
@@ -888,15 +997,19 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     // Wait for every entry before removing staging or writing the report. A
     // mandatory compiler refusal stays fatal even when strict mode is off.
     if (buildFailures.length) throw buildFailures[0];
+    if (firstPassFailure) throw firstPassFailure;
     if (strict) {
       const errors = collector.errors();
       if (errors.length > 0) throw strictFailure(errors);
     }
 
+    mark('bundle');
+
     // ── Content hashing ───────────────────────────────────────────────
     const assets = hashAssets(config, graph?.assets);
     printBundleSummary(metafiles, assets, shownDir);
     console.log(`   ${Object.keys(assets).length} assets hashed`);
+    mark('hash');
 
     // ── Compression ───────────────────────────────────────────────────
     // The preview frame's runtime is inlined by forma-server, never fetched:
@@ -904,19 +1017,39 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     // Verified by: packages/build/tests/preview-frame.test.ts > "the runtime is inlined, never fetched: no compressed copies, and no entry in the on-demand worker's immutable list"
     const frameFile = frame ? assets[FRAME_RUNTIME_ASSET] : undefined;
     compressAssets(distDir, new Set(frameFile ? [frameFile] : []));
+    mark('compress');
 
     // ── Manifest generation ───────────────────────────────────────────
-    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products);
+    const { manifest, warnings, classes } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products, identity);
     if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
+    mark('manifest');
 
-    // ── The size report, and N2's gate on it (FORMA-021, L-55) ──────────
-    // Forma's code per route, from the bundler's metafile and the hashed files
-    // the manifest names, printed for every route; a route over the ceiling
-    // fails the build here, before the manifest is written and the staging
-    // directory swapped in, so the previous output stays as it was (L-21).
+    // ── The size report, and the gate on it (FORMA-021, FORMA-190, L-55) ──
+    // Each route's class and Forma's code, from the bundler's metafile and the
+    // hashed files the manifest names, with the service worker a route with
+    // JavaScript registers, the preview frame's runtime when it is on, and the
+    // times above; printed for every route. A route over a ceiling fails the
+    // build here, before the manifest is written and the staging directory
+    // swapped in, so the previous output stays as it was (L-21).
     // Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's Forma code is over the ceiling, leaving no output"
-    const sizes = routeSizes(manifest.routes, metafiles, assets, distDir);
-    console.log(`\n${formatRouteSizes(sizes).join('\n')}`);
+    // Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's JavaScript is over 75 KiB, unless the route is declared a canvas, and a canvas is held to 365 KiB"
+    const workerSource = workerSourceFor(config, manifest, frameFile ? [frameFile] : []);
+    const worker = workerSize(workerSource);
+    const sizes = routeSizes(manifest.routes, metafiles, assets, distDir, {
+      classes,
+      canvases: new Set(Object.entries(config.routes).filter(([, mapping]) => mapping.canvas === true).map(([route]) => route)),
+      worker,
+    });
+    const times: BuildTimes = { totalMs: Object.values(phases).reduce((total, ms) => total + ms, 0), phases };
+    const sizeReport: SizeReport = {
+      version: 1,
+      ceilings: REPORT_CEILINGS,
+      routes: sizes,
+      worker,
+      ...(frameFile ? { frame: frameSize(frameFile, distDir) } : {}),
+      times,
+    };
+    console.log(`\n${formatSizeReport(sizeReport).join('\n')}`);
     const overCeiling = routeSizeFailure(sizes);
     if (overCeiling) throw overCeiling;
 
@@ -924,12 +1057,18 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       join(distDir, 'manifest.json'),
       JSON.stringify(manifest, null, 2) + '\n',
     );
+    // Beside the manifest, without the times: the application embeds this
+    // directory, and the same sources are the same bytes. forma-server refuses
+    // to serve it, as it refuses the manifest.
+    // Verified by: packages/build/tests/route-size.test.ts > "writes size-report.json beside the manifest: every route with its class, ceilings and verdict, the service worker, and no clock reading"
+    writeFileSync(join(distDir, 'size-report.json'), serializeSizeReport(sizeReport));
     console.log(
       `\nManifest written: ${shownDir}/manifest.json (build: ${manifest.build.slice(0, 12)}...)`,
     );
+    console.log(`Size report written: ${shownDir}/size-report.json`);
 
     // ── Service worker generation ─────────────────────────────────────
-    generateServiceWorker(config, manifest, frameFile ? [frameFile] : []);
+    generateServiceWorker(config, workerSource);
 
     return {
       manifest,
@@ -937,6 +1076,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       warnings,
       diagnostics,
       sizes,
+      sizeReport,
     };
   } catch (err) {
     // Watch mode: remove the output directory if this build created it. A

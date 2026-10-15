@@ -4,7 +4,7 @@
  * Configuration and result types for the Forma build pipeline.
  */
 
-import type { RouteSize } from './route-size.js';
+import type { RouteSize, SizeReport } from './route-size.js';
 
 // ---------------------------------------------------------------------------
 // Configuration Types
@@ -36,6 +36,15 @@ export interface RouteMapping {
   css: string[];
   /** Font file names for this route (optional, defaults to all fonts in outputDir) */
   fonts?: string[];
+  /**
+   * Declare the route a canvas (N2, FORMA-190): a page that hosts many modules
+   * and is JavaScript-heavy by design. The size report holds all of its
+   * JavaScript to 365 KiB gzip -9 instead of the 75 KiB of other pages; Forma's
+   * own code stays under N2's 25,500 B either way. It raises nothing for a
+   * route without JavaScript. A heavy page that is not a canvas is trimmed or
+   * split, not declared.
+   */
+  canvas?: boolean;
 }
 
 export interface BuildConfig {
@@ -137,7 +146,7 @@ export interface AssetMetadata {
   immutable: boolean;
   /** Full SHA-384 of the final uncompressed file, used by SRI and the worker. */
   integrity: string;
-  /** Older deployment artifact retained by the deployment-identity implementation. */
+  /** A file of the previous release kept for tabs still open on it (FORMA-186, L-25). */
   retained?: boolean;
 }
 
@@ -145,7 +154,15 @@ export interface AssetManifest {
   version: 2;
   writer: string;
   app: string;
-  /** Opaque build ID; input-derived deployment identity is a separate contract. */
+  /**
+   * The deployment identity (FORMA-186, DR-29): 16 lowercase hexadecimal
+   * characters computed from the build's own outputs and the writers'
+   * versions before anything is named, compiled into every JavaScript bundle
+   * (`__FORMA_BUILD__`, which core compares with the page's
+   * `data-forma-build`), and the same for identical inputs however often they
+   * are built, from any directory when built from the project root (esbuild
+   * hashes input paths relative to its working directory). `dev` in watch mode.
+   */
   build: string;
   aliases: Record<string, string>;
   assets: Record<string, AssetMetadata>;
@@ -192,12 +209,24 @@ export interface BuildResult {
   /** Every coded SSR diagnostic the build reported, page by page. */
   diagnostics: BuildDiagnostic[];
   /**
-   * The size report (FORMA-021): per route, what it loads cold in raw, gzip -9
-   * and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as
-   * bundled) beside the application's. A production build fails with
-   * `BUILD-819` before writing its output when a route's `forma.gzip` is over
-   * N2's ceiling, `FORMA_CODE_CEILING_GZIP` (25,500 B; decision brief L-55).
-   * Empty in watch mode, whose unminified bytes are not what a route ships.
+   * The size report's routes (FORMA-021, FORMA-190): per route, its class, what
+   * it loads cold in raw, gzip -9 and Brotli bytes, Forma's code
+   * (`@getforma/core` and `alien-signals` as bundled) beside the application's,
+   * the service worker it registers, and its ceilings. A production build fails
+   * with `BUILD-819` before writing its output when a route is over one:
+   * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (25,500 B; decision brief
+   * L-55), all of its JavaScript over its class's (none for a route without an
+   * interactive region, 75 KiB, 365 KiB for a canvas). Empty in watch mode,
+   * whose unminified bytes are not what a route ships. The same objects as
+   * `sizeReport.routes`.
    */
   sizes: RouteSize[];
+  /**
+   * The one report (FORMA-190): `sizes` with the service worker, the preview
+   * frame's runtime when `previewFrame` is on (the frame document row), and the
+   * build's times by phase. A production build prints it and writes it, without
+   * the times (so the output stays the same bytes for the same sources), as
+   * `size-report.json` beside `manifest.json`. No routes in watch mode.
+   */
+  sizeReport: SizeReport;
 }

@@ -1,7 +1,7 @@
 {
   "rule": 7,
   "title": "Conditions are boolean-typed (FORMA-182; DR-9 rule 7, design 4 rule 6)",
-  "contract": "The condition of a createShow or the test of a ternary child must be boolean-typed: a declared boolean prop (optional admitted: absent reads as false on both sides), a signal whose default is a boolean, a closed boolean (an aggregate or list-row field, a module-level const, which a condition now folds), a boolean literal, or an expression whose every result is a boolean (!x, !!x, a comparison, Boolean(x), && or || of booleans). A type the compiler can prove is not boolean is a build error, BUILD-615: a number, a string, null or an object from a declared prop, a signal default, a closed value or a literal, or a mix such as `a() && count()` or `name() || 'x'`. The server would pick the branch by ECMAScript ToBoolean while the page meant something else (React's `{count && …}` printing 0 is the shape kept out). A scalar signal getter passed itself (`createShow(open, …)`) is read as its call. A condition the compiler cannot type at all stays BUILD-302 (the server renders the else branch without proof). The walker selects the branch by the slot's boolean value; its ToBoolean fallback for a non-boolean slot value is unreachable from a compiled product.",
+  "contract": "The condition of a createShow or the test of a ternary child must be boolean-typed: a declared boolean prop (optional admitted: absent reads as false on both sides), a signal whose default is a boolean, a closed boolean (an aggregate or list-row field, a module-level const, which a condition now folds), a boolean literal, or an expression whose every result is a boolean (!x, !!x, a comparison, Boolean(x), && or || of booleans). A type the compiler can prove is not boolean is a build error, BUILD-615: a number, a string, null or an object from a declared prop, a signal default, a closed value or a literal, or a mix such as `a() && count()` or `name() || 'x'`. The server would pick the branch by ECMAScript ToBoolean while the page meant something else (React's `{count && …}` printing 0 is the shape kept out). A scalar signal getter passed to createShow itself (`createShow(open, …)`) is read as its call, since createShow calls it; anywhere else a getter named without its call (`() => open ? a : b`, `() => open`, `ready() && open`) is a function, always truthy in the browser, and is BUILD-615 naming the missing call. A condition the compiler cannot type at all stays BUILD-302 (the server renders the else branch without proof). The walker selects the branch by the slot's boolean value; its ToBoolean fallback for a non-boolean slot value is unreachable from a compiled product.",
   "consumers": [
     "packages/compiler/tests/value-rule-7-conditions.test.ts (each `compiledCondition` shape refuses with its code, or builds a SHOW_IF on a boolean slot with exactly its `diagnostics` and shows `writes` under its defaults)",
     "packages/compiler/tests/diagnostics-conformance.test.ts (the BUILD-615 fixture and its comparison near miss)",
@@ -9,7 +9,7 @@
     "packages/core/src/dom/__tests__/value-rule-7-conditions.test.ts (createShow on a boolean selects the branch, static and reactive; the served branch adopts without a write)",
     "packages/core/e2e/value-rules.spec.ts (the walker's SHOW_IF range parsed by the three engines and strictly adopted without a write, then toggled)"
   ],
-  "note": "Hand-enumerated. `condition` is createShow's first argument, rendered as createShow(condition, () => h('b', null, 'yes'), () => h('i', null, 'no')); `child` is a whole text child for the ternary shape. `code` null means the page builds a SHOW_IF on a TYPE_BOOL slot, `writes`, where given, is the visible text under the slot defaults (a declared prop has none: absent, so the else branch; a closed field is read through PROP, which the compiler's test renderer does not render) and `diagnostics` the codes it reports (none unless listed). `walker` is the SHOW_IF branch selection on a Bool slot with element branches <b>then</b> and <i>else</i>.",
+  "note": "Hand-enumerated. `condition` is createShow's first argument, rendered as createShow(condition, () => h('b', null, 'yes'), () => h('i', null, 'no')); `child` is a whole text child for the ternary shape. `code` null means the page builds; `message`, where given, is a phrase the refusal's message must contain a SHOW_IF on a TYPE_BOOL slot, `writes`, where given, is the visible text under the slot defaults (a declared prop has none: absent, so the else branch; a closed field is read through PROP, which the compiler's test renderer does not render) and `diagnostics` the codes it reports (none unless listed). `walker` is the SHOW_IF branch selection on a Bool slot with element branches <b>then</b> and <i>else</i>.",
   "compiledCondition": [
     {"id": "boolean-signal", "setup": "const [open] = createSignal(true);", "condition": "() => open()", "code": null, "writes": "yes"},
     {"id": "negated-signal", "setup": "const [ready] = createSignal(false);", "condition": "() => !ready()", "code": null, "writes": "yes"},
@@ -22,6 +22,13 @@
     {"id": "double-negation", "setup": "const [count] = createSignal(2);", "condition": "() => !!count()", "code": null, "writes": "yes"},
     {"id": "boolean-call", "setup": "const [count] = createSignal(2);", "condition": "() => Boolean(count())", "code": null, "writes": "yes"},
     {"id": "bare-boolean-getter", "setup": "const [open] = createSignal(true);", "condition": "open", "code": null, "writes": "yes"},
+    {"id": "asserted-boolean-getter", "setup": "const [open] = createSignal(false);", "condition": "open as () => boolean", "code": null, "writes": "no"},
+    {"id": "satisfies-boolean-getter", "setup": "const [open] = createSignal(true);", "condition": "open satisfies () => boolean", "code": null, "writes": "yes"},
+    {"id": "nonnull-boolean-getter", "setup": "const [open] = createSignal(false);", "condition": "open!", "code": null, "writes": "no"},
+    {"id": "nested-transparent-boolean-getter", "setup": "const [open] = createSignal(true);", "condition": "((open as () => boolean)!)", "code": null, "writes": "yes"},
+    {"id": "asserted-number-getter", "setup": "const [count] = createSignal(0);", "condition": "count as () => number", "code": "BUILD-615", "message": "is not boolean-typed"},
+    {"id": "getter-returning-asserted-getter", "setup": "const [open] = createSignal(false);", "condition": "() => (open as () => boolean)", "code": "BUILD-615", "message": "call it, open()"},
+    {"id": "ternary-asserted-uncalled-getter", "setup": "const [open] = createSignal(false);", "child": "() => (open as () => boolean) ? h('b', null, 'a') : h('i', null, 'b')", "code": "BUILD-615", "message": "call it, open()"},
     {"id": "module-boolean-constant-true", "setup": "const SHOWN = true;", "condition": "() => SHOWN", "code": null, "writes": "yes"},
     {"id": "closed-aggregate-boolean-field", "setup": "const [state] = createSignal({ ready: true });", "condition": "() => state().ready", "code": null},
     {"id": "untyped-condition-stays-build-302", "setup": "const store = { ready: () => true };", "condition": "() => store.ready()", "code": null, "writes": "no", "diagnostics": ["BUILD-302"]},
@@ -35,13 +42,19 @@
     {"id": "closed-aggregate-number-field", "setup": "const [state] = createSignal({ count: 2 });", "condition": "() => state().count", "code": "BUILD-615"},
     {"id": "number-literal", "condition": "() => 1", "code": "BUILD-615"},
     {"id": "string-literal", "condition": "() => 'x'", "code": "BUILD-615"},
-    {"id": "bare-number-getter", "setup": "const [count] = createSignal(0);", "condition": "count", "code": "BUILD-615"},
+    {"id": "bare-number-getter", "setup": "const [count] = createSignal(0);", "condition": "count", "code": "BUILD-615", "message": "is not boolean-typed"},
     {"id": "conjunction-with-number", "setup": "const [a] = createSignal(true); const [count] = createSignal(0);", "condition": "() => a() && count()", "code": "BUILD-615"},
     {"id": "or-with-string-default", "setup": "const [name] = createSignal('');", "condition": "() => name() || 'x'", "code": "BUILD-615"},
     {"id": "closed-aggregate-object", "setup": "const [state] = createSignal({ ready: true });", "condition": "() => state()", "code": "BUILD-615"},
     {"id": "ternary-boolean-test", "setup": "const [open] = createSignal(true);", "child": "() => open() ? h('b', null, 'a') : h('i', null, 'b')", "code": null, "writes": "a"},
     {"id": "ternary-number-test", "setup": "const [count] = createSignal(0);", "child": "() => count() ? h('b', null, 'a') : h('i', null, 'b')", "code": "BUILD-615"},
-    {"id": "ternary-declared-string-test", "props": "{ title: string }", "child": "() => props.title ? h('b', null, 'a') : h('i', null, 'b')", "code": "BUILD-615"}
+    {"id": "ternary-declared-string-test", "props": "{ title: string }", "child": "() => props.title ? h('b', null, 'a') : h('i', null, 'b')", "code": "BUILD-615"},
+    {"id": "ternary-uncalled-boolean-getter", "setup": "const [open] = createSignal(false);", "child": "() => open ? h('b', null, 'a') : h('i', null, 'b')", "code": "BUILD-615", "message": "call it, open()"},
+    {"id": "ternary-uncalled-number-getter", "setup": "const [count] = createSignal(0);", "child": "() => count ? h('b', null, 'a') : h('i', null, 'b')", "code": "BUILD-615", "message": "call it, count()"},
+    {"id": "eager-ternary-uncalled-getter", "setup": "const [open] = createSignal(false);", "child": "open ? h('b', null, 'a') : h('i', null, 'b')", "code": "BUILD-615", "message": "call it, open()"},
+    {"id": "getter-returning-uncalled-getter", "setup": "const [open] = createSignal(false);", "condition": "() => open", "code": "BUILD-615", "message": "call it, open()"},
+    {"id": "conjunction-with-uncalled-getter", "setup": "const [ready] = createSignal(true); const [open] = createSignal(false);", "condition": "() => ready() && open", "code": "BUILD-615", "message": "call it, open()"},
+    {"id": "negated-uncalled-getter", "setup": "const [open] = createSignal(false);", "condition": "() => !open", "code": "BUILD-615", "message": "call it, open()"}
   ],
   "walker": [
     {"id": "true-selects-then", "value": true, "branch": "then"},

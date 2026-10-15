@@ -1,5 +1,68 @@
 # Changelog
 
+## Unreleased — the size report with route classes and ceilings (FORMA-190)
+
+- **One report, extended.** The size report of FORMA-021 now classifies each
+  route (DR-35) and holds it to its class's ceilings, gzip -9 with 1 KB =
+  1,000 B and 1 KiB = 1,024 B: `no-interactive-region` (a server-rendered page
+  without an island, or a route that lists no script) ships no JavaScript, a
+  service worker counted; `islands` and `whole-page-mount` (a declared
+  `ssr: false` entry, or any route of an application built without `ssr`) carry
+  at most 25,500 B of Forma code (N2, unchanged) and at most 75 KiB of
+  JavaScript in all; a route declared `canvas: true` may ship 365 KiB. A route
+  over a ceiling fails the build with `BUILD-819`, now naming the route, its
+  class and each figure against its ceiling (the code is the same; its message
+  and catalogue entry cover the new ceilings).
+- `RouteMapping.canvas` (optional boolean) declares a route a canvas: a page
+  that hosts many modules. It raises only the JavaScript ceiling of a route that
+  has JavaScript; anything else but `true` or `false` is refused before the
+  build writes anything.
+- The generated `sw.js` counts as JavaScript in each route that lists a script
+  (forma-server registers it only on such pages) and is reported as a row of its
+  own. With `previewFrame`, a **frame document** row reports the runtime
+  forma-server inlines into every preview document (raw, gzip -9, Brotli; it is
+  not a route's and carries no ceiling here: core's package gate holds it).
+- **Written beside the manifest.** A production build writes `size-report.json`
+  next to `manifest.json` (and prints the report): the routes with class,
+  ceilings, files, Forma and application bytes and verdict, the worker, the
+  frame row. The file holds no clock reading, so the same sources are the same
+  bytes (the application embeds this directory); forma-server refuses to serve
+  it, as it refuses the manifest. The manifest does not list it.
+- **Build times** (N7) by phase (`bundle`, `hash`, `compress`, `manifest`) are
+  printed with the report and returned in `BuildResult.sizeReport.times`; they
+  are not in the file, for the same reason.
+- `BuildResult.sizeReport` is the whole report; `BuildResult.sizes` stays, the
+  same route objects, with the new fields `class`, `canvas`, `worker`,
+  `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
+  empty). Both are empty in watch mode.
+## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
+
+- `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
+  identity: 16 lowercase hex characters, computed first from every output of a
+  first bundling pass (bundles, `.ir` modules, css entries, fonts) and the
+  writers' versions, before any file is named. It was a hash of the hashed
+  filenames. The same inputs give the same identity wherever they are built
+  (from the project root); an edit that changes no output byte changes nothing;
+  the previous `dist/` is not an input. `dev` in watch mode, as before.
+- The identity is compiled into every production bundle twice: the constant
+  `__FORMA_BUILD__` (esbuild `define`; what core compares with the page's
+  `data-forma-build`) and a `/*forma-build:<id>*/` banner in every JavaScript
+  output, so every deploy renames every bundle, including entries and lazy
+  chunks the change did not touch. A chunk that kept its name across deploys
+  now does not; a build's names are unique to the build.
+- Cost: one more bundling pass per production build; the SSR plugin's
+  "IR emitted" and "IR: ..." lines are printed once, as before.
+- **N2's figure rises.** The banner is Forma's code in the size report (the lead's
+  ruling: Forma's build writes it), and a 16-hex id does not compress: a route's
+  Forma figure rises by about 30 B gzip for each JavaScript file it loads cold, and a
+  route with none of core's bytes now reports the banner's 33 raw bytes. Measured on
+  the SSR lane's Counter (the minimal template's shape, whole-route gzip -9 of Forma
+  code): `/` 25,091 B to 25,120 B (+29), the client-rendered `/csr` 24,418 B to
+  24,451 B (+33), and the same page code-split into an entry and a chunk, 25,091 B
+  to 25,165 B (+74, two cold files). The minimal template's Counter route, 25,101 B
+  after FORMA-021's cuts, becomes about 25,130 B: its headroom under N2's 25,500 B
+  falls from 399 B to about 370 B.
+
 ## Unreleased — the size report per route and N2's gate (FORMA-021)
 
 - A production build reports, per route, what the route loads cold (its `js`

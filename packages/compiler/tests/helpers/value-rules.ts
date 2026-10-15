@@ -16,7 +16,7 @@ export const VECTOR_DIR = resolve(__dirname, '../../../../crates/forma-ir/tests/
 export const readVectors = <T>(name: string): T => JSON.parse(readFileSync(resolve(VECTOR_DIR, name), 'utf8')) as T;
 
 export interface TextVector { id: string; props?: string; setup?: string; child?: string; attribute?: string; value?: string; code: string | null; slot?: string; writes?: string; fix?: string }
-export interface ConditionVector { id: string; props?: string; setup?: string; condition?: string; child?: string; code: string | null; writes?: string; diagnostics?: string[] }
+export interface ConditionVector { id: string; props?: string; setup?: string; condition?: string; child?: string; code: string | null; writes?: string; diagnostics?: string[]; message?: string }
 
 const folders: string[] = [];
 export function cleanup(): void { for (const dir of folders.splice(0)) rmSync(dir, { recursive: true, force: true }); vi.restoreAllMocks(); }
