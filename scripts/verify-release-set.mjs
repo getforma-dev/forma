@@ -10,6 +10,7 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
+import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
 async function freePort() {
   const server = net.createServer();
@@ -110,6 +111,57 @@ export function verifyPackedPropsTests(manifest, { boundRender = false } = {}) {
   const completed = output.split('\n');
   for (const name of names) assert(completed.includes(`test ${name} ... ok`), `packed props did not execute ${name}`);
 }
+// Every native public-path control must run from the actual packed crate.
+export function verifyPackedIntegrityTests(manifest) {
+  const names = [
+    'both_public_document_paths_write_exact_integrity_and_keep_nonces',
+    'every_asset_requires_full_canonical_integrity_before_startup',
+    'constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags',
+  ];
+  const args = ['test', '--locked', '--manifest-path', manifest, '--test', 'asset_integrity', '--', '--color', 'never'];
+  const listed = run('cargo', [...args, '--list'], ROOT).split('\n');
+  for (const name of names) assert(listed.includes(`${name}: test`), `packed integrity is missing ${name}`);
+  const output = run('cargo', args, ROOT);
+  process.stdout.write(output);
+  for (const name of names) assert(output.split('\n').includes(`test ${name} ... ok`), `packed integrity did not execute ${name}`);
+}
+
+// Observations come from the browser's parsed actual packed-server response.
+export function requireAssetIntegrity(resources, manifest, route = '/') {
+  const declared = manifest.routes[route];
+  assert(declared, 'resource integrity has no declared route');
+  const counts = new Map();
+  for (const resource of resources) {
+    assert(resource.url?.startsWith('/_assets/'), `resource URL is not a build asset: ${resource.url}`);
+    const file = resource.url.slice('/_assets/'.length), metadata = manifest.assets[file];
+    assert(metadata && /^sha384-[A-Za-z0-9+/]{64}$/.test(metadata.integrity), `resource ${file} lacks canonical manifest SHA-384`);
+    assert.equal(resource.integrity, metadata.integrity, `resource ${file} has wrong or missing integrity`);
+    assert.equal(resource.crossorigin, 'anonymous', `resource ${file} has no anonymous crossorigin`);
+    if (resource.tag === 'SCRIPT' || resource.rel === 'modulepreload') assert(resource.nonce, `resource ${file} lost its nonce`);
+    const kind = resource.tag === 'SCRIPT' ? 'script' : resource.rel;
+    assert(['script', 'stylesheet', 'modulepreload'].includes(kind), `unexpected protected resource ${kind}`);
+    const key = `${kind}:${file}`; counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  for (const [key, count] of counts) assert.equal(count, 1, `resource ${key} is duplicated`);
+  const expected = new Map();
+  const expect = (kind, file) => { const key = `${kind}:${file}`; expected.set(key, (expected.get(key) || 0) + 1); };
+  for (const file of declared.css) expect('stylesheet', file);
+  for (const file of declared.js) expect('modulepreload', file);
+  if (declared.js.length) expect('script', declared.js.at(-1));
+  for (const [key, count] of expected) assert.equal(counts.get(key), count, `resource ${key} is missing or duplicated`);
+  return resources;
+}
+
+// P17 requires every named browser assertion; a resolved but partial result is a failure.
+export function requireWorkerChecks(observation, names, app) {
+  assert.equal(observation.passed, true, 'worker replay did not pass');
+  assert.equal(observation.app, app, 'worker replay used a different application');
+  assert.deepEqual(observation.results?.map(result => result.name), names, 'worker replay omitted or duplicated a required check');
+  for (const result of observation.results) assert.equal(result.passed, true, `worker replay did not execute ${result.name}`);
+  const { directory, ...portable } = observation;
+  return portable;
+}
+
 export function verifyPackedPropsFixtures(compiler, serverCrate) {
   assert.equal(typeof compiler.generateRealIr, 'function', 'packed compiler lacks its IR emitter');
   for (const [app, name] of [['app', 'home'], ['empty-app', 'empty'], ['empty-typed-app', 'empty-typed']]) {
@@ -134,12 +186,40 @@ export function requireEnforcedTrustedTypes(headers) {
   return policy;
 }
 
+async function verifyPackedBrowserSri(browser, origin, entry) {
+  const observations = [];
+  for (const protectedTag of [true, false]) {
+    const page = await browser.newPage();
+    let served = 0;
+    try {
+      if (!protectedTag) await page.route(`${origin}/`, async route => {
+        const response = await route.fetch();
+        // A paired control: the identical harmless replacement must execute
+        // when only SRI is removed. Keep the real document's nonce and headers.
+        await route.fulfill({ response, body: (await response.text()).replace(/ integrity="[^"]*"/g, '') });
+      });
+      await page.route(`${origin}/_assets/${entry}`, async route => {
+        served++;
+        await route.fulfill({ status: 200, contentType: 'application/javascript', body: 'globalThis.__formaP17AlteredEntry = true;' });
+      });
+      await page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 });
+      const executed = await page.evaluate(() => Boolean(globalThis.__formaP17AlteredEntry));
+      assert(served > 0, 'SRI control never served the replacement entry');
+      assert.equal(executed, !protectedTag, protectedTag ? 'altered entry executed despite SRI' : 'paired no-SRI control did not execute the same replacement');
+      observations.push({ protectedTag, replacementRequests: served, replacementExecuted: executed });
+    } finally { await page.close(); }
+  }
+  return observations;
+}
+
 export async function verify(dir, reportPath) {
   assert(!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN, 'P17 must not have an OIDC credential');
   const started = Date.now(), set = json(join(dir, 'release-set.json'));
   assert([undefined, null, 'enforced-v1'].includes(set.contracts.trustedTypes), 'P17 has no verifier for the recorded Trusted Types contract');
   assert([null, 'declared-v1'].includes(set.contracts.props), 'P17 has no verifier for the recorded props contract');
   assert([undefined, null, 'finalized-v1'].includes(set.contracts.boundRender), 'P17 has no verifier for the recorded bound rendering contract');
+  assert([undefined, null, 'sha384-v1'].includes(set.contracts.assetIntegrity), 'P17 has no verifier for the recorded asset integrity contract');
+  if (set.contracts.assetIntegrity === 'sha384-v1') assert.equal(set.contracts.manifest, 2, 'asset integrity requires schema2');
   if (set.contracts.boundRender === 'finalized-v1') assert.equal(set.contracts.props, 'declared-v1', 'finalized rendering requires the declared props checks');
   for (const p of set.packages) assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file}: wrong packed bytes`);
   const scratch = join(ROOT, `.release-verify-${process.pid}`);
@@ -217,9 +297,26 @@ export async function verify(dir, reportPath) {
         verifyPackedPropsTests(join(serverCrate, 'Cargo.toml'), { boundRender: set.contracts.boundRender === 'finalized-v1' });
       });
     }
+    if (set.contracts.assetIntegrity === 'sha384-v1') await test('packed reader requires full digests on every public document path', async () => verifyPackedIntegrityTests(join(scratch, 'crates/forma-server/Cargo.toml')));
     const { chromium } = await import('@playwright/test');
     const browser = await chromium.launch();
     try {
+      if (set.contracts.assetIntegrity === 'sha384-v1') {
+        const { build } = await import(pathToFileURL(join(scratch, 'packages/build/dist/index.js')).href);
+        assert.equal(typeof build, 'function', 'packed build package lacks build()');
+        const app = 'p17-integrity';
+        const options = { build, browser, workDir: join(scratch, 'worker-browser'), app };
+        await test('packed build verifies cached and network bytes including dynamic chunks and compressed delivery', async () => {
+          report.workerIntegrity = requireWorkerChecks(await verifyWorkerIntegrity(options), WORKER_INTEGRITY_CHECKS, app);
+        });
+        await test('packed builds preserve waiting lifecycle and actual packed Rust retirement', async () => {
+          const retiringWorkerSource = run('cargo', ['run', '--quiet', '--locked', '--manifest-path', join(scratch, 'crates/forma-server/Cargo.toml'), '--example', 'retiring_worker_source', '--', app], ROOT,
+            { env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
+          const sourcePath = join(scratch, 'retiring-worker.js');
+          writeFileSync(sourcePath, retiringWorkerSource);
+          report.workerLifecycle = { ...requireWorkerChecks(await verifyWorkerLifecycle({ ...options, retiringWorkerSource }), WORKER_LIFECYCLE_CHECKS, app), retiringWorkerSha256: digest(sourcePath) };
+        });
+      }
       for (const template of ['minimal', 'dashboard']) {
         await test(`${template}: packed CLI, locked install, signatures, build, serve and interaction`, async () => {
           const name = `release-${template}`;
@@ -286,6 +383,14 @@ export async function verify(dir, reportPath) {
               assert(navigation, 'packed template navigation produced no response');
               const browserHeaders = new Headers(await navigation.allHeaders());
               const browserPolicy = enforced ? requireEnforcedTrustedTypes(browserHeaders) : browserHeaders.get('content-security-policy');
+              if (set.contracts.assetIntegrity === 'sha384-v1') {
+                const resources = await page.locator('script[src], link[rel="stylesheet"], link[rel="modulepreload"]').evaluateAll(elements => elements.map(el => ({
+                  tag: el.tagName, rel: el.getAttribute('rel'), url: el.getAttribute(el.tagName === 'SCRIPT' ? 'src' : 'href'),
+                  integrity: el.getAttribute('integrity'), crossorigin: el.getAttribute('crossorigin'), nonce: el.nonce,
+                })));
+                requireAssetIntegrity(resources, json(join(admin, 'dist/manifest.json')));
+                report.tests.push({ name: `${template}: actual packed server resource tags carry manifest SHA-384 and nonces`, passed: true, resources });
+              }
               if (template === 'minimal') {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count').filter({ hasText: 'Count: 1' }).waitFor();
@@ -311,6 +416,13 @@ export async function verify(dir, reportPath) {
               report.tests.push({ name: `${template}: served policy and zero CSP violations during positive browser interaction`, passed: true,
                 trustedTypesContract: set.contracts.trustedTypes ?? null, servedPolicy, browserPolicy, ...observation, pageErrors: errors });
             } finally { await page.close(); }
+            if (set.contracts.assetIntegrity === 'sha384-v1') {
+              const manifest = json(join(admin, 'dist/manifest.json'));
+              const entry = manifest.routes['/'].js.at(-1);
+              assert(entry, 'SRI browser control requires the actual template entry');
+              const observations = await verifyPackedBrowserSri(browser, origin, entry);
+              report.tests.push({ name: `${template}: browser blocks changed actual entry bytes using packed server SRI`, passed: true, observations });
+            }
           });
           if (template === 'minimal') {
             const manifest = json(join(admin, 'dist/manifest.json'));
@@ -344,6 +456,19 @@ export async function verify(dir, reportPath) {
               } finally { writeFileSync(manifestPath, bytes); }
             }
             report.tests.push({ name: `${template}: packed manifest schema/app/writer refused before binding`, passed: true });
+            if (set.contracts.assetIntegrity === 'sha384-v1') {
+              const asset = manifest.routes['/'].js.at(-1);
+              assert(asset, 'packed integrity refusal requires a declared entry');
+              for (const integrity of [undefined, null, 'sha384-short', `sha256-${'A'.repeat(64)}`]) {
+                try {
+                  const invalid = structuredClone(manifest);
+                  invalid.assets[asset].integrity = integrity;
+                  save(manifestPath, invalid);
+                  await server(binary, project, port, async () => {}, ['MANIFEST-103', asset]);
+                } finally { writeFileSync(manifestPath, bytes); }
+              }
+              report.tests.push({ name: `${template}: packed manifest missing and malformed digests refused before binding`, passed: true });
+            }
             const off = 'sw::configure(sw::ServiceWorker::off())';
             const mainSource = readFileSync(main, 'utf8'); assert(mainSource.includes(off), 'template worker startup changed; update P17 adapter');
             writeFileSync(main, mainSource.replace(off, `sw::configure_for_manifest(sw::ServiceWorker::for_app(${JSON.stringify(name)}).unwrap().enabled(), &manifest)`));

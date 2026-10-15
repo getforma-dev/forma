@@ -61,6 +61,8 @@ step "declared props: compiler bytes match the native typed-handler fixtures"
 node packages/compiler/scripts/emit-props-contract.mjs --check
 step "packed compiler API and actual optional-compiler compatibility"
 node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test.mjs
+step "packed integrity gate: resource observations and mandatory native checks"
+node --test scripts/release-integrity.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core

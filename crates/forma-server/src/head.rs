@@ -28,9 +28,10 @@ use std::sync::Arc;
 /// cloning it is cheap. Dynamically imported chunks are not in the list: the
 /// build leaves them out, so they load when the page asks for them.
 ///
-/// The table is the one from the manifest at start. In development, a chunk
-/// the watcher renames stays listed until the server restarts; its preload
-/// fails harmlessly, as a hint, and the module itself still loads.
+/// The table is the one from the manifest at start. A render resolves every
+/// listed file's integrity through its current manifest snapshot. If development
+/// renames a chunk out of that snapshot, rendering refuses with RENDER-104 until
+/// the application replaces its preload table; no unchecked tag is emitted.
 ///
 /// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "try_render_writes_the_routes_manifest_modulepreload_links_nonced"
 #[derive(Debug, Clone)]
@@ -313,7 +314,7 @@ mod tests {
         serde_json::json!({
             "version": 2, "writer":"3.0.0", "app":"ledger", "build":"h",
             "aliases": {"home.js": "home.A1B2C3D4.js", "chunk.X.js": "chunk.X.js"},
-            "assets": {"home.A1B2C3D4.js":{"immutable":true}, "chunk.X.js":{"immutable":true}},
+            "assets": {"home.A1B2C3D4.js":{"immutable":true,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"}, "chunk.X.js":{"immutable":true,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"}},
             "routes": {"/": {
                 "mode":"browser", "js": ["home.A1B2C3D4.js"],
                 "modulepreload": preloads,

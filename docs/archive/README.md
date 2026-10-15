@@ -115,3 +115,5 @@ why it was wrong the first time.
 - [FORMA-185 exact-stage FMIR v3 contract](2026-10-15-FMIR-FORMAT-exact-stage.md): superseded only in version acceptance by FORMA-112; the maintained format keeps its bytes and structural rules.
 
 - `2026-10-15-bound-render/forma-server-README.md`: exact pre-FORMA-107 staged102/109 README, archived by Codex when finalization, bind limits and the bound-only render API replaced the interim SSR bridge.
+
+- [Schema2 test manifests before mandatory SHA-384](2026-10-15-asset-integrity/README.md): exact prior metadata and hashes; original FMIR/document byte fixtures remain unchanged.

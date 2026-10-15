@@ -1,5 +1,6 @@
 //! Default worker retirement and browser-shell behavior.
 
+mod support;
 use axum::body::to_bytes;
 use axum::http::StatusCode;
 use forma_server::{render_browser_shell, sw, AssetManifest, PageConfig, RenderCtx, RouteAssets};
@@ -31,7 +32,7 @@ fn manifest() -> AssetManifest {
         app: "ledger".into(),
         aliases: HashMap::new(),
         build: "test".to_string(),
-        assets: HashMap::new(),
+        assets: support::fixture_assets(&routes),
         routes,
     }
 }

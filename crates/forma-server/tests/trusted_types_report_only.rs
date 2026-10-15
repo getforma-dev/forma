@@ -2,6 +2,7 @@
 //! Both retained document renderers enforce without a reporting endpoint; only
 //! the named relaxation moves those directives to Report-Only.
 
+mod support;
 use axum::body::to_bytes;
 use axum::http::HeaderMap;
 use axum::response::IntoResponse;
@@ -41,7 +42,7 @@ fn manifest() -> AssetManifest {
         app: "ledger".into(),
         aliases: HashMap::new(),
         build: "test".to_string(),
-        assets: HashMap::new(),
+        assets: support::fixture_assets(&routes),
         routes,
     }
 }
@@ -95,7 +96,7 @@ fn make(
                     name.into(),
                     forma_server::AssetMetadata {
                         immutable: false,
-                        integrity: None,
+                        integrity: "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb".into(),
                         retained: false,
                     },
                 );

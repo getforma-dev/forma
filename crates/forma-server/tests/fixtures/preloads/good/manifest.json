@@ -13,22 +13,28 @@
   },
   "assets": {
     "admin.E5F6A7B8.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
     },
     "chunk.ADMIN001.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
     },
     "chunk.HOMEONLY.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
     },
     "chunk.LAZY0001.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
     },
     "chunk.SHARED01.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
     },
     "home.A1B2C3D4.js": {
-      "immutable": false
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
     }
   },
   "routes": {

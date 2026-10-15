@@ -1,1 +1,24 @@
-{"version":2,"writer":"3.1.0","app":"ledger","build":"fixture","aliases":{},"assets":{"page.ir":{"immutable":false}},"routes":{"/":{"mode":"ssr","js":[],"css":[],"fonts":[],"ir":"page.ir","total_size_br":0,"budget_warn_threshold":0}}}
+{
+  "version": 2,
+  "writer": "3.1.0",
+  "app": "ledger",
+  "build": "fixture",
+  "aliases": {},
+  "assets": {
+    "page.ir": {
+      "immutable": false,
+      "integrity": "sha384-6cPEe2i9sfK93Wi5jbnk8HDXvgE5Vd/PtvzKe6rBLdVD3NTdboedGiTVyf+eFcp5"
+    }
+  },
+  "routes": {
+    "/": {
+      "mode": "ssr",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "ir": "page.ir",
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    }
+  }
+}
