@@ -1,0 +1,41 @@
+{
+  "rule": 2,
+  "title": "Numbers in ECMAScript Number::toString formatting (FORMA-182; DR-9 rule 2, design 4 rule 2)",
+  "contract": "A finite number written as DOM text or as an attribute value is formatted as ECMAScript Number.prototype.toString formats it: the shortest digits that round-trip, a fixed form when the decimal exponent n satisfies -6 < n <= 21, otherwise an exponent with an explicit '+' sign, and -0 as '0'. Each `lexeme` is parsed as a binary64 on both sides (Rust `str::parse::<f64>`, JS `Number(lexeme)`), so a lexeme past 2^53 is rounded before formatting; an exact integer origin beyond 2^53 - 1 is rule 3's refusal, not this rule.",
+  "consumers": [
+    "crates/forma-ir/src/walker.rs > value_rule_vectors (DYN_TEXT and DYN_ATTR on a Number slot)",
+    "packages/core/src/dom/__tests__/value-rule-2-numbers.test.ts (String(n) as the oracle; h() text and attribute children; adoption expectations)"
+  ],
+  "note": "Hand-enumerated finite vectors. NaN and the infinities are not vectors: RENDER-402 refuses a non-finite declared number before it can be rendered, and the walker's spelling of them ('NaN', 'Infinity', '-Infinity') is the same as String(). Not a generator or campaign.",
+  "values": [
+    { "id": "zero", "lexeme": "0", "expected": "0" },
+    { "id": "negative-zero", "lexeme": "-0.0", "expected": "0" },
+    { "id": "one", "lexeme": "1", "expected": "1" },
+    { "id": "negative-one", "lexeme": "-1", "expected": "-1" },
+    { "id": "integer-valued-float", "lexeme": "100.0", "expected": "100" },
+    { "id": "million", "lexeme": "1000000", "expected": "1000000" },
+    { "id": "half", "lexeme": "0.5", "expected": "0.5" },
+    { "id": "fraction", "lexeme": "2.5", "expected": "2.5" },
+    { "id": "negative-fraction", "lexeme": "-4.35", "expected": "-4.35" },
+    { "id": "tenth", "lexeme": "0.1", "expected": "0.1" },
+    { "id": "float-sum", "lexeme": "0.30000000000000004", "expected": "0.30000000000000004" },
+    { "id": "third", "lexeme": "0.3333333333333333", "expected": "0.3333333333333333" },
+    { "id": "decimal", "lexeme": "123.456", "expected": "123.456" },
+    { "id": "small-fixed-boundary", "lexeme": "1e-6", "expected": "0.000001" },
+    { "id": "small-fixed-with-digits", "lexeme": "0.000001234", "expected": "0.000001234" },
+    { "id": "small-exponent", "lexeme": "1e-7", "expected": "1e-7" },
+    { "id": "small-exponent-mantissa", "lexeme": "1.5e-7", "expected": "1.5e-7" },
+    { "id": "exponent-in-lexeme", "lexeme": "123e-20", "expected": "1.23e-18" },
+    { "id": "ten-to-sixteen", "lexeme": "1e16", "expected": "10000000000000000" },
+    { "id": "large-fixed", "lexeme": "1e20", "expected": "100000000000000000000" },
+    { "id": "fixed-upper-with-digits", "lexeme": "123456.789e15", "expected": "123456789000000000000" },
+    { "id": "seventeen-significant-digits", "lexeme": "123456789012345678901", "expected": "123456789012345680000" },
+    { "id": "large-exponent-boundary", "lexeme": "1e21", "expected": "1e+21" },
+    { "id": "negative-large-exponent", "lexeme": "-1e21", "expected": "-1e+21" },
+    { "id": "large-exponent-mantissa", "lexeme": "1.5e21", "expected": "1.5e+21" },
+    { "id": "two-to-fifty-three", "lexeme": "9007199254740992", "expected": "9007199254740992" },
+    { "id": "float-rounds-past-safe", "lexeme": "9007199254740993", "expected": "9007199254740992" },
+    { "id": "min-subnormal", "lexeme": "5e-324", "expected": "5e-324" },
+    { "id": "max-finite", "lexeme": "1.7976931348623157e308", "expected": "1.7976931348623157e+308" }
+  ]
+}

@@ -103,8 +103,11 @@ describe('declared root slot bindings', () => {
   });
 
   it('uses declared values in createShow branches and direct or nested ternaries', () => {
+    // FORMA-182 rule 6: the trailing bare `p.ok` child this page used to end
+    // with is a boolean in text (BUILD-614); the original is archived in
+    // docs/archive/2026-10-15-pre-value-rules and pinned by value-rules-archive.test.ts.
     const binary = emit(`import { h, createShow } from '@getforma/core'; export function Page(p: { ok: boolean; title: string }) {
-      return h('main', null, createShow(() => p.ok, () => p.title), p.ok ? p.title : 'hidden', () => p.ok ? p.title : 'hidden', p.ok);
+      return h('main', null, createShow(() => p.ok, () => p.title), p.ok ? p.title : 'hidden', () => p.ok ? p.title : 'hidden');
     }`);
     const ops = parseOpcodeList(binary);
     expect(ops.filter(op => op.startsWith('DYN_TEXT title'))).toHaveLength(3);
