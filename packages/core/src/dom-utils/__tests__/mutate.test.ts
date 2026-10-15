@@ -1,3 +1,4 @@
+import { trustedHtml } from '../../dom/trusted-html';
 import { describe, it, expect } from 'vitest';
 import { addClass, removeClass, toggleClass, setStyle, setAttr, setText, setHTMLUnsafe } from '../mutate';
 
@@ -84,6 +85,17 @@ describe('setStyle', () => {
 });
 
 describe('setAttr', () => {
+  it('srcdoc requires typed markup and rejects strings before the DOM write', () => {
+    const frame = document.createElement('iframe');
+    setAttr(frame, { srcdoc: trustedHtml('<p>reviewed</p>'), title: 'kept' });
+    expect(frame.getAttribute('srcdoc')).toBe('<p>reviewed</p>');
+    // @ts-expect-error a raw srcdoc string is not a typed attribute
+    expect(() => setAttr(frame, { srcdoc: '<p>raw</p>' })).toThrow('FORMA_E_RAW_SRCDOC');
+    expect(frame.getAttribute('srcdoc')).toBe('<p>reviewed</p>');
+    setAttr(frame, { srcdoc: false });
+    expect(frame.hasAttribute('srcdoc')).toBe(false);
+    expect(frame.getAttribute('title')).toBe('kept');
+  });
   it('sets string attributes', () => {
     const el = document.createElement('input');
     setAttr(el, { type: 'email', placeholder: 'Enter email' });
@@ -155,7 +167,7 @@ describe('setText', () => {
 describe('setHTMLUnsafe', () => {
   it('sets inner HTML', () => {
     const el = document.createElement('div');
-    setHTMLUnsafe(el, '<em>italic</em>');
+    setHTMLUnsafe(el, trustedHtml('<em>italic</em>'));
     expect(el.innerHTML).toBe('<em>italic</em>');
   });
 
@@ -165,7 +177,7 @@ describe('setHTMLUnsafe', () => {
     // tell users to prefer setText would be wrong.
     const unsafe = document.createElement('div');
     const safe = document.createElement('div');
-    setHTMLUnsafe(unsafe, '<b>x</b>');
+    setHTMLUnsafe(unsafe, trustedHtml('<b>x</b>'));
     setText(safe, '<b>x</b>');
     expect(unsafe.children).toHaveLength(1);
     expect(unsafe.querySelector('b')).not.toBeNull();

@@ -5,6 +5,8 @@
 The repository inventory and FMIR v2 discussion below describe that historical
 baseline. The merged workspace now uses the maintained
 [FMIR v3 contract](FMIR-FORMAT.md); use it for current binary layout and loader rules.
+The maintained [response and Trusted Types contract](TRUSTED-TYPES.md) replaces
+the historical raw-output and caller-script paths described below.
 
 **Audience:** an engineer joining tomorrow who will change one of these four
 repos. Read §1 and §2 once, then keep §3 open while you work — §3 is the part

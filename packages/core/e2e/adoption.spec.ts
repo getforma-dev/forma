@@ -68,7 +68,7 @@ test('what the user entered before activation survives adoption, and later updat
   await page.locator('#text').focus();
 
   await page.evaluate(async () => {
-    const { h, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
     const [state, setState] = createSignal({ text: 'Saved', agree: true, cycle: 'yearly', notes: 'Saved notes', legacy: 'hello' });
     (window as any).setState = setState;
     mount(() => h('form', null,
@@ -155,7 +155,7 @@ test("an older server's marker text and unselected select are repaired at adopti
   await expect(page.locator('#tt')).toHaveText('<!--f:t0-->hello<!--/f:t0-->');
 
   await page.evaluate(async () => {
-    const { h, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
     const [text, setText] = createSignal('hello');
     const [choice, setChoice] = createSignal('b');
     Object.assign(window as any, { setText, setChoice });
@@ -177,7 +177,7 @@ test("an older server's marker text and unselected select are repaired at adopti
 test("after the user types, a textarea's reactive text changes only its default, client-rendered and adopted alike", async ({ page }) => {
   await serve(page, '<div id="csr"></div><div id="ssr" data-forma-ssr><textarea id="adopted">Hello Ann</textarea></div>');
   await page.evaluate(async () => {
-    const { h, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
     const [text, setText] = createSignal('Hello Ann');
     (window as any).setText = setText;
     mount(() => h('textarea', { id: 'rendered' }, () => text()), '#csr');
@@ -204,8 +204,8 @@ test('a component that returns a DOM node is adopted as itself or reported, and 
   page.on('pageerror', (err) => errors.push(`uncaught: ${err.message}`));
 
   await page.evaluate(async () => {
-    const { mount, activateIslands, createSignal, createEffect, template } = await import('/adoption-core.mjs' as string);
-    mount(() => template('<p>static</p>'), '#app');
+    const { mount, activateIslands, createSignal, createEffect, template, trustedHtml } = await import('/adoption-core.mjs' as string);
+    mount(() => template(trustedHtml('<p>static</p>')), '#app');
     (window as any).afterMount = true;
     activateIslands({
       Imp: (el: HTMLElement) => {
@@ -264,7 +264,7 @@ test('an inline SVG icon is adopted without one DOM write; its title stays SVG a
       for (const r of batch) seen.push(`${r.type}:${(r.target as Element).id || (r.target as Node).nodeName}:${r.attributeName ?? ''}`);
     });
     observer.observe(app, { subtree: true, childList: true, attributes: true, characterData: true });
-    const { h, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
     const [d, setD] = createSignal('M0 0L10 10');
     (window as any).setD = setD;
     mount(() => h('button', { id: 'close' },
@@ -310,7 +310,7 @@ test('SVG and MathML are adopted in place, and what adoption must create inside 
     const icon = document.getElementById('icon')!;
     const originalWarn = console.warn;
     console.warn = () => {};
-    const { h, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
     const [x, setX] = createSignal('x');
     (window as any).setX = setX;
     try {
@@ -350,7 +350,7 @@ test("a bound iframe src the server already rendered is not set again, so the fr
     let loads = 0;
     frame.addEventListener('load', () => loads++);
     (frame.contentWindow as any).state = 'kept';
-    const { h, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
     const [src, setSrc] = createSignal('/frame.html');
     (window as any).setSrc = setSrc;
     mount(() => h('iframe', { id: 'frame', src: () => src(), title: 'frame' }), '#app');
@@ -467,6 +467,15 @@ test('the namespace vectors: the parser, h() and adoption agree on every element
       const parsedRoot = ssr.firstElementChild!;
       const parsed = namespaces(parsedRoot);
       const parsedHtml = parsedRoot.outerHTML;
+      const hasScript = ([tag, , ...children]: NsTree): boolean =>
+        tag.toLowerCase() === 'script' || children.some(c => Array.isArray(c) && hasScript(c as NsTree));
+      if (hasScript(v.tree)) {
+        const refused: string[] = [];
+        for (const render of [() => builtWithParent(v.tree), () => build(v.tree)]) {
+          try { render(); } catch (error) { refused.push(String(error)); }
+        }
+        return { name: v.name, parsed, refused };
+      }
       mount(() => builtWithParent(v.tree), `#csr${i}`);
       const built = document.getElementById(`csr${i}`)!.firstElementChild!;
       const writes: string[] = [];
@@ -485,6 +494,11 @@ test('the namespace vectors: the parser, h() and adoption agree on every element
   for (const [i, r] of results.entries()) {
     const v = NS_VECTORS[i]!;
     expect({ name: r.name, parsed: r.parsed }).toEqual({ name: v.name, parsed: v.namespaces });
+    if ('refused' in r) {
+      expect(r.refused).toHaveLength(2);
+      for (const error of r.refused!) expect(error).toContain('FORMA_E_SCRIPT_ELEMENT');
+      continue;
+    }
     expect({ name: r.name, built: r.built }).toEqual({ name: v.name, built: v.namespaces });
     expect({ name: r.name, html: r.builtHtml }).toEqual({ name: v.name, html: r.parsedHtml });
     expect({ name: r.name, html: r.builtHtml }).toEqual({ name: v.name, html: v.server });
@@ -575,7 +589,7 @@ test('a reactive dangerouslySetInnerHTML is adopted as content, follows its sign
     const seen: unknown[] = [];
     const record = () => seen.push([doc.innerHTML, twin.innerHTML, doc.getAttribute('dangerouslysetinnerhtml')]);
     record();
-    for (const next of [{ __html: trustedHtml('<i>B</i>') }, null, { __html: trustedHtml('<b>A</b>') }, { __html: '<u>C</u>' }]) {
+    for (const next of [{ __html: trustedHtml('<i>B</i>') }, null, { __html: trustedHtml('<b>A</b>') }, { __html: trustedHtml('<u>C</u>') }]) {
       setInner(next);
       record();
     }
@@ -627,14 +641,14 @@ test('markup the server wrote in a form the browser serialises differently is ad
   await serve(page, markups.map((m, i) => `<div id="m${i}" data-forma-ssr><article>${m}</article></div>`).join(''));
   await page.locator('#typed').fill('typed before activation');
   const writes = await page.evaluate(async (list) => {
-    const { h, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
     const firsts = list.map((_, i) => document.querySelector(`#m${i} article`)!.firstChild);
     const observer = new MutationObserver(() => {});
     for (let i = 0; i < list.length; i++) {
       observer.observe(document.querySelector(`#m${i} article`)!, { subtree: true, childList: true, attributes: true, characterData: true });
     }
     list.forEach((markup, i) => {
-      const [inner] = createSignal({ __html: markup });
+      const [inner] = createSignal({ __html: trustedHtml(markup) });
       mount(() => h('article', { dangerouslySetInnerHTML: () => inner() }), `#m${i}`);
     });
     const records = observer.takeRecords();

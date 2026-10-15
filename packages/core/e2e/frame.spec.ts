@@ -22,7 +22,7 @@ import { resolve } from 'node:path';
 
 const RUNTIME = readFileSync(resolve(process.cwd(), 'dist/formajs-frame.global.js'), 'utf8');
 const HASH = createHash('sha256').update(RUNTIME).digest('base64');
-const ORIGIN = 'http://localhost:3456';
+const ORIGIN = `http://localhost:${Number(process.env.FORMA_TEST_PORT ?? 3456)}`;
 
 type Received = { type: string; code?: string; message?: string; height?: number };
 

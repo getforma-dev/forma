@@ -2223,10 +2223,12 @@ function emitCreateList(
     );
   }
 
-  // Create slots: array slot (server-sourced) and item slot
+  // Declared arrays read the root server value; local arrays and their named
+  // debugging/projection slots stay CLIENT-owned. Retain local labels used by
+  // the frozen corpus harness; their names never grant handler binding access.
   const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
   const arraySlotId = declaredArray ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
-  const itemSlotId = walkCtx.propsScope ? ctx.addTemporarySlot(TYPE_OBJECT) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, SOURCE_SERVER);
+  const itemSlotId = declaredArray !== undefined ? ctx.addTemporarySlot(TYPE_OBJECT) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
 
   // Scan the body for param.prop member accesses to determine which
   // properties need PROP extraction opcodes.
@@ -2237,7 +2239,7 @@ function emitCreateList(
   const bindings = new Map<string, number>();
   const propEntries: Array<{ name: string; strIdx: number; slotId: number }> = [];
   for (const propName of Array.from(propNames)) {
-    const targetSlotId = walkCtx.propsScope ? ctx.addTemporarySlot(TYPE_TEXT) : ctx.addSlot(`list:${base}:${propName}`, TYPE_TEXT, SOURCE_SERVER);
+    const targetSlotId = ctx.addSlot(`list:${base}:${propName}`, TYPE_TEXT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
     bindings.set(`${paramName}.${propName}`, targetSlotId);
     propEntries.push({
       name: propName,

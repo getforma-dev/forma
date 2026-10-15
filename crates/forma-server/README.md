@@ -1,12 +1,14 @@
 # forma-server
 
-Typed server rendering and explicit browser shells for the Forma stack. This is the coordinated3.0.0-dev source contract; publication remains gated.
+Typed server rendering and explicit browser shells for the Forma stack. This is the coordinated 3.0.0-dev source contract; publication remains gated.
 
 ```toml
 [dependencies]
 forma-server = "=3.0.0-dev"
 forma-ir = "=3.0.0-dev"
 ```
+
+The [archived A2 README](../../docs/archive/2026-10-15-declared-props/forma-server-README.md) preserves the old slot-injection API.
 
 ## Startup and rendering
 
@@ -29,13 +31,13 @@ fn home(page: &PageHandle<HomeProps>) -> Result<forma_server::PageResponse, form
 }
 ```
 
-`bind` selects defaults; `bind_with` selects immutable page limits. Both accept an exact route or an unambiguous logical page alias. Failed binds never register a handler. `finalize` lists all unbound SSR routes and stays repairable; successful finalization seals every clone, is idempotent, and refuses later binds. Rendering before it succeeds returns406 without a response. Forma does not own the listener and cannot intercept an application that opens one prematurely.
+`bind` selects defaults; `bind_with` selects immutable page limits. Both accept an exact route or an unambiguous logical page alias. Failed binds never register a handler. `finalize` lists all unbound SSR routes and stays repairable; successful finalization seals every clone, is idempotent, and refuses later binds. Rendering before it succeeds returns RENDER-406 without a response. Forma does not own the listener and cannot intercept an application that opens one prematurely.
 
 `PageHandle::render` checks and projects declared props by name and returns `Result<PageResponse, RenderError>`. The handler chooses/logs its error response. No failed render becomes an empty shell. See [declared props](../../docs/DECLARED-PROPS.md) for field/type/source diagnostics. Extra Rust fields warn and never enter the rendered data.
 
 ## Limits and request metadata
 
-`Limits` is the existing `WalkLimits` type:8MiB of walked HTML and50,000 total list iterations by default. `RenderCtx::new()` inherits the handle's limits. `with_limits` overrides both budgets for one request; struct-update from `page.limits()` changes one. Zero remains restrictive. A list longer than its remaining budget fails before its first row; output and list failures report counts reached with301/302. Fixed structural/depth ceilings remain.
+`Limits` is the existing `WalkLimits` type: 8 MiB of walked HTML and 50,000 total list iterations by default. `RenderCtx::new()` inherits the handle's limits. `with_limits` overrides both budgets for one request; struct-update from `page.limits()` changes one. Zero remains restrictive. A list longer than its remaining budget fails before its first row; output and list failures report counts reached with RENDER-301/302. Fixed structural/depth ceilings remain.
 
 Counts report nodes, walked bytes, list rows and **walker time**. The time excludes checked props conversion and document assembly. Measure the complete handle call separately when deciding whether to move a cloned handle and owned props into the runtime's blocking pool. Forma starts no threads.
 
@@ -45,15 +47,15 @@ RenderCtx preserves the document's typed homes: title/body class, policy extensi
 
 `PageResponse` keeps HTML, a fresh nonce, enforced CSP, no-store and document security headers together. Axum's IntoResponse sends them. Its fields are private; `into_parts_unchecked` is the named reviewed integration exit. The named preview frame policy retains its separate documented overrides.
 
-`render_browser_shell(&PageConfig, &RenderCtx)` requires a manifest route explicitly declared Browser (`ssr:false`). An unknown or SSR route returns103 before document work. PageConfig is browser document metadata and carries no module, slots or render-mode selector. A browser shell has an empty root and the same response headers; it is never a fallback for SSR failure.
+`render_browser_shell(&PageConfig, &RenderCtx)` requires a manifest route explicitly declared Browser (`ssr:false`). An unknown or SSR route returns RENDER-103 before document work. PageConfig is browser document metadata and carries no module, slots or render-mode selector. A browser shell has an empty root and the same response headers; it is never a fallback for SSR failure.
 
 Both Trusted Types directives are enforced without requiring a reporting endpoint. The typed per-route relaxation removes exactly those directives from enforcement and retains Report-Only; owner/date governance applies. The existing bounded relaxation audit and loader/reload diagnostics remain distinct from application-owned render-error reporting.
 
 ## Development and panics
 
-Debug reload keeps immutable module/asset snapshots paired. A corrupt write retains the last good pair; a valid incompatible schema returns405 until corrected. After finalization, adding/removing a route or changing its mode requires restart/rebinding. Compatible module and asset edits can reload without restart. Release builds use embedded snapshots without per-request filesystem reads.
+Debug reload keeps immutable module/asset snapshots paired. A corrupt write retains the last good pair; a valid incompatible schema returns RENDER-405 until corrected. After finalization, adding/removing a route or changing its mode requires restart/rebinding. Compatible module and asset edits can reload without restart. Release builds use embedded snapshots without per-request filesystem reads.
 
-The complete handle boundary catches unwinding request faults, including custom props conversion, and returns399; a later request can still render. Under `panic = "abort"`, a fault ends the process and every in-flight request. The previously recorded fAuth abort profile therefore requires application migration review; this package does not change application profiles.
+The complete handle boundary catches unwinding request faults, including custom props conversion, and returns RENDER-399; a later request can still render. Under `panic = "abort"`, a fault ends the process and every in-flight request. The previously recorded fAuth abort profile therefore requires application migration review; this package does not change application profiles.
 
 The old `try_render`, tuple loader, public IrModules/RenderMode, PageOutput, render_page, caller-nonce renderer and raw config_script are removed. [The previous staged README](../../docs/archive/2026-10-15-bound-render/forma-server-README.md) is preserved for migration context. Source A2 templates remain historical until their milestone migration; release verification stages an explicit candidate-only adapter, and live publication stays disabled.
 

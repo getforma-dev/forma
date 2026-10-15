@@ -2,12 +2,11 @@
  * The zero-build runtime's own `srcdoc` writes (formajs#29's review, S3):
  * `data-bind:srcdoc` and `{item…}` in a list row's `srcdoc` write an
  * expression's value, or a row's data, as a document. No `trustedHtml()` can
- * reach them, so they stay strings, never minted (a page requiring Trusted
- * Types reports or refuses them), and in development they say so once, with
- * their code. 3.0.0 refuses them (FORMA-109).
+ * reach them, so v3 refuses them before evaluation or a native sink and
+ * identifies the binding through the ordinary diagnostic channel.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mount, unmount } from '../runtime';
+import { mount, unmount, clearDiagnostics, getDiagnostics } from '../runtime';
 import { RUNTIME_SRCDOC_CODE } from '../dom/trusted-html';
 
 const REGISTRY = Symbol.for('@getforma/core#trusted-types');
@@ -17,6 +16,7 @@ let warn: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   delete (globalThis as Record<symbol, unknown>)[REGISTRY];
+  clearDiagnostics();
   warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
@@ -46,12 +46,12 @@ describe('the runtime\'s srcdoc bindings', () => {
   function expectOneRuntimeLine(): void {
     const lines = linesWith(RUNTIME_SRCDOC_CODE);
     expect(lines).toHaveLength(1);
-    expect(lines[0]).toMatch(/^\[forma\] FORMA_W_RAW_RUNTIME_SRCDOC: /);
-    expect(lines[0]).toContain('FORMA-109');
+    expect(lines[0]).toContain('FORMA_E_RUNTIME_SRCDOC');
+    expect(getDiagnostics().some(d => d.code === RUNTIME_SRCDOC_CODE)).toBe(true);
     expect(linesWith('FORMA_W_RAW_SRCDOC')).toEqual([]);
   }
 
-  it('data-bind:srcdoc writes its string and warns once with the runtime code', () => {
+  it('data-bind:srcdoc is refused with its binding code while neighboring attributes work', () => {
     const frame = document.createElement('iframe');
     frame.setAttribute('sandbox', '');
     frame.setAttribute('data-bind:srcdoc', '{doc}');
@@ -60,15 +60,15 @@ describe('the runtime\'s srcdoc bindings', () => {
     button.setAttribute('data-on:click', "{doc = '<p>changed</p>'}");
     mounted({ doc: '<p>from data</p>', title: 'not a sink' }, frame, button);
 
-    // Written as the string it is, as before, and again when it changes.
-    expect(frame.getAttribute('srcdoc')).toBe('<p>from data</p>');
+    // Initial and changed values remain outside the raw sink.
+    expect(frame.hasAttribute('srcdoc')).toBe(false);
     expect(frame.getAttribute('title')).toBe('not a sink');
     button.click();
-    expect(frame.getAttribute('srcdoc')).toBe('<p>changed</p>');
+    expect(frame.hasAttribute('srcdoc')).toBe(false);
     expectOneRuntimeLine();
   });
 
-  it("a list row's srcdoc writes its string and warns once with the runtime code", () => {
+  it("a list row's srcdoc is refused with its binding code", () => {
     const list = document.createElement('ul');
     list.setAttribute('data-list', '{rows}');
     const row = document.createElement('li');
@@ -81,7 +81,36 @@ describe('the runtime\'s srcdoc bindings', () => {
     mounted({ rows: [{ d: '<p>row one</p>', t: 'one' }, { d: '<p>row two</p>', t: 'two' }] }, list);
 
     expect([...list.querySelectorAll('iframe')].map((f) => [f.getAttribute('srcdoc'), f.getAttribute('title')]))
-      .toEqual([['<p>row one</p>', 'one'], ['<p>row two</p>', 'two']]);
+      .toEqual([[null, 'one'], [null, 'two']]);
+    expectOneRuntimeLine();
+  });
+
+  it('reused rows update neighboring attributes while refused srcdoc stays absent', async () => {
+    const list = document.createElement('ul');
+    list.setAttribute('data-list', '{rows}');
+    const row = document.createElement('li');
+    row.setAttribute('title', '{item.t}');
+    const frame = document.createElement('iframe');
+    frame.setAttribute('srcdoc', '{item.d}');
+    frame.setAttribute('title', '{item.t}');
+    const link = document.createElement('a');
+    link.setAttribute('href', '{item.url}');
+    row.append(frame, link);
+    list.append(row);
+    const button = document.createElement('button');
+    button.setAttribute('data-on:click', "{rows = [{d:'changed',t:'two',url:'javascript:void(0)'}]}");
+    mounted({ rows: [{ d: 'first', t: 'one', url: '/safe' }] }, list, button);
+    const original = list.firstElementChild!;
+    expect(original.getAttribute('title')).toBe('one');
+    expect(original.querySelector('a')!.getAttribute('href')).toBe('/safe');
+
+    button.click();
+    await Promise.resolve();
+    expect(list.firstElementChild).toBe(original);
+    expect(original.getAttribute('title')).toBe('two');
+    expect(original.querySelector('iframe')!.getAttribute('title')).toBe('two');
+    expect(original.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(false);
+    expect(original.querySelector('a')!.hasAttribute('href')).toBe(false);
     expectOneRuntimeLine();
   });
 

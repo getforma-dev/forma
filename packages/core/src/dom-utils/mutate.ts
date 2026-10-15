@@ -1,6 +1,6 @@
 // DOM mutation helpers
 
-import { rawHtml, type TrustedHtml } from '../dom/trusted-html.js';
+import { checkRawAttr, htmlOf, isTrustedHtml, rawHtml, type TrustedHtml } from '../dom/trusted-html.js';
 
 /** Add one or more CSS classes to an element. */
 export function addClass(el: HTMLElement, ...classes: string[]): void {
@@ -48,15 +48,17 @@ export function setStyle(
  */
 export function setAttr(
   el: HTMLElement,
-  attrs: Record<string, string | boolean | null>,
+  attrs: Record<string, string | TrustedHtml | boolean | null> & { srcdoc?: TrustedHtml | false | null },
 ): void {
   for (const [name, value] of Object.entries(attrs)) {
     if (value === false || value === null) {
       el.removeAttribute(name);
     } else if (value === true) {
+      checkRawAttr(name, value);
       el.setAttribute(name, '');
     } else {
-      el.setAttribute(name, value);
+      checkRawAttr(name, value);
+      el.setAttribute(name, isTrustedHtml(value) ? htmlOf(value) : value);
     }
   }
 }
@@ -71,9 +73,8 @@ export function setText(el: HTMLElement, text: string): void {
  *
  * Prefer `setText()` for user-controlled content. Only use this when you
  * trust the HTML source (e.g., server-rendered markup you control), and wrap
- * it in `trustedHtml()` (DR-19): a plain string still works in 2.x and warns
- * once in development (FORMA_W_RAW_SET_HTML).
+ * it in `trustedHtml()` (DR-19). Plain strings are refused before the sink.
  */
-export function setHTMLUnsafe(el: HTMLElement, html: string | TrustedHtml): void {
+export function setHTMLUnsafe(el: HTMLElement, html: TrustedHtml): void {
   el.innerHTML = rawHtml(html, 'setHTMLUnsafe');
 }

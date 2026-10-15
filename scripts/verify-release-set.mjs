@@ -77,9 +77,57 @@ export function verifyPackedCorpus(manifest, fmir) {
   const completed = output.split('\n');
   for (const name of names) assert(completed.includes(`test ${name} ... ok`), `packed corpus did not execute ${name}`);
 }
+// Required by the recorded declared-v1 props contract. Never accept an empty
+// Cargo target, a filtered/ignored check or bytes from the source compiler.
+export function verifyPackedPropsTests(manifest) {
+  const names = [
+    'actual_compiler_module_binds_by_declared_names_and_renders_two_list_views',
+    'every_request_checks_numeric_and_date_bounds_with_declared_paths',
+    'bind_errors_stop_startup_before_listener_and_keep_both_source_positions',
+    'unknown_browser_and_ambiguous_pages_refuse_binding',
+    'no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists',
+    'reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot',
+  ];
+  const args = ['test', '--locked', '--manifest-path', manifest, '--test', 'typed_pages', '--', '--color', 'never'];
+  const env = { ...process.env };
+  delete env.UPDATE_GOLDEN;
+  const options = { env };
+  const listed = run('cargo', [...args, '--list'], ROOT, options).split('\n');
+  for (const name of names) assert(listed.includes(`${name}: test`), `packed props are missing ${name}`);
+  const output = run('cargo', args, ROOT, options);
+  process.stdout.write(output);
+  const completed = output.split('\n');
+  for (const name of names) assert(completed.includes(`test ${name} ... ok`), `packed props did not execute ${name}`);
+}
+export function verifyPackedPropsFixtures(compiler, serverCrate) {
+  assert.equal(typeof compiler.generateRealIr, 'function', 'packed compiler lacks its IR emitter');
+  for (const [app, name] of [['app', 'home'], ['empty-app', 'empty'], ['empty-typed-app', 'empty-typed']]) {
+    const entry = join(ROOT, 'packages/compiler/tests/fixtures/props-contract', `${app}.ts`);
+    const emitted = compiler.generateRealIr(entry);
+    assert(emitted?.binary, `${name}: declared props compiler fell back to placeholder`);
+    assert.deepEqual(Buffer.from(emitted.binary), readFileSync(join(serverCrate, 'tests/fixtures/props-contract', `${name}.ir`)), `${name}: emitted declared props differ from packed server fixture`);
+  }
+}
+// Inspect the actual response's enforced policy, never a Report-Only fallback.
+export function requireEnforcedTrustedTypes(headers) {
+  const policy = headers.get('content-security-policy');
+  assert(policy, 'packed template lacks an enforced Content-Security-Policy');
+  const directives = new Map();
+  for (const part of policy.split(';').map(part => part.trim()).filter(Boolean)) {
+    const [name, ...values] = part.split(/\s+/);
+    assert(!directives.has(name), `packed template has duplicate ${name} directives`);
+    directives.set(name, values);
+  }
+  assert.deepEqual(directives.get('require-trusted-types-for'), ["'script'"], 'packed template does not require Trusted Types for script sinks');
+  assert.deepEqual(directives.get('trusted-types')?.slice().sort(), ['forma', 'forma-runtime'], 'packed template allows unexpected Trusted Types policies');
+  return policy;
+}
+
 export async function verify(dir, reportPath) {
   assert(!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN, 'P17 must not have an OIDC credential');
   const started = Date.now(), set = json(join(dir, 'release-set.json'));
+  assert([undefined, null, 'enforced-v1'].includes(set.contracts.trustedTypes), 'P17 has no verifier for the recorded Trusted Types contract');
+  assert([null, 'declared-v1'].includes(set.contracts.props), 'P17 has no verifier for the recorded props contract');
   for (const p of set.packages) assert.equal(digest(join(dir, p.file)), p.sha256, `${p.file}: wrong packed bytes`);
   const scratch = join(ROOT, `.release-verify-${process.pid}`);
   mkdirSync(scratch);
@@ -148,6 +196,14 @@ export async function verify(dir, reportPath) {
       }
       verifyPackedCorpus(join(scratch, 'crates/forma-ir/Cargo.toml'), set.contracts.fmir);
     });
+    if (set.contracts.props === 'declared-v1') {
+      await test('packed compiler declared props bind and render through packed typed Pages', async () => {
+        const compiler = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
+        const serverCrate = join(scratch, 'crates/forma-server');
+        verifyPackedPropsFixtures(compiler, serverCrate);
+        verifyPackedPropsTests(join(serverCrate, 'Cargo.toml'));
+      });
+    }
     const { chromium } = await import('@playwright/test');
     const browser = await chromium.launch();
     try {
@@ -198,13 +254,25 @@ export async function verify(dir, reportPath) {
           const binary = join(scratch, 'target/debug', name);
           await server(binary, project, port, async (response, origin) => {
             assert.equal(response.status, 200);
+            const enforced = set.contracts.trustedTypes === 'enforced-v1';
+            const servedPolicy = enforced ? requireEnforcedTrustedTypes(response.headers) : response.headers.get('content-security-policy');
             const html = await response.text();
             assert(!html.includes('<div id="app"></div>') || template === 'dashboard', 'minimal SSR is an empty shell');
             const page = await browser.newPage();
             page.setDefaultTimeout(15_000);
             const errors = []; page.on('pageerror', e => errors.push(e.message));
+            // Install before navigation: a CSP violation need not throw a pageerror.
+            await page.addInitScript(() => {
+              globalThis.__formaP17Violations = [];
+              document.addEventListener('securitypolicyviolation', event => {
+                globalThis.__formaP17Violations.push({ directive: event.effectiveDirective, disposition: event.disposition, blockedURI: event.blockedURI });
+              });
+            });
             try {
-              await page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 });
+              const navigation = await page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 });
+              assert(navigation, 'packed template navigation produced no response');
+              const browserHeaders = new Headers(await navigation.allHeaders());
+              const browserPolicy = enforced ? requireEnforcedTrustedTypes(browserHeaders) : browserHeaders.get('content-security-policy');
               if (template === 'minimal') {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count').filter({ hasText: 'Count: 1' }).waitFor();
@@ -219,7 +287,16 @@ export async function verify(dir, reportPath) {
               await assert.rejects(assertActivated, /did not activate/);
               await page.locator('#p17-pending-probe').evaluate(el => el.remove());
               await assertActivated();
+              // Native violation events are queued; collect them after positive interaction.
+              const observation = await page.evaluate(() => new Promise(resolve => setTimeout(() => resolve({
+                nativeTrustedTypes: typeof globalThis.trustedTypes?.isHTML === 'function',
+                violations: globalThis.__formaP17Violations,
+              }), 100)));
+              if (enforced) assert.equal(observation.nativeTrustedTypes, true, 'packed enforcement gate requires a native Trusted Types engine');
+              assert.deepEqual(observation.violations, [], 'CSP violation in packed template');
               assert.deepEqual(errors, [], 'browser error in packed template');
+              report.tests.push({ name: `${template}: served policy and zero CSP violations during positive browser interaction`, passed: true,
+                trustedTypesContract: set.contracts.trustedTypes ?? null, servedPolicy, browserPolicy, ...observation, pageErrors: errors });
             } finally { await page.close(); }
           });
           if (template === 'minimal') {

@@ -526,11 +526,11 @@ in any casing on the client.
 
 Verified by `src/dom/__tests__/element-url-safety.test.ts` > "drops dangerous URLs from client-created elements"
 Verified by `src/dom/__tests__/element-url-safety.test.ts` > "drops ONCLICK-cased string props instead of writing an inline handler"
-Verified by `src/dom/__tests__/element-url-safety.test.ts` > "emits srcdoc but warns that escaping does not neutralize it"
+Verified by `src/dom/__tests__/element-url-safety.test.ts` > "srcdoc requires trustedHtml and strings are refused before the sink"
 
 ### `trustedHtml()`: the one raw entry
 
-Every raw sink takes `trustedHtml(markup)` beside a string. It is the one way to
+Every raw sink requires `trustedHtml(markup)`; plain strings are refused. It is the one way to
 say that a string is markup someone vouches for, so a search for its name finds
 every raw entry in an application, and a consumer's CI can list each one with an
 owner and an end date. It sanitizes nothing: pass only markup you control.
@@ -551,16 +551,14 @@ bundles), for `reconcile()`. A `TrustedHTML` from an application's own policy
 is accepted as well; TypeScript takes it for the `TrustedHtml` type only
 through a cast (`value as unknown as TrustedHtml`).
 
-A plain string still works through 2.x, exactly as before, and so does a
-non-string value where a sink took one in 2.0 (`dangerouslySetInnerHTML` and
-`reconcile()` refused one then, and still do). In a development build the first
-value each sink receives that is not `trustedHtml()` logs one coded warning;
-3.0.0 accepts only `trustedHtml()`. The codes, and `h('script')`'s, are in
-[STABILITY.md](STABILITY.md#deprecated-forms).
+The v3 type signatures and runtime checks reject raw strings, boxed strings
+and look-alikes before parsing or returning cached markup. These checks run
+in development and production, even without native Trusted Types. `h('script')`
+is also refused. The codes are in [STABILITY.md](STABILITY.md#deprecated-forms).
 
 Verified by `src/dom/__tests__/trusted-html.test.ts` > "every raw sink writes a trustedHtml() value without a warning, and the DOM holds its markup"
-Verified by `src/dom/__tests__/trusted-html.test.ts` > "a string to each raw sink still renders, and warns once with the sink's code in development"
+Verified by `src/dom/__tests__/trusted-html.test.ts` > "every raw sink refuses strings before parsing, including an already cached trusted value"
 Verified by `src/dom/__tests__/trusted-html.test.ts` > "a look-alike object is not trusted HTML"
-Verified by `src/dom/__tests__/trusted-html.test.ts` > "a look-alike object or a String object is written as before and warns as a string does"
+Verified by `src/dom/__tests__/trusted-html.test.ts` > "every raw sink refuses look-alikes and String objects"
 
 The full threat model is in [`../SECURITY.md`](../SECURITY.md).

@@ -15,7 +15,7 @@
  */
 
 import { isEventHandlerAttr } from '../security/url-safety.js';
-import { isTrustedHtml, warnRawString, type TrustedHtml } from './trusted-html.js';
+import { rawHtml, type TrustedHtml } from './trusted-html.js';
 import { runtimeParser, type RuntimeParser } from './runtime-parser.js';
 
 // ── Types ─────────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ function parseHTML(html: string, context?: Element): DocumentFragment {
  * An attribute that is a Trusted Types script sink: an `on*` handler, or a
  * script element's `src` or `href`. The diff of trusted markup writes none,
  * as h() and adoption write no `on*` name, and v2's nonce policy runs none of
- * them anyway; a string's diff writes them as 2.0 did (L-18).
+ * them anyway. Raw strings cannot enter the diff.
  */
 function isScriptAttr(el: Element, name: string): boolean {
   return isEventHandlerAttr(name) || (el.localName === 'script' && /^(?:src|href|xlink:href)$/i.test(name));
@@ -139,11 +139,10 @@ function isScriptAttr(el: Element, name: string): boolean {
  * arrived as trusted HTML: a changed script attribute is then not written (the
  * stale one is removed), and where `parser` is set too, a changed `srcdoc` is
  * minted again through forma-runtime, so a page enforcing Trusted Types
- * accepts it. A string's diff writes every changed attribute as a string, as
- * 2.0 did (L-18), which such a page reports or refuses.
+ * accepts it. Raw strings are refused before parsing or diffing.
  *
  * Verified by: src/dom/__tests__/trusted-html.test.ts > "reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src"
- * Verified by: src/dom/__tests__/trusted-html.test.ts > "a string reconcile()'s diff writes a changed on*, script src and srcdoc as 2.0 did"
+ * Verified by: src/dom/__tests__/trusted-html.test.ts > "a string cannot enter reconcile after trusted markup populated its cache"
  */
 function patchAttributes(liveEl: Element, newEl: Element, trusted: boolean, parser: RuntimeParser | null): void {
   const bindTargets = getBindTargets(liveEl);
@@ -478,18 +477,11 @@ export function createReconciler(config: ReconcilerConfig) {
    *  The WeakMap lets detached containers be GC'd. */
   const lastHtmlByContainer = new WeakMap<Element, string>();
 
-  return function reconcile(container: Element, html: string | TrustedHtml): void {
-    // A raw sink (DR-19). Markup that arrived as a browser TrustedHTML is
-    // trimmed, minted again and parsed through the runtime parser's own
-    // policy, forma-runtime (DR-20), so a page requiring Trusted Types accepts
-    // what is written; a string is parsed as a string, which such a page
-    // reports or refuses, and warns once in development (FORMA_W_RAW_RECONCILE).
-    // Verified by: src/dom/__tests__/trusted-html.test.ts > "reconcile() parses trusted markup through the forma-runtime policy and a string through no policy"
-    let trusted = false;
-    let parser: RuntimeParser | null = null;
-    if (typeof html === 'string') warnRawString('reconcile');
-    else if ((trusted = isTrustedHtml(html))) parser = runtimeParser(html);
-    else throw new TypeError('reconcile: expected a string or a trustedHtml() value, got ' + typeof html);
+  return function reconcile(container: Element, html: TrustedHtml): void {
+    // Check before both empty and unchanged-markup fast paths.
+    rawHtml(html, 'reconcile');
+    const trusted = true;
+    const parser = runtimeParser(html);
     const trimmed = String(html).trim();
     if (!trimmed) return;
 

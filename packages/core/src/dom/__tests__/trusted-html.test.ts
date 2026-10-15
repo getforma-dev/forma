@@ -19,7 +19,7 @@ import { createReconciler } from '../reconcile';
 import { setHTMLUnsafe } from '../../dom-utils/mutate';
 import {
   POLICY_REFUSED_CODE,
-  RAW_STRING_CODES,
+  RAW_HTML_CODES,
   isTrustedHtml,
   trustedHtml,
   type RawSink,
@@ -201,8 +201,8 @@ describe('trustedHtml()', () => {
 
     // At a sink, a look-alike is refused and writes nothing; the real one renders.
     const target = h('div', null, 'kept');
-    expect(() => h('div', { dangerouslySetInnerHTML: { __html: lookAlikes[1] } })).toThrow(TypeError);
-    expect(() => reconcile(target, lookAlikes[2] as string)).toThrow(TypeError);
+    expect(() => h('div', { dangerouslySetInnerHTML: { __html: lookAlikes[1] as unknown as TrustedHtml } })).toThrow(TypeError);
+    expect(() => reconcile(target, lookAlikes[2] as unknown as TrustedHtml)).toThrow(TypeError);
     expect(target.textContent).toBe('kept');
     reconcile(target, trustedHtml('<p>new</p>'));
     expect(target.innerHTML).toBe('<p>new</p>');
@@ -211,7 +211,7 @@ describe('trustedHtml()', () => {
 
 describe('the raw sinks', () => {
   /** Each raw sink: write `html` into a fresh element and return what the DOM holds. */
-  const SINKS: Record<RawSink, (html: string | TrustedHtml) => string> = {
+  const SINKS: Record<RawSink, (html: TrustedHtml) => string> = {
     innerHTML: (html) => h('div', { dangerouslySetInnerHTML: { __html: html } }).innerHTML,
     setHTMLUnsafe: (html) => {
       const el = h('div');
@@ -239,13 +239,13 @@ describe('the raw sinks', () => {
   };
 
   it('the sink table covers every raw sink the warnings name', () => {
-    expect(Object.keys(SINKS).sort()).toEqual(Object.keys(RAW_STRING_CODES).sort());
-    expect(Object.values(RAW_STRING_CODES).map(([code]) => code).sort()).toEqual([
-      'FORMA_W_RAW_INNER_HTML',
-      'FORMA_W_RAW_RECONCILE',
-      'FORMA_W_RAW_SET_HTML',
-      'FORMA_W_RAW_SRCDOC',
-      'FORMA_W_RAW_TEMPLATE',
+    expect(Object.keys(SINKS).sort()).toEqual(Object.keys(RAW_HTML_CODES).sort());
+    expect(Object.values(RAW_HTML_CODES).map(([code]) => code).sort()).toEqual([
+      'FORMA_E_RAW_INNER_HTML',
+      'FORMA_E_RAW_RECONCILE',
+      'FORMA_E_RAW_SET_HTML',
+      'FORMA_E_RAW_SRCDOC',
+      'FORMA_E_RAW_TEMPLATE',
     ]);
   });
 
@@ -254,30 +254,22 @@ describe('the raw sinks', () => {
       const markup = `<p class="${sink}">typed ${sink}</p>`;
       expect(write(trustedHtml(markup)), sink).toBe(EXPECTED[sink](markup));
     }
-    expect(linesWith(warn, 'FORMA_W_RAW_')).toEqual([]);
+    expect(linesWith(warn, 'FORMA_E_RAW_')).toEqual([]);
   });
 
-  it("a string to each raw sink still renders, and warns once with the sink's code in development", () => {
+  it('every raw sink refuses strings before parsing, including an already cached trusted value', () => {
     for (const [sink, write] of Object.entries(SINKS) as Array<[RawSink, typeof SINKS[RawSink]]>) {
-      const [code] = RAW_STRING_CODES[sink];
-      const first = `<p class="${sink}">first ${sink}</p>`;
-      const second = `<p class="${sink}">second ${sink}</p>`;
-      // L-18: the string form keeps working, exactly as before.
-      expect(write(first), sink).toBe(EXPECTED[sink](first));
-      expect(write(second), sink).toBe(EXPECTED[sink](second));
-      const lines = linesWith(warn, code);
-      expect(lines, sink).toHaveLength(1);
-      expect(lines[0]).toMatch(new RegExp(`^\\[forma\\] ${code}: `));
-      expect(lines[0]).toContain('trustedHtml()');
-      expect(lines[0]).toContain('3.0.0');
+      const [code] = RAW_HTML_CODES[sink];
+      const markup = '<p class="' + sink + '">reviewed</p>';
+      expect(() => write(markup as unknown as TrustedHtml), sink).toThrow(code);
+      expect(write(trustedHtml(markup)), sink).toBe(EXPECTED[sink](markup));
+      expect(() => write(markup as unknown as TrustedHtml), sink).toThrow(code);
     }
-    // One line per sink, and each names only its own code.
-    expect(linesWith(warn, 'FORMA_W_RAW_')).toHaveLength(Object.keys(SINKS).length);
   });
 
   it('a reactive dangerouslySetInnerHTML and srcdoc take trustedHtml() values through every transition', () => {
-    const [html, setHtml] = createSignal<{ __html: string | TrustedHtml } | null>({ __html: trustedHtml('<b>one</b>') });
-    const [doc, setDoc] = createSignal<string | TrustedHtml>(trustedHtml('<p>a</p>'));
+    const [html, setHtml] = createSignal<{ __html: TrustedHtml } | null>({ __html: trustedHtml('<b>one</b>') });
+    const [doc, setDoc] = createSignal<TrustedHtml>(trustedHtml('<p>a</p>'));
     const box = h('div', { dangerouslySetInnerHTML: () => html() });
     const frame = h('iframe', { srcdoc: () => doc() });
     expect(box.innerHTML).toBe('<b>one</b>');
@@ -293,49 +285,25 @@ describe('the raw sinks', () => {
     expect(box.innerHTML).toBe('<i>two</i>');
     expect(frame.getAttribute('srcdoc')).toBe('<p>c</p>');
 
-    setHtml({ __html: '<u>three</u>' });
-    expect(box.innerHTML).toBe('<u>three</u>');
-    expect(linesWith(warn, 'FORMA_W_RAW_INNER_HTML')).toHaveLength(1);
-    expect(linesWith(warn, 'FORMA_W_RAW_SRCDOC')).toEqual([]);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    setHtml({ __html: '<u>three</u>' as unknown as TrustedHtml });
+    expect(box.innerHTML).toBe('<i>two</i>');
+    expect(linesWith(warn, 'FORMA_E_RAW_INNER_HTML')).toHaveLength(0);
+    expect(linesWith(warn, 'FORMA_E_RAW_SRCDOC')).toEqual([]);
   });
 
-  it("h('script') warns once in development and still builds the element", () => {
-    const style = h('style');
-    const link = h('a', { href: '/x' });
-    expect(linesWith(warn, 'FORMA_W_SCRIPT_ELEMENT')).toEqual([]);
-
-    const first = h('script', { type: 'module' });
-    const second = h('script');
-    expect(first.localName).toBe('script');
-    expect(first.getAttribute('type')).toBe('module');
-    expect(second.localName).toBe('script');
-    expect(style.localName).toBe('style');
-    expect(link.getAttribute('href')).toBe('/x');
-    const lines = linesWith(warn, 'FORMA_W_SCRIPT_ELEMENT');
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toMatch(/^\[forma\] FORMA_W_SCRIPT_ELEMENT: h\('script'\)/);
-    expect(lines[0]).toContain('3.0.0');
+  it('h refuses script elements in every HTML spelling before construction', () => {
+    for (const tag of ['script', 'SCRIPT', 'Script']) expect(() => h(tag, { src: '/code.js' })).toThrow('FORMA_E_SCRIPT_ELEMENT');
+    expect(h('style').localName).toBe('style');
+    expect(h('a', { href: '/x' }).getAttribute('href')).toBe('/x');
   });
 
-  it('a look-alike object or a String object is written as before and warns as a string does', () => {
-    // formajs#29's review (N1). Each sink treats a value that is not
-    // trustedHtml() as 2.0 did; the ones that converted it still do, and now
-    // say so with their code, as for a string.
-    const lookAlike = { toString: () => '<b>look-alike</b>' };
-    const boxed = new String('<i>boxed</i>');
-    const target = h('div');
-    setHTMLUnsafe(target, lookAlike as unknown as string);
-    expect(target.innerHTML).toBe('<b>look-alike</b>');
-    expect((template(boxed as unknown as string).cloneNode(true) as Element).outerHTML).toBe('<i>boxed</i>');
-    expect(h('iframe', { srcdoc: lookAlike }).getAttribute('srcdoc')).toBe('<b>look-alike</b>');
-    for (const code of ['FORMA_W_RAW_SET_HTML', 'FORMA_W_RAW_TEMPLATE', 'FORMA_W_RAW_SRCDOC']) {
-      expect(linesWith(warn, code), code).toHaveLength(1);
+  it('every raw sink refuses look-alikes and String objects', () => {
+    for (const value of [{ toString: () => '<b>look-alike</b>' }, new String('<i>boxed</i>'), {__formaTrustedHtml:true}]) {
+      for (const [sink, write] of Object.entries(SINKS) as Array<[RawSink, typeof SINKS[RawSink]]>) {
+        expect(() => write(value as unknown as TrustedHtml), sink).toThrow(RAW_HTML_CODES[sink][0]);
+      }
     }
-    // The two that refused a non-string in 2.0 still refuse it, writing nothing.
-    const kept = h('div', null, 'kept');
-    expect(() => h('div', { dangerouslySetInnerHTML: { __html: boxed } })).toThrow(TypeError);
-    expect(() => reconcile(kept, boxed as unknown as string)).toThrow(TypeError);
-    expect(kept.textContent).toBe('kept');
   });
 });
 
@@ -440,11 +408,11 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     // A string is written as a string: the page reports it (Report-Only
     // renders it), and no policy launders it.
     const plain = document.createElement('div');
-    reconcile(plain, ' <p>plain</p> ');
-    expect(plain.innerHTML).toBe('<p>plain</p>');
-    expect(sim.violations).toEqual(['innerHTML <p>plain</p>']);
+    expect(() => reconcile(plain, ' <p>plain</p> ' as unknown as TrustedHtml)).toThrow('FORMA_E_RAW_RECONCILE');
+    expect(plain.innerHTML).toBe('');
+    expect(sim.violations).toEqual([]);
     expect(sim.minted.map((v) => v.markup)).not.toContain('<p>plain</p>');
-    expect(linesWith(warn, 'FORMA_W_RAW_RECONCILE')).toHaveLength(1);
+    expect(linesWith(warn, 'FORMA_E_RAW_RECONCILE')).toHaveLength(0);
   });
 
   it("an adopted island's dangerouslySetInnerHTML writes trustedHtml() typed, as content and never as an attribute", () => {
@@ -463,18 +431,15 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     expect(sim.violations).toEqual([]);
   });
 
-  it("adopting a string onto the walker's empty element raises one Trusted Types report, as client rendering does", () => {
-    // formajs#32's second review: holdsMarkup parsed the string through a
-    // template before writing it, a second report for one write.
+  it('adopted and client reactive strings are refused before the browser sink', () => {
     sim = enforceTrustedTypes({ reportOnly: true });
     document.body.innerHTML = trustedHtml('<div id="app" data-forma-ssr><article></article></div>') as unknown as string;
-    mount(() => h('article', { dangerouslySetInnerHTML: () => ({ __html: '<b>x</b>' }) }), '#app');
-    expect(document.querySelector('#app article')!.innerHTML).toBe('<b>x</b>');
-    expect(sim.violations).toEqual(['innerHTML <b>x</b>']);
-    // Client rendering, for comparison: one report for one write.
-    const client = h('article', { dangerouslySetInnerHTML: () => ({ __html: '<b>x</b>' }) });
-    expect(client.innerHTML).toBe('<b>x</b>');
-    expect(sim.violations).toEqual(['innerHTML <b>x</b>', 'innerHTML <b>x</b>']);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const raw = '<b>x</b>' as unknown as TrustedHtml;
+    expect(() => mount(() => h('article', { dangerouslySetInnerHTML: () => ({ __html: raw }) }), '#app')).toThrow('FORMA_E_RAW_INNER_HTML');
+    expect(document.querySelector('#app article')!.innerHTML).toBe('');
+    expect(() => h('article', { dangerouslySetInnerHTML: () => ({ __html: raw }) })).toThrow('FORMA_E_RAW_INNER_HTML');
+    expect(sim.violations).toEqual([]);
   });
 
   it('a refused string does not block the same markup sent later as trustedHtml(), client-rendered and adopted', () => {
@@ -483,18 +448,18 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     // markup as trustedHtml() read as no change and was never written.
     sim = enforceTrustedTypes();
     document.body.innerHTML = trustedHtml('<div id="app" data-forma-ssr><article><b>old</b></article></div>') as unknown as string;
-    const [inner, setInner] = createSignal<{ __html: string | TrustedHtml }>({ __html: trustedHtml('<b>old</b>') });
+    const [inner, setInner] = createSignal<{ __html: TrustedHtml }>({ __html: trustedHtml('<b>old</b>') });
     const client = h('article', { dangerouslySetInnerHTML: () => inner() });
     mount(() => h('article', { dangerouslySetInnerHTML: () => inner() }), '#app');
     const adopted = document.querySelector('#app article')!;
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    setInner({ __html: '<b>new</b>' });
+    setInner({ __html: '<b>new</b>' as unknown as TrustedHtml });
     expect(adopted.innerHTML).toBe('<b>old</b>');
     expect(client.innerHTML).toBe('<b>old</b>');
     setInner({ __html: trustedHtml('<b>new</b>') });
     expect(adopted.innerHTML).toBe('<b>new</b>');
     expect(client.innerHTML).toBe('<b>new</b>');
-    expect(sim.violations).toEqual(['innerHTML <b>new</b>', 'innerHTML <b>new</b>']);
+    expect(sim.violations).toEqual([]);
   });
 
   it("an adopted island's srcdoc binding writes trustedHtml() typed and warns once for a string", () => {
@@ -502,7 +467,7 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     document.body.innerHTML = trustedHtml(
       '<div id="app" data-forma-ssr><div><iframe srcdoc="&lt;p&gt;a&lt;/p&gt;"></iframe></div></div>',
     ) as unknown as string;
-    const [doc, setDoc] = createSignal<string | TrustedHtml>(trustedHtml('<p>a</p>'));
+    const [doc, setDoc] = createSignal<TrustedHtml>(trustedHtml('<p>a</p>'));
     mount(() => h('div', null, h('iframe', { srcdoc: () => doc() })), '#app');
     const frame = document.querySelector('iframe')!;
     // Adoption writes nothing where the server agrees.
@@ -511,13 +476,14 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     setDoc(trustedHtml('<p>b</p>'));
     expect(frame.getAttribute('srcdoc')).toBe('<p>b</p>');
     expect(sim.violations).toEqual([]);
-    expect(linesWith(warn, 'FORMA_W_RAW_SRCDOC')).toEqual([]);
+    expect(linesWith(warn, 'FORMA_E_RAW_SRCDOC')).toEqual([]);
 
-    setDoc('<p>c</p>');
-    setDoc('<p>d</p>');
-    expect(frame.getAttribute('srcdoc')).toBe('<p>d</p>');
-    expect(sim.violations).toEqual(['srcdoc <p>c</p>', 'srcdoc <p>d</p>']);
-    expect(linesWith(warn, 'FORMA_W_RAW_SRCDOC')).toHaveLength(1);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    setDoc('<p>c</p>' as unknown as TrustedHtml);
+    expect(frame.getAttribute('srcdoc')).toBe('<p>b</p>');
+    setDoc(trustedHtml('<p>c</p>'));
+    expect(frame.getAttribute('srcdoc')).toBe('<p>c</p>');
+    expect(sim.violations).toEqual([]);
   });
 
   it("reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src", () => {
@@ -548,25 +514,16 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
       .toEqual(expect.arrayContaining(['<p>two</p>', '<p>three</p>', '<p>four</p>']));
   });
 
-  it("a string reconcile()'s diff writes a changed on*, script src and srcdoc as 2.0 did", () => {
-    // formajs#29's second review (R1): only the diff of trusted markup leaves
-    // script attributes unwritten. A string keeps 2.0.3's behaviour (L-18),
-    // and its writes are strings, which the page reports.
+  it('a string cannot enter reconcile after trusted markup populated its cache', () => {
     sim = enforceTrustedTypes({ reportOnly: true });
     const live = document.createElement('div');
-    const markup = (doc: string, handler: string, src: string) =>
-      `<div data-forma-id="a"><iframe sandbox="" srcdoc="&lt;p&gt;${doc}&lt;/p&gt;"></iframe>` +
-      `<button onclick="${handler}()">x</button><script type="text/x-inert" src="/${src}.js"></script></div>`;
-    reconcile(live, markup('one', 'a', 'a'));
-    for (const [doc, handler, src] of [['two', 'b', 'b'], ['three', 'c', 'c']] as const) {
-      reconcile(live, markup(doc, handler, src));
-      expect(live.querySelector('iframe')!.getAttribute('srcdoc'), doc).toBe(`<p>${doc}</p>`);
-      expect(live.querySelector('button')!.getAttribute('onclick')).toBe(`${handler}()`);
-      expect(live.querySelector('script')!.getAttribute('src')).toBe(`/${src}.js`);
-    }
-    // Written as strings: the page saw each srcdoc write, and nothing minted it.
-    expect(sim.violations.filter((v) => v.startsWith('srcdoc '))).toEqual(['srcdoc <p>two</p>', 'srcdoc <p>three</p>']);
-    expect(sim.minted.filter((v) => v.policy === 'forma-runtime')).toEqual([]);
+    const markup = '<div data-forma-id="a"><p>safe fixture</p></div>';
+    reconcile(live, trustedHtml(markup));
+    const before = live.innerHTML;
+    expect(() => reconcile(live, markup as unknown as TrustedHtml)).toThrow('FORMA_E_RAW_RECONCILE');
+    expect(() => reconcile(live, '<p>changed</p>' as unknown as TrustedHtml)).toThrow('FORMA_E_RAW_RECONCILE');
+    expect(live.innerHTML).toBe(before);
+    expect(sim.violations).toEqual([]);
   });
 
   it('the shared registry holds no policy, and its forma-runtime handle mints nothing from a string', () => {
@@ -640,11 +597,11 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     const live = document.createElement('div');
     live.append(Object.assign(document.createElement('p'), { textContent: 'old' }));
     live.firstElementChild!.setAttribute('data-forma-id', 'old');
-    expect(() => reconcile(live, '<p data-forma-id="new">new</p>')).toThrow(TypeError);
+    expect(() => reconcile(live, '<p data-forma-id="new">new</p>' as unknown as TrustedHtml)).toThrow(TypeError);
     expect(live.textContent).toBe('old');
     reconcile(live, trustedHtml('<p data-forma-id="new">new</p>'));
     expect(live.textContent).toBe('new');
-    expect(sim.violations).toEqual(['innerHTML <p data-forma-id="new">new</p>']);
+    expect(sim.violations).toEqual([]);
   });
 
   it('a refused policy name warns once in development, and the sinks then write strings the page refuses', () => {

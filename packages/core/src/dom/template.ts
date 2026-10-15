@@ -14,18 +14,19 @@ const cache = new Map<string, Node>();
 
 /**
  * Create a reusable template node from markup. A raw sink: the markup is
- * parsed as it is, unescaped, so pass `trustedHtml()` (DR-19); a plain string
- * still works in 2.x and warns once in development (FORMA_W_RAW_TEMPLATE).
+ * parsed as it is, unescaped, so pass `trustedHtml()` (DR-19). Plain strings
+ * are refused before parsing or returning a cached template.
  *
  * The returned node is a cached prototype. Callers must call
  * `.cloneNode(true)` to get a unique DOM tree for each component instance.
  */
-export function template(html: string | TrustedHtml): Node {
-  const markup = String(html);
+export function template(html: TrustedHtml): Node {
+  const sink = rawHtml(html, 'template');
+  const markup = String(sink);
   let node = cache.get(markup);
   if (!node) {
     const tpl = document.createElement('template');
-    tpl.innerHTML = rawHtml(html, 'template');
+    tpl.innerHTML = sink;
     node = tpl.content.firstChild!;
     cache.set(markup, node);
   }
@@ -39,12 +40,13 @@ export function template(html: string | TrustedHtml): Node {
  * Used when the template has multiple root nodes. The returned fragment
  * is a cached prototype; callers must call `.cloneNode(true)`.
  */
-export function templateMany(html: string | TrustedHtml): DocumentFragment {
-  const markup = String(html);
+export function templateMany(html: TrustedHtml): DocumentFragment {
+  const sink = rawHtml(html, 'template');
+  const markup = String(sink);
   let node = cache.get(markup);
   if (!node) {
     const tpl = document.createElement('template');
-    tpl.innerHTML = rawHtml(html, 'template');
+    tpl.innerHTML = sink;
     node = tpl.content;
     cache.set(markup, node);
   }

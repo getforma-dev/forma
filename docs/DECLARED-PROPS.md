@@ -44,7 +44,7 @@ A handle is cloneable and Send+Sync and compares the contract once. In developme
 
 The fixture in `packages/compiler/tests/fixtures/props-contract` is emitted by `scripts/emit-props-contract.mjs` and consumed by `crates/forma-server/tests/typed_pages.rs` through the real parser, derive, bind, native walker and document renderer. `npm run check` verifies those bytes against this compiler. The no-parameter and typed-empty fixtures prove local empty lists need no handler keys. Rust's dedicated comparer/value and compile-refusal tests cover the closed/refused type matrix and source positions.
 
-Read-only inventory used preserved clones under `work/review-FORMA-126-lint/consumers`, never application worktrees. These are shape references, not a claim that applications already build against3.0.0:
+Read-only inventory used preserved clones under `work/review-FORMA-126-lint/consumers`, never application worktrees. These are shape references, not a claim that applications already build against 3.0.0:
 
 | Pinned source | Inspected data and fixture coverage |
 |---|---|
@@ -57,7 +57,7 @@ Read-only inventory used preserved clones under `work/review-FORMA-126-lint/cons
 | same fAuth, platform login app's five islands: AuthCard, MfaPanel, InviteBanner, LoginCardHead, OnboardingCta | Shared bool/string/null state, optional nested MFA setup and invite data → nested optional shape; DOM refs, promises, callbacks and browser actions stay local, outside PageProps. |
 | same fAuth, RegistrationForm; BenchmarkFilterBar, BenchmarkDataTable, PerfPanel | Nine registered islands total across login/onboarding/benchmark; local controls, shared dataset and derived filtering → local-state isolation and shared declared dataset. Application-specific filtering moves to a declared rendered value or later compiler work, not ad hoc slot injection. |
 
-Application migration remains in its assigned follow-up tickets. Fixture expansion is FORMA-188; row-key policy is106; browser activation is103. No live application repository was changed.
+Application migration remains in its assigned follow-up tickets. Fixture expansion is FORMA-188; row-key policy is FORMA-106; browser activation is FORMA-103. No live application repository was changed.
 
 ## Startup completion and document extensions
 

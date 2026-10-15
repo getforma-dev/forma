@@ -223,31 +223,28 @@ for (const rel of [`${DEV_OUT_DIR}/index.js`, `${DEV_OUT_DIR}/index.cjs`]) {
 }
 
 // ---------------------------------------------------------------------------
-// 3c. The raw-HTML warnings are development-only
+// 3c. Raw-HTML refusals survive both builds; warnings remain development-only
 // ---------------------------------------------------------------------------
-// A value that is not trustedHtml() given to a raw sink, the runtime's srcdoc
-// bindings, h('script') and a refused policy name log a coded warning in a
-// development build (FORMA-126, src/dom/trusted-html.ts). Each sits behind
-// the build flag itself, written out at the warning, so every production
-// artifact drops it, code-split chunks and the CDN bundles included; the
-// development twins keep it.
-const RAW_HTML_WARNING = /FORMA_W_(?:RAW_[A-Z_]+|SCRIPT_ELEMENT|TT_POLICY_REFUSED|INNER_HTML_CHILDREN)/;
+const DEVELOPMENT_WARNING = /FORMA_W_(?:TT_POLICY_REFUSED|INNER_HTML_CHILDREN)/;
+const REMOVED_RAW_WARNING = /FORMA_W_(?:RAW_[A-Z_]+|SCRIPT_ELEMENT)/;
 for (const rel of jsArtifacts()) {
-  if (!isDevelopment(rel) && RAW_HTML_WARNING.test(read(rel))) {
-    fail(`${rel} contains a raw-HTML development warning: the build flag did not fold it away`);
+  const code = read(rel);
+  if (REMOVED_RAW_WARNING.test(code)) fail(`${rel} retains a removed A2 raw-HTML warning bridge`);
+  if (!isDevelopment(rel) && DEVELOPMENT_WARNING.test(code)) {
+    fail(`${rel} contains a development warning: the build flag did not fold it away`);
   }
 }
-for (const [entry, codes] of [
-  ['index', ['FORMA_W_RAW_INNER_HTML', 'FORMA_W_RAW_SET_HTML', 'FORMA_W_RAW_TEMPLATE', 'FORMA_W_RAW_SRCDOC', 'FORMA_W_SCRIPT_ELEMENT', 'FORMA_W_TT_POLICY_REFUSED', 'FORMA_W_INNER_HTML_CHILDREN']],
-  ['runtime', ['FORMA_W_RAW_RECONCILE', 'FORMA_W_RAW_RUNTIME_SRCDOC', 'FORMA_W_TT_POLICY_REFUSED']],
-  ['runtime-hardened', ['FORMA_W_RAW_RECONCILE', 'FORMA_W_RAW_RUNTIME_SRCDOC', 'FORMA_W_TT_POLICY_REFUSED']],
+for (const [entry, refusals, warnings] of [
+  ['index', ['FORMA_E_RAW_INNER_HTML', 'FORMA_E_RAW_SET_HTML', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_SCRIPT_ELEMENT'], ['FORMA_W_TT_POLICY_REFUSED', 'FORMA_W_INNER_HTML_CHILDREN']],
+  ['runtime', ['FORMA_E_RAW_RECONCILE', 'FORMA_E_RUNTIME_SRCDOC'], ['FORMA_W_TT_POLICY_REFUSED']],
+  ['runtime-hardened', ['FORMA_E_RAW_RECONCILE', 'FORMA_E_RUNTIME_SRCDOC'], ['FORMA_W_TT_POLICY_REFUSED']],
 ]) {
-  for (const ext of ['js', 'cjs']) {
-    const rel = `${DEV_OUT_DIR}/${entry}.${ext}`;
+  for (const base of ['dist', DEV_OUT_DIR]) for (const ext of ['js', 'cjs']) {
+    const rel = `${base}/${entry}.${ext}`;
     if (!existsSync(resolve(ROOT, rel))) continue; // reported by section 1
     const graph = collectGraph(rel, ROOT).files.map((file) => read(file)).join('\n');
-    for (const code of codes) {
-      if (!graph.includes(code)) fail(`${rel} does not log ${code}: the development build lost the raw-HTML warning`);
+    for (const code of [...refusals, ...(base === DEV_OUT_DIR ? warnings : [])]) {
+      if (!graph.includes(code)) fail(`${rel} lost required raw-HTML boundary code ${code}`);
     }
   }
 }

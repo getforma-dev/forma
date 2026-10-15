@@ -125,8 +125,8 @@
   "tags": [
    "security"
   ],
-  "find": "  if (isEventHandlerAttr(key)) {\n    if (__DEV__) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  warnRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
-  "replace": "  warnRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
+  "find": "  if (isEventHandlerAttr(key)) {\n    if (__DEV__) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
+  "replace": "  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
   "note": "h() static path writes ONCLICK as an inline handler"
  },
  {
@@ -1251,8 +1251,8 @@
   "id": "mutate/setAttr-true-branch",
   "file": "src/dom-utils/mutate.ts",
   "tags": [],
-  "find": "    } else if (value === true) {\n      el.setAttribute(name, '');",
-  "replace": "    } else if (value === true) {\n      el.setAttribute(name, 'true');",
+  "find": "    } else if (value === true) {\n      checkRawAttr(name, value);\n      el.setAttribute(name, '');",
+  "replace": "    } else if (value === true) {\n      checkRawAttr(name, value);\n      el.setAttribute(name, 'true');",
   "note": "boolean attr emitted as 'true' instead of ''"
  },
  {
@@ -2711,26 +2711,6 @@
   "note": "without Trusted Types, what trustedHtml() returns is not recognised by the sinks it was made for. Verified by: src/dom/__tests__/trusted-html.test.ts > \"without Trusted Types it returns a frozen stand-in that core recognises\""
  },
  {
-  "id": "trusted/string-warning-silent",
-  "file": "src/dom/trusted-html.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (isTrustedHtml(value)) return htmlOf(value);\n  warnRawString(sink);\n",
-  "replace": "  if (isTrustedHtml(value)) return htmlOf(value);\n",
-  "note": "a string given to a raw sink is written with no development warning, so the 2.x bridge says nothing before 3.0.0 refuses it (L-18, DR-19). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a string to each raw sink still renders, and warns once with the sink's code in development\""
- },
- {
-  "id": "trusted/script-warning-silent",
-  "file": "src/dom/element.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    warnScriptElement(tagName);\n",
-  "replace": "",
-  "note": "h('script') builds a script element with no development warning before 3.0.0 refuses it (DR-19, FORMA-109). Verified by: src/dom/__tests__/trusted-html.test.ts > \"h('script') warns once in development and still builds the element\""
- },
- {
   "id": "trusted/static-attr-second-conversion",
   "file": "src/dom/element.ts",
   "tags": [
@@ -2849,36 +2829,6 @@
   "find": "  return tt && typeof tt.createPolicy === 'function' && typeof tt.isHTML === 'function' ? tt : undefined;",
   "replace": "  return tt;",
   "note": "an element clobbered onto window.trustedTypes is taken for Trusted Types (formajs#29 review N5). Verified by: src/dom/__tests__/trusted-html.test.ts > \"an element named trustedTypes is not Trusted Types\""
- },
- {
-  "id": "trusted/look-alike-silent",
-  "file": "src/dom/trusted-html.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (isTrustedHtml(value)) return htmlOf(value);\n  warnRawString(sink);\n",
-  "replace": "  if (isTrustedHtml(value)) return htmlOf(value);\n  if (typeof value === 'string') warnRawString(sink);\n",
-  "note": "a look-alike object or a String object at a raw sink is written untyped with no development warning (formajs#29 review N1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a look-alike object or a String object is written as before and warns as a string does\""
- },
- {
-  "id": "trusted/runtime-bind-srcdoc-silent",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "          warnRuntimeSrcdoc(attrName);\n",
-  "replace": "",
-  "note": "data-bind:srcdoc writes a document from an expression with no development warning (formajs#29 review S3). Verified by: src/__tests__/runtime-srcdoc.test.ts > \"data-bind:srcdoc writes its string and warns once with the runtime code\""
- },
- {
-  "id": "trusted/runtime-row-srcdoc-silent",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "          warnRuntimeSrcdoc(attr.name);\n",
-  "replace": "",
-  "note": "a list row's srcdoc writes a document from row data with no development warning (formajs#29 review S3). Verified by: src/__tests__/runtime-srcdoc.test.ts > \"a list row's srcdoc writes its string and warns once with the runtime code\""
  },
  {
   "id": "trusted/reconcile-string-script-attrs-removed",
@@ -3156,8 +3106,8 @@
   "tags": [
    "security"
   ],
-  "find": "      if (scope.mount?.tier === 'unreviewed' && isRawHtmlAttr(attrName)) {\n",
-  "replace": "      if (scope.mount?.tier === 'unreviewed' && isRawHtmlAttr(attrName) && attrName === 'never') {\n",
+  "find": "      if (isRawHtmlAttr(attrName)) {\n",
+  "replace": "      if (isRawHtmlAttr(attrName) && attrName === 'never') {\n",
   "note": "data-bind:srcdoc runs in an unreviewed mount and writes a document the strip never saw, from a value the module chose (formajs#35's review, S2). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported\""
  }
 ]
