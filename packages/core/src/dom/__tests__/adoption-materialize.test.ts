@@ -11,6 +11,8 @@ import { createSignal } from '../../reactive/signal.js';
 import { createEffect } from '../../reactive/effect.js';
 import { prepareAdoption } from '../adoption.js';
 import { AdoptionLifecycle } from '../../reactive/adoption-lifecycle.js';
+import { liveRanges } from '../adoption-live-ranges.js';
+import { registerDisposer } from '../../reactive/root.js';
 
 const HTML = 'http://www.w3.org/1999/xhtml';
 const disposers: (() => void)[] = [];
@@ -22,6 +24,16 @@ const noRanges: MaterializeContext = {
 function owned<T>(build: () => T): T { return createRoot(dispose => { disposers.push(dispose); return build(); }); }
 function build(read: () => unknown, ns: string | null = null, context = noRanges): Node | null {
   return owned(() => materializeAdoption(withAdoptionDescription(read), ns, context));
+}
+function liveFixture(read: () => unknown) {
+  const doc = document.implementation.createHTMLDocument(); doc.body.innerHTML = '<section></section>';
+  const host = doc.body.firstElementChild!, failure = vi.fn(); let scope!: AdoptionLifecycle;
+  const plan = prepareAdoption(host, () => h('section'), { scope: options => (scope = new AdoptionLifecycle(options)), failure });
+  plan.commit(); disposers.push(() => plan.dispose());
+  const context = liveRanges(scope, doc, () => {});
+  const candidate = scope.group(() => materializeAdoption(withAdoptionDescription(read), null, context));
+  if (candidate.value) host.append(candidate.value);
+  return { host, plan, failure };
 }
 afterEach(() => { for (const dispose of disposers.splice(0).reverse()) dispose(); document.body.replaceChildren(); vi.restoreAllMocks(); });
 
@@ -189,5 +201,79 @@ describe('private live descriptor materialization', () => {
     expect(generation.value).toBeInstanceOf(HTMLDivElement); expect(nodes[0]).toBeInstanceOf(HTMLElement); expect(refs[0]).toBeInstanceOf(HTMLElement);
     withAdoptionDescription(() => setTick(1)); expect(nodes).toHaveLength(2); expect(nodes[1]).toBeInstanceOf(HTMLElement);
     generation.dispose(); setTick(2); expect(nodes).toHaveLength(2); expect(describingAdoption).toBe(false);
+  });
+
+  it('constructs later nested namespace branches with the actual owned Show adapter', () => {
+    const [on, setOn] = createSignal(false);
+    const { host, failure } = liveFixture(() => h(Fragment, null,
+      h('svg', null, createShow(on, () => h('foreignObject', null, h('div', null, h('a', null, 'html'))))),
+      h('math', null, h('annotation-xml', { encoding: 'application/mathml+xml' }, createShow(on, () => h('svg', null, h('title', null, 'svg'))))),
+    ));
+    expect(host.querySelector('a')).toBeNull(); setOn(true);
+    expect(host.querySelector('a')).toBeInstanceOf(HTMLAnchorElement);
+    expect(host.querySelector('title')!.namespaceURI).toBe(SVG_NS);
+    setOn(false); expect(host.querySelector('a')).toBeNull(); expect(host.querySelector('title')).toBeNull();
+    setOn(true); expect(host.querySelector('a')).toBeInstanceOf(HTMLAnchorElement); expect(failure).not.toHaveBeenCalled();
+  });
+
+  it('keeps a nested explicit Show range byte-identical when its alternate construction fails', () => {
+    const [on, setOn] = createSignal(true), sentinel = new Error('nested alternate'), cleanup = vi.fn();
+    const { host, plan, failure } = liveFixture(() => createShow(() => true, () => h('div', null,
+      createShow(on, () => h('b', null, 'old'), () => { registerDisposer(cleanup); throw sentinel; }),
+    )));
+    const original = host.querySelector('b')!, before = host.innerHTML, observer = new MutationObserver(() => {});
+    observer.observe(host, { childList: true, characterData: true, attributes: true, subtree: true });
+    try {
+      setOn(false); expect(plan.phase).toBe('aborted'); expect(failure.mock.calls[0]![0]).toBe(sentinel);
+      expect(cleanup).toHaveBeenCalledOnce(); expect(host.querySelector('b')).toBe(original); expect(host.innerHTML).toBe(before); expect(observer.takeRecords()).toEqual([]);
+    } finally { observer.disconnect(); }
+  });
+
+  it('reconciles fresh Fragment Lists with multi-node and empty rows and real indices', () => {
+    const [items, setItems] = createSignal([0, 1, 2]);
+    const { host, failure } = liveFixture(() => h('svg', null, createList(items, item => item,
+      ((item: number, index: () => number) => item ? h(Fragment, null, h('title', null, item), h('a', null, index)) : null) as unknown as (item: number, index: () => number) => HTMLElement,
+    )));
+    const first = host.querySelector('title')!, second = host.querySelectorAll('title')[1]!;
+    expect(host.textContent).toBe('1122'); setItems([2, 0, 1, 3]);
+    expect(host.textContent).toBe('201233'); expect(host.querySelector('title')).toBe(second); expect(host.querySelectorAll('title')[1]).toBe(first);
+    expect([...host.querySelectorAll('title,a')].every(node => node.namespaceURI === SVG_NS)).toBe(true);
+    setItems([3]); expect(host.textContent).toBe('30'); setItems([]); expect(host.textContent).toBe(''); expect(failure).not.toHaveBeenCalled();
+  });
+
+  it('keeps one condition read per consumed function-reader update with shared selected dependencies', () => {
+    const [label, setLabel] = createSignal('a'), condition = vi.fn(() => true), selected = vi.fn(() => h('b', null, label()));
+    const { host, failure } = liveFixture(() => h(Fragment, null, () => {
+      label(); return __adoptionConditional(condition, selected, () => null);
+    }));
+    expect(host.textContent).toBe('a'); expect(condition).toHaveBeenCalledOnce(); expect(selected).toHaveBeenCalledOnce();
+    setLabel('b'); expect(host.textContent).toBe('b'); expect(condition).toHaveBeenCalledTimes(2); expect(selected).toHaveBeenCalledTimes(2); expect(failure).not.toHaveBeenCalled();
+  });
+
+  it('keeps prior materialized rows unchanged when a later described row refuses', () => {
+    const [items, setItems] = createSignal([1]), cleanup = vi.fn(), sentinel = new Error('last row');
+    const { host, plan, failure } = liveFixture(() => h('div', null, createList(items, item => item, item => {
+      if (item === 3) throw sentinel;
+      if (item === 2) registerDisposer(cleanup);
+      return h('b', null, item);
+    })));
+    const original = host.querySelector('b'), before = host.innerHTML, observer = new MutationObserver(() => {});
+    observer.observe(host, { childList: true, characterData: true, attributes: true, subtree: true });
+    try {
+      setItems([2, 3]); expect(plan.phase).toBe('aborted'); expect(failure.mock.calls[0]![0]).toBe(sentinel); expect(cleanup).toHaveBeenCalledOnce();
+      expect(host.querySelector('b')).toBe(original); expect(host.innerHTML).toBe(before); expect(observer.takeRecords()).toEqual([]);
+    } finally { observer.disconnect(); }
+  });
+
+  it('refuses a connected child in a later public reader without moving external or retained content', () => {
+    const external = document.createElement('aside'), foreign = document.createElement('b'); external.append(foreign); document.body.append(external);
+    const [next, setNext] = createSignal(false);
+    const { host, plan, failure } = liveFixture(() => h(Fragment, null, () => next() ? h('section', null, foreign) : h('i', null, 'old')));
+    const old = host.querySelector('i'), before = host.innerHTML, observer = new MutationObserver(() => {});
+    observer.observe(host, { subtree: true, childList: true, characterData: true, attributes: true }); observer.observe(external, { childList: true, subtree: true });
+    try {
+      setNext(true); expect(plan.phase).toBe('aborted'); expect(failure).toHaveBeenCalledOnce();
+      expect(host.querySelector('i')).toBe(old); expect(host.innerHTML).toBe(before); expect(foreign.parentNode).toBe(external); expect(observer.takeRecords()).toEqual([]);
+    } finally { observer.disconnect(); }
   });
 });
