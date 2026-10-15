@@ -175,6 +175,9 @@ required separately before merging PR38.
 
 ## Declared page props and typed handles (FORMA-102)
 
+The original qualification below is preserved for its source. The reload correction
+and current acceptance are recorded in the subsequent section.
+
 `v3-props-set.json` records seven unpublished 3.0.0-dev artifacts from
 `7e5f0c966de04ab7c2b4b7d7b50ac467a037f30e`. The same source's verifier passed
 in 50.501 seconds (`v3-props-p17.json`), including the new `declared-v1` props
@@ -208,3 +211,43 @@ seven original archives remain under `work/FORMA-102/tmp/`. This is ordinary
 functional/corpus replay, not a new fuzz or mutation campaign. Final activation,
 renderer budgets/finalization and template API migration remain in their assigned
 tickets. `liveReleaseReady` remains false; no tag or publication occurred.
+
+## Declared props reload correction and repeated packaging
+
+The current accepted local artifacts are `v3-props-reload-set.json` from
+`8f7a2aa02398240845681f1c777e4b9dfdcf7eaa`. `v3-props-reload-p17.json` passes
+all 20 checks in 62.502 seconds, including all seven real typed Pages controls and
+both packed templates. Every archive SHA-256 and packed crate VCS commit matches
+that source. All ten template source files were restored and match Git exactly
+(`v3-props-reload-template-restore.json`). The original 7e5f0c9 archives and reports
+remain unchanged; this acceptance supersedes them for the current source.
+
+Independent review found that invalid or missing manifests could still allow an
+edited IR file at the same filename to load under old assets. The new regression
+failed before the fix. The cache now freezes the complete previous pair until a
+valid manifest returns, including identical original bytes after disappearance.
+It also handles an invalid initial disk baseline while retaining caller-added
+startup routes. The lead replayed its original failing reproducer unchanged and
+all eight independent typed Pages controls passed.
+
+The corrected source passed the full local gate in 162 seconds, MSRV 1.85, release
+typed Pages 5/5 and Clippy. A later test-only Windows correction uses Path suffix
+semantics without changing native diagnostic paths; all ten props tests passed.
+The old-head Windows failure is preserved in the independent review directory;
+only new-head hosted CI can qualify the final tree.
+
+The first fresh packing attempt correctly failed: the rebuilt forma-ir archive
+was `749a6613d7c96f597a21d434a3ef4c7d6be5611b045a6dbb1aa8ea165f0060ec`,
+but Cargo 1.93.1's reused packaging index left the dependent lock checksum at
+`19ae3c5ff041656505e3e88bd1a3378202894fdac34f090ed1b54846372cecdc`.
+`v3-props-reload-refused-pack.json` records that refusal; its original archives,
+index, shipped lock and raw log are retained. Packaging now uses a fresh owned
+Cargo target per attempt. It copies archives out and removes only that target.
+The verifier never repairs a candidate lock. The 38 release helper tests include
+same-source reproducibility and changed-source dependent-checksum/VCS controls.
+
+`v3-props-reload-qualification.json` records source boundaries, raw-log hashes
+and unchanged HTML goldens. The known same-file Page entry-selection defect
+fails closed and is explicitly assigned to the approved FORMA-103 entry correction;
+it does not invalidate imported-entry evidence. No application repository,
+package version, tag or live publication changed.

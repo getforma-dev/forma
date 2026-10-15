@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "da10ba06a87aef3093e846fbaab902473ccb7587",
+  "passed": false,
+  "stage": "fresh advisories over every exact shipped crate lock",
+  "reason": "Cargo1.93.1 reused stale tmp-registry checksum across changed source; verifier refused actual shipped dependent lock",
+  "expectedActualArchiveSha256": "749a6613d7c96f597a21d434a3ef4c7d6be5611b045a6dbb1aa8ea165f0060ec",
+  "actualShippedDependentChecksum": "19ae3c5ff041656505e3e88bd1a3378202894fdac34f090ed1b54846372cecdc",
+  "preservedArtifacts": "declared-props-artifacts-reload-fix/",
+  "log": "packed-rehearsal-reload-fix.log",
+  "logSha256": "0483b8686da3dc2da077ca713577012b0d0c09236c5f14464556b64af2e7c827",
+  "fix": "Fresh owned --target-dir per Cargo packaging attempt; candidate locks are never repaired by verification"
+}

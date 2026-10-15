@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "sourceCommit": "8f7a2aa02398240845681f1c777e4b9dfdcf7eaa",
+  "recordedAt": "2026-10-15T03:38:17.686077+00:00",
+  "supersedes": "v3-props-qualification.json; original source artifacts and reports remain historical evidence",
+  "reloadFix": {
+    "commit": "da10ba06a87aef3093e846fbaab902473ccb7587",
+    "beforeControlFailed": true,
+    "fullServerSuitePassed": true,
+    "typedPagesDebug": 7,
+    "rootIndependentControls": 8,
+    "clippy": "all targets and features, warnings denied",
+    "coverage": [
+      "unsupported/malformed/missing manifest",
+      "repeated mutable IR edits freeze entire prior pair",
+      "identical old manifest recovery",
+      "valid new asset/module pair",
+      "invalid/missing initial disk baseline",
+      "caller-added startup routes retained"
+    ]
+  },
+  "fullCheck": {
+    "passed": true,
+    "seconds": 162,
+    "sourceCommit": "da10ba06a87aef3093e846fbaab902473ccb7587",
+    "log": "full-check-reload-fix.log",
+    "laterChanges": "Windows test assertion and fresh-target Cargo packaging; affected10 props and38 release helper tests plus complete exact-artifact P17 replayed"
+  },
+  "windowsPathFix": {
+    "commit": "0128c2a025f7b0df10a76d30276336f75339480f",
+    "tests": 10,
+    "otherSourceSuffixAssertions": "basename-only; no other separator-sensitive source assertion",
+    "nativeDiagnosticPathsPreserved": true
+  },
+  "packagingFix": {
+    "originalCommit": "886001074b199d4e977c72c7ae1f81bbbb674290",
+    "integratedCommit": "8f7a2aa02398240845681f1c777e4b9dfdcf7eaa",
+    "independentReviewPassed": true,
+    "releaseHelperTests": 38,
+    "sameAndChangedSourceChecksums": true,
+    "refusedAttempt": "v3-props-reload-refused-pack.json"
+  },
+  "checks": {
+    "serverMsrv": "1.85",
+    "typedPagesRelease": 5,
+    "compilerTests": 704,
+    "coreBrowserTests": 90,
+    "staticBrowserTests": 52,
+    "packedTests": 20,
+    "packedSeconds": 62.502,
+    "packedTypedPagesDebug": 7,
+    "packedTemplates": 2,
+    "restoredTemplateFiles": 10
+  },
+  "corpus": {
+    "nativeTests": 10,
+    "unchangedHtml": {
+      "crates/forma-ir/tests/fixtures/js-emitter/barrel-exports.html": "c1019f6e39303420e76442e6ed0f242116f6cf21d00cef4bd038bba2eec0db5a",
+      "crates/forma-ir/tests/fixtures/js-emitter/create-show.html": "73ef5ed8f286dbbd9a64f8d4ae2e3b6eda6e8c0c9b5e535d65559d9d455480df",
+      "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.html": "5a3defb5e64931e777fa7203d1e5cfefd33307b994156bef88aaca30af887043",
+      "crates/forma-ir/tests/fixtures/js-emitter/dynamic-text.html": "8dee4992ae5b09d67f2e48a63d0704d0ab775987a4376de75efcac9cfc930240",
+      "crates/forma-ir/tests/fixtures/js-emitter/eager-concat.html": "8c149184f99c5c5eadf69a2c28fafe72b15b47222a4a77c42bf79ca80c8f1a6f",
+      "crates/forma-ir/tests/fixtures/js-emitter/imported-const-table.html": "0379be201848cabc154f0fb60561e54d70745c246e1c4b5e9c6af8f648d2623a",
+      "crates/forma-ir/tests/fixtures/js-emitter/imported-signal-defaults.html": "0a3155c03bb6dc097e458d16269bbd0e4ef106956acc175dbea8564d80019512",
+      "crates/forma-ir/tests/fixtures/js-emitter/jsx-page.html": "6a53c52e0e22a886d1456f3d0776e410555c965f21158df51882e4a3ee5240bb",
+      "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html": "d557fcdb4472a590e718c7bcb613d0dc5ba122cf4aaddfeffcb177967206b5b7",
+      "crates/forma-ir/tests/fixtures/js-emitter/nested-islands.html": "2db6b28f996f3ee52ba04dbe2ef6e68655061747d68c79b2d31892cf46461524",
+      "crates/forma-ir/tests/fixtures/js-emitter/static-page.html": "cdbb309eff6a49c96fc5b730121d7e652b7139115f91e910d71cfcbce75ad905",
+      "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.html": "a737db33c0550c1e475c17345d449e6071a0f48778204ca0695e4685afa9e8be",
+      "crates/forma-ir/tests/fixtures/js-emitter/ternary-asymmetric.html": "51ae2c1ec7d297c6a0111d6d81cfb0a5a4ddbe022e0b3f6bcf8836f45da89adc",
+      "crates/forma-ir/tests/fixtures/js-emitter/unicode-emoji.html": "adabb95eca835d1f308b2606991a4384e9b397830f093a5e4b698d005daad83a"
+    },
+    "changedBinaryAndDump": "list-same-source: only seven CLIENT source bits and CRC; identical opcode/string bytes"
+  },
+  "logSha256": {
+    "rejected-manifest-before.log": "da07f7ff4d88af0f995e2ee9f4a4f8ddfe6b7525634336e937666989a4343a88",
+    "server-reload-fix.log": "b7e7d66e0a2caeac4c19b4a350a47718b8800039ad4a0c8bc26e7810904b7ec0",
+    "reload-fix-focused.log": "fc212008bb96f693a28129c755c797c7e92f3e24d286fd6292eace04ba93247d",
+    "reload-fix-helpers.log": "56d1849ce2bfeca3226a52b86c1dcaa6086f5f258fc7499960cf1c5b42b4e990",
+    "full-check-reload-fix.log": "9159e86b401d4502bcd42c49a4b549564a5771283659aa534c500f1be5225dec",
+    "reload-fix-msrv-release.log": "325c448f7a592c5fffdde75783a894746e7b7a42b3aa1ffcd104c7b4440abb9b",
+    "props-windows-path-fix.log": "ecbc83830835ea6e47d63ae2feeba9957908b3d9729abccdd2ea64176049cafd",
+    "packed-rehearsal-reload-fix.log": "0483b8686da3dc2da077ca713577012b0d0c09236c5f14464556b64af2e7c827",
+    "packed-rehearsal-reload-final.log": "d79851b89e067c73d9a9990475ce6dff69cb09f8b3e0ea21396f420e8e1d5aa3",
+    "release-helpers-reload-final.log": "7e7a48c96f09906dbcd9cd7ae761ab390f29bafa81f88ee25c4c663d4670bfae"
+  },
+  "knownFollowup": {
+    "ticket": "FORMA-103",
+    "finding": "Same-file declared Page is misclassified as an empty inline mount; fails BUILD-610. Imported declared entry remains valid. Exact reproduction retained in work/FORMA-103/tmp/same-file-entry.log; lead-approved entry fix precedes new wire work."
+  },
+  "hostedCi": "required on final evidence head; not satisfied by a724 old-head runs",
+  "liveReleaseReady": false,
+  "newFuzzOrMutationCampaign": false
+}
