@@ -365,8 +365,18 @@ export async function check(plans: readonly ModulePlan[], options: CheckOptions,
         ...(server.bind.length ? { bind: server.bind } : {}),
       }));
       const runs: (PageRun | null)[] = [];
+      // After a module's first boot timeout its remaining states are errors at once, not one
+      // timeout each: reported, never skipped, and the run goes on to the next module.
+      let bootTimedOut: number | null = null;
       for (let k = 0; k < count; k++) {
         const { next: _next, ...base } = bases[k]!;
+        if (bootTimedOut !== null) {
+          const error = `not run: the module's boot did not finish at state ${bootTimedOut}`;
+          reports.push(makeReport({ ...base, check: 'P1', verdict: 'error', error }, null));
+          if (plan.script !== null) reports.push(makeReport({ ...base, check: 'P2', verdict: 'error', error }, null));
+          runs.push(null);
+          continue;
+        }
         const document = server.documents[k];
         if (!document || 'error' in document) {
           reports.push(makeReport({ ...base, check: 'P1', verdict: 'error', error: document ? `server: ${document.error}` : 'server: no entry' }, null));
@@ -385,6 +395,7 @@ export async function check(plans: readonly ModulePlan[], options: CheckOptions,
           ...(options.observeDetached ? { observeDetached: true } : {}),
         });
         runs.push(run);
+        if (run.error?.startsWith('the boot did not finish')) bootTimedOut = base.index;
         const p1 = p1Report({ ...base, html }, run);
         reports.push(p1.verdict === 'equal' || !plan.diagnostics.length ? p1 : { ...p1, compiler: plan.diagnostics });
         if (plan.script !== null) reports.push(p2Report(base, run));
