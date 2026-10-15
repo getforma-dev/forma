@@ -118,3 +118,61 @@ test('rule 2 control: a server spelling 1e21 as Rust\'s Display does (22 digits)
   });
   expect(kept).toBe('1000000000000000000000');
 });
+
+// -- Rule 5: null writes nothing ------------------------------------------------
+interface NullChildrenVector { id: string; children: (string | number | null)[]; expected: string }
+interface NullAttributeVector { id: string; attribute: string }
+const nulls = vectors<{ children: NullChildrenVector[]; attribute: NullAttributeVector[] }>('null.json');
+const absentAs = ['null', 'undefined'] as const;
+const wire = (value: string | number | null, absent: 'null' | 'undefined'): Wire =>
+  value === null ? { absent } : typeof value === 'number' ? { n: String(value) } : { s: value };
+for (const { id, children, expected } of nulls.children) {
+  for (const absent of absentAs) {
+    test(`rule 5 ${id} (${absent}, reactive): each child in its own range, the absent one held empty, adopts without a write`, async ({ page }) => {
+      const ranges = children.map((child, i) => range(i, child === null ? '' : String(child))).join('');
+      await serve(page, `<p>${ranges}</p>`);
+      expect(await adopt(page, { tag: 'p', children: children.map(child => wire(child, absent)), reactive: true }))
+        .toEqual({ text: expected, ...written });
+    });
+    test(`rule 5 ${id} (${absent}, static): the composed text, with nothing for the absent child, adopts without a write`, async ({ page }) => {
+      await serve(page, `<p>${expected}</p>`);
+      expect(await adopt(page, { tag: 'p', children: children.map(child => wire(child, absent)), reactive: false }))
+        .toEqual({ text: expected, ...written });
+    });
+    test(`rule 5 ${id} (${absent}): a textarea composes the same value and adopts without a write`, async ({ page }) => {
+      await serve(page, `<textarea>${expected}</textarea>`);
+      expect(await adopt(page, { tag: 'textarea', children: children.map(child => wire(child, absent)), reactive: false }))
+        .toEqual({ text: expected, ...written });
+    });
+  }
+}
+for (const { id, attribute } of nulls.attribute) {
+  for (const absent of absentAs) {
+    for (const reactive of [false, true]) {
+      test(`rule 5 ${id} (${absent}, ${reactive ? 'reactive' : 'static'}): the omitted attribute adopts without a write`, async ({ page }) => {
+        await serve(page, '<span id="ok"></span>');
+        expect(await adopt(page, { tag: 'span', props: { id: { s: 'ok' }, [attribute]: { absent } }, reactive }))
+          .toEqual({ text: '', ...written });
+      });
+    }
+  }
+}
+for (const { id, attribute } of nulls.attribute) {
+  test(`rule 5 ${id}: a later null or undefined removes the attribute, on an adopted element and on a fresh h() element`, async ({ page }) => {
+    await serve(page, `<span id="ok" ${attribute}="x"></span>`);
+    const seen = await page.evaluate(async (attribute) => {
+      const { h, Fragment, createSignal } = await import('/adoption-core.mjs' as string);
+      const { adoptMatching } = await import('/test-owned-adoption.mjs' as string);
+      const [value, setValue] = createSignal('x');
+      adoptMatching(() => h(Fragment, null, h('span', { id: 'ok', [attribute]: value })), '#app');
+      const adopted = document.querySelector('#ok')!, fresh = h('span', { [attribute]: value }) as Element;
+      const states: (string | null)[] = [];
+      for (const next of [null, 'y', undefined, 'z']) {
+        setValue(next);
+        states.push(adopted.getAttribute(attribute), fresh.getAttribute(attribute));
+      }
+      return states;
+    }, attribute);
+    expect(seen).toEqual([null, null, 'y', 'y', null, null, 'z', 'z']);
+  });
+}

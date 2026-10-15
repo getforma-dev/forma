@@ -1,10 +1,11 @@
 # Parity rules: the marker vocabulary and the value rules
 
 **Status:** rule 1 is stated and implemented for the body/DOM slice (FORMA-182,
-checkpoint 2); the marker vocabulary below describes what the walker writes
-today. Rules 2 to 7 are listed with where their current behaviour lives; this
-document does not claim they are qualified, and FORMA-182 is not complete while
-they, the namespace-vector relocation, `renderBoth` (FORMA-184) and the ticket's
+checkpoint 2), and rules 2 to 5 are stated with their shared vectors; the
+marker vocabulary below describes what the walker writes today. Rules 6 and 7
+are listed with where their current behaviour lives; this document does not
+claim they are qualified, and FORMA-182 is not complete while they, the
+namespace-vector relocation, `renderBoth` (FORMA-184) and the ticket's
 large-scale qualification remain open.
 
 **Why one document.** Three implementations produce or consume the same tree:
@@ -249,11 +250,63 @@ through `String()`, and as an attribute: each `BUILD-610`). Consumers:
 Date(ms).getTime()` is the oracle: the instant for an admitted vector, NaN
 for a refused one, and the truncated value for the fractional ones).
 
-## Rules 5 to 7: listed, not qualified here
+## Rule 5: `null` writes nothing on every side
+
+**Statement.** `null` and `undefined` write nothing. As a text child they
+contribute no text: the walker's `DYN_TEXT` range on a `Null` slot holds only
+the marker vocabulary's U+200B and shows nothing, `h()` appends nothing, and
+strict adoption expects the empty string; a later `null` written into a live
+range clears it to empty text, never the word. As an attribute value the
+attribute is absent on both sides (the walker omits a `DYN_ATTR` whose slot is
+`Null`; `h()`, its `class` writer included, and adoption omit it), and a later
+`null` removes it. Inside a text-only parent (`textarea`, `title`) an absent
+child contributes the empty string to the composed value. The walker has one
+absent value, `Null`; the client treats `undefined` exactly as `null`.
+
+**Why.** v1's adoption wrote the word `null` where the walker and `h()` wrote
+nothing (DR-9); that is fixed and now pinned. The vectors found one more
+disagreement, in `h()`'s `class` writer: a reactive class getter returning
+`null`, `undefined` or `false` threw inside its effect (the rule-1 normalizer
+was handed a non-string) and left the previous class standing, so a fresh
+element kept `class="x"` in all three engines while the walker omits the
+attribute; and a static `class: true` wrote the word `true` where the walker
+writes the bare attribute.
+
+**Implementation.** Rust: `crates/forma-ir/src/walker.rs` (`DYN_TEXT` on
+`Null` writes the empty holder, `DYN_ATTR` on `Null` writes nothing, a text-only
+parent composes the empty string). TypeScript: `h()`'s `appendChild` skips
+`null` and `undefined` and a reactive child returning one clears its content;
+adoption's text expectation is empty and `prepareAttribute` expects the
+attribute absent; `class`/`className`, static and reactive, now goes through
+`classValue` in `packages/core/src/dom/element.ts` (`null`, `undefined` and
+`false` remove the attribute, `true` is the bare attribute, anything else its
+string under rule 1), the presence table every other attribute writer uses.
+
+**Vectors.** `crates/forma-ir/tests/fixtures/parity/null.json`: `children`
+(`null` alone, between, first, last, only `null`s, beside a number; `expected`
+the composed text) and `attribute` (`title`, `class`, `data-x`). Consumers:
+`crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
+"rule_5_null_writes_nothing_as_text_attribute_and_textarea_child" (the exact
+ranges, the visible text, no word `null`, the `textarea` value, the omitted
+attribute); `packages/core/src/dom/__tests__/value-rule-5-null.test.ts` (each
+vector with `null` and again with `undefined`: `h()` children static and
+reactive, `childText`, a `textarea`, the attribute static, reactive and on
+adoption with a later `null` removing it, and a served empty range adopting a
+`null` child without a write whose later `null` clears the retained Text); and
+`packages/core/e2e/value-rules.spec.ts` in the three engines (each `children`
+vector served as the walker's ranges, as composed static text and as a
+`textarea`; each attribute omitted, static and reactive, all adopted without a
+write; a later `null` or `undefined` removing the attribute on an adopted and
+on a fresh element).
+
+**Not in this rule.** `style` objects, form-control properties (`value`,
+`checked`, `selected`) and the raw sinks keep their own typed handling and
+are not vectors here.
+
+## Rules 6 and 7: listed, not qualified here
 
 | # | Rule | Where the current behaviour lives |
 |---|---|---|
-| 5 | `null` writes nothing on every side | Walker `DYN_TEXT` (U+200B holder), `h()`, adoption `text()` |
 | 6 | A boolean in text is a build error | Not implemented; codes reserved with FORMA-101 |
 | 7 | Conditions are boolean-typed | Not implemented; codes reserved with FORMA-101 |
 

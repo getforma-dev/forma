@@ -1,0 +1,24 @@
+{
+  "rule": 5,
+  "title": "null writes nothing on every side (FORMA-182, design 4 rule 5, DR-9)",
+  "contract": "null and undefined write nothing. As a text child they contribute no text: the walker holds an empty dynamic range with one U+200B so the browser creates a Text node, and its visible text is empty; h() appends nothing; strict adoption expects an empty string. As an attribute value the attribute is absent on both sides, and a later null removes it. Inside a textarea or title they contribute an empty string to the composed value. A later null written into a live text range clears it to empty text. The word 'null' is never written (v1's adoption wrote it; DR-9).",
+  "consumers": [
+    "crates/forma-ir/src/walker.rs > value_rule_vectors (DYN_TEXT and DYN_ATTR on a Null slot, static and dynamic textarea children)",
+    "packages/core/src/dom/__tests__/value-rule-5-null.test.ts (h() children and attributes, childText, adoption expectations and later writes; undefined beside null in every case)",
+    "packages/core/e2e/value-rules.spec.ts (the walker's ranges, composed text and textarea parsed by the three engines and strictly adopted without a write; a later null removing the attribute)"
+  ],
+  "note": "Hand-enumerated. JSON carries null only; the TypeScript suite runs every vector a second time with undefined in null's place, since h() treats both alike. The walker has one absent value, Null.",
+  "children": [
+    { "id": "null-alone", "children": [null], "expected": "" },
+    { "id": "null-between", "children": ["a", null, "b"], "expected": "ab" },
+    { "id": "null-first", "children": [null, "x"], "expected": "x" },
+    { "id": "null-last", "children": ["x", null], "expected": "x" },
+    { "id": "nulls-only", "children": [null, null], "expected": "" },
+    { "id": "null-beside-number", "children": [null, 7, null], "expected": "7" }
+  ],
+  "attribute": [
+    { "id": "title-null", "attribute": "title" },
+    { "id": "class-null", "attribute": "class" },
+    { "id": "data-null", "attribute": "data-x" }
+  ]
+}

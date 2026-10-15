@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Value rule 5: `null` writes nothing — FORMA-182
+
+- `h()`'s `class`/`className` writer follows the attribute presence table, static and reactive (`docs/parity-rules.md`, rule 5): `null`, `undefined` and `false` remove the attribute, `true` writes it bare, anything else its string. A reactive class getter returning `null`, `undefined` or `false` used to throw inside its effect and leave the previous class standing, and a static `class: true` wrote `class="true"`; the walker omits the attribute in the first case and writes it bare in the second. Verified by `src/dom/__tests__/value-rule-5-null.test.ts` and `e2e/value-rules.spec.ts` in three engines.
+
 ### Value rule 1: line endings and NUL — FORMA-182
 
 - Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. The URL guard classifies the raw value and refuses a NUL anywhere in a URL attribute (normalized it would be a fetchable same-origin relative reference); the normalized value is what is written. `h('pre', null, '\nline')` now agrees with the walker's `<pre>\n\nline</pre>` in every engine. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.

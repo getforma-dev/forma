@@ -6276,6 +6276,7 @@ mod tests {
 
         const NUMBERS: &str = include_str!("../tests/fixtures/parity/numbers.json");
         const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
+        const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
 
         fn cases(file: &str, section: &str) -> Vec<Value> {
             let all: Value = serde_json::from_str(file).unwrap();
@@ -6297,6 +6298,20 @@ mod tests {
             format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
         }
 
+        /// The text a browser shows: marker comments and the empty-range
+        /// zero-width spaces removed.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
         fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
             if actual != expected {
                 failures.push(format!(
@@ -6312,6 +6327,28 @@ mod tests {
                 failures.len(),
                 failures.join("\n")
             );
+        }
+
+        /// What a vector's JSON value reads as on the page: null is empty,
+        /// a string itself, a number or boolean its JSON spelling.
+        fn vector_text(value: &Value) -> String {
+            match value {
+                Value::Null => String::new(),
+                Value::String(s) => s.clone(),
+                other => other.to_string(),
+            }
+        }
+
+        /// A slot value from a vector's JSON value: a string, a number, a
+        /// boolean or null (the shapes the vectors use).
+        fn slot_value(value: &Value) -> SlotValue {
+            match value {
+                Value::Null => SlotValue::Null,
+                Value::Bool(b) => SlotValue::Bool(*b),
+                Value::Number(n) => SlotValue::Number(n.as_f64().unwrap()),
+                Value::String(s) => SlotValue::Text(s.clone()),
+                other => panic!("unsupported vector value {other}"),
+            }
         }
 
         #[test]
@@ -6383,6 +6420,81 @@ mod tests {
                     &format!("integers/floatOrigin/{id}"),
                     &page.render(),
                     &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_5_null_writes_nothing_as_text_attribute_and_textarea_child() {
+            let mut failures = Vec::new();
+            for case in cases(NULL, "children") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let values = case["children"].as_array().unwrap();
+
+                // Dynamic children: each value in its own range; a Null range
+                // is held by the zero-width space and shows nothing.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("p", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                let rendered = page.render();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic (visible text)"),
+                    &visible(&rendered),
+                    &format!("<p>{expected}</p>"),
+                );
+                // The exact ranges, which the three-engine replay
+                // (packages/core/e2e/value-rules.spec.ts) serves: a Null range
+                // holds only the zero-width space.
+                let ranges: String = slots
+                    .iter()
+                    .zip(values)
+                    .map(|(slot, value)| marker(*slot, &vector_text(value)))
+                    .collect();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic"),
+                    &rendered,
+                    &format!("<p>{ranges}</p>"),
+                );
+                if rendered.contains("null") {
+                    failures.push(format!(
+                        "null/children/{id}: the word null was written: {rendered:?}"
+                    ));
+                }
+
+                // Inside a textarea the same children compose to the value.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("textarea", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} textarea"),
+                    &page.render(),
+                    &format!("<textarea>{expected}</textarea>"),
+                );
+            }
+            for case in cases(NULL, "attribute") {
+                let (id, attribute) = (field(&case, "id"), field(&case, "attribute"));
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Null);
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close("span");
+                check(
+                    &mut failures,
+                    &format!("null/attribute/{id}"),
+                    &page.render(),
+                    "<span id=\"ok\"></span>",
                 );
             }
             finish(failures);
