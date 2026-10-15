@@ -438,6 +438,19 @@ one byte over is RENDER-502, never truncation. Malformed mapping/value is
 RENDER-501 with route and island/field path. These are separate from111's
 RENDER-104. State bytes also count toward107's final response-byte budget.
 
+Charge this escaped UTF-8 budget incrementally during each ISLAND_START
+snapshot. Reserve the complete empty envelope and closing delimiters first;
+before retaining an entry, charge its exact encoded h/p bytes, braces/keys and
+the comma when it is not the first entry. Use checked arithmetic and a capped
+encoder: a large value must refuse before an unbounded snapshot or temporary
+JSON string is retained. Only a successfully projected, fully charged owned
+snapshot enters the collection. A representation may retain its checked encoded
+bytes in a private typed wrapper to avoid encoding it twice. Final serialization
+consumes only those owned snapshots and reserved envelope bytes, never rereads
+slots, and verifies its actual byte count agrees with the charged total. Thus
+many LIST iterations cannot accumulate unbounded deep copies before the final
+one-megabyte check. The byte grammar and exact-limit behavior above are unchanged.
+
 Core finds only `document.head.querySelector('script[type="application/json"][data-island-state]')`
 once per Document (cached success or refusal in a WeakMap), never a subtree/body
 fallback. Parse an envelope that is an object with exactly `v`, `s`, `i`, version1,
