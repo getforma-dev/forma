@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### A list source must be a function: BUILD-614 — FORMA-181 (FORMA-183 finding F1)
+
+- Core's `createList(items, key, row)` calls `items()` to read the rows, and a page list's source is never evaluated by the native module (its array is a named slot), so a plain array compiled and then failed in the browser with `items is not a function`. The original list proof now refuses, on the page and island paths alike, a source it can prove is not a function: a literal, a binding to one (local, or a named export of an imported module), a core getter's returned value or a field of it (`rows()`, `data().rows`), or a field an inline parameter type declares as data (`p.rows` with `p: { rows: Row[] }`). New mandatory code BUILD-614 with a conformance pair; functions, getters and sources the compiler cannot see through stay admitted. The js-emitter corpus case `list-same-source` passes `const todos = () => [...]`; its original source is archived in `docs/archive/2026-10-15-pre-list-source/` (still asserted to refuse), and every compiled output of the case is byte-identical.
+
 ### Keyed rows, checkpoint A: original key-path proof and section 6 — FORMA-181
 
 - Prove every server-rendered list's key from the original source before JSX lowering: a nonempty property path of the row parameter (`row.id`, `row.user.id`, `row['id']`, an immutable alias) with one stable owned Element as the row root, resolved through lexical helpers, imported aliases and registered children. Emit FMIR section `0x0006` with one entry per emitted LIST at its exact opcode offset, including repeated helper sites and nested lists.

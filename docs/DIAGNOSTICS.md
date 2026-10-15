@@ -636,6 +636,30 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/
 [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx) pin the
 original TSX position of the list.
 
+### BUILD-614 List source that is not a function
+
+**Why.** FORMA-183's parity harness, finding F1: core's `createList(items, key, row)` calls
+`items()` to read the rows, so a list source that is not a function fails in the browser with
+`items is not a function` even though the native module renders it (the page's list array is a
+named slot the module never evaluates). The compiler refuses a source it can prove is not a
+function: a literal (an array, an object, a string, a number, `null`, `undefined`), a binding
+whose value is one (a local `const`, or a named export of an imported module), a core getter's
+returned value or a field of it (`rows()`, `data().rows`, where `rows` and `data` come from
+`createSignal`, `createComputed` or `createMemo`), or a field that an inline parameter type
+declares as data (`p.rows` with `p: { rows: Row[] }`). A function, a getter, and anything the
+compiler cannot see through (an untyped parameter's field, another call's result) stay admitted.
+The refusal names the call's own argument. This refusal is mandatory without strict mode.
+
+**Fix.** Pass the getter itself or a function returning the rows: `createList(rows, …)` with
+`const [rows] = createSignal([...])`, `createList(() => p.rows, …)`, or
+`const todos = () => [...]`.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/pass/app.tsx) pin the
+original TSX position of the list.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
