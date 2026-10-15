@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "2f14ba0b94d40c62501fa4bfa5ce89136b72f44f",
+  "files": [
+    {
+      "path": "packages/build/tests/watch-ir.test.ts",
+      "sha256": "2d9157e13a4cde39088a8343bd321facab9aececd643463f4ca8035a7e5d99da",
+      "bytes": 13315
+    },
+    {
+      "path": "packages/build/tests/strict.test.ts",
+      "sha256": "62a158043aa081b4fa446630eb22aae9310424a7a947c0cc5fbc050a6d4956d1",
+      "bytes": 14401
+    }
+  ]
+}

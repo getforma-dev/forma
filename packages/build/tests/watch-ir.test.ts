@@ -28,11 +28,16 @@ function site() {
   const src = join(root, 'src'); const dist = join(root, 'dist'); mkdirSync(src);
   // `formajs` resolves to a stub for the browser bundle; the compiler reads
   // the source, so the stub is invisible to the FMIR it emits.
-  writeFileSync(join(src, 'forma-stub.js'), 'export const h = () => {}; export const mount = () => {};\n');
+  const stub = 'export const h = () => {}; export const mount = () => {}; export const activateIslands = x => x; export const __islandRegistration = (component,metadata) => component;\n';
+  writeFileSync(join(src, 'forma-stub.js'), stub);
+  const core = join(root, 'node_modules', '@getforma', 'core'); mkdirSync(core, {recursive: true});
+  writeFileSync(join(core, 'package.json'), '{"name":"@getforma/core","version":"3.0.0-dev","type":"module","exports":"./index.js"}');
+  writeFileSync(join(core, 'index.js'), stub);
   writeFileSync(join(src, 'Greeting.ts'), greeting('Hello from the first build'));
   writeFileSync(join(src, 'home.ts'), [
-    `import { h, mount } from 'formajs';`,
+    `import { h, mount, activateIslands } from 'formajs';`,
     `import { Greeting } from './Greeting';`,
+    `activateIslands({ Greeting });`,
     `mount(() => h('main', { id: 'app' }, h('h1', null, 'Home'), Greeting()), '#app');`,
     '',
   ].join('\n'));
@@ -168,7 +173,7 @@ describe('watch mode rewrites the FMIR modules of the pages a change touches (N7
       await change(()=>writeFileSync(join(src,'home.ts'),'import {h,mount} from "formajs";function Home(p:{bad:()=>void}){return h("main",null,"must not publish");}mount(()=>Home(),"#app");'));
       expect(output()).toContain('BUILD-610');
       paths.forEach((path,index)=>expect(readFileSync(path)).toEqual(accepted[index]));
-      await change(()=>writeFileSync(join(src,'home.ts'),'import {h,mount} from "formajs";function Home(){return h("main",null,"paired recovery");}mount(()=>Home(),"#app");'));
+      await change(()=>writeFileSync(join(src,'home.ts'),'import {h,mount,activateIslands} from "formajs";function Recovered(){return h("p",null,"paired recovery");}function Home(){return h("main",null,Recovered());}activateIslands({Recovered});mount(()=>Home(),"#app");'));
       await vi.waitFor(()=>expect(ir(dist,'home')).toContain('paired recovery'),{timeout:10_000});
       expect(readFileSync(join(dist,manifest().routes['/'].js[0]),'utf8')).toContain('paired recovery');
       for(const index of [0,1])expect(readFileSync(paths[index]!)).toEqual(accepted[index]);
