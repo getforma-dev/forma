@@ -226,8 +226,9 @@ installs and builds included, took 1m22s.
 expected-divergent, P2 98 equal and 1 expected-divergent, P3 10 equal (the fixture's transitions)
 and 27 `no-setter`; the same in Firefox and WebKit. At 100 states (1,018 states): P1 908 equal and
 110 expected-divergent, P2 877 and 32, P3 100 equal and 27 `no-setter`; 2 structural classes; 314
-holder-ambiguous positions. Locally about 100 ms a state in Chromium (100 s for the 1,018), 0.7 s
-in Firefox, 0.1 s in WebKit; CI's figures are in the ticket. The new entries: F2's case in
+holder-ambiguous positions; every module on the typed path. Locally 72 s for the 1,018 states in
+Chromium (about 70 ms a state); on CI's `e2e-engines` jobs step 1 at 10 states runs in 34 s in
+Firefox and in WebKit. CI's figure for the per-merge job at 100 states is in the ticket. The new entries: F2's case in
 `nullish` and `closed-nullish`; F5, `props-contract`'s `createShow` branch that returns a string
 (core throws, the walker renders the text; a finding); F6, `aggregate-fallback`'s keys that hold CR
 or NUL (adoption compares the raw key, not the rule-1 key text; FORMA-181 checkpoint C).
