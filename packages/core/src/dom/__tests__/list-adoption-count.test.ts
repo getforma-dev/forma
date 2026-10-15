@@ -101,7 +101,7 @@ describe('list adoption row-count check', () => {
       const coded = logged.filter((line) => line.includes(CODE));
       expect(coded).toHaveLength(1);
       expect(coded[0]).toContain('"Mismatch"');
-      expect(coded[0]).toContain(`3 rows`);
+      expect(coded[0]).toContain(clientItems.length>3?'server range exhausted after 3 prepared items':`${3-clientItems.length} unconsumed top-level DOM node`);
       expect(coded[0]).toContain(`${clientItems.length} item`);
 
       // The failed island is inert: later updates reach no row.
@@ -240,7 +240,7 @@ describe('list adoption row-count check', () => {
     expect(island.innerHTML).toBe('<!--f:l0--><!--/f:l0-->');
   });
 
-  it('the coded message counts a single row or item in the singular', () => {
+  it('the coded message reports known client items and unconsumed DOM without inventing server row counts', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="One">${serverList(['a'])}</div>` +
       `<div data-forma-island="1" data-forma-component="Two">${serverList(['a', 'b'])}</div>`;
@@ -250,9 +250,9 @@ describe('list adoption row-count check', () => {
     });
     const coded = logged.filter((line) => line.includes(CODE));
     expect(coded).toHaveLength(2);
-    expect(coded[0]).toContain('rendered 1 row without');
+    expect(coded[0]).toContain('1 unconsumed top-level DOM node');
     expect(coded[0]).toContain('has 0 items,');
-    expect(coded[1]).toContain('rendered 2 rows without');
+    expect(coded[1]).toContain('1 unconsumed top-level DOM node');
     expect(coded[1]).toContain('has 1 item,');
   });
 

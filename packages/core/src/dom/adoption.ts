@@ -385,7 +385,8 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       keyOwner=scope.group(()=>keys(initial));
       const prepared=keyOwner.value,elements=contents().filter(node=>node.nodeType===1) as Element[];
       const keyed=elements.filter(element=>element.hasAttribute('data-forma-key'));
-      if(keyed.length&&keyed.length!==prepared.items.length)refuse();
+      const mismatch=(extent:string)=>new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT',`client has ${prepared.items.length} item${prepared.items.length===1?'':'s'}, ${extent}`);
+      if(keyed.length&&keyed.length!==prepared.items.length)throw mismatch(`server range has ${keyed.length} keyed root elements`);
       if(keyed.some((element,i)=>element.getAttribute('data-forma-key')!==String(prepared.keys[i])))refuse();
       const originalRows=new Map<string,Element>();
       for(const element of keyed){const key=element.getAttribute('data-forma-key')!;if(originalRows.has(key))refuse();originalRows.set(key,element);}
@@ -400,7 +401,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
             const captured=inside.capture(()=>walk(construct(()=>desc.renderFn(item,getIndex),ns),inside,ns));
             span=new AdoptionRow(captured.pieces);
           }catch(error){
-            if(empty&&error instanceof AdoptionDomError&&(error.code==='FORMA_E_HYDRATE_NODE'||error.code==='FORMA_E_HYDRATE_MARKER'))throw new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT');
+            if(empty&&error instanceof AdoptionDomError&&(error.code==='FORMA_E_HYDRATE_NODE'||error.code==='FORMA_E_HYDRATE_MARKER'))throw mismatch(`server range exhausted after ${i} prepared items`);
             throw error;
           }
         });
@@ -412,7 +413,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         }
         cache.set(key,{owner:child,span,item,setIndex});ordered.push(cache.get(key)!);
       }
-      try{inside.finish();}catch(error){if(error instanceof AdoptionDomError&&error.code==='FORMA_E_HYDRATE_STRUCTURE')throw new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT');throw error;}
+      try{inside.finish();}catch(error){if(error instanceof AdoptionDomError&&error.code==='FORMA_E_HYDRATE_STRUCTURE')throw mismatch(inside.remainder());throw error;}
       let last:Node|null=null;for(const row of ordered)if(row.span.last)last=row.span.last;
       let node=last?last.nextSibling:range.start.nextSibling;
       for(;node!==range.end;node=node?.nextSibling??null){if(!node)refuse();tail.push(node);}

@@ -64,6 +64,15 @@ describe('private prepared list rows',()=>{
       expect(render).toHaveBeenCalledTimes(items.length);expect(cleanup).toHaveBeenCalledTimes(items.length);expect(effect).not.toHaveBeenCalled();expect(f.records()).toEqual([]);f.disconnect();
     }
   });
+  it('reports DOM extents without inventing row counts for empty or shared-text row shapes',()=>{
+    const extra=fixture('<b>a</b><i>b</i>','section'),before=extra.host.innerHTML;
+    expect(()=>prepareAdoption(extra.host,()=>h('section',null,createList(()=>[],item=>String(item),()=>fragment())))).toThrow('client has 0 items, 2 unconsumed top-level DOM nodes');
+    expect(extra.host.innerHTML).toBe(before);expect(extra.records()).toEqual([]);extra.disconnect();
+    const shared=fixture('ab','section'),nodes=[...shared.host.childNodes];
+    expect(()=>prepareAdoption(shared.host,()=>h('section',null,createList(()=>['a'],item=>item,item=>item as unknown as HTMLElement)))).toThrow('client has 1 item, 1 unconsumed top-level DOM node (first Text consumed through offset 1)');
+    expect([...shared.host.childNodes]).toEqual(nodes);expect(shared.records()).toEqual([]);shared.disconnect();
+    const empty=fixture('','section'),plan=prepareAdoption(empty.host,()=>h('section',null,createList(()=>[1,2],item=>item,()=>fragment())));plan.commit();expect(empty.records()).toEqual([]);expect(empty.host.childNodes).toHaveLength(2);plan.dispose();empty.disconnect();
+  });
   it('retains the explicit pre181 key-order limitation without moving mismatched rows',()=>{
     const f=fixture('<li data-forma-key="2">2</li><li data-forma-key="1">1</li>'),before=[...f.host.childNodes],render=vi.fn((item:number)=>h('li',null,item));
     expect(()=>prepareAdoption(f.host,()=>h('ul',null,createList(()=>[1,2],item=>item,render)))).toThrow('FORMA_E_HYDRATE_STRUCTURE');expect(render).not.toHaveBeenCalled();expect([...f.host.childNodes]).toEqual(before);expect(f.records()).toEqual([]);f.disconnect();
