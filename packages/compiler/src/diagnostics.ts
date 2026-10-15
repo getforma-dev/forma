@@ -261,6 +261,9 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-818', 'Worker metadata cannot authenticate an asset',
     'A protected immutable JS/CSS/WASM filename or its full canonical SHA-384 digest is invalid.',
     'Generate the worker from the completed manifest after final asset bytes are written; do not substitute a filename hash or abbreviated digest.'),
+  entry('BUILD-819', "A route's Forma code is over N2's ceiling",
+    "What the route loads cold carries more than 25,500 B gzip -9 of @getforma/core and alien-signals as bundled (decision brief L-55, DR-35), or a file the manifest names for it was written by no bundling pass so its Forma code cannot be attributed. The build fails before writing its output.",
+    "Trim what the route imports from @getforma/core, or split the route; the ceiling is policy, not an option. The report above the failure shows each route's Forma code beside its own."),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);
