@@ -1,9 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createList, reconcileList } from '../list';
 import { activateIslands, deactivateAllIslands, deactivateIsland } from '../activate';
 import { createSignal } from '../../reactive/signal';
 import { createEffect } from '../../reactive/effect';
 import { createRoot, registerDisposer } from '../../reactive/root';
+
+const originalHosts = new Map<number, HTMLElement>();
+
+function mountOriginal(container: HTMLElement, id: number): HTMLElement {
+  const island = originalHosts.get(id)!;
+  if (!container.isConnected) document.body.appendChild(container);
+  container.appendChild(island);
+  return island;
+}
 
 function mountFragment(frag: DocumentFragment): HTMLElement {
   const container = document.createElement('div');
@@ -142,13 +152,9 @@ function activateIslandIn(
   onDispose: (id: number) => void,
   trigger?: string,
 ): HTMLElement {
-  const island = document.createElement('span');
-  island.setAttribute('data-forma-island', String(id));
-  island.setAttribute('data-forma-component', 'Widget');
+  const island = mountOriginal(container, id);
   if (trigger) island.setAttribute('data-forma-hydrate', trigger);
-  island.textContent = 'ssr';
-  container.appendChild(island);
-  activateIslands({ Widget: () => { registerDisposer(() => onDispose(id)); } }, container);
+  activateIslands(emptyRegistry({ Widget: () => { registerDisposer(() => onDispose(id)); } }), container);
   return island;
 }
 
@@ -381,14 +387,11 @@ describe('the scheduled-or-active island count', () => {
 
   it('stops scanning after an island whose hydrate function threw', () => {
     const holder = document.createElement('div');
-    const island = document.createElement('span');
-    island.setAttribute('data-forma-island', '1');
+    const island = mountOriginal(holder, 1);
     island.setAttribute('data-forma-component', 'Broken');
-    island.textContent = 'ssr';
-    holder.appendChild(island);
 
     const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
-    activateIslands({ Broken: () => { throw new Error('boom'); } }, holder);
+    activateIslands(emptyRegistry({ Broken: () => { throw new Error('boom'); } }), holder);
     errors.mockRestore();
 
     expect(island.getAttribute('data-forma-status')).toBe('error');
@@ -401,20 +404,18 @@ describe('the scheduled-or-active island count', () => {
   it('moves the count to the element that replaced an empty island shell', () => {
     const warns = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const holder = document.createElement('div');
-    const shell = document.createElement('span');
-    shell.setAttribute('data-forma-island', '1');
-    shell.setAttribute('data-forma-component', 'Widget');
-    holder.appendChild(shell);
+    const shell = mountOriginal(holder, 1);
+    shell.textContent = '';
 
     let disposed = false;
-    activateIslands({
+    activateIslands(emptyRegistry({
       Widget: () => {
         registerDisposer(() => { disposed = true; });
         // An EMPTY shell takes hydrateIsland's CSR fallback, which replaces the
         // shell with the component's own root element.
         return document.createElement('article');
       },
-    }, holder);
+    }), holder);
     warns.mockRestore();
 
     const replacement = holder.querySelector('article') as HTMLElement;
@@ -432,10 +433,24 @@ describe('the scheduled-or-active island count', () => {
   it('does not double-count an island that activateIslands is called on twice', () => {
     const holder = document.createElement('div');
     const island = activateIslandIn(holder, 1, () => {});
-    activateIslands({ Widget: () => {} }, holder); // HMR / SPA re-mount
+    activateIslands(emptyRegistry({ Widget: () => {} }), holder); // HMR / SPA re-mount
     expect(scansForPlainRowRemoval()).toBe(3);
 
     deactivateIsland(island);
     expect(scansForPlainRowRemoval()).toBe(0);
   });
+});
+
+useFreshDocument();
+beforeEach(() => {
+  originalHosts.clear();
+  for (const id of [1, 2]) {
+    const host = document.createElement('span');
+    host.setAttribute('data-forma-island', String(id));
+    host.setAttribute('data-forma-component', 'Widget');
+    host.textContent = 'ssr';
+    document.body.appendChild(host);
+    originalHosts.set(id, host);
+  }
+  installState();
 });

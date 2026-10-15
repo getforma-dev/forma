@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 /**
  * The row-count check at list adoption (FORMA-123, decision brief DR-8).
  *
@@ -68,16 +69,17 @@ describe('list adoption row-count check', () => {
       document.body.innerHTML =
         `<div data-forma-island="0" data-forma-component="Mismatch">${serverList(['a', 'b', 'c'])}</div>` +
         `<div data-forma-island="1" data-forma-component="Agrees">${serverList(['x', 'y'])}</div>`;
+      installState();
       const mismatch = document.querySelector('[data-forma-island="0"]')!;
       const before = mismatch.innerHTML;
       const serverNodes = nodesUnder(mismatch);
       const [items, setItems] = createSignal(clientItems);
 
       const { received, logged } = captureErrors(() => {
-        activateIslands({
+        activateIslands(emptyRegistry({
           Mismatch: () => listIsland(items),
           Agrees: () => listIsland(() => ['x', 'y']),
-        });
+        }));
       });
 
       const statuses = Array.from(document.querySelectorAll('[data-forma-island]'), (el) => el.getAttribute('data-forma-status'));
@@ -101,11 +103,12 @@ describe('list adoption row-count check', () => {
 
   it('a server region with no rows and a client array with items fails the island and inserts nothing', () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Empty">${serverList([])}</div>`;
+    installState();
     const island = document.querySelector('[data-forma-island="0"]')!;
     const before = island.innerHTML;
 
     const { received } = captureErrors(() => {
-      activateIslands({ Empty: () => listIsland(() => ['a', 'b']) });
+      activateIslands(emptyRegistry({ Empty: () => listIsland(() => ['a', 'b']) }));
     });
 
     expect(island.getAttribute('data-forma-status')).toBe('error');
@@ -119,16 +122,17 @@ describe('list adoption row-count check', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="Rows">${serverList(rows)}</div>` +
       `<div data-forma-island="1" data-forma-component="Rows2">${serverList(['p', 'q'])}</div>`;
+    installState();
     const serverRows = Array.from(document.querySelectorAll('[data-forma-island="0"] li'));
     const [items, setItems] = createSignal(rows);
     const clicked: string[] = [];
 
     const { received, logged } = captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         Rows: () => h('div', null, h('ul', null,
           createList(items, (x) => x, (x) => h('li', { onClick: () => clicked.push(x) }, x)))),
         Rows2: () => listIsland(() => ['p', 'q']),
-      });
+      }));
     });
 
     expect(received).toEqual([]);
@@ -157,11 +161,12 @@ describe('list adoption row-count check', () => {
       '<div data-forma-island="0" data-forma-component="Keyed"><ul><!--f:l0-->' +
       '<li data-forma-key="a">a</li><li data-forma-key="b">b</li><li data-forma-key="c">c</li>' +
       '<!--/f:l0--></ul></div>';
+    installState();
     const [a, b, c] = Array.from(document.querySelectorAll('li'));
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const { received } = captureErrors(() => {
-      activateIslands({ Keyed: () => listIsland(() => ['a', 'c']) });
+      activateIslands(emptyRegistry({ Keyed: () => listIsland(() => ['a', 'c']) }));
     });
     warn.mockRestore();
 
@@ -177,14 +182,15 @@ describe('list adoption row-count check', () => {
       '<div data-forma-island="0" data-forma-component="Nested"><section><!--f:s0-->' +
       serverList(['a', 'b']) +
       '<!--/f:s0--></section></div>';
+    installState();
     const island = document.querySelector('[data-forma-island="0"]')!;
     const before = island.innerHTML;
 
     const { received } = captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         Nested: () => h('div', null, h('section', null,
           createShow(() => true, () => h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))))),
-      });
+      }));
     });
 
     expect(island.getAttribute('data-forma-status')).toBe('error');
@@ -195,9 +201,10 @@ describe('list adoption row-count check', () => {
   it('the migration: an empty server region adopts an empty array, and rows filled after activation render', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="Later"><h2>Recent</h2>${serverList([])}</div>`;
+    installState();
     const [items, setItems] = createSignal<string[]>([]);
     const { received } = captureErrors(() => {
-      activateIslands({ Later: () => h('div', null, h('h2', null, 'Recent'), h('ul', null, createList(items, (x) => x, (x) => h('li', null, x)))) });
+      activateIslands(emptyRegistry({ Later: () => h('div', null, h('h2', null, 'Recent'), h('ul', null, createList(items, (x) => x, (x) => h('li', null, x)))) }));
     });
     const island = document.querySelector('[data-forma-island="0"]')!;
     expect(island.getAttribute('data-forma-status')).toBe('active');
@@ -211,8 +218,9 @@ describe('list adoption row-count check', () => {
   it('an island whose only server content is an empty list region is rendered in the browser, not checked', () => {
     // No element and no text: hydrateIsland's no-SSR-content fallback renders the component.
     document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Bare"><!--f:l0--><!--/f:l0--></div>';
+    installState();
     const { received } = captureErrors(() => {
-      activateIslands({ Bare: () => h('div', null, createList(() => ['a', 'b'], (x) => x, (x) => h('p', null, x))) });
+      activateIslands(emptyRegistry({ Bare: () => h('div', null, createList(() => ['a', 'b'], (x) => x, (x) => h('p', null, x))) }));
     });
     const island = document.querySelector('[data-forma-island="0"]')!;
     expect(island.getAttribute('data-forma-status')).toBe('active');
@@ -224,8 +232,9 @@ describe('list adoption row-count check', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="One">${serverList(['a'])}</div>` +
       `<div data-forma-island="1" data-forma-component="Two">${serverList(['a', 'b'])}</div>`;
+    installState();
     const { logged } = captureErrors(() => {
-      activateIslands({ One: () => listIsland(() => []), Two: () => listIsland(() => ['a']) });
+      activateIslands(emptyRegistry({ One: () => listIsland(() => []), Two: () => listIsland(() => ['a']) }));
     });
     const coded = logged.filter((line) => line.includes(CODE));
     expect(coded).toHaveLength(2);
@@ -244,16 +253,17 @@ describe('list adoption row-count check', () => {
       '<ol><!--f:l0--><li data-forma-key="a">a</li><!--/f:l0--></ol>' +
       '<section><!--f:s0--><!--/f:s0--></section>' +
       `${serverList(['x', 'y'])}</div>`;
+    installState();
     const clicks: string[] = [];
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         Fresh: () => h('div', null,
           h('button', { id: 'drift', onClick: () => clicks.push('drift') }, 'go'),
           h('ol', null, createList(() => ['a', 'b'], (k) => k, (k) => h('li', { id: `row-${k}`, onClick: () => clicks.push(k) }, k))),
           h('section', null, createShow(() => true, () => h('button', { id: 'branch', onClick: () => clicks.push('branch') }, 'b'))),
           h('ul', null, createList(() => ['x'], (k) => k, (k) => h('li', null, k)))),
-      });
+      }));
     });
     warn.mockRestore();
 
@@ -274,15 +284,16 @@ describe('list adoption row-count check', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><ul><!--f:l0--><li>r0</li><!--/f:l0--></ul></div>` +
       `<div data-forma-island="1" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
+    installState();
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
     captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r)))),
         B: () => h('div', null,
           h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
           h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))),
-      });
+      }));
     });
     const statuses = Array.from(document.querySelectorAll('[data-forma-island]'), (el) => el.getAttribute('data-forma-status'));
     expect(statuses).toEqual(['active', 'error']);
@@ -296,15 +307,16 @@ describe('list adoption row-count check', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><section><!--f:s0--><!--/f:s0--></section></div>` +
       `<div data-forma-island="1" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
+    installState();
     const [open, setOpen] = createSignal(false);
     const clicks: string[] = [];
     captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         A: () => h('div', null, h('section', null, createShow(open, () => h('button', { id: 'a-btn', onClick: () => clicks.push('a') }, 'a')))),
         B: () => h('div', null,
           h('div', { ref: () => setOpen(true) }, 'x'),
           h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))),
-      });
+      }));
     });
     const statuses = Array.from(document.querySelectorAll('[data-forma-island]'), (el) => el.getAttribute('data-forma-status'));
     expect(statuses).toEqual(['active', 'error']);
@@ -336,15 +348,16 @@ describe('list adoption row-count check', () => {
   it("a failing island's ref that writes a shared signal does not detach a client-rendered mount() root's new row", () => {
     document.body.innerHTML =
       `<div id="app2"></div><div data-forma-island="0" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
+    installState();
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
     mount(() => h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r))) as unknown as HTMLElement, '#app2');
     captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         B: () => h('div', null,
           h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
           h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))),
-      });
+      }));
     });
     expect(document.querySelector('[data-forma-island="0"]')!.getAttribute('data-forma-status')).toBe('error');
     const lis = Array.from(document.querySelectorAll<HTMLElement>('#app2 li'));
@@ -357,9 +370,10 @@ describe('list adoption row-count check', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><ul><!--f:l0--><li>r0</li><!--/f:l0--></ul></div>` +
       `<div id="app1" data-forma-ssr><div><div>x</div>${serverList(['a', 'b'])}</div></div>`;
+    installState();
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
-    activateIslands({ A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r)))) });
+    activateIslands(emptyRegistry({ A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r)))) }));
     captureErrors(() => {
       mount((() => h('div', null,
         h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
@@ -378,15 +392,16 @@ describe('list adoption row-count check', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><ul><!--f:l0--><li>r0:</li><!--/f:l0--></ul></div>` +
       `<div data-forma-island="1" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
+    installState();
     const [rows, setRows] = createSignal(['r0']);
     const [tag, setTag] = createSignal('');
     captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', null, () => `${r}:${tag()}`)))),
         B: () => h('div', null,
           h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
           h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))),
-      });
+      }));
     });
     const statuses = Array.from(document.querySelectorAll('[data-forma-island]'), (el) => el.getAttribute('data-forma-status'));
     expect(statuses).toEqual(['active', 'error']);
@@ -399,13 +414,14 @@ describe('list adoption row-count check', () => {
   it('a node the failing island builds outside every island during the walk (a portal of its own) is detached with it', () => {
     document.body.innerHTML =
       `<div id="outside"></div><div data-forma-island="0" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
+    installState();
     const clicks: string[] = [];
     captureErrors(() => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         B: () => h('div', null,
           h('div', { ref: () => document.getElementById('outside')!.appendChild(h('button', { id: 'out', onClick: () => clicks.push('out') }, 'o')) }, 'x'),
           h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))),
-      });
+      }));
     });
     expect(document.querySelector('[data-forma-island="0"]')!.getAttribute('data-forma-status')).toBe('error');
     document.getElementById('out')!.click();
@@ -440,6 +456,7 @@ describe('list adoption row-count check', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Bad"><button>go</button><span>idle</span>' + serverList(['a', 'b']) + '</div>' +
       '<div data-forma-island="1" data-forma-component="Good"><button>go</button><span>idle</span>' + serverList(['a', 'b']) + '</div>';
+    installState();
     const [label, setLabel] = createSignal('idle');
     const clicks: string[] = [];
     const island = (name: string, items: string[]) => () => h('div', null,
@@ -448,7 +465,7 @@ describe('list adoption row-count check', () => {
       h('ul', null, createList(() => items, (x) => x, (x) => h('li', null, x))));
 
     captureErrors(() => {
-      activateIslands({ Bad: island('Bad', ['a']), Good: island('Good', ['a', 'b']) });
+      activateIslands(emptyRegistry({ Bad: island('Bad', ['a']), Good: island('Good', ['a', 'b']) }));
     });
 
     const [bad, good] = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
@@ -468,12 +485,13 @@ describe('list adoption row-count check', () => {
       `<div data-forma-island="0" data-forma-component="Short">${serverList(['a', 'b'])}</div>` +
       `<div id="app" data-forma-ssr>${serverList(['a', 'b'])}</div>` +
       `<div id="direct" data-forma-ssr>${serverList(['a', 'b'])}</div>`;
+    installState();
     const before = document.body.innerHTML.replace(/ data-forma-status="[a-z]+"/, '');
     const short = () => h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)));
     let unmount: (() => void) | undefined;
 
     const { received, logged } = captureErrors(() => {
-      activateIslands({ Short: () => h('div', null, short()) });
+      activateIslands(emptyRegistry({ Short: () => h('div', null, short()) }));
       expect(() => { unmount = mount(short as unknown as () => HTMLElement, '#app'); }).not.toThrow();
       expect(() => hydrateIsland(short, document.getElementById('direct')!)).not.toThrow();
     });
@@ -486,3 +504,5 @@ describe('list adoption row-count check', () => {
     expect(typeof unmount).toBe('function');
   });
 });
+
+useFreshDocument();

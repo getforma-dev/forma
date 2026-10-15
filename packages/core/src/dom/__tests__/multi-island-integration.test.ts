@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 /**
  * Multi-island integration tests — full-page scenarios.
  *
@@ -35,11 +36,12 @@ describe('multi-island integration', () => {
         <p><!--f:t0-->Hello<!--/f:t0--></p>
       </div>
     `;
+    installState();
 
     let setCount!: (v: number) => void;
     let setName!: (v: string) => void;
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Counter: () => {
         const [count, _setCount] = createSignal(0);
         setCount = _setCount;
@@ -55,7 +57,7 @@ describe('multi-island integration', () => {
           h('p', null, () => name()),
         );
       },
-    });
+    }));
 
     // Both islands activated
     expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(2);
@@ -76,8 +78,9 @@ describe('multi-island integration', () => {
         <span><!--f:t0-->0<!--/f:t0--></span>
       </div>
     `;
+    installState();
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Counter: () => {
         const [count, setCount] = createSignal(0);
         return h('div', null,
@@ -85,7 +88,7 @@ describe('multi-island integration', () => {
           h('span', null, () => String(count())),
         );
       },
-    });
+    }));
 
     expect(document.querySelector('[data-forma-status="active"]')).toBeTruthy();
 
@@ -116,11 +119,12 @@ describe('multi-island integration', () => {
         <!--/f:s0-->
       </div>
     `;
+    installState();
 
     let setItems!: (v: { id: string; text: string }[]) => void;
     let setShow!: (v: boolean) => void;
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       TodoList: () => {
         const [items, _setItems] = createSignal([
           { id: '1', text: 'Task 1' },
@@ -143,7 +147,7 @@ describe('multi-island integration', () => {
           ),
         );
       },
-    });
+    }));
 
     expect(document.querySelector('[data-forma-status="active"]')).toBeTruthy();
 
@@ -181,17 +185,18 @@ describe('multi-island integration', () => {
         <p><!--f:t0-->OK<!--/f:t0--></p>
       </div>
     `;
+    installState();
 
     let setMsg!: (v: string) => void;
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Broken: () => { throw new Error('intentional'); },
       Working: () => {
         const [msg, _setMsg] = createSignal('OK');
         setMsg = _setMsg;
         return h('div', null, h('p', null, () => msg()));
       },
-    });
+    }));
 
     // Broken island shows SSR content with error status
     expect(document.querySelector('[data-forma-island="0"]')!
@@ -220,13 +225,14 @@ describe('multi-island integration', () => {
         <span>OK</span>
       </div>
     `;
+    installState();
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Broken: () => { throw new Error('boom'); },
       Good: () => {
         return h('div', null, h('span', null, 'OK'));
       },
-    });
+    }));
 
     // Broken island: error status, no dispose, SSR content intact
     const broken = document.querySelector('[data-forma-island="0"]') as any;
@@ -242,3 +248,5 @@ describe('multi-island integration', () => {
     errorSpy.mockRestore();
   });
 });
+
+useFreshDocument();

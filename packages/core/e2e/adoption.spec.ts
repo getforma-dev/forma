@@ -10,14 +10,18 @@ import { fileURLToPath } from 'node:url';
 // Optional installed Chrome is useful on machines without Playwright's bundle.
 test.use({ channel: process.env.FORMA_TEST_BROWSER_CHANNEL || undefined });
 
-async function serve(page: Page, body: string): Promise<void> {
+const STATE_HASH = '0123456789abcdef';
+async function serve(page: Page, body: string, islandCount = 0): Promise<void> {
+  const state = islandCount ? `<script type="application/json" data-island-state>${JSON.stringify({
+    v: 1, s: [], i: Array.from({ length: islandCount }, () => ({ h: STATE_HASH, p: {} })),
+  })}</script>` : '';
   await page.route('**/adoption-core.mjs', (route) => route.fulfill({
     path: fileURLToPath(new URL('../dist/forma.esm.js', import.meta.url)),
     contentType: 'text/javascript',
   }));
   await page.route('**/adoption.html', (route) => route.fulfill({
     contentType: 'text/html',
-    body: `<!doctype html><html><head><title>Adoption</title></head><body>${body}</body></html>`,
+    body: `<!doctype html><html><head><title>Adoption</title>${state}</head><body>${body}</body></html>`,
   }));
   await page.goto('/adoption.html');
 }
@@ -197,25 +201,27 @@ test("after the user types, a textarea's reactive text changes only its default,
 test('a component that returns a DOM node is adopted as itself or reported, and never aborts the module', async ({ page }) => {
   await serve(page,
     '<div id="app" data-forma-ssr><p>static</p></div>' +
-    '<div data-forma-island="0" data-forma-component="Imp"><button id="imp">0</button></div>' +
-    '<div data-forma-island="1" data-forma-component="Detached"><span>server</span></div>');
+    '<div data-forma-island="0" data-forma-component="Imp" data-forma-state="0" data-forma-h="0123456789abcdef"><button id="imp">0</button></div>' +
+    '<div data-forma-island="1" data-forma-component="Detached" data-forma-state="1" data-forma-h="0123456789abcdef"><span>server</span></div>', 2);
   const errors: string[] = [];
   page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
   page.on('pageerror', (err) => errors.push(`uncaught: ${err.message}`));
 
   await page.evaluate(async () => {
-    const { mount, activateIslands, createSignal, createEffect, template, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { mount, activateIslands, __islandRegistration, createSignal, createEffect, template, trustedHtml } = await import('/adoption-core.mjs' as string);
     mount(() => template(trustedHtml('<p>static</p>')), '#app');
     (window as any).afterMount = true;
+    const metadata = { h: '0123456789abcdef', schema: [[]], mode: 0 as const };
+    const el = document.querySelector('[data-forma-component="Imp"]') as HTMLElement;
     activateIslands({
-      Imp: (el: HTMLElement) => {
+      Imp: __islandRegistration(() => {
         const [n, setN] = createSignal(0);
         const button = el.querySelector('button')!;
         button.addEventListener('click', () => setN(n() + 1));
         createEffect(() => { button.textContent = String(n()); });
         return el;
-      },
-      Detached: () => document.createElement('span'),
+      }, metadata),
+      Detached: __islandRegistration(() => document.createElement('span'), metadata),
     });
   });
 
@@ -370,9 +376,9 @@ test("a bound iframe src the server already rendered is not set again, so the fr
 test('a list whose client array differs in count from the server rows leaves the island error with its code and removes no node', async ({ page }) => {
   const rows = (n: number) => `<ul><!--f:l0-->${Array.from({ length: n }, (_, i) => `<li>row ${i}</li>`).join('')}<!--/f:l0--></ul>`;
   await serve(page,
-    `<div data-forma-island="0" data-forma-component="Fewer"><button id="fewer">go</button>${rows(3)}</div>` +
-    `<div data-forma-island="1" data-forma-component="More"><button id="more">go</button>${rows(3)}</div>` +
-    `<div data-forma-island="2" data-forma-component="Equal"><button id="equal">go</button>${rows(3)}</div>`);
+    `<div data-forma-island="0" data-forma-component="Fewer" data-forma-state="0" data-forma-h="0123456789abcdef"><button id="fewer">go</button>${rows(3)}</div>` +
+    `<div data-forma-island="1" data-forma-component="More" data-forma-state="1" data-forma-h="0123456789abcdef"><button id="more">go</button>${rows(3)}</div>` +
+    `<div data-forma-island="2" data-forma-component="Equal" data-forma-state="2" data-forma-h="0123456789abcdef"><button id="equal">go</button>${rows(3)}</div>`, 3);
   const errors: string[] = [];
   page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
   page.on('pageerror', (err) => errors.push(`uncaught: ${err.message}`));
@@ -389,7 +395,7 @@ test('a list whose client array differs in count from the server rows leaves the
       }
     });
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
-    const { h, activateIslands, createList, createSignal, onError } = await import('/adoption-core.mjs' as string);
+    const { h, activateIslands, __islandRegistration, createList, createSignal, onError } = await import('/adoption-core.mjs' as string);
     const codes: string[] = [];
     onError((err: { code?: string }, info?: { source?: string }) => codes.push(`${err.code}:${info?.source}`));
     const clicks: string[] = [];
@@ -400,7 +406,10 @@ test('a list whose client array differs in count from the server rows leaves the
     const island = (name: string, items: () => string[]) => () => h('div', null,
       h('button', { id: name, onClick: () => clicks.push(name) }, 'go'),
       h('ul', null, createList(items, (x: string) => x, (x: string) => h('li', null, x))));
-    activateIslands({ Fewer: island('fewer', fewer), More: island('more', more), Equal: island('equal', equal) });
+    const metadata = { h: '0123456789abcdef', schema: [[]], mode: 0 as const };
+    activateIslands({ Fewer: __islandRegistration(island('fewer', fewer), metadata),
+      More: __islandRegistration(island('more', more), metadata),
+      Equal: __islandRegistration(island('equal', equal), metadata) });
     await new Promise((resolve) => setTimeout(resolve, 0));
     records.push(...observer.takeRecords().map((r) => `${r.type}:late`));
     observer.disconnect();

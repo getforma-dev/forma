@@ -16,7 +16,8 @@ categories = ["web-programming"]
 
 [dependencies]
 forma-ir-derive = { version = "=3.0.0-dev", path = "../forma-ir-derive" }
-serde_json.workspace = true
+# Public JSON import must round serialized finite f64 values exactly.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 tracing = { workspace = true, optional = true }
 
 [features]

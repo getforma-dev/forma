@@ -22,7 +22,7 @@ package shows it as `@deprecated` in its types. See
 | `createStore` (deep reactivity) | **Stable** | Membership changes (`Object.keys`, spread, `for…in`) are not reactive by design |
 | Components (`defineComponent`, lifecycle) | **Stable** | |
 | Context (`createContext`, `provide`, `inject`) | **Stable** | |
-| Islands (`activateIslands`, disposal, triggers) | **Stable** | 199 tests across 12 dedicated files † |
+| Islands (`activateIslands`, disposal, triggers) | **Stable** | 193 tests across 12 dedicated files † |
 | `createHistory` (undo/redo) | **Stable** | Takes a `[get, set]` tuple; returns a controls object, not a tuple |
 | `createReducer` | **Stable** | |
 | `createResource` / `createSuspense` | **Stable** | Abortable; the Suspense boundary is captured at resource creation |
@@ -35,7 +35,8 @@ package shows it as `@deprecated` in its types. See
 | TC39 Signals compat (`State`, `Computed`) | **Beta** | Tracks an evolving TC39 proposal |
 | Development build (the `development` export condition) | **Beta** | Each subpath's `development` condition selects a twin under `dist/dev/` that keeps the `__DEV__` warnings; the CDN bundles have none. What the warnings say may change in any release. See [Development builds](#development-builds). |
 
-† The island figure counts the test cases in `activate`, `activate-isolation`,
+† The island figure counts literal test declarations (parameterized rows expand
+to additional runtime cases) in `activate`, `activate-isolation`,
 `activate-reactivate`, `activate-triggers`, `activate-visible`,
 `activate-visible-leak`, `deactivate`, `hydrate`, `hydrate-cleanup`,
 `list-hydration`, `multi-island-integration` and

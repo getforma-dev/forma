@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createSignal, createRoot } from 'forma/reactive';
 import { mount } from '../mount';
@@ -2283,10 +2284,11 @@ describe('island isolation for throwing bindings', () => {
         <p><!--f:t0-->OK<!--/f:t0--></p>
       </div>
     `;
+    installState();
 
     let setMsg!: (v: string) => void;
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       // The component builds fine; its reactive attribute binding throws on the
       // first (synchronous) run, which must surface to island activation.
       Broken: () => h('div', null, h('p', { title: () => { throw new Error('binding blew up'); } }, 'SSR content stays')),
@@ -2295,7 +2297,7 @@ describe('island isolation for throwing bindings', () => {
         setMsg = _setMsg;
         return h('div', null, h('p', null, () => msg()));
       },
-    });
+    }));
 
     expect(document.querySelector('[data-forma-island="0"]')!.getAttribute('data-forma-status')).toBe('error');
     expect(document.querySelector('[data-forma-island="0"] p')!.textContent).toBe('SSR content stays');
@@ -2317,17 +2319,18 @@ describe('island isolation for throwing bindings', () => {
         <p><!--f:t0-->0<!--/f:t0--></p>
       </div>
     `;
+    installState();
 
     const [count, setCount] = createSignal(0);
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       // Island 0 is fine at hydration time and breaks on the first update.
       Fragile: () => h('div', null, h('p', null, () => {
         if (count() > 0) throw new Error('island 0 binding is broken');
         return '0';
       })),
       Display: () => h('div', null, h('p', null, () => String(count()))),
-    });
+    }));
 
     expect(document.querySelector('[data-forma-island="1"] p')!.textContent).toBe('0');
 
@@ -2339,3 +2342,5 @@ describe('island isolation for throwing bindings', () => {
     errorSpy.mockRestore();
   });
 });
+
+useFreshDocument();

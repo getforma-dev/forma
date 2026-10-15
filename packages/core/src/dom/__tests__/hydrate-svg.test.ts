@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 /**
  * SVG and MathML in adoption (FORMA-020; decision brief DR-5, DR-9 and R7).
  *
@@ -79,20 +80,21 @@ describe('adopting inline SVG', () => {
     document.body.innerHTML = [0, 1].map((id) =>
       `<span data-forma-island="${id}" data-forma-component="Icon">${ICON}</span>`,
     ).join('');
+    installState();
     const islands = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
     const svgs = islands.map((island) => island.querySelector('svg')!);
     const paths = islands.map((island) => island.querySelector('path')!);
     const setters: Array<(d: string) => void> = [];
 
     const writes = writesDuring(document.body, () => {
-      activateIslands({
+      activateIslands(emptyRegistry({
         Icon: () => {
           const [d, setD] = createSignal('M0 0L10 10');
           setters.push(setD);
           return h('span', null,
             h('svg', { viewBox: '0 0 10 10' }, h('title', null, 'Close'), h('path', { d: () => d() })));
         },
-      });
+      }));
     });
 
     // activateIslands writes status attributes on each island root; inside an
@@ -307,3 +309,5 @@ describe('reactive attributes at adoption', () => {
     expect(link.getAttribute('aria-busy')).toBe('');
   });
 });
+
+useFreshDocument();

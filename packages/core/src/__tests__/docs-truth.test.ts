@@ -246,12 +246,29 @@ describe('"Verified by" citations', () => {
         } catch {
           throw new Error(`${doc}: cited test file does not exist: ${file}`);
         }
-        // The archived A2 audit records its original warning behavior. Keep
-        // that historical prose intact while following its regression to the
-        // stricter v3 refusal test; this exception applies only to that citation.
+        // Preserve the archived audit's original channel/diagnostic claims.
+        // Follow those exact citations to their current stricter regression;
+        // current docs receive no alias and must name their actual test.
+        const historicalNames: Record<string, string> = {
+          'emits srcdoc but warns that escaping does not neutralize it':
+            'srcdoc requires trustedHtml and strings are refused before the sink',
+          'island activation strips forbidden keys at every depth, inline and shared, with no opt-out':
+            'island activation projects only declared safe fields at every depth for both instances',
+          'a malformed __forma_islands block does not stop islands from hydrating':
+            'refuses the %s legacy block without using it as fallback',
+          'ignores a non-script element carrying id __forma_islands':
+            'refuses the %s legacy block without using it as fallback',
+          'an empty __forma_islands script block degrades to null props':
+            'refuses the %s legacy block without using it as fallback',
+          'activates islands inside a shadow root when one is passed as root':
+            'refuses a shadow-only host even when the shadow root is explicitly passed',
+          'falls back to the document props block for a shadow subtree':
+            'an explicit light-DOM subtree shares original document authority',
+          'island props nested 10,000 deep are parsed and stripped':
+            'standalone sanitization still strips props nested 10,000 deep',
+        };
         const currentName = doc === 'docs/archive/2026-08-05-hardening-audit.md'
-          && name === 'emits srcdoc but warns that escaping does not neutralize it'
-          ? 'srcdoc requires trustedHtml and strings are refused before the sink' : name;
+          ? historicalNames[name!] ?? name : name;
         const declared =
           source.includes(`'${currentName}'`) || source.includes(`"${currentName}"`) || source.includes(`\`${currentName}\``);
         expect(declared, `${doc} cites "${name}" in ${file}, which has no such test`).toBe(true);

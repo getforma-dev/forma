@@ -235,10 +235,16 @@ Verified by: `src/security/__tests__/url-safety.test.ts` > "blocks data:image/sv
 
 ### Island props
 
-- **Island props** (inline `data-forma-props` and the shared `__forma_islands` block) are stripped **at every depth while they are parsed**, before any island sees them, with no opt-out. A nested pollution key never reaches an island, so a deep merge of its props (`createStore`, a deep-merge helper, an `Object.assign` chain) cannot carry one into a prototype. The pass is iterative with a `WeakSet`, so deep and cyclic payloads are safe. `sanitizePropsDeep(props)` stays exported for props that reach an island some other way.
+Compiled SSR island state is read from the first head block once per Document,
+with a 1 MiB UTF-8 cap. Each instance receives a fresh projection of its declared
+schema: undeclared and forbidden keys never reach component props, including in
+nested objects and array elements. Identity and schema checks complete before
+any requested component or trigger runs. Legacy inline and shared-spill channels
+are refused. `sanitizePropsDeep(props)` remains a standalone iterative utility
+for other data paths; it is not the state decoder or a schema bypass.
 
-Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "island activation strips forbidden keys at every depth, inline and shared, with no opt-out"
-Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "island props nested 10,000 deep are parsed and stripped"
+Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "island activation projects only declared safe fields at every depth for both instances"
+Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "standalone sanitization still strips props nested 10,000 deep"
 Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "sanitizePropsDeep strips forbidden keys at every depth"
 
 ### Store prototype-pollution guard

@@ -1,126 +1,73 @@
 # Islands — hydrating server-rendered HTML
 
-Hydrate independent interactive regions of server-rendered HTML. Each island
-callback receives the root element and parsed props, then returns a component
-tree. The hydration system walks that tree against the existing SSR DOM,
-attaching handlers and reactive bindings without recreating elements.
+Registered components receive one declared props object. The compiler binds each
+literal `activateIslands({ Counter })` registry entry to its schema, mode and
+identity digest; applications do not construct this metadata themselves.
 
-```ts
-import { activateIslands, createSignal, h } from "@getforma/core";
+```tsx
+import { activateIslands, createSignal } from "@getforma/core";
 
-activateIslands({
-  Counter: (el, props) => {
-    const [count, setCount] = createSignal(props?.initial ?? 0);
+function Counter(props: { initial: number }) {
+  const [count, setCount] = createSignal(props.initial);
+  return <div>
+    <span>{() => count()}</span>
+    <button onClick={() => setCount(count() + 1)}>+1</button>
+  </div>;
+}
 
-    el.classList.add("is-hydrated");
-
-    return h("div", null,
-      h("span", null, () => String(count())),
-      h("button", { onClick: () => setCount((c) => c + 1) }, "+1"),
-    );
-  },
-});
+activateIslands({ Counter });
 ```
 
-```html
-<!-- Server-rendered HTML -->
-<div data-forma-island="0" data-forma-component="Counter" data-forma-props='{"initial": 5}'>
-  <span>5</span>
-  <button>+1</button>
-</div>
-```
+The server takes a bounded snapshot of each executed island's declared inputs
+from the same values used to render its body. The browser validates every
+requested host before arming any trigger or invoking any component. Each accepted
+component then runs in an isolated reactive root; a failed sibling does not
+prevent another valid island from activating.
 
-Each island runs in its own `createRoot` scope with error isolation — a broken
-island never takes down its siblings, and a component that throws part-way
-through disposes whatever it had already created rather than leaving live
-effects behind.
-
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "disposes effects created before a failing island threw"
-Verified by `src/dom/__tests__/hydrate.test.ts` > "a binding that throws on a shared-signal update does not freeze the other island"
-
----
+This is the 3.0 development contract. Legacy `(element, props)` registrations,
+`data-forma-props` and `#__forma_islands` no longer provide SSR state. Rebuild the
+page and browser entry together. An uncompiled SSR callback is refused; a
+Browser-shell route remains an ordinary browser mount without this preflight.
 
 ## SSR with server data
 
-When the server renders an island with real data, the island's signals **must
-initialize from the `props` argument** — `createSignal(props?.x ?? fallback)` —
-never from a bare client-side default. That is why the Counter above seeds
-`createSignal(props?.initial ?? 0)` instead of `createSignal(0)`.
-
-The reason is mechanical: adoption binds server-rendered text to your signals
-through effects, and an effect's first run **writes the current client signal
-value over the server-rendered text**. List adoption goes further. SSR rows
-that carry `data-forma-key` and whose keys are missing from the client array
-are **removed**. Rows without keys are matched by index, and when their count
-differs from the client array's length the island **fails** instead (see
-[Server-rendered lists](#server-rendered-lists)). Seed a signal with an empty
-client default and the hydrated page either erases the server's data on load
-or leaves the island inert.
-
-In dev builds a keyed mismatch is loud. Grep your console for:
-
-```
-[FormaJS] Hydration: list item key "…" not found in SSR — rendering fresh
-[FormaJS] Hydration: removing extra SSR list item with key "…"
-```
-
-An unkeyed count mismatch is logged in every build as
-`FORMA_E_HYDRATE_LIST_COUNT`.
+Seed local signals from the declared props argument. A server value of 1001 must
+reach the signal before its first effect; a bare browser default of 42 would
+start from different state. Distinct local signals seeded from the same prop
+remain distinct. Imported or lexical shared getters keep their actual identity
+and are not recreated from a snapshot.
 
 ### Getting props to the island
 
-**Mode 1 — inline attribute** (small props, under about 1 KB). JSON in
-`data-forma-props` on the island root:
+Every SSR response contains exactly one non-executable
+`<script type="application/json" data-island-state>` in its head, including when
+there are no islands. The envelope is `{"v":1,"s":[],"i":[...]}`; each occurrence
+contains exactly `h` (the compiled digest) and `p` (projected declared props).
+The matching original host carries `data-forma-state` and `data-forma-h`.
+This is compiler/server output, not a separate manual serialization API.
 
-```html
-<div data-forma-island="0" data-forma-component="Counter" data-forma-props='{"initial": 5}'>
-  <span>5</span>
-  <button>+1</button>
-</div>
-```
+The complete escaped state envelope is capped at 1 MiB. Every literal `<` in
+state strings is escaped. Finite numbers retain their IEEE-754 value, with
+negative zero canonicalized to zero; signed epoch milliseconds become `Date`
+objects in the browser. Declared arrays, objects and enums are checked before
+activation. Optional null object fields are omitted; optional array positions
+retain null. Undeclared and forbidden fields never reach the component.
 
-**Mode 2 — shared script block** (larger props, or many islands on one page). A
-single JSON block for the whole page, keyed by each island's id (the
-`data-forma-island` value) as a decimal string:
+The decoder reads only the first matching head block once per Document.
+Malformed envelope data refuses the document; a malformed individual entry
+leaves unrelated valid entries eligible. Missing state, mismatched digests,
+duplicate occurrence claims, unknown registrations and schema mismatches log
+stable `FORMA_E_ISLAND_*` codes and leave the host's content and status unchanged.
+They run no component, effect or trigger. Later injected hosts cannot acquire an
+original occurrence claim, even through a subtree activation request.
 
-```html
-<div data-forma-island="0" data-forma-component="TrackList">
-  <!-- server-rendered rows -->
-</div>
+See [the decoder contract](ISLAND-STATE.md) and
+[the reviewed wire grammar](../../../docs/proposals/FORMA-103-STATE-WIRE.md).
+`sanitizePropsDeep` remains a standalone utility for other data paths; SSR
+activation uses declared-schema projection rather than the old generic sanitizer.
 
-<script id="__forma_islands" type="application/json">
-{"0": {"items": [{"id": 1, "name": "Track 1"}, {"id": 2, "name": "Track 2"}]}}
-</script>
-```
-
-Because the block is `type="application/json"`, the browser treats it as inert
-data and never executes it — no `unsafe-inline` script needed, CSP-friendly. An
-island with an inline `data-forma-props` attribute ignores the script block. A
-malformed or truncated block degrades to "no shared props" instead of aborting
-hydration for the whole page.
-
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "a malformed __forma_islands block does not stop islands from hydrating"
-
-**Props are stripped at every depth while they are parsed.** Both channels
-delete `__proto__` / `constructor` / `prototype` keys at every depth, in
-objects and in array elements, before your island sees the props, and there is
-no opt-out (DR-21). Handing props to anything that merges them into another
-object — `createStore`, a deep-merge helper, an `Object.assign` chain — cannot
-carry a nested pollution key into a prototype. The pass is iterative with a
-`WeakSet`, so neither deeply nested nor cyclic props can overflow the stack or
-loop. A shared `__forma_islands` block is parsed and stripped once per
-`activateIslands` call.
-Props must be a JSON object or array: any other JSON value (`null`, a number, a
-string, a boolean) marks the island `error`, and `FORMA_E_ISLAND_PROPS` is
-logged in every build.
-
-`sanitizePropsDeep` (the same pass) stays exported for props that reach an
-island some other way, and calling it on activation props is a harmless no-op.
-
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "island activation strips forbidden keys at every depth, inline and shared, with no opt-out"
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "island props nested 10,000 deep are parsed and stripped"
-Verified by `src/dom/__tests__/props-loading.test.ts` > "props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS"
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "sanitizePropsDeep strips forbidden keys at every depth"
+Verified by `src/dom/__tests__/island-state.test.ts` and
+`src/dom/__tests__/island-state-activation.test.ts`.
 
 ### Server-rendered lists
 
@@ -137,9 +84,8 @@ Server rows carry `data-forma-key` matching the `keyFn` output, wrapped in a
   </ul>
 </div>
 
-<script id="__forma_islands" type="application/json">
-{"0": {"items": [{"id": 1, "name": "Track 1"}, {"id": 2, "name": "Track 2"}]}}
-</script>
+<!-- The generated head state contains the same declared items; the generated
+     host also carries its occurrence and compiled digest. -->
 ```
 
 The client island seeds a signal from `props.items` and passes it to
@@ -149,7 +95,7 @@ The client island seeds a signal from `props.items` and passes it to
 import { activateIslands, createSignal, createList, h } from "@getforma/core";
 
 activateIslands({
-  TrackList: (el, props) => {
+  TrackList: (props: { items: { id: number; name: string }[] }) => {
     // Seed from server data — NOT createSignal([])
     const [items, setItems] = createSignal(props?.items ?? []);
 
@@ -224,14 +170,13 @@ Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "onError receives 
 
 ### Server data flow
 
-The server renders the HTML and emits the matching props (inline or script
-block) from the same data. On the client, `activateIslands` parses the props
-*before* your island callback runs; the callback seeds signals from them, and
-adoption then binds that already-correct state onto the existing DOM — when the
-first effects run, they write the same values the server rendered, so nothing
-visibly changes. Live updates after hydration (polling, websockets, user input)
-flow through the same signals: `setItems(fresh)` reconciles rows in place, zero
-clobber.
+The server captures declared inputs when each island starts. The browser
+projects fresh per-instance values, then calls the compiled unary component.
+Its signals therefore start with the server values before effects run. Current
+adoption still writes lifecycle status and may perform existing DOM repairs;
+zero-write successful adoption and transactional mismatch handling are separate
+FORMA-104 work, not claims of this state-preflight change. Later updates use the
+same signals and ordinary keyed reconciliation.
 
 ---
 
@@ -364,32 +309,17 @@ export const Chart = browserOnly((props: { title: string }) =>
 activateIslands({ Chart });
 ```
 
-`@getforma/compiler` 0.3.7 and later emit it as a registered island whose
-server output is its empty host element with its declared props:
+The compiler records mode `browserOnly`, the declared schema and ordered inputs.
+The server emits an empty host plus the same bounded head-state occurrence used
+by other islands. The compiled registry wrapper supplies one projected props
+argument to `Chart`; its browser implementation renders into the empty host.
+A client-rendered page calls the component directly. Without a document it
+renders nothing.
 
-```html
-<div data-forma-island="0" data-forma-component="Chart" data-forma-status="pending"
-     data-forma-hydrate="load" data-forma-props='{"title":"Sales"}'></div>
-```
-
-`activateIslands` finds the host empty and renders the component in its place,
-with those props (or `{}`), carrying the island's `data-forma-*` attributes over
-to the component's root. Register it as `browserOnly()` returns it: activation
-calls it with the island's element and props, and it passes the props to the
-component. In a client-rendered page it renders as any component. Where there
-is no document (Node rendering) it renders nothing.
-
-- **Props.** Only props the compiler can evaluate to a string, number, boolean
-  or null reach the host: literals and module-level consts. A function, a
-  spread, an array or object, or a value only the browser knows is left out
-  and reported (`BUILD-706`); read such a value in the browser. A handler
-  cannot change them; 3.0.0's declared island props do (DR-4).
-- **Registration.** On a page that activates islands from a literal registry,
-  a browser-only component the registry does not name never renders, and the
-  build says so (`BUILD-708`).
-- **Development builds** log, for each browser-only island, that it has no SSR
-  content and falls back to client rendering. For these islands that is what
-  was asked for.
+Browser-only props use the declared type contract, including objects, arrays,
+optional values and server-derived data. Unsupported expressions remain build
+diagnostics; they are not silently omitted from the state. A Browser-shell route
+(`ssr: false`) has no SSR state block and mounts through its own browser entry.
 
 Verified by `src/dom/__tests__/browser-only.test.ts` > "registered in activateIslands, renders the component in its empty host, from the server props"
 Verified by `src/dom/__tests__/browser-only.test.ts` > "called as a component, renders it as any component in a client-rendered tree"
@@ -450,37 +380,40 @@ Control when an island hydrates via `data-forma-hydrate`:
 
 ## Scoping to a subtree, and disposal
 
-`activateIslands(registry, root?)` takes an optional root — pass a `ShadowRoot`
-or a container element to hydrate only the islands inside it. It defaults to
-`document`. When swapping content (for example inside a Shadow DOM stage),
-dispose the old islands first or their effects leak:
+`activateIslands(registry, root?)` accepts a container to request only its
+original document islands. The first call still freezes claims across the whole
+Document, so duplicate claims outside that subtree also refuse their owners.
+A shadow-only host or later injected host was never in that original document
+set and is refused. Deferred activation rechecks the frozen markers immediately
+before running the component.
 
 ```ts
 import { activateIslands, deactivateIsland, deactivateAllIslands } from "@getforma/core";
 
-activateIslands(registry, shadowRoot);   // hydrate one subtree
-deactivateAllIslands(shadowRoot);        // tear the whole subtree down
-deactivateIsland(islandElement);         // or one island
+activateIslands(registry, originalContainer);
+deactivateAllIslands(originalContainer);
+deactivateIsland(islandElement);
 ```
 
-Both `root` parameters accept any `ParentNode`. A shared `__forma_islands`
-block in the main document is still found when activating a shadow subtree that
-has none of its own. An island removed as part of a `createList` row is
-deactivated automatically.
+Dispose islands before removing their content so their effects and deferred
+observers are released. Islands removed inside a `createList` row are disposed
+automatically. Disposal accepts any `ParentNode`; it does not grant a new state
+claim or make later inserted hosts eligible.
 
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "activates islands inside a shadow root when one is passed as root"
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "falls back to the document props block for a shadow subtree"
-Verified by `src/dom/__tests__/list-disposal.test.ts` > "deactivates an island inside a removed row"
+Verified by `src/dom/__tests__/island-state-activation.test.ts` and
+`src/dom/__tests__/list-disposal.test.ts`.
 
 ---
 
 ## Where the wire format is specified
 
 The marker grammar (`<!--f:t0-->`, `<!--f:s0-->`, `<!--f:l0-->`, `<!--f:i0-->`),
-the `data-forma-*` attributes and the `__forma_islands` props protocol are
+the `data-forma-*` attributes and the head-state envelope are
 **shared contracts**, not implementation details of this library: the Rust
 walker emits them and this runtime consumes them.
 
+- [Island state wire grammar](../../../docs/proposals/FORMA-103-STATE-WIRE.md)
+  — canonical identities, declared input bindings and bounded snapshots
 - [Stack architecture §3](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)
   — the contracts, and where each one is enforced
 - [FMIR format](https://github.com/getforma-dev/forma/blob/main/docs/FMIR-FORMAT.md)

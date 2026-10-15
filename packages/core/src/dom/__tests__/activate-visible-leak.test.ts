@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 // F2 (1.3.0): a visible-trigger IntersectionObserver must be disconnected when the
 // island is deactivated before it ever intersects (otherwise it leaks).
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
@@ -30,13 +31,14 @@ function makeVisibleIsland(): HTMLElement {
   el.setAttribute('data-forma-status', 'pending');
   el.innerHTML = '<p>SSR</p>';
   document.body.appendChild(el);
+  installState();
   return el;
 }
 
 describe('activateIslands visible observer leak (F2)', () => {
   it('disconnects the observer when the island is deactivated before intersecting', () => {
     const el = makeVisibleIsland();
-    activateIslands({ Counter: vi.fn(() => null) });
+    activateIslands(emptyRegistry({ Counter: vi.fn(() => null) }));
     expect(obInstance.observe).toHaveBeenCalledWith(el);
     expect(obInstance.disconnect).not.toHaveBeenCalled();
 
@@ -46,7 +48,7 @@ describe('activateIslands visible observer leak (F2)', () => {
 
   it('deactivating a never-hydrated visible island leaves status pending (not disposed)', () => {
     const el = makeVisibleIsland();
-    activateIslands({ Counter: vi.fn(() => null) });
+    activateIslands(emptyRegistry({ Counter: vi.fn(() => null) }));
     deactivateIsland(el);
     expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
@@ -60,7 +62,7 @@ describe('activateIslands visible observer leak (F2)', () => {
     // that, and nothing covered it.
     const el = makeVisibleIsland();
     const hydrate = vi.fn(() => null);
-    activateIslands({ Counter: hydrate });
+    activateIslands(emptyRegistry({ Counter: hydrate }));
     expect(hydrate).not.toHaveBeenCalled();
 
     deactivateIsland(el);
@@ -70,3 +72,5 @@ describe('activateIslands visible observer leak (F2)', () => {
     expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
 });
+
+useFreshDocument();

@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 // F1 (1.3.0): a second activateIslands() must not double-run/double-bind islands.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { activateIslands } from '../activate';
@@ -9,14 +10,15 @@ describe('activateIslands re-invocation guard (F1)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Dup" data-forma-status="pending">' +
       '<span>x</span></div>';
+    installState();
     const hydrateFn = vi.fn(() => null);
 
-    activateIslands({ Dup: hydrateFn });
+    activateIslands(emptyRegistry({ Dup: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(island.getAttribute('data-forma-status')).toBe('active');
 
-    activateIslands({ Dup: hydrateFn });
+    activateIslands(emptyRegistry({ Dup: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
     expect(island.getAttribute('data-forma-status')).toBe('active');
   });
@@ -25,15 +27,17 @@ describe('activateIslands re-invocation guard (F1)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Btn" data-forma-status="pending">' +
       '<button>click</button></div>';
+    installState();
     let attachCount = 0;
-    const hydrateFn = vi.fn((el: HTMLElement) => {
+    const hydrateFn = vi.fn(() => {
+      const el = document.querySelector('[data-forma-island="0"]')!;
       const btn = el.querySelector('button')!;
       btn.addEventListener('click', () => { attachCount++; });
       return null;
     });
 
-    activateIslands({ Btn: hydrateFn });
-    activateIslands({ Btn: hydrateFn });
+    activateIslands(emptyRegistry({ Btn: hydrateFn }));
+    activateIslands(emptyRegistry({ Btn: hydrateFn }));
 
     const btn = document.querySelector('button') as HTMLButtonElement;
     btn.dispatchEvent(new Event('click', { bubbles: true }));
@@ -44,15 +48,16 @@ describe('activateIslands re-invocation guard (F1)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Fresh" data-forma-status="pending">' +
       '<span>x</span></div>';
+    installState();
     const hydrateFn = vi.fn(() => null);
 
-    activateIslands({ Fresh: hydrateFn });
+    activateIslands(emptyRegistry({ Fresh: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     island.setAttribute('data-forma-status', 'pending');
 
-    activateIslands({ Fresh: hydrateFn });
+    activateIslands(emptyRegistry({ Fresh: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(2);
     expect(island.getAttribute('data-forma-status')).toBe('active');
   });
@@ -66,13 +71,16 @@ describe('activateIslands re-invocation guard (F1)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Vis" data-forma-hydrate="visible"' +
       ' data-forma-status="pending"><span>x</span></div>';
+    installState();
     const hydrateFn = vi.fn(() => null);
 
-    activateIslands({ Vis: hydrateFn });
-    activateIslands({ Vis: hydrateFn });
+    activateIslands(emptyRegistry({ Vis: hydrateFn }));
+    activateIslands(emptyRegistry({ Vis: hydrateFn }));
 
     expect(observe).toHaveBeenCalledTimes(1);
     expect(hydrateFn).not.toHaveBeenCalled();
     delete (globalThis as any).IntersectionObserver;
   });
 });
+
+useFreshDocument();

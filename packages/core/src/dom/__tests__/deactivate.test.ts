@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 /**
  * Island disposal tests — deactivateIsland, deactivateAllIslands.
  *
@@ -19,8 +20,9 @@ describe('deactivateIsland', () => {
         <span>Content</span>
       </div>
     `;
+    installState();
 
-    activateIslands({ Test: vi.fn() });
+    activateIslands(emptyRegistry({ Test: vi.fn() }));
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(island.getAttribute('data-forma-status')).toBe('active');
@@ -38,8 +40,9 @@ describe('deactivateIsland', () => {
         <span>Content</span>
       </div>
     `;
+    installState();
 
-    activateIslands({ Test: vi.fn() });
+    activateIslands(emptyRegistry({ Test: vi.fn() }));
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
 
     deactivateIsland(island);
@@ -52,6 +55,7 @@ describe('deactivateIsland', () => {
 
   it('does nothing for an element without __formaDispose', () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="X"></div>`;
+    installState();
     const el = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(() => deactivateIsland(el)).not.toThrow();
   });
@@ -62,18 +66,19 @@ describe('deactivateIsland', () => {
         <span>x</span>
       </div>
     `;
+    installState();
 
     let effectCount = 0;
     const [count, setCount] = createSignal(0);
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       EffectTest: () => {
         createEffect(() => {
           count(); // track dependency
           effectCount++;
         });
       },
-    });
+    }));
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     const beforeDisposal = effectCount;
@@ -106,8 +111,9 @@ describe('deactivateAllIslands', () => {
         </div>
       </div>
     `;
+    installState();
 
-    activateIslands({ A: vi.fn(), B: vi.fn() });
+    activateIslands(emptyRegistry({ A: vi.fn(), B: vi.fn() }));
 
     const islands = document.querySelectorAll('[data-forma-island]');
     expect(islands[0]?.getAttribute('data-forma-status')).toBe('active');
@@ -126,8 +132,9 @@ describe('deactivateAllIslands', () => {
         <span>Solo</span>
       </div>
     `;
+    installState();
 
-    activateIslands({ Solo: vi.fn() });
+    activateIslands(emptyRegistry({ Solo: vi.fn() }));
     deactivateAllIslands();
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
@@ -143,8 +150,9 @@ describe('deactivateAllIslands', () => {
         <span>Error</span>
       </div>
     `;
+    installState();
 
-    activateIslands({ Active: vi.fn() });
+    activateIslands(emptyRegistry({ Active: vi.fn() }));
 
     // Island 0 is active, Island 1 has status "error" (no registry entry)
     deactivateAllIslands();
@@ -154,3 +162,5 @@ describe('deactivateAllIslands', () => {
     expect(document.querySelector('[data-forma-island="1"]')?.getAttribute('data-forma-status')).toBe('error');
   });
 });
+
+useFreshDocument();

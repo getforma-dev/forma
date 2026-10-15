@@ -1,3 +1,4 @@
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 /**
  * Shared signals across islands — proves the store pattern works with activateIslands().
  *
@@ -31,11 +32,12 @@ describe('shared signals across islands', () => {
         <span><!--f:t0-->0<!--/f:t0--></span>
       </div>
     `;
+    installState();
 
     // Shared signal — the store pattern
     const [count, setCount] = createSignal(0);
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Counter: () => {
         return h('div', null,
           h('span', null, () => String(count())),
@@ -47,7 +49,7 @@ describe('shared signals across islands', () => {
           h('span', null, () => String(count())),
         );
       },
-    });
+    }));
 
     // Both islands active
     expect(document.querySelector('[data-forma-island="0"]')!
@@ -86,12 +88,13 @@ describe('shared signals across islands', () => {
         <span><!--f:t0-->1000<!--/f:t0--></span>
       </div>
     `;
+    installState();
 
     // Shared store — multiple signals
     const [sortCol, setSortCol] = createSignal('id');
     const [rowCount, setRowCount] = createSignal(1000);
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       FilterBar: () => {
         return h('div', null,
           h('select', { onChange: (e: Event) => setSortCol((e.target as HTMLSelectElement).value) },
@@ -116,7 +119,7 @@ describe('shared signals across islands', () => {
           h('span', null, () => String(rowCount())),
         );
       },
-    });
+    }));
 
     // All three active
     expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(3);
@@ -140,10 +143,11 @@ describe('shared signals across islands', () => {
         <!--f:s0--><p>visible</p><!--/f:s0-->
       </div>
     `;
+    installState();
 
     const [visible, setVisible] = createSignal(true);
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Toggle: () => {
         return h('div', null,
           h('button', { onClick: () => setVisible(!visible()) }, 'toggle'),
@@ -154,7 +158,7 @@ describe('shared signals across islands', () => {
           createShow(visible, () => h('p', null, 'visible')),
         );
       },
-    });
+    }));
 
     expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(2);
 
@@ -184,13 +188,14 @@ describe('shared signals across islands', () => {
         <!--/f:l0-->
       </div>
     `;
+    installState();
 
     const [items, setItems] = createSignal([
       { id: '1', text: 'Item 1' },
       { id: '2', text: 'Item 2' },
     ]);
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       AddItem: () => {
         return h('div', null,
           h('button', {
@@ -208,7 +213,7 @@ describe('shared signals across islands', () => {
           ),
         );
       },
-    });
+    }));
 
     expect(document.querySelectorAll('[data-forma-status="active"]').length).toBe(2);
 
@@ -235,10 +240,11 @@ describe('shared signals across islands', () => {
         <span><!--f:t0-->0<!--/f:t0--></span>
       </div>
     `;
+    installState();
 
     const [count, setCount] = createSignal(0);
 
-    activateIslands({
+    activateIslands(emptyRegistry({
       Writer: () => {
         return h('div', null,
           h('span', null, () => String(count())),
@@ -249,7 +255,7 @@ describe('shared signals across islands', () => {
           h('span', null, () => String(count())),
         );
       },
-    });
+    }));
 
     // Both track
     setCount(10);
@@ -265,3 +271,5 @@ describe('shared signals across islands', () => {
     expect(document.querySelector('[data-forma-island="1"] span')!.textContent).toBe('20');
   });
 });
+
+useFreshDocument();
