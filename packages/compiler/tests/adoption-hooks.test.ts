@@ -30,7 +30,7 @@ const writableCount=(text:string)=>[...text.matchAll(/__forma_adoptWritable\w*\(
 async function runtime(f:ReturnType<typeof fixture>) {
   const root=resolve('../core/src'), wrapper=join(f.dir,'runtime.ts');
   writeFileSync(wrapper,`export * from './entry';\nexport { withAdoptionSink } from ${JSON.stringify(join(root,'reactive/adoption-hooks.ts'))};\nexport { withAdoptionDescription } from ${JSON.stringify(join(root,'dom/adoption-description.ts'))};`);
-  const result=await build({entryPoints:[wrapper],bundle:true,write:false,platform:'node',format:'cjs',target:'node20',alias:{'@getforma/core':join(root,'index.ts')},plugins:[{name:'original-adoption-hooks',setup(plugin){plugin.onLoad({filter:/\.[jt]sx?$/},args=>{const contents=f.transformed.get(args.path);return contents===undefined?undefined:{contents,loader:'tsx'};});}}]});
+  const result=await build({entryPoints:[wrapper],bundle:true,write:false,platform:'node',format:'cjs',target:'node20',jsxFactory:'h',jsxFragment:'Fragment',alias:{'@getforma/core':join(root,'index.ts')},plugins:[{name:'original-adoption-hooks',setup(plugin){plugin.onLoad({filter:/\.[jt]sx?$/},args=>{const contents=f.transformed.get(args.path);return contents===undefined?undefined:{contents,loader:'tsx'};});}}]});
   const output={exports:{} as any};runInNewContext(result.outputFiles[0]!.text,{module:output,exports:output.exports,console,queueMicrotask,setTimeout,clearTimeout,TextEncoder,TextDecoder,require:()=>{throw new Error('unexpected runtime require');}});return output.exports;
 }
 
@@ -107,6 +107,19 @@ describe('original-source adoption hooks',()=>{
     const r=await runtime(f),pairs:any[]=[],reads:any[]=[];
     const result=r.withAdoptionSink({enroll:(_s:any,p:any)=>pairs.push(p),writable:(read:any,get:any)=>{reads.push(get);return read;}},()=>r.withAdoptionDescription(()=>r.Counter({count:8})));
     expect(reads).toEqual([pairs[0][0]]);expect(result.props.value()).toBe(8);
+  });
+  it('preserves sole direct textarea child authority through h, JSX and a proven inline read',async()=>{
+    const f=fixture(`export function Counter(p:{text:string}){const [value]=createSignal(p.text);return h('div',null,h('textarea',null,value),<textarea>{value}</textarea>,h('textarea',null,()=>value()));}`);
+    expect(writableCount(f.text)).toBe(3);
+    const r=await runtime(f),pairs:any[]=[],reads:any[]=[];
+    const result=r.withAdoptionSink({enroll:(_s:any,p:any)=>pairs.push(p),writable:(read:any,get:any,codec:any)=>{reads.push({read,get,codec});return read;}},()=>r.withAdoptionDescription(()=>r.Counter({text:'original'})));
+    expect(reads.map(item=>item.get)).toEqual([pairs[0][0],pairs[0][0],pairs[0][0]]);
+    expect(reads.map(item=>item.codec)).toEqual(['string','string','string']);
+    expect(result.children.map((item:any)=>item.children[0]())).toEqual(['original','original','original']);
+  });
+  it('does not invent textarea inverses for mixed, eager, computed, captured or narrow readers',()=>{
+    const f=fixture(`const [shared]=createSignal('shared');export function Counter(){const [value]=createSignal('local');const [narrow]=createSignal<'x'|'y'>('x');return h('div',null,h('textarea',null,'prefix',value),<textarea>prefix{value}</textarea>,h('textarea',null,value()),h('textarea',null,()=>value()+'!'),h('textarea',null,shared),h('textarea',null,narrow));}`);
+    expect(writableCount(f.text)).toBe(0);
   });
   it('keeps direct registered child calls lazy with original argument count and props',async()=>{
     const f=fixture(`export function Child(p:{title?:string}){return 'child';} export function Counter(p:{title:string}){return h('div',null,Child(),Child({title:p.title}));}` ,{},'Counter,Child');
