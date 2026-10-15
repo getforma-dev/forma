@@ -4,7 +4,7 @@
  * Verifies the complete Forma pipeline in a real browser:
  *   1. HTML Runtime (data-* directives) — zero JS, reactive via CDN
  *   2. Programmatic h() API — createSignal + h() + mount()
- *   3. Compiled template path — template() + cloneNode() (compiler output pattern)
+ *   3. Reviewed template path — template(trustedHtml()) + cloneNode()
  *
  * Run: npx playwright test
  * Guide: See e2e/README.md
@@ -97,11 +97,11 @@ test.describe('Programmatic h() API', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════
-// Test 3: Compiled template path (compiler output pattern)
+// Test 3: Reviewed template path (public API)
 // ═══════════════════════════════════════════════════════════════════════
 
-test.describe('Compiled template path — template() + cloneNode()', () => {
-  test('template creates DOM from HTML string', async ({ page }) => {
+test.describe('Reviewed template path — template() + cloneNode()', () => {
+  test('template creates DOM from reviewed markup', async ({ page }) => {
     await expect(page.locator('#tpl-container')).toBeVisible();
   });
 
@@ -124,8 +124,9 @@ test.describe('Compiled template path — template() + cloneNode()', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 test.describe('Cross-cutting', () => {
-  test('no console errors on page load', async ({ page }) => {
+  test('no browser errors on page load', async ({ page }) => {
     const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
     page.on('console', msg => {
       if (msg.type() === 'error') errors.push(msg.text());
     });

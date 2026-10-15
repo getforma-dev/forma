@@ -8,7 +8,7 @@ Browser-level verification of the entire Forma pipeline. Tests run in a real Chr
 |------------|-------|-----------------|
 | **HTML Runtime** | 8 | data-text, data-on:click, data-model, data-show, data-class, data-computed, $refs |
 | **Programmatic h() API** | 2 | createSignal + h() + mount() renders DOM, signals update reactively |
-| **Compiled template path** | 3 | template() + cloneNode() (compiler output) creates working DOM with reactive effects |
+| **Reviewed template path** | 3 | template(trustedHtml()) + cloneNode() creates working DOM with reactive effects |
 | **Cross-cutting** | 2 | No console errors on page load, all three approaches coexist |
 
 ## The SSR lane: compiler, forma walker, FormaJS (`e2e/ssr/`)
@@ -140,7 +140,7 @@ e2e/
 │   ├── full-stack.html              ← Test page with all three entry points
 │   ├── formajs-runtime.global.js    ← Auto-synced from formajs build
 │   ├── formajs.global.js            ← Auto-synced from formajs build
-│   └── compiled-counter.js          ← Compiler output example (reference)
+│   └── compiled-counter.js          ← Reviewed template/clone reference (the old JSX transform is retired)
 ├── full-stack.spec.ts               ← 15 Playwright tests
 ├── sync-fixtures.sh                 ← Builds FormaJS and copies dist files
 ├── ssr/

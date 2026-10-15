@@ -1,7 +1,8 @@
 import { createEffect as _$createEffect } from "@getforma/core";
 import { template as _$template } from "@getforma/core";
-import { h, createSignal } from 'formajs';
-const _tmpl$0 = _$template("<div id=\"compiled-counter\"><span id=\"compiled-count\"><!></span><button id=\"compiled-btn\">Compiled +1</button></div>");
+import { trustedHtml as _$trustedHtml, createSignal } from '@getforma/core';
+// Retained template/clone reference; this is not output of the current compiler.
+const _tmpl$0 = _$template(_$trustedHtml("<div id=\"compiled-counter\"><span id=\"compiled-count\"><!></span><button id=\"compiled-btn\">Compiled +1</button></div>"));
 export function CompiledCounter() {
   const [count, setCount] = createSignal(0);
   return (() => {
