@@ -39,6 +39,8 @@
 pub mod format;
 /// Bounds-checked parsing and one-shot structural validation of an FMIR file.
 pub mod parser;
+/// Derived page contracts, schema comparison and checked value encoding.
+pub mod props;
 /// Typed props schema, key paths and source positions carried by FMIR v3.
 pub mod schema;
 /// Runtime slot values and the dense `SlotData` a page handler populates.
@@ -69,6 +71,10 @@ pub mod fuzz_support;
 /// Human-readable text dump of a module, for debugging and diffing.
 #[cfg(feature = "dump")]
 pub mod dump;
+
+/// Derive a named props struct or unit enum.
+pub use forma_ir_derive::PageProps;
+pub use props::PageProps;
 
 // Re-exports for convenience
 pub use format::{

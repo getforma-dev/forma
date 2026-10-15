@@ -69,3 +69,4 @@ codegen-units = 1
 # path source is the one in use.
 [patch.crates-io]
 forma-ir = { path = "crates/forma-ir" }
+forma-ir-derive = { path = "crates/forma-ir-derive" }

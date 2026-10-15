@@ -63,6 +63,21 @@ The `wasm` feature and its JavaScript exports were removed in 3.0.0. Browser
 islands re-render with `@getforma/core`. `walk_island` remains internal and is
 not a supported API; server callers use the full-page walker.
 
+## Declared page props (3.0.0 development)
+
+`#[derive(forma_ir::PageProps)]` describes named Rust structs and unit enums using
+FMIR's actual props schema. `props::BoundProps::<P>::bind(module, route)` checks
+that contract by field name once and retains the immutable module. Its `encode`
+method checks each request's values and emits only declared fields. Extra Rust
+fields warn and never reach the page; every declared TypeScript field must exist
+in Rust, including optional fields. Errors include route, property path and both
+source declarations where available.
+
+The [derive reference](../forma-ir-derive/README.md) documents supported types,
+renames, optional direction, integer bounds and signed epoch-millisecond dates.
+`props::encode_props` is a one-shot convenience that also performs the comparison;
+servers should retain a binding and rebind only when the module changes.
+
 ## When You Need This
 
 - **Building your own server** (not Axum) — parse IR and generate HTML yourself
