@@ -9,6 +9,7 @@
 
 import { signal as createRawSignal, setActiveSub, trigger } from 'alien-signals';
 import { __DEV__ } from './dev.js';
+import { recordAdoptionSignal } from './adoption-hooks.js';
 
 // Debug names live in a side table rather than on the getter's `.name`, so
 // alien-signals' isSignal() (which keys off the bound function name) still
@@ -146,6 +147,7 @@ export function createSignal<T>(initialValue: T, options?: SignalOptions<T>): [g
   }
   const eq = options?.equals;
   const setter: SignalSetter<T> = (v: T | ((prev: T) => T)) => applySignalSet(s, v, eq);
+  if (!eq) recordAdoptionSignal(getter, setter);
 
   return [getter, setter];
 }

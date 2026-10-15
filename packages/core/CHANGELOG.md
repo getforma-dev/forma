@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Internal preparation seam — FORMA-104 (dependent work)
+
+- Add private scoped enrollment of actual default-equality `createSignal` pairs, compiler-facing tuple/read hooks, checked seed values and batched rollback. Captured, substituted and custom-equality setters cannot be enrolled by these hooks.
+- Stage exact DOM snapshots/marker cursors and shared preparation ownership. Per-row groups dispose independently; public effects/refs stay dormant until publication, and callback failures after commit dispose their island without claiming to undo application writes. The direct-adoption kernel has no compiled signal enrollment authority.
+- Stage lazy h/direct-child/Show/list descriptions. Nested child matching retains each host's original component identity and compares declared values against its private original state, including intrinsic Date epochs; child-mutated props do not replace that baseline. No activation dispatch changes in this checkpoint.
+- Ordinary controls cover instance identity, dormant read cleanup after construction failures and unchanged client signal behavior. The seam is not connected to activation or the DOM walker yet; this checkpoint does not claim read-only adoption or early-input preservation in a page.
 ### Staged whole-page mount retirement — FORMA-105
 
 - `mount()` refuses a `data-forma-ssr` target with `FORMA_E_MOUNT_SSR` before component/root/effect/listener creation or DOM writes. Ordinary Browser mounting, explicit browserOnly islands and public caller-owned `hydrateIsland()` are retained.

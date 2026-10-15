@@ -641,7 +641,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if (hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;\n    const frag = document.createDocumentFragment();",
+  "find": "    if (describingAdoption || hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;\n    const frag = document.createDocumentFragment();",
   "replace": "    const frag = document.createDocumentFragment();",
   "note": "h(Fragment) builds a detached DocumentFragment while hydrating: a root Fragment stays inert after activation (FORMA-003, DR-7 a)"
  },
