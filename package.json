@@ -1,0 +1,24 @@
+{
+  "name": "forma-tools",
+  "private": true,
+  "workspaces": [
+    "packages/compiler",
+    "packages/build"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces",
+    "emit:corpus": "npm run emit:corpus -w packages/compiler --",
+    "test:e2e": "bash e2e/sync-fixtures.sh && bash e2e/ssr/build.sh && bash e2e/frame/build.sh && npx playwright test",
+    "test:e2e:ci": "npx playwright test",
+    "build": "npm run build -w packages/compiler && npm run build -w packages/build"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "esbuild": "^0.28.1",
+    "serve": "^14.2.6",
+    "tsup": "^8.5.1"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  }
+}
