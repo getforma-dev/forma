@@ -166,12 +166,12 @@ async fn check_page(
         session: Session {
             reachable: true,
             running: false,
-            line: "Ready to test.".into(),
+            line: "Idle.".into(),
             profile: None,
         },
-        feed_hint: "Press a panel key and watch every action it drives.".into(),
-        feed_line: "Waiting for the panel.".into(),
-        loss_line: "2 frames were dropped.".into(),
+        feed_hint: "Press a key to see which inputs respond.".into(),
+        feed_line: "Waiting for input.".into(),
+        loss_line: "2 frames skipped.".into(),
         frames_seen: 1001,
         has_slots: !chips.is_empty(),
         no_slots: chips.is_empty(),
@@ -179,18 +179,18 @@ async fn check_page(
         has_loss: true,
         quiet: true,
         empty_heading: if empty {
-            "No controller is ready to test".into()
+            "No device configured".into()
         } else {
             String::new()
         },
         empty_line: if empty {
-            "Add a controller in the studio, then come back to test its buttons.".into()
+            "Add a device, then return to this page.".into()
         } else {
             String::new()
         },
     };
     fixture::respond(
         app.check
-            .render(&props, &RenderCtx::new().with_title("Button check")),
+            .render(&props, &RenderCtx::new().with_title("Input monitor")),
     )
 }

@@ -1,5 +1,5 @@
 /**
- * The fixture applications (FORMA-188; DR-34, L-54): consumer-shaped pages written fresh
+ * The fixture applications (FORMA-188; DR-34, L-54): consumer-shaped pages written new
  * in this repository, built in strict mode and served by forma-server through a
  * `#[derive(PageProps)]` handler bound at start.
  *
@@ -80,9 +80,9 @@ type Behaviour = { hold?: string[]; interact?: (page: Page) => Promise<unknown> 
 const BEHAVIOURS: Record<string, Behaviour> = {
   'ledger /household': {
     // The island fetches the workspace at activation: held until adoption is judged.
-    hold: ['/api/v1/instance'],
+    hold: ['/api/status'],
     interact: async (page) => {
-      await expect(page.locator('#arrival-status')).toHaveText('The workspace is ready.');
+      await expect(page.locator('#arrival-status')).toHaveText('Loaded.');
       await expect(page.locator('#arrival-retry')).toHaveCount(0);
       return 'status moved to ready';
     },
@@ -92,20 +92,20 @@ const BEHAVIOURS: Record<string, Behaviour> = {
       await page.locator('#oauth-google').click();
       await expect(page.locator('#oauth-chosen')).toHaveText('Continuing with Google');
       // Sign up: the name field and the other button appear, the sign-in only controls go.
-      await page.locator('#tl-toggle').click();
+      await page.locator('#lc-toggle').click();
       await expect(page.locator('#auth-subtitle')).toHaveText('Create your account');
-      await expect(page.locator('#tl-name')).toBeVisible();
-      await expect(page.locator('#tl-submit-up')).toHaveText('Create account');
-      await expect(page.locator('#tl-submit-in')).toHaveCount(0);
-      await expect(page.locator('#tl-forgot')).toHaveCount(0);
-      await page.locator('#tl-toggle').click();
-      await expect(page.locator('#tl-submit-in')).toBeVisible();
-      await expect(page.locator('#tl-forgot')).toBeVisible();
+      await expect(page.locator('#lc-name')).toBeVisible();
+      await expect(page.locator('#lc-submit-up')).toHaveText('Create account');
+      await expect(page.locator('#lc-submit-in')).toHaveCount(0);
+      await expect(page.locator('#lc-forgot')).toHaveCount(0);
+      await page.locator('#lc-toggle').click();
+      await expect(page.locator('#lc-submit-in')).toBeVisible();
+      await expect(page.locator('#lc-forgot')).toBeVisible();
       // A visitor's own fields are the island's: typing, revealing, submitting empty.
-      await page.locator('#tl-password').fill('hunter2');
-      await page.locator('#tl-reveal').click();
-      await expect(page.locator('#tl-password')).toHaveAttribute('type', 'text');
-      await page.locator('#tl-submit-in').click();
+      await page.locator('#lc-password').fill('hunter2');
+      await page.locator('#lc-reveal').click();
+      await expect(page.locator('#lc-password')).toHaveAttribute('type', 'text');
+      await page.locator('#lc-submit-in').click();
       await expect(page.locator('#auth-failure')).toHaveText('Enter your email address.');
       return 'oauth, mode toggle, reveal and failure';
     },
@@ -132,12 +132,49 @@ const BEHAVIOURS: Record<string, Behaviour> = {
       return 'filter bar and toolbar';
     },
   },
+  // Each variant reaches the islands that have something to do on it.
+  'fauth /t/:slug/login (invite-only tenant)': {
+    interact: async (page) => {
+      await page.locator('#lc-password').fill('hunter2');
+      await page.locator('#lc-reveal').click();
+      await expect(page.locator('#lc-password')).toHaveAttribute('type', 'text');
+      await page.locator('#lc-submit-in').click();
+      await expect(page.locator('#auth-failure')).toHaveText('Enter your email address.');
+      return 'reveal and failure';
+    },
+  },
+  'fauth /t/:slug/login (invite link on an invite-only tenant, starting in register mode)': {
+    interact: async (page) => {
+      await page.locator('#lc-toggle').click();
+      await expect(page.locator('#auth-subtitle')).toHaveText('Sign in to your account');
+      await expect(page.locator('#lc-submit-in')).toBeVisible();
+      return 'mode toggle';
+    },
+  },
+  'fauth /platform/benchmark (no results)': {
+    interact: async (page) => {
+      await page.locator('#bm-query').fill('abc');
+      await expect(page.locator('#bm-summary')).toHaveText('Showing 0 results for "abc", by name.');
+      await page.locator('#bm-failures').click();
+      await expect(page.locator('#bm-filtered')).toBeVisible();
+      return 'filter bar and toolbar';
+    },
+  },
+  'ksx /check (no controller)': {
+    interact: async (page) => {
+      await page.locator('#count-frame').click();
+      await expect(page.locator('#frames-seen')).toHaveText('1002');
+      await page.keyboard.press('g');
+      await expect(page.locator('#echo-last')).toHaveText('Last key: G');
+      return 'frame counter and key echo';
+    },
+  },
   'ksx /check': {
     interact: async (page) => {
       await page.locator('#count-frame').click();
       await expect(page.locator('#frames-seen')).toHaveText('1002');
       await expect(page.locator('#quiet-line')).toHaveCount(0);
-      await expect(page.locator('#feed-line')).toHaveText('Receiving frames.');
+      await expect(page.locator('#feed-line')).toHaveText('Frames arriving.');
       // One key lights every chip it drives, on every slot at once (the screen's point).
       await page.keyboard.press('g');
       await expect(page.locator('.chip.lit')).toHaveCount(2);
@@ -172,7 +209,7 @@ for (const name of APPS) {
     for (const [route, page] of Object.entries(app.routes)) {
       const cases: { label: string; path: string; expectation: Expectation; behaviour: Behaviour }[] = [
         { label: route, path: page.path ?? route, expectation: page, behaviour: BEHAVIOURS[`${name} ${route}`] ?? {} },
-        ...(page.variants ?? []).map((variant) => ({ label: `${route} (${variant.name})`, path: variant.path, expectation: variant, behaviour: {} as Behaviour })),
+        ...(page.variants ?? []).map((variant) => ({ label: `${route} (${variant.name})`, path: variant.path, expectation: variant, behaviour: BEHAVIOURS[`${name} ${route} (${variant.name})`] ?? {} })),
       ];
       for (const { label, path, expectation, behaviour } of cases) {
         test(`${label}: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values`, async ({ browser }) => {
@@ -200,7 +237,7 @@ for (const name of APPS) {
               hosts: Object.fromEntries(Object.keys(states).map((component) => [component, 1])),
             },
             hold: behaviour.hold ?? [],
-            interact: behaviour.interact ?? (async (tab: Page) => (await tab.locator('[data-forma-island]').count())),
+            interact: behaviour.interact,
           });
           expect(result.mutations).toBe(0);
           expect(result.interacted, 'the page defines no behaviour that proves activation').toBeTruthy();
@@ -220,16 +257,16 @@ test.describe('fixture application ledger: a failing workspace', () => {
     try {
       const tab = await context.newPage();
       let calls = 0;
-      await tab.route('**/api/v1/instance', async (route) => {
+      await tab.route('**/api/status', async (route) => {
         calls += 1;
         if (calls === 1) await route.fulfill({ status: 503, body: 'down' });
         else await route.continue();
       });
       await tab.goto(new URL('/household', server.origin).href);
-      await expect(tab.locator('#arrival-status')).toHaveText('The workspace could not load (attempt 1). This snapshot is not live.');
+      await expect(tab.locator('#arrival-status')).toHaveText('Loading failed (attempt 1). Showing the opening snapshot.');
       await expect(tab.locator('#arrival-cash')).toHaveText('$12,345.67');
       await tab.locator('#arrival-retry').click();
-      await expect(tab.locator('#arrival-status')).toHaveText('The workspace is ready.');
+      await expect(tab.locator('#arrival-status')).toHaveText('Loaded.');
       await expect(tab.locator('#arrival-retry')).toHaveCount(0);
       expect(calls).toBe(2);
     } finally { await context.close(); }
@@ -247,17 +284,16 @@ test.describe('fixture application fauth: the tenant is data, never markup', () 
       const tab = await context.newPage();
       const errors: string[] = [];
       tab.on('pageerror', (error) => errors.push(error.message));
-      const violations: string[] = [];
       await tab.addInitScript(() => document.addEventListener('securitypolicyviolation', (e) => (globalThis as { __v?: string[] }).__v = [...((globalThis as { __v?: string[] }).__v ?? []), e.effectiveDirective]));
       await tab.goto(new URL('/t/quote/login', server.origin).href);
       await expect(tab.locator('#tenant-name')).toHaveText('";alert(1);//</script><b>bold</b>');
       expect(await tab.locator('#tenant-name b').count()).toBe(0);
       expect(await tab.locator('title').textContent()).toContain('";alert(1);//');
       // The page still works after the hostile name: the document was not cut short.
-      await tab.locator('#tl-toggle').click();
+      await tab.locator('#lc-toggle').click();
       await expect(tab.locator('#auth-subtitle')).toHaveText('Create your account');
       expect(errors).toEqual([]);
-      expect(await tab.evaluate(() => (globalThis as { __v?: string[] }).__v ?? [])).toEqual(violations);
+      expect(await tab.evaluate(() => (globalThis as { __v?: string[] }).__v ?? [])).toEqual([]);
     } finally { await context.close(); }
   });
 
@@ -273,7 +309,7 @@ test.describe('fixture application fauth: the tenant is data, never markup', () 
       await tab.goto(new URL('/t/lockbox/login', server.origin).href);
       await expect(tab.locator('#oauth-google')).toHaveCount(0);
       await expect(tab.locator('#oauth-github')).toHaveCount(0);
-      await expect(tab.locator('#tl-toggle')).toHaveCount(0);
+      await expect(tab.locator('#lc-toggle')).toHaveCount(0);
       await expect(tab.locator('#invite-notice')).toBeVisible();
     } finally { await context.close(); }
   });
@@ -289,7 +325,7 @@ test.describe('fixture application ksx: the other branch of every condition', ()
     try {
       const tab = await context.newPage();
       await tab.goto(new URL('/check?state=empty', server.origin).href);
-      await expect(tab.locator('#empty h2')).toHaveText('No controller is ready to test');
+      await expect(tab.locator('#empty h2')).toHaveText('No device configured');
       await expect(tab.locator('#chips')).toHaveCount(0);
       await expect(tab.locator('#roster li')).toHaveCount(0);
     } finally { await context.close(); }
@@ -305,6 +341,25 @@ test.describe('fixture application ksx: the other branch of every condition', ()
       await expect(tab.locator('#chips li')).toHaveCount(6);
       await expect(tab.locator('.chip[data-control="dpad.up"]')).toHaveAttribute('data-keys', 'W ArrowUp');
     } finally { await context.close(); }
+  });
+});
+
+test.describe('activation is required, not assumed', () => {
+  let server: Running;
+  test.beforeAll(async () => { server = await start('ksx'); });
+  test.afterAll(async () => { await server?.stop(); });
+  const manifest = () => readJson(join(OUT, 'ksx', 'dist', 'manifest.json'));
+
+  test('a page with no behaviour that proves activation is refused', async ({ browser }) => {
+    const { verifyIslandPage } = await verifier();
+    await expect(verifyIslandPage(browser, server.origin, '/check', manifest(), { path: '/check?state=empty' })).rejects.toThrow(/needs an interact behaviour/);
+  });
+
+  test('a variant whose islands never activate fails its behaviour (the reviewer\'s probe)', async ({ browser }) => {
+    const { verifyIslandPage } = await verifier();
+    const interact = BEHAVIOURS['ksx /check (no controller)'].interact;
+    // The held script is answered with an empty module: the hosts are in the HTML and nothing ran.
+    await expect(verifyIslandPage(browser, server.origin, '/check', manifest(), { path: '/check?state=empty', interact, scriptBody: '', timeout: 3000 })).rejects.toThrow();
   });
 });
 
@@ -346,6 +401,7 @@ test.describe('fixtures the closed type set and N2 refuse', () => {
     expect(result.message).toContain(entry.code);
     expect(result.message).toContain(entry.message);
     const bytes = Number(/loads ([\d,]+) B gzip -9 of Forma code/.exec(result.message)?.[1]?.replaceAll(',', ''));
-    expect(bytes).toBeGreaterThan(25_500);
+    const ceiling = Number(/ceiling of ([\d,]+) B/.exec(result.message)?.[1]?.replaceAll(',', ''));
+    expect(bytes).toBeGreaterThan(ceiling);
   });
 });

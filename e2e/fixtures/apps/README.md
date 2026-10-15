@@ -2,9 +2,11 @@
 
 Three applications written for this repository to the shape of three consumers' pages, so the 3.0.0
 contract (declared props, the state block, strict adoption, the closed type set) is checked against
-real shapes before an application has to migrate (L-54, DR-34). Nothing is copied from an application
-repository: `apps.json` names, for each page, where its shape was read (`shapeSource`), and every
-file here is new. P17 builds and serves the same sources against the packed set
+real shapes before an application has to migrate (L-54, DR-34). The pages are shaped after, not taken
+from, the applications: they keep the element structure, the island count, the prop types and the list
+sizes, and carry neutral, synthetic labels, class names, colours and values (two of the applications
+are private repositories and this one is public). `apps.json` says, for each application, what it is
+shaped after (`shapeSource`). P17 builds and serves the same sources against the packed set
 (`scripts/release-fixture-apps.mjs`).
 
 | Application | Pages | Shape it carries |
@@ -60,7 +62,7 @@ the walker and not guessed.
   not the string a screen reader needs; the fixture writes the string in the click.
 - **An island with a client-side list is over N2 today.** Forma's code on the smallest island is 25,084 B
   gzip -9, `createShow` adds 241 B and `createList` 1,282 B: a route whose island holds a `createList` is
-  26,366 B against the 25,500 B ceiling (`negative/list-island`, BUILD-819). The studio's chips and the
+  about 26.4 KB against the 25,500 B ceiling (26,366 B when first measured, 26,403 B on `49c6146`) (`negative/list-island`, BUILD-819). The studio's chips and the
   service's results table are lists in islands on the pages these fixtures are shaped like, so the fixtures
   keep their lists in the page outside every island (server markup, no client code) and reach them by id.
-  The fixture routes are 25,373 to 25,424 B: within 76 to 127 B of the ceiling.
+  The fixture routes measured 25,399 to 25,447 B on the integration head `49c6146` (FORMA-186's identity banner added about 32 B per route), 53 to 101 B under the ceiling, and `negative/list-island` 26,403 B; the figures move with the tree.

@@ -16,12 +16,12 @@ export type ArrivalProps = {
 
 /** What the browser-only build mounts when nothing server-rendered is adopted. */
 export const defaultArrival: ArrivalProps = {
-  arrivalTitle: 'Your household',
+  arrivalTitle: 'Household',
   arrivalDate: '',
-  arrivalCash: 'Balance needed',
+  arrivalCash: 'Pending',
   arrivalBills: '-',
   arrivalIncome: '-',
-  arrivalStatus: 'Opening the workspace',
+  arrivalStatus: 'Loading',
   arrivalSummary: false,
 };
 
@@ -39,28 +39,28 @@ export function HouseholdArrival(props: ArrivalProps) {
     attempts += 1;
     setRetryVisible(false);
     try {
-      const response = await fetch('/api/v1/instance');
+      const response = await fetch('/api/status');
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      setArrivalStatus('The workspace is ready.');
+      setArrivalStatus('Loaded.');
     } catch {
-      setArrivalStatus(`The workspace could not load (attempt ${attempts}). This snapshot is not live.`);
+      setArrivalStatus(`Loading failed (attempt ${attempts}). Showing the opening snapshot.`);
       setRetryVisible(true);
     }
   }
   return (
-    <section class="arrival" aria-label="Household arrival" ref={() => { void loadWorkspace(); }}>
+    <section class="arrival" aria-label="Arrival" ref={() => { void loadWorkspace(); }}>
       <h1 id="arrival-title">{() => arrivalTitle()}</h1>
       {createShow(
         () => arrivalSummary(),
         () => (
-          <div id="arrival-summary" aria-label="Initial household snapshot">
-            <p>Household date: <span id="arrival-date">{() => arrivalDate()}</span></p>
+          <div id="arrival-summary" aria-label="Opening snapshot">
+            <p>Snapshot taken: <span id="arrival-date">{() => arrivalDate()}</span></p>
             <dl>
-              <dt>Recorded cash now</dt>
+              <dt>Cash on hand</dt>
               <dd id="arrival-cash">{() => arrivalCash()}</dd>
-              <dt>Bills remaining this month</dt>
+              <dt>Bills due</dt>
               <dd id="arrival-bills">{() => arrivalBills()}</dd>
-              <dt>Expected income this month</dt>
+              <dt>Income expected</dt>
               <dd id="arrival-income">{() => arrivalIncome()}</dd>
             </dl>
           </div>
@@ -71,7 +71,7 @@ export function HouseholdArrival(props: ArrivalProps) {
         () => retryVisible(),
         () => (
           <button id="arrival-retry" type="button" onClick={() => { void loadWorkspace(); }}>
-            Retry loading
+            Try again
           </button>
         ),
       )}
