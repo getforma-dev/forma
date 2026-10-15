@@ -57,8 +57,12 @@ describe('declared island writer integration',()=>{
   });
   it('emits the typed roundtrip contract for independent native-to-browser state controls',()=>{
     const fields="label:string;value:number;date:Date;mode:'a'|'b';maybe?:string;list:(number|null)[];nested:{active:boolean}";
-    emit('roundtrip',`import {Badge} from "./island";export function Page(p:{${fields}}){return h("main",null,Badge(p));}`,
+    const result=emit('roundtrip',`import {Badge} from "./island";export function Page(p:{${fields}}){return h("main",null,Badge(p));}`,
       `export function Badge(p:{${fields}}){return h("p",null,p.label,p.value);}`);
+    const contract=result.islands[0]!.contract!,registration={h:contract.digest,schema:contract.schema,mode:0};
+    const text=JSON.stringify(registration,null,2)+'\n';
+    if(process.env.FORMA_EMITTER_PROBE_DIR)writeFileSync(join(process.env.FORMA_EMITTER_PROBE_DIR,'roundtrip.registration.json'),text);
+    expect(text).toBe(readFileSync(fileURLToPath(new URL('../../../crates/forma-ir/tests/fixtures/island-emitter/roundtrip.registration.json',import.meta.url)),'utf8'));
   });
   it('refuses missing or incompatible declared input and numeric Date impostors',()=>{
     for(const args of ['{}','{label:2}'])expect(()=>emit('bad','import {Badge} from "./island";export function Page(){return Badge('+args+');}',
