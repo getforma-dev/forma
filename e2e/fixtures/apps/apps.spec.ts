@@ -384,8 +384,24 @@ test.describe('activation is required, not assumed', () => {
   test('a variant whose islands never activate fails its behaviour (the reviewer\'s probe)', async ({ browser }) => {
     const { verifyIslandPage } = await verifier();
     const interact = BEHAVIOURS['ksx /check (no controller)'].interact;
+    const page = INDEX.apps.ksx.routes['/check'];
+    const variant = page.variants!.find(each => each.name === 'no controller')!;
+    const expected = {
+      serverValues: variant.serverValues,
+      state: Object.fromEntries(Object.entries(variant.state!).map(([component, state]) => [component, [state]])),
+      hosts: Object.fromEntries(page.islands.map(component => [component, 1])),
+    };
+    const options = { path: variant.path, expected, interact, timeout: 3000 };
+    const active = await verifyIslandPage(browser, server.origin, '/check', manifest(), options);
+    expect(active.interacted, 'the paired control must reach the live variant behaviour').toBeTruthy();
     // The held script is answered with an empty module: the hosts are in the HTML and nothing ran.
-    await expect(verifyIslandPage(browser, server.origin, '/check', manifest(), { path: '/check?state=empty', interact, scriptBody: '', timeout: 3000 })).rejects.toThrow();
+    let failure: Error | undefined;
+    try {
+      await verifyIslandPage(browser, server.origin, '/check', manifest(), { ...options, scriptBody: '' });
+    } catch (error) { failure = error as Error; }
+    expect(failure?.message).toContain('toHaveText');
+    expect(failure?.message).toContain('#frames-seen');
+    expect(failure?.message).toContain('1002');
   });
 });
 
