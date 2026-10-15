@@ -65,6 +65,17 @@ no pending island and refusal of corrupt IR before binding. These are explicit
 local substitutions; the shipped template uses registry URLs/checksums.
 Unpublished candidates have no registry signatures yet: DS11 SHA-256 authenticates
 their bytes, while `npm audit signatures` checks their registry dependencies.
+
+npm determines signature eligibility from each dependency's requirement, so an exact
+peer requirement can make an unpublished local candidate look like a registry package.
+P17 therefore audits a separate copy of the installed tree: only candidates authenticated
+against DS11 become local npm workspaces. Their inactive development dependencies are
+omitted from that audit copy so workspace semantics cannot invent new dependency edges.
+Runtime, peer and optional requirements stay unchanged. The helper compares the complete
+external package inventory, dependency edges and manifest bytes before auditing it, then
+runs npm's normal signature verifier. Every registry error remains a failure. The report
+lists each audited external location, version, URL and integrity, plus each candidate's
+DS11 digest. The original installation and lock used for build/browser tests are unchanged.
 Future contract owners extend this same P17 job; they must not weaken exact version
 checks to make the A2 skeleton pass.
 

@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
+import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 
 async function freePort() {
   const server = net.createServer();
@@ -90,6 +91,8 @@ export async function verify(dir, reportPath) {
       const lockHash = digest(join(cli, 'package-lock.json'));
       run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], cli, { stdio: 'inherit' });
       assert.equal(digest(join(cli, 'package-lock.json')), lockHash, 'npm changed the packed CLI runtime lock');
+      const signatures = auditCandidateSignatures(cli, set.packages, dir);
+      report.tests.push({ name: 'packed CLI registry signatures', passed: true, ...signatures });
     });
     await test('packed compiler emits the frozen corpus read by packed forma-ir', async () => {
       const compiler = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
@@ -129,7 +132,8 @@ export async function verify(dir, reportPath) {
           save(join(admin, 'package.json'), staged.manifest); save(join(admin, 'package-lock.json'), staged.lock);
           const npmHash = digest(join(admin, 'package-lock.json'));
           run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin, { stdio: 'inherit' });
-          run('npm', ['audit', 'signatures'], admin, { stdio: 'inherit' });
+          const signatures = auditCandidateSignatures(admin, set.packages, dir);
+          report.tests.push({ name: `${template}: registry signatures and DS11 candidate authentication`, passed: true, ...signatures });
           for (const p of set.packages.filter(p => p.registry === 'npm' && p.name !== '@getforma/create-app')) {
             const manifest = join(admin, 'node_modules', p.name, 'package.json');
             if (existsSync(manifest)) assert.equal(json(manifest).version, p.version, `${template} installed another ${p.name}`);

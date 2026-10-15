@@ -1,0 +1,276 @@
+{
+  "schema": 1,
+  "commit": "f7d99761ff6fe6e9e76528c09cfd8ced92ced914",
+  "passed": false,
+  "tests": [
+    {
+      "name": "forma-ir: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "b361b75313605694af44383ecc37b9f44d2317dc413d4c6be949c7c6d6ee26af",
+      "auditLockSha256": "b361b75313605694af44383ecc37b9f44d2317dc413d4c6be949c7c6d6ee26af"
+    },
+    {
+      "name": "forma-ir-derive: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "9826fa539d088720e7ab52950d2afb86a8d65a433225973359a0abe8e8bb9121",
+      "auditLockSha256": "9826fa539d088720e7ab52950d2afb86a8d65a433225973359a0abe8e8bb9121"
+    },
+    {
+      "name": "forma-server: packed Cargo.lock advisories",
+      "passed": true,
+      "shippedLockSha256": "ffa3b101aca66cf481a23e5e4356fd44eb03bafcbbafba632c61064fe4a83072",
+      "auditLockSha256": "930edf02959408b8d34ec512188d2c0cbad7044a4255e3ffe0d2ab4a88a321df"
+    },
+    {
+      "name": "fresh advisories over every exact shipped crate lock",
+      "passed": true,
+      "seconds": 2.862
+    },
+    {
+      "name": "packed CLI registry signatures",
+      "passed": true,
+      "localCandidates": [],
+      "registryDependencies": [
+        {
+          "name": "prompts",
+          "version": "2.4.2",
+          "location": "node_modules/prompts",
+          "resolved": "https://registry.npmjs.org/prompts/-/prompts-2.4.2.tgz",
+          "integrity": "sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q=="
+        },
+        {
+          "name": "kleur",
+          "version": "3.0.3",
+          "location": "node_modules/prompts/node_modules/kleur",
+          "resolved": "https://registry.npmjs.org/kleur/-/kleur-3.0.3.tgz",
+          "integrity": "sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w=="
+        },
+        {
+          "name": "sisteransi",
+          "version": "1.0.5",
+          "location": "node_modules/prompts/node_modules/sisteransi",
+          "resolved": "https://registry.npmjs.org/sisteransi/-/sisteransi-1.0.5.tgz",
+          "integrity": "sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg=="
+        }
+      ]
+    },
+    {
+      "name": "packed CLI has an isolated, locked runtime dependency installation",
+      "passed": true,
+      "seconds": 1.593
+    },
+    {
+      "name": "packed compiler emits the frozen corpus read by packed forma-ir",
+      "passed": true,
+      "seconds": 5.698
+    },
+    {
+      "name": "minimal: registry signatures and DS11 candidate authentication",
+      "passed": true,
+      "localCandidates": [
+        {
+          "name": "@getforma/build",
+          "version": "3.0.0-dev",
+          "location": "node_modules/@getforma/build",
+          "file": "getforma-build-3.0.0-dev.tgz",
+          "sha256": "971c104be5c6ff26657c19b6909cfe67f0b9e179e231e3617013c2953db22c69"
+        },
+        {
+          "name": "@getforma/compiler",
+          "version": "3.0.0-dev",
+          "location": "node_modules/@getforma/compiler",
+          "file": "getforma-compiler-3.0.0-dev.tgz",
+          "sha256": "6ba38da891efcd848eba7fbd1f7721428e0c180b6a0933a2a9805b7522dd6ab7"
+        },
+        {
+          "name": "@getforma/core",
+          "version": "3.0.0-dev",
+          "location": "node_modules/@getforma/core",
+          "file": "getforma-core-3.0.0-dev.tgz",
+          "sha256": "180ea55491d7b4302e6e88a011da1601a2d4a0b0b6397e23fcce5a8d0141d157"
+        }
+      ],
+      "registryDependencies": [
+        {
+          "name": "@babel/code-frame",
+          "version": "7.29.7",
+          "location": "node_modules/@babel/code-frame",
+          "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz",
+          "integrity": "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="
+        },
+        {
+          "name": "@babel/generator",
+          "version": "7.29.8",
+          "location": "node_modules/@babel/generator",
+          "resolved": "https://registry.npmjs.org/@babel/generator/-/generator-7.29.8.tgz",
+          "integrity": "sha512-gZbepsdh3WDtgZKWL+vTPh71LSBrm/Y4/QDZBVCcYfmeTEEuoOYwlSy+G1StfJg+/Zy550u/3TATbm7qDbbMtg=="
+        },
+        {
+          "name": "@babel/helper-globals",
+          "version": "7.29.7",
+          "location": "node_modules/@babel/helper-globals",
+          "resolved": "https://registry.npmjs.org/@babel/helper-globals/-/helper-globals-7.29.7.tgz",
+          "integrity": "sha512-3nQVUAtvkKH9zahfWgw96Jc/uFOmjACE1kQz82E2lqWmHBgjzbNlsC22nuQTfahmWeQtTq5nQ/4Nnd2A1wj4zA=="
+        },
+        {
+          "name": "@babel/helper-string-parser",
+          "version": "7.29.7",
+          "location": "node_modules/@babel/helper-string-parser",
+          "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+          "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+        },
+        {
+          "name": "@babel/helper-validator-identifier",
+          "version": "7.29.7",
+          "location": "node_modules/@babel/helper-validator-identifier",
+          "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+          "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+        },
+        {
+          "name": "@babel/parser",
+          "version": "7.29.9",
+          "location": "node_modules/@babel/parser",
+          "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.9.tgz",
+          "integrity": "sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA=="
+        },
+        {
+          "name": "@babel/template",
+          "version": "7.29.7",
+          "location": "node_modules/@babel/template",
+          "resolved": "https://registry.npmjs.org/@babel/template/-/template-7.29.7.tgz",
+          "integrity": "sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg=="
+        },
+        {
+          "name": "@babel/traverse",
+          "version": "7.29.10",
+          "location": "node_modules/@babel/traverse",
+          "resolved": "https://registry.npmjs.org/@babel/traverse/-/traverse-7.29.10.tgz",
+          "integrity": "sha512-B3lYAs2nkKskbgQ1nfy8Ma9ao9Q1rntTAQHrzzyDuj+TSO+X3le6PfWwqDvodsb+OumE10eMFfuMCTQSQ5iuIQ=="
+        },
+        {
+          "name": "@babel/types",
+          "version": "7.29.8",
+          "location": "node_modules/@babel/types",
+          "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+          "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+        },
+        {
+          "name": "@esbuild/darwin-arm64",
+          "version": "0.28.2",
+          "location": "node_modules/@esbuild/darwin-arm64",
+          "resolved": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.28.2.tgz",
+          "integrity": "sha512-n4KqkOQrraxHJcgjM1RvwbigfQKIKJVpM7xp+KsxiyUSrRdIXnt73VhrPAx0fV44hgfmIVKjxMN9J1t5jySVkw=="
+        },
+        {
+          "name": "@jridgewell/gen-mapping",
+          "version": "0.3.13",
+          "location": "node_modules/@jridgewell/gen-mapping",
+          "resolved": "https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz",
+          "integrity": "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="
+        },
+        {
+          "name": "@jridgewell/resolve-uri",
+          "version": "3.1.2",
+          "location": "node_modules/@jridgewell/resolve-uri",
+          "resolved": "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz",
+          "integrity": "sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw=="
+        },
+        {
+          "name": "@jridgewell/sourcemap-codec",
+          "version": "1.6.0",
+          "location": "node_modules/@jridgewell/sourcemap-codec",
+          "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz",
+          "integrity": "sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw=="
+        },
+        {
+          "name": "@jridgewell/trace-mapping",
+          "version": "0.3.31",
+          "location": "node_modules/@jridgewell/trace-mapping",
+          "resolved": "https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz",
+          "integrity": "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="
+        },
+        {
+          "name": "alien-signals",
+          "version": "3.1.2",
+          "location": "node_modules/alien-signals",
+          "resolved": "https://registry.npmjs.org/alien-signals/-/alien-signals-3.1.2.tgz",
+          "integrity": "sha512-d9dYqZTS90WLiU0I5c6DHj/HcKkF8ZyGN3G5x8wSbslulz70KOxaqCT0hQCo9KOyhVqzqGojvNdJXoTumZOtcw=="
+        },
+        {
+          "name": "debug",
+          "version": "4.4.3",
+          "location": "node_modules/debug",
+          "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+          "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA=="
+        },
+        {
+          "name": "esbuild",
+          "version": "0.28.2",
+          "location": "node_modules/esbuild",
+          "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+          "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA=="
+        },
+        {
+          "name": "fsevents",
+          "version": "2.3.3",
+          "location": "node_modules/fsevents",
+          "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz",
+          "integrity": "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="
+        },
+        {
+          "name": "js-tokens",
+          "version": "4.0.0",
+          "location": "node_modules/js-tokens",
+          "resolved": "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz",
+          "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="
+        },
+        {
+          "name": "jsesc",
+          "version": "3.1.0",
+          "location": "node_modules/jsesc",
+          "resolved": "https://registry.npmjs.org/jsesc/-/jsesc-3.1.0.tgz",
+          "integrity": "sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA=="
+        },
+        {
+          "name": "ms",
+          "version": "2.1.3",
+          "location": "node_modules/ms",
+          "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+          "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="
+        },
+        {
+          "name": "picocolors",
+          "version": "1.1.1",
+          "location": "node_modules/picocolors",
+          "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+          "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="
+        },
+        {
+          "name": "tsx",
+          "version": "4.23.15",
+          "location": "node_modules/tsx",
+          "resolved": "https://registry.npmjs.org/tsx/-/tsx-4.23.15.tgz",
+          "integrity": "sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw=="
+        },
+        {
+          "name": "typescript",
+          "version": "5.9.3",
+          "location": "node_modules/typescript",
+          "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+          "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="
+        }
+      ]
+    }
+  ],
+  "pending": {
+    "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+    "FORMA-112": "manifest 2 and runtime version-pair rejection",
+    "FORMA-102": "declared props and bind mutation suite",
+    "FORMA-144": "both templates use the milestone's API",
+    "FORMA-188": "fixture applications and skew drill",
+    "FORMA-191": "release measurements"
+  },
+  "signatures": "registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256",
+  "templates": [],
+  "elapsedSeconds": 15.929
+}
