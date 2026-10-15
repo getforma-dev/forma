@@ -7,6 +7,14 @@ import {registerDisposer} from '../../reactive/root.js';
 function fixture(html:string){const doc=document.implementation.createHTMLDocument();doc.body.innerHTML=html;return doc.body.firstElementChild!;}
 const raw=(value:string)=>({__html:trustedHtml(value)});
 describe('prepared style and raw content integration',()=>{
+ it('retains the development raw-plus-children warning without evaluating fallback or writing live DOM',()=>{
+  const registry=Symbol.for('@getforma/core#trusted-types');delete (globalThis as Record<symbol,unknown>)[registry];
+  const warn=vi.spyOn(console,'warn').mockImplementation(()=>{}),host=fixture('<div><b>raw</b></div>'),fallback=vi.fn(()=>h('i',null,'unused')),observer=new MutationObserver(()=>{});
+  observer.observe(host,{subtree:true,attributes:true,childList:true,characterData:true});
+  try{const plan=prepareAdoption(host,()=>h('div',{dangerouslySetInnerHTML:raw('<b>raw</b>')},fallback));plan.commit();
+   expect(warn.mock.calls.filter(([line])=>String(line).includes('FORMA_W_INNER_HTML_CHILDREN'))).toHaveLength(1);expect(fallback).not.toHaveBeenCalled();expect(observer.takeRecords()).toEqual([]);plan.dispose();
+  }finally{warn.mockRestore();observer.disconnect();delete (globalThis as Record<symbol,unknown>)[registry];}
+ });
  it('validates normalized CSS once without initial writes and retains later style updates',async()=>{
   const host=fixture('<div style="color: red; padding: 1px">kept</div>'),[style,setStyle]=createSignal<unknown>({color:'red',padding:'1px'}),read=vi.fn(style),records:MutationRecord[]=[];
   const observer=new MutationObserver(batch=>records.push(...batch));observer.observe(host,{attributes:true,childList:true,subtree:true,characterData:true});
