@@ -1,8 +1,9 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { h } from '../element';
 import { mount } from '../mount';
 import { createList } from '../list';
-import { setHydrating } from '../hydrate';
+import { withAdoptionDescription, type ComponentDescription } from '../adoption-description';
+import { prepareAdoption } from '../adoption';
 import { createSignal, createRoot } from 'forma/reactive';
 
 // ---------------------------------------------------------------------------
@@ -97,45 +98,27 @@ describe('h() — function components', () => {
     expect(lis[2]!.textContent).toBe('C');
   });
 
-  it('does NOT generate hydration descriptors — returns real DOM even during hydration mode', () => {
-    let wasCalled = false;
+  it('describes a function component lazily, then prepares it once with merged props', () => {
+    let calls = 0;
     let receivedProps: Record<string, unknown> | null = null;
-
     const MyComponent = (props: Record<string, unknown>) => {
-      wasCalled = true;
-      receivedProps = props;
+      calls++; receivedProps = props;
       return h('div', { class: 'real' }, 'real content');
     };
-
-    // Enable hydration mode
-    setHydrating(true);
-
-    try {
-      const result = h(MyComponent, { value: 42 });
-
-      // The function component is CALLED immediately (not deferred as a descriptor).
-      // This is the critical distinction: string-tag h('div') produces a descriptor
-      // during hydration, but h(MyComponent) always invokes the function.
-      expect(wasCalled).toBe(true);
-      expect(receivedProps).not.toBeNull();
-      expect(receivedProps!.value).toBe(42);
-
-      // The result is whatever the function returned. Since the inner h('div')
-      // runs during hydration mode, it returns a descriptor object (cast as HTMLElement).
-      // The important thing is that the function component path itself does NOT
-      // create its own descriptor — it delegates to the function.
-      expect(result).toBeDefined();
-      expect((result as any).type).toBe('element');
-      expect((result as any).tag).toBe('div');
-    } finally {
-      setHydrating(false);
-    }
-
-    // Verify hydrating is properly restored — outside hydration, real DOM is produced
-    wasCalled = false;
+    const result = withAdoptionDescription(() => h(MyComponent, { value: 42 }, 'child')) as unknown as ComponentDescription;
+    expect(calls).toBe(0);
+    expect(result.type).toBe('component');
+    expect(result.component).toBe(MyComponent);
+    expect(result.args).toEqual([{ value: 42, children: ['child'] }]);
+    const doc = document.implementation.createHTMLDocument();
+    doc.body.innerHTML = '<div class="real">real content</div>';
+    const host = doc.body.firstElementChild!, original = host.firstChild;
+    const plan = prepareAdoption(host, () => result);
+    expect(calls).toBe(1);
+    expect(receivedProps).toEqual({ value: 42, children: ['child'] });
+    plan.commit(); expect(calls).toBe(1); expect(host.firstChild).toBe(original); plan.dispose();
     const normalResult = h(MyComponent, null) as HTMLElement;
-    expect(wasCalled).toBe(true);
-    expect(normalResult).toBeInstanceOf(HTMLDivElement);
+    expect(calls).toBe(2); expect(normalResult).toBeInstanceOf(HTMLDivElement);
     expect(normalResult.textContent).toBe('real content');
   });
 

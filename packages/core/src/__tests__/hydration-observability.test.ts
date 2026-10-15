@@ -1,143 +1,24 @@
-/**
- * Layer 2 Hydration Observability: SSR-vs-Client Diff Test
- *
- * Automated test that catches hydration mismatches in CI by comparing:
- *   1. Client render:     h() creates real DOM nodes directly
- *   2. Descriptor render: h() creates HydrationDescriptors, then
- *                         descriptorToElement() converts them back to DOM
- *
- * Both paths should produce structurally equivalent HTML. Divergence here
- * means the descriptor path would silently produce wrong output during
- * island hydration.
- */
-
+/** Fixed expected markup checked against ordinary CSR and read-only prepared adoption. */
 import { describe, it, expect } from 'vitest';
 import { createSignal, createRoot } from 'forma/reactive';
 import { h, createShow } from 'forma/dom';
-import {
-  setHydrating,
-  isDescriptor,
-  isShowDescriptor,
-  descriptorToElement,
-  type HydrationDescriptor,
-  type ShowDescriptor,
-} from 'forma/dom/hydrate';
+import { withAdoptionDescription, type HydrationDescriptor, type ShowDescriptor } from '../dom/adoption-description';
+import { prepareAdoption } from '../dom/adoption';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Normalize HTML for structural comparison:
- * - Strips SSR hydration markers (<!--f:t0-->, <!--/f:s1-->, etc.)
- * - Removes zero-width spaces injected during hydration
- * - Collapses runs of whitespace to a single space
- */
 function normalizeHtml(html: string): string {
-  return html
-    .replace(/<!--\/?f:[tsi]\d+-->/g, '') // Strip hydration markers
-    .replace(/\u200B/g, '')               // Remove zero-width spaces
-    .replace(/\s+/g, ' ')                 // Collapse whitespace
-    .trim();
+  return html.replace(/<!--\/?f:[tsli]\d+-->/g, '').replace(/\u200B/g, '').replace(/\s+/g, ' ').trim();
 }
-
-/**
- * Render a component in normal client mode (h() creates real DOM) and
- * return the normalized innerHTML of a wrapper container.
- */
-function renderClient(componentFn: () => unknown): string {
-  let html = '';
-  createRoot((_dispose) => {
-    const result = componentFn();
-    if (result instanceof Node) {
-      const container = document.createElement('div');
-      container.appendChild(result as Node);
-      html = normalizeHtml(container.innerHTML);
-    }
-  });
-  return html;
-}
-
-/**
- * Render a component in hydration (descriptor) mode, convert the top-level
- * HydrationDescriptor back to a real DOM element via descriptorToElement(),
- * and return the normalized innerHTML of a wrapper container.
- *
- * Only works for components whose top-level return is a HydrationDescriptor
- * (i.e., the root call is h(), not createShow()).
- */
-function renderDescriptor(componentFn: () => unknown): string {
-  let html = '';
-  createRoot((_dispose) => {
-    setHydrating(true);
-    let result: unknown;
+function renderClient(component: () => unknown): string {
+  return createRoot(dispose => {
     try {
-      result = componentFn();
-    } finally {
-      setHydrating(false);
-    }
-
-    if (isDescriptor(result)) {
-      const el = descriptorToElement(result as HydrationDescriptor);
-      const container = document.createElement('div');
-      container.appendChild(el);
-      html = normalizeHtml(container.innerHTML);
-    }
+      const node = component();
+      expect(node).toBeInstanceOf(Node);
+      const container = document.createElement('div'); container.appendChild(node as Node);
+      return normalizeHtml(container.innerHTML);
+    } finally { dispose(); }
   });
-  return html;
 }
 
-/**
- * Render a show branch component in hydration mode.
- * createShow() returns a ShowDescriptor during hydration; extract the
- * initialBranch and convert it using descriptorToElement().
- *
- * Used only for tests that call createShow() at the top level.
- */
-function renderShowDescriptorBranch(componentFn: () => unknown): string {
-  let html = '';
-  createRoot((_dispose) => {
-    setHydrating(true);
-    let result: unknown;
-    try {
-      result = componentFn();
-    } finally {
-      setHydrating(false);
-    }
-
-    if (isShowDescriptor(result)) {
-      const show = result as ShowDescriptor;
-      const branch = show.initialBranch;
-      if (isDescriptor(branch)) {
-        const el = descriptorToElement(branch as HydrationDescriptor);
-        const container = document.createElement('div');
-        container.appendChild(el);
-        html = normalizeHtml(container.innerHTML);
-      }
-    }
-  });
-  return html;
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-/**
- * The client tree and the descriptor tree, both pinned to the EXACT markup.
- *
- * This table replaces 12 tests of the shape
- * `expect(renderClient(c)).toBe(renderDescriptor(c))` plus three of the shape
- * `expect(renderClient(a)).not.toBe(renderDescriptor(b))`. Neither shape can
- * fail for the right reason: the equality ones compare one implementation's
- * output to the same implementation's output (both paths end in `h()`), so a
- * defect that breaks BOTH paths identically is invisible — and the inequality
- * ones assert that two DIFFERENT components render differently, which is true
- * by construction.
- *
- * Pinning the bytes keeps the original property (the two paths agree) and adds
- * the half that was missing (they agree on the RIGHT markup).
- */
 const CASES: Array<[name: string, component: () => unknown, html: string]> = [
   [
     'static element tree',
@@ -231,125 +112,49 @@ const CASES: Array<[name: string, component: () => unknown, html: string]> = [
   ],
 ];
 
-describe.each([
-  ['client', renderClient],
-  ['descriptor', renderDescriptor],
-] as const)('Hydration Observability: the %s path renders', (_path, render) => {
-  it.each(CASES)('%s', (_name, component, html) => {
-    expect(render(component)).toBe(html);
+
+describe('Hydration Observability: fixed CSR and adoption markup', () => {
+  it.each(CASES)('%s', async (name, component, expected) => {
+    expect(renderClient(component)).toBe(expected);
+    let server = expected;
+    if (name === 'reactive text signal') server = expected.replace('<span>World</span>', '<span><!--f:t0-->World<!--/f:t0--></span>');
+    if (name === 'multiple reactive signals in one tree') server = expected.replace('>Jane<', '><!--f:t0-->Jane<!--/f:t0--><').replace('>Doe<', '><!--f:t1-->Doe<!--/f:t1--><');
+    const doc = document.implementation.createHTMLDocument(); doc.body.innerHTML = server;
+    const host = doc.body.firstElementChild!, nodes: Node[] = [];
+    const cursor = doc.createTreeWalker(host); for (let node = cursor.nextNode(); node; node = cursor.nextNode()) nodes.push(node);
+    const mutations: MutationRecord[] = [], observer = new MutationObserver(batch => mutations.push(...batch));
+    observer.observe(host, { childList: true, attributes: true, characterData: true, subtree: true });
+    const plan = prepareAdoption(host, component);
+    try {
+      plan.commit(); await new Promise(resolve => setTimeout(resolve, 0));
+      expect(normalizeHtml(host.outerHTML)).toBe(expected);
+      const after: Node[] = [], walker = doc.createTreeWalker(host); for (let node = walker.nextNode(); node; node = walker.nextNode()) after.push(node);
+      expect(after).toEqual(nodes); expect(mutations.concat(observer.takeRecords())).toEqual([]);
+      host.setAttribute('data-observer-control', 'yes'); await new Promise(resolve => setTimeout(resolve, 0));
+      expect(mutations.concat(observer.takeRecords()).length).toBeGreaterThan(0);
+    } finally { observer.disconnect(); plan.dispose(); }
   });
 });
 
-describe('Hydration Observability: SSR-vs-Client Diff', () => {
-
-  // -------------------------------------------------------------------------
-  // createShow tests
-  // -------------------------------------------------------------------------
-
-  // createShow returns a ShowDescriptor during hydration (not a HydrationDescriptor),
-  // so it cannot be passed to descriptorToElement directly.  Instead we:
-  //   a) test the client render independently (checking expected content)
-  //   b) verify the hydration descriptor captures the correct initial branch
-  //      by rendering only the initialBranch descriptor.
-
-  it('conditional rendering: client render shows visible branch', () => {
-    const component = () => {
-      const [visible] = createSignal(true);
-      return createShow(
-        visible,
-        () => h('div', { class: 'content' }, 'Visible'),
-        () => h('div', { class: 'placeholder' }, 'Hidden'),
-      ) as unknown as Node;
-    };
-
-    // Client side: injects into container and checks innerHTML
-    let html = '';
-    createRoot((_dispose) => {
-      const frag = component();
-      const container = document.createElement('div');
-      container.appendChild(frag);
-      html = normalizeHtml(container.innerHTML);
-    });
-
-    expect(html).toContain('Visible');
-    expect(html).not.toContain('Hidden');
+describe('Hydration Observability: conditional descriptions', () => {
+  it.each([true, false])('pins the selected branch for visible=%s in CSR and prepared adoption', visible => {
+    const branch = visible ? '<div class="content">Visible</div>' : '<div class="placeholder">Hidden</div>';
+    const component = () => createShow(() => visible, () => h('div', { class: 'content' }, 'Visible'), () => h('div', { class: 'placeholder' }, 'Hidden'));
+    expect(renderClient(component)).toBe('<!--forma-show-->' + branch + '<!--/forma-show-->');
+    const doc = document.implementation.createHTMLDocument(); doc.body.innerHTML = '<section><!--f:s0-->' + branch + '<!--/f:s0--></section>';
+    const host = doc.body.firstElementChild!, old = host.querySelector('div');
+    const plan = prepareAdoption(host, () => h('section', null, component()));
+    plan.commit(); expect(host.querySelector('div')).toBe(old); expect(normalizeHtml(host.innerHTML)).toBe(branch); plan.dispose();
   });
-
-  it('conditional rendering: hydration descriptor initialBranch matches client visible branch', () => {
-    // Client render: visible=true → 'Visible' branch
-    const clientComponent = () => h('div', { class: 'content' }, 'Visible');
-    const clientHtml = renderClient(clientComponent);
-
-    // Descriptor render of the show's initial branch
-    const showComponent = () => {
-      const [visible] = createSignal(true);
-      return createShow(
-        visible,
-        () => h('div', { class: 'content' }, 'Visible'),
-        () => h('div', { class: 'placeholder' }, 'Hidden'),
-      );
-    };
-    const branchHtml = renderShowDescriptorBranch(showComponent);
-
-    expect(branchHtml).toBe(clientHtml);
+  it('createShow describes its thunks without evaluating the condition or branches', () => {
+    let reads = 0;
+    const result = withAdoptionDescription(() => createShow(() => { reads++; return true; }, () => { reads++; return h('div', null, 'yes'); })) as unknown as ShowDescriptor;
+    expect(result.type).toBe('show'); expect(result).not.toBeInstanceOf(Node); expect(reads).toBe(0);
+    expect(result).not.toHaveProperty('initialBranch');
   });
-
-  it('conditional rendering: false initial branch matches client fallback', () => {
-    // Client render: visible=false → 'Hidden' branch
-    const clientComponent = () => h('div', { class: 'placeholder' }, 'Hidden');
-    const clientHtml = renderClient(clientComponent);
-
-    // Descriptor render of the show's initial branch (condition=false)
-    const showComponent = () => {
-      const [visible] = createSignal(false);
-      return createShow(
-        visible,
-        () => h('div', { class: 'content' }, 'Visible'),
-        () => h('div', { class: 'placeholder' }, 'Hidden'),
-      );
-    };
-    const branchHtml = renderShowDescriptorBranch(showComponent);
-
-    expect(branchHtml).toBe(clientHtml);
+  it('h() describes the exact element props and children without allocating a DOM element', () => {
+    const result = withAdoptionDescription(() => h('div', { class: 'test' }, 'hello')) as unknown as HydrationDescriptor;
+    expect(result).toEqual({ type: 'element', tag: 'div', props: { class: 'test' }, children: ['hello'] });
+    expect(result).not.toBeInstanceOf(Element);
   });
-
-  it('createShow during hydration returns ShowDescriptor not HydrationDescriptor', () => {
-    // Guards the assumption that the test helpers above are using the right path.
-    createRoot((_dispose) => {
-      setHydrating(true);
-      let result: unknown;
-      try {
-        const [visible] = createSignal(true);
-        result = createShow(
-          visible,
-          () => h('div', null, 'yes'),
-        );
-      } finally {
-        setHydrating(false);
-      }
-
-      expect(isDescriptor(result)).toBe(false);
-      expect(isShowDescriptor(result)).toBe(true);
-    });
-  });
-
-  it('h() during hydration returns HydrationDescriptor not a DOM element', () => {
-    createRoot((_dispose) => {
-      setHydrating(true);
-      let result: unknown;
-      try {
-        result = h('div', { class: 'test' }, 'hello');
-      } finally {
-        setHydrating(false);
-      }
-
-      expect(isDescriptor(result)).toBe(true);
-      const desc = result as HydrationDescriptor;
-      expect(desc.tag).toBe('div');
-      expect(desc.props).toEqual({ class: 'test' });
-      expect(desc.children).toEqual(['hello']);
-      expect(result instanceof Element).toBe(false);
-    });
-  });
-
 });
