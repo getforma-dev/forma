@@ -115,8 +115,9 @@ export function parseImportSpecifiers(code) {
   for (const m of code.matchAll(/^[ \t]*import\s*["']([^"']+)["']/gm)) found.add(m[1]);
   // Dynamic import with a literal specifier.
   for (const m of code.matchAll(/\bimport\s*\(\s*["']([^"']+)["']\s*\)/g)) found.add(m[1]);
-  // CommonJS require with a literal specifier.
-  for (const m of code.matchAll(/\brequire\s*\(\s*["']([^"']+)["']\s*\)/g)) found.add(m[1]);
+  // CommonJS require with a literal specifier. A member method such as
+  // `this.require("live")` is a state guard, not a module dependency.
+  for (const m of code.matchAll(/(?<![\w$]|\.\s*)require\s*\(\s*["']([^"']+)["']\s*\)/g)) found.add(m[1]);
   return [...found];
 }
 
