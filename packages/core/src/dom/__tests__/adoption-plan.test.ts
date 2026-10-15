@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AdoptionDom, AdoptionDomError } from '../adoption-plan.js';
+import { AdoptionDom } from '../adoption-plan.js';
 import { SVG_NS, MATHML_NS } from '../namespace.js';
 
 function fixture(html: string) {
@@ -7,15 +7,6 @@ function fixture(html: string) {
   doc.body.innerHTML = `<main><section>${html}</section></main><aside></aside>`;
   return { doc, host: doc.querySelector('section')!, other: doc.querySelector('aside')! };
 }
-function code(run: () => unknown, expected: string) {
-  try { run(); } catch (error) {
-    expect(error).toBeInstanceOf(AdoptionDomError);
-    expect((error as AdoptionDomError).code).toBe(`FORMA_E_HYDRATE_${expected}`);
-    return;
-  }
-  throw new Error(`Expected ${expected}`);
-}
-
 describe('read-only structural cursor', () => {
   it('consumes static structure, coalesced authored text, attributes and exact marker text without writes', () => {
     const { host } = fixture('before <span class="label">Hello world</span>\n<!--f:t2-->value<!--/f:t2-->');
@@ -42,23 +33,23 @@ describe('read-only structural cursor', () => {
   it('does not skip authored whitespace or silently accept surplus nodes', () => {
     const { host } = fixture(' <b>bold</b> ');
     const dom = new AdoptionDom(host), cursor = dom.children();
-    code(() => cursor.element('b'), 'NODE');
+    expect(() => cursor.element('b')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_NODE' }));
     cursor.text(' '); const b = cursor.element('b');
     const content = dom.children(b); content.text('bold'); content.finish();
-    code(() => cursor.finish(), 'STRUCTURE');
+    expect(() => cursor.finish()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
     cursor.text(' '); cursor.finish();
-    code(() => dom.children(b).text('other'), 'VALUE');
-    code(() => dom.expectAttribute(b, 'title', 'missing'), 'VALUE');
+    expect(() => dom.children(b).text('other')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_VALUE' }));
+    expect(() => dom.expectAttribute(b, 'title', 'missing')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_VALUE' }));
   });
 
   it('does not consume a text prefix as a complete child or replace an incorrect tag', () => {
     const { host } = fixture('hello<span></span>');
     const cursor = new AdoptionDom(host).children();
     cursor.text('hell');
-    code(() => cursor.finish(), 'STRUCTURE');
-    code(() => cursor.element('span'), 'NODE');
+    expect(() => cursor.finish()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
+    expect(() => cursor.element('span')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_NODE' }));
     cursor.text('o');
-    code(() => cursor.element('strong'), 'NODE');
+    expect(() => cursor.element('strong')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_NODE' }));
     expect(host.innerHTML).toBe('hello<span></span>');
   });
 
@@ -71,13 +62,14 @@ describe('read-only structural cursor', () => {
     const dom = new AdoptionDom(host), cursor = dom.children();
     const svg = cursor.element('svg', SVG_NS);
     const inside = dom.children(svg);
-    code(() => inside.element('clippath', SVG_NS), 'NODE');
+    expect(() => inside.element('clippath', SVG_NS)).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_NODE' }));
     inside.element('clipPath', SVG_NS);
-    code(() => inside.element('title'), 'NODE');
+    expect(() => inside.element('title')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_NODE' }));
     const title = inside.element('title', SVG_NS);
     dom.children(title).text('SVG'); inside.finish();
     const math = cursor.element('math', MATHML_NS);
     dom.children(math).element('mi', MATHML_NS); cursor.finish();
+    expect(() => dom.assertUnchanged()).not.toThrow();
   });
 
   it('checks namespaced attributes without confusing a same-spelled unnamespaced value', () => {
@@ -86,9 +78,9 @@ describe('read-only structural cursor', () => {
     use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#shape');
     const dom = new AdoptionDom(host);
     dom.expectAttribute(use, 'href', '#shape', 'http://www.w3.org/1999/xlink');
-    code(() => dom.expectAttribute(use, 'href', '#shape'), 'VALUE');
+    expect(() => dom.expectAttribute(use, 'href', '#shape')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_VALUE' }));
     use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#other');
-    code(() => dom.assertUnchanged(), 'VALUE');
+    expect(() => dom.assertUnchanged()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_VALUE' }));
   });
 
   it('retains authored comments that only share a marker prefix', () => {
@@ -142,7 +134,7 @@ describe('native marker occurrence ranges', () => {
     ['extra content in text range', '<!--f:t0-->x<!--authored--><!--/f:t0-->'],
   ])('refuses %s without modifying the original range', (_label, html) => {
     const { host } = fixture(html), before = host.innerHTML, children = [...host.childNodes];
-    code(() => new AdoptionDom(host).children(), 'MARKER');
+    expect(() => new AdoptionDom(host).children()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_MARKER' }));
     expect(host.innerHTML).toBe(before); expect([...host.childNodes]).toEqual(children);
   });
 
@@ -150,7 +142,15 @@ describe('native marker occurrence ranges', () => {
     const { host } = fixture('<!--f:s1--><!--/f:s1--><!--f:s1--><!--/f:s1-->');
     const dom = new AdoptionDom(host), cursor = dom.children();
     dom.within(cursor.range('s')).finish();
-    code(() => cursor.finish(), 'STRUCTURE');
+    expect(() => cursor.finish()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
+  });
+
+  it('does not publish earlier ranges when a later pair is malformed', () => {
+    const { host } = fixture('<!--f:s1--><!--/f:s1--><!--f:l2-->');
+    const dom = new AdoptionDom(host);
+    expect(() => dom.children()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_MARKER' }));
+    expect(dom.rangeAt(host.firstChild!)).toBeUndefined();
+    expect(() => dom.children()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_MARKER' }));
   });
 
   it('does not reinterpret raw or separately owned nested island contents as parent marker syntax', () => {
@@ -159,20 +159,20 @@ describe('native marker occurrence ranges', () => {
     const raw = cursor.element('div');
     dom.expectAttribute(raw, 'class', 'raw'); // The raw planner compares markup, without opening a child cursor.
     const child = dom.within(cursor.range('i')), article = child.element('article'); child.finish(); cursor.finish();
-    code(() => dom.children(article), 'STRUCTURE');
+    expect(() => dom.children(article)).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
     article.appendChild(host.ownerDocument.createTextNode('independent child update'));
     dom.assertUnchanged();
     // The same malformed marker cannot pass when it belongs to this island's visited tree.
-    code(() => dom.children(raw), 'MARKER');
+    expect(() => dom.children(raw)).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_MARKER' }));
   });
 
   it('refuses borrowing a range or element from another snapshot', () => {
     const a = fixture('<!--f:s0--><!--/f:s0-->'), b = fixture('<!--f:s0--><!--/f:s0-->');
     const first = new AdoptionDom(a.host), second = new AdoptionDom(b.host);
     const range = first.children().range('s');
-    code(() => second.within(range), 'STRUCTURE');
-    code(() => second.expectAttribute(a.host, 'class', null), 'STRUCTURE');
-    code(() => second.expectElement(a.host, 'section'), 'NODE');
+    expect(() => second.within(range)).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
+    expect(() => second.expectAttribute(a.host, 'class', null)).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
+    expect(() => second.expectElement(a.host, 'section')).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_NODE' }));
   });
 });
 
@@ -188,7 +188,7 @@ describe('final exact DOM observation recheck', () => {
   ])('refuses %s even if document membership alone would pass', (_label, change) => {
     const { host, other } = fixture('<b>A</b><i>B</i>');
     const dom = new AdoptionDom(host); change(host, other);
-    code(() => dom.assertUnchanged(), 'STRUCTURE');
+    expect(() => dom.assertUnchanged()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
   });
 
   it.each([
@@ -200,22 +200,22 @@ describe('final exact DOM observation recheck', () => {
   ])('refuses changed %s while retaining all node identities', (_label, change) => {
     const { host } = fixture('<!--f:s0--><b title="original">A</b><!--/f:s0-->');
     const dom = new AdoptionDom(host); change(host);
-    code(() => dom.assertUnchanged(), 'VALUE');
+    expect(() => dom.assertUnchanged()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_VALUE' }));
   });
 
   it('detects children inserted into an originally empty observed element', () => {
     const { host } = fixture('<b></b>'); const dom = new AdoptionDom(host);
     host.firstChild!.appendChild(host.ownerDocument.createTextNode('later'));
-    code(() => dom.assertUnchanged(), 'STRUCTURE');
+    expect(() => dom.assertUnchanged()).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
   });
 
   it('refuses initial detached or shadow-root targets without acquiring ownership', () => {
     const { doc, host } = fixture('original'); host.remove();
-    code(() => new AdoptionDom(host), 'STRUCTURE');
+    expect(() => new AdoptionDom(host)).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
     const parent = doc.createElement('div'); doc.body.append(parent);
     parent.attachShadow({ mode: 'open' }).append(host);
     expect(host.isConnected).toBe(true);
-    code(() => new AdoptionDom(host), 'STRUCTURE');
+    expect(() => new AdoptionDom(host)).toThrowError(expect.objectContaining({ code: 'FORMA_E_HYDRATE_STRUCTURE' }));
   });
 
   it('validates a deep static tree iteratively without imposing a control-flow depth limit', () => {
@@ -224,6 +224,6 @@ describe('final exact DOM observation recheck', () => {
     parent.append('leaf');
     const dom = new AdoptionDom(host); let cursor = dom.children();
     for (let index = 0; index < 300; index++) { const child = cursor.element('div'); cursor.finish(); cursor = dom.children(child); }
-    cursor.text('leaf'); cursor.finish(); dom.assertUnchanged();
+    cursor.text('leaf'); cursor.finish(); expect(() => dom.assertUnchanged()).not.toThrow();
   });
 });

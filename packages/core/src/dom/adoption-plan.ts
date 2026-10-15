@@ -142,6 +142,7 @@ export class AdoptionDom {
     if (!observed || observed.opaque) refuse('FORMA_E_HYDRATE_STRUCTURE');
     if (this.parsed.has(parent)) return;
     const stack: { marker: Marker; start: Comment }[] = [];
+    const completed: AdoptionRange[] = [];
     for (let node = parent.firstChild; node; node = node.nextSibling) {
       const token = marker(node);
       if (!token) continue;
@@ -156,12 +157,13 @@ export class AdoptionDom {
           const text = opening.start.nextSibling;
           if (!text || text.nodeType !== 3 || text.nextSibling !== node) refuse('FORMA_E_HYDRATE_MARKER');
         }
-        this.ranges.set(opening.start, Object.freeze({
+        completed.push(Object.freeze({
           kind: token.kind, id: token.id, start: opening.start, end: node as Comment,
         }));
       }
     }
     if (stack.length) refuse('FORMA_E_HYDRATE_MARKER');
+    for (const range of completed) this.ranges.set(range.start, range);
     this.parsed.add(parent);
   }
 }
