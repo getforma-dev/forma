@@ -28,10 +28,10 @@ test('the suite over two modules: P1 and P2 at generated states of an island pag
     assert.equal(report.verdict, 'equal', JSON.stringify(report.differences));
     assert.deepEqual(report.activation, { hosts: 3, activated: 3 });
   }
+  const long = 'abcdefghijklmnopqrstuvwxyz'.repeat(79).slice(0, 2048);
   assert.deepEqual(p1.slice(1).map(report => report.state), [
-    { panelClass: '', badgeTitle: '' }, { panelClass: 'a', badgeTitle: 'a' },
-    { panelClass: 'abcdefghijklmnopqrstuvwxyz'.repeat(79).slice(0, 2048), badgeTitle: 'abcdefghijklmnopqrstuvwxyz'.repeat(79).slice(0, 2048) },
-  ], 'the first three string edges, in order');
+    { panelClass: '', badgeTitle: 'a' }, { panelClass: 'a', badgeTitle: long }, { panelClass: long, badgeTitle: '</script>' },
+  ], 'the first string edges in order, the second field one step on');
   assert.ok(result.reports.every(report => report.serverPath === 'typed'));
   assert.deepEqual(structuralClasses(result.reports), []);
   assert.ok(passed(result));
