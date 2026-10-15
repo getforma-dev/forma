@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## [3.0.0-alpha.2] - 2026-10-15
+
+The tag `v3.0.0-alpha.1` on `8ba2930` never published: its release run (38764599499) passed
+`check`, the three engines and `pack`, then `verify` failed in P17 before the publish jobs,
+which were skipped; nothing reached crates.io or npm. The cause was the verification harness,
+not the packages: the packed `@getforma/build` imports its optional compiler peer by name, and
+P17 ran the packed libraries from a scratch directory whose upward module search reached the
+checkout's root `node_modules`, where the workspace link `@getforma/compiler` points at
+`packages/compiler`, which the `verify` job never builds (`ERR_MODULE_NOT_FOUND` on
+`packages/compiler/dist/index.js`). On a built workstation the same search had silently used
+the workspace build instead of the packed bytes, which is why every local dry run passed.
+
+P17 now writes a `node_modules/@getforma` beside the unpacked packages, linking each packed
+library, and proves with Node's own resolver that every bare `@getforma/*` specifier in every
+packed dist resolves inside the packed set (`scripts/release-packed-resolution.mjs`, a new P17
+check before any packed code runs, and `release-packed-resolution.test.mjs`, which reproduces
+the tag's failure in an unbuilt checkout and refuses a built workspace standing in). Since a
+version is never retagged, this alpha is `3.0.0-alpha.2`: the seven packages at the new
+version, their bytes otherwise identical to alpha.1's, and the alpha.1 notes below stand.
+
 ## [3.0.0-alpha.1] - 2026-10-15
 
 The first pre-release of 3.0.0: milestone M2 of PLAN-merge-and-3.0.0 (FORMA-145 step 2,

@@ -10,6 +10,7 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
 import { withOwnedServer } from './owned-server.mjs';
+import { linkPackedPackages, assertPackedResolution } from './release-packed-resolution.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
@@ -246,6 +247,14 @@ export async function verify(dir, reportPath) {
         writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[workspace]\n');
       }
     }
+    // The packed libraries resolve one another inside the scratch, never through the root's
+    // workspace links: the verify job never builds packages/*, and a built workstation must
+    // not stand in for the packed bytes (the v3.0.0-alpha.1 tag, run 38764599499).
+    await test('packed npm packages resolve one another inside the packed set, never through the workspace', async () => {
+      report.packedLinks = linkPackedPackages(scratch, set.packages);
+      report.packedResolution = assertPackedResolution(scratch, set.packages);
+      assert(report.packedResolution.some(edge => edge.package === '@getforma/build' && edge.specifier === '@getforma/compiler'), 'the packed build no longer imports its compiler peer; update this check');
+    });
     if (set.contracts.sourceTemplates === 'declared-v1') await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {
       assert(/^[a-f0-9]{40}$/.test(set.commit), 'source record must name an exact commit');
       for (const relative of ['minimal/src/main.rs', 'dashboard/src/main.rs', 'minimal/admin/src/home/app.tsx']) {

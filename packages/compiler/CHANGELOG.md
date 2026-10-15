@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
 ## [3.0.0-alpha.1] - 2026-10-15
 
 The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.3.7. Part of the seven-package set 3.0.0-alpha.1; the FMIR v3 writer (FORMA-185), declared page props (FORMA-102), the compatibility window and core as a peer (FORMA-112) and the removals (FORMA-110) below are the alpha's gates. The island props block and compiler-bound seeding (FORMA-103) are pending before the beta on the integration branch. See the root CHANGELOG for the set, the pending gates and the restated N2.

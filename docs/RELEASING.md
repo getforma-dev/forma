@@ -101,7 +101,14 @@ job output, so replacing both an archive and its manifest fails verification.
 `verify`, without OIDC permission, checks DS11 and the recorded lock, installs
 locked tools with scripts off, checks fresh advisories against the root lock and
 each crate archive’s own lock (only internal sources substituted), and checks npm registry signatures,
-then runs the packed compiler/reader corpus and both packed templates. For local
+then runs the packed compiler/reader corpus and both packed templates. Before any
+packed code runs, P17 writes a `node_modules/@getforma` beside the unpacked libraries,
+linking each packed one, and proves with Node's resolver that every bare `@getforma/*`
+specifier in every packed dist resolves inside the packed set
+(`scripts/release-packed-resolution.mjs`): the packed build imports its optional
+compiler peer by name, the `verify` job never builds `packages/*`, and the checkout's
+root `node_modules` holds workspace links, so without the links the import failed on a
+tag (`v3.0.0-alpha.1`) and silently used the workspace build on a built workstation. For local
 installation it substitutes DS11 file URLs and extracted crate paths for internal
 packages only. It checks locked installation, build, serve, browser interaction,
 no pending island and refusal of corrupt IR before binding. These are explicit

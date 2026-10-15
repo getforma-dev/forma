@@ -53,7 +53,15 @@ node scripts/verify-release-set.mjs "$TMP/alpha-ds11" "$TMP/alpha-p17.json"
 ```
 
    `release-set.json` and the P17 report carry `milestone: { name: "alpha", plan: "M2",
-   ready: true, later: {...} }`; the report says `passed: true`.
+   ready: true, later: {...} }`; the report says `passed: true`. Run P17 the way the tag's
+   `verify` job will: after `pack`, delete the workspace builds (`rm -rf packages/*/dist`)
+   and only then run `verify-release-set.mjs`. The `verify` job never builds `packages/*`;
+   `v3.0.0-alpha.1` (run 38764599499) failed there because the packed build's optional
+   compiler peer resolved through the unbuilt workspace link, while every local dry run had
+   silently used the workspace build. P17 now links the packed libraries inside its scratch
+   and proves every `@getforma/*` import resolves there ("packed npm packages resolve one
+   another inside the packed set"), so a built workstation can no longer mask it; the unbuilt
+   run is still the faithful rehearsal.
 
 4. Open the PR (`release: 3.0.0-alpha.1`), wait for CI green, merge as a merge commit, then wait
    for the **push** run of `ci.yml` on the merge commit to finish green, including the jobs SR13
@@ -155,6 +163,13 @@ rest is serial). Expect the first real G6 figure to exceed 1,800 seconds. `relea
 records the figure and fails nothing on it; the ticket log takes it as the first measurement, and
 the beta is where the time is trimmed (caching `cargo-deny` and the browser in `verify` are the
 obvious cuts).
+
+What alpha.1 taught: on 2026-10-15 the tag `v3.0.0-alpha.1` on `8ba2930` passed `check`, the
+three engines and `pack`, then `verify` failed in P17 at 16:00Z (`ERR_MODULE_NOT_FOUND` on the
+workspace compiler); the publish jobs were skipped and nothing was published, exactly as the
+pipeline promises. The version was not retagged: the fix and the bump to `3.0.0-alpha.2` went
+through one pull request, and the founder's npm entries (created that afternoon) stayed inside
+their two-day window.
 
 | Job | Expected | If it fails |
 |---|---|---|
