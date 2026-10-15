@@ -223,8 +223,9 @@ the bytes, before anything is written.
 | `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as `islands` |
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed
-from the bundler's metafile; the application's own code is outside that
-ceiling. A route's JavaScript is the files the manifest lists for it and the
+from the bundler's metafile, plus the identity banner Forma's build writes at
+the top of every JavaScript file (about 30 B gzip for each file the route
+loads cold); the application's own code is outside that ceiling. A route's JavaScript is the files the manifest lists for it and the
 generated `sw.js` when the route lists any script (forma-server registers the
 worker only on such pages).
 
@@ -267,7 +268,7 @@ a route ships.
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-55, DR-35; the ceilings are not configurable): Forma's code at most 25,500 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-55, DR-35; the ceilings are not configurable): Forma's code at most 25,500 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 ## Configuration
@@ -367,7 +368,7 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
   "version": 2,
   "writer": "3.0.0",
   "app": "ledger",
-  "build": "example-build-identifier",
+  "build": "5f0c9a1e7d2b4c86",
   "aliases": {"home.js": "home.a1b2c3d4.js", "home.ir": "home.a1b2c3d4.ir"},
   "assets": {
     "home.a1b2c3d4.js": {"immutable": true},
@@ -384,8 +385,27 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
 The actual build includes `integrity: "sha384-<base64>"` for each asset, computed
 from its final uncompressed bytes. Compression sidecars, the manifest and the
 worker are excluded. Integrity enforcement is FORMA-111; emission alone does not
-provide that enforcement. `build` retains the previous filename-derived algorithm
-(and `dev` during watch); FORMA-186 owns the final deployment identity.
+provide that enforcement.
+
+### The deployment identity (`build`)
+
+`build` is the build's deployment identity: 16 lowercase hexadecimal characters
+(`dev` in watch mode). A production build computes it first, from every output of
+a first bundling pass (the JavaScript and CSS bundles, the other emitted files and
+the `.ir` modules, plus the css entries and fonts) and the writers' versions, and
+only then compiles it in:
+
+- as the constant `__FORMA_BUILD__` (esbuild `define`), which `@getforma/core`
+  compares with the `data-forma-build` attribute forma-server writes on the page's
+  root before it activates anything;
+- as a `/*forma-build:<id>*/` banner in every JavaScript output, so the names,
+  which hash content, change with the identity: every deploy renames every bundle.
+
+The same inputs give the same identity wherever they are built from (esbuild
+hashes paths relative to the working directory, so build from the project root).
+An edit that changes no output byte, a comment, changes nothing and disturbs no
+open tab. The identity does not depend on a previous `dist/`. The first pass
+costs one more bundling run; the compiler's lines for it are not printed twice.
 
 forma-server validates the schema, writer window, app, references and route modes
 before loading modules. It resolves logical names through `aliases` and reads

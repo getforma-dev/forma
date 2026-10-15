@@ -56,13 +56,17 @@ describe('Opt-in ESM code splitting', () => {
     expect(route.total_size_br).toBe(firstFiles.reduce((sum, file) => sum + size(file), 0));
     for (const file of readdirSync(dist).filter(file => file.endsWith('.js') && file !== 'sw.js')) expect(Object.values(result.manifest.aliases)).toContain(file);
   });
-  it('invalidates linked entry URLs after a dynamic chunk changes and remains deterministic otherwise', async () => {
+  it('invalidates every entry URL after any input changes (the deployment identity, L-6) and remains deterministic otherwise', async () => {
     const { src, config } = fixture(); const before = await build(config); const identical = await build(config);
     expect(identical.buildHash).toBe(before.buildHash);
+    expect(identical.manifest.aliases).toEqual(before.manifest.aliases);
     writeFileSync(join(src, 'later.ts'), 'import { singleton } from "./shared"; export const later = singleton; export const label = "CHANGED_FINANCIAL_TOOL";');
     const after = await build(config);
     expect(after.manifest.aliases['phone.js']).not.toBe(before.manifest.aliases['phone.js']);
-    expect(after.manifest.aliases['desktop.js']).toBe(before.manifest.aliases['desktop.js']);
+    // Before FORMA-186 desktop.js kept its name: the edit never reached it. The
+    // identity is in every bundle, so every deploy renames every bundle (L-6);
+    // identity.test.ts > "every JavaScript output carries the identity".
+    expect(after.manifest.aliases['desktop.js']).not.toBe(before.manifest.aliases['desktop.js']);
   });
   it('preserves explicitly server-inlined entry copies without overwriting graph manifest mappings', async () => {
     const { dist, config } = fixture(); const result = await build({ ...config, serverInlined: ['phone.js'] });

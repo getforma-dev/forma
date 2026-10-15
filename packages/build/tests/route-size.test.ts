@@ -23,6 +23,7 @@ import {
   PAGE_JAVASCRIPT_CEILING_GZIP,
   assembleRoute,
   formatSizeReport,
+  identityBannerBytes,
   isFormaInput,
   packageNameOf,
   routeCeilings,
@@ -92,6 +93,9 @@ function fixture(corePad = padding(CORE_PAD, 1), appPad = padding(APP_PAD, 3), c
   return { root, dist, config };
 }
 
+// The identity banner (a block comment with a 16-hex id) and the newline esbuild writes after a banner.
+const BANNER_BYTES = '/*forma-build:'.length + 16 + '*/\n'.length;
+
 const gzip9 = (buffer: Buffer) => gzipSync(buffer, { level: 9 }).length;
 const brotli11 = (buffer: Buffer) => brotliCompressSync(buffer, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length;
 
@@ -150,8 +154,13 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     // A route with no Forma code reports none; a route with no JavaScript is 0.
     const about = byRoute['/about'];
     expect(about.files).toHaveLength(1);
-    expect(about.forma).toEqual({ raw: 0, gzip: 0, brotli: 0 });
-    expect(about.application.gzip).toBe(about.gzip);
+    // ...except the identity banner Forma's build writes at the top of every JavaScript
+    // file (FORMA-186): the ruling is that it is Forma's code, so even a route with none of
+    // core's bytes carries it in its figure, and nothing else of the file.
+    expect(about.forma.raw).toBe(BANNER_BYTES);
+    expect(about.forma.gzip).toBeGreaterThan(0);
+    expect(about.forma.gzip).toBeLessThan(about.gzip); // the rest of the file is the application's
+    expect(about.application.gzip).toBe(about.gzip - about.forma.gzip);
     expect(byRoute['/static']).toMatchObject({ files: [], raw: 0, gzip: 0, brotli: 0, forma: { raw: 0, gzip: 0, brotli: 0 }, over: false });
 
     // The build printed the same figures, one line per route, under the ceiling.
@@ -161,7 +170,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     expect(printed).toContain(home.files[0].file);
     expect(printed).toMatch(/\/static +no interactive region +no JavaScript/);
     expect(printed).not.toContain('OVER');
-  });
+  }, 60_000);
 
   it('fails the build with BUILD-819 when a route\'s Forma code is over the ceiling, leaving no output', async () => {
     // A core whose bytes alone are over the ceiling: gzip cannot take seeded
@@ -172,7 +181,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     // leaves no output directory and nothing beside it (L-21).
     expect(existsSync(dist)).toBe(false);
     expect(readdirSync(join(dist, '..')).filter((name) => name.includes('forma-staging'))).toEqual([]);
-  });
+  }, 60_000);
 
   it('names every route over a ceiling, and none under it', () => {
     const sizes = [
@@ -317,7 +326,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     const again = fixture();
     await build(again.config);
     expect(readFileSync(join(again.dist, 'size-report.json'), 'utf8')).toBe(text);
-  });
+  }, 60_000);
 
   it('times the build by phase for the printed report and the result, and keeps the times out of the file', async () => {
     const { dist, config } = fixture();
@@ -336,7 +345,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     expect(times.totalMs).toBe(Object.values(times.phases).reduce((total, ms) => total + ms, 0));
     expect(lines.join('\n')).toMatch(/Build time +[\d.,]+ (?:ms|s): bundle [\d.,]+ (?:ms|s), hash [\d.,]+ (?:ms|s), compress [\d.,]+ (?:ms|s), manifest [\d.,]+ (?:ms|s)/);
     expect(readFileSync(join(dist, 'size-report.json'), 'utf8')).not.toMatch(/times|Ms\b/);
-  });
+  }, 60_000);
 
   it('fails the build with BUILD-819 when a route\'s JavaScript is over 75 KiB, unless the route is declared a canvas, and a canvas is held to 365 KiB', async () => {
     // Application code that gzip cannot take under 76,800 B, and under 373,760 B.
@@ -358,13 +367,29 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     const past = fixture(undefined, padding(520_000, 5), true);
     await expect(build(past.config)).rejects.toThrow(/\/ \(whole-page mount, canvas\) JavaScript [\d,]+ B against 373,760 B/);
     expect(existsSync(past.dist)).toBe(false);
-  });
+  }, 60_000);
 
   it('refuses a canvas that is not a boolean before writing anything', async () => {
     const { dist, config } = fixture();
     const bad = { ...config, routes: { ...config.routes, '/': { js: ['home'], css: [], canvas: 'yes' } } };
     await expect(build(bad as never)).rejects.toThrow(/routes\['\/'\]\.canvas is "yes": use true to declare the route a canvas/);
     expect(existsSync(dist)).toBe(false);
+  }, 60_000);
+
+  it('counts the identity banner at the top of a file as Forma\'s code, and a comment anywhere else as nobody\'s', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'forma-route-size-banner-'));
+    temporary.push(dir);
+    const write = (name: string, text: string) => { writeFileSync(join(dir, name), text); return join(dir, name); };
+    const banner = '/*forma-build:5f0c9a1e7d2b4c86*/';
+    expect(identityBannerBytes(write('banner.js', `${banner}\nexport const a=1;`))).toBe(banner.length + 1);
+    expect(identityBannerBytes(write('no-newline.js', `${banner}export const a=1;`))).toBe(banner.length);
+    // Only the exact header the build writes: not another comment, not a short or upper-case id,
+    // not the banner further down a file.
+    expect(identityBannerBytes(write('other.js', '/*a comment*/\nexport const a=1;'))).toBe(0);
+    expect(identityBannerBytes(write('short.js', '/*forma-build:5f0c9a1e*/\n'))).toBe(0);
+    expect(identityBannerBytes(write('upper.js', '/*forma-build:5F0C9A1E7D2B4C86*/\n'))).toBe(0);
+    expect(identityBannerBytes(write('later.js', `export const a=1;\n${banner}\n`))).toBe(0);
+    expect(identityBannerBytes(join(dir, 'missing.js'))).toBe(0);
   });
 
   it('counts the bytes of @getforma/core and alien-signals as Forma\'s, wherever they are installed, and nothing else', () => {
