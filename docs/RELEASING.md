@@ -178,7 +178,13 @@ network ingestion latency; the recorded timing basis states this limitation.
 
 ## Current development integration
 
-The current seven-package set is staged at `3.0.0-dev` and the contract record names
+Between releases `main` carries the next version with the `-dev` suffix: the current
+seven-package set is staged at `3.0.0-dev` again after `v3.0.0-alpha.2` published
+(2026-10-15), by the post-release pull request that runs
+`node scripts/release-set.mjs version 3.0.0-dev`; the released sections stay in every
+changelog under a fresh `## [Unreleased]`, and the crate READMEs keep naming the last
+published pre-release, which is what crates.io shows. A `-dev` version names no
+milestone and never publishes. The contract record names
 FMIR v3. P17 compares the packed compiler's writer triple and canonical dumps with
 the packed reader's actual version and frozen corpus. Version preparation updates
 all three Cargo locks (root, e2e and fuzz) without changing external resolutions.

@@ -8,7 +8,7 @@ exclude = ["e2e"]
 resolver = "2"
 
 [workspace.package]
-version = "3.0.0-alpha.2"
+version = "3.0.0-dev"
 edition = "2021"
 license = "MIT"
 authors = ["Forma <victor@getforma.dev>"]
