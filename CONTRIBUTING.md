@@ -30,7 +30,7 @@ Rust toolchain with `rustfmt` and `clippy`. Its steps, for when you want one of 
 | The npm packages: builds and unit suites | `npm run build`, `npm test --workspaces` (or `-w packages/<name>`) |
 | Core's gates: types, size, packaging, probe anchors | `npm run typecheck -w packages/core`, `npm run check:size -w packages/core`, `npm run check:pack -w packages/core`, `cd packages/core && node scripts/run-probes.mjs --check` |
 | The packed `forma-raw-lint` bin, as an application installs it | `node packages/build/scripts/test-raw-lint-bin.mjs` |
-| The FMIR contract: this compiler emits the corpus forma-ir has committed, and forma-ir reads it | `npm run emit:corpus -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"`, then `cargo test -p forma-ir --test js_emitter_contract`; the fixtures must be unchanged |
+| The FMIR contract: this compiler emits the corpus forma-ir has committed, and forma-ir reads it | `npm run emit:corpus -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"`, then `cargo test -p forma-ir --lib js_emitter_contract`; the fixtures must be unchanged |
 | The browser lanes (Chromium): the build package's worker upgrade, the full-stack, SSR and preview-frame lanes, core's own suite | `npm run test:browser -w packages/build`, `npm run test:e2e` (see [`e2e/README.md`](e2e/README.md)), `npm run test:e2e -w packages/core` |
 
 CI adds, beside that command, what needs another toolchain, target or

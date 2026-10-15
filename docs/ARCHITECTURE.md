@@ -245,7 +245,7 @@ are created for matched content.
 never talks back. `formajs` reads what `forma` emits and never talks back. The
 graph is a straight line — which is why a change in the middle can break both
 ends without any compiler noticing. That asymmetry is the reason §3 exists and
-the reason `crates/forma-ir/tests/js_emitter_contract.rs` exists: it is the one
+the reason `crates/forma-ir/src/js_emitter_contract.rs` exists: it is the one
 test in the stack where the real TS emitter's bytes are fed to the real Rust
 consumer.
 
@@ -580,7 +580,7 @@ that tells them to migrate to the native path.
 | Contract | Enforced by |
 |---|---|
 | FMIR frozen bytes | `forma/crates/forma-ir/tests/fmir_contract.rs` (reads raw bytes as a consumer would) |
-| Real emitter → real consumer | `forma/crates/forma-ir/tests/js_emitter_contract.rs` + `forma-tools/packages/compiler/tests/fixtures/ir-corpus/` |
+| Real emitter → real consumer | `forma/crates/forma-ir/src/js_emitter_contract.rs` + `forma-tools/packages/compiler/tests/fixtures/ir-corpus/` |
 | Slot-name uniqueness | `forma-tools/packages/compiler/tests/ir-walk.test.ts` |
 | First-wins duplicate rule | `forma/crates/forma-ir/src/parser.rs > "duplicate_slot_names_resolve_first_wins_everywhere"` |
 | Marker parsing strictness | `formajs/src/dom/__tests__/hydrate.test.ts` |

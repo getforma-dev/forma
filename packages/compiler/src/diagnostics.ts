@@ -238,12 +238,12 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-807', 'Bundles that import more than one @getforma/core',
     "`previewFrame` is on, and the bundles import more than one @getforma/core, whose frame runtimes differ (entries from packages with their own cores, or a library bundling its own): the frame runs one runtime, so the build would have to pick the core it renders previews with, and the page could mount the module with another.",
     'Make every entry import one @getforma/core (one version in the workspace, `npm dedupe`, a library taking core as a peer dependency), or turn `previewFrame` off.'),
-  // The raw-entry lint, forma-raw-lint (FORMA-126, SR8): reported by @getforma/build's
-  // bin, never in a build's report. RAW_LINT_CATALOGUE in packages/build/src/raw-lint.ts
-  // holds the same entries (packages/build/tests/raw-lint.test.ts keeps them equal).
   entry('BUILD-808', 'Server functions were removed',
     'Forma builds browser code; a server function body must never ship as a browser implementation.',
     'Move server-side work to an authenticated Rust route and call that route from the browser.'),
+  // The raw-entry lint, forma-raw-lint (FORMA-126, SR8): reported by @getforma/build's
+  // bin, never in a build's report. RAW_LINT_CATALOGUE in packages/build/src/raw-lint.ts
+  // holds the same entries (packages/build/tests/raw-lint.test.ts keeps them equal).
   entry('BUILD-810', 'Raw entry not on the allowlist (forma-raw-lint)',
     "The source uses one of INV1's and INV2's exits (raw HTML, a typed raw home or a Trusted Types relaxation), and the allowlist names no owner and end date for it (SR8).",
     'Write it without the exit (render through a component, or the typed form the message names), or add an entry to forma-raw-allowlist.json with its path, line or symbol, exit, owner, until and reason.'),

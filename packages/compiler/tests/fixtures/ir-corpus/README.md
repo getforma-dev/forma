@@ -177,7 +177,7 @@ hand-written filename label on already-transformed source. The extension is the
 entire trigger — it is what makes the compiler run esbuild over the file at all
 — so a fixture that is not really on disk with that extension tests nothing.
 
-`crates/forma-ir/tests/js_emitter_contract.rs` gives these two cases an extra
+`crates/forma-ir/src/js_emitter_contract.rs` gives these two cases an extra
 assertion (`resolution_cases_ship_named_islands_over_named_slots`): the islands
 must carry their real component names rather than a minted `island_<n>`, must
 carry non-empty slot ids, and the page must have slots named after its signals
@@ -187,7 +187,7 @@ happily bless the empty div.
 
 ## What the consumer side asserts
 
-`crates/forma-ir/tests/js_emitter_contract.rs` in the `forma` repo reads each
+`crates/forma-ir/src/js_emitter_contract.rs` in the `forma` repo reads each
 `.ir` and requires: `IrModule::parse` succeeds, slot **names** and slot **ids**
 are each pairwise unique, `walk_to_html` succeeds, `walk_island` succeeds for
 every island entry and returns a root carrying `data-forma-island`, and the
@@ -213,7 +213,7 @@ npm run emit:corpus -- <out-dir>       # or to a directory of your choosing
 The `.ir` files and their golden HTML are committed in the `forma` repo under
 `crates/forma-ir/tests/fixtures/js-emitter/`. After an intentional emitter
 change, re-emit here, copy the `.ir` files over, and regenerate the goldens
-with `UPDATE_GOLDEN=1 cargo test -p forma-ir --test js_emitter_contract`.
+with `UPDATE_GOLDEN=1 cargo test -p forma-ir --lib js_emitter_contract`.
 
 The `fmir-contract` job in this repo's CI does the same thing on every PR — it
 checks out `forma`, emits the corpus over its committed fixtures, runs that

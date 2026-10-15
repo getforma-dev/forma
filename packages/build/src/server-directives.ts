@@ -14,7 +14,11 @@ export function serverDirectiveGuard(): esbuild.Plugin {
         const source = readFileSync(args.path, 'utf8');
         if (!source.includes('use server')) return;
         // Parse directive nodes: comments and an ordinary string value are not RPC code.
-        const ast = parse(source, { sourceType: 'unambiguous', allowReturnOutsideFunction: true, plugins: ['typescript', 'jsx', 'decorators-legacy'] });
+        const ast = parse(source, { sourceType: 'unambiguous', allowReturnOutsideFunction: true, plugins: [
+          ...(/\.[cm]?tsx?$/.test(args.path) ? ['typescript' as const] : []),
+          ...(/\.[jt]sx$/.test(args.path) ? ['jsx' as const] : []),
+          'decorators-legacy',
+        ] });
         const errors: esbuild.PartialMessage[] = [];
         const visit = (node: unknown): void => {
           if (!node || typeof node !== 'object') return;

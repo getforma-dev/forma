@@ -574,7 +574,7 @@ The compiler's real `generateRealIr` entry point emits fourteen `.ir` files and 
 
 ```sh
 npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"
-cargo test -p forma-ir --test js_emitter_contract
+cargo test -p forma-ir --lib js_emitter_contract
 ```
 
 Every original `.html` golden stays byte-identical. The Rust test compares all four slot-data

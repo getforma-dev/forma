@@ -342,7 +342,7 @@ aspirational unless it says "proposed".
 |---|---|
 | Full unit suite on every push and PR | all four repos |
 | Coverage report (text and lcov, no threshold) | `formajs` only, `npm run test:coverage`; `forma`, `forma-tools` and `create-forma-app` collect none |
-| Cross-implementation FMIR contract: the real compiler emits `.ir` files, the real Rust parser reads them and diffs against committed goldens | `forma-tools` `npm run emit:corpus` → `forma` `crates/forma-ir/tests/js_emitter_contract.rs`; CI fails with regeneration instructions |
+| Cross-implementation FMIR contract: the real compiler emits `.ir` files, the real Rust parser reads them and diffs against committed goldens | `forma-tools` `npm run emit:corpus` → `forma` `crates/forma-ir/src/js_emitter_contract.rs`; CI fails with regeneration instructions |
 | Linear-cost regression gate on the SSR list walk (wall time *and* allocation count) | `forma` `crates/forma-ir/tests/list_scaling.rs` |
 | Bundle-size ceilings on the real ESM import graph | `formajs` `npm run check:size` |
 | Built-artifact greps (no `new Function` in the hardened build) | `formajs` `scripts/verify-dist.mjs`, run as the last build step |

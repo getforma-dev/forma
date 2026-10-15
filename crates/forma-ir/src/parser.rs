@@ -766,15 +766,6 @@ fn read_u32_at(ops: &[u8], pos: usize, end: usize) -> Result<u32, IrError> {
 // panicking says so at the line that built it. Never in a consumer's build.
 #[allow(clippy::panic, clippy::unwrap_used, clippy::expect_used)]
 pub mod test_helpers {
-    /// Internal fragment renderer for conformance fixtures; not a supported API.
-    #[doc(hidden)]
-    pub fn walk_island(
-        module: &crate::IrModule,
-        slots: &crate::SlotData,
-        island_id: u16,
-    ) -> Result<String, crate::IrError> {
-        crate::walker::walk_island(module, slots, island_id)
-    }
     use crate::format::{
         crc32, reader_version, HEADER_SIZE, SECTION_ENTRY_SIZE, SIGNATURE, TABLE_PREFIX_SIZE,
     };

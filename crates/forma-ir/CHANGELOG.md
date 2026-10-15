@@ -5,7 +5,7 @@
 ### Removed — FORMA-110
 
 - Removed the `wasm` feature, its `render`/`render_island` JavaScript exports, wasm-bindgen dependency and wasm-pack metadata. The native parser and page walker remain supported.
-- Made `walk_island` and `walk_island_with_limits` crate-internal (DR-10). Their corpus coverage uses the existing internal `test-helpers` feature; ordinary consumers cannot import either function.
+- Made `walk_island` and `walk_island_with_limits` crate-internal (DR-10). Their unchanged page/fragment corpus runs in a private unit-test module; no feature exposes a fragment renderer.
 
 
 ### FMIR v3 (FORMA-185)

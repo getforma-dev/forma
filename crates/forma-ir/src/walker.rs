@@ -38,7 +38,7 @@ struct IslandPending {
 /// falls back to the shared block, and the walker emits exactly one channel
 /// per island so that precedence never has two answers to choose between.
 ///
-/// A *fragment* render ([`walk_island`]) never spills — it cannot legally emit
+/// An internal fragment render (`walk_island`) never spills — it cannot legally emit
 /// a second `__forma_islands` block — so an over-size fragment keeps its props
 /// inline.
 ///

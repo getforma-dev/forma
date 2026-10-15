@@ -78,3 +78,8 @@ pub use walker::{
     walk_to_html, walk_to_html_counted, walk_to_html_with_limits, WalkCounts, WalkFailure,
     WalkLimits, WalkOutput, DEFAULT_MAX_LIST_ITERATIONS, DEFAULT_MAX_OUTPUT_BYTES,
 };
+
+// The combined page/fragment corpus has private access to the internal walker.
+// No feature exports a fragment renderer to consumers.
+#[cfg(test)]
+mod js_emitter_contract;

@@ -65,7 +65,7 @@ node packages/build/scripts/test-raw-lint-bin.mjs
 
 step "FMIR contract: this compiler's corpus is the one forma-ir has committed"
 npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"
-cargo test --locked -p forma-ir --test js_emitter_contract
+cargo test --locked -p forma-ir --lib js_emitter_contract
 if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)" ]; then
   echo "::error::the compiler no longer emits the .ir bytes and canonical .dump texts committed in crates/forma-ir/tests/fixtures/js-emitter:"
   git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter
