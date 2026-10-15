@@ -77,6 +77,11 @@ export function structuralClasses(reports: readonly Report[]): string[] {
   return [...classes].sort();
 }
 
+/** Server holders compared over the run (e2e/parity/README.md, 'What parity compares'). */
+export function holderAmbiguous(reports: readonly Report[]): number {
+  return reports.reduce((sum, report) => sum + (report.holderAmbiguous ?? 0), 0);
+}
+
 export function totals(reports: readonly Report[]): Record<string, Record<string, number>> {
   const out: Record<string, Record<string, number>> = {};
   for (const report of reports) {
@@ -109,6 +114,7 @@ export function summaryText(result: SuiteResult): string {
   }
   const classes = structuralClasses(result.reports);
   lines.push(`structural classes: ${classes.length}${classes.length ? ` (${classes.join('; ')})` : ''}`);
+  lines.push(`holder-ambiguous: ${holderAmbiguous(result.reports)} (server U+200B holders compared, each matching client "" or U+200B: the wire cannot tell them apart)`);
   lines.push(`wall time ${seconds(result.timings.total)} (prepare ${seconds(result.timings.prepare)}, browser launch ${seconds(result.timings.launch)}, server ${seconds(result.timings.server)}, browser ${seconds(result.timings.browser)})`);
   lines.push(passed(result) ? 'parity: PASS (every difference is expected and every expected difference occurred)' : 'parity: FAIL');
   return lines.join('\n');
@@ -135,7 +141,7 @@ async function main(): Promise<number> {
     mkdirSync(dirname(values.report), { recursive: true });
     const summary = {
       summary: true, seed: values.seed, engine, modules: result.modules, states: result.states, totals: totals(result.reports),
-      structuralClasses: structuralClasses(result.reports), unexpectedPasses: result.unexpectedPasses,
+      structuralClasses: structuralClasses(result.reports), holderAmbiguous: holderAmbiguous(result.reports), unexpectedPasses: result.unexpectedPasses,
       timingsMs: Object.fromEntries(Object.entries(result.timings).map(([k, v]) => [k, Math.round(v)])), passed: passed(result),
     };
     writeFileSync(values.report, [...result.reports.map(report => JSON.stringify(report)), JSON.stringify(summary)].join('\n') + '\n');

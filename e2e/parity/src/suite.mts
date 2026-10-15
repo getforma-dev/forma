@@ -165,7 +165,7 @@ export interface ReportBase {
 }
 
 /** The harness's own containers are compared under one neutral root, so paths read `page > main:nth-child(1) > …`. */
-const asPage = (tree: CanonNode): CanonNode => (tree.kind === 'element' ? { ...tree, tag: 'page', attrs: {} } : tree);
+const asPage = (tree: CanonNode): CanonNode => (tree.kind === 'element' ? { ...tree, tag: 'page', attrs: [] } : tree);
 
 export function p1Report(base: ReportBase & { html?: string }, run: PageRun): Report {
   const head = { module: base.module, seed: base.seed, index: base.index, check: 'P1' as const, serverPath: base.serverPath, state: base.state, ...(base.bind ? { bind: base.bind } : {}) };
@@ -179,10 +179,10 @@ export function p1Report(base: ReportBase & { html?: string }, run: PageRun): Re
     ...run.violations.map(entry => `${entry.step}: policy violation ${entry.text}`),
     ...run.pageErrors.map(text => `page error: ${text}`),
   ];
-  const server = stripTransport(asPage(run.served), 'page');
-  const client = stripTransport(asPage(run.twin), 'page');
+  const server = stripTransport(asPage(run.served), 'server', 'page');
+  const client = stripTransport(asPage(run.twin), 'client', 'page');
   const comparison = compareTrees(server.tree, client.tree);
-  const report = makeReport({ ...head, server: { tree: server.tree, ...(base.html ? { html: base.html } : {}), keys: server.keys }, client: { tree: client.tree } }, comparison);
+  const report = makeReport({ ...head, server: { tree: server.tree, ...(base.html ? { html: base.html } : {}), keys: Object.fromEntries(server.keys) }, client: { tree: client.tree } }, comparison);
   return problems.length ? { ...report, verdict: 'error', error: problems.join('; ') } : report;
 }
 
@@ -205,7 +205,7 @@ export function p2Report(base: ReportBase, run: PageRun): Report {
   if (differences.length === 0 && activation.activated === 0) {
     return makeReport({ ...head, verdict: 'error', activation, error: `no island host was activated (${activation.hosts} on the page): zero records would prove nothing` }, null);
   }
-  return makeReport({ ...head, activation }, { differences, first: differences[0] ?? null, count: differences.length, structural: 0 });
+  return makeReport({ ...head, activation }, { differences, first: differences[0] ?? null, count: differences.length, structural: 0, holderAmbiguous: 0 });
 }
 
 export interface CheckOptions extends PlanOptions {

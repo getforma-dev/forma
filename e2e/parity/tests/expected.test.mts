@@ -6,7 +6,7 @@ import { makeReport, type Difference, type Report } from '../src/compare.mts';
 import { applyExpected, readExpected, type ExpectedEntry } from '../src/expected.mts';
 
 const different = (module: string, index: number, differences: Difference[], check: 'P1' | 'P2' = 'P1'): Report =>
-  makeReport({ module, seed: 's', index, check }, { differences, first: differences[0] ?? null, count: differences.length, structural: 0 });
+  makeReport({ module, seed: 's', index, check }, { differences, first: differences[0] ?? null, count: differences.length, structural: 0, holderAmbiguous: 0 });
 const keyed: Difference = { kind: 'key', path: 'page > ul:nth-child(1) > li:nth-child(1)', server: undefined, client: '7' };
 const valueText: Difference = { kind: 'attribute-value', path: 'page > span:nth-child(1)[data-live]', server: '', client: 'true' };
 const entry = (over: Partial<ExpectedEntry>): ExpectedEntry => ({ module: 'm', index: '*', check: 'P1', kind: 'key', ticket: 'FORMA-181', note: 'keys land with B', ...over });
@@ -43,7 +43,7 @@ test('an error entry matches an error report by its message, and nothing else', 
 });
 
 test('an entry the run covers that matches nothing is an unexpected pass; one for a module the run did not cover is not', () => {
-  const equal = makeReport({ module: 'm', seed: 's', index: 0, check: 'P1' }, { differences: [], first: null, count: 0, structural: 0 });
+  const equal = makeReport({ module: 'm', seed: 's', index: 0, check: 'P1' }, { differences: [], first: null, count: 0, structural: 0, holderAmbiguous: 0 });
   const gone = entry({});
   const elsewhere = entry({ module: 'other' });
   const { reports, unexpectedPasses } = applyExpected([equal], [gone, elsewhere]);

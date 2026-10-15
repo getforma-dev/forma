@@ -34,6 +34,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Fail fast on the wrong Node: the parity harness's step (near the end) runs
+# TypeScript by Node's own type stripping (Node 24, `.node-version`). A Node
+# without it fails here, by name, before the long run, never skipping the step
+# (TESTING.md P7).
+node -e 'if (!process.features.typescript) { console.error(`::error::scripts/check.sh needs a Node that strips types (.node-version: 24) for the parity harness; this is ${process.version}`); process.exit(1); }'
+
 started=$(date +%s)
 step() { echo; echo "### $* ($(( $(date +%s) - started ))s)"; }
 
@@ -97,9 +103,6 @@ npx playwright test
 npm run test:e2e -w packages/core
 
 step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
-# The harness is TypeScript run by Node itself. A Node without type stripping
-# fails here, by name, rather than skipping the step (TESTING.md P7).
-node -e 'if (!process.features.typescript) { console.error(`::error::the parity harness needs a Node that strips types (.node-version: 24); this is ${process.version}`); process.exit(1); }'
 npx tsc --noEmit -p e2e/parity
 node --test "e2e/parity/tests/*.test.mts"
 
