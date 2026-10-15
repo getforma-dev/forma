@@ -211,6 +211,20 @@ export class AdoptionCursor {
     return !!node && (node.nodeType === 1 && (node as Element).hasAttribute('data-forma-island') || this.dom.rangeAt(node)?.kind === 'i');
   }
 
+  /** Consume one original child shell, optionally inside its exact native i range. */
+  island():Element {
+    if(this.rangeKind()==='i'){
+      const inside=this.dom.within(this.range('i')),host=inside.islandElement();inside.finish();return host;
+    }
+    return this.islandElement();
+  }
+  private islandElement():Element {
+    const node=this.current();
+    if(!node||this.offset||node.nodeType!==1||!(node as Element).hasAttribute('data-forma-island'))refuse('FORMA_E_HYDRATE_STRUCTURE');
+    const element=node as Element;
+    this.dom.expectElement(node,element.localName,element.namespaceURI);this.next=node.nextSibling;return element;
+  }
+
   rangeKind():MarkerKind|undefined { const node=this.current();return node?this.dom.rangeAt(node)?.kind:undefined; }
 
   get atEnd():boolean { return this.next===this.end&&this.offset===0; }

@@ -15,6 +15,7 @@ import { prepareAttribute } from './adoption-attributes.js';
 import { prepareStyle, prepareRaw, type PreparedRaw } from './adoption-content.js';
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import { AdoptionControls, type ControlToken } from './adoption-controls.js';
+import { checkIslandClaim, isRegisteredIslandComponent, matchAdoptionChild, type ValidatedIsland } from './island-state.js';
 import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './hydrate.js';
 
 interface Listener { element:Element; event:string; listener:EventListener; controller?:AbortController }
@@ -27,6 +28,8 @@ export interface AdoptionOptions {
   /** Public hydrate keeps its explicit marked-host/container convention.
    * Compiled activation leaves this unset and consumes only its owned host. */
   target?: 'host'|'public';
+  /** Original document preflight results, indexed by their exact light-DOM host. */
+  children?: ReadonlyMap<Element,ValidatedIsland>;
   /** Source-private compiled caller supplies the real 103 scope; the default
    * direct-API kernel has no capture/enroll methods or setter authority. */
   scope?: (options:PreparationOptions)=>AdoptionLifecycle;
@@ -60,11 +63,12 @@ function listenerObject(value:unknown):value is EventListenerObject {
 export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionOptions={}):PreparedAdoption {
   const dom=new AdoptionDom(host);
   const controls=new AdoptionControls(host);
-  const scopeOptions:PreparationOptions={check:()=>{dom.assertUnchanged();controls.check();},failure:options.failure};
+  const children=new Set<ValidatedIsland>();
+  const scopeOptions:PreparationOptions={check:()=>{dom.assertUnchanged();controls.check();for(const child of children)checkIslandClaim(child);},failure:options.failure};
   const scope=options.scope?.(scopeOptions)??new AdoptionLifecycle(scopeOptions);
   const listeners:Listener[]=[];
   const controlBindings=new Map<ControlToken,{read?:()=>unknown;skip?:{value:unknown}}>();
-  const release=():void=>{dom.release();controls.release();controlBindings.clear();};
+  const release=():void=>{dom.release();controls.release();controlBindings.clear();children.clear();};
   const dispose=():void=>{scope.abort();release();};
   function construct<T>(fn:()=>T,ns:string|null):T {
     return scope.run(()=>withNamespace(ns,()=>withAdoptionDescription(fn)));
@@ -386,9 +390,13 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       case 'list':list(description,cursor,ns);return;
       case 'fragment':for(const child of description.children)walk(child,cursor,ns);return;
       case 'component':{
-        // Registered nested hosts are opaque and must use their own checked
-        // 103 claim. Until that joint mapping lands, this cannot consume one.
-        if(!root&&cursor.isIslandBoundary())refuse();
+        if(!root&&isRegisteredIslandComponent(description.component)){
+          const host=cursor.island(),checked=options.children?.get(host);
+          if(!checked)refuse();
+          matchAdoptionChild(host,description,checked);children.add(checked);return;
+        }
+        // A genuine unregistered helper can produce the registered child
+        // description. Its body executes once under this parent's ownership.
         scope.group(()=>walk(construct(()=>Reflect.apply(description.component,description.receiver,description.args),ns),cursor,ns,root));return;
       }
       default:return refuse();
