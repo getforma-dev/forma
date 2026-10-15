@@ -113,6 +113,14 @@ This automatically:
    frame spec starts its own server on a free port)
 6. Runs the Playwright tests in headless Chromium
 
+The two FormaJS bundles in `e2e/fixtures/` exist only after step 2; git does
+not track them. Until 2026-10-15 it did, and the tracked copies predated
+`trustedHtml()` (FORMA-126), so `npx playwright test` run without the sync, or
+after a `git checkout -- e2e/fixtures`, failed the five template and
+cross-cutting cases with `trustedHtml is not a function` while a fresh sync
+passed them all. `full-stack.spec.ts` now refuses to run without the bundles
+and names the sync script.
+
 ### Custom FormaJS or forma path, or another SSR port
 
 ```bash
@@ -138,10 +146,10 @@ The GitHub Actions CI workflow runs E2E automatically on every push to main and 
 e2e/
 ├── fixtures/
 │   ├── full-stack.html              ← Test page with all three entry points
-│   ├── formajs-runtime.global.js    ← Auto-synced from formajs build
-│   ├── formajs.global.js            ← Auto-synced from formajs build
+│   ├── formajs-runtime.global.js    ← Written by sync-fixtures.sh; not tracked (a committed copy is only ever stale)
+│   ├── formajs.global.js            ← Written by sync-fixtures.sh; not tracked
 │   └── compiled-counter.js          ← Reviewed template/clone reference (the old JSX transform is retired)
-├── full-stack.spec.ts               ← 15 Playwright tests
+├── full-stack.spec.ts               ← 16 Playwright tests (one guards the synced bundles)
 ├── sync-fixtures.sh                 ← Builds FormaJS and copies dist files
 ├── ssr/
 │   ├── cases/<case>/app.tsx         ← One page per case (+ slots.json)
