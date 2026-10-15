@@ -1031,14 +1031,14 @@ export function h(
 
 /**
  * The half of h() that runs once the element exists: props, children, live
- * form values, then the ref. Exported for adoption's fallback, which creates
- * an element in the SVG or MathML namespace itself (`descriptorToElement` in
- * hydrate.ts) and then builds it as h() would.
+ * form values, then the ref. The private live materializer resolves children
+ * after props establish the actual content namespace. Ordinary h() omits it.
  */
 export function fillElement<E extends Element>(
   el: E,
   props: Record<string, unknown> | null | undefined,
   children: unknown[],
+  resolveChildren?: () => { children: unknown[]; target: Element | DocumentFragment },
 ): E {
   // Children beside dangerouslySetInnerHTML: h() renders the markup, then
   // them, until the markup next changes; ./ssr and adoption keep the markup.
@@ -1088,6 +1088,10 @@ export function fillElement<E extends Element>(
     }
   }
 
+  const resolved = resolveChildren?.();
+  if (resolved) children = resolved.children;
+  const target = resolved?.target ?? el;
+
   // Append children — fast path for single string/number child avoids
   // Text node allocation + separate appendChild. el.textContent is a single
   // native C++ call that combines both operations.
@@ -1097,15 +1101,15 @@ export function fillElement<E extends Element>(
   } else if (childLen === 1) {
     const only = children[0];
     if (typeof only === 'string') {
-      el.textContent = only;
+      target.textContent = only;
     } else if (typeof only === 'number') {
-      el.textContent = String(only);
+      target.textContent = String(only);
     } else {
-      appendChild(el, only);
+      appendChild(target, only);
     }
   } else if (childLen > 1) {
     for (const child of children) {
-      appendChild(el, child);
+      appendChild(target, child);
     }
   }
 
