@@ -44,5 +44,12 @@ The fixed controls are in `src/dom/__tests__/island-state.test.ts`. They include
 100 values for each supported schema kind, numeric/text boundary values, exact
 UTF-8 byte limits, forbidden-key projection, per-entry isolation, frozen claims,
 and zero DOM mutations. Activation controls are in `src/dom/__tests__/island-state-activation.test.ts`.
-Browser timing and the complete compiler/build/browser acceptance remain separate
-integration gates; these unit results do not claim either one.
+The real transport controls in `e2e/state-roundtrip.spec.ts` run 100 fixed cases
+through the actual compiler fixture, production Rust walker and built browser
+activation in Chromium, Firefox and WebKit. They cover all eight kinds in one
+combined declared schema, including original finite numeric bits (apart from
+intentional -0 to 0), Dates and undeclared-field removal. They are distinct from
+the decoder-only unit cases above. The fixture is served with an enforcing CSP;
+positive runs require zero policy violations, page errors and console errors.
+Final packed compiler/build/server acceptance and measured browser performance
+remain separately recorded integration gates.

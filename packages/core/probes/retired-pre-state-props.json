@@ -1,0 +1,56 @@
+{
+ "reason": "FORMA-103 removes inline and __forma_islands props readers; these historical probes target removed paths. Original records retained unchanged. No new mutation run is claimed.",
+ "source": "48875c25e8bf75049cf36467304ae4e2980f8c64",
+ "probes": [
+  {
+   "id": "activate/props-error-uncoded",
+   "file": "src/dom/activate.ts",
+   "tags": [
+    "correctness"
+   ],
+   "find": "    if (isIslandPropsError(err) || isHydrateError(err))",
+   "replace": "    if (isHydrateError(err))",
+   "note": "an island refused for its props type is marked error with no FORMA_E_ISLAND_PROPS line in a production build. Verified by: src/dom/__tests__/props-loading.test.ts > \"props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS\""
+  },
+  {
+   "id": "activate/props-inline-unstripped",
+   "file": "src/dom/activate.ts",
+   "tags": [
+    "security"
+   ],
+   "find": "checkProps(sanitizePropsDeep(JSON.parse(inline)))",
+   "replace": "checkProps(JSON.parse(inline))",
+   "note": "inline data-forma-props reach the island with __proto__ / constructor / prototype at every depth (DR-21). Verified by: src/dom/__tests__/activate-isolation.test.ts > \"island activation strips forbidden keys at every depth, inline and shared, with no opt-out\""
+  },
+  {
+   "id": "activate/props-reviver-recursive",
+   "file": "src/dom/activate.ts",
+   "tags": [
+    "correctness"
+   ],
+   "find": "checkProps(sanitizePropsDeep(JSON.parse(inline)))",
+   "replace": "checkProps(JSON.parse(inline, (k: string, v: unknown) => (FORBIDDEN_PROP_KEYS.has(k) ? undefined : v)))",
+   "note": "strip with a JSON.parse reviver: V8 applies it recursively and overflows near 5,000 levels, so deep props fail the island. Verified by: src/dom/__tests__/activate-isolation.test.ts > \"island props nested 10,000 deep are parsed and stripped\""
+  },
+  {
+   "id": "activate/props-shared-unstripped",
+   "file": "src/dom/activate.ts",
+   "tags": [
+    "security"
+   ],
+   "find": "sanitizePropsDeep(JSON.parse(scriptBlock.textContent ?? ''))",
+   "replace": "JSON.parse(scriptBlock.textContent ?? '')",
+   "note": "props from the shared __forma_islands block reach the island with nested pollution keys (DR-21). Verified by: src/dom/__tests__/activate-isolation.test.ts > \"island activation strips forbidden keys at every depth, inline and shared, with no opt-out\""
+  },
+  {
+   "id": "activate/props-type-unchecked",
+   "file": "src/dom/activate.ts",
+   "tags": [
+    "correctness"
+   ],
+   "find": "  if (props === null || typeof props !== 'object') {",
+   "replace": "  if (false) {",
+   "note": "props that are null, a number, a string or a boolean reach the island, where 2.0.1 marked it error (FORMA-004 review). Verified by: src/dom/__tests__/props-loading.test.ts > \"props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS\""
+  }
+ ]
+}
