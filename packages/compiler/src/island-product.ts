@@ -12,6 +12,7 @@ import {ComponentAnalyzer} from './component-analyzer';
 import {resolveExportedFunction} from './export-resolver';
 import {resolveFilePath} from './module-loader';
 import {inspectEntryMounts,isCoreCall,refuseEntry} from './entry-policy';
+import {applySourceEdits,type SourceEdit} from './source-edits';
 import type {IrResult} from './esbuild-ssr-plugin';
 
 /** Resolve the original page declaration, never the emitted function's text/name. */
@@ -27,7 +28,7 @@ function pageIdentity(file:string):string|undefined {
   return found.kind==='found'?`${realpathSync(found.filePath)}\0${found.fn.start}`:undefined;
 }
 
-export interface EntrySourceEdit { readonly start:number; readonly end:number; readonly text:string; }
+export type EntrySourceEdit = SourceEdit;
 
 /**
  * Rewrite the captured original entry only after its native contracts exist.
@@ -96,7 +97,5 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
 /** Apply original-coordinate edits;104 composes its module hooks at this seam. */
 export function injectIslandMetadata(file:string,server:IslandRegistry,result:IrResult|null,sourceEntry=file):string {
   const edits=collectIslandEntryEdits(file,server,result,sourceEntry);
-  let output=readSourceFile(file);
-  for(const edit of [...edits].sort((a,b)=>b.start-a.start))output=output.slice(0,edit.start)+edit.text+output.slice(edit.end);
-  return output;
+  return applySourceEdits(readSourceFile(file),edits);
 }

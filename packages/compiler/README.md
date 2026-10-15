@@ -499,3 +499,20 @@ its explicit SSR mode/IR while omitting final JavaScript/module-preload links.
 The compiler alone does not claim a zero-request route, complete105 acceptance,
 or changed package size limits. Browser routes (`ssr: false`) remain normal
 client mounts and do not use this native entry rewrite.
+
+Multiple native entry plugins in one esbuild operation share a private
+compilation coordinator. It waits for every current `onStart` analysis, checks
+that overlapping original source snapshots agree, and composes original-range
+entry edits before any file is loaded. Each contributor's source and resolution
+guards still run before publication; a refused cycle cannot supply partial
+transformation authority. Identical edits may be deduplicated; conflicting
+ranges refuse instead of choosing the first plugin.
+
+Ordinary sequential reuse of an esbuild options object is supported, as are
+concurrent builds with independent options objects and previously completed
+contexts that continue rebuilding. If two setups interleave while reusing the
+same options object, the grouping is ambiguous and fails with `BUILD-611`.
+Use distinct options objects for concurrent setups (and a fresh options object
+after an incomplete failed setup). This coordinator does not add a public
+combined-plugin API. Adoption hook collection is a separate104 integration;
+this checkpoint composes the existing entry edits and retains all source guards.
