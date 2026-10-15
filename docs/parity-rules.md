@@ -126,8 +126,8 @@ panics rather than failing one case.
   body class and head metadata separately; it is not routed through the crate
   helper. Extending rule 1 to it is a separate cross-crate decision.
 - The walker selects text-only parents by tag spelling in any namespace; a
-  contextual namespace mechanism, if the SVG `title`/`foreignObject`/MathML
-  products need one, is a separate proposal.
+  contextual namespace mechanism is written as a proposal below ("Namespace
+  context for the walker"), with the SVG `title` disagreement it would close.
 - `packages/core/src/dom/reconcile.ts` copies DOM values a writer already
   produced and so has no normalizer of its own; the HTML runtime's `data-*`
   binder and `dom-utils/mutate.ts` are outside the plan's table and unchanged.
