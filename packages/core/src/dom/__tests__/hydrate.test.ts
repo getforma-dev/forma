@@ -1,1388 +1,220 @@
+/** Strict adoption replacements for the archived repairing-helper tests. */
 import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createSignal, createRoot } from 'forma/reactive';
 import { adoptInRoot } from './helpers/owned-adoption.js';
+import { connect, fixture, prepareAndCommit, expectRefusal } from './helpers/prepared-fixture';
 import { activateIslands } from '../activate';
-import {
-  hydrating,
-  setHydrating,
-  isDescriptor,
-  isShowDescriptor,
-  collectMarkers,
-  applyDynamicProps,
-  descriptorToElement,
-  adoptNode,
-  hydrateIsland,
-  type HydrationDescriptor,
-  type ShowDescriptor,
-  type MarkerMap,
-} from '../hydrate';
-
-// ---------------------------------------------------------------------------
-// Task 11: barrel export
-// ---------------------------------------------------------------------------
-
-describe('barrel exports', () => {
-  it('exports hydrateIsland from dom/index', async () => {
-    const domIndex = await import('../index');
-    expect(typeof domIndex.hydrateIsland).toBe('function');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Task 1: Descriptor types and hydration state
-// ---------------------------------------------------------------------------
-
-describe('hydrating state', () => {
-  it('defaults to false', () => {
-    expect(hydrating).toBe(false);
-  });
-
-  it('can be toggled via setHydrating', () => {
-    setHydrating(true);
-    expect(hydrating).toBe(true);
-    setHydrating(false);
-    expect(hydrating).toBe(false);
-  });
-});
-
-describe('isDescriptor', () => {
-  it('returns true for a valid HydrationDescriptor', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [],
-    };
-    expect(isDescriptor(desc)).toBe(true);
-  });
-
-  it('returns false for null', () => {
-    expect(isDescriptor(null)).toBe(false);
-  });
-
-  it('returns false for undefined', () => {
-    expect(isDescriptor(undefined)).toBe(false);
-  });
-
-  it('returns false for a string', () => {
-    expect(isDescriptor('hello')).toBe(false);
-  });
-
-  it('returns false for a number', () => {
-    expect(isDescriptor(42)).toBe(false);
-  });
-
-  it('returns false for a ShowDescriptor', () => {
-    const show: ShowDescriptor = {
-      type: 'show',
-      condition: () => true,
-      whenTrue: () => null,
-      initialBranch: null,
-    };
-    expect(isDescriptor(show)).toBe(false);
-  });
-
-  it('returns false for a plain object with wrong type', () => {
-    expect(isDescriptor({ type: 'other', tag: 'div' })).toBe(false);
-  });
-
-  it('returns true even with extra properties', () => {
-    const desc = {
-      type: 'element',
-      tag: 'span',
-      props: { class: 'foo' },
-      children: ['text'],
-      extra: true,
-    };
-    expect(isDescriptor(desc)).toBe(true);
-  });
-});
-
-describe('isShowDescriptor', () => {
-  it('returns true for a valid ShowDescriptor', () => {
-    const desc: ShowDescriptor = {
-      type: 'show',
-      condition: () => true,
-      whenTrue: () => null,
-      initialBranch: null,
-    };
-    expect(isShowDescriptor(desc)).toBe(true);
-  });
-
-  it('returns false for null', () => {
-    expect(isShowDescriptor(null)).toBe(false);
-  });
-
-  it('returns false for undefined', () => {
-    expect(isShowDescriptor(undefined)).toBe(false);
-  });
-
-  it('returns false for a HydrationDescriptor', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [],
-    };
-    expect(isShowDescriptor(desc)).toBe(false);
-  });
-
-  it('returns false for a plain object with wrong type', () => {
-    expect(isShowDescriptor({ type: 'element' })).toBe(false);
-  });
-
-  it('returns true with optional whenFalse', () => {
-    const desc: ShowDescriptor = {
-      type: 'show',
-      condition: () => true,
-      whenTrue: () => 'yes',
-      whenFalse: () => 'no',
-      initialBranch: 'yes',
-    };
-    expect(isShowDescriptor(desc)).toBe(true);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Task 2: collectMarkers
-// ---------------------------------------------------------------------------
-
-describe('collectMarkers', () => {
-  it('collects a single text marker', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:t0-->Hello<!--other-->';
-
-    const markers = collectMarkers(root);
-    expect(markers.text.size).toBe(1);
-    expect(markers.text.get(0)).toBeInstanceOf(Text);
-    expect(markers.text.get(0)!.data).toBe('Hello');
-    expect(markers.show.size).toBe(0);
-  });
-
-  it('collects multiple text markers', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:t0-->First<!--f:t1-->Second';
-
-    const markers = collectMarkers(root);
-    expect(markers.text.size).toBe(2);
-    expect(markers.text.get(0)!.data).toBe('First');
-    expect(markers.text.get(1)!.data).toBe('Second');
-  });
-
-  it('collects show markers', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:s0--><span>content</span><!--/f:s0-->';
-
-    const markers = collectMarkers(root);
-    expect(markers.show.size).toBe(1);
-    const entry = markers.show.get(0)!;
-    expect(entry.start).toBeInstanceOf(Comment);
-    expect(entry.end).toBeInstanceOf(Comment);
-    expect((entry.start as Comment).data).toBe('f:s0');
-    expect((entry.end as Comment).data).toBe('/f:s0');
-  });
-
-  it('collects interleaved text and show markers', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:t0-->Name<!--f:s0--><b>visible</b><!--/f:s0--><!--f:t1-->Age';
-
-    const markers = collectMarkers(root);
-    expect(markers.text.size).toBe(2);
-    expect(markers.text.get(0)!.data).toBe('Name');
-    expect(markers.text.get(1)!.data).toBe('Age');
-    expect(markers.show.size).toBe(1);
-    expect(markers.show.get(0)!.start.data).toBe('f:s0');
-  });
-
-  it('returns empty maps for a container with no markers', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<p>Just plain HTML</p>';
-
-    const markers = collectMarkers(root);
-    expect(markers.text.size).toBe(0);
-    expect(markers.show.size).toBe(0);
-  });
-
-  it('handles text marker without a following text node', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:t0--><span>not a text node</span>';
-
-    const markers = collectMarkers(root);
-    // The marker comment exists but no text node follows it directly
-    expect(markers.text.size).toBe(0);
-  });
-
-  it('handles show opening marker without closing marker', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:s0--><span>orphan</span>';
-
-    const markers = collectMarkers(root);
-    expect(markers.show.size).toBe(0);
-  });
-
-  it('collects multiple show markers with correct pairing', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:s0-->A<!--/f:s0--><!--f:s1-->B<!--/f:s1-->';
-
-    const markers = collectMarkers(root);
-    expect(markers.show.size).toBe(2);
-    expect(markers.show.get(0)!.start.data).toBe('f:s0');
-    expect(markers.show.get(0)!.end.data).toBe('/f:s0');
-    expect(markers.show.get(1)!.start.data).toBe('f:s1');
-    expect(markers.show.get(1)!.end.data).toBe('/f:s1');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Task 3: applyDynamicProps
-// ---------------------------------------------------------------------------
-
-describe('applyDynamicProps', () => {
-  it('attaches event handlers via addEventListener', () => {
-    const el = document.createElement('button');
-    const handler = vi.fn();
-
-    applyDynamicProps(el, { onClick: handler });
-
-    el.click();
-    expect(handler).toHaveBeenCalledTimes(1);
-  });
-
-  it('attaches multiple event handlers', () => {
-    const el = document.createElement('input');
-    const clickHandler = vi.fn();
-    const focusHandler = vi.fn();
-
-    applyDynamicProps(el, { onClick: clickHandler, onFocus: focusHandler });
-
-    el.click();
-    expect(clickHandler).toHaveBeenCalledTimes(1);
-
-    el.dispatchEvent(new Event('focus'));
-    expect(focusHandler).toHaveBeenCalledTimes(1);
-  });
-
-  it('skips static (non-function) props', () => {
-    const el = document.createElement('div');
-    el.setAttribute('class', 'original');
-
-    applyDynamicProps(el, { class: 'should-not-change', id: 'myid', 'data-x': 42 });
-
-    // Static props should not be applied — they are already in SSR HTML
-    expect(el.getAttribute('class')).toBe('original');
-  });
-
-  it('creates reactive attribute bindings for non-event functions', () => {
-    const el = document.createElement('div');
-
-    createRoot(() => {
-      const [value, setValue] = createSignal('initial');
-      applyDynamicProps(el, { 'data-state': value });
-
-      expect(el.getAttribute('data-state')).toBe('initial');
-
-      setValue('updated');
-      expect(el.getAttribute('data-state')).toBe('updated');
-    });
-  });
-
-  it('removes attribute when reactive value returns false', () => {
-    const el = document.createElement('div');
-    el.setAttribute('hidden', '');
-
-    createRoot(() => {
-      const [show] = createSignal(false);
-      applyDynamicProps(el, { hidden: show });
-
-      // false causes removeAttribute
-      expect(el.hasAttribute('hidden')).toBe(false);
-    });
-  });
-
-  it('removes attribute when reactive value returns null', () => {
-    const el = document.createElement('div');
-    el.setAttribute('title', 'old');
-
-    createRoot(() => {
-      const [title, setTitle] = createSignal<string | null>('hello');
-      applyDynamicProps(el, { title: title });
-
-      expect(el.getAttribute('title')).toBe('hello');
-
-      setTitle(null);
-      expect(el.hasAttribute('title')).toBe(false);
-    });
-  });
-
-  it('sets empty attribute when reactive value returns true', () => {
-    const el = document.createElement('div');
-
-    createRoot(() => {
-      const [disabled] = createSignal(true);
-      applyDynamicProps(el, { disabled: disabled });
-
-      expect(el.getAttribute('disabled')).toBe('');
-    });
-  });
-
-  it('handles null props gracefully', () => {
-    const el = document.createElement('div');
-    expect(() => applyDynamicProps(el, null)).not.toThrow();
-  });
-
-  it('maps className/htmlFor/tabIndex to their HTML attribute names', () => {
-    const el = document.createElement('label');
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-      const [cls, setCls] = createSignal('a');
-      applyDynamicProps(el, {
-        className: cls,
-        htmlFor: () => 'field',
-        tabIndex: () => 3,
-      });
-
-      // The raw prop name would produce classname="a", which styles nothing.
-      expect(el.getAttribute('class')).toBe('a');
-      expect(el.hasAttribute('classname')).toBe(false);
-      expect(el.getAttribute('for')).toBe('field');
-      expect(el.getAttribute('tabindex')).toBe('3');
-
-      setCls('b');
-      expect(el.getAttribute('class')).toBe('b');
-    });
-
-    dispose?.();
-  });
-
-  it('calls a function ref with the adopted element instead of writing a ref attribute', () => {
-    const el = document.createElement('input');
-    const seen: Element[] = [];
-
-    applyDynamicProps(el, { ref: (node: Element) => { seen.push(node); } });
-
-    expect(seen).toEqual([el]);
-    expect(el.hasAttribute('ref')).toBe(false);
-  });
-
-  it('never writes an inline event-handler attribute for an odd-cased on* prop', () => {
-    const el = document.createElement('img');
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    applyDynamicProps(el, { ONERROR: () => 'alert(1)', Onload: () => 'alert(2)' });
-
-    // setAttribute lowercases qualified names on HTML elements, so writing
-    // these would install real inline handlers the SSR renderer drops.
-    expect(el.hasAttribute('onerror')).toBe(false);
-    expect(el.hasAttribute('onload')).toBe(false);
-    expect(el.attributes.length).toBe(0);
-
-    warn.mockRestore();
-  });
-
-  it('removes a URL attribute whose reactive value uses a dangerous scheme', () => {
-    const el = document.createElement('a');
-    el.setAttribute('href', '/safe');
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-      const [url, setUrl] = createSignal('/ok');
-      applyDynamicProps(el, { href: url });
-      expect(el.getAttribute('href')).toBe('/ok');
-
-      // Control characters are stripped by the browser before the scheme is
-      // read, so this is a live javascript: URL.
-      setUrl('java	script:alert(1)');
-      expect(el.hasAttribute('href')).toBe(false);
-
-      setUrl('/back-to-safe');
-      expect(el.getAttribute('href')).toBe('/back-to-safe');
-    });
-
-    warn.mockRestore();
-    dispose?.();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Task 4: descriptorToElement
-// ---------------------------------------------------------------------------
-
-describe('descriptorToElement', () => {
-  it('converts a simple descriptor to a DOM element', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: { class: 'card' },
-      children: ['Hello'],
-    };
-
-    const el = descriptorToElement(desc);
-    expect(el.tagName).toBe('DIV');
-    expect(el.getAttribute('class')).toBe('card');
-    expect(el.textContent).toBe('Hello');
-  });
-
-  it('converts nested descriptors recursively', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [
-        {
-          type: 'element' as const,
-          tag: 'span',
-          props: { class: 'inner' },
-          children: ['Nested'],
-        },
-      ],
-    };
-
-    const el = descriptorToElement(desc);
-    expect(el.tagName).toBe('DIV');
-    expect(el.children.length).toBe(1);
-    expect(el.children[0]!.tagName).toBe('SPAN');
-    expect(el.children[0]!.getAttribute('class')).toBe('inner');
-    expect(el.children[0]!.textContent).toBe('Nested');
-  });
-
-  it('attaches event handlers from props', () => {
-    const handler = vi.fn();
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'button',
-      props: { onClick: handler },
-      children: ['Click me'],
-    };
-
-    const el = descriptorToElement(desc);
-    expect(el.tagName).toBe('BUTTON');
-    (el as HTMLButtonElement).click();
-    expect(handler).toHaveBeenCalledTimes(1);
-  });
-
-  it('passes function children through (reactive text)', () => {
-    createRoot(() => {
-      const [name] = createSignal('World');
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'span',
-        props: null,
-        children: [name],
-      };
-
-      const el = descriptorToElement(desc);
-      expect(el.tagName).toBe('SPAN');
-      expect(el.textContent).toBe('World');
-    });
-  });
-
-  it('restores hydrating state after conversion', () => {
-    setHydrating(true);
-    expect(hydrating).toBe(true);
-
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [],
-    };
-
-    descriptorToElement(desc);
-
-    // hydrating should be restored to true
-    expect(hydrating).toBe(true);
-    setHydrating(false);
-  });
-
-  it('handles descriptors with null props', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'br',
-      props: null,
-      children: [],
-    };
-
-    const el = descriptorToElement(desc);
-    expect(el.tagName).toBe('BR');
-  });
-
-  it('handles deeply nested descriptors', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [
-        {
-          type: 'element' as const,
-          tag: 'ul',
-          props: null,
-          children: [
-            {
-              type: 'element' as const,
-              tag: 'li',
-              props: null,
-              children: ['Item 1'],
-            },
-            {
-              type: 'element' as const,
-              tag: 'li',
-              props: null,
-              children: ['Item 2'],
-            },
-          ],
-        },
-      ],
-    };
-
-    const el = descriptorToElement(desc);
-    expect(el.tagName).toBe('DIV');
-    const ul = el.children[0]!;
-    expect(ul.tagName).toBe('UL');
-    expect(ul.children.length).toBe(2);
-    expect(ul.children[0]!.textContent).toBe('Item 1');
-    expect(ul.children[1]!.textContent).toBe('Item 2');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Task 5: adoptNode
-// ---------------------------------------------------------------------------
-
-describe('adoptNode', () => {
-  it('adopts matching SSR element and attaches event handlers', () => {
-    const handler = vi.fn();
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'button',
-      props: { onClick: handler },
-      children: [],
-    };
-
-    const ssrEl = document.createElement('button');
-    ssrEl.textContent = 'Click me';
-
-    adoptNode(desc, ssrEl);
-
-    ssrEl.click();
-    expect(handler).toHaveBeenCalledTimes(1);
-  });
-
-  it('recurses into nested children', () => {
-    const innerHandler = vi.fn();
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [
-        {
-          type: 'element' as const,
-          tag: 'span',
-          props: { onClick: innerHandler },
-          children: [],
-        },
-      ],
-    };
-
-    const ssrEl = document.createElement('div');
-    const ssrSpan = document.createElement('span');
-    ssrSpan.textContent = 'inner';
-    ssrEl.appendChild(ssrSpan);
-
-    adoptNode(desc, ssrEl);
-
-    ssrSpan.click();
-    expect(innerHandler).toHaveBeenCalledTimes(1);
-  });
-
-  it('binds reactive text to SSR text marker nodes', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      const [text, setText] = createSignal('hello');
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [text],
-      };
-
-      // SSR DOM with text marker: <!--f:t0-->hello<!--/f:t0-->
-      const ssrEl = document.createElement('div');
-      ssrEl.appendChild(document.createComment('f:t0'));
-      const textNode = document.createTextNode('hello');
-      ssrEl.appendChild(textNode);
-      ssrEl.appendChild(document.createComment('/f:t0'));
-
-      adoptNode(desc, ssrEl);
-
-      expect(textNode.data).toBe('hello');
-
-      setText('world');
-      expect(textNode.data).toBe('world');
-    });
-
-    dispose?.();
-  });
-
-  it('binds reactive text to SSR show marker nodes', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      const [text, setText] = createSignal('Show');
-      const label = () => text();
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'button',
-        props: null,
-        children: [label],
-      };
-
-      // SSR DOM with show marker (IR emits ShowIf for inline ternaries):
-      // <!--f:s5-->Show<!--/f:s5-->
-      const ssrEl = document.createElement('button');
-      ssrEl.appendChild(document.createComment('f:s5'));
-      const textNode = document.createTextNode('Show');
-      ssrEl.appendChild(textNode);
-      ssrEl.appendChild(document.createComment('/f:s5'));
-
-      adoptNode(desc, ssrEl);
-
-      expect(textNode.data).toBe('Show');
-
-      setText('Hide');
-      expect(textNode.data).toBe('Hide');
-    });
-
-    dispose?.();
-  });
-
-  it('handles interleaved elements and reactive text', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      const [dyn] = createSignal('dynamic');
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [
-          { type: 'element' as const, tag: 'span', props: null, children: [] },
-          dyn,
-          { type: 'element' as const, tag: 'p', props: null, children: [] },
-        ],
-      };
-
-      const ssrEl = document.createElement('div');
-      const ssrSpan = document.createElement('span');
-      const textNode = document.createTextNode('dynamic');
-      const ssrP = document.createElement('p');
-      ssrEl.appendChild(ssrSpan);
-      ssrEl.appendChild(document.createComment('f:t0'));
-      ssrEl.appendChild(textNode);
-      ssrEl.appendChild(document.createComment('/f:t0'));
-      ssrEl.appendChild(ssrP);
-
-      adoptNode(desc, ssrEl);
-
-      // span is children[0], p is children[1] (element index)
-      expect(ssrEl.children[0]!.tagName).toBe('SPAN');
-      expect(ssrEl.children[1]!.tagName).toBe('P');
-      expect(textNode.data).toBe('dynamic');
-    });
-
-    dispose?.();
-  });
-
-  it('warns and replaces on tag mismatch', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: { class: 'replacement' },
-      children: ['Replaced'],
-    };
-
-    const parent = document.createElement('section');
-    const ssrEl = document.createElement('span'); // wrong tag
-    parent.appendChild(ssrEl);
-
-    adoptNode(desc, ssrEl);
-
-    expect(warnSpy).toHaveBeenCalledWith(
-      'Hydration mismatch: expected <div>, got <span>',
-    );
-
-    // The span should have been replaced with a div
-    expect(parent.children[0]!.tagName).toBe('DIV');
-    expect(parent.children[0]!.textContent).toBe('Replaced');
-
-    warnSpy.mockRestore();
-  });
-
-  it('handles missing SSR element gracefully', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [],
-    };
-
-    adoptNode(desc, undefined);
-
-    expect(warnSpy).toHaveBeenCalledWith(
-      'Hydration mismatch: expected <div>, got <nothing>',
-    );
-
-    warnSpy.mockRestore();
-  });
-
-  it('adopts static string children without touching the server text node', () => {
-    // Static text is already in the SSR markup; adoption must leave the exact
-    // node the server produced in place. Creating a replacement would discard
-    // whatever the browser had already laid out and painted.
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: ['static text', 'another string', 42],
-    };
-
-    const ssrEl = document.createElement('div');
-    ssrEl.textContent = 'static text';
-    const original = ssrEl.firstChild;
-
-    adoptNode(desc, ssrEl);
-
-    expect(ssrEl.childNodes).toHaveLength(1);
-    expect(ssrEl.firstChild).toBe(original); // same node, not a re-render
-    expect(ssrEl.textContent).toBe('static text');
-  });
-
-  it('adopts falsy children (false, null, undefined) without creating nodes', () => {
-    // `cond && <p/>` renders nothing on the server, so adoption must not
-    // materialise a stray text node the server never emitted — that is a
-    // hydration mismatch the next diff would have to reconcile away.
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [false, null, undefined],
-    };
-
-    const ssrEl = document.createElement('div');
-
-    adoptNode(desc, ssrEl);
-
-    expect(ssrEl.childNodes).toHaveLength(0);
-    expect(ssrEl.innerHTML).toBe('');
-  });
-
-  it('creates real DOM for island marker regions', () => {
-    const handler = vi.fn();
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [
-        { type: 'element' as const, tag: 'h2', props: null, children: ['Title'] },
-        { type: 'element' as const, tag: 'div', props: { class: 'alert', onClick: handler }, children: ['Error'] },
-        { type: 'element' as const, tag: 'form', props: null, children: [] },
-      ],
-    };
-
-    // SSR DOM: <div><h2>Title</h2><!--f:i0--><!--/f:i0--><form></form></div>
-    const ssrEl = document.createElement('div');
-    const h2 = document.createElement('h2');
-    h2.textContent = 'Title';
-    ssrEl.appendChild(h2);
-    ssrEl.appendChild(document.createComment('f:i0'));
-    ssrEl.appendChild(document.createComment('/f:i0'));
-    const form = document.createElement('form');
-    ssrEl.appendChild(form);
-
-    adoptNode(desc, ssrEl);
-
-    // h2 adopted
-    expect(ssrEl.querySelector('h2')!.textContent).toBe('Title');
-    // Alert created fresh between island markers
-    const alert = ssrEl.querySelector('.alert')!;
-    expect(alert).toBeTruthy();
-    expect(alert.textContent).toBe('Error');
-    (alert as HTMLElement).click();
-    expect(handler).toHaveBeenCalledTimes(1);
-    // Form adopted
-    expect(ssrEl.querySelector('form')).toBe(form);
-  });
-
-  it('creates text node for empty text markers and binds reactive effect', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      // SSR HTML: <div><!--f:t0--><!--/f:t0--></div> (no text node — empty initial value)
-      const ssrEl = document.createElement('div');
-      ssrEl.appendChild(document.createComment('f:t0'));
-      ssrEl.appendChild(document.createComment('/f:t0'));
-
-      const [msg, setMsg] = createSignal<string | null>(null);
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [() => msg() || ''],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // A text node should have been created between the markers
-      const startMarker = ssrEl.childNodes[0];
-      const textNode = ssrEl.childNodes[1];
-      expect(textNode.nodeType).toBe(3); // Text node
-      expect((textNode as Text).data).toBe('');
-
-      // Update the signal — text should update reactively
-      setMsg('Error occurred');
-      expect((textNode as Text).data).toBe('Error occurred');
-    });
-
-    dispose?.();
-  });
-
-  it('creates text node for empty show markers used as reactive text', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      // SSR HTML: <div><!--f:s5--><!--/f:s5--></div> (no text node — empty initial value)
-      const ssrEl = document.createElement('div');
-      ssrEl.appendChild(document.createComment('f:s5'));
-      ssrEl.appendChild(document.createComment('/f:s5'));
-
-      const [msg, setMsg] = createSignal<string | null>(null);
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [() => msg() || ''],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // A text node should have been created between the markers
-      const textNode = ssrEl.childNodes[1];
-      expect(textNode.nodeType).toBe(3);
-      expect((textNode as Text).data).toBe('');
-
-      // Update — should bind reactively
-      setMsg('Something happened');
-      expect((textNode as Text).data).toBe('Something happened');
-    });
-
-    dispose?.();
-  });
-
-  it('handles multiple adjacent island markers', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [
-        { type: 'element' as const, tag: 'div', props: { class: 'alert-error' }, children: [] },
-        { type: 'element' as const, tag: 'div', props: { class: 'alert-info' }, children: [] },
-      ],
-    };
-
-    const ssrEl = document.createElement('div');
-    ssrEl.appendChild(document.createComment('f:i0'));
-    ssrEl.appendChild(document.createComment('/f:i0'));
-    ssrEl.appendChild(document.createComment('f:i1'));
-    ssrEl.appendChild(document.createComment('/f:i1'));
-
-    adoptNode(desc, ssrEl);
-
-    // Two islands, not one: cross-island bleed is invisible with a single
-    // instance, and "an .alert-error exists somewhere" would also be satisfied
-    // by both markers adopting the same descriptor.
-    expect([...ssrEl.children].map((c) => c.className)).toEqual(['alert-error', 'alert-info']);
-    expect(ssrEl.querySelectorAll('.alert-error')).toHaveLength(1);
-    expect(ssrEl.querySelectorAll('.alert-info')).toHaveLength(1);
-  });
-
-  it('does not duplicate a nested island that already has an SSR shell', () => {
-    // The compiler always emits a shell element between ISLAND_START/ISLAND_END;
-    // activateIslands hydrates it. Building our descriptor into the region too
-    // would put a second copy of the island next to the server's.
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [
-        { type: 'element' as const, tag: 'section', props: { class: 'child' }, children: ['from client'] },
-        { type: 'element' as const, tag: 'form', props: null, children: [] },
-      ],
-    };
-
-    const ssrEl = document.createElement('div');
-    ssrEl.appendChild(document.createComment('f:i0'));
-    const shell = document.createElement('section');
-    shell.setAttribute('data-forma-island', '1');
-    shell.setAttribute('data-forma-component', 'Child');
-    shell.setAttribute('class', 'child');
-    shell.textContent = 'from server';
-    ssrEl.appendChild(shell);
-    ssrEl.appendChild(document.createComment('/f:i0'));
-    const form = document.createElement('form');
-    ssrEl.appendChild(form);
-
-    adoptNode(desc, ssrEl);
-
-    // Exactly one section, still the server's, untouched.
-    expect(ssrEl.querySelectorAll('section').length).toBe(1);
-    expect(ssrEl.querySelector('section')).toBe(shell);
-    expect(shell.textContent).toBe('from server');
-    // The cursor moved past the whole region, so the next child still adopts.
-    expect(ssrEl.querySelector('form')).toBe(form);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Marker parsing — authored comments must not be mistaken for markers
-// ---------------------------------------------------------------------------
-
-describe('marker parsing', () => {
-  it('ignores an authored comment that only shares a marker prefix', () => {
-    const root = document.createElement('div');
-    root.innerHTML =
-      '<!--f:side note--><!--f:t--><!--f:l--><!--f:i--><!--/f:s-->' +
-      '<!--f:s0--><span>x</span><!--/f:s0-->';
-
-    const markers = collectMarkers(root);
-    expect(markers.show.size).toBe(1);
-    expect(markers.show.get(0)!.start.data).toBe('f:s0');
-    expect(markers.text.size).toBe(0);
-    expect(markers.list.size).toBe(0);
-  });
-
-  it('adopts a show region even when an authored comment precedes it', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      // `f:side note` is authored template text the walker passes through. Read
-      // as a show marker it has no closing tag, so the real f:s0 region below is
-      // never adopted and the show stops working entirely.
-      const root = document.createElement('div');
-      root.innerHTML = '<!--f:side note--><!--f:s0--><p class="content">Hi</p><!--/f:s0-->';
-      document.body.appendChild(root);
-
-      const [show, setShow] = createSignal(true);
-      setHydrating(true);
-      const showDesc = createShow(
-        show,
-        () => h('p', { class: 'content' }, 'Hi'),
-        () => h('p', { class: 'fallback' }, 'Bye'),
-      );
-      setHydrating(false);
-
-      const parentDesc = { type: 'element' as const, tag: 'div', props: null, children: [showDesc] };
-      adoptNode(parentDesc, root);
-
-      setShow(false);
-      expect(root.querySelector('p.fallback')).toBeTruthy();
-      expect(root.querySelector('p.content')).toBeNull();
-    });
-
-    document.body.innerHTML = '';
-    dispose?.();
-  });
-});
-
-describe('adoptNode reactive text in empty parent', () => {
-  it('creates text node when SSR element has no children at all', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      // SSR HTML: <div class="toast"></div> (completely empty, no markers)
-      const ssrEl = document.createElement('div');
-      ssrEl.className = 'toast';
-
-      const [msg, setMsg] = createSignal<string | null>(null);
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: { class: () => msg() ? 'toast show' : 'toast' },
-        children: [() => msg() ? msg() : ''],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // A text node should have been created
-      expect(ssrEl.childNodes.length).toBe(1);
-      expect(ssrEl.childNodes[0].nodeType).toBe(3);
-      expect((ssrEl.childNodes[0] as Text).data).toBe('');
-
-      // Reactive update should work
-      setMsg('Operation failed');
-      expect((ssrEl.childNodes[0] as Text).data).toBe('Operation failed');
-      expect(ssrEl.className).toBe('toast show');
-    });
-
-    dispose?.();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Task 6: h() descriptor branch
-// ---------------------------------------------------------------------------
-
+import { hydrateIsland } from '../hydrate';
+import { withAdoptionDescription, describingAdoption, type HydrationDescriptor, type ShowDescriptor } from '../adoption-description';
+import { AdoptionDom } from '../adoption-plan';
 import { h } from '../element';
 import { createShow } from '../show';
 
-// ---------------------------------------------------------------------------
-// Task 7: createShow hydration path
-// ---------------------------------------------------------------------------
-
-describe('createShow hydration path', () => {
-  afterEach(() => {
-    setHydrating(false);
-  });
-
-  it('returns a DocumentFragment when not hydrating', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-      const result = createShow(() => true, () => document.createElement('span'));
-      expect(result).toBeInstanceOf(DocumentFragment);
-    });
-
-    dispose?.();
-  });
-
-  it('returns a ShowDescriptor when hydrating', () => {
-    setHydrating(true);
-
-    const condition = () => true;
-    const whenTrue = () => h('span', null, 'yes');
-    const whenFalse = () => h('span', null, 'no');
-
-    const result = createShow(condition, whenTrue, whenFalse);
-
-    // It's not a real DocumentFragment
-    expect(result).not.toBeInstanceOf(DocumentFragment);
-
-    const desc = result as unknown as ShowDescriptor;
-    expect(desc.type).toBe('show');
-    expect(desc.condition).toBe(condition);
-    expect(desc.whenTrue).toBe(whenTrue);
-    expect(desc.whenFalse).toBe(whenFalse);
-  });
-
-  it('evaluates initial true branch in ShowDescriptor', () => {
-    setHydrating(true);
-
-    const result = createShow(
-      () => true,
-      () => h('span', { class: 'visible' }, 'yes'),
-      () => h('span', null, 'no'),
-    );
-
-    const desc = result as unknown as ShowDescriptor;
-    expect(desc.initialBranch).not.toBeNull();
-
-    // During hydration, h() returns a descriptor
-    const branch = desc.initialBranch as HydrationDescriptor;
-    expect(branch.type).toBe('element');
-    expect(branch.tag).toBe('span');
-    expect(branch.props).toEqual({ class: 'visible' });
-    expect(branch.children).toEqual(['yes']);
-  });
-
-  it('evaluates false branch when condition is false', () => {
-    setHydrating(true);
-
-    const result = createShow(
-      () => false,
-      () => h('span', null, 'yes'),
-      () => h('div', { class: 'fallback' }, 'no'),
-    );
-
-    const desc = result as unknown as ShowDescriptor;
-    const branch = desc.initialBranch as HydrationDescriptor;
-    expect(branch.type).toBe('element');
-    expect(branch.tag).toBe('div');
-    expect(branch.props).toEqual({ class: 'fallback' });
-    expect(branch.children).toEqual(['no']);
-  });
-
-  it('initialBranch is null when condition false and no elseFn', () => {
-    setHydrating(true);
-
-    const result = createShow(
-      () => false,
-      () => h('span', null, 'yes'),
-    );
-
-    const desc = result as unknown as ShowDescriptor;
-    expect(desc.initialBranch).toBeNull();
-  });
+describe('barrel exports', () => {
+  it('exports hydrateIsland from dom/index', async () => { expect(typeof (await import('../index')).hydrateIsland).toBe('function'); });
+  it.each(['hydrating','setHydrating','isDescriptor','isShowDescriptor','collectMarkers','applyDynamicProps','descriptorToElement','adoptNode'])('retires the private repairing helper %s', async key => { expect(await import('../hydrate')).not.toHaveProperty(key); });
 });
 
-describe('h() descriptor branch', () => {
-  afterEach(() => {
-    setHydrating(false);
+describe('private description scope', () => {
+  it('defaults to ordinary DOM and restores nested description state even after an exception', () => {
+    expect(describingAdoption).toBe(false); expect(h('div')).toBeInstanceOf(Element);
+    withAdoptionDescription(() => {
+      expect(describingAdoption).toBe(true);
+      expect(withAdoptionDescription(() => h('div'), false)).toBeInstanceOf(Element);
+      expect(describingAdoption).toBe(true);
+      expect(() => withAdoptionDescription(() => { throw Error('original'); })).toThrow('original');
+      expect(describingAdoption).toBe(true);
+    });
+    expect(describingAdoption).toBe(false);
   });
-
-  it('returns a real DOM element when not hydrating', () => {
-    const el = h('div', { class: 'real' }, 'Hello');
-    expect(el).toBeInstanceOf(HTMLElement);
-    expect(el.tagName).toBe('DIV');
-    expect(el.textContent).toBe('Hello');
+  it('returns a descriptor with the exact original props and lazy children', () => {
+    const getter=vi.fn(()=>'dynamic');
+    const result=withAdoptionDescription(()=>h('div',{class:'card'},'text',getter)) as unknown as HydrationDescriptor;
+    expect(result).toEqual({type:'element',tag:'div',props:{class:'card'},children:['text',getter]});
+    expect(result).not.toBeInstanceOf(Element);expect(getter).not.toHaveBeenCalled();
   });
-
-  it('returns a descriptor when hydrating is true', () => {
-    setHydrating(true);
-    const result = h('div', { class: 'card' }, 'text');
-
-    // It's not a real element
-    expect(result).not.toBeInstanceOf(HTMLElement);
-
-    // It's a descriptor object
-    const desc = result as unknown as HydrationDescriptor;
-    expect(desc.type).toBe('element');
-    expect(desc.tag).toBe('div');
-    expect(desc.props).toEqual({ class: 'card' });
-    expect(desc.children).toEqual(['text']);
-  });
-
   it('builds nested descriptor tree during hydration', () => {
-    setHydrating(true);
-
-    const result = h('div', null,
-      h('span', { class: 'inner' }, 'Nested'),
-      h('p', null, 'Para'),
-    );
-
-    const desc = result as unknown as HydrationDescriptor;
-    expect(desc.type).toBe('element');
-    expect(desc.tag).toBe('div');
-    expect(desc.children.length).toBe(2);
-
-    const span = desc.children[0] as HydrationDescriptor;
-    expect(span.type).toBe('element');
-    expect(span.tag).toBe('span');
-    expect(span.props).toEqual({ class: 'inner' });
-    expect(span.children).toEqual(['Nested']);
-
-    const p = desc.children[1] as HydrationDescriptor;
-    expect(p.type).toBe('element');
-    expect(p.tag).toBe('p');
-    expect(p.children).toEqual(['Para']);
+    const result=withAdoptionDescription(()=>h('div',null,h('span',{class:'inner'},'Nested'),h('p',null,'Para'))) as unknown as HydrationDescriptor;
+    expect(result.children).toEqual([{type:'element',tag:'span',props:{class:'inner'},children:['Nested']},{type:'element',tag:'p',props:null,children:['Para']}]);
   });
+  it('preserves function children in descriptor',()=>{
+    const getter=()=> 'dynamic',desc=withAdoptionDescription(()=>h('div',null,getter)) as unknown as HydrationDescriptor;
+    expect(desc.children).toEqual([getter]);expect(desc.children[0]).toBe(getter);
+  });
+  it.each([true,false])('describes Show thunks lazily for condition=%s',value=>{
+    const condition=vi.fn(()=>value),yes=vi.fn(()=>h('span',null,'yes')),no=vi.fn(()=>h('div',null,'no'));
+    const result=withAdoptionDescription(()=>createShow(condition,yes,no)) as unknown as ShowDescriptor;
+    expect(result).toEqual({type:'show',condition,whenTrue:yes,whenFalse:no});expect(condition).not.toHaveBeenCalled();expect(yes).not.toHaveBeenCalled();expect(no).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty('initialBranch');
+  });
+  it('does not invent an initial branch when no else factory exists',()=>{
+    const desc=withAdoptionDescription(()=>createShow(()=>false,()=>h('span',null,'yes'))) as unknown as ShowDescriptor;
+    expect(desc.type).toBe('show');expect(desc).not.toHaveProperty('initialBranch');
+    const root=fixture('<div><!--f:s0--><!--/f:s0--></div>');prepareAndCommit(root,()=>h('div',null,desc));expect(root.childNodes).toHaveLength(2);
+  });
+  it('returns a DocumentFragment when not describing',()=>{createRoot(dispose=>{try{expect(createShow(()=>true,()=>h('span'))).toBeInstanceOf(DocumentFragment);}finally{dispose();}});});
+});
 
-  it('preserves function children in descriptor', () => {
-    setHydrating(true);
-
-    const getter = () => 'dynamic';
-    const result = h('div', null, getter);
-
-    const desc = result as unknown as HydrationDescriptor;
-    expect(desc.children.length).toBe(1);
-    expect(desc.children[0]).toBe(getter);
-    expect(typeof desc.children[0]).toBe('function');
+describe('strict original marker ranges',()=>{
+  it.each([
+    ['single text','<!--f:t0-->Hello<!--/f:t0--><!--other-->',['t']],
+    ['multiple text','<!--f:t0-->First<!--/f:t0--><!--f:t1-->Second<!--/f:t1-->',['t','t']],
+    ['show','<!--f:s0--><span>content</span><!--/f:s0-->',['s']],
+    ['interleaved','<!--f:t0-->Name<!--/f:t0--><!--f:s0--><b>visible</b><!--/f:s0--><!--f:t1-->Age<!--/f:t1-->',['t','s','t']],
+    ['plain HTML','<p>Just plain HTML</p>',[]],
+    ['multiple show','<!--f:s0-->A<!--/f:s0--><!--f:s1-->B<!--/f:s1-->',['s','s']],
+  ] as const)('collects %s without global marker counters',(_name,html,kinds)=>{
+    const root=fixture('<div>'+html+'</div>'),dom=new AdoptionDom(root);dom.children();
+    const ranges=Array.from(root.childNodes).map(node=>dom.rangeAt(node)).filter(range=>range!==undefined);
+    expect(ranges.map(range=>range.kind)).toEqual(kinds);
+    for(const range of ranges){expect(range.start.parentNode).toBe(root);expect(range.end.parentNode).toBe(root);expect(range.end.data).toBe('/'+range.start.data);}
+    dom.release();
+  });
+  it.each(['<!--f:t0--><span>not text</span><!--/f:t0-->','<!--f:s0--><span>orphan</span>','<!--f:t0--><!--/f:t0-->'])('refuses malformed original marker structure: %s',html=>{
+    const root=fixture('<div>'+html+'</div>');expectRefusal(root,()=>h('div',null),'FORMA_E_HYDRATE_MARKER');
+  });
+  it('ignores an authored comment that only shares a marker prefix',()=>{
+    const root=fixture('<div><!--f:side note--><!--f:t--><!--f:l--><!--f:i--><!--/f:s--><!--f:s0--><span>x</span><!--/f:s0--></div>');
+    prepareAndCommit(root,()=>h('div',null,createShow(()=>true,()=>h('span',null,'x'))));expect(root.querySelector('span')!.textContent).toBe('x');
+  });
+  it('adopts a show region even when an authored comment precedes it',()=>{
+    const root=fixture('<div><!--f:side note--><!--f:s0--><p class="content">Hi</p><!--/f:s0--></div>'),[show,setShow]=createSignal(true),comment=root.firstChild;
+    prepareAndCommit(root,()=>h('div',null,createShow(show,()=>h('p',{class:'content'},'Hi'),()=>h('p',{class:'fallback'},'Bye'))));
+    setShow(false);expect(root.querySelector('p.fallback')!.textContent).toBe('Bye');expect(root.firstChild).toBe(comment);expect(root.querySelector('p.content')).toBeNull();
   });
 });
 
-// ---------------------------------------------------------------------------
-// Task 8: adoptNode show descriptor handling
-// ---------------------------------------------------------------------------
-
-describe('adoptNode show descriptor handling', () => {
-  it('adopts show descriptor initial branch from SSR markers', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      const handler = vi.fn();
-
-      // Build SSR DOM: <div><!--f:s0--><span>content</span><!--/f:s0--></div>
-      const ssrEl = document.createElement('div');
-      const startComment = document.createComment('f:s0');
-      const ssrSpan = document.createElement('span');
-      ssrSpan.textContent = 'content';
-      const endComment = document.createComment('/f:s0');
-      ssrEl.appendChild(startComment);
-      ssrEl.appendChild(ssrSpan);
-      ssrEl.appendChild(endComment);
-
-      // Descriptor: div with a show descriptor child whose initial branch is a span
-      const showDesc: ShowDescriptor = {
-        type: 'show',
-        condition: () => true,
-        whenTrue: () => document.createElement('span'),
-        initialBranch: {
-          type: 'element' as const,
-          tag: 'span',
-          props: { onClick: handler },
-          children: [],
-        },
-      };
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [showDesc],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // The event handler should be attached to the SSR span
-      ssrSpan.click();
-      expect(handler).toHaveBeenCalledTimes(1);
-    });
-
-    dispose?.();
+describe('strict prepared dynamic props',()=>{
+  it('attaches event handlers via addEventListener only at commit',()=>{
+    const el=fixture('<button>Click me</button>') as HTMLButtonElement,handler=vi.fn();
+    prepareAndCommit(el,()=>h('button',{onClick:handler},'Click me'));el.click();expect(handler).toHaveBeenCalledOnce();
   });
-
-  it('handles empty initial branch (condition false, no else)', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      // Build SSR DOM: <div><!--f:s0--><!--/f:s0--></div>
-      const ssrEl = document.createElement('div');
-      const startComment = document.createComment('f:s0');
-      const endComment = document.createComment('/f:s0');
-      ssrEl.appendChild(startComment);
-      ssrEl.appendChild(endComment);
-
-      const showDesc: ShowDescriptor = {
-        type: 'show',
-        condition: () => false,
-        whenTrue: () => document.createElement('span'),
-        initialBranch: null,
-      };
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [showDesc],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // The markers should still be in place
-      expect(ssrEl.contains(startComment)).toBe(true);
-      expect(ssrEl.contains(endComment)).toBe(true);
-    });
-
-    dispose?.();
+  it('attaches multiple event handlers',()=>{
+    const el=fixture('<input>') as HTMLInputElement,click=vi.fn(),focus=vi.fn();prepareAndCommit(el,()=>h('input',{onClick:click,onFocus:focus}));el.click();el.dispatchEvent(new Event('focus'));expect(click).toHaveBeenCalledOnce();expect(focus).toHaveBeenCalledOnce();
   });
-
-  it('global counters increment correctly across multiple show descriptors', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      const handler1 = vi.fn();
-      const handler2 = vi.fn();
-
-      // Build SSR DOM: <div><!--f:s0--><span>A</span><!--/f:s0--><!--f:s1--><span>B</span><!--/f:s1--></div>
-      const ssrEl = document.createElement('div');
-
-      const start0 = document.createComment('f:s0');
-      const span0 = document.createElement('span');
-      span0.textContent = 'A';
-      const end0 = document.createComment('/f:s0');
-
-      const start1 = document.createComment('f:s1');
-      const span1 = document.createElement('span');
-      span1.textContent = 'B';
-      const end1 = document.createComment('/f:s1');
-
-      ssrEl.appendChild(start0);
-      ssrEl.appendChild(span0);
-      ssrEl.appendChild(end0);
-      ssrEl.appendChild(start1);
-      ssrEl.appendChild(span1);
-      ssrEl.appendChild(end1);
-
-      const showDesc0: ShowDescriptor = {
-        type: 'show',
-        condition: () => true,
-        whenTrue: () => document.createElement('span'),
-        initialBranch: {
-          type: 'element' as const,
-          tag: 'span',
-          props: { onClick: handler1 },
-          children: [],
-        },
-      };
-
-      const showDesc1: ShowDescriptor = {
-        type: 'show',
-        condition: () => true,
-        whenTrue: () => document.createElement('span'),
-        initialBranch: {
-          type: 'element' as const,
-          tag: 'span',
-          props: { onClick: handler2 },
-          children: [],
-        },
-      };
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [showDesc0, showDesc1],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // Both handlers should be attached to their respective SSR spans
-      span0.click();
-      expect(handler1).toHaveBeenCalledTimes(1);
-      expect(handler2).not.toHaveBeenCalled();
-
-      span1.click();
-      expect(handler2).toHaveBeenCalledTimes(1);
-    });
-
-    dispose?.();
+  it('validates static props instead of silently ignoring a mismatch',()=>{
+    const el=fixture('<div class="original"></div>');expectRefusal(el,()=>h('div',{class:'should-not-change',id:'myid','data-x':42}),'FORMA_E_HYDRATE_VALUE');
+  });
+  it('creates reactive attribute bindings without rewriting matching initial values',()=>{
+    const el=fixture('<div data-state="initial"></div>'),[value,setValue]=createSignal('initial');prepareAndCommit(el,()=>h('div',{'data-state':value}));expect(el.getAttribute('data-state')).toBe('initial');setValue('updated');expect(el.getAttribute('data-state')).toBe('updated');
+  });
+  it('removes attribute when reactive value returns false',()=>{
+    const el=fixture('<div hidden></div>'),[hidden,setHidden]=createSignal(true);prepareAndCommit(el,()=>h('div',{hidden}));setHidden(false);expect(el.hasAttribute('hidden')).toBe(false);
+  });
+  it('removes attribute when reactive value returns null',()=>{
+    const el=fixture('<div title="hello"></div>'),[title,setTitle]=createSignal<string|null>('hello');prepareAndCommit(el,()=>h('div',{title}));setTitle(null);expect(el.hasAttribute('title')).toBe(false);
+  });
+  it('sets empty attribute when reactive value returns true',()=>{
+    const el=fixture('<button></button>'),[disabled,setDisabled]=createSignal(false);prepareAndCommit(el,()=>h('button',{disabled}));setDisabled(true);expect(el.getAttribute('disabled')).toBe('');
+  });
+  it('handles null props gracefully',()=>{const el=fixture('<div></div>');prepareAndCommit(el,()=>h('div',null));expect(el.attributes.length).toBe(0);});
+  it('maps className/htmlFor/tabIndex to their HTML attribute names',()=>{
+    const el=fixture('<label class="a" for="field" tabindex="3"></label>'),[cls,setCls]=createSignal('a');prepareAndCommit(el,()=>h('label',{className:cls,htmlFor:()=> 'field',tabIndex:()=>3}));expect(el.getAttribute('class')).toBe('a');expect(el.hasAttribute('classname')).toBe(false);expect(el.getAttribute('for')).toBe('field');expect(el.getAttribute('tabindex')).toBe('3');setCls('b');expect(el.getAttribute('class')).toBe('b');
+  });
+  it('calls a function ref with the adopted element instead of writing a ref attribute',()=>{
+    const el=fixture('<input>'),seen:Element[]=[];prepareAndCommit(el,()=>h('input',{ref:(node:Element)=>seen.push(node)}));expect(seen).toEqual([el]);expect(el.hasAttribute('ref')).toBe(false);
+  });
+  it('never writes an inline event-handler attribute for an odd-cased on* prop',()=>{
+    const el=fixture('<img>');prepareAndCommit(el,()=>h('img',{ONERROR:()=> 'alert(1)',Onload:()=> 'alert(2)'}));expect(el.hasAttribute('onerror')).toBe(false);expect(el.hasAttribute('onload')).toBe(false);expect(el.attributes.length).toBe(0);
+  });
+  it('removes a URL attribute whose reactive value uses a dangerous scheme',()=>{
+    const el=fixture('<a href="/ok"></a>'),[url,setUrl]=createSignal('/ok');prepareAndCommit(el,()=>h('a',{href:url}));setUrl('java\tscript:alert(1)');expect(el.hasAttribute('href')).toBe(false);setUrl('/back-to-safe');expect(el.getAttribute('href')).toBe('/back-to-safe');
   });
 });
 
-// ---------------------------------------------------------------------------
-// Task 9: hydrateIsland — full orchestration
-// ---------------------------------------------------------------------------
+describe('strict descriptor preparation',()=>{
+  it.each([
+    ['simple','<div class="card">Hello</div>',()=>h('div',{class:'card'},'Hello')],
+    ['nested','<div><span class="inner">Nested</span></div>',()=>h('div',null,h('span',{class:'inner'},'Nested'))],
+    ['null props','<br>',()=>h('br',null)],
+    ['deep','<div><ul><li>Item 1</li><li>Item 2</li></ul></div>',()=>h('div',null,h('ul',null,h('li',null,'Item 1'),h('li',null,'Item 2')))],
+  ] as const)('adopts %s descriptors without converting them to new DOM',(_name,html,build)=>{
+    const el=fixture(html),before=el.outerHTML,first=el.firstChild;prepareAndCommit(el,build);expect(el.outerHTML).toBe(before);expect(el.firstChild).toBe(first);
+  });
+  it('recurses into nested children and attaches their event handlers',()=>{
+    const el=fixture('<div><span>inner</span></div>'),span=el.firstElementChild as HTMLElement,handler=vi.fn();prepareAndCommit(el,()=>h('div',null,h('span',{onClick:handler},'inner')));span.click();expect(handler).toHaveBeenCalledOnce();expect(el.firstElementChild).toBe(span);
+  });
+  it('binds reactive text to SSR text marker nodes',()=>{
+    const el=fixture('<div><!--f:t0-->hello<!--/f:t0--></div>'),node=el.childNodes[1] as Text,[value,setValue]=createSignal('hello');prepareAndCommit(el,()=>h('div',null,value));expect(node.data).toBe('hello');setValue('world');expect(node.data).toBe('world');
+  });
+  it('uses a scalar text range rather than treating a Show marker as a text binding',()=>{
+    const el=fixture('<button><!--f:s5-->Show<!--/f:s5--></button>'),[value]=createSignal('Show');expectRefusal(el,()=>h('button',null,value),'FORMA_E_HYDRATE_MARKER');
+    const positive=fixture('<button><!--f:t5-->Show<!--/f:t5--></button>'),[label,setLabel]=createSignal('Show');prepareAndCommit(positive,()=>h('button',null,label));setLabel('Hide');expect(positive.textContent).toBe('Hide');
+  });
+  it('handles interleaved elements and reactive text',()=>{
+    const el=fixture('<div><span></span><!--f:t0-->dynamic<!--/f:t0--><p></p></div>'),children=Array.from(el.children),[value]=createSignal('dynamic');prepareAndCommit(el,()=>h('div',null,h('span'),value,h('p')));expect(Array.from(el.children)).toEqual(children);expect(el.textContent).toBe('dynamic');
+  });
+  it('refuses a tag mismatch without replacing the original element',()=>{const el=fixture('<span></span>');expectRefusal(el,()=>h('div',{class:'replacement'},'Replaced'),'FORMA_E_HYDRATE_NODE');});
+  it('refuses a missing SSR child without inserting a replacement',()=>{const el=fixture('<section></section>');expectRefusal(el,()=>h('section',null,h('div')),'FORMA_E_HYDRATE_NODE');});
+  it('adopts static string children without touching the server text node',()=>{
+    const el=fixture('<div>static textanother string42</div>'),node=el.firstChild;prepareAndCommit(el,()=>h('div',null,'static text','another string',42));expect(el.childNodes).toHaveLength(1);expect(el.firstChild).toBe(node);expect(el.textContent).toBe('static textanother string42');
+  });
+  it('refuses differing static text rather than ignoring trailing client children',()=>{const el=fixture('<div>static text</div>');expectRefusal(el,()=>h('div',null,'static text','another string',42),'FORMA_E_HYDRATE_NODE');});
+  it('adopts falsy children (false, null, undefined) without creating nodes',()=>{const el=fixture('<div></div>');prepareAndCommit(el,()=>h('div',null,false,null,undefined));expect(el.childNodes).toHaveLength(0);});
+  it.each(['<!--f:i0--><!--/f:i0-->','<!--f:i0--><!--/f:i0--><!--f:i1--><!--/f:i1-->'])('refuses empty island regions without manufacturing client roots: %s',html=>{
+    const el=fixture('<div>'+html+'</div>');expectRefusal(el,()=>h('div',null,h('div',{class:'alert'},'Error')),'FORMA_E_HYDRATE_NODE');
+  });
+  it('does not consume a nested island as the parent component\'s own element',()=>{
+    const el=fixture('<div><!--f:i0--><section data-forma-island="1" class="child">from server</section><!--/f:i0--><form></form></div>'),shell=el.querySelector('section');
+    expectRefusal(el,()=>h('div',null,h('section',{class:'child'},'from client'),h('form')),'FORMA_E_HYDRATE_NODE');expect(el.querySelector('section')).toBe(shell);
+  });
+  it.each(['<!--f:t0--><!--/f:t0-->','<!--f:s5--><!--/f:s5-->',''])('refuses missing dynamic text instead of inserting it: %s',html=>{
+    const el=fixture('<div>'+html+'</div>');expectRefusal(el,()=>h('div',null,()=>''),'FORMA_E_HYDRATE_MARKER');
+  });
+  it('preserves the native zero-width empty-text placeholder and binds later text',()=>{
+    const el=fixture('<div><!--f:t0-->\u200b<!--/f:t0--></div>'),node=el.childNodes[1] as Text,[value,setValue]=createSignal<string|null>(null);prepareAndCommit(el,()=>h('div',null,()=>value()||''));expect(el.childNodes[1]).toBe(node);expect(node.data).toBe('\u200b');setValue('Error occurred');expect(node.data).toBe('Error occurred');
+  });
+  it('refuses an element-valued uncompiled reader without invoking a repairing path',()=>{
+    const el=fixture('<div><span class="inner">hello</span></div>'),handler=vi.fn();expectRefusal(el,()=>h('div',null,()=>h('span',{class:'inner',onClick:handler},'hello')),'FORMA_E_HYDRATE_STRUCTURE');(el.firstElementChild as HTMLElement).click();expect(handler).not.toHaveBeenCalled();
+  });
+  it('refuses scalar text at an element cursor without adding text alongside it',()=>{
+    const el=fixture('<div><span>existing</span></div>'),[value,setValue]=createSignal('hello');expectRefusal(el,()=>h('div',null,value),'FORMA_E_HYDRATE_MARKER');setValue('world');expect(el.textContent).toBe('existing');
+  });
+});
+
+describe('strict Show preparation and later ownership',()=>{
+  it('adopts show descriptor initial branch from SSR markers',()=>{
+    const el=fixture('<div><!--f:s0--><span>content</span><!--/f:s0--></div>'),old=el.querySelector('span') as HTMLElement,handler=vi.fn();prepareAndCommit(el,()=>h('div',null,createShow(()=>true,()=>h('span',{onClick:handler},'content'))));old.click();expect(handler).toHaveBeenCalledOnce();expect(el.querySelector('span')).toBe(old);
+  });
+  it('handles empty initial branch (condition false, no else)',()=>{
+    const el=fixture('<div><!--f:s0--><!--/f:s0--></div>'),start=el.firstChild,end=el.lastChild,[show,setShow]=createSignal(false);prepareAndCommit(el,()=>h('div',null,createShow(show,()=>h('span',null,'yes'))));expect(el.firstChild).toBe(start);expect(el.lastChild).toBe(end);setShow(true);expect(el.querySelector('span')!.textContent).toBe('yes');setShow(false);expect(el.querySelector('span')).toBeNull();
+  });
+  it('keeps multiple Show regions independent without global counters',()=>{
+    const el=fixture('<div><!--f:s0--><span>A</span><!--/f:s0--><!--f:s1--><span>B</span><!--/f:s1--></div>'),a=vi.fn(),b=vi.fn();prepareAndCommit(el,()=>h('div',null,createShow(()=>true,()=>h('span',{onClick:a},'A')),createShow(()=>true,()=>h('span',{onClick:b},'B'))));(el.children[0] as HTMLElement).click();expect(a).toHaveBeenCalledOnce();expect(b).not.toHaveBeenCalled();(el.children[1] as HTMLElement).click();expect(b).toHaveBeenCalledOnce();
+  });
+  it('adopts SSR show content in place — no DOM movement during initial hydration',async()=>{
+    const el=fixture('<div><!--f:s0--><p class="content">Hello</p><!--/f:s0--></div>'),old=el.querySelector('p'),[show,setShow]=createSignal(true),records:MutationRecord[]=[];
+    const observer=new MutationObserver(batch=>records.push(...batch));observer.observe(el,{attributes:true,childList:true,characterData:true,subtree:true});
+    prepareAndCommit(el,()=>h('div',null,createShow(show,()=>h('p',{class:'content'},'Hello'),()=>h('p',{class:'fallback'},'Hidden'))));await new Promise(resolve=>setTimeout(resolve,0));expect(records.concat(observer.takeRecords())).toEqual([]);expect(el.querySelector('p')).toBe(old);
+    setShow(false);expect(el.querySelector('p.fallback')).toBeTruthy();expect(el.contains(old)).toBe(false);setShow(true);expect(el.querySelector('p.content')).not.toBe(old);expect(el.textContent).toBe('Hello');await new Promise(resolve=>setTimeout(resolve,0));expect(records.concat(observer.takeRecords()).length).toBeGreaterThan(0);observer.disconnect();
+  });
+  it.each([
+    ['wrong branch','<p class="truthy">Truthy</p>',false,true,'FORMA_E_HYDRATE_VALUE'],
+    ['no false branch','<p class="truthy">Truthy</p>',false,false,'FORMA_E_HYDRATE_STRUCTURE'],
+    ['missing true branch','',true,true,'FORMA_E_HYDRATE_NODE'],
+  ] as const)('refuses initial %s with no repair or later resurrection',(_name,markup,initial,hasElse,code)=>{
+    const el=fixture('<div><!--f:s0-->'+markup+'<!--/f:s0--></div>'),[show,setShow]=createSignal<boolean>(initial);
+    expectRefusal(el,()=>h('div',null,createShow(show,()=>h('p',{class:'truthy'},'Truthy'),hasElse?()=>h('p',{class:'falsy'},'Falsy'):undefined)),code);
+    const original=el.innerHTML;for(const value of [true,false,true,false])setShow(value);expect(el.innerHTML).toBe(original);
+  });
+  it('disposes the adopted branch bindings when the server content is dropped',()=>{
+    const el=fixture('<div><!--f:s0--><p class="content"><!--f:t0-->one<!--/f:t0--></p><!--/f:s0--></div>'),[show,setShow]=createSignal(true),[label,setLabel]=createSignal('one'),runs=vi.fn();prepareAndCommit(el,()=>h('div',null,createShow(show,()=>h('p',{class:'content'},()=>{runs();return label();}),()=>h('p',{class:'fallback'},'Hidden'))));const old=el.querySelector('p')!;expect(runs).toHaveBeenCalledOnce();setLabel('two');expect(old.textContent).toBe('two');expect(runs).toHaveBeenCalledTimes(2);setShow(false);runs.mockClear();setLabel('three');expect(runs).not.toHaveBeenCalled();
+  });
+  it('a branch built by its factory keeps updating after a toggle round-trip',()=>{
+    const el=fixture('<div><!--f:s0--><p class="content"><!--f:t0-->one<!--/f:t0--></p><!--/f:s0--></div>'),[show,setShow]=createSignal(true),[label,setLabel]=createSignal('one');prepareAndCommit(el,()=>h('div',null,createShow(show,()=>h('p',{class:'content'},label),()=>h('p',{class:'fallback'},'Hidden'))));setShow(false);setShow(true);setLabel('two');expect(el.querySelector('p.content')!.textContent).toBe('two');setShow(false);setLabel('three');setShow(true);expect(el.querySelector('p.content')!.textContent).toBe('three');
+  });
+});
+
+describe('opaque nested island marker ownership',()=>{
+  it.each([
+    ['text','<!--f:t0-->Parent text<!--/f:t0--><div data-forma-island="1"><!--f:t1-->Child text<!--/f:t1--></div><!--f:t2-->After child<!--/f:t2-->','t',2],
+    ['show','<!--f:s0--><p>Show</p><!--/f:s0--><aside data-forma-island="1"><!--f:s1--><p>Child show</p><!--/f:s1--></aside>','s',1],
+  ] as const)('keeps nested %s ranges outside parent authority',(_name,html,kind,count)=>{
+    const el=fixture('<div>'+html+'</div>'),child=el.querySelector('[data-forma-island]')!,dom=new AdoptionDom(el);dom.children();
+    expect(Array.from(el.childNodes).filter(node=>dom.rangeAt(node)?.kind===kind)).toHaveLength(count);expect(dom.rangeAt(child.firstChild!)).toBeUndefined();expect(()=>dom.children(child)).toThrow('FORMA_E_HYDRATE_STRUCTURE');dom.release();
+  });
+});
 
 describe('hydrateIsland', () => {
   it('hydrates SSR HTML with event handlers', () => {
@@ -1392,7 +224,7 @@ describe('hydrateIsland', () => {
       dispose = d;
 
       // Build SSR container with data-forma-ssr
-      const container = document.createElement('div');
+      const container = connect(document.createElement('div'));
       container.setAttribute('data-forma-ssr', '');
       const ssrButton = document.createElement('button');
       ssrButton.textContent = 'Click me';
@@ -1405,8 +237,8 @@ describe('hydrateIsland', () => {
         container,
       );
 
-      // data-forma-ssr attribute should be removed
-      expect(container.hasAttribute('data-forma-ssr')).toBe(false);
+      // Successful adoption also preserves the original SSR marker attribute
+      expect(container.hasAttribute('data-forma-ssr')).toBe(true);
 
       // SAME button element preserved (not replaced)
       expect(container.children[0]).toBe(ssrButton);
@@ -1426,12 +258,13 @@ describe('hydrateIsland', () => {
       dispose = d;
 
       // Build SSR container: <div data-forma-ssr><p><!--f:t0-->Hello</p></div>
-      const container = document.createElement('div');
+      const container = connect(document.createElement('div'));
       container.setAttribute('data-forma-ssr', '');
       const p = document.createElement('p');
       p.appendChild(document.createComment('f:t0'));
       const textNode = document.createTextNode('Hello');
       p.appendChild(textNode);
+      p.appendChild(document.createComment('/f:t0'));
       container.appendChild(p);
 
       const [text, setText] = createSignal('Hello');
@@ -1458,7 +291,7 @@ describe('hydrateIsland', () => {
       dispose = d;
 
       // Build SSR container: <div data-forma-ssr><input type="password"></div>
-      const container = document.createElement('div');
+      const container = connect(document.createElement('div'));
       container.setAttribute('data-forma-ssr', '');
       const input = document.createElement('input');
       input.setAttribute('type', 'password');
@@ -1487,7 +320,7 @@ describe('hydrateIsland', () => {
     createRoot((d) => {
       dispose = d;
 
-      const container = document.createElement('div');
+      const container = connect(document.createElement('div'));
       container.setAttribute('data-forma-ssr', '');
       const ssrSpan = document.createElement('span');
       ssrSpan.textContent = 'hi';
@@ -1499,7 +332,7 @@ describe('hydrateIsland', () => {
       );
 
       // After hydration, hydrating should be false
-      expect(hydrating).toBe(false);
+      expect(describingAdoption).toBe(false);
 
       // h() should now return a real element
       const el = h('div', { class: 'post-hydration' }, 'real');
@@ -1518,11 +351,12 @@ describe('hydrateIsland', () => {
       dispose = d;
 
       // Build SSR: <div data-forma-ssr><button><!--f:t0-->Create Account</button></div>
-      const container = document.createElement('div');
+      const container = connect(document.createElement('div'));
       container.setAttribute('data-forma-ssr', '');
       const ssrButton = document.createElement('button');
       ssrButton.appendChild(document.createComment('f:t0'));
       ssrButton.appendChild(document.createTextNode('Create Account'));
+      ssrButton.appendChild(document.createComment('/f:t0'));
       container.appendChild(ssrButton);
 
       const [submitting, setSubmitting] = createSignal(false);
@@ -1555,7 +389,7 @@ describe('hydrateIsland', () => {
 describe('complex hydration scenarios', () => {
   it('form with submit handler, reactive button text, password toggle', () => {
     // Container simulates SSR HTML from Rust walker
-    const container = document.createElement('div');
+    const container = connect(document.createElement('div'));
     container.setAttribute('data-forma-ssr', '');
     container.innerHTML = [
       '<div class="page">',
@@ -1621,7 +455,7 @@ describe('complex hydration scenarios', () => {
     // 1. SSR elements preserved
     expect(container.querySelector('form')).toBe(ssrForm);
     expect(container.querySelectorAll('input')[1]).toBe(ssrPasswordInput);
-    expect(container.hasAttribute('data-forma-ssr')).toBe(false);
+    expect(container.hasAttribute('data-forma-ssr')).toBe(true);
 
     // 2. Password toggle
     expect(ssrPasswordInput.getAttribute('type')).toBe('password');
@@ -1641,7 +475,7 @@ describe('complex hydration scenarios', () => {
   });
 
   it('hydration with createShow conditional content', () => {
-    const container = document.createElement('div');
+    const container = connect(document.createElement('div'));
     container.setAttribute('data-forma-ssr', '');
     container.innerHTML = '<div><!--f:s0--><div class="oauth"><button>Google</button></div><!--/f:s0--><form><button>Submit</button></form></div>';
 
@@ -1676,288 +510,6 @@ describe('complex hydration scenarios', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Task 2: createShow hydration enhancement (adopt-in-place + branch caching)
-// ---------------------------------------------------------------------------
-
-describe('createShow hydration enhancement', () => {
-  afterEach(() => {
-    setHydrating(false);
-    document.body.innerHTML = '';
-  });
-
-  it('adopts SSR show content in place — no DOM movement during initial hydration', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      // Set up SSR DOM with show markers and content
-      const root = document.createElement('div');
-      root.innerHTML = '<!--f:s0--><p class="content">Hello</p><!--/f:s0-->';
-      document.body.appendChild(root);
-
-      const originalP = root.querySelector('p')!;
-
-      // Create show descriptor
-      const [show, setShow] = createSignal(true);
-      setHydrating(true);
-      const showDesc = createShow(
-        show,
-        () => h('p', { class: 'content' }, 'Hello'),
-        () => h('p', { class: 'fallback' }, 'Hidden'),
-      );
-      setHydrating(false);
-
-      // Adopt — p should stay in place (same DOM node)
-      const parentDesc = { type: 'element' as const, tag: 'div', props: null, children: [showDesc] };
-      adoptNode(parentDesc, root);
-
-      // Same DOM node, not moved
-      expect(root.querySelector('p.content')).toBe(originalP);
-
-      // First toggle: the adopted server content leaves and the else branch
-      // renders. The server content is NOT cached — hydration cannot prove
-      // which branch the server rendered, so re-inserting it under a branch
-      // label would be a guess.
-      setShow(false);
-      expect(root.querySelector('p.content')).toBeNull();
-      expect(root.querySelector('p.fallback')).toBeTruthy();
-      expect(root.contains(originalP)).toBe(false);
-
-      // Toggle back: the true branch is rebuilt from its factory.
-      setShow(true);
-      const rebuilt = root.querySelector('p.content')!;
-      expect(rebuilt).toBeTruthy();
-      expect(rebuilt).not.toBe(originalP);
-      expect(rebuilt.textContent).toBe('Hello');
-    });
-
-    dispose?.();
-  });
-
-  it('forward mismatch: the server branch is never re-inserted as the other branch across repeated toggles', () => {
-    // Forward mismatch: SSR rendered the TRUE branch but the client condition
-    // is false at adoption (stale server data, or a slot-injection bug). Both
-    // branches render a <p>, so nothing in the DOM says which one is there —
-    // the region is adopted as-is. What must NOT happen is the server's truthy
-    // DOM coming back as the FALSE branch on a later toggle.
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      const root = document.createElement('div');
-      root.innerHTML = '<!--f:s0--><p class="truthy" data-ssr="1">Truthy</p><!--/f:s0-->';
-      document.body.appendChild(root);
-
-      const [show, setShow] = createSignal(false);
-      setHydrating(true);
-      const showDesc = createShow(
-        show,
-        () => h('p', { class: 'truthy' }, 'Truthy'),
-        () => h('p', { class: 'falsy' }, 'Falsy'),
-      );
-      setHydrating(false);
-
-      const parentDesc = { type: 'element' as const, tag: 'div', props: null, children: [showDesc] };
-      adoptNode(parentDesc, root);
-
-      // Undetectable at adoption: the server content stays put.
-      expect(root.querySelector('p')!.getAttribute('data-ssr')).toBe('1');
-
-      // Toggle 1 → true: the true branch is built by its factory.
-      setShow(true);
-      expect(root.querySelector('p')!.className).toBe('truthy');
-      expect(root.querySelector('[data-ssr]')).toBeNull();
-
-      // Toggle 2 → false: the FALSE branch must render. Before the fix the
-      // server's truthy node was cached as the else-fragment and came back
-      // here, permanently showing the truthy UI while the condition is false.
-      setShow(false);
-      expect(root.querySelector('p')!.className).toBe('falsy');
-      expect(root.querySelector('[data-ssr]')).toBeNull();
-
-      // Toggles 3 and 4: the fragments keep swapping the right way round.
-      setShow(true);
-      expect(root.querySelector('p')!.className).toBe('truthy');
-      setShow(false);
-      expect(root.querySelector('p')!.className).toBe('falsy');
-      expect(root.querySelectorAll('p').length).toBe(1);
-    });
-
-    dispose?.();
-  });
-
-  it('forward mismatch with no whenFalse: the server content does not come back as the false branch', () => {
-    // createShow defaults elseFn to () => null, so a show with no author-supplied
-    // false branch renders NOTHING when the condition is false. That makes this
-    // mismatch detectable: the client branch is empty but the region has server
-    // content, so the content is dropped at adoption instead of being cached.
-    let dispose: (() => void) | undefined;
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    createRoot((d) => {
-      dispose = d;
-
-      const root = document.createElement('div');
-      root.innerHTML = '<!--f:s0--><p class="truthy">Truthy</p><!--/f:s0-->';
-      document.body.appendChild(root);
-
-      const [show, setShow] = createSignal(false);
-      setHydrating(true);
-      const showDesc = createShow(show, () => h('p', { class: 'truthy' }, 'Truthy'));
-      setHydrating(false);
-
-      const parentDesc = { type: 'element' as const, tag: 'div', props: null, children: [showDesc] };
-      adoptNode(parentDesc, root);
-
-      expect(root.querySelector('p')).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('show condition mismatch'));
-
-      setShow(true);
-      expect(root.querySelector('p.truthy')).toBeTruthy();
-
-      setShow(false);
-      expect(root.querySelector('p')).toBeNull();
-
-      setShow(true);
-      expect(root.querySelector('p.truthy')).toBeTruthy();
-      setShow(false);
-      expect(root.querySelector('p')).toBeNull();
-    });
-
-    warn.mockRestore();
-    dispose?.();
-  });
-
-
-  it('disposes the adopted branch bindings when the server content is dropped', () => {
-    // The adopted branch owns a reactive root, so when hydration drops that
-    // content its bindings stop. Without it they keep running against DOM that
-    // is no longer in the document, for as long as the island lives.
-    let dispose: (() => void) | undefined;
-    const runs = vi.fn();
-
-    createRoot((d) => {
-      dispose = d;
-
-      const root = document.createElement('div');
-      root.innerHTML = '<!--f:s0--><p class="content">one</p><!--/f:s0-->';
-      document.body.appendChild(root);
-
-      const [show, setShow] = createSignal(true);
-      const [label, setLabel] = createSignal('one');
-      setHydrating(true);
-      const showDesc = createShow(
-        show,
-        () => h('p', { class: 'content' }, () => { runs(); return label(); }),
-        () => h('p', { class: 'fallback' }, 'Hidden'),
-      );
-      setHydrating(false);
-
-      const parentDesc = { type: 'element' as const, tag: 'div', props: null, children: [showDesc] };
-      adoptNode(parentDesc, root);
-
-      const adopted = root.querySelector('p.content')!;
-      expect(runs).toHaveBeenCalledTimes(1);
-
-      setLabel('two');
-      expect(adopted.textContent).toBe('two');
-      expect(runs).toHaveBeenCalledTimes(2);
-
-      // The server content leaves and is not cached — its bindings must go too.
-      runs.mockClear();
-      setShow(false);
-      setLabel('three');
-      expect(runs).not.toHaveBeenCalled();
-    });
-
-    dispose?.();
-  });
-
-  it('a branch built by its factory keeps updating after a toggle round-trip', () => {
-    // The branch factory runs inside createRoot + untrack. Without untrack its
-    // bindings become dependencies of the show effect and alien-signals tears
-    // them down on the next toggle, so the cached branch would come back frozen.
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      const root = document.createElement('div');
-      root.innerHTML = '<!--f:s0--><p class="content">one</p><!--/f:s0-->';
-      document.body.appendChild(root);
-
-      const [show, setShow] = createSignal(true);
-      const [label, setLabel] = createSignal('one');
-      setHydrating(true);
-      const showDesc = createShow(
-        show,
-        () => h('p', { class: 'content' }, label),
-        () => h('p', { class: 'fallback' }, 'Hidden'),
-      );
-      setHydrating(false);
-
-      const parentDesc = { type: 'element' as const, tag: 'div', props: null, children: [showDesc] };
-      adoptNode(parentDesc, root);
-
-      // Round-trip so the branch in the DOM is one this effect built itself.
-      setShow(false);
-      setShow(true);
-      expect(root.querySelector('p.content')!.textContent).toBe('one');
-
-      // Live while shown…
-      setLabel('two');
-      expect(root.querySelector('p.content')!.textContent).toBe('two');
-
-      // …and still live while cached off-DOM: a value written while the branch
-      // is hidden must be visible when it is re-inserted.
-      setShow(false);
-      setLabel('three');
-      setShow(true);
-      expect(root.querySelector('p.content')!.textContent).toBe('three');
-    });
-
-    dispose?.();
-  });
-
-  it('handles reverse mismatch — SSR empty but client condition is true', () => {
-    const root = document.createElement('div');
-    // SSR rendered with false condition — empty markers
-    root.innerHTML = '<!--f:s0--><!--/f:s0-->';
-    document.body.appendChild(root);
-
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    // Client condition is true — reverse mismatch
-    const [show] = createSignal(true);
-    setHydrating(true);
-    const showDesc = createShow(
-      show,
-      () => h('p', { class: 'truthy' }, 'Visible'),
-      () => h('p', { class: 'falsy' }, 'Hidden'),
-    );
-    setHydrating(false);
-
-    const parentDesc = { type: 'element' as const, tag: 'div', props: null, children: [showDesc] };
-    adoptNode(parentDesc, root);
-
-    // Should render the true branch
-    expect(root.querySelector('p.truthy')).toBeTruthy();
-    expect(root.querySelector('p.truthy')!.textContent).toBe('Visible');
-
-    // Dev warning logged
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('show condition mismatch'),
-    );
-    warn.mockRestore();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Function child returning element (not text) — element.ts fix
-// ---------------------------------------------------------------------------
 
 describe('h() function child returning Node', () => {
   it('appends DOM element when function returns a Node', () => {
@@ -2053,92 +605,6 @@ describe('h() function child returning Node', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// adoptNode: function child returning descriptor (hydration fix)
-// ---------------------------------------------------------------------------
-
-describe('adoptNode function child returning descriptor', () => {
-  it('adopts element when function child returns a descriptor during hydration', () => {
-    createRoot(() => {
-      // SSR HTML: <div><span class="inner">hello</span></div>
-      const ssrEl = document.createElement('div');
-      const ssrSpan = document.createElement('span');
-      ssrSpan.className = 'inner';
-      ssrSpan.textContent = 'hello';
-      ssrEl.appendChild(ssrSpan);
-
-      const handler = vi.fn();
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [
-          // Function child that returns a descriptor (e.g., conditional rendering)
-          () => ({ type: 'element' as const, tag: 'span', props: { onClick: handler }, children: ['hello'] }),
-        ],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // The SSR span should still be there (adopted, not replaced)
-      expect(ssrEl.children.length).toBe(1);
-      expect(ssrEl.children[0]).toBe(ssrSpan);
-
-      // Event handler should be bound
-      ssrSpan.click();
-      expect(handler).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('falls back to text when function child returns primitive with element at cursor', () => {
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-
-      // SSR HTML: <div><span>existing</span></div>
-      const ssrEl = document.createElement('div');
-      const ssrSpan = document.createElement('span');
-      ssrSpan.textContent = 'existing';
-      ssrEl.appendChild(ssrSpan);
-
-      const [msg, setMsg] = createSignal('hello');
-
-      const desc: HydrationDescriptor = {
-        type: 'element',
-        tag: 'div',
-        props: null,
-        children: [() => msg()],
-      };
-
-      adoptNode(desc, ssrEl);
-
-      // The function returned a string, not a descriptor, so the <span> at the
-      // cursor must NOT be adopted as that child's element — it survives
-      // untouched and the reactive text lands beside it.
-      expect(ssrEl.querySelector('span')).toBe(ssrSpan);
-      expect(ssrSpan.textContent).toBe('existing');
-      expect(ssrEl.textContent).toContain('hello');
-
-      // …and it stays a live binding across three updates, not a one-shot write.
-      setMsg('world');
-      expect(ssrEl.textContent).toContain('world');
-      expect(ssrEl.textContent).not.toContain('hello');
-      setMsg('third');
-      expect(ssrEl.textContent).toContain('third');
-      setMsg('');
-      expect(ssrEl.textContent).toBe('existing');
-      expect(ssrEl.querySelector('span')).toBe(ssrSpan);
-    });
-
-    dispose?.();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Style object reconciliation — P2 fix
-// ---------------------------------------------------------------------------
 
 describe('reactive style object reconciliation', () => {
   it('removes stale style keys when reactive style object changes', () => {
@@ -2183,7 +649,7 @@ describe('reactive style object reconciliation', () => {
       expect((el as HTMLElement).style.color).toBe('red');
       expect((el as HTMLElement).style.fontWeight).toBe('bold');
 
-      // Switch to string — cssText replaces everything
+      // Switch to string — the shared per-property writer removes stale declarations
       (setStyles as any)('color: green');
 
       expect((el as HTMLElement).style.color).toBe('green');
@@ -2219,56 +685,8 @@ describe('reactive style object reconciliation', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Task 4: collectMarkers child island skip (FILTER_REJECT)
-// ---------------------------------------------------------------------------
 
-describe('collectMarkers child island skip', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
-  it('FILTER_REJECT skips child island subtrees', () => {
-    const root = document.createElement('div');
-    root.setAttribute('data-forma-island', '0');
-    root.innerHTML = [
-      '<!--f:t0-->Parent text<!--/f:t0-->',
-      '<div data-forma-island="1">',
-      '  <!--f:t1-->Child text<!--/f:t1-->',
-      '</div>',
-      '<!--f:t2-->After child<!--/f:t2-->',
-    ].join('');
-    document.body.appendChild(root);
-
-    const markers = collectMarkers(root);
-
-    // Parent sees t0 and t2, but NOT t1 (inside child island)
-    expect(markers.text.has(0)).toBe(true);
-    expect(markers.text.has(1)).toBe(false); // inside child island
-    expect(markers.text.has(2)).toBe(true);
-  });
-
-  it('markers inside child islands NOT collected by parent', () => {
-    const root = document.createElement('div');
-    root.setAttribute('data-forma-island', '0');
-    root.innerHTML = [
-      '<!--f:s0--><p>Show</p><!--/f:s0-->',
-      '<aside data-forma-island="1">',
-      '  <!--f:s1--><p>Child show</p><!--/f:s1-->',
-      '</aside>',
-    ].join('');
-    document.body.appendChild(root);
-
-    const markers = collectMarkers(root);
-    expect(markers.show.has(0)).toBe(true);
-    expect(markers.show.has(1)).toBe(false); // inside child island
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Binding errors: first run fails the island, later runs never cross islands
-// ---------------------------------------------------------------------------
-
+// Activation isolation remains on the real registry path; runtime activation switch is separately owned.
 describe('island isolation for throwing bindings', () => {
   afterEach(() => {
     document.body.innerHTML = '';
@@ -2276,14 +694,7 @@ describe('island isolation for throwing bindings', () => {
 
   it('a binding that throws while being built fails only its own island', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending">
-        <p title="x">SSR content stays</p>
-      </div>
-      <div data-forma-island="1" data-forma-component="Working" data-forma-status="pending">
-        <p><!--f:t0-->OK<!--/f:t0--></p>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending"><p title="x">SSR content stays</p></div><div data-forma-island="1" data-forma-component="Working" data-forma-status="pending"><p><!--f:t0-->OK<!--/f:t0--></p></div>`;
     installState();
 
     let setMsg!: (v: string) => void;
@@ -2302,7 +713,8 @@ describe('island isolation for throwing bindings', () => {
     expect(document.querySelector('[data-forma-island="0"]')!.getAttribute('data-forma-status')).toBe('error');
     expect(document.querySelector('[data-forma-island="0"] p')!.textContent).toBe('SSR content stays');
 
-    expect(document.querySelector('[data-forma-island="1"]')!.getAttribute('data-forma-status')).toBe('active');
+    expect(document.querySelector('[data-forma-island="1"]')!.getAttribute('data-forma-status')).toBe('pending');
+    expect(typeof (document.querySelector('[data-forma-island="1"]') as any).__formaDispose).toBe('function');
     setMsg('Updated');
     expect(document.querySelector('[data-forma-island="1"] p')!.textContent).toBe('Updated');
 
@@ -2311,14 +723,7 @@ describe('island isolation for throwing bindings', () => {
 
   it('a binding that throws on a shared-signal update does not freeze the other island', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="Fragile" data-forma-status="pending">
-        <p><!--f:t0-->0<!--/f:t0--></p>
-      </div>
-      <div data-forma-island="1" data-forma-component="Display" data-forma-status="pending">
-        <p><!--f:t0-->0<!--/f:t0--></p>
-      </div>
-    `;
+    document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Fragile" data-forma-status="pending"><p><!--f:t0-->0<!--/f:t0--></p></div><div data-forma-island="1" data-forma-component="Display" data-forma-status="pending"><p><!--f:t0-->0<!--/f:t0--></p></div>`;
     installState();
 
     const [count, setCount] = createSignal(0);

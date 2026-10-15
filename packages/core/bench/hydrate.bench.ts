@@ -6,22 +6,15 @@
  * cheaper than building it. Every benchmark here is therefore paired with the
  * client-side-render cost of the same tree.
  *
- * The hardening lane rewrote marker parsing (`markerIndex` in
- * src/dom/hydrate.ts): a prefix test became a full decimal-digit scan of every
- * character after the kind, so an authored `<!--f:side note-->` can no longer
- * be mistaken for a show marker and desync the adoption cursor. That parse runs
- * once per comment node in the tree, which is exactly what the `f:tN`-dense
- * fixtures below stress.
- *
- * The SSR markup and the component that adopts it are written next to each
- * other on purpose: if they drift, adoption silently falls back to *creating*
- * nodes and the benchmark stops measuring hydration. The `describe` bodies
- * assert the adoption actually took (same node identity, live binding) before
- * any measurement happens.
+ * Strict preparation validates exact paired native markers and matching values
+ * on connected original DOM. A refusal never repairs the fixture. The guards
+ * below prove identity, zero initial writes and later liveness before timing.
+ * Connected setup/removal is part of each measured parse/adopt cycle; archived
+ * detached, repairing-hydrator timings are not directly comparable.
  */
 
 import { bench, describe } from 'vitest';
-import { createSignal, createRoot } from 'forma/reactive';
+import { createSignal, createRoot, onError } from 'forma/reactive';
 import { h, hydrateIsland } from 'forma/dom';
 import { createList } from 'forma/dom';
 import {
@@ -69,10 +62,11 @@ function pageComponent(sections: number, slotsPerSection: number, value: () => n
         h('h2', { class: 'card-title' }, `Section ${s}`),
       ];
       for (let i = 0; i < slotsPerSection; i++) {
+        const slot = s * slotsPerSection + i;
         rows.push(
           h('p', { class: 'row' },
             h('span', { class: 'label' }, `Field ${i}`),
-            () => `value ${value()}`,
+            () => `value ${slot + value()}`,
           ),
         );
       }
@@ -88,7 +82,20 @@ function pageComponent(sections: number, slotsPerSection: number, value: () => n
 function ssrHost(markup: string): HTMLElement {
   const host = detachedContainer(markup);
   host.setAttribute('data-forma-ssr', '');
+  document.body.appendChild(host);
   return host;
+}
+
+function guardAdoption(build: () => unknown, host: HTMLElement): void {
+  const errors: unknown[] = [], stop = onError(error => errors.push(error));
+  const before = host.outerHTML, observer = new MutationObserver(() => {});
+  observer.observe(host, { subtree: true, attributes: true, childList: true, characterData: true });
+  try {
+    hydrateIsland(build, host);
+    if (errors.length || host.outerHTML !== before || observer.takeRecords().length) {
+      throw new Error('Benchmark fixture failed strict zero-write adoption', { cause: errors[0] });
+    }
+  } finally { stop(); observer.disconnect(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -114,8 +121,8 @@ describe('hydration: adopt an SSR page', () => {
     createRoot((dispose) => {
       const host = ssrHost(markup);
       const before = host.querySelector('h2')!;
-      const [n, setN] = createSignal(1);
-      hydrateIsland(pageComponent(sections, slots, n), host);
+      const [n, setN] = createSignal(0);
+      guardAdoption(pageComponent(sections, slots, n), host);
       if (host.querySelector('h2') !== before) {
         throw new Error(`${label}: adoption replaced the SSR node instead of adopting it`);
       }
@@ -124,27 +131,30 @@ describe('hydration: adopt an SSR page', () => {
         throw new Error(`${label}: adopted binding is not live`);
       }
       dispose();
+      host.remove();
     });
 
     bench(`${label}: parse markup only (control)`, () => {
-      ssrHost(markup);
+      ssrHost(markup).remove();
     }, preset);
 
     bench(`${label}: parse + hydrateIsland (adopt)`, () => {
       createRoot((dispose) => {
         const host = ssrHost(markup);
-        const [n] = createSignal(1);
+        const [n] = createSignal(0);
         hydrateIsland(pageComponent(sections, slots, n), host);
         dispose();
+        host.remove();
       });
     }, preset);
 
     bench(`${label}: client-side render, no SSR markup (comparison)`, () => {
       createRoot((dispose) => {
         const host = detachedContainer();
-        const [n] = createSignal(1);
+        const [n] = createSignal(0);
         host.appendChild(pageComponent(sections, slots, n)() as Node);
         dispose();
+        host.remove();
       });
     }, preset);
   }
@@ -156,8 +166,8 @@ describe('hydration: adopt an SSR page', () => {
 
 /**
  * A server-rendered keyed list region: `<!--f:l0-->` … `<!--/f:l0-->` with one
- * `data-forma-key` row per item. `adoptListRegion` indexes those rows by key
- * and hands them to the reconciler instead of creating fresh nodes.
+ * `data-forma-key` row per item. Strict preparation requires the initial key
+ * order to match and retains those exact rows for later reconciliation.
  */
 function listMarkup(rows: Row[]): string {
   const parts: string[] = ['<ul class="todos"><!--f:l0-->'];
@@ -181,19 +191,24 @@ describe('hydration: adopt an SSR keyed list', () => {
     createRoot((dispose) => {
       const host = ssrHost(markup);
       const before = host.querySelector('li')!;
-      const [items] = createSignal(rows);
-      hydrateIsland(
+      const [items, setItems] = createSignal(rows);
+      guardAdoption(
         () => h('ul', { class: 'todos' }, createList(items, key, renderRow)),
         host,
       );
       if (host.querySelector('li') !== before) {
         throw new Error(`${n}-row list: adoption replaced the SSR rows instead of adopting them`);
       }
+      setItems(rows.slice(1));
+      if (host.contains(before) || host.querySelectorAll('li').length !== n - 1) {
+        throw new Error(`${n}-row list: adopted reconciliation is not live`);
+      }
       dispose();
+      host.remove();
     });
 
     bench(`${n} rows: parse markup only (control)`, () => {
-      ssrHost(markup);
+      ssrHost(markup).remove();
     }, preset);
 
     bench(`${n} rows: parse + adopt by data-forma-key`, () => {
@@ -205,6 +220,7 @@ describe('hydration: adopt an SSR keyed list', () => {
           host,
         );
         dispose();
+        host.remove();
       });
     }, preset);
 

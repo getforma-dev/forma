@@ -1,8 +1,8 @@
-import{describe,it,expect,vi}from'vitest';
-import{prepareAdoption}from'../adoption.js';
-import{h}from'../element.js';
-import{__adoptionChild}from'../adoption-description.js';
-import{__islandRegistration,preflightIslands,type ValidatedIsland,type IslandSchema}from'../island-state.js';
+import {describe,it,expect,vi} from 'vitest';
+import {prepareAdoption} from '../adoption.js';
+import {h} from '../element.js';
+import {__adoptionChild} from '../adoption-description.js';
+import {__islandRegistration,preflightIslands,type ValidatedIsland,type IslandSchema} from '../island-state.js';
 const H='0123456789abcdef',J='fedcba9876543210',schema:IslandSchema=[[{name:'count',type:{kind:'number'}}]];
 function fixture(Child:(props:Record<string,unknown>)=>unknown,{second=false,bad=false}={}){
  const doc=document.implementation.createHTMLDocument();doc.body.innerHTML=`<main><!--f:i0--><button data-forma-island="0" data-forma-state="0" data-forma-component="A" data-forma-h="${H}">one</button><!--/f:i0-->${second?`<!--f:i1--><button data-forma-island="1" data-forma-state="1" data-forma-component="B" data-forma-h="${J}">two</button><!--/f:i1-->`:''}${bad?'<i>wrong</i>':''}</main>`;
