@@ -514,5 +514,12 @@ contexts that continue rebuilding. If two setups interleave while reusing the
 same options object, the grouping is ambiguous and fails with `BUILD-611`.
 Use distinct options objects for concurrent setups (and a fresh options object
 after an incomplete failed setup). This coordinator does not add a public
-combined-plugin API. Adoption hook collection is a separate104 integration;
-this checkpoint composes the existing entry edits and retains all source guards.
+combined-plugin API.
+
+The coordinator collects adoption hooks from every original registration before
+loading shared modules, then composes those hooks with entry edits in original
+coordinates. Shared helper uses with conflicting writable codecs retain their
+signal tuples but receive no setter authority. Each module receives one hygienic
+hook import, and unchanged native bytes/contracts remain the authority for
+browser registration. This is compiler preparation; the104 adoption transaction
+and final combined browser/packed acceptance remain separate gates.

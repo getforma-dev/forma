@@ -7,7 +7,7 @@ import {runInNewContext} from 'node:vm';
 import {formaSsrPlugin,generateRealIr} from '../src/esbuild-ssr-plugin';
 const roots:string[]=[];
 afterEach(()=>{for(const root of roots.splice(0))rmSync(root,{recursive:true,force:true});});
-const stub:Plugin={name:'core-fixture',setup(b){b.onResolve({filter:/^@getforma\/core$/},()=>({path:'core',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`export function h(){return {}};export function mount(){};export function createSignal(v){return [()=>v,()=>{}]};export function activateIslands(registry){globalThis.registry=registry};export function __islandRegistration(component,metadata){const wrapper=p=>component(p);wrapper.metadata=metadata;return wrapper}`,loader:'js'}));}};
+const stub:Plugin={name:'core-fixture',setup(b){b.onResolve({filter:/^@getforma\/core$/},()=>({path:'core',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`export function h(){return {}};export function mount(){};export function createSignal(v){return [()=>v,()=>{}]};export function __adoptionSignal(_site,pair){return pair};export function activateIslands(registry){globalThis.registry=registry};export function __islandRegistration(component,metadata){const wrapper=p=>component(p);wrapper.metadata=metadata;return wrapper}`,loader:'js'}));}};
 function fixture(){
   const root=mkdtempSync(join(tmpdir(),'forma-island-product-'));roots.push(root);
   const island=join(root,'badge.ts'),entry=join(root,'app.ts');
