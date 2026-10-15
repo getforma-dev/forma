@@ -34,9 +34,9 @@ function invalid(scope: PropsScope, node: t.Node, message: string): never {
   const at = originalPosition(scope.file, node.loc?.start ?? { line: 1, column: 0 });
   throw new PropsSchemaError(scope.file, at.line, at.column, message);
 }
-function unwrap(node: t.Node): t.Node {
-  if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node) || t.isParenthesizedExpression(node)) return unwrap(node.expression);
-  if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {
+function unwrap(node: t.Node, readGetter=true): t.Node {
+  if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node) || t.isParenthesizedExpression(node)) return unwrap(node.expression,readGetter);
+  if (readGetter&&(t.isArrowFunctionExpression(node) || t.isFunctionExpression(node))) {
     if (node.params.length) return node;
     if (!t.isBlockStatement(node.body)) return unwrap(node.body);
     if (node.body.body.length === 1 && t.isReturnStatement(node.body.body[0]) && node.body.body[0].argument) return unwrap(node.body.body[0].argument);
@@ -47,9 +47,10 @@ function localName(node: t.Identifier, scope: PropsScope): string | undefined {
   const binding = scope.references.get(node);
   return binding && binding === scope.bindings.get(node.name) ? node.name : undefined;
 }
-export function propPath(node: t.Node | null | undefined, scope: PropsScope | undefined): Path | undefined {
+export function propPath(node: t.Node | null | undefined, scope: PropsScope | undefined, readGetter=true): Path | undefined {
   if (!node || !scope) return undefined;
-  node = unwrap(node);
+  node = unwrap(node,readGetter);
+  if(!readGetter&&t.isIdentifier(node)&&localName(node,scope)&&scope.signals.has(node.name))invalid(scope,node,'a signal getter must be called before reading its returned object');
   if (t.isIdentifier(node)) { const name = localName(node, scope); if (name && scope.unsupported.has(name)) invalid(scope, node, `computed declared prop binding ${name} is outside the SSR subset; pass its rendered value from the handler`); return name ? scope.aliases.get(name) ?? scope.signals.get(name) : undefined; }
   if (t.isCallExpression(node) && t.isIdentifier(node.callee)) {
     if (node.arguments.length === 0) { const name = localName(node.callee, scope); if (name && scope.unsupported.has(name)) invalid(scope, node, `computed declared prop binding ${name} is outside the SSR subset`); return name ? scope.signals.get(name) : undefined; }
@@ -76,7 +77,7 @@ export function propPath(node: t.Node | null | undefined, scope: PropsScope | un
       if (!path) invalid(scope, node, `field ${key} is absent from the declared props`);
       return path;
     }
-    const parent = propPath(node.object, scope);
+    const parent = propPath(node.object, scope, false);
     if (parent) {
       if (key === undefined) invalid(scope, node, 'a declared prop requires a literal field name');
       return [...parent, key];
@@ -131,6 +132,7 @@ export function propSlot(node: t.Node | null | undefined, scope: PropsScope | un
   if (slot === undefined) invalid(scope, node, `missing declared root binding ${path[0]}`);
   for (let i = 1; i < path.length; i++) {
     const closed=ctx.constantSlot(slot);
+    if(propType(path.slice(0,i),scope,node).kind==='optional'&&!closed)invalid(scope,node,'plain property access through an optional declared value needs a proven non-null value');
     if(closed) {
       if(closed.value===null)invalid(scope,node,'plain property access through a known null or absent value would throw');
       if(typeof closed.value==='object'&&!Object.hasOwn(closed.value,path[i]!)&&path[i]! in Object.prototype)invalid(scope,node,'inherited object properties are not closed own data');
@@ -193,16 +195,19 @@ function declarations(scope: PropsScope, fn: ComponentFunction, ctx?: IrEmitCont
         scope.objects.set(declaration.id.name, scope.objects.get(declaration.init.name)!);
       } else {
         const path = propPath(declaration.init, scope);
-        if (path) scope.aliases.set(declaration.id.name, path);
+        const initial=unwrap(declaration.init,false);
+        const callable=t.isArrowFunctionExpression(initial)||t.isFunctionExpression(initial)
+          ||t.isIdentifier(initial)&&localName(initial,scope)&&scope.signals.has(initial.name);
+        if (path) (callable?scope.signals:scope.aliases).set(declaration.id.name, path);
         else if (containsDeclared(declaration.init, scope)) scope.unsupported.set(declaration.id.name, declaration.init);
       }
     } else if (t.isArrayPattern(declaration.id) && t.isIdentifier(declaration.id.elements[0]) && t.isCallExpression(declaration.init)
       && t.isIdentifier(declaration.init.callee) && scope.signalImports.has(declaration.init.callee.name)
       && !scope.references.has(declaration.init.callee) && declaration.init.arguments[0]) {
-      const initial = unwrap(declaration.init.arguments[0]);
-      let path = propPath(initial, scope);
+      const initial = unwrap(declaration.init.arguments[0],false);
+      let path = propPath(initial, scope, false);
       if (!path && ctx && t.isLogicalExpression(initial) && initial.operator === '??') {
-        const sourcePath = propPath(initial.left, scope);
+        const sourcePath = propPath(initial.left, scope, false);
         if (sourcePath) {
           const sourceType = propType(sourcePath, scope, initial.left), targetType = inner(sourceType);
           const fallback = closedExpression(initial.right, scope.file);
@@ -315,9 +320,9 @@ export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source
 /** Boolean children are omitted by core's h(), for direct and reactive reads. */
 export function emitPropText(node: t.Node, scope: PropsScope | undefined, ctx: IrEmitContext): boolean {
   const path = propPath(node, scope);
-  if (path && scope && inner(propType(path, scope, node)).kind === 'boolean') return true;
   const slot = propSlot(node, scope, ctx, 'text');
   if (slot === undefined) return false;
+  if (path && scope && inner(propType(path, scope, node)).kind === 'boolean') return true;
   ctx.emit(C.OP_DYN_TEXT); ctx.emitU16(slot); ctx.emitU16(ctx.nextMarker());
   return true;
 }

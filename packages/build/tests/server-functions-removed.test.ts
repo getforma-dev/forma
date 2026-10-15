@@ -57,18 +57,20 @@ describe.each([false, true])('server functions removed (codeSplitting=%s)', code
       await ready();
       await vi.waitFor(() => {
         expect(manifest().build).toBe('dev');
-        expect(readFileSync(join(f.outputDir, 'app.js'), 'utf8')).toContain('public-before');
+        expect(readFileSync(join(f.outputDir, manifest().aliases['app.js']), 'utf8')).toContain('public-before');
       }, { timeout: 10_000 });
-      const bundle = join(f.outputDir, 'app.js');
+      const bundle = join(f.outputDir, manifest().aliases['app.js']);
       const before = readFileSync(bundle, 'utf8');
       expect(before).toContain('public-before');
       await change(() => writeFileSync(f.entry, '"use server"; export const label = "private-after";'));
       await vi.waitFor(() => expect(output()).toContain('BUILD-808'), { timeout: 10_000 });
-      // esbuild may remove the old output on an error; it must not publish private code.
-      if (existsSync(bundle)) expect(readFileSync(bundle, 'utf8')).toBe(before);
+      // Rejected output never changes the accepted alias or its immutable bytes.
+      expect(join(f.outputDir, manifest().aliases['app.js'])).toBe(bundle);
+      expect(readFileSync(bundle, 'utf8')).toBe(before);
       await change(() => writeFileSync(f.entry, 'export const label = "public-recovered";'));
-      await vi.waitFor(() => expect(readFileSync(bundle, 'utf8')).toContain('public-recovered'), { timeout: 10_000 });
-      expect(readFileSync(bundle, 'utf8')).not.toContain('private-after');
+      await vi.waitFor(() => expect(readFileSync(join(f.outputDir, manifest().aliases['app.js']), 'utf8')).toContain('public-recovered'), { timeout: 10_000 });
+      expect(readFileSync(bundle, 'utf8')).toBe(before);
+      expect(readFileSync(join(f.outputDir, manifest().aliases['app.js']), 'utf8')).not.toContain('private-after');
     });
   }, 30_000);
   it('rejects a separate SSR entry and reports the exact source location', async () => {

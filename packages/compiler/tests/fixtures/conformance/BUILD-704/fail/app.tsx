@@ -2,6 +2,6 @@ import { h, mount, createSignal, createShow, createList, activateIslands, browse
 
 mount(() => (
   <main>
-    {createPortal(() => <p>overlay</p>, document.body)}{/* expect: BUILD-704 */}
+    {createPortal(() => <p>overlay</p>, document.body)}{/* expect: BUILD-704; expect: BUILD-610 */}
   </main>
 ), '#app');

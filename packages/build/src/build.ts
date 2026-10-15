@@ -788,46 +788,52 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     // Each pass's metafile feeds the summary printed once the files have
     // their hashed names (FORMA-180 F3).
     const metafiles: esbuild.Metafile[] = [];
+    const buildFailures: unknown[] = [];
     if (config.codeSplitting && config.entryPoints.length) {
-      const result = await esbuild.build(splitOptions);
-      publishOutputFiles(result.outputFiles??[]);
-      if (!result.metafile) throw new Error('Split build did not return its module graph.');
-      metafiles.push(result.metafile);
-      graph = splitGraph(result.metafile, config.entryPoints, distDir);
-      for (const entry of config.entryPoints) {
-        if (config.serverInlined?.includes(entry.outfile)) cpSync(join(distDir, graph.assets[entry.outfile]), join(distDir, entry.outfile));
-      }
-    } else await Promise.all(
-      config.entryPoints.map(async (entry) => {
-        const buildOptions: esbuild.BuildOptions = {
-          ...shared,
-          entryPoints: [entry.entry],
-          outfile: join(distDir, entry.outfile),
-          metafile: true,
-          write: false,
-        };
-
-        if (config.ssr && entry.ssr !== false && formaSsrPlugin) {
-          const pageName = basename(entry.outfile, '.js');
-          const ssrEntryPoint =
-            config.ssrEntryPoints?.[pageName] ?? entry.entry;
-          buildOptions.plugins = [
-            ...(buildOptions.plugins || []),
-            formaSsrPlugin({
-              page: pageName,
-              outDir: distDir,
-              entryPoint: ssrEntryPoint,
-              clientEntryPoint: entry.entry,
-              ...pluginShared,
-            }),
-          ];
-        }
-
-        const result = await esbuild.build(buildOptions);
+      try {
+        const result = await esbuild.build(splitOptions);
         publishOutputFiles(result.outputFiles??[]);
-        if (result.metafile) metafiles.push(result.metafile);
-      }),
-    );
+        if (!result.metafile) throw new Error('Split build did not return its module graph.');
+        metafiles.push(result.metafile);
+        graph = splitGraph(result.metafile, config.entryPoints, distDir);
+        for (const entry of config.entryPoints) {
+          if (config.serverInlined?.includes(entry.outfile)) cpSync(join(distDir, graph.assets[entry.outfile]), join(distDir, entry.outfile));
+        }
+      } catch (error) { buildFailures.push(error); }
+    } else {
+      const attempts = await Promise.allSettled(
+        config.entryPoints.map(async (entry) => {
+          const buildOptions: esbuild.BuildOptions = {
+            ...shared,
+            entryPoints: [entry.entry],
+            outfile: join(distDir, entry.outfile),
+            metafile: true,
+            write: false,
+          };
+
+          if (config.ssr && entry.ssr !== false && formaSsrPlugin) {
+            const pageName = basename(entry.outfile, '.js');
+            const ssrEntryPoint =
+              config.ssrEntryPoints?.[pageName] ?? entry.entry;
+            buildOptions.plugins = [
+              ...(buildOptions.plugins || []),
+              formaSsrPlugin({
+                page: pageName,
+                outDir: distDir,
+                entryPoint: ssrEntryPoint,
+                clientEntryPoint: entry.entry,
+                ...pluginShared,
+              }),
+            ];
+          }
+
+          const result = await esbuild.build(buildOptions);
+          publishOutputFiles(result.outputFiles??[]);
+          if (result.metafile) metafiles.push(result.metafile);
+        }),
+      );
+      for (const attempt of attempts) if (attempt.status === 'rejected') buildFailures.push(attempt.reason);
+    }
 
     duplicateCore = duplicateCoreDiagnostic(metafiles);
     if (duplicateCore) console.warn(`${duplicateCore.code}: ${duplicateCore.message}`);
@@ -839,6 +845,9 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       const written = writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
       console.log(`   SSR diagnostics written: ${written} (${diagnostics.length})`);
     }
+    // Wait for every entry before removing staging or writing the report. A
+    // mandatory compiler refusal stays fatal even when strict mode is off.
+    if (buildFailures.length) throw buildFailures[0];
     if (strict) {
       const errors = collector.errors();
       if (errors.length > 0) throw strictFailure(errors);

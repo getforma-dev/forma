@@ -3,6 +3,6 @@ function Empty() { const label = 'x'; void label; }
 
 mount(() => (
   <main>
-    <Empty />{/* expect: BUILD-406 */}
+    <Empty />{/* expect: BUILD-406; expect: BUILD-610 */}
   </main>
 ), '#app');

@@ -8,9 +8,9 @@ import { COMPILER_WRITER_VERSION, readFmirContainer } from '../src/fmir';
  * (walker.rs::roundtrip_*) which verify that programmatically-built IR walks
  * to correct HTML.
  *
- * Together, the two test suites ensure the binary contract between the TS
- * emitter and the Rust walker is correct without needing a cross-language
- * execution bridge (that comes in Phase 2 with WASM).
+ * These local structural controls complement the real native-emitter corpus
+ * and the writer/native/browser state transport controls. They do not claim
+ * to replace strict native payload validation.
  *
  * The end-to-end case compiles a page fixture committed in this repository
  * (tests/fixtures/ssr-page) through the real generateRealIr() pipeline, so it
@@ -57,32 +57,18 @@ describe('IR roundtrip validation', () => {
 
     const s = readSections(binary);
 
-    // All sections must end within file bounds
-    expect(s.stringTableOffset + s.stringTableSize).toBeLessThanOrEqual(binary.length);
-    expect(s.slotTableOffset + s.slotTableSize).toBeLessThanOrEqual(binary.length);
-    expect(s.opcodeOffset + s.opcodeSize).toBeLessThanOrEqual(binary.length);
-    expect(s.islandTableOffset + s.islandTableSize).toBeLessThanOrEqual(binary.length);
-
-    // Sections must start at or after byte 88 (header + section table)
-    expect(s.stringTableOffset).toBeGreaterThanOrEqual(88);
-    expect(s.slotTableOffset).toBeGreaterThanOrEqual(88);
-    expect(s.opcodeOffset).toBeGreaterThanOrEqual(88);
-    expect(s.islandTableOffset).toBeGreaterThanOrEqual(88);
-
-    // Sections must tile the file end to end with no gap and no overlap.
-    expect([
-      [s.opcodeOffset, s.opcodeSize],
-      [s.stringTableOffset, s.stringTableSize],
-      [s.slotTableOffset, s.slotTableSize],
-      [s.islandTableOffset, s.islandTableSize],
-    ]).toEqual([
-      [88, s.opcodeSize],
-      [88 + s.opcodeSize, s.stringTableSize],
-      [88 + s.opcodeSize + s.stringTableSize, s.slotTableSize],
-      [88 + s.opcodeSize + s.stringTableSize + s.slotTableSize, s.islandTableSize],
-    ]);
+    const sections = readFmirContainer(binary).sections;
+    expect(sections.map(section => section.id)).toEqual([1, 2, 3, 4, 5, 10]);
+    // Header (24), table prefix (4), and six 12-byte descriptors.
+    let offset = 24 + 4 + 6 * 12;
+    for (const section of sections) {
+      expect(section.offset).toBe(offset);
+      expect(section.offset + section.length).toBeLessThanOrEqual(binary.length);
+      offset += section.length;
+    }
+    expect(offset).toBe(binary.length);
     expect(s.schemaOffset).toBe(s.islandTableOffset + s.islandTableSize);
-    expect(s.schemaOffset + s.schemaSize).toBe(binary.length);
+    expect(sections.at(-1)!.offset).toBe(s.schemaOffset + s.schemaSize);
   });
 
   it('string table is readable and contains exactly the interned entries', () => {
@@ -130,6 +116,7 @@ describe('IR roundtrip validation', () => {
       try {
         const result = generateRealIr(FIXTURE_ENTRY);
         expect(result, 'fixture page must compile to real IR, not fall back').not.toBeNull();
+        expect(warnSpy, 'declared fixture has no unresolved source reads').not.toHaveBeenCalled();
         return result!;
       } finally {
         warnSpy.mockRestore();
@@ -157,7 +144,7 @@ describe('IR roundtrip validation', () => {
         ['Slots', s.slotTableOffset, s.slotTableSize],
         ['Islands', s.islandTableOffset, s.islandTableSize],
       ] as Array<[string, number, number]>) {
-        expect(offset, `${name} section start`).toBeGreaterThanOrEqual(88);
+        expect(offset, `${name} section start`).toBeGreaterThanOrEqual(100);
         expect(offset + size, `${name} section end`).toBeLessThanOrEqual(binary.length);
       }
 
@@ -176,7 +163,7 @@ describe('IR roundtrip validation', () => {
       // Root element with its static and dynamic attributes.
       expect(ops[0]).toBe('OPEN_TAG section id="app"');
       expect(ops[1]).toBe('DYN_ATTR class -> attr:class');
-      // The plain sub-component is inlined; the registered island is not.
+      // The plain sub-component is inlined; the island body keeps its boundary.
       expect(ops).toContain('OPEN_TAG article class="summary"');
       expect(ops).toContain('ISLAND_START StatusPanel#0');
       expect(ops).toContain('ISLAND_END StatusPanel#0');
@@ -190,8 +177,8 @@ describe('IR roundtrip validation', () => {
       expect(ops).toContain('TEXT "Home"');
       expect(ops).toContain('TEXT "Reports"');
       // List, show and event-handler elision all survive the real pipeline.
-      expect(ops).toContain('LIST array=list:rows:array item=list:rows:item body=33');
-      expect(ops).toContain('PROP list:rows:item.name -> list:rows:name');
+      expect(ops.filter(op => op.startsWith('LIST '))).toEqual(['LIST array=$slot11 item=$slot12 body=33']);
+      expect(ops.filter(op => op.startsWith('PROP '))).toEqual(['PROP $slot12.name -> $slot14']);
       expect(ops).toContain('SHOW_IF show:busy then=17 else=17');
       expect(ops).toContain('VOID_TAG input type="search" placeholder="Filter"');
       expect(getStrings(binary)).not.toContain('onSubmit');
@@ -200,29 +187,16 @@ describe('IR roundtrip validation', () => {
     it('gives every colliding slot on the page a distinct name', () => {
       const { binary } = compileFixture();
 
-      // The page mints four `class` attribute slots (root, sub-component,
-      // island, list body) and two text children at child index 0 under
-      // different parents. Before the attr/text occurrence registries these
-      // collapsed into two names. The unrolled NAV_ITEMS spread mints NO slot:
-      // both hrefs resolve to static attributes at compile time.
-      //
-      // Ordering is the walk's: the root page's own scope first, then each
-      // slot at the point the walk reaches it — including `statusText`, which
-      // is minted when the walk ENTERS the island's file, between the
-      // sub-component's class and the island's own.
+      // Root, summary and row class computations each retain a separate slot;
+      // the two computed metrics share a child index but never an identity.
+      // Module captures use named defaults, while local aggregate/list scratch
+      // values use private labels with no handler binding semantics.
       expect(getSlots(binary).map(s => s.name)).toEqual([
-        'title',           // page file module scope
-        'busy',            // page file module scope
-        'attr:class',      // root <section>
-        'attr:class#2',    // inlined SummaryCard
-        'statusText',      // minted on entering the island's scope
-        'attr:class#3',    // the island's own <aside>
-        'text:0',
-        'text:0#2',
-        'list:rows:array',
-        'list:rows:item',          // private local list item
-        'list:rows:name',         // private local list projection
-        'attr:class#4',    // the list body
+        'title', 'busy', 'uptime', 'latency',
+        'attr:class', 'tone', 'attr:class#2',
+        'statusText', 'panelClass',
+        'text:0', 'text:0#2',
+        '$slot11', '$slot12', 'attr:class#3', '$slot14',
         'show:busy',
       ]);
 
@@ -245,17 +219,20 @@ describe('IR roundtrip validation', () => {
         expect(slot.nameIdx, `slot ${slot.name} name index`).toBeLessThan(strings.length);
         // text=1, bool=2, number=3, array=4, object=5
         expect([0x01, 0x02, 0x03, 0x04, 0x05]).toContain(slot.typeHint);
-        // server=0 (list data injected by the host), client=1
+        // server=0 (declared handler roots only), client=1
         expect([0x00, 0x01]).toContain(slot.source);
       });
 
       // A no-props page owns local list state; no handler addresses its scratch slots.
       const byName = new Map(slots.map(slot => [slot.name, slot]));
-      expect(byName.get('list:rows:array')).toMatchObject({ typeHint: 0x04, source: 0x01 });
-      expect(byName.get('list:rows:item')).toMatchObject({ typeHint: 0x05, source: 0x01 });
+      expect(byName.get('$slot11')).toMatchObject({ typeHint: 0x04, source: 0x01 });
+      expect(byName.get('$slot12')).toMatchObject({ typeHint: 0x05, source: 0x01 });
       expect(byName.get('show:busy')).toMatchObject({ typeHint: 0x02, source: 0x01 });
       // The signal default declared in the island file reaches the slot table.
       expect(byName.get('statusText')).toMatchObject({ typeHint: 0x01, default: 'idle' });
+      expect(byName.get('panelClass')).toMatchObject({ typeHint: 0x01, default: 'panel' });
+      expect(byName.get('text:0')).toMatchObject({ default: '10ms' });
+      expect(byName.get('text:0#2')).toMatchObject({ default: '2ms' });
 
       // The slot table consumed exactly its declared section size.
       let pos = s.slotTableOffset + 2;
@@ -269,7 +246,6 @@ describe('IR roundtrip validation', () => {
     it('island metadata matches the binary island table', () => {
       const { binary, islands } = compileFixture();
       const tableIslands = getIslands(binary);
-      const slotsByName = new Map(getSlots(binary).map(s => [s.name, s.id]));
 
       expect(islands.map(i => i.name)).toEqual(['StatusPanel']);
       expect(tableIslands).toHaveLength(1);
@@ -277,13 +253,11 @@ describe('IR roundtrip validation', () => {
         id: 0,
         name: 'StatusPanel',
         trigger: 0x01,   // Load
-        schemaObject: 0xffff, // reserved until schema extraction
+        schemaObject: 1, // actual empty declared island props
       });
-      // Exactly the slots referenced inside the island span.
-      expect(tableIslands[0]!.slotIds).toEqual([
-        slotsByName.get('statusText'),
-        slotsByName.get('attr:class#3'),
-      ]);
+      // Module captures keep their identity and defaults, never handler inputs.
+      expect(tableIslands[0]!.slotIds).toEqual([]);
+      expect(islands[0]!.contract!.schema).toEqual([[]]);
       expect(islands[0]!.slotIds).toEqual(tableIslands[0]!.slotIds);
     });
 
@@ -295,7 +269,7 @@ describe('IR roundtrip validation', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Placeholder IR — the fallback every page lands on when emission fails
+  // Explicit placeholder helper — declared native refusal never uses it
   // -------------------------------------------------------------------------
 
   it('placeholder IR from the SSR plugin has valid structure', () => {

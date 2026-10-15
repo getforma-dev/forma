@@ -2,6 +2,7 @@ import {readSourceFile} from './source-snapshot';
 /** Declared page data is read before JSX lowering erases TypeScript annotations. */
 
 import { dirname, relative, resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
 import { parse } from '@babel/parser';
 import * as t from '@babel/types';
 import { resolveExportedFunction, readImportBindings, type ComponentFunction } from './export-resolver';
@@ -30,6 +31,9 @@ function nameOf(node: t.Node): string | undefined {
 
 /** Empty-parameter pages have an empty contract; a parameter must declare its type. */
 export function readPageProps(file: string, exportedName: string): DeclaredPageProps {
+  // Resolved imports already use canonical paths. Keep the entry root in the
+  // same coordinate system so symlinked checkouts do not invent ../../ paths.
+  file=realpathSync(file);
   const raw: ModuleLoader = (from, specifier) => {
     if (!specifier.startsWith('.')) return null;
     const path = resolveFilePath(dirname(from), specifier);

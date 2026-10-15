@@ -83,7 +83,7 @@ describe('component binding identity extraction', () => {
     expect(()=>analyze('export function Counter(){const [s,setS]=createSignal(1);return h("p",null,()=>s()+1);}')).not.toThrow();
   });
   it('assigns captures by canonical child field use and omits unread helper inputs', () => {
-    const source = head + 'const [a,setA]=createSignal(1);const [b,setB]=createSignal(2);function Label(p){return h("p",null,p.used);}export function Counter(){return h("div",null,Label({unused:b,used:a}),Badge({z:a,a:b}));}';
+    const source = head + 'const [a,setA]=createSignal(1);const [b,setB]=createSignal(2);function Label(p){return h("p",null,p.used);}export function Counter(){return h("div",null,Label({unused:b,used:a}),Badge({z:a(),a:b()}));}';
     const result = analyzeIslandBindings(source, '/page.ts', 'Counter', {props:[],islands:new Set(['Badge']),childFields:()=>[{name:'z',optional:false},{name:'a',optional:false}]});
     expect(result.bindings.slice(0,2)).toEqual([{kind:'capture',value:1},{kind:'capture',value:2}]);
     expect((result.bindings[3] as any).fields).toEqual([{name:'a',value:{kind:'capture',id:1,path:[]}},{name:'z',value:{kind:'capture',id:0,path:[]}}]);
@@ -139,4 +139,14 @@ describe('component binding identity extraction', () => {
     const result=analyze('const [unused,setUnused]=createSignal(1);const [used,setUsed]=createSignal(2);export function Counter(){const ignored=unused();return h("p",null,used);}');
     expect(result.bindings).toEqual([{kind:'capture',value:2},{kind:'text',value:{kind:'capture',id:0,path:[]}}]);
   });
+});
+
+it('keeps callable aliases and helper props distinct from eager values',()=>{
+  expect(()=>analyze('export function Counter(){const[n,s]=createSignal({name:"x"});const alias=n;return h("b",null,alias.name);}')).toThrow(/eager expression/);
+  expect(()=>analyze('export function Counter(){const[n,s]=createSignal({name:"x"});const alias=()=>n();return h("b",null,alias.name);}')).toThrow(/eager expression/);
+  expect(()=>analyze('export function Counter(){const[n,s]=createSignal(1);const value=n();return h("b",null,value());}')).toThrow(/actual signal getter/);
+  expect(()=>analyze('export function Counter(){const[n,s]=createSignal(1);const [other,t]=createSignal(n);return h("b",null,other);}')).toThrow(/eager expression/);
+  expect(()=>analyze('function Label(p){return h("b",null,p.get.name);}export function Counter(){const[n,s]=createSignal({name:"x"});return Label({get:n});}')).toThrow(/eager expression/);
+  expect(()=>analyze('function Label(p){return h("b",null,()=>p.get());}export function Counter(){const[n,s]=createSignal(1);return Label({get:n});}')).not.toThrow();
+  expect(()=>analyze('export function Counter(p){const read=()=>p.title;return h("b",null,()=>read());}',['title'])).not.toThrow();
 });

@@ -14,13 +14,9 @@
  * asset copied into `e2e/ssr/out/site/_assets/`, where the pages rendered by
  * render/ reference them (`/_assets/<file>`).
  *
- * The SSR plugin's IR emission is non-fatal by design: when the compiler
- * cannot analyse a page it writes a PLACEHOLDER module and the page silently
- * becomes client-rendered. A placeholder case tests nothing, so this script
- * re-runs `generateRealIr` on each entry and fails unless the served module is
- * byte-identical to the real one, and unless the islands are exactly the ones
- * the case declares (`expectedIslands` below): an anonymous `island_<n>` shell
- * means the compiler gave up on part of the tree.
+ * Declared native contracts refuse unsupported expressions. This harness also
+ * re-emits each accepted entry and checks that the served IR is byte-identical,
+ * with exactly the expected registered island definitions.
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -36,6 +32,7 @@ const assetsDir = join(outDir, 'site', '_assets');
 /** Islands each case must compile to, by name; every other case has none. */
 const expectedIslands = {
   'browser-only': ['Chart'],
+  'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],
 };
 

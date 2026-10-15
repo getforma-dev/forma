@@ -101,7 +101,7 @@ export class DiagnosticsCollector {
   private toBuildDiagnostic(d: CompilerDiagnostic, page: string): BuildDiagnostic {
     return {
       code: d.code,
-      severity: !d.strict ? 'note' : this.strict ? 'error' : 'warning',
+      severity: d.code === 'BUILD-610' ? 'error' : !d.strict ? 'note' : this.strict ? 'error' : 'warning',
       page,
       file: d.file,
       line: d.line,

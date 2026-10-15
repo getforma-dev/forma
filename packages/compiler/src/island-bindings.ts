@@ -37,8 +37,8 @@ interface Environment {
   functions: Set<t.Node>;
   staticRows: Set<Binding>;
 }
-type DeferredValue = BindingValue | (() => BindingValue);
-function resolved(value: DeferredValue): BindingValue { return typeof value === 'function' ? value() : value; }
+type DeferredValue = BindingValue | { resolve:(readGetter:boolean)=>BindingValue; callable:()=>boolean };
+function resolved(value: DeferredValue,readGetter=true): BindingValue { return 'resolve' in value ? value.resolve(readGetter) : value; }
 interface Signal { binding: Binding; module: Module; declaration: t.VariableDeclarator; initial: t.Expression }
 const functionKey = (node: t.Node): string => `${node.start}:${node.end}:${node.type}`;
 function isFunction(node: t.Node | null | undefined): node is ComponentFunction { return t.isFunctionDeclaration(node) || t.isFunctionExpression(node) || t.isArrowFunctionExpression(node); }
@@ -238,25 +238,52 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       default: return false;
     }
   }
-  function expression(node: t.Node, env: Environment, depth = 0): BindingValue {
+  /** JavaScript callability belongs to the lexical binding, not the encoded
+   * value path: `const value = get()` is a value even if it reads a signal. */
+  function callable(node:t.Node,env:Environment,seen=new Set<Binding>()):boolean {
+    node=unwrap(node);
+    if(isFunction(node))return node.params.length===0;
+    if(t.isMemberExpression(node)&&t.isIdentifier(node.object)) {
+      const key=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
+      const field=key===undefined?undefined:objectFields(node.object,env)?.get(key);
+      return !!field&&'resolve' in field&&field.callable();
+    }
+    if(!t.isIdentifier(node))return false;
+    const local=binding(node,env),mod=moduleOf.get(local)??env.module;
+    if(seen.has(local))fail(env.module,node,'cyclic callable alias');seen.add(local);
+    const known=env.values.get(local);
+    if(known&&'resolve' in known)return known.callable();
+    if(directSignal(local,mod)||signal(local,mod,node))return true;
+    const declaration=local.path.node;
+    return t.isVariableDeclarator(declaration)&&!!declaration.init
+      &&callable(declaration.init,environment(mod,env),seen);
+  }
+  function expression(node: t.Node, env: Environment, depth = 0, readGetter = true): BindingValue {
     if (depth > C.MAX_VALUE_DEPTH) fail(env.module, node, 'binding expression depth exceeds 64');
     node = unwrap(node);
     if (isFunction(node)) {
+      if(!readGetter)fail(env.module,node,'a callable binding is not its returned value in an eager expression');
       if (node.params.length) fail(env.module, node, 'binding getter takes no parameters');
       const returned = returnExpressionOf(node); if (!returned) fail(env.module, node, 'binding getter has no return value');
-      return expression(returned, env, depth + 1);
+      return expression(returned, env, depth + 1, false);
     }
     if (scalar(node) || t.isArrayExpression(node) || t.isObjectExpression(node) || t.isTemplateLiteral(node) && node.expressions.length === 0) return { kind: 'constant', value: data(node, env) };
     if (t.isIdentifier(node)) {
       const local = binding(node, env), known = env.values.get(local);
-      if (known) return resolved(known);
+      if (known) {
+        if(!readGetter&&directSignal(local,moduleOf.get(local)??env.module))fail(env.module,node,'a signal getter must be called in an eager expression');
+        return resolved(known,readGetter);
+      }
       const captured = signal(local, moduleOf.get(local) ?? env.module, node);
-      if (captured) return readCapture(captured, node, env);
+      if (captured) {
+        if(!readGetter)fail(env.module,node,'a captured getter must be called in an eager expression');
+        return readCapture(captured, node, env);
+      }
       const declaration = local.path.node;
       if (t.isVariableDeclarator(declaration) && t.isIdentifier(declaration.id) && declaration.init) {
         if (activeValues.has(local)) fail(env.module, node, 'cyclic alias binding');
         activeValues.add(local);
-        try { return expression(declaration.init, environment(moduleOf.get(local) ?? env.module, env), depth + 1); }
+        try { return expression(declaration.init, environment(moduleOf.get(local) ?? env.module, env), depth + 1, readGetter); }
         finally { activeValues.delete(local); }
       }
       fail(env.module, node, `unsupported native value ${node.name}`);
@@ -267,7 +294,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       const key=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
       if(node.optional&&key!==undefined&&t.isIdentifier(node.object)) {
         const object=objectFields(node.object,env),field=object?.get(key);
-        if(field)return resolved(field);
+        if(field)return resolved(field,readGetter);
       }
       fail(env.module,node,'optional access is admitted only on the proven non-null declared props object');
     }
@@ -276,23 +303,22 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       if (key === undefined) fail(env.module, node, 'native property path needs a literal field');
       if (t.isIdentifier(node.object)) {
         const object = objectFields(node.object, env);
-        if (object) { const field = object.get(key); if (!field) fail(env.module, node, `field ${key} is absent from declared props`); return resolved(field); }
+        if (object) { const field = object.get(key); if (!field) fail(env.module, node, `field ${key} is absent from declared props`); return resolved(field,readGetter); }
       }
-      return project(expression(node.object, env, depth + 1), key, node, env);
+      return project(expression(node.object, env, depth + 1, false), key, node, env);
     }
     if (t.isCallExpression(node) && node.arguments.length === 0) {
-      const value = expression(node.callee, env, depth + 1);
-      if ((value.kind === 'signal' || value.kind === 'capture') && value.path.length === 0) return value;
-      fail(env.module, node, 'native getter call must resolve to an actual signal getter');
+      if(!callable(node.callee,env))fail(env.module,node,'native getter call must resolve to an actual signal getter or proven callable forwarder');
+      return expression(node.callee, env, depth + 1);
     }
-    if (t.isLogicalExpression(node) && node.operator === '??') return { kind: 'nullish', source: expression(node.left, env, depth + 1), fallback: data(node.right, env) };
+    if (t.isLogicalExpression(node) && node.operator === '??') return { kind: 'nullish', source: expression(node.left, env, depth + 1, false), fallback: data(node.right, env) };
     if (t.isUnaryExpression(node) && ['!', '+', '-'].includes(node.operator)) {
-      const value = expression(node.argument, env, depth + 1);
+      const value = expression(node.argument, env, depth + 1, false);
       if (declared(value)) fail(env.module, node, 'computed declared values remain outside the native subset');
       return { kind: 'unary', operator: node.operator as UnaryBindingOperator, value };
     }
     if ((t.isBinaryExpression(node) || t.isLogicalExpression(node)) && ['+', '-', '*', '/', '%', '**', '===', '!==', '<', '<=', '>', '>=', '&&', '||'].includes(node.operator)) {
-      const left = expression(node.left, env, depth + 1), right = expression(node.right, env, depth + 1);
+      const left = expression(node.left, env, depth + 1, false), right = expression(node.right, env, depth + 1, false);
       if (declared(left) || declared(right)) fail(env.module, node, 'computed declared values remain outside the native subset');
       return { kind: 'binary', operator: node.operator as BinaryBindingOperator, left, right };
     }
@@ -322,7 +348,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       if (fields.has(key)) fail(env.module, field, `duplicate component input ${key}`);
       // Helper inputs are only semantic bindings when the helper reads them.
       // CHILD resolves these thunks in its canonical declared-field order.
-      fields.set(key, () => expression(field.value, env));
+      fields.set(key, {resolve:readGetter=>expression(field.value,env,0,readGetter),callable:()=>callable(field.value,env)});
     }
     return fields;
   }
@@ -340,7 +366,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
               }
               const getter = declaration.id.elements[0], local = binding(getter, env), info = directSignal(local, env.module);
               if (!info) { if (declaration.init) rejectInitializerWrites(declaration.init, env); continue; }
-              const ordinal = nextSignal++, initial = expression(info.initial, env);
+              const ordinal = nextSignal++, initial = expression(info.initial, env, 0, false);
               signalInitializers.set(ordinal, initial);
               records.push({ kind: 'signal', value: initial }); env.values.set(local, { kind: 'signal', id: ordinal, path: [] });
               const setter = declaration.id.elements[1];
@@ -374,7 +400,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     if (isFunction(node)) return;
     if (t.isIdentifier(node)) { binding(node, env); return; }
     const savedIds = new Map(captureIds), savedCount = captures.length;
-    try { expression(node, env); }
+    try { expression(node, env, 0, false); }
     catch (error) {
       if (error instanceof PropsSchemaError) fail(env.module, node, `unsupported pre-return execution: ${error.message}`);
       throw error;
@@ -445,7 +471,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       records.push({ kind: 'child', name: componentName, fields: canonical.map(field => {
         const value = fields.get(field.name);
         if (!value && !field.optional) fail(env.module, callee, `missing declared child input ${field.name}`);
-        return { name: field.name, value: value ? resolved(value) : { kind: 'constant', value: null } };
+        return { name: field.name, value: value ? resolved(value,false) : { kind: 'constant', value: null } };
       }) });
       return;
     }

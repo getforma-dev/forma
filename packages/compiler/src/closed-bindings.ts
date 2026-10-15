@@ -31,10 +31,11 @@ export function closedHint(values:readonly unknown[],env:ClosedEnvironment,node:
   }
   return hint??C.SLOT_TYPE_TEXT;
 }
-export function closedBinding(node:t.Node|null|undefined,ctx:IrEmitContext,env:ClosedEnvironment):ClosedBinding|undefined {
+export function closedBinding(node:t.Node|null|undefined,ctx:IrEmitContext,env:ClosedEnvironment,readGetter=true):ClosedBinding|undefined {
   if(!node)return undefined;
-  if(t.isTSAsExpression(node)||t.isTSNonNullExpression(node)||t.isTSSatisfiesExpression(node)||t.isParenthesizedExpression(node))return closedBinding(node.expression,ctx,env);
+  if(t.isTSAsExpression(node)||t.isTSNonNullExpression(node)||t.isTSSatisfiesExpression(node)||t.isParenthesizedExpression(node))return closedBinding(node.expression,ctx,env,readGetter);
   if((t.isArrowFunctionExpression(node)||t.isFunctionExpression(node))&&node.params.length===0) {
+    if(!readGetter)fail(env,node,'a function object is not its returned closed value');
     const body=t.isBlockStatement(node.body)?node.body.body.length===1&&t.isReturnStatement(node.body.body[0])?node.body.body[0].argument:undefined:node.body;
     return closedBinding(body,ctx,env);
   }
@@ -42,11 +43,12 @@ export function closedBinding(node:t.Node|null|undefined,ctx:IrEmitContext,env:C
   if(identifier) {
     const row=env.rows?.get(identifier);if(row){if(t.isCallExpression(node))fail(env,node,'a LIST row value is not a callable signal getter');return row;}
     const signal=env.signal(identifier);
+    if(signal&&!readGetter&&t.isIdentifier(node))fail(env,node,'a signal getter must be called before reading its returned object');
     if(signal?.default.type==='aggregate')return {values:[signal.default.default],slot:()=>signal.slotId};
     return undefined;
   }
   if(t.isMemberExpression(node)) {
-    const source=closedBinding(node.object,ctx,env);if(!source)return undefined;
+    const source=closedBinding(node.object,ctx,env,false);if(!source)return undefined;
     const key=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
     if(key===undefined)fail(env,node,'closed aggregate reads require a literal property name');
     const values=source.values.map(value=>{

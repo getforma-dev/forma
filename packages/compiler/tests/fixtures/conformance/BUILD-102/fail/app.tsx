@@ -3,6 +3,6 @@ let caption = 'Hello';
 
 mount(() => (
   <main>
-    <p>{caption}</p>{/* expect: BUILD-102 */}
+    <p>{caption}</p>{/* expect: BUILD-102; expect: BUILD-610 */}
   </main>
 ), '#app');

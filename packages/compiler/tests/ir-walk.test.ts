@@ -326,7 +326,7 @@ describe('IR Walk Engine', () => {
 
   describe('Rule 5: Non-ternary arrow children', () => {
     it('emits DYN_TEXT for non-ternary arrow', () => {
-      const binary = walkAndEmit(`h('span', null, () => email())`);
+      const binary = walkAndEmit(`h('span', null, () => 'email')`);
 
       expect(parseOpcodeList(binary)).toEqual([
         'OPEN_TAG span',
@@ -336,17 +336,18 @@ describe('IR Walk Engine', () => {
     });
 
     it('emits DYN_TEXT, not SHOW_IF, for an arrow calling a signal', () => {
-      const binary = walkAndEmit(`h('div', null, () => count())`);
+      const { ctx, walkCtx } = withSignals(`const [count] = createSignal(3);`);
+      const binary = walkIntoAndEmit(`h('div', null, () => count())`, ctx, walkCtx);
 
       expect(parseOpcodeList(binary)).toEqual([
         'OPEN_TAG div',
-        'DYN_TEXT text:0 marker=0',
+        'DYN_TEXT count marker=0',
         'CLOSE_TAG div',
       ]);
     });
 
     it('names the text slot after its child index within the parent', () => {
-      const binary = walkAndEmit(`h('div', null, 'a', () => b(), 'c', () => d())`);
+      const binary = walkAndEmit(`h('div', null, 'a', () => 'b', 'c', () => 'd')`);
 
       expect(parseOpcodeList(binary)).toEqual([
         'OPEN_TAG div',
@@ -1197,7 +1198,7 @@ describe('IR Walk Engine', () => {
         `h('div', { class: 'card' },
           h('h1', null, 'Title'),
           h('input', { type: 'email', placeholder: 'Enter email' }),
-          h('p', null, () => message()),
+          h('p', null, () => 'message'),
           h('button', { onClick: handleClick, class: 'btn' }, 'Submit')
         )`,
       );
@@ -1278,7 +1279,7 @@ describe('IR Walk Engine', () => {
 
     it('dedupes two dynamic text children at the same child index', () => {
       const binary = walkAndEmit(
-        `h('div', null, h('span', null, () => a()), h('span', null, () => b()))`,
+        `h('div', null, h('span', null, () => 'a'), h('span', null, () => 'b'))`,
       );
 
       expect(getSlotNames(binary)).toEqual(['text:0', 'text:0#2']);
@@ -1329,8 +1330,8 @@ describe('IR Walk Engine', () => {
     it('dedupes a dynamic text child inside a show branch against one outside it', () => {
       const binary = walkAndEmit(
         `h('div', null,
-          createShow(() => visible(), () => h('span', null, () => a())),
-          h('span', null, () => b()),
+          createShow(() => visible(), () => h('span', null, () => 'a')),
+          h('span', null, () => 'b'),
         )`,
       );
 
@@ -1340,7 +1341,7 @@ describe('IR Walk Engine', () => {
     it('keeps single-occurrence attr and text names unsuffixed', () => {
       // The downstream consumer pins these exact spellings; only genuine
       // collisions may gain a suffix.
-      const binary = walkAndEmit(`h('div', { id: () => a() }, () => b())`);
+      const binary = walkAndEmit(`h('div', { id: () => a() }, () => 'b')`);
 
       expect(getSlotNames(binary)).toEqual(['attr:id', 'text:0']);
     });
@@ -1725,7 +1726,7 @@ describe('IR Walk Engine', () => {
     // constructs through an element and a Fragment and require identical
     // opcodes: a divergence is the bug returning.
     describe.each([
-      ['a dynamic text child', `() => title()`, ['DYN_TEXT text:0 marker=0']],
+      ['a dynamic text child', `() => 'title'`, ['DYN_TEXT text:0 marker=0']],
       ['a numeric child', `7`, ['TEXT "7"']],
       [
         // Structurally asymmetric branches, so a swap of then_len/else_len is
@@ -1770,7 +1771,7 @@ describe('IR Walk Engine', () => {
       // The original defect in one line: the h() call survived, the binding
       // beside it disappeared.
       expect(parseOpcodeList(walkAndEmit(
-        `h(Fragment, null, h('p', null, 'kept'), () => alsoKept(), 'and this')`,
+        `h(Fragment, null, h('p', null, 'kept'), () => 'also kept', 'and this')`,
       ))).toEqual([
         'OPEN_TAG p',
         'TEXT "kept"',

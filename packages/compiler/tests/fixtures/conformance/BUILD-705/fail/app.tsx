@@ -2,6 +2,6 @@ import { h, mount, createSignal, createShow, createList, activateIslands, browse
 
 mount(() => (
   <main>
-    {createSuspense(() => <p>loading</p>, () => <p>loaded</p>)}{/* expect: BUILD-705 */}
+    {createSuspense(() => <p>loading</p>, () => <p>loaded</p>)}{/* expect: BUILD-705; expect: BUILD-610 */}
   </main>
 ), '#app');

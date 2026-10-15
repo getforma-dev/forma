@@ -30,6 +30,15 @@ function emitDiv(ctx: IrEmitContext): void {
   ctx.emitU32(divIdx);
 }
 
+/** Each manual island has a real declared schema; capture bookkeeping is separate. */
+function declareIsland(ctx: IrEmitContext, id: number, fieldCount: number): void {
+  const schema = ctx.appendPropsSchema([Array.from({ length: fieldCount }, (_, index) => ({
+    name: `field${index}`, type: { kind: 'string' as const }, file: 'manual.ts', line: 1, column: index + 1,
+  }))]);
+  ctx.setIslandSchemaObject(id, schema);
+  ctx.setIslandContract(id, 'ssr', []);
+}
+
 describe('IrEmitContext string interning', () => {
   it('returns the same index for a repeated string and stores it once', () => {
     const ctx = new IrEmitContext();
@@ -94,7 +103,7 @@ describe('IrEmitContext binary layout', () => {
 
     expect(ctx.peekNextIslandId()).toBe(0);
     expect(ctx.addIsland('First', 0x01, [], 0)).toBe(0);
-    // peek must NOT consume — emitIsland relies on it for fallback naming.
+    // A peek must not consume an identity before the entry is registered.
     expect(ctx.peekNextIslandId()).toBe(1);
     expect(ctx.peekNextIslandId()).toBe(1);
     expect(ctx.addIsland('Second', 0x01, [], 3)).toBe(1);
@@ -167,45 +176,37 @@ describe('IrEmitContext island slot capture', () => {
     expect(new IrEmitContext().endSlotCapture()).toEqual([]);
   });
 
-  it('drops per-item list scratch slots from an island entry', () => {
+  it('preserves declared input order and repeated source slots', () => {
     const ctx = new IrEmitContext();
-    const arraySlot = ctx.addSlot('list:rows:array', 0x04, 0x00);
-    const itemSlot = ctx.addSlot('list:rows:item', 0x05, 0x00);
-    const propSlot = ctx.addSlot('list:rows:name', 0x01, 0x00);
-    const attrSlot = ctx.addSlot('attr:class', 0x01);
-    const id = ctx.addIsland('RowsIsland', 0x01, [], 0);
-    emitDiv(ctx);
-
-    ctx.setIslandSlotIds(id, [arraySlot, itemSlot, propSlot, attrSlot]);
-
-    // `list:rows:item` holds the LAST rendered row after SSR — serializing it
-    // into data-forma-props would leak that row into the page.
-    expect(ctx.getIslands()[0]!.slotIds).toEqual([arraySlot, propSlot, attrSlot]);
+    const first = ctx.addConstantSlot('first', 1);
+    const second = ctx.addConstantSlot('second', 1);
+    const id = ctx.addIsland('Fields', 0x01, [], 0);
+    declareIsland(ctx, id, 3);
+    const inputs = [second, first, second];
+    ctx.setIslandSlotIds(id, inputs);
+    inputs[0] = first;
+    // Two declared fields may share a source; snapshot order is schema order.
+    expect(ctx.getIslands()[0]!.slotIds).toEqual([second, first, second]);
   });
 
-  it('drops the scratch slot of a name-deduped list too', () => {
-    // The second list over the same source is based `todos#2`, so its scratch
-    // slot is `list:todos#2:item`. The exclusion pattern must still match it —
-    // `#` is not a `:`, but a pattern anchored on the wrong segment would miss.
+  it('does not infer input ownership from a debug slot name', () => {
     const ctx = new IrEmitContext();
-    const arraySlot = ctx.addSlot('list:todos#2:array', 0x04, 0x00);
-    const itemSlot = ctx.addSlot('list:todos#2:item', 0x05, 0x00);
-    const id = ctx.addIsland('TodosIsland', 0x01, [], 0);
-    emitDiv(ctx);
-
-    ctx.setIslandSlotIds(id, [arraySlot, itemSlot]);
-
-    expect(ctx.getIslands()[0]!.slotIds).toEqual([arraySlot]);
+    const namedLikeScratch = ctx.addSlot('list:todos#2:item', 1, 1, new TextEncoder().encode('declared'));
+    const id = ctx.addIsland('Fields', 0x01, [namedLikeScratch], 0);
+    declareIsland(ctx, id, 1);
+    expect(ctx.getIslands()[0]!.slotIds).toEqual([namedLikeScratch]);
   });
 
   it('ignores setIslandSlotIds for an unregistered island id', () => {
     const ctx = new IrEmitContext();
-    const id = ctx.addIsland('Only', 0x01, [7], 0);
+    const value = ctx.addConstantSlot('value', 1);
+    const id = ctx.addIsland('Only', 0x01, [value], 0);
+    declareIsland(ctx, id, 1);
     emitDiv(ctx);
 
     ctx.setIslandSlotIds(id + 1, [1, 2, 3]);
 
-    expect(ctx.getIslands()).toMatchObject([{ id, name: 'Only', slotIds: [7] }]);
+    expect(ctx.getIslands()).toMatchObject([{ id, name: 'Only', slotIds: [value] }]);
   });
 });
 
@@ -220,7 +221,8 @@ describe('IrEmitContext island table', () => {
     ctx.emit(0x0c); // ISLAND_END
     ctx.emitU16(0);
     for (let i = 0; i < 10; i++) ctx.addSlot(`slot${i}`, 1);
-    ctx.addIsland('FormIsland', 0x01, [4, 9], 0);
+    const id = ctx.addIsland('FormIsland', 0x01, [4, 9], 0);
+    declareIsland(ctx, id, 2);
 
     const binary = ctx.toBinary();
 
@@ -229,7 +231,7 @@ describe('IrEmitContext island table', () => {
       name: 'FormIsland',
       nameIdx: 1,
       trigger: 0x01,
-      schemaObject: 0xffff,
+      schemaObject: 1,
       byteOffset: 0,
       slotIds: [4, 9],
     }]);
@@ -244,13 +246,13 @@ describe('IrEmitContext island table', () => {
   it('exposes the same island metadata through getIslands() as the binary table', () => {
     const ctx = new IrEmitContext();
     ctx.addSlot('value', 1);
-    ctx.addIsland('Alpha', 0x01, [0], 0);
+    declareIsland(ctx, ctx.addIsland('Alpha', 0x01, [0], 0), 1);
     ctx.emit(0x0b); ctx.emitU16(0); ctx.emit(0x0c); ctx.emitU16(0);
-    ctx.addIsland('Beta', 0x02, [], 6);
+    declareIsland(ctx, ctx.addIsland('Beta', 0x02, [], 6), 0);
     ctx.emit(0x0b); ctx.emitU16(1); ctx.emit(0x0c); ctx.emitU16(1);
 
     const binary = ctx.toBinary();
-    expect(ctx.getIslands()).toEqual(
+    expect(ctx.getIslands().map(({ id, name, trigger, slotIds }) => ({ id, name, trigger, slotIds }))).toEqual(
       getIslands(binary).map(({ id, name, trigger, slotIds }) =>
         ({ id, name, trigger, slotIds })),
     );

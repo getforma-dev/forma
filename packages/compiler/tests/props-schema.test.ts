@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { readPageProps } from '../src/props-schema';
@@ -13,6 +13,12 @@ function files(sources: Record<string, string>): string {
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
 describe('declared page props', () => {
+  it('uses the same relative source coordinates through a directory alias',()=>{
+    const dir=files({'app.ts':'export {Page} from "./page";','page.ts':'export function Page(p:{title:string}){return null;}'});
+    const links=files({});symlinkSync(dir,join(links,'source'),'junction');
+    expect(readPageProps(join(links,'source','app.ts'),'Page')).toEqual(readPageProps(join(dir,'app.ts'),'Page'));
+    expect(readPageProps(join(links,'source','app.ts'),'Page').schema[0]![0]!.file).toBe('page.ts');
+  });
   it('reads original TSX types, imported aliases and every closed type with original positions', () => {
     const dir = files({
       'barrel.ts': "export { Actual as Page } from './page';",

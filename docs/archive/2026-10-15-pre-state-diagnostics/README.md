@@ -1,0 +1,3 @@
+# Diagnostics before the declared-state migration
+
+Exact prior catalogue, documentation, diagnostic tests and source fixtures are preserved before updating fallback-shell expectations. BUILD-303 and BUILD-504 are retired because closed aggregate signal defaults now emit; BUILD-408 is retired with the old registered-island fallback. BUILD-706 and BUILD-708 are retired with browser-only prop dropping and unregistered shells; those source forms remain explicit BUILD-610 refusal controls. Their numbers remain reserved. Other historical reason codes remain as diagnostics, accompanied by mandatory BUILD-610 when native emission cannot form a declared contract. Active tests must not expect successful empty shells.
