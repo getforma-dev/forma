@@ -28,13 +28,13 @@ async function server(binary, cwd, port, visit, refusal = false) {
         assert(refusal && code !== 0 && /LOAD-/.test(output), `server exited unexpectedly: ${output}`);
         return;
       }
-      try {
-        const response = await fetch(`http://127.0.0.1:${port}/`, { signal: AbortSignal.timeout(500) });
+      let response;
+      try { response = await fetch(`http://127.0.0.1:${port}/`, { signal: AbortSignal.timeout(500) }); }
+      catch (e) { if (e.message !== 'fetch failed' && e.name !== 'TimeoutError') throw e; }
+      if (response) {
         assert(!refusal, `corrupt module server accepted a connection: ${output}`);
+        // Browser test timeouts are failures, not a reason to retry server readiness.
         return await visit(response, `http://127.0.0.1:${port}`);
-      } catch (e) {
-        if (e instanceof assert.AssertionError) throw e;
-        if (e.message !== 'fetch failed' && e.name !== 'TimeoutError') throw e;
       }
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -151,7 +151,13 @@ export async function verify(dir, reportPath) {
                 await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
                 await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
               }
-              assert.equal(await page.locator('[data-forma-state="pending"], [data-forma-island-state="pending"]').count(), 0, 'island remains pending after load');
+              const assertActivated = async () => assert.equal(await page.locator('[data-forma-status="pending"], [data-forma-status="hydrating"], [data-forma-status="error"]').count(), 0, 'island did not activate after load');
+              await assertActivated();
+              // Real DOM negative control: the gate must reject the runtime's actual marker.
+              await page.evaluate(() => { const el = document.createElement('div'); el.id = 'p17-pending-probe'; el.setAttribute('data-forma-status', 'pending'); document.body.append(el); });
+              await assert.rejects(assertActivated, /did not activate/);
+              await page.locator('#p17-pending-probe').evaluate(el => el.remove());
+              await assertActivated();
               assert.deepEqual(errors, [], 'browser error in packed template');
             } finally { await page.close(); }
           });

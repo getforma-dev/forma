@@ -6,7 +6,7 @@ FORMA-113 in `tmp/a2-tarballs`, `tmp/a2-crates` and the founder-published derive
 merged rehearsal baseline 72c2804, not a claim that the seven old registry archives
 were published from one commit. The strengthened P17 implementation is in this PR.
 
-The run passed in 34.419 seconds: fresh advisory checks over each crate's embedded
+The run passed in 29.561 seconds: fresh advisory checks over each crate's embedded
 lock (internal DS11 path substitutions only), packed compiler's 14-case corpus,
 packed reader's nine contract tests, both templates' locked script-disabled npm
 installs, registry signatures, frontend/Rust builds, served pages and browser
@@ -23,6 +23,10 @@ The combined113+117+187 checkout passed `npm run check` in 172 seconds
 source policy also passed. Local logs remain in `work/FORMA-187/tmp/`.
 
 The separate current-source candidate at `bd01d9de517183788dee693f271116d99342e474` also passed P17 in
-34.736 seconds after the 117 integration, including shipped `_npmrc`
+29.18 seconds after the 117 integration, including shipped `_npmrc`
 files and all three embedded-lock advisory checks. Its archives differ from historical
 A2 by design; `current-source-set.json` records the new candidate hashes.
+
+Both final replays check the actual `data-forma-status` marker and inject a real
+pending DOM island to prove the gate rejects it before cleanup. Browser failures
+fail immediately; only the initial HTTP readiness request is retried.

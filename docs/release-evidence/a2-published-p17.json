@@ -24,12 +24,12 @@
     {
       "name": "fresh advisories over every exact shipped crate lock",
       "passed": true,
-      "seconds": 2.99
+      "seconds": 2.829
     },
     {
       "name": "packed compiler emits the frozen corpus read by packed forma-ir",
       "passed": true,
-      "seconds": 6.663
+      "seconds": 5.121
     },
     {
       "name": "packed loader refuses a corrupt module before binding",
@@ -38,12 +38,12 @@
     {
       "name": "minimal: packed CLI, locked install, signatures, build, serve and interaction",
       "passed": true,
-      "seconds": 17.681
+      "seconds": 14.967
     },
     {
       "name": "dashboard: packed CLI, locked install, signatures, build, serve and interaction",
       "passed": true,
-      "seconds": 6.136
+      "seconds": 6.067
     }
   ],
   "pending": {
@@ -83,5 +83,5 @@
       ]
     }
   ],
-  "elapsedSeconds": 34.419
+  "elapsedSeconds": 29.561
 }
