@@ -586,9 +586,13 @@ proof reads the exact source snapshot before JSX lowering and admits a nonempty 
 of the key callback's own row parameter: `row.id`, `row.user.id`, the string-literal member
 `row['id']`, and an immutable local alias of such a read. Anything else refuses here: the row
 itself (`r => r`), an index or second parameter, a computed member, a call, coercion,
-concatenation or arithmetic, a captured or reassigned binding, a path deeper than 32 segments,
-or a `createList` call that does not resolve to the core import (a local function of that name,
-or an ambiguous lowered position). This refusal is mandatory without strict mode. The legacy
+concatenation or arithmetic, a captured or reassigned binding, an empty string-literal segment
+(`row['']`), a path deeper than 32 segments, a key callback with more than one return path (its
+body must be an expression, or variable declarations and exactly one `return`), or a
+`createList` call that does not resolve to the core import (a local function of that name, or an
+ambiguous lowered position). Whether a segment must name a declared field of the row's schema
+type is decided with native key rendering and adoption (checkpoints B and C), not here. This
+refusal is mandatory without strict mode. The legacy
 shape checks keep their precedence: a call missing its row callback, or whose row callback is
 not an inline function with a named parameter, still reports BUILD-107 and ends with BUILD-610.
 
@@ -611,7 +615,9 @@ Element, and a registered child component that itself renders one, are admitted.
 `null`, an empty string, several roots, a conditional (`cond ? <li/> : null`), `createShow` or
 `createList` as the root, a root reached through a spread or computed attribute, or an
 authored `data-forma-key` on the root (reserved for the compiler-written identity) refuse
-here. Conditionals and dynamic ranges inside the stable root remain valid. This refusal is
+here, as does a row callback or row helper with more than one return path (`if (…) return
+<li/>; return <p/>`): the body must be an expression, or variable declarations and exactly one
+`return`. Conditionals and dynamic ranges inside the stable root remain valid. This refusal is
 mandatory without strict mode.
 
 **Fix.** Return one Element per row, `(row) => h('li', …)` or `<li>…</li>`, and move the

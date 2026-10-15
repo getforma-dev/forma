@@ -4,7 +4,7 @@ import {parse} from '@babel/parser';
 import _traverse, {type Binding, type NodePath} from '@babel/traverse';
 import * as t from '@babel/types';
 import {dirname} from 'node:path';
-import {resolveExportedFunction, returnExpressionOf, type ComponentFunction} from './export-resolver';
+import {resolveExportedFunction, type ComponentFunction} from './export-resolver';
 import {resolveFilePath, type ModuleLoader} from './module-loader';
 import {readSourceFile} from './source-snapshot';
 import {originalPosition} from './diagnostics';
@@ -52,6 +52,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   if(t.isMemberExpression(node)) {
    const name=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
    if(name===undefined)fail(mod,node,'BUILD-612','LIST key needs literal row property names, not computed values or indexes');
+   if(name==='')fail(mod,node.property,'BUILD-612','LIST key segment must be a nonempty field name');
    const path=keyPath(mod,node.object,row,active);path.push(name);
    if(path.length>MAX_KEY_SEGMENTS)fail(mod,node,'BUILD-612','LIST key path exceeds32 segments');
    return path;
@@ -123,20 +124,35 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   }
   fail(mod,node,'BUILD-613','LIST row must have exactly one stable owned Element; text, empty, multiple and conditional roots are unsupported');
  }
+ /** The one return of a key, row or row-helper function: an expression body, or a block of
+  * variable declarations plus exactly one `return` with a value. A second return path (an `if`,
+  * a `try`, a loop) would make the key or the row shape depend on data, which DR-8 refuses at
+  * build time rather than at adoption. */
+ function singleReturn(mod:Module,fn:ComponentFunction,code:'BUILD-612'|'BUILD-613',what:string):t.Expression {
+  if(!t.isBlockStatement(fn.body))return fn.body;
+  let found:t.Expression|undefined;
+  for(const statement of fn.body.body) {
+   if(t.isVariableDeclaration(statement))continue;
+   if(t.isReturnStatement(statement)&&statement.argument&&!found){found=statement.argument;continue;}
+   fail(mod,statement,code,`${what} must have exactly one return path: an expression body, or variable declarations and one return`);
+  }
+  if(!found)fail(mod,fn,code,`${what} has no single provable return`);
+  return found;
+ }
  function helper(mod:Module,node:t.Node,active:Set<string>):Root[] {
   const target=resolveFunction(mod,node),id=`${target.mod.file}\0${target.fn.start}`;
   if(active.has(id)||active.size>=64)fail(mod,node,'BUILD-613','recursive or excessive row-root helper chain');
-  const value=returnExpressionOf(target.fn);if(!value)fail(target.mod,target.fn,'BUILD-613','row helper has no single provable return');
+  const value=singleReturn(target.mod,target.fn,'BUILD-613','LIST row helper');
   active.add(id);try{return roots(target.mod,value,active);}finally{active.delete(id);}
  }
  function prove(mod:Module,path:NodePath<t.CallExpression>):ListProof {
   const call=path.node,[,key,row]=call.arguments;
   if(!callable(key)||!t.isIdentifier(key.params[0]))fail(mod,key??call,'BUILD-612','LIST key must be an inline function with a named row parameter');
-  const body=returnExpressionOf(key);if(!body)fail(mod,key,'BUILD-612','LIST key function needs a single property-path return');
+  const body=singleReturn(mod,key,'BUILD-612','LIST key function');
   const parameter=binding(mod,key.params[0],'BUILD-612'),keyParts=keyPath(mod,body,parameter);
   if(!keyParts.length)fail(mod,body,'BUILD-612','LIST key cannot be the row itself; use a nonempty path such as row.id');
   if(!callable(row)||!t.isIdentifier(row.params[0]))fail(mod,row??call,'BUILD-613','LIST row needs an inline callback with a named item');
-  const result=returnExpressionOf(row);if(!result)fail(mod,row,'BUILD-613','LIST row has no single provable return');
+  const result=singleReturn(mod,row,'BUILD-613','LIST row callback');
   const found=roots(mod,result,new Set());if(found.length!==1)fail(mod,result,'BUILD-613','LIST row must contain exactly one stable owned Element');
   return {file:mod.file,start:call.start!,end:call.end!,key:keyParts,root:found[0]!};
  }

@@ -69,12 +69,12 @@ describe('original identity and legacy precedence',()=>{
 });
 describe('proved keyed LIST production',()=>{
  it('emits required section6 for the actual original row path and LIST offset',()=>{expect(keys(emit()).map(x=>x.path)).toEqual([['id']]);});
- it.each(['r=>r','(r,index)=>index','r=>r.id+"!"','r=>String(r.id)','r=>r[0]'])('refuses unsupported key %s at its source, with a passing path near miss',key=>{
+ it.each(['r=>r','(r,index)=>index','r=>r.id+"!"','r=>String(r.id)','r=>r[0]','r=>r[""]','r=>{if(r.legacy)return r.old;return r.id;}','r=>{try{return r.id}catch{return r.old}}'])('refuses unsupported key %s at its source, with a passing path near miss',key=>{
   let failure:any;try{emit(key);}catch(error){failure=error;}
   expect(failure).toMatchObject({code:'BUILD-612',line:3});
   expect(keys(emit()).map(x=>x.path)).toEqual([['id']]);
  });
- it.each(["r=>'text'",'r=>null','r=><><b>{r.label}</b><i>tail</i></>','r=>true?<li>{r.label}</li>:null',"r=><li data-forma-key='authored'>{r.label}</li>"])(
+ it.each(["r=>'text'",'r=>null','r=><><b>{r.label}</b><i>tail</i></>','r=>true?<li>{r.label}</li>:null',"r=><li data-forma-key='authored'>{r.label}</li>",'r=>{if(r.label)return <li>{r.label}</li>;return <p>none</p>;}'])(
   'refuses nonstable row %s with a passing single-root near miss',row=>{
    let failure:any;try{emit('r=>r.id',row);}catch(error){failure=error;}
    expect(failure).toMatchObject({code:'BUILD-613',line:3});
