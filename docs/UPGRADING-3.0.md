@@ -19,6 +19,19 @@ Unwinding faults during the typed request boundary become RENDER-399, and a late
 See [declared props](DECLARED-PROPS.md), [server API](../crates/forma-server/README.md) and [diagnostic codes](DIAGNOSTICS.md). Application migration and rollback remain handler-by-handler work in their assigned tickets; this repository change does not claim those applications are already upgraded.
 
 
+## Keeping the previous release's assets (FORMA-186)
+
+Keep the `dist/` of the release that is live as a release artifact in your pipeline
+and pass its path to the build as `previousDist` (another directory than
+`outputDir`). The build copies that release's own hashed assets into the new
+`dist/`, flagged `retained` and `immutable` in the manifest, so a tab opened before
+a deploy still loads its lazily imported chunks from the one `dist/` you embed.
+One generation only. Mark every release that fixes a vulnerability, a Forma
+security upgrade included, with `security: true` (or `FORMA_SECURITY_RELEASE=1`):
+it retains nothing. Leave the option out for a first deploy; your first 3.0.0
+deploy over a 2.x release retains nothing and says so. Details and the errors
+(`BUILD-820`, `BUILD-821`) are in `packages/build/README.md`, "Retention".
+
 ## Full asset digests
 
 Rebuild schema2 manifests with complete canonical SHA-384 metadata before starting the reader. Every asset requires `integrity`, including retained files; a filename hash is not a substitute. Manually constructed Browser manifests follow the same checks. External script, stylesheet and modulepreload tags now include integrity and anonymous crossorigin attributes while retaining their existing nonces. Inline bodies remain nonce-protected. A typed preload no longer present in the response's accepted manifest returns RENDER-104, so development reloads must refresh that table rather than emitting an unchecked reference.

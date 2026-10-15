@@ -270,6 +270,12 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-819', "A route's Forma code is over N2's ceiling",
     "What the route loads cold carries more than 25,500 B gzip -9 of @getforma/core and alien-signals as bundled (decision brief L-55, DR-35), or a file the manifest names for it was written by no bundling pass so its Forma code cannot be attributed. The build fails before writing its output.",
     "Trim what the route imports from @getforma/core, or split the route; the ceiling is policy, not an option. The report above the failure shows each route's Forma code beside its own."),
+  entry('BUILD-820', 'The previous release for retention is not usable',
+    "previousDist names something that is not the previous release's dist/: a path that does not exist or is not a directory, one with no readable manifest.json, another application's dist, a watch build's, one whose asset names are not flat file names, or a directory that is, holds or sits inside outputDir (which the build replaces whole).",
+    "Pass the directory of the release that is live, kept apart from outputDir, or leave previousDist out for a first deploy. A dist built by an earlier schema retains nothing and says so; that is not this error."),
+  entry('BUILD-821', 'A retained asset cannot be vouched for',
+    "A file the previous manifest lists is missing from the previous dist, is not a regular file, or its bytes no longer match the SHA-384 the manifest recorded; or this build emitted a file of the same name with other bytes. The build will not copy bytes it cannot vouch for into a release browsers execute, and it fails before writing any output.",
+    "Keep the whole release artifact unaltered, as the build wrote it, and pass that directory. If the previous dist was damaged, restore it from the artifact store, or build this release as a security release (security: true) to retain nothing."),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);

@@ -955,6 +955,38 @@ the ceiling is policy, not an option. Verified by
 `packages/build/tests/route-size.test.ts` > "fails the build with BUILD-819 when a
 route's Forma code is over the ceiling, leaving no output".
 
+### BUILD-820 The previous release for retention is not usable
+
+`previousDist` (FORMA-186, DR-29, L-25) names something that is not the previous
+release's `dist/`: a path that does not exist or is not a directory, a directory
+with no readable `manifest.json`, another application's dist (its `app` differs), a
+watch build's (`build` is `dev`), a manifest listing an asset whose name is not a
+flat file name, or a directory that is, holds or sits inside `outputDir`, which the
+build replaces whole. It is checked before anything is bundled, and the build fails
+without writing. A previous dist whose manifest is not schema 2 (the first 3.0.0
+deploy over a 2.x release) is not this error: nothing is retained, and the build
+says so.
+
+**Fix.** Pass the directory of the release that is live, kept apart from
+`outputDir`, or leave `previousDist` out for a first deploy. Verified by
+`packages/build/tests/retention.test.ts` > "refuses %s (BUILD-820)".
+
+### BUILD-821 A retained asset cannot be vouched for
+
+A file the previous manifest lists immutable is missing from the previous dist, is
+not a regular file (a link or a directory), or its bytes no longer match the SHA-384
+the manifest recorded for it; or this build emitted a file of the same name with
+other bytes than the previous release recorded. Retained files are executed by
+browsers under this release's name, so the build copies only bytes it can check, and
+fails before writing any output rather than let its own manifest re-bless whatever
+was copied.
+
+**Fix.** Keep the whole release artifact unaltered and pass that directory. If it
+was damaged, restore it from the artifact store, or mark this release security
+(`security: true` or `FORMA_SECURITY_RELEASE=1`) to retain nothing. Verified by
+`packages/build/tests/retention.test.ts` > "refuses bytes that do not match the
+recorded SHA-384, a missing file, a link and a directory (BUILD-821)".
+
 ### Native island request state
 
 | Code | Boundary | Meaning |

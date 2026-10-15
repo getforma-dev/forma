@@ -114,6 +114,29 @@ export interface BuildConfig {
    * the build replaces whole and serves.
    */
   diagnosticsJson?: string;
+  /**
+   * The previous release's `dist/`, which the application's pipeline keeps as a
+   * release artifact (FORMA-186, DR-29, L-25). The build copies that release's
+   * own hashed assets into the new `dist/`, listed in the manifest `retained`
+   * and `immutable`, so a tab opened before a deploy still loads its chunks
+   * from the one `dist/` the application embeds. One generation: what the
+   * previous release itself retained is not copied again. A directory other
+   * than `outputDir`, which the build replaces whole. Leave it out for a first
+   * deploy, or when no release is live. Every copied file is checked against
+   * the SHA-384 the previous manifest recorded (`BUILD-821`); a path that is
+   * not a usable previous release fails the build (`BUILD-820`). Ignored in
+   * watch mode. Provisional name (L-56), settled before the beta.
+   */
+  previousDist?: string;
+  /**
+   * Mark this release as one that fixes a vulnerability (L-16, SR45): nothing is
+   * retained from `previousDist`, so no earlier build's asset is served and a
+   * revoked build's tabs meet 404s for their lazy chunks. The application's
+   * deploy pipeline must mark every such release, a Forma security upgrade
+   * included. `FORMA_SECURITY_RELEASE=1` in the environment marks it too, and a
+   * `false` here does not unmark it. Provisional name (L-56).
+   */
+  security?: boolean;
 }
 
 // ---------------------------------------------------------------------------
