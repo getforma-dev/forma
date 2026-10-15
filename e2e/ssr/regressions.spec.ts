@@ -52,6 +52,7 @@ const CASES = {
   select: 'island',
   'edited-controls': 'island',
   'ledger-arrival': 'island',
+  'keyed-moves': 'island',
   'browser-only': 'island',
 } as const;
 type CaseName = keyof typeof CASES;
@@ -553,4 +554,48 @@ test.describe('browser-only', () => {
     await expect(page.locator('#chart-caption')).toHaveText('Sales: 3 points');
     await expect(page.locator('#report-title')).toHaveText('Quarterly report');
   });
+});
+
+
+// FORMA-181 D: unlike the low-level core seam, these bytes come from the current compiler,
+// typed Rust Pages handler and full browser entry. No registration or state is hand-authored.
+test('keyed-moves: typed server rows adopt with zero writes and a focused row moves without losing its listeners', async ({ page }) => {
+  const errors = watchErrors(page);
+  const held = await openHeld(page, 'keyed-moves');
+  const before = await page.evaluate(() => {
+    const host = document.querySelector('#keyed-rows')!;
+    const rows = [...host.querySelectorAll('li')];
+    const input = rows[0]!.querySelector('input')!;
+    input.focus(); input.setSelectionRange(1, 4, 'backward');
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver(batch => records.push(...batch));
+    observer.observe(host, { subtree: true, childList: true, characterData: true, attributes: true });
+    Object.assign(window as any, { keyedProduct: { rows, input, records, observer } });
+    const state = JSON.parse(document.querySelector('script[data-island-state]')!.textContent!);
+    return { keys: rows.map(row => row.getAttribute('data-forma-key')), values: rows.map(row => row.querySelector('input')!.value), state: state.i.map((entry: any) => entry.p) };
+  });
+  expect(before).toEqual({ keys: ['alpha', 'beta', 'gamma'], values: ['Alpha', 'Beta', 'Gamma'], state: [{ rows: [{ id: 'alpha', label: 'Alpha' }, { id: 'beta', label: 'Beta' }, { id: 'gamma', label: 'Gamma' }] }] });
+  await held.activate();
+  const adopted = await page.evaluate(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const state = (window as any).keyedProduct;
+    state.records.push(...state.observer.takeRecords());
+    const records = state.records.length; state.records.length = 0;
+    return { records, focused: document.activeElement === state.input, selection: [state.input.selectionStart, state.input.selectionEnd, state.input.selectionDirection], retained: [...document.querySelectorAll('#keyed-rows li')].every((node, i) => node === state.rows[i]) };
+  });
+  expect(adopted).toEqual({ records: 0, focused: true, selection: [1, 4, 'backward'], retained: true });
+  await page.keyboard.press('F2');
+  const moved = await page.evaluate(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const state = (window as any).keyedProduct;
+    state.records.push(...state.observer.takeRecords()); state.observer.disconnect();
+    const touched = state.records.flatMap((record: MutationRecord) => [...record.addedNodes, ...record.removedNodes]);
+    return { order: [...document.querySelectorAll('#keyed-rows li')].map(row => state.rows.indexOf(row)), records: state.records.length, touched: touched.length, onlyMovedRow: touched.every((node: Node) => node === state.rows[0]), focused: document.activeElement === state.input, selection: [state.input.selectionStart, state.input.selectionEnd, state.input.selectionDirection] };
+  });
+  expect(moved).toEqual({ order: [1, 2, 0], records: 2, touched: 2, onlyMovedRow: true, focused: true, selection: [1, 4, 'backward'] });
+  await page.keyboard.insertText('Z');
+  await expect(page.locator('#keyed-edit')).toHaveText('alpha:AZa');
+  await page.locator('#keyed-rows li').last().locator('button').click();
+  await expect(page.locator('#keyed-click')).toHaveText('alpha');
+  expect(errors).toEqual([]);
 });
