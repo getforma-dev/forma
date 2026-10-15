@@ -71,7 +71,7 @@ export function verifyPackedCorpus(manifest, fmir) {
     'corpus_contains_every_expected_case', 'every_case_parses_as_fmir',
     'slot_names_are_pairwise_unique', 'slot_ids_are_pairwise_unique',
     'every_case_walks_to_html', 'every_island_entry_walks_as_a_fragment',
-    'resolution_cases_ship_named_islands_over_named_slots',
+    fmir === 2 ? 'resolution_cases_ship_named_islands_over_named_slots' : 'resolution_cases_ship_named_contracts_and_client_defaults',
     'corpus_exercises_multibyte_utf8', 'rendered_html_matches_golden',
     ...(fmir === 3 ? ['canonical_dumps_match_the_typescript_emitter'] : []),
   ].map(name => fmir === 3 ? `js_emitter_contract::${name}` : name);
@@ -444,14 +444,22 @@ export async function verify(dir, reportPath) {
             if (template === 'minimal' && islandTemplates) {
               const manifest = json(join(admin, 'dist/manifest.json'));
               assert.match(html.replace(/<!--[\s\S]*?-->/g, ''), /Count:\s*<span[^>]*>7<\/span>/, 'original handler count is missing before JavaScript');
-              for (const [engine, launcher] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
-                const actual = engine === 'chromium' ? browser : await launcher.launch();
-                try {
-                  const island = await verifyMinimalIsland(actual, origin, manifest);
-                  const staticRoute = await verifyStaticTemplate(actual, origin, manifest);
-                  report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, island, staticRoute });
-                } finally { if (actual !== browser) await actual.close(); }
-              }
+              // Observe release behavior without replacing the debug binary: the
+              // corrupt-file controls below require rust-embed's debug disk reads.
+              // Debug's deliberate endpoint-free Report-Only TT logs in WebKit.
+              run('cargo', ['build', '--locked', '--release'], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
+              const releaseBinary = join(scratch, 'target/release', process.platform === 'win32' ? `${name}.exe` : name);
+              await server(releaseBinary, project, null, async (releaseResponse, releaseOrigin) => {
+                assert.equal(releaseResponse.headers.get('content-security-policy-report-only'), null, 'strict release template has an unexpected diagnostic policy');
+                for (const [engine, launcher] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
+                  const actual = engine === 'chromium' ? browser : await launcher.launch();
+                  try {
+                    const island = await verifyMinimalIsland(actual, releaseOrigin, manifest);
+                    const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest);
+                    report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, profile: 'release', island, staticRoute });
+                  } finally { if (actual !== browser) await actual.close(); }
+                }
+              });
             }
             if (set.contracts.assetIntegrity === 'sha384-v1') {
               const manifest = json(join(admin, 'dist/manifest.json'));

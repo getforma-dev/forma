@@ -504,10 +504,13 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     expect(install.status, install.stderr).toBe(0);
     const build = run('npm', ['run', 'build:ssr'], admin);
     expect(build.status, build.stdout + build.stderr).toBe(0);
-    const cargo = run('cargo', ['build', '--locked'], dest);
+    // Release acceptance must exercise the shipped profile. Debug deliberately
+    // includes diagnostic Report-Only TT without an endpoint, which WebKit logs.
+    const cargo = run('cargo', ['build', '--locked', '--release'], dest);
     expect(cargo.status, cargo.stderr).toBe(0);
     const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist/manifest.json'), 'utf8'));
     await withServer(dest, name, async (body, response) => {
+      expect(response.headers.get('content-security-policy-report-only')).toBeNull();
       expect(body.replace(/<!--[\s\S]*?-->/g, '')).toMatch(/Count:\s*<span[^>]*>7<\/span>/);
       const origin = new URL(response.url).origin;
       for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
@@ -515,10 +518,10 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
         try {
           const island = await verifyMinimalIsland(browser, origin, manifest);
           const staticRoute = await verifyStaticTemplate(browser, origin, manifest);
-          recordObservation(`minimal: ${engine} actual native island and static route`, {engine, island, staticRoute});
+          recordObservation(`minimal: ${engine} actual native island and static route`, {engine, profile: 'release', island, staticRoute});
         } finally { await browser.close(); }
       }
-    });
+    }, { profile: 'release' });
   }, 900_000);
 
   it('dashboard: serves each page as its browser shell, by declaration (ssr: false)', async () => {
