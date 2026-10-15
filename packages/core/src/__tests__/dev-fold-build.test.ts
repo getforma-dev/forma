@@ -93,7 +93,10 @@ describe('development-only text in the built artifacts (FORMA-021)', () => {
     // runtime IIFEs (the standard one has no Rollup pass, so only esbuild's
     // own folding removes the text) and the preview frame's runtime.
     for (const entries of [['forma.esm'], ['formajs-runtime'], ['formajs-runtime-hardened'], ['formajs-frame']]) {
-      const code = await buildAll(entries);
+      // The frame is shipped minified (FORMA-190), which renames the `__DEV__`
+      // binding this test looks for; the texts it also looks for survive, and
+      // the same sources are built readable so both questions are asked.
+      const code = await buildAll(entries, entries[0] === 'formajs-frame' ? { minify: false } : {});
       for (const [text, source] of DEVELOPMENT_ONLY) expect(code, `${entries[0]}: ${source}`).not.toContain(text);
       for (const text of REMOVED) expect(code, `${entries[0]}: ${text}`).not.toContain(text);
       expect(code, `${entries[0]}: the registry`).not.toContain('registerInstance');

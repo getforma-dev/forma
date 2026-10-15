@@ -360,11 +360,13 @@ source map comment, so a server writes it inline into the frame document and a
 policy allows it by its SHA-256 hash (forma-server's `PageResponse::frame`;
 an application's build copies it into its assets as `forma-runtime.js`,
 FORMA-175, which is not core's CDN alias of the same name). The file is
-unminified and uncompressed, about 160 KB raw (40 KB gzipped; the README's
-size table gates the gzipped figure), and the server inlines it into every
-frame document it serves under `no-store`, so the application compresses
-those responses (gzip or brotli at its server or its edge) rather than
-serving the bytes as they are; a minified build of the entry is FORMA-118.
+minified (whitespace and names; the one artifact here that is) and
+uncompressed, about 85 KB raw (28.7 KB gzipped; the README's size table gates
+the gzipped figure; it was 164 KB raw and 39.6 KB before FORMA-190), and the
+server inlines it into every frame document it serves under `no-store`, so the
+application compresses those responses (gzip or brotli at its server or its
+edge) rather than serving the bytes as they are. `@getforma/build`'s size
+report (`previewFrame: true`) carries its bytes as the frame document row.
 It renders into
 `<div id="forma-frame">` and never mounts the page or watches `body`. The host
 posts one message carrying one `MessageChannel` port at the frame's first load
