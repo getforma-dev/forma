@@ -13,7 +13,7 @@ import { adoptionListener } from '../reactive/adoption-events.js';
 import { hydrating } from './hydrate.js';
 import { describingAdoption, __adoptionChild } from './adoption-description.js';
 import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
-import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
+import { isFormControlProperty, writeFormControlProperty, isReactiveTextOnly, childText } from './form-control.js';
 import {
   isDangerousUrl,
   isEventHandlerAttr,
@@ -1109,7 +1109,9 @@ export function fillElement<E extends Element>(
   // Text node allocation + separate appendChild. el.textContent is a single
   // native C++ call that combines both operations.
   const childLen = children.length;
-  if (childLen === 1) {
+  if (el instanceof HTMLTextAreaElement && isReactiveTextOnly(children)) {
+    internalEffect(() => writeFormControlProperty(el, 'text', childText(children)));
+  } else if (childLen === 1) {
     const only = children[0];
     if (typeof only === 'string') {
       el.textContent = only;

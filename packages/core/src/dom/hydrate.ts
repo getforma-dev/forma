@@ -1167,9 +1167,9 @@ export function adoptNode(
  * - textarea: the first run is an adoption ({@link adoptTextareaText}): marker
  *   text is removed from the default value, what the user typed before
  *   activation is kept, and nothing is written when the server agrees.
- * - every other run, and a title's first: the element's text (a textarea's
- *   default value) is written only when it differs, which also replaces a
- *   title's marker text. A textarea's typed value is never overwritten.
+ * - later textarea runs use the shared controlled writer for both default
+ *   and live value; a title updates its text. The private3.x planner replaces
+ *   this legacy first-run repair path separately.
  *
  * Verified by: src/dom/__tests__/form-control-adoption.test.ts > "binds a marker-free textarea by the element and writes nothing when it agrees"
  * Verified by: src/dom/__tests__/form-control-adoption.test.ts > "binds a textarea with static and reactive text, from either server output"
@@ -1179,8 +1179,10 @@ function bindElementText(el: Element, children: unknown[]): void {
   let adopted = false;
   internalEffect(() => {
     const text = childText(children);
-    if (!adopted && el instanceof HTMLTextAreaElement) adoptTextareaText(el, text);
-    else if (el.textContent !== text) el.textContent = text;
+    if (el instanceof HTMLTextAreaElement) {
+      if (!adopted) adoptTextareaText(el, text);
+      else writeFormControlProperty(el, 'text', text);
+    } else if (el.textContent !== text) el.textContent = text;
     adopted = true;
   });
 }

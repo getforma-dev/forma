@@ -83,10 +83,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         const expected=binding.skip.value;binding.skip=undefined;
         if(Object.is(next,expected)||(Array.isArray(next)&&Array.isArray(expected)&&next.length===expected.length&&next.every((item,i)=>item===expected[i])))return;
       }
-      if(key==='text'){
-        const target=element as HTMLTextAreaElement,normalized=text(next);
-        if(target.defaultValue!==normalized)target.defaultValue=normalized;
-      }else writeFormControlProperty(element,key,next);
+      writeFormControlProperty(element,key,next);
     };
     const initial=read?scope.observe(read,write):value;
     const token=controls.add({element,key,initial,kind:read?'binding':'initial',codec:binding.read?scope.inputCodec(binding.read):undefined});
@@ -129,13 +126,14 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   }
   function element(desc:HydrationDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const own=desc.tag==='svg'?SVG_NS:desc.tag==='math'?MATHML_NS:ns;
-    const target=cursor.element(desc.tag,own);props(target,desc.props);
-    if(target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='textarea'){
-      // A value prop already owns the control. Children remain ordinary exact
-      // default text when supplied; duplicate ownership is rejected by kernel.
-      if(desc.children.length||!desc.props||!Object.hasOwn(desc.props,'value'))textarea(target,desc.children);
-      return;
-    }
+    const target=cursor.element(desc.tag,own);
+    const area=target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='textarea';
+    const valueProp=area&&desc.props&&Object.hasOwn(desc.props,'value');
+    // Static holes render nothing. A reactive child is still real ownership,
+    // even if it would read empty; never evaluate it to decide this boundary.
+    if(valueProp&&desc.children.some(child=>child!=null&&typeof child!=='boolean'&&child!==''))refuse();
+    props(target,desc.props);
+    if(area){if(!valueProp)textarea(target,desc.children);return;}
     const nested=dom.children(target),inner=contentNs(target);
     for(const child of desc.children)walk(child,nested,inner);
     nested.finish();

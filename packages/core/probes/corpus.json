@@ -1007,23 +1007,13 @@
   "note": "textarea/title reactive text walked as marker-delimited child nodes, which RCDATA does not have (FORMA-002 output)"
  },
  {
-  "id": "hydrate/textarea-updates-overwrite-typing",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    else if (el.textContent !== text) el.textContent = text;",
-  "replace": "    else if (el.textContent !== text) { el.textContent = text; if (el instanceof HTMLTextAreaElement) el.value = text; }",
-  "note": "an adopted textarea's reactive text overwrites what the user typed on every update (FORMA-003 B3; controlled children are 3.0)"
- },
- {
   "id": "hydrate/title-never-written",
   "file": "src/dom/hydrate.ts",
   "tags": [
    "correctness"
   ],
-  "find": "    else if (el.textContent !== text) el.textContent = text;",
-  "replace": "",
+  "find": "    } else if (el.textContent !== text) el.textContent = text;",
+  "replace": "    }",
   "note": "a title's reactive text is never written: marker text from an older server stays, updates never show"
  },
  {
