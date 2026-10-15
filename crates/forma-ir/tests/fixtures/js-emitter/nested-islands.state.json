@@ -1,0 +1,102 @@
+{
+  "bools=false": {
+    "i": [
+      {
+        "h": "ad58eaa81b724860",
+        "p": {
+          "badgeTitle": "[badgeTitle#1]",
+          "panelClass": "[panelClass#0]"
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": "[badgeTitle#1]"
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": "[badgeTitle#1]"
+        }
+      }
+    ],
+    "s": [],
+    "v": 1
+  },
+  "bools=true": {
+    "i": [
+      {
+        "h": "ad58eaa81b724860",
+        "p": {
+          "badgeTitle": "[badgeTitle#1]",
+          "panelClass": "[panelClass#0]"
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": "[badgeTitle#1]"
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": "[badgeTitle#1]"
+        }
+      }
+    ],
+    "s": [],
+    "v": 1
+  },
+  "defaults": {
+    "i": [
+      {
+        "h": "ad58eaa81b724860",
+        "p": {
+          "badgeTitle": "[badgeTitle#1]",
+          "panelClass": "[panelClass#0]"
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": "[badgeTitle#1]"
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": "[badgeTitle#1]"
+        }
+      }
+    ],
+    "s": [],
+    "v": 1
+  },
+  "text-empty": {
+    "i": [
+      {
+        "h": "ad58eaa81b724860",
+        "p": {
+          "badgeTitle": "",
+          "panelClass": ""
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": ""
+        }
+      },
+      {
+        "h": "b601bd7955f69501",
+        "p": {
+          "title": ""
+        }
+      }
+    ],
+    "s": [],
+    "v": 1
+  }
+}

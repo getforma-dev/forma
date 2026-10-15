@@ -137,10 +137,10 @@ export class IrEmitContext {
    * the island subtree currently being captured. It is true for every slot
    * minted because an opcode needs one, and false for a slot merely DECLARED —
    * a signal the walk found in scope but that no binding on the page reads.
-   * A declared-but-unread slot must not enter an island's `slot_ids`, or the
-   * walker serializes it into `data-forma-props` and every island ships state
-   * nothing on the page renders.
-   * Verified by: packages/compiler/tests/island-registry.test.ts > "island slot ids include the signal slots its own scope minted"
+   * Capture bookkeeping supports the bytecode walk only. Island input lists
+   * are independently constructed from ordered declared fields; local signals
+   * and captured defaults never enter the state envelope as handler props.
+   * Verified by: packages/compiler/tests/island-registry.test.ts > "local signal defaults and list scratch values stay outside declared inputs"
    */
   addSlot(
     name: string,

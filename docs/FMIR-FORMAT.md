@@ -27,7 +27,7 @@ everything around them:
 | Signature | `FMIR` + u16 version `2` + u16 flags `0` + u64 `source_hash` written `0`, never checked (16 bytes) | PNG-style 8-byte signature, writer's version as three u16, body length, CRC-32 of every byte except its own four-byte field (24 bytes) |
 | Sections | Exactly four, fixed order, fixed-offset descriptors (offset, size), data from byte 48 | A table: count, then (id, flags, offset, length) per section; known ids, a required flag, unknown optional sections skipped, unknown required refused |
 | Integrity | None; structure checks only | Declared length must match; CRC-32 (IEEE) over the file excluding its own field checked before any section is parsed |
-| Required content | bytecode, strings, slots, islands | bytecode, strings, slots, islands (with schema reference and digest), props schema; section10 for any island; key paths where rows are keyed |
+| Required content | bytecode, strings, slots, islands | bytecode, strings, slots, islands (with schema reference and digest), props schema; section10 for any island, COALESCE, or closed constant; key paths where rows are keyed |
 | Optional content | none possible | source positions; reserved ids for 114b's build identity and deployment |
 | Opcodes | 18 defined (`0x01`-`0x12`), 12 emitted | 13 emitted including COALESCE `0x13`; `0x09`, `0x0D`-`0x11` reserved for good |
 | Versioning | exact match on `2` | same major, writer minor no greater than reader minor, patch ignored; both versions named on refusal |
@@ -108,7 +108,7 @@ oracle, without raising the package's declared Node requirement.
    but a correctly restamped nonzero reserved field still has to fail its own rule.
 7. Validate the section table (4), then parse and cross-check sections in the order specified
    in section 5, including structural bytecode validation before key paths and source positions. Only after those
-   checks does a module with islands but no section10 refuse with `LOAD-105`; malformed old
+   checks does a module with islands or COALESCE but no section10 refuse with `LOAD-105`; malformed old
    payloads keep their earlier structural refusal. Contract contents/type flow are then validated.
 
 The CRC detects a bad copy (truncation, a flipped storage or transfer byte, text-mode conversion).
@@ -177,7 +177,7 @@ later version, as opcode bytes do.
 | `0x0007` | source positions | optional | 5.7 (L-7) |
 | `0x0008` | build identity | optional; reserved until 114b | 5.8 |
 | `0x0009` | deployment | optional; reserved until 114b | 5.8 |
-| `0x000A` | island contracts and closed constants | required when islands exist; current writer always emits it | reviewed state grammar |
+| `0x000A` | island contracts and closed constants | required for islands, COALESCE or closed constants; current writer always emits it | reviewed state grammar |
 
 The writer sets required bit 0 on emitted ids `0x0001` through `0x0006`, and clears it on
 `0x0007`; the canonical dump includes flags. Known-id readers still apply their own required set.
@@ -203,8 +203,8 @@ until both bounds pass.
 
 ### 5.1 Bytecode (`0x0001`)
 
-Unchanged from v2: a flat stream of the twelve opcodes of section 6 with the operand encodings of
-`format.rs` L443-L492. The structural rules of `parser.rs` L509-L641 stay: regions tile exactly;
+A flat stream of the assigned opcodes in section 6, including typed COALESCE (`0x13`),
+with the operand encodings defined by `format.rs` and the reviewed state grammar. The structural rules of `parser.rs` L509-L641 stay: regions tile exactly;
 every slot id named is declared; every `ISLAND_START` names an island in the table; a `SHOW_IF`'s
 `SHOW_ELSE` byte lies inside its region; depth at most 64. A byte from the reserved set (`0x09`,
 `0x0D`-`0x11`) or outside the assigned set through `0x13` is `IrError::InvalidOpcode` (`LOAD-103`).
