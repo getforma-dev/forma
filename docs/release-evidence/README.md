@@ -340,6 +340,14 @@ full FORMA-109 qualification and preserves the new source, hashes and Windows fa
 log. Later dependency evidence/documentation commits do not change these packed
 production bytes; final-head hosted CI remains required separately.
 
+A later Windows Node run passed the manifest/watch assertions but fixture cleanup
+failed with EBUSY after only the watcher's parent had exited. The test harness now
+terminates only its owned PID tree on Windows, waits for inherited stdio closure,
+and retries the affected fixture's removal with a bounded delay. A real parent/
+descendant control also verifies an unrelated fixture remains alive. All52 affected
+watch controls pass locally. This is a test-only delta over the recorded production
+artifact source2110f01; its Windows hosted run is required before merging.
+
 ## Finalized typed rendering (FORMA-107)
 
 `v3-bound-render-set.json` records seven unpublished 3.0.0-dev archives from
