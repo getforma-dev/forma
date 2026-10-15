@@ -157,6 +157,25 @@ describe('private live descriptor materialization', () => {
     expect(root.style.color).toBe('blue'); expect(root.innerHTML).toBe('<i>two</i>'); expect(link.getAttribute('href')).toBeNull();
   });
 
+  it.each(['root', 'element', 'fragment'] as const)('refuses a parented Node in a fresh %s before moving any original content', kind => {
+    document.body.innerHTML = '<aside><b>foreign</b></aside><main>old</main>';
+    const aside = document.querySelector('aside')!, foreign = aside.firstChild!, before = document.body.innerHTML;
+    const observer = new MutationObserver(() => {}); observer.observe(document.body, { childList: true, subtree: true });
+    const description = withAdoptionDescription(() => kind === 'root' ? foreign : kind === 'element'
+      ? h('section', null, foreign) : h(Fragment, null, foreign, { type: 'unsupported' }));
+    try {
+      expect(() => materializeAdoption(description, null, noRanges)).toThrow('FORMA_E_HYDRATE_STRUCTURE');
+      expect(foreign.parentNode).toBe(aside); expect(document.body.innerHTML).toBe(before); expect(observer.takeRecords()).toEqual([]);
+    } finally { observer.disconnect(); }
+  });
+
+  it('retains detached Node identity without interpreting or recreating its subtree', () => {
+    const detached = document.createElement('b'), child = document.createTextNode('owned'); detached.append(child);
+    expect(materializeAdoption(detached, null, noRanges)).toBe(detached);
+    const parent = build(() => h('div', null, detached)) as Element;
+    expect(parent.firstChild).toBe(detached); expect(detached.firstChild).toBe(child); expect(parent.textContent).toBe('owned');
+  });
+
   it('keeps effect and ref callbacks ordinary inside a describing live factory and disposes them', () => {
     const doc = document.implementation.createHTMLDocument(); doc.body.innerHTML = '<section>ready</section>';
     let scope!: AdoptionLifecycle;

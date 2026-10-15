@@ -38,7 +38,13 @@ export function materializeAdoption(value: unknown, ns: string | null, context: 
 
 function materialize(value: unknown, ns: string | null, context: MaterializeContext): Node | null {
   if (value == null || typeof value === 'boolean') return null;
-  if (value instanceof Node) return value;
+  if (value instanceof Node) {
+    // A later public-facade factory may supply a real Node. Moving an existing
+    // child while constructing a candidate would mutate outside that candidate
+    // before its owner can check/replace the old range. Detached Nodes are fresh.
+    if (value.parentNode) throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');
+    return value;
+  }
   if (typeof value === 'string' || typeof value === 'number') return document.createTextNode(String(value));
   if (typeof value === 'function') {
     return context.dynamic(() => describe(value as () => unknown, ns), next => materializeAdoption(next, ns, context));
