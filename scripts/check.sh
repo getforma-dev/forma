@@ -87,6 +87,7 @@ bash e2e/ssr/build.sh
 bash e2e/frame/build.sh
 step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
 npm run test:browser -w packages/build
+node --test scripts/template-islands-browser.test.mjs
 npx playwright test
 npm run test:e2e -w packages/core
 
