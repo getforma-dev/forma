@@ -12,6 +12,8 @@ authenticated in `docs/archive/2026-10-15-pre-keyed-rows/manifest.json`:
 A `LIST` without a section 6 entry remains a valid low-level reader form. `island_emitter.rs`
 parses and renders these exactly as before: `local-aggregates` and `aggregate-fallback` keep
 their scalar-key and scalar-row assertions here (the compiler no longer produces that shape from
-source), and `rows` and `local-inputs` must render byte-identical HTML and state to their keyed
-successors while native key rendering (checkpoint B) is not implemented. No compiler test
-regenerates these files.
+source), and every keyed successor must render byte-identical state and byte-identical HTML
+once its `data-forma-key` attributes are removed: since checkpoint B the walker writes the key
+on each keyed row's root, and these unkeyed modules are the control that an unkeyed `LIST`
+still renders exactly as before, with no key attribute. No compiler test regenerates these
+files.

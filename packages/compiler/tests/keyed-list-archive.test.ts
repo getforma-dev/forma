@@ -68,12 +68,63 @@ describe('archived pre-keyed-rows sources', () => {
       'crates/forma-server/tests/fixtures/props-contract/home.ir',
       'crates/forma-server/tests/fixtures/props-contract/manifest.json',
     ]);
+    // A later checkpoint's ledger takes over a file it regenerates: there the chain is checked
+    // (this ledger's `after` is the later one's `before`) and the later test pins the live bytes.
+    const later = JSON.parse(readFileSync(resolve(__dirname, '../../../docs/archive/2026-10-15-pre-native-keys/ledger.json'), 'utf8')) as {files: Record<string, {before: {sha256: string}; after: {sha256: string}}>};
+    const superseded = Object.entries(later.files).filter(([, entry]) => entry.before.sha256 !== entry.after.sha256).map(([path]) => path);
+    expect(superseded).toEqual(['crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html']);
     for (const [path, entry] of Object.entries(ledger.files)) {
       const live = readFileSync(join(root, path));
-      expect(createHash('sha256').update(live).digest('hex'), path).toBe(entry.after.sha256);
+      if (superseded.includes(path)) expect(later.files[path]!.before.sha256, path).toBe(entry.after.sha256);
+      else expect(createHash('sha256').update(live).digest('hex'), path).toBe(entry.after.sha256);
       const archivedPath = entry.archived ?? path.replace('crates/forma-ir/tests/fixtures/', '');
       expect(manifest.sha256[archivedPath]!.sha256, path).toBe(entry.before.sha256);
       expect(manifest.sha256[archivedPath]!.bytes, path).toBe(entry.before.bytes);
+    }
+  });
+});
+
+/** FORMA-181 checkpoint B (docs/archive/2026-10-15-pre-native-keys): the walker writes
+ *  `data-forma-key`, so the one committed rendering of a keyed list, the list-same-source
+ *  js-emitter golden, was archived byte-exact and regenerated; its module, dump and state
+ *  snapshot did not move. */
+describe('archived pre-native-keys golden', () => {
+  const ARCHIVE_B = resolve(__dirname, '../../../docs/archive/2026-10-15-pre-native-keys');
+  const manifestB = JSON.parse(readFileSync(join(ARCHIVE_B, 'manifest.json'), 'utf8')) as {sha256: Record<string, {bytes: number; sha256: string}>};
+  it('keeps the archived original byte-exact under its manifest', () => {
+    const names = Object.keys(manifestB.sha256);
+    expect(names).toEqual(['js-emitter/list-same-source.html']);
+    for (const name of names) {
+      const bytes = readFileSync(join(ARCHIVE_B, name));
+      expect(bytes.length, name).toBe(manifestB.sha256[name]!.bytes);
+      expect(createHash('sha256').update(bytes).digest('hex'), name).toBe(manifestB.sha256[name]!.sha256);
+    }
+  });
+  it('records a before and after hash for the regenerated golden, the unchanged module, dump and state, and nothing else', () => {
+    const ledger = JSON.parse(readFileSync(join(ARCHIVE_B, 'ledger.json'), 'utf8')) as {files: Record<string, {archived?: string; before: {bytes: number; sha256: string}; after: {bytes: number; sha256: string}; change: string}>};
+    const root = resolve(__dirname, '../../..');
+    const changed = Object.entries(ledger.files).filter(([, entry]) => entry.before.sha256 !== entry.after.sha256).map(([path]) => path);
+    expect(changed).toEqual(['crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html']);
+    expect(Object.keys(ledger.files).sort()).toEqual([
+      'crates/forma-ir/tests/fixtures/js-emitter/list-same-source.dump',
+      'crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html',
+      'crates/forma-ir/tests/fixtures/js-emitter/list-same-source.ir',
+      'crates/forma-ir/tests/fixtures/js-emitter/list-same-source.state.json',
+    ]);
+    for (const [path, entry] of Object.entries(ledger.files)) {
+      const live = readFileSync(join(root, path));
+      expect(createHash('sha256').update(live).digest('hex'), path).toBe(entry.after.sha256);
+      expect(live.length, path).toBe(entry.after.bytes);
+      if (entry.archived) {
+        expect(manifestB.sha256[entry.archived]!.sha256, path).toBe(entry.before.sha256);
+        expect(manifestB.sha256[entry.archived]!.bytes, path).toBe(entry.before.bytes);
+      }
+    }
+    // The unchanged three are the checkpoint A ledger's `after` bytes, so the two ledgers chain.
+    const ledgerA = JSON.parse(readFileSync(join(ARCHIVE, 'ledger.json'), 'utf8')) as {files: Record<string, {after: {sha256: string}}>};
+    for (const name of ['ir', 'dump', 'state.json']) {
+      const path = `crates/forma-ir/tests/fixtures/js-emitter/list-same-source.${name}`;
+      expect(ledger.files[path]!.before.sha256, path).toBe(ledgerA.files[path]!.after.sha256);
     }
   });
 });

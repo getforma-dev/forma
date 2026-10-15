@@ -5,15 +5,18 @@
  * stays distinct from `1`, and a string with an unpaired UTF-16 surrogate is refused before any
  * replacement could lose identity. The string normalization itself (line-ending folding and NUL
  * replacement) is FORMA-182's shared `normalizeDomText` in `./normalize-text`, rule 1 of
- * `docs/parity-rules.md`: a string key passes through it after the surrogate check and before
- * nothing else. This module does not implement an independent normalizer;
- * `__tests__/key-text.test.ts` asserts that against the source and runs 182's shared vectors
- * (`crates/forma-ir/tests/fixtures/parity/normalization.json`) through `canonicalKeyText`.
+ * `docs/parity-rules.md`: a string key passes the surrogate check, then `normalizeDomText`, and
+ * nothing else is applied to it. This module does not implement an independent normalizer;
+ * `__tests__/key-text.test.ts` asserts that against the source, checks through a mock that the
+ * result is `normalizeDomText`'s own, and runs 182's shared vectors
+ * (`crates/forma-ir/tests/fixtures/parity/normalization.json`) and 181's key vectors
+ * (`keys.json` beside it) through `canonicalKeyText`.
  *
- * The native walker computes the same text (`crate::text::normalize_text` on the row's value at
- * the list's key path) and writes it as the row root's `data-forma-key`; adoption (checkpoint C)
- * compares the browser's decoded attribute against this text. The compiler never computes key
- * text.
+ * Since checkpoint B the native walker computes the same text for every row of a keyed list
+ * (`crate::keys::canonical_key_text` in forma-ir, through the shared `crate::text::normalize_text`,
+ * on the row's value at the list's key path) and writes it as the row root's `data-forma-key`.
+ * Nothing in core's bundle imports this module yet: adoption by key (checkpoint C) will compare
+ * the browser's decoded attribute against this text. The compiler never computes key text.
  */
 import { normalizeDomText } from './normalize-text.js';
 
