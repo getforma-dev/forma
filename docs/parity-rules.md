@@ -165,7 +165,12 @@ smallest subnormal and the largest finite. Consumers: `crates/forma-ir/src/walke
 > `value_rule_vectors` > "rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute"
 and `packages/core/src/dom/__tests__/value-rule-2-numbers.test.ts` (the engine
 is the oracle: `String(Number(lexeme))` must equal the vector before any
-writer is checked, so the Rust side is held to the engine).
+writer is checked, so the Rust side is held to the engine). In the three
+engines, `packages/core/e2e/value-rules.spec.ts` serves each vector's range and
+attribute as the walker writes them, and strict adoption of the number, static
+and reactive, makes no write; its control serves Rust's `Display` spelling of
+`1e21` (twenty-two digits) and adoption refuses it with
+`FORMA_E_HYDRATE_VALUE` instead of repairing it.
 
 ## Rule 3: integers within ±(2^53 − 1), refused beyond
 
@@ -202,7 +207,9 @@ on the origin), `crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
 "rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits", and
 `packages/core/src/dom/__tests__/value-rule-3-integers.test.ts` (the boundary
 equals the safe-integer range; an admitted value survives `JSON.parse` and
-`String()` exactly; a refused one is not a safe integer).
+`String()` exactly; a refused one is not a safe integer). In the three engines,
+`packages/core/e2e/value-rules.spec.ts` serves each admitted integer's digits
+and each float origin's rule-2 spelling and adopts the number without a write.
 
 ## Rule 4: dates as epoch milliseconds, no `Intl` on the server
 
