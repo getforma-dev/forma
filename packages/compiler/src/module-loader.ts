@@ -39,22 +39,9 @@ export type ModuleLoader = (
 export function resolveFilePath(fromDir: string, importPath: string): string | null {
   const base = resolve(fromDir, importPath);
 
-  return resolveSourceFile(base, () => {
-  // Try exact path
-  if (existsSync(base) && !isDirectory(base)) return base;
-
-  for (const ext of ['.ts', '.tsx', '.jsx', '.js']) {
-    const withExt = base + ext;
-    if (existsSync(withExt)) return withExt;
-  }
-
-  for (const index of ['index.ts', 'index.tsx', 'index.jsx', 'index.js']) {
-    const indexPath = join(base, index);
-    if (existsSync(indexPath)) return indexPath;
-  }
-
-  return null;
-  });
+  const candidates=[base,...['.ts','.tsx','.jsx','.js'].map(ext=>base+ext),
+    ...['index.ts','index.tsx','index.jsx','index.js'].map(index=>join(base,index))];
+  return resolveSourceFile(base, () => candidates.find(candidate=>existsSync(candidate)&&!isDirectory(candidate))??null,candidates);
 }
 
 /**
