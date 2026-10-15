@@ -73,7 +73,7 @@ describe('frozen canonical keyed-list baselines', () => {
    *  so the limitation is explicit; emission-level helper reuse is proved below. */
   const EMITTED = CASES.filter(name => name !== 'helper-twice');
   it('helper-twice: the page walk still refuses the declared-prop helper call with BUILD-610 at the call', () => {
-    expect(() => emit(join(ROOT, 'helper-twice', 'app.ts'))).toThrow(/^BUILD-610 .*helper-twice\/app\.ts:3:49: this declared prop expression is outside the SSR subset/);
+    expect(() => emit(join(ROOT, 'helper-twice', 'app.ts'))).toThrow(/^BUILD-610 .*helper-twice[\\/]app\.ts:3:49: this declared prop expression is outside the SSR subset/);
   });
   it.each(EMITTED)('%s: section 6 names every emitted LIST once, at its offset, with the canonical record key path', name => {
     const file = join(ROOT, name, 'app.ts'), records = contracts(file), entries = keyPaths(emit(file));

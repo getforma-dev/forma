@@ -44,3 +44,5 @@ docs/archive/2026-10-15-template-slice1/** -text
 # FORMA-181: archived originals and frozen keyed-list sources are authenticated by SHA-256.
 docs/archive/2026-10-15-pre-keyed-rows/** -text
 packages/compiler/tests/fixtures/keyed-lists/** -text
+# FORMA-181: the archive test hashes the live list-same-source.state.json byte-for-byte.
+crates/forma-ir/tests/fixtures/js-emitter/*.state.json text eol=lf
