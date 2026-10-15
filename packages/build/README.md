@@ -319,7 +319,7 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
   "version": 2,
   "writer": "3.0.0",
   "app": "ledger",
-  "build": "example-build-identifier",
+  "build": "5f0c9a1e7d2b4c86",
   "aliases": {"home.js": "home.a1b2c3d4.js", "home.ir": "home.a1b2c3d4.ir"},
   "assets": {
     "home.a1b2c3d4.js": {"immutable": true},
@@ -336,8 +336,27 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
 The actual build includes `integrity: "sha384-<base64>"` for each asset, computed
 from its final uncompressed bytes. Compression sidecars, the manifest and the
 worker are excluded. Integrity enforcement is FORMA-111; emission alone does not
-provide that enforcement. `build` retains the previous filename-derived algorithm
-(and `dev` during watch); FORMA-186 owns the final deployment identity.
+provide that enforcement.
+
+### The deployment identity (`build`)
+
+`build` is the build's deployment identity: 16 lowercase hexadecimal characters
+(`dev` in watch mode). A production build computes it first, from every output of
+a first bundling pass (the JavaScript and CSS bundles, the other emitted files and
+the `.ir` modules, plus the css entries and fonts) and the writers' versions, and
+only then compiles it in:
+
+- as the constant `__FORMA_BUILD__` (esbuild `define`), which `@getforma/core`
+  compares with the `data-forma-build` attribute forma-server writes on the page's
+  root before it activates anything;
+- as a `/*forma-build:<id>*/` banner in every JavaScript output, so the names,
+  which hash content, change with the identity: every deploy renames every bundle.
+
+The same inputs give the same identity wherever they are built from (esbuild
+hashes paths relative to the working directory, so build from the project root).
+An edit that changes no output byte, a comment, changes nothing and disturbs no
+open tab. The identity does not depend on a previous `dist/`. The first pass
+costs one more bundling run; the compiler's lines for it are not printed twice.
 
 forma-server validates the schema, writer window, app, references and route modes
 before loading modules. It resolves logical names through `aliases` and reads

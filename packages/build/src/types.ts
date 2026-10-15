@@ -137,7 +137,7 @@ export interface AssetMetadata {
   immutable: boolean;
   /** Full SHA-384 of the final uncompressed file, used by SRI and the worker. */
   integrity: string;
-  /** Older deployment artifact retained by the deployment-identity implementation. */
+  /** A file of the previous release kept for tabs still open on it (FORMA-186, L-25). */
   retained?: boolean;
 }
 
@@ -145,7 +145,14 @@ export interface AssetManifest {
   version: 2;
   writer: string;
   app: string;
-  /** Opaque build ID; input-derived deployment identity is a separate contract. */
+  /**
+   * The deployment identity (FORMA-186, DR-29): 16 lowercase hexadecimal
+   * characters computed from the build's own outputs and the writers'
+   * versions before anything is named, compiled into every JavaScript bundle
+   * (`__FORMA_BUILD__`, which core compares with the page's
+   * `data-forma-build`), and the same for identical inputs wherever and
+   * however often they are built. `dev` in watch mode.
+   */
   build: string;
   aliases: Record<string, string>;
   assets: Record<string, AssetMetadata>;

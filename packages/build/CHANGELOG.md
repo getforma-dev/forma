@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
+
+- `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
+  identity: 16 lowercase hex characters, computed first from every output of a
+  first bundling pass (bundles, `.ir` modules, css entries, fonts) and the
+  writers' versions, before any file is named. It was a hash of the hashed
+  filenames. The same inputs give the same identity wherever they are built
+  (from the project root); an edit that changes no output byte changes nothing;
+  the previous `dist/` is not an input. `dev` in watch mode, as before.
+- The identity is compiled into every production bundle twice: the constant
+  `__FORMA_BUILD__` (esbuild `define`; what core compares with the page's
+  `data-forma-build`) and a `/*forma-build:<id>*/` banner in every JavaScript
+  output, so every deploy renames every bundle, including entries and lazy
+  chunks the change did not touch. A chunk that kept its name across deploys
+  now does not; a build's names are unique to the build.
+- Cost: one more bundling pass per production build; the SSR plugin's
+  "IR emitted" and "IR: ..." lines are printed once, as before.
+
 ## Unreleased — the size report per route and N2's gate (FORMA-021)
 
 - A production build reports, per route, what the route loads cold (its `js`
