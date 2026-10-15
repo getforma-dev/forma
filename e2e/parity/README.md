@@ -154,6 +154,22 @@ report is `expected-divergent` only when every difference in it is matched. The 
 skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
 run as an unexpected pass, so the entry is removed the day its fix lands.
 
+The entries today, each found at step 0 and assigned by the lead:
+
+| | Case | Kind | Clears it |
+|---|---|---|---|
+| F1 | `list-same-source`: the source passes a plain array to `createList`, which core 3.0 calls as an accessor (`items is not a function`) | P1 error | FORMA-181, after checkpoint C: the compiler refuses a non-function list source with a code |
+| F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
+| F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
+| F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
+
+F4 can never become equal: the server has no value to write. In warning mode the compiler reports
+BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
+(`docs/DIAGNOSTICS.md`; DR-1's release-A bridge). DR-1 makes strict the only mode in release B
+(3.0.0, FORMA-101), where BUILD-206 is a build error. The difference then ends because the page no
+longer compiles, not because the trees agree; the corpus fixture has to move the attribute behind
+`browserOnly()` or drop it, and the entry fails the run as an unexpected pass.
+
 ## The corpus and its ratchet
 
 | Step | Modules | States each | When |
@@ -169,8 +185,8 @@ props are rendered at their source state on both sides, not "generated". Each st
 count, states per module, measured wall time, P1/P2/P3 counts and expected-divergent entries are
 recorded in the ticket, and the step in force at a release in its GitHub Release.
 
-**Step 0, 2026-10-15:** 14 modules, 23 states; P1 19 equal and 4 expected-divergent (F2,
-bool-slot attributes, is FORMA-182's; F1, F3 and F4 are findings without a ticket yet), P2 14 equal over the 5 island pages (every host activated, zero records); 2 structural
+**Step 0, 2026-10-15:** 14 modules, 23 states; P1 19 equal and 4 expected-divergent (F1 to F4,
+below), P2 14 equal over the 5 island pages (every host activated, zero records); 2 structural
 classes (both in `dynamic-attrs`); 0 holder-ambiguous positions. On CI's `parity` job the run takes
 4.3 s with a warm Rust cache and 14.5 s cold (building the example dominates); the whole job,
 installs and builds included, took 1m22s.
