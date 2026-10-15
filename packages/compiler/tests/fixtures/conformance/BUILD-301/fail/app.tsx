@@ -4,6 +4,6 @@ function format(n: number) { return `${n} items`; }
 
 mount(() => (
   <main>
-    <p>{() => format(count())}</p>{/* expect: BUILD-301 */}
+    <p>{() => format(count())}</p>{/* expect: BUILD-301; expect: BUILD-610 */}
   </main>
 ), '#app');

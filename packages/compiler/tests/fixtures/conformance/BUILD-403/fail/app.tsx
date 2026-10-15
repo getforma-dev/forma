@@ -5,7 +5,7 @@ function B() { return <article><C /></article>; }
 function C() {
   return (
     <div>
-      <D />{/* expect: BUILD-403 */}
+      <D />{/* expect: BUILD-403; expect: BUILD-610 */}
     </div>
   );
 }

@@ -1727,17 +1727,14 @@ function emitChild(
       slotId = binding.slotId;
       ctx.recordSlotRef(slotId);
     } else {
-      // An anonymous text slot still gets an SSR default when the expression
-      // evaluates. Without one the server emits the zero-width-space
-      // placeholder and the text only appears after hydration — a flash on
-      // every page that computes its text (`() => count() + ' items'`).
+      // Computed scalar text must have a closed native value. Refuse unknown
+      // runtime expressions instead of manufacturing an empty default.
       const evaluated = tryEvalExprDefault(arrowOrFunc, evalEnv(walkCtx));
       if (evaluated !== undefined && evaluated !== null) {
         checkLiteralSize(walkCtx, arrowOrFunc, String(evaluated), 'text value');
       }
-      // A reactive child returning rows or a control-flow component is one
-      // of FORMA-016's constructs: it renders empty here, and adoption binds
-      // it as text. Same emission; its own code, naming the way out.
+      // A reactive child returning unsupported structure is not scalar text.
+      // Refuse it with the same source-located contract as the eager form.
       const gap = evaluated === undefined ? adoptionGapCode(bodyExpr) : null;
       if (gap) {
         const isArray = gap === 'BUILD-701';
@@ -1748,22 +1745,23 @@ function emitChild(
           isArray
             ? `plain array child ${describeNode(arrowOrFunc)} (a .map() without createList)`
             : `reactive child ${describeNode(arrowOrFunc)}`,
-          'it renders EMPTY server-side and adoption binds it as text'
+          ISLAND_CONSEQUENCE
           + (isArray
-            ? ', so after activation the page shows the elements as text ([object HTMLLIElement]) —'
-              + ' render rows with createList(source, keyFn, (row) => h(...)), or '
+            ? ' — render rows with createList(source, keyFn, (row) => h(...)), or '
             : ` — adoption has no handling for ${describeNode(bodyExpr!)}; `)
           + BROWSER_ONLY_FIX,
         );
+        refuseIsland(walkCtx, arrowOrFunc);
       } else if (evaluated === undefined) {
         warnDegraded(
           walkCtx,
           'BUILD-301',
           arrowOrFunc,
           `dynamic text child ${describeNode(arrowOrFunc)}, which the compiler cannot evaluate`,
-          'it renders EMPTY server-side and only fills in once the client hydrates —'
+          ISLAND_CONSEQUENCE + ' —'
           + ' initialize the signals it reads with literal defaults so the server can render them',
         );
+        refuseIsland(walkCtx, arrowOrFunc);
       }
       slotId = ctx.addSlot(
         textSlotName(childIndex, walkCtx),
@@ -2026,7 +2024,7 @@ function emitCreateShowBranch(
     `createShow branch ${describeNode(expr)}`,
     ISLAND_CONSEQUENCE + ' — a branch must be `() => h(...)` (or a direct h(...) call) to render server-side',
   );
-  refuseIsland(walkCtx,expr);
+  refuseIsland(walkCtx, expr);
 }
 
 // ---------------------------------------------------------------------------
@@ -2743,8 +2741,9 @@ function emitBranchContent(
       'BUILD-301',
       expr,
       `dynamic value ${describeNode(expr)}, which the compiler cannot evaluate`,
-      'it renders EMPTY server-side and only fills in once the client hydrates',
+      ISLAND_CONSEQUENCE,
     );
+    refuseIsland(walkCtx, expr);
   }
   const slotId = ctx.addSlot(
     textSlotName(childIndex, walkCtx),

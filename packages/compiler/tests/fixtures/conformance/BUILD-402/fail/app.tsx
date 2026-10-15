@@ -4,6 +4,6 @@ const Widget = makeWidget('w');
 
 mount(() => (
   <main>
-    <div><Widget /></div>{/* expect: BUILD-402 */}
+    <div><Widget /></div>{/* expect: BUILD-402; expect: BUILD-610 */}
   </main>
 ), '#app');

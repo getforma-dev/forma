@@ -4,6 +4,6 @@ function Card(props: { title: string }) { return <h2>{props.title}</h2>; }
 
 mount(() => (
   <main>
-    <Card title={computeTitle()} />{/* expect: BUILD-405 */}
+    <Card title={computeTitle()} />{/* expect: BUILD-405; expect: BUILD-610 */}
   </main>
 ), '#app');
