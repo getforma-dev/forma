@@ -144,13 +144,15 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     if(value instanceof Node)return value;
     return refuse();
   }
-  function show(desc:ShowDescriptor,cursor:AdoptionCursor,ns:string|null):void {
+  function show(desc:ShowDescriptor,cursor:AdoptionCursor,ns:string|null,observed?:{
+    initial:boolean;description:()=>ShowDescriptor;connect:(write:(next:boolean)=>void)=>void;
+  }):void {
     const range=cursor.range('s');
     let active:PreparedGroup<unknown>,initial=true,current:boolean;
     const cached=new Map<boolean,{fragment:DocumentFragment;owner:PreparedGroup<unknown>}>();
     let owner:PreparedGroup<void>;
     owner=scope.group(()=>{
-      current=scope.observe(()=>!!desc.condition(),next=>{
+      const update=(next:boolean)=>{
         if(next===current)return;
         const parent=range.start.parentNode;
         if(!parent||range.end.parentNode!==parent)refuse();
@@ -164,7 +166,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         if(entering)cached.delete(next);
         else{
           const branch=owner.child(()=>untrack(()=>withNamespace(ns,()=>withAdoptionDescription(
-            ()=>fresh((next?desc.whenTrue:desc.whenFalse)?.()),false,
+            ()=>{const value=observed?.description()??desc;return fresh((next?value.whenTrue:value.whenFalse)?.());},false,
           ))));
           const fragment=host.ownerDocument.createDocumentFragment();
           if(branch.value)fragment.appendChild(branch.value);
@@ -183,10 +185,12 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         else cached.set(current,{fragment,owner:active});
         active=entering.owner;current=next;
         parent.insertBefore(entering.fragment,range.end);
-      });
+      };
+      if(observed){current=observed.initial;observed.connect(update);}
+      else current=scope.observe(()=>!!desc.condition(),update);
       active=scope.group(()=>{
         const inside=dom.within(range);
-        const selected=current?desc.whenTrue:desc.whenFalse;
+        const value=observed?.description()??desc,selected=current?value.whenTrue:value.whenFalse;
         if(selected)walk(construct(selected,ns),inside,ns);
         inside.finish();
       });
@@ -323,12 +327,27 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(cursor.rangeKind()==='t')cursor.textRange(String(value));else cursor.text(String(value));return;
     }
     if(typeof value==='function'){
-      let target:Text|undefined,previous:string;
-      const initial=scope.observe(()=>withNamespace(ns,()=>withAdoptionDescription(value as ()=>unknown)),next=>{
-        const normalized=text(next);if(normalized===previous)return;
-        target!.data=normalized;previous=normalized;
-      });
-      previous=text(initial);target=cursor.textRange(previous);return;
+      scope.group(()=>{
+        type Read={kind:'show';value:boolean;description:ShowDescriptor}|{kind:'text';value:string};
+        let write:(value:Read)=>void;
+        const initial=scope.observe<Read>(()=>{
+          const result=withNamespace(ns,()=>withAdoptionDescription(value as ()=>unknown));
+          if(result&&typeof result==='object'&&(result as ShowDescriptor).type==='show'){
+            const description=result as ShowDescriptor;
+            return {kind:'show',description,value:!!description.condition()};
+          }
+          return {kind:'text',value:text(result)};
+        },next=>write(next));
+        if(initial.kind==='show'){
+          let description=initial.description;
+          show(description,cursor,ns,{initial:initial.value,description:()=>description,connect:update=>{
+            write=next=>{if(next.kind!=='show')refuse();description=next.description;update(next.value);};
+          }});
+        }else{
+          const target=cursor.textRange(initial.value);let previous=initial.value;
+          write=next=>{if(next.kind!=='text')refuse();if(next.value!==previous){target.data=next.value;previous=next.value;}};
+        }
+      });return;
     }
     if(typeof value!=='object')return refuse();
     const description=value as HydrationDescriptor|FragmentDescriptor|ComponentDescription|ShowDescriptor|ListDescriptor;
