@@ -1,5 +1,10 @@
 [workspace]
-members = ["crates/forma-ir", "crates/forma-server"]
+members = ["crates/forma-ir", "crates/forma-ir-derive", "crates/forma-server"]
+# The e2e lanes (e2e/ssr/render, e2e/frame/server) are a workspace of their own
+# (e2e/Cargo.toml): the frame server embeds what e2e/frame/build.sh builds, which
+# does not exist on a clean clone, so `cargo test --workspace` here must not
+# compile it. They depend on these crates by path.
+exclude = ["e2e"]
 resolver = "2"
 
 [workspace.package]

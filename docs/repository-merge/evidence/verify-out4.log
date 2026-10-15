@@ -1,0 +1,40 @@
+== 1. every old commit reachable
+ok   formajs: 273 commits before, 273 mapped, all present in the merged repository
+ok   formajs: every branch head is refs/heads/formajs/<branch> at its mapped commit (25 branches)
+ok   forma-tools: 175 commits before, 175 mapped, all present in the merged repository
+ok   forma-tools: every branch head is refs/heads/forma-tools/<branch> at its mapped commit (19 branches)
+ok   create-forma-app: 75 commits before, 75 mapped, all present in the merged repository
+ok   create-forma-app: every branch head is refs/heads/create-forma-app/<branch> at its mapped commit (6 branches)
+ok   forma: its own 108 commits are untouched (same ids)
+== 2. every tag resolves under its prefix to the original tree, moved
+ok   formajs: 23 tags resolve under formajs/ to their mapped commits with the original trees moved (type and message kept)
+ok   formajs: all 273 commits' trees are the originals moved
+ok   formajs: every commit keeps its author, committer, dates and message
+ok   forma-tools: 26 tags resolve under forma-tools/ to their mapped commits with the original trees moved (type and message kept)
+ok   forma-tools: all 175 commits' trees are the originals moved
+ok   forma-tools: every commit keeps its author, committer, dates and message
+ok   create-forma-app: 12 tags resolve under create-forma-app/ to their mapped commits with the original trees moved (type and message kept)
+ok   create-forma-app: all 75 commits' trees are the originals moved
+ok   create-forma-app: every commit keeps its author, committer, dates and message
+ok   forma: its own 12 tags are untouched
+== 3. the branch
+ok   formajs/main is an ancestor of merge/forma-stack
+ok   forma-tools/main is an ancestor of merge/forma-stack
+ok   create-forma-app/main is an ancestor of merge/forma-stack
+ok   forma's main is an ancestor of merge/forma-stack
+ok   merge/forma-stack reaches 437 commits = the four mains + 3 merges + 1 setup
+ok   every branch and tag of the four repositories: 635 commits in all
+ok   the working tree is clean
+== 4. git log --follow
+ok   packages/core/src/index.ts: 20 commits (20 original + 0 setup edits), back to 2026-03-13
+ok   packages/core/README.md: 40 commits (40 original + 0 setup edits), back to 2026-03-13
+ok   packages/compiler/src/index.ts: 8 commits (8 original + 0 setup edits), back to 2026-03-13
+ok   packages/build/src/index.ts: 2 commits (2 original + 0 setup edits), back to 2026-03-13
+ok   packages/build/scripts/test-raw-lint-bin.mjs: 2 commits (1 original + 1 setup edits), back to 2026-10-14
+ok   docs/DIAGNOSTICS.md: 4 commits (4 original + 0 setup edits), back to 2026-10-14
+ok   e2e/ssr/build.sh: 4 commits (3 original + 1 setup edits), back to 2026-10-14
+ok   packages/create-app/src/index.ts: 10 commits (10 original + 0 setup edits), back to 2026-03-13
+ok   crates/forma-ir/src/lib.rs: 8 commits (8 original + 0 setup edits), back to 2026-03-13
+ok   docs/archive/2026-10-15-forma-tools-README.md: 7 commits through the move (forma-tools' README had 6)
+
+verify: every check passed

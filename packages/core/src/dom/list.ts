@@ -1,0 +1,714 @@
+/**
+ * Forma DOM - List
+ *
+ * Keyed list reconciliation with Longest Increasing Subsequence (LIS).
+ * The LIS tells us the maximum set of DOM nodes that can stay in place;
+ * only the remaining nodes need to be moved. This minimises DOM operations
+ * to exactly `n - LIS_length` moves — provably optimal.
+ *
+ * Algorithm used by ivi, Inferno, and (with variations) Solid, Vue 3, Svelte.
+ *
+ * Uses comment-node markers instead of a wrapper <div>, so the list can be
+ * placed inside <table>, <ul>, <select>, etc. without breaking semantics.
+ *
+ * Total module budget: <2KB minified.
+ */
+
+import { createSignal, internalEffect, untrack, createRoot, registerDisposer, __DEV__ } from '../reactive';
+import { hydrating } from './hydrate.js';
+import { deactivateIsland, hasScheduledOrActiveIslands } from './activate.js';
+import { getNamespace, insertNs, withNamespace } from './namespace.js';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** Return value from {@link reconcileList} — the new nodes and items arrays. */
+export interface ReconcileResult<T> {
+  /** The DOM nodes currently in the list, in order. */
+  nodes: Node[];
+  /** The items array corresponding to the current nodes. */
+  items: T[];
+}
+
+/** Animation hooks for list transitions. */
+export interface ListTransitionHooks {
+  /** Called after a new node is inserted into the DOM. */
+  onInsert?: (node: Node) => void;
+  /** Called before a node is removed. Call `done()` when the exit animation finishes. */
+  onBeforeRemove?: (node: Node, done: () => void) => void;
+}
+
+interface CachedItem<T> {
+  element: HTMLElement;
+  item: T;
+  getIndex: () => number;
+  setIndex: (v: number) => void;
+  dispose: () => void;
+}
+
+export interface CreateListOptions {
+  /**
+   * How to handle same-key items whose object identity changed.
+   * - 'none' (default): keep the existing row node for maximum throughput.
+   * - 'rerender': replace changed rows in a fresh reactive scope. Unchanged
+   *   item objects and keyed reorders retain their existing DOM and state.
+   */
+  updateOnItemChange?: 'none' | 'rerender';
+}
+
+// ---------------------------------------------------------------------------
+// LIS — O(n log n) via patience sorting + binary search
+// ---------------------------------------------------------------------------
+
+/**
+ * Find the longest increasing subsequence.
+ * Returns indices into the input array.
+ * O(n log n) time, O(n) space — patience sorting with a binary search for each
+ * insertion point.
+ *
+ * Verified by: src/dom/__tests__/list-lis.test.ts > "agrees with a brute-force LIS on random inputs"
+ * Verified by: src/dom/__tests__/list-lis.test.ts > "runs in O(n log n), not O(n²)"
+ */
+export function longestIncreasingSubsequence(arr: number[]): number[] {
+  const n = arr.length;
+  if (n === 0) return [];
+
+  // Pre-allocate typed arrays — avoids V8 array growth overhead on push
+  const tails = new Int32Array(n);
+  const tailIndices = new Int32Array(n);
+  const predecessor = new Int32Array(n).fill(-1);
+  let tailsLen = 0;
+
+  for (let i = 0; i < n; i++) {
+    const val = arr[i]!;
+
+    // Binary search: leftmost tail >= val
+    let lo = 0, hi = tailsLen;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (tails[mid]! < val) lo = mid + 1;
+      else hi = mid;
+    }
+
+    tails[lo] = val;
+    tailIndices[lo] = i;
+    if (lo > 0) predecessor[i] = tailIndices[lo - 1]!;
+    if (lo >= tailsLen) tailsLen++;
+  }
+
+  // Reconstruct — return plain array since callers expect number[]
+  const result = new Array<number>(tailsLen);
+  let idx = tailIndices[tailsLen - 1]!;
+  for (let i = tailsLen - 1; i >= 0; i--) {
+    result[i] = idx;
+    idx = predecessor[idx]!;
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// reconcileList — low-level keyed reconciler
+// ---------------------------------------------------------------------------
+
+/** Below this threshold, use flat array scan instead of Map for better cache locality. */
+const SMALL_LIST_THRESHOLD = 32;
+
+/**
+ * Tear down any islands inside a row that is leaving the list.
+ *
+ * An island's reactive root is created with createUnownedRoot (activate.ts), so
+ * it deliberately does NOT die with the row's own root: without this, removing
+ * a row containing an island leaves that island's effects running against
+ * detached DOM — plus its IntersectionObserver / interaction listeners if it
+ * had not hydrated yet — for the lifetime of the page.
+ *
+ * The subtree scan is guarded by an integer compare, because almost no list
+ * anywhere contains an island and the scan otherwise costs ~19 µs per removed
+ * six-node row (docs/PERFORMANCE.md). An island only becomes something worth
+ * tearing down by going through activateIslands / hydrateIslandRoot, and those
+ * count it, so a zero count is proof that no row can contain one — not a
+ * heuristic.
+ *
+ * Verified by: src/dom/__tests__/list-disposal.test.ts > "deactivates an island inside a removed row"
+ * Verified by: src/dom/__tests__/list-disposal.test.ts > "does not scan a removed row when no island has ever been activated"
+ */
+function deactivateIslandsIn(node: Node): void {
+  if (!hasScheduledOrActiveIslands()) return;
+  if (!(node instanceof Element)) return;
+  if (node.hasAttribute('data-forma-island')) {
+    deactivateIsland(node as HTMLElement);
+  }
+  for (const nested of node.querySelectorAll<HTMLElement>('[data-forma-island]')) {
+    deactivateIsland(nested);
+  }
+}
+
+/**
+ * Remove one row, honouring an exit animation.
+ *
+ * With onBeforeRemove the island teardown is deferred into done() so an island
+ * inside an animating row keeps working until the row actually leaves.
+ */
+function removeRow(parent: Node, node: Node, hooks?: ListTransitionHooks): void {
+  if (hooks?.onBeforeRemove) {
+    hooks.onBeforeRemove(node, () => {
+      deactivateIslandsIn(node);
+      if (node.parentNode) node.parentNode.removeChild(node);
+    });
+    return;
+  }
+  deactivateIslandsIn(node);
+  parent.removeChild(node);
+}
+
+/**
+ * Marks createList's own `'rerender'` update callback, whose returned node
+ * replaces the row. Every other callback, a public reconcileList caller's
+ * included, keeps 2.0.1's contract: its return value is ignored.
+ *
+ * Verified by: src/dom/__tests__/list-rerender.test.ts > "reconcileList ignores a node returned by a public update callback"
+ */
+const REPLACES_ROW = Symbol('forma.replacesRow');
+
+/** A tagged update may return a replacement; anything else keeps the keyed node. */
+function updateRowNode<T>(
+  parent: Node,
+  node: Node,
+  item: T,
+  updateFn: (node: Node, item: T) => unknown,
+): Node {
+  const next = updateFn(node, item);
+  if ((updateFn as { [REPLACES_ROW]?: boolean })[REPLACES_ROW] && next instanceof Node && next !== node) {
+    deactivateIslandsIn(node);
+    parent.replaceChild(next, node);
+    return next;
+  }
+  return node;
+}
+
+/**
+ * Small-list reconciler: uses flat arrays + indexOf instead of Map/Set.
+ * For < 32 items, linear scan is faster than hash computation overhead.
+ */
+function reconcileSmall<T>(
+  parent: Node,
+  oldItems: T[],
+  newItems: T[],
+  oldNodes: Node[],
+  keyFn: (item: T) => string | number,
+  createFn: (item: T) => Node,
+  updateFn: (node: Node, item: T) => unknown,
+  beforeNode?: Node | null,
+  hooks?: ListTransitionHooks,
+): ReconcileResult<T> {
+  const oldLen = oldItems.length;
+  const newLen = newItems.length;
+
+  // Build flat arrays for old keys/nodes — better cache locality than Map
+  const oldKeys: (string | number)[] = new Array(oldLen);
+  for (let i = 0; i < oldLen; i++) {
+    oldKeys[i] = keyFn(oldItems[i]!);
+  }
+
+  // Classify each new item: find matching old index via linear scan
+  const oldIndices = new Array<number>(newLen);
+  const oldUsed = new Uint8Array(oldLen); // 0 = unused, 1 = used
+
+  for (let i = 0; i < newLen; i++) {
+    const key = keyFn(newItems[i]!);
+    let found = -1;
+    for (let j = 0; j < oldLen; j++) {
+      if (!oldUsed[j] && oldKeys[j] === key) {
+        found = j;
+        oldUsed[j] = 1;
+        break;
+      }
+    }
+    oldIndices[i] = found;
+  }
+
+  // Remove old items not reused
+  for (let i = 0; i < oldLen; i++) {
+    if (!oldUsed[i]) {
+      removeRow(parent, oldNodes[i]!, hooks);
+    }
+  }
+
+  // Fast path: same keys, same order -> just update, 0 DOM moves
+  if (oldLen === newLen) {
+    let allSameOrder = true;
+    for (let i = 0; i < newLen; i++) {
+      if (oldIndices[i] !== i) {
+        allSameOrder = false;
+        break;
+      }
+    }
+    if (allSameOrder) {
+      const nodes = new Array<Node>(newLen);
+      for (let i = 0; i < newLen; i++) {
+        nodes[i] = updateRowNode(parent, oldNodes[i]!, newItems[i]!, updateFn);
+      }
+      return { nodes, items: newItems };
+    }
+  }
+
+  // LIS for minimum moves (still needed even for small lists)
+  const reusedIndices: number[] = [];
+  const reusedPositions: number[] = [];
+  for (let i = 0; i < newLen; i++) {
+    if (oldIndices[i] !== -1) {
+      reusedIndices.push(oldIndices[i]!);
+      reusedPositions.push(i);
+    }
+  }
+
+  const lisOfReused = longestIncreasingSubsequence(reusedIndices);
+  // Use Uint8Array as a bitmap instead of Set for small lists
+  const lisFlags = new Uint8Array(newLen);
+  for (const li of lisOfReused) {
+    lisFlags[reusedPositions[li]!] = 1;
+  }
+
+  // Build result: walk right-to-left for stable insertBefore targets
+  const newNodes = new Array<Node>(newLen);
+  let nextSibling: Node | null = beforeNode ?? null;
+
+  for (let i = newLen - 1; i >= 0; i--) {
+    let node: Node;
+    let isNew = false;
+
+    if (oldIndices[i] === -1) {
+      node = createFn(newItems[i]!);
+      isNew = true;
+    } else {
+      node = updateRowNode(parent, oldNodes[oldIndices[i]!]!, newItems[i]!, updateFn);
+
+      if (lisFlags[i]) {
+        newNodes[i] = node;
+        nextSibling = node;
+        continue;
+      }
+    }
+
+    if (nextSibling) {
+      parent.insertBefore(node, nextSibling);
+    } else {
+      parent.appendChild(node);
+    }
+
+    if (isNew) hooks?.onInsert?.(node);
+
+    newNodes[i] = node;
+    nextSibling = node;
+  }
+
+  return { nodes: newNodes, items: newItems };
+}
+
+/**
+ * Reconcile a DOM parent's children to match a new array of items.
+ * Uses keyed reconciliation with LIS for minimum DOM operations.
+ *
+ * For small lists (< 32 items), uses a flat array scan path that avoids
+ * Map/Set hash overhead and provides better cache locality.
+ *
+ * @param parent     - The container DOM element
+ * @param oldItems   - Previous array (from last reconciliation)
+ * @param newItems   - New array to render
+ * @param oldNodes   - Previous DOM nodes array
+ * @param keyFn      - Extracts a unique key from each item
+ * @param createFn   - Creates a new DOM node for an item
+ * @param updateFn   - Updates an existing DOM node with new item data
+ * @param beforeNode - Optional boundary marker. When provided, new nodes are
+ *                     inserted before this node instead of appended to parent.
+ *                     This allows the reconciler to operate within a range
+ *                     delimited by comment markers.
+ * @returns Object with new nodes array and items array for next call
+ */
+export function reconcileList<T>(
+  parent: Node,
+  oldItems: T[],
+  newItems: T[],
+  oldNodes: Node[],
+  keyFn: (item: T) => string | number,
+  createFn: (item: T) => Node,
+  updateFn: (node: Node, item: T) => void,
+  beforeNode?: Node | null,
+  hooks?: ListTransitionHooks,
+): ReconcileResult<T> {
+  const oldLen = oldItems.length;
+  const newLen = newItems.length;
+
+  // --- Trivial: new is empty -> remove all ---
+  if (newLen === 0) {
+    for (let i = 0; i < oldLen; i++) {
+      removeRow(parent, oldNodes[i]!, hooks);
+    }
+    return { nodes: [], items: [] };
+  }
+
+  // --- Trivial: old is empty -> create all ---
+  if (oldLen === 0) {
+    const nodes = new Array<Node>(newLen);
+    for (let i = 0; i < newLen; i++) {
+      const node = createFn(newItems[i]!);
+      if (beforeNode) {
+        parent.insertBefore(node, beforeNode);
+      } else {
+        parent.appendChild(node);
+      }
+      hooks?.onInsert?.(node);
+      nodes[i] = node;
+    }
+    return { nodes, items: newItems };
+  }
+
+  // --- Small list path: flat array scan, no Map/Set overhead ---
+  if (oldLen < SMALL_LIST_THRESHOLD) {
+    return reconcileSmall(parent, oldItems, newItems, oldNodes, keyFn, createFn, updateFn, beforeNode, hooks);
+  }
+
+  // --- Large list path: Map-based approach ---
+  // Bucket occurrences per key so DUPLICATE keys are consumed one-per-match
+  // (matching the small-list path). A single index per key collapsed duplicates
+  // to one node, dropping duplicate-keyed rows once a list crossed the threshold.
+  const oldKeyMap = new Map<string | number, number[]>();
+  for (let i = 0; i < oldLen; i++) {
+    const k = keyFn(oldItems[i]!);
+    const bucket = oldKeyMap.get(k);
+    if (bucket) bucket.push(i);
+    else oldKeyMap.set(k, [i]);
+  }
+
+  // --- Classify each new item: reuse or create ---
+  // Use Uint8Array bitmap instead of Set for O(1) lookup without hash overhead
+  const oldIndices = new Array<number>(newLen); // -1 means new item
+  const oldUsed = new Uint8Array(oldLen);
+
+  for (let i = 0; i < newLen; i++) {
+    const key = keyFn(newItems[i]!);
+    const bucket = oldKeyMap.get(key);
+    if (bucket && bucket.length > 0) {
+      const oldIdx = bucket.shift()!; // consume next unused occurrence (left-to-right)
+      oldIndices[i] = oldIdx;
+      oldUsed[oldIdx] = 1;
+    } else {
+      oldIndices[i] = -1;
+    }
+  }
+
+  // --- Remove old items not in new array ---
+  for (let i = 0; i < oldLen; i++) {
+    if (!oldUsed[i]) {
+      removeRow(parent, oldNodes[i]!, hooks);
+    }
+  }
+
+  // --- Fast path: same keys, same order -> just update, 0 DOM moves ---
+  if (oldLen === newLen) {
+    let allSameOrder = true;
+    for (let i = 0; i < newLen; i++) {
+      if (oldIndices[i] !== i) {
+        allSameOrder = false;
+        break;
+      }
+    }
+    if (allSameOrder) {
+      const nodes = new Array<Node>(newLen);
+      for (let i = 0; i < newLen; i++) {
+        nodes[i] = updateRowNode(parent, oldNodes[i]!, newItems[i]!, updateFn);
+      }
+      return { nodes, items: newItems };
+    }
+  }
+
+  // --- Find LIS of old indices (reused items only) ---
+  const reusedIndices: number[] = [];
+  const reusedPositions: number[] = []; // position in new array
+  for (let i = 0; i < newLen; i++) {
+    if (oldIndices[i] !== -1) {
+      reusedIndices.push(oldIndices[i]!);
+      reusedPositions.push(i);
+    }
+  }
+
+  const lisOfReused = longestIncreasingSubsequence(reusedIndices);
+  // Use Uint8Array bitmap instead of Set for O(1) lookup without hash overhead
+  const lisFlags = new Uint8Array(newLen);
+  for (const li of lisOfReused) {
+    lisFlags[reusedPositions[li]!] = 1;
+  }
+
+  // --- Build result: walk right-to-left for stable insertBefore targets ---
+  const newNodes = new Array<Node>(newLen);
+  let nextSibling: Node | null = beforeNode ?? null;
+
+  for (let i = newLen - 1; i >= 0; i--) {
+    let node: Node;
+    let isNew = false;
+
+    if (oldIndices[i] === -1) {
+      // NEW: create and insert
+      node = createFn(newItems[i]!);
+      isNew = true;
+    } else {
+      // REUSE: update content
+      node = updateRowNode(parent, oldNodes[oldIndices[i]!]!, newItems[i]!, updateFn);
+
+      if (lisFlags[i]) {
+        // LIS item: already in correct relative position, don't move
+        newNodes[i] = node;
+        nextSibling = node;
+        continue;
+      }
+    }
+
+    // Insert/move into position
+    if (nextSibling) {
+      parent.insertBefore(node, nextSibling);
+    } else {
+      parent.appendChild(node);
+    }
+
+    if (isNew) hooks?.onInsert?.(node);
+
+    newNodes[i] = node;
+    nextSibling = node;
+  }
+
+  return { nodes: newNodes, items: newItems };
+}
+
+// ---------------------------------------------------------------------------
+// createList — high-level reactive API
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a reactively-bound list of DOM elements with keyed reconciliation.
+ *
+ * Returns a `DocumentFragment` containing two comment markers
+ * (`<!--forma-list-start-->` and `<!--forma-list-end-->`) that delimit the
+ * list's range in the DOM. All managed elements live between these markers.
+ *
+ * This avoids a wrapper `<div>` which would break `<table>`, `<ul>`,
+ * `<select>` semantics and pollute the DOM.
+ *
+ * When the `items` signal changes, only the minimal set of DOM mutations is
+ * performed using the LIS algorithm:
+ * - New keys: create elements via `renderFn`
+ * - Removed keys: remove elements from DOM
+ * - Moved keys: reorder elements using minimum moves (n - LIS)
+ * - Same keys: keep row nodes and update index signals
+ *   (or re-render row content when `updateOnItemChange: 'rerender'`)
+ *
+ * @param items    Signal getter returning the current array of items.
+ * @param keyFn    Extracts a unique key from each item.
+ * @param renderFn Renders a single item. Receives the item and a reactive index getter.
+ * @returns A DocumentFragment to insert into the DOM. The fragment includes
+ *          start/end comment markers and any initial list items.
+ *
+ * ```ts
+ * const frag = createList(
+ *   todos,
+ *   (t) => t.id,
+ *   (todo, index) => h('li', null, () => `${index() + 1}. ${todo.text}`),
+ * );
+ * container.appendChild(frag);
+ * ```
+ */
+export function createList<T>(
+  items: () => T[],
+  keyFn: (item: T) => string | number,
+  renderFn: (item: T, index: () => number) => HTMLElement,
+  options?: CreateListOptions,
+): DocumentFragment {
+  if (hydrating) {
+    return { type: 'list', items, keyFn, renderFn, options } as unknown as DocumentFragment;
+  }
+
+  const startMarker = document.createComment('forma-list-start');
+  const endMarker = document.createComment('forma-list-end');
+
+  const fragment = document.createDocumentFragment();
+  fragment.appendChild(startMarker);
+  fragment.appendChild(endMarker);
+
+  // The namespace rows are built in: the parent's content namespace once the
+  // markers are in an element; for the first render, into this fragment, the
+  // one being built in when createList was called (SVG inside svg()).
+  let ns = getNamespace();
+
+  // Cache: key -> { element, item, setIndex }
+  let cache = new Map<string | number, CachedItem<T>>();
+  let currentNodes: Node[] = [];
+  let currentItems: T[] = [];
+  const updateOnItemChange = options?.updateOnItemChange ?? 'none';
+
+  // Every generation owns all its effects, even when its root looks static.
+  // Patching only children cannot transfer refs/imperative root bindings and
+  // left both discarded candidates and replaced descendants subscribed.
+  const renderOwned = (item: T, getIndex: () => number) => {
+    let dispose!: () => void;
+    let failure: unknown;
+    let failed = false;
+    const element = createRoot((stop) => {
+      dispose = stop;
+      try {
+        return untrack(() => withNamespace(ns, () => renderFn(item, getIndex)));
+      } catch (error) {
+        // Finish root setup before disposal so even a partially built row's
+        // graph and user cleanups can be torn down.
+        failed = true;
+        failure = error;
+        return undefined;
+      }
+    });
+    if (failed) {
+      dispose();
+      throw failure;
+    }
+    return { element: element!, dispose };
+  };
+
+  internalEffect(() => {
+    const newItems = items();
+
+    // The parent is discovered lazily: once the fragment has been inserted
+    // into the live DOM the markers have a parentNode.
+    const parent = startMarker.parentNode;
+    if (!parent) {
+      // Markers are not yet in the DOM — nothing to reconcile.
+      // This can happen if the effect fires synchronously before mount.
+      return;
+    }
+    // Verified by: src/dom/__tests__/namespace-resolution.test.ts > "list rows inside an svg are SVG when first rendered inside svg(), and when added or moved later without it"
+    const into = insertNs(parent);
+    if (into !== undefined) ns = into;
+
+    // Edge case: non-array
+    if (!Array.isArray(newItems)) {
+      if (__DEV__) {
+        console.warn('[forma] createList: value is not an array, treating as empty');
+      }
+      // Remove all nodes between the markers
+      for (const node of currentNodes) {
+        if (node.parentNode === parent) {
+          deactivateIslandsIn(node);
+          parent.removeChild(node);
+        }
+      }
+      for (const cached of cache.values()) cached.dispose();
+      cache = new Map();
+      currentNodes = [];
+      currentItems = [];
+      return;
+    }
+
+    // Filter nullish items — avoid array allocation when no nulls found (common case)
+    let cleanItems: T[] = newItems;
+    for (let i = 0; i < newItems.length; i++) {
+      if (newItems[i] == null) {
+        cleanItems = newItems.filter(item => item != null);
+        break;
+      }
+    }
+
+    // Dev-mode duplicate key detection
+    if (__DEV__) {
+      const seen = new Set<string | number>();
+      for (const item of cleanItems) {
+        const key = keyFn(item);
+        if (seen.has(key)) {
+          console.warn('[forma] createList: duplicate key detected:', key);
+        }
+        seen.add(key);
+      }
+    }
+
+    const updateRow = updateOnItemChange === 'rerender'
+      ? (_node: Node, item: T): Node | void => {
+        const key = keyFn(item);
+        const cached = cache.get(key);
+        if (!cached) return;
+        if (cached.item === item) return;
+        const next = renderOwned(item, cached.getIndex);
+        cached.dispose();
+        cached.item = item;
+        cached.element = next.element;
+        cached.dispose = next.dispose;
+        return next.element;
+      }
+      : (_node: Node, item: T): void => {
+        const key = keyFn(item);
+        const cached = cache.get(key);
+        if (cached) cached.item = item;
+      };
+    (updateRow as { [REPLACES_ROW]?: boolean })[REPLACES_ROW] = updateOnItemChange === 'rerender';
+
+    const oldCache = cache;
+
+    const result = reconcileList<T>(
+      parent,
+      currentItems,
+      cleanItems,
+      currentNodes,
+      keyFn,
+      // createFn: create element + cache entry.
+      // Each item is rendered inside createRoot + untrack so that inner
+      // effects are owned by the item's root (not the parent), and are
+      // disposed when the item is removed from the list.
+      (item) => {
+        const key = keyFn(item);
+        const [getIndex, setIndex] = createSignal(0);
+        const rendered = renderOwned(item, getIndex);
+        cache.set(key, { ...rendered, item, getIndex, setIndex });
+        return rendered.element;
+      },
+      updateRow,
+      // beforeNode: insert items before the end marker
+      endMarker,
+    );
+
+    // Rebuild cache + update index signals in a single pass.
+    // Avoids .map() array allocation + Set construction from the previous approach.
+    const newCache = new Map<string | number, CachedItem<T>>();
+    for (let i = 0; i < cleanItems.length; i++) {
+      const key = keyFn(cleanItems[i]!);
+      const cached = oldCache.get(key);
+      if (cached) {
+        cached.setIndex(i);
+        newCache.set(key, cached);
+      }
+    }
+
+    // Dispose removed items' reactive roots
+    for (const [key, cached] of oldCache) {
+      if (!newCache.has(key)) {
+        cached.dispose();
+      }
+    }
+
+    cache = newCache;
+
+    currentNodes = result.nodes;
+    currentItems = result.items;
+  });
+
+  // Defense-in-depth: when the parent root is disposed, explicitly dispose
+  // all cached item roots and clear references. Item roots are already
+  // auto-registered with the parent (Solid-style ownership), but the cache
+  // Map still holds stale references that prevent GC.
+  registerDisposer(() => {
+    for (const cached of cache.values()) {
+      deactivateIslandsIn(cached.element);
+      cached.dispose();
+    }
+    cache = new Map();
+    currentNodes = [];
+    currentItems = [];
+  });
+
+  return fragment;
+}

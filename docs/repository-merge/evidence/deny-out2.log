@@ -1,0 +1,6 @@
+         │           ├── rust-embed v8.11.0 (*)
+         │           └── rust-embed-impl v8.13.0 (*)
+         └── walkdir v2.5.0 (*)
+
+advisories ok, bans ok, licenses ok, sources ok
+cargo deny check  0.30s user 0.28s system 83% cpu 0.692 total

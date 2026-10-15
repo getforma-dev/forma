@@ -1,0 +1,1194 @@
+/**
+ * @getforma/build — Build Pipeline
+ *
+ * Parameterized build pipeline extracted from the GateWASM admin build.ts.
+ * Handles: esbuild bundling, CSS generation, font copying, SSR IR emission,
+ * island registry generation, WASM builds, the preview frame's runtime
+ * (previewFrame), content hashing, compression, manifest generation, service
+ * worker generation, and budget warnings.
+ */
+
+import * as esbuild from 'esbuild';
+import { createHash } from 'node:crypto';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  renameSync,
+  statSync,
+  existsSync,
+} from 'node:fs';
+import { join, extname, basename, dirname, sep } from 'node:path';
+import { tmpdir } from 'node:os';
+import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
+import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { APP_NAME, appCacheName, serviceWorkerSource } from './service-worker.js';
+import { splitGraph, type SplitGraph } from './split-graph.js';
+import { createStagingDirectory, replaceDirectory, writeFileAtomic } from './output.js';
+import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
+import {
+  DiagnosticsCollector,
+  compilerMissing,
+  isInsideOutputDir,
+  resolveDiagnosticOptions,
+  wasmKeyDiagnostic,
+  wasmPackDiagnostic,
+  workerWithoutAppDiagnostic,
+  strictFailure,
+  writeDiagnosticsJson,
+  type CompilerDiagnostic,
+} from './diagnostics.js';
+
+import type {
+  BuildConfig,
+  BuildResult,
+  AssetManifest,
+  RouteManifest,
+} from './types.js';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Hash a file and return an 8-char hex prefix. */
+function contentHash(filePath: string): string {
+  const content = readFileSync(filePath);
+  return createHash('sha256').update(content).digest('hex').slice(0, 8);
+}
+
+// ---------------------------------------------------------------------------
+// CSS Generation
+// ---------------------------------------------------------------------------
+
+/**
+ * Locate the consuming project's installed @tailwindcss/cli entry script,
+ * resolving from the current working directory. Returns null if the package
+ * is not installed locally.
+ */
+function resolveTailwindCli(): string | null {
+  try {
+    const projectRequire = createRequire(join(process.cwd(), 'package.json'));
+    const pkgPath = projectRequire.resolve('@tailwindcss/cli/package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as {
+      bin?: string | Record<string, string>;
+    };
+    const bin = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.tailwindcss;
+    if (!bin) return null;
+    const cliPath = join(dirname(pkgPath), bin);
+    return existsSync(cliPath) ? cliPath : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Run @tailwindcss/cli on an input file. Prefers the locally installed CLI
+ * script executed with the current Node binary — no shell on any platform,
+ * so paths with spaces survive and nothing is exposed to shell injection.
+ * Falls back to npx for projects that rely on it fetching the CLI on demand —
+ * through spawnTool, because npx is a .cmd shim on Windows (see its doc
+ * comment for why that needs a shell).
+ */
+function runTailwind(input: string, outPath: string): void {
+  const args = ['-i', input, '-o', outPath, '--minify'];
+
+  const cli = resolveTailwindCli();
+  if (cli) {
+    execFileSync(process.execPath, [cli, ...args], { stdio: 'inherit' });
+    return;
+  }
+
+  spawnTool('npx', ['@tailwindcss/cli', ...args], { stdio: 'inherit' });
+}
+
+function generateCss(
+  config: BuildConfig,
+): void {
+  if (!config.cssEntries || config.cssEntries.length === 0) return;
+
+  for (const entry of config.cssEntries) {
+    const inputs = Array.isArray(entry.input) ? entry.input : [entry.input];
+    const outPath = join(config.outputDir, entry.outfile);
+
+    if (entry.tailwind && inputs.length > 0) {
+      runTailwind(inputs[0], outPath);
+    } else {
+      // Concatenate all input CSS files
+      const cssConcat = inputs
+        .map((f) => readFileSync(f, 'utf8'))
+        .join('\n');
+      writeFileSync(outPath, cssConcat);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Font Copying
+// ---------------------------------------------------------------------------
+
+function copyFonts(config: BuildConfig): void {
+  if (!config.fontDir || !existsSync(config.fontDir)) return;
+
+  for (const fontFile of readdirSync(config.fontDir)) {
+    if (fontFile.endsWith('.woff2')) {
+      cpSync(join(config.fontDir, fontFile), join(config.outputDir, fontFile));
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Deprecations: the WASM walker (FORMA-131; DR-23)
+// ---------------------------------------------------------------------------
+
+/**
+ * BUILD-803 (deprecated in 0.3.1): the config sets `wasm`. The key goes in
+ * 3.0.0 with the WASM walker: forma-ir's `wasm` feature and
+ * `@getforma/core/wasm` are deprecated in the same release. Said once per
+ * `build()` call, production and watch alike, on the console and in
+ * `BuildResult.warnings`, as BUILD-802 is.
+ *
+ * Verified by: packages/build/tests/wasm-deprecation.test.ts > "a config that sets wasm warns BUILD-803 once per build, naming 3.0.0"
+ */
+function wasmKey(config: BuildConfig): string | undefined {
+  if (config.wasm === undefined) return undefined;
+  return (
+    "BUILD-803 the wasm key is deprecated and is removed in 3.0.0 with the WASM walker (forma-ir's " +
+    '`wasm` feature and @getforma/core/wasm). Remove it from the config: islands re-render in the ' +
+    'browser with h(), and forma-server renders pages.'
+  );
+}
+
+/**
+ * BUILD-804 (deprecated in 0.3.1): the wasm-pack step ran, in a production
+ * build whose config sets `wasm` with `wasm-pack` on `PATH`. Said when the
+ * step starts, on the console, and in that build's `BuildResult.warnings`.
+ *
+ * Verified by: packages/build/tests/wasm-deprecation.test.ts > "the wasm-pack step warns BUILD-804 when it runs, and still ships the walker"
+ */
+const WASM_PACK_DEPRECATION =
+  'BUILD-804 the wasm-pack step is deprecated and is removed in 3.0.0: forma_ir.js, ' +
+  "forma_ir_bg.wasm and the manifest's wasm entry go with the WASM walker.";
+
+// ---------------------------------------------------------------------------
+// WASM Build
+// ---------------------------------------------------------------------------
+
+/**
+ * Spawn a developer tool that may be installed either as a native executable
+ * or as an npm `.cmd`/`.ps1` shim.
+ *
+ * `execFileSync` calls CreateProcess, which can only run a real PE image — a
+ * `.cmd` shim (which is what `npm i -g` writes on Windows for wasm-pack, npx,
+ * tsc and friends) fails with ENOENT/EINVAL. Windows therefore goes through a
+ * shell, where arguments are NOT escaped for us, so each one is quoted; `"`
+ * cannot appear in a Windows path, which makes that quoting sufficient. POSIX
+ * keeps the no-shell path, where a path with spaces is safe as-is.
+ * Verified by: packages/build/tests/build.test.ts > "runs a .cmd-shimmed wasm-pack (the Windows npm install shape)"
+ */
+function spawnTool(
+  command: string,
+  args: string[],
+  options: { stdio: 'inherit' | 'pipe' },
+): void {
+  const windows = process.platform === 'win32';
+  execFileSync(
+    windows ? `"${command}"` : command,
+    windows ? args.map((a) => `"${a}"`) : args,
+    { ...options, shell: windows },
+  );
+}
+
+function buildWasm(
+  config: BuildConfig,
+): boolean {
+  if (!config.wasm) return false;
+
+  // Probe separately from the build so a COMPILE failure is never reported as
+  // "wasm-pack not found" — that message sent people looking for a missing
+  // tool while the real error was in their crate.
+  try {
+    spawnTool('wasm-pack', ['--version'], { stdio: 'pipe' });
+  } catch {
+    console.warn(
+      'Warning: wasm-pack not found — skipping WASM build. SSR pipeline works without it.',
+    );
+    return false;
+  }
+
+  console.warn(`Warning: ${WASM_PACK_DEPRECATION}`);
+  console.log('   Building WASM walker...');
+  spawnTool(
+    'wasm-pack',
+    ['build', '--target', 'web', '--release', config.wasm.crateDir, '--', '--features', 'wasm'],
+    { stdio: 'inherit' },
+  );
+
+  // Copy wasm outputs to outputDir
+  const wasmPkgDir = join(config.wasm.crateDir, 'pkg');
+  const wasmFile = 'forma_ir_bg.wasm';
+  const wasmLoader = 'forma_ir.js';
+
+  if (!existsSync(join(wasmPkgDir, wasmFile))) {
+    throw new Error(
+      `wasm-pack reported success but ${join(wasmPkgDir, wasmFile)} does not exist — check that the crate at ${config.wasm.crateDir} builds the forma-ir cdylib`,
+    );
+  }
+
+  cpSync(join(wasmPkgDir, wasmFile), join(config.outputDir, wasmFile));
+  cpSync(join(wasmPkgDir, wasmLoader), join(config.outputDir, wasmLoader));
+  console.log(`   WASM built: ${wasmFile}`);
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Content Hashing
+// ---------------------------------------------------------------------------
+
+function hashAssets(
+  config: BuildConfig,
+  preserved: Record<string, string> = {},
+): Record<string, string> {
+  const distDir = config.outputDir;
+  const files = readdirSync(distDir);
+  const assets: Record<string, string> = { ...preserved };
+  const graphFiles = new Set(Object.values(preserved));
+  const serverInlinedSet = new Set(config.serverInlined ?? []);
+
+  for (const file of files) {
+    if (graphFiles.has(file) || Object.hasOwn(preserved, file)) continue;
+    const ext = extname(file);
+    // Only hash .js, .css, .wasm, .ir files; skip manifest.json, .woff2, etc.
+    if (ext !== '.js' && ext !== '.css' && ext !== '.wasm' && ext !== '.ir')
+      continue;
+
+    const filePath = join(distDir, file);
+    // Skip directories
+    if (!statSync(filePath).isFile()) continue;
+
+    const hash = contentHash(filePath);
+    const base = basename(file, ext);
+    const hashedName = `${base}.${hash}${ext}`;
+
+    // Keep unhashed copy for files inlined by the server
+    if (serverInlinedSet.has(file)) {
+      cpSync(filePath, join(distDir, hashedName));
+    } else {
+      renameSync(filePath, join(distDir, hashedName));
+    }
+    assets[file] = hashedName;
+  }
+
+  return assets;
+}
+
+// ---------------------------------------------------------------------------
+// Compression
+// ---------------------------------------------------------------------------
+
+/**
+ * `skip` names files nothing fetches, which get no compressed copies: the
+ * preview frame's runtime, which forma-server inlines (FORMA-175).
+ */
+function compressAssets(distDir: string, skip: ReadonlySet<string> = new Set()): number {
+  const COMPRESSIBLE_EXTS = new Set(['.js', '.css']);
+  let compressCount = 0;
+
+  for (const file of readdirSync(distDir)) {
+    const ext = extname(file);
+    if (!COMPRESSIBLE_EXTS.has(ext) || skip.has(file)) continue;
+
+    const filePath = join(distDir, file);
+    if (!statSync(filePath).isFile()) continue;
+
+    const content = readFileSync(filePath);
+
+    // Brotli (level 11 — max compression)
+    const br = brotliCompressSync(content, {
+      params: {
+        [constants.BROTLI_PARAM_QUALITY]: 11,
+      },
+    });
+    if (br.length < content.length) {
+      writeFileSync(`${filePath}.br`, br);
+    }
+
+    // Gzip (level 9 — max compression)
+    const gz = gzipSync(content, { level: 9 });
+    if (gz.length < content.length) {
+      writeFileSync(`${filePath}.gz`, gz);
+    }
+
+    compressCount++;
+  }
+
+  console.log(`   ${compressCount} files compressed (brotli 11 + gzip 9)`);
+  return compressCount;
+}
+
+// ---------------------------------------------------------------------------
+// Config Validation
+// ---------------------------------------------------------------------------
+
+/**
+ * A config value as an error message shows it: escaped, the way forma-server
+ * prints a refused name (`{:?}`), so a control character or a lookalike stays
+ * visible; never a throw, whatever a JavaScript config holds.
+ */
+function shown(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? typeof value;
+  } catch {
+    return typeof value;
+  }
+}
+
+/**
+ * BUILD-802 (deprecated in 0.3.1): `serviceWorker` is set but `app` is not,
+ * so the worker is 0.3.0's, with the cache names every Forma application on
+ * the origin shares and an immediate takeover. Said once per `build()` call,
+ * production and watch alike, on the console and in `BuildResult.warnings`.
+ *
+ * Verified by: packages/build/tests/build.test.ts > "warns when serviceWorker is set without app, naming the 3.0.0 change, and is silent with app"
+ */
+function workerWithoutApp(config: BuildConfig): string | undefined {
+  if (config.serviceWorker === undefined || config.app !== undefined) return undefined;
+  return (
+    `BUILD-802 serviceWorker is set without app: this is 0.3.0's worker, whose caches every ` +
+    `Forma application on the origin shares and which takes over open tabs at once. Set app to ` +
+    `the name the server passes to forma-server's sw::ServiceWorker::for_app for caches per ` +
+    `application and build and a waiting upgrade; from 3.0.0 a worker is written only for a ` +
+    `named app.`
+  );
+}
+
+/**
+ * Reject configurations whose output cannot be correct, BEFORE anything is
+ * written. The first four checks close a silent failure mode; the fifth
+ * turns a crash into a message:
+ *
+ *  - An unknown `serviceWorker` value (a near miss such as 'ondemand' in a
+ *    JavaScript config) silently produced the precache worker.
+ *  - Two entries sharing an `outfile` write one file, and the route serves
+ *    whichever build finished last.
+ *  - An `outfile` containing a path separator lands esbuild's output in a
+ *    subdirectory, which the (non-recursive) hashing pass never sees. The asset
+ *    was silently absent from the manifest and its route fell back to an
+ *    unhashed name that 404s in production.
+ *  - A route naming a JS/CSS base that no entry produces is a typo that
+ *    manifests as a missing script tag on a deployed page, not at build time.
+ *  - A route whose `js` or `css` is missing (a JavaScript config is not type
+ *    checked) threw `TypeError: mapping.css is not iterable`, naming neither
+ *    the route nor the key; a string there was read letter by letter.
+ *
+ * Verified by: packages/build/tests/build.test.ts > "rejects an unknown serviceWorker value, naming it"
+ * Verified by: packages/build/tests/build.test.ts > "rejects an application name forma-server cannot take, naming it"
+ * Verified by: packages/build/tests/build.test.ts > "rejects two entryPoints that share an outfile"
+ * Verified by: packages/build/tests/build.test.ts > "rejects a route that names an asset no entry produces"
+ * Verified by: packages/build/tests/build.test.ts > "rejects a route without css, naming the route"
+ * Verified by: packages/build/tests/build.test.ts > "rejects a route whose js is missing or not an array, naming each route"
+ */
+function validateConfig(config: BuildConfig): void {
+  const problems: string[] = [];
+  const entryNames = new Set<string>();
+
+  const serviceWorker: unknown = config.serviceWorker;
+  if (serviceWorker !== undefined && serviceWorker !== 'precache' && serviceWorker !== 'on-demand') {
+    problems.push(
+      `serviceWorker is '${String(serviceWorker)}': use 'precache' (the default) or 'on-demand'`,
+    );
+  }
+
+  // The worker's cache names carry it between colons, and the server must
+  // name the same application to retire them (FORMA-130).
+  const app: unknown = config.app;
+  if (app !== undefined && (typeof app !== 'string' || !APP_NAME.test(app))) {
+    problems.push(
+      `app is ${shown(app)}: use 1 to 63 of a-z, 0-9 and -, starting with a letter or digit ` +
+        `(the name forma-server's sw::ServiceWorker::for_app takes)`,
+    );
+  }
+
+  // A JavaScript config is not type checked: a string here would read as on.
+  // Verified by: packages/build/tests/preview-frame.test.ts > "refuses a previewFrame that is not a boolean, and an entry that takes forma-runtime.js, before anything is written"
+  const previewFrame: unknown = config.previewFrame;
+  if (previewFrame !== undefined && typeof previewFrame !== 'boolean') {
+    problems.push(
+      `previewFrame is ${shown(previewFrame)}: use true to copy @getforma/core's preview-frame runtime, or false (the default)`,
+    );
+  }
+
+  for (const entry of config.entryPoints) {
+    if (entryNames.has(entry.outfile)) problems.push(`entryPoints: duplicate outfile '${entry.outfile}'`);
+    entryNames.add(entry.outfile);
+    // The manifest would name the application's bundle where forma-server
+    // reads the frame's runtime, and the two files would be one: compared
+    // without case, as the file systems of macOS and Windows compare names.
+    if (previewFrame === true && entry.outfile.toLowerCase() === FRAME_RUNTIME_ASSET) {
+      problems.push(
+        `entryPoints: outfile '${entry.outfile}' is the preview frame runtime's name in the manifest (previewFrame): name the entry something else`,
+      );
+    }
+    if (/[\\/]/.test(entry.outfile)) {
+      problems.push(
+        `entryPoints: outfile '${entry.outfile}' contains a path separator — outfile is a bare filename inside outputDir`,
+      );
+    }
+    if (!entry.outfile.endsWith('.js')) {
+      problems.push(
+        `entryPoints: outfile '${entry.outfile}' must end in .js (routes and the SSR page name are derived from it)`,
+      );
+    }
+  }
+
+  const jsBases = new Set(
+    config.entryPoints.map((e) => basename(e.outfile, '.js')),
+  );
+  const cssBases = new Set(
+    (config.cssEntries ?? []).map((e) => basename(e.outfile, '.css')),
+  );
+
+  const baseNames = (route: string, key: 'js' | 'css', value: unknown): string[] => {
+    if (Array.isArray(value)) return value;
+    problems.push(
+      `routes['${route}'].${key} is ${value === undefined ? 'missing' : 'not an array'}: list the route's ${key.toUpperCase()} base names, or [] for none`,
+    );
+    return [];
+  };
+
+  for (const [route, mapping] of Object.entries(config.routes)) {
+    for (const name of baseNames(route, 'js', mapping?.js)) {
+      if (!jsBases.has(name)) {
+        problems.push(
+          `routes['${route}'].js names '${name}', but no entryPoint produces '${name}.js'`,
+        );
+      }
+    }
+    for (const name of baseNames(route, 'css', mapping?.css)) {
+      if (!cssBases.has(name)) {
+        problems.push(
+          `routes['${route}'].css names '${name}', but no cssEntry produces '${name}.css'`,
+        );
+      }
+    }
+  }
+
+  // The JSON report is a build-time record, not an asset: inside outputDir it
+  // would be swapped away with the staging directory on success, written into
+  // the previous build on failure (which must stay untouched, L-21), and
+  // served or embedded with the assets (FORMA-119).
+  // Verified by: packages/build/tests/strict.test.ts > "refuses a JSON report path inside outputDir, before anything is written"
+  if (config.diagnosticsJson !== undefined) {
+    if (isInsideOutputDir(config.diagnosticsJson, config.outputDir)) {
+      problems.push(
+        `diagnosticsJson '${config.diagnosticsJson}' is inside outputDir '${config.outputDir}': the build replaces outputDir whole, and its files are served; write the report outside it`,
+      );
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `@getforma/build: invalid config\n  - ${problems.join('\n  - ')}`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Build Summary
+// ---------------------------------------------------------------------------
+
+/** esbuild's size notation: `842b`, `1.2kb`, `3.4mb`. */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes}b`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}kb`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}mb`;
+}
+
+/**
+ * The production build's summary, in place of esbuild's: every file the
+ * bundling pass wrote, by the name it has after hashing and under `shownDir`,
+ * the directory the application reads, never the staging directory the
+ * pass wrote into (FORMA-180 F3). Sizes are the metafile's, the bytes
+ * before compression. Forward slashes on every platform, as the manifest
+ * and the URLs name the files, so the line reads the same on Windows.
+ * Verified by: packages/build/tests/build.test.ts > "a production build's summary names dist/<entry>.<hash>.js, never the staging directory"
+ */
+function printBundleSummary(metafiles: esbuild.Metafile[], assets: Record<string, string>, shownDir: string): void {
+  const lines: string[] = [];
+  const dir = shownDir.split(sep).join('/');
+  for (const metafile of metafiles) {
+    for (const [path, output] of Object.entries(metafile.outputs)) {
+      const name = basename(path);
+      lines.push(`   ${dir}/${assets[name] ?? name}  ${formatBytes(output.bytes)}`);
+    }
+  }
+  if (lines.length) console.log(`\n${lines.join('\n')}\n`);
+}
+
+// ---------------------------------------------------------------------------
+// Manifest Generation
+// ---------------------------------------------------------------------------
+
+function generateManifest(
+  config: BuildConfig,
+  assets: Record<string, string>,
+  wasmBuilt: boolean,
+  staticDependencies: Record<string, string[]> = {},
+): { manifest: AssetManifest; warnings: string[] } {
+  const distDir = config.outputDir;
+  const BUDGET_THRESHOLD = config.budgetThreshold ?? 200_000;
+  const warnings: string[] = [];
+
+  // Build hash: SHA-256 of all hashed filenames sorted and joined
+  const buildHash = createHash('sha256')
+    .update(Object.values(assets).sort().join(','))
+    .digest('hex');
+
+  // Collect font files (stable names, not hashed)
+  const fonts = readdirSync(distDir)
+    .filter((f) => f.endsWith('.woff2'))
+    .sort();
+
+  // Build route manifest
+  const routes: Record<string, RouteManifest> = {};
+
+  for (const [route, mapping] of Object.entries(config.routes)) {
+    const jsFiles = mapping.js.map(
+      (name) => assets[`${name}.js`] ?? `${name}.js`,
+    );
+    const cssFiles = mapping.css.map(
+      (name) => assets[`${name}.css`] ?? `${name}.css`,
+    );
+    const modulepreload = [...new Set(jsFiles.flatMap(file => staticDependencies[file] ?? []))].filter(file => !jsFiles.includes(file));
+
+    // Use route-level fonts if specified, otherwise all fonts
+    const routeFonts = mapping.fonts ?? fonts;
+
+    // Calculate total size using brotli sizes when available
+    let totalSize = 0;
+    for (const f of new Set([...jsFiles, ...modulepreload, ...cssFiles])) {
+      const brPath = join(distDir, `${f}.br`);
+      const origPath = join(distDir, f);
+      if (existsSync(brPath)) {
+        totalSize += statSync(brPath).size;
+      } else if (existsSync(origPath)) {
+        totalSize += statSync(origPath).size;
+      }
+    }
+    // Add font sizes (uncompressed — woff2 is already compressed)
+    for (const f of routeFonts) {
+      const fp = join(distDir, f);
+      if (existsSync(fp)) {
+        totalSize += statSync(fp).size;
+      }
+    }
+
+    const routeEntry: RouteManifest = {
+      js: jsFiles,
+      ...(modulepreload.length ? { modulepreload } : {}),
+      css: cssFiles,
+      fonts: routeFonts,
+      total_size_br: totalSize,
+      budget_warn_threshold: BUDGET_THRESHOLD,
+    };
+
+    // If SSR mode, check for .ir files and add to route manifest
+    if (config.ssr) {
+      const pageName = mapping.js[0];
+      if (pageName) {
+        const irFile = `${pageName}.ir`;
+        if (assets[irFile]) {
+          routeEntry.ir = assets[irFile];
+        }
+      }
+    }
+
+    routes[route] = routeEntry;
+
+    // Budget warning
+    if (totalSize > BUDGET_THRESHOLD) {
+      const kb = (totalSize / 1024).toFixed(1);
+      const msg = `Budget exceeded: ${route} -> ${kb}KB (threshold: ${BUDGET_THRESHOLD / 1024}KB)`;
+      warnings.push(msg);
+      console.warn(`   Warning: ${msg}`);
+    }
+  }
+
+  // Assemble manifest
+  const manifest: AssetManifest = {
+    version: 1,
+    build_hash: buildHash,
+    assets,
+    routes,
+  };
+
+  if (wasmBuilt && assets['forma_ir.js'] && assets['forma_ir_bg.wasm']) {
+    manifest.wasm = {
+      loader: assets['forma_ir.js'],
+      binary: assets['forma_ir_bg.wasm'],
+    };
+  }
+
+  return { manifest, warnings };
+}
+
+// ---------------------------------------------------------------------------
+// Service Worker Generation
+// ---------------------------------------------------------------------------
+
+function generateServiceWorker(
+  config: BuildConfig,
+  assets: Record<string, string>,
+  buildHash: string,
+  wasmBuilt: boolean,
+): void {
+  const distDir = config.outputDir;
+  const onDemand = config.serviceWorker === 'on-demand';
+  // Per application and build when the config names the application
+  // (FORMA-130); otherwise 0.3.0's shared `forma-` name.
+  const swCacheName = config.app !== undefined
+    ? appCacheName(config.app, buildHash)
+    : `forma-${buildHash.slice(0, 12)}${onDemand ? '-on-demand-v1' : ''}`;
+  const fonts = readdirSync(distDir)
+    .filter((f) => f.endsWith('.woff2'))
+    .sort();
+
+  // Precache: all CSS assets + all font files
+  const precacheUrls = [
+    ...Object.entries(assets)
+      .filter(([orig]) => orig.endsWith('.css'))
+      .map(([, hashed]) => `/_assets/${hashed}`),
+    ...fonts.map((f) => `/_assets/${f}`),
+  ];
+
+  // Add WASM assets to precache if built
+  if (wasmBuilt && assets['forma_ir.js'] && assets['forma_ir_bg.wasm']) {
+    precacheUrls.push(`/_assets/${assets['forma_ir.js']}`);
+    precacheUrls.push(`/_assets/${assets['forma_ir_bg.wasm']}`);
+  }
+
+  const immutableUrls = onDemand ? [...new Set(Object.values(assets))]
+    .filter(file => !file.includes('..') && /^[A-Za-z0-9_.-]+\.[A-Za-z0-9_-]{8}\.(?:js|css|wasm)$/.test(file))
+    .sort().map(file => `/_assets/${file}`) : undefined;
+  const swContent = serviceWorkerSource(swCacheName, precacheUrls, config.watch === true, immutableUrls, config.app);
+
+  writeFileAtomic(join(distDir, 'sw.js'), swContent);
+  console.log(`   SW generated: dist/sw.js (${config.watch ? 'network-only development' : `cache: ${swCacheName}`})`);
+}
+
+// ---------------------------------------------------------------------------
+// Watch Mode: a Development Build
+// ---------------------------------------------------------------------------
+
+/**
+ * What watch mode adds to esbuild's options; a production build adds nothing,
+ * so its options, and the bytes it writes, are what they were (FORMA-169).
+ *
+ * - `conditions`: watch mode resolves each package's `development` export
+ *   condition. `@getforma/core` points it at a build of every entry that
+ *   keeps its development warnings (hydration mismatches, dropped props, the
+ *   deprecations' codes); a production build resolves the files it always
+ *   did. esbuild adds the `module` condition by itself only while no custom
+ *   conditions are configured, so the list names it too: with it, the list
+ *   is what esbuild would have used plus `development`. (`browser`, `import`
+ *   or `require`, and `default` esbuild adds whatever the list says.)
+ * - `process.env.NODE_ENV`: esbuild already defines it as `"development"` in a
+ *   browser build that is not minified, as watch mode's is; stated here so a
+ *   development build says so whatever its minify setting. It does not reach
+ *   core's own source check, which tests `typeof process` first and finds no
+ *   `process` in a browser, and core's development build needs no define.
+ *
+ * Verified by: packages/build/tests/development-condition.test.ts > "watch mode resolves the development condition and keeps module and browser, with and without code splitting"
+ * Verified by: packages/build/tests/development-condition.test.ts > "a production build resolves the production files, with module and browser, as it did"
+ */
+const WATCH_RESOLUTION: Pick<esbuild.BuildOptions, 'conditions' | 'define'> = {
+  conditions: ['development', 'module'],
+  define: { 'process.env.NODE_ENV': '"development"' },
+};
+
+/**
+ * The esbuild options every bundle of a build shares. previewFrame's reading
+ * of which core the bundles import (preview-frame.ts) bundles each entry in
+ * memory with these same options, so its answer is the bundles'.
+ */
+function sharedOptions(config: BuildConfig): Partial<esbuild.BuildOptions> {
+  return {
+    bundle: true,
+    format: 'esm',
+    target: 'es2022',
+    alias: config.formaAlias
+      ? { 'formajs': config.formaAlias }
+      : {},
+    minify: !config.watch,
+    sourcemap: config.watch ? 'inline' : false,
+    // A production build writes into a staging directory, so esbuild's own
+    // summary would name `.dist.forma-staging-<pid>-<hex>/app.js`, a path
+    // nothing reads; the build prints its own from the metafile, under the
+    // names the application reads (FORMA-180 F3). Warnings and errors still
+    // print. Watch mode writes in place and keeps esbuild's summary.
+    // Verified by: packages/build/tests/build.test.ts > "a production build's summary names dist/<entry>.<hash>.js, never the staging directory"
+    // Verified by: packages/build/tests/build.test.ts > "a production build still prints esbuild's warnings"
+    logLevel: config.watch ? 'info' : 'warning',
+    jsx: 'transform',
+    jsxFactory: 'h',
+    jsxFragment: 'Fragment',
+    // Watch mode is a development build (FORMA-169); production adds nothing.
+    ...(config.watch ? WATCH_RESOLUTION : {}),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Watch Mode: Server-Rendered Pages
+// ---------------------------------------------------------------------------
+
+/** `formaSsrPlugin` from `@getforma/compiler`, loaded only for SSR builds.
+ *  `strict` and `onDiagnostics` are read by compiler 0.3.7 and later. */
+type SsrPluginFactory = (opts: {
+  page: string;
+  outDir: string;
+  entryPoint?: string;
+  strict?: boolean;
+  onDiagnostics?: (diagnostics: CompilerDiagnostic[], page: string) => void;
+}) => esbuild.Plugin;
+
+/** What every SSR plugin instance of one build is given besides its page. */
+type SsrPluginShared = Pick<Parameters<SsrPluginFactory>[0], 'strict' | 'onDiagnostics'>;
+
+/**
+ * Keep each server-rendered page's FMIR module current in watch mode (N7,
+ * L-31). v1 found watch mode rebuilt the bundles but wrote no module, so a
+ * page the server renders never changed on an incremental rebuild.
+ *
+ * Each page gets its own esbuild watcher over its SSR entry (`ssrEntryPoints`,
+ * else the browser entry) that writes nothing: it exists to know the page's
+ * module graph and to rebuild when a file in it changes, so an edit re-runs
+ * the compiler for exactly the pages it touches, including an SSR entry the
+ * browser bundle never imports. Packages are left external, as the compiler
+ * follows relative imports only. The compiler writes the module into a
+ * private directory; it is published into the output by rename, and only when
+ * its bytes changed, then `onPublished` updates the manifest. The time from
+ * the rebuild's start to the published module is logged per page, for the
+ * per-build report (DR-34, FORMA-118).
+ *
+ * Resolves once every page's first module is published, or has failed:
+ * - An esbuild error (a syntax error, an import that does not resolve) keeps
+ *   the page's last good module and logs the first error.
+ * - A compiler emission failure writes the compiler's placeholder module, as
+ *   a production build does; the compiler logs why.
+ * - A module that cannot be published is logged, naming the page.
+ *
+ * Verified by: packages/build/tests/watch-ir.test.ts > "logs a page's module it could not publish, naming the page, and recovers"
+ * Verified by: packages/build/tests/watch-ir.test.ts > "rewrites a page's .ir when a component it renders changes, and no other page's"
+ * Verified by: packages/build/tests/watch-ir.test.ts > "rewrites a page's .ir when only its SSR entry changes, in a code-splitting build"
+ */
+async function watchServerRenderedPages(
+  config: BuildConfig,
+  shared: esbuild.BuildOptions,
+  ssrPlugin: SsrPluginFactory,
+  pluginShared: SsrPluginShared,
+  onPublished: (page: string) => void,
+): Promise<void> {
+  const scratch = mkdtempSync(join(tmpdir(), 'forma-ir-'));
+  process.once('exit', () => rmSync(scratch, { recursive: true, force: true }));
+
+  const firstBuilds: Promise<void>[] = [];
+  for (const entry of config.entryPoints) {
+    if (entry.ssr === false) continue;
+    const page = basename(entry.outfile, '.js');
+    const source = config.ssrEntryPoints?.[page] ?? entry.entry;
+    const emitted = join(scratch, `${page}.ir`);
+    const target = join(config.outputDir, `${page}.ir`);
+    let started = 0;
+    let firstBuilt!: () => void;
+    firstBuilds.push(new Promise<void>((resolve) => { firstBuilt = resolve; }));
+
+    const ctx = await esbuild.context({
+      ...shared,
+      entryPoints: [source],
+      outdir: scratch,
+      write: false,
+      packages: 'external',
+      sourcemap: false,
+      logLevel: 'silent',
+      plugins: [
+        { name: 'forma-ir-clock', setup(builder) { builder.onStart(() => { started = performance.now(); }); } },
+        // Under --strict a page with an error is not published: the
+        // compiler's errors reach the publisher below as esbuild errors.
+        ssrPlugin({ page, outDir: scratch, entryPoint: source, ...pluginShared }),
+        {
+          name: 'forma-ir-publish',
+          setup(builder) {
+            builder.onEnd((result) => {
+              try {
+                if (result.errors.length) {
+                  console.warn(`   IR not rewritten for ${page}: ${result.errors[0]!.text} (the last good ${page}.ir stays)`);
+                  return;
+                }
+                if (!existsSync(emitted)) return;
+                const bytes = readFileSync(emitted);
+                rmSync(emitted, { force: true });
+                if (!existsSync(target) || !readFileSync(target).equals(bytes)) {
+                  writeFileAtomic(target, bytes);
+                  console.log(`   IR rewritten: ${page}.ir in ${Math.round(performance.now() - started)} ms`);
+                }
+                onPublished(page);
+              } catch (error) {
+                // This watcher's esbuild logging is off, so an exception left
+                // to esbuild would never be printed: say it here.
+                console.error(`   IR not written for ${page}: ${(error as Error).message}`);
+              } finally {
+                firstBuilt();
+              }
+            });
+          },
+        },
+      ],
+    });
+    // watch() runs the first build itself; waiting for its end (rather than
+    // calling rebuild() first) emits each page once at startup, not twice.
+    await ctx.watch();
+  }
+  await Promise.all(firstBuilds);
+}
+
+// ---------------------------------------------------------------------------
+// Main Build Function
+// ---------------------------------------------------------------------------
+
+/**
+ * Run the Forma build pipeline.
+ *
+ * Orchestrates: clean, CSS generation, font copying, esbuild bundling
+ * (with optional SSR IR emission), island registry generation, WASM build,
+ * content hashing, compression, manifest generation, service worker
+ * generation, and budget warnings.
+ *
+ * A production build writes into a staging directory beside `outputDir` and
+ * swaps it in only when every step has succeeded, so a build that fails part
+ * way leaves the previous output exactly as it was, and nothing beside it
+ * (L-21). The application embeds `outputDir` in its binary, and used to embed
+ * half a build after a failure. Watch mode writes in place, as before.
+ * Verified by: packages/build/tests/build.test.ts > "leaves the previous build byte-identical when a build fails after writing files"
+ * Verified by: packages/build/tests/build.test.ts > "a failed first build leaves no output directory and nothing beside it"
+ */
+export async function build(userConfig: BuildConfig): Promise<BuildResult> {
+  // Validate before anything is written: a config error must not touch the
+  // previous build's output on its way to failing.
+  validateConfig(userConfig);
+  // `strict` from the config, else FORMA_STRICT (FORMA-119).
+  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig) };
+  // What the config itself deprecates, each said once per build() call,
+  // production and watch alike, on the console and in BuildResult.warnings.
+  const deprecations = [workerWithoutApp(config), wasmKey(config)].filter(
+    (line): line is string => line !== undefined,
+  );
+  for (const line of deprecations) console.warn(`Warning: ${line}`);
+  const withDeprecations = (result: BuildResult): BuildResult =>
+    deprecations.length > 0 ? { ...result, warnings: [...result.warnings, ...deprecations] } : result;
+  // The preview frame's runtime (FORMA-175), found from the core the bundles
+  // import, read and checked before anything is written: no runtime
+  // (BUILD-805), one forma-server would refuse (BUILD-806) or bundles that
+  // import cores with different runtimes (BUILD-807) leave the previous
+  // output as it was, in watch mode too. Off, nothing is read.
+  const frame = config.previewFrame === true
+    ? await readFrameRuntime(config, sharedOptions(config), config.strict === true)
+    : undefined;
+  if (config.watch) return withDeprecations(await buildInto(config, config.outputDir, frame));
+
+  const staging = createStagingDirectory(config.outputDir);
+  let result: BuildResult;
+  try {
+    result = await buildInto({ ...config, outputDir: staging }, config.outputDir, frame);
+  } catch (err) {
+    rmSync(staging, { recursive: true, force: true });
+    throw err;
+  }
+  // Throws with the previous output restored if the swap itself fails.
+  replaceDirectory(staging, config.outputDir);
+  return withDeprecations(result);
+}
+
+/**
+ * The pipeline, writing into `config.outputDir`: the staging directory for a
+ * production build, the output itself in watch mode. `shownDir` is the
+ * directory named in log lines, the one the application reads. `frame` is
+ * the preview frame's runtime, already read and checked, when `previewFrame`
+ * is on.
+ */
+async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRuntime): Promise<BuildResult> {
+  const distDir = config.outputDir;
+  const createdDir = !existsSync(distDir);
+
+  // ── Clean output directory (watch mode; a staging directory is new) ──
+  rmSync(distDir, { recursive: true, force: true });
+  mkdirSync(distDir, { recursive: true });
+
+  try {
+    // ── CSS generation ────────────────────────────────────────────────
+    generateCss(config);
+
+    // ── Font copying ──────────────────────────────────────────────────
+    copyFonts(config);
+
+    // ── The preview frame's runtime (previewFrame, FORMA-175) ─────────
+    // Core's bytes as they are, under the name forma-server reads from the
+    // manifest: the hashing pass below makes it forma-runtime.<hash>.js like
+    // any asset; watch mode keeps the name, as it does every asset's.
+    // Verified by: packages/build/tests/preview-frame.test.ts > "copies core's dist/formajs-frame.global.js unchanged as a hashed forma-runtime.<hash>.js and names it in the manifest's assets"
+    if (frame) {
+      const target = join(distDir, FRAME_RUNTIME_ASSET);
+      if (config.watch) writeFileAtomic(target, frame.bytes);
+      else writeFileSync(target, frame.bytes);
+      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}`);
+    }
+    // The dev manifest names it as itself, as it names every watched asset.
+    const frameAssets: Record<string, string> = frame ? { [FRAME_RUNTIME_ASSET]: FRAME_RUNTIME_ASSET } : {};
+
+    // ── esbuild shared config ─────────────────────────────────────────
+    const shared = sharedOptions(config);
+
+    // ── Lazy-load SSR plugin only when needed ─────────────────────────
+    let formaSsrPlugin: SsrPluginFactory | undefined;
+    // Every page's coded diagnostics (FORMA-119). A production build applies
+    // --strict itself, once every page is compiled, so the failure lists all
+    // of them; watch mode hands it to each page's plugin.
+    const strict = config.strict === true;
+    const collector = new DiagnosticsCollector(strict, config.entryPoints.map((entry) => basename(entry.outfile, '.js')));
+    // BUILD-802 and BUILD-803, which build() has already printed, join the report.
+    const workerDeprecation = workerWithoutApp(config);
+    if (workerDeprecation) collector.addBuildLevel(workerWithoutAppDiagnostic(workerDeprecation));
+    const wasmDeprecation = wasmKey(config);
+    if (wasmDeprecation) collector.addBuildLevel(wasmKeyDiagnostic(wasmDeprecation));
+    const pluginShared: SsrPluginShared = {
+      onDiagnostics: collector.onDiagnostics,
+      ...(config.watch && strict ? { strict: true } : {}),
+    };
+
+    if (config.ssr) {
+      console.log('SSR mode enabled — emitting IR files');
+      try {
+        const mod = await import('@getforma/compiler');
+        formaSsrPlugin = mod.formaSsrPlugin;
+        // A compiler that predates coded diagnostics would let --strict pass
+        // a page it never checked: refuse instead (fail closed).
+        if (strict && !('collectDiagnostics' in mod)) {
+          throw new Error(
+            'strict mode (strict: true or FORMA_STRICT=1) needs @getforma/compiler 0.3.7 or later, which reports coded diagnostics; '
+            + 'the installed compiler does not, so the build cannot check its pages.',
+          );
+        }
+      } catch (error) {
+        if ((error as Error).message.startsWith('strict mode (strict: true or FORMA_STRICT=1) needs')) throw error;
+        console.warn(
+          'Warning: BUILD-801 @getforma/compiler not available for SSR. Skipping IR emission.',
+        );
+        collector.addBuildLevel(compilerMissing());
+      }
+    }
+
+    let graph: SplitGraph | undefined;
+    const splitOptions: esbuild.BuildOptions = {
+      ...shared,
+      entryPoints: config.entryPoints.map(entry => ({ in: entry.entry, out: basename(entry.outfile, '.js') })),
+      outdir: distDir,
+      splitting: true,
+      metafile: true,
+      entryNames: config.watch ? '[name]' : '[name].[hash]',
+      chunkNames: 'chunk.[hash]',
+      assetNames: 'asset.[hash]',
+      plugins: config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
+        page: basename(entry.outfile, '.js'),
+        outDir: distDir,
+        entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
+        ...pluginShared,
+      })) : [],
+    };
+
+    // ── Build entries ─────────────────────────────────────────────────
+    if (config.watch) {
+      // Watch mode. The dev manifest maps each name to itself: the split
+      // graph's files (with code splitting), each server-rendered page's
+      // `.ir`, and with previewFrame the frame's runtime. Whoever changes the
+      // first two rewrites it.
+      const irAssets: Record<string, string> = {};
+      let lastManifest = '';
+      const writeDevManifest = () => {
+        const { manifest, warnings } = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, false, graph?.staticDependencies);
+        manifest.build_hash = 'dev';
+        const text = JSON.stringify(manifest, null, 2) + '\n';
+        // Replaced by rename: the application's server reads this file while
+        // the watcher rewrites it. Unchanged content is not rewritten, so a
+        // server restarted on a change to the output is not restarted for
+        // nothing.
+        if (text !== lastManifest) writeFileAtomic(join(distDir, 'manifest.json'), text);
+        lastManifest = text;
+        return { manifest, warnings };
+      };
+
+      // Server-rendered pages: each page's module is watched over its SSR
+      // entry's own module graph, apart from the browser bundles (L-31).
+      if (formaSsrPlugin) {
+        await watchServerRenderedPages(config, shared, formaSsrPlugin, pluginShared, (page) => {
+          irAssets[`${page}.ir`] = `${page}.ir`;
+          writeDevManifest();
+        });
+      }
+
+      if (config.codeSplitting && config.entryPoints.length) {
+        let previousFiles = new Set<string>();
+        const ctx = await esbuild.context({
+          ...splitOptions,
+          // Not the SSR plugins: the pages' modules are watched above.
+          plugins: [{
+            name: 'forma-split-manifest',
+            setup(builder) {
+              builder.onEnd(result => {
+                if (result.errors.length || !result.metafile) return;
+                graph = splitGraph(result.metafile, config.entryPoints, distDir);
+                // Only remove outputs belonging to the previous successful
+                // graph. CSS/fonts/IR and failed-build diagnostics stay intact.
+                for (const file of previousFiles) if (!graph.files.has(file)) rmSync(join(distDir, file), { force: true });
+                previousFiles = graph.files;
+                writeDevManifest();
+              });
+            },
+          }],
+        });
+        // Ensure the first complete graph exists before returning a dev manifest.
+        await ctx.rebuild();
+        await ctx.watch();
+      } else for (const entry of config.entryPoints) {
+        const ctx = await esbuild.context({
+          ...shared,
+          entryPoints: [entry.entry],
+          outfile: join(distDir, entry.outfile),
+        });
+        await ctx.watch();
+      }
+
+      // The dev manifest, with identity mappings (unhashed filenames), so the
+      // server can boot without a production build.
+      const { manifest, warnings } = writeDevManifest();
+      console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
+
+      // Generate a dev service worker so /sw.js doesn't 404
+      generateServiceWorker(config, {}, 'dev', false);
+
+      // The pages' first compilation; each rebuild replaces its page's own.
+      const diagnostics = collector.all();
+      if (config.diagnosticsJson) writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
+
+      return {
+        manifest,
+        buildHash: 'dev',
+        warnings,
+        diagnostics,
+      };
+    }
+
+    // ── Parallel production builds ────────────────────────────────────
+    // Each pass's metafile feeds the summary printed once the files have
+    // their hashed names (FORMA-180 F3).
+    const metafiles: esbuild.Metafile[] = [];
+    if (config.codeSplitting && config.entryPoints.length) {
+      const result = await esbuild.build(splitOptions);
+      if (!result.metafile) throw new Error('Split build did not return its module graph.');
+      metafiles.push(result.metafile);
+      graph = splitGraph(result.metafile, config.entryPoints, distDir);
+      for (const entry of config.entryPoints) {
+        if (config.serverInlined?.includes(entry.outfile)) cpSync(join(distDir, graph.assets[entry.outfile]), join(distDir, entry.outfile));
+      }
+    } else await Promise.all(
+      config.entryPoints.map(async (entry) => {
+        const buildOptions: esbuild.BuildOptions = {
+          ...shared,
+          entryPoints: [entry.entry],
+          outfile: join(distDir, entry.outfile),
+          metafile: true,
+        };
+
+        if (config.ssr && entry.ssr !== false && formaSsrPlugin) {
+          const pageName = basename(entry.outfile, '.js');
+          const ssrEntryPoint =
+            config.ssrEntryPoints?.[pageName] ?? entry.entry;
+          buildOptions.plugins = [
+            ...(buildOptions.plugins || []),
+            formaSsrPlugin({
+              page: pageName,
+              outDir: distDir,
+              entryPoint: ssrEntryPoint,
+              ...pluginShared,
+            }),
+          ];
+        }
+
+        const result = await esbuild.build(buildOptions);
+        if (result.metafile) metafiles.push(result.metafile);
+      }),
+    );
+
+    // ── WASM build ────────────────────────────────────────────────────
+    // Before the report, so BUILD-804 is in it when the step ran.
+    const wasmBuilt = buildWasm(config);
+    if (wasmBuilt) collector.addBuildLevel(wasmPackDiagnostic(WASM_PACK_DEPRECATION));
+
+    // ── SSR diagnostics: the JSON report, then strict mode ────────────
+    // Every page is compiled by now, so a strict failure names them all.
+    const diagnostics = collector.all();
+    if (config.diagnosticsJson) {
+      const written = writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
+      console.log(`   SSR diagnostics written: ${written} (${diagnostics.length})`);
+    }
+    if (strict) {
+      const errors = collector.errors();
+      if (errors.length > 0) throw strictFailure(errors);
+    }
+
+    // ── Content hashing ───────────────────────────────────────────────
+    const assets = hashAssets(config, graph?.assets);
+    printBundleSummary(metafiles, assets, shownDir);
+    console.log(`   ${Object.keys(assets).length} assets hashed`);
+
+    // ── Compression ───────────────────────────────────────────────────
+    // The preview frame's runtime is inlined by forma-server, never fetched:
+    // no compressed copies of it, and no place in the worker's lists.
+    // Verified by: packages/build/tests/preview-frame.test.ts > "the runtime is inlined, never fetched: no compressed copies, and no entry in the on-demand worker's immutable list"
+    const frameFile = frame ? assets[FRAME_RUNTIME_ASSET] : undefined;
+    compressAssets(distDir, new Set(frameFile ? [frameFile] : []));
+
+    // ── Manifest generation ───────────────────────────────────────────
+    const { manifest, warnings } = generateManifest(config, assets, wasmBuilt, graph?.staticDependencies);
+
+    writeFileSync(
+      join(distDir, 'manifest.json'),
+      JSON.stringify(manifest, null, 2) + '\n',
+    );
+    console.log(
+      `\nManifest written: ${shownDir}/manifest.json (build_hash: ${manifest.build_hash.slice(0, 12)}...)`,
+    );
+
+    // ── Service worker generation ─────────────────────────────────────
+    const fetchedAssets = frameFile
+      ? Object.fromEntries(Object.entries(assets).filter(([name]) => name !== FRAME_RUNTIME_ASSET))
+      : assets;
+    generateServiceWorker(config, fetchedAssets, manifest.build_hash, wasmBuilt);
+
+    return {
+      manifest,
+      buildHash: manifest.build_hash,
+      warnings: wasmBuilt ? [...warnings, WASM_PACK_DEPRECATION] : warnings,
+      diagnostics,
+    };
+  } catch (err) {
+    // Watch mode: remove the output directory if this build created it. A
+    // production build's caller removes the staging directory.
+    if (createdDir && existsSync(distDir)) {
+      rmSync(distDir, { recursive: true, force: true });
+    }
+    throw err;
+  }
+}

@@ -1,0 +1,142 @@
+name: E2E engines
+
+# Core's whole e2e suite in Chromium, Firefox and WebKit, one job per engine.
+# Decision brief DR-9: Chromium on every merge (ci.yml's `check` job runs
+# `npm run test:e2e -w packages/core`, the `chromium` project only), all three
+# before each release (FORMA-027). Ways in:
+#   - the npm release workflow (FORMA-115a) calls this workflow and its
+#     `publish` job needs it, so a tag publishes only if all three engines pass
+#     on the tagged commit;
+#   - workflow_dispatch, to run it on a branch before cutting a tag:
+#       gh workflow run e2e-engines.yml --ref <branch>
+#   - a pull request that changes the gate itself (this file or core's
+#     Playwright config). Not every PR: per-merge stays Chromium-only.
+# Came from formajs's .github at the repository merge (FORMA-113), with its
+# paths moved to packages/core.
+on:
+  workflow_call:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/e2e-engines.yml'
+      - 'packages/core/playwright.config.ts'
+
+permissions:
+  contents: read
+
+# No concurrency group, deliberately. Called from a release workflow,
+# `github.workflow` is the caller's name, so a group built from it equals the
+# release's own and deadlocks; and a group that a dispatch on the tag could
+# share would let that dispatch cancel the release's engine run. Dispatch and
+# PR runs are rare.
+
+jobs:
+  e2e:
+    name: e2e (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    # MEASURED in formajs's CI (FORMA-027, cold browser cache): whole job 55s
+    # chromium, 1m6s firefox, 1m19s webkit. The two install steps below are
+    # bounded on their own, with one retry each (at most 11 and 5 minutes); 20
+    # holds both at their worst plus the ~2m the rest takes.
+    timeout-minutes: 20
+    strategy:
+      # Each engine reports on its own: one red engine does not hide another.
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      # The engine is installed in two halves, each from a cache when it can
+      # be, each bounded with one retry (FORMA-179). The system packages come
+      # from the runner's apt mirror; the browser binary from Playwright's CDN.
+      # Both caches are keyed on the resolved Playwright version, which decides
+      # the browser build and the package list; the packages' key also names
+      # the runner image, whose package versions they must match.
+      - name: Resolve Playwright version and runner image
+        id: pw
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+
+      # The .deb archives apt downloaded for this engine. apt checks each
+      # restored archive against the signed package index before it installs
+      # it, and downloads again any whose version or checksum differs.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
+      - name: Install ${{ matrix.browser }}'s system packages, retried once
+        # Normally under a minute (WebKit's 117 MB in 15s, Chromium's 22 MB in
+        # 2s); each attempt is cut at 4 minutes, so a stalled mirror costs two
+        # attempts, not the job. Worst case about 9m40s; 11 holds it.
+        timeout-minutes: 11
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
+          for attempt in 1 2; do
+            if timeout --kill-after=20s 4m npx playwright install-deps "$BROWSER"; then
+              break
+            fi
+            if [ "$attempt" = 2 ]; then
+              echo "::error::installing $BROWSER's system packages failed twice; see the apt output above"
+              exit 1
+            fi
+            echo "::warning::installing $BROWSER's system packages failed or ran past 4 minutes; retrying once"
+            # `timeout` runs as the runner user and cannot signal the root
+            # `apt-get` that `sudo` started, so after a cut it may still hold
+            # the dpkg lock; then `dpkg --configure -a` fails on that lock,
+            # and under errexit the step ended here, so the retry never ran
+            # (A2 audit F17a, FORMA-180). Its failure is tolerated and the
+            # lock waited out, up to 60 seconds, before attempt 2.
+            sudo dpkg --configure -a || true
+            for waited in $(seq 1 60); do
+              if ! sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; then break; fi
+              if [ "$waited" = 60 ]; then echo "::warning::the dpkg lock is still held after 60s; attempt 2 runs anyway"; fi
+              sleep 1
+            done
+          done
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
+
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
+      - name: Install ${{ matrix.browser }}, retried once
+        # A no-op on a cache hit; each attempt is cut at 2 minutes.
+        timeout-minutes: 5
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          for attempt in 1 2; do
+            if timeout --kill-after=20s 2m npx playwright install "$BROWSER"; then
+              exit 0
+            fi
+            echo "::warning::installing $BROWSER failed or ran past 2 minutes (attempt $attempt of 2)"
+          done
+          echo "::error::installing $BROWSER failed twice; see the output above"
+          exit 1
+
+      # Builds core's dist, then runs every spec in this engine's project.
+      - run: npm run test:e2e:engines -w packages/core -- --project=${{ matrix.browser }}
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: e2e-results-${{ matrix.browser }}
+          path: packages/core/test-results/
+          if-no-files-found: ignore
+          retention-days: 7

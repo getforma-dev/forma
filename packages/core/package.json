@@ -1,0 +1,274 @@
+{
+  "name": "@getforma/core",
+  "author": "Forma <victor@getforma.dev>",
+  "version": "2.1.0",
+  "description": "Real DOM reactive library — fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. Untree-shaken core ~29KB gzipped; CDN HTML runtime ~40KB gzipped with a CSP-safe allowlist expression interpreter, zero eval (measured by scripts/check-size.mjs).",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "development": "./dist/dev/index.js",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "development": "./dist/dev/index.cjs",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./runtime": {
+      "import": {
+        "types": "./dist/runtime.d.ts",
+        "development": "./dist/dev/runtime.js",
+        "default": "./dist/runtime.js"
+      },
+      "require": {
+        "types": "./dist/runtime.d.cts",
+        "development": "./dist/dev/runtime.cjs",
+        "default": "./dist/runtime.cjs"
+      }
+    },
+    "./runtime-hardened": {
+      "import": {
+        "types": "./dist/runtime-hardened.d.ts",
+        "development": "./dist/dev/runtime-hardened.js",
+        "default": "./dist/runtime-hardened.js"
+      },
+      "require": {
+        "types": "./dist/runtime-hardened.d.cts",
+        "development": "./dist/dev/runtime-hardened.cjs",
+        "default": "./dist/runtime-hardened.cjs"
+      }
+    },
+    "./runtime-csp": {
+      "import": {
+        "types": "./dist/runtime-hardened.d.ts",
+        "development": "./dist/dev/runtime-hardened.js",
+        "default": "./dist/runtime-hardened.js"
+      },
+      "require": {
+        "types": "./dist/runtime-hardened.d.cts",
+        "development": "./dist/dev/runtime-hardened.cjs",
+        "default": "./dist/runtime-hardened.cjs"
+      }
+    },
+    "./wasm": {
+      "import": {
+        "types": "./dist/wasm.d.ts",
+        "development": "./dist/dev/wasm.js",
+        "default": "./dist/wasm.js"
+      },
+      "require": {
+        "types": "./dist/wasm.d.cts",
+        "development": "./dist/dev/wasm.cjs",
+        "default": "./dist/wasm.cjs"
+      }
+    },
+    "./tc39": {
+      "import": {
+        "types": "./dist/tc39-compat.d.ts",
+        "development": "./dist/dev/tc39-compat.js",
+        "default": "./dist/tc39-compat.js"
+      },
+      "require": {
+        "types": "./dist/tc39-compat.d.cts",
+        "development": "./dist/dev/tc39-compat.cjs",
+        "default": "./dist/tc39-compat.cjs"
+      }
+    },
+    "./ssr": {
+      "import": {
+        "types": "./dist/ssr/index.d.ts",
+        "development": "./dist/dev/ssr/index.js",
+        "default": "./dist/ssr/index.js"
+      },
+      "require": {
+        "types": "./dist/ssr/index.d.cts",
+        "development": "./dist/dev/ssr/index.cjs",
+        "default": "./dist/ssr/index.cjs"
+      }
+    },
+    "./http": {
+      "import": {
+        "types": "./dist/http.d.ts",
+        "development": "./dist/dev/http.js",
+        "default": "./dist/http.js"
+      },
+      "require": {
+        "types": "./dist/http.d.cts",
+        "development": "./dist/dev/http.cjs",
+        "default": "./dist/http.cjs"
+      }
+    },
+    "./storage": {
+      "import": {
+        "types": "./dist/storage.d.ts",
+        "development": "./dist/dev/storage.js",
+        "default": "./dist/storage.js"
+      },
+      "require": {
+        "types": "./dist/storage.d.cts",
+        "development": "./dist/dev/storage.cjs",
+        "default": "./dist/storage.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/server.d.ts",
+        "development": "./dist/dev/server.js",
+        "default": "./dist/server.js"
+      },
+      "require": {
+        "types": "./dist/server.d.cts",
+        "development": "./dist/dev/server.cjs",
+        "default": "./dist/server.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "runtime": [
+        "dist/runtime.d.ts"
+      ],
+      "runtime-hardened": [
+        "dist/runtime-hardened.d.ts"
+      ],
+      "runtime-csp": [
+        "dist/runtime-hardened.d.ts"
+      ],
+      "wasm": [
+        "dist/wasm.d.ts"
+      ],
+      "tc39": [
+        "dist/tc39-compat.d.ts"
+      ],
+      "ssr": [
+        "dist/ssr/index.d.ts"
+      ],
+      "http": [
+        "dist/http.d.ts"
+      ],
+      "storage": [
+        "dist/storage.d.ts"
+      ],
+      "server": [
+        "dist/server.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "./dist/runtime.js",
+    "./dist/runtime.cjs",
+    "./dist/runtime-hardened.js",
+    "./dist/runtime-hardened.cjs",
+    "./dist/chunk-*.js",
+    "./dist/chunk-*.cjs",
+    "./dist/dev/runtime.js",
+    "./dist/dev/runtime.cjs",
+    "./dist/dev/runtime-hardened.js",
+    "./dist/dev/runtime-hardened.cjs",
+    "./dist/dev/chunk-*.js",
+    "./dist/dev/chunk-*.cjs"
+  ],
+  "scripts": {
+    "build": "node scripts/clean-dist.mjs && tsup && node scripts/post-build.mjs && node scripts/verify-dist.mjs",
+    "check:size": "node scripts/check-size.mjs",
+    "check:pack": "publint && attw --pack . && node scripts/check-pack-development.mjs",
+    "check:baseline": "node scripts/dist-baseline.mjs",
+    "pack:release": "npm run build && npm pack --pack-destination releases",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "bench": "node scripts/bench.mjs",
+    "bench:doc": "node scripts/bench.mjs --runs 5 --json docs/performance-baseline.json --doc",
+    "bench:compare": "node scripts/bench.mjs --runs 5 --compare docs/performance-baseline.json",
+    "test:e2e": "npm run build && node -e \"require('fs').copyFileSync('dist/formajs-runtime.global.js','e2e/fixtures/formajs-runtime.global.js')\" && npx playwright test --project=chromium",
+    "test:e2e:engines": "npm run build && node -e \"require('fs').copyFileSync('dist/formajs-runtime.global.js','e2e/fixtures/formajs-runtime.global.js')\" && npx playwright test",
+    "docs": "typedoc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "signals",
+    "reactive",
+    "framework",
+    "dom",
+    "fine-grained",
+    "real-dom",
+    "no-vdom",
+    "no-virtual-dom",
+    "tc39-signals",
+    "alien-signals",
+    "lightweight",
+    "typescript",
+    "jsx",
+    "hyperscript",
+    "state-management",
+    "islands",
+    "islands-architecture",
+    "hydration",
+    "ssr",
+    "server-side-rendering",
+    "csp",
+    "csp-safe",
+    "content-security-policy",
+    "declarative",
+    "data-attributes",
+    "alpine-alternative",
+    "solidjs-alternative",
+    "rust-ssr",
+    "web-components",
+    "progressive-enhancement",
+    "zero-build",
+    "cdn"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getforma-dev/formajs.git"
+  },
+  "homepage": "https://getforma.dev",
+  "bugs": {
+    "url": "https://github.com/getforma-dev/formajs/issues"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=20.19.0",
+      "onFail": "warn"
+    }
+  },
+  "dependencies": {
+    "alien-signals": "~3.1.2"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1",
+    "rollup": "^4.59.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@playwright/test": "^1.62.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "esbuild": "^0.28.1",
+    "fake-indexeddb": "^6.2.3",
+    "happy-dom": "^20.11.2",
+    "publint": "^0.3.23",
+    "serve": "^14.2.6",
+    "tsup": "^8.5.1",
+    "typedoc": "^0.28.20",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

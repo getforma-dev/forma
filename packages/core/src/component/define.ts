@@ -1,0 +1,262 @@
+/**
+ * Forma Component - Define
+ *
+ * Component definition system where the setup function runs ONCE.
+ * Reactivity comes from signals, not re-rendering.
+ * Backed by alien-signals via forma/reactive.
+ */
+
+import { reportError } from '../reactive/dev.js';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** A teardown function that disposes effects and cleans up resources. */
+export type CleanupFn = () => void;
+/** A function that runs once to build the component's DOM tree. */
+export type SetupFn = () => HTMLElement | DocumentFragment;
+
+/** Definition object passed to {@link defineComponent}. */
+export interface ComponentDef {
+  /** The setup function that builds the component's DOM and reactive bindings. */
+  setup: SetupFn;
+  /**
+   * Optional debug name. It prefixes the `source` of any error reported from
+   * this component's lifecycle (`onMount`, `onUnmount`, disposers), so an
+   * onError handler can say which component failed.
+   */
+  name?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle context stack
+// ---------------------------------------------------------------------------
+
+interface LifecycleContext {
+  /** Dispose functions for all effects created during setup. */
+  disposers: (() => void)[];
+  /** Callbacks registered via onMount(). */
+  mountCallbacks: (() => void | CleanupFn)[];
+  /** Callbacks registered via onUnmount(). */
+  unmountCallbacks: (() => void)[];
+  /** Teardowns for context values provided during setup (auto-unprovide). */
+  contextDisposers: (() => void)[];
+}
+
+let currentLifecycleContext: LifecycleContext | null = null;
+const lifecycleStack: (LifecycleContext | null)[] = [];
+
+function pushLifecycleContext(ctx: LifecycleContext): void {
+  lifecycleStack.push(currentLifecycleContext);
+  currentLifecycleContext = ctx;
+}
+
+function popLifecycleContext(): void {
+  currentLifecycleContext = lifecycleStack.pop() ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Public API - Lifecycle hooks
+// ---------------------------------------------------------------------------
+
+/**
+ * Register a callback that runs after the component's setup completes.
+ * If the callback returns a function, that function is called on unmount.
+ * Must be called inside a setup function.
+ */
+export function onMount(fn: () => void | CleanupFn): void {
+  if (currentLifecycleContext === null) {
+    throw new Error('onMount() must be called inside a component setup function');
+  }
+  currentLifecycleContext.mountCallbacks.push(fn);
+}
+
+/**
+ * Register a callback that runs when the component is disposed.
+ * Must be called inside a setup function.
+ */
+export function onUnmount(fn: () => void): void {
+  if (currentLifecycleContext === null) {
+    throw new Error('onUnmount() must be called inside a component setup function');
+  }
+  currentLifecycleContext.unmountCallbacks.push(fn);
+}
+
+/**
+ * @internal — register a teardown for a context value provided during the
+ * current component setup, so it is auto-unprovided on dispose. Returns true if
+ * a live setup captured it (context.ts uses this to keep provide/unprovide
+ * balanced without manual bookkeeping). Returns false outside a setup.
+ */
+export function registerContextDisposer(dispose: () => void): boolean {
+  if (currentLifecycleContext !== null) {
+    currentLifecycleContext.contextDisposers.push(dispose);
+    return true;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// Internal: symbol for attaching dispose to DOM nodes
+// ---------------------------------------------------------------------------
+
+const DISPOSE_KEY = Symbol('forma:component:dispose');
+
+interface DisposableNode {
+  [DISPOSE_KEY]?: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// Public API - defineComponent
+// ---------------------------------------------------------------------------
+
+/**
+ * Define a component from a setup function or definition object.
+ * Returns a factory function that, when called, produces a DOM element
+ * with attached lifecycle and disposal logic.
+ *
+ * The setup function runs ONCE per factory call. Reactivity is driven
+ * by signals, not by re-running setup.
+ */
+export function defineComponent(
+  setupOrDef: SetupFn | ComponentDef,
+): () => HTMLElement | DocumentFragment {
+  const setup: SetupFn =
+    typeof setupOrDef === 'function' ? setupOrDef : setupOrDef.setup;
+  // `name` exists to make a lifecycle failure identifiable. It was read here
+  // and then never used, so the "optional debug name" in ComponentDef bought a
+  // caller nothing at all; it is now the prefix on every reportError source
+  // below, which is the only place a component identity is ever needed.
+  // Verified by: src/component/__tests__/define.test.ts > "names the component in a lifecycle error report"
+  const name: string | undefined =
+    typeof setupOrDef === 'function' ? undefined : setupOrDef.name;
+  const where = (phase: string): string => (name ? `${name}: ${phase}` : phase);
+
+  return function componentFactory(): HTMLElement | DocumentFragment {
+    // Create a fresh lifecycle context for this component instance
+    const ctx: LifecycleContext = {
+      disposers: [],
+      mountCallbacks: [],
+      unmountCallbacks: [],
+      contextDisposers: [],
+    };
+
+    // Push lifecycle context so onMount/onUnmount calls register here
+    pushLifecycleContext(ctx);
+
+    let dom: HTMLElement | DocumentFragment;
+    try {
+      dom = setup();
+    } catch (e) {
+      // setup threw after possibly provide()-ing a context — unwind the frames
+      // it pushed (LIFO) so they do not leak globally with no dispose handle.
+      for (let i = ctx.contextDisposers.length - 1; i >= 0; i--) {
+        try { ctx.contextDisposers[i]!(); } catch { /* ignore */ }
+      }
+      ctx.contextDisposers.length = 0;
+      throw e;
+    } finally {
+      popLifecycleContext();
+    }
+
+    // Build the dispose function that tears down the entire component.
+    // Idempotent: a fragment stamps DISPOSE_KEY on multiple children, all sharing
+    // this one function, so it must run at most once.
+    // Verified by: src/component/__tests__/component-lifecycle.test.ts > "is idempotent across multiple stamped children"
+    let disposed = false;
+    const dispose = (): void => {
+      if (disposed) return;
+      disposed = true;
+
+      // Run onUnmount callbacks
+      for (const cb of ctx.unmountCallbacks) {
+        try {
+          cb();
+        } catch (e) {
+          reportError(e, where('onUnmount'));
+        }
+      }
+
+      // Dispose all effects
+      for (const d of ctx.disposers) {
+        try {
+          d();
+        } catch (e) {
+          reportError(e, where('component disposer'));
+        }
+      }
+
+      // Auto-unprovide context values (in reverse / LIFO order).
+      for (let i = ctx.contextDisposers.length - 1; i >= 0; i--) {
+        try {
+          ctx.contextDisposers[i]!();
+        } catch (e) {
+          reportError(e, where('context disposer'));
+        }
+      }
+
+      // Clean up
+      ctx.disposers.length = 0;
+      ctx.mountCallbacks.length = 0;
+      ctx.unmountCallbacks.length = 0;
+      ctx.contextDisposers.length = 0;
+    };
+
+    // Attach dispose to the DOM node so callers can tear it down. A returned
+    // DocumentFragment is emptied when appended, so stamp its children too — a
+    // child is the only reachable handle after `parent.append(fragment)`.
+    (dom as unknown as DisposableNode)[DISPOSE_KEY] = dispose;
+    if (dom.nodeType === 11 /* DOCUMENT_FRAGMENT_NODE */) {
+      for (const child of Array.from(dom.childNodes)) {
+        (child as unknown as DisposableNode)[DISPOSE_KEY] = dispose;
+      }
+    }
+
+    // Run mount callbacks (synchronously, after setup completes). Re-install the
+    // lifecycle context so provide()/trackDisposer()/onUnmount() called inside a
+    // mount callback register with this component (and are balanced on dispose)
+    // instead of silently leaking. If a callback returns a cleanup, register it
+    // as an unmount callback.
+    pushLifecycleContext(ctx);
+    try {
+      for (const cb of ctx.mountCallbacks) {
+        try {
+          const cleanup = cb();
+          if (typeof cleanup === 'function') {
+            ctx.unmountCallbacks.push(cleanup);
+          }
+        } catch (e) {
+          reportError(e, where('onMount'));
+        }
+      }
+    } finally {
+      popLifecycleContext();
+    }
+
+    return dom;
+  };
+}
+
+/**
+ * Dispose a component that was created via defineComponent.
+ * This runs all onUnmount callbacks and disposes all tracked effects.
+ */
+export function disposeComponent(dom: HTMLElement | DocumentFragment): void {
+  const disposable = dom as unknown as DisposableNode;
+  if (typeof disposable[DISPOSE_KEY] === 'function') {
+    disposable[DISPOSE_KEY]();
+    delete disposable[DISPOSE_KEY];
+  }
+}
+
+/**
+ * Track an effect disposal within the current component's lifecycle.
+ * Call this inside a setup function to ensure effects are cleaned up
+ * when the component is disposed.
+ */
+export function trackDisposer(dispose: () => void): void {
+  if (currentLifecycleContext !== null) {
+    currentLifecycleContext.disposers.push(dispose);
+  }
+}

@@ -1,0 +1,2989 @@
+/**
+ * Forma Compiler - IR Walk Engine
+ *
+ * Walks h() call tree AST nodes and emits FMIR binary opcodes.
+ * Implements all 12 pattern recognition rules for real component analysis.
+ *
+ * Rules:
+ *   1. Static h() calls        -> OPEN_TAG + CLOSE_TAG
+ *   2. String literal children  -> TEXT
+ *   3. Void elements            -> VOID_TAG
+ *   4. Ternary arrow children   -> SHOW_IF
+ *   5. Non-ternary arrow child  -> DYN_TEXT
+ *   6. Function-valued props    -> DYN_ATTR
+ *   7. on* event handlers       -> skip
+ *   8. createShow()             -> SHOW_IF
+ *   9. Spread .map() unroll     -> static unroll or island
+ *  10. Sub-component calls      -> follow or island
+ *  11. Unknown expressions      -> ISLAND_START / ISLAND_END
+ *  12. null/undefined/false      -> skip
+ */
+
+import { parse } from '@babel/parser';
+import type * as T from '@babel/types';
+import * as t from '@babel/types';
+import {
+  IrEmitContext,
+  SLOT_SOURCE_CLIENT,
+  SLOT_SOURCE_SERVER,
+  SLOT_TYPE_ARRAY,
+  SLOT_TYPE_BOOL,
+  SLOT_TYPE_OBJECT,
+  SLOT_TYPE_TEXT,
+} from './ir-emit.js';
+import { ComponentAnalyzer, nestedScopeBindings } from './component-analyzer.js';
+import {
+  resolveExportedFunction,
+  resolveImportedConstant,
+  returnExpressionOf,
+  type ComponentFunction,
+  type ConstantLookup,
+} from './export-resolver.js';
+import type { ModuleLoader } from './module-loader.js';
+import type { ImportBinding } from './export-resolver.js';
+import {
+  originalPosition,
+  reportDiagnostic,
+  type DiagnosticChainLink,
+  type Locatable,
+} from './diagnostics.js';
+import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
+import {
+  enterComponentScope,
+  lookupLiteralRows,
+  lookupSignal,
+  newSignalRegistry,
+  type SignalDefault,
+  type SignalImportResolver,
+  type SignalRegistry,
+  type SignalScope,
+} from './signal-scope.js';
+import {
+  VOID_TAGS,
+  isEventProp,
+  isStaticLiteral,
+  isUndefinedIdentifier,
+  uniqueName,
+} from './utils.js';
+
+/** Maximum depth for sub-component resolution. Prevents unbounded AST parsing. */
+export const MAX_RESOLVE_DEPTH = 3;
+
+// ---------------------------------------------------------------------------
+// Opcodes
+// ---------------------------------------------------------------------------
+
+const OP_OPEN_TAG    = 0x01;
+const OP_CLOSE_TAG   = 0x02;
+const OP_VOID_TAG    = 0x03;
+const OP_TEXT        = 0x04;
+const OP_DYN_TEXT    = 0x05;
+const OP_DYN_ATTR    = 0x06;
+const OP_SHOW_IF     = 0x07;
+const OP_SHOW_ELSE   = 0x08;
+const OP_LIST         = 0x0A;
+const OP_ISLAND_START = 0x0B;
+const OP_ISLAND_END   = 0x0C;
+const OP_PROP         = 0x12;
+
+// ---------------------------------------------------------------------------
+// Slot Type Hints (defined beside the encoder that writes them — ir-emit.ts)
+// ---------------------------------------------------------------------------
+
+const TYPE_TEXT   = SLOT_TYPE_TEXT;
+const TYPE_BOOL   = SLOT_TYPE_BOOL;
+const TYPE_ARRAY  = SLOT_TYPE_ARRAY;
+const TYPE_OBJECT = SLOT_TYPE_OBJECT;
+const SOURCE_SERVER = SLOT_SOURCE_SERVER;
+const SOURCE_CLIENT = SLOT_SOURCE_CLIENT;
+
+/** Convert a static literal to its string representation for an attribute value. */
+function staticLiteralToAttrString(expr: t.Expression): string | null {
+  if (t.isStringLiteral(expr)) return expr.value;
+  if (t.isNumericLiteral(expr)) return String(expr.value);
+  if (t.isBooleanLiteral(expr)) return expr.value ? '' : null;
+  if (t.isNullLiteral(expr)) return null;
+  return null;
+}
+
+/** Check if an expression is null, undefined, or false (Rule 12). */
+function isNullish(node: t.Expression): boolean {
+  return t.isNullLiteral(node)
+    || isUndefinedIdentifier(node)
+    || (t.isBooleanLiteral(node) && node.value === false);
+}
+
+/** Check if a node is a function expression (arrow or regular). */
+function isFunctionExpr(node: t.Node): boolean {
+  return t.isArrowFunctionExpression(node) || t.isFunctionExpression(node);
+}
+
+/** Render an Identifier or MemberExpression as source-like text for warnings. */
+function exprToText(node: t.Node): string {
+  if (t.isIdentifier(node)) return node.name;
+  if (t.isMemberExpression(node)) {
+    const obj = exprToText(node.object);
+    if (!node.computed && t.isIdentifier(node.property)) {
+      return `${obj}.${node.property.name}`;
+    }
+    return `${obj}[...]`;
+  }
+  return '<expression>';
+}
+
+// ---------------------------------------------------------------------------
+// Build diagnostics
+// ---------------------------------------------------------------------------
+
+/**
+ * Report a construct the walker could not translate into IR.
+ *
+ * Every path that emits a fallback island shell, drops a child, or mints an
+ * anonymous slot instead of the thing the author wrote goes through here. The
+ * failure mode these replace is the one that cost the most in the field: the
+ * compiler quietly emitted a placeholder and the wrong page shipped (see the
+ * ksx dogfood ledger, findings #9 and #10). A diagnostic therefore always
+ * names three things — WHERE (file), WHAT (the construct, in source terms),
+ * and SO WHAT (the consequence for the rendered page) — and, since FORMA-119,
+ * a stable code and the line and column of `node` (diagnostics.ts).
+ * Verified by: packages/compiler/tests/ir-diagnostics.test.ts > "names the file, the construct and the consequence"
+ * Verified by: packages/compiler/tests/diagnostics-conformance.test.ts
+ */
+function warnDegraded(
+  walkCtx: WalkContext,
+  code: string,
+  node: Locatable | null | undefined,
+  construct: string,
+  consequence: string,
+  chain?: DiagnosticChainLink[],
+): void {
+  reportDiagnostic({
+    code,
+    file: walkCtx.sourceFile ?? '',
+    node,
+    text: (where) => `${construct}${where ? ` in ${where}` : ''} — ${consequence}`,
+    chain,
+  });
+}
+
+/** The way out FORMA-016's constructs name (DR-1, L-1). */
+const BROWSER_ONLY_FIX =
+  'declare the component that renders it with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone';
+
+/**
+ * What each of core's control-flow components does to a server-rendered page
+ * after activation, measured in Chromium on a mount() root (FORMA-119's
+ * review): the printed consequence says it.
+ */
+const ADOPTION_OUTCOME: ReadonlyMap<string, string> = new Map([
+  ['createErrorBoundary', 'on a mount() root activation throws (insertBefore), so nothing after it activates'],
+  ['createSwitch', 'on a mount() root activation throws (insertBefore), so nothing after it activates'],
+  ['createPortal', "activation goes on past it, but the portal's content never appears"],
+  ['createSuspense', 'on a mount() root activation throws (insertBefore), so nothing after it activates'],
+]);
+
+/**
+ * Core's control-flow components that adoption has no handling for
+ * (FORMA-016): in a server-rendered component each one is reported under its
+ * own code, naming browserOnly() as the way out, where it used to be reported
+ * as a component the compiler could not resolve. What the walker emits for
+ * them is unchanged. `browserOnly` itself, called inside the tree rather than
+ * wrapping a declaration, is reported the same way (BUILD-707).
+ */
+const ADOPTION_GAPS: ReadonlyMap<string, string> = new Map([
+  ['createErrorBoundary', 'BUILD-702'],
+  ['createSwitch', 'BUILD-703'],
+  ['createPortal', 'BUILD-704'],
+  ['createSuspense', 'BUILD-705'],
+]);
+
+/** `xs.map(…)`: a plain array child, which adoption does not reconcile (FORMA-016). */
+function isMapCall(node: t.Node | null | undefined): boolean {
+  return t.isCallExpression(node)
+    && t.isMemberExpression(node.callee)
+    && !node.callee.computed
+    && t.isIdentifier(node.callee.property)
+    && node.callee.property.name === 'map';
+}
+
+/** The FORMA-016 code a call names, if it is one of those constructs. */
+function adoptionGapCode(node: t.Node | null | undefined): string | null {
+  if (isMapCall(node)) return 'BUILD-701';
+  if (t.isCallExpression(node) && t.isIdentifier(node.callee)) {
+    return ADOPTION_GAPS.get(node.callee.name) ?? null;
+  }
+  return null;
+}
+
+/**
+ * FMIR's string table and slot defaults carry a u16 length, so an entry past
+ * 65,535 UTF-8 bytes cannot be encoded: `toBinary` throws and the page falls
+ * back to placeholder IR, as at compiler 0.3.6. This reports it where the
+ * author wrote it (BUILD-604); the SSR plugin then says nothing more about
+ * the same failure. Literals that reach the module another way are reported
+ * by the plugin, under the same code, without a position.
+ * Verified by: packages/compiler/tests/diagnostics-conformance.test.ts > "BUILD-604"
+ */
+function checkLiteralSize(
+  walkCtx: WalkContext,
+  node: Locatable | null | undefined,
+  value: string,
+  what: string,
+): void {
+  // A UTF-16 unit is at most 3 UTF-8 bytes, so only a long string can overflow.
+  if (value.length <= 0xffff / 3) return;
+  const bytes = new TextEncoder().encode(value).length;
+  if (bytes <= 0xffff) return;
+  warnDegraded(
+    walkCtx,
+    'BUILD-604',
+    node,
+    `a ${bytes}-byte ${what}`,
+    'exceeds the 65535-byte FMIR string limit, so the page cannot be encoded and falls back to placeholder IR'
+    + ' — load content that long at run time, or split it',
+  );
+}
+
+/** Describe a child/tag expression in source-like terms for a diagnostic. */
+function describeNode(node: t.Node): string {
+  if (t.isIdentifier(node) || t.isMemberExpression(node)) return exprToText(node);
+  if (isFunctionExpr(node)) {
+    const body = getEffectiveBody(node as t.ArrowFunctionExpression | t.FunctionExpression);
+    return body ? `\`() => ${describeNode(body)}\`` : 'a function with no visible return';
+  }
+  if (t.isCallExpression(node)) return `${exprToText(node.callee)}(...)`;
+  if (t.isTemplateLiteral(node)) return 'a template literal';
+  if (t.isConditionalExpression(node)) return 'a bare ternary (not wrapped in a function)';
+  if (t.isLogicalExpression(node)) return `a bare '${node.operator}' expression (not wrapped in a function)`;
+  // A BinaryExpression is what `'Player ' + name()` parses to. Reporting it as
+  // "a BinaryExpression" named the AST node instead of the code, which is the
+  // one thing a build warning must not do.
+  if (t.isBinaryExpression(node)) return `a bare '${node.operator}' expression (not wrapped in a function)`;
+  if (t.isUnaryExpression(node)) return `a bare '${node.operator}' expression (not wrapped in a function)`;
+  if (t.isSpreadElement(node)) return 'a spread child';
+  if (t.isObjectExpression(node)) return 'an object literal';
+  if (t.isArrayExpression(node)) return 'an array literal';
+  if (t.isBooleanLiteral(node)) return String(node.value);
+  return `a ${node.type}`;
+}
+
+/** The consequence shared by every construct that becomes a client-side island. */
+const ISLAND_CONSEQUENCE =
+  'emitted as an empty island shell, so it renders nothing server-side and only appears once the client bundle hydrates';
+
+/**
+ * Extract signal name from a simple signal-call arrow: () => signalName()
+ * Returns the signal name if the body is a no-arg call to an identifier, else null.
+ */
+function extractSignalName(fn: t.ArrowFunctionExpression | t.FunctionExpression): string | null {
+  const body = getEffectiveBody(fn);
+  if (
+    body
+    && t.isCallExpression(body)
+    && t.isIdentifier(body.callee)
+    && body.arguments.length === 0
+  ) {
+    return body.callee.name;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// SSR Default Evaluation
+// ---------------------------------------------------------------------------
+
+/**
+ * A statically evaluated value. `undefined` (never a member of this type) means
+ * "could not be evaluated"; `null` is a real JS null.
+ *
+ * The evaluator used to work in STRINGS, which made truthiness a guess: the
+ * number 0 and the string "0" both arrived as `"0"`, and `false` arrived as the
+ * non-empty string `"false"`. That is fine for concatenation and wrong for
+ * every conditional — and conditionals are what decides which SHOW_IF branch
+ * the server renders. Values stay typed until the moment they are written into
+ * a slot's default bytes.
+ */
+type EvalValue = string | number | boolean | null;
+
+/**
+ * Names an expression can resolve against: signals in the lexical chain the
+ * walk is currently inside, plus module constants and locals folded from a
+ * block-bodied arrow.
+ */
+interface EvalEnv {
+  signal(name: string): SignalDefault | undefined;
+  ident(name: string): EvalValue | undefined;
+}
+
+/** The env for the scope the walk is in right now. */
+function evalEnv(walkCtx: WalkContext): EvalEnv {
+  return {
+    signal: (name) => lookupSignal(walkCtx.signalScope, name)?.default,
+    ident: (name) => walkCtx.stringConstants?.get(name),
+  };
+}
+
+/** JS truthiness of an evaluated value. */
+function isTruthy(val: EvalValue): boolean {
+  if (val === null) return false;
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'number') return val !== 0 && !Number.isNaN(val);
+  return val !== '';
+}
+
+/**
+ * Render an evaluated value the way the client renderer would write it into the
+ * DOM: `null` is the ABSENT case (an omitted attribute, empty text), everything
+ * else is its JS string form.
+ */
+function evalToText(val: EvalValue): string {
+  return val === null ? '' : String(val);
+}
+
+/**
+ * The `default_bytes` an evaluated value contributes to a slot.
+ *
+ * Empty bytes mean "no default" to the FMIR reader — `SlotData::new_from_defaults`
+ * leaves such a slot Null, which renders as an omitted attribute and empty text.
+ * That is the right answer for null and for a value that could not be evaluated;
+ * it is also, unavoidably, what an EMPTY STRING default has to encode, because
+ * the slot entry has no way to distinguish "" from absent. An attribute whose
+ * value evaluates to "" is therefore omitted server-side where the client writes
+ * `attr=""` — a documented boundary of the binary format, not a walker choice.
+ */
+function defaultBytesFor(val: EvalValue | undefined): Uint8Array {
+  if (val === undefined || val === null) return new Uint8Array(0);
+  return new TextEncoder().encode(String(val));
+}
+
+/**
+ * Try to evaluate a dynamic binding (`() => …`) to the value the client would
+ * render on first paint. Handles the shapes real pages use:
+ *   () => showPassword() ? 'text' : 'password'           → "password"
+ *   () => 'mfa-panel' + (showMfa() ? '' : ' hidden')     → "mfa-panel hidden"
+ *   () => `sidebar ${collapsed() ? 'is-collapsed' : ''}` → "sidebar "
+ *   () => { const cls = 'row'; return cls + tone(); }     → "rowcalm"
+ *   () => !!busy()                                        → false
+ *
+ * Returns undefined when any leaf cannot be evaluated — a partial answer would
+ * be worse than none, because it would render as though it were complete.
+ */
+function tryEvalExprDefault(
+  fnExpr: t.ArrowFunctionExpression | t.FunctionExpression,
+  env: EvalEnv,
+): EvalValue | undefined {
+  const body = getEffectiveBody(fnExpr);
+  if (!body) return undefined;
+
+  // A block body may fold its own locals first: `const cls = 'row'; return …`.
+  // Without this, a component that names its class before returning it drops
+  // the whole attribute server-side.
+  if (t.isBlockStatement(fnExpr.body)) {
+    const locals = new Map<string, EvalValue>();
+    const inner: EvalEnv = {
+      signal: env.signal,
+      ident: (name) => (locals.has(name) ? locals.get(name)! : env.ident(name)),
+    };
+    for (const stmt of fnExpr.body.body) {
+      if (!t.isVariableDeclaration(stmt) || stmt.kind !== 'const') continue;
+      for (const decl of stmt.declarations) {
+        if (!t.isIdentifier(decl.id) || !decl.init) continue;
+        const value = evalNode(decl.init, inner);
+        if (value !== undefined) locals.set(decl.id.name, value);
+      }
+    }
+    return evalNode(body, inner);
+  }
+
+  return evalNode(body, env);
+}
+
+function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
+  if (t.isStringLiteral(node)) return node.value;
+  if (t.isNumericLiteral(node)) return node.value;
+  if (t.isBooleanLiteral(node)) return node.value;
+  if (t.isNullLiteral(node)) return null;
+
+  // Template literal, with or without embedded expressions. The dashboard's
+  // sidebar class is `${base} ${collapsed() ? 'is-collapsed' : ''}` — refusing
+  // interpolation meant that page server-rendered with no class attribute at
+  // all and every control was unstyled until hydration.
+  if (t.isTemplateLiteral(node)) {
+    let out = '';
+    for (let i = 0; i < node.quasis.length; i++) {
+      out += node.quasis[i]!.value.cooked ?? node.quasis[i]!.value.raw;
+      const expr = node.expressions[i];
+      if (expr === undefined) continue;
+      if (!t.isExpression(expr)) return undefined;
+      const value = evalNode(expr, env);
+      if (value === undefined) return undefined;
+      out += evalToText(value);
+    }
+    return out;
+  }
+
+  // Module-level constant or a folded local: SIL_BODY
+  if (t.isIdentifier(node)) {
+    if (isUndefinedIdentifier(node)) return null;
+    return env.ident(node.name);
+  }
+
+  // Signal call: signalName()
+  if (
+    t.isCallExpression(node)
+    && t.isIdentifier(node.callee)
+    && node.arguments.length === 0
+  ) {
+    return env.signal(node.callee.name)?.default;
+  }
+
+  // Explicit cast: String(expr) / Number(expr). Pages write these around a
+  // signal read to pin the type; without folding them the cast alone was
+  // enough to turn an otherwise evaluable value into an empty attribute.
+  // Only a string or number operand folds: `String(null)` is "null" in JS but
+  // `null` is also how this evaluator spells "absent", and guessing between
+  // the two would put the wrong text on the page.
+  if (
+    t.isCallExpression(node)
+    && t.isIdentifier(node.callee)
+    && (node.callee.name === 'String' || node.callee.name === 'Number')
+    && node.arguments.length === 1
+    && t.isExpression(node.arguments[0]!)
+  ) {
+    const inner = evalNode(node.arguments[0] as t.Expression, env);
+    if (typeof inner !== 'string' && typeof inner !== 'number') return undefined;
+    return node.callee.name === 'String' ? String(inner) : Number(inner);
+  }
+
+  // Unary negation: !expr or !!expr
+  if (t.isUnaryExpression(node) && node.operator === '!') {
+    const inner = evalNode(node.argument as t.Expression, env);
+    if (inner === undefined) return undefined;
+    return !isTruthy(inner);
+  }
+
+  // Ternary: test ? consequent : alternate
+  if (t.isConditionalExpression(node)) {
+    const test = evalNode(node.test as t.Expression, env);
+    if (test === undefined) return undefined;
+    return evalNode((isTruthy(test) ? node.consequent : node.alternate) as t.Expression, env);
+  }
+
+  // Logical && / ||, which is how conditional classes are usually written.
+  if (t.isLogicalExpression(node) && (node.operator === '&&' || node.operator === '||')) {
+    const left = evalNode(node.left as t.Expression, env);
+    if (left === undefined) return undefined;
+    if (node.operator === '&&' && !isTruthy(left)) return left;
+    if (node.operator === '||' && isTruthy(left)) return left;
+    return evalNode(node.right as t.Expression, env);
+  }
+
+  if (t.isBinaryExpression(node)) {
+    const left = evalNode(node.left as t.Expression, env);
+    const right = evalNode(node.right as t.Expression, env);
+    if (left === undefined || right === undefined) return undefined;
+
+    // Binary +: numeric when both sides are numbers, string concatenation
+    // otherwise — the same rule JavaScript applies.
+    if (node.operator === '+') {
+      if (typeof left === 'number' && typeof right === 'number') return left + right;
+      return evalToText(left) + evalToText(right);
+    }
+
+    // Strict equality is exact over the primitives this evaluator holds.
+    // Loose `==` / `!=` is deliberately NOT folded: its coercion table would
+    // have to distinguish JS `null` from `undefined`, and EvalValue spells
+    // both as `null` — a fold that guesses there would put the wrong SHOW_IF
+    // branch or the wrong attribute on the page rather than warning.
+    if (node.operator === '===') return left === right;
+    if (node.operator === '!==') return left !== right;
+
+    // Arithmetic and ordering, restricted to operands of the SAME primitive
+    // type, where JavaScript's answer needs no coercion rules. `'2' * x` and
+    // friends fall through to the diagnostic instead of being guessed at.
+    if (typeof left === 'number' && typeof right === 'number') {
+      switch (node.operator) {
+        case '-': return left - right;
+        case '*': return left * right;
+        case '/': return left / right;
+        case '%': return left % right;
+        case '<': return left < right;
+        case '<=': return left <= right;
+        case '>': return left > right;
+        case '>=': return left >= right;
+      }
+    }
+    if (typeof left === 'string' && typeof right === 'string') {
+      switch (node.operator) {
+        case '<': return left < right;
+        case '<=': return left <= right;
+        case '>': return left > right;
+        case '>=': return left >= right;
+      }
+    }
+    return undefined;
+  }
+
+  if (t.isParenthesizedExpression(node)) {
+    return evalNode(node.expression, env);
+  }
+
+  // TypeScript wrappers carry no runtime value of their own. The walker parses
+  // ORIGINAL .ts source, so `('Slot ' + count()) as string` and `title!` reach
+  // the evaluator with the cast still on them; refusing them degraded an
+  // expression purely because it had been annotated.
+  if (t.isTSAsExpression(node) || t.isTSSatisfiesExpression(node) || t.isTSNonNullExpression(node)) {
+    return evalNode(node.expression, env);
+  }
+
+  // Can't evaluate
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Walk Context
+// ---------------------------------------------------------------------------
+
+export interface WalkContext {
+  /** File-level constant arrays (for Rule 9 static unroll). */
+  fileConstants?: Map<string, any[]>;
+  /** Resolve a constant array the CURRENT module imports, for the same unroll.
+   *
+   *  `fileConstants` is extracted per resolved file, which is what makes an
+   *  identifier resolve against its own module scope — and is also why a table
+   *  declared one file away was invisible: ksx's map island spreads twelve
+   *  tables it imports from the page module, and every one of the 34 spreads
+   *  degraded to an unhydratable island shell. This follows the import to the
+   *  declaring module and reads the table from THERE.
+   *
+   *  Set alongside `fileConstants` by `moduleConstantScope`, so it always
+   *  describes the same module the local constants came from. Consulted only
+   *  after `fileConstants` misses, which is what keeps a local declaration
+   *  shadowing an imported one.
+   *  Verified by: packages/compiler/tests/ssr-emission.test.ts > "unrolls a const table the island imports from the page module" */
+  resolveImportedConstant?: (name: string) => ConstantLookup;
+  /** File-level string constants: const name → folded string value.
+   *  Identifiers referencing these resolve to STATIC attribute values
+   *  (and fold inside function-valued prop SSR defaults). */
+  stringConstants?: Map<string, string>;
+  /** The lexical signal chain the walk is currently inside. Pushed at every
+   *  point the walk enters a new scope (a component's file, a component's
+   *  body), so a signal is in scope exactly when the code that declares it was
+   *  inlined into this page — see signal-scope.ts.
+   *  Verified by: packages/compiler/tests/ssr-emission.test.ts > "names a signal declared inside an inlined sub-component" */
+  signalScope?: SignalScope;
+  /** Page-wide signal slot-name occurrences and scope memo. Same eager-init
+   *  and by-reference sharing rules as listNames. */
+  signalRegistry?: SignalRegistry;
+  /** Follows a module's imports so a signal declared in a store file folds
+   *  wherever it is read. Created once per page (its caches are page-wide);
+   *  absent = imports are not followed. */
+  signalImports?: SignalImportResolver;
+  /** Path of the file whose tree is currently being walked. Only used to name
+   *  the file in build diagnostics — nested walks (sub-components, islands)
+   *  carry the resolved component's own path so a warning points at the file
+   *  the author has to edit, not the page that included it. */
+  sourceFile?: string;
+  /** Resolve a sub-component call to its source file and function name.
+   *
+   *  `fromFile` is the file the CALL appears in, and the resolver must read
+   *  that file's imports — not the entry point's. A resolver closed over the
+   *  entry's import map could only see components the entry itself imported,
+   *  so anything a page file imported became an empty island shell the moment
+   *  the entry did not happen to import it too.
+   *  Verified by: packages/compiler/tests/ir-walk.test.ts > "asks the resolver for the file the CALL is in, not the entry point"
+   *
+   *  `path` is optional and only feeds diagnostics (see sourceFile). */
+  resolveComponent?: (
+    name: string,
+    fromFile?: string,
+  ) => { source: string; functionName: string; path?: string } | null;
+  /** Follows `export … from './x'` re-exports when resolving a sub-component,
+   *  so a component imported through an index barrel still inlines. */
+  loadModule?: ModuleLoader;
+  /** Set of visited component names for cycle detection. */
+  visited?: Set<string>;
+  /** Current depth for sub-component resolution (max 3). */
+  depth?: number;
+  /** List item bindings: "paramName.propName" → target slot id.
+   *  Set when walking inside a createList mapFn body.
+   *  The PROP opcodes extract properties at runtime; these bindings
+   *  tell the child walker which slot each property was extracted into. */
+  listItemBindings?: Map<string, number>;
+  /** Per-page registry for list slot naming: occurrences of each derived
+   *  base name (for `#n` dedup) plus the running list count (for the
+   *  positional fallback). Initialized eagerly at the walk entry points
+   *  (walkHTree / walkCallExpression) so it lives on the ROOT context and is
+   *  shared by reference with every spread-copied nested walk context —
+   *  island subtrees, inlined sub-components, and list bodies all dedup
+   *  against the same page-wide namespace. */
+  listNames?: { counts: Map<string, number>; total: number };
+  /** Per-page registry for show slot naming (createShow + ternary SHOW_IF):
+   *  same shape and sharing semantics as listNames. */
+  showNames?: { counts: Map<string, number>; total: number };
+  /** Per-page occurrence registry for `attr:<key>` slot names. Two dynamic
+   *  attributes sharing a key anywhere on the page (sibling elements, an
+   *  island and the page around it, a list body and its enclosing page) would
+   *  otherwise mint the same name twice; same eager-init and by-reference
+   *  sharing rules as listNames.
+   *  Verified by: packages/compiler/tests/ir-walk.test.ts > "dedupes two dynamic attrs sharing a key on sibling elements"
+   */
+  attrNames?: Map<string, number>;
+  /** Per-page occurrence registry for `text:<childIndex>` slot names. Child
+   *  indices restart inside every element, so two dynamic text children at the
+   *  same index in different parents collide without it; same sharing rules as
+   *  listNames.
+   *  Verified by: packages/compiler/tests/ir-walk.test.ts > "dedupes two dynamic text children at the same child index"
+   */
+  textNames?: Map<string, number>;
+  /** Names of island components registered in activateIslands({...}).
+   *  Island components are NEVER inlined — they always emit ISLAND_START/ISLAND_END. */
+  islandNames?: Set<string>;
+  /** The import binding `name` has in `fromFile`, if any: how a component the
+   *  resolver cannot follow is told apart as one from a package (BUILD-401)
+   *  rather than one the compiler cannot find (BUILD-402). Diagnostics only. */
+  importOf?: (name: string, fromFile?: string) => ImportBinding | null;
+  /** The `const X = browserOnly(Impl)` declaration `name` refers to in
+   *  `fromFile`, if any (browser-only.ts). Asked only where the walk would
+   *  otherwise give up on a component. */
+  findBrowserOnly?: (name: string, fromFile?: string) => BrowserOnlyDeclaration | null;
+  /** The components inlined from the page down to the walk's current scope,
+   *  the page root first: named by BUILD-403 when composition passes the
+   *  inlining limit (L-26). Diagnostics only. */
+  chain?: DiagnosticChainLink[];
+}
+
+// ---------------------------------------------------------------------------
+// Per-file Constant Scoping
+// ---------------------------------------------------------------------------
+
+/** Analyzer for re-extracting constants from resolved sub-component/island
+ *  sources (baseDir is unused by the extraction methods). */
+const constantAnalyzer = new ComponentAnalyzer('');
+
+/** One module's constant scope, as the walk needs it. */
+export type ModuleConstantScope =
+  Pick<WalkContext, 'fileConstants' | 'stringConstants' | 'resolveImportedConstant'>;
+
+/**
+ * The constant scope of ONE module: the tables and strings it declares, plus
+ * the resolver for the ones it imports.
+ *
+ * Every walk entry point builds its scope through this function — the root
+ * page in the SSR plugin, an inlined sub-component, an inlined island — so a
+ * construct that resolves on a page cannot fail to resolve inside an island
+ * merely because a different site assembled the context. That divergence is
+ * exactly what left ksx's map island unable to see the tables its own page
+ * module declares.
+ *
+ * Falls back to EMPTY maps if the source fails to parse: falling back to the
+ * parent context's constants would resolve the child file's identifiers
+ * against the WRONG module scope (the parent's).
+ */
+export function moduleConstantScope(
+  source: string,
+  filePath: string,
+  loadModule?: ModuleLoader,
+): ModuleConstantScope {
+  let fileConstants: Map<string, any[]>;
+  let stringConstants: Map<string, string>;
+  try {
+    fileConstants = constantAnalyzer.extractFileConstants(source, filePath);
+    stringConstants = constantAnalyzer.extractStringConstants(source, filePath);
+  } catch {
+    fileConstants = new Map();
+    stringConstants = new Map();
+  }
+
+  // Parsed on the FIRST imported-table question and never again: a module with
+  // no such spread pays nothing, and a module with 34 of them — ksx's 240 KB
+  // map island — parses itself once rather than once per spread.
+  let parsed: { ast: T.File; shadowed: Set<string> } | null | undefined;
+  const answers = new Map<string, ConstantLookup>();
+
+  const parseOnce = (): { ast: T.File; shadowed: Set<string> } | null => {
+    if (parsed !== undefined) return parsed;
+    try {
+      const ast = parse(source, {
+        sourceType: 'module',
+        plugins: ['typescript', 'jsx'],
+      }) as unknown as T.File;
+      parsed = { ast, shadowed: nestedScopeBindings(ast) };
+    } catch {
+      parsed = null;
+    }
+    return parsed;
+  };
+
+  const resolveImportedConstantForModule = (name: string): ConstantLookup => {
+    const cached = answers.get(name);
+    if (cached) return cached;
+
+    const answer = ((): ConstantLookup => {
+      const mod = parseOnce();
+      // Unparseable here means unparseable above too, where it already emptied
+      // the local maps; the caller's generic diagnostic is the honest one.
+      if (!mod) return { kind: 'not-imported' };
+
+      // A local declaration shadows an imported one. Module scope cannot hold
+      // both (that is a redeclaration), so the case that matters is a NESTED
+      // binding: a component-local `const KEYS = buildKeys()` beside a module
+      // `import { KEYS }`. The identifier at the spread refers to the inner
+      // one, and unrolling the imported table there would ship rows the client
+      // never renders.
+      if (mod.shadowed.has(name)) {
+        return {
+          kind: 'unresolved',
+          detail: `'${name}' is imported into ${filePath} but ALSO declared in a nested scope of that file, so the compiler cannot tell which one this spread reads`,
+        };
+      }
+
+      return resolveImportedConstant(mod.ast, filePath, name, {
+        loadModule,
+        readConstants: (src, path) => constantAnalyzer.extractFileConstants(src, path),
+      });
+    })();
+
+    answers.set(name, answer);
+    return answer;
+  };
+
+  return {
+    fileConstants,
+    stringConstants,
+    resolveImportedConstant: resolveImportedConstantForModule,
+  };
+}
+
+/**
+ * The nested walk context for a component the walk has decided to inline:
+ * the component file's own constants, its own signal scope chain, and its own
+ * path for diagnostics.
+ *
+ * ONE function builds it for both inlining sites — a registered island and a
+ * plain sub-component — so the two cannot drift into resolving different
+ * things, which is precisely how island files came to be the only nested scope
+ * whose signals were read.
+ * Verified by: packages/compiler/tests/ssr-emission.test.ts > "names a signal declared inside an inlined sub-component"
+ */
+function inlinedWalkContext(
+  walkCtx: WalkContext,
+  ctx: IrEmitContext,
+  sub: ResolvedSubComponent,
+  functionName: string,
+  visited: Set<string>,
+  link: DiagnosticChainLink,
+): WalkContext {
+  const constants = moduleConstantScope(sub.source, sub.filePath, walkCtx.loadModule);
+  return {
+    ...walkCtx,
+    ...constants,
+    signalScope: enterComponentScope({
+      ast: sub.ast,
+      fn: sub.fn,
+      fnName: functionName,
+      filePath: sub.filePath,
+      constants: constants.stringConstants,
+      ctx,
+      registry: walkCtx.signalRegistry!,
+      // A helper declared inside another function is only reachable from its
+      // own file, and the caller's chain is then its lexical environment.
+      callerScope: sub.filePath === walkCtx.sourceFile ? walkCtx.signalScope ?? null : null,
+      imports: walkCtx.signalImports,
+    }),
+    sourceFile: sub.filePath,
+    visited,
+    depth: (walkCtx.depth ?? 0) + 1,
+    chain: [...chainSoFar(walkCtx), link],
+  };
+}
+
+/** The chain the walk is in: the context's own, or (a hand-built context)
+ *  the names it has inlined, without positions. */
+function chainSoFar(walkCtx: WalkContext): DiagnosticChainLink[] {
+  if (walkCtx.chain) return walkCtx.chain;
+  return [...(walkCtx.visited ?? [])].map((component) => ({ component, file: '', line: 0, column: 0 }));
+}
+
+/** One chain link: `component`, called at `node` in the walk's current file. */
+function chainLink(walkCtx: WalkContext, component: string, node: Locatable): DiagnosticChainLink {
+  const file = walkCtx.sourceFile ?? '';
+  const start = node.loc?.start;
+  const position = file && start ? originalPosition(file, start) : { line: 0, column: 0 };
+  return { component, file, line: position.line, column: position.column };
+}
+
+// ---------------------------------------------------------------------------
+// Walk Engine — Main Entry Points
+// ---------------------------------------------------------------------------
+
+/**
+ * Ensure the per-page name registries exist on the given context.
+ * MUST run at the walk entry points BEFORE any nested walk spread-copies the
+ * context ({ ...walkCtx, ... }): a registry first created lazily on a COPY
+ * dies with that copy, and a later sibling construct would recreate it and
+ * mint DUPLICATE slot names (e.g. two `list:todos:array` slots); `forma-ir`
+ * resolves a name to the first slot in table order (the rule is stated once,
+ * at its `IrModule::slot_id_by_name`), so the later twin is unreachable by
+ * name. Covers hand-built test contexts as well as the root contexts built by
+ * the SSR plugin.
+ * Every slot-name family that can collide page-wide is registered here —
+ * list, show, attr and text.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "dedupes a dynamic attr inside an island against one on the page"
+ */
+function ensureNameRegistries(walkCtx: WalkContext): void {
+  walkCtx.listNames ??= { counts: new Map(), total: 0 };
+  walkCtx.showNames ??= { counts: new Map(), total: 0 };
+  walkCtx.attrNames ??= new Map();
+  walkCtx.textNames ??= new Map();
+  walkCtx.signalRegistry ??= newSignalRegistry();
+}
+
+/**
+ * Page-unique slot name for a dynamic attribute: `attr:<key>`, then
+ * `attr:<key>#2` for the next attribute anywhere on the page that binds the
+ * same key. ensureNameRegistries has already run at the walk entry point on
+ * every path that reaches here, so the non-null assertion holds — and a lazy
+ * `??=` in its place would reintroduce the stranding bug that makes nested
+ * walks mint duplicates.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "dedupes two dynamic attrs sharing a key on sibling elements"
+ */
+function attrSlotName(key: string, walkCtx: WalkContext): string {
+  return uniqueName(walkCtx.attrNames!, `attr:${key}`);
+}
+
+/**
+ * Page-unique slot name for a dynamic text child at `childIndex` in its
+ * parent's argument list (`h(tag, props, child0, ...)`, so the first child is
+ * index 2): `text:0`, then `text:0#2` for the next dynamic text child that
+ * lands at the same index under a different parent.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "dedupes two dynamic text children at the same child index"
+ */
+function textSlotName(childIndex: number, walkCtx: WalkContext): string {
+  return uniqueName(walkCtx.textNames!, `text:${childIndex - 2}`);
+}
+
+/**
+ * Walk an h() call tree and emit FMIR opcodes.
+ * This is the primary entry point for IR compilation.
+ */
+export function walkHTree(
+  node: t.CallExpression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  ensureNameRegistries(walkCtx);
+  const args = node.arguments;
+  if (args.length === 0) return;
+
+  // First arg: tag name
+  const tagArg = args[0];
+  if (!tagArg) return;
+
+  // Fragment: h(Fragment, null, child1, child2) → emit children inline, no wrapper
+  if (t.isIdentifier(tagArg) && tagArg.name === 'Fragment') {
+    emitFragmentChildren(args, 2, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Component tag: h(Card, props, ...children) — what JSX compiles a
+  // capitalized element to. Route it through the same sub-component/island
+  // machinery as a bare Card(props) call so it is inlined when resolvable and
+  // registered under its REAL name when not: an anonymous `island_<n>` shell
+  // is unhydratable, because the client registry is keyed by component name.
+  // Verified by: packages/compiler/tests/ir-walk.test.ts > "registers a JSX component tag under its own name"
+  if (t.isIdentifier(tagArg) && isComponentName(tagArg.name)) {
+    if (args.length > 2) {
+      warnDegraded(
+        walkCtx,
+        'BUILD-407',
+        args[2],
+        `children passed to component <${tagArg.name}>`,
+        'not represented in SSR IR (the compiler cannot place a component\'s children) — they appear only after the client renders the component',
+      );
+    }
+    const propsArg = args.length > 1 ? args[1] : undefined;
+    const callArgs = propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)
+      ? [propsArg]
+      : [];
+    const call = t.callExpression(tagArg, callArgs);
+    // The call stands for the JSX element: its diagnostics point there.
+    call.loc = node.loc;
+    walkCallExpression(call, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Rule 11: non-string tag → island
+  if (!t.isStringLiteral(tagArg)) {
+    if (isBrowserOnlyCall(tagArg)) {
+      warnDegraded(
+        walkCtx,
+        'BUILD-707',
+        tagArg,
+        `browserOnly(...) used as a tag`,
+        ISLAND_CONSEQUENCE + ' — declare `const X = browserOnly(Impl)` at the top level of a module, render <X/>, and register X in activateIslands',
+      );
+      emitIsland(ctx);
+      return;
+    }
+    warnDegraded(
+      walkCtx,
+      'BUILD-103',
+      tagArg,
+      `dynamic tag h(${describeNode(tagArg)}, ...)`,
+      ISLAND_CONSEQUENCE + ' — use a literal tag name to render it server-side',
+    );
+    emitIsland(ctx);
+    return;
+  }
+
+  const tag = tagArg.value;
+  const tagStrIdx = ctx.addString(tag);
+  const isVoid = VOID_TAGS.has(tag);
+
+  // Process props (second arg)
+  const staticAttrs: Array<{ keyIdx: number; valIdx: number }> = [];
+  const dynAttrs: Array<{ keyIdx: number; slotId: number }> = [];
+
+  const propsArg = args.length > 1 ? args[1] : undefined;
+  const hasProps = propsArg !== undefined
+    && !t.isNullLiteral(propsArg)
+    && !isUndefinedIdentifier(propsArg);
+
+  // A props argument that is not an object literal — `h('div', props, …)`,
+  // `h('div', ...rest)` — used to drop straight through this block, taking
+  // EVERY attribute on the element with it and saying nothing.
+  // Verified by: packages/compiler/tests/ir-diagnostics.test.ts > "props argument that is not an object literal"
+  if (hasProps && (t.isSpreadElement(propsArg) || !t.isObjectExpression(propsArg))) {
+    warnDegraded(
+      walkCtx,
+      'BUILD-201',
+      propsArg,
+      `props on <${tag}> passed as ${t.isSpreadElement(propsArg) ? 'a spread argument' : describeNode(propsArg)} rather than an object literal`,
+      `NONE of the attributes it carries are rendered server-side — write them as an object literal on the h('${tag}', { … }) call`,
+    );
+  }
+
+  if (hasProps && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
+    for (const prop of propsArg.properties) {
+      // `{...rest}`: the walker cannot know what is in it, so none of it is
+      // rendered server-side. Silently dropping it is how an element ships
+      // missing half its attributes with a clean build log.
+      if (t.isSpreadElement(prop)) {
+        warnDegraded(
+          walkCtx,
+          'BUILD-202',
+          prop,
+          `spread props {...${exprToText(prop.argument)}} on <${tag}>`,
+          'the attributes it carries are NOT rendered server-side — list them explicitly on the h() call to server-render them',
+        );
+        continue;
+      }
+
+      if (prop.computed) {
+        warnDegraded(
+          walkCtx,
+          'BUILD-203',
+          prop,
+          `computed prop key on <${tag}>`,
+          'the attribute is NOT rendered server-side — use a literal key so the compiler can name the attribute',
+        );
+        continue;
+      }
+
+      const key = t.isIdentifier(prop.key)
+        ? prop.key.name
+        : t.isStringLiteral(prop.key)
+          ? prop.key.value
+          : null;
+      if (key === null) {
+        warnDegraded(
+          walkCtx,
+          'BUILD-203',
+          prop,
+          `prop with a ${prop.key.type} key on <${tag}>`,
+          'the attribute is NOT rendered server-side — use a plain identifier or string key',
+        );
+        continue;
+      }
+
+      // Rule 7: Skip event handlers. Not a degradation: an event listener has
+      // no server-side representation by design, and the client attaches it.
+      if (isEventProp(key)) continue;
+
+      // `ref` is a callback, not an attribute — nothing to render.
+      if (key === 'ref') continue;
+
+      // A method-valued prop (`{ title() { … } }`) is a function the walker
+      // has no binding form for once it is not an event handler.
+      if (t.isObjectMethod(prop)) {
+        warnDegraded(
+          walkCtx,
+          'BUILD-204',
+          prop,
+          `method-valued prop '${key}' on <${tag}>`,
+          `the attribute is NOT rendered server-side — write it as an arrow property (\`${key}: () => …\`) for a reactive binding`,
+        );
+        continue;
+      }
+
+      // Raw markup is deliberately not server-rendered from IR, but the page
+      // author has to know the content is missing until the client runs.
+      if (key === 'dangerouslySetInnerHTML') {
+        warnDegraded(
+          walkCtx,
+          'BUILD-205',
+          prop,
+          `dangerouslySetInnerHTML on <${tag}>`,
+          'its markup is NOT rendered server-side and appears only once the client hydrates — the element ships empty',
+        );
+        continue;
+      }
+
+      const val = prop.value as t.Expression;
+
+      // Static literal value -> static attribute pair
+      if (isStaticLiteral(val)) {
+        const strVal = staticLiteralToAttrString(val);
+        if (strVal !== null) {
+          checkLiteralSize(walkCtx, val, strVal, `value of attribute '${key}' on <${tag}>`);
+          const keyIdx = ctx.addString(key);
+          const valIdx = ctx.addString(strVal);
+          staticAttrs.push({ keyIdx, valIdx });
+        }
+        continue;
+      }
+
+      // List item property in attr value: String(row.id) or row.name → DYN_ATTR with bound slot
+      if (walkCtx.listItemBindings) {
+        let bindingKey: string | null = null;
+        // Direct: row.prop
+        if (t.isMemberExpression(val) && !val.computed && t.isIdentifier(val.object) && t.isIdentifier(val.property)) {
+          bindingKey = `${val.object.name}.${val.property.name}`;
+        }
+        // Wrapped: String(row.prop)
+        if (
+          !bindingKey
+          && t.isCallExpression(val)
+          && t.isIdentifier(val.callee)
+          && (val.callee.name === 'String' || val.callee.name === 'Number')
+          && val.arguments.length === 1
+          && !t.isSpreadElement(val.arguments[0])
+        ) {
+          const inner = val.arguments[0] as t.Expression;
+          if (t.isMemberExpression(inner) && !inner.computed && t.isIdentifier(inner.object) && t.isIdentifier(inner.property)) {
+            bindingKey = `${inner.object.name}.${inner.property.name}`;
+          }
+        }
+        if (bindingKey && walkCtx.listItemBindings.has(bindingKey)) {
+          const keyIdx = ctx.addString(key);
+          const slotId = walkCtx.listItemBindings.get(bindingKey)!;
+          ctx.recordSlotRef(slotId);
+          dynAttrs.push({ keyIdx, slotId });
+          continue;
+        }
+      }
+
+      // Rule 6: Function/arrow expression -> DYN_ATTR
+      if (isFunctionExpr(val)) {
+        const keyIdx = ctx.addString(key);
+        const fn = val as t.ArrowFunctionExpression | t.FunctionExpression;
+        // A bare `() => sig()` binding reuses the signal's own named slot
+        // rather than minting an anonymous `attr:` one.
+        const sigName = extractSignalName(fn);
+        const binding = sigName ? lookupSignal(walkCtx.signalScope, sigName) : undefined;
+        let slotId: number;
+        if (binding) {
+          slotId = binding.slotId;
+          ctx.recordSlotRef(slotId);
+        } else {
+          const evaluated = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          if (evaluated !== undefined && evaluated !== null) {
+            checkLiteralSize(walkCtx, fn, String(evaluated), `value of attribute '${key}' on <${tag}>`);
+          }
+          if (evaluated === undefined) {
+            warnDegraded(
+              walkCtx,
+              'BUILD-206',
+              fn,
+              `attribute '${key}' on <${tag}> binds ${describeNode(fn)}, which the compiler cannot evaluate`,
+              'the attribute is OMITTED server-side and only appears once the client hydrates —'
+              + ' initialize the signals it reads with literal defaults, or fold the value into a module-level const',
+            );
+          }
+          slotId = ctx.addSlot(
+            attrSlotName(key, walkCtx),
+            // A boolean value must land in a TYPE_BOOL slot: the walkers omit a
+            // false boolean attribute and write the bare name for a true one.
+            // As TYPE_TEXT it would render `disabled="false"`, which the browser
+            // reads as DISABLED — the exact inversion of what the client shows.
+            typeof evaluated === 'boolean' ? TYPE_BOOL : TYPE_TEXT,
+            SOURCE_CLIENT,
+            defaultBytesFor(evaluated),
+          );
+        }
+        dynAttrs.push({ keyIdx, slotId });
+        continue;
+      }
+
+      // Module-level string const as attr value: d: SIL_BODY → static attribute
+      if (t.isIdentifier(val) && walkCtx.stringConstants?.has(val.name)) {
+        const keyIdx = ctx.addString(key);
+        const valIdx = ctx.addString(walkCtx.stringConstants.get(val.name)!);
+        staticAttrs.push({ keyIdx, valIdx });
+        continue;
+      }
+
+      // Any other expression -> DYN_ATTR, folded to an SSR default when every
+      // operand resolves.
+      //
+      // `title: 'Enable ' + name()` is not a reactive binding — the client
+      // computes it once, while h() builds the element — but it is not opaque
+      // either: the operands are a literal and a signal whose default is in
+      // lexical scope. This arm used to mint the slot with NO default and NO
+      // diagnostic, so the attribute shipped with no value and nothing said
+      // so. That is what stripped the tooltips off ksx's controls.
+      // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a concatenated attribute value into an SSR default"
+      const evaluated = evalNode(val, evalEnv(walkCtx));
+      if (evaluated !== undefined && evaluated !== null) {
+        checkLiteralSize(walkCtx, val, String(evaluated), `value of attribute '${key}' on <${tag}>`);
+      }
+      if (evaluated === undefined) {
+        // The consequence is stated as PERMANENTLY missing, not
+        // missing-until-hydration: a prop whose value is not a function is
+        // skipped by the client's hydration pass as "static and already in
+        // the SSR HTML" (formajs src/dom/hydrate.ts, applyDynamicProps), so
+        // an attribute the server omits is never written at all.
+        // Verified by: packages/compiler/tests/ir-diagnostics.test.ts > "concatenated attribute with an unresolvable operand"
+        warnDegraded(
+          walkCtx,
+          'BUILD-207',
+          val,
+          `attribute '${key}' on <${tag}> is ${describeNode(val)}, which the compiler cannot evaluate`,
+          'the attribute is OMITTED from the server-rendered HTML and hydration does not re-apply a'
+          + ' non-function prop, so it never appears — inline the literal, use a module-level const,'
+          + ' or wrap it in a function (`() => …`) for a reactive binding',
+        );
+      }
+      const keyIdx = ctx.addString(key);
+      const slotId = ctx.addSlot(
+        attrSlotName(key, walkCtx),
+        // Same typing rule as the function-valued arm above: a boolean must
+        // land in a TYPE_BOOL slot or `disabled="false"` ships as DISABLED.
+        typeof evaluated === 'boolean' ? TYPE_BOOL : TYPE_TEXT,
+        SOURCE_CLIENT,
+        defaultBytesFor(evaluated),
+      );
+      dynAttrs.push({ keyIdx, slotId });
+    }
+  }
+
+  // Rule 3: Void elements
+  if (isVoid) {
+    ctx.emit(OP_VOID_TAG);
+    ctx.emitU32(tagStrIdx);
+    ctx.emitU16(staticAttrs.length);
+    for (const attr of staticAttrs) {
+      ctx.emitU32(attr.keyIdx);
+      ctx.emitU32(attr.valIdx);
+    }
+    // Emit DYN_ATTR for each dynamic attribute
+    for (const dyn of dynAttrs) {
+      ctx.emit(OP_DYN_ATTR);
+      ctx.emitU32(dyn.keyIdx);
+      ctx.emitU16(dyn.slotId);
+    }
+    return; // void tags have no children or close tag
+  }
+
+  // Rule 1: Static h() calls -> OPEN_TAG + CLOSE_TAG
+  ctx.emit(OP_OPEN_TAG);
+  ctx.emitU32(tagStrIdx);
+  ctx.emitU16(staticAttrs.length);
+  for (const attr of staticAttrs) {
+    ctx.emitU32(attr.keyIdx);
+    ctx.emitU32(attr.valIdx);
+  }
+
+  // Emit DYN_ATTR for each dynamic attribute
+  for (const dyn of dynAttrs) {
+    ctx.emit(OP_DYN_ATTR);
+    ctx.emitU32(dyn.keyIdx);
+    ctx.emitU16(dyn.slotId);
+  }
+
+  // Process children (3rd+ args)
+  for (let i = 2; i < args.length; i++) {
+    const childArg = args[i];
+    if (!childArg) continue;
+
+    // Handle spread elements (Rule 9)
+    if (t.isSpreadElement(childArg)) {
+      emitSpreadChild(childArg, hName, ctx, walkCtx);
+      continue;
+    }
+
+    const child = childArg as t.Expression;
+    emitChild(child, hName, ctx, walkCtx, i);
+  }
+
+  // CLOSE_TAG
+  ctx.emit(OP_CLOSE_TAG);
+  ctx.emitU32(tagStrIdx);
+}
+
+/**
+ * Handle non-h() call expressions: createShow, sub-components.
+ */
+export function walkCallExpression(
+  node: t.CallExpression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  ensureNameRegistries(walkCtx);
+
+  // Check if this is a createShow call (Rule 8)
+  if (
+    t.isIdentifier(node.callee)
+    && node.callee.name === 'createShow'
+  ) {
+    emitCreateShow(node, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Check if this is a createList call
+  if (
+    t.isIdentifier(node.callee)
+    && node.callee.name === 'createList'
+  ) {
+    emitCreateList(node, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Check if this is an h() call
+  if (
+    t.isIdentifier(node.callee)
+    && node.callee.name === hName
+  ) {
+    walkHTree(node, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Fragment: Fragment(child1, child2) → emit children inline, no wrapper
+  if (
+    t.isIdentifier(node.callee)
+    && node.callee.name === 'Fragment'
+  ) {
+    emitFragmentChildren(node.arguments, 0, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Rule 10: Sub-component calls
+  if (t.isIdentifier(node.callee)) {
+    const componentName = node.callee.name;
+
+    /**
+     * A component declared `const X = browserOnly(Impl)` (L-1): emitted as a
+     * registered island whose server output is its empty host element with
+     * its declared props. Asked only where the walk would otherwise give up
+     * on the component, so a page without the marker compiles as before.
+     */
+    const emittedBrowserOnly = (): boolean => {
+      const declaration = walkCtx.findBrowserOnly?.(componentName, walkCtx.sourceFile);
+      if (!declaration) return false;
+      emitBrowserOnlyIsland(node, componentName, ctx, walkCtx);
+      return true;
+    };
+
+    // Island components are NEVER inlined — they always emit ISLAND_START/ISLAND_END.
+    // This check must come before resolveComponent to prevent depth-0 inlining.
+    // When resolvable, we walk the full component h() tree between ISLAND_START
+    // and ISLAND_END so the Rust walker renders real SSR content inside islands.
+    if (walkCtx.islandNames?.has(componentName)) {
+      let reason = 'could not be resolved to a source file (the compiler follows relative imports only)';
+      if (walkCtx.resolveComponent) {
+        try {
+          const resolved = walkCtx.resolveComponent(componentName, walkCtx.sourceFile);
+          if (!resolved) {
+            reason = 'could not be resolved to a source file (the compiler follows relative imports only)';
+          } else {
+            const sub = resolveSubComponent(
+              resolved.source,
+              resolved.path ?? walkCtx.sourceFile ?? '<unknown>',
+              resolved.functionName,
+              node,
+              walkCtx.loadModule,
+            );
+            const componentReturn = sub?.returnNode;
+            if (!componentReturn || !t.isCallExpression(componentReturn)) {
+              reason = 'has no return statement the compiler can follow to an h() call';
+            } else {
+              // Register island and emit ISLAND_START
+              const byteOffset = ctx.opcodeLen();
+              const id = ctx.addIsland(componentName, 0x01, 0x01, [], byteOffset);
+              ctx.emit(OP_ISLAND_START);
+              ctx.emitU16(id);
+
+              // Walk the full component subtree for SSR content, capturing
+              // every slot id referenced in the island span so the island
+              // table entry carries real slot_ids (the Rust walker skips
+              // data-forma-props emission for islands with empty slot_ids).
+              ctx.beginSlotCapture();
+              let capturedSlotIds: number[] = [];
+              try {
+                const newVisited = new Set<string>(walkCtx.visited || new Set<string>());
+                newVisited.add(componentName);
+                walkCallExpression(
+                  componentReturn,
+                  hName,
+                  ctx,
+                  inlinedWalkContext(
+                    walkCtx, ctx, sub, resolved.functionName, newVisited,
+                    chainLink(walkCtx, componentName, node),
+                  ),
+                );
+              } catch (err) {
+                // ISLAND_START is already in the stream: unwinding past the
+                // matching ISLAND_END would leave the bytecode unbalanced (and
+                // the outer fallback would register a SECOND island for the
+                // same component). Absorb the failure, say so, and close the
+                // span with whatever content was emitted.
+                warnDegraded(
+                  walkCtx,
+                  'BUILD-408',
+                  node,
+                  `island component '${componentName}' failed part-way through compiling (${(err as Error).message})`,
+                  'its server-rendered content is truncated at that point; the shell still hydrates client-side',
+                );
+              } finally {
+                // Always pop the capture set, even when the subtree walk
+                // throws — an unbalanced stack would make an enclosing
+                // island's endSlotCapture pop THIS island's set instead of
+                // its own.
+                capturedSlotIds = ctx.endSlotCapture();
+              }
+
+              // Emit ISLAND_END
+              ctx.emit(OP_ISLAND_END);
+              ctx.emitU16(id);
+              ctx.setIslandSlotIds(id, capturedSlotIds);
+              return;
+            }
+          }
+        } catch (err) {
+          // Resolution threw mid-walk — fall back to the empty shell, but say so.
+          reason = `failed to compile (${(err as Error).message})`;
+        }
+      }
+
+      // A registered browser-only component: the empty host is what it means.
+      if (emittedBrowserOnly()) return;
+
+      // Fallback: the island's content could not be compiled — emit the empty
+      // div shell the client hydrates into, and name the reason. The island
+      // itself still works (it is registered under its own name); what is lost
+      // is its server-rendered content.
+      warnDegraded(
+        walkCtx,
+        'BUILD-408',
+        node,
+        `island component '${componentName}' ${reason}`,
+        'its shell still hydrates client-side, but the island renders nothing server-side — the page ships with a hole where it will appear',
+      );
+      emitIsland(ctx, componentName);
+      return;
+    }
+
+    /**
+     * Every bail-out below defers the component to client-side rendering,
+     * unless it is declared browser-only, which is the island it asked for.
+     * Core's control-flow components (FORMA-016) and a bare browserOnly()
+     * call are reported under their own codes, whichever bail-out they reach;
+     * what is emitted does not change.
+     */
+    const bailOut = (code: string, why: string, fix?: string, chain?: DiagnosticChainLink[]): void => {
+      const gap = componentName === 'browserOnly' ? 'BUILD-707' : ADOPTION_GAPS.get(componentName);
+      if (!gap && emittedBrowserOnly()) return;
+      if (gap) {
+        warnDegraded(
+          walkCtx,
+          gap,
+          node,
+          componentName === 'browserOnly'
+            ? 'browserOnly(...) called inside the tree'
+            : `${componentName}(...) in a server-rendered component`,
+          componentName === 'browserOnly'
+            ? ISLAND_CONSEQUENCE + ' — browserOnly() wraps a component declaration: declare `const X = browserOnly(Impl)` at the top level of a module, render <X/>, and register X in activateIslands'
+            : ISLAND_CONSEQUENCE + ` — adoption has no handling for ${componentName}: `
+              + `${ADOPTION_OUTCOME.get(componentName)}; ${BROWSER_ONLY_FIX}`,
+        );
+        emitIsland(ctx, componentName);
+        return;
+      }
+      warnDegraded(
+        walkCtx,
+        code,
+        node,
+        `component ${componentName}(...) ${why}`,
+        ISLAND_CONSEQUENCE + (fix ? ` — ${fix}` : ''),
+        chain,
+      );
+      emitIsland(ctx, componentName);
+    };
+
+    if (walkCtx.resolveComponent) {
+      const resolved = walkCtx.resolveComponent(componentName, walkCtx.sourceFile);
+      if (resolved) {
+        // Cycle detection
+        const visited = walkCtx.visited || new Set<string>();
+        if (visited.has(componentName)) {
+          bailOut('BUILD-404', 'is recursive (it appears inside its own subtree)');
+          return;
+        }
+
+        // Depth check. The chain from the page down is named, so a
+        // consumer can count composition past the limit (L-26).
+        const depth = walkCtx.depth ?? 0;
+        if (depth >= MAX_RESOLVE_DEPTH) {
+          const chain = [...chainSoFar(walkCtx), chainLink(walkCtx, componentName, node)];
+          bailOut(
+            'BUILD-403',
+            `nests deeper than the ${MAX_RESOLVE_DEPTH}-level inlining limit (chain: ${chain.map((link) => link.component).join(' > ')})`,
+            'flatten the component tree if it needs to render server-side',
+            chain,
+          );
+          return;
+        }
+
+        // Check if call-site props contain non-static values → bail to island
+        if (node.arguments.length > 0) {
+          const propsArg = node.arguments[0];
+          if (propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
+            const nonStatic = propsArg.properties.find(prop => {
+              if (t.isSpreadElement(prop) || !t.isObjectProperty(prop)) return true;
+              return !isStaticLiteral(prop.value as t.Expression);
+            });
+            if (nonStatic) {
+              bailOut(
+                'BUILD-405',
+                `is passed a prop the compiler cannot evaluate (${
+                  t.isObjectProperty(nonStatic) && t.isIdentifier(nonStatic.key)
+                    ? `'${nonStatic.key.name}'`
+                    : 'a spread or computed property'
+                })`,
+                'pass literal values to inline a component server-side',
+              );
+              return;
+            }
+          }
+        }
+
+        // Try to resolve and walk the sub-component
+        try {
+          const sub = resolveSubComponent(
+            resolved.source,
+            resolved.path ?? walkCtx.sourceFile ?? '<unknown>',
+            resolved.functionName,
+            node,
+            walkCtx.loadModule,
+          );
+
+          if (sub && t.isCallExpression(sub.returnNode)) {
+            const newVisited = new Set(visited);
+            newVisited.add(componentName);
+
+            walkHTree(
+              sub.returnNode,
+              hName,
+              ctx,
+              inlinedWalkContext(
+                walkCtx, ctx, sub, resolved.functionName, newVisited,
+                chainLink(walkCtx, componentName, node),
+              ),
+            );
+            return;
+          }
+          bailOut('BUILD-406', 'has no return statement the compiler can follow to an h() call');
+          return;
+        } catch (err) {
+          bailOut('BUILD-406', `failed to compile (${(err as Error).message})`);
+          return;
+        }
+      }
+    }
+
+    // Resolution failed or not available → island. A package import is told
+    // apart from a name the compiler cannot find; the line is the same.
+    const binding = walkCtx.importOf?.(componentName, walkCtx.sourceFile);
+    const fromPackage = binding !== undefined && binding !== null
+      && !binding.source.startsWith('.') && !binding.source.startsWith('/');
+    bailOut(
+      fromPackage ? 'BUILD-401' : 'BUILD-402',
+      'could not be resolved to a source file',
+      'the compiler follows relative imports only; package imports and dynamic references always stay client-side',
+    );
+    return;
+  }
+
+  // Rule 11: Unknown call expression → island
+  const gap = isBrowserOnlyCall(node.callee) ? 'BUILD-707' : adoptionGapCode(node);
+  if (gap === 'BUILD-707') {
+    warnDegraded(
+      walkCtx,
+      'BUILD-707',
+      node,
+      'browserOnly(...)(...) called inside the tree',
+      ISLAND_CONSEQUENCE + ' — browserOnly() wraps a component declaration: declare `const X = browserOnly(Impl)` at the top level of a module, render <X/>, and register X in activateIslands',
+    );
+    emitIsland(ctx);
+    return;
+  }
+  if (gap === 'BUILD-701') {
+    warnDegraded(
+      walkCtx,
+      'BUILD-701',
+      node,
+      `plain array child ${describeNode(node)} (a .map() without createList)`,
+      ISLAND_CONSEQUENCE + ' — adoption skips a plain array, so the rows never appear after activation; render rows with'
+      + ' createList(source, keyFn, (row) => h(...)), unroll a module-level const with ...CONST.map(...),'
+      + ` or ${BROWSER_ONLY_FIX}`,
+    );
+    emitIsland(ctx);
+    return;
+  }
+  warnDegraded(
+    walkCtx,
+    'BUILD-101',
+    node,
+    `call expression ${describeNode(node)}`,
+    ISLAND_CONSEQUENCE,
+  );
+  emitIsland(ctx);
+}
+
+// ---------------------------------------------------------------------------
+// Child Emission
+// ---------------------------------------------------------------------------
+
+/**
+ * Is this identifier a component reference rather than a tag name?
+ *
+ * The JSX transforms both esbuild and Babel apply lower-case element names to
+ * string literals (`<div/>` → `h("div", …)`) and leave capitalized ones as
+ * identifiers (`<Card/>` → `h(Card, …)`), so an initial capital is exactly the
+ * signal that the tag position holds a component.
+ */
+function isComponentName(name: string): boolean {
+  const first = name.charCodeAt(0);
+  return first >= 65 && first <= 90; // 'A'-'Z'
+}
+
+/**
+ * Emit the children of a Fragment inline, with no wrapper element.
+ *
+ * Children go through the SAME emitChild path as an element's children.
+ * Handling only h() calls and string literals here (as this did until the
+ * fragment-child audit) silently DROPPED every other child — a `() => name()`
+ * text binding, a ternary show, a number, a spread — producing a page missing
+ * content with no island marker to recover it client-side and no diagnostic.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "emits a dynamic text child of a Fragment > matching what the same child emits inside a real element"
+ *
+ * `childArgOffset` is the index of the first child in `args`: 2 for
+ * `h(Fragment, props, ...)`, 0 for the bare `Fragment(...)` call form. Child
+ * indices are normalized to the element convention so `text:<n>` slot names
+ * mean the same thing in both.
+ */
+function emitFragmentChildren(
+  args: Array<t.Node | null | undefined>,
+  childArgOffset: number,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  for (let i = childArgOffset; i < args.length; i++) {
+    const child = args[i];
+    if (!child) continue;
+    if (t.isSpreadElement(child)) {
+      emitSpreadChild(child, hName, ctx, walkCtx);
+      continue;
+    }
+    emitChild(child as t.Expression, hName, ctx, walkCtx, i - childArgOffset + 2);
+  }
+}
+
+/**
+ * Emit opcodes for a single child expression.
+ */
+function emitChild(
+  child: t.Expression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+  childIndex: number,
+): void {
+  // Rule 12: null, undefined, false → skip
+  if (isNullish(child)) return;
+
+  // Rule 2: String literal → TEXT
+  if (t.isStringLiteral(child)) {
+    checkLiteralSize(walkCtx, child, child.value, 'text literal');
+    ctx.emit(OP_TEXT);
+    ctx.emitU32(ctx.addString(child.value));
+    return;
+  }
+
+  // Numeric literal → TEXT
+  if (t.isNumericLiteral(child)) {
+    ctx.emit(OP_TEXT);
+    ctx.emitU32(ctx.addString(String(child.value)));
+    return;
+  }
+
+  // Recursive h() call
+  if (
+    t.isCallExpression(child)
+    && t.isIdentifier(child.callee)
+    && child.callee.name === hName
+  ) {
+    walkHTree(child, hName, ctx, walkCtx);
+    return;
+  }
+
+  // String(row.prop) or Number(row.prop) wrapper → same as row.prop
+  if (
+    t.isCallExpression(child)
+    && t.isIdentifier(child.callee)
+    && (child.callee.name === 'String' || child.callee.name === 'Number')
+    && child.arguments.length === 1
+    && !t.isSpreadElement(child.arguments[0])
+  ) {
+    const arg = child.arguments[0] as t.Expression;
+    if (t.isMemberExpression(arg) && !arg.computed && t.isIdentifier(arg.object) && t.isIdentifier(arg.property)) {
+      const key = `${arg.object.name}.${arg.property.name}`;
+      if (walkCtx.listItemBindings?.has(key)) {
+        const slotId = walkCtx.listItemBindings.get(key)!;
+        ctx.recordSlotRef(slotId);
+        const markerId = ctx.nextMarker();
+        ctx.emit(OP_DYN_TEXT);
+        ctx.emitU16(slotId);
+        ctx.emitU16(markerId);
+        return;
+      }
+    }
+  }
+
+  // A bare signal read in child position: h('span', null, name()).
+  // Without this it reached walkCallExpression, which sees an identifier
+  // callee, fails to resolve `name` to a component file, and ships an island
+  // shell named after the signal. Bound to the signal's OWN slot, exactly as
+  // the `() => name()` arrow form is.
+  // Verified by: packages/compiler/tests/ir-walk.test.ts > "binds a bare signal-read child to the signal's own slot"
+  if (
+    t.isCallExpression(child)
+    && t.isIdentifier(child.callee)
+    && child.arguments.length === 0
+  ) {
+    const binding = lookupSignal(walkCtx.signalScope, child.callee.name);
+    if (binding) {
+      ctx.recordSlotRef(binding.slotId);
+      const markerId = ctx.nextMarker();
+      ctx.emit(OP_DYN_TEXT);
+      ctx.emitU16(binding.slotId);
+      ctx.emitU16(markerId);
+      return;
+    }
+  }
+
+  // A child expression the compiler can FOLD to a value.
+  //
+  // `'Player ' + name()` is not a reactive binding — the client evaluates it
+  // once, while h() is building the tree — but it is not opaque either: every
+  // operand is a literal, a module constant, or a signal whose default is in
+  // lexical scope, so the server can render exactly what the client's first
+  // paint shows. This arm did not exist, so the whole element degraded to an
+  // empty island shell that rendered nothing until the bundle hydrated.
+  // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a concatenated child into a DYN_TEXT slot with an SSR default"
+  //
+  // It sits ABOVE the call-expression dispatch because some evaluable
+  // expressions ARE calls: `String(count())` has a capitalized callee, so the
+  // sub-component path below reads it as a component and ships an
+  // `ISLAND_START String` shell for what is really the text "3".
+  // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a String() cast child instead of islanding it as a component"
+  const folded = evalNode(child, evalEnv(walkCtx));
+  if (folded !== undefined) {
+    // A folded null or boolean emits NOTHING, because that is what the client
+    // does with one: `h()` drops `null`, `true` and `false` children outright
+    // (formajs src/dom/element.ts) and so does the client transform's
+    // analyzeChild. Rendering "true" server-side would put text on the page
+    // the client has no counterpart for. Same rule as Rule 12, extended to
+    // the forms that only become null/boolean after evaluation
+    // (`ready() && 'Go'` with ready defaulting to false).
+    if (folded !== null && typeof folded !== 'boolean') {
+      checkLiteralSize(walkCtx, child, String(folded), 'text value');
+      const slotId = ctx.addSlot(
+        textSlotName(childIndex, walkCtx),
+        TYPE_TEXT,
+        SOURCE_CLIENT,
+        defaultBytesFor(folded),
+      );
+      const markerId = ctx.nextMarker();
+      ctx.emit(OP_DYN_TEXT);
+      ctx.emitU16(slotId);
+      ctx.emitU16(markerId);
+    }
+    return;
+  }
+
+  // Non-h() call expressions (createShow, sub-components, etc.)
+  if (t.isCallExpression(child)) {
+    walkCallExpression(child, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Arrow/function expressions
+  if (isFunctionExpr(child)) {
+    const arrowOrFunc = child as t.ArrowFunctionExpression | t.FunctionExpression;
+
+    // Get the effective body expression
+    const bodyExpr = getEffectiveBody(arrowOrFunc);
+
+    // Rule 4: Ternary arrow → SHOW_IF
+    if (bodyExpr && t.isConditionalExpression(bodyExpr)) {
+      emitTernaryShowIf(bodyExpr, hName, ctx, walkCtx, childIndex);
+      return;
+    }
+
+    // Rule 5: Non-ternary arrow → DYN_TEXT.
+    // A bare `() => email()` binding reuses the signal's own named slot.
+    const signalName = extractSignalName(arrowOrFunc);
+    const binding = signalName ? lookupSignal(walkCtx.signalScope, signalName) : undefined;
+    let slotId: number;
+    if (binding) {
+      slotId = binding.slotId;
+      ctx.recordSlotRef(slotId);
+    } else {
+      // An anonymous text slot still gets an SSR default when the expression
+      // evaluates. Without one the server emits the zero-width-space
+      // placeholder and the text only appears after hydration — a flash on
+      // every page that computes its text (`() => count() + ' items'`).
+      const evaluated = tryEvalExprDefault(arrowOrFunc, evalEnv(walkCtx));
+      if (evaluated !== undefined && evaluated !== null) {
+        checkLiteralSize(walkCtx, arrowOrFunc, String(evaluated), 'text value');
+      }
+      // A reactive child returning rows or a control-flow component is one
+      // of FORMA-016's constructs: it renders empty here, and adoption binds
+      // it as text. Same emission; its own code, naming the way out.
+      const gap = evaluated === undefined ? adoptionGapCode(bodyExpr) : null;
+      if (gap) {
+        const isArray = gap === 'BUILD-701';
+        warnDegraded(
+          walkCtx,
+          gap,
+          arrowOrFunc,
+          isArray
+            ? `plain array child ${describeNode(arrowOrFunc)} (a .map() without createList)`
+            : `reactive child ${describeNode(arrowOrFunc)}`,
+          'it renders EMPTY server-side and adoption binds it as text'
+          + (isArray
+            ? ', so after activation the page shows the elements as text ([object HTMLLIElement]) —'
+              + ' render rows with createList(source, keyFn, (row) => h(...)), or '
+            : ` — adoption has no handling for ${describeNode(bodyExpr!)}; `)
+          + BROWSER_ONLY_FIX,
+        );
+      } else if (evaluated === undefined) {
+        warnDegraded(
+          walkCtx,
+          'BUILD-301',
+          arrowOrFunc,
+          `dynamic text child ${describeNode(arrowOrFunc)}, which the compiler cannot evaluate`,
+          'it renders EMPTY server-side and only fills in once the client hydrates —'
+          + ' initialize the signals it reads with literal defaults so the server can render them',
+        );
+      }
+      slotId = ctx.addSlot(
+        textSlotName(childIndex, walkCtx),
+        TYPE_TEXT,
+        SOURCE_CLIENT,
+        defaultBytesFor(evaluated),
+      );
+    }
+    const markerId = ctx.nextMarker();
+    ctx.emit(OP_DYN_TEXT);
+    ctx.emitU16(slotId);
+    ctx.emitU16(markerId);
+    return;
+  }
+
+  // List item property access: row.name → DYN_TEXT(bound slot)
+  if (t.isMemberExpression(child) && !child.computed && t.isIdentifier(child.object) && t.isIdentifier(child.property)) {
+    const key = `${child.object.name}.${child.property.name}`;
+    if (walkCtx.listItemBindings?.has(key)) {
+      const slotId = walkCtx.listItemBindings.get(key)!;
+      ctx.recordSlotRef(slotId);
+      const markerId = ctx.nextMarker();
+      ctx.emit(OP_DYN_TEXT);
+      ctx.emitU16(slotId);
+      ctx.emitU16(markerId);
+      return;
+    }
+  }
+
+  // Rule 11: Anything else → ISLAND_START / ISLAND_END
+  warnDegraded(
+    walkCtx,
+    'BUILD-102',
+    child,
+    `child ${describeNode(child)}`,
+    ISLAND_CONSEQUENCE
+      + " — wrap it in a function (`() => …`) for a reactive binding, or use createShow/createList for conditionals and lists",
+  );
+  emitIsland(ctx);
+}
+
+// ---------------------------------------------------------------------------
+// Rule 4: Ternary SHOW_IF
+// ---------------------------------------------------------------------------
+
+/**
+ * Derive the slot name for a SHOW_IF (createShow or ternary) from its
+ * condition expression, using the shared per-page showNames registry:
+ * condition-derived base (`() => visible()` → `show:visible`) with a
+ * positional fallback (`show:#2`) and per-base occurrence suffixes
+ * (`show:visible#2`) — same scheme as list slot naming (see the doc
+ * comment on emitCreateList).
+ */
+function deriveShowSlotName(cond: t.Node | null | undefined, walkCtx: WalkContext): string {
+  // Created at the walk entry points — see attrSlotName on why this must not
+  // fall back to a lazily created registry.
+  const registry = walkCtx.showNames!;
+  registry.total += 1;
+  const condName = deriveBindingName(cond);
+  const base = condName === null
+    ? `#${registry.total}`
+    : uniqueName(registry.counts, condName);
+  return `show:${base}`;
+}
+
+/**
+ * Mint the TYPE_BOOL slot a SHOW_IF selects its branch with, carrying the
+ * branch the CLIENT would take on first paint as its SSR default.
+ *
+ * Without a default the slot is Null, which the walkers read as false, so the
+ * server rendered the ELSE branch for every conditional on the page —
+ * including one whose signal defaults to `true`. Hydration does not repair it:
+ * `adoptShowRegion` matches the client's THEN descriptor against the server's
+ * ELSE element, the tags match, the node is adopted, and the static content is
+ * never rewritten. Both mismatch-repair arms test "one side has content and the
+ * other does not", and here both do — so the page shows the wrong branch, with
+ * no warning from either side, until the signal CHANGES VALUE. For a
+ * config-like default that never changes, that is forever.
+ *
+ * The slot NAME is unchanged and no slot is reused: `show:<name>` stays in the
+ * table, because servers inject shows by that name.
+ * Verified by: packages/compiler/tests/ssr-render.test.ts > "renders the THEN branch for a show whose condition defaults true"
+ */
+function addShowSlot(
+  cond: t.Node | null | undefined,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): number {
+  const slotName = deriveShowSlotName(cond, walkCtx);
+
+  let value: EvalValue | undefined;
+  if (cond && isFunctionExpr(cond)) {
+    value = tryEvalExprDefault(cond as t.ArrowFunctionExpression | t.FunctionExpression, evalEnv(walkCtx));
+  } else if (cond && t.isExpression(cond)) {
+    value = evalNode(cond, evalEnv(walkCtx));
+  }
+
+  if (value === undefined) {
+    warnDegraded(
+      walkCtx,
+      'BUILD-302',
+      cond,
+      cond
+        ? `conditional on ${describeNode(cond)}, which the compiler cannot evaluate`
+        : 'conditional with no condition expression',
+      'the server renders its ELSE branch; if the client would render the THEN branch, hydration'
+      + ' adopts the wrong one silently and the page stays wrong until the condition changes value —'
+      + ' initialize the signals it reads with literal defaults',
+    );
+    return ctx.addSlot(slotName, TYPE_BOOL, SOURCE_CLIENT);
+  }
+
+  return ctx.addSlot(
+    slotName,
+    TYPE_BOOL,
+    SOURCE_CLIENT,
+    new TextEncoder().encode(String(isTruthy(value))),
+  );
+}
+
+/**
+ * Emit SHOW_IF for a ternary conditional expression.
+ *
+ * Binary format:
+ *   [SHOW_IF(0x07)] [slot_id(u16)] [then_len(u32)] [else_len(u32)]
+ *   [...then_body_opcodes...]
+ *   [SHOW_ELSE(0x08)]
+ *   [...else_body_opcodes...]
+ */
+function emitTernaryShowIf(
+  cond: t.ConditionalExpression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+  childIndex: number,
+): void {
+  const slotId = addShowSlot(cond.test, ctx, walkCtx);
+
+  ctx.emit(OP_SHOW_IF);
+  ctx.emitU16(slotId);
+
+  // Placeholders for then_len and else_len
+  const thenLenPos = ctx.opcodeLen();
+  ctx.emitU32(0); // then_len placeholder
+  const elseLenPos = ctx.opcodeLen();
+  ctx.emitU32(0); // else_len placeholder
+
+  // Emit then-branch
+  const thenStart = ctx.opcodeLen();
+  emitBranchContent(cond.consequent, hName, ctx, walkCtx, childIndex);
+  const thenLen = ctx.opcodeLen() - thenStart;
+
+  // SHOW_ELSE marker
+  ctx.emit(OP_SHOW_ELSE);
+
+  // Emit else-branch
+  const elseStart = ctx.opcodeLen();
+  emitBranchContent(cond.alternate, hName, ctx, walkCtx, childIndex);
+  const elseLen = ctx.opcodeLen() - elseStart;
+
+  // Back-patch lengths
+  ctx.patchU32(thenLenPos, thenLen);
+  ctx.patchU32(elseLenPos, elseLen);
+}
+
+// ---------------------------------------------------------------------------
+// Rule 8: createShow → SHOW_IF
+// ---------------------------------------------------------------------------
+
+/**
+ * Emit SHOW_IF for a createShow() call.
+ *
+ * Pattern: createShow(() => condition, () => h('div', ...), () => h('span', ...))
+ */
+function emitCreateShow(
+  node: t.CallExpression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  const slotId = addShowSlot(node.arguments[0], ctx, walkCtx);
+
+  ctx.emit(OP_SHOW_IF);
+  ctx.emitU16(slotId);
+
+  // Placeholders for then_len and else_len
+  const thenLenPos = ctx.opcodeLen();
+  ctx.emitU32(0);
+  const elseLenPos = ctx.opcodeLen();
+  ctx.emitU32(0);
+
+  // Then-branch: second argument (index 1)
+  const thenStart = ctx.opcodeLen();
+  if (node.arguments.length > 1) {
+    const thenArg = node.arguments[1];
+    if (thenArg && !t.isSpreadElement(thenArg)) {
+      emitCreateShowBranch(thenArg as t.Expression, hName, ctx, walkCtx);
+    }
+  }
+  const thenLen = ctx.opcodeLen() - thenStart;
+
+  // SHOW_ELSE marker
+  ctx.emit(OP_SHOW_ELSE);
+
+  // Else-branch: third argument (index 2), if it exists
+  const elseStart = ctx.opcodeLen();
+  if (node.arguments.length > 2) {
+    const elseArg = node.arguments[2];
+    if (elseArg && !t.isSpreadElement(elseArg)) {
+      emitCreateShowBranch(elseArg as t.Expression, hName, ctx, walkCtx);
+    }
+  }
+  const elseLen = ctx.opcodeLen() - elseStart;
+
+  // Back-patch lengths
+  ctx.patchU32(thenLenPos, thenLen);
+  ctx.patchU32(elseLenPos, elseLen);
+}
+
+/**
+ * Emit content from a createShow branch.
+ * The branch is typically an arrow function: () => h('div', ...)
+ */
+function emitCreateShowBranch(
+  expr: t.Expression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  // Unwrap arrow function: () => h('div', ...)
+  if (isFunctionExpr(expr)) {
+    const fn = expr as t.ArrowFunctionExpression | t.FunctionExpression;
+    const body = getEffectiveBody(fn);
+    if (body) {
+      if (t.isCallExpression(body) && t.isIdentifier(body.callee) && body.callee.name === hName) {
+        walkHTree(body, hName, ctx, walkCtx);
+      } else if (t.isCallExpression(body)) {
+        walkCallExpression(body, hName, ctx, walkCtx);
+      } else {
+        emitBranchContent(body, hName, ctx, walkCtx, 2);
+      }
+      return;
+    }
+  }
+
+  // Direct h() call (no wrapping arrow)
+  if (t.isCallExpression(expr) && t.isIdentifier(expr.callee) && expr.callee.name === hName) {
+    walkHTree(expr, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Anything else → island
+  warnDegraded(
+    walkCtx,
+    'BUILD-106',
+    expr,
+    `createShow branch ${describeNode(expr)}`,
+    ISLAND_CONSEQUENCE + ' — a branch must be `() => h(...)` (or a direct h(...) call) to render server-side',
+  );
+  emitIsland(ctx);
+}
+
+// ---------------------------------------------------------------------------
+// createList → LIST + PROP
+// ---------------------------------------------------------------------------
+
+/**
+ * Derive a human-meaningful name for a binding expression:
+ * an identifier (`todos`), a call (`todos()`, `state.todos()`), an arrow or
+ * function expression wrapping either (`() => todos()`,
+ * `function() { return todos(); }`), a member access (`state.todos`), or a
+ * `!`-negation of any of these (`!visible()`, `!!visible()`).
+ * Returns null when no static name is recoverable.
+ */
+function deriveBindingName(node: t.Node | null | undefined): string | null {
+  if (!node) return null;
+  if (t.isIdentifier(node)) return node.name;
+  if (t.isCallExpression(node)) return deriveBindingName(node.callee);
+  if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {
+    // Unwrap both function forms (expression and block bodies) the same way
+    // extractSignalName does — a `function() { return visible(); }` condition
+    // must derive the same name as `() => visible()`.
+    return deriveBindingName(getEffectiveBody(node));
+  }
+  if (t.isMemberExpression(node) && t.isIdentifier(node.property) && !node.computed) {
+    return node.property.name;
+  }
+  if (t.isUnaryExpression(node) && node.operator === '!') {
+    return deriveBindingName(node.argument);
+  }
+  return null;
+}
+
+/**
+ * Emit LIST opcode for a createList() call.
+ *
+ * Pattern: createList(dataSignal, keyFn, mapFn)
+ *   dataSignal: identifier or arrow returning an array
+ *   keyFn: (item) => string key — ignored for SSR
+ *   mapFn: (item) => h(...) — the template to render for each item
+ *
+ * Slot naming: each list derives a base name from its data source
+ * (`createList(todos, ...)` → `todos`); when the source has no derivable
+ * name (e.g. a literal `() => []`), the map function's first parameter is
+ * used instead (`(tile) => ...` → `tile`, unless named `_`), and only then
+ * a positional fallback (`#3`). Shows follow the same scheme: the base is
+ * derived from the condition (`() => visible()` → `visible`, `!` unwraps)
+ * with the same positional fallback. Occurrence suffixes are per-BASE in
+ * document order — the first occurrence is unsuffixed, the second reuse of
+ * the same base gets `#2`, and so on. Slots are then `list:<base>:array`,
+ * `list:<base>:item`, and `list:<base>:<prop>` (or `show:<base>`), so every
+ * list on a page is individually addressable by name for server-side
+ * SlotData injection.
+ *
+ * Dynamic attributes (`attr:<key>`) and dynamic text children
+ * (`text:<childIndex>`) run the SAME occurrence scheme over their own
+ * page-wide registries — see attrSlotName / textSlotName. Every slot name a
+ * page emits is therefore unique, which `forma-ir` requires: it resolves a
+ * name to the first slot in table order (`IrModule::slot_id_by_name`), so a
+ * duplicate silently makes the later slot unreachable for server-side
+ * SlotData injection.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "dedupes two dynamic attrs sharing a key on sibling elements"
+ *
+ * Binary format:
+ *   LIST(0x0A) array_slot_id(u16) item_slot_id(u16) body_len(u32)
+ *   [...body opcodes (PROP + template)...]
+ */
+function emitCreateList(
+  node: t.CallExpression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  /** Every bail-out below renders the whole list as an empty client island. */
+  const bailOut = (why: string, fix: string): void => {
+    warnDegraded(walkCtx, 'BUILD-107', node, `createList(...) ${why}`, `the whole list is ${ISLAND_CONSEQUENCE} — ${fix}`);
+    emitIsland(ctx, 'createList');
+  };
+
+  // Need at least 3 arguments: dataSignal, keyFn, mapFn
+  if (node.arguments.length < 3) {
+    bailOut(
+      `was called with ${node.arguments.length} argument(s)`,
+      'SSR needs all three of createList(source, keyFn, mapFn)',
+    );
+    return;
+  }
+
+  const mapArg = node.arguments[2];
+  if (!mapArg || t.isSpreadElement(mapArg) || !isFunctionExpr(mapArg)) {
+    bailOut(
+      `has a third argument that is ${mapArg ? describeNode(mapArg) : 'missing'} rather than a function`,
+      'inline the map function at the call site so the compiler can see the row template',
+    );
+    return;
+  }
+
+  const mapFn = mapArg as t.ArrowFunctionExpression | t.FunctionExpression;
+
+  // Get the map function parameter name (e.g., "row")
+  if (mapFn.params.length < 1 || !t.isIdentifier(mapFn.params[0])) {
+    bailOut(
+      mapFn.params.length < 1
+        ? 'has a map function that takes no row parameter'
+        : `has a destructured map parameter (${mapFn.params[0]!.type})`,
+      'name the row parameter — `(row) => ...`, then read `row.field` — so the compiler can emit a PROP for each field',
+    );
+    return;
+  }
+  const paramName = (mapFn.params[0] as t.Identifier).name;
+
+  // Get the map function body
+  const bodyExpr = getEffectiveBody(mapFn);
+  if (!bodyExpr) {
+    bailOut(
+      'has a map function with no return value the compiler can see',
+      'return the row template directly — `(row) => h(...)` or a block body whose top-level `return` is the h() call',
+    );
+    return;
+  }
+
+  // Unique per-page base name for this list's slots (see doc comment above):
+  // source-derived, else map-param-derived, else positional. Deduped on the
+  // BASE, not on each slot name, so one list's three slots stay a matched set.
+  // Created at the walk entry points — see attrSlotName on why this must not
+  // fall back to a lazily created registry.
+  const registry = walkCtx.listNames!;
+  registry.total += 1;
+  const derivedName = deriveBindingName(node.arguments[0])
+    ?? (paramName !== '_' ? paramName : null);
+  const base = derivedName === null
+    ? `#${registry.total}`
+    : uniqueName(registry.counts, derivedName);
+
+  // A source signal initialized with literal rows has no slot, so its rows
+  // never reach the list's array slot: the server renders the list empty
+  // unless a handler fills it, where the browser renders the rows (BUILD-303).
+  // Reported only; what is emitted does not change.
+  const sourceName = signalReadName(node.arguments[0]);
+  const literal = sourceName ? lookupLiteralRows(walkCtx.signalScope, sourceName) : undefined;
+  if (literal) {
+    warnDegraded(
+      walkCtx,
+      'BUILD-303',
+      node,
+      `createList(...) over signal '${sourceName}', whose literal default has ${literal.rows} row(s)`,
+      `the server renders the list EMPTY unless the handler fills 'list:${base}:array', while the browser`
+      + ` renders the default's rows — start the signal empty (\`createSignal([])\`) and fill it from the server`
+      + ` (the handler sets 'list:${base}:array'; an island seeds the signal from its props), or unroll a`
+      + ' module-level const with ...CONST.map(...)',
+    );
+  }
+
+  // Create slots: array slot (server-sourced) and item slot
+  const arraySlotId = ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, SOURCE_SERVER);
+  const itemSlotId = ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, SOURCE_SERVER);
+
+  // Scan the body for param.prop member accesses to determine which
+  // properties need PROP extraction opcodes.
+  const propNames = new Set<string>();
+  collectMemberProps(bodyExpr, paramName, propNames);
+
+  // Create target slots for each property and build the bindings map
+  const bindings = new Map<string, number>();
+  const propEntries: Array<{ name: string; strIdx: number; slotId: number }> = [];
+  for (const propName of Array.from(propNames)) {
+    const targetSlotId = ctx.addSlot(`list:${base}:${propName}`, TYPE_TEXT, SOURCE_SERVER);
+    bindings.set(`${paramName}.${propName}`, targetSlotId);
+    propEntries.push({
+      name: propName,
+      strIdx: ctx.addString(propName),
+      slotId: targetSlotId,
+    });
+  }
+
+  // Emit LIST header: opcode + array_slot + item_slot + body_len(placeholder)
+  ctx.emit(OP_LIST);
+  ctx.emitU16(arraySlotId);
+  ctx.emitU16(itemSlotId);
+  const bodyLenPos = ctx.opcodeLen();
+  ctx.emitU32(0); // placeholder for body_len
+
+  const bodyStart = ctx.opcodeLen();
+
+  // Emit PROP opcodes at the start of the body
+  for (const entry of propEntries) {
+    ctx.emit(OP_PROP);
+    ctx.emitU16(itemSlotId);     // src: item slot
+    ctx.emitU32(entry.strIdx);   // prop name string index
+    ctx.emitU16(entry.slotId);   // target slot
+  }
+
+  // Walk the body with list item bindings in context
+  const listWalkCtx: WalkContext = {
+    ...walkCtx,
+    listItemBindings: bindings,
+  };
+
+  if (t.isCallExpression(bodyExpr) && t.isIdentifier(bodyExpr.callee) && bodyExpr.callee.name === hName) {
+    walkHTree(bodyExpr, hName, ctx, listWalkCtx);
+  } else if (t.isCallExpression(bodyExpr)) {
+    walkCallExpression(bodyExpr, hName, ctx, listWalkCtx);
+  } else {
+    emitBranchContent(bodyExpr, hName, ctx, listWalkCtx, 2);
+  }
+
+  // Back-patch body length
+  const bodyLen = ctx.opcodeLen() - bodyStart;
+  ctx.patchU32(bodyLenPos, bodyLen);
+}
+
+/**
+ * The signal a list source reads, when it is a plain read: `rows`, `rows()`,
+ * or `() => rows()` (either function form). Null for anything else.
+ */
+function signalReadName(node: t.Node | null | undefined): string | null {
+  if (!node) return null;
+  if (t.isIdentifier(node)) return node.name;
+  if (t.isCallExpression(node) && t.isIdentifier(node.callee) && node.arguments.length === 0) {
+    return node.callee.name;
+  }
+  if (t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) {
+    const body = getEffectiveBody(node);
+    return body && t.isCallExpression(body) ? signalReadName(body) : null;
+  }
+  return null;
+}
+
+/**
+ * Recursively collect all `paramName.propName` member accesses in an AST node.
+ * Used to determine which PROP extraction opcodes to emit in a LIST body.
+ */
+function collectMemberProps(node: t.Node, paramName: string, props: Set<string>): void {
+  if (!node) return;
+
+  // Direct member access: param.prop
+  if (
+    t.isMemberExpression(node)
+    && !node.computed
+    && t.isIdentifier(node.object)
+    && node.object.name === paramName
+    && t.isIdentifier(node.property)
+  ) {
+    props.add(node.property.name);
+  }
+
+  // Recurse into all child nodes
+  for (const key of t.VISITOR_KEYS[node.type] || []) {
+    const child = (node as any)[key];
+    if (Array.isArray(child)) {
+      for (const item of child) {
+        if (item && typeof item === 'object' && item.type) {
+          collectMemberProps(item, paramName, props);
+        }
+      }
+    } else if (child && typeof child === 'object' && child.type) {
+      collectMemberProps(child, paramName, props);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Rule 9: Spread .map() Unroll
+// ---------------------------------------------------------------------------
+
+/**
+ * Handle spread children: ...ARRAY.map(cb)
+ *
+ * ARRAY may be declared in this module or IMPORTED from another; either way it
+ * must be a statically knowable array of object literals. When the callback
+ * only uses Rules 1-7 patterns, the spread unrolls to static markup.
+ * Otherwise it degrades to an island — and says which of those two things
+ * failed, because "the table is unreadable" and "the callback is not a plain
+ * h() call" need different fixes.
+ */
+function emitSpreadChild(
+  spread: t.SpreadElement,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  const arg = spread.argument;
+
+  // Check for IDENTIFIER.map(arrow)
+  if (
+    t.isCallExpression(arg)
+    && t.isMemberExpression(arg.callee)
+    && t.isIdentifier(arg.callee.object)
+    && t.isIdentifier(arg.callee.property)
+    && arg.callee.property.name === 'map'
+    && arg.arguments.length >= 1
+  ) {
+    const arrayName = arg.callee.object.name;
+    const callback = arg.arguments[0];
+    const table = resolveConstantTable(arrayName, walkCtx);
+
+    if (
+      table.kind === 'found'
+      && callback
+      && !t.isSpreadElement(callback)
+      && isFunctionExpr(callback)
+    ) {
+      const items = table.value;
+      const fn = callback as t.ArrowFunctionExpression | t.FunctionExpression;
+
+      // Get the callback parameter name
+      const params = fn.params;
+      if (params.length >= 1 && t.isIdentifier(params[0])) {
+        const paramName = params[0].name;
+        const body = getEffectiveBody(fn);
+
+        if (body && t.isCallExpression(body) && t.isIdentifier(body.callee) && body.callee.name === hName) {
+          // Unroll: for each item in the array, substitute properties and walk
+          for (const item of items) {
+            const substituted = substituteProperties(body, paramName, item as Record<string, any>);
+            if (substituted && t.isCallExpression(substituted)) {
+              walkHTree(substituted, hName, ctx, walkCtx);
+            } else {
+              warnDegraded(
+                walkCtx,
+                'BUILD-104',
+                spread,
+                `row ${JSON.stringify(item)} of the unrolled '${arrayName}' spread could not be substituted`,
+                `that one row is ${ISLAND_CONSEQUENCE}`,
+              );
+              emitIsland(ctx);
+            }
+          }
+          return;
+        }
+      }
+    }
+
+    // The table itself is the thing that failed, and it knows why — the file
+    // it lives in, and what about it is not statically knowable. Reporting
+    // that beats the generic "use createList" line, which sends the author
+    // looking at the spread when the problem is one module away.
+    // Verified by: packages/compiler/tests/ir-walk.test.ts > "warns with the declaring module when an imported table is not static"
+    if (table.kind === 'unresolved') {
+      warnDegraded(
+        walkCtx,
+        'BUILD-105',
+        spread,
+        `spread child ...${arrayName}.map(...)`,
+        `${ISLAND_CONSEQUENCE} — ${table.detail}`,
+      );
+      emitIsland(ctx);
+      return;
+    }
+  }
+
+  // Can't statically unroll → island
+  warnDegraded(
+    walkCtx,
+    'BUILD-104',
+    spread,
+    `spread child ...${describeNode(arg)}`,
+    ISLAND_CONSEQUENCE
+      + ' — only `...CONST.map(item => h(...))` over a module-level array of object literals unrolls statically; use createList for runtime data',
+  );
+  emitIsland(ctx);
+}
+
+/**
+ * The constant table `name` refers to at this point in the walk: this module's
+ * own declaration first, then whatever it imports under that name.
+ *
+ * Order is the scope rule, not a preference — a module-scope declaration is
+ * what the identifier binds to, and only when there is none can an import be
+ * the answer.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "consults the import resolver only when the module declares no such table"
+ */
+function resolveConstantTable(name: string, walkCtx: WalkContext): ConstantLookup {
+  const local = walkCtx.fileConstants?.get(name);
+  if (local) return { kind: 'found', value: local, filePath: walkCtx.sourceFile ?? '' };
+  return walkCtx.resolveImportedConstant?.(name) ?? { kind: 'not-imported' };
+}
+
+/**
+ * Substitute member expressions like `param.key` with actual values from the object.
+ * Returns a new AST node with substitutions applied, or null if substitution fails.
+ */
+function substituteProperties(
+  node: t.CallExpression,
+  paramName: string,
+  item: Record<string, any>,
+): t.CallExpression | null {
+  try {
+    return substituteInCallExpr(node, paramName, item);
+  } catch {
+    return null;
+  }
+}
+
+function substituteInCallExpr(
+  node: t.CallExpression,
+  paramName: string,
+  item: Record<string, any>,
+): t.CallExpression {
+  const newArgs = node.arguments.map(arg => {
+    if (t.isSpreadElement(arg)) return arg;
+    return substituteInExpr(arg as t.Expression, paramName, item);
+  });
+  return t.callExpression(node.callee, newArgs);
+}
+
+function substituteInExpr(
+  expr: t.Expression,
+  paramName: string,
+  item: Record<string, any>,
+): t.Expression {
+  // param.key → string literal
+  if (
+    t.isMemberExpression(expr)
+    && t.isIdentifier(expr.object)
+    && expr.object.name === paramName
+    && t.isIdentifier(expr.property)
+    && !expr.computed
+  ) {
+    const key = expr.property.name;
+    const val = item[key];
+    if (typeof val === 'string') return t.stringLiteral(val);
+    if (typeof val === 'number') return t.numericLiteral(val);
+    if (typeof val === 'boolean') return t.booleanLiteral(val);
+    if (val === null) return t.nullLiteral();
+    // Unknown type, return as-is (will be caught by static checks)
+    return expr;
+  }
+
+  // Recurse into h() call arguments
+  if (t.isCallExpression(expr)) {
+    return substituteInCallExpr(expr, paramName, item);
+  }
+
+  // Recurse into the props object: `h('a', { href: item.href }, ...)`.
+  // Without this the unroll substituted only CHILD positions, so every
+  // attribute taken from the item reached the walker as an unresolvable
+  // `item.href` and was emitted as an EMPTY dynamic attribute — the same
+  // silent missing-attribute failure as a module const that will not fold.
+  // A new object is built rather than mutated: the same body AST is
+  // substituted once per row.
+  // Verified by: packages/compiler/tests/ir-walk.test.ts > "unrolls item properties in attribute position"
+  if (t.isObjectExpression(expr)) {
+    return t.objectExpression(
+      expr.properties.map((prop) => {
+        if (t.isSpreadElement(prop) || !t.isObjectProperty(prop) || prop.computed) {
+          return prop;
+        }
+        const value = substituteInExpr(prop.value as t.Expression, paramName, item);
+        if (value === prop.value) return prop;
+        return t.objectProperty(prop.key, value, false, false);
+      }),
+    );
+  }
+
+  // String literal, number literal, etc. pass through
+  return expr;
+}
+
+// ---------------------------------------------------------------------------
+// Rule 10: Sub-component Resolution
+// ---------------------------------------------------------------------------
+
+interface ResolvedSubComponent {
+  /** The h() call expression the component returns, props already substituted. */
+  returnNode: t.Expression;
+  /** File the component is DECLARED in — the barrel a page imports through is
+   *  not where the code lives, and module-scope constants must be read from
+   *  the file that actually holds it. */
+  filePath: string;
+  /** Source of `filePath`. */
+  source: string;
+  /** Parsed module of `filePath` — its top level is the component's outer
+   *  lexical scope. */
+  ast: T.File;
+  /** The component function. Its body is the component's inner scope. */
+  fn: ComponentFunction;
+}
+
+/**
+ * Resolve a sub-component to the tree it returns, through the one shared
+ * export resolver (export-resolver.ts) — the same code path the root page and
+ * the signal-default extractors use, so the three can no longer disagree about
+ * which export forms exist.
+ *
+ * `allowLocal`/`allowNested` are on because a sub-component call CAN name a
+ * file-local helper: `function Sidebar()` beside the mount, or a `navItem`
+ * arrow declared inside the mount callback. Those are not importable, but
+ * nothing imported them — the call site is in the same file.
+ *
+ * Returns the h() call expression from the function's return statement with
+ * prop substitutions applied, plus the file it actually came from.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "inlines a sub-component re-exported through an index barrel"
+ */
+function resolveSubComponent(
+  source: string,
+  filePath: string,
+  functionName: string,
+  callNode: t.CallExpression,
+  loadModule?: ModuleLoader,
+): ResolvedSubComponent | null {
+  const lookup = resolveExportedFunction(source, filePath, functionName, {
+    loadModule,
+    allowLocal: true,
+    allowNested: true,
+  });
+  if (lookup.kind === 'unresolved') return null;
+
+  const returnNode = returnExpressionOf(lookup.fn);
+  if (!returnNode) return null;
+
+  /** The component's first parameter — its props binding, needed to substitute
+   *  call-site prop values into the returned tree (see substituteProps). */
+  const paramNode: t.Node | null = lookup.fn.params[0] ?? null;
+
+  // Apply prop substitutions from the call arguments
+  // Pattern: Alert({ message: 'Saved', variant: 'success' })
+  if (callNode.arguments.length > 0) {
+    const propsArg = callNode.arguments[0];
+    if (propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
+      substituteProps(returnNode, paramNode, propsArg);
+    }
+  }
+
+  return {
+    returnNode,
+    filePath: lookup.filePath,
+    source: lookup.source,
+    ast: lookup.ast,
+    fn: lookup.fn,
+  };
+}
+
+/**
+ * Substitute call-site prop values into an inlined component's returned tree.
+ *
+ * `Badge({ label: 'New' })` over `function Badge(props) { return h('span',
+ * null, props.label); }` must emit `TEXT "New"`. Until this was implemented the
+ * substitution was a no-op that returned its input unchanged in every branch —
+ * so `props.label` reached the walker as an unresolvable expression and became
+ * an EMPTY island nested inside the span: the label vanished from the server
+ * render with no diagnostic. Both prop-binding forms are handled:
+ *
+ *   function Badge(props)      → `props.label` member reads
+ *   function Badge({ label })  → the destructured local, including `{ label = 'x' }`
+ *
+ * Only static literals are substituted, which is all that can reach here:
+ * walkCallExpression bails to an island before inlining when any call-site prop
+ * is non-static. The tree is mutated in place — resolveSubComponent parses the
+ * component source per call, so it is private to this walk.
+ *
+ * A name is left alone if a nested function inside the returned tree rebinds
+ * it (`(label) => ...` shadowing the prop), which is the same conservatism the
+ * module-constant folding applies.
+ * Verified by: packages/compiler/tests/ir-walk.test.ts > "substitutes a call-site prop into an inlined component"
+ */
+function substituteProps(
+  returnNode: t.Expression,
+  paramNode: t.Node | null,
+  propsObj: t.ObjectExpression,
+): void {
+  if (!paramNode) return;
+
+  // Call-site props: key → literal value.
+  const values = new Map<string, t.Expression>();
+  for (const prop of propsObj.properties) {
+    if (t.isSpreadElement(prop) || !t.isObjectProperty(prop) || prop.computed) continue;
+    const key = t.isIdentifier(prop.key)
+      ? prop.key.name
+      : t.isStringLiteral(prop.key)
+        ? prop.key.value
+        : null;
+    if (key === null) continue;
+    const val = prop.value as t.Expression;
+    if (isStaticLiteral(val)) values.set(key, val);
+  }
+  if (values.size === 0) return;
+
+  // Local bindings to replace: `label` (destructured) or `props.label` (member).
+  const locals = new Map<string, t.Expression>();
+  let propsParamName: string | null = null;
+
+  if (t.isIdentifier(paramNode)) {
+    propsParamName = paramNode.name;
+  } else if (t.isObjectPattern(paramNode)) {
+    for (const prop of paramNode.properties) {
+      if (t.isRestElement(prop) || !t.isObjectProperty(prop) || prop.computed) continue;
+      const key = t.isIdentifier(prop.key)
+        ? prop.key.name
+        : t.isStringLiteral(prop.key)
+          ? prop.key.value
+          : null;
+      if (key === null) continue;
+      // `{ label }`, `{ label: text }` and `{ label = 'fallback' }` all bind a
+      // local name; only the first two forms name it in `prop.value` directly.
+      const target = t.isAssignmentPattern(prop.value) ? prop.value.left : prop.value;
+      if (!t.isIdentifier(target)) continue;
+      const value = values.get(key);
+      if (value) locals.set(target.name, value);
+    }
+  }
+
+  if (locals.size === 0 && propsParamName === null) return;
+
+  const replace = (node: t.Node, shadowed: Set<string>): void => {
+    for (const key of t.VISITOR_KEYS[node.type] || []) {
+      const child = (node as any)[key];
+      const children: any[] = Array.isArray(child) ? child : [child];
+      for (let i = 0; i < children.length; i++) {
+        const item = children[i];
+        if (!item || typeof item !== 'object' || !item.type) continue;
+
+        // `props.label` → literal
+        if (
+          propsParamName !== null
+          && !shadowed.has(propsParamName)
+          && t.isMemberExpression(item)
+          && !item.computed
+          && t.isIdentifier(item.object)
+          && item.object.name === propsParamName
+          && t.isIdentifier(item.property)
+          && values.has(item.property.name)
+        ) {
+          const replacement = values.get(item.property.name)!;
+          if (Array.isArray(child)) child[i] = replacement;
+          else (node as any)[key] = replacement;
+          continue;
+        }
+
+        // destructured `label` → literal (never a property key or a declaration)
+        if (
+          t.isIdentifier(item)
+          && locals.has(item.name)
+          && !shadowed.has(item.name)
+          && !(t.isMemberExpression(node) && !node.computed && key === 'property')
+          && !(t.isObjectProperty(node) && key === 'key' && !node.computed)
+        ) {
+          const replacement = locals.get(item.name)!;
+          if (Array.isArray(child)) child[i] = replacement;
+          else (node as any)[key] = replacement;
+          continue;
+        }
+
+        // Descend, hiding any name a nested function rebinds.
+        let nestedShadowed = shadowed;
+        if (t.isFunction(item)) {
+          const bound = new Set<string>();
+          for (const param of item.params) {
+            for (const name of Object.keys(t.getBindingIdentifiers(param))) bound.add(name);
+          }
+          if (bound.size > 0) nestedShadowed = new Set([...shadowed, ...bound]);
+        }
+        replace(item, nestedShadowed);
+      }
+    }
+  };
+
+  replace(returnNode, new Set());
+}
+
+// ---------------------------------------------------------------------------
+// Branch Content Emission
+// ---------------------------------------------------------------------------
+
+/**
+ * Emit content for a SHOW_IF branch (then or else).
+ */
+function emitBranchContent(
+  expr: t.Expression,
+  hName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+  childIndex: number,
+): void {
+  // String literal → TEXT
+  if (t.isStringLiteral(expr)) {
+    checkLiteralSize(walkCtx, expr, expr.value, 'text literal');
+    ctx.emit(OP_TEXT);
+    ctx.emitU32(ctx.addString(expr.value));
+    return;
+  }
+
+  // Numeric literal → TEXT
+  if (t.isNumericLiteral(expr)) {
+    ctx.emit(OP_TEXT);
+    ctx.emitU32(ctx.addString(String(expr.value)));
+    return;
+  }
+
+  // null/undefined/false → skip
+  if (isNullish(expr)) return;
+
+  // h() call → walk
+  if (
+    t.isCallExpression(expr)
+    && t.isIdentifier(expr.callee)
+    && expr.callee.name === hName
+  ) {
+    walkHTree(expr, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Other call expression
+  if (t.isCallExpression(expr)) {
+    walkCallExpression(expr, hName, ctx, walkCtx);
+    return;
+  }
+
+  // Anything else → DYN_TEXT, with an SSR default when the expression folds
+  // (a branch like `PREFIX + name()` is static text once the signals resolve).
+  // Reached from a conditional branch, a createShow branch and a list row
+  // body, so the diagnostic names the VALUE rather than guessing which.
+  const evaluated = evalNode(expr, evalEnv(walkCtx));
+  if (evaluated !== undefined && evaluated !== null) {
+    checkLiteralSize(walkCtx, expr, String(evaluated), 'text value');
+  }
+  if (evaluated === undefined) {
+    warnDegraded(
+      walkCtx,
+      'BUILD-301',
+      expr,
+      `dynamic value ${describeNode(expr)}, which the compiler cannot evaluate`,
+      'it renders EMPTY server-side and only fills in once the client hydrates',
+    );
+  }
+  const slotId = ctx.addSlot(
+    textSlotName(childIndex, walkCtx),
+    TYPE_TEXT,
+    SOURCE_CLIENT,
+    defaultBytesFor(evaluated),
+  );
+  const markerId = ctx.nextMarker();
+  ctx.emit(OP_DYN_TEXT);
+  ctx.emitU16(slotId);
+  ctx.emitU16(markerId);
+}
+
+// ---------------------------------------------------------------------------
+// Island Emission
+// ---------------------------------------------------------------------------
+
+/**
+ * Emit ISLAND_START / ISLAND_END markers and register the island in the table.
+ *
+ * This is the FALLBACK shell for every subtree the walker does NOT translate
+ * into IR — a registered island whose component would not resolve, a
+ * sub-component stopped by the depth/cycle/non-static-props guards, an
+ * un-unrollable spread, or an unrecognized expression. It emits a bare <div>
+ * for the Rust walker to hang data-forma-island / data-forma-component
+ * attributes on, so CSR hydration can replace it in place.
+ *
+ * A registered island that DOES resolve never reaches here: it emits its own
+ * root element from the walked component subtree, between ISLAND_START and
+ * ISLAND_END (see walkCallExpression's islandNames branch).
+ * Verified by: packages/compiler/tests/island-registry.test.ts > "unresolved island falls back to empty div shell"
+ * Verified by: packages/compiler/tests/island-registry.test.ts > "island root element matches component root tag"
+ */
+function emitIsland(ctx: IrEmitContext, name?: string): void {
+  // Capture byte offset BEFORE emitting ISLAND_START so walk_island() can seek directly here.
+  const byteOffset = ctx.opcodeLen();
+  // addIsland increments nextIslandCounter and registers the island in the table.
+  // Use the returned id for the fallback name to avoid double-increment.
+  // trigger: 0x01 = Load, propsMode: 0x01 = Inline (must match Rust IslandTrigger/PropsMode enums)
+  const id = ctx.addIsland(name || `island_${ctx.peekNextIslandId()}`, 0x01, 0x01, [], byteOffset);
+  ctx.emit(OP_ISLAND_START);
+  ctx.emitU16(id);
+
+  // Emit an empty <div> shell so the Rust walker has an element to inject
+  // data-forma-island / data-forma-component attributes onto.
+  const tagIdx = ctx.addString('div');
+  ctx.emit(OP_OPEN_TAG);
+  ctx.emitU32(tagIdx);
+  ctx.emitU16(0); // no attributes
+
+  ctx.emit(OP_CLOSE_TAG);
+  ctx.emitU32(tagIdx);
+
+  ctx.emit(OP_ISLAND_END);
+  ctx.emitU16(id);
+}
+
+/**
+ * Emit a component declared `const X = browserOnly(Impl)` (DR-1, L-1): a
+ * registered island named as the call names it, whose server output is its
+ * empty host element with its declared props. The browser activates it like
+ * any island; core finds the host empty and renders the component there.
+ *
+ * The declared props are the call site's props the compiler can evaluate to a
+ * string, number, boolean or null. They are written into the host as a static
+ * `data-forma-props` attribute, the inline props channel core reads, so they
+ * take no slot: a prop named like a signal, or two browser-only islands with
+ * the same prop, cannot collide in the page's slot namespace, and the
+ * component receives each prop under its own name. A handler cannot change
+ * them (3.0.0's declared island props do, DR-4). Anything else (a function, a
+ * spread, an array or object, a value only the browser knows) cannot reach
+ * the island's props, and is reported (BUILD-706).
+ *
+ * On a page that activates islands from a literal registry, a browser-only
+ * component the registry does not name would never render (BUILD-708).
+ * Verified by: packages/compiler/tests/browser-only.test.ts
+ */
+function emitBrowserOnlyIsland(
+  node: t.CallExpression,
+  componentName: string,
+  ctx: IrEmitContext,
+  walkCtx: WalkContext,
+): void {
+  if (walkCtx.islandNames && walkCtx.islandNames.size > 0 && !walkCtx.islandNames.has(componentName)) {
+    warnDegraded(
+      walkCtx,
+      'BUILD-708',
+      node,
+      `browserOnly() component ${componentName}`,
+      `the page activates islands from a registry that does not name it, so its empty host never renders in the browser — add ${componentName} to the activateIslands({ … }) registry`,
+    );
+  }
+
+  const notAProp = (at: Locatable, what: string): void => warnDegraded(
+    walkCtx,
+    'BUILD-706',
+    at,
+    `${what} on browserOnly() component ${componentName}`,
+    'it is not among the island\'s server props, so the component never receives it — pass a literal or a'
+    + ' module-level const, or read the value in the browser',
+  );
+
+  const props: Record<string, EvalValue> = {};
+  let declared = 0;
+  const propsArg = node.arguments[0];
+  if (propsArg && (t.isSpreadElement(propsArg) || !t.isObjectExpression(propsArg))) {
+    notAProp(propsArg, 'props passed as something other than an object literal');
+  } else if (propsArg) {
+    for (const prop of propsArg.properties) {
+      if (t.isSpreadElement(prop)) {
+        notAProp(prop, `spread props {...${exprToText(prop.argument)}}`);
+        continue;
+      }
+      const key = prop.computed
+        ? null
+        : t.isIdentifier(prop.key)
+          ? prop.key.name
+          : t.isStringLiteral(prop.key) ? prop.key.value : null;
+      if (key === null) {
+        notAProp(prop, 'a prop whose key the compiler cannot name');
+        continue;
+      }
+      if (t.isObjectMethod(prop)) {
+        notAProp(prop, `method-valued prop '${key}'`);
+        continue;
+      }
+      // Core strips these from every island's props (DR-21), and `__proto__`
+      // would set this object's prototype rather than a key: never written.
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        notAProp(prop, `prop '${key}' (a name core strips from island props, DR-21)`);
+        continue;
+      }
+      const value = prop.value as t.Expression;
+      // `undefined`, which esbuild writes as `void 0`: an absent prop.
+      if (isUndefinedIdentifier(value) || (t.isUnaryExpression(value) && value.operator === 'void')) continue;
+      if (isFunctionExpr(value)) {
+        notAProp(value, `function-valued prop '${key}'`);
+        continue;
+      }
+      const evaluated = t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)
+        ? -value.argument.value
+        : evalNode(value, evalEnv(walkCtx));
+      if (evaluated === undefined) {
+        notAProp(value, `prop '${key}' (${describeNode(value)}), which the compiler cannot evaluate,`);
+        continue;
+      }
+      props[key] = evaluated;
+      declared++;
+    }
+  }
+
+  // The host: the empty shell every island root has. trigger 0x01 = Load,
+  // propsMode 0x01 = Inline; no slot ids, so the walker writes no props of
+  // its own beside the static ones.
+  const byteOffset = ctx.opcodeLen();
+  const id = ctx.addIsland(componentName, 0x01, 0x01, [], byteOffset);
+  ctx.emit(OP_ISLAND_START);
+  ctx.emitU16(id);
+  const tagIdx = ctx.addString('div');
+  ctx.emit(OP_OPEN_TAG);
+  ctx.emitU32(tagIdx);
+  if (declared > 0) {
+    const json = JSON.stringify(props);
+    checkLiteralSize(walkCtx, propsArg as Locatable, json, `props of browserOnly() component ${componentName}`);
+    ctx.emitU16(1);
+    ctx.emitU32(ctx.addString('data-forma-props'));
+    ctx.emitU32(ctx.addString(json));
+  } else {
+    ctx.emitU16(0);
+  }
+  ctx.emit(OP_CLOSE_TAG);
+  ctx.emitU32(tagIdx);
+  ctx.emit(OP_ISLAND_END);
+  ctx.emitU16(id);
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the effective body expression from an arrow/function expression.
+ * For expression bodies: returns the body directly.
+ * For block bodies: returns the argument of the first return statement.
+ */
+function getEffectiveBody(
+  fn: t.ArrowFunctionExpression | t.FunctionExpression,
+): t.Expression | null {
+  if (t.isArrowFunctionExpression(fn) && !t.isBlockStatement(fn.body)) {
+    return fn.body;
+  }
+
+  if (t.isBlockStatement(fn.body)) {
+    for (const stmt of fn.body.body) {
+      if (t.isReturnStatement(stmt) && stmt.argument) {
+        return stmt.argument;
+      }
+    }
+  }
+
+  return null;
+}

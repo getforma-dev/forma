@@ -1,0 +1,8 @@
+post-build: copied dist/formajs-runtime.global.js → dist/forma-runtime.js
+post-build: copied dist/formajs-runtime-hardened.global.js → dist/forma-runtime-csp.js
+post-build: jsx.d.ts copied and referenced in type declarations
+verify-dist: ok (64 JS artifacts checked)
+Browser framework comparison complete.
+Chromium single update among 100: Forma 0.31 µs, React Compiler 7.76 µs.
+Server fan-out: Forma isolated 50 browser requests, Forma shared 1, React Query 1.
+Quick wiring checks do not overwrite recorded evidence.

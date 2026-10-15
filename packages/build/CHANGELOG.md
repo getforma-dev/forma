@@ -1,0 +1,248 @@
+# Changelog
+
+## [Unreleased]
+
+### Changed
+
+- **A production build prints its own summary, under `outputDir`** (A2 audit
+  F3, FORMA-180). 0.3.1's bundling pass ran esbuild at `logLevel: 'info'`
+  with the staging directory as its `outdir`, so its summary named
+  `.dist.forma-staging-<pid>-<hex>/home.js`, a path nothing reads. The pass
+  now runs at `logLevel: 'warning'`, and once the files have their hashed
+  names the build prints one line per bundle from esbuild's metafile, as the
+  manifest names it (`dist/home.<hash>.js  12.3kb`), before `N assets
+  hashed`. esbuild's warnings and errors print as before. Watch mode writes
+  in place and keeps esbuild's summary. A script that parses the output
+  should be checked against it.
+
+## [0.3.1] - 2026-10-14
+
+Release A2, the bridge to 3.0.0: additive, with deprecations. Released with
+`@getforma/compiler` 0.3.7, which strict mode needs (the peer range stays
+`^0.3.0`: without strict mode an older compiler is used as before).
+
+### Upgrading from 0.3.0: what an application may meet
+
+- **The default build fails on nothing it passed before; its console output
+  changes.** Strict mode is opt-in (`strict: true` or `FORMA_STRICT=1`).
+  Without it, what a build prints differs in three ways: each `IR:` line
+  carries a code and a position, and `BUILD-303` adds a line for a
+  `createList` over a plain read of a signal initialised with literal rows
+  (compiler 0.3.7); the deprecated paths add `BUILD-802` to `BUILD-804`
+  lines (below); and esbuild's summary names the staging directory the build
+  writes into (`.dist.forma-staging-<pid>-<hex>/home.js`), not `dist/`. A
+  script that parses the output should be checked against it.
+- **A production build replaces `outputDir` whole,** by renaming a staging
+  directory beside it (`.<name>.forma-staging-<pid>-<hex>`) into place, so a
+  failed build leaves the previous output untouched. A process holding the
+  old directory open, or watching it by inode, sees a new directory; an
+  `outputDir` that is a mount point is filled in place, with a warning.
+- **Warnings for the deprecated paths,** once per `build()` call, on the
+  console and in `BuildResult.warnings`: `BUILD-802` for `serviceWorker`
+  without `app`, `BUILD-803` for the `wasm` key, `BUILD-804` when the
+  wasm-pack step runs.
+- **Watch mode is a development build:** it resolves the `development` export
+  condition and defines `process.env.NODE_ENV` as `"development"`, so core
+  2.1.0's development warnings appear in watch builds. Watch builds with
+  `ssr: true` name each page's module in the dev manifest, so forma-server
+  renders the page (Phase 2) as in production, and they replace
+  `manifest.json` and `sw.js` by rename.
+- **`previewFrame: true` is opt-in** (FORMA-175). With it on, the build copies
+  the frame runtime of the `@getforma/core` the bundles import (2.1.0 or
+  later) into the output as `forma-runtime.<hash>.js` for forma-server's
+  preview frame, and fails, strict or not, before writing anything, with
+  `BUILD-805` (that core has no frame runtime, or no core is found),
+  `BUILD-806` (a runtime forma-server could not inline) or `BUILD-807` (the
+  bundles import two cores whose runtimes differ). Off, the output is what
+  it was without the setting (`tests/preview-frame.test.ts` > "with
+  previewFrame off or unset the output is byte-identical, names no runtime,
+  and reads no frame runtime").
+- **A new bin, `forma-raw-lint`,** for an application's CI: 24 raw-entry
+  exits, among them core 2.1.0's `mountMarkup` and a mount handle's `update`
+  given a string (#27, the A2 audit's S2). `build()` and the package's exports
+  are unchanged.
+
+### Added
+- **`previewFrame: true` copies the preview-frame runtime of the `@getforma/core` the bundles import into the output as `forma-runtime.js` (FORMA-175; DR-14 tier (c), DR-26, L-27, L-44).** forma-server's preview frame (`PageResponse::frame`, FORMA-125) inlines core's frame runtime (FORMA-128) and allows it by its SHA-256 hash; `PreviewFrame::load` reads it at start from the manifest's `assets["forma-runtime.js"]`, and until a build writes it the frame refuses to start (FRAME-101). Off by default; off (or `false`), nothing is read and the output is byte-identical to a build without the setting.
+  - **Which core: the one the bundles import.** Before anything is written, each entry is bundled in memory (nothing written) with the bundles' own esbuild options, and every file it loads is mapped to its package, a core being a directory whose package.json is named `@getforma/core`. So the copied core is the bundles', however they reach it: `formaAlias`, whose target esbuild resolves from the working directory (a build run from a monorepo's root takes the root's core, as its bundles do); tsconfig `paths` to a vendored copy; a linked or pnpm-installed core, by its real path. When the bundles import no core, the one installed where the build runs (the working directory) is copied. The entries must bundle at start, in watch mode too.
+  - **What it copies:** that core's `dist/formajs-frame.global.js` (core 2.1.0 and later), never its `dist/forma-runtime.js`, the CDN alias of the auto-mounting runtime that shares the target's name. The bytes are copied unchanged (no minify, no transform, no line endings rewritten), so the hash forma-server computes is the hash of core's file. A production build hashes it with the other assets as `forma-runtime.<hash>.js` and names it under `assets["forma-runtime.js"]`; it is inlined, never fetched, so it gets no `.br` or `.gz` copy, no route loads it, and the on-demand worker's immutable list leaves it out. Watch mode writes it as `forma-runtime.js`, named as itself in the dev manifest.
+  - **Coded refusals, before anything is written** (the previous output stays as it was, in watch mode too), with or without strict mode: `BUILD-805` when the core the bundles import has no frame runtime (older than 2.1.0) or no core is found, naming its version, directory and the entries that import it, never falling back to another core; `BUILD-806` when the runtime is empty, not UTF-8, or contains `</script` or `<!--` (in any ASCII case), a carriage return or a NUL, which forma-server refuses with FRAME-103, at the file, line and column; `BUILD-807` when the bundles import more than one core and their frame runtimes differ (entries from two packages with their own cores, a library bundling its own), naming each core and its entries, rather than pick one; one version installed twice, with the same runtime, is one core. The error (`FormaPreviewFrameError`) carries the diagnostic in `error.diagnostics`, and a `diagnosticsJson` report, when asked for, holds it alone. A `previewFrame` that is not a boolean, and an entry whose `outfile` is `forma-runtime.js` in any case (`Forma-Runtime.js` is the same file on macOS and Windows) while it is on, are config errors.
+  - Tests: `tests/preview-frame.test.ts` (30) > "copies core's dist/formajs-frame.global.js unchanged as a hashed forma-runtime.<hash>.js and names it in the manifest's assets", "the runtime is inlined, never fetched: no compressed copies, and no entry in the on-demand worker's immutable list", "with previewFrame off or unset the output is byte-identical, names no runtime, and reads no frame runtime", "BUILD-805: a core without the frame runtime (older than 2.1.0) fails the build, naming its version, and leaves the previous output as it was", "BUILD-805: the bundles import no core, and none is installed where the build runs", "when the bundles import no core, it copies the core installed where the build runs", "BUILD-806: a runtime with %s fails the build with its code, before anything is written" (9: `</script`, in any case, `<!--`, CRLF, a lone CR, a NUL, nothing, only whitespace, not UTF-8), "BUILD-806 names the line and column of what it refuses", "a refused runtime is the JSON report's one diagnostic, so a report from an earlier build is not left standing", "refuses a previewFrame that is not a boolean, and an entry that takes forma-runtime.js in any case, before anything is written", "watch mode writes it as forma-runtime.js, unchanged, and the dev manifest names it, with and without code splitting", "watch mode refuses a runtime it cannot inline, with its code, and leaves the previous output as it was", "BUILD-805, BUILD-806 and BUILD-807 carry the catalogue's why and fix"; and review-FORMA-175's scenarios, each comparing the core the frame copied with the cores the bundles contain: "an application in a monorepo whose root has another core: the application's, as its bundle", "formaAlias resolved from the working directory, as esbuild resolves it: from the monorepo's root, the root's core" (a build in a child process per working directory), "hoisted: the root's core only", "a linked core (npm link, workspaces): the link's target, as its bundle", "tsconfig paths to a vendored core: the vendored core, as its bundle", "BUILD-807: entries from two packages with cores whose runtimes differ fail the build, naming each core and its entries", "one version installed twice, with the same runtime, is one core to the frame: the build copies it", "BUILD-807: a library that bundles its own older core (a pnpm layout), naming the core without a frame runtime", "BUILD-805: an old core next to the entry is refused, never another core in a parent directory". End to end, `e2e/frame/frame.spec.ts` (the CI `e2e` job): core packed from formajs and installed from its tarball into a fixture application whose lockfile pins core's dependencies, the application built with the setting and without it, a forma-server application that embeds the output and calls `PreviewFrame::load` on it, and Chromium mounting a module in the frame under its hash-only policy; off is FRAME-101, a tampered runtime BUILD-806 and FRAME-103.
+- **`forma-raw-lint`, the raw-entry allowlist lint for an application's CI (FORMA-126; v2's SR8, M8, DR-19, L-37).** A new bin, the package's first (`"bin": { "forma-raw-lint": "dist/raw-lint-cli.js" }`, built from its own entry; `build()` and the package's exports are unchanged; adding the bin left `dist/index.js` byte-identical to the build before it, in #23). `npx forma-raw-lint src crates` finds every use of INV1's and INV2's exits in TypeScript, JavaScript, Rust and HTML and fails on any that `forma-raw-allowlist.json` does not list with an owner and an end date, and on any entry past its end date.
+  - **The exits it finds** (24; `--exits` lists them): `trustedHtml` (called, renamed, on core's namespace or `FormaRuntime`, referenced, exported under another name); the string forms the A2 bridge still accepts, `dangerouslySetInnerHTML` (every `__html` key, wherever written) and `setHTMLUnsafe`, `template`, `templateMany`, `reconcile`, core 2.1.0's `mountMarkup` and a mount handle's `update` (`MountHandle.update`; the A2 audit's S2: on a name assigned the handle by `=`, `??=`, `||=` or a ternary arm, by dot or bracket, chained on the call, or destructured as `update` or under another name; by name, file-wide) and `srcdoc` given a value not traced to `trustedHtml()`, through string, computed and `const` keys, `Reflect.set`, `Object.defineProperty`, and core's namespace destructured, aliased or by bracket; a sink re-exported from core, and `core-reexport` for `export * from` core; `h('script')`, JSX `<script>` included; in markup, the HTML runtime's `data-bind:srcdoc` and a list row's `srcdoc="…{item…"` (character references and string escapes decoded), and core's Trusted Types registry key; in Rust, `RawHtml::trusted` (qualified, `<RawHtml>::trusted`, `Self::trusted` in an `impl` for it, or through an alias from any file), `RawHtml` under another name (`use … as`, `type … =`, any `= RawHtml`), `r#html`, a `body_prefix` not traced to a `RawHtml`, `config_json`, the deprecated `config_script` (each also when written through an `Option` method or `&mut`), `into_parts_unchecked`, `with_module_preloads`, `with_head_link` and `relax_trusted_types`. A typed use is one raw entry, its constructor.
+  - **Trust is lexical:** a TypeScript name is trusted markup only where its nearest binding is a `const` bound to `trustedHtml()`; a Rust name holds a `RawHtml` only where its last binding in scope makes or declares one, and `self.x` only for a field the `impl`'s own struct declares `RawHtml`. Any shadowing binding undoes it.
+  - **The allowlist**, version 1 JSON: entries of `path`, `line` or `symbol` (the innermost named function, method, class, `impl` or module, as the lint prints it), `exit`, `owner`, `until` (the last valid day, UTC, at most a year after the run), `reason` and an optional `count` (default 1: a second use in the same symbol is not listed until the count says so, and slack in a count is a note). An unknown or missing field, an unknown exit, an impossible date or an `until` more than a year out stops the run.
+  - **Coded findings in the catalogue's BUILD-8xx family** (`docs/DIAGNOSTICS.md`): `BUILD-810` a raw entry not on the allowlist, `BUILD-811` an entry past its end date, `BUILD-812` an allowlist the lint cannot use, `BUILD-813` an entry listing fewer uses than it says (a note), `BUILD-814` a source file or path it cannot read or parse, a link that leads nowhere or loops included (fails closed). Exit codes: 0 pass, 1 on 810, 811 or 814, 2 on 812 or a usage error. `--json` prints, and `--report <file>` writes, `{ version: 1, today, allowlist, files, rawEntries, diagnostics, exitCode }`; `rawEntries` is the inventory an allowlist starts from.
+  - **How it reads:** esbuild parses TypeScript and JavaScript (a `.js` file is also tried as JSX and TypeScript) and the lint reads its output, types erased, JSX as `h()` calls, comments gone, positions mapped back through the source map; Rust is a token scan that knows Rust's lexical grammar and pairs brackets; HTML is read in one pass, comments only in text, inline scripts as JavaScript and other script types as markup. Skips and `--exclude` come before anything is read; links are followed, loops cut. No dependency beyond esbuild. What it misses is listed in the README (a namespace reached in a `.then` callback, provenance across files, names built at run time, props from parsed data, macro-assembled Rust names, struct update, a mount handle the file does not hold under a plain name).
+  - Tests: `tests/raw-lint.test.ts` (44) > "SR8: a seeded body_prefix outside the allowlist fails, and so does an entry past its end date", "a near miss passes: a comment, a string literal mentioning trustedHtml, a variable named rawHtml", "TypeScript exits: each fails unlisted, passes listed, fails expired" (11), "markup exits: …" (3), "Rust exits: …" (10), each over `tests/fixtures/raw-lint/<exit>/` (fail files with `expect:` markers, the review's bypass corpus among them, and near misses), unlisted, listed by line, listed by symbol, until today, and expired; "BUILD-812: an allowlist the lint cannot use stops the run with exit code 2, naming the entry and the field", "an entry lists at most its count (default 1): the rest are not on the allowlist", "BUILD-813: an entry that lists nothing is a note, and the run passes", "BUILD-813: an entry that lists fewer uses than its count is a note, so counts stay tight", "BUILD-811: an entry past its end date fails even when it lists nothing", "matches paths written with \\ or a leading ./, relative to the allowlist's directory", "BUILD-814: a file esbuild cannot parse fails the run at its line, and so does an inline script", "reads TypeScript in a .js file and JSX in a .js file rather than failing them", "walks directories, skipping node_modules, target and dot-directories, and leaves out what --exclude matches", "a dangling symbolic link or a loop never crashes: skips and --exclude come first, and what cannot be read is a BUILD-814", "refuses a path that does not exist, a file it does not read, and a bad date", "positions are the author's: lines and columns through JSX, template literals and HTML", "a CRLF source reports the lines and columns an LF one does", "the command: exit codes, text and JSON", "is the package's bin, built from its own entry", "the compiler catalogue and docs/DIAGNOSTICS.md carry BUILD-810 to BUILD-814 as the lint reports them", "the README lists every exit the lint knows". CI runs `scripts/test-raw-lint-bin.mjs` after the build on every runner: the packed tarball, installed with esbuild at the lockfile's version into a scratch application, fails a seeded `body_prefix` (1), passes it listed (0), fails it past its end date (1), and exits 2 on a usage error, through npm's `.cmd` shim on Windows.
+- **Strict mode, the SSR diagnostics report, and `result.diagnostics` (FORMA-119; DR-1 migration step 1, N12, S6).** With `@getforma/compiler` 0.3.7, every construct a page's module cannot represent is a coded diagnostic (`docs/DIAGNOSTICS.md`). The build gathers them from every page and returns them as `result.diagnostics` (`code`, `severity`, `page`, `file`, `line`, `column`, `message`, `why`, `fix`, and for `BUILD-403` the `chain`), in the config's entry order.
+  - **`strict: true`, or `FORMA_STRICT=1` in the environment when the config leaves `strict` unset,** fails the build on every diagnostic but a note, after every page is compiled, with all of them at once (`FormaStrictBuildError`, its `diagnostics` attached, each as `file:line:column  CODE  message` with its why and fix). A failed build leaves the previous output as it was. `strict: false` ignores the variable, and a value of it other than `1`, `true`, `0`, `false` or empty is refused. `build()` reads no command-line flag, as for `ssr` and `watch`: a build script maps its own `--strict` to the config (the templates do from create-app 0.6.2, FORMA-133). In watch mode a page with an error keeps its last good module and logs its first error.
+  - **The default stays a warning:** without strict mode every build behaves as it did, the only difference in its output being the code and position in each `IR:` line.
+  - **A compiler that predates coded diagnostics is refused in strict mode** (`strict mode (strict: true or FORMA_STRICT=1) needs @getforma/compiler 0.3.7 or later`) rather than passing pages it never checked; without it, it is used as before.
+  - **`diagnosticsJson: '<path>'`** writes `{ version, strict, diagnostics }` to that path, also when strict mode fails the build. The path must be outside `outputDir` (the build replaces it whole and serves it); one inside is refused before anything is written, inside as the filesystem sees it: through real paths (a symlink or junction into `outputDir` is inside), case-insensitively where the filesystem ignores case, and with `..` only as a whole segment (`dist/..diag.json` is inside). `version` is 1; a field may be added without changing it, and renaming or removing one, or changing what one means, increments it.
+  - **SSR without the compiler is `BUILD-801`:** its warning carries the code (`Warning: BUILD-801 @getforma/compiler not available for SSR. Skipping IR emission.`) and strict mode fails on it. **`serviceWorker` without `app` (`BUILD-802`, FORMA-130), `wasm` in the config (`BUILD-803`) and the wasm-pack step (`BUILD-804`, FORMA-131)** join the report as notes strict mode does not fail on: the old paths keep working in A2, so a build that still sets `wasm` passes in strict mode. The WASM step now runs before the report is written, so the report names `BUILD-804` when it ran.
+  - Tests: `tests/strict.test.ts` > "S6: an unrepresentable construct fails the strict build with its code, file and line", "without --strict the same build succeeds, prints its lines as before, and returns the diagnostics", "reports BUILD-802 (serviceWorker without app) as a note --strict does not fail on", "passes a clean build, and never fails on a note", "pins its keys: the report, and each diagnostic", "refuses a JSON report path inside outputDir, before anything is written", "is written on request, also when --strict fails the build", "takes strict from the config, else from FORMA_STRICT, and reads no command-line flag", "applies FORMA_STRICT=1 to a build whose config does not set it", "ignores a --strict on the command line of the process that calls build()", "keeps a page with an error unpublished, says why, and publishes it once fixed"; `tests/strict-compiler.test.ts` > "reports SSR without @getforma/compiler with its code, and fails it under --strict", "is refused under --strict, and used as before without it".
+- **Per-application, per-build service-worker caches with a waiting upgrade:
+  `BuildConfig.app`** (FORMA-130, the build half; DR-25, SR28). Set it to the
+  string the server passes to forma-server 0.2.2's
+  `sw::ServiceWorker::for_app`. The production worker, in either mode, then
+  names its cache `forma:<app>:<build>` (the build hash's first 12 hex), deletes
+  on activation only Forma's v1 names
+  (`^forma-(?:dev|[0-9a-f]{12})(?:-on-demand-v1)?$`) and its own application's
+  older caches, never another application's or anything else, and neither
+  skips waiting nor claims pages: a new build's worker waits until no tab uses
+  the previous one, which a reload alone does not end. An invalid name is a
+  config error naming it. Without `app`, the workers are 0.3.0's, byte for
+  byte; the development (watch) worker is unchanged either way. The contract is
+  forma-server's (`forma_server::sw`); `tests/helpers/cache-vectors.ts` copies
+  its shared vectors from forma PR 15 (`d859f03`, after its review added the near misses). Tests:
+  `tests/service-worker.test.ts` > "per-application workers (FORMA-130)" (the
+  vectors, the waiting upgrade, own-cache reads, 0.3.0's workers byte for byte
+  against `tests/fixtures/workers-0.3.0/`, the development worker unchanged);
+  `tests/build.test.ts` > "names the worker's cache per application and build,
+  and gives it a waiting upgrade", "rejects an application name forma-server
+  cannot take, naming it" (every name in `tests/helpers/app-name-vectors.ts`,
+  the accepted and refused names copied from forma-server's tests so the two
+  grammars stay one, the trailing-hyphen and one-character edges included; a
+  refused value is printed escaped, as forma-server's `{:?}` does), "the
+  generator refuses a name or a cache name outside the contract on its own";
+  `browser-tests/per-application-upgrade.spec.ts`
+  (SR28's lifecycle half in Chromium: two tabs, upgrade, rollback and
+  upgrade, the new worker waiting while an old tab is open and after reloads,
+  the old tab reading its build's asset from its own cache with the HTTP
+  cache emptied and no request reaching the server, also while two instances
+  alternate `/sw.js` over six update checks, an unrelated cache and a second
+  application's cache surviving, v1's name retired).
+
+### Deprecated
+
+Each keeps working through 0.3.x, warns once per `build()` call, and goes in
+3.0.0:
+
+| Deprecated in 0.3.1 | Use instead (3.0.0's form) |
+|---|---|
+| `serviceWorker` without `app` (`BUILD-802`) | set `app` to the name the server passes to forma-server's `sw::ServiceWorker::for_app` |
+| the `wasm` key (`BUILD-803`) and the wasm-pack step (`BUILD-804`) | none: islands re-render in the browser with `@getforma/core`'s `h()` |
+
+- **`serviceWorker` without `app`** (BUILD-802; FORMA-130). The worker it
+  writes is 0.3.0's: cache names every Forma application on the origin
+  shares, and an immediate takeover of open tabs. The build now says so once
+  per `build()` call, in watch mode and in production alike, on the console
+  (`Warning: BUILD-802 ...`) and as an entry in `BuildResult.warnings`; set
+  `app` to the name the server passes to forma-server's
+  `sw::ServiceWorker::for_app`. From 3.0.0 a worker is written only for a
+  named `app`. Nothing changes without `serviceWorker`, or with `app`. Test:
+  `tests/build.test.ts` > "warns when serviceWorker is set without app, naming
+  the 3.0.0 change, and is silent with app". The code is in the diagnostic
+  catalogue (`docs/DIAGNOSTICS.md`, BUILD-8xx).
+  The build's `app` and the server's `for_app` meet by convention: FORMA-168
+  records `app` in the manifest so the server can check it.
+- **The `wasm` key and the wasm-pack step** (BUILD-803, BUILD-804;
+  FORMA-131, DR-23). Both go in 3.0.0 with the WASM walker: forma-ir's `wasm`
+  feature and `@getforma/core/wasm` are deprecated in the same release, and
+  islands re-render in the browser with `h()`. A config that sets `wasm` gets
+  `Warning: BUILD-803 the wasm key is deprecated ...` once per `build()` call,
+  in watch mode and in production alike, on the console and in
+  `BuildResult.warnings`, as BUILD-802 is. When the wasm-pack step runs (a
+  production build with `wasm-pack` on `PATH`), it says
+  `Warning: BUILD-804 the wasm-pack step is deprecated ...` as it starts, and
+  that build's `BuildResult.warnings` lists it. Nothing else changes: the
+  step still runs, and the manifest's `wasm` entry and the worker still name
+  its outputs. `BuildConfig.wasm` and `AssetManifest.wasm` are `@deprecated`
+  in the types. Tests: `tests/wasm-deprecation.test.ts` > "a config that sets
+  wasm warns BUILD-803 once per build, naming 3.0.0", "the wasm-pack step
+  warns BUILD-804 when it runs, and still ships the walker" and "a config
+  without wasm warns neither". Both codes are in the catalogue
+  (`docs/DIAGNOSTICS.md`, BUILD-8xx), with BUILD-802.
+
+### Changed
+- **Watch mode is a development build: it resolves each package's `development` export condition (FORMA-169; L-18's A2 bridge).** `@getforma/core` points that condition at a build of every entry that keeps its development warnings (hydration mismatches, dropped props, raw-HTML sinks, the `FORMA_W_DEPRECATED_` codes), which an application built from npm never saw before: every published file of core folds them away, and the build passed esbuild no conditions. Watch mode now passes `conditions: ['development', 'module']`: `module` because esbuild adds it by itself only while no custom conditions are set, so the list is what esbuild would have used plus `development` (it still adds `browser`, `import` or `require`, and `default` itself). It also defines `process.env.NODE_ENV` as `"development"`, which esbuild already did for watch mode's unminified browser build; stating it keeps it so whatever the minify setting. A production build passes neither and its options are unchanged, so it resolves the same files (`tests/development-condition.test.ts` > "a production build resolves the production files, with module and browser, as it did"). When this merged, an application built from the packed core and this build was byte-identical to the same application built from core and build `main`; that was checked by hand, and no test repeats it. A core without the condition (2.0.x) resolves as before in both modes. Tests: `tests/development-condition.test.ts` > "watch mode resolves the development condition and keeps module and browser, with and without code splitting" (fails with `conditions: ['development']` alone: the module package resolves to its `default`), "a production build resolves the production files, with module and browser, as it did".
+- **Watch builds with `ssr: true` now give Phase 2 rendering in development.** Without `codeSplitting` (the default) the dev manifest named no `.ir`, so `forma-server` rendered each page client-side (Phase 1); it now names each page's module, and the server renders the page as production does. `forma-server` loads the modules when the application starts, so until it restarts it serves the module it loaded, under the rebuilt bundle: restart it on a change under `outputDir`. FORMA-166 tracks the server half.
+- **Release and CI install with `npm ci` (DR-32, FORMA-010; the package is unchanged).** `release.yml`, `ci.yml` and `compat.yml` install exactly what `package-lock.json` records instead of running `npm install`; `compat.yml` still installs the newest `@getforma/core` on top, deliberately. Each `uses:` names the commit its tag or branch pointed to on 2026-10-14, with the ref in a comment, and every CI job declares `contents: read`; `release.yml` keeps its workflow-level `contents: read` and `id-token: write`.
+- **Only the release's publish job can mint the publish credential (SR43, L-34, L-42, FORMA-134; the package is unchanged).** `release.yml` splits into `test`, `pack` and `publish`. Tests and builds run in jobs without `id-token: write`; `pack` restores no cache, packs the tagged package with `npm pack --ignore-scripts` and records its SHA-256; `publish`, the only job holding `id-token: write`, restores no cache and installs nothing, checks the downloaded tarball against that record (whose own hash travels as a job output) and runs `npm publish <tarball> --provenance --access public --ignore-scripts`. A `build-v*` release now also runs the compiler's suite, as CI does. The tags stay the only trigger. CI's new `release-workflow` job runs actionlint (binary checked against a pinned SHA-256), `scripts/check-release-workflow.rb --self-test` and `scripts/test-release-artifacts.sh`. The lint also refuses a publish job that could go on after a failed check (`continue-on-error`, an `if:` on a step up to the publish, `always()`, `failure()` or `cancelled()` in the job's `if`, a check line that can swallow its failure, a shell without errexit), `container:` or `services:` on the publish or pack job, and a checkout of another repository or ref; every rule has a seed in `--self-test`, which fails if one does not. The artefact test flips a byte instead of writing one that may already be there. `pack`'s setup-node sets `package-manager-cache: false`, so a move to setup-node v5 keeps its cache off.
+- **CI installs Chromium in two bounded steps (FORMA-179; the package is unchanged).** The `e2e` job installs Chromium's system packages, then the browser, each restored from a cache keyed on the Playwright version (the packages' also on the runner image) and each cut at a bound with one retry, where `npx playwright install chromium --with-deps` had only the job's timeout: a slow apt mirror once held formajs's WebKit install past its job's. CONTRIBUTING says which skipped checks are by design.
+- **The release's artefact upload can be re-run (A2 audit S7, FORMA-179; the package is unchanged).** The release's `pack` job uploads `release-packed` with `overwrite: true`, so re-running all jobs after a failure replaces the earlier attempt's artefact instead of failing on its name (A2 audit S7); `publish` still checks every file against the record whose hash `pack` passes as a job output. The SR43 lint's new rule K4 requires it, with two seeds in `--self-test`.
+
+### Fixed
+- **Watch mode keeps server-rendered pages' FMIR modules current (N7, L-31).** Watch mode rebuilt the bundles but, without `codeSplitting`, wrote no `.ir` at all and the dev manifest named none, so a page the server renders never changed on an incremental rebuild (v1 6.4). With `codeSplitting`, every page's module was re-emitted on every browser rebuild, written in place, and never re-emitted for an edit to an SSR entry the browser bundle does not import. Now each server-rendered page gets its own esbuild watcher over its SSR entry (`ssrEntryPoints`, else the browser entry; packages external, nothing written), so an edit re-runs the compiler for exactly the pages whose module graph it touches. The module is published as `<page>.ir` by rename, only when its bytes changed, and the dev manifest names it in the route's `ir`. A page with an esbuild error (a syntax error, an import that does not resolve) keeps its last good module and logs the first error; a compiler emission failure writes the compiler's placeholder module, as a production build does. A module that cannot be published (a file Windows will not release, a full disk) is logged with its page; the page watchers print nothing through esbuild, so this was silent. Each rewrite logs its time (`IR rewritten: home.ir in 36 ms`); those times join the per-build report when it exists (DR-34, FORMA-118). Measured on an Apple M1 Pro, Node 22, 20 pages, 20 edits to a component one page renders: from the file write to the new `.ir` on disk p50 63 ms and max 200 ms without code splitting, p50 40 ms and max 144 ms with it; the other 19 pages were not re-emitted. The server must reread the module: `forma-server` loads modules at startup, so restart it on a change under `outputDir` (see the README). Tests: `tests/watch-ir.test.ts` > "rewrites a page's .ir when a component it renders changes, and no other page's" (failed before this change: the dev manifest named no `.ir`) "rewrites a page's .ir when only its SSR entry changes, in a code-splitting build" (failed before this change: the module kept its first content) and "logs a page's module it could not publish, naming the page, and recovers".
+- **A build that fails part way leaves the previous output exactly as it was (L-21).** The build emptied `outputDir` first and then wrote into it step by step, so a failure in a late step (a wasm-pack compile error, a Tailwind error, a disk-full write) left the last good build deleted and part of the new one in its place, and an application that embeds `outputDir` then shipped half a build. A production build now writes into a staging directory beside `outputDir` (`.<name>.forma-staging-<pid>-<hex>`, on the same filesystem) and swaps it in only when every step has succeeded; on failure the staging directory is removed and `outputDir` is untouched, byte for byte. The swap is two renames (no platform renames a directory over a non-empty one); if the second fails, the first is undone. On Windows a rename refused because another process holds a handle (EPERM, EACCES, EBUSY: a virus scanner, the indexer, an editor) is retried for up to 5 s before the build fails, with `outputDir` restored. An `outputDir` that is a mount point (EBUSY or EXDEV on the rename, such as a container volume) has its contents replaced in place instead, with a warning, since the build being swapped in is already complete; if that copy fails, the error says `outputDir` may be partial. Staging directories left by a killed build are removed by the next one, except a previous output: a build that stops between the swap's two renames (a Ctrl-C during a Windows retry) leaves no `outputDir` and the last good build beside it, so the next build first moves that back (the newest, if several) and says so. A swap that can neither move the new build in nor restore the previous one names where the previous one is, and the next build moves it back. Validation still runs before anything is written. Watch mode still writes in place. Tests: `tests/build.test.ts` > "leaves the previous build byte-identical when a build fails after writing files" (failed before this change: the output held the failed build's unhashed `app.js` and `main.css`), "a failed first build leaves no output directory and nothing beside it", "a successful build replaces the previous output whole"; `tests/output.test.ts` (the swap's failure paths, with an injected failing rename or copy), among them "puts back the previous output a build killed between its two renames left aside, the newest if several", "names where the previous output is when it cannot be put back either, and the next build puts it back" and "says the output may be partial when a mount point's copy fails".
+- **Watch mode replaces `manifest.json` and `sw.js` by rename instead of rewriting them in place.** A reader between the truncate and the write saw an empty or partial file: with a code-splitting watch build of 41 entries, a reader polling `manifest.json` through 51 rebuilds failed to parse it 13 to 20 times per run before this change, and 0 times after. This was the intermittent failure of the test "updates the watched graph and removes obsolete chunks instead of accumulating them", which also now waits for the manifest state it asserts rather than reading once after a chunk appears on disk. Test: `tests/code-splitting.test.ts` > "replaces the watched manifest by rename, so a reader never sees half of it".
+
+## [0.3.0] - 2026-10-14
+
+Consolidated from the local, unpublished builds Ledger vendors as `0.2.1-ledger.1`, `0.2.2-ledger.1` and `0.2.2-ledger.2` (checkpoint `205b612`), plus the fixes made while preparing this release. None of those labels was published; the version is set at release.
+
+### Changed
+- **Config validation rejects two `entryPoints` that share an `outfile`.** A config that built under 0.2.0 now fails: both bundles were written to one file, and the route served whichever finished last.
+
+### Fixed
+- **Production workers delete and read only Forma caches.** Activation deleted every cache on the origin except the worker's own, including other applications', and lookups matched requests against all of them. The worker now reads only its own cache and deletes only caches named `forma-*` other than its own; caches named otherwise survive. Every worker mode still deletes all `forma-*` caches but its own, so Forma applications sharing an origin, which share that prefix, still delete each other's caches; per-application cache names are not part of this release. Content-hashed assets stay cache-first.
+- **The default (precache) worker answers before it saves.** A fetched asset is returned at once and written to the cache in the background; a failed write, such as a quota error, is ignored, and when CacheStorage itself fails the worker answers from the network.
+- **Development workers (watch mode) are network-only.** They bypass CacheStorage and the HTTP cache for stable asset URLs, take over from an old cache-first worker, and delete every `forma-*` cache, so rebuilt CSS and JavaScript appear on reload.
+- Generated workers intercept only same-origin `GET` requests; cross-origin requests and writes pass through untouched.
+- **A route without `css` (or `js`) fails with a message naming the route.** A JavaScript config, or TypeScript run without a type check, could omit either list, and validation threw `TypeError: mapping.css is not iterable`, naming neither the route nor the key. It now reports, for example, `routes['/'].css is missing: list the route's CSS base names, or [] for none`; a string in place of the list is reported as `not an array` rather than read letter by letter. Validation still runs before the output directory is touched.
+
+### Added
+- Opt-in `codeSplitting` builds one shared ESM graph, retains native dynamic imports, and preserves esbuild's linked content hashes. Chunks are compressed and included in the asset manifest without renaming their import targets.
+- Routes expose static-only `modulepreload` dependencies and count those dependencies in byte budgets. Lazy chunks are excluded from initial preload and budget totals.
+- `BuildEntry.ssr: false` keeps one entry browser-only in an otherwise SSR application. Split watch mode refreshes graph manifests and removes obsolete emitted chunks.
+- Optional `serviceWorker: 'on-demand'` installs without downloading assets, so deferred tools remain deferred and installation does not compete with first paint. The option accepts only `'precache'` (the default) and `'on-demand'`; any other value is a config error naming it, for example `serviceWorker is 'ondemand': use 'precache' (the default) or 'on-demand'`.
+- On-demand caching is restricted to exact content-hashed manifest JS/CSS/WASM URLs and successful, non-redirected immutable asset responses. Navigations, APIs, query URLs, private/no-store responses and unknown asset paths are excluded.
+- CacheStorage and quota failures no longer turn a successful asset request into a failed page load in on-demand mode. Precache remains the default; watch mode remains network-only.
+- Tests: generated-worker unit coverage (cache scoping, development takeover, on-demand eligibility, storage failures in both production modes); code-splitting builds (multi-entry singleton and dynamic import, linked invalidation, mixed SSR, server-inlined copies, watched graph, the on-demand allowlist); config validation for missing route lists, duplicate outfiles and the `serviceWorker` value; and a controlled-browser upgrade and rebuild regression, `npm run test:browser -w packages/build`.
+
+## [0.2.0] - 2026-08-06
+
+### Removed
+- **Breaking: the generated island registry (`<page>.islands.js`) is gone.** It could not work in any configuration and every consumer had to delete it by hand. It was written *after* the esbuild pass, so it shipped unbundled with a bare `import { activateIslands } from '@getforma/core'` no browser can resolve; it imported the page component as `'../<entry>'` — a source path, relative to the *output* directory, that resolves from nowhere; and it mapped every island name to the page ROOT component, which is the clobber pattern the islands protocol exists to avoid. It was then hashed, brotli+gzip compressed and registered in `manifest.json`, so it reached production bundles as dead weight. The registry was redundant by construction as well as broken: the compiler only knows an island exists *because* the entry point already calls `activateIslands({ ... })` with the real components, so the user's own bundle registers exactly the right set. Nothing replaces it — delete any scrubbing step you added.
+- **`<page>.islands.json` is no longer written** (from `@getforma/compiler`, whose SSR plugin emitted it). It was build metadata deposited in the *served* asset directory, its only consumer was the island registry above, and it was not hashed — so it lingered in `outputDir` and got embedded verbatim by asset-embedding servers. The island table it duplicated is inside the `.ir` binary, and `generateRealIr()` returns it to programmatic callers.
+
+### Fixed
+- **WASM builds work when `wasm-pack` is an npm shim on Windows.** The tool was spawned with `execFileSync` and no shell, which CreateProcess cannot use to run a `.cmd` — the same defect as the 0.1.9 tailwind/`npx` fix. The failure was silent: the ENOENT was caught by the same `catch` as the version probe and reported as "wasm-pack not found — skipping WASM build", so a Windows build quietly shipped no WASM.
+- **A wasm-pack *compile* failure is no longer reported as "wasm-pack not found".** The version probe and the build are separate now: a missing tool still skips the step with a warning, while a build failure propagates. A run that reports success but produces no `forma_ir_bg.wasm` fails with the path it expected.
+
+### Added
+- **Config validation before the output directory is touched.** Two silent misconfigurations are now build errors: an `outfile` containing a path separator (esbuild wrote it into a subdirectory the hashing pass never reads, so the asset vanished from the manifest and its route 404'd in production), and a route naming a JS/CSS base that no entry produces (a typo that surfaced as a missing `<script>` on a deployed page). Validation runs *before* the clean, so a config error no longer destroys the previous build's output.
+
+### Changed
+- Test suite reassessed: the ten "exports X type" tests asserted fields of object literals they had just written — vitest strips types without checking them, so they passed with `build.ts` deleted. They are replaced by one two-sided export-surface test plus real coverage for `serverInlined`, budget warnings, SSR `.ir` wiring (single and multi-route), the WASM path, and config validation. 17 tests → 15, of which 15 can fail.
+
+## [0.1.9] - 2026-08-05
+
+### Fixed
+- Tailwind CSS step no longer fails on Windows. `execFileSync('npx', ...)` cannot spawn the `npx.cmd` shim there — the build now resolves the locally installed `@tailwindcss/cli` and runs its entry script with the current Node executable (no shell on any platform, so paths with spaces are safe and nothing is exposed to shell injection). `npx` remains as a fallback for projects without a local install, spawned through a shell on Windows with quoted arguments.
+
+### Added
+- Functional test for the Tailwind CSS entry path (uses a fake locally installed `@tailwindcss/cli`, no network)
+
+### Changed
+- Optional `@getforma/compiler` peer range widened to `^0.1.0 || ^0.2.0`
+
+## [0.1.5] - 2026-03-16
+
+### Added
+- 6 functional tests for the build pipeline (manifest structure, content hashing, compression, font copying, multi-entry, directory creation)
+- Build failure cleanup — removes output directory if build fails and we created it
+
+### Changed
+- `@getforma/compiler` moved from `dependencies` to optional `peerDependencies` — non-SSR users no longer install Babel
+- Added `engines: { node: ">=18" }` to package.json
+- README route config examples fixed — routes expect base names without extension (`"app"` not `"app.js"`)
+
+### Removed
+- TODO comment from generated island registry code (was shipping in user output)
+
+## [0.1.4] - 2026-03-16
+
+### Changed
+- Stack table in README uses Frontend/Backend/Full Framework split with links
+
+## [0.1.3] - 2026-03-16
+
+### Added
+- README with full documentation
+
+## [0.1.2] - 2026-03-15
+
+### Fixed
+- Build order in CI — compiler built before build package for DTS resolution
