@@ -164,7 +164,12 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
     for (file, is_ssr, response) in [("index", true, ssr), ("csr", false, csr)] {
         let page = response.into_parts_unchecked();
 
-        let server_rendered = page.html.contains("<div id=\"app\" data-forma-ssr>");
+        // The root also names the build (FORMA-186, DR-29).
+        let ssr_root = format!(
+            "<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
+            manifest.build
+        );
+        let server_rendered = page.html.contains(&ssr_root);
         if server_rendered != is_ssr {
             return Err(format!(
                 "{file}.html: expected SSR={is_ssr}, but the page {} server-rendered \

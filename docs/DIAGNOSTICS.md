@@ -948,7 +948,9 @@ are written. Do not substitute a filename hash or an abbreviated digest.
 
 What the route loads cold (its `js` files and their `modulepreload` dependencies)
 carries more than 25,500 B gzip -9 of Forma's code, `@getforma/core` and
-`alien-signals` as bundled, attributed from the bundler's metafile (each input's
+`alien-signals` as bundled, plus the identity banner `@getforma/build` writes at the
+top of every JavaScript file (about 30 B gzip for each file the route loads cold),
+attributed from the bundler's metafile (each input's
 share of the file's raw bytes, applied to its compressed size), or a file the
 manifest names for the route was written by no bundling pass, so its Forma code
 cannot be attributed. N2 as restated by decision brief L-55 (DR-35's fallback):
