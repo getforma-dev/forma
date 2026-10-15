@@ -114,7 +114,7 @@ describe('component binding identity extraction', () => {
     expect(other.bindings).toEqual([]);
   });
   it('refuses pre-return writes while allowing event handlers and unrelated registered effects', () => {
-    for (const statement of ['setN(2);','const alias=setN;alias(2);','external();','const ignored=setN(2);','const ignored=external();']) {
+    for (const statement of ['setN(2);','const alias=setN;alias(2);','external();','const ignored=setN(2);','const ignored=external();','const ignored=setN?.(2);','const ignored=setN`tag`;']) {
       expect(()=>analyze(`export function Counter(){const [n,setN]=createSignal(1);${statement}return h('p',null,n);}`)).toThrow(/pre-return/);
     }
     const effects = `import {createEffect} from '@getforma/core';`;
@@ -122,6 +122,9 @@ describe('component binding identity extraction', () => {
     expect(()=>analyze(effects+`export function Counter(p){createEffect(()=>{p.title='changed';});return h('p',null,p.title);}`,['title'])).toThrow(/effect mutates/);
     expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);createEffect(()=>{n();});return h('button',{onClick:()=>setN(2)},n);}`)).not.toThrow();
     expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);function bump(){setN(2);}createEffect(()=>bump());return h('p',null,n);}`)).toThrow(/pre-return effect call/);
+    expect(()=>analyze(effects+`export function Counter(){const [n,setN]=createSignal(1);function bump(){setN(2);}createEffect(bump);return h('p',null,n);}`)).toThrow(/literal callback/);
+    expect(()=>analyze(effects+`const [n,setN]=createSignal(1);class Bump{constructor(){setN(2);}}export function Counter(){createEffect(()=>new Bump());return h('p',null,n);}`)).toThrow(/pre-return effect execution/);
+    expect(()=>analyze(`import {onCleanup} from '@getforma/core';export function Counter(){const [n,setN]=createSignal(1);function dispose(){setN(2);}onCleanup(dispose);return h('button',{onClick:()=>setN?.(3)},n);}`)).not.toThrow();
     const modules: Record<string,string> = {
       './store': head+'export const [count,setCount]=createSignal(1);',
       './barrel': 'export {setCount as update} from "./store";',

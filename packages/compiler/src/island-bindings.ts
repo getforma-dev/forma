@@ -344,7 +344,9 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
               continue;
             }
             if (t.isCallExpression(value) && coreName(value.callee, env.module) === 'createEffect') {
-              rejectBindingWrites(value, env); continue;
+              const callback = value.arguments[0];
+              if (value.arguments.length !== 1 || !isFunction(callback)) fail(env.module, value, 'pre-return effect needs a literal callback whose execution can be checked');
+              rejectBindingWrites(callback.body, env); continue;
             }
             fail(env.module, statement, 'unsupported pre-return expression or mutation; native bindings must keep their described initial value');
           } else if (!t.isFunctionDeclaration(statement) && !t.isEmptyStatement(statement) && !t.isTSTypeAliasDeclaration(statement) && !t.isTSInterfaceDeclaration(statement)) fail(env.module, statement, 'unsupported native component control flow');
@@ -365,9 +367,9 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
   function rejectInitializerWrites(node: t.Node, env: Environment): void {
     // Creating a function does not execute its body. All other initializer
     // expressions execute before return even if their result is never read.
-    if (isFunction(node)) return;
+    if (t.isFunction(node)) return;
     if (t.isCallExpression(node) && !(node.arguments.length === 0 && getter(node.callee, env))) fail(env.module, node, 'unsupported pre-return initializer call; native bindings require closed execution');
-    if (t.isNewExpression(node) || t.isAssignmentExpression(node) || t.isUpdateExpression(node) || t.isAwaitExpression(node) || t.isYieldExpression(node)) fail(env.module, node, 'unsupported pre-return initializer mutation');
+    if (t.isNewExpression(node) || t.isOptionalCallExpression(node) || t.isTaggedTemplateExpression(node) || t.isAssignmentExpression(node) || t.isUpdateExpression(node) || t.isAwaitExpression(node) || t.isYieldExpression(node) || t.isUnaryExpression(node,{operator:'delete'})) fail(env.module, node, 'unsupported pre-return initializer execution');
     for (const key of t.VISITOR_KEYS[node.type] ?? []) {
       const child = (node as unknown as Record<string,unknown>)[key];
       for (const value of Array.isArray(child) ? child : [child]) if (value && typeof value === 'object' && 'type' in value) rejectInitializerWrites(value as t.Node,env);
@@ -418,6 +420,8 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     return false;
   }
   function rejectBindingWrites(node: t.Node, env: Environment): void {
+    if (t.isFunction(node)) return; // A nested function is a deferred value.
+    if (t.isNewExpression(node) || t.isOptionalCallExpression(node) || t.isTaggedTemplateExpression(node) || t.isAwaitExpression(node) || t.isYieldExpression(node) || t.isUnaryExpression(node,{operator:'delete'})) fail(env.module, node, 'unsupported pre-return effect execution');
     if (t.isCallExpression(node) && setter(node.callee, env)) fail(env.module, node, 'pre-return effect writes a signal used by native rendering');
     if (t.isCallExpression(node) && coreName(node.callee, env.module) !== 'createEffect' && !(node.arguments.length === 0 && getter(node.callee, env))) fail(env.module, node, 'unsupported pre-return effect call; helper and external effects cannot prove a stable native seed');
     if (t.isAssignmentExpression(node) || t.isUpdateExpression(node)) {
