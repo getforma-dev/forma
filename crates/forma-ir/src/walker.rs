@@ -11,6 +11,7 @@ use crate::format::SlotSource;
 use crate::format::{IrError, IslandTrigger, Opcode};
 use crate::parser::IrModule;
 use crate::slot::{SlotData, SlotValue};
+use crate::text::{normalize_text, normalized_chars};
 use std::fmt;
 
 // ---------------------------------------------------------------------------
@@ -704,7 +705,8 @@ fn walk_range_impl(
                 } else {
                     push_escaped_html(out, text, limit)?;
                     if let Some(option) = state.option_by_text.as_mut() {
-                        option.text.push_str(text);
+                        // The text as the parser reads it: normalized.
+                        option.text.extend(normalized_chars(text));
                     }
                 }
                 state.nodes += 1;
@@ -754,7 +756,7 @@ fn walk_range_impl(
                     push_u16(out, marker_id, limit)?;
                     push_checked(out, "-->", limit)?;
                     if let Some(option) = state.option_by_text.as_mut() {
-                        option.text.push_str(written);
+                        option.text.extend(normalized_chars(written));
                     }
                 }
                 state.nodes += 1;
@@ -1242,8 +1244,11 @@ fn is_url_attr(name: &str) -> bool {
 /// same way before testing — byte-identical to formajs's `isDangerousUrl`, so
 /// the server emits exactly what the client would have produced.
 fn is_dangerous_url(value: &str, tag: &str) -> bool {
-    let normalized: String = value
-        .chars()
+    // The guard reads the value as it will be written (rule 1, FORMA-182), so
+    // the string it classifies is the string the attribute carries; the
+    // filtered copy it already built is the only allocation.
+    // Verified by: crates/forma-ir/src/walker.rs > "url_attributes_are_checked_as_the_normalized_string_that_is_written"
+    let normalized: String = normalized_chars(value)
         .filter(|c| {
             let n = *c as u32;
             !((n <= 0x20) || (0x7F..=0x9F).contains(&n))
@@ -1476,12 +1481,15 @@ struct TextOnlyParent {
 /// Write text into a text-only parent: escaped, with no marker and no
 /// zero-width space, under the textarea's leading-LF rule.
 ///
-/// The parser drops one line feed straight after `<textarea>` (a CR or CRLF is
-/// a line feed by then). A marker used to stand between the tag and the first
-/// line; without one, content that starts with a line break gets one more, so
-/// the parsed value is the value written.
+/// The parser drops one line feed straight after `<textarea>`. A marker used
+/// to stand between the tag and the first line; without one, content that
+/// starts with a line break gets one more, so the parsed value is the value
+/// written. Under rule 1 a leading CR or CRLF is already a line feed when it
+/// is written, so only an initial LF of the normalized text is doubled. An
+/// empty chunk does not consume the boundary.
 ///
 /// Verified by: crates/forma-ir/src/walker.rs > "a_textarea_doubles_a_leading_line_feed"
+/// Verified by: crates/forma-ir/src/walker.rs > "textarea_children_protect_only_an_initial_normalized_line_feed"
 fn write_text_only(
     out: &mut String,
     parent: &mut TextOnlyParent,
@@ -1493,7 +1501,7 @@ fn write_text_only(
     }
     if parent.tag == TextOnlyTag::Textarea
         && !parent.started
-        && (text.starts_with('\n') || text.starts_with('\r'))
+        && normalized_chars(text).next() == Some('\n')
     {
         push_checked(out, "\n", limit)?;
     }
@@ -1554,12 +1562,15 @@ enum SelectWanted {
 
 impl SelectBinding {
     fn new(value: &SlotValue, multiple: bool) -> Self {
+        // Each wanted value is compared with option values that are written
+        // normalized (rule 1), so it is normalized the same way: a requested
+        // NUL matches the option whose attribute the browser reads as U+FFFD.
         let wanted = match value {
             SlotValue::Array(items) if multiple => {
                 SelectWanted::Any(items.iter().map(js_string).collect())
             }
             // `value == null ? '' : String(value)` is exactly `to_text`.
-            other => SelectWanted::One(other.to_text()),
+            other => SelectWanted::One(normalize_text(&other.to_text()).into_owned()),
         };
         SelectBinding {
             wanted,
@@ -1585,7 +1596,7 @@ impl SelectBinding {
 fn js_string(value: &SlotValue) -> String {
     match value {
         SlotValue::Null => "null".to_string(),
-        other => other.to_text(),
+        other => normalize_text(&other.to_text()).into_owned(),
     }
 }
 
@@ -1608,11 +1619,12 @@ enum Prop<'a> {
 }
 
 impl Prop<'_> {
-    /// The client's control text: `value == null ? '' : String(value)`.
+    /// The client's control text: `value == null ? '' : String(value)`, under
+    /// rule 1, since it is compared with and written as DOM text.
     fn control_text(self) -> String {
         match self {
-            Prop::Static(s) => s.to_string(),
-            Prop::Slot(v) => v.to_text(),
+            Prop::Static(s) => normalize_text(s).into_owned(),
+            Prop::Slot(v) => normalize_text(&v.to_text()).into_owned(),
         }
     }
 
@@ -1924,7 +1936,28 @@ fn push_u16(out: &mut String, value: u16, limit: usize) -> Result<(), IrError> {
     }
 }
 
+/// Append one normalized character, refusing to exceed the output budget by
+/// its actual encoded length: U+FFFD (NUL's replacement) is three bytes, an
+/// astral character four, so a check of `out.len() >= limit` before the push
+/// could overshoot the budget by up to three bytes.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written"
+fn push_char_checked(out: &mut String, ch: char, limit: usize) -> Result<(), IrError> {
+    if out.len().saturating_add(ch.len_utf8()) > limit {
+        return Err(IrError::OutputLimitExceeded { limit });
+    }
+    out.push(ch);
+    Ok(())
+}
+
 /// Escape text for HTML content (`& < >`), within the output budget.
+///
+/// The text is written under rule 1 (`crate::text`): CRLF and CR become LF
+/// and NUL becomes U+FFFD, per value, before escaping. A NUL grows from one
+/// byte to three, which the fast path's worst-case bound (six per input
+/// byte) already covers.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "text_and_dyn_text_write_each_value_normalized"
 fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), IrError> {
     // Fast path: even worst-case expansion fits, so no per-character checks.
     if out
@@ -1932,7 +1965,7 @@ fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), I
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in text.chars() {
+        for ch in normalized_chars(text) {
             match ch {
                 '&' => out.push_str("&amp;"),
                 '<' => out.push_str("&lt;"),
@@ -1942,30 +1975,28 @@ fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), I
         }
         return Ok(());
     }
-    for ch in text.chars() {
+    for ch in normalized_chars(text) {
         match ch {
             '&' => push_checked(out, "&amp;", limit)?,
             '<' => push_checked(out, "&lt;", limit)?,
             '>' => push_checked(out, "&gt;", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
+            _ => push_char_checked(out, ch, limit)?,
         }
     }
     Ok(())
 }
 
 /// Escape text for HTML attribute values (`& " < >`), within the output budget.
+/// Normalized under rule 1 exactly as [`push_escaped_html`] is.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "static_and_dynamic_attributes_write_each_value_normalized"
 fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), IrError> {
     if out
         .len()
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in text.chars() {
+        for ch in normalized_chars(text) {
             match ch {
                 '&' => out.push_str("&amp;"),
                 '"' => out.push_str("&quot;"),
@@ -1976,18 +2007,13 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
         }
         return Ok(());
     }
-    for ch in text.chars() {
+    for ch in normalized_chars(text) {
         match ch {
             '&' => push_checked(out, "&amp;", limit)?,
             '"' => push_checked(out, "&quot;", limit)?,
             '<' => push_checked(out, "&lt;", limit)?,
             '>' => push_checked(out, "&gt;", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
+            _ => push_char_checked(out, ch, limit)?,
         }
     }
     Ok(())
@@ -4841,7 +4867,9 @@ mod tests {
                     let v = p.slot(text("\r\nhello"));
                     p.dyn_text(v);
                 }),
-                "<textarea>\n\r\nhello</textarea>",
+                // Rule 1 (FORMA-182): the CRLF is written as LF, and that
+                // initial LF is the one doubled.
+                "<textarea>\n\nhello</textarea>",
             ),
             (
                 "an empty value first: the first written byte decides",
@@ -6061,6 +6089,41 @@ mod tests {
                 );
             }
             finish(failures);
+        }
+
+        #[test]
+        fn the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written() {
+            // A top-level TEXT with no closing tag, so the budget ends inside
+            // the text itself: exactly-at renders, one byte under refuses. The
+            // ten-byte prefix forces the per-character slow path (worst-case
+            // expansion no longer fits). Before this check a three-byte U+FFFD
+            // or four-byte astral character was pushed when `out.len()` was
+            // merely below the limit, overshooting it by up to three bytes.
+            for (input, written) in [
+                ("xxxxxxxxxx\0", "xxxxxxxxxx\u{FFFD}"),
+                ("xxxxxxxxxx😀", "xxxxxxxxxx😀"),
+                ("xxxxxxxxxx&", "xxxxxxxxxx&amp;"),
+                ("xxxxxxxxxx\r\n", "xxxxxxxxxx\n"),
+            ] {
+                let mut page = Page::new();
+                page.text(input);
+                let (module, slots) = page.module_and_slots();
+                let limits = |max_output_bytes| WalkLimits {
+                    max_output_bytes,
+                    ..WalkLimits::default()
+                };
+                let exact = written.len();
+                assert_eq!(
+                    walk_to_html_with_limits(&module, &slots, limits(exact)).as_deref(),
+                    Ok(written),
+                    "{input:?} at its exact budget"
+                );
+                assert_eq!(
+                    walk_to_html_with_limits(&module, &slots, limits(exact - 1)),
+                    Err(IrError::OutputLimitExceeded { limit: exact - 1 }),
+                    "{input:?} one byte under its budget"
+                );
+            }
         }
     }
 }

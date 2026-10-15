@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Value rule 1: line endings and NUL — FORMA-182
+
+- Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. A scalar URL attribute is normalized before the URL guard, so the string checked is the string written. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.
+
 ### Strict island activation — FORMA-104 development integration
 
 - Connect the checked transaction to compiled SSR activation. It requires one matching owned Element, validates before publication, and makes zero initial DOM writes on success. Private phase replaces success-status/SSR-marker writes. Empty SSR, imperative Node/void returns and mismatches no longer select a repair or client fallback.

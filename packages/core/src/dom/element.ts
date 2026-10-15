@@ -21,6 +21,11 @@ import {
   isUrlAttr,
 } from '../security/url-safety.js';
 import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, refuseScriptElement, type TrustedHtml } from './trusted-html.js';
+// Rule 1 (FORMA-182, docs/parity-rules.md): every ordinary text child and
+// scalar attribute value is written normalized, per value, so the DOM h()
+// builds is the DOM the browser parses from the walker's HTML. Raw HTML,
+// style and event sinks keep their own typed paths and are not routed here.
+import { normalizeDomText } from './normalize-text.js';
 
 /**
  * Symbol used as JSX Fragment factory. h(Fragment, null, ...children) returns DocumentFragment.
@@ -299,7 +304,7 @@ function innerHtmlOf(value: unknown): unknown {
 function handleClass(el: Element, _key: string, value: unknown): void {
   if (typeof value === 'function') {
     internalEffect(() => {
-      const v = (value as () => string)();
+      const v = normalizeDomText((value as () => string)());
       const cache = getCache(el);
       if (cache['class'] === v) return;
       cache['class'] = v;
@@ -311,12 +316,13 @@ function handleClass(el: Element, _key: string, value: unknown): void {
     });
   } else {
     const cache = getCache(el);
-    if (cache['class'] === value) return;
-    cache['class'] = value;
+    const v = typeof value === 'string' ? normalizeDomText(value) : value;
+    if (cache['class'] === v) return;
+    cache['class'] = v;
     if (el instanceof HTMLElement) {
-      el.className = value as string;
+      el.className = v as string;
     } else {
-      el.setAttribute('class', value as string);
+      el.setAttribute('class', v as string);
     }
   }
 }
@@ -546,7 +552,7 @@ function handleXLink(el: Element, key: string, value: unknown): void {
       el.removeAttributeNS(XLINK_NS, localName);
       return;
     }
-    const strVal = String(v);
+    const strVal = normalizeDomText(String(v));
     if (isUnsafeAttrWrite(el.localName, key, strVal)) {
       if (__DEV__) warnDropped(el, key, 'unsafe-URL');
       el.removeAttributeNS(XLINK_NS, localName);
@@ -634,7 +640,10 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
     const cache = getCache(el);
     if (v != null && v !== false) {
       checkRawAttr(key, v);
-      const strVal = String(v);
+      // Normalized before the guard and the cache: the string checked is the
+      // string written and remembered.
+      // Verified by: src/dom/__tests__/normalize-text.test.ts > "h() attributes write $id normalized: static, dynamic, class and xlink"
+      const strVal = normalizeDomText(String(v));
       // Already written, already guarded — see the note above the function.
       if (cache[key] === strVal) return;
       if (!urlAttr || !isDangerousUrl(strVal, el.localName)) {
@@ -729,10 +738,11 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   if (value == null || value === false) return;
 
   if (key === 'class' || key === 'className') {
+    const v = typeof value === 'string' ? normalizeDomText(value) : value as string;
     if (el instanceof HTMLElement) {
-      el.className = value as string;
+      el.className = v;
     } else {
-      el.setAttribute('class', value as string);
+      el.setAttribute('class', v);
     }
     return;
   }
@@ -753,7 +763,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
 
   // xlink: namespace
   if (key.charCodeAt(0) === 120 /* x */ && key.startsWith('xlink:')) {
-    const strVal = String(value);
+    const strVal = normalizeDomText(String(value));
     if (isUnsafeAttrWrite(el.localName, key, strVal)) {
       if (__DEV__) warnDropped(el, key, 'unsafe-URL');
       return;
@@ -785,7 +795,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
     el.setAttribute(key, '');
     return;
   }
-  const strVal = String(value);
+  const strVal = normalizeDomText(String(value));
   if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {
     if (__DEV__) warnDropped(el, key, 'unsafe-URL');
     return;
@@ -811,8 +821,9 @@ function appendChild(parent: Node, child: unknown): void {
   }
 
   // "Track Limits": new Text() bypasses Document.createTextNode's validation.
+  // Verified by: src/dom/__tests__/normalize-text.test.ts > "h() children write $id normalized on the single, multiple, reactive and array paths"
   if (typeof child === 'string') {
-    parent.appendChild(new Text(child));
+    parent.appendChild(new Text(normalizeDomText(child)));
     return;
   }
 
@@ -872,7 +883,7 @@ function appendChild(parent: Node, child: unknown): void {
           else if (Array.isArray(item)) {
             if (DEBUG) console.warn('[forma] Nested arrays in function children are not supported. Flatten the array or use createList().');
           } else if (item != null && item !== false && item !== true) {
-            frag.appendChild(new Text(String(item)));
+            frag.appendChild(new Text(normalizeDomText(String(item))));
           }
         }
         // Empty array → treat as null (no DOM output)
@@ -909,7 +920,7 @@ function appendChild(parent: Node, child: unknown): void {
           }
           currentFragChildren = null;
         }
-        const text = typeof resolved === 'symbol' ? String(resolved) : String(resolved ?? '');
+        const text = normalizeDomText(typeof resolved === 'symbol' ? String(resolved) : String(resolved ?? ''));
         if (!currentNode) {
           currentNode = new Text(text);
           parent.appendChild(currentNode);
@@ -1105,7 +1116,7 @@ export function fillElement<E extends Element>(
   } else if (childLen === 1) {
     const only = children[0];
     if (typeof only === 'string') {
-      target.textContent = only;
+      target.textContent = normalizeDomText(only);
     } else if (typeof only === 'number') {
       target.textContent = String(only);
     } else {

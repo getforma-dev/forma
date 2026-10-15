@@ -8,6 +8,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { normalizeDomText } from '../normalize-text.js';
 import { createText } from '../text.js';
 import { h, svg } from '../element.js';
 import { childText, writeFormControlProperty } from '../form-control.js';
@@ -37,6 +38,20 @@ function servedRange(doc: Document, text: string): HTMLElement {
   doc.body.append(host);
   return host;
 }
+
+describe('normalizeDomText: the shared helper', () => {
+  it.each(vectors.values)('maps $id exactly and returns the same string when nothing changes', ({ input, expected }) => {
+    const result = normalizeDomText(input);
+    expect(result).toBe(expected);
+    // Identity for unchanged input, so cache comparisons see the same string.
+    expect(Object.is(result, input)).toBe(input === expected);
+    expect(normalizeDomText(result)).toBe(result);
+  });
+
+  it.each(vectors.children)('folds a CRLF only inside one value: $id', ({ children, expected }) => {
+    expect(children.map(normalizeDomText).join('')).toBe(expected);
+  });
+});
 
 describe('rule 1 vectors: ordinary text writers', () => {
   it.each(vectors.values)('createText writes $id normalized, static and reactive', ({ input, expected }) => {
