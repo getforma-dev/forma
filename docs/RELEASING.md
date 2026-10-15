@@ -42,7 +42,13 @@ packages every crate with `cargo package --workspace --no-verify --locked` and
 packs all npm packages with `--ignore-scripts`. Cargo 1.90 stabilized workspace
 packaging/publishing of unpublished interdependent crates; the pinned 1.93.1
 behavior is also exercised by an offline two-crate test that packages twice and
-compares bytes and the unchanged lock. See the [Rust 1.90 release notes](https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/).
+compares bytes and the unchanged lock. See the [Rust 1.90 release notes](https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/). Each packaging
+attempt uses its own fresh `--target-dir` and removes only that owned directory
+after copying the archives. Reusing Cargo's temporary packaging registry after a
+source change can retain a predecessor's old checksum even at the same version.
+The changed-source regression checks every dependent lock against its actual new
+predecessor archive and verifies the packed source-commit metadata; shared build
+targets and failed release artifacts remain untouched.
 
 Source template locks cannot contain a future registry checksum before that
 artifact has been packed. Pack first creates the three crates and three library
