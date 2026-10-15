@@ -3,12 +3,13 @@
 import { AdoptionDom, AdoptionDomError, type AdoptionCursor } from './adoption-plan.js';
 import { withAdoptionDescription, type ComponentDescription } from './adoption-description.js';
 import { registerDisposer } from '../reactive/root.js';
-import { AdoptionLifecycle, type PreparationOptions } from '../reactive/adoption-lifecycle.js';
+import { untrack } from '../reactive/untrack.js';
+import { AdoptionLifecycle, type PreparationOptions, type PreparedGroup } from '../reactive/adoption-lifecycle.js';
 import { contentNs, SVG_NS, MATHML_NS, withNamespace } from './namespace.js';
 import { isEventHandlerAttr } from '../security/url-safety.js';
 import { prepareAttribute } from './adoption-attributes.js';
 import { isFormControlProperty } from './form-control.js';
-import type { HydrationDescriptor, FragmentDescriptor } from './hydrate.js';
+import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor } from './hydrate.js';
 
 interface Listener { element:Element; event:string; listener:EventListener; controller?:AbortController }
 export interface PreparedAdoption {
@@ -79,6 +80,54 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     for(const child of desc.children)walk(child,nested,inner);
     nested.finish();
   }
+  function fresh(value:unknown):Node|null {
+    if(value==null||typeof value==='boolean')return null;
+    if(typeof value==='string'||typeof value==='number')return host.ownerDocument.createTextNode(String(value));
+    if(value instanceof Node)return value;
+    return refuse();
+  }
+  function show(desc:ShowDescriptor,cursor:AdoptionCursor,ns:string|null):void {
+    const range=cursor.range('s');
+    let active:PreparedGroup<unknown>,initial=true,current:boolean;
+    const cached=new Map<boolean,{fragment:DocumentFragment;owner:PreparedGroup<unknown>}>();
+    let owner:PreparedGroup<void>;
+    owner=scope.group(()=>{
+      current=scope.observe(()=>!!desc.condition(),next=>{
+        if(next===current)return;
+        const parent=range.start.parentNode;
+        if(!parent||range.end.parentNode!==parent)refuse();
+        // Validate the range before moving anything; factory failure also
+        // leaves the original live range intact (callbacks are already live).
+        const leaving:Node[]=[];
+        for(let node=range.start.nextSibling;node!==range.end;node=node?.nextSibling??null){
+          if(!node)refuse();leaving.push(node);
+        }
+        let entering=cached.get(next);
+        if(entering)cached.delete(next);
+        else{
+          const branch=owner.child(()=>untrack(()=>withNamespace(ns,()=>withAdoptionDescription(
+            ()=>fresh((next?desc.whenTrue:desc.whenFalse)?.()),false,
+          ))));
+          const fragment=host.ownerDocument.createDocumentFragment();
+          if(branch.value)fragment.appendChild(branch.value);
+          entering={fragment,owner:branch};
+        }
+        const fragment=host.ownerDocument.createDocumentFragment();
+        for(const node of leaving)fragment.appendChild(node);
+        if(initial){active.dispose();initial=false;}
+        else cached.set(current,{fragment,owner:active});
+        active=entering.owner;current=next;
+        parent.insertBefore(entering.fragment,range.end);
+      });
+      active=scope.group(()=>{
+        const inside=dom.within(range);
+        const selected=current?desc.whenTrue:desc.whenFalse;
+        if(selected)walk(construct(selected,ns),inside,ns);
+        inside.finish();
+      });
+      registerDisposer(()=>{cached.clear();});
+    });
+  }
   function walk(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
     if(value==null||typeof value==='boolean')return;
     if(typeof value==='string'||typeof value==='number'){cursor.text(String(value));return;}
@@ -91,9 +140,10 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       previous=text(initial);target=cursor.textRange(previous);return;
     }
     if(typeof value!=='object')return refuse();
-    const description=value as HydrationDescriptor|FragmentDescriptor|ComponentDescription;
+    const description=value as HydrationDescriptor|FragmentDescriptor|ComponentDescription|ShowDescriptor;
     switch(description.type){
       case 'element':element(description,cursor,ns);return;
+      case 'show':show(description,cursor,ns);return;
       case 'fragment':for(const child of description.children)walk(child,cursor,ns);return;
       case 'component':{
         // Registered nested hosts are opaque and must use their own checked
