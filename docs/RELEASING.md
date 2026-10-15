@@ -46,8 +46,10 @@ compares bytes and the unchanged lock. See the [Rust 1.90 release notes](https:/
 
 Source template locks cannot contain a future registry checksum before that
 artifact has been packed. Pack first creates the three crates and three library
-npm tarballs, then stages **only** internal package versions, dependency metadata,
-registry URLs and checksums into the create-app templates. Third-party resolutions
+npm tarballs, then stages internal package versions, dependency metadata,
+registry URLs and checksums into the create-app templates. For the finalized 3.0.x
+candidate contract, an authenticated source adapter also stages the reviewed
+typed startup API; historical A2 source stays unchanged. Third-party resolutions
 remain unchanged. It packs create-app last and restores all source template files,
 including after a staging/write failure. Packed template `_npmrc` files are kept
 and restored to `.npmrc` by the CLI. DS11 contains seven archives, the exact source
@@ -176,3 +178,7 @@ and locks on success or failure. This adapter does not migrate applications or
 claim FORMA-144 complete. The recurring restoration test and a new actual packed
 rehearsal document this stage; historical A2 and earlier P17 reports stay unchanged.
 `liveReleaseReady` remains false while the remaining milestone contracts are open.
+
+## Finalized rendering in candidate templates
+
+The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates and FORMA-144 remain pending, and `liveReleaseReady` stays false.

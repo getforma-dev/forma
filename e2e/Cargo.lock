@@ -164,6 +164,7 @@ version = "0.0.0"
 dependencies = [
  "forma-ir",
  "forma-server",
+ "rust-embed",
  "serde_json",
 ]
 

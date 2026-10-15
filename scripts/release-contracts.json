@@ -12,5 +12,6 @@
     "FORMA-188": "fixture applications and skew drill",
     "FORMA-191": "release measurements"
   },
-  "trustedTypes": "enforced-v1"
+  "trustedTypes": "enforced-v1",
+  "boundRender": "finalized-v1"
 }
