@@ -14,6 +14,7 @@ import { isEventHandlerAttr } from '../security/url-safety.js';
 import { prepareAttribute } from './adoption-attributes.js';
 import { prepareStyle, prepareRaw, type PreparedRaw } from './adoption-content.js';
 import { warnInnerHtmlChildren } from './trusted-html.js';
+import { currentAdoptionDiagnostic, withAdoptionDiagnostic, type AdoptionDiagnostic } from '../reactive/adoption-diagnostics.js';
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import { AdoptionControls, type ControlToken } from './adoption-controls.js';
 import { checkIslandClaim, isRegisteredIslandComponent, matchAdoptionChild, type ValidatedIsland } from './island-state.js';
@@ -35,6 +36,8 @@ export interface AdoptionOptions {
    * direct-API kernel has no capture/enroll methods or setter authority. */
   scope?: (options:PreparationOptions)=>AdoptionLifecycle;
   failure?: PreparationOptions['failure'];
+  /** Preserve initial thrown primitive values without wrapping user exceptions. */
+  errorContext?: (diagnostic:AdoptionDiagnostic)=>void;
 }
 function refuse():never {throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');}
 function text(value:unknown):string {
@@ -68,7 +71,15 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   const scopeOptions:PreparationOptions={check:()=>{dom.assertUnchanged();controls.check();for(const child of children)checkIslandClaim(child);},failure:options.failure};
   const scope=options.scope?.(scopeOptions)??new AdoptionLifecycle(scopeOptions);
   const listeners:Listener[]=[];
-  const controlBindings=new Map<ControlToken,{read?:()=>unknown;skip?:{value:unknown}}>();
+  let nextBinding=0,initialFailure=false;
+  function at<T>(label:string,fn:()=>T):T {
+    const binding=nextBinding++,parent=currentAdoptionDiagnostic();
+    const diagnostic=Object.freeze({binding,path:`${parent?.path??''}/${label}[${binding}]`});
+    try{return withAdoptionDiagnostic(diagnostic,fn);}catch(error){
+      if(!initialFailure){initialFailure=true;options.errorContext?.(diagnostic);}throw error;
+    }
+  }
+  const controlBindings=new Map<ControlToken,{read?:()=>unknown;skip?:{value:unknown};diagnostic?:AdoptionDiagnostic}>();
   const release=():void=>{dom.release();controls.release();controlBindings.clear();children.clear();};
   const dispose=():void=>{scope.abort();release();};
   function construct<T>(fn:()=>T,ns:string|null):T {
@@ -83,7 +94,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
 
   function control(element:Element,key:'value'|'checked'|'selected'|'text',value:unknown,authority?:()=>unknown):void {
     const read=typeof value==='function'?value as ()=>unknown:undefined;
-    const binding:{read?:()=>unknown;skip?:{value:unknown}}={read:authority??read};
+    const binding:{read?:()=>unknown;skip?:{value:unknown};diagnostic?:AdoptionDiagnostic}={read:authority??read,diagnostic:currentAdoptionDiagnostic()};
     const write=(next:unknown)=>{
       // Seeding only suppresses this edited control's matching notification.
       // Other dependents remain live; a later different value is never skipped,
@@ -109,11 +120,21 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     control(element,'text',reads.length?collect:collect(),children.length===1&&reads.length===1?reads[0]:undefined);
   }
 
+  function title(element:Element,children:unknown[]):void {
+    const collect=()=>children.map(child=>{
+      const value=typeof child==='function'?(child as ()=>unknown)():child;
+      return value==null||typeof value==='boolean'?'':text(value);
+    }).join('');
+    let previous:string;
+    const write=(next:string)=>{if(next!==previous){element.textContent=next;previous=next;}};
+    const initial=children.some(child=>typeof child==='function')?scope.observe(collect,write):collect();
+    const inside=dom.children(element);inside.text(initial);inside.finish();previous=initial;
+  }
   function props(element:Element,values:Record<string,unknown>|null,raw:(value:unknown)=>void):void {
     if(!values)return;
-    for(const [key,value]of ownProps(values)){
-      if(key==='children')continue;
-      if(key==='ref'){if(typeof value==='function')scope.deferRef(()=>value(element));continue;}
+    for(const [key,value]of ownProps(values))at('@'+key,()=>{
+      if(key==='children')return;
+      if(key==='ref'){if(typeof value==='function')scope.deferRef(()=>value(element));return;}
       if(key.startsWith('on')&&key.length>2){
         // Preserve function receiver and native object handleEvent lookup,
         // while keeping all callback-created work in this prepared owner.
@@ -125,18 +146,18 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
           const item:Listener={element,event:key.slice(2).toLowerCase(),listener};
           listeners.push(item);registerDisposer(()=>item.controller?.abort());
         }
-        dom.expectAttribute(element,key.toLowerCase(),null);continue;
+        dom.expectAttribute(element,key.toLowerCase(),null);return;
       }
       if(key==='style'){
         let binding:ReturnType<typeof prepareStyle>;
         const initial=typeof value==='function'?scope.observe(value as ()=>unknown,next=>binding.write(next)):value;
-        binding=prepareStyle(element,initial);continue;
+        binding=prepareStyle(element,initial);return;
       }
-      if(key==='dangerouslySetInnerHTML'){raw(value);continue;}
-      if(isFormControlProperty(element,key)){control(element,key as 'value'|'checked'|'selected',value);continue;}
-      if(isEventHandlerAttr(key)){dom.expectAttribute(element,key.toLowerCase(),null);continue;}
+      if(key==='dangerouslySetInnerHTML'){raw(value);return;}
+      if(isFormControlProperty(element,key)){control(element,key as 'value'|'checked'|'selected',value);return;}
+      if(isEventHandlerAttr(key)){dom.expectAttribute(element,key.toLowerCase(),null);return;}
       attribute(element,key,value);
-    }
+    });
   }
   function element(desc:HydrationDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const own=desc.tag==='svg'?SVG_NS:desc.tag==='math'?MATHML_NS:ns;
@@ -166,6 +187,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     if(raw?.ownsContent){warnInnerHtmlChildren(desc.props,desc.children);return;}
     const children=()=>{
       if(area){if(!valueProp)textarea(target,desc.children);return;}
+      if(target.namespaceURI==='http://www.w3.org/1999/xhtml'&&target.localName==='title'){title(target,desc.children);return;}
       const nested=dom.children(target),inner=contentNs(target);
       for(const child of desc.children)walk(child,nested,inner);
       nested.finish();
@@ -395,6 +417,9 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     });
   }
   function walk(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
+    at('node',()=>visit(value,cursor,ns,root));
+  }
+  function visit(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
     if(value==null||typeof value==='boolean'){
       if(cursor.rangeKind()==='t')cursor.textRange(text(value));return;
     }
@@ -463,7 +488,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     for(const observation of controls.finish())if(observation.kind==='binding'&&observation.edited){
       const binding=controlBindings.get(observation.token)!;
       if(!binding.read)refuse();
-      scope.queueEdit(binding.read,observation.value);binding.skip={value:observation.value};
+      withAdoptionDiagnostic(binding.diagnostic,()=>scope.queueEdit(binding.read!,observation.value));binding.skip={value:observation.value};
     }
     scope.seal();
   }catch(error){dispose();throw error;}
