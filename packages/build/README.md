@@ -288,6 +288,25 @@ per entry: no island registry, no island metadata sidecar. (Through 0.1.9 it
 also wrote `<page>.islands.js` and `<page>.islands.json`, which every consumer
 had to delete by hand — see the CHANGELOG.)
 
+The compiler's successful entry product determines whether an SSR page needs
+browser code. A page with no reachable island definitions keeps its native IR,
+CSS and fonts, but its manifest has `mode: "ssr"`, `js: []` and no module
+preloads. Conditional islands still require JavaScript even when one request
+renders no island. Explicit `ssr: false` entries retain normal browser output.
+
+The first configured route entry remains its native owner before filtering.
+Keep that name in `routes[route].js`; do not replace the configuration with the
+filtered manifest array. Additional route entries must declare `ssr: false`.
+A static owner cannot request extra scripts or executable `serverInlined`
+output: those contradictions fail with `BUILD-611`. Other explicitly inlined
+resources remain available to their configured consumers.
+
+Split output keeps every static and dynamic JavaScript dependency of active
+entries, plus CSS/font resources; chunks used only by a removed static entry
+are omitted. Watch retains old generation files for existing documents. A
+candidate classification becomes accepted only when its complete graph, IR and
+manifest publication succeeds; a failed rebuild keeps the prior route policy.
+
 ## Asset Manifest
 
 Manifest 2 separates logical aliases from metadata keyed by emitted filename.

@@ -27,7 +27,8 @@ export interface CssEntry {
 }
 
 export interface RouteMapping {
-  /** Base names (without extension) of JS files for this route */
+  /** Configured entry base names. The first selects the native owner before
+   * static SSR removes its browser output; additional entries must be Browser. */
   js: string[];
   /** Base names (without extension) of CSS files for this route */
   css: string[];
@@ -90,7 +91,8 @@ export interface BuildConfig {
   watch?: boolean;
   /** Budget threshold in bytes (Brotli-compressed), default 200_000 */
   budgetThreshold?: number;
-  /** Files that should keep unhashed copies (e.g. for server-inlined assets) */
+  /** Files that should keep unhashed copies (e.g. for server-inlined assets).
+   * A zero-JS SSR owner cannot request executable server inlining. */
   serverInlined?: string[];
   /**
    * Fail the build on every coded SSR diagnostic but a note (FORMA-119,
