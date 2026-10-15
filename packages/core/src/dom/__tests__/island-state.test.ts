@@ -62,6 +62,20 @@ for (const test of cases) it(`roundtrips 100 fixed ${test.name} values by the co
 });
 
 describe('first-head document authority', () => {
+  it('requires the original light-DOM document at execution, preserving a restored same-node claim', () => {
+    const doc = page(), checked = valid(preflightIslands({ Test: registration() }, doc)[0]!);
+    expect(() => checkIslandClaim(checked)).not.toThrow();
+    checked.host.remove();
+    expect(checked.host.ownerDocument).toBe(doc);
+    expect(() => checkIslandClaim(checked)).toThrow('FORMA_E_ISLAND_IDENTITY');
+    const shadowHost = doc.createElement('section'); doc.body.appendChild(shadowHost);
+    shadowHost.attachShadow({ mode: 'open' }).appendChild(checked.host);
+    expect(checked.host.isConnected).toBe(true);
+    expect(() => checkIslandClaim(checked)).toThrow('FORMA_E_ISLAND_IDENTITY');
+    doc.body.appendChild(checked.host);
+    expect(() => checkIslandClaim(checked)).not.toThrow();
+  });
+
   it.each([
     null, [], {}, { v: 1, s: [], i: [], extra: true }, { v: 2, s: [], i: [] },
     { v: 1, s: {}, i: [] }, { v: 1, s: [1], i: [] }, { v: 1, s: [], i: {} },
@@ -108,6 +122,18 @@ describe('first-head document authority', () => {
 });
 
 describe('entry and original-host isolation', () => {
+  it('retains valid sibling state among many unclaimed malformed entries', () => {
+    const entries = Array.from({ length: 4096 }, () => null) as unknown[];
+    entries.push({ h: H, p: { value: 1001 } });
+    const doc = page({ v: 1, s: [], i: entries }, host(0) + host(4096));
+    const registry = { Test: registration(schema({ kind: 'number' })) };
+    for (let call = 0; call < 2; call++) {
+      const results = preflightIslands(registry, doc);
+      expect(code(results[0]!)).toBe('FORMA_E_ISLAND_STATE');
+      expect(valid(results[1]!).props.value).toBe(1001);
+    }
+    expect(doc.querySelectorAll('[data-forma-status="pending"]')).toHaveLength(2);
+  });
   it.each([null, [], {}, { h: H, p: {}, extra: 1 }, { h: H.toUpperCase(), p: {} }, { h: H, p: null }, { h: H, p: [] }])('isolates malformed entry %j from a valid sibling', bad => {
     const doc = page({ v: 1, s: [], i: [bad, { h: H, p: {} }] }, host(0) + host(1));
     const results = preflightIslands({ Test: registration() }, doc);

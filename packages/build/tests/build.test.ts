@@ -757,6 +757,9 @@ describe('@getforma/build — SSR output', () => {
    * to IR emission.
    */
   function writeIslandPage(): string {
+    const core=join(tmpRoot,'node_modules','@getforma','core');mkdirSync(core,{recursive:true});
+    writeFileSync(join(core,'package.json'),JSON.stringify({name:'@getforma/core',version:'3.0.0-dev',type:'module',exports:'./index.js'}));
+    writeFileSync(join(core,'index.js'),'export const __islandRegistration=(component,metadata)=>component;');
     writeFileSync(
       join(srcDir, 'forma-stub.js'),
       [

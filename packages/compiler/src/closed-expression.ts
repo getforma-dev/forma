@@ -1,5 +1,6 @@
+import {readSourceFile} from './source-snapshot';
 /** Closed source data shared by island inputs and local signal defaults. */
-import {readFileSync} from 'node:fs';
+
 import * as t from '@babel/types';
 import {originalPosition} from './diagnostics';
 import {PropsSchemaError} from './props-schema';
@@ -26,7 +27,7 @@ export function closedExpression(node:t.Node, file:string, identifiers?:Readonly
       // JSX lowering may already have rounded its numeric node. Check the
       // original token at the source-mapped position before accepting it.
       if(node.loc&&file) {
-        if(originalLines===undefined)try{originalLines=readFileSync(file,'utf8').split(/\r?\n/);}catch{originalLines=null;}
+        if(originalLines===undefined)try{originalLines=readSourceFile(file).split(/\r?\n/);}catch{originalLines=null;}
         if(originalLines) {
           const at=originalPosition(file,node.loc.start),line=originalLines[at.line-1]??'';
           const token=/^(?:0[xX][0-9a-fA-F_]+|0[bB][01_]+|0[oO][0-7_]+|[0-9][0-9_]*(?:\.[0-9_]*)?(?:[eE][+-]?[0-9_]+)?)/.exec(line.slice(at.column-1))?.[0]?.replaceAll('_','');

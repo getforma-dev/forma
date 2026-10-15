@@ -8,9 +8,9 @@
  * - A production build writes into a staging directory beside `outputDir` and
  *   swaps it in only once every step has succeeded ({@link replaceDirectory});
  *   a failure removes the staging directory and leaves `outputDir` untouched.
- * - Watch mode writes in place (esbuild owns the bundles), and replaces the
- *   files it writes itself by rename ({@link writeFileAtomic}), never by
- *   truncating them and writing again.
+ * - Watch mode stages immutable generation files and switches the manifest
+ *   by rename. Retained previous URLs remain valid for in-flight readers.
+ *   Failed publication restores prior files ({@link publishOutputFiles}).
  *
  * Windows: `rename` cannot replace a non-empty directory on any platform, and
  * on Windows a rename also fails while another process (a virus scanner, the
@@ -24,6 +24,8 @@ import {
   cpSync,
   existsSync,
   mkdirSync,
+  mkdtempSync,
+  readFileSync,
   readdirSync,
   renameSync,
   rmSync,
@@ -100,6 +102,56 @@ export function writeFileAtomic(path: string, data: string | Uint8Array, env: Ou
     (env.fs ?? nodeFs).rmSync(temporary, { recursive: true, force: true });
     throw error;
   }
+}
+
+export interface OutputWrite {path:string;contents:string|Uint8Array|null}
+
+/** Publish one successful browser/IR result, then its manifest. Every changed
+ * file is staged and backed up before its first replacement. A failed rename,
+ * validation or final manifest write restores the entire previous result.
+ * Readers use the manifest last; this is rollback, not a multi-file rename.
+ */
+export function publishOutputFiles(files:readonly OutputWrite[],complete:()=>readonly OutputWrite[]=()=>[],env:OutputEnv={}):void {
+  if(!files.length)return;
+  const fs=env.fs??nodeFs;
+  const scratch=mkdtempSync(join(dirname(dirname(files[0]!.path)),'.forma-publish-'));
+  type Prepared={path:string;next:string|null;previous:string|null};
+  const pending:Prepared[]=[],changed:Prepared[]=[],seen=new Set<string>();
+  let retain=false;
+  const stage=(writes:readonly OutputWrite[]):Prepared[]=>{
+    const group:Prepared[]=[];
+    for(const file of writes) {
+      if(seen.has(file.path))throw new Error(`duplicate output in one publication: ${file.path}`);
+      seen.add(file.path);
+      const old=existsSync(file.path)?readFileSync(file.path):null;
+      const next=file.contents===null?null:Buffer.from(file.contents);
+      if(old===null&&next===null||old!==null&&next!==null&&old.equals(next))continue;
+      const id=pending.length;
+      const item={path:file.path,next:next===null?null:join(scratch,`${id}.next`),previous:old===null?null:join(scratch,`${id}.previous`)};
+      if(next!==null)writeFileSync(item.next!,next);
+      if(old!==null)writeFileSync(item.previous!,old);
+      pending.push(item);group.push(item);
+    }
+    return group;
+  };
+  const install=(group:readonly Prepared[]):void=>{
+    for(const item of group) {
+      mkdirSync(dirname(item.path),{recursive:true});
+      if(item.next===null)fs.rmSync(item.path,{recursive:true,force:true});
+      else renameWithRetry(item.next,item.path,env);
+      changed.push(item);
+    }
+  };
+  try { install(stage(files));install(stage(complete())); }
+  catch(error) {
+    const failures:string[]=[];
+    for(const item of changed.reverse())try {
+      if(item.previous===null)fs.rmSync(item.path,{recursive:true,force:true});
+      else renameWithRetry(item.previous,item.path,env);
+    } catch {failures.push(item.path);}
+    if(failures.length){retain=true;throw new Error(`output publication failed (${String(error)}); could not restore ${failures.join(', ')}; previous bytes retained in ${scratch}`);}
+    throw error;
+  } finally {if(!retain)fs.rmSync(scratch,{recursive:true,force:true});}
 }
 
 // The siblings a build creates beside `outputDir`. The process id in the name

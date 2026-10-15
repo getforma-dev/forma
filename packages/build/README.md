@@ -341,23 +341,24 @@ resolves the files it always did and logs none of them.
 
 ### Watch mode and server-rendered pages
 
-With `ssr: true`, watch mode keeps each page's FMIR module current, so a page
-the server renders changes on an incremental rebuild (N7). Each page is watched
-over its own SSR entry's module graph (`ssrEntryPoints`, else its browser
-entry), apart from the browser bundles: an edit re-runs the compiler for the
-pages it touches and no others, including an SSR entry the browser bundle never
-imports. A module is written as `<page>.ir`, replaced by rename and only when
-its bytes change, and the dev manifest names it in the route's `ir`. A page
-with an esbuild error (a syntax error, an import that does not resolve) keeps
-its last good module and logs the error; when the compiler cannot emit a page's
-module, it writes its placeholder, as a production build does. A module that
-cannot be written is logged with its page. Each rewrite logs its time, for
-example `IR rewritten: home.ir in 36 ms`.
+Watched JS/chunks use esbuild's linked generation filenames, and IR filenames
+include their SHA-256. New bytes are staged before an atomic manifest rename
+selects the complete generation. Earlier files stay available for readers holding
+an earlier manifest or HTML response, until a fresh production build replaces the
+output directory. Failed compilation, validation or final publication keeps the
+accepted manifest and its referenced bytes. Always resolve output through manifest
+aliases; watched entry and IR filenames are no longer stable logical names.
 
-The server must read the new module. `forma-server` loads the `.ir` modules
-when the application starts (`load_ir_modules`), so restart it on a change
-under `outputDir`, for example with `cargo watch`, until it rereads them in
-development builds.
+With `ssr: true`, each browser context also watches the source and type inputs
+of its SSR entry (`ssrEntryPoints`, else its browser entry). A successful cycle
+returns JS and IR together; an SSR-only edit triggers the same paired cycle.
+Compiler and publication errors keep the last accepted generation. Each native
+rewrite logs its logical name and time, for example
+`IR rewritten: home.ir in 36 ms`; the manifest holds its actual hashed filename.
+
+In debug builds, `forma-server` validates the new manifest and module together.
+A refused update retains the previous module and asset snapshot. Route names
+and modes are frozen after startup finalization; those changes need a restart.
 
 ### Removed server functions
 

@@ -72,6 +72,29 @@ describe('state preflight precedes every activation side effect', () => {
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
     expect(hasScheduledOrActiveIslands()).toBe(false);
   });
+  it.each([0, 1] as const)('refuses a detached later immediate host before mode %s component execution', mode => {
+    const doc = page(['load', 'load']), second = doc.querySelector('[data-forma-state="1"]')!;
+    const skipped = vi.fn(), error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const before = second.outerHTML;
+    activateIslands({ C0: registration(() => { second.remove(); }), C1: registration(skipped, mode) }, doc);
+    expect(skipped).not.toHaveBeenCalled(); expect(second.outerHTML).toBe(before);
+    expect(second.ownerDocument).toBe(doc); expect(doc.contains(second)).toBe(false);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
+  });
+  it.each(['visible', 'idle', 'interaction'])('refuses a detached deferred %s host without component or DOM writes', trigger => {
+    const doc = page([trigger]); const host = doc.querySelector('[data-forma-island]')!;
+    let callback = () => {};
+    vi.stubGlobal('IntersectionObserver', class { constructor(fn: (entries: { isIntersecting: boolean }[]) => void) { callback = () => fn([{ isIntersecting: true }]); } observe() {} disconnect() {} });
+    vi.stubGlobal('requestIdleCallback', (fn: () => void) => { callback = fn; return 1; }); vi.stubGlobal('cancelIdleCallback', vi.fn());
+    const component = vi.fn(), error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    activateIslands({ C0: registration(component) }, doc); expect(component).not.toHaveBeenCalled();
+    host.remove(); const before = host.outerHTML;
+    const observer = new MutationObserver(() => {}); observer.observe(host, { subtree: true, childList: true, attributes: true, characterData: true });
+    if (trigger === 'interaction') host.dispatchEvent(new Event('pointerdown')); else callback();
+    expect(component).not.toHaveBeenCalled(); expect(host.outerHTML).toBe(before); expect(observer.takeRecords()).toEqual([]);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
+    expect(hasScheduledOrActiveIslands()).toBe(false); observer.disconnect();
+  });
   it('runs a valid sibling while an individually malformed entry stays unchanged', () => {
     const doc = page(['load', 'load']); doc.head.querySelector('script')!.textContent = JSON.stringify({ v: 1, s: [], i: [null, { h: H, p: { value: 7 } }] });
     const bad = vi.fn(), good = vi.fn(); vi.spyOn(console, 'error').mockImplementation(() => {});

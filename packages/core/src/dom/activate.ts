@@ -134,7 +134,11 @@ export function sanitizePropsDeep<T>(props: T): T {
  * Verified by: src/dom/__tests__/activate.test.ts > "error in island 0 does not prevent island 1 from activating"
  */
 export function activateIslands(
-  registry: Record<string, IslandHydrateFn>,
+  // Source registries contain declared unary components; compiler output
+  // contains branded internal callbacks. This opaque callable constraint
+  // accepts either without pretending their parameter types are identical.
+  // Only preflight may recover a registered callback and invoke its signature.
+  registry: Record<string, (...args: never[]) => unknown>,
   root: ParentNode = document,
 ): void {
   // Materialize every requested result before running any component or arming
