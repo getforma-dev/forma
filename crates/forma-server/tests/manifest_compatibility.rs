@@ -86,6 +86,23 @@ fn schema_writer_and_mode_refusals_happen_before_binding() {
     assert!(errors[0].reason.contains("3.1.0"));
 }
 
+/// A retained file is the previous release's, kept for tabs still open on it
+/// (FORMA-186, L-25); it is served as immutable, so a manifest that lists one
+/// mutable is contradicting itself and is refused at start.
+#[test]
+fn a_retained_asset_must_be_immutable() {
+    let mut v = valid();
+    v["assets"]["old-X.js"] = json!({"immutable":true,"retained":true,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"});
+    let manifest = load(&v).expect("a retained, immutable asset is a valid entry");
+    assert!(manifest.assets["old-X.js"].retained && manifest.assets["old-X.js"].immutable);
+    v["assets"]["old-X.js"]["immutable"] = json!(false);
+    let error = load(&v).unwrap_err();
+    assert!(
+        error.contains("MANIFEST-103") && error.contains("old-X.js") && error.contains("retained"),
+        "{error}"
+    );
+}
+
 #[test]
 fn checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app() {
     let manifest = assets::try_load_manifest::<Files>().unwrap();
