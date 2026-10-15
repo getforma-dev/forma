@@ -34,6 +34,7 @@ import { splitGraph, type SplitGraph } from './split-graph.js';
 import { entryProducts, browserEntries, type EntryProduct, type EntryProducts } from './entry-products.js';
 import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
+import { formatRouteSizes, routeSizeFailure, routeSizes } from './route-size.js';
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
   DiagnosticsCollector,
@@ -815,6 +816,9 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         buildHash: 'dev',
         warnings,
         diagnostics,
+        // Watch mode is a development build, unminified and inline-mapped:
+        // its bytes are not what a route ships, so there is no report.
+        sizes: [],
       };
     }
 
@@ -905,6 +909,17 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products);
     if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
 
+    // ── The size report, and N2's gate on it (FORMA-021, L-55) ──────────
+    // Forma's code per route, from the bundler's metafile and the hashed files
+    // the manifest names, printed for every route; a route over the ceiling
+    // fails the build here, before the manifest is written and the staging
+    // directory swapped in, so the previous output stays as it was (L-21).
+    // Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's Forma code is over the ceiling, leaving no output"
+    const sizes = routeSizes(manifest.routes, metafiles, assets, distDir);
+    console.log(`\n${formatRouteSizes(sizes).join('\n')}`);
+    const overCeiling = routeSizeFailure(sizes);
+    if (overCeiling) throw overCeiling;
+
     writeFileSync(
       join(distDir, 'manifest.json'),
       JSON.stringify(manifest, null, 2) + '\n',
@@ -921,6 +936,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       buildHash: manifest.build,
       warnings,
       diagnostics,
+      sizes,
     };
   } catch (err) {
     // Watch mode: remove the output directory if this build created it. A

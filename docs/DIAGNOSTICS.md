@@ -938,6 +938,23 @@ invalid. The build fails before replacing the prior output.
 **Fix.** Generate the worker from the completed manifest after final asset bytes
 are written. Do not substitute a filename hash or an abbreviated digest.
 
+### BUILD-819 A route's Forma code is over N2's ceiling
+
+What the route loads cold (its `js` files and their `modulepreload` dependencies)
+carries more than 25,500 B gzip -9 of Forma's code, `@getforma/core` and
+`alien-signals` as bundled, attributed from the bundler's metafile (each input's
+share of the file's raw bytes, applied to its compressed size), or a file the
+manifest names for the route was written by no bundling pass, so its Forma code
+cannot be attributed. N2 as restated by decision brief L-55 (DR-35's fallback):
+the ceiling is Forma's code, the application's own is outside it, Brotli is
+reported beside it, and 1 KB is 1,000 B. The build fails before writing its
+output, and the report above the failure shows every route's figures.
+
+**Fix.** Trim what the route imports from `@getforma/core`, or split the route;
+the ceiling is policy, not an option. Verified by
+`packages/build/tests/route-size.test.ts` > "fails the build with BUILD-819 when a
+route's Forma code is over the ceiling, leaving no output".
+
 ### Native island request state
 
 | Code | Boundary | Meaning |

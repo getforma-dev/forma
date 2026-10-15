@@ -8,6 +8,10 @@
 - New mandatory codes BUILD-612 (key that is not a row property path, or no original core `createList` identity) and BUILD-613 (row without one stable root, including an authored `data-forma-key`), with conformance pairs; the legacy BUILD-107 shape checks keep their precedence. Canonical schema, binding and digest bytes and row ordinals are unchanged for every previously valid list (`tests/fixtures/keyed-lists/baseline.json`); a LIST without an entry stays a valid low-level reader form.
 - Migrated the row-root conditional and scalar-key test sources; originals, the regenerated native and corpus binaries and their before/after hashes are in `docs/archive/2026-10-15-pre-keyed-rows/`. Native key rendering and key adoption (checkpoints B and C) are not part of this change; the compiler never computes key text, so the FORMA-182 normalization seam (an identity placeholder) lives in core, `packages/core/src/dom/key-text.ts`. A key or row callback with more than one return path, and an empty string-literal key segment, are refused at build time. The three frozen declared-props server fixtures (`crates/forma-server/tests/fixtures/props-contract`) gained section 6 and are regenerated with their SRI manifest, archived and ledgered like the native fixtures.
 
+### The diagnostic catalogue — FORMA-021
+
+- `BUILD-819`, the build package's size-report gate: a route whose Forma code (`@getforma/core` and `alien-signals` as bundled) is over N2's ceiling of 25,500 B gzip -9 (decision brief L-55). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/route-size.test.ts`; no page triggers it.
+
 ### Conditional description seam — FORMA-104
 
 - Record source ranges only for existing admitted DOM conditional bindings and compose private descriptor hooks with tuple, writable-read and child edits. Original comments, parentheses and lexical thunks remain intact; scalar/value ternaries and canonical schema, binding and FMIR bytes are unchanged. Strict activation remains dependent work.

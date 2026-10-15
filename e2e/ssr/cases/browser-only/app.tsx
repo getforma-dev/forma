@@ -1,14 +1,13 @@
-// The entry. On a server-rendered page the islands are activated from a
-// literal registry, and the browser-only chart is registered as browserOnly()
-// returns it: activation calls its unary component with validated props. With
-// no island (development, Phase 1) the page is mounted whole, and the chart
-// renders as any component does.
-import { h, mount, activateIslands } from '@getforma/core';
+// The entry, in the 3.0.0 shape (FORMA-105, DR-6): a standalone literal
+// registry and a standalone top-level mount. The compiler selects ReportPage
+// through the mount and removes it from the server-rendered route's browser
+// product, which then only activates the registered islands; the chart,
+// browserOnly(), is registered and activation calls its unary component with
+// its validated props. The explicit Browser build of this same file (route
+// /csr, Phase 1) keeps the mount and renders the page whole, chart included.
+import { mount, activateIslands } from '@getforma/core';
 import { Chart } from './chart';
 import { ReportPage } from './page';
 
-if (document.querySelector('[data-forma-island]')) {
-  activateIslands({ Chart });
-} else {
-  mount(() => ReportPage(), '#app');
-}
+activateIslands({ Chart });
+mount(() => ReportPage(), '#app');

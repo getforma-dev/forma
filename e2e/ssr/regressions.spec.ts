@@ -19,25 +19,38 @@
  * until that one line is removed. FORMA-002 and FORMA-003 have flipped theirs
  * (each now says "Fixed by"); generic-state is now delivered by FORMA-103.
  *
+ * Since 3.0.0 (FORMA-105, DR-6) a server-rendered page activates only its
+ * islands: the compiler selects the page through the entry's standalone
+ * `mount()` and removes it from the route's browser product, and a page with
+ * no island loads no JavaScript at all. So each case's interactive subtree is
+ * an island, seeded from declared props, and `root-fragment` is a static
+ * page. Phase 1 (`/<case>/csr`) is the same entry built as an explicit
+ * Browser route (`ssr: false`), which keeps the mount and renders the page
+ * whole from an empty #app.
+ *
  * The table "every case is server-rendered and activates" adds the shared
- * controls (the walker's HTML, activation, Phase 1, no console errors), and
- * the file refuses to run unless the server on the SSR port serves THIS
- * clone's site.
+ * controls (the walker's HTML; island activation, or no script at all for a
+ * static page; the Phase 1 mount; no console errors), and the file refuses to
+ * run unless the server on the SSR port serves THIS clone's site.
  */
 import { readdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Browser, type Page, type Route } from '@playwright/test';
 import { SSR_ORIGIN as ORIGIN } from './origin';
 
-/** Every case under e2e/ssr/cases/, and how its page reports activation. */
+/**
+ * Every case under e2e/ssr/cases/, and what its server-rendered page does
+ * once its module runs: an `island` page activates its islands; a `static`
+ * page has none and loads no script (DR-6).
+ */
 const CASES = {
   'generic-state': 'island',
-  'root-fragment': 'mount',
-  'textarea-child': 'mount',
-  'textarea-value': 'mount',
-  title: 'mount',
-  select: 'mount',
-  'edited-controls': 'mount',
+  'root-fragment': 'static',
+  'textarea-child': 'island',
+  'textarea-value': 'island',
+  title: 'island',
+  select: 'island',
+  'edited-controls': 'island',
   'ledger-arrival': 'island',
   'browser-only': 'island',
 } as const;
@@ -93,6 +106,7 @@ async function openWithoutJs(browser: Browser, path: string): Promise<{ page: Pa
 async function openHeld(page: Page, name: CaseName): Promise<{ activate: () => Promise<void> }> {
   const held: Route[] = [];
   let holding = true;
+  await recordIslandErrors(page);
   await page.route('**/_assets/*.js', (route) => {
     if (holding) held.push(route);
     else void route.continue();
@@ -109,21 +123,61 @@ async function openHeld(page: Page, name: CaseName): Promise<{ activate: () => P
   };
 }
 
+/**
+ * Record every `forma:error` event the page dispatches, from before its module
+ * runs. Must be installed before navigation.
+ */
+async function recordIslandErrors(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const errors: unknown[] = [];
+    (window as any).__formaErrors = errors;
+    document.addEventListener('forma:error', (event) => errors.push((event as CustomEvent).detail));
+  });
+}
+
+/**
+ * Since FORMA-104's strict activation a successful island makes zero initial
+ * DOM writes: `data-forma-status` stays "pending" (packages/core/docs/ISLANDS.md,
+ * "Strict activation"). A failed adoption writes "error" and dispatches one
+ * bubbling `forma:error`; a state preflight refusal writes nothing and logs a
+ * console error (watchErrors sees it). So "activated" is: the page's module
+ * has run (the load event follows a deferred module), every host is still
+ * there, none reports an error, and no `forma:error` was dispatched. Each
+ * behaviour test then checks that the island is live.
+ */
 async function waitForActivation(page: Page, name: CaseName): Promise<void> {
-  if (CASES[name] === 'island') {
-    await expect(page.locator('[data-forma-island]')).toHaveAttribute('data-forma-status', 'active');
-  } else {
-    await page.waitForFunction(() => !document.getElementById('app')?.hasAttribute('data-forma-ssr'));
-  }
+  if (CASES[name] !== 'island') throw new Error(`${name} is a static page: nothing activates`);
+  await page.waitForLoadState('load');
+  expect(await page.locator('[data-forma-island]').count(), 'the island hosts are on the page').toBeGreaterThan(0);
+  await expect(page.locator('[data-forma-island][data-forma-status="error"]')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).__formaErrors), 'no forma:error event').toEqual([]);
 }
 
 /** The Phase 2 page, loaded and activated. */
 async function openActivated(page: Page, name: CaseName): Promise<void> {
+  await recordIslandErrors(page);
   await page.goto(`/${name}/`);
   await waitForActivation(page, name);
 }
 
-/** The same build client-rendered (Phase 1), mounted. */
+/**
+ * The Phase 2 page of a case with no island: the server's HTML stays as
+ * parsed, and the page references no script at all (DR-6: a server-rendered
+ * page with no island loads zero bytes of JavaScript).
+ */
+async function openStatic(page: Page, name: CaseName): Promise<void> {
+  if (CASES[name] !== 'static') throw new Error(`${name} has islands: it is not a static page`);
+  const scripts: string[] = [];
+  page.on('request', (request) => {
+    if (request.resourceType() === 'script') scripts.push(request.url());
+  });
+  await page.goto(`/${name}/`);
+  await expectServerRendered(page);
+  expect(await page.locator('script[src], link[rel="modulepreload"]').count(), 'the page references no script').toBe(0);
+  expect(scripts, 'the page loaded no script').toEqual([]);
+}
+
+/** The same entry built as an explicit Browser route (Phase 1), mounted. */
 async function openClientRendered(page: Page, name: CaseName): Promise<void> {
   await page.goto(`/${name}/csr`);
   await page.waitForFunction(() => (document.getElementById('app')?.childElementCount ?? 0) > 0);
@@ -159,11 +213,13 @@ test.describe('every case is server-rendered and activates', () => {
     expect(Object.keys(CASES).sort()).toEqual(dirs);
   });
 
-  // "Activates" here means the module ran to its activation signal (for a
-  // mount() root, data-forma-ssr removed). That is not proof that anything was
-  // adopted, as root-fragment shows; the behaviour tests below check that.
+  // "Activates" here means the module ran, no host is in `error` and no
+  // `forma:error` was dispatched (a static page has none and loads no
+  // script). Strict SSR activation writes no status on success (`active` is
+  // written only on the browserOnly path), so a module that loads and does
+  // nothing passes this row; only the behaviour tests below catch that.
   for (const name of Object.keys(CASES) as CaseName[]) {
-    test(`${name}: walker HTML present, Phase 2 activates, Phase 1 mounts, no errors`, async ({ browser, page }) => {
+    test(`${name}: walker HTML present, Phase 2 ${CASES[name] === 'island' ? 'activates' : 'is static'}, Phase 1 mounts, no errors`, async ({ browser, page }) => {
       const noJs = await openWithoutJs(browser, `/${name}/`);
       await expectServerRendered(noJs.page);
       const serverHtml = await noJs.page.locator('#app').innerHTML();
@@ -171,7 +227,8 @@ test.describe('every case is server-rendered and activates', () => {
       expect(serverHtml.trim().length, 'the walker rendered content into #app').toBeGreaterThan(0);
 
       const errors = watchErrors(page);
-      await openActivated(page, name);
+      if (CASES[name] === 'island') await openActivated(page, name);
+      else await openStatic(page, name);
       await openClientRendered(page, name);
       expect(errors).toEqual([]);
     });
@@ -214,15 +271,16 @@ test.describe('root-fragment', () => {
     await expect(page.locator('#note')).toHaveText('bye', SETTLE);
   });
 
-  test('root-fragment: after Phase 2 activation, the button updates the text', async ({ page }) => {
-    await openActivated(page, 'root-fragment');
+  test('root-fragment: server-rendered, a page with no island is static: the walker\'s HTML, no script, the button inert', async ({ page }) => {
+    // Before 3.0.0 this page was adopted whole by mount(), and FORMA-003
+    // (DR-7 a) made a Fragment root adopt as the range of its children. Since
+    // FORMA-105 (DR-6) mount() does not adopt a server-marked root: a page
+    // declares what is live as islands, and one with none ships no script.
+    await openStatic(page, 'root-fragment');
     await expect(page.locator('#note')).toHaveText('hello');
     await page.click('#go');
-
-    // Fixed by FORMA-003 (DR-7 a): a Fragment is adopted as the range of its
-    // children. Before it, adoption treated h(Fragment)'s DocumentFragment as
-    // nothing to adopt, removed data-forma-ssr, and bound no handler.
-    await expect(page.locator('#note')).toHaveText('bye', SETTLE);
+    await expect(page.locator('#note')).toHaveText('hello');
+    await expectServerRendered(page);
   });
 });
 
@@ -385,6 +443,7 @@ test.describe('edited-controls', () => {
 
     await held.activate();
     await expect(input).toHaveValue('server typed', SETTLE);
+    await expect(page.locator('#echo-name'), 'the island is live and its signal was seeded from the edit').toHaveText('server typed', SETTLE);
     await expect(input).toBeFocused();
     expect(await submitted(page, 'name')).toEqual(['server typed']);
   });
@@ -397,6 +456,7 @@ test.describe('edited-controls', () => {
 
     await held.activate();
     await expect(box).toBeChecked(SETTLE);
+    await expect(page.locator('#echo-agreed'), 'the island is live and its signal was seeded from the edit').toHaveText('yes', SETTLE);
     expect(await submitted(page, 'agreed')).toEqual(['on']);
   });
 
@@ -408,6 +468,7 @@ test.describe('edited-controls', () => {
 
     await held.activate();
     await expect(select).toHaveValue('l', SETTLE);
+    await expect(page.locator('#echo-size'), 'the island is live and its signal was seeded from the edit').toHaveText('l', SETTLE);
     expect(await submitted(page, 'size')).toEqual(['l']);
   });
 });

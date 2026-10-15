@@ -19,6 +19,15 @@ import { describingAdoption } from './adoption-description.js';
 import { deactivateIsland, hasScheduledOrActiveIslands } from './activate.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
 
+declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the two list warnings leave the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -589,7 +598,7 @@ export function createList<T>(
 
     // Edge case: non-array
     if (!Array.isArray(newItems)) {
-      if (__DEV__) {
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
         console.warn('[forma] createList: value is not an array, treating as empty');
       }
       // Remove all nodes between the markers
@@ -616,7 +625,7 @@ export function createList<T>(
     }
 
     // Dev-mode duplicate key detection
-    if (__DEV__) {
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
       const seen = new Set<string | number>();
       for (const item of cleanItems) {
         const key = keyFn(item);

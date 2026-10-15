@@ -10,7 +10,6 @@ use std::path::{Path, PathBuf};
 use forma_ir::PageProps;
 use forma_server::{
     load_ir_modules, render_browser_shell, AssetManifest, PageConfig, PageResponse, RenderCtx,
-    RouteMode,
 };
 use rust_embed::Embed;
 use std::borrow::Cow;
@@ -56,6 +55,8 @@ fn render_typed<P: PageProps>(
 
 /// The route every case is built and rendered under.
 const ROUTE: &str = "/";
+/// The same entry built as an explicit Browser route (`ssr: false`): Phase 1.
+const CSR_ROUTE: &str = "/csr";
 /// The page title the renderer writes into `<head>`.
 const TITLE: &str = "Forma SSR fixture";
 
@@ -143,19 +144,15 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
         )?,
         _ => render_typed(&manifest, &Empty {})?,
     };
-    // The paired CSR comparison is an explicit Browser route declaration.
-    let mut browser = manifest.clone();
-    let route = browser
-        .routes
-        .get_mut(ROUTE)
-        .ok_or("missing browser route")?;
-    route.mode = RouteMode::Browser;
-    route.ir = None;
+    // The paired CSR comparison (Phase 1) is the case's explicit Browser route,
+    // `/csr`, which the build declared `ssr: false` from the same entry: its
+    // script keeps the entry's mount, where the `/` route's product has only
+    // island activation (FORMA-105, DR-6).
     let csr = render_browser_shell(
         &PageConfig {
             title: TITLE,
-            route_pattern: ROUTE,
-            manifest: &browser,
+            route_pattern: CSR_ROUTE,
+            manifest: &manifest,
             config_json: None,
             body_class: None,
             personality_css: None,

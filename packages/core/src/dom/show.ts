@@ -58,22 +58,12 @@ export function createShow(
 
   const showDispose = internalEffect(() => {
     const truthy = !!when();
-    const DEBUG = typeof (globalThis as any).__FORMA_DEBUG__ !== 'undefined';
-    const DEBUG_LABEL = DEBUG ? thenFn.toString().slice(0, 60) : '';
 
-    if (truthy === lastTruthy) {
-      if (DEBUG) console.log('[forma:show] skip (same)', truthy, DEBUG_LABEL);
-      return;
-    }
-    if (DEBUG) console.log('[forma:show]', lastTruthy, '→', truthy, DEBUG_LABEL);
+    if (truthy === lastTruthy) return;
     lastTruthy = truthy;
 
     const parent = startMarker.parentNode;
-    if (!parent) {
-      if (DEBUG) console.warn('[forma:show] parentNode is null! skipping.', DEBUG_LABEL);
-      return;
-    }
-    if (DEBUG) console.log('[forma:show] parent:', parent.nodeName, 'inDoc:', document.contains(parent as any));
+    if (!parent) return;
     // Verified by: src/dom/__tests__/namespace-resolution.test.ts > "a createShow inside an svg renders each branch once, in SVG, inside svg() from its first render and on every toggle"
     const into = insertNs(parent);
     if (into !== undefined) ns = into;

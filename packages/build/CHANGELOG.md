@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased — the size report per route and N2's gate (FORMA-021)
+
+- A production build reports, per route, what the route loads cold (its `js`
+  files and their `modulepreload` dependencies) in raw, gzip -9 and Brotli-11
+  bytes, with Forma's code (`@getforma/core` and `alien-signals` as bundled)
+  beside the application's own, attributed from the bundler's metafile
+  (`bytesInOutput`, Forma's share of the raw bytes applied to the compressed
+  size). The lines are printed after the bundle summary and returned as
+  `BuildResult.sizes`; a route with no JavaScript reports 0 bytes. Watch mode
+  reports nothing: its unminified bytes are not what a route ships.
+- **N2's gate** (decision brief L-55, DR-35's fallback): a route whose Forma
+  code is over **25,500 B gzip -9** (`FORMA_CODE_CEILING_GZIP`, 1 KB = 1,000 B)
+  fails the build with `BUILD-819`, naming each such route and its bytes,
+  before the manifest is written and the staging directory swapped in, so the
+  previous output stays as it was. The ceiling is not configurable. The
+  minimal template's Counter route measures 25,101 B after core's FORMA-021
+  cuts.
+- `BuildConfig.budgetThreshold`, the Brotli warning over a route's whole
+  payload (default 200 KB), is unchanged and separate: it is the application's
+  budget, N2 is Forma's.
+
 ## Unreleased — verified production workers (FORMA-111)
 
 - Production workers use finalized immutable manifest metadata and full SHA-384,
