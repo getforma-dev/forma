@@ -20,7 +20,7 @@
  * The renderer used here covers only the opcodes it can reproduce exactly and
  * throws on anything else; the authority on FMIR rendering is the Rust walker,
  * which renders these same corpus fixtures in
- * `forma/crates/forma-ir/tests/js_emitter_contract.rs`.
+ * `forma/crates/forma-ir/src/js_emitter_contract.rs`.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';

@@ -6,7 +6,7 @@
  * `tests/fixtures/ir-corpus/` and writes `<case>.ir` — the exact bytes a build
  * would ship — into the output directory.
  *
- * The `.ir` files are the input to `crates/forma-ir/tests/js_emitter_contract.rs`
+ * The `.ir` files are the input to `crates/forma-ir/src/js_emitter_contract.rs`
  * in the `forma` repo, which parses and renders them with the real Rust
  * consumer. That is the only check on this emitter that is not written from
  * the emitter's own mental model.

@@ -7,9 +7,9 @@ import { watching } from './helpers/watch';
 
 const scratch: string[] = [];
 afterEach(() => { for (const path of scratch.splice(0)) rmSync(path, { recursive: true, force: true }); });
-function fixture(source: string) {
+function fixture(source: string, extension = 'ts') {
   const root = mkdtempSync(join(tmpdir(), 'forma-no-server-functions-')); scratch.push(root);
-  const entry = join(root, 'app.ts'), outputDir = join(root, 'dist');
+  const entry = join(root, `app.${extension}`), outputDir = join(root, 'dist');
   writeFileSync(entry, source); mkdirSync(outputDir);
   writeFileSync(join(outputDir, 'last-good.txt'), 'previous build');
   return { root, entry, outputDir, config: { entryPoints: [{ entry, outfile: 'app.js' }], outputDir, routes: { '/': { js: ['app'], css: [] } } } };
@@ -30,11 +30,19 @@ describe.each([false, true])('server functions removed (codeSplitting=%s)', code
     await expect(build({ ...f.config, codeSplitting })).rejects.toThrow(/BUILD-808.*Rust route/s);
     expect(readFileSync(join(f.outputDir, 'last-good.txt'), 'utf8')).toBe('previous build');
   });
-  it('allows comments and ordinary strings, and emits no WASM manifest entry', async () => {
-    const f = fixture('// "use server" is removed\nexport const message = "use server";');
+  it.each([
+    ['ts', '// "use server" is removed\nexport const message = "use server";'],
+    ['ts', 'export const message = <string>"use server";'],
+    ['ts', '// "use server" is removed\nexport const message = <string>"ordinary";'],
+    ['cts', 'export const message = "use server" as string;'],
+    ['mts', 'export const message = "use server" as string;'],
+    ['tsx', 'export const message = <div>use server</div>;'],
+    ['jsx', 'export const message = <div>use server</div>;'],
+  ])('allows comments, ordinary strings and matching parser syntax in .%s: %s', async (extension, source) => {
+    const f = fixture(source, extension);
     const result = await build({ ...f.config, codeSplitting });
     expect(Object.keys(result.manifest).sort()).toEqual(['assets', 'build_hash', 'routes', 'version']);
-    expect(readFileSync(join(f.outputDir, result.manifest.assets['app.js']), 'utf8')).toContain('use server');
+    expect(readFileSync(join(f.outputDir, result.manifest.assets['app.js']), 'utf8')).toContain(source.includes('ordinary') ? 'ordinary' : 'use server');
   });
   it('rejects the initial watch build without deleting last good output', async () => {
     const f = fixture('"use server"; export const secret = "private";');

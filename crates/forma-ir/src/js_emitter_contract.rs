@@ -57,15 +57,15 @@
 //!
 //! After an intentional emitter change: re-run `npm run emit:corpus`, copy the
 //! `.ir` files into `tests/fixtures/js-emitter/`, then
-//! `UPDATE_GOLDEN=1 cargo test -p forma-ir --test js_emitter_contract` and
+//! `UPDATE_GOLDEN=1 cargo test -p forma-ir --lib js_emitter_contract` and
 //! review the golden diff. A golden diff you cannot explain is the finding.
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use forma_ir::parser::test_helpers::walk_island;
-use forma_ir::{
+use crate::walker::walk_island;
+use crate::{
     walk_to_html, IrError, IrModule, SlotData, SlotTable, SlotType, SlotValue, StringTable,
     HEADER_SIZE,
 };
@@ -156,7 +156,7 @@ fn string_at(module: &IrModule, str_idx: u32) -> &str {
 ///
 /// The independently decoded descriptor table identifies sections by their stable ids.
 fn raw_tables(bytes: &[u8]) -> (StringTable, SlotTable) {
-    let table = forma_ir::SectionTable::parse(&bytes[HEADER_SIZE..]).expect("section table");
+    let table = crate::SectionTable::parse(&bytes[HEADER_SIZE..]).expect("section table");
     table.validate(bytes.len()).expect("tiling");
     let strings = table.get(2).expect("strings");
     let slots = table.get(3).expect("slots");
@@ -608,6 +608,6 @@ fn canonical_dumps_match_the_typescript_emitter() {
             .join("tests/fixtures/js-emitter")
             .join(format!("{name}.dump"));
         let expected = std::fs::read_to_string(path).expect("committed TypeScript canonical dump");
-        assert_eq!(forma_ir::dump::dump_ir(&module), expected, "{name}");
+        assert_eq!(crate::dump::dump_ir(&module), expected, "{name}");
     }
 }
