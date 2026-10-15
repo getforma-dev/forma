@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Retained row focus — FORMA-181 checkpoint D, first slice
+
+- A keyed row relocation previously blurred its focused input in Chromium, Firefox and WebKit even though the input node and selection survived. The private live reconciler now uses state-preserving `moveBefore` for retained rows where supported. Its `insertBefore` fallback restores lost focus and text selection only while the owner remains live and no callback has focused another control. Detached new rows still use ordinary insertion.
+- Three-engine controls move exactly one existing row in 2,000, preserve its focused input and backward selection, keep the original row factories and listeners, and prove disposal removes those listeners. Forced fallback and callback focus-redirection controls run alongside the existing keyed-adoption matrix. This establishes row-move behavior; indexed row-edit performance and actual-product qualification remain separate checkpoint D work.
+- The low-level unkeyed adoption path shares the client key cache's domain: fractions and lone surrogates refuse before row callbacks or writes; safe integers and valid Unicode strings remain admitted. The guide and refusal/near-miss tests now state this explicitly.
+- Production sizes on checkpoint C base `8aec868`: core entry 46,720 B gzip (+243 B), browser ESM 46,746 B (+242 B), inside the existing 46,777/46,804 B gates. Runtime, hardened runtime and frame sizes are unchanged; no gate is raised.
+
 ### Integrated package size gates — FORMA-181/182
 
 - Keyed adoption (FORMA-181 checkpoint C) and the value rules (FORMA-182) together measure 46,477 B gzip for the core entry and 46,504 B for browser ESM. The latter exceeded the previous 46,500 B gate by 4 B. Under decision L-58, the two package gates are re-anchored to the measured sizes plus 300 B: 46,777 and 46,804 B. The runtime gates remain 41,500, 40,500 and 40,000 B; the route budget remains 27,500 B gzip -9 of Forma code. Measurements come from the actual production build's import graph via `scripts/check-size.mjs`.
