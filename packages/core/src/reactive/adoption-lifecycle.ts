@@ -1,6 +1,6 @@
 /** Private, unprivileged ownership kernel shared by direct and compiled adoption. */
 import { effect as rawEffect, getActiveSub, setActiveSub } from 'alien-signals';
-import { withAdoptionSink, type AdoptionSink, type DeferredEffect, type AdoptionCodec } from './adoption-hooks.js';
+import { withAdoptionSink, withAdoptionCallbacks, type AdoptionCallbackRunner, type AdoptionSink, type DeferredEffect, type AdoptionCodec } from './adoption-hooks.js';
 import { openBatch, closeBatchWithoutRoot } from './batch.js';
 import { createUnownedRoot, registerDisposer } from './root.js';
 import { withAdoptionEvents } from './adoption-events.js';
@@ -38,6 +38,8 @@ export interface PreparationOptions {
   /** Recheck exact DOM observations; compiled scope adds its original claim. */
   check?: () => void;
   failure?: (error: unknown, code: Code) => void;
+  /** Ordinary user callbacks may run inside a describing live factory. */
+  callback?:AdoptionCallbackRunner;
 }
 function group(diagnostic=currentAdoptionDiagnostic()): PreparationGroup { return { alive: true, disposers: [], children: new Set(), diagnostic }; }
 
@@ -55,6 +57,9 @@ export class AdoptionLifecycle implements AdoptionSink {
   private readonly callbacks: (() => void)[] = [];
 
   constructor(private readonly options: PreparationOptions = {}) {}
+  private callback<T>(fn:()=>T):T {
+    return withAdoptionCallbacks(this.options.callback,()=>this.options.callback?this.options.callback(fn):fn());
+  }
   get phase(): Phase { return this.state; }
   protected require(phase: Phase): void {
     if (this.state !== phase || !this.currentGroup.alive) throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
@@ -62,7 +67,7 @@ export class AdoptionLifecycle implements AdoptionSink {
 
   /** A disposer created after synchronous abort must run immediately as well. */
   protected own(dispose: () => void, owner = this.currentGroup): void {
-    if (!owner.alive || this.state === 'aborted') dispose();
+    if (!owner.alive || this.state === 'aborted') this.callback(dispose);
     else owner.disposers.push(dispose);
   }
 
@@ -92,7 +97,7 @@ export class AdoptionLifecycle implements AdoptionSink {
       cause=>this.fail(cause,'FORMA_E_HYDRATE_EFFECT',owner.diagnostic),
       ()=>withAdoptionEvents(this.eventWrapper(owner),()=>createUnownedRoot(rootDispose=>{
         dispose=rootDispose;
-        try{result=withAdoptionDiagnostic(owner.diagnostic,fn);}catch(cause){failed=true;error=cause;}
+        try{result=withAdoptionCallbacks(this.options.callback,()=>withAdoptionDiagnostic(owner.diagnostic,fn));}catch(cause){failed=true;error=cause;}
       })),
     ));
     this.own(dispose,owner);
@@ -122,7 +127,7 @@ export class AdoptionLifecycle implements AdoptionSink {
     return value=>{
       if(this.state!=='live'||!owner.alive)return;
       const previous=this.currentGroup;this.currentGroup=owner;
-      try{this.runLive(()=>invoke(value));}
+      try{this.runLive(()=>this.callback(()=>invoke(value)));}
       catch{ /* runLive reports real callback failures once; revocation is inert. */ }
       finally{this.currentGroup=previous;}
     };
@@ -165,7 +170,7 @@ export class AdoptionLifecycle implements AdoptionSink {
     for (const child of owner.children) this.disposeGroup(child);
     owner.children.clear();
     for (const dispose of owner.disposers.splice(0)) {
-      try { dispose(); } catch (error) { reportError(error, 'adoption cleanup'); }
+      try { this.callback(dispose); } catch (error) { reportError(error, 'adoption cleanup'); }
     }
   }
 
@@ -246,7 +251,7 @@ export class AdoptionLifecycle implements AdoptionSink {
         // effects disposable; nested effects inherit effect.ts's failure boundary.
         const startRoot = () => createUnownedRoot(rootDispose => {
           dispose = rootDispose;
-          try { registerDisposer(withAdoptionDiagnostic(diagnostic,()=>start(error => this.fail(error, code,diagnostic)))); }
+          try { registerDisposer(withAdoptionDiagnostic(diagnostic,()=>this.callback(()=>start(error => this.fail(error, code,diagnostic))))); }
           catch (error) { failed = true; cause = error; }
         });
         withAdoptionSink(undefined, () => withAdoptionEffectFailure(

@@ -43,3 +43,20 @@ export function deferAdoptionEffect(
   // The optional call avoids allocating a deferred starter for ordinary effects.
   return active?.deferEffect?.(fail => start(fn, fail));
 }
+
+/** Private generic callback context; this module has no DOM dependency. */
+export type AdoptionCallbackRunner = <T>(callback:()=>T)=>T;
+let callbacks:AdoptionCallbackRunner|undefined;
+export function withAdoptionCallbacks<T>(runner:AdoptionCallbackRunner|undefined,fn:()=>T):T {
+  const previous=callbacks;callbacks=runner;
+  try{return fn();}finally{callbacks=previous;}
+}
+export function getAdoptionCallbacks():AdoptionCallbackRunner|undefined{return callbacks;}
+export function bindAdoptionCallback<T>(fn:()=>T,runner:AdoptionCallbackRunner|undefined):()=>T {
+  return ()=>{
+    // An ordinary neighbor can be synchronously flushed by a describing
+    // factory. It gets mode isolation, never the adopted owner's authority.
+    const current=runner??callbacks;
+    return current?withAdoptionCallbacks(current,()=>current(fn)):fn();
+  };
+}
