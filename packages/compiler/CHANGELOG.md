@@ -7,6 +7,11 @@
 - Generate browser registration metadata and FMIR from one captured source graph; compare resolved declarations and canonical contracts for distinct browser/SSR entries. Type-only dependencies join the same watcher.
 - Require esbuild `write: false` and return IR with browser `outputFiles`. The plugin never writes before the complete build succeeds. Mid-build source changes refuse publication.
 
+### Native island refusal — FORMA-103
+
+- Remove legacy unnamed/empty native island shells and the inline `data-forma-props` writer. Unsupported subtrees now fail BUILD-610 with their source location; browser-only content requires its actual declared registration and state contract.
+- Preserve the archived unresolved nested-island source as a refusal control, while the admitted imported static-table expansion still emits its registered contract.
+
 ### Closed signal defaults — FORMA-103
 
 - Preserve bounded array/object initial values as lazy CLIENT constants, including nested list projections and per-row declared island inputs. Keep unused constants out of the emitted program and never infer handler fields from local data.
