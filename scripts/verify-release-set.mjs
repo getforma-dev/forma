@@ -91,6 +91,7 @@ export function verifyPackedPropsTests(manifest, { boundRender = false } = {}) {
   ];
   if (boundRender) names.push(
     'finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs',
+    'finalization_refuses_a_bind_already_comparing_on_another_thread',
     'two_routes_sharing_an_alias_need_two_successful_exact_bindings',
     'bind_limits_inherit_and_request_overrides_never_change_sibling_defaults',
     'typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy',

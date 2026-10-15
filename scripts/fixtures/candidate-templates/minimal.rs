@@ -55,7 +55,7 @@ async fn main() {
     });
     // The unchanged template page has no declared handler fields. Local state
     // stays CLIENT-owned; an actual data-backed page declares its props first.
-    let home = match manifest.route("/").map(|route| route.mode) {
+    let home_page = match manifest.route("/").map(|route| route.mode) {
         Some(RouteMode::Ssr) => Some(pages.bind::<HomeProps>("/").unwrap_or_else(|errors| {
             for error in errors {
                 eprintln!("{error}");
@@ -81,7 +81,10 @@ async fn main() {
     // worker on, see `forma_server::sw`.
     sw::configure(sw::ServiceWorker::off()).expect("configured once, before the first page");
 
-    let state = Arc::new(AppState { manifest, home });
+    let state = Arc::new(AppState {
+        manifest,
+        home: home_page,
+    });
 
     let app = Router::new()
         .route("/", get(home))

@@ -90,6 +90,57 @@ fn bind_empty(pages: &forma_server::Pages) {
 }
 fn assert_send_sync<T: Send + Sync>() {}
 
+static SLOW_BIND: std::sync::OnceLock<(
+    std::sync::mpsc::SyncSender<()>,
+    std::sync::Mutex<std::sync::mpsc::Receiver<()>>,
+)> = std::sync::OnceLock::new();
+struct SlowEmpty;
+impl forma_ir::props::PropValue for SlowEmpty {
+    fn describe(
+        builder: &mut forma_ir::props::SchemaBuilder,
+    ) -> Result<forma_ir::schema::PropType, forma_ir::props::PropsError> {
+        let (entered, release) = SLOW_BIND.get().unwrap();
+        entered.send(()).unwrap();
+        release
+            .lock()
+            .unwrap()
+            .recv_timeout(Duration::from_secs(5))
+            .unwrap();
+        Empty::describe(builder)
+    }
+    fn encode_value(
+        &self,
+        context: &forma_ir::props::EncodeContext<'_>,
+        kind: &forma_ir::schema::PropType,
+        path: &str,
+    ) -> Result<Option<serde_json::Value>, forma_ir::props::PropsError> {
+        Empty {}.encode_value(context, kind, path)
+    }
+}
+impl forma_ir::PageProps for SlowEmpty {}
+
+#[test]
+fn finalization_refuses_a_bind_already_comparing_on_another_thread() {
+    let (entered_tx, entered_rx) = std::sync::mpsc::sync_channel(1);
+    let (release_tx, release_rx) = std::sync::mpsc::sync_channel(1);
+    SLOW_BIND
+        .set((entered_tx, std::sync::Mutex::new(release_rx)))
+        .unwrap();
+    let pages = load_ir_modules::<Assets>(&try_load_manifest::<Assets>().unwrap()).unwrap();
+    let home = pages.bind::<Handler>("home").unwrap();
+    bind_empty(&pages);
+    let other = pages.clone();
+    let pending = std::thread::spawn(move || other.bind::<SlowEmpty>("empty"));
+    entered_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    pages.finalize().unwrap();
+    release_tx.send(()).unwrap();
+    let errors = pending.join().unwrap().unwrap_err();
+    assert_eq!(errors[0].code, "BIND-111");
+    assert_eq!(errors[0].route, "/empty");
+    assert!(home.render(&props(), &RenderCtx::new()).is_ok());
+    pages.clone().finalize().unwrap();
+}
+
 #[test]
 fn actual_compiler_module_binds_by_declared_names_and_renders_two_list_views() {
     assert_send_sync::<PageHandle<Handler>>();
