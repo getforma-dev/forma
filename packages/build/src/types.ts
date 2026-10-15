@@ -125,7 +125,7 @@ export interface BuildConfig {
    * deploy, or when no release is live. Every copied file is checked against
    * the SHA-384 the previous manifest recorded (`BUILD-821`); a path that is
    * not a usable previous release fails the build (`BUILD-820`). Ignored in
-   * watch mode. Provisional name (L-56), settled before the beta.
+   * watch mode.
    */
   previousDist?: string;
   /**
@@ -134,7 +134,7 @@ export interface BuildConfig {
    * revoked build's tabs meet 404s for their lazy chunks. The application's
    * deploy pipeline must mark every such release, a Forma security upgrade
    * included. `FORMA_SECURITY_RELEASE=1` in the environment marks it too, and a
-   * `false` here does not unmark it. Provisional name (L-56).
+   * `false` here does not unmark it.
    */
   security?: boolean;
 }

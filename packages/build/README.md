@@ -299,8 +299,7 @@ forma-server serves them as it serves any immutable asset, so you embed one
   `FORMA_SECURITY_RELEASE=1` (a `false` in the config does not unmark it). The
   build then retains nothing and the revoked build's files are not served; a
   revoked build's open tabs meet 404s for their lazy chunks.
-- Watch mode ignores both options. They are provisional names, settled before the
-  beta.
+- Watch mode ignores both options.
 
 The identity does not depend on the retained set: the same inputs give the same
 `build`, the same non-retained entries and, with the same previous release, a

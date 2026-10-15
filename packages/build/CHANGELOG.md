@@ -18,7 +18,7 @@
   existing output untouched (L-21). The identity does not depend on it.
 - New `BuildConfig.security` and `FORMA_SECURITY_RELEASE=1`: a release marked
   security retains nothing from `previousDist` (a `false` does not unmark it).
-  Both option names are provisional until the founder sees them before the beta.
+  Both option names, and the environment variable, are approved (L-57).
 - Watch mode ignores both options, with a note.
 
 ## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
