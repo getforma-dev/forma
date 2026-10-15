@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "sourceCommit": "1c032095ec072ea8cd41f3b604cd6892024aa048",
+  "recordedAt": "2026-10-15T03:47:26.928299+00:00",
+  "liveReleaseReady": false,
+  "contracts": {
+    "stage": "v3-development",
+    "fmir": 3,
+    "manifest": 2,
+    "props": "declared-v1",
+    "stateBlock": null,
+    "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+    "liveReleaseReady": false,
+    "pending": {
+      "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+      "FORMA-144": "both templates use the milestone's API",
+      "FORMA-188": "fixture applications and skew drill",
+      "FORMA-191": "release measurements"
+    },
+    "trustedTypes": "enforced-v1"
+  },
+  "packed": {
+    "passed": true,
+    "tests": 22,
+    "seconds": 49.08,
+    "templates": 2,
+    "artifacts": 7,
+    "restoredTemplateFiles": 10,
+    "ds11RecordSha256": "8ce722a55311e94597c1474f5915c1718326cd367446dcc73d0216b5949eae7c",
+    "setFile": "v3-trusted-types-set.json",
+    "p17File": "v3-trusted-types-p17.json",
+    "restorationFile": "v3-trusted-types-template-restore.json",
+    "policyObservations": [
+      {
+        "name": "minimal: served policy and zero CSP violations during positive browser interaction",
+        "passed": true,
+        "trustedTypesContract": "enforced-v1",
+        "servedPolicy": "default-src 'none'; script-src 'nonce-Aw3/bF8yyGq4pj41JlWr+LxdyvX6lMcGBH8SQxL/ATU=' 'strict-dynamic' 'self'; style-src 'nonce-Aw3/bF8yyGq4pj41JlWr+LxdyvX6lMcGBH8SQxL/ATU=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "browserPolicy": "default-src 'none'; script-src 'nonce-v47PqCRpkZ0i2q0HFaJVlPEWNfvzXPaXVdsVVCNOdb0=' 'strict-dynamic' 'self'; style-src 'nonce-v47PqCRpkZ0i2q0HFaJVlPEWNfvzXPaXVdsVVCNOdb0=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "nativeTrustedTypes": true,
+        "violations": [],
+        "pageErrors": []
+      },
+      {
+        "name": "dashboard: served policy and zero CSP violations during positive browser interaction",
+        "passed": true,
+        "trustedTypesContract": "enforced-v1",
+        "servedPolicy": "default-src 'none'; script-src 'nonce-1MQOBqQy7UbMzjAvNGI3kbRk1AOKHxKJEyEbxFujZBs=' 'strict-dynamic' 'self'; style-src 'nonce-1MQOBqQy7UbMzjAvNGI3kbRk1AOKHxKJEyEbxFujZBs=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "browserPolicy": "default-src 'none'; script-src 'nonce-URDpBFsyY/ZJ/lINbRZAiWurD9MzrDi7GJ8R+2Kv7/Y=' 'strict-dynamic' 'self'; style-src 'nonce-URDpBFsyY/ZJ/lINbRZAiWurD9MzrDi7GJ8R+2Kv7/Y=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "nativeTrustedTypes": true,
+        "violations": [],
+        "pageErrors": []
+      }
+    ]
+  },
+  "fullCheck": {
+    "passed": true,
+    "seconds": 159,
+    "log": "full-check-3.log",
+    "startedAtSource": "a67fc02",
+    "corePackedFixtureCorrectionIncludedBeforeBrowserPhase": "7f0152e",
+    "laterChanges": "Two Windows-only rustc diagnostic path assertions, dependency evidence and ancestry. Focused native tests and exact-source P17 replayed after these changes."
+  },
+  "checks": {
+    "coreUnitTests": 1915,
+    "coreUnitFiles": 141,
+    "artifactChecks": 42,
+    "affectedBrowserControlsAcrossThreeEngines": 126,
+    "f2DocumentAndRowFollowupAcrossThreeEngines": 6,
+    "packedConditionControlsAcrossThreeEngines": 9,
+    "fullGateChromiumRootTests": 52,
+    "fullGateChromiumCoreTests": 93,
+    "releaseHelpers": 43,
+    "sr8GovernanceControls": 44,
+    "rustDebugTests": 159,
+    "rustReleaseTests": 159,
+    "rustExistingFixtureRegeneratorIgnored": 1,
+    "rustChecks": "all targets/features Clippy in debug/release; MSRV1.85; rustdoc warnings denied; separate locked SSR renderer fixture"
+  },
+  "budgets": {
+    "frameGzip": 39973,
+    "frameLimit": 40000,
+    "frameHardenedGzip": 40375,
+    "frameHardenedLimit": 40500,
+    "browserEsmGzip": 28637,
+    "browserEsmLimit": 29000,
+    "runtimeGzip": 41360,
+    "runtimeLimit": 41500,
+    "limitsChanged": false
+  },
+  "independentReview": "Lead independently replayed Rust/CSP boundaries, strict packed JSX positive and nine negative controls, 54 native Trusted Types controls plus six F2 controls across three engines, nine packed condition controls and 14 fresh Cargo controls. The lead authenticated all final DS11/P17 hashes and ten restored source files. Exact-head hosted CI remains a separate merge gate.",
+  "scope": "Ordinary functional tests and existing corpus only. No new fuzz or payload campaign; FORMA-188 fixture applications and FORMA-152 hosted application acceptance remain separate. Source A2 templates unchanged; candidate-only config_script field adapter is temporary until FORMA-144. Historical FORMA-185/112/102 and earlier FORMA-109 attempts remain preserved.",
+  "generatedFixtures": "Two historically stale e2e JS bundles were saved outside checkout after full gate then restored to committed bytes.",
+  "logSha256": {
+    "full-check-3.log": "6e9a1268e89f2d485f4141b58cfee5d7617f5df09eede8c5ffc6c4264dea6e08",
+    "core-browser-final-engines.log": "6fd89498a238c39b2e8ab397b953eda254510162b3f945145f13220508fdfe7d",
+    "core-browser-f2-updates.log": "e5cc3d219ba0b40713688da37d828d69bcfad63bb0b57e804290007ce1c5eafc",
+    "packed-development-engines.log": "56b50bb8f058e19e69e76bea01100496cc8e13349e7526d7ac222aa579f69f75",
+    "release-helper-integrated-final.log": "6325f25d9df024933965b4e19aa95ad5d28081d232d4576a9531578c88de495e",
+    "raw-lint-governance.log": "d185807d844dc1b4f2a7df9c3f52a0c6ba19432bcaf4bb88546c9fb4e00c956f",
+    "windows-rustc-path-integration.log": "022784ea5fd289f32195e2468cc3c2f9767956ba9fabc8213e9e46549a6cf275",
+    "pack-trusted-types-3.log": "7336e1d3c6529f40211fc67f08bce9deee5ebd2a7448a35db5a1274beb423d23",
+    "p17-trusted-types-3.log": "81f68e0a002717c9a4d056e902ac4ccf3ae61242c9ef24e04a85bbbb4f591660"
+  },
+  "preservedAttempts": [
+    "artifacts-trusted-types-1 + p17-trusted-types-1.json at7f0152e",
+    "artifacts-trusted-types-2 + p17-trusted-types-2.json ateb452eb",
+    "full-check-1.log size refusal; full-check-2.log old raw fixture refusal"
+  ]
+}

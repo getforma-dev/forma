@@ -1,0 +1,56 @@
+{
+  "source": "1c032095ec072ea8cd41f3b604cd6892024aa048",
+  "files": [
+    {
+      "path": "packages/create-app/templates/minimal/src/main.rs",
+      "before": "527ab0341b29621ae6b26d455b818851907d8fbcefc3d95067b900026ad6d81f",
+      "after": "527ab0341b29621ae6b26d455b818851907d8fbcefc3d95067b900026ad6d81f"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/Cargo.toml",
+      "before": "ad780ef8a150f1fe06316c4f9cc23b37e0c32dd9a682ff72455739387919154f",
+      "after": "ad780ef8a150f1fe06316c4f9cc23b37e0c32dd9a682ff72455739387919154f"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/Cargo.lock",
+      "before": "0a7026d5d2fe9127c34377848d35f1b57b187de054d84a37a1ef780e2cb7798e",
+      "after": "0a7026d5d2fe9127c34377848d35f1b57b187de054d84a37a1ef780e2cb7798e"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package.json",
+      "before": "139eee60b76a092d8a65d7667262ba4fa48fa6de6a7e7a343abbe0b895beb6db",
+      "after": "139eee60b76a092d8a65d7667262ba4fa48fa6de6a7e7a343abbe0b895beb6db"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package-lock.json",
+      "before": "7f3b3288283f556b1e7fc40014635da412bb08a589b9c5a325afb782f741fbaf",
+      "after": "7f3b3288283f556b1e7fc40014635da412bb08a589b9c5a325afb782f741fbaf"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/src/main.rs",
+      "before": "b64ec04e23bc48f330d7ec53500705502773a548091ca6138ff6c364ca906b2b",
+      "after": "b64ec04e23bc48f330d7ec53500705502773a548091ca6138ff6c364ca906b2b"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/Cargo.toml",
+      "before": "d4e1cc48de34b18e89a10aff737fbfa6d4f7ee7e59d50044f01cb75ee456bb24",
+      "after": "d4e1cc48de34b18e89a10aff737fbfa6d4f7ee7e59d50044f01cb75ee456bb24"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/Cargo.lock",
+      "before": "577460634cbc5e64c3cd20b3f8c7119242310ff7019952740d9fa18ced089b9e",
+      "after": "577460634cbc5e64c3cd20b3f8c7119242310ff7019952740d9fa18ced089b9e"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package.json",
+      "before": "c13c6a133276615cbfeec7c89eb4fc8ba8c64ed36145e568207334606350025a",
+      "after": "c13c6a133276615cbfeec7c89eb4fc8ba8c64ed36145e568207334606350025a"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
+      "before": "87d9e8dad47f41e752c6eda525c2ac21ca6d50dfc3915498ae884bed9548e66e",
+      "after": "87d9e8dad47f41e752c6eda525c2ac21ca6d50dfc3915498ae884bed9548e66e"
+    }
+  ],
+  "restored": true
+}
