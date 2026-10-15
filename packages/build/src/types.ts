@@ -173,8 +173,9 @@ export interface AssetManifest {
    * characters computed from the build's own outputs and the writers'
    * versions before anything is named, compiled into every JavaScript bundle
    * (`__FORMA_BUILD__`, which core compares with the page's
-   * `data-forma-build`), and the same for identical inputs wherever and
-   * however often they are built. `dev` in watch mode.
+   * `data-forma-build`), and the same for identical inputs however often they
+   * are built, from any directory when built from the project root (esbuild
+   * hashes input paths relative to its working directory). `dev` in watch mode.
    */
   build: string;
   aliases: Record<string, string>;

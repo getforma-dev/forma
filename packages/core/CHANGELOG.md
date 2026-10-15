@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Keyed rows: the key-text seam is wired to rule 1 — FORMA-181
+
+- `src/dom/key-text.ts` (private; nothing in the bundle imports it yet) now runs a string key through FORMA-182's shared `normalizeDomText` instead of checkpoint A's identity placeholder: CRLF and CR become LF and NUL becomes U+FFFD in the canonical key text, so `"a\r\nb"` and `"a\nb"` are the same row. The unpaired-surrogate refusal, the safe-integer domain and `-0` printing as `0` are unchanged. `src/dom/__tests__/key-text.test.ts` runs 182's `values` vectors (`crates/forma-ir/tests/fixtures/parity/normalization.json`) through `canonicalKeyText` and still asserts the module carries no normalizer of its own.
+
 ### Value rule 1: line endings and NUL — FORMA-182
 
 - Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. The URL guard classifies the raw value and refuses a NUL anywhere in a URL attribute (normalized it would be a fetchable same-origin relative reference); the normalized value is what is written. `h('pre', null, '\nline')` now agrees with the walker's `<pre>\n\nline</pre>` in every engine. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.

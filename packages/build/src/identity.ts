@@ -68,6 +68,8 @@ export function computeIdentity(input: { writers: readonly IdentityWriter[]; fil
  * deploy renames every bundle (L-6): a name pins one build. The constant core
  * reads is esbuild's `define`, which lands only in files that use it.
  */
+export const IDENTITY_BANNER_HEAD = /^\/\*forma-build:[0-9a-f]{16}\*\/\n?/;
+
 export function identityBanner(identity: string): string {
   if (!IDENTITY_PATTERN.test(identity)) throw new Error(`@getforma/build: not a deployment identity: ${JSON.stringify(identity)}`);
   return `/*forma-build:${identity}*/`;
