@@ -176,10 +176,13 @@ describe('FORMA_SECURITY_RELEASE', () => {
     const one = app('one'); const distA = join(scratch(), 'dist');
     await build(one.config(distA));
     one.relabel('two');
-    const run = async (value: string) => { vi.stubEnv('FORMA_SECURITY_RELEASE', value); try { return await build(one.config(join(scratch(), 'dist'), { previousDist: distA })); } finally { vi.unstubAllEnvs(); } };
+    const run = async (value: string, security?: boolean) => { vi.stubEnv('FORMA_SECURITY_RELEASE', value); try { return await build(one.config(join(scratch(), 'dist'), { previousDist: distA, security })); } finally { vi.unstubAllEnvs(); } };
     for (const marked of ['1', 'true', 'TRUE', ' 1 ', 'True']) expect(retainedOf((await run(marked)).manifest), marked).toEqual([]);
     for (const unmarked of ['0', 'false', '', ' FALSE ']) expect(retainedOf((await run(unmarked)).manifest).length, unmarked).toBeGreaterThan(0);
-    for (const bad of ['yes', 'on', '2', 'tru']) await expect(run(bad), bad).rejects.toThrow(/BUILD-822.*FORMA_SECURITY_RELEASE/s);
+    for (const bad of ['yes', 'on', '2', 'tru']) {
+      await expect(run(bad), bad).rejects.toThrow(/BUILD-822.*FORMA_SECURITY_RELEASE/s);
+      await expect(run(bad, true), `${bad} with security:true`).rejects.toThrow(/BUILD-822.*FORMA_SECURITY_RELEASE/s);
+    }
   }, 60_000);
 });
 

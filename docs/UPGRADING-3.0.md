@@ -30,7 +30,10 @@ One generation only. Mark every release that fixes a vulnerability, a Forma
 security upgrade included, with `security: true` (or `FORMA_SECURITY_RELEASE=1`):
 it retains nothing. Leave the option out for a first deploy; your first 3.0.0
 deploy over a 2.x release retains nothing and says so. Details and the errors
-(`BUILD-820`, `BUILD-821`) are in `packages/build/README.md`, "Retention".
+(`BUILD-820`, `BUILD-821`, `BUILD-822`) are in `packages/build/README.md`, "Retention".
+Unknown `FORMA_SECURITY_RELEASE` values fail even when `security: true` already marks the build.
+Treat the previous artifact store as trusted input: the SHA-384 checks detect changed files,
+not an attacker who can replace both the files and their manifest.
 
 ## Full asset digests
 

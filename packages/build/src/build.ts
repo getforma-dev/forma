@@ -614,7 +614,8 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   const project = process.cwd();
   // A release marked security retains nothing (L-16, SR45); the environment marks it too, and
   // a `false` in the configuration does not unmark it: the mark can only be forgotten safely.
-  const security = userConfig.security === true || securityFromEnvironment(process.env.FORMA_SECURITY_RELEASE);
+  const environmentSecurity = securityFromEnvironment(process.env.FORMA_SECURITY_RELEASE);
+  const security = userConfig.security === true || environmentSecurity;
   const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app), security };
   // The previous release is read and checked before anything is bundled or written, so a wrong
   // path fails at once (BUILD-820). Watch mode and a security release never read it.
