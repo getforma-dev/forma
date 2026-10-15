@@ -241,8 +241,9 @@ mod reload {
         collections::HashMap,
         sync::{Mutex, OnceLock},
     };
-    fn files() -> &'static Mutex<HashMap<String, Vec<u8>>> {
-        static FILES: OnceLock<Mutex<HashMap<String, Vec<u8>>>> = OnceLock::new();
+    static SERIAL: Mutex<()> = Mutex::new(());
+    fn files() -> &'static Mutex<HashMap<String, Option<Vec<u8>>>> {
+        static FILES: OnceLock<Mutex<HashMap<String, Option<Vec<u8>>>>> = OnceLock::new();
         FILES.get_or_init(Default::default)
     }
     struct Memory;
@@ -250,7 +251,7 @@ mod reload {
         fn get(name: &str) -> Option<rust_embed::EmbeddedFile> {
             let mut file = Assets::get(name).or_else(|| Assets::get("home.ir"))?;
             if let Some(bytes) = files().lock().unwrap().get(name) {
-                file.data = Cow::Owned(bytes.clone());
+                file.data = Cow::Owned(bytes.clone()?);
             } else if Assets::get(name).is_none() {
                 return None;
             }
@@ -267,7 +268,7 @@ mod reload {
         }
     }
     fn write(name: &str, bytes: Vec<u8>) {
-        files().lock().unwrap().insert(name.into(), bytes);
+        files().lock().unwrap().insert(name.into(), Some(bytes));
     }
     fn replace(bytes: &[u8], from: &[u8], to: &[u8]) -> Vec<u8> {
         assert_eq!(from.len(), to.len());
@@ -283,7 +284,103 @@ mod reload {
         changed
     }
     #[test]
+    fn rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery() {
+        let _serial = SERIAL.lock().unwrap_or_else(|p| p.into_inner());
+        let _reset = Reset;
+        let original = Assets::get("home.ir").unwrap().data.into_owned();
+        let manifest_bytes = Assets::get("manifest.json").unwrap().data.into_owned();
+        let manifest = try_load_manifest::<Memory>().unwrap();
+        let handle = load_ir_modules::<Memory>(&manifest)
+            .unwrap()
+            .bind::<Handler>("home")
+            .unwrap();
+        let render = || {
+            handle
+                .render(&props(), &RenderCtx::new())
+                .unwrap()
+                .into_parts_unchecked()
+                .html
+        };
+        let mut incompatible: serde_json::Value = serde_json::from_slice(&manifest_bytes).unwrap();
+        incompatible["writer"] = "4.0.0".into();
+        incompatible["assets"]["fresh.js"] = serde_json::json!({"immutable":false});
+        incompatible["routes"]["/"]["js"] = serde_json::json!(["fresh.js"]);
+        let rejected_candidates = [
+            Some(incompatible.to_string().into_bytes()),
+            Some(b"{broken".to_vec()),
+            None,
+        ];
+        for rejected in rejected_candidates.clone() {
+            write("home.ir", original.clone());
+            write("manifest.json", manifest_bytes.clone());
+            assert!(render().contains("local-only"));
+            files()
+                .lock()
+                .unwrap()
+                .insert("manifest.json".into(), rejected);
+            for text in [b"edited-one", b"edited-two"] {
+                write("home.ir", replace(&original, b"local-only", text));
+                for _ in 0..2 {
+                    let html = render();
+                    assert!(
+                        html.contains("local-only"),
+                        "rejected manifest must preserve old IR: {html}"
+                    );
+                    assert!(!html.contains("edited-"));
+                    assert!(
+                        !html.contains("fresh.js"),
+                        "rejected manifest must preserve old assets"
+                    );
+                }
+            }
+            // Restoring exactly the old valid bytes must reopen reload, including
+            // after a missing manifest; an unchanged-byte fast path cannot trap it.
+            write("manifest.json", manifest_bytes.clone());
+            let recovered = render();
+            assert!(recovered.contains("edited-two"), "{recovered}");
+            assert!(!recovered.contains("fresh.js"));
+            let mut valid = incompatible.clone();
+            valid["writer"] = "3.0.0".into();
+            write("manifest.json", valid.to_string().into_bytes());
+            write("home.ir", replace(&original, b"local-only", b"edited-one"));
+            let paired = render();
+            assert!(paired.contains("edited-one"));
+            assert!(paired.contains("fresh.js"));
+        }
+        // The disk may change after the caller reads its valid startup manifest
+        // but before constructing Pages. A refused initial baseline also freezes
+        // the caller's loaded pair, rather than blessing subsequent IR-only edits.
+        for rejected in rejected_candidates {
+            write("home.ir", original.clone());
+            files()
+                .lock()
+                .unwrap()
+                .insert("manifest.json".into(), rejected);
+            let startup = load_ir_modules::<Memory>(&manifest)
+                .unwrap()
+                .bind::<Handler>("home")
+                .unwrap();
+            write("home.ir", replace(&original, b"local-only", b"edited-one"));
+            let render_startup = || {
+                startup
+                    .render(&props(), &RenderCtx::new())
+                    .unwrap()
+                    .into_parts_unchecked()
+                    .html
+            };
+            for _ in 0..2 {
+                let frozen = render_startup();
+                assert!(frozen.contains("local-only"));
+                assert!(!frozen.contains("edited-one"));
+            }
+            write("manifest.json", manifest_bytes.clone());
+            assert!(render_startup().contains("edited-one"));
+        }
+    }
+
+    #[test]
     fn reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot() {
+        let _serial = SERIAL.lock().unwrap_or_else(|p| p.into_inner());
         let _reset = Reset;
         let original = Assets::get("home.ir").unwrap().data.into_owned();
         let manifest = try_load_manifest::<Memory>().unwrap();

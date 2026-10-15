@@ -263,7 +263,8 @@ pub fn load_ir_modules_strict<A: Embed>(
 ///   as start ([`IrModule::parse`], the strict loader's). A module that fails
 ///   it keeps the previous one, and the failure is logged once per distinct
 ///   file, as a `tracing` warning carrying its `LOAD-1xx` code; the next good
-///   write replaces it. A route the manifest starts naming after start is
+///   write replaces it. An invalid or missing manifest freezes the previous
+///   module and asset snapshot together until a valid manifest returns. A route the manifest starts naming after start is
 ///   loaded on its first `get`; a route the manifest stops naming keeps its
 ///   last module.
 ///
@@ -446,6 +447,9 @@ mod dev {
     pub(super) struct Pages {
         /// `manifest.json` as last read, parsed or refused.
         manifest: Option<Vec<u8>>,
+        /// Invalid or missing manifest bytes freeze the complete last-good pair.
+        /// Repeated identical refusals must not permit a mutable .ir file reload.
+        manifest_rejected: bool,
         accepted_manifest: Arc<AssetManifest>,
         /// Each route's module file, as the manifest last named it.
         names: HashMap<String, String>,
@@ -480,11 +484,27 @@ mod dev {
                     (l.route, page)
                 })
                 .collect();
+            // Preserve the caller's validated startup manifest, including any
+            // explicit route additions. Disk bytes establish the watch baseline,
+            // but an invalid or missing baseline must not permit IR-only reload.
+            let baseline = read("manifest.json").map(Cow::into_owned);
+            let manifest_rejected = match baseline.as_deref() {
+                Some(bytes) => match serde_json::from_slice::<AssetManifest>(bytes) {
+                    Ok(_) => false,
+                    Err(error) => {
+                        tracing::warn!("manifest.json does not parse ({error}); the previous module and assets stay together (development reload)");
+                        true
+                    }
+                },
+                None => {
+                    tracing::warn!("manifest.json is missing; the previous module and assets stay together (development reload)");
+                    true
+                }
+            };
             Pages {
                 accepted_manifest: Arc::new(manifest.clone()),
-                // The manifest on disk now is the baseline: a later change to
-                // it is what a `get` looks for.
-                manifest: read("manifest.json").map(Cow::into_owned),
+                manifest: baseline,
+                manifest_rejected,
                 names,
                 pages,
             }
@@ -499,7 +519,9 @@ mod dev {
         }
 
         pub(super) fn get(&mut self, route: &str, read: Read<'_>) -> Option<Arc<IrModule>> {
-            self.reread_manifest(read);
+            if !self.reread_manifest(read) {
+                return self.current(route);
+            }
             let Some(file) = self.names.get(route).cloned() else {
                 return self.current(route);
             };
@@ -562,16 +584,25 @@ mod dev {
 
         /// Take the module names from `manifest.json` when it changed. One the
         /// watch mode publishes is whole (it is replaced by rename); one that
-        /// does not parse keeps the names and is logged once.
-        fn reread_manifest(&mut self, read: Read<'_>) {
+        /// does not validate (or disappears) freezes module reload as well as
+        /// the names/assets. Each distinct refusal is logged once. Restoring
+        /// valid bytes reopens reload, including the exact old manifest bytes.
+        fn reread_manifest(&mut self, read: Read<'_>) -> bool {
             let Some(bytes) = read("manifest.json") else {
-                return;
+                if self.manifest.is_some() || !self.manifest_rejected {
+                    tracing::warn!("manifest.json is missing; the previous module and assets stay together (development reload)");
+                }
+                self.manifest = None;
+                self.manifest_rejected = true;
+                return false;
             };
             if self.manifest.as_deref() == Some(&bytes[..]) {
-                return;
+                return !self.manifest_rejected;
             }
+            self.manifest_rejected = true;
             match serde_json::from_slice::<AssetManifest>(&bytes) {
                 Ok(manifest) => {
+                    self.manifest_rejected = false;
                     self.accepted_manifest = Arc::new(manifest.clone());
                     self.names = manifest
                         .routes
@@ -583,11 +614,12 @@ mod dev {
                     self.pages.retain(|route, _| self.names.contains_key(route));
                 }
                 Err(e) => tracing::warn!(
-                    "manifest.json does not parse ({e}); the module names stay as they were \
+                    "manifest.json does not parse ({e}); the previous module and assets stay together \
                      (development reload)"
                 ),
             }
             self.manifest = Some(bytes.into_owned());
+            !self.manifest_rejected
         }
     }
 }
