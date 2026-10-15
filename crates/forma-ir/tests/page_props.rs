@@ -199,7 +199,8 @@ fn errors_retain_route_path_and_both_actual_declarations() {
         ("BIND-102", "/typed", "value")
     );
     let rust = error.rust.unwrap();
-    assert!(rust.file.ends_with("tests/page_props.rs"));
+    assert!(std::path::Path::new(&rust.file)
+        .ends_with(std::path::Path::new("tests").join("page_props.rs")));
     let source = include_str!("page_props.rs");
     let field_line = source
         .lines()
