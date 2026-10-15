@@ -12,6 +12,14 @@ import { __DEV__ } from './dev.js';
 import { recordAdoptionSignal } from './adoption-hooks.js';
 
 declare const __FORMA_FRAME_BUILD__: boolean | undefined;
+declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the signal-name bookkeeping leaves the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
 
 // Debug names live in a side table rather than on the getter's `.name`, so
 // alien-signals' isSignal() (which keys off the bound function name) still
@@ -144,7 +152,7 @@ function forceNotify<T>(s: RawSignal<T>): void {
 export function createSignal<T>(initialValue: T, options?: SignalOptions<T>): [get: SignalGetter<T>, set: SignalSetter<T>] {
   const s = createRawSignal<T>(initialValue) as RawSignal<T>;
   const getter = s as unknown as SignalGetter<T>;
-  if (__DEV__ && options?.name) {
+  if (((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) && options?.name) {
     signalNames.set(getter as object, options.name);
   }
   const eq = options?.equals;

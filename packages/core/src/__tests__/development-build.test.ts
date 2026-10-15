@@ -20,7 +20,9 @@
  * resolver applies one set of conditions to every specifier, and a twin
  * imports only twins (verify-dist checks the graphs never cross), so one
  * resolver loads one build. Only two resolvers with different conditions in
- * one process can load both, and the duplicate-instance warning says so.
+ * one process can load both. The duplicate-instance warning is the
+ * development build's (FORMA-021 C3): it names a second development copy, and
+ * the production build keeps no registry at all.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { build, type Options } from 'tsup';
@@ -167,28 +169,50 @@ describe('resolving @getforma/core with and without the development condition (N
       ${imports}
       const core = await import('@getforma/core');
       const [named] = core.createSignal(0, { name: 'probe' });
-    `) + `console.log(JSON.stringify({ instances: ${INSTANCES}, name: core.getSignalName(named) ?? null, warns }));`);
+    `) + `console.log(JSON.stringify({ instances: ${INSTANCES} ?? null, name: core.getSignalName(named) ?? null, warns }));`);
 
-    expect(esm).toEqual({ instances: 1, name: null, warns: [] });
+    // The production build keeps no instance registry (FORMA-021 C3): the
+    // global the development build counts copies in is never created.
+    expect(esm).toEqual({ instances: null, name: null, warns: [] });
   });
 
-  it('a process that loads both builds is told so by the duplicate-instance warning', () => {
+  it('a process that loads the development build twice is told so by the duplicate-instance warning; the production build keeps no registry', () => {
+    // Two copies of the development build in one process: its ESM twin by
+    // `import` and its CJS twin by `require`, both resolved with the
+    // condition (mixing the two module systems is one of the topologies the
+    // warning names). Each copy registers; the second one warns, once.
+    const twice = runNode([DEV_CONDITION], capturingWarnings(`
+      import { createRequire } from 'node:module';
+      const require = createRequire(${JSON.stringify(join(scratch, 'app.cjs'))});
+      const esm = await import('@getforma/core');
+      const cjs = require('@getforma/core');
+      const [named] = esm.createSignal(0, { name: 'probe' });
+      const sameState = cjs.getSignalName(named) === esm.getSignalName(named);
+    `) + `console.log(JSON.stringify({ instances: ${INSTANCES} ?? null, sameState, warns }));`);
+    expect(twice.instances).toBe(2);
+    expect(twice.sameState).toBe(false);
+    expect(twice.warns).toHaveLength(1);
+    expect(twice.warns[0]).toContain('Duplicate @getforma/core instance detected (2 copies loaded)');
+
     // Two resolvers in one process, one passing the condition and one not (a
     // development server whose externalized dependencies Node resolves
     // without it): the production root by specifier, its development twin by
-    // the file the other resolver would have reached.
+    // the file the other resolver would have reached. The copies still do not
+    // share state, but only the development copy registers, so no warning
+    // names the mix: the production build carries no registry and no warning
+    // text (FORMA-021 C3; two physical copies in one bundle are the build's
+    // BUILD-816 diagnostic, @getforma/build's core-instances.ts).
     const devRoot = pathToFileURL(join(pkgDir, pkg.exports['.'].import[DEV_CONDITION])).href;
     const mixed = runNode([], capturingWarnings(`
       const production = await import('@getforma/core');
       const development = await import(${JSON.stringify(devRoot)});
       const [named] = development.createSignal(0, { name: 'probe' });
       const sameState = production.getSignalName(named) === development.getSignalName(named);
-    `) + `console.log(JSON.stringify({ instances: ${INSTANCES}, sameState, warns }));`);
+    `) + `console.log(JSON.stringify({ instances: ${INSTANCES} ?? null, sameState, warns }));`);
 
-    expect(mixed.instances).toBe(2);
+    expect(mixed.instances).toBe(1);
     // The two copies do not share state: the name lives in the development copy only.
     expect(mixed.sameState).toBe(false);
-    expect(mixed.warns).toHaveLength(1);
-    expect(mixed.warns[0]).toContain('Duplicate @getforma/core instance detected (2 copies loaded)');
+    expect(mixed.warns).toEqual([]);
   });
 });

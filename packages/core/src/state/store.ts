@@ -15,6 +15,15 @@
 
 import { createSignal, batch, untrack, value, __DEV__ } from 'forma/reactive';
 
+declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the forbidden-key warning leaves the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -402,7 +411,7 @@ export function createStore<T extends object>(
         // strict mode — the key is simply not applied.
         // Verified by: src/state/__tests__/store-proto-hijack.test.ts > "assigning __proto__ directly on the proxy does not replace the prototype"
         if (FORBIDDEN_STORE_KEYS.has(key)) {
-          if (__DEV__) warnForbiddenKey(key);
+          if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnForbiddenKey(key);
           return true;
         }
 
@@ -567,7 +576,7 @@ export function createStore<T extends object>(
         // backstop for direct mutation, this loop stops the same key before it
         // is ever handed to Reflect.set.
         if (FORBIDDEN_STORE_KEYS.has(key)) {
-          if (__DEV__) warnForbiddenKey(key);
+          if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnForbiddenKey(key);
           continue;
         }
         (rootProxy as Record<string, unknown>)[key] = (updates as Record<string, unknown>)[key];
