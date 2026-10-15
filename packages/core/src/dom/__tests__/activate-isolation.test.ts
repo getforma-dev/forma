@@ -1,3 +1,4 @@
+import { h } from '../element.js';
 /** Original error-isolation and deep-projection controls, with authoritative head state. */
 import { compiled, emptyRegistry, FIXTURE_HASH, installState, useFreshDocument } from './helpers/compiled-island.js';
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -25,10 +26,10 @@ describe('removed shared props block', () => {
   it('ignores a body block when the first head block supplies valid declared props', () => {
     document.body.innerHTML = '<div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div><script id="__forma_islands" type="application/json">{"0":{"title":"attacker"}}</script>';
     installState([{ title: 'hello' }]);
-    const component = vi.fn();
+    const component = vi.fn((_props: Record<string, unknown>) => h('div', null, h('p', null, '0')));
     activateIslands({ A: compiled(component, [[{ name: 'title', type: { kind: 'string' } }]]) });
     expect(component).toHaveBeenCalledExactlyOnceWith({ title: 'hello' });
-    expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('active');
+    expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('pending');
   });
 });
 
@@ -52,11 +53,11 @@ describe('failed island teardown', () => {
 
     const island = document.querySelector('[data-forma-island]')!;
     expect(island.getAttribute('data-forma-status')).toBe('error');
-    expect(runs).toBe(1);
+    expect(runs).toBe(0);
 
     // A zombie island keeps re-running its bindings on every shared-signal write.
     setCount(1);
-    expect(runs).toBe(1);
+    expect(runs).toBe(0);
     // Nothing is left dangling for deactivateIsland to find.
     expect((island as unknown as { __formaDispose?: unknown }).__formaDispose).toBeUndefined();
     expect(() => deactivateIsland(island as HTMLElement)).not.toThrow();
@@ -71,10 +72,10 @@ describe('failed island teardown', () => {
     const [count, setCount] = createSignal(0);
     let runs = 0;
 
-    activateIslands(emptyRegistry({ Ok: () => { createEffect(() => { count(); runs++; }); } }));
+    activateIslands(emptyRegistry({ Ok: () => { createEffect(() => { count(); runs++; }); return h('div', null, h('p', null, 'x')); } }));
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
-    expect(island.getAttribute('data-forma-status')).toBe('active');
+    expect(island.getAttribute('data-forma-status')).toBe('pending');
     setCount(1);
     expect(runs).toBe(2);
 
@@ -102,10 +103,10 @@ describe('activateIslands root parameter', () => {
   it('an explicit light-DOM subtree shares original document authority', () => {
     document.body.innerHTML = '<main><div data-forma-island="7" data-forma-component="A" data-forma-status="pending"><p>original</p></div></main>';
     installState([{ from: 'page' }]);
-    const component = vi.fn();
+    const component = vi.fn((_props: Record<string, unknown>) => h('div', null, h('p', null, 'original')));
     activateIslands({ A: compiled(component, [[{ name: 'from', type: { kind: 'string' } }]]) }, document.querySelector('main')!);
     expect(component).toHaveBeenCalledExactlyOnceWith({ from: 'page' });
-    expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('active');
+    expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('pending');
   });
 });
 
@@ -159,8 +160,7 @@ describe('sanitizePropsDeep', () => {
       '"deeper":{"constructor":{"prototype":{"x":1}},"prototype":{"y":2},"ok":4}},' +
       '"rows":[{"__proto__":{"row":true},"id":1},{"id":2}]}';
     document.body.innerHTML = `
-      <div data-forma-island="0" data-forma-component="First" data-forma-status="pending"><p>0</p></div>
-      <div data-forma-island="1" data-forma-component="Second" data-forma-status="pending"><p>1</p></div>
+      <div data-forma-island="0" data-forma-component="First" data-forma-status="pending"><p>0</p></div><div data-forma-island="1" data-forma-component="Second" data-forma-status="pending"><p>1</p></div>
     `;
 
     installState([JSON.parse(payload), JSON.parse(payload)]);
@@ -188,6 +188,7 @@ describe('sanitizePropsDeep', () => {
     const island = (props: Record<string, unknown>) => {
       received.push(props!);
       merged.push(deepMerge({}, props!));
+      return h('div', null, h('p', null, String(received.length - 1)));
     };
     try {
       activateIslands({ First: compiled(island, schema), Second: compiled(island, schema) });
@@ -215,7 +216,7 @@ describe('sanitizePropsDeep', () => {
     expect(merged[0]).toEqual(merged[1]);
     // There is no opt-out: the islands never saw the keys, so a caller that
     // never heard of sanitizePropsDeep is covered too.
-    expect(document.querySelectorAll('[data-forma-status="active"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-forma-status="pending"]')).toHaveLength(2);
   });
 
   it('standalone sanitization still strips props nested 10,000 deep', () => {
