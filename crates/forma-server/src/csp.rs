@@ -1,5 +1,5 @@
 //! CSP nonce generation and policy construction: the enforced policy, its
-//! typed extensions, and Trusted Types in Report-Only.
+//! typed extensions, and enforced Trusted Types with a named route relaxation.
 
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use ring::rand::{SecureRandom, SystemRandom};
@@ -11,15 +11,9 @@ use std::fmt;
 /// (`nonce="{nonce}"` on every script/style tag) and raw into the CSP header
 /// value. That is only safe because the value comes from
 /// [`CspNonce::generate`], whose base64 alphabet contains nothing that is
-/// attribute- or directive-significant. The newtype exists so a caller that
-/// supplies its own nonce — which cache-aware callers must, see
-/// [`crate::template::render_page_with_nonce`] — cannot hand in
-/// `" onload="alert(1)` (attribute breakout on every script tag) or
-/// `x' 'unsafe-inline` (rewriting the policy from outside).
-///
-/// It also makes `generate()` the obvious path, which blunts the other failure
-/// mode: a caller hard-coding one static, publicly-known nonce for all users
-/// defeats nonce-based CSP entirely.
+/// attribute- or directive-significant. Parsing an existing nonce is useful for
+/// diagnostics and policy inspection. Public page renderers always generate a
+/// fresh nonce themselves; no renderer accepts a caller-supplied nonce.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CspNonce(String);
 
@@ -120,7 +114,7 @@ pub fn generate_csp_nonce() -> CspNonce {
 /// The strict policy's directives, in the order [`build_csp_header`] writes
 /// them, for a nonce. One table, so the plain header and an extended one can
 /// never disagree about the base.
-fn strict_directives(nonce: &str) -> [(&'static str, Vec<String>); 12] {
+fn strict_directives(nonce: &str) -> [(&'static str, Vec<String>); 14] {
     let nonce_source = format!("'nonce-{nonce}'");
     let words = |w: &[&str]| w.iter().map(|s| s.to_string()).collect::<Vec<_>>();
     [
@@ -143,6 +137,8 @@ fn strict_directives(nonce: &str) -> [(&'static str, Vec<String>); 12] {
         ("frame-ancestors", words(&["'none'"])),
         ("base-uri", words(&["'none'"])),
         ("form-action", words(&["'self'"])),
+        ("require-trusted-types-for", words(&["'script'"])),
+        ("trusted-types", words(&["forma", "forma-runtime"])),
     ]
 }
 
@@ -198,7 +194,7 @@ pub fn build_csp_header(nonce: &CspNonce) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Trusted Types, Report-Only (DR-20) and the reporting endpoint
+// Enforced Trusted Types, optional reporting, and the reporting endpoint
 // ---------------------------------------------------------------------------
 
 /// The Trusted Types directives: every write to a script-carrying
@@ -207,10 +203,9 @@ pub fn build_csp_header(nonce: &CspNonce) -> String {
 /// zero-build runtime's parser). No `'allow-duplicates'`: a second copy of
 /// core creating `forma` is itself a violation.
 ///
-/// In 0.2.2 they are sent in `Content-Security-Policy-Report-Only`, beside
-/// the unchanged enforced policy, for one release; 3.0.0 enforces them. A
-/// release build sends that header only when the application names a
-/// reporting endpoint ([`report_only_policy`]).
+/// These directives are enforced on every strict document, including frames,
+/// in debug and release builds. A named per-route relaxation removes only these
+/// directives from enforcement and retains them in Report-Only.
 const TRUSTED_TYPES: [(&str, &[&str]); 2] = [
     ("require-trusted-types-for", &["'script'"]),
     ("trusted-types", &["forma", "forma-runtime"]),
@@ -422,11 +417,9 @@ impl PolicyExtensions {
     /// - Alert **per route and directive above a baseline**, deduplicated:
     ///   never a ticket per report. One page in a loop sends thousands.
     ///
-    /// Without an endpoint, the enforced policy is byte-identical to
-    /// 0.2.1's and its violations reach only the browser's console; the
-    /// Trusted Types Report-Only header goes out in development builds only
-    /// (a released Report-Only policy with no endpoint reports to nobody, and
-    /// WebKit logs an error for it on every page). Naming an endpoint sends
+    /// Trusted Types enforcement does not depend on an endpoint. The additional
+    /// diagnostic Report-Only header goes out in development builds and whenever
+    /// a route explicitly relaxes enforcement. Naming an endpoint sends
     /// it in every build. An endpoint that is empty, carries `;`,
     /// `,`, a quote, a backslash, whitespace, a fragment or a non-ASCII byte,
     /// starts with `//`, or uses another scheme fails the page with a
@@ -484,9 +477,9 @@ impl PolicyExtensions {
     /// allowlist (`forma-raw-lint`) with an owner and an end date, and
     /// `reason` should name them.
     ///
-    /// What it does: in 0.2.x Trusted Types are Report-Only on every route,
-    /// so the headers do not change; from 3.0.0, when the other routes
-    /// enforce Trusted Types, this route keeps them Report-Only. Either way
+    /// The selected route omits the two Trusted Types enforcement directives,
+    /// retaining them in Report-Only even without a reporting endpoint. Other
+    /// routes keep enforcement. Where a reporting endpoint is configured,
     /// its violations are still reported, so the sinks left to move stay
     /// visible. A relaxed route is logged, once per route and reason per
     /// process, as a `tracing` warning naming the route and `reason`;
@@ -522,15 +515,6 @@ pub struct PolicyError {
 }
 
 impl PolicyError {
-    /// A `PageOutput::csp` edited as text, refused by the bridge.
-    pub(crate) fn edited_as_text(csp: String) -> Self {
-        PolicyError {
-            directive: "content-security-policy",
-            source: csp,
-            reason: "the policy was edited as text; express the edit as PolicyExtensions",
-        }
-    }
-
     /// The directive the source was added to, such as `img-src`, or
     /// `content-security-policy` for a whole policy edited as text.
     pub fn directive(&self) -> &'static str {
@@ -641,6 +625,9 @@ pub(crate) fn page_policy(
 
     let mut directives: Vec<(&'static str, Vec<String>)> =
         strict_directives(nonce.as_str()).into_iter().collect();
+    if extensions.relax_trusted_types.is_some() {
+        directives.retain(|(name, _)| !TRUSTED_TYPES.iter().any(|(tt, _)| tt == name));
+    }
     for (directive, sources) in added {
         if sources.is_empty() {
             continue;
@@ -681,6 +668,7 @@ pub(crate) fn page_policy(
     )?;
     let report_only = match reporting {
         Some(reporting) => Some(report_only_text(Some(reporting))),
+        None if extensions.relax_trusted_types.is_some() => Some(report_only_text(None)),
         None => report_only_policy(),
     }
     .map(|text| header("content-security-policy-report-only", text))
@@ -711,9 +699,8 @@ pub(crate) fn page_policy(
 const RELAXATIONS_LOGGED: usize = 1024;
 
 /// Log a render of a route whose Trusted Types are relaxed: once per route
-/// and reason per process, so a busy route does not flood the log. `route`
-/// is `None` for a page made by `PageOutput::into_page_response`, which does
-/// not know its route; its relaxations are told apart by their reasons.
+/// and reason per process, so a busy route does not flood the log. The route
+/// is the declared route pattern, never a request-specific path.
 ///
 /// After a pair's first render this takes the lock, finds the pair and
 /// allocates nothing. The set is bounded: past [`RELAXATIONS_LOGGED`] pairs
@@ -722,7 +709,7 @@ const RELAXATIONS_LOGGED: usize = 1024;
 /// are not logged.
 ///
 /// Verified by: crates/forma-server/tests/trusted_types_report_only.rs > "a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason"
-pub(crate) fn log_relaxation(route: Option<&str>, reason: &str) {
+pub(crate) fn log_relaxation(route: &str, reason: &str) {
     use std::collections::{BTreeMap, BTreeSet};
     use std::sync::Mutex;
     struct Logged {
@@ -733,7 +720,6 @@ pub(crate) fn log_relaxation(route: Option<&str>, reason: &str) {
         pairs: BTreeMap::new(),
         count: 0,
     });
-    let route = route.unwrap_or("(a page made by PageOutput::into_page_response)");
     // Nothing panics while holding the lock; a poisoned set is still a set.
     let mut logged = LOGGED
         .lock()
@@ -766,9 +752,9 @@ pub(crate) fn log_relaxation(route: Option<&str>, reason: &str) {
     tracing::warn!(
         route,
         reason,
-        "Trusted Types relaxed on route {route}: {reason}. An allowlisted exit: in 0.2.x every \
-         route reports them (Report-Only); from 3.0.0 this route keeps reporting while the \
-         others enforce. Logged once per route and reason per process."
+        "Trusted Types relaxed on route {route}: {reason}. An allowlisted exit: this route \
+         keeps Trusted Types in Report-Only while other routes enforce. Logged once per \
+         route and reason per process."
     );
 }
 
@@ -1238,10 +1224,9 @@ mod tests {
     }
 
     #[test]
-    fn build_csp_header_is_byte_identical_to_0_2_1() {
-        // `build_csp_header` now writes from the directive table the typed
-        // extensions share; the text an application already sends must not
-        // move by a byte.
+    fn strict_base_preserves_existing_directives_and_adds_enforced_trusted_types() {
+        // The existing strict directives retain their order and values;
+        // both Trusted Types directives are now part of enforcement.
         let nonce = CspNonce::parse("test-nonce-value-0123456789").unwrap();
         assert_eq!(
             build_csp_header(&nonce),
@@ -1256,7 +1241,7 @@ mod tests {
              font-src 'self'; \
              frame-ancestors 'none'; \
              base-uri 'none'; \
-             form-action 'self'"
+             form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"
         );
     }
 
@@ -1430,9 +1415,9 @@ mod tests {
             assert!(!policy.contains("unsafe-eval") && !policy.contains("unsafe-hashes"));
         }
 
-        // Trusted Types (DR-20), in Report-Only for 0.2.2: both directives,
+        // Trusted Types enforcement and the optional reporting copy: both directives,
         // with Forma's two policies and no 'allow-duplicates' (TH18), and no
-        // 'unsafe-*' at all. The enforced policy names neither.
+        // 'unsafe-*' at all. Only the named relaxed policy omits them.
         let report_only = report_only_text(None);
         assert_eq!(
             report_only,
@@ -1454,10 +1439,16 @@ mod tests {
             "{extended_report_only}"
         );
         assert!(!extended_report_only.contains("unsafe"));
-        for policy in [csp.as_str(), extended_csp] {
-            assert_eq!(directive(policy, "require-trusted-types-for"), None);
-            assert_eq!(directive(policy, "trusted-types"), None);
-        }
+        assert_eq!(
+            directive(&csp, "require-trusted-types-for"),
+            Some("'script'")
+        );
+        assert_eq!(
+            directive(&csp, "trusted-types"),
+            Some("forma forma-runtime")
+        );
+        assert_eq!(directive(extended_csp, "require-trusted-types-for"), None);
+        assert_eq!(directive(extended_csp, "trusted-types"), None);
     }
 
     #[test]

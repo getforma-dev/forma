@@ -47,9 +47,8 @@
 //! [`render_browser_shell`]. At start, [`load_ir_modules_strict`] is the
 //! module loader: stop on its errors, before the port binds. [`IrModules`]
 //! loads the same way and, in a debug build, rereads a page's module when the
-//! build's watch mode rewrites it. Deprecated in
-//! 0.2.2, removed in 3.0.0: `render_page` and its Phase 1 fallback,
-//! `render_page_with_nonce`, the lenient `load_ir_modules`, [`PageOutput`]'s
+//! build's watch mode rewrites it. Removed in 3.0.0: `render_page` and its Phase 1 fallback,
+//! `render_page_with_nonce`, the lenient `load_ir_modules`, `PageOutput`'s
 //! public fields and `headers()`, and `PageConfig::config_script`.
 
 // Makes README.md's and SECURITY.md's "Zero `unsafe` blocks" a property the
@@ -69,7 +68,7 @@
 pub mod assets;
 /// Content-Security-Policy construction and nonce generation.
 pub mod csp;
-/// Doctests pinning each deprecation; built only by `cargo test --doc`.
+/// Compile controls pinning removed response/raw-script bridges.
 #[cfg(doctest)]
 mod deprecations;
 // Documented by its own `//!` docs (the preview frame, DR-14 tier (c)).
@@ -109,6 +108,4 @@ pub use ir::{load_ir_modules, load_ir_modules_strict, IrLoadError, IrModules};
 pub use raw::RawHtml;
 pub use render::{render_browser_shell, try_render, RenderCtx, RenderError};
 pub use response::{PageParts, PageResponse, RenderCounts};
-#[allow(deprecated)]
-pub use template::{render_page, render_page_with_nonce};
 pub use types::*;

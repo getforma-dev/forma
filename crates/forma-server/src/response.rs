@@ -1,6 +1,6 @@
 //! The page response: HTML that never leaves without its policy.
 
-use crate::csp::{self, CspNonce, PagePolicy, PolicyError, PolicyExtensions};
+use crate::csp::{CspNonce, PagePolicy};
 use axum::http::{header, HeaderName, HeaderValue};
 use axum::response::{IntoResponse, Response};
 use std::time::Duration;
@@ -13,18 +13,14 @@ use std::time::Duration;
 ///   this one response; a cached copy would hand that nonce to every later
 ///   reader, and another user's page with it;
 /// - `Content-Security-Policy`, the strict policy for that nonce
-///   ([`csp::build_csp_header`]) with only the handler's typed
-///   [`PolicyExtensions`] added;
-/// - `Content-Security-Policy-Report-Only`: Trusted Types,
-///   `require-trusted-types-for 'script'; trusted-types forma forma-runtime`,
-///   reported, not enforced, in 0.2.x, when the
-///   extensions name a reporting endpoint ([`PolicyExtensions::report_to`],
-///   [`PolicyExtensions::report_uri`]), with the reporting directives in both
-///   policies (and, for `report_to`, a `Reporting-Endpoints` header), or, with
-///   no endpoint, in a development build only (forma-server's own
-///   `debug_assertions`: a release profile or package override with debug
-///   assertions on counts as one), so a check that Trusted Types raise no
-///   violation must name an endpoint or run a debug build;
+///   ([`crate::csp::build_csp_header`]) with only the handler's typed
+///   [`crate::PolicyExtensions`] added;
+/// - Trusted Types enforcement in the strict policy, in every build and without
+///   a reporting endpoint. The named route relaxation moves only those two
+///   directives to `Content-Security-Policy-Report-Only`;
+/// - Optional reporting through [`crate::PolicyExtensions::report_to`] or
+///   [`crate::PolicyExtensions::report_uri`]. Strict pages also carry a diagnostic
+///   Report-Only policy in debug builds; a relaxed route always carries it;
 /// - `Cross-Origin-Opener-Policy: same-origin` (or `same-origin-allow-popups`
 ///   when the extensions ask for it), `X-Content-Type-Options`,
 ///   `Referrer-Policy` and `Permissions-Policy`;
@@ -58,9 +54,8 @@ pub struct PageResponse {
 ///
 /// On a [`crate::RenderError`] for a budget or a fault, the same counts say
 /// how far the walk got. For a page served without a walk (a browser
-/// shell, or the deprecated `render_page`'s fallback) every count is zero.
-/// `nodes` and `list_iterations` are counted by [`crate::try_render`]; a page
-/// from the deprecated `render_page` reports them as zero.
+/// shell) every count is zero. `nodes` and `list_iterations` are counted by
+/// [`crate::try_render`].
 ///
 /// The walk time is the number to watch for moving a page off an async
 /// worker: see [`crate::try_render`]'s `spawn_blocking` recipe.
@@ -112,21 +107,6 @@ pub struct PageParts {
 }
 
 impl PageResponse {
-    /// Wrap a rendered document: the policy is built here, from the nonce
-    /// the HTML embeds, so the two cannot disagree.
-    pub(crate) fn new(
-        html: String,
-        nonce: CspNonce,
-        extensions: &PolicyExtensions,
-        counts: RenderCounts,
-    ) -> Result<Self, PolicyError> {
-        let policy = csp::page_policy(&nonce, extensions)?;
-        if let Some(reason) = policy.relaxed() {
-            csp::log_relaxation(None, reason);
-        }
-        Ok(Self::with_policy(html, nonce, policy, counts))
-    }
-
     /// Wrap a rendered document whose policy was built, from the same nonce,
     /// before the walk (so an invalid extension costs no walk).
     pub(crate) fn with_policy(

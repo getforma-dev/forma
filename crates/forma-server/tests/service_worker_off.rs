@@ -1,16 +1,10 @@
-//! The default (FORMA-130, DR-25, Q15): no page registers a service worker,
-//! and `/sw.js` is the retiring worker, which deletes Forma's v1 caches and
-//! unregisters, whatever worker the build embedded.
-//!
-//! Its own test binary: the setting is process-wide and this one is never
-//! configured, so every test here sees the default.
-// `render_page` is deprecated on the A2 stack (FORMA-120); these tests use
-// it because it is the page API on `main` too.
-#![allow(deprecated)]
+//! Default worker retirement and browser-shell behavior.
 
 use axum::body::to_bytes;
 use axum::http::StatusCode;
-use forma_server::{render_page, sw, AssetManifest, PageConfig, RenderMode, RouteAssets};
+use forma_server::{
+    render_browser_shell, sw, AssetManifest, PageConfig, RenderCtx, RenderMode, RouteAssets,
+};
 use rust_embed::Embed;
 use std::collections::HashMap;
 
@@ -45,12 +39,10 @@ fn manifest() -> AssetManifest {
 }
 
 fn page_html(manifest: &AssetManifest) -> String {
-    #[allow(deprecated)] // `config_script` is named by every 0.2.x literal on the A2 stack
     let config = PageConfig {
         title: "Home",
         route_pattern: "/",
         manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: None,
@@ -60,7 +52,9 @@ fn page_html(manifest: &AssetManifest) -> String {
         slots: None,
     };
     #[allow(deprecated)]
-    let page = render_page(&config);
+    let page = render_browser_shell(&config, &RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked();
     #[allow(deprecated)]
     let html = page.html;
     html

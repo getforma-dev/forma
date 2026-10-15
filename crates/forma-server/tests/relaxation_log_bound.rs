@@ -3,7 +3,6 @@
 //! grow it with every distinct URL.
 //!
 //! Its own test binary: the bound is per process.
-// `config_script` is a field each remaining legacy page literal names.
 #![allow(deprecated)]
 
 use forma_server::{
@@ -67,7 +66,6 @@ fn the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once() {
             title: "Relaxed",
             route_pattern: route,
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,

@@ -1,10 +1,7 @@
-use crate::csp::{self, CspNonce};
+use crate::csp::CspNonce;
 use crate::head::HeadLink;
 use crate::render::RenderCtx;
-use crate::response::RenderCounts;
-use crate::types::{AssetManifest, PageConfig, PageOutput, RenderMode};
-use forma_ir as ir;
-use std::time::Instant;
+use crate::types::{AssetManifest, PageConfig};
 
 /// Resolved asset URLs for a route — shared between Phase 1 and Phase 2 paths.
 struct ResolvedAssets {
@@ -19,46 +16,6 @@ pub(crate) fn escape_html(s: &str) -> String {
         .replace('<', "&lt;")
         .replace('>', "&gt;")
         .replace('"', "&quot;")
-}
-
-/// Neutralize the only two sequences that can end an inline `<script>` element
-/// or start a comment-driven double-escape inside one.
-///
-/// `</script` → `<\/script` and `<!--` → `<\!--`. Both are identity escapes in
-/// a JS string, template literal or regex, so the *value* is preserved — which
-/// is why `<!--` becomes `<\!--` and not `<--` (the latter changes the string's
-/// contents and parses as `< --` in code position).
-///
-/// The match is case-insensitive because HTML tag names are: `</ScRiPt >`
-/// closes the element just as well as `</script>`. Matching bare `</script`
-/// (rather than `</script` plus a tag-name terminator, which is what the
-/// tokenizer requires) is slightly over-broad, and that is fine here because
-/// the transform is value-preserving.
-///
-/// This makes the value unable to escape its element. It does NOT make an
-/// untrusted value safe — see the doc comment on `PageConfig::config_script`.
-fn neutralize_script_terminators(s: &str) -> String {
-    let lower = s.to_ascii_lowercase();
-    let mut out = String::with_capacity(s.len() + 8);
-    let mut i = 0;
-    while i < s.len() {
-        if lower[i..].starts_with("</script") {
-            out.push_str("<\\/script");
-            i += "</script".len();
-        } else if lower[i..].starts_with("<!--") {
-            out.push_str("<\\!--");
-            i += "<!--".len();
-        } else {
-            // Walk by char so multi-byte UTF-8 is never split. `i < s.len()`
-            // and `i` is always on a char boundary, so there is a next char.
-            let Some(ch) = s[i..].chars().next() else {
-                break;
-            };
-            out.push(ch);
-            i += ch.len_utf8();
-        }
-    }
-    out
 }
 
 /// Build the common `<head>` content shared by both render paths.
@@ -166,11 +123,11 @@ fn resolve_assets(manifest: &AssetManifest, route_pattern: &str) -> ResolvedAsse
     }
 }
 
-/// Build shared body fragments (class attr, prefix, config script, page JS tag).
+/// Build shared body fragments (class attr, prefix, escaped JSON data, page JS tag).
 struct BodyParts {
     body_class_attr: String,
     body_prefix: String,
-    config_script_tag: String,
+    config_json_tag: String,
     page_js_tag: String,
     sw_script: String,
 }
@@ -180,12 +137,10 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         .body_class
         .map(|c| format!(" class=\"{}\"", escape_html(c)))
         .unwrap_or_default();
-    // Raw, trusted HTML by contract — see PageConfig::body_prefix. Written
-    // as it is; a plain string, not a RawHtml, logs RAW-101 once in debug
-    // builds (DR-19).
-    let body_prefix = config.body_prefix.unwrap_or("");
-    crate::raw::check_body_prefix(body_prefix, config.route_pattern);
-    let body_prefix = body_prefix.to_string();
+    let body_prefix = config
+        .body_prefix
+        .map_or("", crate::RawHtml::as_str)
+        .to_string();
 
     // `config_json` is the safe path: serde_json output with every `<`
     // escaped, which simultaneously kills `</script`, `<!--` and `<script`
@@ -201,22 +156,6 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
             )
         })
         .unwrap_or_default();
-
-    // `config_script` is the raw escape hatch. Neutralizing the terminators
-    // stops it breaking out of its own element; it does not make untrusted
-    // content safe inside it. Deprecated (DR-18), and still written exactly
-    // as at 0.2.1 until 3.0.0 removes it.
-    #[allow(deprecated)]
-    let config_script = config.config_script;
-    let config_script_tag = config_script
-        .map(|s| {
-            format!(
-                "<script nonce=\"{nonce}\">{}</script>\n",
-                neutralize_script_terminators(s)
-            )
-        })
-        .unwrap_or_default();
-    let config_script_tag = format!("{config_json_tag}{config_script_tag}");
 
     let page_js_tag = js_urls
         .last()
@@ -236,88 +175,14 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
     BodyParts {
         body_class_attr,
         body_prefix,
-        config_script_tag,
+        config_json_tag,
         page_js_tag,
         sw_script,
     }
 }
 
-/// Render a page, generating a fresh CSP nonce for it.
-///
-/// The returned HTML and CSP header are ONE UNIT: the HTML embeds the nonce
-/// that only this policy blesses. Send the page with
-/// [`PageOutput::into_page_response`], which writes `Cache-Control: no-store`,
-/// the policy and the document headers whenever the response is sent.
-/// Caching the HTML while regenerating the CSP kills every script on the
-/// page; caching both ships one static, publicly-known nonce to all users and
-/// defeats nonce-based CSP.
-///
-/// Deprecated: any load or walk failure here serves the empty Phase 1
-/// shell with a 200 and a log line the handler never sees. Use
-/// [`crate::try_render`], which returns the failure as a coded
-/// [`crate::RenderError`], and [`crate::render_browser_shell`] for a route
-/// declared browser-rendered. This function keeps its fallback until 3.0.0
-/// removes it, and in debug builds logs its deprecation once per process.
-#[deprecated(
-    since = "0.2.2",
-    note = "serves an empty shell with a 200 on any failure; use `try_render`, which returns \
-            the failure as a `RenderError`, and `render_browser_shell` for a route declared \
-            `ssr: false`. Removed in 3.0.0"
-)]
-pub fn render_page(config: &PageConfig) -> PageOutput {
-    log_deprecation_once();
-    render_with_nonce(config, &csp::generate_csp_nonce())
-}
-
-/// The runtime half of `render_page`'s deprecation: one `tracing` warning
-/// per process, in debug builds only, so development sees it and production
-/// logs do not fill with it.
-///
-/// Verified by: crates/forma-server/tests/render_page_deprecation.rs > "render_page_logs_its_deprecation_once_per_process_in_debug_builds"
-fn log_deprecation_once() {
-    #[cfg(debug_assertions)]
-    {
-        use std::sync::atomic::{AtomicBool, Ordering};
-        static LOGGED: AtomicBool = AtomicBool::new(false);
-        if !LOGGED.swap(true, Ordering::Relaxed) {
-            tracing::warn!(
-                "forma_server::render_page is deprecated: it serves an empty shell with a 200 \
-                 when a render fails; use try_render, which returns the failure. \
-                 Logged once per process, in debug builds."
-            );
-        }
-    }
-}
-
-/// [`render_page`] with a caller-supplied per-request nonce.
-///
-/// Takes a validated [`CspNonce`] rather than a `&str`: the value is
-/// interpolated unescaped into five HTML attributes and into the CSP header,
-/// so an arbitrary string would be an attribute- and directive-injection sink.
-///
-/// Deprecated: from 3.0.0 the render draws every response's nonce and
-/// no caller supplies one, so a cached shell cannot be re-stamped with a
-/// nonce of the caller's choosing.
-#[deprecated(
-    since = "0.2.2",
-    note = "the render draws the nonce: use `try_render`, which returns a `PageResponse`. \
-            Removed in 3.0.0"
-)]
-pub fn render_page_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
-    render_with_nonce(config, nonce)
-}
-
-/// The one render behind [`render_page`] and [`render_page_with_nonce`].
-fn render_with_nonce(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
-    match config.render_mode {
-        RenderMode::Phase1ClientMount => render_page_phase1(config, nonce),
-        RenderMode::Phase2SsrReconcile => render_page_phase2(config, nonce),
-    }
-}
-
 /// The document around the page's root: empty for a client-mounted page,
-/// or holding the walk's HTML. `ctx` carries the typed homes; the deprecated
-/// renders pass an empty one and write 0.2.1's document.
+/// or holding the walk's HTML. `ctx` carries the typed head metadata.
 pub(crate) fn write_document(
     config: &PageConfig,
     nonce: &CspNonce,
@@ -357,7 +222,7 @@ pub(crate) fn write_document(
         None => html.push_str("<div id=\"app\"></div>"),
     }
     html.push('\n');
-    html.push_str(&parts.config_script_tag);
+    html.push_str(&parts.config_json_tag);
     html.push_str(&parts.page_js_tag);
     html.push('\n');
     html.push_str(&parts.sw_script);
@@ -365,81 +230,32 @@ pub(crate) fn write_document(
     html
 }
 
-/// A [`PageOutput`] with the strict policy for its nonce.
-#[allow(deprecated)] // the fields are deprecated for callers, not for us
-fn page_output(html: String, nonce: &CspNonce, counts: RenderCounts) -> PageOutput {
-    PageOutput {
-        html,
-        csp: csp::build_csp_header(nonce),
-        nonce: nonce.clone(),
-        counts,
-    }
-}
-
-/// Phase 1: empty `<div id="app"></div>` — client JS mounts from scratch.
-fn render_page_phase1(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
-    page_output(
-        write_document(config, nonce, None, &RenderCtx::default()),
-        nonce,
-        RenderCounts::default(),
-    )
-}
-
-/// Phase 2: server-render the IR module into `<div id="app" data-forma-ssr>`.
-/// Falls back to Phase 1 on any error (missing IR module, walk failure, etc.).
-fn render_page_phase2(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
-    // Both ir_module and slots must be present for SSR
-    let (ir_module, slots) = match (config.ir_module, config.slots) {
-        (Some(m), Some(s)) => (m, s),
-        _ => {
-            tracing::warn!(
-                route = config.route_pattern,
-                "Phase 2 SSR: missing IR module or slots, falling back to Phase 1"
-            );
-            return render_page_phase1(config, nonce);
-        }
-    };
-
-    // Attempt IR walk. This is also where the walker's resource budgets
-    // surface — an over-limit or malformed module degrades to Phase 1 rather
-    // than aborting the process.
-    let started = Instant::now();
-    let walked = ir::walker::walk_to_html(ir_module, slots);
-    let walk_time = started.elapsed();
-    let ssr_body = match walked {
-        Ok(html) => html,
-        Err(err) => {
-            tracing::warn!(
-                route = config.route_pattern,
-                error = %err,
-                "Phase 2 SSR: IR walk failed, falling back to Phase 1"
-            );
-            return render_page_phase1(config, nonce);
-        }
-    };
-
-    let counts = RenderCounts {
-        bytes: ssr_body.len(),
-        walk_time,
-        ..RenderCounts::default()
-    };
-    page_output(
-        write_document(config, nonce, Some(&ssr_body), &RenderCtx::default()),
-        nonce,
-        counts,
-    )
-}
-
 #[cfg(test)]
-// The 0.2.1 API these tests pin is deprecated, not changed: they keep
-// calling it to prove `render_page`'s output is what it was.
-#[allow(deprecated)]
 mod tests {
     use super::*;
-    use crate::types::RouteAssets;
+    use crate::types::{RenderMode, RouteAssets};
     use forma_ir::parser::IrModule;
     use forma_ir::slot::{SlotData, SlotValue};
     use std::collections::HashMap;
+
+    fn render_parts(config: &PageConfig) -> crate::PageParts {
+        let ctx = RenderCtx::new();
+        match config.render_mode {
+            RenderMode::Phase1ClientMount => crate::render_browser_shell(config, &ctx),
+            RenderMode::Phase2SsrReconcile => crate::try_render(config, &ctx),
+        }
+        .expect("valid fixture renders")
+        .into_parts_unchecked()
+    }
+    fn policy(page: &crate::PageParts) -> &str {
+        page.headers
+            .iter()
+            .find(|(name, _)| name == "content-security-policy")
+            .unwrap()
+            .1
+            .to_str()
+            .unwrap()
+    }
 
     /// Build a minimal AssetManifest with no routes for testing.
     fn empty_manifest() -> AssetManifest {
@@ -482,11 +298,10 @@ mod tests {
     #[test]
     fn phase1_renders_empty_app_div() {
         let manifest = empty_manifest();
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -507,11 +322,10 @@ mod tests {
         let ir = hello_ir_module();
         let slots = SlotData::new(0);
 
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "SSR Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -527,103 +341,26 @@ mod tests {
     }
 
     #[test]
-    fn phase2_falls_back_to_phase1_when_ir_module_missing() {
-        let manifest = empty_manifest();
-
-        let page = render_page(&PageConfig {
-            title: "Fallback Test",
-            route_pattern: "/test",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase2SsrReconcile,
-            ir_module: None,
-            slots: None,
-        });
-
-        // Should fall back to Phase 1: empty #app, no data-forma-ssr
-        assert!(page.html.contains("<div id=\"app\"></div>"));
-        assert!(!page.html.contains("<div id=\"app\" data-forma-ssr>"));
-    }
-
-    #[test]
-    fn phase2_falls_back_to_phase1_when_slots_missing() {
-        let manifest = empty_manifest();
-        let ir = hello_ir_module();
-
-        let page = render_page(&PageConfig {
-            title: "Fallback Test",
-            route_pattern: "/test",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase2SsrReconcile,
-            ir_module: Some(&ir),
-            slots: None,
-        });
-
-        assert!(page.html.contains("<div id=\"app\"></div>"));
-        assert!(!page.html.contains("<div id=\"app\" data-forma-ssr>"));
-    }
-
-    #[test]
-    fn phase2_falls_back_on_ir_walk_error() {
-        let manifest = empty_manifest();
-        // FMIR v3 validates string references at load. An existing string that
-        // is not a valid HTML tag reaches the walk's semantic refusal instead.
-        let opcodes = forma_ir::parser::test_helpers::encode_open_tag(0, &[]);
-        let data =
-            forma_ir::parser::test_helpers::build_minimal_ir(&["bad tag"], &[], &opcodes, &[]);
-        let ir = IrModule::parse(&data).unwrap();
-        let slots = SlotData::new(0);
-
-        let page = render_page(&PageConfig {
-            title: "Walk Error Test",
-            route_pattern: "/test",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase2SsrReconcile,
-            ir_module: Some(&ir),
-            slots: Some(&slots),
-        });
-
-        // Should fall back to Phase 1
-        assert!(page.html.contains("<div id=\"app\"></div>"));
-        assert!(!page.html.contains("<div id=\"app\" data-forma-ssr>"));
-    }
-
-    #[test]
     fn phase2_ssr_preserves_head_content() {
         let manifest = empty_manifest();
         let ir = hello_ir_module();
         let slots = SlotData::new(0);
 
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Head Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: Some("window.__TEST__=true;"),
-            config_json: None,
+            config_json: Some(&serde_json::json!({"test":true})),
             body_class: Some("dark"),
             personality_css: Some(":root{--c:red}"),
-            body_prefix: Some("<nav>nav</nav>"),
+            body_prefix: Some(&crate::RawHtml::trusted("<nav>nav</nav>")),
             render_mode: RenderMode::Phase2SsrReconcile,
             ir_module: Some(&ir),
             slots: Some(&slots),
         });
 
         assert!(page.html.contains("<title>Head Test</title>"));
-        assert!(page.html.contains("window.__TEST__=true;"));
+        assert!(page.html.contains("window.__FORMA_CONFIG__="));
         assert!(page.html.contains("class=\"dark\""));
         assert!(page.html.contains(":root{--c:red}"));
         assert!(page.html.contains("<nav>nav</nav>"));
@@ -656,11 +393,10 @@ mod tests {
         slots.set(0, SlotValue::Text("World".to_string()));
 
         let manifest = empty_manifest();
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Slot Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -715,11 +451,10 @@ mod tests {
             routes,
         };
 
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "XSS Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -744,11 +479,10 @@ mod tests {
     #[test]
     fn body_class_with_quotes_is_escaped() {
         let manifest = empty_manifest();
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Body Class Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: Some("dark\" onload=\"alert(1)"),
             personality_css: None,
@@ -790,11 +524,10 @@ mod tests {
             "body{color:red}</sty</style><script>alert(1)</script>",
         ] {
             let manifest = empty_manifest();
-            let page = render_page(&PageConfig {
+            let page = render_parts(&PageConfig {
                 title: "CSS Test",
                 route_pattern: "/test",
                 manifest: &manifest,
-                config_script: None,
                 config_json: None,
                 body_class: None,
                 personality_css: Some(css),
@@ -832,11 +565,10 @@ mod tests {
         let css = "@media (width < 600px){#t{color:rgb(1,2,3)}}\
                    .a::after{content:\"</div>\"}\
                    .b{font:12px/1.4 sans-serif;aspect-ratio:16/9}";
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "CSS Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: Some(css),
@@ -855,46 +587,6 @@ mod tests {
         assert!(page.html.contains("content:\"<\\/div>\""));
     }
 
-    // -- config_script / config_json (S3) -----------------------------------
-
-    /// Render a page with the given config_script and return the HTML.
-    fn page_with_config_script(script: &str) -> String {
-        let manifest = empty_manifest();
-        render_page(&PageConfig {
-            title: "Config Test",
-            route_pattern: "/test",
-            manifest: &manifest,
-            config_script: Some(script),
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
-        })
-        .html
-    }
-
-    #[test]
-    fn config_script_terminators_are_neutralized() {
-        // </script closes the tag and turns the remainder into live markup...
-        let html = page_with_config_script("window.x=\"</script><img src=x onerror=alert(1)>\";");
-        assert!(!html.contains("</script><img"));
-        assert!(html.contains("<\\/script>"));
-
-        // ...and the match must be case-insensitive, because the tokenizer is.
-        let html = page_with_config_script("window.x=\"</ScRiPt ><img src=x>\";");
-        assert!(!html.to_ascii_lowercase().contains("</script ><img"));
-
-        // <!--<script drives the script-data-double-escaped state, where the
-        // element's own closing tag stops ending it.
-        let html = page_with_config_script("window.x=\"<!--<script>PAYLOAD\";");
-        assert!(!html.contains("<!--<script"));
-        // `\!` is an identity escape in a JS string, so the value survives.
-        assert!(html.contains("<\\!--"));
-    }
-
     #[test]
     fn config_json_emits_no_raw_angle_brackets() {
         let manifest = empty_manifest();
@@ -902,11 +594,10 @@ mod tests {
             "user": "</script><img src=x onerror=alert(1)>",
             "note": "<!--<script>",
         });
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Config Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: Some(&value),
             body_class: None,
             personality_css: None,
@@ -935,14 +626,13 @@ mod tests {
     // -- Nonce plumbing (S11) -----------------------------------------------
 
     #[test]
-    fn page_output_exposes_the_nonce_it_embedded() {
+    fn named_parts_expose_the_nonce_bound_to_the_document() {
         let manifest = empty_manifest();
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Nonce Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: Some("window.x=1;"),
-            config_json: None,
+            config_json: Some(&serde_json::json!({"x":1})),
             body_class: None,
             personality_css: Some("body{color:red}"),
             body_prefix: None,
@@ -952,7 +642,7 @@ mod tests {
         });
 
         // No string-parsing the CSP to recover it.
-        assert!(page.csp.contains(&format!("'nonce-{}'", page.nonce)));
+        assert!(policy(&page).contains(&format!("'nonce-{}'", page.nonce)));
         assert!(page
             .html
             .contains(&format!("<script nonce=\"{}\">", page.nonce)));
@@ -962,40 +652,13 @@ mod tests {
     }
 
     #[test]
-    fn render_page_with_nonce_uses_the_supplied_nonce() {
-        // The cache-aware path: a caller re-stamping a shell per request must
-        // get the same nonce in the HTML and the header.
-        let manifest = empty_manifest();
-        let nonce = crate::csp::CspNonce::generate();
-        let page = render_page_with_nonce(
-            &PageConfig {
-                title: "Nonce Test",
-                route_pattern: "/test",
-                manifest: &manifest,
-                config_script: None,
-                config_json: None,
-                body_class: None,
-                personality_css: None,
-                body_prefix: None,
-                render_mode: RenderMode::Phase1ClientMount,
-                ir_module: None,
-                slots: None,
-            },
-            &nonce,
-        );
-        assert_eq!(page.nonce, nonce);
-        assert!(page.csp.contains(&format!("'nonce-{nonce}'")));
-    }
-
-    #[test]
-    fn page_output_headers_are_no_store() {
+    fn page_response_headers_are_no_store() {
         // The HTML embeds a per-request nonce, so it must never be cached.
         let manifest = empty_manifest();
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Header Test",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -1005,7 +668,7 @@ mod tests {
             slots: None,
         });
 
-        let headers = page.headers();
+        let headers = page.headers;
         let get = |name: &str| {
             headers
                 .iter()
@@ -1040,11 +703,10 @@ mod tests {
         slots.set(0, SlotValue::Text("color:red".into()));
 
         let manifest = empty_manifest();
-        let page = render_page(&PageConfig {
+        let page = render_parts(&PageConfig {
             title: "Style Attr",
             route_pattern: "/test",
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -1060,9 +722,9 @@ mod tests {
             page.html
         );
         assert!(
-            page.csp.contains("style-src-attr 'unsafe-inline'"),
+            policy(&page).contains("style-src-attr 'unsafe-inline'"),
             "CSP must permit the attribute style the walker just emitted: {}",
-            page.csp
+            policy(&page)
         );
     }
 }

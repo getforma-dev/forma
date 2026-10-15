@@ -2,7 +2,6 @@
 //! origin, its requests closed but for the documented residuals, and the
 //! runtime inline by its hash (DR-14 tier (c); L-17, L-27, L-44, L-52; SR32;
 //! FORMA-125).
-// `config_script` is a field each remaining legacy page literal names, and the bridge from `render_page` is one of the page paths.
 #![allow(deprecated)]
 
 use axum::body::to_bytes;
@@ -11,8 +10,8 @@ use axum::response::IntoResponse;
 use forma_server::assets::try_load_manifest;
 use forma_server::csp::build_csp_header;
 use forma_server::{
-    render_browser_shell, render_page, try_render, AssetManifest, CspNonce, PageConfig,
-    PageResponse, PolicyExtensions, PreviewFrame, RenderCtx, RenderMode, RouteAssets,
+    render_browser_shell, try_render, AssetManifest, CspNonce, PageConfig, PageResponse,
+    PreviewFrame, RenderCtx, RenderMode, RouteAssets,
 };
 use rust_embed::Embed;
 use std::collections::HashMap;
@@ -142,6 +141,8 @@ async fn the_frame_policy_replaces_exactly_its_nine_directives() {
         ("object-src", "'none'"),
         ("base-uri", "'none'"),
         ("style-src-attr", "'unsafe-inline'"),
+        ("require-trusted-types-for", "'script'"),
+        ("trusted-types", "forma forma-runtime"),
     ] {
         assert!(
             frame.iter().any(|(n, s)| n == name && s.join(" ") == value),
@@ -350,7 +351,6 @@ async fn page_response_frame_is_the_only_response_that_rewrites_the_policy() {
         title: "Page",
         route_pattern: "/",
         manifest: &manifest,
-        config_script: None,
         config_json: None,
         body_class: None,
         personality_css: None,
@@ -360,9 +360,6 @@ async fn page_response_frame_is_the_only_response_that_rewrites_the_policy() {
         slots: Some(&slots),
     };
     let pages = [
-        render_page(&config)
-            .into_page_response(&PolicyExtensions::new())
-            .expect("bridge"),
         try_render(&config, &RenderCtx::new()).expect("try_render"),
         render_browser_shell(&config, &RenderCtx::new()).expect("shell"),
     ];

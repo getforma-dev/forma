@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Response and raw boundaries — FORMA-109
+
+- Remove `PageOutput`, `render_page`, `render_page_with_nonce` and `PageConfig::config_script`. Retained checked renderers return only `PageResponse`; HTML leaves separately only through the named `into_parts_unchecked` exit. `try_render` remains for typed-handle integration until FORMA-107.
+- Require `PageConfig::body_prefix: Option<&RawHtml>` and remove the string-provenance registry and RAW-101 bridge warning. Keep the single reviewed `RawHtml::trusted` constructor.
+- Enforce both Trusted Types directives for strict pages and named frames in every build without requiring a reporting endpoint. The typed route relaxation removes only those directives from enforcement and retains Report-Only; SR8 governs owner/date metadata. Existing frame overrides, document headers, nonce generation and escaped JSON remain.
+
+
 ### Compatibility — FORMA-112
 
 - Validate schema-2 manifests and module compatibility before startup; use explicit browser/SSR modes and filename-keyed immutable metadata, including retained assets. Enabled service workers require configure_for_manifest and a matching app; failed validation does not seal defaults. Development reload shares the validator and preserves last good state on refusal.

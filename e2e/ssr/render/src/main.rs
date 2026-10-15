@@ -14,23 +14,21 @@
 //! - write `<site-dir>/<case>/index.html`, the Phase 2 page, and
 //!   `<site-dir>/<case>/csr.html`, the same build client-rendered (Phase 1),
 //!   each with a `.headers.json` holding the response headers
-//!   `PageOutput::headers()` gives (CSP with the page's nonce, `no-store`, the
+//!   the named `PageResponse::into_parts_unchecked` supplies (CSP with the page's nonce, `no-store`, the
 //!   document security headers).
 //!
-//! Any failure is fatal. In particular a Phase 2 render that fell back to
-//! Phase 1 (`render_page` does that silently on a walk error) stops the run:
-//! a case that is not server-rendered tests nothing.
+//! Any checked render failure is fatal; an SSR case must contain its rendered root.
 
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use forma_ir::{IrModule, SlotData};
-use forma_server::{render_page, AssetManifest, PageConfig, RenderMode};
+use forma_server::{try_render, render_browser_shell, RenderCtx, AssetManifest, PageConfig, RenderMode};
 
 /// The route every case is built and rendered under.
 const ROUTE: &str = "/";
-/// The page title `render_page` writes into `<head>`.
+/// The page title the renderer writes into `<head>`.
 const TITLE: &str = "Forma SSR fixture";
 
 fn main() {
@@ -89,11 +87,10 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
         ("index", RenderMode::Phase2SsrReconcile),
         ("csr", RenderMode::Phase1ClientMount),
     ] {
-        let page = render_page(&PageConfig {
+        let config = PageConfig {
             title: TITLE,
             route_pattern: ROUTE,
             manifest: &manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
@@ -101,20 +98,24 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
             render_mode: mode,
             ir_module: Some(&module),
             slots: Some(&slots),
-        });
+        };
+        let page = match mode {
+            RenderMode::Phase2SsrReconcile => try_render(&config, &RenderCtx::new()),
+            RenderMode::Phase1ClientMount => render_browser_shell(&config, &RenderCtx::new()),
+        }?.into_parts_unchecked();
 
         let server_rendered = page.html.contains("<div id=\"app\" data-forma-ssr>");
         if server_rendered != (mode == RenderMode::Phase2SsrReconcile) {
             return Err(format!(
                 "{file}.html: expected {mode:?}, but the page {} server-rendered \
-                 (render_page falls back to Phase 1 when the walk fails)",
+                 (the selected checked renderer must preserve its declared mode)",
                 if server_rendered { "is" } else { "is not" }
             )
             .into());
         }
 
         let mut headers = serde_json::Map::new();
-        for (header, value) in page.headers() {
+        for (header, value) in &page.headers {
             headers.insert(
                 header.as_str().to_string(),
                 serde_json::Value::String(value.to_str()?.to_string()),

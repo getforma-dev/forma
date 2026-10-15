@@ -1,10 +1,6 @@
-//! The 0.2.2 render: a page with its counts, or a coded error the handler
-//! answers.
-//!
-//! [`try_render`] is the bridge to 3.0.0's `render` on a bound page handle:
-//! it takes today's [`PageConfig`] and returns what that `render`
-//! will return, `Result<PageResponse, RenderError>`. It sits beside the
-//! deprecated `render_page`, which keeps its Phase 1 fallback.
+//! Checked page rendering: a PageResponse with counts, or a coded error.
+//! `try_render` remains the low-level bridge used by typed page handles;
+//! `render_browser_shell` serves explicitly browser-rendered routes.
 
 use crate::csp::{self, CspNonce, NonceError, PolicyError, PolicyExtensions};
 use crate::head::{HeadLink, ModulePreloads};
@@ -297,8 +293,7 @@ impl std::error::Error for RenderError {
 
 /// Render a page on the server: the page with its counts, or why not.
 ///
-/// The bridge to 3.0.0's `render`. Unlike the deprecated
-/// `render_page`, it never substitutes an empty shell for a failure: a
+/// This lower-level bridge never substitutes an empty shell for a failure: a
 /// missing module, a walk the module or data fails, an exceeded budget, an
 /// invalid policy extension, a failed nonce draw and a panic each come back
 /// as a [`RenderError`] with a stable code, the route and the component
@@ -308,8 +303,8 @@ impl std::error::Error for RenderError {
 /// first: the default hook prints it to stderr, and a reporting hook, such as
 /// an error tracker's, records it.)
 ///
-/// It always renders on the server: `config.render_mode` steers only the
-/// deprecated `render_page`. A route the build declares `ssr: false` is
+/// It always renders on the server, regardless of `config.render_mode`. A route
+/// the build declares browser-rendered is
 /// served by [`render_browser_shell`].
 ///
 /// ```no_run
@@ -354,7 +349,6 @@ impl std::error::Error for RenderError {
 ///             title: "Ledger",
 ///             route_pattern: "/ledger",
 ///             manifest: &manifest,
-///             config_script: None,
 ///             config_json: None,
 ///             body_class: None,
 ///             personality_css: None,
@@ -494,7 +488,7 @@ fn render(
 
     let html = crate::template::write_document(config, &nonce, ssr_body.as_deref(), ctx);
     if let Some(reason) = policy.relaxed() {
-        csp::log_relaxation(Some(config.route_pattern), reason);
+        csp::log_relaxation(config.route_pattern, reason);
     }
     Ok(PageResponse::with_policy(html, nonce, policy, counts))
 }
@@ -535,7 +529,6 @@ mod tests {
             title: "Seam",
             route_pattern: "/seam",
             manifest,
-            config_script: None,
             config_json: None,
             body_class: None,
             personality_css: None,
