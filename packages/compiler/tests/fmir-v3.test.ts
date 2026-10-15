@@ -11,6 +11,13 @@ const root = resolve(__dirname, '../../..');
 const fixtures = resolve(root, 'crates/forma-ir/tests/fixtures/fmir-v3');
 const fixture = (name: string) => new Uint8Array(readFileSync(resolve(fixtures, name)));
 const enc = new TextEncoder();
+// Historical exact-stage examples remain byte oracles for their original five
+// sections. Current producers also write section10; this explicit test-only
+// reconstruction never claims the old island is accepted by the native reader.
+function historicalSections(bytes:Uint8Array):Uint8Array {
+  const module=readFmirContainer(bytes);
+  return encodeFmirSections(module.sections.filter(section=>section.id!==C.SECTION_ISLAND_CONTRACTS),module.writer);
+}
 
 function workedExample(): IrEmitContext {
   const ctx = new IrEmitContext();
@@ -39,7 +46,7 @@ describe('FMIR v3 wire contract', () => {
     expect(() => execFileSync(process.execPath, [resolve(root, 'scripts/generate-fmir-constants.mjs'), '--check'])).not.toThrow();
   });
   it('encodes the independently authored worked example byte for byte', () => {
-    const bytes = workedExample().toBinary();
+    const bytes = historicalSections(workedExample().toBinary());
     expect(bytes).toEqual(fixture('PASS-good-a.ir'));
     expect(bytes.length).toBe(183);
     expect(readFmirContainer(bytes)).toMatchObject({ writer: [3, 0, 0], bodyLength: 159, checksum: 0xfa39788c });
@@ -67,11 +74,14 @@ describe('FMIR v3 wire contract', () => {
       else expect(read).toThrow(`writer ${baseWriterVersion(writer).join('.')} is outside reader ${baseWriterVersion(reader).join('.')}`);
     }
   });
-  it('preserves the exact-stage fixture table and uses the shared window overlay', () => {
+  it('preserves raw container bytes while authenticating the native state overlay', () => {
     const rows = (name: string) => readFileSync(resolve(fixtures, name), 'utf8').trim().split('\n').slice(1).map(line => line.split('\t'));
     const historical = new Map(rows('index.tsv').map(([name, expected]) => [name, expected]));
+    const window = new Map(rows('window-expectations.tsv').map(([name,expected])=>[name,expected]));
+    const stateChanges:string[]=[];
     const changes: string[] = [];
-    for (const [name, expected] of rows('window-expectations.tsv')) {
+    for (const [name, expected] of rows('state-expectations.tsv')) {
+      if(window.get(name)!==expected)stateChanges.push(name);
       if (historical.get(name) !== expected) changes.push(name);
       // The diagnostic container reader validates header/table sections. Rust's
       // production loader additionally validates each payload and opcode operand.
@@ -82,13 +92,16 @@ describe('FMIR v3 wire contract', () => {
         } else expect(() => readFmirContainer(fixture(name)), name).toThrow(expected);
       }
     }
-    expect(changes).toEqual(['LOAD-108-writer-3.0.1.ir']);
-    expect(historical.get(changes[0])).toBe('LOAD-108');
+    expect(changes).toEqual(['PASS-good-b.ir','LOAD-108-writer-3.0.1.ir','PASS-positions-absent.ir']);
+    expect(stateChanges).toEqual(['PASS-good-b.ir','PASS-positions-absent.ir']);
+    // Native required10 refusal is a payload rule. The diagnostic inspector
+    // still preserves these original bytes without pretending to validate them.
+    for(const name of stateChanges){const bytes=fixture(name),module=readFmirContainer(bytes);expect(encodeFmirSections(module.sections,module.writer)).toEqual(bytes);}
   });
   it('pins streaming CRC and skips rather than zero-fills its field', () => {
     expect(crc32(enc.encode('123456789'))).toBe(C.CRC_CHECK_VALUE);
     expect(crc32(enc.encode('123'), enc.encode('456789'))).toBe(0xcbf43926);
-    const bytes = workedExample().toBinary();
+    const bytes = historicalSections(workedExample().toBinary());
     expect(crc32(bytes.subarray(0, 18), bytes.subarray(22))).toBe(0xfa39788c);
     expect(crc32(bytes.subarray(0, 18), new Uint8Array(4), bytes.subarray(22))).not.toBe(0xfa39788c);
   });
@@ -136,14 +149,14 @@ describe('FMIR v3 wire contract', () => {
       expect(encodeFmirSections(module.sections, module.writer), name).toEqual(bytes);
     }
     const module = readFmirContainer(generatePlaceholderIr('page'));
-    expect(module.sections.map(s => [s.id, s.flags])).toEqual([[1, 1], [2, 1], [3, 1], [4, 1], [5, 1]]);
+    expect(module.sections.map(s => [s.id, s.flags])).toEqual([[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [10, 1]]);
     expect([...module.sections[4]!.bytes]).toEqual([1, 0, 0, 0]);
     expect(() => new IrEmitContext().toBinary()).not.toThrow();
   });
 });
 
 describe('FMIR v3 payload emission', () => {
-  it('encodes the full independently authored island/list/schema/position fixture byte for byte', () => {
+  it('preserves the historical island/list/schema/position sections and adds the current contract', () => {
     const ctx = new IrEmitContext();
     for (const text of ['main', 'ul', 'li', 'Counter', 'rows', 'row', 'id', 'label', 'page.tsx', 'Counter.tsx', 'count']) ctx.addString(text);
     ctx.addSlot('rows', 4, 0); ctx.addSlot('row', 5, 1); ctx.addSlot('label', 1, 1); ctx.addSlot('count', 3, 0, enc.encode('7'));
@@ -160,12 +173,19 @@ describe('FMIR v3 payload emission', () => {
     ctx.emit(C.OP_PROP); ctx.emitU16(1); ctx.emitU32(7); ctx.emitU16(2);
     open(2); ctx.emit(C.OP_DYN_TEXT); ctx.emitU16(2); ctx.emitU16(0); close(2); close(1);
     const island = ctx.addIsland('Counter', 1, [3], ctx.opcodeLen(), 1);
+    ctx.setIslandContract(island,'ssr',[]);
     ctx.emit(C.OP_ISLAND_START); ctx.emitU16(island); open(3);
     ctx.emit(C.OP_DYN_TEXT); ctx.emitU16(3); ctx.emitU16(1); close(3);
     ctx.emit(C.OP_ISLAND_END); ctx.emitU16(island); close(0);
     ctx.addKeyPath(14, ['id']);
     ctx.setSourcePositions([{ opcodeOffset: 0, file: 'page.tsx', line: 8, column: 5, component: 'main' }, { opcodeOffset: 54, file: 'page.tsx', line: 12, column: 7, component: 'Counter' }]);
-    expect(ctx.toBinary()).toEqual(fixture('PASS-good-b.ir'));
+    const current=readFmirContainer(ctx.toBinary());
+    expect(current.sections.find(s=>s.id===C.SECTION_ISLAND_CONTRACTS)?.flags).toBe(C.SECTION_REQUIRED);
+    const old=readFmirContainer(fixture('PASS-good-b.ir'));
+    // The legacy table had an empty digest. All other payload sections remain
+    // exact; the native suite separately refuses this historical island.
+    for(const section of old.sections.filter(s=>s.id!==C.SECTION_ISLANDS))expect(current.sections.find(s=>s.id===section.id)?.bytes).toEqual(section.bytes);
+    expect(encodeFmirSections(old.sections,old.writer)).toEqual(fixture('PASS-good-b.ir'));
   });
   it.each([C.OP_OPEN_TAG, C.OP_CLOSE_TAG, C.OP_VOID_TAG, C.OP_TEXT, C.OP_DYN_ATTR, C.OP_PROP])('refuses out-of-range strings in opcode %i before writing', op => {
     const ctx = new IrEmitContext(); ctx.addSlot('value', 1);
@@ -181,17 +201,19 @@ describe('FMIR v3 payload emission', () => {
       ctx.emitU32(pair[0]!); ctx.emitU32(pair[1]!); expect(() => ctx.toBinary()).toThrow(/string index/);
     }
   });
-  it.each([0, ...C.RESERVED_OPCODES, 0x13, 0xff])('never emits reserved or unassigned opcode %i', opcode => {
+  it.each([0, ...C.RESERVED_OPCODES, 0xff])('never emits reserved or unassigned opcode %i', opcode => {
     const ctx = new IrEmitContext(); ctx.emit(opcode); expect(() => ctx.toBinary()).toThrow(/invalid or reserved opcode/);
   });
-  it('checks references, region tiling, numeric widths and island lengths', () => {
+  it('checks references, region tiling, numeric widths and declared island inputs', () => {
     const unknown = new IrEmitContext(); unknown.emit(C.OP_DYN_TEXT); unknown.emitU16(3); unknown.emitU16(0);
     expect(() => unknown.toBinary()).toThrow(/undeclared slot/);
     const truncated = listContext(); truncated.patchU32(5, 1); expect(() => truncated.toBinary()).toThrow(/truncated/);
     expect(() => truncated.emitU16(65536)).toThrow(/u16/);
     expect(() => truncated.emitU32(-1)).toThrow(/u32/);
-    const island = new IrEmitContext(); island.addSlot('value', 1); island.addIsland('Counter', 1, new Array(32760).fill(0), 0);
-    expect(() => island.toBinary()).toThrow(/32759/);
+    const island = new IrEmitContext(); island.addSlot('value', 1); const id=island.addIsland('Counter', 1, new Array(32760).fill(0), 0, 0);
+    expect(() => island.toBinary()).toThrow(/no declared contract/);
+    island.setIslandContract(id,'ssr',[]);
+    expect(() => island.toBinary()).toThrow(/input count must equal/);
     const unknownIsland = new IrEmitContext(); unknownIsland.emit(C.OP_ISLAND_START); unknownIsland.emitU16(0);
     expect(() => unknownIsland.toBinary()).toThrow(/undeclared island/);
   });
@@ -224,7 +246,7 @@ describe('FMIR v3 payload emission', () => {
     const duplicate = listContext(); duplicate.addKeyPath(0, ['id']); duplicate.addKeyPath(0, ['id']); expect(() => duplicate.toBinary()).toThrow(/unique/);
     const full = listContext(); full.addKeyPath(0, new Array(32).fill('id'));
     full.setSourcePositions([{ opcodeOffset: 0, file: 'page.tsx', line: 1, column: 3, component: 'Page' }]);
-    expect(readFmirContainer(full.toBinary()).sections.slice(-2).map(s => [s.id, s.flags])).toEqual([[6, 1], [7, 0]]);
+    expect(readFmirContainer(full.toBinary()).sections.filter(s=>s.id===6||s.id===7).map(s => [s.id, s.flags])).toEqual([[6, 1], [7, 0]]);
     full.setSourcePositions([{ opcodeOffset: 1, file: 'page.tsx', line: 1, column: 3, component: 'Page' }]);
     expect(() => full.toBinary()).toThrow(/eligible opcode/);
   });

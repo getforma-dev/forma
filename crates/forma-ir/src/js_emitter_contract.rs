@@ -66,8 +66,8 @@ use std::path::{Path, PathBuf};
 
 use crate::walker::walk_island;
 use crate::{
-    walk_to_html, IrError, IrModule, SlotData, SlotTable, SlotType, SlotValue, StringTable,
-    HEADER_SIZE,
+    walk_to_html, walk_to_html_counted, IrError, IrModule, SlotData, SlotSource, SlotTable,
+    SlotType, SlotValue, StringTable, WalkLimits, HEADER_SIZE,
 };
 
 /// Every case the corpus is required to contain.
@@ -280,6 +280,19 @@ fn empty_text_slots(module: &IrModule) -> SlotData {
     data
 }
 
+/// CLIENT defaults are compiler-owned. Declared SERVER fields have no wire
+/// defaults: use this corpus's distinguishing request values for those fields.
+fn default_slots(module: &IrModule) -> SlotData {
+    let mut defaults = SlotData::new_from_defaults(&module.slots);
+    let request = distinguishing_slots(module, true);
+    for entry in module.slots.entries() {
+        if entry.source == SlotSource::Server {
+            defaults.set(entry.slot_id, request.get(entry.slot_id).clone());
+        }
+    }
+    defaults
+}
+
 // ---------------------------------------------------------------------------
 // Golden rendering
 // ---------------------------------------------------------------------------
@@ -300,7 +313,7 @@ fn render_all(module: &IrModule) -> Result<String, IrError> {
     let on = distinguishing_slots(module, true);
     let off = distinguishing_slots(module, false);
     let empty = empty_text_slots(module);
-    let defaults = SlotData::new_from_defaults(&module.slots);
+    let defaults = default_slots(module);
 
     push_section(&mut out, "page bools=true", &walk_to_html(module, &on)?);
     push_section(&mut out, "page bools=false", &walk_to_html(module, &off)?);
@@ -459,7 +472,7 @@ fn every_island_entry_walks_as_a_fragment() {
 }
 
 #[test]
-fn resolution_cases_ship_named_islands_over_named_slots() {
+fn resolution_cases_ship_named_contracts_and_client_defaults() {
     for name in RESOLUTION_CASES {
         let module = parse_case(name);
 
@@ -481,11 +494,16 @@ fn resolution_cases_ship_named_islands_over_named_slots() {
                  nothing server-side and only appears once the client bundle hydrates",
                 entry.id
             );
-            assert!(
-                !entry.slot_ids.is_empty(),
-                "{name}: island '{island}' carries no slot ids, so the walker emits no \
-                 data-forma-props and the client hydrates it with nothing"
+            assert_eq!(
+                entry.slot_ids.len(),
+                module.schema.objects[entry.schema_object as usize].len(),
+                "{name}: ordered inputs must match declared fields, not captured/local signals"
             );
+            assert!(
+                module.island_contract_bytes(entry.id).is_some(),
+                "{name}: missing paired contract"
+            );
+            assert_eq!(entry.digest.len(), 8, "{name}: missing contract identity");
         }
 
         // Slot NAMES are the addressing scheme server-side injection uses. A
@@ -609,5 +627,50 @@ fn canonical_dumps_match_the_typescript_emitter() {
             .join(format!("{name}.dump"));
         let expected = std::fs::read_to_string(path).expect("committed TypeScript canonical dump");
         assert_eq!(crate::dump::dump_ir(&module), expected, "{name}");
+    }
+}
+
+/// The state envelope is a separate channel from body HTML. Pin actual native
+/// snapshots for each request variant without embedding them in body goldens.
+#[test]
+fn state_snapshots_match_golden() {
+    let update = std::env::var_os("UPDATE_GOLDEN").is_some();
+    for name in EXPECTED_CASES {
+        let module = parse_case(name);
+        let variants = [
+            ("bools=true", distinguishing_slots(&module, true)),
+            ("bools=false", distinguishing_slots(&module, false)),
+            ("text-empty", empty_text_slots(&module)),
+            ("defaults", default_slots(&module)),
+        ];
+        let mut states = serde_json::Map::new();
+        for (label, slots) in variants {
+            let output = walk_to_html_counted(&module, &slots, WalkLimits::default()).unwrap();
+            assert_eq!(output.html, walk_to_html(&module, &slots).unwrap());
+            let state: serde_json::Value =
+                serde_json::from_str(output.island_state.as_json()).unwrap();
+            assert_eq!(
+                state["s"],
+                serde_json::json!([]),
+                "captured/local signals are not handler inputs"
+            );
+            assert_eq!(
+                state["i"].as_array().unwrap().len(),
+                module.islands.entries().len()
+            );
+            assert!(!output.html.contains("data-forma-props"));
+            states.insert(label.into(), state);
+        }
+        let actual = serde_json::to_string_pretty(&states).unwrap() + "\n";
+        let path = fixture_dir().join(format!("{name}.state.json"));
+        if update {
+            fs::write(&path, actual).unwrap();
+        } else {
+            assert_eq!(
+                read_golden(&path).as_deref(),
+                Some(actual.as_str()),
+                "{name}: state snapshot drift"
+            );
+        }
     }
 }

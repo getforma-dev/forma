@@ -80,14 +80,14 @@ fn integrity(bytes: &[u8]) -> String {
 /// A valid module: island "Hello" around `<p>hello</p>`.
 fn good_module() -> Vec<u8> {
     use forma_ir::parser::test_helpers::{
-        build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
+        build_declared_fixture, encode_close_tag, encode_open_tag, encode_text,
     };
     let mut ops = vec![0x0B, 0, 0]; // ISLAND_START 0
     ops.extend_from_slice(&encode_open_tag(0, &[]));
     ops.extend_from_slice(&encode_text(1));
     ops.extend_from_slice(&encode_close_tag(0));
     ops.extend_from_slice(&[0x0C, 0, 0]); // ISLAND_END 0
-    build_minimal_ir(
+    build_declared_fixture(
         &["p", "hello", "Hello"],
         &[],
         &ops,
@@ -124,7 +124,9 @@ fn manifest_json(bad: &[(&str, &str)]) -> String {
 /// Every fixture file: (set, file name, bytes).
 fn fixture_files() -> Vec<(&'static str, &'static str, Vec<u8>)> {
     let good = good_module();
-    let mut opcode = flip(good.clone(), 91, 0x80); // second opcode, OPEN_TAG
+    let table = forma_ir::SectionTable::parse(&good[forma_ir::HEADER_SIZE..]).unwrap();
+    let opcode_offset = table.get(1).unwrap().offset as usize + 3; // after ISLAND_START
+    let mut opcode = flip(good.clone(), opcode_offset, 0x80);
     forma_ir::parser::test_helpers::restamp(&mut opcode);
     let flipped = [
         ("/magic", "magic.ir", flip(good.clone(), 0, 1)),

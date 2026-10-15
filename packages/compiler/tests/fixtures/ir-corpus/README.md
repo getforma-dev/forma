@@ -10,6 +10,25 @@ These files are never imported by the TypeScript build or by any vitest suite;
 they are read off disk exactly as the plugin reads a real page, so the corpus
 exercises the shipped code path rather than a test-only re-implementation.
 
+## Current state contract migration (FORMA-103)
+
+The original 87 source/IR/dump/HTML files are frozen in
+`docs/archive/2026-10-15-pre-state-contract-corpus`. Current binaries include
+section 10; registered islands carry an eight-byte canonical digest and only
+their ordered declared inputs. Local/captured signals retain their own defaults
+and identity, and do not become handler props. HTML uses occurrence/hash markers
+instead of inline `data-forma-props`. Separate `.state.json` goldens pin actual
+native snapshots for all four page variants, including empty state tables.
+
+Only `nested-islands` changes source semantics: its two formerly undeclared
+getters (`panelClass` and `badgeTitle`) now arrive through explicit page and
+component props. The archived source remains a BUILD-610 refusal control.
+Both InnerBadge occurrences use the same contract and shared module getter,
+but have separate occurrence indexes. The default render supplies distinguishing
+values to the two required SERVER fields while retaining all CLIENT defaults.
+The historical audit discussion below describes why the original cases exist;
+its former slot-name injection API is not the typed Pages interface.
+
 ## Why this corpus exists
 
 The compiler's binary output used to be pinned only by hand-written FMIR
@@ -178,9 +197,9 @@ entire trigger — it is what makes the compiler run esbuild over the file at al
 — so a fixture that is not really on disk with that extension tests nothing.
 
 `crates/forma-ir/src/js_emitter_contract.rs` gives these two cases an extra
-assertion (`resolution_cases_ship_named_islands_over_named_slots`): the islands
+assertion (`resolution_cases_ship_named_contracts_and_client_defaults`): the islands
 must carry their real component names rather than a minted `island_<n>`, must
-carry non-empty slot ids, and the page must have slots named after its signals
+carry a valid declared contract and exactly its field inputs, and the page must have slots named after its signals
 carrying their defaults. The golden alone would not catch a relapse — a
 degraded emit is still a valid, walkable module, and `UPDATE_GOLDEN` would
 happily bless the empty div.
@@ -201,13 +220,13 @@ slot data hides binding mix-ups:
 | `page bools=true` | every Text slot a marker naming itself, every list 3 rows of named columns, Bools true | slot → output wiring; a swapped slot id changes the marker |
 | `page bools=false` | same, Bools false | the OTHER side of every `SHOW_IF`, and boolean attrs when off |
 | `page text-empty` | every Text slot `""` | empty is `attr=""`, not an omitted attribute |
-| `page defaults` | `SlotData::new_from_defaults` | the slot table's own `default_bytes`, and Null → attribute omitted |
+| `page defaults` | CLIENT `SlotData::new_from_defaults` plus declared SERVER request values | the slot table's own `default_bytes`, and Null → attribute omitted |
 
 ## Regenerating
 
 ```sh
-npm run emit:corpus                    # writes packages/compiler/ir-corpus/*.ir
-npm run emit:corpus -- <out-dir>       # or to a directory of your choosing
+npm run emit:corpus -w @getforma/compiler # writes crates/forma-ir/tests/fixtures/js-emitter/
+npm run emit:corpus -w @getforma/compiler -- <out-dir>       # or to a directory of your choosing
 ```
 
 The `.ir` files and their golden HTML are committed in the `forma` repo under
