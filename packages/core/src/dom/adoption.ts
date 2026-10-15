@@ -15,7 +15,7 @@ import { prepareAttribute } from './adoption-attributes.js';
 import { prepareStyle, prepareRaw, type PreparedRaw } from './adoption-content.js';
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import { AdoptionControls, type ControlToken } from './adoption-controls.js';
-import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './hydrate.js';
+import type { HydrationDescriptor, FragmentDescriptor, ShowDescriptor, ListDescriptor } from './adoption-description.js';
 
 interface Listener { element:Element; event:string; listener:EventListener; controller?:AbortController }
 export interface PreparedAdoption {

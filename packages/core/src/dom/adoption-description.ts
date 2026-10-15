@@ -39,3 +39,39 @@ export function __adoptionConditional<T, F>(
   if (!describingAdoption) return test() ? consequent() : alternate();
   return { type: 'show', condition: test, whenTrue: consequent, whenFalse: alternate } as T | F;
 }
+
+/** Descriptor returned by h() during adoption description instead of a real Element. */
+export interface HydrationDescriptor {
+  type: 'element';
+  tag: string;
+  props: Record<string, unknown> | null;
+  children: unknown[];
+}
+
+/** Descriptor returned by createShow() during adoption description. */
+export interface ShowDescriptor {
+  type: 'show';
+  condition: () => unknown;
+  whenTrue: () => unknown;
+  whenFalse?: () => unknown;
+}
+
+/** Descriptor returned by createList() during adoption description. */
+export interface ListDescriptor {
+  type: 'list';
+  items: () => unknown[];
+  keyFn: (item: unknown) => string | number;
+  renderFn: (item: unknown, index: () => number) => HTMLElement;
+  options?: Record<string, unknown>;
+}
+
+/**
+ * Descriptor returned by `h(Fragment, …)` and `fragment(…)` during adoption description.
+ * A Fragment has no element of its own on the server: its children are
+ * rendered in place, so adoption walks them as a range of the parent's nodes.
+ */
+export interface FragmentDescriptor {
+  type: 'fragment';
+  children: unknown[];
+}
+
