@@ -18,6 +18,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 const HERE = __dirname;
@@ -214,9 +215,10 @@ test.describe('activation is required, not assumed', () => {
     try {
       await verifyIslandPage(browser, server.origin, '/check', manifest(), { ...options, scriptBody: '' });
     } catch (error) { failure = error as Error; }
-    expect(failure?.message).toContain('toHaveText');
-    expect(failure?.message).toContain('#frames-seen');
-    expect(failure?.message).toContain('1002');
+    const message = stripVTControlCharacters(failure?.message ?? '');
+    expect(message).toContain('toHaveText');
+    expect(message).toContain('#frames-seen');
+    expect(message).toContain('1002');
   });
 });
 
