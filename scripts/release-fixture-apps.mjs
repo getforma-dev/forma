@@ -232,13 +232,25 @@ export async function stageFixtureProject({ set, dir, cratesDir, targetDir, test
 export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, browser, test, report }) {
   const { verifyIslandPage } = await import(pathToFileURL(join(FIXTURES, 'lib/verify-page.mjs')).href);
   const { BEHAVIOURS, EXTRAS } = await import(pathToFileURL(join(FIXTURES, 'lib/behaviours.mjs')).href);
-  const { buildNegative, readApps } = await import(pathToFileURL(join(FIXTURES, 'lib/build-apps.mjs')).href);
+  const { buildNegative, buildPositive, readApps } = await import(pathToFileURL(join(FIXTURES, 'lib/build-apps.mjs')).href);
   const staged = await stageFixtureProject({ set, dir, cratesDir, targetDir, test, report });
   const { project } = staged;
   try {
     const index = readApps(project);
     const expectedRoutes = Object.entries(index.apps).flatMap(([app, each]) => Object.keys(each.routes).map(route => ({ app, route })));
     const n2 = Object.keys(staged.reports).flatMap(app => n2Rows(app, readPackedSizes(join(project, 'out', app, 'dist'))));
+    const positives = [];
+    await test('fixture applications: the packed build admits a client-side keyed list and reports its size policy (L-58)', async () => {
+      for (const entry of index.positive) {
+        const result = await buildPositive({ build: staged.build, root: project, outRoot: join(project, 'out'), name: entry.name });
+        const app = `positive/${entry.name}`;
+        const rows = n2Rows(app, readPackedSizes(result.outputDir));
+        assert(rows.every(row => row.formaGzip > 0), `${app}: expected an interactive route with Forma code`);
+        n2.push(...rows);
+        expectedRoutes.push({ app, route: '/' });
+        positives.push({ name: entry.name, sizeReport: result.sizeReport });
+      }
+    });
     const shapes = [], pages = [];
     await test('fixture applications: Forma\'s code on every fixture route is inside N2\'s ceiling in the packed build', async () => { assertN2(n2, expectedRoutes); });
     for (const [name, app] of Object.entries(index.apps)) {
@@ -280,7 +292,7 @@ export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, bro
     return {
       npmLockSha256: staged.npmLockSha256, cargoLockSha256: staged.cargoLockSha256, signatures: staged.signatures,
       resolution: staged.resolution, apps: Object.fromEntries(Object.entries(staged.reports).map(([app, each]) => [app, { buildHash: each.buildHash, routes: each.routes, seconds: each.seconds }])),
-      pages, n2, shapes, expectedRoutes,
+      pages, positives, n2, shapes, expectedRoutes,
     };
   } finally { rmSync(project, { recursive: true, force: true }); }
 }

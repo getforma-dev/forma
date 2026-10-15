@@ -204,7 +204,7 @@ test.describe('activation is required, not assumed', () => {
   });
 });
 
-test.describe('fixtures the closed type set and N2 refuse', () => {
+test.describe('fixtures at the declared type and size boundaries', () => {
   const negative = (INDEX as unknown as { negative: { name: string; entry: string; code: string; message: string; file?: string }[] }).negative;
   const buildOne = async (name: string) => {
     const { buildNegative } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
@@ -233,19 +233,15 @@ test.describe('fixtures the closed type set and N2 refuse', () => {
     expect(result.diagnostics.some((each: { code: string; message: string }) => each.code === entry.code && each.message.includes(entry.message))).toBe(true);
   });
 
-  test('an island holding a client-side list is over N2 today (BUILD-819): the finding, until the ceiling or the list code changes', async () => {
-    const entry = negative.find((each) => each.name === 'list-island')!;
-    const result = await buildOne(entry.name);
-    // If this fails because the build succeeded, N2 now admits a list island: delete this test and
-    // put the list back into the ksx check chips island and the fauth results island (FORMA-188).
-    expect(result.built, 'N2 now admits an island with a client-side list; flip this fixture').toBe(false);
-    expect(result.message).toContain(entry.code);
-    expect(result.message).toContain(entry.message);
-    const size = /Forma code ([\d,]+) B against ([\d,]+) B/.exec(result.message);
-    expect(size, 'BUILD-819 names both the measured Forma code and its ceiling').not.toBeNull();
-    const bytes = Number(size![1].replaceAll(',', ''));
-    const ceiling = Number(size![2].replaceAll(',', ''));
-    expect(bytes).toBeGreaterThan(ceiling);
+  test('an island holding a client-side list builds inside the packed size policy (L-58)', async () => {
+    const { buildPositive } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
+    const { build } = await import(pathToFileURL(join(HERE, 'node_modules', '@getforma', 'build', 'dist', 'index.js')).href);
+    const { n2Rows, assertN2, readPackedSizes } = await import(pathToFileURL(resolve(HERE, '../../../scripts/release-measurements.mjs')).href);
+    const result = await buildPositive({ build, outRoot: OUT, name: 'list-island' });
+    const rows = assertN2(n2Rows('list-island', readPackedSizes(result.outputDir)), [{ app: 'list-island', route: '/' }]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].formaGzip).toBeGreaterThan(0);
+    expect(rows[0].passed).toBe(true);
   });
 });
 

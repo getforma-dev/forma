@@ -20,11 +20,17 @@ export const P17_BUDGET_SECONDS = 1800;
 export function readPackedSizes(outputDir) {
   const report = JSON.parse(readFileSync(join(outputDir, 'size-report.json'), 'utf8'));
   assert.equal(report.version, 1, 'N2: unsupported packed size-report.json version');
-  assert(Number.isInteger(report.ceilings?.forma) && report.ceilings.forma > 0, 'N2: packed size-report.json has no Forma ceiling');
+  for (const key of ['forma', 'page', 'canvas']) {
+    assert(Number.isInteger(report.ceilings?.[key]) && report.ceilings[key] > 0, `N2: packed size-report.json has no ${key} ceiling`);
+  }
   assert(Array.isArray(report.routes) && report.routes.length > 0, 'N2: packed size-report.json reported no route sizes');
   for (const route of report.routes) {
+    assert(['no-interactive-region', 'islands', 'whole-page-mount'].includes(route.class), `N2 ${route.route}: packed size report has no route class`);
+    assert.equal(typeof route.canvas, 'boolean', `N2 ${route.route}: packed size report has no canvas declaration`);
     const ceiling = route.class === 'no-interactive-region' ? 0 : report.ceilings.forma;
     assert.equal(route.ceilings?.forma, ceiling, `N2 ${route.route}: route ceiling differs from the packed policy`);
+    const javascriptCeiling = route.class === 'no-interactive-region' ? 0 : report.ceilings[route.canvas ? 'canvas' : 'page'];
+    assert.equal(route.ceilings?.javascript, javascriptCeiling, `N2 ${route.route}: JavaScript ceiling differs from the packed policy`);
   }
   return report.routes;
 }
