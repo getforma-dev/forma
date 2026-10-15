@@ -335,6 +335,14 @@ mount(() => h("p", null, "hello"), "#nonexistent");
 // Error: mount: container not found — "#nonexistent"
 ```
 
+A target carrying `data-forma-ssr` throws `FORMA_E_MOUNT_SSR` before the
+component, reactive root, effects or listeners run, and before any DOM write.
+Use declared `activateIslands` for SSR interaction. Ordinary Browser mounting
+and unmounting are unchanged; public direct `hydrateIsland` remains separate
+and requires caller-owned reactive cleanup.
+
+Verified by `src/dom/__tests__/mount.test.ts` > "refuses a marked %s root by %s before component/root/effects/listeners or DOM writes"
+
 **Global error handler** for effects and lifecycle callbacks:
 
 ```ts

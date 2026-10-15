@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { serveOwnedAdoption } from './helpers/owned-adoption.js';
 
 /**
  * Core under Trusted Types, in a real browser (FORMA-126, FORMA-127; decision
@@ -63,6 +64,7 @@ async function underTrustedTypes(page: Page, header: string): Promise<{ errors: 
     const response = await route.fetch();
     await route.fulfill({ response, headers: { ...response.headers(), [header]: POLICY } });
   });
+  await serveOwnedAdoption(page, '/tt-core.mjs');
   return { errors };
 }
 
@@ -221,7 +223,8 @@ for (const { mode, header, disposition } of MODES) {
         island.append(document.createElement('article'));
         document.body.append(island);
         const [adoptedHtml, setAdoptedHtml] = createSignal({ __html: trustedHtml('<b>A</b>') });
-        mount(() => h('article', { dangerouslySetInnerHTML: () => adoptedHtml() }), island);
+        const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
+        const disposeAdoption = adoptInRoot(() => h('article', { dangerouslySetInnerHTML: () => adoptedHtml() }), island);
         const article = island.querySelector('article')!;
         const adopted = [article.innerHTML];
         setAdoptedHtml(null);
@@ -229,6 +232,7 @@ for (const { mode, header, disposition } of MODES) {
         setAdoptedHtml({ __html: trustedHtml('<b>A</b>') });
         adopted.push(article.innerHTML, String(article.hasAttribute('dangerouslysetinnerhtml')));
         out.adopted = adopted;
+        disposeAdoption();
 
         // The runtime's parser, on its three paths: an empty container, a diff
         // of keyed children, a full replacement. The runtime's own copy of

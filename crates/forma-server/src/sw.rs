@@ -8,7 +8,7 @@
 //! ```no_run
 //! use forma_server::sw::{self, ServiceWorker};
 //!
-//! // Ledger: pages register /sw.js, which serves the worker its build wrote.
+//! // Ledger: pages with JS entries register /sw.js, which serves the built worker.
 //! // After loading and validating the manifest, before binding:
 //! # fn startup(manifest: &forma_server::AssetManifest) -> Result<(), Box<dyn std::error::Error>> {
 //! sw::configure_for_manifest(ServiceWorker::for_app("ledger")?.enabled(), manifest)?;
@@ -24,9 +24,13 @@
 //! on loads every page and asset from the network. This is the kill switch
 //! that keeps turning the worker on a two-way door; it is served through 3.x.
 //!
+//! Static SSR pages emit no registration even when this setting is enabled.
+//! A static-only app therefore does not newly install a worker. Existing clients
+//! may still check the unchanged endpoint through the browser's worker lifecycle.
+//!
 //! Rolling back an application's worker is turning `.enabled()` off and
 //! keeping the name: its retiring worker then deletes that application's own
-//! caches too. Turning it back on re-installs the worker on the next visit.
+//! caches too. Turning it back on re-installs it on the next JS-enabled page visit.
 //!
 //! # The cache-name contract (forma-server 0.2.2, `@getforma/build` 0.3.1)
 //!

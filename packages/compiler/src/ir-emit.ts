@@ -66,6 +66,7 @@ export class IrEmitContext {
   private propsSchema: Array<PropsSchema[number]> = [[]];
   private readonly islandBindings = new Map<number, { mode: IslandRenderMode; bindings: readonly BindingRecord[] }>();
   private readonly constants = new Map<number, unknown>();
+  private readonly closedProjections = new Map<number, unknown>();
   private keyPaths: KeyPath[] = [];
   private sourcePositions: SourcePosition[] | undefined;
 
@@ -136,10 +137,10 @@ export class IrEmitContext {
    * the island subtree currently being captured. It is true for every slot
    * minted because an opcode needs one, and false for a slot merely DECLARED —
    * a signal the walk found in scope but that no binding on the page reads.
-   * A declared-but-unread slot must not enter an island's `slot_ids`, or the
-   * walker serializes it into `data-forma-props` and every island ships state
-   * nothing on the page renders.
-   * Verified by: packages/compiler/tests/island-registry.test.ts > "island slot ids include the signal slots its own scope minted"
+   * Capture bookkeeping supports the bytecode walk only. Island input lists
+   * are independently constructed from ordered declared fields; local signals
+   * and captured defaults never enter the state envelope as handler props.
+   * Verified by: packages/compiler/tests/island-registry.test.ts > "local signal defaults and list scratch values stay outside declared inputs"
    */
   addSlot(
     name: string,
@@ -178,7 +179,15 @@ export class IrEmitContext {
 
   /** Closed provenance is distinct from a schema hint, including literal null. */
   constantSlot(id: number): { value: unknown } | undefined {
-    return this.constants.has(id) ? { value: this.constants.get(id) } : undefined;
+    return this.constants.has(id) ? { value: this.constants.get(id) } : this.closedProjections.has(id) ? {value:this.closedProjections.get(id)} : undefined;
+  }
+
+  /** Compiler-known PROP result; still independently validated by native flow. */
+  recordClosedProjection(source:number,key:string,target:number):void {
+    const closed=this.constantSlot(source);if(!closed)return;
+    const value=closed.value;
+    if(value===null)this.closedProjections.set(target,null);
+    else if(typeof value==='object'&&!Array.isArray(value))this.closedProjections.set(target,Object.hasOwn(value,key)?(value as Record<string,unknown>)[key]:null);
   }
 
   /** Begin capturing slot ids referenced while walking an island subtree. */
@@ -438,7 +447,7 @@ export class IrEmitContext {
       assertEmit(island.schemaObject === 0xffff || island.schemaObject < this.propsSchema.length, 'island schema object out of bounds');
       uint(island.byteOffset, 0xffffffff, 'island byte offset');
       const length = 25 + island.slotIds.length * 2;
-      assertEmit(length <= 0xffff, 'island entry exceeds u16 length (at most 32759 slot ids)');
+      assertEmit(length <= 0xffff, 'island entry exceeds u16 length (at most 32755 slot ids)');
       for (const id of island.slotIds) assertEmit(declaredSlots.has(id), `island references undeclared slot ${id}`);
       totalSize += 2 + length;
     }

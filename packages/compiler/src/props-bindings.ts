@@ -58,6 +58,16 @@ export function propPath(node: t.Node | null | undefined, scope: PropsScope | un
       if (path) invalid(scope, node, `${node.callee.name}(declared prop) coercion is not in the SSR subset; pass the rendered value as a declared prop`);
     }
   }
+  if (t.isOptionalMemberExpression(node)) {
+    if(node.optional&&t.isIdentifier(node.object)&&localName(node.object,scope)&&scope.objects.has(node.object.name)) {
+      const key=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
+      if(key===undefined)invalid(scope,node,'a declared prop requires a literal field name');
+      const path=scope.objects.get(node.object.name)!.get(key);
+      if(!path)invalid(scope,node,`field ${key} is absent from the declared props`);
+      return path;
+    }
+    return undefined;
+  }
   if (t.isMemberExpression(node)) {
     const key = !node.computed && t.isIdentifier(node.property) ? node.property.name : t.isStringLiteral(node.property) ? node.property.value : undefined;
     if (t.isIdentifier(node.object) && localName(node.object, scope) && scope.objects.has(node.object.name)) {
@@ -120,8 +130,14 @@ export function propSlot(node: t.Node | null | undefined, scope: PropsScope | un
   let slot = scope.views.get(path[0]!)?.slot ?? scope.roots.get(path[0]!);
   if (slot === undefined) invalid(scope, node, `missing declared root binding ${path[0]}`);
   for (let i = 1; i < path.length; i++) {
+    const closed=ctx.constantSlot(slot);
+    if(closed) {
+      if(closed.value===null)invalid(scope,node,'plain property access through a known null or absent value would throw');
+      if(typeof closed.value==='object'&&!Object.hasOwn(closed.value,path[i]!)&&path[i]! in Object.prototype)invalid(scope,node,'inherited object properties are not closed own data');
+    }
     const target = ctx.addTemporarySlot(hint(propType(path.slice(0, i + 1), scope, node)));
     ctx.emit(C.OP_PROP); ctx.emitU16(slot); ctx.emitU32(ctx.addString(path[i]!)); ctx.emitU16(target);
+    ctx.recordClosedProjection(slot,path[i]!,target);
     slot = target;
   }
   ctx.recordSlotRef(slot);
@@ -268,6 +284,13 @@ export function islandPropsScope(fn: ComponentFunction, file: string, ctx: IrEmi
   }
   bindParameter(scope,fn.params[0],fields); declarations(scope,fn,ctx); validateBindings(scope,fn);
   return scope;
+}
+
+export function listItemHint(scope:PropsScope,source:t.Node):number {
+  const path=propPath(source,scope);if(!path)invalid(scope,source,'missing declared list source');
+  const type=inner(propType(path,scope,source));
+  if(type.kind!=='array')invalid(scope,source,'createList declared source must have an array type');
+  return hint(type.element);
 }
 
 /** A row uses its own local projection root, never a handler-addressed slot. */

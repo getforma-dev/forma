@@ -199,10 +199,14 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> B
         })
         .unwrap_or_default();
 
-    // Only for an application that enabled its worker (DR-25, Q15): the
-    // default registers nothing, and `/sw.js` retires any worker installed
-    // by an earlier release.
-    let sw_script = crate::sw::registration_script(nonce);
+    // Registration belongs only to pages that publish a JavaScript entry.
+    // Static pages never bootstrap a worker, even in an enabled application.
+    // The worker endpoint and off-mode retirement remain independently available.
+    let sw_script = if js_urls.is_empty() {
+        String::new()
+    } else {
+        crate::sw::registration_script(nonce)
+    };
 
     BodyParts {
         body_class_attr,

@@ -1,4 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { generateRealIr } from '../src/esbuild-ssr-plugin';
 import { IrEmitContext } from '../src/ir-emit';
 import {
   moduleConstantScope,
@@ -717,33 +721,16 @@ describe('IR Walk Engine', () => {
       ]);
     });
 
-    it('emits island for .map() without fileConstants', () => {
-      const binary = walkAndEmit(
+    it('refuses .map() without a resolvable static table', () => {
+      expect(() => walkAndEmit(
         `h('div', null, ...items.map((item) => h('div', null, item.name)))`,
         { fileConstants: new Map() },
-      );
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'OPEN_TAG div',
-        'ISLAND_START island_0#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END island_0#0',
-        'CLOSE_TAG div',
-      ]);
+      )).toThrow(/BUILD-610.*spread child/);
     });
 
-    it('emits island for spread without .map()', () => {
-      const binary = walkAndEmit(`h('div', null, ...children)`);
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'OPEN_TAG div',
-        'ISLAND_START island_0#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END island_0#0',
-        'CLOSE_TAG div',
-      ]);
+    it('refuses an unresolved spread instead of emitting a shell', () => {
+      expect(() => walkAndEmit(`h('div', null, ...children)`))
+        .toThrow(/BUILD-610.*spread child/);
     });
 
     // -----------------------------------------------------------------------
@@ -842,20 +829,17 @@ describe('IR Walk Engine', () => {
       expect(loads).toBe(1);
     });
 
-    it('warns with the declaring module when an imported table is not static', () => {
+    it('refuses a non-static imported table and names its declaring module', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       try {
         const spread = `h('ul', null, ...ROWS.map((r) => h('li', null, r.k)))`;
-        const binary = walkAndEmit(spread, scopeOf(
+        expect(() => walkAndEmit(spread, scopeOf(
           `import { ROWS } from './tables';\nexport function P() { return ${spread}; }`,
           { './tables': `export const ROWS = loadRows();` },
-        ));
-
-        expect(getIslands(binary).map((i) => i.name)).toEqual(['island_0']);
+        ))).toThrow(/BUILD-610.*spread child/);
 
         const warned = warn.mock.calls.map((c) => c.join(' ')).join('\n');
-        // The generic "use createList" line would send the author to the
-        // spread; the table is one module away and that is what must be named.
+        // Identify the declaring module, not a generic suggestion to use createList.
         expect(warned).toContain('...ROWS.map(...)');
         expect(warned).toContain('./tables');
         expect(warned).toContain('CallExpression');
@@ -975,27 +959,15 @@ describe('IR Walk Engine', () => {
         expect(getIslands(binary)).toEqual([]);
       });
 
-      it('substitutes a destructured prop, including one with a default', () => {
-        const binary = walkAndEmit(`h('div', null, Badge({ label: 'New' }))`, {
+      it('refuses an unresolved destructured default instead of emitting a shell', () => {
+        // This legacy untyped inline path does not evaluate destructuring defaults.
+        // The old test explicitly expected a shell for tone; it never proved 'plain'.
+        expect(() => walkAndEmit(`h('div', null, Badge({ label: 'New' }))`, {
           resolveComponent: propsComponent(
             `h('span', null, label, tone)`,
             `{ label, tone = 'plain' }`,
           ),
-        });
-
-        // `label` comes from the call site; `tone` is not passed, so its
-        // reference stays unresolved and degrades visibly to an island.
-        expect(parseOpcodeList(binary)).toEqual([
-          'OPEN_TAG div',
-          'OPEN_TAG span',
-          'TEXT "New"',
-          'ISLAND_START island_0#0',
-          'OPEN_TAG div',
-          'CLOSE_TAG div',
-          'ISLAND_END island_0#0',
-          'CLOSE_TAG span',
-          'CLOSE_TAG div',
-        ]);
+        })).toThrow(/BUILD-610.*tone/);
       });
 
       it('substitutes into attribute values as well as children', () => {
@@ -1029,102 +1001,61 @@ describe('IR Walk Engine', () => {
       });
     });
 
-    it('emits island when resolveComponent returns null', () => {
-      const binary = walkAndEmit(`h('div', null, UnknownComponent())`, {
+    it('refuses an unresolved component returned by the resolver', () => {
+      expect(() => walkAndEmit(`h('div', null, UnknownComponent())`, {
         resolveComponent: () => null,
-      });
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'OPEN_TAG div',
-        'ISLAND_START UnknownComponent#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END UnknownComponent#0',
-        'CLOSE_TAG div',
-      ]);
+      })).toThrow(/BUILD-610.*UnknownComponent/);
     });
 
-    it('emits island when no resolveComponent provided', () => {
-      const binary = walkAndEmit(`h('div', null, SomeComponent())`);
-
-      expect(parseOpcodeList(binary)).toContain('ISLAND_START SomeComponent#0');
-      expect(parseOpcodeList(binary)).toContain('ISLAND_END SomeComponent#0');
+    it('refuses a component without a resolver', () => {
+      expect(() => walkAndEmit(`h('div', null, SomeComponent())`))
+        .toThrow(/BUILD-610.*SomeComponent/);
     });
 
-    it('emits island when depth exceeded', () => {
+    it('refuses a component beyond the inline depth limit', () => {
       const resolveComponent = (name: string) => name === 'Deep'
         ? { source: `export function Deep() { return h('span', null, 'deep'); }`, functionName: 'Deep' }
         : null;
-
-      const binary = walkAndEmit(`h('div', null, Deep())`, { resolveComponent, depth: 3 });
-
-      // Shell only — the resolved <span>deep</span> must NOT be inlined.
-      expect(parseOpcodeList(binary)).toEqual([
-        'OPEN_TAG div',
-        'ISLAND_START Deep#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END Deep#0',
-        'CLOSE_TAG div',
-      ]);
-      expect(getStrings(binary)).not.toContain('deep');
+      // A known body must not bypass the limit or turn into an anonymous shell.
+      expect(() => walkAndEmit(`h('div', null, Deep())`, { resolveComponent, depth: 3 }))
+        .toThrow(/BUILD-610.*Deep/);
     });
 
-    it('detects cycles and emits island', () => {
+    it('refuses a component already present in the visited set', () => {
       const resolveComponent = (name: string) => name === 'Recursive'
         ? {
           source: `export function Recursive() { return h('div', null, Recursive()); }`,
           functionName: 'Recursive',
         }
         : null;
-
-      const binary = walkAndEmit(`h('div', null, Recursive())`, {
+      expect(() => walkAndEmit(`h('div', null, Recursive())`, {
         resolveComponent,
         visited: new Set(['Recursive']),
-      });
-
-      expect(parseOpcodeList(binary)).toContain('ISLAND_START Recursive#0');
+      })).toThrow(/BUILD-610.*Recursive/);
     });
 
-    it('emits island when sub-component props contain non-static values', () => {
+    it('refuses non-static untyped sub-component props', () => {
       const resolveComponent = (name: string) => name === 'Alert'
         ? {
           source: `export function Alert(props) { return h('div', { class: 'alert' }, 'msg'); }`,
           functionName: 'Alert',
         }
         : null;
-
-      // 'error' is an identifier (signal reference), not a string literal.
-      const binary = walkAndEmit(
+      // The unbound identifier error has neither a closed value nor declared provenance.
+      expect(() => walkAndEmit(
         `h('div', null, Alert({ message: error, variant: 'error' }))`,
         { resolveComponent },
-      );
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'OPEN_TAG div',
-        'ISLAND_START Alert#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END Alert#0',
-        'CLOSE_TAG div',
-      ]);
+      )).toThrow(/BUILD-610.*Alert/);
     });
   });
 
   // -------------------------------------------------------------------------
-  // Rule 11: Unknown → ISLAND_START / ISLAND_END
+  // Rule 11: Unknown → explicit BUILD-610 refusal
   // -------------------------------------------------------------------------
 
   describe('Rule 11: Unknown expressions', () => {
-    it('emits ISLAND for computed tag name', () => {
-      const binary = walkAndEmit(`h(tagName, null, 'text')`);
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'ISLAND_START island_0#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END island_0#0',
-      ]);
+    it('refuses an unresolved computed tag name', () => {
+      expect(() => walkAndEmit(`h(tagName, null, 'text')`)).toThrow(/BUILD-610/);
     });
 
     // A capitalized tag is what BOTH JSX transforms emit for <Card/>, so the
@@ -1137,19 +1068,9 @@ describe('IR Walk Engine', () => {
       const resolveComponent = (name: string) =>
         name === 'Card' ? { source, functionName: 'Card' } : null;
 
-      it('registers a JSX component tag under its own name', () => {
-        // Unresolvable: still an island, but one the client can find.
-        const binary = walkAndEmit(`h('main', null, h(Card, null))`);
-
-        expect(parseOpcodeList(binary)).toEqual([
-          'OPEN_TAG main',
-          'ISLAND_START Card#0',
-          'OPEN_TAG div',
-          'CLOSE_TAG div',
-          'ISLAND_END Card#0',
-          'CLOSE_TAG main',
-        ]);
-        expect(getIslands(binary).map(i => i.name)).toEqual(['Card']);
+      it('refuses an unresolved JSX component tag without inventing registry authority', () => {
+        expect(() => walkAndEmit(`h('main', null, h(Card, null))`))
+          .toThrow(/BUILD-610.*Card/);
       });
 
       it('inlines a resolvable component tag exactly like a Card() call', () => {
@@ -1164,41 +1085,45 @@ describe('IR Walk Engine', () => {
         expect(viaTag).toEqual(viaCall);
       });
 
-      it('honours the island registry for a component tag', () => {
-        const binary = walkAndEmit(`h(Card, null)`, {
-          resolveComponent,
-          islandNames: new Set(['Card']),
-        });
-
-        // Registered islands are never inlined — but their SSR content is
-        // still emitted inside the island span.
-        expect(parseOpcodeList(binary)).toEqual([
-          'ISLAND_START Card#0',
-          'OPEN_TAG article class="card"',
-          'TEXT "Body"',
-          'CLOSE_TAG article',
-          'ISLAND_END Card#0',
-        ]);
+      it('honours a real literal registration for a component tag', () => {
+        const directory = mkdtempSync(join(tmpdir(), 'forma-walk-registration-'));
+        try {
+          const entry = join(directory, 'app.ts');
+          writeFileSync(entry, `
+            import { h, mount, activateIslands } from '@getforma/core';
+            export function Card() { return h('article', { class: 'card' }, 'Body'); }
+            export function Page() { return h(Card, null); }
+            activateIslands({ Card });
+            mount(() => Page(), '#app');
+          `);
+          const result = generateRealIr(entry);
+          expect(result).not.toBeNull();
+          assertBinaryInvariants(result!.binary);
+          expect(parseOpcodeList(result!.binary)).toEqual([
+            'ISLAND_START Card#0',
+            'OPEN_TAG article class="card"',
+            'TEXT "Body"',
+            'CLOSE_TAG article',
+            'ISLAND_END Card#0',
+          ]);
+          expect(getIslands(result!.binary)).toEqual([
+            expect.objectContaining({ name: 'Card', slotIds: [] }),
+          ]);
+          expect(result!.islands[0]!.contract).toMatchObject({ mode: 'ssr', schema: [[]] });
+        } finally {
+          rmSync(directory, { recursive: true, force: true });
+        }
       });
 
-      it('keeps a lower-case identifier tag as a dynamic-tag island', () => {
-        // `h(tagName, ...)` with a runtime tag string is not a component.
-        expect(getIslands(walkAndEmit(`h(tagName, null)`)).map(i => i.name))
-          .toEqual(['island_0']);
+      it('refuses a runtime lower-case tag identifier', () => {
+        // A runtime tag string is not a declared component identity.
+        expect(() => walkAndEmit(`h(tagName, null)`)).toThrow(/BUILD-610/);
       });
     });
 
-    it('emits ISLAND for unknown call in child position', () => {
-      const binary = walkAndEmit(`h('div', null, someFunction())`);
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'OPEN_TAG div',
-        'ISLAND_START someFunction#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END someFunction#0',
-        'CLOSE_TAG div',
-      ]);
+    it('refuses an unknown call in child position', () => {
+      expect(() => walkAndEmit(`h('div', null, someFunction())`))
+        .toThrow(/BUILD-610.*someFunction/);
     });
   });
 
@@ -1257,15 +1182,8 @@ describe('IR Walk Engine', () => {
       ]);
     });
 
-    it('handles unknown function as island', () => {
-      const binary = walkCallAndEmit(`unknownFunc()`);
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'ISLAND_START unknownFunc#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END unknownFunc#0',
-      ]);
+    it('refuses an unknown function without an island contract', () => {
+      expect(() => walkCallAndEmit(`unknownFunc()`)).toThrow(/BUILD-610.*unknownFunc/);
     });
   });
 
@@ -1678,20 +1596,19 @@ describe('IR Walk Engine', () => {
       expect(slot.default).toBe('false');
     });
 
-    it('still degrades — loudly — when an operand cannot be resolved', () => {
+    it('refuses an unresolved operand and names its source file', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const { ctx, walkCtx } = withSignals(`const [name] = createSignal('Xbox');`);
-      const binary = walkIntoAndEmit(
-        `h('span', null, 'Player ' + lookupName())`,
-        ctx,
-        { ...walkCtx, sourceFile: 'src/pages/Roster.ts' },
-      );
-
-      expect(getIslands(binary)).toHaveLength(1);
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('src/pages/Roster.ts'),
-      );
-      warnSpy.mockRestore();
+      try {
+        const { ctx, walkCtx } = withSignals(`const [name] = createSignal('Xbox');`);
+        expect(() => walkIntoAndEmit(
+          `h('span', null, 'Player ' + lookupName())`,
+          ctx,
+          { ...walkCtx, sourceFile: 'src/pages/Roster.ts' },
+        )).toThrow(/BUILD-610.*src\/pages\/Roster\.ts/);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('src/pages/Roster.ts'));
+      } finally {
+        warnSpy.mockRestore();
+      }
     });
 
     it('does not fold a loose == comparison it cannot evaluate exactly', () => {
@@ -1889,7 +1806,7 @@ describe('IR Walk Engine', () => {
       ]);
     });
 
-    it('detects circular reference and emits island without infinite loop', () => {
+    it('refuses a circular reference without looping or emitting a shell', () => {
       const resolveComponent = (name: string) => {
         if (name === 'A') {
           return { source: `export function A() { return h('div', null, B()); }`, functionName: 'A' };
@@ -1899,22 +1816,9 @@ describe('IR Walk Engine', () => {
         }
         return null;
       };
-
-      // A calls B, B calls A — the cycle must terminate at an island.
-      const binary = walkAndEmit(`h('div', null, A())`, { resolveComponent });
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'OPEN_TAG div',
-        'OPEN_TAG div',
-        'OPEN_TAG div',
-        'ISLAND_START A#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END A#0',
-        'CLOSE_TAG div',
-        'CLOSE_TAG div',
-        'CLOSE_TAG div',
-      ]);
+      // The actual A -> B -> A traversal must terminate with the coded refusal.
+      expect(() => walkAndEmit(`h('div', null, A())`, { resolveComponent }))
+        .toThrow(/BUILD-610.*A/);
     });
   });
 
@@ -2149,15 +2053,9 @@ describe('IR Walk Engine', () => {
       expect(slotNames).toContain('list:b:array');
     });
 
-    it('emits an island for a createList missing its map function', () => {
-      const binary = walkCallAndEmit(`createList(todos, (r) => r.id)`);
-
-      expect(parseOpcodeList(binary)).toEqual([
-        'ISLAND_START createList#0',
-        'OPEN_TAG div',
-        'CLOSE_TAG div',
-        'ISLAND_END createList#0',
-      ]);
+    it('refuses createList without its map function', () => {
+      expect(() => walkCallAndEmit(`createList(todos, (r) => r.id)`))
+        .toThrow(/BUILD-610.*createList/);
     });
   });
 

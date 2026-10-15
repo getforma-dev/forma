@@ -22,3 +22,12 @@ See [declared props](DECLARED-PROPS.md), [server API](../crates/forma-server/REA
 ## Full asset digests
 
 Rebuild schema2 manifests with complete canonical SHA-384 metadata before starting the reader. Every asset requires `integrity`, including retained files; a filename hash is not a substitute. Manually constructed Browser manifests follow the same checks. External script, stylesheet and modulepreload tags now include integrity and anonymous crossorigin attributes while retaining their existing nonces. Inline bodies remain nonce-protected. A typed preload no longer present in the response's accepted manifest returns RENDER-104, so development reloads must refresh that table rather than emitting an unchecked reference.
+
+
+## Staged static-route policy (FORMA-105)
+
+An explicit SSR manifest route with `js: []` must have a valid IR module with no declared islands and an empty `modulepreload` list. Missing JS metadata is an error, not a static declaration. LOAD-109 refuses an island module without browser code; MANIFEST-103 refuses contradictory static preloads. The development reader checks changed manifest policy even for unchanged IR bytes and keeps both parts of the last valid pair on failure.
+
+Do not pass `with_config_json` or a stale/nonempty module-preload table to a static SSR handle: these return RENDER-105. Configuration remains a nonced `window.__FORMA_CONFIG__` assignment on JS-enabled SSR and Browser routes; it is not moved into the inert island state channel. CSS/fonts, branding, strict headers and the inert empty state block remain. Explicit executable RawHtml is outside zero-JS qualification.
+
+Enabled worker registration now requires a page JS entry. Static pages do not newly install workers; serving `/sw.js` and the off-mode retirement path remain unchanged for existing clients. Keep the endpoint while changing worker policy. This is the staged server slice; compiler static-entry filtering, island-only activation, mount refusal and template/browser acceptance still depend on coordinated103/104/105 integration. It does not authorize application migration or publication.

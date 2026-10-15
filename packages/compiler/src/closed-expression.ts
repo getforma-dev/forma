@@ -53,6 +53,7 @@ export function closedExpression(node:t.Node, file:string, identifiers?:Readonly
       for(const property of node.properties) {
         if(!t.isObjectProperty(property)||property.computed||(!t.isIdentifier(property.key)&&!t.isStringLiteral(property.key)))fail(property,'closed objects need literal own data fields');
         const key=t.isIdentifier(property.key)?property.key.name:property.key.value;
+        if(key==='__proto__')fail(property,'prototype-setting object literal fields are not closed own data');
         if(Object.hasOwn(out,key))fail(property,'duplicate closed object key');
         out[key]=visit(property.value,depth+1);
       }

@@ -190,6 +190,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       for (const field of node.properties) {
         if (!t.isObjectProperty(field) || field.computed) fail(env.module, field, 'closed object needs explicit data fields');
         const key = name(field.key); if (key === undefined || Object.hasOwn(result, key)) fail(env.module, field, 'closed object field must be named and unique');
+        if(key==='__proto__')fail(env.module,field,'prototype-setting object literal fields are not closed own data');
         result[key] = data(field.value, env, depth + 1);
       }
       return result;
@@ -259,6 +260,16 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
         finally { activeValues.delete(local); }
       }
       fail(env.module, node, `unsupported native value ${node.name}`);
+    }
+    if (t.isOptionalMemberExpression(node)) {
+      // A declared component props object is non-null. Normalize only its
+      // direct optional read; nullable intermediates/calls keep their refusal.
+      const key=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
+      if(node.optional&&key!==undefined&&t.isIdentifier(node.object)) {
+        const object=objectFields(node.object,env),field=object?.get(key);
+        if(field)return resolved(field);
+      }
+      fail(env.module,node,'optional access is admitted only on the proven non-null declared props object');
     }
     if (t.isMemberExpression(node)) {
       const key = !node.computed && t.isIdentifier(node.property) ? node.property.name : t.isStringLiteral(node.property) ? node.property.value : undefined;

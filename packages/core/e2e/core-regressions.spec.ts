@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { serveOwnedAdoption } from './helpers/owned-adoption.js';
 
 // Optional installed Chrome is useful on machines without Playwright's bundle.
 test.use({ channel: process.env.FORMA_TEST_BROWSER_CHANNEL || undefined });
 
 test.beforeEach(async ({ page }) => {
+  await serveOwnedAdoption(page, '/core-regression.mjs');
   await page.route('**/core-regression.mjs', (route) => route.fulfill({
     path: fileURLToPath(new URL('../dist/forma.esm.js', import.meta.url)),
     contentType: 'text/javascript',
@@ -94,13 +96,14 @@ test('same-key rerenders dispose old reactive generations; unchanged objects ret
 test('SSR adoption restores form properties and keeps them controlled', async ({ page }) => {
   await page.evaluate(async () => {
     const coreUrl = '/core-regression.mjs';
-    const { h, mount, createSignal } = await import(coreUrl);
+    const { h, createSignal } = await import(coreUrl);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const root = document.querySelector('#app')!;
     root.setAttribute('data-forma-ssr', '');
     root.innerHTML = '<form><textarea id="notes" value="Saved notes"></textarea><select id="cycle" value="yearly"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></form>';
     const [value, setValue] = createSignal('yearly');
     (window as any).selectMonthly = () => setValue('monthly');
-    mount(() => h('form', null,
+    adoptInRoot(() => h('form', null,
       h('textarea', { id: 'notes', value: 'Saved notes' }),
       h('select', { id: 'cycle', value },
         h('option', { value: 'monthly' }, 'Monthly'), h('option', { value: 'yearly' }, 'Yearly')),

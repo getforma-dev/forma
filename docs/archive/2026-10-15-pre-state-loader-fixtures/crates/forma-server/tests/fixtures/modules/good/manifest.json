@@ -1,0 +1,40 @@
+{
+  "aliases": {},
+  "app": "ledger",
+  "assets": {
+    "app.js": {
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
+    },
+    "page.0f0f.ir": {
+      "immutable": false,
+      "integrity": "sha384-qQtXZrJ4d/Jzdol9HkgUqKe2D6qEkGfr7KfwYAwrck9zTmF30ySPL4OPAXrPNFXI"
+    }
+  },
+  "build": "fixture",
+  "routes": {
+    "/": {
+      "budget_warn_threshold": 0,
+      "css": [],
+      "fonts": [],
+      "ir": "page.0f0f.ir",
+      "js": [
+        "app.js"
+      ],
+      "mode": "ssr",
+      "total_size_br": 0
+    },
+    "/app": {
+      "budget_warn_threshold": 0,
+      "css": [],
+      "fonts": [],
+      "js": [
+        "app.js"
+      ],
+      "mode": "browser",
+      "total_size_br": 0
+    }
+  },
+  "version": 2,
+  "writer": "3.0.0"
+}

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateRealIr } from '../src/esbuild-ssr-plugin';
 import { getSlots, parseOpcodeList } from './helpers/fmir';
+import {SLOT_TYPE_ARRAY} from '../src/fmir-constants';
 
 const folders: string[] = [];
 afterEach(() => { for (const dir of folders.splice(0)) rmSync(dir, { recursive: true, force: true }); vi.restoreAllMocks(); });
@@ -56,7 +57,7 @@ describe('declared root slot bindings', () => {
     expect(new Set(slots.map(slot => slot.name)).size).toBe(slots.length);
   });
 
-  it('keeps local list debug labels CLIENT-owned and avoids declared root name collisions', () => {
+  it('keeps local list constants CLIENT-owned and avoids declared root name collisions', () => {
     const binary = emit(imports + `export function Page(p: { 'list:rows:item': string; 'list:rows:label': string }) {
       const [rows] = createSignal([]);
       return h('main', null, p['list:rows:item'], createList(rows, row => row.id, row => h('p', null, row.label)));
@@ -64,7 +65,7 @@ describe('declared root slot bindings', () => {
     const slots = getSlots(binary);
     expect(slots.filter(slot => slot.source === 0).map(slot => slot.name)).toEqual(['list:rows:item', 'list:rows:label']);
     expect(new Set(slots.map(slot => slot.name)).size).toBe(slots.length);
-    expect(slots.find(slot => slot.name === 'list:rows:array')?.source).toBe(1);
+    expect(slots.filter(slot=>slot.typeHint===SLOT_TYPE_ARRAY).map(slot=>slot.source)).toEqual([1]);
   });
 
   it.each([

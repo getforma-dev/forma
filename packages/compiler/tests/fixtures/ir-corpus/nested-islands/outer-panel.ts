@@ -4,13 +4,13 @@ import { InnerBadge } from './inner-badge';
 
 const [panelTitle] = createSignal('Panel');
 
-export function OuterPanel() {
+export function OuterPanel(props: { panelClass: string; badgeTitle: string }) {
   // The shell element opens BEFORE the nested island starts: an island whose
   // body reaches another ISLAND_START first has no element to carry its own
   // data-forma-* attributes, and the walker refuses to render that rather
   // than shipping an island that can never hydrate.
-  return h('div', { class: () => panelClass() },
+  return h('div', { class: () => props.panelClass },
     h('h3', null, () => panelTitle()),
-    InnerBadge(),
+    InnerBadge({ title: props.badgeTitle }),
   );
 }

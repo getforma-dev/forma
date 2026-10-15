@@ -611,7 +611,7 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
         const file=resolve(args.path);
         if(file!==client&&(browserEntries.has(file)||!snapshot.files.has(file)))return;
         const loader=extname(file).slice(1).replace(/^[cm](?=[jt]s$)/,'') as Loader;
-        return {contents:file===client?(transformed??snapshot.files.get(file)??readSourceFile(file)):snapshot.files.get(file),loader,resolveDir:dirname(file),watchFiles:[...snapshot.files.keys()],watchDirs:[...snapshot.directories]};
+        return {contents:file===client?(transformed??snapshot.files.get(file)??readSourceFile(file)):snapshot.files.get(file),loader,resolveDir:dirname(file),watchFiles:[...snapshot.files.keys(),...snapshot.dependencies],watchDirs:[...snapshot.directories]};
       });
       build.onEnd(result=>{
         if(result.errors.length)return;

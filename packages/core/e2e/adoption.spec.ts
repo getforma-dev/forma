@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { serveOwnedAdoption } from './helpers/owned-adoption.js';
 
 // Adoption in a real browser (FORMA-003; decision brief DR-5 and DR-7). The
 // server HTML is served as the page, so Chromium's parser handles it (markers
@@ -12,6 +13,7 @@ test.use({ channel: process.env.FORMA_TEST_BROWSER_CHANNEL || undefined });
 
 const STATE_HASH = '0123456789abcdef';
 async function serve(page: Page, body: string, islandCount = 0): Promise<void> {
+  await serveOwnedAdoption(page, '/adoption-core.mjs');
   const state = islandCount ? `<script type="application/json" data-island-state>${JSON.stringify({
     v: 1, s: [], i: Array.from({ length: islandCount }, () => ({ h: STATE_HASH, p: {} })),
   })}</script>` : '';
@@ -30,13 +32,14 @@ async function serve(page: Page, body: string, islandCount = 0): Promise<void> {
 const formData = (page: Page, selector = 'form') =>
   page.evaluate((sel) => [...new FormData(document.querySelector(sel) as HTMLFormElement)], selector);
 
-test('a root Fragment from the server is interactive after mount() adoption', async ({ page }) => {
+test('a root Fragment from the server is interactive under caller-owned direct adoption', async ({ page }) => {
   await serve(page, '<div id="app" data-forma-ssr><span id="note"><!--f:t0-->hello<!--/f:t0--></span><button id="go">go</button></div>');
   await page.evaluate(async () => {
     const { h, Fragment, mount, createSignal } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [note, setNote] = createSignal('hello');
     (window as any).serverSpan = document.getElementById('note');
-    mount(() => h(Fragment, null,
+    adoptInRoot(() => h(Fragment, null,
       h('span', { id: 'note' }, () => note()),
       h('button', { id: 'go', onClick: () => setNote(note() === 'bye' ? 'hello' : 'bye') }, 'go'),
     ), '#app');
@@ -73,9 +76,10 @@ test('what the user entered before activation survives adoption, and later updat
 
   await page.evaluate(async () => {
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [state, setState] = createSignal({ text: 'Saved', agree: true, cycle: 'yearly', notes: 'Saved notes', legacy: 'hello' });
     (window as any).setState = setState;
-    mount(() => h('form', null,
+    adoptInRoot(() => h('form', null,
       h('input', { id: 'text', name: 'text', value: () => state().text }),
       h('input', { id: 'agree', name: 'agree', type: 'checkbox', checked: () => state().agree }),
       h('select', { id: 'cycle', name: 'cycle', value: () => state().cycle },
@@ -127,7 +131,8 @@ test('an untouched page whose server agrees with the client is adopted without o
     });
     observer.observe(document.getElementById('app')!, { subtree: true, childList: true, attributes: true, characterData: true });
     const { h, mount } = await import('/adoption-core.mjs' as string);
-    mount(() => h('form', null,
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
+    adoptInRoot(() => h('form', null,
       h('input', { id: 'text', name: 'text', value: () => 'Saved' }),
       h('input', { id: 'agree', name: 'agree', type: 'checkbox', checked: () => true }),
       h('select', { id: 'cycle', name: 'cycle', value: () => 'yearly' },
@@ -160,10 +165,11 @@ test("an older server's marker text and unselected select are repaired at adopti
 
   await page.evaluate(async () => {
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [text, setText] = createSignal('hello');
     const [choice, setChoice] = createSignal('b');
     Object.assign(window as any, { setText, setChoice });
-    mount(() => h('form', null,
+    adoptInRoot(() => h('form', null,
       h('textarea', { id: 'ta', name: 'ta' }, () => text()),
       h('select', { id: 'choice', name: 'choice', value: () => choice() },
         h('option', { value: 'a' }, 'A'), h('option', { value: 'b' }, 'B'), h('option', { value: 'c' }, 'C')),
@@ -182,10 +188,11 @@ test("after the user types, a textarea's reactive text changes only its default,
   await serve(page, '<div id="csr"></div><div id="ssr" data-forma-ssr><textarea id="adopted">Hello Ann</textarea></div>');
   await page.evaluate(async () => {
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [text, setText] = createSignal('Hello Ann');
     (window as any).setText = setText;
     mount(() => h('textarea', { id: 'rendered' }, () => text()), '#csr');
-    mount(() => h('textarea', { id: 'adopted' }, () => text()), '#ssr');
+    adoptInRoot(() => h('textarea', { id: 'adopted' }, () => text()), '#ssr');
   });
   for (const id of ['#rendered', '#adopted']) {
     await expect(page.locator(id)).toHaveValue('Hello Ann');
@@ -209,8 +216,9 @@ test('a component that returns a DOM node is adopted as itself or reported, and 
 
   await page.evaluate(async () => {
     const { mount, activateIslands, __islandRegistration, createSignal, createEffect, template, trustedHtml } = await import('/adoption-core.mjs' as string);
-    mount(() => template(trustedHtml('<p>static</p>')), '#app');
-    (window as any).afterMount = true;
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
+    adoptInRoot(() => template(trustedHtml('<p>static</p>')), '#app');
+    (window as any).afterDirectAdoption = true;
     const metadata = { h: '0123456789abcdef', schema: [[]], mode: 0 as const };
     const el = document.querySelector('[data-forma-component="Imp"]') as HTMLElement;
     activateIslands({
@@ -225,7 +233,7 @@ test('a component that returns a DOM node is adopted as itself or reported, and 
     });
   });
 
-  expect(await page.evaluate(() => (window as any).afterMount)).toBe(true);
+  expect(await page.evaluate(() => (window as any).afterDirectAdoption)).toBe(true);
   await expect(page.locator('#app')).toHaveAttribute('data-forma-ssr', '');
   await expect(page.locator('#app')).toHaveText('static');
   await expect(page.locator('[data-forma-island="0"]')).toHaveAttribute('data-forma-status', 'active');
@@ -244,8 +252,9 @@ test('an option bound to undefined submits its text, client-rendered and adopted
     '<div id="ssr" data-forma-ssr><form id="adopted"><select name="s"><option>Alpha</option><option>Beta</option></select></form></div>');
   await page.evaluate(async () => {
     const { h, mount } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     mount(() => h('select', { name: 'c' }, h('option', { value: undefined }, 'Alpha'), h('option', { value: null }, 'Beta')), '#csr');
-    mount(() => h('form', { id: 'adopted' },
+    adoptInRoot(() => h('form', { id: 'adopted' },
       h('select', { name: 's' }, h('option', { value: () => undefined }, 'Alpha'), h('option', { value: () => null }, 'Beta'))), '#ssr');
   });
   expect(await formData(page, '#csr')).toEqual([['c', 'Alpha']]);
@@ -271,9 +280,10 @@ test('an inline SVG icon is adopted without one DOM write; its title stays SVG a
     });
     observer.observe(app, { subtree: true, childList: true, attributes: true, characterData: true });
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [d, setD] = createSignal('M0 0L10 10');
     (window as any).setD = setD;
-    mount(() => h('button', { id: 'close' },
+    adoptInRoot(() => h('button', { id: 'close' },
       h('svg', { viewBox: '0 0 10 10' }, h('title', null, 'Close'), h('path', { d: () => d() }))), '#app');
     await new Promise((resolve) => setTimeout(resolve, 0));
     seen.push(...observer.takeRecords().map((r) => `${r.type}:${(r.target as Element).id}:${r.attributeName ?? ''}`));
@@ -317,10 +327,11 @@ test('SVG and MathML are adopted in place, and what adoption must create inside 
     const originalWarn = console.warn;
     console.warn = () => {};
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [x, setX] = createSignal('x');
     (window as any).setX = setX;
     try {
-      mount(() => h('div', null,
+      adoptInRoot(() => h('div', null,
         h('p', { id: 'formula' }, h('math', null, h('mi', null, () => x()), h('mo', null, '+'), h('mn', null, '1'))),
         // The server rendered a circle; the client wants a titled link.
         h('svg', { id: 'icon', viewBox: '0 0 10 10' }, h('title', null, 'Close'), h('a', { href: '#close' }, h('path', { d: 'M0 0L10 10' }))),
@@ -357,9 +368,10 @@ test("a bound iframe src the server already rendered is not set again, so the fr
     frame.addEventListener('load', () => loads++);
     (frame.contentWindow as any).state = 'kept';
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [src, setSrc] = createSignal('/frame.html');
     (window as any).setSrc = setSrc;
-    mount(() => h('iframe', { id: 'frame', src: () => src(), title: 'frame' }), '#app');
+    adoptInRoot(() => h('iframe', { id: 'frame', src: () => src(), title: 'frame' }), '#app');
     await new Promise((resolve) => setTimeout(resolve, 300));
     return { loads, state: (frame.contentWindow as any).state ?? null };
   });
@@ -396,6 +408,7 @@ test('a list whose client array differs in count from the server rows leaves the
     });
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
     const { h, activateIslands, __islandRegistration, createList, createSignal, onError } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const codes: string[] = [];
     onError((err: { code?: string }, info?: { source?: string }) => codes.push(`${err.code}:${info?.source}`));
     const clicks: string[] = [];
@@ -459,6 +472,7 @@ test('the namespace vectors: the parser, h() and adoption agree on every element
   await serve(page, NS_VECTORS.map((v, i) => `<div class="ssr" id="ssr${i}" data-forma-ssr>${v.server}</div><div id="csr${i}"></div>`).join(''));
   const results = await page.evaluate(async (vectors) => {
     const { h, mount } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const short: Record<string, string> = {
       'http://www.w3.org/1999/xhtml': 'html', 'http://www.w3.org/2000/svg': 'svg', 'http://www.w3.org/1998/Math/MathML': 'mathml',
     };
@@ -490,7 +504,7 @@ test('the namespace vectors: the parser, h() and adoption agree on every element
       const writes: string[] = [];
       const observer = new MutationObserver(() => {});
       observer.observe(ssr, { subtree: true, childList: true, attributes: true, characterData: true });
-      mount(() => build(v.tree), `#ssr${i}`);
+      adoptInRoot(() => build(v.tree), `#ssr${i}`);
       for (const r of observer.takeRecords()) writes.push(`${r.type}:${(r.target as Element).id || (r.target as Element).localName}:${r.attributeName ?? ''}`);
       observer.disconnect();
       return {
@@ -523,6 +537,7 @@ test('content built inside an svg is SVG and rendered once: a createShow branch,
     '<g id="rows"><!--f:l0--><a data-forma-key="a" href="#a"><title>a</title></a><!--/f:l0--></g></svg></div>');
   const steps = await page.evaluate(async () => {
     const { h, svg, mount, createSignal, createShow, createList, createSwitch, createPortal } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const renders = { show: 0, rows: 0, cases: 0 };
     const SVG = 'http://www.w3.org/2000/svg';
     const nonSvg = (root: Element) =>
@@ -547,7 +562,7 @@ test('content built inside an svg is SVG and rendered once: a createShow branch,
     console.warn = () => {};
     const [aOn, setAOn] = createSignal(true);
     const [aKeys, setAKeys] = createSignal(['a', 'b']);
-    mount(() => h('svg', { viewBox: '0 0 10 10' },
+    adoptInRoot(() => h('svg', { viewBox: '0 0 10 10' },
       h('g', { id: 'show' }, createShow(aOn, () => h('title', null, 'On'), () => h('a', { href: '#off' }, 'Off'))),
       h('g', { id: 'rows' }, createList(aKeys, (k: string) => k, (k: string) => h('a', { 'data-forma-key': k, href: `#${k}` }, h('title', null, k)))),
     ), '#adopt');
@@ -590,8 +605,9 @@ test('a reactive dangerouslySetInnerHTML is adopted as content, follows its sign
   await serve(page, '<div id="app" data-forma-ssr><article id="doc"></article></div><div id="client"></div>');
   const steps = await page.evaluate(async () => {
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [inner, setInner] = createSignal({ __html: trustedHtml('<b>A</b>') });
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
+    adoptInRoot(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() }), '#app');
     mount(() => h('article', { id: 'twin', dangerouslySetInnerHTML: () => inner() }), '#client');
     const doc = document.getElementById('doc')!;
     const twin = document.getElementById('twin')!;
@@ -622,10 +638,11 @@ test('a falsy static dangerouslySetInnerHTML is no prop: the server\'s children 
   page.on('pageerror', (err) => errors.push(String(err)));
   await page.evaluate(async () => {
     const { h, mount } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const clicks = [0, 0, 0];
     (window as any).clicks = clicks;
     [undefined, null, false].forEach((value, i) => {
-      mount(() => h('article', { dangerouslySetInnerHTML: value }, h('button', { id: `b${i}`, onClick: () => { clicks[i]++; } }, 'go')), `#app${i}`);
+      adoptInRoot(() => h('article', { dangerouslySetInnerHTML: value }, h('button', { id: `b${i}`, onClick: () => { clicks[i]++; } }, 'go')), `#app${i}`);
     });
   });
   for (const i of [0, 1, 2]) await page.locator(`#b${i}`).click();
@@ -651,6 +668,7 @@ test('markup the server wrote in a form the browser serialises differently is ad
   await page.locator('#typed').fill('typed before activation');
   const writes = await page.evaluate(async (list) => {
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const firsts = list.map((_, i) => document.querySelector(`#m${i} article`)!.firstChild);
     const observer = new MutationObserver(() => {});
     for (let i = 0; i < list.length; i++) {
@@ -658,7 +676,7 @@ test('markup the server wrote in a form the browser serialises differently is ad
     }
     list.forEach((markup, i) => {
       const [inner] = createSignal({ __html: trustedHtml(markup) });
-      mount(() => h('article', { dangerouslySetInnerHTML: () => inner() }), `#m${i}`);
+      adoptInRoot(() => h('article', { dangerouslySetInnerHTML: () => inner() }), `#m${i}`);
     });
     const records = observer.takeRecords();
     observer.disconnect();
@@ -677,10 +695,11 @@ test('a reactive dangerouslySetInnerHTML whose first value is null keeps the ser
   await serve(page, '<div id="app" data-forma-ssr><article id="doc"><button id="fb">fallback</button></article></div>');
   await page.evaluate(async () => {
     const { h, mount, createSignal, trustedHtml } = await import('/adoption-core.mjs' as string);
+    const { adoptInRoot } = await import('/test-owned-adoption.mjs' as string);
     const [inner, setInner] = createSignal(null);
     (window as any).clicks = 0;
     (window as any).showMarkup = () => setInner({ __html: trustedHtml('<b id="m">markup</b>') });
-    mount(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() },
+    adoptInRoot(() => h('article', { id: 'doc', dangerouslySetInnerHTML: () => inner() },
       h('button', { id: 'fb', onClick: () => { (window as any).clicks++; } }, 'fallback')), '#app');
   });
   await page.locator('#fb').click();

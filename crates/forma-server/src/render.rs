@@ -59,7 +59,8 @@ impl RenderCtx {
         self
     }
 
-    /// Request data written as escaped JSON, never executable handler script.
+    /// Request data assigned to `window.__FORMA_CONFIG__` by a nonced script.
+    /// Static SSR routes refuse this executable configuration with `RENDER-105`.
     #[must_use]
     pub fn with_config_json(mut self, value: serde_json::Value) -> Self {
         self.config_json = Some(value);
@@ -183,6 +184,7 @@ impl RenderCtx {
 /// |---|---|---|
 /// | RENDER-101 | [`MissingModule`](RenderError::MissingModule) | The config has no module or no slots to render |
 /// | RENDER-104 | [`Manifest`](RenderError::Manifest) | Invalid manifest or referenced integrity |
+/// | RENDER-105 | [`StaticRoute`](RenderError::StaticRoute) | A static SSR route requires JavaScript for islands, configuration or preloads |
 /// | RENDER-103 | [`RouteMode`](RenderError::RouteMode) | A shell route is absent or not Browser |
 /// | RENDER-406 | [`Unfinalized`](RenderError::Unfinalized) | Required startup finalization is incomplete |
 /// | RENDER-102 | [`Walk`](RenderError::Walk) | The walk refused the module or its data |
@@ -199,6 +201,14 @@ impl RenderCtx {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderError {
+    /// RENDER-105: a static SSR route cannot execute or preload JavaScript.
+    #[non_exhaustive]
+    StaticRoute {
+        /// The requested route.
+        route: String,
+        /// The incompatible island, configuration or preload contract.
+        message: String,
+    },
     /// RENDER-104: manifest or referenced resource integrity is invalid.
     #[non_exhaustive]
     Manifest {
@@ -315,6 +325,7 @@ impl RenderError {
     /// The stable code, such as `RENDER-301`.
     pub fn code(&self) -> &'static str {
         match self {
+            RenderError::StaticRoute { .. } => "RENDER-105",
             RenderError::Manifest { .. } => "RENDER-104",
             RenderError::RouteMode { .. } => "RENDER-103",
             RenderError::Unfinalized { .. } => "RENDER-406",
@@ -341,7 +352,8 @@ impl RenderError {
     /// The route pattern the render was for.
     pub fn route(&self) -> &str {
         match self {
-            RenderError::Manifest { route, .. }
+            RenderError::StaticRoute { route, .. }
+            | RenderError::Manifest { route, .. }
             | RenderError::RouteMode { route }
             | RenderError::Unfinalized { route } => route,
             RenderError::Props { cause } => cause.route(),
@@ -402,7 +414,9 @@ impl fmt::Display for RenderError {
             write!(f, " in {}", path.join(" > "))?;
         }
         match self {
-            RenderError::Manifest { message, .. } => write!(f, ": {message}"),
+            RenderError::StaticRoute { message, .. } | RenderError::Manifest { message, .. } => {
+                write!(f, ": {message}")
+            }
             RenderError::RouteMode { .. } => {
                 write!(f, ": route is not explicitly browser-rendered")
             }
@@ -560,6 +574,33 @@ fn render(
     root: Root<'_>,
 ) -> Result<PageResponse, RenderError> {
     let route = || config.route_pattern.to_string();
+    if config
+        .manifest
+        .route(config.route_pattern)
+        .is_some_and(crate::RouteAssets::is_static_ssr)
+    {
+        let message = if config.config_json.is_some() {
+            Some("static SSR cannot execute config_json; publish a JavaScript entry for client configuration")
+        } else if !ctx.module_preloads(config.route_pattern).is_empty()
+            || config
+                .manifest
+                .route(config.route_pattern)
+                .is_some_and(|assets| !assets.modulepreload.is_empty())
+        {
+            Some("static SSR cannot load module preloads; rebuild the route and its request preload table together")
+        } else if matches!(root, Root::Walk { module: Some(module), .. } if !module.islands.is_empty())
+        {
+            Some("static SSR contains declared islands but has no JavaScript entry")
+        } else {
+            None
+        };
+        if let Some(message) = message {
+            return Err(RenderError::StaticRoute {
+                route: route(),
+                message: message.into(),
+            });
+        }
+    }
     let nonce = draw().map_err(|cause| RenderError::Nonce {
         route: route(),
         cause,
@@ -689,6 +730,57 @@ mod tests {
             personality_css: None,
             body_prefix: None,
         }
+    }
+
+    #[test]
+    fn static_island_mismatch_refuses_before_nonce_or_walk() {
+        use forma_ir::parser::test_helpers::{
+            build_declared_fixture, encode_close_tag, encode_open_tag,
+        };
+        let mut manifest = manifest();
+        manifest.routes.insert(
+            "/seam".into(),
+            crate::RouteAssets {
+                mode: crate::RouteMode::Ssr,
+                js: vec![],
+                css: vec![],
+                fonts: vec![],
+                modulepreload: vec![],
+                ir: Some("home.ir".into()),
+                total_size_br: 0,
+                budget_warn_threshold: 0,
+            },
+        );
+        let opcodes = [
+            vec![11, 0, 0],
+            encode_open_tag(0, &[]),
+            encode_close_tag(0),
+            vec![12, 0, 0],
+        ]
+        .concat();
+        let module = forma_ir::IrModule::parse(&build_declared_fixture(
+            &["div", "Panel"],
+            &[],
+            &opcodes,
+            &[(0, 1, 0, 1, 0, &[])],
+        ))
+        .unwrap();
+        let error = render_guarded(
+            &shell_config(&manifest),
+            &RenderCtx::new(),
+            || panic!("static refusal must precede nonce generation"),
+            Root::Walk {
+                module: Some(&module),
+                slots: None,
+                limits: WalkLimits::default(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(error.code(), "RENDER-105");
+        assert_eq!(error.route(), "/seam");
+        assert!(error.to_string().contains("declared islands"));
+        assert_eq!(error.counts(), None);
+        assert!(error.component_path().is_empty());
     }
 
     #[test]

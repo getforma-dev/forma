@@ -1001,7 +1001,7 @@ export function h(
   // descriptor like any element, so adoption can walk its children as a range
   // of the server's nodes instead of receiving a detached fragment it cannot
   // match to anything.
-  // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text after mount() adoption"
+  // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text under a caller-owned adoption root"
   if (tag === Fragment) {
     if (describingAdoption || hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
     const frag = document.createDocumentFragment();

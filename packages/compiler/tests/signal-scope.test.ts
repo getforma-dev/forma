@@ -138,7 +138,7 @@ describe('collectSignalDeclarations — evaluating initial values', () => {
 
   it('warns, naming the file and the consequence, for a default it cannot evaluate', () => {
     const result = collect(`
-      const [config] = createSignal({ key: 'val' });
+      const [config] = createSignal(readConfig());
       const [label] = createSignal('ok');
     `);
     expect([...result]).toEqual([['label', { type: 'text', default: 'ok' }]]);
@@ -146,8 +146,15 @@ describe('collectSignalDeclarations — evaluating initial values', () => {
     const warned = warnings();
     expect(warned).toContain("signal 'config'");     // which signal
     expect(warned).toContain('page.ts');             // the file to edit
-    expect(warned).toContain('ObjectExpression');    // the construct
+    expect(warned).toContain('CallExpression');    // the construct
     expect(warned).toContain('render EMPTY server-side'); // the consequence
+  });
+
+  it('preserves bounded closed aggregate defaults including a nullish aggregate fallback',()=>{
+    expect(collect(`const [rows]=createSignal([{id:1,note:null}]);const [config]=createSignal(null??{title:'kept'});`)).toEqual(new Map([
+      ['rows',{type:'aggregate',default:[{id:1,note:null}]}],['config',{type:'aggregate',default:{title:'kept'}}],
+    ]));
+    expect(warnings()).toBe('');
   });
 
   it('warns when one frame collects a name twice with different defaults', () => {

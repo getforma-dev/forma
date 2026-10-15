@@ -15,6 +15,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createSignal, createRoot, onError } from 'forma/reactive';
 import { h } from '../element';
 import { mount } from '../mount';
+import { adoptInRoot } from './helpers/owned-adoption.js';
 import { activateIslands } from '../activate';
 import { createShow } from '../show';
 import { createList } from '../list';
@@ -327,14 +328,14 @@ describe('list adoption row-count check', () => {
   // Round 3: the same for roots outside every island. The walk runs in a
   // batch, so effects a signal written during it triggers in other roots run
   // after the walk, outside its recording and outside its root.
-  it("a failing mount() whose ref writes a shared signal does not detach a second mount() root's new row", () => {
+  it("a failing caller-owned adoption whose ref writes a shared signal does not detach a Browser mount root's new row", () => {
     document.body.innerHTML =
       `<div id="app2"></div><div id="app1" data-forma-ssr><div><div>x</div>${serverList(['a', 'b'])}</div></div>`;
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
     mount(() => h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r))) as unknown as HTMLElement, '#app2');
     captureErrors(() => {
-      mount((() => h('div', null,
+      adoptInRoot((() => h('div', null,
         h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
         h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x))))) as unknown as () => HTMLElement, '#app1');
     });
@@ -366,7 +367,7 @@ describe('list adoption row-count check', () => {
     expect(clicks).toEqual(['r0', 'r1']);
   });
 
-  it("a failing mount() whose ref writes a shared signal leaves another island's new row its handler", () => {
+  it("a failing caller-owned adoption whose ref writes a shared signal leaves another island's new row its handler", () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><ul><!--f:l0--><li>r0</li><!--/f:l0--></ul></div>` +
       `<div id="app1" data-forma-ssr><div><div>x</div>${serverList(['a', 'b'])}</div></div>`;
@@ -375,7 +376,7 @@ describe('list adoption row-count check', () => {
     const clicks: string[] = [];
     activateIslands(emptyRegistry({ A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r)))) }));
     captureErrors(() => {
-      mount((() => h('div', null,
+      adoptInRoot((() => h('div', null,
         h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
         h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x))))) as unknown as () => HTMLElement, '#app1');
     });
@@ -480,7 +481,7 @@ describe('list adoption row-count check', () => {
     }
   });
 
-  it('onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, mount() and hydrateIsland(), and each keeps the server rows', () => {
+  it('onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows', () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="Short">${serverList(['a', 'b'])}</div>` +
       `<div id="app" data-forma-ssr>${serverList(['a', 'b'])}</div>` +
@@ -488,11 +489,11 @@ describe('list adoption row-count check', () => {
     installState();
     const before = document.body.innerHTML.replace(/ data-forma-status="[a-z]+"/, '');
     const short = () => h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)));
-    let unmount: (() => void) | undefined;
+    let dispose: (() => void) | undefined;
 
     const { received, logged } = captureErrors(() => {
       activateIslands(emptyRegistry({ Short: () => h('div', null, short()) }));
-      expect(() => { unmount = mount(short as unknown as () => HTMLElement, '#app'); }).not.toThrow();
+      expect(() => { dispose = adoptInRoot(short as unknown as () => HTMLElement, '#app'); }).not.toThrow();
       expect(() => hydrateIsland(short, document.getElementById('direct')!)).not.toThrow();
     });
 
@@ -501,7 +502,7 @@ describe('list adoption row-count check', () => {
     expect(document.body.innerHTML.replace(/ data-forma-status="[a-z]+"/, '')).toBe(before);
     expect(document.getElementById('app')!.hasAttribute('data-forma-ssr')).toBe(true);
     expect(document.getElementById('direct')!.hasAttribute('data-forma-ssr')).toBe(true);
-    expect(typeof unmount).toBe('function');
+    expect(typeof dispose).toBe('function');
   });
 });
 

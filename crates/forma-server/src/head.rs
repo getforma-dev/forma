@@ -32,6 +32,8 @@ use std::sync::Arc;
 /// listed file's integrity through its current manifest snapshot. If development
 /// renames a chunk out of that snapshot, rendering refuses with RENDER-104 until
 /// the application replaces its preload table; no unchecked tag is emitted.
+/// A static SSR route refuses a nonempty request table with RENDER-105 even
+/// when those files remain valid retained assets in the current manifest.
 ///
 /// Verified by: crates/forma-server/tests/internal_renderer/typed_homes.rs > "try_render_writes_the_routes_manifest_modulepreload_links_nonced"
 #[derive(Debug, Clone)]

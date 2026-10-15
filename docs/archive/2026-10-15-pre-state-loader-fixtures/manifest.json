@@ -1,0 +1,72 @@
+[
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/hash.ir",
+    "bytes": 159,
+    "sha256": "563b4c309f6eea5cfb52102caf483d151b70c88cccc15775946532549493da68"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/magic.ir",
+    "bytes": 159,
+    "sha256": "aa255065467a38a52bcec48e4e1d4021e484956080168f95ff0e2a76329098d1"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/manifest.json",
+    "bytes": 2554,
+    "sha256": "a0b056da1f67625ed8da247aec38c30e7de4ebe1b6dbe74cc2934d0615a75831"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/opcode.ir",
+    "bytes": 159,
+    "sha256": "f85142714a4bc9cbf1dbe48b6c40ad3d48dc4ab0dead402421f5644d8529a1fa"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/page.0f0f.ir",
+    "bytes": 159,
+    "sha256": "343ce6ae4f265a451c2b1c34e556e147b645c6c154228f99dcdb1766ef619af3"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/section.ir",
+    "bytes": 159,
+    "sha256": "ae49615949646bd67a7efa652dbd5172112651adac39e27ec5eeed0279edf3f4"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/flipped/version.ir",
+    "bytes": 159,
+    "sha256": "050d0cdbd0e0fc4be2c20d4ac13642cfbe1957b96fcabc871279c7cf6032f16e"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/good/manifest.json",
+    "bytes": 807,
+    "sha256": "a173e417f0b777758e1775af2c429b7230ec68c8212523906c79f0ff198bdc0c"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/good/page.0f0f.ir",
+    "bytes": 159,
+    "sha256": "343ce6ae4f265a451c2b1c34e556e147b645c6c154228f99dcdb1766ef619af3"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/truncated/header.ir",
+    "bytes": 10,
+    "sha256": "690cdb21cbb83ea461c0749f7fe26a916bd1d5e5f4dc8beadf105c66df16dcdf"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/truncated/manifest.json",
+    "bytes": 1501,
+    "sha256": "65f90e7616f7f49d8509ed0aa5ff2dd03a1c54da63f1e155d8ada53bbb31c701"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/truncated/page.0f0f.ir",
+    "bytes": 159,
+    "sha256": "343ce6ae4f265a451c2b1c34e556e147b645c6c154228f99dcdb1766ef619af3"
+  },
+  {
+    "path": "crates/forma-server/tests/fixtures/modules/truncated/tail.ir",
+    "bytes": 158,
+    "sha256": "9f54bf32a580f61428f4d7edbe2da96f9ff5a4992ecf38ffc0cb6becc9e5733c"
+  },
+  {
+    "path": "crates/forma-server/tests/strict_loader.rs",
+    "bytes": 17090,
+    "sha256": "bbfcd249ea8e24e17690ad896b4c33e7f16c1e8b878d6e28a1dbbc70c65f3749"
+  }
+]

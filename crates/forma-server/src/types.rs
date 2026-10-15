@@ -161,7 +161,8 @@ pub enum RouteMode {
 pub struct RouteAssets {
     /// Explicit browser or server rendering, independent of file availability.
     pub mode: RouteMode,
-    /// JS modules for this route, in load order.
+    /// JS modules for this route, in load order. An empty list on an SSR route
+    /// declares static output: no island definitions or module preloads.
     pub js: Vec<String>,
     /// Stylesheets for this route.
     pub css: Vec<String>,
@@ -177,6 +178,13 @@ pub struct RouteAssets {
     /// Required for SSR, absent for an intentional browser route.
     #[serde(default)]
     pub ir: Option<String>,
+}
+
+impl RouteAssets {
+    /// A native route whose accepted product publishes no browser entry.
+    pub(crate) fn is_static_ssr(&self) -> bool {
+        self.mode == RouteMode::Ssr && self.js.is_empty()
+    }
 }
 
 impl<'de> Deserialize<'de> for AssetManifest {
@@ -311,6 +319,9 @@ impl AssetManifest {
                 (RouteMode::Ssr,Some(file)) if file.ends_with(".ir")=>{},
                 (RouteMode::Browser,None)=>{},
                 _=>return Err(format!("MANIFEST-103 route {pattern}: ssr requires an .ir module; browser must not declare one")),
+            }
+            if route.is_static_ssr() && !route.modulepreload.is_empty() {
+                return Err(format!("MANIFEST-103 route {pattern}: static SSR must not declare module preloads without a JavaScript entry"));
             }
             for file in route
                 .js

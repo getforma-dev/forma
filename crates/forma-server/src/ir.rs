@@ -17,6 +17,7 @@ use crate::{AssetManifest, RouteMode};
 /// | LOAD-101 | The manifest declares a module that is not embedded |
 /// | LOAD-102 | Bad signature or legacy FMIR module requiring a rebuild |
 /// | LOAD-103 | A corrupt or truncated module: sections, tables, opcodes, names |
+/// | LOAD-109 | Declared islands require a JavaScript entry on their SSR route |
 ///
 /// FMIR v3 checks length and CRC before parsing sections (`LOAD-104`). Missing
 /// or unknown required sections use `LOAD-105`/`LOAD-106`; limits `LOAD-107`,
@@ -33,7 +34,7 @@ pub struct IrLoadError {
 }
 
 impl IrLoadError {
-    /// The failure's code (`LOAD-101` to `LOAD-108`), read from the start of
+    /// The failure's code (`LOAD-101` to `LOAD-109`), read from the start of
     /// `reason`; `None` for an error built by hand without one.
     pub fn code(&self) -> Option<&str> {
         let code = self.reason.split(' ').next()?;
@@ -71,6 +72,8 @@ enum Refusal {
     NotEmbedded,
     /// The parser refused it.
     Parse(forma_ir::IrError),
+    /// The manifest declares no browser entry for a module containing islands.
+    StaticIslands,
 }
 
 impl Refusal {
@@ -81,6 +84,7 @@ impl Refusal {
                 "LOAD-101 declared in the manifest but not embedded".to_string()
             }
             Refusal::Parse(e) => format!("{} {e}", parse_failure_code(e)),
+            Refusal::StaticIslands => "LOAD-109 declared islands require a JavaScript entry; rebuild the static route and module together".into(),
         };
         IrLoadError {
             route: route.to_string(),
@@ -95,6 +99,16 @@ impl Refusal {
 fn check_module(bytes: Option<&[u8]>) -> Result<IrModule, Refusal> {
     let bytes = bytes.ok_or(Refusal::NotEmbedded)?;
     IrModule::parse(bytes).map_err(Refusal::Parse)
+}
+
+/// This route/module contract is checked at startup and on every candidate
+/// reload, including a changed manifest pointing at unchanged module bytes.
+fn check_route_module(module: IrModule, static_ssr: bool) -> Result<IrModule, Refusal> {
+    if static_ssr && !module.islands.is_empty() {
+        Err(Refusal::StaticIslands)
+    } else {
+        Ok(module)
+    }
 }
 
 /// One route's module as loaded, with the file and bytes it came from (which
@@ -144,7 +158,9 @@ fn load_from(
         };
 
         let bytes = read(ir_filename);
-        match check_module(bytes.as_deref()) {
+        match check_module(bytes.as_deref())
+            .and_then(|module| check_route_module(module, route_assets.is_static_ssr()))
+        {
             Ok(module) => {
                 tracing::info!(
                     route = %route_pattern,
@@ -317,7 +333,7 @@ impl Modules {
 /// The development reload (debug builds only).
 #[cfg(debug_assertions)]
 mod dev {
-    use super::{check_module, Loaded, Read};
+    use super::{check_module, check_route_module, Loaded, Read};
     use crate::{AssetManifest, RouteMode};
     use forma_ir::parser::IrModule;
     use std::borrow::Cow;
@@ -345,8 +361,9 @@ mod dev {
         manifest: Option<Arc<AssetManifest>>,
         /// The module served, with the file and bytes it was parsed from.
         current: Option<(String, Cow<'static, [u8]>, Arc<IrModule>)>,
-        /// The file and bytes last refused, so a broken write is logged once.
-        refused: Option<(String, Option<Vec<u8>>)>,
+        /// File, bytes and route policy last refused. Changing the JavaScript
+        /// policy retries the same module bytes instead of caching the refusal.
+        refused: Option<(String, Option<Vec<u8>>, bool)>,
     }
 
     fn topology(manifest: &AssetManifest) -> HashMap<String, RouteMode> {
@@ -427,12 +444,18 @@ mod dev {
                 return self.current(route);
             };
             let bytes = read(&file);
+            let static_ssr = self
+                .accepted_manifest
+                .route(route)
+                .is_some_and(crate::RouteAssets::is_static_ssr);
             let page = self.pages.entry(route.to_string()).or_default();
             let unchanged = page
                 .current
                 .as_ref()
-                .is_some_and(|(loaded_from, loaded, _)| {
-                    *loaded_from == file && Some(loaded) == bytes.as_ref()
+                .is_some_and(|(loaded_from, loaded, module)| {
+                    *loaded_from == file
+                        && Some(loaded) == bytes.as_ref()
+                        && (!static_ssr || module.islands.is_empty())
                 });
             if unchanged {
                 // The build wrote back what is served: a later refusal of
@@ -441,12 +464,18 @@ mod dev {
                 page.manifest = Some(Arc::clone(&self.accepted_manifest));
                 return page.current.as_ref().map(|(_, _, m)| Arc::clone(m));
             }
-            let attempt = (file.clone(), bytes.as_deref().map(<[u8]>::to_vec));
+            let attempt = (
+                file.clone(),
+                bytes.as_deref().map(<[u8]>::to_vec),
+                static_ssr,
+            );
             if page.refused.as_ref() == Some(&attempt) {
                 // Refused and logged already; still the previous module.
                 return page.current.as_ref().map(|(_, _, m)| Arc::clone(m));
             }
-            match check_module(bytes.as_deref()) {
+            match check_module(bytes.as_deref())
+                .and_then(|module| check_route_module(module, static_ssr))
+            {
                 Ok(module) => {
                     tracing::info!(
                         route,
