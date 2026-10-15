@@ -13,6 +13,7 @@ import type { PropsSchema, SchemaType } from './fmir-payload';
 import type { ComponentFunction } from './export-resolver';
 import { PropsSchemaError, type DeclaredPageProps } from './props-schema';
 import { closedExpression, constantAssignable, schemaHint } from './closed-expression';
+import { refuseBooleanText } from './value-rules';
 
 type Path = readonly string[];
 export interface PropsScope {
@@ -30,9 +31,9 @@ export interface PropsScope {
   signalImports: Set<string>;
   unsupported: Map<string, t.Node>;
 }
-function invalid(scope: PropsScope, node: t.Node, message: string, code: 'BUILD-610' | 'BUILD-614' = 'BUILD-610'): never {
+function invalid(scope: PropsScope, node: t.Node, message: string): never {
   const at = originalPosition(scope.file, node.loc?.start ?? { line: 1, column: 0 });
-  throw new PropsSchemaError(scope.file, at.line, at.column, message, code);
+  throw new PropsSchemaError(scope.file, at.line, at.column, message);
 }
 function unwrap(node: t.Node, readGetter=true): t.Node {
   if (t.isTSAsExpression(node) || t.isTSTypeAssertion(node) || t.isTSNonNullExpression(node) || t.isParenthesizedExpression(node)) return unwrap(node.expression,readGetter);
@@ -331,8 +332,11 @@ export function emitPropText(node: t.Node, scope: PropsScope | undefined, ctx: I
   // The read's own refusals (an optional intermediate, an aggregate) come first.
   const slot = propSlot(word ?? node, scope, ctx, 'text');
   if (slot === undefined) return false;
-  if (path && scope && inner(propType(path, scope, node)).kind === 'boolean') {
-    invalid(scope, node, `declared boolean ${path.filter(part => !part.startsWith('\0')).join('.') || 'prop'} is a boolean in text: the browser writes nothing for it whatever its value, and the server would write "true" or "false"; write String(flag) for the word, or createShow or a ternary for content`, 'BUILD-614');
+  if (path && scope) {
+    const type = propType(path, scope, node);
+    if (inner(type).kind === 'boolean') {
+      refuseBooleanText(scope.file, node, `declared boolean ${path.filter(part => !part.startsWith('\0')).join('.') || 'prop'}`, type.kind === 'optional' ? 'ternary' : 'string');
+    }
   }
   ctx.emit(C.OP_DYN_TEXT); ctx.emitU16(slot); ctx.emitU16(ctx.nextMarker());
   return true;

@@ -1,6 +1,6 @@
 {
   "rule": 3,
-  "title": "Integers within plus or minus (2^53 - 1), refused beyond (FORMA-182, design 3 lines 86-92, design 4 rule 3, DR-9)",
+  "title": "Integers within plus or minus (2^53 - 1), refused beyond (FORMA-182; DR-9 rule 3, design 4 rule 3, design 3 lines 86-92)",
   "contract": "A Rust integer bound for a page (i8 to i64, u8 to u64, isize, usize) is compared in the integer domain before any conversion: inside -(2^53 - 1)..=(2^53 - 1) it is encoded exactly and written as its decimal digits; beyond, the render refuses it with RENDER-401 instead of letting it arrive rounded. A finite float keeps its own admission (RENDER-402, finite only): an integer-valued float past 2^53 is admitted and formatted by rule 2, because its origin carries no exactness claim. The client reads the envelope with JSON.parse, so an admitted integer is a safe integer there and String() spells the same digits.",
   "consumers": [
     "crates/forma-ir/tests/page_props.rs > integer_vectors_are_admitted_or_refused_in_the_integer_domain (encode_props on i64 and u64 origins, f64 origins)",

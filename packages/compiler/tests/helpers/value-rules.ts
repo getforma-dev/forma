@@ -15,7 +15,7 @@ import { renderDefaults, ZWSP } from './render';
 export const VECTOR_DIR = resolve(__dirname, '../../../../crates/forma-ir/tests/fixtures/parity');
 export const readVectors = <T>(name: string): T => JSON.parse(readFileSync(resolve(VECTOR_DIR, name), 'utf8')) as T;
 
-export interface TextVector { id: string; props?: string; setup?: string; child?: string; attribute?: string; value?: string; code: string | null; slot?: string; writes?: string }
+export interface TextVector { id: string; props?: string; setup?: string; child?: string; attribute?: string; value?: string; code: string | null; slot?: string; writes?: string; fix?: string }
 export interface ConditionVector { id: string; props?: string; setup?: string; condition?: string; child?: string; code: string | null; writes?: string; diagnostics?: string[] }
 
 const folders: string[] = [];
@@ -39,7 +39,7 @@ export function visibleText(binary: Uint8Array): string {
   return renderDefaults(binary, { stripMarkers: true }).replace(/<[^>]*>/g, '').split(ZWSP).join('');
 }
 
-const head = `import { h, createSignal, createShow } from '@getforma/core';\n`;
+const head = `import { h, createSignal, createShow, createList } from '@getforma/core';\n`;
 
 export function textPage(vector: TextVector): string {
   const body = vector.attribute !== undefined

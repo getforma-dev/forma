@@ -342,10 +342,11 @@ function kindEnv(walkCtx: WalkContext): KindEnvironment {
  * is a boolean (BUILD-614). A boolean literal is not refused: it writes nothing
  * on both sides.
  */
-function refuseBooleanTextKind(node: t.Node, walkCtx: WalkContext): void {
+function refuseBooleanTextKind(node: t.Node, walkCtx: WalkContext, evaluable: boolean): void {
   const value = t.isArrowFunctionExpression(node) || t.isFunctionExpression(node) ? getEffectiveBody(node) : node;
   if (value && t.isBooleanLiteral(value)) return;
-  if (valueKind(node, kindEnv(walkCtx)) === 'boolean') refuseBooleanText(walkCtx.sourceFile ?? '', node, `text ${describeNode(node)}`);
+  // String() of it builds only when the compiler can evaluate it.
+  if (valueKind(node, kindEnv(walkCtx)) === 'boolean') refuseBooleanText(walkCtx.sourceFile ?? '', node, `text ${describeNode(node)}`, evaluable ? 'string' : 'ternary');
 }
 
 /** JS truthiness of an evaluated value. */
@@ -481,6 +482,18 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
     if (typeof inner === 'boolean' && node.callee.name === 'String') return String(inner);
     if (typeof inner !== 'string' && typeof inner !== 'number') return undefined;
     return node.callee.name === 'String' ? String(inner) : Number(inner);
+  }
+
+  // Boolean(expr): JS truthiness, as `!!expr` (value rule 7 types it boolean).
+  if (
+    t.isCallExpression(node)
+    && t.isIdentifier(node.callee)
+    && node.callee.name === 'Boolean'
+    && node.arguments.length === 1
+    && t.isExpression(node.arguments[0]!)
+  ) {
+    const inner = evalNode(node.arguments[0] as t.Expression, env);
+    return inner === undefined ? undefined : isTruthy(inner);
   }
 
   // Unary negation: !expr or !!expr
@@ -1726,7 +1739,7 @@ function emitChild(
     // Rule 6: a value that can only be a boolean shows nothing in the browser
     // whatever it is (`!ready()`, `count() > 0`): BUILD-614. A mixed idiom
     // (`ready() && 'Go'`) folds to nothing below when its value is a boolean.
-    if (typeof folded === 'boolean') refuseBooleanTextKind(child, walkCtx);
+    if (typeof folded === 'boolean') refuseBooleanTextKind(child, walkCtx, true);
     // A folded null or boolean emits NOTHING, because that is what the client
     // does with one: `h()` drops `null`, `true` and `false` children outright
     // (packages/core/src/dom/element.ts). Rendering "true" server-side would put text on the page
@@ -1778,10 +1791,10 @@ function emitChild(
       slotId = binding.slotId;
       ctx.recordSlotRef(slotId);
     } else {
-      refuseBooleanTextKind(arrowOrFunc, walkCtx);
       // Computed scalar text must have a closed native value. Refuse unknown
       // runtime expressions instead of manufacturing an empty default.
       const evaluated = tryEvalExprDefault(arrowOrFunc, evalEnv(walkCtx));
+      refuseBooleanTextKind(arrowOrFunc, walkCtx, evaluated !== undefined);
       if (evaluated !== undefined && evaluated !== null) {
         checkLiteralSize(walkCtx, arrowOrFunc, String(evaluated), 'text value');
       }
@@ -1848,7 +1861,7 @@ function emitChild(
 
   // A module-level boolean const read as text (rule 6).
   if (t.isIdentifier(child) && typeof moduleLiteral(walkCtx.sourceFile, child.name) === 'boolean') {
-    refuseBooleanText(walkCtx.sourceFile ?? '', child, `module constant ${child.name}`);
+    refuseBooleanText(walkCtx.sourceFile ?? '', child, `module constant ${child.name}`, 'ternary');
   }
 
   // Rule 11: Anything else → ISLAND_START / ISLAND_END
@@ -1924,7 +1937,11 @@ function addShowSlot(
   if (closed && closedKind(closed.values) !== 'boolean') refuse();
   const closedSlotId = closed ? closedSlot(cond, ctx, closedEnv(walkCtx)) : undefined;
   if (closedSlotId !== undefined) return closedSlotId;
-  if (cond && valueKind(cond, kindEnv(walkCtx)) === 'other') refuse();
+  // A scalar signal getter passed itself (`createShow(open, …)`) is read as
+  // its call, as createShow calls it.
+  const read = cond && t.isIdentifier(cond) && lookupSignal(walkCtx.signalScope, cond.name)
+    ? t.callExpression(t.identifier(cond.name), []) : cond;
+  if (read && valueKind(read, kindEnv(walkCtx)) === 'other') refuse();
   const slotName = deriveShowSlotName(cond, walkCtx);
 
   // A condition also folds a module-level boolean const (`const SHOWN = true`),
@@ -1937,10 +1954,10 @@ function addShowSlot(
     return typeof literal === 'boolean' ? literal : undefined;
   } };
   let value: EvalValue | undefined;
-  if (cond && isFunctionExpr(cond)) {
-    value = tryEvalExprDefault(cond as t.ArrowFunctionExpression | t.FunctionExpression, env);
-  } else if (cond && t.isExpression(cond)) {
-    value = evalNode(cond, env);
+  if (read && isFunctionExpr(read)) {
+    value = tryEvalExprDefault(read as t.ArrowFunctionExpression | t.FunctionExpression, env);
+  } else if (read && t.isExpression(read)) {
+    value = evalNode(read, env);
   }
   if (value !== undefined && typeof value !== 'boolean') refuse();
 
@@ -2820,8 +2837,12 @@ function emitBranchContent(
     return;
   }
 
-  // Other call expression
-  if (t.isCallExpression(expr)) {
+  // Other call expression. A String()/Number() cast the evaluator folds is a
+  // value, not a component: it falls through to DYN_TEXT below, as emitChild
+  // folds it before its own call dispatch (value rule 6's `String(flag)`).
+  const cast = t.isCallExpression(expr) && t.isIdentifier(expr.callee)
+    && (expr.callee.name === 'String' || expr.callee.name === 'Number') && evalNode(expr, evalEnv(walkCtx)) !== undefined;
+  if (t.isCallExpression(expr) && !cast) {
     walkCallExpression(expr, hName, ctx, walkCtx);
     return;
   }
@@ -2846,7 +2867,7 @@ function emitBranchContent(
   }
   // Rule 6: a boolean-only value is BUILD-614; a mixed one at a boolean
   // default writes an empty range, as h() writes nothing for it.
-  if (typeof evaluated === 'boolean') refuseBooleanTextKind(expr, walkCtx);
+  if (typeof evaluated === 'boolean') refuseBooleanTextKind(expr, walkCtx, true);
   const slotId = ctx.addSlot(
     textSlotName(childIndex, walkCtx),
     TYPE_TEXT,

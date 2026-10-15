@@ -651,9 +651,13 @@ expression whose boolean result stands for nothing (`ready() && 'Go'`) is admitt
 folds, and through a getter the server writes an empty range when its default is the boolean,
 as the browser does. This refusal is mandatory without strict mode.
 
-**Fix.** Write the word with `String(flag)`: on a non-optional declared boolean it binds the
-text to the boolean slot (the walker writes the word `String()` gives), and on a boolean signal
-it folds to the same word. For content, use `createShow(() => flag(), …)` or a ternary.
+**Fix.** The message gives the form that builds for its source. Write the word with
+`String(flag)` on a non-optional declared boolean (it binds the text to the boolean slot, which
+the walker writes as the word `String()` gives), on a boolean signal, and on an expression the
+compiler evaluates (they fold to the same word). On an optional declared boolean (`String()`
+would print `undefined` when it is absent), a closed value or a module `const` (`String()` of
+those is not folded), write the word with a ternary, `() => (flag ? 'yes' : 'no')`. For
+content, use `createShow(() => flag(), …)` or a ternary.
 
 **In strict mode.** An error (and an error without strict mode).
 
@@ -671,10 +675,12 @@ boolean, and a page whose condition is a number or a string only imitates what t
 another type (an optional boolean is admitted: absent reads as false on both sides), a signal
 whose literal default is a number, a string or `null`, a closed value (an aggregate or list-row
 field, a module-level `const`) of another type, a literal, or an expression whose result is not
-always a boolean (`a() && count()`, `name() || 'x'`). A boolean signal, a negation, a comparison,
-`Boolean(x)`, `&&` and `||` of booleans, and a module-level boolean `const` (now folded, so the
-server renders the branch the browser takes) are admitted. A condition the compiler cannot type
-at all stays BUILD-302. This refusal is mandatory without strict mode.
+always a boolean (`a() && count()`, `name() || 'x'`). A signal getter passed itself
+(`createShow(count, …)`) is read as its call. A boolean signal, a negation, a comparison,
+`Boolean(x)`, `&&` and `||` of booleans, and a module-level boolean `const` are admitted, and
+`Boolean(x)` and the module `const` are folded, so the server renders the branch the browser
+takes. A condition the compiler cannot type at all stays BUILD-302. This refusal is mandatory
+without strict mode.
 
 **Fix.** Compare explicitly so the condition is a boolean: `() => count() > 0`,
 `() => name() !== ''`, `() => item() !== null`, or `!!x` when truthiness is what is meant.

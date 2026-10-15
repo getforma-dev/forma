@@ -132,10 +132,23 @@ function refuse(code: 'BUILD-614' | 'BUILD-615', file: string, node: t.Node, det
   throw new PropsSchemaError(file, at.line, at.column, detail, code);
 }
 
+/**
+ * How a BUILD-614 message tells the author to write the word, so the advice
+ * builds: `String(…)` where the compiler binds or folds it (a non-optional
+ * declared boolean, a signal, an expression it evaluates); a ternary where
+ * `String(…)` is itself refused (an optional declared boolean, whose absent
+ * value would print "undefined"; a closed value or a module const, which the
+ * compiler does not fold through `String()`).
+ */
+export type WordFix = 'string' | 'ternary';
+
 /** Rule 6: `what` reads a boolean into a text position. */
-export function refuseBooleanText(file: string, node: t.Node, what: string): never {
+export function refuseBooleanText(file: string, node: t.Node, what: string, fix: WordFix = 'string'): never {
+  const word = fix === 'string'
+    ? 'write String(…) of it for the word'
+    : "write the word with a ternary, `() => (flag ? 'yes' : 'no')` (String() of it does not build here)";
   refuse('BUILD-614', file, node,
-    `${what} is a boolean in text: the browser writes nothing for it whatever its value, and the server would write "true" or "false"; write String(flag) for the word, or createShow or a ternary for content`);
+    `${what} is a boolean in text: the browser writes nothing for it whatever its value, and the server would write "true" or "false"; ${word}, or use createShow for content`);
 }
 
 /** Rule 7: `what` is a condition that is not boolean-typed. */

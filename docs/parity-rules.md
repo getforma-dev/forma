@@ -309,10 +309,11 @@ writes the bare attribute.
 parent composes the empty string). TypeScript: `h()`'s `appendChild` skips
 `null` and `undefined` and a reactive child returning one clears its content;
 adoption's text expectation is empty and `prepareAttribute` expects the
-attribute absent; `class`/`className`, static and reactive, now goes through
-`classValue` in `packages/core/src/dom/element.ts` (`null`, `undefined` and
+attribute absent; `class`/`className`, static and reactive, now follows the
+presence table every other attribute writer uses (`null`, `undefined` and
 `false` remove the attribute, `true` is the bare attribute, anything else its
-string under rule 1), the presence table every other attribute writer uses.
+string under rule 1): the inner `write` of `handleClass` and the class branch
+of `applyStaticProp` in `packages/core/src/dom/element.ts`.
 
 **Vectors.** `crates/forma-ir/tests/fixtures/parity/null.json`: `children`
 (`null` alone, between, first, last, only `null`s, beside a number; `expected`
@@ -347,9 +348,14 @@ through a getter, as a child or as a `createShow` or ternary branch. Admitted:
 
 - `String(flag)`. On a non-optional declared boolean it binds `DYN_TEXT` to
   the boolean slot itself and the walker writes `true` or `false`, the word
-  `String()` gives; on a boolean signal it folds to the word. On an optional
-  declared boolean it stays `BUILD-610`: the browser would write `undefined`
-  where the server writes nothing.
+  `String()` gives; on a boolean signal, or on an expression the compiler
+  evaluates (`String(!ready())`, also as a ternary branch), it folds to the
+  word. On an optional declared boolean it stays `BUILD-610` (the browser
+  would write `undefined` where the server writes nothing), and on a closed
+  value or a module `const` it is not folded (`BUILD-610`); there a ternary
+  writes the word, `() => (flag ? 'yes' : 'no')`. Each `BUILD-614` message
+  gives the form that builds for its source, and every refused vector's `fix`
+  builds.
 - A boolean literal as a child or a branch: nothing on both sides.
 - A mixed expression whose boolean result stands for "nothing"
   (`ready() && 'Go'`). Eagerly it folds, to nothing at a boolean; through a
@@ -389,7 +395,8 @@ Core: `packages/core/src/dom/adoption.ts` > `text()` maps a boolean to the
 empty string, as it already did `null`.
 
 **Vectors.** `crates/forma-ir/tests/fixtures/parity/boolean-text.json`:
-`compiledText` (twenty-five page shapes, each refused with its code or built
+`compiledText` (twenty-seven page shapes, each refused with its code (and, for
+`BUILD-614`, a `fix` that builds) or built
 with no diagnostic and the visible text `writes` under its defaults),
 `nearMissText` (the word for `true` and `false`), `idiom` (`() => ready() &&
 'Go'` at each default) and `attribute` (the presence table). Consumers:
@@ -407,8 +414,15 @@ control shows the word the walker used to serve for the idiom at `false`
 refused). Mutation probes `el/static-class-true-word` and
 `adoption/boolean-text-word` are caught by the core suite.
 
-**Migration.** A page that reads a boolean as text no longer builds; the fix
-is `String(flag)` or a conditional. Two compiler tests read one
+**Migration.** Breaking: a page that reads a boolean as text no longer
+builds; the fix is `String(flag)` or a ternary, as the message says. Rendered
+output also changes with no source change: `() => ready() && 'Go'` at `false`
+no longer serves the word `false` (an empty range), a `true` ternary branch no
+longer serves `true` (nothing), and core's adoption writes nothing for a
+boolean text value where it wrote the word. A page server-rendered by an older
+compiler and adopted by this core refuses at that idiom
+(`FORMA_E_HYDRATE_VALUE`): compiler and core move together in 3.0.0. Two
+compiler tests read one
 (`tests/props-bindings.test.ts`, `tests/ssr-emission.test.ts`); they were
 migrated and their original sources archived in
 `docs/archive/2026-10-15-pre-value-rules/`, where
@@ -427,8 +441,10 @@ aggregate or list-row field, an aggregate itself, a module-level `const`) of
 another type, a non-boolean literal, or an expression whose result is not always
 a boolean (`a() && count()`, `name() || 'x'`). Admitted: a declared boolean
 (optional included: absent reads as `false` on both sides), a boolean signal, a
-closed boolean, a boolean literal, `!x` and `!!x`, a comparison, `Boolean(x)`,
-and `&&` or `||` of booleans. A module-level boolean `const` is now folded in a
+closed boolean, a boolean literal, `!x` and `!!x`, a comparison, `Boolean(x)`
+(now folded as `!!x` is), and `&&` or `||` of booleans. A scalar signal getter
+passed itself (`createShow(open, …)`) is read as its call, so a number getter
+is refused and a boolean one folds. A module-level boolean `const` is now folded in a
 condition, so the server renders the branch the browser takes (it used to be
 `BUILD-302`, the `else` branch whatever the value). A condition the compiler
 cannot type at all keeps `BUILD-302`: the server renders the `else` branch
@@ -454,7 +470,7 @@ conformance pair (`packages/compiler/tests/fixtures/conformance/BUILD-615/`:
 the walker selects by the boolean, `createShow` by the condition's value.
 
 **Vectors.** `crates/forma-ir/tests/fixtures/parity/conditions.json`:
-`compiledCondition` (twenty-eight shapes, each refused with its code or built as
+`compiledCondition` (thirty-one shapes, each refused with its code or built as
 a `SHOW_IF` on a `TYPE_BOOL` slot with exactly its `diagnostics` and, where
 given, the branch `writes` shows under the defaults) and `walker` (the branch a
 `Bool` slot selects). Consumers: `packages/compiler/tests/value-rule-7-conditions.test.ts`,
@@ -466,8 +482,12 @@ with element branches), `packages/core/src/dom/__tests__/value-rule-7-conditions
 a write and toggled), and `packages/core/e2e/value-rules.spec.ts` in the three
 engines (the same range parsed, adopted without a write, toggled and back).
 
-**Migration.** A page whose condition is a number, a string, `null` or an object
-no longer builds; the fix is an explicit comparison or `!!`. One compiler test
+**Migration.** Breaking: a page whose condition is a number, a string, `null`
+or an object no longer builds; the fix is an explicit comparison or `!!`. The
+common shapes are `createShow(() => count(), …)`, `createShow(count, …)`, a
+ternary on a `null`-default signal (`() => user() ? a : b`) and on a string
+(`() => name() ? …`), which become `count() > 0`, `user() !== null` and
+`name() !== ''`. One compiler test
 read a zero-number condition (`tests/ir-walk.test.ts` > "writes false when the
 condition evaluates falsy, including a zero number read through !!"); it reads
 `!!count()` now, and the original fragments are archived in

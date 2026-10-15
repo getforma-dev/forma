@@ -1,6 +1,6 @@
 {
   "rule": 4,
-  "title": "Dates as epoch milliseconds, no Intl on the server (FORMA-182, design 3 line 91, design 4 rule 4, DR-9)",
+  "title": "Dates as epoch milliseconds, no Intl on the server (FORMA-182; DR-9 rule 4, design 4 rule 4, design 3 line 91)",
   "contract": "A date travels as a signed integer count of milliseconds since the Unix epoch, truncated toward zero to whole milliseconds, within plus or minus 8.64e15 (the range ECMAScript's TimeClip accepts); beyond it the render refuses with RENDER-403. The server never formats a date as text: a declared Date in a text position, bare or through String(), is a build error, so no locale, time zone or ICU table on the server can reach the page. Formatting is the component's, in the browser, from the number.",
   "consumers": [
     "crates/forma-ir/tests/page_props.rs > date_vectors_are_epoch_milliseconds_truncated_toward_zero (encode_props on SystemTime origins)",

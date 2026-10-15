@@ -1,6 +1,6 @@
 {
   "rule": 5,
-  "title": "null writes nothing on every side (FORMA-182, design 4 rule 5, DR-9)",
+  "title": "null writes nothing on every side (FORMA-182; DR-9 rule 5, the second half of design 4 rule 5)",
   "contract": "null and undefined write nothing. As a text child they contribute no text: the walker holds an empty dynamic range with one U+200B so the browser creates a Text node, and its visible text is empty; h() appends nothing; strict adoption expects an empty string. As an attribute value the attribute is absent on both sides, and a later null removes it. Inside a textarea or title they contribute an empty string to the composed value. A later null written into a live text range clears it to empty text. The word 'null' is never written (v1's adoption wrote it; DR-9).",
   "consumers": [
     "crates/forma-ir/src/walker.rs > value_rule_vectors (DYN_TEXT and DYN_ATTR on a Null slot, static and dynamic textarea children)",

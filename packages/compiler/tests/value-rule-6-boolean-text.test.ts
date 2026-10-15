@@ -19,6 +19,14 @@ describe('rule 6 vectors: a boolean in text is a build error, String(flag) is th
     expect(() => emitDeclaredPage(textPage(vector))).toThrow(refusal(vector.code));
   });
 
+  it.each(booleans.compiledText.filter(vector => vector.fix !== undefined))('$id: the advice in its message is $fix, and that builds', vector => {
+    // String(…) where the compiler binds or folds it; a ternary where String(…)
+    // is itself refused (an optional declared boolean, a closed value, a module const).
+    const advice = vector.fix!.includes('String(') ? /write String\(…\) of it for the word/ : /write the word with a ternary/;
+    expect(() => emitDeclaredPage(textPage(vector))).toThrow(advice);
+    expect(emitDeclaredPage(textPage({ ...vector, child: vector.fix, code: null })).codes).toEqual([]);
+  });
+
   it.each(booleans.compiledText.filter(vector => vector.code === null))('$id builds without a diagnostic and writes what the browser writes', vector => {
     const { binary, codes } = emitDeclaredPage(textPage(vector));
     expect(codes).toEqual([]);

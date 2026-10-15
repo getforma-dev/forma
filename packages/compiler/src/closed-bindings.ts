@@ -76,7 +76,7 @@ export function closedSlot(node:t.Node|null|undefined,ctx:IrEmitContext,env:Clos
 /** A closed read in a text position: absent writes nothing (rule 5); a boolean is BUILD-614 (rule 6, docs/parity-rules.md). */
 export function emitClosedText(node:t.Node,ctx:IrEmitContext,env:ClosedEnvironment):boolean {
   const binding=closedBinding(node,ctx,env);if(!binding)return false;
-  if(binding.values.some(value=>typeof value==='boolean'))refuseBooleanText(env.file,node,'a closed boolean value');
+  if(binding.values.some(value=>typeof value==='boolean'))refuseBooleanText(env.file,node,'a closed boolean value','ternary');
   if(binding.values.every(value=>value===null))return true;
   const slot=closedSlot(node,ctx,env,'text')!;ctx.emit(C.OP_DYN_TEXT);ctx.emitU16(slot);ctx.emitU16(ctx.nextMarker());return true;
 }
