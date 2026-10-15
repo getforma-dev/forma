@@ -17,8 +17,8 @@
       "kind": "attribute-value",
       "path": "page > main:nth-child(1) > span:nth-child(3)[data-live]",
       "match": "^ → true$",
-      "ticket": "finding F2 (no ticket yet)",
-      "note": "A reactive true on a non-boolean attribute (data-live: () => live()): the walker writes it bare (DYN_ATTR over a bool slot), core's reactive generic path writes String(true), \"true\"; core's static path writes it bare. Adoption accepts the server's \"\" (P2 equal)."
+      "ticket": "FORMA-182: bool-slot attributes (F2)",
+      "note": "A reactive true on a non-boolean attribute (data-live: () => live()): the walker writes it bare (DYN_ATTR over a bool slot), core's reactive generic path writes String(true), \"true\"; core's static path writes it bare. Adoption accepts the server's \"\" (P2 equal). Accepted by the lead (L-57) as a real divergence: FORMA-182's follow-up writes HTML-boolean presence only for the HTML boolean attribute set, so data-* and aria-* match core; this entry fails the run as an unexpected pass when that lands."
     },
     {
       "module": "sub-component-scopes",
@@ -27,7 +27,7 @@
       "kind": "attribute-value",
       "path": "page > main:nth-child(1) > article:nth-child(3)[data-ready]",
       "match": "^ → true$",
-      "ticket": "finding F2 (no ticket yet)",
+      "ticket": "FORMA-182: bool-slot attributes (F2)",
       "note": "The same as jsx-page's data-live: 'data-ready': () => ready(), walker bare, core \"true\"."
     },
     {
