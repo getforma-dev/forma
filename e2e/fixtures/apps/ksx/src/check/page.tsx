@@ -4,7 +4,7 @@ import { FeedStatus, LiveEcho, type CheckProps } from './screen';
 export function CheckPage(props: CheckProps) {
   return (
     <main class="check">
-      <h1 id="check-title">Button check</h1>
+      <h1 id="check-title">Input monitor</h1>
       <FeedStatus
         sessionLine={props.session.line}
         feedHint={props.feedHint}

@@ -78,8 +78,8 @@ export function FeedStatus(props: {
       <p id="frames">Frames seen: <span id="frames-seen">{() => framesSeen()}</span></p>
       {createShow(() => hasLoss(), () => <p id="loss-line" role="status">{() => lossLine()}</p>)}
       {createShow(() => quiet(), () => <p id="quiet-line">Nothing pressed yet.</p>)}
-      {createShow(() => running(), () => <p id="running-line">Play is active.</p>)}
-      <button id="count-frame" type="button" onClick={() => { setFramesSeen(framesSeen() + 1); setQuiet(false); setFeedLine('Receiving frames.'); }}>
+      {createShow(() => running(), () => <p id="running-line">Running.</p>)}
+      <button id="count-frame" type="button" onClick={() => { setFramesSeen(framesSeen() + 1); setQuiet(false); setFeedLine('Frames arriving.'); }}>
         Count a frame
       </button>
     </section>

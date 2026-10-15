@@ -1,7 +1,7 @@
 //! The bench fixture application: the consumers' heaviest pages as synthetic data
 //! (design.md A4), for the measurements FORMA-191 takes and for the parity corpus. Every
 //! page is server markup in lists over a handler-generated dataset, plus a few small
-//! islands. The data is deterministic: the same request is the same bytes.
+//! islands. The data is deterministic: the same request is the same markup (the response's nonce aside).
 
 use std::sync::Arc;
 

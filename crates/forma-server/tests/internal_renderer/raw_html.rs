@@ -500,7 +500,10 @@ fn the_documented_body_prefix_form_compiles_on_the_msrv_and_renders() {
         .into_parts_unchecked()
         .html;
     assert!(
-        html.contains("<img src=\"/logo.svg\" alt=\"\"><div id=\"app\"></div>"),
+        html.contains(&format!(
+            "<img src=\"/logo.svg\" alt=\"\"><div id=\"app\" data-forma-build=\"{}\"></div>",
+            manifest.build
+        )),
         "{html}"
     );
 }

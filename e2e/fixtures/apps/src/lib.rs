@@ -136,7 +136,7 @@ pub async fn serve(router: Router) {
     }
 }
 
-/// The island's `fetch('/api/v1/instance')` target in the ledger fixture.
+/// The island's `fetch('/api/status')` target in the ledger fixture.
 pub async fn instance() -> impl IntoResponse {
     (
         [

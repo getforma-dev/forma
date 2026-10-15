@@ -51,11 +51,15 @@ const textOf = (page, selector) => page.locator(selector).first().textContent();
  *   path                   the URL path to open when it is not the manifest route (a route pattern with a parameter)
  *   hold                   [urlSubstring]           requests the island makes at activation: they stay pending
  *                                                   until adoption is judged, and their arrival proves activation
+ *   scriptBody             test only: answer the held scripts with this body, so no island can activate
  *   release                async (route) => void    how a held request is answered once released (default: continue)
- *   interact               async (page) => any      behaviour that must change the DOM (activation proof)
+ *   interact               async (page) => any      REQUIRED: behaviour that must change the DOM (activation proof)
  */
 export async function verifyIslandPage(browser, origin, route, manifest, options = {}) {
-  const { expected = {}, hold = [], interact, release: answer, timeout = 15_000, path = route } = options;
+  const { expected = {}, hold = [], interact, release: answer, timeout = 15_000, path = route, scriptBody } = options;
+  // Nothing else proves the island module ran: the hosts are in the server's HTML whether or not
+  // anything activated. A page without a behaviour that only a live island can satisfy is refused.
+  assert.equal(typeof interact, 'function', `${route}: verifyIslandPage needs an interact behaviour that proves activation`);
   const declared = manifest.routes[route];
   assert.equal(declared?.mode, 'ssr', `${route}: not a server-rendered route`);
   assert(declared.js.length >= 1, `${route}: no island script to hold`);
@@ -71,7 +75,7 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
     return { match, seen, arrived };
   });
   try {
-    for (const url of scripts) await page.route(url, async routed => { requestedScripts.add(url); await gate; await routed.continue(); });
+    for (const url of scripts) await page.route(url, async routed => { requestedScripts.add(url); await gate; if (scriptBody === undefined) await routed.continue(); else await routed.fulfill({ status: 200, contentType: 'text/javascript', body: scriptBody }); });
     for (const each of holds) {
       await page.route(url => url.pathname.includes(each.match), async routed => {
         each.arrived();
@@ -95,7 +99,6 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
       const blocks = document.querySelectorAll('script[data-island-state][type="application/json"]');
       out.blocks = blocks.length;
       out.state = blocks.length === 1 ? JSON.parse(blocks[0].textContent) : null;
-      out.statuses = [...document.querySelectorAll('[data-forma-island]')].map(h => h.getAttribute('data-forma-status'));
       const nodes = [...document.querySelectorAll('*')];
       const records = [];
       const observer = new MutationObserver(batch => records.push(...batch));
@@ -108,7 +111,8 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
     (expected.serverValues ?? []).forEach(({ selector, text }, index) => assert.equal(before.values[index], text, `${route}: ${selector} before activation`));
     if (expected.hosts) assert.deepEqual(before.hosts, expected.hosts, `${route}: island hosts in the served HTML`);
     assert.equal(before.blocks, 1, `${route}: exactly one inert state envelope`);
-    if (expected.state || expected.statePrefix) {
+    assert(expected.state || expected.statePrefix, `${route}: the page names neither a state nor a statePrefix to compare with the envelope; a missing oracle is a failure, not a skip`);
+    {
       const byComponent = {};
       const components = [...(await page.evaluate(() => [...document.querySelectorAll('[data-forma-island]')].map(h => [h.getAttribute('data-forma-component'), Number(h.getAttribute('data-forma-state'))])))];
       for (const [component, occurrence] of components) (byComponent[component] ??= []).push(before.state.i[occurrence].p);
@@ -158,6 +162,6 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
     const violations = await page.evaluate(() => globalThis.__fixtureViolations);
     assert.deepEqual(violations, [], `${route}: CSP violation`);
     assert.deepEqual(observed.errors, [], `${route}: browser error`);
-    return { route, served, hosts: before.hosts, nodes: before.nodes, statusesBefore: before.statuses, mutations: adoption.mutations.length, interacted };
+    return { route, served, hosts: before.hosts, nodes: before.nodes, mutations: adoption.mutations.length, interacted };
   } finally { open(); openRequests(); await context.close(); }
 }
