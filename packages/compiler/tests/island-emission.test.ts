@@ -56,7 +56,7 @@ describe('declared island writer integration',()=>{
     expect(result.islands[0]!.contract?.mode).toBe('browserOnly');
   });
   it('emits the typed roundtrip contract for independent native-to-browser state controls',()=>{
-    const fields='label:string;value:number;date:Date;maybe?:string;list:(number|null)[];nested:{active:boolean}';
+    const fields="label:string;value:number;date:Date;mode:'a'|'b';maybe?:string;list:(number|null)[];nested:{active:boolean}";
     emit('roundtrip',`import {Badge} from "./island";export function Page(p:{${fields}}){return h("main",null,Badge(p));}`,
       `export function Badge(p:{${fields}}){return h("p",null,p.label,p.value);}`);
   });
