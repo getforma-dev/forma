@@ -386,32 +386,6 @@ describe('the runtime file map', () => {
   });
 });
 
-describe('documented known gaps', () => {
-  // A gap stated in prose and nowhere else quietly stops being true (or stays
-  // true long after someone believes they fixed it). These pin the two gaps
-  // SECURITY.md and CSP.md admit to, so both move together with the code.
-
-  it('the streaming swap scripts really do lack a nonce, as the caveat says', async () => {
-    const { getSwapScript, getSwapTag } = await import('../ssr/client-script.js');
-    expect(getSwapScript()).toMatch(/^<script>/);
-    expect(getSwapScript()).not.toContain('nonce');
-    expect(getSwapTag('forma-s:0', '<p>hi</p>')).toMatch(/^<script>/);
-    expect(getSwapTag('forma-s:0', '<p>hi</p>')).not.toContain('nonce');
-    // Neither function accepts one, which is why this is a gap and not a bug
-    // in the caller.
-    expect(getSwapScript.length).toBe(0);
-    expect(getSwapTag.length).toBe(2);
-    for (const doc of [CSP, SECURITY]) expect(doc).toContain('nonce');
-  });
-
-  it('a swap payload still cannot close the script block', async () => {
-    const { getSwapTag } = await import('../ssr/client-script.js');
-    const tag = getSwapTag('forma-s:0', '</script><img src=x onerror=alert(1)>');
-    expect(tag).not.toContain('</script><img');
-    expect(tag.match(/<\/script>/g)).toHaveLength(1);
-  });
-});
-
 describe('coverage figures', () => {
   it('the island coverage figure matches the island test files', () => {
     const dir = resolve(ROOT, 'src/dom/__tests__');

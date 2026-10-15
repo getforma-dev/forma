@@ -184,7 +184,7 @@ The citation rule above says a claim must name its proof. This section says what
 makes something a proof.
 
 A 2026-08 audit mutation-probed this suite one surgical break at a time, against
-the 93-probe corpus now committed at `probes/corpus.json`. It detected **64%**
+the original 93-probe corpus (its remaining paths are in `probes/corpus.json`). It detected **64%**
 of those defects overall, **72%** on security-relevant code and **33%** on the
 SSR renderer — the one component whose output goes straight into a browser. Two
 whole files named for security controls passed with the control deleted from
@@ -202,7 +202,7 @@ same corpus reports today.
    empty branch.
 
 2. **When N paths share a guarantee, the assertion lives in ONE shared table.**
-   This repo has six attribute sinks — SSR `renderToString`, `h()` static,
+   This repo has five attribute sinks — `h()` static,
    `h()` reactive, hydration adoption, the `data-bind:` binder, and
    `$el.setAttribute()` in the expression grammar. Historically each guarantee
    was asserted on exactly one of them, and that single habit produced 7 of the

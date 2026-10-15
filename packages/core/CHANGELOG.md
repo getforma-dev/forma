@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Removed — FORMA-110
+
+- Removed `@getforma/core/server`, `@getforma/core/ssr` and `@getforma/core/wasm`, their implementations, and their development warnings. Use authenticated Rust routes, forma-server's native walker and browser `h()` respectively. These subpaths no longer resolve in any export condition or TypeScript resolver.
+- Preserved the 2.x guides in `docs/archive/2026-10-15-legacy-apis/`; the live API and security guides describe the remaining browser runtime. Tierless `reconcile()` and raw-string retirement remain separate work (FORMA-108).
+
+
 - FORMA-185 stages the shared development version at `3.0.0-dev` for the FMIR
   compiler/reader contract. This is not a publication: CDN examples and support
   history still name the latest shipped core release. The documentation gate

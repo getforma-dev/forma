@@ -6,8 +6,7 @@
 # replaced, in one place:
 #
 #   Rust    fmt, clippy over every target and feature, the workspace's tests
-#           and docs, the wasm32 build of forma-ir and the wasm exports' doc
-#           tests (forma's CI `test` job)
+#           and docs (forma's CI `test` job)
 #   npm     the four packages built in dependency order and their unit suites
 #           (formajs, forma-tools and create-forma-app's `test` jobs); core's
 #           type check, size gate, packaging lint and probe-anchor check
@@ -21,7 +20,7 @@
 #           formajs and forma) and core's own Playwright suite, all in Chromium
 #
 # Needs: Node 20+ with npm, a stable Rust toolchain with rustfmt, clippy and
-# the wasm32-unknown-unknown target, and Playwright's Chromium
+# Playwright's Chromium
 # (`npx playwright install chromium` once; CI installs it before this runs).
 # Not here: the 32-bit, release-profile and MSRV builds, cargo-deny, the
 # Windows legs, the release-workflow lint and the scaffold gate, which are
@@ -51,10 +50,6 @@ step "cargo test --locked --workspace"
 cargo test --locked --workspace
 step "cargo doc --locked --workspace --no-deps"
 cargo doc --locked --workspace --no-deps
-step "forma-ir builds for wasm32 with the wasm feature"
-cargo build --locked --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
-step "the wasm exports' deprecation reaches a caller"
-cargo test --locked -p forma-ir --doc --features wasm
 
 step "npm run build (compiler, build, core, create-app)"
 npm run build

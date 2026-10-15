@@ -3,8 +3,7 @@
 //! grow it with every distinct URL.
 //!
 //! Its own test binary: the bound is per process.
-// `config_script` and `AssetManifest::wasm` are fields every 0.2.x literal
-// names.
+// `config_script` is a field each remaining legacy page literal names.
 #![allow(deprecated)]
 
 use forma_server::{
@@ -56,7 +55,6 @@ fn the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once() {
         build_hash: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
-        wasm: None,
     };
     let ctx = RenderCtx::new().with_policy(
         PolicyExtensions::new().relax_trusted_types("migrating; owner app; until 2027-01-31"),

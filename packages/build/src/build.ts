@@ -3,7 +3,7 @@
  *
  * Parameterized build pipeline extracted from the GateWASM admin build.ts.
  * Handles: esbuild bundling, CSS generation, font copying, SSR IR emission,
- * island registry generation, WASM builds, the preview frame's runtime
+ * island registry generation, the preview frame's runtime
  * (previewFrame), content hashing, compression, manifest generation, service
  * worker generation, and budget warnings.
  */
@@ -31,13 +31,12 @@ import { APP_NAME, appCacheName, serviceWorkerSource } from './service-worker.js
 import { splitGraph, type SplitGraph } from './split-graph.js';
 import { createStagingDirectory, replaceDirectory, writeFileAtomic } from './output.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
+import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
   DiagnosticsCollector,
   compilerMissing,
   isInsideOutputDir,
   resolveDiagnosticOptions,
-  wasmKeyDiagnostic,
-  wasmPackDiagnostic,
   workerWithoutAppDiagnostic,
   strictFailure,
   writeDiagnosticsJson,
@@ -137,110 +136,6 @@ function copyFonts(config: BuildConfig): void {
       cpSync(join(config.fontDir, fontFile), join(config.outputDir, fontFile));
     }
   }
-}
-
-// ---------------------------------------------------------------------------
-// Deprecations: the WASM walker (FORMA-131; DR-23)
-// ---------------------------------------------------------------------------
-
-/**
- * BUILD-803 (deprecated in 0.3.1): the config sets `wasm`. The key goes in
- * 3.0.0 with the WASM walker: forma-ir's `wasm` feature and
- * `@getforma/core/wasm` are deprecated in the same release. Said once per
- * `build()` call, production and watch alike, on the console and in
- * `BuildResult.warnings`, as BUILD-802 is.
- *
- * Verified by: packages/build/tests/wasm-deprecation.test.ts > "a config that sets wasm warns BUILD-803 once per build, naming 3.0.0"
- */
-function wasmKey(config: BuildConfig): string | undefined {
-  if (config.wasm === undefined) return undefined;
-  return (
-    "BUILD-803 the wasm key is deprecated and is removed in 3.0.0 with the WASM walker (forma-ir's " +
-    '`wasm` feature and @getforma/core/wasm). Remove it from the config: islands re-render in the ' +
-    'browser with h(), and forma-server renders pages.'
-  );
-}
-
-/**
- * BUILD-804 (deprecated in 0.3.1): the wasm-pack step ran, in a production
- * build whose config sets `wasm` with `wasm-pack` on `PATH`. Said when the
- * step starts, on the console, and in that build's `BuildResult.warnings`.
- *
- * Verified by: packages/build/tests/wasm-deprecation.test.ts > "the wasm-pack step warns BUILD-804 when it runs, and still ships the walker"
- */
-const WASM_PACK_DEPRECATION =
-  'BUILD-804 the wasm-pack step is deprecated and is removed in 3.0.0: forma_ir.js, ' +
-  "forma_ir_bg.wasm and the manifest's wasm entry go with the WASM walker.";
-
-// ---------------------------------------------------------------------------
-// WASM Build
-// ---------------------------------------------------------------------------
-
-/**
- * Spawn a developer tool that may be installed either as a native executable
- * or as an npm `.cmd`/`.ps1` shim.
- *
- * `execFileSync` calls CreateProcess, which can only run a real PE image — a
- * `.cmd` shim (which is what `npm i -g` writes on Windows for wasm-pack, npx,
- * tsc and friends) fails with ENOENT/EINVAL. Windows therefore goes through a
- * shell, where arguments are NOT escaped for us, so each one is quoted; `"`
- * cannot appear in a Windows path, which makes that quoting sufficient. POSIX
- * keeps the no-shell path, where a path with spaces is safe as-is.
- * Verified by: packages/build/tests/build.test.ts > "runs a .cmd-shimmed wasm-pack (the Windows npm install shape)"
- */
-function spawnTool(
-  command: string,
-  args: string[],
-  options: { stdio: 'inherit' | 'pipe' },
-): void {
-  const windows = process.platform === 'win32';
-  execFileSync(
-    windows ? `"${command}"` : command,
-    windows ? args.map((a) => `"${a}"`) : args,
-    { ...options, shell: windows },
-  );
-}
-
-function buildWasm(
-  config: BuildConfig,
-): boolean {
-  if (!config.wasm) return false;
-
-  // Probe separately from the build so a COMPILE failure is never reported as
-  // "wasm-pack not found" — that message sent people looking for a missing
-  // tool while the real error was in their crate.
-  try {
-    spawnTool('wasm-pack', ['--version'], { stdio: 'pipe' });
-  } catch {
-    console.warn(
-      'Warning: wasm-pack not found — skipping WASM build. SSR pipeline works without it.',
-    );
-    return false;
-  }
-
-  console.warn(`Warning: ${WASM_PACK_DEPRECATION}`);
-  console.log('   Building WASM walker...');
-  spawnTool(
-    'wasm-pack',
-    ['build', '--target', 'web', '--release', config.wasm.crateDir, '--', '--features', 'wasm'],
-    { stdio: 'inherit' },
-  );
-
-  // Copy wasm outputs to outputDir
-  const wasmPkgDir = join(config.wasm.crateDir, 'pkg');
-  const wasmFile = 'forma_ir_bg.wasm';
-  const wasmLoader = 'forma_ir.js';
-
-  if (!existsSync(join(wasmPkgDir, wasmFile))) {
-    throw new Error(
-      `wasm-pack reported success but ${join(wasmPkgDir, wasmFile)} does not exist — check that the crate at ${config.wasm.crateDir} builds the forma-ir cdylib`,
-    );
-  }
-
-  cpSync(join(wasmPkgDir, wasmFile), join(config.outputDir, wasmFile));
-  cpSync(join(wasmPkgDir, wasmLoader), join(config.outputDir, wasmLoader));
-  console.log(`   WASM built: ${wasmFile}`);
-  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -534,7 +429,6 @@ function printBundleSummary(metafiles: esbuild.Metafile[], assets: Record<string
 function generateManifest(
   config: BuildConfig,
   assets: Record<string, string>,
-  wasmBuilt: boolean,
   staticDependencies: Record<string, string[]> = {},
 ): { manifest: AssetManifest; warnings: string[] } {
   const distDir = config.outputDir;
@@ -624,13 +518,6 @@ function generateManifest(
     routes,
   };
 
-  if (wasmBuilt && assets['forma_ir.js'] && assets['forma_ir_bg.wasm']) {
-    manifest.wasm = {
-      loader: assets['forma_ir.js'],
-      binary: assets['forma_ir_bg.wasm'],
-    };
-  }
-
   return { manifest, warnings };
 }
 
@@ -642,7 +529,6 @@ function generateServiceWorker(
   config: BuildConfig,
   assets: Record<string, string>,
   buildHash: string,
-  wasmBuilt: boolean,
 ): void {
   const distDir = config.outputDir;
   const onDemand = config.serviceWorker === 'on-demand';
@@ -662,12 +548,6 @@ function generateServiceWorker(
       .map(([, hashed]) => `/_assets/${hashed}`),
     ...fonts.map((f) => `/_assets/${f}`),
   ];
-
-  // Add WASM assets to precache if built
-  if (wasmBuilt && assets['forma_ir.js'] && assets['forma_ir_bg.wasm']) {
-    precacheUrls.push(`/_assets/${assets['forma_ir.js']}`);
-    precacheUrls.push(`/_assets/${assets['forma_ir_bg.wasm']}`);
-  }
 
   const immutableUrls = onDemand ? [...new Set(Object.values(assets))]
     .filter(file => !file.includes('..') && /^[A-Za-z0-9_.-]+\.[A-Za-z0-9_-]{8}\.(?:js|css|wasm)$/.test(file))
@@ -715,6 +595,7 @@ const WATCH_RESOLUTION: Pick<esbuild.BuildOptions, 'conditions' | 'define'> = {
  */
 function sharedOptions(config: BuildConfig): Partial<esbuild.BuildOptions> {
   return {
+    plugins: [serverDirectiveGuard()],
     bundle: true,
     format: 'esm',
     target: 'es2022',
@@ -813,6 +694,7 @@ async function watchServerRenderedPages(
       sourcemap: false,
       logLevel: 'silent',
       plugins: [
+        serverDirectiveGuard(),
         { name: 'forma-ir-clock', setup(builder) { builder.onStart(() => { started = performance.now(); }); } },
         // Under --strict a page with an error is not published: the
         // compiler's errors reach the publisher below as esbuild errors.
@@ -861,7 +743,7 @@ async function watchServerRenderedPages(
  * Run the Forma build pipeline.
  *
  * Orchestrates: clean, CSS generation, font copying, esbuild bundling
- * (with optional SSR IR emission), island registry generation, WASM build,
+ * (with optional SSR IR emission), island registry generation,
  * content hashing, compression, manifest generation, service worker
  * generation, and budget warnings.
  *
@@ -879,9 +761,10 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   validateConfig(userConfig);
   // `strict` from the config, else FORMA_STRICT (FORMA-119).
   const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig) };
+  await assertNoServerFunctions(config, sharedOptions(config));
   // What the config itself deprecates, each said once per build() call,
   // production and watch alike, on the console and in BuildResult.warnings.
-  const deprecations = [workerWithoutApp(config), wasmKey(config)].filter(
+  const deprecations = [workerWithoutApp(config)].filter(
     (line): line is string => line !== undefined,
   );
   for (const line of deprecations) console.warn(`Warning: ${line}`);
@@ -956,11 +839,9 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
     // of them; watch mode hands it to each page's plugin.
     const strict = config.strict === true;
     const collector = new DiagnosticsCollector(strict, config.entryPoints.map((entry) => basename(entry.outfile, '.js')));
-    // BUILD-802 and BUILD-803, which build() has already printed, join the report.
+    // BUILD-802, which build() has already printed, joins the report.
     const workerDeprecation = workerWithoutApp(config);
     if (workerDeprecation) collector.addBuildLevel(workerWithoutAppDiagnostic(workerDeprecation));
-    const wasmDeprecation = wasmKey(config);
-    if (wasmDeprecation) collector.addBuildLevel(wasmKeyDiagnostic(wasmDeprecation));
     const pluginShared: SsrPluginShared = {
       onDiagnostics: collector.onDiagnostics,
       ...(config.watch && strict ? { strict: true } : {}),
@@ -998,12 +879,12 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
       entryNames: config.watch ? '[name]' : '[name].[hash]',
       chunkNames: 'chunk.[hash]',
       assetNames: 'asset.[hash]',
-      plugins: config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
+      plugins: [serverDirectiveGuard(), ...(config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
         page: basename(entry.outfile, '.js'),
         outDir: distDir,
         entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
         ...pluginShared,
-      })) : [],
+      })) : [])],
     };
 
     // ── Build entries ─────────────────────────────────────────────────
@@ -1015,7 +896,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
       const irAssets: Record<string, string> = {};
       let lastManifest = '';
       const writeDevManifest = () => {
-        const { manifest, warnings } = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, false, graph?.staticDependencies);
+        const { manifest, warnings } = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies);
         manifest.build_hash = 'dev';
         const text = JSON.stringify(manifest, null, 2) + '\n';
         // Replaced by rename: the application's server reads this file while
@@ -1041,7 +922,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
         const ctx = await esbuild.context({
           ...splitOptions,
           // Not the SSR plugins: the pages' modules are watched above.
-          plugins: [{
+          plugins: [serverDirectiveGuard(), {
             name: 'forma-split-manifest',
             setup(builder) {
               builder.onEnd(result => {
@@ -1074,7 +955,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
       console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
 
       // Generate a dev service worker so /sw.js doesn't 404
-      generateServiceWorker(config, {}, 'dev', false);
+      generateServiceWorker(config, {}, 'dev');
 
       // The pages' first compilation; each rebuild replaces its page's own.
       const diagnostics = collector.all();
@@ -1129,11 +1010,6 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
       }),
     );
 
-    // ── WASM build ────────────────────────────────────────────────────
-    // Before the report, so BUILD-804 is in it when the step ran.
-    const wasmBuilt = buildWasm(config);
-    if (wasmBuilt) collector.addBuildLevel(wasmPackDiagnostic(WASM_PACK_DEPRECATION));
-
     // ── SSR diagnostics: the JSON report, then strict mode ────────────
     // Every page is compiled by now, so a strict failure names them all.
     const diagnostics = collector.all();
@@ -1159,7 +1035,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
     compressAssets(distDir, new Set(frameFile ? [frameFile] : []));
 
     // ── Manifest generation ───────────────────────────────────────────
-    const { manifest, warnings } = generateManifest(config, assets, wasmBuilt, graph?.staticDependencies);
+    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies);
 
     writeFileSync(
       join(distDir, 'manifest.json'),
@@ -1173,12 +1049,12 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
     const fetchedAssets = frameFile
       ? Object.fromEntries(Object.entries(assets).filter(([name]) => name !== FRAME_RUNTIME_ASSET))
       : assets;
-    generateServiceWorker(config, fetchedAssets, manifest.build_hash, wasmBuilt);
+    generateServiceWorker(config, fetchedAssets, manifest.build_hash);
 
     return {
       manifest,
       buildHash: manifest.build_hash,
-      warnings: wasmBuilt ? [...warnings, WASM_PACK_DEPRECATION] : warnings,
+      warnings,
       diagnostics,
     };
   } catch (err) {

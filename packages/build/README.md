@@ -3,9 +3,9 @@
 [![npm](https://img.shields.io/npm/v/@getforma/build)](https://www.npmjs.com/package/@getforma/build)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Production build pipeline for [FormaJS](https://github.com/getforma-dev/formajs) applications. Handles esbuild bundling, CSS generation, content hashing, Brotli/gzip compression, asset manifest generation, SSR IR emission, and WASM compilation — all from a single config.
+Production build pipeline for [FormaJS](https://github.com/getforma-dev/formajs) applications. Handles esbuild bundling, CSS generation, content hashing, Brotli/gzip compression, asset manifest generation, SSR IR emission — all from a single config.
 
-**This replaces writing your own build script.** If you're using Vite for development and need a production pipeline with content hashing and SSR, this is the tool.
+**This replaces writing your own build script.** It provides content hashing and optional native Rust SSR from one config.
 
 ## Install
 
@@ -179,7 +179,6 @@ The build then copies `dist/formajs-frame.global.js` from the
 | **Compress** | Brotli (level 11) + gzip (level 9) for `.js` and `.css` |
 | **Manifest** | Writes `manifest.json` mapping source filenames → hashed filenames |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
-| **WASM** | (Optional, deprecated: removed in 3.0.0) Runs `wasm-pack build` for the Rust IR walker. A config that sets `wasm` warns `BUILD-803` once per build, and the step warns `BUILD-804` when it runs |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode writes in place and replaces `manifest.json` and `sw.js` by rename, so a server reading them mid-rebuild never sees half a file |
 
@@ -216,7 +215,6 @@ const config: BuildConfig = {
   // strict: true,                   // Fail on every coded SSR diagnostic (or FORMA_STRICT=1); see below
   // diagnosticsJson: "ssr-diagnostics.json", // Also write them as JSON, outside outputDir
   previewFrame: false,                // true: copy core's frame runtime as forma-runtime.js (forma-server's PageResponse::frame)
-  wasm: { crateDir: "../crates/forma-ir" },  // Deprecated (removed in 3.0.0): build the WASM walker
   watch: false,                       // Rebuild on change; writes a dev manifest and, with ssr, each page's .ir
   budgetThreshold: 200_000,           // Warn at 200KB brotli per route
   formaAlias: "@getforma/core",       // What bare 'formajs' imports resolve to
@@ -238,8 +236,6 @@ dist/
 ├── dashboard.i9j0k1l2.js
 ├── home.m3n4o5p6.ir          # FMIR binary (if ssr: true)
 ├── forma-runtime.y5z6a7b8.js # Core's preview-frame runtime, unchanged and uncompressed (if previewFrame: true)
-├── forma_ir.q7r8s9t0.js      # WASM loader (if the deprecated wasm key is set)
-├── forma_ir_bg.u1v2w3x4.wasm # WASM binary
 ├── inter.woff2                # Copied fonts (never hashed)
 ├── sw.js                      # Service worker (generated last, never hashed)
 └── manifest.json              # Asset manifest (generated last, never compressed)
@@ -306,6 +302,17 @@ The server must read the new module. `forma-server` loads the `.ir` modules
 when the application starts (`load_ir_modules`), so restart it on a change
 under `outputDir`, for example with `cargo watch`, until it rereads them in
 development builds.
+
+### Removed server functions
+
+A `"use server"` directive at module or function scope, including in an imported
+module, fails every build with `BUILD-808`, regardless of `strict`. Move server
+work into an authenticated Rust route and call it with `fetch`. The initial
+source check runs before output is replaced; watch rebuilds run the same guard.
+The `wasm` configuration key and walker packaging step were removed in 3.0.0.
+Islands re-render with core's `h()`; server rendering uses the native Rust walker.
+
+Verified by `tests/server-functions-removed.test.ts` (directive and near-miss fixtures).
 
 ### SSR diagnostics and strict mode
 
@@ -639,14 +646,14 @@ What it cannot see, and review must:
 | Package | Description |
 |---|---|
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | Vite plugin — h() optimization, server transforms, IR emission |
+| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR compiler and esbuild SSR plugin |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | **This package** — bundling, hashing, compression, manifest |
 
 ### Backend (Rust)
 
 | Package | Description |
 |---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser, walker, WASM exports |
+| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser and native HTML walker |
 | [forma-server](https://crates.io/crates/forma-server) | Axum middleware — SSR page rendering, asset serving, CSP headers |
 
 ### Full Framework

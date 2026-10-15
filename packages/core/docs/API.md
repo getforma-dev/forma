@@ -449,8 +449,7 @@ const chart = svg(() => h("svg", null, h("foreignObject", { width: 100, height: 
 
 A compiler pass that builds compiled JSX this way is a follow-up (FORMA-171).
 The shared namespace vectors (`src/__tests__/vectors/namespaces.json`) are run
-through `h()` building each child with its parent known, through
-`renderToString`, and through each browser's parser and adoption in Chromium,
+through `h()` building each child with its parent known, and through each browser's parser and adoption in Chromium,
 Firefox and WebKit.
 
 Verified by `src/dom/__tests__/namespace-resolution.test.ts` > "a title or an a passed to h() before its svg parent exists stays HTML, and is SVG inside svg()"
@@ -517,15 +516,15 @@ that do; **none of them sanitizes**, and all are first-party-content-only sinks:
 | `setHTMLUnsafe(el, html)` | `@getforma/core` | assigns `innerHTML` on the element |
 | `template(html)`, `templateMany(html)` | `@getforma/core` | parses the markup into a cached `<template>`, which compiled output clones |
 | `reconcile(container, html)` | `@getforma/core/runtime` | parses an HTML string into a `<template>` and diffs it into the live page |
-| `srcdoc` attribute | `h()`, adoption and SSR | the browser parses the *attribute value* as a document, so escaping does not neutralize it; anything but `trustedHtml()` logs a coded warning in development |
+| `srcdoc` attribute | `h()` and adoption | the browser parses the *attribute value* as a document, so escaping does not neutralize it; anything but `trustedHtml()` logs a coded warning in development |
 | `data-bind:srcdoc`, `{item…}` in a list row's `srcdoc` | the HTML runtime | writes an expression's value, or a row's data, as the iframe's document: a string no `trustedHtml()` can reach, refused in 3.0.0 ([HTML-RUNTIME.md](HTML-RUNTIME.md)) |
 
 Everything else is guarded: URL-bearing attributes (`href`, `src`, `action`,
 `formaction`, `xlink:href`, `poster`, `background`, `data`) drop `javascript:`,
 `vbscript:` and `data:text/html` values, and `on*` attribute names are dropped
-in any casing, on both the client and SSR paths.
+in any casing on the client.
 
-Verified by `src/dom/__tests__/element-url-safety.test.ts` > "drops exactly what the SSR renderer drops, so hydration cannot re-add it"
+Verified by `src/dom/__tests__/element-url-safety.test.ts` > "drops dangerous URLs from client-created elements"
 Verified by `src/dom/__tests__/element-url-safety.test.ts` > "drops ONCLICK-cased string props instead of writing an inline handler"
 Verified by `src/dom/__tests__/element-url-safety.test.ts` > "emits srcdoc but warns that escaping does not neutralize it"
 

@@ -59,7 +59,7 @@ asserted on its sibling.
 
 **Cost:** 7 of the 25 real code defects found this week, including the only
 non-documentation Critical. `formajs` has four renderers that must uphold the
-same guarantees — SSR `src/ssr/render.ts`, client `src/dom/element.ts`,
+same guarantees — client `src/dom/element.ts`,
 hydration adoption `src/dom/hydrate.ts`, and the HTML runtime's `data-*`
 binder — and URL-scheme blocking was asserted on exactly one of them, so
 `h('a', { href: 'javascript:alert(1)' })` emitted the attribute verbatim with a
@@ -310,7 +310,7 @@ not merge.
 1. Does every `toHaveBeenCalled*` / `toThrow` in this diff have an
    observable-outcome assertion after it?
 2. Does this guarantee exist on a sibling path (SSR / `h()` / hydrate /
-   `data-bind`; parser / walker / WASM)? If so, is the assertion in the shared
+   `data-bind`; parser / walker)? If so, is the assertion in the shared
    table rather than one path's file?
 3. Does the "we block X" test also assert that a benign sibling survives?
 4. Depth floors met — state machine ≥ 3 transitions, list ≥ 2 items *and* a

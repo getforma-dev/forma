@@ -22,7 +22,7 @@ TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML →
 | The compiler: TypeScript components to FMIR, `"use server"` transforms, the diagnostics catalogue | [`packages/compiler`](packages/compiler) | [`@getforma/compiler`](https://www.npmjs.com/package/@getforma/compiler) |
 | The build pipeline: bundling, hashing, compression, the asset manifest, the raw-markup lint | [`packages/build`](packages/build) | [`@getforma/build`](https://www.npmjs.com/package/@getforma/build) |
 | The scaffolder: `npx @getforma/create-app` | [`packages/create-app`](packages/create-app) | [`@getforma/create-app`](https://www.npmjs.com/package/@getforma/create-app) |
-| The FMIR format: parser, walker, WASM exports | [`crates/forma-ir`](crates/forma-ir) | [`forma-ir`](https://crates.io/crates/forma-ir) |
+| The FMIR format: parser and native HTML walker | [`crates/forma-ir`](crates/forma-ir) | [`forma-ir`](https://crates.io/crates/forma-ir) |
 | Derive macros for forma-ir (`#[derive(PageProps)]`, from 3.0.0; 0.0.0 is a placeholder) | [`crates/forma-ir-derive`](crates/forma-ir-derive) | [`forma-ir-derive`](https://crates.io/crates/forma-ir-derive) |
 | The Axum middleware: page rendering, asset serving, CSP, the service worker | [`crates/forma-server`](crates/forma-server) | [`forma-server`](https://crates.io/crates/forma-server) |
 
@@ -49,7 +49,7 @@ browser lanes that take a page from TypeScript source through the compiler and
 the Rust walker to a hydrated DOM in Chromium. CI runs the same command on
 every push and pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 It needs Node 20 or later, a stable Rust toolchain with `rustfmt`, `clippy` and
-the `wasm32-unknown-unknown` target, and Playwright's Chromium
+Playwright's Chromium
 (`npx playwright install chromium`, once).
 
 ## Layout

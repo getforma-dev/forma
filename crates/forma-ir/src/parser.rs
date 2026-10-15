@@ -49,7 +49,7 @@ impl StringTable {
         if count > max_entries {
             return Err(IrError::BufferTooShort {
                 // Saturating: `count` is u32-wide and `usize` is 32 bits on
-                // wasm32, a first-class target for this crate.
+                // 32-bit targets.
                 expected: 4usize.saturating_add(count.saturating_mul(2)),
                 actual: data.len(),
             });
@@ -725,8 +725,7 @@ fn build_id_index(ids: impl Iterator<Item = u16> + Clone) -> Vec<u32> {
 
 /// `base + len`, rejected if it overflows or leaves the enclosing region.
 ///
-/// Plain `+` on `usize` cannot wrap on 64-bit but can on wasm32, which this
-/// crate ships a build for.
+/// Plain `+` on `usize` can overflow on a 32-bit target.
 fn bounded(base: usize, len: usize, end: usize, op_start: usize) -> Result<usize, IrError> {
     base.checked_add(len)
         .filter(|e| *e <= end)
@@ -767,6 +766,15 @@ fn read_u32_at(ops: &[u8], pos: usize, end: usize) -> Result<u32, IrError> {
 // panicking says so at the line that built it. Never in a consumer's build.
 #[allow(clippy::panic, clippy::unwrap_used, clippy::expect_used)]
 pub mod test_helpers {
+    /// Internal fragment renderer for conformance fixtures; not a supported API.
+    #[doc(hidden)]
+    pub fn walk_island(
+        module: &crate::IrModule,
+        slots: &crate::SlotData,
+        island_id: u16,
+    ) -> Result<String, crate::IrError> {
+        crate::walker::walk_island(module, slots, island_id)
+    }
     use crate::format::{
         crc32, reader_version, HEADER_SIZE, SECTION_ENTRY_SIZE, SIGNATURE, TABLE_PREFIX_SIZE,
     };

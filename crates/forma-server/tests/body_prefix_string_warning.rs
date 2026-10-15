@@ -121,7 +121,6 @@ fn a_string_body_prefix_warns_once_per_process_in_debug_builds_and_a_raw_html_ne
             build_hash: "test".to_string(),
             assets: HashMap::new(),
             routes: HashMap::new(),
-            wasm: None,
         },
         module: module(),
         slots: SlotData::new(0),

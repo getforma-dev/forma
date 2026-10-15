@@ -8,7 +8,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "attribute-safety guards in isolation",
-      "name": "isEventHandlerAttr on a non-event name (×20000)",
+      "name": "isEventHandlerAttr on a non-event name (\u00d720000)",
       "ops": 20000,
       "sampleCount": 600,
       "runs": 5,
@@ -26,7 +26,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "attribute-safety guards in isolation",
-      "name": "isUrlAttr on a non-URL name (×20000)",
+      "name": "isUrlAttr on a non-URL name (\u00d720000)",
       "ops": 20000,
       "sampleCount": 600,
       "runs": 5,
@@ -44,7 +44,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "attribute-safety guards in isolation",
-      "name": "isDangerousUrl on a benign https URL (×20000)",
+      "name": "isDangerousUrl on a benign https URL (\u00d720000)",
       "ops": 20000,
       "sampleCount": 600,
       "runs": 5,
@@ -62,7 +62,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "attribute-safety guards in isolation",
-      "name": "isDangerousUrl on an obfuscated javascript: URL (×20000)",
+      "name": "isDangerousUrl on an obfuscated javascript: URL (\u00d720000)",
       "ops": 20000,
       "sampleCount": 600,
       "runs": 5,
@@ -80,7 +80,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "attribute-safety guards in isolation",
-      "name": "isUnsafeAttrWrite on <a href> with a benign URL (×20000)",
+      "name": "isUnsafeAttrWrite on <a href> with a benign URL (\u00d720000)",
       "ops": 20000,
       "sampleCount": 600,
       "runs": 5,
@@ -98,7 +98,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): reactive attribute updates",
-      "name": "3 reactive attrs incl. href: signal write → attr writes (×500)",
+      "name": "3 reactive attrs incl. href: signal write \u2192 attr writes (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -116,7 +116,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): reactive attribute updates",
-      "name": "3 reactive attrs, none URL-bearing (control): write (×500)",
+      "name": "3 reactive attrs, none URL-bearing (control): write (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -134,7 +134,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): reactive attribute updates",
-      "name": "href bound to an unchanging URL: write → cache hit (×500)",
+      "name": "href bound to an unchanging URL: write \u2192 cache hit (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -152,7 +152,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): realistic component subtree",
-      "name": "card subtree: 6 elements, 11 attrs, 1 href, 2 handlers (×200)",
+      "name": "card subtree: 6 elements, 11 attrs, 1 href, 2 handlers (\u00d7200)",
       "ops": 200,
       "sampleCount": 600,
       "runs": 5,
@@ -170,7 +170,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): static attribute writes",
-      "name": "h('div') with 4 static non-URL attrs (×500)",
+      "name": "h('div') with 4 static non-URL attrs (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -188,7 +188,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): static attribute writes",
-      "name": "document.createElement + 4 setAttribute, no library (×500)",
+      "name": "document.createElement + 4 setAttribute, no library (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -206,7 +206,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): static attribute writes",
-      "name": "h('div') with no props (×500)",
+      "name": "h('div') with no props (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -224,7 +224,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): URL-bearing static attribute writes",
-      "name": "h('a') with href + 3 static non-URL attrs (×500)",
+      "name": "h('a') with href + 3 static non-URL attrs (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -242,7 +242,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): URL-bearing static attribute writes",
-      "name": "h('a') with the same 4 attrs, none URL-bearing (control) (×500)",
+      "name": "h('a') with the same 4 attrs, none URL-bearing (control) (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -260,7 +260,7 @@
     {
       "file": "bench/element.bench.ts",
       "group": "h(): URL-bearing static attribute writes",
-      "name": "h('img') with src + srcset + alt (×500)",
+      "name": "h('img') with src + srcset + alt (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -278,7 +278,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression compile",
-      "name": "new Function compile, unique expressions (×200)",
+      "name": "new Function compile, unique expressions (\u00d7200)",
       "ops": 200,
       "sampleCount": 600,
       "runs": 5,
@@ -296,7 +296,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression compile",
-      "name": "CSP parser: mount unique arithmetic expressions (×40)",
+      "name": "CSP parser: mount unique arithmetic expressions (\u00d740)",
       "ops": 40,
       "sampleCount": 200,
       "runs": 5,
@@ -314,7 +314,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression compile",
-      "name": "CSP parser: mount bare identifiers, plumbing control (×40)",
+      "name": "CSP parser: mount bare identifiers, plumbing control (\u00d740)",
       "ops": 40,
       "sampleCount": 200,
       "runs": 5,
@@ -332,7 +332,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression compile",
-      "name": "CSP parser: mount every supported grammar shape (×16)",
+      "name": "CSP parser: mount every supported grammar shape (\u00d716)",
       "ops": 16,
       "sampleCount": 200,
       "runs": 5,
@@ -350,7 +350,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression evaluate: CSP-safe interpreter (shipped)",
-      "name": "8 count-dependent expressions: write → evaluate → text (×20)",
+      "name": "8 count-dependent expressions: write \u2192 evaluate \u2192 text (\u00d720)",
       "ops": 20,
       "sampleCount": 600,
       "runs": 5,
@@ -368,7 +368,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression evaluate: CSP-safe interpreter (shipped)",
-      "name": "8 × bare identifier, plumbing control: write → text (×20)",
+      "name": "8 \u00d7 bare identifier, plumbing control: write \u2192 text (\u00d720)",
       "ops": 20,
       "sampleCount": 600,
       "runs": 5,
@@ -386,7 +386,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression evaluate: new Function path (reconstructed)",
-      "name": "8 count-dependent expressions via new Function: write → evaluate → text (×20)",
+      "name": "8 count-dependent expressions via new Function: write \u2192 evaluate \u2192 text (\u00d720)",
       "ops": 20,
       "sampleCount": 600,
       "runs": 5,
@@ -404,7 +404,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression evaluate: new Function path (reconstructed)",
-      "name": "8 × bare identifier via new Function, plumbing control (×20)",
+      "name": "8 \u00d7 bare identifier via new Function, plumbing control (\u00d720)",
       "ops": 20,
       "sampleCount": 600,
       "runs": 5,
@@ -422,7 +422,7 @@
     {
       "file": "bench/expression.bench.ts",
       "group": "expression evaluate: new Function path (reconstructed)",
-      "name": "8 count-dependent expressions as hand-written closures, floor (×20)",
+      "name": "8 count-dependent expressions as hand-written closures, floor (\u00d720)",
       "ops": 20,
       "sampleCount": 600,
       "runs": 5,
@@ -548,7 +548,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "5 sections × 4 slots (20 bindings): parse markup only (control)",
+      "name": "5 sections \u00d7 4 slots (20 bindings): parse markup only (control)",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -566,7 +566,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "5 sections × 4 slots (20 bindings): parse + hydrateIsland (adopt)",
+      "name": "5 sections \u00d7 4 slots (20 bindings): parse + hydrateIsland (adopt)",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -584,7 +584,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "5 sections × 4 slots (20 bindings): client-side render, no SSR markup (comparison)",
+      "name": "5 sections \u00d7 4 slots (20 bindings): client-side render, no SSR markup (comparison)",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -602,7 +602,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "20 sections × 5 slots (100 bindings): parse markup only (control)",
+      "name": "20 sections \u00d7 5 slots (100 bindings): parse markup only (control)",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -620,7 +620,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "20 sections × 5 slots (100 bindings): parse + hydrateIsland (adopt)",
+      "name": "20 sections \u00d7 5 slots (100 bindings): parse + hydrateIsland (adopt)",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -638,7 +638,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "20 sections × 5 slots (100 bindings): client-side render, no SSR markup (comparison)",
+      "name": "20 sections \u00d7 5 slots (100 bindings): client-side render, no SSR markup (comparison)",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -656,7 +656,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "60 sections × 8 slots (480 bindings): parse markup only (control)",
+      "name": "60 sections \u00d7 8 slots (480 bindings): parse markup only (control)",
       "ops": 1,
       "sampleCount": 60,
       "runs": 5,
@@ -674,7 +674,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "60 sections × 8 slots (480 bindings): parse + hydrateIsland (adopt)",
+      "name": "60 sections \u00d7 8 slots (480 bindings): parse + hydrateIsland (adopt)",
       "ops": 1,
       "sampleCount": 60,
       "runs": 5,
@@ -692,7 +692,7 @@
     {
       "file": "bench/hydrate.bench.ts",
       "group": "hydration: adopt an SSR page",
-      "name": "60 sections × 8 slots (480 bindings): client-side render, no SSR markup (comparison)",
+      "name": "60 sections \u00d7 8 slots (480 bindings): client-side render, no SSR markup (comparison)",
       "ops": 1,
       "sampleCount": 60,
       "runs": 5,
@@ -890,7 +890,7 @@
     {
       "file": "bench/list.bench.ts",
       "group": "createList: full teardown",
-      "name": "1000 rows → [] → 1000 rows (drain + refill round trip)",
+      "name": "1000 rows \u2192 [] \u2192 1000 rows (drain + refill round trip)",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -908,7 +908,7 @@
     {
       "file": "bench/list.bench.ts",
       "group": "createList: initial render",
-      "name": "100 rows: createList → mount → first reconcile",
+      "name": "100 rows: createList \u2192 mount \u2192 first reconcile",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -926,7 +926,7 @@
     {
       "file": "bench/list.bench.ts",
       "group": "createList: initial render",
-      "name": "1000 rows: createList → mount → first reconcile",
+      "name": "1000 rows: createList \u2192 mount \u2192 first reconcile",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -944,7 +944,7 @@
     {
       "file": "bench/list.bench.ts",
       "group": "createList: initial render",
-      "name": "10000 rows: createList → mount → first reconcile",
+      "name": "10000 rows: createList \u2192 mount \u2192 first reconcile",
       "ops": 1,
       "sampleCount": 60,
       "runs": 5,
@@ -1214,7 +1214,7 @@
     {
       "file": "bench/list.bench.ts",
       "group": "createList: keyed reconciliation on 1000 rows",
-      "name": "same keys, same order — reconciler fast path",
+      "name": "same keys, same order \u2014 reconciler fast path",
       "ops": 1,
       "sampleCount": 200,
       "runs": 5,
@@ -1340,7 +1340,7 @@
     {
       "file": "bench/reactive.bench.ts",
       "group": "effect creation",
-      "name": "createEffect + dispose (×500)",
+      "name": "createEffect + dispose (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -1358,7 +1358,7 @@
     {
       "file": "bench/reactive.bench.ts",
       "group": "effect creation",
-      "name": "internalEffect + dispose, the DOM-binding path (×500)",
+      "name": "internalEffect + dispose, the DOM-binding path (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -1376,7 +1376,7 @@
     {
       "file": "bench/reactive.bench.ts",
       "group": "internalEffect: flush-isolation overhead",
-      "name": "1 internalEffect binding(s), as shipped: write (×5000)",
+      "name": "1 internalEffect binding(s), as shipped: write (\u00d75000)",
       "ops": 5000,
       "sampleCount": 600,
       "runs": 5,
@@ -1394,7 +1394,7 @@
     {
       "file": "bench/reactive.bench.ts",
       "group": "internalEffect: flush-isolation overhead",
-      "name": "1 rawEffect binding(s), pre-hardening shape: write (×5000)",
+      "name": "1 rawEffect binding(s), pre-hardening shape: write (\u00d75000)",
       "ops": 5000,
       "sampleCount": 600,
       "runs": 5,
@@ -1412,7 +1412,7 @@
     {
       "file": "bench/reactive.bench.ts",
       "group": "internalEffect: flush-isolation overhead",
-      "name": "100 internalEffect binding(s), as shipped: write (×50)",
+      "name": "100 internalEffect binding(s), as shipped: write (\u00d750)",
       "ops": 50,
       "sampleCount": 600,
       "runs": 5,
@@ -1430,7 +1430,7 @@
     {
       "file": "bench/reactive.bench.ts",
       "group": "internalEffect: flush-isolation overhead",
-      "name": "100 rawEffect binding(s), pre-hardening shape: write (×50)",
+      "name": "100 rawEffect binding(s), pre-hardening shape: write (\u00d750)",
       "ops": 50,
       "sampleCount": 600,
       "runs": 5,
@@ -1447,8 +1447,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: batching",
-      "name": "100 signals, one write each, unbatched (×30)",
+      "group": "signal write \u2192 effect flush: batching",
+      "name": "100 signals, one write each, unbatched (\u00d730)",
       "ops": 30,
       "sampleCount": 600,
       "runs": 5,
@@ -1465,8 +1465,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: batching",
-      "name": "100 signals, one write each, batched (×30)",
+      "group": "signal write \u2192 effect flush: batching",
+      "name": "100 signals, one write each, batched (\u00d730)",
       "ops": 30,
       "sampleCount": 600,
       "runs": 5,
@@ -1483,8 +1483,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: batching",
-      "name": "one signal, 100 writes, unbatched (×30)",
+      "group": "signal write \u2192 effect flush: batching",
+      "name": "one signal, 100 writes, unbatched (\u00d730)",
       "ops": 30,
       "sampleCount": 600,
       "runs": 5,
@@ -1501,8 +1501,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: batching",
-      "name": "one signal, 100 writes, batched (×30)",
+      "group": "signal write \u2192 effect flush: batching",
+      "name": "one signal, 100 writes, batched (\u00d730)",
       "ops": 30,
       "sampleCount": 600,
       "runs": 5,
@@ -1519,8 +1519,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: deep chain",
-      "name": "computed depth 1: write → re-derive → effect (×500)",
+      "group": "signal write \u2192 effect flush: deep chain",
+      "name": "computed depth 1: write \u2192 re-derive \u2192 effect (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -1537,8 +1537,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: deep chain",
-      "name": "computed depth 10: write → re-derive → effect (×500)",
+      "group": "signal write \u2192 effect flush: deep chain",
+      "name": "computed depth 10: write \u2192 re-derive \u2192 effect (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -1555,8 +1555,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: deep chain",
-      "name": "computed depth 50: write → re-derive → effect (×500)",
+      "group": "signal write \u2192 effect flush: deep chain",
+      "name": "computed depth 50: write \u2192 re-derive \u2192 effect (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -1573,8 +1573,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: equal-value no-op",
-      "name": "write the SAME value, no effect runs (×20000)",
+      "group": "signal write \u2192 effect flush: equal-value no-op",
+      "name": "write the SAME value, no effect runs (\u00d720000)",
       "ops": 20000,
       "sampleCount": 600,
       "runs": 5,
@@ -1591,8 +1591,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: equal-value no-op",
-      "name": "write a CHANGING value, effect runs (×500)",
+      "group": "signal write \u2192 effect flush: equal-value no-op",
+      "name": "write a CHANGING value, effect runs (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -1609,8 +1609,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: equal-value no-op",
-      "name": "write suppressed by a custom equals (×20000)",
+      "group": "signal write \u2192 effect flush: equal-value no-op",
+      "name": "write suppressed by a custom equals (\u00d720000)",
       "ops": 20000,
       "sampleCount": 600,
       "runs": 5,
@@ -1627,8 +1627,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: wide fan-out",
-      "name": "10 effects on one signal: write (×500)",
+      "group": "signal write \u2192 effect flush: wide fan-out",
+      "name": "10 effects on one signal: write (\u00d7500)",
       "ops": 500,
       "sampleCount": 600,
       "runs": 5,
@@ -1645,8 +1645,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: wide fan-out",
-      "name": "100 effects on one signal: write (×50)",
+      "group": "signal write \u2192 effect flush: wide fan-out",
+      "name": "100 effects on one signal: write (\u00d750)",
       "ops": 50,
       "sampleCount": 600,
       "runs": 5,
@@ -1663,8 +1663,8 @@
     },
     {
       "file": "bench/reactive.bench.ts",
-      "group": "signal write → effect flush: wide fan-out",
-      "name": "1000 effects on one signal: write (×5)",
+      "group": "signal write \u2192 effect flush: wide fan-out",
+      "name": "1000 effects on one signal: write (\u00d75)",
       "ops": 5,
       "sampleCount": 600,
       "runs": 5,
@@ -1677,150 +1677,6 @@
         0.41619999999988977,
         0.416849999999954,
         0.430849999999964
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: reactive props and children",
-      "name": "500 list items, plain values",
-      "ops": 1,
-      "sampleCount": 200,
-      "runs": 5,
-      "median": 0.3915999999999258,
-      "p95": 0.9107999999996537,
-      "spread": 0.5638105099647305,
-      "runMedians": [
-        0.3870999999999185,
-        0.3915999999999258,
-        0.604099999999562,
-        0.3863000000001193,
-        0.4095999999999549
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: reactive props and children",
-      "name": "500 list items, every prop and child a getter",
-      "ops": 1,
-      "sampleCount": 200,
-      "runs": 5,
-      "median": 0.409099999999853,
-      "p95": 1.1772999999993772,
-      "spread": 0.5836785938488788,
-      "runMedians": [
-        0.4017999999996391,
-        0.409099999999853,
-        0.6307000000006155,
-        0.3982500000001892,
-        0.4214000000001761
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: tree size sweep",
-      "name": "10 cards (~3 KB of HTML)",
-      "ops": 1,
-      "sampleCount": 200,
-      "runs": 5,
-      "median": 0.04609999999996717,
-      "p95": 0.08129999999999882,
-      "spread": 0.5849673202605111,
-      "runMedians": [
-        0.04599999999999227,
-        0.04609999999996717,
-        0.07150000000001455,
-        0.04590000000001737,
-        0.072749999999985
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: tree size sweep",
-      "name": "100 cards (~31 KB of HTML)",
-      "ops": 1,
-      "sampleCount": 200,
-      "runs": 5,
-      "median": 0.4580500000000143,
-      "p95": 0.9610000000000127,
-      "spread": 0.5899240393207605,
-      "runMedians": [
-        0.45820000000000505,
-        0.4475999999999942,
-        0.7116499999999633,
-        0.4505999999999801,
-        0.4580500000000143
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: tree size sweep",
-      "name": "1000 cards (~316 KB of HTML)",
-      "ops": 1,
-      "sampleCount": 200,
-      "runs": 5,
-      "median": 6.0283000000000015,
-      "p95": 9.252700000000004,
-      "spread": 0.5300834927813359,
-      "runMedians": [
-        5.8977500000000305,
-        6.0283000000000015,
-        8.796449999999936,
-        6.224150000000009,
-        5.749000000000024
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: tree size sweep",
-      "name": "5000 cards (~1597 KB of HTML)",
-      "ops": 1,
-      "sampleCount": 60,
-      "runs": 5,
-      "median": 32.21950000000015,
-      "p95": 68.41840000000047,
-      "spread": 0.4991059730751738,
-      "runMedians": [
-        31.66435000000024,
-        32.427900000000136,
-        46.11205000000018,
-        32.21950000000015,
-        30.75969999999984
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: URL-attribute guard cost",
-      "name": "1000 cards, one href each",
-      "ops": 1,
-      "sampleCount": 200,
-      "runs": 5,
-      "median": 5.809899999999743,
-      "p95": 9.523099999999431,
-      "spread": 0.49015830764908447,
-      "runMedians": [
-        5.854150000000118,
-        5.809899999999743,
-        8.509399999999914,
-        5.710400000000391,
-        5.754950000000008
-      ]
-    },
-    {
-      "file": "bench/ssr.bench.ts",
-      "group": "renderToString: URL-attribute guard cost",
-      "name": "1000 cards, same attrs, none URL-bearing (control)",
-      "ops": 1,
-      "sampleCount": 200,
-      "runs": 5,
-      "median": 5.70719999999983,
-      "p95": 10.185999999999694,
-      "spread": 0.518928311789621,
-      "runMedians": [
-        5.70719999999983,
-        5.706749999999829,
-        8.5662999999995,
-        5.639699999999721,
-        6.043949999999768
       ]
     }
   ]

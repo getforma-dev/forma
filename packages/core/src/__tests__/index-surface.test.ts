@@ -53,13 +53,6 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
       'setScopeValue', 'trustedHtml', 'unmount', 'yieldToMain',
     ],
   },
-  './ssr': {
-    load: () => import('../ssr/index'),
-    exports: [
-      'getSwapScript', 'getSwapTag', 'renderToStream', 'renderToString', 'sh',
-      'shSuspense', 'ssrComputed', 'ssrSignal',
-    ],
-  },
   './http': {
     load: () => import('../http/index'),
     exports: ['createFetch', 'createSSE', 'createWebSocket', 'fetchJSON'],
@@ -67,20 +60,6 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
   './storage': {
     load: () => import('../storage/index'),
     exports: ['createIndexedDB', 'createLocalStorage', 'createSessionStorage'],
-  },
-  './server': {
-    load: () => import('../server/index'),
-    exports: [
-      '$$serverFunction', 'applyRevalidation', 'createAction',
-      'createRPCMiddleware', 'enableAutoRevalidation', 'getRegisteredEndpoints',
-      'getServerFunction', 'handleRPC', 'registerResource',
-      'registerServerFunction', 'setRPCGuard', 'unregisterResource',
-      'withRevalidation',
-    ],
-  },
-  './wasm': {
-    load: () => import('../wasm/forma-wasm'),
-    exports: ['renderIsland', 'renderLocal'],
   },
   './tc39': {
     load: () => import('../reactive/tc39-compat'),

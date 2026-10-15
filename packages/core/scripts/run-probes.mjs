@@ -126,12 +126,10 @@ const rate = (subset) =>
 
 const overall = rate(scored);
 const security = rate(scored.filter((r) => (r.tags ?? []).includes('security')));
-const render = rate(scored.filter((r) => r.file === 'src/ssr/render.ts'));
 
 console.log('\n--- detection ---');
 console.log(`overall        ${scored.filter((r) => r.status === 'CAUGHT').length}/${scored.length} = ${overall}%`);
 if (security !== null) console.log(`security       ${security}%`);
-if (render !== null) console.log(`ssr/render.ts  ${render}%`);
 
 const equivalent = results.filter((r) => r.status === 'EQUIVALENT');
 if (equivalent.length) {

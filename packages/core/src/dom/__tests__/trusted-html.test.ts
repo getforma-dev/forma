@@ -17,8 +17,6 @@ import { mount } from '../mount';
 import { template, templateMany } from '../template';
 import { createReconciler } from '../reconcile';
 import { setHTMLUnsafe } from '../../dom-utils/mutate';
-import { renderToString, sh } from '../../ssr/render';
-import { renderToStream } from '../../ssr/stream';
 import {
   POLICY_REFUSED_CODE,
   RAW_STRING_CODES,
@@ -677,21 +675,5 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     } finally {
       delete (globalThis as Record<string, unknown>).trustedTypes;
     }
-  });
-});
-
-describe('the SSR renderers', () => {
-  it("the SSR renderers write a trustedHtml() value's markup and still refuse a non-string", async () => {
-    const typed = sh('div', { dangerouslySetInnerHTML: { __html: trustedHtml('<b>typed</b>') } });
-    const plain = sh('div', { dangerouslySetInnerHTML: { __html: '<b>plain</b>' } });
-    expect(renderToString(typed)).toBe('<div><b>typed</b></div>');
-    expect(renderToString(plain)).toBe('<div><b>plain</b></div>');
-
-    let streamed = '';
-    for await (const chunk of renderToStream(typed)) streamed += chunk;
-    expect(streamed).toContain('<div><b>typed</b></div>');
-
-    const lookAlike = sh('div', { dangerouslySetInnerHTML: { __html: { toString: () => '<b>x</b>' } } });
-    expect(() => renderToString(lookAlike)).toThrow('dangerouslySetInnerHTML must be { __html: string }');
   });
 });

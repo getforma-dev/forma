@@ -1,10 +1,8 @@
-//! The 0.2.1 page API, called exactly as an application on 0.2.1 calls it.
+//! Historical page behaviour retained after the explicit FORMA-110 removals.
 //!
-//! Release A2 (0.2.2) is additive: it deprecates, it does not break. This
-//! file is a consumer of the old surface, outside the crate, so it compiles
-//! against the public API alone; `deprecated` is allowed because warning is
-//! all a deprecation may do. If a 0.2.2 change breaks a 0.2.1 caller, this
-//! file stops compiling.
+//! This consumer exercises the remaining deprecated page API. The old manifest
+//! WASM field is gone; golden documents keep their historical bytes and the
+//! assertions subtract only the two intentional script removals.
 #![allow(deprecated)]
 
 use forma_server::{
@@ -19,7 +17,6 @@ fn manifest() -> AssetManifest {
         build_hash: "test".to_string(),
         assets: HashMap::new(),
         routes: HashMap::new(),
-        wasm: None,
     }
 }
 
@@ -40,7 +37,7 @@ fn config<'a>(manifest: &'a AssetManifest, config_script: Option<&'a str>) -> Pa
 }
 
 #[test]
-fn the_0_2_1_page_api_still_compiles_and_renders_as_it_did() {
+fn remaining_legacy_page_api_still_compiles_and_renders() {
     let manifest = manifest();
 
     // `render_page`, its public fields, and `headers()`.
@@ -90,12 +87,12 @@ fn the_0_2_1_page_api_still_compiles_and_renders_as_it_did() {
 /// The goldens in `tests/fixtures/documents-0.2.1/` were written by this
 /// function's body run against `main` at 36d835f (forma-server 0.2.1), with a
 /// fixed nonce. A2 restructures the render; this pins that `render_page`'s
-/// document and policy did not move by a byte.
+/// document and policy did not move beyond the explicitly retired scripts.
 fn documents() -> Vec<(&'static str, String)> {
     use forma_ir::parser::test_helpers::{
         build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
     };
-    use forma_server::{RouteAssets, WasmAssets};
+    use forma_server::RouteAssets;
 
     let mut routes = HashMap::new();
     routes.insert(
@@ -114,10 +111,6 @@ fn documents() -> Vec<(&'static str, String)> {
         build_hash: "h".into(),
         assets: HashMap::new(),
         routes,
-        wasm: Some(WasmAssets {
-            loader: "l.js".into(),
-            binary: "b.wasm".into(),
-        }),
     };
     let mut ops = Vec::new();
     ops.extend_from_slice(&encode_open_tag(0, &[]));
@@ -162,25 +155,30 @@ fn documents() -> Vec<(&'static str, String)> {
 const REGISTRATION: &str = "<script nonce=\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\">\
     if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>\n";
 
+const WASM_BOOTSTRAP: &str = "<script nonce=\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\">window.__FORMA_WASM__={loader:\"/_assets/l.js\",binary:\"/_assets/b.wasm\",ir:\"/_assets/p.5.ir\"};</script>\n";
+
 #[test]
-fn render_page_writes_the_0_2_1_document_byte_for_byte() {
+fn render_page_preserves_document_except_retired_scripts() {
     for (name, document) in documents() {
         let path = format!(
             "{}/tests/fixtures/documents-0.2.1/{name}.txt",
             env!("CARGO_MANIFEST_DIR")
         );
         let golden = std::fs::read_to_string(&path).expect("golden present in the repo");
-        // The goldens stay what 0.2.1 wrote; the registration line is taken
-        // out here, and only that line, once: anything else that moved fails.
+        // The goldens stay what 0.2.1 wrote; subtract the two retired scripts
+        // exactly once each. All other bytes remain asserted.
         assert_eq!(
             golden.matches(REGISTRATION).count(),
             1,
             "{name}: 0.2.1's golden carries the registration exactly once"
         );
-        let expected = golden.replacen(REGISTRATION, "", 1);
+        assert_eq!(golden.matches(WASM_BOOTSTRAP).count(), 1);
+        let expected = golden
+            .replacen(REGISTRATION, "", 1)
+            .replacen(WASM_BOOTSTRAP, "", 1);
         assert_eq!(
             document, expected,
-            "{name} differs from 0.2.1's document beyond the worker registration"
+            "{name} differs from 0.2.1's document beyond the retired worker registration and WASM bootstrap"
         );
     }
 }

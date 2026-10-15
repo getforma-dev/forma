@@ -68,7 +68,7 @@ async function buildAll(entries: string[], overrides: Options = {}): Promise<Rec
  * script warning).
  */
 const BUILDS: ReadonlyArray<{ name: string; entries: string[]; marks: string[] }> = [
-  { name: 'code-split ESM', entries: ['index', 'runtime', 'ssr/index'], marks: [...RAW_MARKS, SCRIPT_MARK, CHILDREN_MARK, RUNTIME_MARK] },
+  { name: 'code-split ESM', entries: ['index', 'runtime'], marks: [...RAW_MARKS, SCRIPT_MARK, CHILDREN_MARK, RUNTIME_MARK] },
   { name: 'browser ESM bundle', entries: ['forma.esm'], marks: [...RAW_MARKS, SCRIPT_MARK, CHILDREN_MARK] },
   { name: 'runtime IIFE', entries: ['formajs-runtime'], marks: [...RAW_MARKS, RUNTIME_MARK] },
 ];

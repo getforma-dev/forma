@@ -46,4 +46,3 @@ export { $, $$, addClass, removeClass, toggleClass, setStyle, setAttr, setText, 
 // ─── Subpath imports (not in this bundle — zero network code here) ───
 // HTTP:    import { createFetch, createSSE, createWebSocket } from '@getforma/core/http'
 // Storage: import { createLocalStorage, createIndexedDB } from '@getforma/core/storage'
-// Server:  import { createAction, $$serverFunction } from '@getforma/core/server'

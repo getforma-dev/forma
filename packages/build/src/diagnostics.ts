@@ -150,38 +150,6 @@ export function workerWithoutAppDiagnostic(message: string): CompilerDiagnostic 
 }
 
 /**
- * BUILD-803: the config sets `wasm` (FORMA-131's deprecation), in the report
- * beside the line the build prints. A note: the old path keeps working in A2,
- * so strict mode does not fail a build that still sets it.
- */
-export function wasmKeyDiagnostic(message: string): CompilerDiagnostic {
-  return {
-    code: 'BUILD-803',
-    file: '',
-    line: 0,
-    column: 0,
-    message: message.replace(/^BUILD-803 /, ''),
-    why: "The `wasm` key is deprecated and goes in 3.0.0 with the WASM walker (forma-ir's `wasm` feature and `@getforma/core/wasm`).",
-    fix: 'Remove `wasm` from the config: islands re-render in the browser with h(), and forma-server renders pages.',
-    strict: false,
-  };
-}
-
-/** BUILD-804: the wasm-pack step ran (FORMA-131's deprecation). A note, as BUILD-803. */
-export function wasmPackDiagnostic(message: string): CompilerDiagnostic {
-  return {
-    code: 'BUILD-804',
-    file: '',
-    line: 0,
-    column: 0,
-    message: message.replace(/^BUILD-804 /, ''),
-    why: "The wasm-pack step is deprecated and goes in 3.0.0: forma_ir.js, forma_ir_bg.wasm and the manifest's wasm entry go with the WASM walker.",
-    fix: 'Remove `wasm` from the config.',
-    strict: false,
-  };
-}
-
-/**
  * Whether `report` lies inside `outputDir`, as the filesystem sees them: both
  * through their real paths (a symlink or junction pointing into `outputDir`
  * counts as inside), compared case-insensitively where the filesystem ignores

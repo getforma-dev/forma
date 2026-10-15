@@ -517,14 +517,12 @@ mod tests {
     use crate::types::{AssetManifest, RenderMode};
     use std::collections::HashMap;
 
-    #[allow(deprecated)] // `wasm` is named by every 0.2.x `AssetManifest` literal (DR-23)
     fn manifest() -> AssetManifest {
         AssetManifest {
             version: 1,
             build_hash: "test".to_string(),
             assets: HashMap::new(),
             routes: HashMap::new(),
-            wasm: None,
         }
     }
 

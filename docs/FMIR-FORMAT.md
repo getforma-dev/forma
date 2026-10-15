@@ -39,8 +39,8 @@ and included six opcodes that the compiler did not emit. The old promise of reta
 at byte zero is superseded by the v3 signature below. A v2 prefix is recognized only to produce
 a rebuild diagnosis; there is no v2 decoder path.
 
-The browser core does not consume FMIR directly. The deprecated WASM exports and lenient loader
-are separate retirement work; their presence does not permit either container to read v2 bytes.
+The browser core does not consume FMIR directly. The WASM exports are removed in FORMA-110; the lenient loader
+remains separate retirement work and does not permit reading v2 bytes.
 The existing HTML corpus remains the render contract through this upgrade.
 
 ---

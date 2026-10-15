@@ -159,14 +159,14 @@ Examples: [`examples/`](./examples) — counter, counter-jsx, csp, todo, data-ta
 | Package | Description |
 |---|---|
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | **This library** — reactive DOM, signals, islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | Vite plugin — h() optimization, server function transforms, FMIR emission |
+| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR compiler and esbuild SSR plugin |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — esbuild bundling, content hashing, compression, manifest |
 
 ### Backend (Rust)
 
 | Package | Description |
 |---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser, walker, WASM exports |
+| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser and native HTML walker |
 | [forma-server](https://crates.io/crates/forma-server) | Axum middleware — SSR page rendering, asset serving, CSP headers |
 
 ### Full Framework

@@ -1,13 +1,9 @@
 /**
  * Forma Compiler - Public API
  *
- * Re-exports the Vite plugin and the core transform function.
+ * FMIR generation and the esbuild SSR integration.
  */
 
-export { formaCompiler, type FormaCompilerOptions } from './vite-plugin.js';
-export { compileFormaJSX } from './transform.js';
-export { formaServer, type FormaServerOptions } from './vite-plugin.js';
-export { transformServerFunctions } from './server-transform.js';
 export { formaSsrPlugin, generateRealIr, type SsrPluginOptions, type IrResult } from './esbuild-ssr-plugin.js';
 export {
   DIAGNOSTIC_CATALOGUE,

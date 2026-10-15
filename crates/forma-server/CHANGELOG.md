@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Removed — FORMA-110
+
+- Removed `AssetManifest::wasm`, `WasmAssets` and the `window.__FORMA_WASM__` page bootstrap. Unknown legacy manifest fields cannot reactivate the loader. `csp_is_strict` explicitly rejects `wasm-unsafe-eval`.
+- Kept the 0.2.1 document goldens as historical bytes; current output is compared after subtracting only the previously removed worker registration and the now-removed WASM bootstrap.
+
+
 ### FMIR v3 loading (FORMA-185)
 
 - Load through the single v3 reader in `ir.rs`; expose `IrError` and delegate diagnostic codes
