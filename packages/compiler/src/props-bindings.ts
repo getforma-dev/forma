@@ -26,6 +26,7 @@ export interface PropsScope {
   bindings: Map<string, Binding>;
   views: Map<string, { slot: number; type: SchemaType }>;
   signalImports: Set<string>;
+  unsupported: Map<string, t.Node>;
 }
 function invalid(scope: PropsScope, node: t.Node, message: string): never {
   const at = originalPosition(scope.file, node.loc?.start ?? { line: 1, column: 0 });
@@ -47,9 +48,9 @@ function localName(node: t.Identifier, scope: PropsScope): string | undefined {
 export function propPath(node: t.Node | null | undefined, scope: PropsScope | undefined): Path | undefined {
   if (!node || !scope) return undefined;
   node = unwrap(node);
-  if (t.isIdentifier(node)) { const name = localName(node, scope); return name ? scope.aliases.get(name) ?? scope.signals.get(name) : undefined; }
+  if (t.isIdentifier(node)) { const name = localName(node, scope); if (name && scope.unsupported.has(name)) invalid(scope, node, `computed declared prop binding ${name} is outside the SSR subset; pass its rendered value from the handler`); return name ? scope.aliases.get(name) ?? scope.signals.get(name) : undefined; }
   if (t.isCallExpression(node) && t.isIdentifier(node.callee)) {
-    if (node.arguments.length === 0) { const name = localName(node.callee, scope); return name ? scope.signals.get(name) : undefined; }
+    if (node.arguments.length === 0) { const name = localName(node.callee, scope); if (name && scope.unsupported.has(name)) invalid(scope, node, `computed declared prop binding ${name} is outside the SSR subset`); return name ? scope.signals.get(name) : undefined; }
     if ((node.callee.name === 'String' || node.callee.name === 'Number') && node.arguments.length === 1 && !t.isSpreadElement(node.arguments[0])) {
       const path = propPath(node.arguments[0], scope);
       if (path) invalid(scope, node, `${node.callee.name}(declared prop) coercion is not in the SSR subset; pass the rendered value as a declared prop`);
@@ -94,7 +95,7 @@ export function propType(path: Path, scope: PropsScope, at: t.Node): SchemaType 
   return type;
 }
 /** Emit reads at the point of use: a branch must not depend on another branch's temporaries. */
-export function propSlot(node: t.Node | null | undefined, scope: PropsScope | undefined, ctx: IrEmitContext): number | undefined {
+export function propSlot(node: t.Node | null | undefined, scope: PropsScope | undefined, ctx: IrEmitContext, use: 'value' | 'attribute' | 'text' = 'value'): number | undefined {
   const path = propPath(node, scope);
   if (!path || !scope || !node) {
     if (scope && node) {
@@ -112,7 +113,8 @@ export function propSlot(node: t.Node | null | undefined, scope: PropsScope | un
     }
     return undefined;
   }
-  propType(path, scope, node);
+  const type = inner(propType(path, scope, node));
+  if (use !== 'value' && ['array', 'object', 'date'].includes(type.kind)) invalid(scope, node, `a declared ${type.kind} cannot be used directly as ${use}; pass a rendered string or read a scalar field`);
   let slot = scope.views.get(path[0]!)?.slot ?? scope.roots.get(path[0]!);
   if (slot === undefined) invalid(scope, node, `missing declared root binding ${path[0]}`);
   for (let i = 1; i < path.length; i++) {
@@ -174,19 +176,23 @@ function declarations(scope: PropsScope, fn: ComponentFunction): void {
       } else {
         const path = propPath(declaration.init, scope);
         if (path) scope.aliases.set(declaration.id.name, path);
+        else if (containsDeclared(declaration.init, scope)) scope.unsupported.set(declaration.id.name, declaration.init);
       }
     } else if (t.isArrayPattern(declaration.id) && t.isIdentifier(declaration.id.elements[0]) && t.isCallExpression(declaration.init)
       && t.isIdentifier(declaration.init.callee) && scope.signalImports.has(declaration.init.callee.name)
       && !scope.references.has(declaration.init.callee) && declaration.init.arguments[0]) {
       const path = propPath(declaration.init.arguments[0], scope);
       if (path) scope.signals.set(declaration.id.elements[0].name, path);
+      else if (containsDeclared(declaration.init.arguments[0], scope)) scope.unsupported.set(declaration.id.elements[0].name, declaration.init);
+    } else if (t.isObjectPattern(declaration.id) && containsDeclared(declaration.init, scope)) {
+      for (const field of declaration.id.properties) if (t.isObjectProperty(field) && t.isIdentifier(field.value)) scope.unsupported.set(field.value.name, declaration.init);
     }
   }
 }
 export function rootPropsScope(declared: DeclaredPageProps, fn: ComponentFunction, file: string, ctx: IrEmitContext): PropsScope | undefined {
   const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
   const signalImports = new Set([...readImportBindings(ast)].filter(([, binding]) => binding.imported === 'createSignal' && ['@getforma/core', 'formajs'].includes(binding.source)).map(([name]) => name));
-  const scope: PropsScope = { schema: declared.schema, roots: new Map(), aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), views: new Map(), signalImports };
+  const scope: PropsScope = { schema: declared.schema, roots: new Map(), aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), views: new Map(), signalImports, unsupported: new Map() };
   indexBindings(scope, fn);
   const fields = new Map<string, Path>();
   for (const field of declared.schema[0]!) {
@@ -203,7 +209,7 @@ export function childPropsScope(parent: PropsScope | undefined, fn: ComponentFun
   if (!parent) return undefined;
   const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
   const signalImports = new Set([...readImportBindings(ast)].filter(([, binding]) => binding.imported === 'createSignal' && ['@getforma/core', 'formajs'].includes(binding.source)).map(([name]) => name));
-  const scope: PropsScope = { ...parent, aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), signalImports };
+  const scope: PropsScope = { ...parent, aliases: new Map(), objects: new Map(), signals: new Map(), file, references: new WeakMap(), bindings: new Map(), signalImports, unsupported: new Map() };
   indexBindings(scope, fn);
   const fields = new Map<string, Path>();
   if (t.isIdentifier(arg) && localName(arg, parent) && parent.objects.has(arg.name)) {
@@ -227,7 +233,7 @@ export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source
   if (!path) return parent;
   const type = inner(propType(path, parent, source));
   if (type.kind !== 'array') invalid(parent, source, 'createList declared source must have an array type');
-  const scope: PropsScope = { ...parent, aliases: new Map(parent.aliases), objects: new Map(parent.objects), signals: new Map(parent.signals), bindings: new Map(parent.bindings), views: new Map(parent.views) };
+  const scope: PropsScope = { ...parent, aliases: new Map(parent.aliases), objects: new Map(parent.objects), signals: new Map(parent.signals), bindings: new Map(parent.bindings), views: new Map(parent.views), unsupported: new Map(parent.unsupported) };
   indexBindings(scope, fn);
   const param = fn.params[0];
   if (!t.isIdentifier(param)) invalid(scope, fn, 'declared list rows need a named parameter');
@@ -238,4 +244,27 @@ export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source
   scope.objects.delete(param.name); scope.signals.delete(param.name);
   declarations(scope, fn); validateBindings(scope, fn);
   return scope;
+}
+
+/** Boolean children are omitted by core's h(), for direct and reactive reads. */
+export function emitPropText(node: t.Node, scope: PropsScope | undefined, ctx: IrEmitContext): boolean {
+  const path = propPath(node, scope);
+  if (path && scope && inner(propType(path, scope, node)).kind === 'boolean') return true;
+  const slot = propSlot(node, scope, ctx, 'text');
+  if (slot === undefined) return false;
+  ctx.emit(C.OP_DYN_TEXT); ctx.emitU16(slot); ctx.emitU16(ctx.nextMarker());
+  return true;
+}
+
+function containsDeclared(node: t.Node, scope: PropsScope): boolean {
+  if (propPath(node, scope)) return true;
+  if (t.isIdentifier(node) && localName(node, scope) && scope.objects.has(node.name)) return true;
+  return (t.VISITOR_KEYS[node.type] ?? []).some(key => {
+    const child = (node as any)[key];
+    return (Array.isArray(child) ? child : [child]).some(item => item?.type && containsDeclared(item, scope));
+  });
+}
+/** A successful fallback must never discard declared handler data. */
+export function refuseDeclaredFallback(node: t.Node | null | undefined, scope: PropsScope | undefined): void {
+  if (scope && node && containsDeclared(node, scope)) invalid(scope, node, 'this declared prop expression is outside the SSR subset; pass a rendered scalar or use direct fields, createShow and createList');
 }

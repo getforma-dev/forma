@@ -48,7 +48,7 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
-import { childPropsScope, listPropsScope, propPath, propSlot, type PropsScope } from './props-bindings';
+import { childPropsScope, emitPropText, listPropsScope, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
 import { PropsSchemaError } from './props-schema';
 import {
   enterComponentScope,
@@ -148,6 +148,7 @@ function warnDegraded(
   consequence: string,
   chain?: DiagnosticChainLink[],
 ): void {
+  if (node && 'type' in node) refuseDeclaredFallback(node as t.Node, walkCtx.propsScope);
   reportDiagnostic({
     code,
     file: walkCtx.sourceFile ?? '',
@@ -1039,7 +1040,7 @@ export function walkHTree(
 
       const val = prop.value as t.Expression;
 
-      const declaredSlot = propSlot(val, walkCtx.propsScope, ctx);
+      const declaredSlot = propSlot(val, walkCtx.propsScope, ctx, 'attribute');
       if (declaredSlot !== undefined) {
         dynAttrs.push({ keyIdx: ctx.addString(key), slotId: declaredSlot });
         continue;
@@ -1627,11 +1628,8 @@ function emitChild(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
-  const declaredSlot = propSlot(child, walkCtx.propsScope, ctx);
-  if (declaredSlot !== undefined) {
-    ctx.emit(OP_DYN_TEXT); ctx.emitU16(declaredSlot); ctx.emitU16(ctx.nextMarker());
-    return;
-  }
+  if (emitPropText(child, walkCtx.propsScope, ctx)) return;
+  if (walkCtx.propsScope && t.isConditionalExpression(child)) { emitTernaryShowIf(child, hName, ctx, walkCtx, childIndex); return; }
   // Rule 12: null, undefined, false → skip
   if (isNullish(child)) return;
 
@@ -2040,6 +2038,7 @@ function emitCreateShowBranch(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
+  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
   // Unwrap arrow function: () => h('div', ...)
   if (isFunctionExpr(expr)) {
     const fn = expr as t.ArrowFunctionExpression | t.FunctionExpression;
@@ -2749,6 +2748,8 @@ function emitBranchContent(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
+  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
+  if (t.isConditionalExpression(expr)) { emitTernaryShowIf(expr, hName, ctx, walkCtx, childIndex); return; }
   // String literal → TEXT
   if (t.isStringLiteral(expr)) {
     checkLiteralSize(walkCtx, expr, expr.value, 'text literal');

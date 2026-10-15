@@ -92,7 +92,7 @@ function compile(dir: string): { diagnostics: Diagnostic[]; lines: string[] } {
 }
 
 /** Build a fixture with esbuild and the SSR plugin under `strict`. */
-async function strictBuild(dir: string): Promise<esbuild.Message[]> {
+async function strictBuild(dir: string, strict = true): Promise<esbuild.Message[]> {
   const outDir = mkdtempSync(join(tmpdir(), 'forma-conformance-'));
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   const log = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -108,7 +108,7 @@ async function strictBuild(dir: string): Promise<esbuild.Message[]> {
       jsxFactory: 'h',
       jsxFragment: 'Fragment',
       logLevel: 'silent',
-      plugins: [formaSsrPlugin({ page: 'page', outDir, entryPoint: entryOf(dir), strict: true })],
+      plugins: [formaSsrPlugin({ page: 'page', outDir, entryPoint: entryOf(dir), strict })],
     });
     return [];
   } catch (err) {
@@ -307,5 +307,14 @@ describe('positions', () => {
     expect(chain.map((link) => link.component)).toEqual(['mount()', 'A', 'B', 'C', 'D']);
     expect(chain.every((link) => link.line > 0 && link.file.endsWith('app.tsx'))).toBe(true);
     expect(diagnostics[0]!.message).toContain('(chain: mount() > A > B > C > D)');
+  });
+});
+
+describe('declared contract refusal is unconditional', () => {
+  it('fails a default non-strict build with the original TSX position', async () => {
+    const errors = await strictBuild(join(CORPUS, 'BUILD-610/fail'), false);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.text).toMatch(/^BUILD-610 /);
+    expect(errors[0]!.location).toMatchObject({ file: join(CORPUS, 'BUILD-610/fail/page.tsx'), line: 3 });
   });
 });

@@ -59,6 +59,11 @@ describe('declared root slot bindings', () => {
   it.each([
     `export function Page(p: { text: string }) { return h('p', null, Number(p.text)); }`,
     `export function Page(p: { date: Date }) { return h('p', null, String(p.date)); }`,
+    `export function Page(p: { date: Date }) { return h('p', null, p.date); }`,
+    `export function Page(p: { text: string }) { return h('p', null, () => p.text + '!'); }`,
+    `export function Page(p: { text: string }) { return h('p', null, p.text.toUpperCase()); }`,
+    `export function Page(p: { text: string }) { const label = p.text.toUpperCase(); return h('p', null, label); }`,
+    `export function Page(p: { text: string }) { const [label] = createSignal(p.text.toUpperCase()); return h('p', null, label()); }`,
     `export function Page(p: { text: string }) { let text = p.text; text = 'new'; return h('p', null, text); }`,
     `export function Page(p: { text: string }) { p.text = 'new'; return h('p', null, p.text); }`,
     `export function Page(p: { text: string }) { return createList(() => p.text, r => r, r => h('p', null, r)); }`,
@@ -78,6 +83,22 @@ describe('declared root slot bindings', () => {
     const binary = emit(imports + `export function Page(${parameter}) { const [rows] = createSignal([]); return h('main', null, createList(rows, row => row.id, row => h('p', null, row.label))); }`);
     expect(getSlots(binary).every(slot => slot.source === 1)).toBe(true);
     expect(parseOpcodeList(binary).join('\n')).toContain('LIST');
+  });
+
+  it('uses declared values in createShow branches and direct or nested ternaries', () => {
+    const binary = emit(`import { h, createShow } from '@getforma/core'; export function Page(p: { ok: boolean; title: string }) {
+      return h('main', null, createShow(() => p.ok, () => p.title), p.ok ? p.title : 'hidden', () => p.ok ? p.title : 'hidden', p.ok);
+    }`);
+    const ops = parseOpcodeList(binary);
+    expect(ops.filter(op => op.startsWith('DYN_TEXT title'))).toHaveLength(3);
+    expect(ops.filter(op => op.startsWith('SHOW_IF ok'))).toHaveLength(3);
+    expect(ops.some(op => op.startsWith('DYN_TEXT ok'))).toBe(false);
+    expect(getSlots(binary).map(slot => slot.name)).toEqual(['ok', 'title']);
+  });
+
+  it('normalizes repeated nullability through aliases before actual schema emission', () => {
+    const binary = emit(imports + `type Maybe = string | null; export function Page(p: { title: Maybe | null }) { return h('p', null, p.title); }`);
+    expect(getSlots(binary).filter(slot => slot.source === 0).map(slot => slot.name)).toEqual(['title']);
   });
 
 });

@@ -5,7 +5,7 @@ import { parse } from '@babel/parser';
 import * as t from '@babel/types';
 import { resolveExportedFunction, readImportBindings } from './export-resolver';
 import { resolveFilePath, type ModuleLoader } from './module-loader';
-import type { PropsSchema, SchemaField, SchemaType } from './fmir-payload';
+import { encodePropsSchema, type PropsSchema, type SchemaField, type SchemaType } from './fmir-payload';
 import { MAX_SCHEMA_ITEMS, MAX_TYPE_DEPTH } from './fmir-constants';
 
 export type PropsParameter = { kind: 'none' } | { kind: 'named'; name: string }
@@ -62,6 +62,16 @@ export function readPageProps(file: string, exportedName: string): DeclaredPageP
   if (parameter.kind === 'destructured') for (const [name] of parameter.fields) {
     if (!reader.objects[0]!.some(field => field.name === name)) fail(found.filePath, param, `destructured field ${name} is absent from the declared props`);
   }
+  // Exercise the same wire encoder here so a rejected schema cannot escape as
+  // a generic placeholder-producing emission error later in the pipeline.
+  try {
+    const strings = new Map<string, number>();
+    encodePropsSchema(reader.objects, text => {
+      if (new TextEncoder().encode(text).length > 65535) throw new Error('props schema string exceeds the FMIR string limit');
+      if (!strings.has(text)) strings.set(text, strings.size);
+      return strings.get(text)!;
+    });
+  } catch (error) { fail(found.filePath, annotation, `unrepresentable props schema: ${String(error)}`); }
   return { schema: reader.objects, parameter };
 }
 
@@ -129,7 +139,7 @@ class SchemaReader {
           inner = { kind: 'enum', variants: [...new Set(rest.map(type => (type as t.TSLiteralType).literal as t.StringLiteral).map(literal => literal.value))] };
         } else if (nullable.length && rest.length === 1) inner = this.type(rest[0]!, file, depth + 1);
         else fail(file, node, 'only string-literal unions and T | null are supported props unions');
-        return nullable.length ? { kind: 'optional', inner } : inner;
+        return nullable.length && inner.kind !== 'optional' ? { kind: 'optional', inner } : inner;
       }
       if (t.isTSTypeReference(node)) {
         if (!t.isIdentifier(node.typeName) || node.typeParameters) fail(file, node, 'generic or namespace props types are not supported; use T[] for arrays');

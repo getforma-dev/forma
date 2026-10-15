@@ -324,7 +324,11 @@ function emitRealIr(entryPointPath: string): IrResult | null {
       );
     }
 
+    const emptyFn = t.arrowFunctionExpression([], entryInfo.inlineMountBody
+      ? t.blockStatement(entryInfo.inlineMountBody) : entryInfo.inlineReturnNode!);
+    const propsScope = rootPropsScope({ schema: [[]], parameter: { kind: 'none' } }, emptyFn, entryPointPath, ctx);
     const walkCtx: WalkContext = {
+      propsScope,
       sourceFile: entryPointPath,
       fileConstants,
       stringConstants,
