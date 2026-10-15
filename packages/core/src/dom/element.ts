@@ -9,6 +9,7 @@
  */
 
 import { internalEffect, __DEV__ } from 'forma/reactive';
+import { adoptionListener } from '../reactive/adoption-events.js';
 import { hydrating } from './hydrate.js';
 import { describingAdoption, __adoptionChild } from './adoption-description.js';
 import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
@@ -444,7 +445,7 @@ function handleEvent(el: Element, key: string, value: unknown): void {
   const controller = getAbortController(el);
   el.addEventListener(
     eventName(key),
-    value as EventListener,
+    adoptionListener(value as EventListenerOrEventListenerObject),
     { signal: controller.signal },
   );
 }

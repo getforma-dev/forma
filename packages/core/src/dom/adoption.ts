@@ -40,6 +40,17 @@ function ownProps(props:Record<string,unknown>):[string,unknown][] {
   });
 }
 
+function listenerObject(value:unknown):value is EventListenerObject {
+  if(value===null||typeof value!=='object')return false;
+  // Class methods are valid too. Do not execute an accessor before commit;
+  // native handleEvent lookup remains dynamic inside the owned live callback.
+  for(let object=value;object;object=Object.getPrototypeOf(object)){
+    const descriptor=Object.getOwnPropertyDescriptor(object,'handleEvent');
+    if(descriptor)return 'value'in descriptor?typeof descriptor.value==='function':typeof descriptor.get==='function';
+  }
+  return false;
+}
+
 /** Snapshot first, build once, then retain every prepared observation. The
  * returned object is private: no status write/event/activation occurs here. */
 export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionOptions={}):PreparedAdoption {
@@ -98,13 +109,16 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       if(key==='children')continue;
       if(key==='ref'){if(typeof value==='function')scope.deferRef(()=>value(element));continue;}
       if(key.startsWith('on')&&key.length>2){
-        // Listener installation has no user callback. Objects/accessor-backed
-        // handlers remain outside this private checkpoint until shared policy.
-        if(typeof value==='function'){
-          const item:Listener={element,event:key.slice(2).toLowerCase(),listener:function(event){if(scope.phase==='live')value.call(this,event);}};
+        // Preserve function receiver and native object handleEvent lookup,
+        // while keeping all callback-created work in this prepared owner.
+        if(typeof value==='function'||listenerObject(value)){
+          const listener=scope.liveCallback((event:Event)=>{
+            if(typeof value==='function')value.call(element,event);
+            else value.handleEvent(event);
+          });
+          const item:Listener={element,event:key.slice(2).toLowerCase(),listener};
           listeners.push(item);registerDisposer(()=>item.controller?.abort());
         }
-        else if(value!=null&&typeof value==='object')refuse();
         dom.expectAttribute(element,key.toLowerCase(),null);continue;
       }
       if(key==='style'||key==='dangerouslySetInnerHTML')refuse();
