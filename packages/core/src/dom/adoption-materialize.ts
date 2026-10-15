@@ -7,7 +7,6 @@ import {
 import { AdoptionDomError } from './adoption-plan.js';
 import { fillElement, h } from './element.js';
 import { contentNs, withNamespace } from './namespace.js';
-import { createShow } from './show.js';
 
 /** The caller supplies its shared live range coordinators, including ownership,
  * checked replacement, key/index semantics and failure cleanup. No CSR fallback. */
@@ -15,6 +14,7 @@ export interface MaterializeContext {
   list(desc: ListDescriptor, namespace: string | null,
     render: (item: unknown, index: () => number) => Node | null): DocumentFragment;
   dynamic(read: () => unknown, materialize: (value: unknown) => Node | null): DocumentFragment;
+  show(condition: () => unknown, materialize: (shown: boolean) => Node | null): DocumentFragment;
 }
 
 function describe<T>(read: () => T, ns: string | null): T {
@@ -68,9 +68,8 @@ function materialize(value: unknown, ns: string | null, context: MaterializeCont
           next => materializeAdoption(next, ns, context),
         );
       }
-      return createShow(desc.condition,
-        () => materializeAdoption(describe(desc.whenTrue, ns), ns, context) ?? document.createDocumentFragment(),
-        () => materializeAdoption(describe(() => desc.whenFalse?.(), ns), ns, context),
+      return context.show(() => describe(desc.condition, ns),
+        shown => materializeAdoption(describe(() => (shown ? desc.whenTrue : desc.whenFalse)?.(), ns), ns, context),
       );
     case 'list':
       return context.list(desc, ns, (item, index) => materializeAdoption(describe(() => desc.renderFn(item, index), ns), ns, context));

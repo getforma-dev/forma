@@ -17,6 +17,7 @@ const disposers: (() => void)[] = [];
 const noRanges: MaterializeContext = {
   list: () => { throw new Error('unexpected list adapter'); },
   dynamic: () => { throw new Error('unexpected dynamic adapter'); },
+  show: () => { throw new Error('unexpected Show adapter'); },
 };
 function owned<T>(build: () => T): T { return createRoot(dispose => { disposers.push(dispose); return build(); }); }
 function build(read: () => unknown, ns: string | null = null, context = noRanges): Node | null {
@@ -83,21 +84,22 @@ describe('private live descriptor materialization', () => {
     expect(h('a')).toBeInstanceOf(HTMLAnchorElement);
   });
 
-  it('retains explicit Show truthiness caching and live branch cleanup through shared writers', () => {
-    const [on, setOn] = createSignal<unknown>(false), [label, setLabel] = createSignal('one');
-    const read = vi.fn(() => label()), branch = vi.fn(() => h('foreignObject', null, h('div', null, h('a', null, read))));
-    const root = build(() => h('svg', null, createShow(on, branch))) as Element;
-    document.body.append(root);
-    expect(branch).not.toHaveBeenCalled();
-    setOn(true);
-    const link = root.querySelector('a')!;
-    expect(link).toBeInstanceOf(HTMLAnchorElement);
-    setOn('still true');
-    expect(branch).toHaveBeenCalledOnce();
-    expect(root.querySelector('a')).toBe(link);
-    setLabel('two'); expect(link.textContent).toBe('two');
-    setOn(false); const before = read.mock.calls.length; setLabel('three');
-    expect(root.querySelector('a')).toBeNull(); expect(read).toHaveBeenCalledTimes(before);
+  it('delegates explicit Show caching and replacement while describing only its selected factory', () => {
+    const [on, setOn] = createSignal<unknown>(false), condition = vi.fn(on);
+    const yes = vi.fn(() => h('foreignObject', null, h('div', null, h('a', null, 'yes'))));
+    const no = vi.fn(() => h('title', null, 'no'));
+    let request!: Parameters<MaterializeContext['show']>;
+    const show = vi.fn<MaterializeContext['show']>((...args) => { request = args; return document.createDocumentFragment(); });
+    build(() => h('svg', null, createShow(condition, yes, no)), null, { ...noRanges, show });
+    expect(show).toHaveBeenCalledOnce(); expect(condition).not.toHaveBeenCalled(); expect(yes).not.toHaveBeenCalled(); expect(no).not.toHaveBeenCalled();
+    expect(request[0]()).toBe(false);
+    const fallback = owned(() => request[1](false)) as Element;
+    expect(fallback.namespaceURI).toBe(SVG_NS); expect(fallback.textContent).toBe('no');
+    expect(yes).not.toHaveBeenCalled(); expect(no).toHaveBeenCalledOnce();
+    setOn(true); expect(request[0]()).toBe(true);
+    const next = owned(() => request[1](true)) as Element;
+    expect(next.querySelector('a')).toBeInstanceOf(HTMLAnchorElement);
+    expect(yes).toHaveBeenCalledOnce(); expect(no).toHaveBeenCalledOnce(); expect(condition).toHaveBeenCalledTimes(2);
   });
 
   it('delegates Lists unchanged and describes multi-node and empty row callbacks once', () => {
