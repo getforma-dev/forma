@@ -150,7 +150,7 @@ function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boo
   return Object.keys(value).length === keys.length && keys.every(key => own(value, key));
 }
 interface Entry { h: string; p: Record<string, unknown> }
-interface Claim { component: string | null; h: string | null; occurrence: number | null; duplicate: boolean }
+interface Claim { boundary: string | null; component: string | null; h: string | null; occurrence: number | null; duplicate: boolean }
 interface DocumentState {
   entries: (Entry | null)[];
   claims: WeakMap<Element, Claim>;
@@ -172,7 +172,7 @@ function readDocument(doc: Document): DocumentState {
   const counts = new Map<number, Claim>();
   for (const host of doc.querySelectorAll<HTMLElement>('[data-forma-island]')) {
     const text = host.getAttribute('data-forma-state');
-    const claim: Claim = { component: host.getAttribute('data-forma-component'), h: host.getAttribute('data-forma-h'), occurrence: occurrenceOf(text), duplicate: false };
+    const claim: Claim = { boundary: host.getAttribute('data-forma-island'), component: host.getAttribute('data-forma-component'), h: host.getAttribute('data-forma-h'), occurrence: occurrenceOf(text), duplicate: false };
     state.claims.set(host, claim);
     if (claim.occurrence !== null) {
       const previous = counts.get(claim.occurrence);
@@ -269,6 +269,7 @@ function project(input: Record<string, unknown>, schema: IslandSchema): Record<s
 function originalClaim(host: HTMLElement, state: DocumentState): Claim {
   const claim = state.claims.get(host);
   if (!claim || claim.duplicate || claim.occurrence === null
+    || host.getAttribute('data-forma-island') !== claim.boundary
     || host.getAttribute('data-forma-state') !== String(claim.occurrence)
     || host.getAttribute('data-forma-component') !== claim.component
     || host.getAttribute('data-forma-h') !== claim.h) {
