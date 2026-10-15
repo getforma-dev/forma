@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Removed — FORMA-110
+
+- Removed core's server functions, Node SSR and WASM entry points; the compiler's Vite plugins and their standalone transforms; and the WASM walker feature, build step, manifest field and server bootstrap. Browser islands continue to use `h()` and native Rust SSR remains supported.
+- `@getforma/build` rejects `"use server"` directives with `BUILD-808`, including imported modules and watch rebuilds. Move server-side work to authenticated Rust routes called with `fetch`.
+- `walk_island` remains internal. The pre-removal API guides are retained under `docs/archive/2026-10-15-legacy-apis/` and `packages/core/docs/archive/2026-10-15-legacy-apis/`.
+
+
 ### FMIR v3 development staging (FORMA-185)
 
 The seven package versions are aligned at `3.0.0-dev` so the compiler and Rust reader can

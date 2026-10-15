@@ -52,7 +52,7 @@ The client DOM path (`h()` and hydration) writes URL-bearing attributes (href/sr
 
 **Fixed:** `h()`'s static and reactive attribute paths, the xlink path and hydration adoption all route through `isUnsafeAttrWrite` — the same predicate the SSR renderer uses — so the client drops exactly what the server drops and cannot re-add a blocked payload at hydration.
 
-Verified by: `src/dom/__tests__/element-url-safety.test.ts` > "drops exactly what the SSR renderer drops, so hydration cannot re-add it"
+Historical proof (before FORMA-110): [src/dom/__tests__/element-url-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/dom/__tests__/element-url-safety.test.ts) > "drops exactly what the SSR renderer drops, so hydration cannot re-add it"
 Verified by: `src/dom/__tests__/element-url-safety.test.ts` > "drops a javascript: href written through h()"
 Verified by: `src/dom/__tests__/element-url-safety.test.ts` > "drops URL schemes obfuscated with control characters"
 
@@ -127,9 +127,9 @@ Verified by: `src/security/__tests__/url-safety.test.ts` > "matches on* names ca
 
 **Fixed:** `deepStripForbidden` is now iterative with a WeakSet cycle guard, and `createRPCMiddleware` wraps the await so a throw becomes a 500 instead of an unhandled rejection that kills the process.
 
-Verified by: `src/server/__tests__/rpc-deep-strip.test.ts` > "strips forbidden keys at a depth that overflows a recursive walk"
-Verified by: `src/server/__tests__/rpc-deep-strip.test.ts` > "terminates on a cyclic argument graph"
-Verified by: `src/server/__tests__/rpc-deep-strip.test.ts` > "degrades to 500 instead of rejecting when request handling throws"
+Historical proof (before FORMA-110): [src/server/__tests__/rpc-deep-strip.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/server/__tests__/rpc-deep-strip.test.ts) > "strips forbidden keys at a depth that overflows a recursive walk"
+Historical proof (before FORMA-110): [src/server/__tests__/rpc-deep-strip.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/server/__tests__/rpc-deep-strip.test.ts) > "terminates on a cyclic argument graph"
+Historical proof (before FORMA-110): [src/server/__tests__/rpc-deep-strip.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/server/__tests__/rpc-deep-strip.test.ts) > "degrades to 500 instead of rejecting when request handling throws"
 
 #### `store-proto-hijack-via-setter` - FIXED
 
@@ -342,7 +342,7 @@ Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "an empty __forma_
 
 **Fixed:** `srcdoc` is classified as a raw-HTML sink in the shared url-safety module. It is still emitted — a sandboxed `<iframe srcdoc>` is legitimate — but both renderers warn in dev that escaping does not neutralize it, and README/SECURITY.md name it alongside the other trusted-content sinks.
 
-Verified by: `src/ssr/__tests__/render-safety.test.ts` > "warns in dev that srcdoc is a raw-HTML sink but still emits it"
+Historical proof (before FORMA-110): [src/ssr/__tests__/render-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/ssr/__tests__/render-safety.test.ts) > "warns in dev that srcdoc is a raw-HTML sink but still emits it"
 Verified by: `src/security/__tests__/url-safety.test.ts` > "identifies srcdoc as a raw-HTML sink"
 Verified by: `src/dom/__tests__/element-url-safety.test.ts` > "emits srcdoc but warns that escaping does not neutralize it"
 
@@ -545,9 +545,9 @@ Proposed: Reuse the existing validator in the three VNode branches: `if (!isSafe
 
 **Fixed:** All three SSR renderers validate `node.tag` with `isSafeTagName` before interpolating it, and skip the node with a dev warning otherwise. The charset accepts every valid HTML/SVG/custom-element name, so no legitimate tree renders differently — no wire impact.
 
-Verified by: `src/ssr/__tests__/render-safety.test.ts` > "drops a VNode whose tag would inject an attribute"
-Verified by: `src/ssr/__tests__/render-safety.test.ts` > "the streaming renderer drops a VNode with an unsafe tag name"
-Verified by: `src/ssr/__tests__/render-safety.test.ts` > "renders ordinary, SVG and custom-element tags unchanged"
+Historical proof (before FORMA-110): [src/ssr/__tests__/render-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/ssr/__tests__/render-safety.test.ts) > "drops a VNode whose tag would inject an attribute"
+Historical proof (before FORMA-110): [src/ssr/__tests__/render-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/ssr/__tests__/render-safety.test.ts) > "the streaming renderer drops a VNode with an unsafe tag name"
+Historical proof (before FORMA-110): [src/ssr/__tests__/render-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/ssr/__tests__/render-safety.test.ts) > "renders ordinary, SVG and custom-element tags unchanged"
 
 #### `islands-inside-removed-list-rows-never-deactivated` - FIXED (risk: behavioral-additive)
 
@@ -636,7 +636,7 @@ Proposed: Out of bounds to remove or change its output (public API + a wire form
 
 **Fixed:** The finding proposed deprecating it because removal would be breaking for external callers. There are none — ksx Studio is the only consumer and it uses the f:* pipeline — so `renderToStringWithHydration` and its entire `data-forma-h` / `forma-t:N` / `forma-l:N` dialect were deleted rather than left as a second grammar that produces un-adoptable HTML. The test pins the removal so it cannot come back.
 
-Verified by: `src/__tests__/ssr-integration.test.ts` > "does not export a second, unparseable hydration marker dialect"
+Historical proof (before FORMA-110): [src/__tests__/ssr-integration.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/__tests__/ssr-integration.test.ts) > "does not export a second, unparseable hydration marker dialect"
 
 #### `activate-islands-no-shadow-root-param` - FIXED (risk: behavioral-additive)
 
@@ -682,7 +682,7 @@ even against the schemes `DANGEROUS_SCHEME_RE` already covers. One-line fix;
 
 Verified by: `src/security/__tests__/url-safety.test.ts` > "treats the object data attribute as URL-bearing"
 Verified by: `src/dom/__tests__/element-url-safety.test.ts` > "drops javascript: from the object data attribute"
-Verified by: `src/ssr/__tests__/render-safety.test.ts` > "drops javascript: and data:text/html from object data"
+Historical proof (before FORMA-110): [src/ssr/__tests__/render-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/ssr/__tests__/render-safety.test.ts) > "drops javascript: and data:text/html from object data"
 
 #### `svg-data-url-needs-context-aware-check` - FIXED
 
@@ -713,6 +713,6 @@ because the code currently claims to have closed it.
 **Fixed:** Implemented as filed: `isDangerousUrl(value, tag?)` with an `IMAGE_CONTEXT_TAGS` allowlist, strict when no tag is given. Both call sites supply one — `renderAttr` takes the tag from `VNode.tag`, and the client paths pass `el.localName`.
 
 Verified by: `src/security/__tests__/url-safety.test.ts` > "blocks data:image/svg+xml when no tag is supplied"
-Verified by: `src/ssr/__tests__/render-safety.test.ts` > "keeps data:image/svg+xml on an img but drops it on an iframe"
-Verified by: `src/ssr/__tests__/render-safety.test.ts` > "renderAttr with no tag falls back to the strict interpretation"
+Historical proof (before FORMA-110): [src/ssr/__tests__/render-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/ssr/__tests__/render-safety.test.ts) > "keeps data:image/svg+xml on an img but drops it on an iframe"
+Historical proof (before FORMA-110): [src/ssr/__tests__/render-safety.test.ts](https://github.com/getforma-dev/forma/blob/2c7fe9862376eac4ec9bb0378a670e956a497224/packages/core/src/ssr/__tests__/render-safety.test.ts) > "renderAttr with no tag falls back to the strict interpretation"
 Verified by: `src/dom/__tests__/element-url-safety.test.ts` > "drops data:image/svg+xml on an iframe but keeps it on an img"

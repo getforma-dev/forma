@@ -2,8 +2,7 @@
 //! origin, its requests closed but for the documented residuals, and the
 //! runtime inline by its hash (DR-14 tier (c); L-17, L-27, L-44, L-52; SR32;
 //! FORMA-125).
-// `config_script` and `AssetManifest::wasm` are fields every 0.2.x literal
-// names, and the bridge from `render_page` is one of the page paths.
+// `config_script` is a field each remaining legacy page literal names, and the bridge from `render_page` is one of the page paths.
 #![allow(deprecated)]
 
 use axum::body::to_bytes;
@@ -323,7 +322,6 @@ fn manifest() -> AssetManifest {
         build_hash: "test".to_string(),
         assets: HashMap::new(),
         routes,
-        wasm: None,
     }
 }
 

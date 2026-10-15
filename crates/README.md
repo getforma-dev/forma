@@ -53,11 +53,9 @@ forma-ir = "0.2.2"
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
 - Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, `<!--f:l0-->`, `<!--f:i0-->`) that FormaJS uses for client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
 - Writes a `textarea`'s `value` as its text and a `select`'s as `selected` on the matching option, since HTML ignores both as attributes
-- Compiles to WASM for client-side re-renders in the browser (the `wasm` feature: deprecated in 0.2.2, removed in 3.0.0)
 
 **Use it when:**
 - You're building your own server (not Axum) and want Forma SSR
-- You need the WASM build for client-side island re-rendering (deprecated: islands re-render with `@getforma/core`'s `h()`, and the `wasm` feature is removed in 3.0.0)
 - You're building tools that inspect, transform, or generate IR files
 
 **You don't need it directly if:** You're using `forma-server` — it wraps `forma-ir` for you.
@@ -185,7 +183,7 @@ module in your own test suite, that document is what you are guarding against.
 
 | Package | Description |
 |---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | **This repo** — FMIR binary format: parser, walker, WASM exports |
+| [forma-ir](https://crates.io/crates/forma-ir) | **This repo** — FMIR binary format: parser and native HTML walker |
 | [forma-server](https://crates.io/crates/forma-server) | **This repo** — Axum middleware: SSR, asset serving, CSP headers |
 
 ### Full Framework

@@ -127,7 +127,7 @@ export function isUnsafeAttrWrite(tag: string, name: string, value: string): boo
  * legitimate pattern) but treated as a trusted-content sink like
  * `dangerouslySetInnerHTML`, and flagged with a dev-only warning.
  *
- * Verified by: src/ssr/__tests__/render-safety.test.ts > "warns in dev that srcdoc is a raw-HTML sink but still emits it"
+ * Verified by: src/dom/__tests__/element-url-safety.test.ts > "emits srcdoc but warns that escaping does not neutralize it"
  */
 export const RAW_HTML_ATTRS = new Set(['srcdoc']);
 
@@ -154,7 +154,7 @@ export function isSafeAttrName(name: string): boolean {
  * It accepts every valid HTML, SVG and custom-element name, so no legitimate
  * tree renders differently.
  *
- * Verified by: src/ssr/__tests__/render-safety.test.ts > "drops a VNode whose tag would inject an attribute"
+ * Verified by: src/security/__tests__/url-safety.test.ts > "rejects tag names that would inject attributes or close the tag"
  */
 export function isSafeTagName(tag: string): boolean {
   return SAFE_ATTR_NAME_RE.test(tag);

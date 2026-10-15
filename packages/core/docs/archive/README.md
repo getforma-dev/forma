@@ -15,7 +15,8 @@ add a row.
 
 | Document | Retired | What it was, and why it moved |
 |---|---|---|
-| [`2026-08-05-hardening-audit.md`](2026-08-05-hardening-audit.md) | 2026-08-06 | The five-lens hardening audit of 1.5.0: 55 entries, every one closed with a **Fixed:** line and a `Verified by:` citation. A completed point-in-time ledger reads as current documentation when it sits next to the reference docs, which is the confusion this directory exists to prevent. The fixes it records are in `CHANGELOG.md`; what is true today is in the pages listed in [`../README.md`](../README.md). Its citations are **still machine-checked** — `src/__tests__/docs-truth.test.ts` resolves them by path, so the move and the test edit were one change. |
+| [`2026-10-15-legacy-apis/`](2026-10-15-legacy-apis/) | 2026-10-15 | Documentation and performance baseline before removal of Node SSR, server functions and the WASM walker. Current migration guidance is in `../STABILITY.md`. |
+| [`2026-08-05-hardening-audit.md`](2026-08-05-hardening-audit.md) | 2026-08-06 | The five-lens hardening audit of 1.5.0: 55 entries, every one closed with a **Fixed:** line and a `Verified by:` citation. A completed point-in-time ledger reads as current documentation when it sits next to the reference docs, which is the confusion this directory exists to prevent. The fixes it records are in `CHANGELOG.md`; what is true today is in the pages listed in [`../README.md`](../README.md). Its citations for supported APIs are **still machine-checked**; citations to APIs removed in FORMA-110 link to their frozen source revision — `src/__tests__/docs-truth.test.ts` resolves them by path, so the move and the test edit were one change. |
 
 ## Retired and corrected claims
 

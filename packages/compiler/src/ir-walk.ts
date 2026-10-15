@@ -1704,8 +1704,7 @@ function emitChild(
   if (folded !== undefined) {
     // A folded null or boolean emits NOTHING, because that is what the client
     // does with one: `h()` drops `null`, `true` and `false` children outright
-    // (formajs src/dom/element.ts) and so does the client transform's
-    // analyzeChild. Rendering "true" server-side would put text on the page
+    // (packages/core/src/dom/element.ts). Rendering "true" server-side would put text on the page
     // the client has no counterpart for. Same rule as Rule 12, extended to
     // the forms that only become null/boolean after evaluation
     // (`ready() && 'Go'` with ready defaulting to false).

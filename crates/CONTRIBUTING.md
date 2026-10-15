@@ -92,7 +92,7 @@ Two gates are worth understanding rather than just running:
   its cost is a tested property rather than a hope. The time half compares
   sizes 32x apart in back-to-back rounds and judges the median, so a loaded
   machine does not fail it (FORMA-167; 16x apart until FORMA-180).
-- **`crates/forma-ir/tests/js_emitter_contract.rs`** parses `.ir` files emitted
+- **`crates/forma-ir/src/js_emitter_contract.rs`** parses `.ir` files emitted
   by the real TypeScript compiler and diffs the rendered HTML against committed
   goldens. If it fails, the two implementations have diverged; the failure
   message tells you how to regenerate the goldens and reminds you to open the
@@ -134,7 +134,7 @@ comment stops the next reader checking.
 
 ## Crate structure
 
-- `crates/forma-ir/` — FMIR binary parser, HTML walker, WASM exports
+- `crates/forma-ir/` — FMIR binary parser and native HTML walker
 - `crates/forma-server/` — Axum middleware: page rendering, assets, CSP
 
 Each crate has its own README (published to crates.io) and its own CHANGELOG.

@@ -1,15 +1,14 @@
 /**
  * THE SHARED RENDERER CONTRACT.
  *
- * FormaJS writes attributes and text through six independent code paths, and
+ * FormaJS writes attributes and text through five browser code paths, and
  * every one of them must uphold the same guarantees:
  *
- *   1. `src/ssr/render.ts`   — `renderToString()` (server, string output)
- *   2. `src/dom/element.ts`  — `h()` with static props
- *   3. `src/dom/element.ts`  — `h()` with reactive (function) props
- *   4. `src/dom/hydrate.ts`  — `applyDynamicProps()` / `adoptNode()` (adoption)
- *   5. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
- *   6. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
+ *   1. `src/dom/element.ts`  — `h()` with static props
+ *   2. `src/dom/element.ts`  — `h()` with reactive (function) props
+ *   3. `src/dom/hydrate.ts`  — `applyDynamicProps()` / `adoptNode()` (adoption)
+ *   4. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
+ *   5. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
  *
  * Historically each guarantee was asserted thoroughly on exactly ONE of them.
  * That single habit produced 7 of the 25 code defects in
@@ -38,7 +37,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { h } from '../dom/element';
 import { applyDynamicProps, adoptNode } from '../dom/hydrate';
-import { renderToString, sh } from '../ssr/render.js';
 import { mount, unmount } from '../runtime';
 import { URL_ATTRS } from '../security/url-safety';
 import { compileHandler, runHandler } from '../expr/index';
@@ -204,15 +202,6 @@ function exprScope(state: Record<string, unknown>, el: Element): ScopeLike {
 
 const SINKS: Sink[] = [
   {
-    name: 'ssr',
-    programmaticNames: true,
-    declarative: true,
-    objectValues: true,
-    write: (tag, name, value) =>
-      parse(renderToString(sh(tag, { [name]: value, [BENIGN_ATTR]: BENIGN_VALUE }))),
-    writeText: (tag, text) => parse(renderToString(sh(tag, null, text))),
-  },
-  {
     name: 'h-static',
     programmaticNames: true,
     declarative: true,
@@ -238,7 +227,7 @@ const SINKS: Sink[] = [
       owned(() => {
         // Adoption only ever binds FUNCTION props: static ones are already in
         // the server HTML. The element it adopts is the server's own output.
-        const el = parse(renderToString(sh(tag, null)));
+        const el = parse(`<${tag}></${tag}>`);
         applyDynamicProps(el, { [name]: () => value, [BENIGN_ATTR]: () => BENIGN_VALUE });
         return el;
       }),
@@ -328,7 +317,6 @@ afterEach(() => {
 describe('renderer contract: the table covers every sink', () => {
   it('lists exactly the sinks this contract claims to cover', () => {
     expect(SINKS.map((s) => s.name)).toEqual([
-      'ssr',
       'h-static',
       'h-reactive',
       'adopt',
@@ -357,7 +345,7 @@ describe('renderer contract: the table covers every sink', () => {
       'src/expr/allowlist.ts',
     ];
     /** The only module that assembles an attribute into a markup STRING. */
-    const MARKUP_SINK_FILES = ['src/ssr/render.ts'];
+    const MARKUP_SINK_FILES: string[] = [];
 
     const domWriters: string[] = [];
     const markupWriters: string[] = [];
@@ -518,14 +506,14 @@ const BREAKOUT_NAMES = [
 
 /**
  * Names that cannot break out but are outside the well-formed charset. Only the
- * sinks whose NAME can come from runtime data have to police these: `ssr`
+ * sinks whose NAME can come from runtime data have to police these:
  * interpolates the name into markup, and `$el.setAttribute(k, v)` takes `k`
  * from an expression that can read state. Everywhere else the key is a literal
  * in author code and the DOM is the backstop.
  */
 const MALFORMED_NAMES = ['2leading', '-leading', '.leading'] as const;
 
-const DATA_NAME_SINKS = SINKS.filter((s) => s.name === 'ssr' || s.name === '$el.setAttribute');
+const DATA_NAME_SINKS = SINKS.filter((s) => s.name === '$el.setAttribute');
 
 describe.each(DATA_NAME_SINKS)(
   'renderer contract [$name]: attribute names taken from data',
@@ -648,96 +636,6 @@ describe.each(SINKS)('renderer contract [$name]: text is never markup', (sink) =
 });
 
 // ---------------------------------------------------------------------------
-// SSR exact output — the string form, asserted whole
-// ---------------------------------------------------------------------------
-
-describe('renderer contract: SSR emits exactly these bytes', () => {
-  // `render.ts` scored worst in the repo on mutation detection almost entirely
-  // because its assertions were `toContain` fragments. A fragment assertion
-  // cannot see an attribute that was dropped, a quote that was not escaped, or
-  // a `>` that arrived early. These are whole-output assertions.
-
-  it('escapes every HTML metacharacter in a text child', () => {
-    expect(renderToString(sh('p', null, `<a href="x">&'`))).toBe(
-      '<p>&lt;a href=&quot;x&quot;&gt;&amp;&#x27;</p>',
-    );
-  });
-
-  it('escapes every HTML metacharacter in an attribute value', () => {
-    expect(renderToString(sh('a', { title: `" onmouseover=x "` }))).toBe(
-      '<a title="&quot; onmouseover=x &quot;"></a>',
-    );
-    expect(renderToString(sh('a', { title: `<>&'` }))).toBe(
-      '<a title="&lt;&gt;&amp;&#39;"></a>',
-    );
-  });
-
-  it('escapes & first, so an escape is never double-decoded', () => {
-    // `&lt;` in the source must survive as `&amp;lt;`, not decay to `<`.
-    expect(renderToString(sh('p', null, '&lt;script&gt;'))).toBe('<p>&amp;lt;script&amp;gt;</p>');
-    expect(renderToString(sh('p', { title: '&quot;' }))).toBe('<p title="&amp;quot;"></p>');
-  });
-
-  it('drops the dangerous attribute and keeps every benign one, in order', () => {
-    expect(
-      renderToString(sh('a', { id: 'ok', href: 'javascript:alert(1)', title: 'safe' }, 'click')),
-    ).toBe('<a id="ok" title="safe">click</a>');
-  });
-
-  it('renders true as a bare attribute and omits false and null', () => {
-    expect(renderToString(sh('input', { disabled: true, checked: false, name: null, id: 'x' })))
-      .toBe('<input disabled id="x" />');
-  });
-
-  it('closes void elements and never gives them children', () => {
-    expect(renderToString(sh('br', null))).toBe('<br />');
-    expect(renderToString(sh('img', { src: '/a.png' }, 'ignored'))).toBe('<img src="/a.png" />');
-    expect(renderToString(sh('div', null, 'kept'))).toBe('<div>kept</div>');
-  });
-
-  it('maps the JSX prop aliases to their HTML attribute names', () => {
-    expect(renderToString(sh('label', { className: 'a', htmlFor: 'x', tabIndex: 2 }))).toBe(
-      '<label class="a" for="x" tabindex="2"></label>',
-    );
-  });
-
-  it('never serialises a ref prop into the markup, whatever the callback returns', () => {
-    // The idiomatic ref is an arrow with an implicit return —
-    // `ref={(el) => (this.node = el)}` evaluates to the assigned element — so a
-    // `ref` that reached the prop loop would be CALLED and its result
-    // stringified into an attribute. A void ref hides that: the result is
-    // `undefined`, which the null check drops for an unrelated reason.
-    let called = 0;
-    const ref = (): string => { called += 1; return 'LEAKED'; };
-    expect(renderToString(sh('div', { ref, id: 'x' }))).toBe('<div id="x"></div>');
-    expect(called, 'a ref must not be invoked during server rendering').toBe(0);
-  });
-
-  it('drops a whole element whose tag name would inject markup', () => {
-    expect(renderToString(sh('div onload=alert(1)', { id: 'x' }, 'hi'))).toBe('');
-    expect(renderToString(sh('div', null, sh('a><script', null, 'x'), 'after'))).toBe(
-      '<div>after</div>',
-    );
-  });
-
-  it('resolves signal getters in both attributes and children', () => {
-    const [n, setN] = createSignal(1);
-    const tree = (): unknown => sh('p', { 'data-n': () => n() }, () => `n=${n()}`);
-    expect(renderToString(tree())).toBe('<p data-n="1">n=1</p>');
-    setN(2);
-    expect(renderToString(tree())).toBe('<p data-n="2">n=2</p>');
-  });
-
-  it('renders nested trees, arrays and numbers without stray separators', () => {
-    expect(
-      renderToString(
-        sh('ul', { class: 'l' }, [sh('li', null, 1), sh('li', null, 'two')], null, false, 'tail'),
-      ),
-    ).toBe('<ul class="l"><li>1</li><li>two</li>tail</ul>');
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Namespaces: every renderer builds what the parser builds from the markup
 // (decision brief DR-9, FORMA-026)
 // ---------------------------------------------------------------------------
@@ -748,7 +646,7 @@ type NsTree = [string, Record<string, unknown> | null, ...unknown[]];
 /**
  * The shared namespace vectors. The same file drives the three-engine e2e
  * (`e2e/adoption.spec.ts`), where each engine's parser reads the markup and
- * adoption binds it; here h() and renderToString render the tree. happy-dom's
+ * adoption binds it; here h() renders the tree. happy-dom's
  * parser has no MathML and keeps HTML integration points' content in SVG, so
  * the parsed side is the browsers', not happy-dom's.
  */
@@ -794,8 +692,5 @@ describe('renderer contract: namespaces match the parsed server markup (shared v
       expect(built.outerHTML).toBe(vector.server);
     });
 
-    it('renderToString writes the same markup', () => {
-      expect(renderToString(buildWith(sh)(vector.tree))).toBe(vector.server);
-    });
   });
 });

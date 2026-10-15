@@ -20,7 +20,6 @@ forma-ir = "0.2.2"
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
 - Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, etc.) for [FormaJS](https://github.com/getforma-dev/formajs) client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
 - Writes form-control values as HTML reads them: a `textarea`'s `value` as its text, a `select`'s as `selected` on the matching option
-- Compiles to WASM for client-side island re-renders, behind the `wasm` feature, which is deprecated and is removed in 3.0.0 (see below)
 - Renders a list in O(rows), with a committed regression gate that fails the build if that changes (`tests/list_scaling.rs`)
 
 The on-disk layout and its stability contract are documented in
@@ -59,10 +58,13 @@ for the maintained contract and [`CHANGELOG.md`](CHANGELOG.md) for the breaking 
 `dump::dump_ir` is a lossless canonical text representation shared with the compiler. It
 includes every section, including unknown optional bytes and island extensions.
 
+The `wasm` feature and its JavaScript exports were removed in 3.0.0. Browser
+islands re-render with `@getforma/core`. `walk_island` remains internal and is
+not a supported API; server callers use the full-page walker.
+
 ## When You Need This
 
 - **Building your own server** (not Axum) — parse IR and generate HTML yourself
-- **Client-side WASM** — re-render islands in the browser without a server round-trip. Deprecated: the `wasm` feature and its `render` and `render_island` exports are removed in 3.0.0, and islands re-render with `@getforma/core`'s `h()` instead
 - **Build tools** — inspect, transform, or generate IR files
 
 If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server) instead — it wraps `forma-ir` with page rendering, asset serving, and CSP headers.
@@ -87,14 +89,14 @@ If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server
 | Package | Description |
 |---|---|
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | Vite plugin — h() optimization, server transforms, FMIR emission |
+| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR compiler and esbuild SSR plugin |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
 
 ### Backend (Rust)
 
 | Package | Description |
 |---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | **This crate** — FMIR parser, walker, WASM exports |
+| [forma-ir](https://crates.io/crates/forma-ir) | **This crate** — FMIR parser and native HTML walker |
 | [forma-server](https://crates.io/crates/forma-server) | Axum middleware — SSR, asset serving, CSP headers |
 
 ### Full Framework

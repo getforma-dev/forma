@@ -1275,30 +1275,6 @@
   "note": "setText (documented safe for user content) becomes an XSS sink"
  },
  {
-  "id": "mutation/applyRevalidation-noop",
-  "file": "src/server/mutation.ts",
-  "tags": [],
-  "find": "      resource.mutate(freshData);",
-  "replace": "",
-  "note": "public applyRevalidation() never mutates the resource"
- },
- {
-  "id": "mutation/autoRevalidation-noop",
-  "file": "src/server/mutation.ts",
-  "tags": [],
-  "find": "  window.addEventListener('forma:revalidate', handler);",
-  "replace": "",
-  "note": "enableAutoRevalidation() never subscribes"
- },
- {
-  "id": "mutation/registerResource-noop",
-  "file": "src/server/mutation.ts",
-  "tags": [],
-  "find": "  resourceRegistry.set(key, resource);",
-  "replace": "",
-  "note": "public registerResource() does nothing"
- },
- {
   "id": "namespace/desc-content-svg",
   "file": "src/dom/namespace.ts",
   "tags": [
@@ -1525,26 +1501,6 @@
   "note": "data-forma-state prototype-pollution keys no longer stripped"
  },
  {
-  "id": "sec/rpc-no-arg-strip",
-  "file": "src/server/rpc-handler.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "const FORBIDDEN_ARG_KEYS = ['__proto__', 'constructor', 'prototype'];",
-  "replace": "const FORBIDDEN_ARG_KEYS: string[] = [];",
-  "note": "RPC args no longer sanitized for prototype pollution"
- },
- {
-  "id": "sec/rpc-no-endpoint-guard",
-  "file": "src/server/rpc-handler.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);",
-  "replace": "const FORBIDDEN_KEYS = new Set<string>([]);",
-  "note": "endpoint-name prototype pollution guard removed"
- },
- {
   "id": "sec/scheme-re-unanchored",
   "file": "src/security/url-safety.ts",
   "tags": [
@@ -1685,186 +1641,6 @@
   "find": "    if (truthy === lastTruthy) {",
   "replace": "    if (false && truthy === lastTruthy) {",
   "note": "show re-renders branch on every effect run (identity churn)"
- },
- {
-  "id": "ssr/attr-false-emitted",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "  if (resolved === false || resolved == null) return null;",
-  "replace": "  if (resolved == null) return null;",
-  "note": "boolean false emitted as disabled=\"false\" (still disables the control)"
- },
- {
-  "id": "ssr/attr-no-eventhandler-guard",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (isEventHandlerAttr(attrName) || !isSafeAttrName(attrName)) return null;",
-  "replace": "  if (!isSafeAttrName(attrName)) return null;",
-  "note": "SSR emits on* attributes verbatim"
- },
- {
-  "id": "ssr/attr-no-name-guard",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (isEventHandlerAttr(attrName) || !isSafeAttrName(attrName)) return null;\n  if (resolved === true) return ' ' + attrName;",
-  "replace": "  if (isEventHandlerAttr(attrName)) return null;\n  if (resolved === true) return ' ' + attrName;",
-  "note": "SSR emits attribute names that break out of the attribute position"
- },
- {
-  "id": "ssr/attr-no-url-guard",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (isUrlAttr(attrName) && isDangerousUrl(str, tag)) return null;",
-  "replace": "",
-  "note": "SSR emits javascript: URLs"
- },
- {
-  "id": "ssr/attr-true-as-value",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "  if (resolved === true) return ' ' + attrName;",
-  "replace": "  if (resolved === true) return ' ' + attrName + '=\"true\"';",
-  "note": "boolean true no longer emits a bare attribute name"
- },
- {
-  "id": "ssr/escape-html-amp",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  return str\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')",
-  "replace": "  return str\n    .replace(/</g, '&lt;')",
-  "note": "escapeHtml no longer escapes & (double-encode / entity smuggling)"
- },
- {
-  "id": "ssr/escapeAttr-drop-amp",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  return str\n    .replace(/&/g, '&amp;')\n    .replace(/\"/g, '&quot;')",
-  "replace": "  return str\n    .replace(/\"/g, '&quot;')",
-  "note": "escapeAttr no longer escapes & (entity smuggling)"
- },
- {
-  "id": "ssr/escapeAttr-drop-dquote",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    .replace(/&/g, '&amp;')\n    .replace(/\"/g, '&quot;')\n    .replace(/</g, '&lt;')",
-  "replace": "    .replace(/</g, '&lt;')",
-  "note": "SSR attribute values no longer escape double quotes — attribute breakout"
- },
- {
-  "id": "ssr/escapeAttr-drop-lt",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/'/g, '&#39;');",
-  "replace": "    .replace(/>/g, '&gt;')\n    .replace(/'/g, '&#39;');",
-  "note": "escapeAttr no longer escapes <"
- },
- {
-  "id": "ssr/escapeHtml-drop-all-but-quote",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#x27;');",
-  "replace": "    .replace(/\"/g, '&quot;');",
-  "note": "SSR text nodes no longer escape < > & ' — raw XSS"
- },
- {
-  "id": "ssr/escapeHtml-drop-apos",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    .replace(/'/g, '&#x27;');",
-  "replace": "    ;",
-  "note": "escapeHtml no longer escapes single quote"
- },
- {
-  "id": "ssr/escapeHtml-drop-lt",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#x27;');",
-  "replace": "    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#x27;');",
-  "note": "escapeHtml no longer escapes < "
- },
- {
-  "id": "ssr/escapeHtml-drop-quot",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#x27;');",
-  "replace": "    .replace(/'/g, '&#x27;');",
-  "note": "escapeHtml no longer escapes double quote"
- },
- {
-  "id": "ssr/no-tagname-guard",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    if (!isSafeTagName(tag)) {",
-  "replace": "    if (isSafeTagName(tag) && false) {",
-  "note": "SSR interpolates an attacker-controlled tag name verbatim"
- },
- {
-  "id": "ssr/prop-to-attr-classname",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "export const PROP_TO_ATTR: Record<string, string> = {\n  className: 'class',",
-  "replace": "export const PROP_TO_ATTR: Record<string, string> = {\n  classNameXX: 'class',",
-  "note": "className no longer maps to class in SSR output"
- },
- {
-  "id": "ssr/ref-emitted-as-attr",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "        if (key === 'ref' || key === 'dangerouslySetInnerHTML') continue;",
-  "replace": "        if (key === 'dangerouslySetInnerHTML') continue;",
-  "note": "ref serialised into the SSR markup"
- },
- {
-  "id": "ssr/text-child-not-escaped",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (typeof node === 'string') { parts.push(escapeHtml(node)); return; }",
-  "replace": "  if (typeof node === 'string') { parts.push(node); return; }",
-  "note": "SSR text children emitted raw — live <script> in the page"
- },
- {
-  "id": "ssr/void-element-closed",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "    if (VOID_ELEMENTS.has(tag)) { parts.push(' />'); return; }",
-  "replace": "    if (VOID_ELEMENTS.has(tag) && false) { parts.push(' />'); return; }",
-  "note": "void elements get a closing tag"
  },
  {
   "id": "storage/local-skip-validate",
@@ -2953,16 +2729,6 @@
   "find": "    warnScriptElement(tagName);\n",
   "replace": "",
   "note": "h('script') builds a script element with no development warning before 3.0.0 refuses it (DR-19, FORMA-109). Verified by: src/dom/__tests__/trusted-html.test.ts > \"h('script') warns once in development and still builds the element\""
- },
- {
-  "id": "trusted/ssr-refuses-trusted",
-  "file": "src/ssr/render.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (isTrustedHtml(html)) return String(html);\n",
-  "replace": "",
-  "note": "./ssr throws on a dangerouslySetInnerHTML given trustedHtml(), so a component shared with the browser cannot take the typed form (L-18). Verified by: src/dom/__tests__/trusted-html.test.ts > \"the SSR renderers write a trustedHtml() value's markup and still refuse a non-string\""
  },
  {
   "id": "trusted/static-attr-second-conversion",

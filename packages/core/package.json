@@ -2,7 +2,7 @@
   "name": "@getforma/core",
   "author": "Forma <victor@getforma.dev>",
   "version": "3.0.0-dev",
-  "description": "Real DOM reactive library — fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. Untree-shaken core ~29KB gzipped; CDN HTML runtime ~40KB gzipped with a CSP-safe allowlist expression interpreter, zero eval (measured by scripts/check-size.mjs).",
+  "description": "Real DOM reactive library \u2014 fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. Untree-shaken core ~29KB gzipped; CDN HTML runtime ~40KB gzipped with a CSP-safe allowlist expression interpreter, zero eval (measured by scripts/check-size.mjs).",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -56,18 +56,6 @@
         "default": "./dist/runtime-hardened.cjs"
       }
     },
-    "./wasm": {
-      "import": {
-        "types": "./dist/wasm.d.ts",
-        "development": "./dist/dev/wasm.js",
-        "default": "./dist/wasm.js"
-      },
-      "require": {
-        "types": "./dist/wasm.d.cts",
-        "development": "./dist/dev/wasm.cjs",
-        "default": "./dist/wasm.cjs"
-      }
-    },
     "./tc39": {
       "import": {
         "types": "./dist/tc39-compat.d.ts",
@@ -78,18 +66,6 @@
         "types": "./dist/tc39-compat.d.cts",
         "development": "./dist/dev/tc39-compat.cjs",
         "default": "./dist/tc39-compat.cjs"
-      }
-    },
-    "./ssr": {
-      "import": {
-        "types": "./dist/ssr/index.d.ts",
-        "development": "./dist/dev/ssr/index.js",
-        "default": "./dist/ssr/index.js"
-      },
-      "require": {
-        "types": "./dist/ssr/index.d.cts",
-        "development": "./dist/dev/ssr/index.cjs",
-        "default": "./dist/ssr/index.cjs"
       }
     },
     "./http": {
@@ -116,18 +92,6 @@
         "default": "./dist/storage.cjs"
       }
     },
-    "./server": {
-      "import": {
-        "types": "./dist/server.d.ts",
-        "development": "./dist/dev/server.js",
-        "default": "./dist/server.js"
-      },
-      "require": {
-        "types": "./dist/server.d.cts",
-        "development": "./dist/dev/server.cjs",
-        "default": "./dist/server.cjs"
-      }
-    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
@@ -141,23 +105,14 @@
       "runtime-csp": [
         "dist/runtime-hardened.d.ts"
       ],
-      "wasm": [
-        "dist/wasm.d.ts"
-      ],
       "tc39": [
         "dist/tc39-compat.d.ts"
-      ],
-      "ssr": [
-        "dist/ssr/index.d.ts"
       ],
       "http": [
         "dist/http.d.ts"
       ],
       "storage": [
         "dist/storage.d.ts"
-      ],
-      "server": [
-        "dist/server.d.ts"
       ]
     }
   },

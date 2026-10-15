@@ -106,14 +106,14 @@ A page whose counts show more than about 12,500 nodes holds its thread past a mi
 | Package | Description |
 |---|---|
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | Vite plugin — h() optimization, server transforms, FMIR emission |
+| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR compiler and esbuild SSR plugin |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
 
 ### Backend (Rust)
 
 | Package | Description |
 |---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | FMIR parser, walker, WASM exports |
+| [forma-ir](https://crates.io/crates/forma-ir) | FMIR parser and native HTML walker |
 | [forma-server](https://crates.io/crates/forma-server) | **This crate** — Axum middleware: SSR, asset serving, CSP |
 
 ### Full Framework

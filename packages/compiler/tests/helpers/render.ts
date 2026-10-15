@@ -17,7 +17,7 @@
  * share the emitter's blind spots by construction, which is the whole reason
  * the cross-implementation corpus exists. The AUTHORITY on how FMIR renders is
  * `forma/crates/forma-ir/src/walker.rs`, exercised over these same fixtures by
- * `crates/forma-ir/tests/js_emitter_contract.rs` (its `@page defaults` section
+ * `crates/forma-ir/src/js_emitter_contract.rs` (its `@page defaults` section
  * is this same render, produced by the real consumer, pinned to a committed
  * golden). This renderer only lets a compiler-side test state its expectation
  * in markup instead of in slot indices, and it deliberately covers ONLY the

@@ -6,31 +6,20 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
-description = "Forma Module IR: binary format, parser, walker, and WASM exports"
+description = "Forma Module IR: binary format, parser, and server-side HTML walker"
 readme = "README.md"
 # Verified by CI (`msrv` job): `cargo +1.71 check -p forma-ir --all-targets`.
-# The optional `wasm` feature needs 1.77 — wasm-bindgen-macro-support declares
-# it — which cargo enforces from that dependency's own manifest.
 rust-version = "1.71"
 documentation = "https://docs.rs/forma-ir"
-keywords = ["ssr", "binary-ir", "wasm", "web-framework", "forma"]
-categories = ["web-programming", "wasm"]
-
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-O3", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+keywords = ["ssr", "binary-ir", "web-framework", "forma"]
+categories = ["web-programming"]
 
 [dependencies]
 serde_json.workspace = true
 tracing = { workspace = true, optional = true }
-wasm-bindgen = { version = "0.2", optional = true }
 
 [features]
 default = ["tracing", "dump"]
-# DEPRECATED since 0.2.2, removed in 3.0.0 (DR-23). Exports `render` and
-# `render_island` to wasm-bindgen for the browser's WASM walker
-# (`@getforma/core/wasm`, deprecated with it). Both are `#[deprecated]`; the
-# feature still builds for wasm32 (CI's "Verify WASM build" step).
-wasm = ["wasm-bindgen"]
 dump = []
 # Byte-exact FMIR encoders for building test fixtures. Off by default so a
 # consumer's release build does not carry them; forma-server's tests and this

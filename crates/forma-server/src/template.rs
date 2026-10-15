@@ -172,7 +172,6 @@ struct BodyParts {
     body_prefix: String,
     config_script_tag: String,
     page_js_tag: String,
-    wasm_script: String,
     sw_script: String,
 }
 
@@ -229,24 +228,6 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         })
         .unwrap_or_default();
 
-    // The WASM walker's bootstrap, for a manifest that names one: deprecated
-    // with `AssetManifest::wasm`, and removed with it in 3.0.0. Until then
-    // the page is what 0.2.1 wrote.
-    #[allow(deprecated)]
-    let wasm_script = match (
-        &config.manifest.wasm,
-        config.manifest.route(config.route_pattern),
-    ) {
-        (Some(wasm), Some(route)) => match route.ir.as_ref() {
-            Some(ir_name) => format!(
-                "<script nonce=\"{nonce}\">window.__FORMA_WASM__={{loader:\"/_assets/{}\",binary:\"/_assets/{}\",ir:\"/_assets/{}\"}};</script>\n",
-                escape_html(&wasm.loader), escape_html(&wasm.binary), escape_html(ir_name)
-            ),
-            None => String::new(),
-        },
-        _ => String::new(),
-    };
-
     // Only for an application that enabled its worker (DR-25, Q15): the
     // default registers nothing, and `/sw.js` retires any worker installed
     // by an earlier release.
@@ -257,7 +238,6 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         body_prefix,
         config_script_tag,
         page_js_tag,
-        wasm_script,
         sw_script,
     }
 }
@@ -380,7 +360,6 @@ pub(crate) fn write_document(
     html.push_str(&parts.config_script_tag);
     html.push_str(&parts.page_js_tag);
     html.push('\n');
-    html.push_str(&parts.wasm_script);
     html.push_str(&parts.sw_script);
     html.push_str("</body>\n</html>");
     html
@@ -457,7 +436,7 @@ fn render_page_phase2(config: &PageConfig, nonce: &CspNonce) -> PageOutput {
 #[allow(deprecated)]
 mod tests {
     use super::*;
-    use crate::types::{RouteAssets, WasmAssets};
+    use crate::types::RouteAssets;
     use forma_ir::parser::IrModule;
     use forma_ir::slot::{SlotData, SlotValue};
     use std::collections::HashMap;
@@ -469,8 +448,36 @@ mod tests {
             build_hash: "test".to_string(),
             assets: HashMap::new(),
             routes: HashMap::new(),
-            wasm: None,
         }
+    }
+
+    #[test]
+    fn a_legacy_manifest_cannot_restore_the_removed_wasm_bootstrap() {
+        let manifest: AssetManifest = serde_json::from_value(serde_json::json!({
+            "version": 1, "build_hash": "legacy", "assets": {},
+            "routes": {"/": {"js": ["app.js"], "css": [], "fonts": [], "total_size_br": 0, "budget_warn_threshold": 0}},
+            "wasm": {"loader": "legacy-loader.js", "binary": "legacy.wasm"}
+        }))
+        .expect("old unknown manifest fields remain ignored until manifest v2");
+        let page = render_page(&PageConfig {
+            title: "Supported browser shell",
+            route_pattern: "/",
+            manifest: &manifest,
+            config_script: None,
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+        assert!(page.html.contains("/_assets/app.js"));
+        assert!(page.html.contains("<div id=\"app\"></div>"));
+        assert!(!page.html.contains("__FORMA_WASM__"));
+        assert!(!page.html.contains("legacy-loader.js"));
+        assert!(!page.html.contains("legacy.wasm"));
+        assert!(!page.csp.contains("wasm-unsafe-eval"));
     }
 
     /// Build a valid IR module that renders "<p>hello</p>".
@@ -641,115 +648,6 @@ mod tests {
     }
 
     #[test]
-    fn wasm_script_injected_when_manifest_has_wasm_and_route_has_ir() {
-        let mut routes = HashMap::new();
-        routes.insert(
-            "/test".to_string(),
-            RouteAssets {
-                js: vec!["test.abc123.js".to_string()],
-                css: vec![],
-                fonts: vec![],
-                total_size_br: 0,
-                budget_warn_threshold: 204800,
-                ir: Some("test.def456.ir".to_string()),
-            },
-        );
-
-        let manifest = AssetManifest {
-            version: 1,
-            build_hash: "test".to_string(),
-            assets: HashMap::new(),
-            routes,
-            wasm: Some(WasmAssets {
-                loader: "forma_ir.abc.js".to_string(),
-                binary: "forma_ir_bg.def.wasm".to_string(),
-            }),
-        };
-
-        let page = render_page(&PageConfig {
-            title: "WASM Test",
-            route_pattern: "/test",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
-        });
-
-        assert!(page.html.contains("__FORMA_WASM__"));
-        assert!(page.html.contains("/_assets/forma_ir.abc.js"));
-        assert!(page.html.contains("/_assets/forma_ir_bg.def.wasm"));
-        assert!(page.html.contains("/_assets/test.def456.ir"));
-    }
-
-    #[test]
-    fn wasm_script_not_injected_when_no_wasm_in_manifest() {
-        let manifest = empty_manifest();
-        let page = render_page(&PageConfig {
-            title: "No WASM",
-            route_pattern: "/test",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
-        });
-
-        assert!(!page.html.contains("__FORMA_WASM__"));
-    }
-
-    #[test]
-    fn wasm_script_not_injected_when_route_has_no_ir() {
-        let mut routes = HashMap::new();
-        routes.insert(
-            "/test".to_string(),
-            RouteAssets {
-                js: vec!["test.abc123.js".to_string()],
-                css: vec![],
-                fonts: vec![],
-                total_size_br: 0,
-                budget_warn_threshold: 204800,
-                ir: None, // no IR
-            },
-        );
-
-        let manifest = AssetManifest {
-            version: 1,
-            build_hash: "test".to_string(),
-            assets: HashMap::new(),
-            routes,
-            wasm: Some(WasmAssets {
-                loader: "forma_ir.abc.js".to_string(),
-                binary: "forma_ir_bg.def.wasm".to_string(),
-            }),
-        };
-
-        let page = render_page(&PageConfig {
-            title: "No IR",
-            route_pattern: "/test",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
-        });
-
-        assert!(!page.html.contains("__FORMA_WASM__"));
-    }
-
-    #[test]
     fn phase2_with_slot_data() {
         use forma_ir::parser::test_helpers::{build_minimal_ir, encode_close_tag, encode_open_tag};
 
@@ -826,7 +724,6 @@ mod tests {
             build_hash: "test".to_string(),
             assets: HashMap::new(),
             routes,
-            wasm: None,
         };
 
         let page = render_page(&PageConfig {

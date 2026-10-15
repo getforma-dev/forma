@@ -19,6 +19,12 @@ function subpathKeys(): string[] {
 }
 
 describe('exports map', () => {
+  it('publishes the exact v3 surface without server functions, WASM or Node SSR', () => {
+    expect(Object.keys(pkg.exports).sort()).toEqual([
+      '.', './http', './package.json', './runtime', './runtime-csp',
+      './runtime-hardened', './storage', './tc39',
+    ]);
+  });
   it('exposes ./package.json so scaffolders and bundler probes can read it', () => {
     // ERR_PACKAGE_PATH_NOT_EXPORTED otherwise — hit by Vite plugin detection
     // and by `require('@getforma/core/package.json')` in create-forma-app.

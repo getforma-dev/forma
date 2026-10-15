@@ -59,7 +59,7 @@ asserted on its sibling.
 
 **Cost:** 7 of the 25 real code defects found this week, including the only
 non-documentation Critical. `formajs` has four renderers that must uphold the
-same guarantees — SSR `src/ssr/render.ts`, client `src/dom/element.ts`,
+same guarantees — client `src/dom/element.ts`,
 hydration adoption `src/dom/hydrate.ts`, and the HTML runtime's `data-*`
 binder — and URL-scheme blocking was asserted on exactly one of them, so
 `h('a', { href: 'javascript:alert(1)' })` emitted the attribute verbatim with a
@@ -310,7 +310,7 @@ not merge.
 1. Does every `toHaveBeenCalled*` / `toThrow` in this diff have an
    observable-outcome assertion after it?
 2. Does this guarantee exist on a sibling path (SSR / `h()` / hydrate /
-   `data-bind`; parser / walker / WASM)? If so, is the assertion in the shared
+   `data-bind`; parser / walker)? If so, is the assertion in the shared
    table rather than one path's file?
 3. Does the "we block X" test also assert that a benign sibling survives?
 4. Depth floors met — state machine ≥ 3 transitions, list ≥ 2 items *and* a
@@ -342,7 +342,7 @@ aspirational unless it says "proposed".
 |---|---|
 | Full unit suite on every push and PR | all four repos |
 | Coverage report (text and lcov, no threshold) | `formajs` only, `npm run test:coverage`; `forma`, `forma-tools` and `create-forma-app` collect none |
-| Cross-implementation FMIR contract: the real compiler emits `.ir` files, the real Rust parser reads them and diffs against committed goldens | `forma-tools` `npm run emit:corpus` → `forma` `crates/forma-ir/tests/js_emitter_contract.rs`; CI fails with regeneration instructions |
+| Cross-implementation FMIR contract: the real compiler emits `.ir` files, the real Rust parser reads them and diffs against committed goldens | `forma-tools` `npm run emit:corpus` → `forma` `crates/forma-ir/src/js_emitter_contract.rs`; CI fails with regeneration instructions |
 | Linear-cost regression gate on the SSR list walk (wall time *and* allocation count) | `forma` `crates/forma-ir/tests/list_scaling.rs` |
 | Bundle-size ceilings on the real ESM import graph | `formajs` `npm run check:size` |
 | Built-artifact greps (no `new Function` in the hardened build) | `formajs` `scripts/verify-dist.mjs`, run as the last build step |

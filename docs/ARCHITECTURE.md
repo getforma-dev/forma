@@ -204,8 +204,8 @@ serde, byte-for-byte (`forma-spike-1-fmir-compat.md`).
 bound, every cross-table reference, every control-flow region, duplicate ids,
 tag/attr name legality, island offsets. The walker then assumes a valid module
 and stays cheap. `walk_to_html` produces a whole page; `walk_island` seeks to
-one island's `byte_offset` and produces just that island's root element (used by
-the WASM build for client-side re-render).
+one island's `byte_offset` internally. It has no supported public caller since
+3.0.0 removed the WASM walker (DR-10). Browser islands re-render with core's `h()`.
 
 **`forma-server`.** `render_page` builds the document around the walker's output
 and returns `PageOutput { html, csp, nonce }` — the three are one unit, because
@@ -245,7 +245,7 @@ are created for matched content.
 never talks back. `formajs` reads what `forma` emits and never talks back. The
 graph is a straight line — which is why a change in the middle can break both
 ends without any compiler noticing. That asymmetry is the reason §3 exists and
-the reason `crates/forma-ir/tests/js_emitter_contract.rs` exists: it is the one
+the reason `crates/forma-ir/src/js_emitter_contract.rs` exists: it is the one
 test in the stack where the real TS emitter's bytes are fed to the real Rust
 consumer.
 
@@ -274,8 +274,8 @@ section data starting at offset 48.
 
 *The version rule:* `IrHeader::parse` rejects any version but `IR_VERSION`.
 There is no compatibility window in either direction. A bump to 3 means every
-`.ir` module is recompiled and the compiler, `forma-ir`, `forma-server`, the WASM
-walker and every embedded module in every consumer ship **together**. A bump is
+`.ir` module is recompiled and the compiler, `forma-ir`, `forma-server`
+and every embedded module in every consumer ship **together**. A bump is
 reserved for changes that cannot be additive. Adding an opcode byte, an enum
 value, or a fifth section *appended after* the existing four are all additive and
 stay in v2.
@@ -550,7 +550,7 @@ and **MUST NOT** string-match the raw script text. The previous `</` → `<\/`
 escape was insufficient: a props value containing `<!--` followed later by
 `<script` drives a spec-compliant tokenizer into the *script-data-double-escaped*
 state, where the walker's own `</script>` is consumed as text and the entire
-rest of the page — config script, module tag, WASM bootstrap, `</body>` — is
+rest of the page — config script, module tag, `</body>` — is
 swallowed. The page renders completely inert, driven purely by user-controlled
 slot data (`walker.rs:push_json_script_body`; forma-ir CHANGELOG 0.2.0,
 Security). The parsed *values* are unchanged, so this was not a coordinated
@@ -580,7 +580,7 @@ that tells them to migrate to the native path.
 | Contract | Enforced by |
 |---|---|
 | FMIR frozen bytes | `forma/crates/forma-ir/tests/fmir_contract.rs` (reads raw bytes as a consumer would) |
-| Real emitter → real consumer | `forma/crates/forma-ir/tests/js_emitter_contract.rs` + `forma-tools/packages/compiler/tests/fixtures/ir-corpus/` |
+| Real emitter → real consumer | `forma/crates/forma-ir/src/js_emitter_contract.rs` + `forma-tools/packages/compiler/tests/fixtures/ir-corpus/` |
 | Slot-name uniqueness | `forma-tools/packages/compiler/tests/ir-walk.test.ts` |
 | First-wins duplicate rule | `forma/crates/forma-ir/src/parser.rs > "duplicate_slot_names_resolve_first_wins_everywhere"` |
 | Marker parsing strictness | `formajs/src/dom/__tests__/hydrate.test.ts` |
@@ -911,8 +911,8 @@ CHANGELOG 0.2.0).
 
 **[INFERENCE]** the reason to prefer degradation over a hard failure: this is a
 *rendering* stack, and a slow-but-correct page beats a 500. The code never says
-so; the pattern is consistent enough across `load_ir_modules`, `render_page_phase2`
-and the WASM `render()` panic-to-JS-catch path that I am confident in it.
+so; the original inference used `load_ir_modules`, `render_page_phase2` and the
+now-removed WASM path. See the archived pre-removal architecture for that history.
 
 ### D11 — A fragment render is self-contained
 
@@ -1056,11 +1056,8 @@ bytes on purpose"):
 - **No markers inside `textarea`, `title`, `style` or `script`** (3.3, the
   context rule).
 
-> ⚠️ **Parity gap, not closed by the walker change.** The JS renderer
-> (`renderToString`, `formajs/src/ssr/render.ts`) still writes `value=` on a
-> textarea and a select, as the walker used to. It writes no hydration markers at
-> all, so the context rule does not apply to it, but the form-control rule does.
-> Tracked here; it is a formajs change.
+> The separate Node renderer and its form-control parity gap were removed in
+> FORMA-110. Native Rust SSR remains the supported server rendering path.
 
 ### 6.3 Glossary
 

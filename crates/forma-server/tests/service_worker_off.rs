@@ -36,7 +36,6 @@ fn manifest() -> AssetManifest {
         build_hash: "test".to_string(),
         assets: HashMap::new(),
         routes,
-        wasm: None,
     }
 }
 

@@ -673,76 +673,6 @@ describe('@getforma/build — functional', () => {
     }
   }, 60_000);
 
-  // ---- Test 12: WASM build through a .cmd-shimmed tool -------------------
-  it('runs a .cmd-shimmed wasm-pack (the Windows npm install shape)', async () => {
-    const entryFile = join(srcDir, 'app.ts');
-    writeFileSync(entryFile, 'export const x = 1;\n');
-
-    const crateDir = join(tmpRoot, 'crate');
-    const pkgDir = join(crateDir, 'pkg');
-    mkdirSync(crateDir, { recursive: true });
-
-    // `npm i -g wasm-pack` installs a .cmd shim on Windows, which
-    // CreateProcess (execFileSync without a shell) cannot exec — the exact
-    // shape of dogfood finding #1, where the tailwind step spawned npx.cmd.
-    // Without shell:true this build reports "wasm-pack not found" and silently
-    // ships no WASM.
-    const binDir = join(tmpRoot, 'bin');
-    mkdirSync(binDir, { recursive: true });
-    if (process.platform === 'win32') {
-      writeFileSync(
-        join(binDir, 'wasm-pack.cmd'),
-        [
-          '@echo off',
-          'if "%~1"=="--version" ( echo wasm-pack 0.0.0-test & exit /b 0 )',
-          `if not exist "${pkgDir}" mkdir "${pkgDir}"`,
-          `> "${join(pkgDir, 'forma_ir_bg.wasm')}" echo fake-wasm-binary`,
-          `> "${join(pkgDir, 'forma_ir.js')}" echo export const init = 1;`,
-          'exit /b 0',
-          '',
-        ].join('\r\n'),
-      );
-    } else {
-      const shim = join(binDir, 'wasm-pack');
-      writeFileSync(
-        shim,
-        [
-          '#!/bin/sh',
-          'if [ "$1" = "--version" ]; then echo "wasm-pack 0.0.0-test"; exit 0; fi',
-          `mkdir -p "${pkgDir}"`,
-          `echo fake-wasm-binary > "${join(pkgDir, 'forma_ir_bg.wasm')}"`,
-          `echo "export const init = 1;" > "${join(pkgDir, 'forma_ir.js')}"`,
-          '',
-        ].join('\n'),
-      );
-      chmodSync(shim, 0o755);
-    }
-
-    const prevPath = process.env.PATH;
-    process.env.PATH = binDir + delimiter + prevPath;
-    try {
-      await build({
-        entryPoints: [{ entry: entryFile, outfile: 'app.js' }],
-        routes: { '/': { js: ['app'], css: [] } },
-        outputDir: outDir,
-        wasm: { crateDir },
-      });
-    } finally {
-      process.env.PATH = prevPath;
-    }
-
-    const manifest: AssetManifest = JSON.parse(
-      readFileSync(join(outDir, 'manifest.json'), 'utf8'),
-    );
-
-    // The tool ran, its outputs were copied, hashed, and wired into the manifest.
-    expect(manifest.wasm).toBeDefined();
-    expect(manifest.wasm!.binary).toMatch(/^forma_ir_bg\.[0-9a-f]{8}\.wasm$/);
-    expect(manifest.wasm!.loader).toMatch(/^forma_ir\.[0-9a-f]{8}\.js$/);
-    expect(existsSync(join(outDir, manifest.wasm!.binary))).toBe(true);
-    expect(readFileSync(join(outDir, manifest.wasm!.binary), 'utf8').trim())
-      .toBe('fake-wasm-binary');
-  }, 20_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -751,8 +681,7 @@ describe('@getforma/build — functional', () => {
 //
 // The application embeds `outputDir` in its binary (rust-embed), so whatever is
 // there when `cargo build` runs ships. The build used to empty `outputDir`
-// first and write into it step by step, so a failure in a late step (here
-// wasm-pack, which runs after the CSS, the fonts and the bundles are written)
+// first and write into it step by step, so a failure after writing an asset (here the second CSS input)
 // left the previous good build deleted and half of the new one in its place.
 
 /** Every file under `dir`, by relative path, with its bytes. */
@@ -767,41 +696,6 @@ function snapshot(dir: string): Record<string, string> {
   };
   walk(dir, '');
   return files;
-}
-
-/**
- * A wasm-pack on PATH whose build step fails the way a crate that does not
- * compile does: the version probe succeeds, so the build runs it, after every
- * earlier step has written its output. Windows gets a `.cmd` shim, the shape
- * `npm i -g wasm-pack` installs there.
- */
-function failingWasmPack(binDir: string): void {
-  mkdirSync(binDir, { recursive: true });
-  if (process.platform === 'win32') {
-    writeFileSync(
-      join(binDir, 'wasm-pack.cmd'),
-      [
-        '@echo off',
-        'if "%~1"=="--version" ( echo wasm-pack 0.0.0-test & exit /b 0 )',
-        'echo error: could not compile forma-ir 1>&2',
-        'exit /b 1',
-        '',
-      ].join('\r\n'),
-    );
-  } else {
-    const shim = join(binDir, 'wasm-pack');
-    writeFileSync(
-      shim,
-      [
-        '#!/bin/sh',
-        'if [ "$1" = "--version" ]; then echo "wasm-pack 0.0.0-test"; exit 0; fi',
-        'echo "error: could not compile forma-ir" >&2',
-        'exit 1',
-        '',
-      ].join('\n'),
-    );
-    chmodSync(shim, 0o755);
-  }
 }
 
 describe('@getforma/build — atomic output (L-21)', () => {
@@ -833,22 +727,13 @@ describe('@getforma/build — atomic output (L-21)', () => {
     rmSync(tmpRoot, { recursive: true, force: true });
   });
 
-  /** Run a build with a failing wasm-pack first on PATH. */
+  /** The first CSS entry writes successfully; the second fails before promotion. */
   async function failingBuild(): Promise<Error> {
-    const binDir = join(tmpRoot, 'bin');
-    failingWasmPack(binDir);
-    const prevPath = process.env.PATH;
-    process.env.PATH = binDir + delimiter + prevPath;
-    try {
-      const outcome = await build({ ...config, wasm: { crateDir: join(tmpRoot, 'crate') } }).then(
-        () => undefined,
-        (error: unknown) => error,
-      );
-      expect(outcome).toBeInstanceOf(Error);
-      return outcome as Error;
-    } finally {
-      process.env.PATH = prevPath;
-    }
+    const outcome = await build({ ...config, cssEntries: [
+      ...config.cssEntries!, { input: join(srcDir, 'missing.css'), outfile: 'missing.css' },
+    ] }).then(() => undefined, (error: unknown) => error);
+    expect(outcome).toBeInstanceOf(Error);
+    return outcome as Error;
   }
 
   it('leaves the previous build byte-identical when a build fails after writing files', async () => {
@@ -857,25 +742,25 @@ describe('@getforma/build — atomic output (L-21)', () => {
     expect(Object.keys(good)).toContain('manifest.json');
     const besideOutput = readdirSync(tmpRoot).sort();
 
-    // The next build changes every input, then fails in its last-but-three
-    // step, after its CSS, font and bundle are written.
+    // The next build changes every input, writes its first CSS file, then
+    // fails reading the second CSS input.
     writeFileSync(join(srcDir, 'app.ts'), 'export const label = "second, failed build";\n');
     writeFileSync(join(srcDir, 'main.css'), '.second { color: blue; }\n');
     const error = await failingBuild();
-    expect(error.message).toMatch(/wasm-pack/);
+    expect(error.message).toMatch(/missing\.css/);
 
     expect(snapshot(outDir)).toEqual(good);
     // Nothing is left beside the output either: the staging directory the
-    // failed build wrote into is gone. (`bin` is the test's own wasm-pack.)
-    expect(readdirSync(tmpRoot).sort()).toEqual([...besideOutput, 'bin'].sort());
+    // failed build wrote into is gone.
+    expect(readdirSync(tmpRoot).sort()).toEqual(besideOutput);
   }, 30_000);
 
   it('a failed first build leaves no output directory and nothing beside it', async () => {
     const error = await failingBuild();
-    expect(error.message).toMatch(/wasm-pack/);
+    expect(error.message).toMatch(/missing\.css/);
 
     expect(existsSync(outDir)).toBe(false);
-    expect(readdirSync(tmpRoot).sort()).toEqual(['bin', 'fonts', 'src']);
+    expect(readdirSync(tmpRoot).sort()).toEqual(['fonts', 'src']);
   }, 30_000);
 
   it('a successful build replaces the previous output whole', async () => {

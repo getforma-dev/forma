@@ -225,14 +225,6 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     "The worker is 0.3.0's: its caches are shared by every Forma application on the origin, and it takes over open tabs at once. From 3.0.0 a worker is written only for a named app. A deprecation, not a construct the server cannot render, so --strict does not fail on it.",
     "Set `app` to the name the server passes to forma-server's `sw::ServiceWorker::for_app`, for caches per application and build and a waiting upgrade.",
     false),
-  entry('BUILD-803', '`wasm` in the config (deprecated; note)',
-    "The `wasm` key goes in 3.0.0 with the WASM walker (forma-ir's `wasm` feature and `@getforma/core/wasm`). The old path keeps working in A2, so strict mode does not fail a build that still sets it.",
-    'Remove `wasm` from the config: islands re-render in the browser with h(), and forma-server renders pages.',
-    false),
-  entry('BUILD-804', 'The wasm-pack step ran (deprecated; note)',
-    "The wasm-pack step goes in 3.0.0: forma_ir.js, forma_ir_bg.wasm and the manifest's wasm entry go with the WASM walker. It still runs and ships the walker in A2, so strict mode does not fail on it.",
-    'Remove `wasm` from the config.',
-    false),
   // The preview frame's runtime (FORMA-175): `previewFrame: true` copies
   // the frame runtime of the core the bundles import as the manifest's
   // forma-runtime.js, which forma-server's PreviewFrame::load inlines by its
@@ -246,6 +238,9 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-807', 'Bundles that import more than one @getforma/core',
     "`previewFrame` is on, and the bundles import more than one @getforma/core, whose frame runtimes differ (entries from packages with their own cores, or a library bundling its own): the frame runs one runtime, so the build would have to pick the core it renders previews with, and the page could mount the module with another.",
     'Make every entry import one @getforma/core (one version in the workspace, `npm dedupe`, a library taking core as a peer dependency), or turn `previewFrame` off.'),
+  entry('BUILD-808', 'Server functions were removed',
+    'Forma builds browser code; a server function body must never ship as a browser implementation.',
+    'Move server-side work to an authenticated Rust route and call that route from the browser.'),
   // The raw-entry lint, forma-raw-lint (FORMA-126, SR8): reported by @getforma/build's
   // bin, never in a build's report. RAW_LINT_CATALOGUE in packages/build/src/raw-lint.ts
   // holds the same entries (packages/build/tests/raw-lint.test.ts keeps them equal).
@@ -267,10 +262,6 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'Fix the syntax error the message names, or leave the file out with --exclude if it is not source.'),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
-  entry('BUILD-901', '`transformServerFunctions` called (deprecated; note)',
-    'The "use server" transform goes in 3.0.0 with server functions and `@getforma/core/server` (DR-22). Logged once per process when it is called; `@getforma/build` never calls it, so it is never in a build\'s report.',
-    "Serve the call from a route in the application's Rust server.",
-    false),
 ]);
 
 const BY_CODE: ReadonlyMap<string, DiagnosticEntry> = new Map(
