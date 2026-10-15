@@ -190,6 +190,9 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-606', 'Module emission failed',
     'The compiler failed while emitting the page (or writing its module) and fell back to a placeholder module. This is a defect in the compiler or an input it does not expect.',
     'Report it with the message; until it is fixed, declare the route `ssr: false`.'),
+  entry('BUILD-610', 'Invalid declared page props',
+    'The declared page data cannot be represented by the closed props schema; the build fails even without strict mode.',
+    'Declare one object parameter using strings, booleans, numbers, Date, string-literal unions, arrays, optional fields and nested object types.'),
 
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
@@ -340,6 +343,8 @@ export interface ReportInput {
   node?: Locatable | null;
   /** A position to use instead of a node's (1-based line, 0-based column). */
   position?: SourcePosition;
+  /** The node/position already refers to original TypeScript, before JSX lowering. */
+  original?: boolean;
   /**
    * The printed text after `IR: <code> `, given where to say it happened:
    * `file:line:column`, or `file` alone when the position is unknown.
@@ -383,7 +388,7 @@ export function reportDiagnostic(input: ReportInput): Diagnostic {
   // change what is emitted. A test keeps every code in the source catalogued.
   const entryForCode = BY_CODE.get(input.code) ?? { why: '', fix: '', strict: true };
   const start = input.position ?? input.node?.loc?.start;
-  const located = input.file && start ? originalPosition(input.file, start) : null;
+  const located = input.file && start ? (input.original ? { line: start.line, column: start.column + 1 } : originalPosition(input.file, start)) : null;
   const where = !input.file
     ? ''
     : located

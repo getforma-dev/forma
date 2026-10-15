@@ -11,18 +11,18 @@ Axum middleware for the [Forma Stack](https://getforma.dev) — server-side rend
 ```toml
 [dependencies]
 forma-server = "=3.0.0-dev"
+forma-ir = "=3.0.0-dev"
 ```
 
-This is the coordinated development version, not a publication announcement.
-Use the workspace or verified candidate artifacts until the coordinated release.
-The crate pulls in `forma-ir` automatically.
+This is the staged 3.0.0 contract; the release remains gated. Derive handler data with `forma_ir::PageProps`. The [archived A2 README](../../docs/archive/2026-10-15-declared-props/forma-server-README.md) preserves the old slot-injection API.
 
 ## What It Does
 
-- **`try_render(config, ctx)`** — renders a page from an IR module + slot data and returns `Result<PageResponse, RenderError>`: the page with its counts (nodes, bytes, list rows, walk time), or a coded error naming the route and component; never an empty shell in place of a failure, and a panic in the render comes back as `RenderError::Fault`
+- **`PageHandle::<P>::render(&props, &ctx)`** — renders only a handler contract verified at startup; encodes declared fields by name, checks numeric/date bounds, and preserves policy/headers. See [declared props](../../docs/DECLARED-PROPS.md).
+- **`try_render(config, ctx)`** (interim low-level bridge; FORMA-107 removes it) — renders a page from an IR module + slot data and returns `Result<PageResponse, RenderError>`: the page with its counts (nodes, bytes, list rows, walk time), or a coded error naming the route and component; never an empty shell in place of a failure, and a panic in the render comes back as `RenderError::Fault`
 - **`render_browser_shell(config, ctx)`** — the bundle and the same headers around an empty root, for a route the build declares `ssr: false`
 - **`PageResponse`** — the page as axum's `IntoResponse`: always `Cache-Control: no-store`, the strict policy for the page's nonce, and the document headers; a handler extends the policy with typed `PolicyExtensions`, never as text
-- **`load_ir_modules_strict(manifest)`** — the module loader: loads and checks every `.ir` file the manifest declares at startup, or returns every failure (route, file and a `LOAD-1xx` code) so the server refuses to start before its port binds; a route declared `ssr: false` needs no module. The lenient `load_ir_modules`, which serves a corrupt module's route as an empty shell, is deprecated in 0.2.2
+- **`load_ir_modules_strict(manifest)`** — the module loader: loads and checks every `.ir` file the manifest declares at startup, or returns every failure (route, file and a `LOAD-1xx` code) so the server refuses to start before its port binds; a route declared `ssr: false` needs no module. `load_ir_modules` now returns the strict `Pages` registry; there is no lenient fallback. The tuple helper is retained temporarily for FORMA-107
 - **`IrModules::<Assets>::load(manifest)`** — the same strict loading, holding the modules for you: `get(route)` returns the route's module, and in a debug build rereads it when `forma-build --watch` rewrites it, so an edited page is served on the next request without a restart (a module that fails to load keeps the previous one and logs its code). A release build reads nothing after start
 - **`sw::serve_sw` and `sw::configure`**: the service worker is opt-in (0.2.2). By default no page registers one and `/sw.js` serves a retiring worker that clears Forma's v1 caches and unregisters; an application that wants its worker calls `sw::configure_for_manifest(ServiceWorker::for_app("name")?.enabled(), &manifest)` once at start
 - **`serve_asset(filename)`** — serves assets with Brotli/gzip negotiation; `Cache-Control: immutable` only for explicit manifest metadata (including retained assets and split chunks), revalidation + ETag for the rest
@@ -32,43 +32,23 @@ The crate pulls in `forma-ir` automatically.
 ## Quick Start
 
 ```rust,no_run
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use forma_server::{assets, load_ir_modules_strict, try_render, PageConfig, RenderCtx, RenderMode};
-use rust_embed::Embed;
+use forma_ir::PageProps;
+use forma_server::{assets, load_ir_modules, PageHandle, RenderCtx};
 
-#[derive(Embed)]
-#[folder = "dist/"]
-struct Assets;
+#[derive(PageProps)]
+struct HomeProps { title: String }
 
-// At startup, before the port binds: a bad manifest or module stops the server.
-let manifest = assets::try_load_manifest::<Assets>()?;
-let (render_modes, ir_modules) = load_ir_modules_strict::<Assets>(&manifest)
-    .map_err(|errors| format!("{errors:?}"))?;
+fn start<Assets: rust_embed::Embed + 'static>() -> Result<PageHandle<HomeProps>, String> {
+    let manifest = assets::try_load_manifest::<Assets>()?;
+    let pages = load_ir_modules::<Assets>(&manifest).map_err(|errors| format!("{errors:?}"))?;
+    // Only after every bind succeeds should the application open its listener.
+    pages.bind("home").map_err(|errors| format!("{errors:?}"))
+}
 
-// Per request. PageConfig has no Default impl — every field is explicit.
-let page = try_render(
-    &PageConfig {
-        title: "Home",
-        route_pattern: "/",
-        manifest: &manifest,
-        config_json: None,
-        body_class: None,
-        personality_css: None,
-        body_prefix: None,
-        render_mode: RenderMode::Phase2SsrReconcile,
-        ir_module: ir_modules.get("/"),
-        slots: Some(&forma_ir::SlotData::new(0)),
-    },
-    &RenderCtx::new(),
-);
-let response: Response = match page {
-    // A PageResponse writes no-store, the policy and the document headers.
-    Ok(page) => page.into_response(),
-    // The handler chooses: log `error` (its code, route and component), then
-    // serve the application's own error page.
-    Err(error) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-};
+fn home(page: &PageHandle<HomeProps>) -> Result<forma_server::PageResponse, forma_server::RenderError> {
+    page.render(&HomeProps { title: "Hello".into() },
+        &RenderCtx::new().with_title("This request's title").with_body_class("home"))
+}
 ```
 
 A page whose counts show more than about 12,500 nodes holds its thread past a millisecond (at the measured 12.5 million nodes a second); move that route's `try_render` into `tokio::task::spawn_blocking` (the recipe is in `try_render`'s documentation). forma-server itself starts no threads and depends on no async runtime.
@@ -77,8 +57,8 @@ A page whose counts show more than about 12,500 nodes holds its thread past a mi
 
 | Mode | What happens | When to use |
 |------|-------------|-------------|
-| **Phase 1: Client Mount** | Renders `<div id="app"></div>` — FormaJS mounts from scratch | No IR available, or fallback |
-| **Phase 2: SSR Reconcile** | Renders full HTML from IR walker — FormaJS hydrates | IR + slots available, fast first paint |
+| **Phase 1: Client Mount** | Renders `<div id="app"></div>` — FormaJS mounts from scratch | Explicit manifest browser mode |
+| **Phase 2: SSR Reconcile** | Renders full HTML from IR walker — FormaJS hydrates | A verified typed handler and declared page schema |
 
 ## Security
 
