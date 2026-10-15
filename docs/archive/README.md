@@ -24,6 +24,7 @@ it was wrong the first time.
 |---|---|---|
 | [`2026-10-15-declared-props/`](2026-10-15-declared-props/) | 2026-10-15 | Server guide and FMIR format before FORMA-102 replaced the lenient loader and caller-supplied slots with declared props and typed page handles. [`DECLARED-PROPS.md`](../DECLARED-PROPS.md) describes the current contract. |
 | [`2026-10-15-legacy-apis/`](2026-10-15-legacy-apis/) | 2026-10-15 | Compiler/build and crate guides, architecture and diagnostics before FORMA-110 removed the Vite plugins, Node RPC/SSR and WASM walker. The live guides describe the remaining native FMIR pipeline. |
+| [`2026-10-15-islands-only-e2e/`](2026-10-15-islands-only-e2e/) | 2026-10-15 | The SSR e2e lane before FORMA-105's entry contract: conditional entries, whole-page adoption by `mount()`, Phase 1 from the server route's bundle, activation observed as `data-forma-status="active"`. The live lane (`e2e/ssr/`, [`e2e/README.md`](../../e2e/README.md)) uses the one entry shape `BUILD-611` accepts, islands only, an explicit Browser route for Phase 1, and strict activation's contract. |
 | [`2026-10-15-FMIR-FORMAT-v2.md`](2026-10-15-FMIR-FORMAT-v2.md) | 2026-10-15 | [`FMIR-FORMAT.md`](../FMIR-FORMAT.md) defines v3: new signature, exact writer version, CRC, variable sections and schema metadata. The old fixed-header promise is superseded; legacy modules require rebuilding. |
 
 ## FORMA-112 compatibility transition (2026-10-15)
