@@ -188,6 +188,7 @@ impl RenderCtx {
 /// | RENDER-103 | [`RouteMode`](RenderError::RouteMode) | A shell route is absent or not Browser |
 /// | RENDER-406 | [`Unfinalized`](RenderError::Unfinalized) | Required startup finalization is incomplete |
 /// | RENDER-102 | [`Walk`](RenderError::Walk) | The walk refused the module or its data |
+/// | RENDER-503 | [`Walk`](RenderError::Walk) | A keyed list row has no usable identity, repeats another row's key, or has no single root to carry it (FORMA-181) |
 /// | RENDER-201 | [`Policy`](RenderError::Policy) | A policy extension is not a source a page may add |
 /// | RENDER-202 | [`Nonce`](RenderError::Nonce) | The system random source failed to draw a nonce |
 /// | RENDER-301 | [`Budget`](RenderError::Budget) | The complete escaped response passed `max_output_bytes` |
@@ -332,7 +333,12 @@ impl RenderError {
             RenderError::Props { cause } => cause.code(),
             RenderError::Binding { .. } => "RENDER-405",
             RenderError::MissingModule { .. } => "RENDER-101",
-            RenderError::Walk { .. } => "RENDER-102",
+            RenderError::Walk { cause, .. } => match cause {
+                // A published code keeps its meaning; the keyed-row refusal
+                // is a new cause with its own code (FORMA-181, DR-8).
+                IrError::InvalidListKey(_) => "RENDER-503",
+                _ => "RENDER-102",
+            },
             RenderError::IslandState { cause, .. } => match cause {
                 IrError::IslandStateLimitExceeded { .. } => "RENDER-502",
                 IrError::InvalidIslandState(_) => "RENDER-501",
@@ -730,6 +736,36 @@ mod tests {
             personality_css: None,
             body_prefix: None,
         }
+    }
+
+    /// FORMA-181: a keyed-row refusal is a new cause of a refused walk with its own code;
+    /// every other walk refusal keeps RENDER-102.
+    #[test]
+    fn a_keyed_row_refusal_is_render_503_and_other_walk_refusals_stay_render_102() {
+        use forma_ir::{ListKeyReason, ListKeyViolation};
+        let walk = |cause: IrError| RenderError::Walk {
+            route: "/seam".into(),
+            component_path: vec!["Rows".into()],
+            counts: RenderCounts::default(),
+            cause,
+        };
+        let keyed = walk(IrError::InvalidListKey(Box::new(ListKeyViolation {
+            list_offset: 30,
+            row: 2,
+            path: "user.id".into(),
+            reason: ListKeyReason::Duplicate {
+                first_row: 0,
+                key: "a".into(),
+            },
+        })));
+        assert_eq!(keyed.code(), "RENDER-503");
+        assert_eq!(keyed.component_path(), ["Rows".to_string()]);
+        let text = keyed.to_string();
+        assert!(
+            text.contains("RENDER-503: LIST at bytecode offset 30, row 2, key path `user.id`: duplicate key \"a\" already rendered by row 0"),
+            "{text}"
+        );
+        assert_eq!(walk(IrError::InvalidOpcode(0xff)).code(), "RENDER-102");
     }
 
     #[test]

@@ -8,10 +8,11 @@ pub use crate::contracts::state::IslandState;
 use crate::contracts::state::StateBuilder;
 #[cfg(feature = "tracing")]
 use crate::format::SlotSource;
-use crate::format::{IrError, IslandTrigger, Opcode};
+use crate::format::{IrError, IslandTrigger, ListKeyReason, ListKeyViolation, Opcode};
 use crate::parser::IrModule;
 use crate::slot::{SlotData, SlotValue};
 use crate::text::{normalize_text, normalized_chars};
+use std::collections::HashMap;
 use std::fmt;
 
 // ---------------------------------------------------------------------------
@@ -64,6 +65,33 @@ impl Default for WalkLimits {
     }
 }
 
+/// One row of a keyed LIST while its body is walked (FORMA-181, DR-8).
+///
+/// The row-owned guard for `data-forma-key`: the key is attached to the
+/// first element opened at the depth the row was entered at, which is the
+/// row's own root, never a descendant and never an element a later row or
+/// the code after the list opens. The row must render exactly one such
+/// root and nothing beside it (no text, no conditional or list markers at
+/// its level), checked when the row ends; the compiler proves that shape
+/// from the source (BUILD-613), so this is the defence for a hand-built
+/// module, with the same code the key itself refuses under (RENDER-503).
+struct KeyedRow {
+    /// Byte offset of the LIST, as section `0x0006` names it.
+    list_offset: u32,
+    /// Zero-based position of the row in the array this execution iterates.
+    ordinal: usize,
+    /// The key path, dotted, for the row's diagnostics.
+    path: String,
+    /// The canonical key, until the row's root element takes it.
+    key: Option<String>,
+    /// [`WalkState::element_depth`] when the row's body started.
+    entry_depth: usize,
+    /// Elements opened at `entry_depth` so far.
+    roots: usize,
+    /// Whether text or a marker was written at `entry_depth`.
+    stray_content: bool,
+}
+
 /// Mutable state threaded through recursive `walk_range` calls.
 ///
 /// This avoids adding extra parameters every time we need new walker state
@@ -73,8 +101,19 @@ struct WalkState {
     list_depth: u8,
     /// Pending island info to inject on the next OPEN_TAG/VOID_TAG.
     pending_island: Option<IslandPending>,
-    /// Pending list-item key to inject on the next OPEN_TAG/VOID_TAG.
-    pending_list_key: Option<String>,
+    /// Elements opened (`OPEN_TAG`) and not yet closed (`CLOSE_TAG`) at this
+    /// point of the walk. A keyed row's root is the element opened at the
+    /// depth the row was entered at ([`KeyedRow::entry_depth`]).
+    element_depth: usize,
+    /// The keyed rows the walk is inside, outermost first (FORMA-181). Only
+    /// the innermost can still be waiting for its root: an inner row is
+    /// entered at a deeper element depth than the root its outer row already
+    /// opened. Pushed and popped by the LIST item loop, never cleared at a
+    /// range end.
+    keyed_rows: Vec<KeyedRow>,
+    /// Whether the start tag still open is a keyed row's root, so a DYN_ATTR
+    /// named `data-forma-key` on it is refused as an authored identity.
+    open_tag_is_row_root: bool,
     /// Checked, owned snapshots in execution order, separate from body HTML.
     island_state: StateBuilder,
     /// True when an OpenTag or VoidTag has been opened but the `>` has not
@@ -148,7 +187,9 @@ impl WalkState {
         WalkState {
             list_depth: 0,
             pending_island: None,
-            pending_list_key: None,
+            element_depth: 0,
+            keyed_rows: Vec::new(),
+            open_tag_is_row_root: false,
             island_state: StateBuilder::new(),
             pending_tag_close: false,
             pending_tag_name: String::new(),
@@ -186,6 +227,31 @@ impl WalkState {
             if let Some((slot_id, previous)) = self.slot_journal.pop() {
                 slots.set(slot_id, previous);
             }
+        }
+    }
+
+    /// The innermost keyed row, when the walk is at the depth it was
+    /// entered at: the level where its root element and nothing else belongs.
+    fn keyed_row_at_entry_depth(&mut self) -> Option<&mut KeyedRow> {
+        let depth = self.element_depth;
+        self.keyed_rows
+            .last_mut()
+            .filter(|row| row.entry_depth == depth)
+    }
+
+    /// An element is being opened: if it is the innermost keyed row's root,
+    /// count it and hand back the key it carries.
+    fn open_row_root(&mut self) -> Option<String> {
+        let row = self.keyed_row_at_entry_depth()?;
+        row.roots += 1;
+        row.key.take()
+    }
+
+    /// Text or a marker is being written: at a keyed row's own level that is
+    /// content beside its root, which the row's shape does not admit.
+    fn note_row_level_content(&mut self) {
+        if let Some(row) = self.keyed_row_at_entry_depth() {
+            row.stray_content = true;
         }
     }
 }
@@ -703,6 +769,9 @@ fn walk_range_impl(
                     return Err(IrError::InvalidName(tag.to_string()));
                 }
                 leave_element(out, tag, state, limit)?;
+                // A CLOSE_TAG without its OPEN_TAG (a malformed stream) must
+                // not take the depth below the row it is inside.
+                state.element_depth = state.element_depth.saturating_sub(1);
                 push_checked(out, "</", limit)?;
                 push_checked(out, tag, limit)?;
                 push_checked(out, ">", limit)?;
@@ -712,6 +781,7 @@ fn walk_range_impl(
                 let str_idx = read_u32(ops, pos)?;
                 pos += 4;
                 let text = strings.get(str_idx)?;
+                state.note_row_level_content();
                 if let Some(parent) = state.text_only.as_mut() {
                     if !parent.value_bound {
                         write_text_only(out, parent, text, limit)?;
@@ -742,6 +812,7 @@ fn walk_range_impl(
                 pos += 2;
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
+                state.note_row_level_content();
                 let value = slots.get(slot_id).to_text();
 
                 // SR44's stand-in for a component that panics: this crate's
@@ -793,6 +864,11 @@ fn walk_range_impl(
 
                 if state.pending_tag_close {
                     let attr_name = strings.get(attr_str_idx)?;
+                    if state.open_tag_is_row_root
+                        && attr_name.eq_ignore_ascii_case("data-forma-key")
+                    {
+                        return Err(authored_key_error(state));
+                    }
                     // `value` on a textarea or select, and `selected` on an
                     // option of a bound select, are written another way.
                     if consume_control_attr(state, attr_name, Prop::Slot(slots.get(slot_id))) {
@@ -935,6 +1011,9 @@ fn walk_range_impl(
                 let then_len = read_u32(ops, pos + 2)? as usize;
                 let else_len = read_u32(ops, pos + 6)? as usize;
                 pos += 10;
+                // A conditional at a keyed row's own level is a range, not
+                // the one stable root the key needs (BUILD-613 from source).
+                state.note_row_level_content();
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
                 let condition = slots.get(slot_id).as_bool();
@@ -1012,6 +1091,9 @@ fn walk_range_impl(
             // walker-local fix. SWITCH also has no default case in the opcode
             // layout; a non-matching value renders nothing.
             Opcode::List => {
+                // `pos` already passed the opcode byte: the LIST's own offset,
+                // the one section 0x0006 names, is one before it.
+                let list_offset = (pos - 1) as u32;
                 // slot_id(2) + item_slot_id(2) + body_len(4) = 8 bytes header
                 let slot_id = read_u16(ops, pos)?;
                 let item_slot_id = read_u16(ops, pos + 2)?;
@@ -1019,9 +1101,30 @@ fn walk_range_impl(
                 pos += 8;
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
+                // A list at a keyed row's own level is a range beside the
+                // row's root, not the root (BUILD-613 from source).
+                state.note_row_level_content();
 
                 let body_start = pos;
                 let body_end = bounded_offset(pos, body_len, region_limit)?;
+
+                // The key path section 0x0006 attaches to this LIST, if any:
+                // the entries are sorted by offset (the parser refuses
+                // anything else), so one binary search per LIST, not per row.
+                // A LIST without an entry is unkeyed and renders as before.
+                let key_path: Option<Vec<&str>> = module
+                    .key_paths
+                    .binary_search_by_key(&list_offset, |path| path.list_offset)
+                    .ok()
+                    .map(|index| {
+                        module.key_paths[index]
+                            .segments
+                            .iter()
+                            .map(|segment| strings.get(*segment))
+                            .collect::<Result<Vec<&str>, IrError>>()
+                    })
+                    .transpose()?;
+                let key_path_text = key_path.as_ref().map(|path| path.join("."));
 
                 // Emit list markers — none inside a text-only element, where
                 // they are text. Decided once, so the pair always matches.
@@ -1070,7 +1173,16 @@ fn walk_range_impl(
                             max: state.max_list_iterations,
                         });
                     }
-                    for item in items.iter() {
+                    // The keys this execution of the list has rendered, each
+                    // with the row that rendered it (FORMA-181). Scoped to
+                    // one execution: an inner list under two outer rows may
+                    // reuse a key. Its memory is bounded by the output
+                    // budget without separate accounting: every key kept
+                    // here is also written on its row's root, escaped, so
+                    // the keys never outgrow `out`, and a duplicate ends the
+                    // walk before it is kept.
+                    let mut seen_keys: HashMap<String, usize> = HashMap::new();
+                    for (ordinal, item) in items.iter().enumerate() {
                         // Total across all depths, never decremented: depth
                         // alone does not bound volume, and four nested LISTs
                         // over the same array give n^4 body walks.
@@ -1083,6 +1195,40 @@ fn walk_range_impl(
                             });
                         }
                         state.list_iterations += 1;
+
+                        // A keyed row's identity is read from the row's own
+                        // data before its body runs, so a row without one
+                        // writes nothing, and the whole render is refused:
+                        // no partial page carries a list the client could
+                        // not adopt (FORMA-181, DR-8).
+                        if let (Some(path), Some(path_text)) = (&key_path, &key_path_text) {
+                            let key =
+                                crate::keys::canonical_list_key(item, path).map_err(|reason| {
+                                    list_key_error(list_offset, ordinal, path_text, reason)
+                                })?;
+                            if let Some(&first_row) = seen_keys.get(&key) {
+                                return Err(list_key_error(
+                                    list_offset,
+                                    ordinal,
+                                    path_text,
+                                    ListKeyReason::Duplicate {
+                                        first_row,
+                                        key: crate::keys::key_preview(&key),
+                                    },
+                                ));
+                            }
+                            seen_keys.insert(key.clone(), ordinal);
+                            state.keyed_rows.push(KeyedRow {
+                                list_offset,
+                                ordinal,
+                                path: path_text.clone(),
+                                key: Some(key),
+                                entry_depth: state.element_depth,
+                                roots: 0,
+                                stray_content: false,
+                            });
+                        }
+
                         // Scoped binding instead of a per-row `SlotData`
                         // clone: swap the item in, walk, swap back. Same
                         // isolation between rows, without copying every other
@@ -1105,17 +1251,31 @@ fn walk_range_impl(
                         // still hand `slots` back exactly as it was, because
                         // an enclosing row is about to unwind on top of it.
                         state.unwind_slot_journal(slots, mark);
+                        // The row's guard ends with the row, whatever the walk
+                        // returned; a key it still holds met no root element.
+                        let keyed_row = if key_path.is_some() {
+                            state.keyed_rows.pop()
+                        } else {
+                            None
+                        };
                         walked?;
 
-                        // A LIST_ITEM_KEY that never met an element belongs to
-                        // this item only — do not let it leak onto whatever
-                        // element the next item (or the code after the list)
-                        // happens to open.
-                        state.pending_list_key = None;
+                        if let Some(row) = keyed_row {
+                            if row.roots != 1 || row.stray_content {
+                                return Err(list_key_error(
+                                    row.list_offset,
+                                    row.ordinal,
+                                    &row.path,
+                                    ListKeyReason::RowShape {
+                                        roots: row.roots,
+                                        stray_content: row.stray_content,
+                                    },
+                                ));
+                            }
+                        }
                     }
                     state.list_depth -= 1;
                 }
-                state.pending_list_key = None;
 
                 if markers {
                     push_checked(out, "<!--/f:l", limit)?;
@@ -1164,7 +1324,7 @@ fn walk_range_impl(
         WalkMode::Range { .. } => {
             // Flush any pending tag close at the end of the opcode range.
             //
-            // NOTE: `pending_island` / `pending_list_key` are deliberately NOT
+            // NOTE: `pending_island` / `keyed_rows` are deliberately NOT
             // cleared here. This function runs for every nested control-flow
             // body with the same state, so clearing at range end would wipe
             // the island attributes of a legitimate
@@ -1193,6 +1353,31 @@ fn walk_range_impl(
 ///
 /// Plain `+` on `usize` can overflow on a 32-bit target. The parser accepts
 /// arbitrary bytes, so the offset must be checked before indexing.
+/// The whole-render refusal for one keyed row (RENDER-503, FORMA-181).
+fn list_key_error(list_offset: u32, row: usize, path: &str, reason: ListKeyReason) -> IrError {
+    IrError::InvalidListKey(Box::new(ListKeyViolation {
+        list_offset,
+        row,
+        path: path.to_string(),
+        reason,
+    }))
+}
+
+/// An authored `data-forma-key` on the keyed row whose root is being opened.
+fn authored_key_error(state: &WalkState) -> IrError {
+    match state.keyed_rows.last() {
+        Some(row) => list_key_error(
+            row.list_offset,
+            row.ordinal,
+            &row.path,
+            ListKeyReason::AuthoredKey,
+        ),
+        // Unreachable: the flag that leads here is set only while a keyed
+        // row is on the stack. Refuse the attribute name all the same.
+        None => IrError::InvalidName("data-forma-key".to_string()),
+    }
+}
+
 fn bounded_offset(base: usize, len: usize, limit: usize) -> Result<usize, IrError> {
     base.checked_add(len)
         .filter(|e| *e <= limit)
@@ -1378,8 +1563,23 @@ fn emit_open_tag(
     if !is_valid_name(tag) {
         return Err(IrError::InvalidName(tag.to_string()));
     }
+    // Decided before the depth moves: an element opened at the depth the
+    // innermost keyed row was entered at is that row's root (FORMA-181).
+    let row_key = state.open_row_root();
+    state.open_tag_is_row_root = row_key.is_some();
+    if row_key.is_some()
+        && attrs
+            .iter()
+            .any(|(key, _)| key.eq_ignore_ascii_case("data-forma-key"))
+    {
+        // The identity attribute is the walker's to write, once, from the
+        // key path; an authored one would be a second, silently first-wins
+        // identity on the same root.
+        return Err(authored_key_error(state));
+    }
     if has_content {
         enter_element(out, tag, state, limit)?;
+        state.element_depth += 1;
     }
     push_checked(out, "<", limit)?;
     push_checked(out, tag, limit)?;
@@ -1424,8 +1624,11 @@ fn emit_open_tag(
         push_checked(out, "\"", limit)?;
     }
 
-    // Inject pending list-item key
-    if let Some(key) = state.pending_list_key.take() {
+    // The keyed row's identity, on its root (FORMA-181, DR-8). The canonical
+    // text is already normalized (value rule 1); `push_escaped_attr` applies
+    // the same rule again, which is idempotent, and escapes for the
+    // attribute, so the browser decodes exactly the canonical text.
+    if let Some(key) = row_key {
         push_checked(out, " data-forma-key=\"", limit)?;
         push_escaped_attr(out, &key, limit)?;
         push_checked(out, "\"", limit)?;
@@ -1795,6 +1998,7 @@ fn leave_element(
 /// this instead, so a control is resolved whichever opcode ends its tag.
 fn close_start_tag(out: &mut String, state: &mut WalkState, limit: usize) -> Result<(), IrError> {
     state.pending_tag_close = false;
+    state.open_tag_is_row_root = false;
     match std::mem::take(&mut state.pending_control) {
         PendingControl::None => {}
         PendingControl::Textarea { value } => {

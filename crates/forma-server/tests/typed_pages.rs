@@ -194,7 +194,18 @@ fn actual_compiler_module_binds_by_declared_names_and_renders_two_list_views() {
     );
     assert!(inactive_html.contains("hidden"), "{inactive_html}");
     assert_eq!(html.matches("<label").count(), 2, "{html}");
-    assert_eq!(html.matches("<b>").count(), 2, "{html}");
+    // FORMA-181 checkpoint B: both lists are keyed by `id` (FMIR section 6), so every row root
+    // carries its key, the static attributes first and the dynamic ones after it; the two
+    // lists iterate the same rows, and each list execution is its own duplicate scope.
+    assert_eq!(html.matches("<b data-forma-key=").count(), 2, "{html}");
+    for row in [
+        "<label data-forma-key=\"7\" data-enabled><!--f:t9-->First &lt;row&gt;",
+        "<label data-forma-key=\"8\"><!--f:t9-->Second",
+        "<b data-forma-key=\"7\"><!--f:t10-->7<!--/f:t10--></b>",
+        "<b data-forma-key=\"8\"><!--f:t10-->8<!--/f:t10--></b>",
+    ] {
+        assert!(html.contains(row), "missing {row}: {html}");
+    }
     assert!(
         !html.contains(&u64::MAX.to_string()),
         "extra unsafe values are not encoded"

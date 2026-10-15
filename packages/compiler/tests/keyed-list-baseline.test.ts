@@ -9,6 +9,7 @@ import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {createIslandRegistry} from '../src/island-registry';
 import {makeIslandContract, type BindingRecord} from '../src/fmir-contracts';
+import type {PropsSchema} from '../src/fmir-payload';
 import {generateRealIr} from '../src/esbuild-ssr-plugin';
 import {readFmirContainer} from '../src/fmir';
 import {OP_LIST, SECTION_BYTECODE, SECTION_KEY_PATHS} from '../src/fmir-constants';
@@ -105,6 +106,25 @@ activateIslands({Counter});
     expect(entries.map(x => x.path)).toEqual([['id'], ['id']]);
     expect(entries[0]!.offset).toBeLessThan(entries[1]!.offset);
     expect(entries[1]!.offset).toBeGreaterThanOrEqual(entries[0]!.bodyEnd);
+  });
+  /** FORMA-181 checkpoint B: the canonical digest already covers the key path (DR-8). The LIST
+   *  binding record has carried its key segments since before 181 (`fmir-contracts.ts`, record
+   *  kind 5), so native key rendering changed no digest: the six baselines above stay frozen,
+   *  and a key path change is a contract change by construction. */
+  it('the island digest covers the key path: a different key path is a different digest, the same path the same digest', () => {
+    const rows = (key: string[]): BindingRecord[] => [{kind: 'list', value: {kind: 'prop', path: ['rows']}, key, body: [{kind: 'text', value: {kind: 'row', id: 0, path: ['label']}}]}];
+    const at = {file: 'page.ts', line: 1, column: 1};
+    const schema: PropsSchema = [
+      [{name: 'rows', ...at, type: {kind: 'array', element: {kind: 'object', object: 1}}}],
+      [{name: 'id', ...at, type: {kind: 'number'}}, {name: 'label', ...at, type: {kind: 'string'}}, {name: 'user', ...at, type: {kind: 'object', object: 2}}],
+      [{name: 'id', ...at, type: {kind: 'string'}}],
+    ];
+    const contract = (key: string[]) => makeIslandContract(0, schema, 0, 'ssr', rows(key));
+    const digest = (key: string[]) => hex(contract(key).digest);
+    expect(digest(['id'])).toBe(digest(['id']));
+    expect(digest(['id'])).not.toBe(digest(['label']));
+    expect(digest(['id'])).not.toBe(digest(['user', 'id']));
+    expect(hex(contract(['user', 'id']).bindingBytes)).toContain(Buffer.from('user').toString('hex'));
   });
   it('a nested list keeps its own entry inside the outer body and its row source is the outer row', () => {
     const file = join(ROOT, 'nested-list', 'app.ts'), [outer, inner] = keyPaths(emit(file));

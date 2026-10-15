@@ -197,20 +197,74 @@ fn list_props(module: &IrModule, array_slot_name: &str) -> Option<(String, Vec<S
     Some((base.to_string(), props))
 }
 
-/// One row of a list: an object carrying every property the body reads, each
-/// value naming its own list, row index and column.
-fn list_row(base: &str, props: &[String], row: usize) -> SlotValue {
-    if props.is_empty() {
+/// The key paths FMIR section `0x0006` declares for the LIST(s) that iterate
+/// `array_slot_id`, as resolved segment names (FORMA-181).
+///
+/// A keyed LIST refuses the render when a row has no identity at its key
+/// path, so the distinguishing rows must carry the field the module keys them
+/// by, as real data would. The LIST's array slot is the `u16` right after its
+/// opcode byte, which the parser has already checked to be a LIST boundary.
+fn list_key_paths(module: &IrModule, array_slot_id: u16) -> Vec<Vec<String>> {
+    module
+        .key_paths
+        .iter()
+        .filter(|path| {
+            let at = path.list_offset as usize;
+            module
+                .opcodes
+                .get(at + 1..at + 3)
+                .map(|bytes| u16::from_le_bytes([bytes[0], bytes[1]]))
+                == Some(array_slot_id)
+        })
+        .map(|path| {
+            path.segments
+                .iter()
+                .map(|segment| string_at(module, *segment).to_string())
+                .collect()
+        })
+        .collect()
+}
+
+/// Set `value` at `path` inside an object's fields, creating the objects on
+/// the way; an existing leaf is kept (the body's own column already names it).
+fn insert_path(fields: &mut Vec<(String, SlotValue)>, path: &[String], value: SlotValue) {
+    let (head, rest) = match path.split_first() {
+        Some(split) => split,
+        None => return,
+    };
+    let position = fields.iter().position(|(name, _)| name == head);
+    if rest.is_empty() {
+        if position.is_none() {
+            fields.push((head.clone(), value));
+        }
+        return;
+    }
+    let mut inner = match position.map(|i| fields.remove(i)) {
+        Some((_, SlotValue::Object(pairs))) => pairs.to_vec(),
+        _ => Vec::new(),
+    };
+    insert_path(&mut inner, rest, value);
+    fields.push((head.clone(), SlotValue::object(inner)));
+}
+
+/// One row of a list: an object carrying every property the body reads and
+/// the identity each key path names, each value naming its own list, row index
+/// and column.
+fn list_row(base: &str, props: &[String], key_paths: &[Vec<String>], row: usize) -> SlotValue {
+    if props.is_empty() && key_paths.is_empty() {
         // A body that reads no property still iterates; give it something that
         // names the row so an off-by-one in the row loop is visible.
         return SlotValue::Text(format!("{base}[{row}]"));
     }
-    SlotValue::object(
-        props
-            .iter()
-            .map(|p| (p.clone(), SlotValue::Text(format!("{base}[{row}].{p}"))))
-            .collect(),
-    )
+    let mut fields: Vec<(String, SlotValue)> = props
+        .iter()
+        .map(|p| (p.clone(), SlotValue::Text(format!("{base}[{row}].{p}"))))
+        .collect();
+    for path in key_paths {
+        let value = SlotValue::Text(format!("{base}[{row}].{}", path.join(".")));
+        insert_path(&mut fields, path, value);
+    }
+    SlotValue::object(fields)
 }
 
 /// Populate every declared slot with a value of its DECLARED type that names
@@ -241,7 +295,12 @@ fn distinguishing_slots(module: &IrModule, bools: bool) -> SlotData {
             SlotType::Number => SlotValue::Number(1000.0 + f64::from(id)),
             SlotType::Array => match list_props(module, name) {
                 Some((base, props)) => {
-                    SlotValue::array((0..LIST_ROWS).map(|r| list_row(&base, &props, r)).collect())
+                    let keys = list_key_paths(module, id);
+                    SlotValue::array(
+                        (0..LIST_ROWS)
+                            .map(|r| list_row(&base, &props, &keys, r))
+                            .collect(),
+                    )
                 }
                 None => SlotValue::array(
                     (0..LIST_ROWS)
