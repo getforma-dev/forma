@@ -1,0 +1,14 @@
+ok - this tree's requirement equals forma-ir's version
+ok - the scratch copy of this tree passes
+ok - a normal requirement one patch behind fails
+ok - the 0.2.0 requirement 0.2.2 carried until FORMA-138 fails
+ok - a dev requirement one patch behind fails alone
+ok - the normal requirement, unchanged, is not reported
+ok - a requirement ahead of forma-ir's version fails
+ok - a workspace version bump without the requirement fails
+ok - a missing manifest is its own error
+check-forma-ir-requirement: 9 passed, 0 failed
+forma-ir version:                        0.2.2
+forma-server's forma-ir requirement:     ^0.2.2
+forma-server's dev forma-ir requirement: ^0.2.2
+ok: forma-server requires forma-ir ^0.2.2, normal and dev, which is forma-ir's version

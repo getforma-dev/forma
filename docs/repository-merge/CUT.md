@@ -22,7 +22,12 @@ merged main during the rehearsal.
    command; separate jobs retain MSRV, targets, Windows, release/security,
    scaffold and three-engine coverage.
 4. Founder registry work: re-point all four npm trusted publishers to
-   `getforma-dev/forma`, the exact FORMA-187 workflow filename and environment.
+   `getforma-dev/forma`, the exact FORMA-187 workflow filename and `npm-publish` environment.
+   The three crates must likewise name `crates-publish` in their trusted
+   publisher registrations when the new workflow adds that environment
+   (the earlier registrations omitted environments). Inspect all seven
+   registrations against the final workflow; naming only the four npm entries
+   is insufficient if crate environment names still need updating.
    Verify tag-limited environments/rulesets and the agreed six-month
    maintenance publishing route. Do not assume the registry supports multiple
    trusted-publisher entries: confirm the actual settings allow the agreed

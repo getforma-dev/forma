@@ -43,7 +43,9 @@ reviewed against that manifest. Both repeat runs after recovery produced setup
 commit `c0e9ce0e2c10526224eb80fea2fed5c248ed7159`, tree
 `44d2cea29c85223a6b7ab47b971824c7a9b71df2`. The shared working branch retains
 its original setup commit `72c2804` and applies the recovered late test fix as
-a follow-up, so collaborators' branches remain valid.
+a follow-up, so collaborators' branches remain valid. The later CI follow-up
+also includes the derive manifest in the requirement-check fixture and enables
+pull requests targeting `merge/forma-stack` for the next stacked changes.
 
 `verify.sh` checks every commit tree, metadata, mapped branch and tag, the
 merged ancestry/counts, clean state, and representative `git log --follow`
@@ -77,7 +79,9 @@ unit tests, the Rust workspace, cross-language FMIR corpus, packaging/size/type
 gates, and 145 Chromium tests (2 worker, 53 stack/SSR/frame, 90 core). The 16
 create-app scaffold tests run in their dedicated CI jobs instead. Actionlint
 passed; the release lint caught all 62 seeded violations across 31 rules.
-The recovered MSRV and cargo-deny logs also pass. See `evidence/` for compact
+The recovered MSRV and cargo-deny logs also pass. The requirement checker
+self-test passes all nine checks after including every workspace member in its
+scratch fixture (the first CI run exposed its missing derive manifest). See `evidence/` for compact
 outputs; the full logs remain in the ticket work directory.
 
 The benchmark checkpoint quick Chromium smoke passed with one sample and one

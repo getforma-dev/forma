@@ -31,12 +31,15 @@ expect_fail() { # <name> <substring>
 # A scratch workspace: this tree's manifests, empty sources, no target.
 fresh() {
   rm -rf "$work/ws"
-  mkdir -p "$work/ws/crates/forma-ir/src" "$work/ws/crates/forma-server/src"
+  mkdir -p "$work/ws"
   cp "$root/Cargo.toml" "$work/ws/Cargo.toml"
-  cp "$root/crates/forma-ir/Cargo.toml" "$work/ws/crates/forma-ir/Cargo.toml"
-  cp "$root/crates/forma-server/Cargo.toml" "$work/ws/crates/forma-server/Cargo.toml"
-  : > "$work/ws/crates/forma-ir/src/lib.rs"
-  : > "$work/ws/crates/forma-server/src/lib.rs"
+  # Cargo loads every workspace member, including the derive placeholder,
+  # before returning metadata for the two crates whose requirements we test.
+  for crate in forma-ir forma-ir-derive forma-server; do
+    mkdir -p "$work/ws/crates/$crate/src"
+    cp "$root/crates/$crate/Cargo.toml" "$work/ws/crates/$crate/Cargo.toml"
+    : > "$work/ws/crates/$crate/src/lib.rs"
+  done
 }
 
 # Rewrite one of forma-server's two `forma-ir = { version = "…"` lines: the
