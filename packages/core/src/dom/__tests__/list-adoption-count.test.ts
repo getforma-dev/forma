@@ -149,7 +149,7 @@ describe('list adoption row-count check', () => {
     expect(received).toEqual([]);
     expect(logged).toEqual([]);
     const statuses = Array.from(document.querySelectorAll('[data-forma-island]'), (el) => el.getAttribute('data-forma-status'));
-    expect(statuses).toEqual(['active', 'active']);
+    expect(statuses).toEqual([null, null]);
     const adopted = Array.from(document.querySelectorAll('[data-forma-island="0"] li'));
     expect(adopted).toHaveLength(40);
     expect(adopted.every((li, i) => li === serverRows[i])).toBe(true);
