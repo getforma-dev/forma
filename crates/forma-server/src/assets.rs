@@ -259,10 +259,10 @@ fn is_embedded<A: Embed + 'static>(name: &str) -> bool {
 #[cfg(not(debug_assertions))]
 type NameSet = std::collections::HashSet<std::borrow::Cow<'static, str>>;
 
-/// How many `Embed` types get a cached name set. An application serves one;
-/// asset retention would serve two (this build's and the previous one's). A
-/// type beyond the last slot is checked by scanning its list: slower, never
-/// wrong.
+/// How many `Embed` types get a cached name set. An application serves one: asset
+/// retention (FORMA-186) copies the previous release's files into the one `dist/`
+/// the application embeds. A type beyond the last slot is checked by scanning its
+/// list: slower, never wrong.
 #[cfg(not(debug_assertions))]
 const NAME_CACHE_SLOTS: usize = 4;
 
@@ -690,6 +690,47 @@ mod tests {
             header_of(&response, "content-encoding").as_deref(),
             Some("gzip")
         );
+    }
+
+    /// The fixtures plus a `size-report.json`, as an output of `@getforma/build`
+    /// 3.0 embeds it beside the manifest (FORMA-190): really embedded, so that a
+    /// 404 for it can only be the handler's refusal and not an absent file.
+    struct WithReport;
+
+    impl Embed for WithReport {
+        fn get(path: &str) -> Option<rust_embed::EmbeddedFile> {
+            if path != "size-report.json" {
+                return Fixtures::get(path);
+            }
+            let mut file = Fixtures::get("manifest.json")?;
+            file.data = std::borrow::Cow::Borrowed(br#"{"version":1,"routes":[]}"#);
+            Some(file)
+        }
+        fn iter() -> impl Iterator<Item = std::borrow::Cow<'static, str>> {
+            Fixtures::iter().chain(std::iter::once(std::borrow::Cow::Borrowed(
+                "size-report.json",
+            )))
+        }
+    }
+
+    // Verified by: crates/forma-server/src/assets.rs > "denied_names_are_never_served"
+    #[tokio::test]
+    async fn an_embedded_size_report_is_not_served_through_the_route() {
+        assert!(is_embedded::<WithReport>("size-report.json"));
+        assert!(WithReport::get("size-report.json").is_some());
+        for accept in [None, Some("br, gzip"), Some("identity")] {
+            let mut headers = HeaderMap::new();
+            if let Some(accept) = accept {
+                headers.insert(header::ACCEPT_ENCODING, accept.parse().unwrap());
+            }
+            let response =
+                serve_asset::<WithReport>(Path("size-report.json".to_string()), headers).await;
+            assert_eq!(response.status(), StatusCode::NOT_FOUND, "{accept:?}");
+        }
+        // The same embed still serves what it should: the report's neighbours.
+        let served =
+            serve_asset::<WithReport>(Path("app.a1b2c3d4.js".to_string()), HeaderMap::new()).await;
+        assert_eq!(served.status(), StatusCode::OK);
     }
 
     #[tokio::test]

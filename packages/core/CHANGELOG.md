@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Keyed rows: the key-text seam is wired to rule 1 — FORMA-181
+
+- `src/dom/key-text.ts` (private; nothing in the bundle imports it yet) builds the canonical text of a list key: a safe integer prints as its decimal integer (`-0` as `0`), a string with an unpaired surrogate is refused, and any other string goes through FORMA-182's shared `normalizeDomText` (CRLF and CR become LF, NUL becomes U+FFFD), so `"a\r\nb"` and `"a\nb"` are the same row and `1` and `"1"` are too. `src/dom/__tests__/key-text.test.ts` runs 182's `values` vectors (`crates/forma-ir/tests/fixtures/parity/normalization.json`) and 181's shared key vectors (`keys.json`, the same ones forma-ir's walker reads) through `canonicalKeyText`, and asserts the module carries no normalizer of its own and returns `normalizeDomText`'s result. Adoption by key (FORMA-181 checkpoint C) is its first consumer.
+
 ### Documentation
 
 - **The preview frame's runtime in an application's output (FORMA-190).** `docs/HTML-RUNTIME.md`'s frame section says core's `dist/formajs-frame.global.js` stays readable and that `@getforma/build` writes a minified copy of it into the application's output (about 85 KB raw against 164 KB), which is what forma-server inlines and hashes. No change to this package's files.

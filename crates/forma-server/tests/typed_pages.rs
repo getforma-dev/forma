@@ -194,7 +194,18 @@ fn actual_compiler_module_binds_by_declared_names_and_renders_two_list_views() {
     );
     assert!(inactive_html.contains("hidden"), "{inactive_html}");
     assert_eq!(html.matches("<label").count(), 2, "{html}");
-    assert_eq!(html.matches("<b>").count(), 2, "{html}");
+    // FORMA-181 checkpoint B: both lists are keyed by `id` (FMIR section 6), so every row root
+    // carries its key, the static attributes first and the dynamic ones after it; the two
+    // lists iterate the same rows, and each list execution is its own duplicate scope.
+    assert_eq!(html.matches("<b data-forma-key=").count(), 2, "{html}");
+    for row in [
+        "<label data-forma-key=\"7\" data-enabled><!--f:t9-->First &lt;row&gt;",
+        "<label data-forma-key=\"8\"><!--f:t9-->Second",
+        "<b data-forma-key=\"7\"><!--f:t10-->7<!--/f:t10--></b>",
+        "<b data-forma-key=\"8\"><!--f:t10-->8<!--/f:t10--></b>",
+    ] {
+        assert!(html.contains(row), "missing {row}: {html}");
+    }
     assert!(
         !html.contains(&u64::MAX.to_string()),
         "extra unsafe values are not encoded"
@@ -769,9 +780,10 @@ fn typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_po
     bind_empty(&pages);
     pages.finalize().unwrap();
     let parts = page.render(&props(), &ctx).unwrap().into_parts_unchecked();
-    assert!(parts
-        .html
-        .contains(&format!("{prefix}<div id=\"app\" data-forma-ssr>")));
+    assert!(parts.html.contains(&format!(
+        "{prefix}<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
+        manifest.build
+    )));
     assert!(parts.html.contains("@media (width < 600px)"));
     assert!(parts.html.contains(r"<\/style><img src=x>"));
     assert!(!parts.html.contains("</style><img"));
@@ -826,7 +838,10 @@ fn only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize()
     let page = forma_server::render_browser_shell(&shell("/client"), &RenderCtx::new())
         .unwrap()
         .into_parts_unchecked();
-    assert!(page.html.contains("<div id=\"app\"></div>"));
+    assert!(page.html.contains(&format!(
+        "<div id=\"app\" data-forma-build=\"{}\"></div>",
+        manifest.build
+    )));
     assert!(!page.html.contains("data-forma-ssr"));
     assert!(page
         .headers
@@ -871,6 +886,37 @@ fn a_sixty_thousand_row_typed_request_refuses_before_its_first_row() {
         "{:?}",
         counts.walk_time
     );
+}
+
+/// FORMA-181 checkpoint B: a duplicate or non-identity row key in the handler's own data is a
+/// native render failure before any response (RENDER-503): no page, no partial state, a message
+/// that names the LIST, the rows and the path but no row data; the next good request renders.
+#[test]
+fn a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503() {
+    let handle = handle();
+    let refused = |rows: [f64; 2]| {
+        let mut data = props();
+        data.rows[0].id = rows[0];
+        data.rows[1].id = rows[1];
+        let error = handle.render(&data, &RenderCtx::new()).unwrap_err();
+        assert_eq!(error.code(), "RENDER-503", "{error}");
+        let text = error.to_string();
+        assert!(text.contains("row 1, key path `id`: "), "{text}");
+        assert!(
+            !text.contains("First") && !text.contains("Second"),
+            "{text}"
+        );
+        text
+    };
+    assert!(refused([7.0, 7.0]).contains("the row repeats the key row 0 already rendered"));
+    assert!(refused([0.0, -0.0]).contains("the row repeats the key row 0 already rendered"));
+    // A fraction is a valid declared number but not a row identity: the key-only rule does not
+    // narrow the declared type, it refuses the key.
+    assert!(refused([7.0, 1.5]).contains("not an integer within the safe range"));
+    assert!(
+        refused([7.0, 9_007_199_254_740_992.0]).contains("not an integer within the safe range")
+    );
+    assert!(handle.render(&props(), &RenderCtx::new()).is_ok());
 }
 
 struct PanickingHandler {

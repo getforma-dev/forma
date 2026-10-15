@@ -54,3 +54,7 @@ packages/compiler/tests/fixtures/keyed-lists/** -text
 crates/forma-ir/tests/fixtures/js-emitter/*.state.json text eol=lf
 # FORMA-181: the archive test hashes the declared-props SRI manifest byte-for-byte.
 crates/forma-server/tests/fixtures/props-contract/manifest.json text eol=lf
+# FORMA-181 checkpoint B: the pre-native-keys originals are authenticated by SHA-256, and the
+# shared key vectors are hashed by nothing but read by both suites as exact bytes.
+docs/archive/2026-10-15-pre-native-keys/** -text
+crates/forma-ir/tests/fixtures/parity/*.json text eol=lf

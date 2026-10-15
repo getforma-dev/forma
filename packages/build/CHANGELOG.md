@@ -59,6 +59,33 @@
   same route objects, with the new fields `class`, `canvas`, `worker`,
   `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
   empty). Both are empty in watch mode.
+## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
+
+- `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
+  identity: 16 lowercase hex characters, computed first from every output of a
+  first bundling pass (bundles, `.ir` modules, css entries, fonts) and the
+  writers' versions, before any file is named. It was a hash of the hashed
+  filenames. The same inputs give the same identity wherever they are built
+  (from the project root); an edit that changes no output byte changes nothing;
+  the previous `dist/` is not an input. `dev` in watch mode, as before.
+- The identity is compiled into every production bundle twice: the constant
+  `__FORMA_BUILD__` (esbuild `define`; what core compares with the page's
+  `data-forma-build`) and a `/*forma-build:<id>*/` banner in every JavaScript
+  output, so every deploy renames every bundle, including entries and lazy
+  chunks the change did not touch. A chunk that kept its name across deploys
+  now does not; a build's names are unique to the build.
+- Cost: one more bundling pass per production build; the SSR plugin's
+  "IR emitted" and "IR: ..." lines are printed once, as before.
+- **N2's figure rises.** The banner is Forma's code in the size report (the lead's
+  ruling: Forma's build writes it), and a 16-hex id does not compress: a route's
+  Forma figure rises by about 30 B gzip for each JavaScript file it loads cold, and a
+  route with none of core's bytes now reports the banner's 33 raw bytes. Measured on
+  the SSR lane's Counter (the minimal template's shape, whole-route gzip -9 of Forma
+  code): `/` 25,091 B to 25,120 B (+29), the client-rendered `/csr` 24,418 B to
+  24,451 B (+33), and the same page code-split into an entry and a chunk, 25,091 B
+  to 25,165 B (+74, two cold files). The minimal template's Counter route, 25,101 B
+  after FORMA-021's cuts, becomes about 25,130 B: its headroom under N2's 25,500 B
+  falls from 399 B to about 370 B.
 
 ## Unreleased — the size report per route and N2's gate (FORMA-021)
 

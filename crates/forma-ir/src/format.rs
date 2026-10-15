@@ -119,6 +119,131 @@ pub struct IslandStateViolation {
     pub reason: &'static str,
 }
 
+/// A keyed list row whose identity could not be written (FORMA-181, DR-8).
+///
+/// The walker reads each row's value at the list's key path (FMIR section
+/// `0x0006`) and writes its canonical text as the row root's
+/// `data-forma-key`. The whole render is refused, as `RENDER-503`, when the
+/// value is not a row identity, when two rows of one list execution share a
+/// key, or when the row did not render exactly one root element to carry it.
+/// Boxed in [`IrError`] so the path and ordinals do not enlarge every common
+/// error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ListKeyViolation {
+    /// Byte offset of the `LIST` opcode in the bytecode, as section `0x0006`
+    /// names it.
+    pub list_offset: u32,
+    /// Zero-based position of the refused row in the array this execution of
+    /// the list iterated.
+    pub row: usize,
+    /// The key path, dotted (`id`, `user.id`).
+    pub path: String,
+    /// What was wrong with the row's key.
+    pub reason: ListKeyReason,
+}
+
+/// Why a keyed row was refused ([`ListKeyViolation::reason`]).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ListKeyReason {
+    /// The row, or an object on the path, has no field of that name.
+    MissingField {
+        /// The segment that was not found.
+        segment: String,
+    },
+    /// The row, or an object on the path, declares the field twice, so the
+    /// key would be whichever one a reader happened to take.
+    DuplicateField {
+        /// The repeated segment.
+        segment: String,
+    },
+    /// A value on the path before the last segment is not an object.
+    NotAnObject {
+        /// The segment that could not be read.
+        segment: String,
+    },
+    /// The value at the path is not a string or a safe integer: `null`, a
+    /// boolean, an array or an object.
+    NotAnIdentity {
+        /// The kind of value found, for the message.
+        kind: &'static str,
+    },
+    /// The value at the path is a number that is not an integer within
+    /// ±(2^53 − 1): a fraction, an infinity, NaN or a larger magnitude.
+    NotASafeInteger,
+    /// Another row of the same list execution already rendered this key.
+    /// The key itself is not carried: it is the row's data, and a
+    /// diagnostic names positions, never private values.
+    Duplicate {
+        /// Zero-based position of the row that rendered it first.
+        first_row: usize,
+    },
+    /// The row body did not render exactly one root element to carry the
+    /// key: no element, more than one, or text, a dynamic range or an island
+    /// envelope that does not wholly enclose the root beside it.
+    RowShape {
+        /// Elements opened directly at the row's level.
+        roots: usize,
+        /// Whether text, a range, or an island envelope that does not wholly
+        /// enclose the root was written directly at the row's level.
+        stray_content: bool,
+    },
+    /// The row's root carries an authored `data-forma-key` (static or
+    /// dynamic); the attribute is the compiler-written identity and nothing
+    /// else may set it.
+    AuthoredKey,
+    /// The row closed an element it did not open, or left one open at its
+    /// end, so its root is not one balanced element at the row's level.
+    UnbalancedRow,
+}
+
+impl fmt::Display for ListKeyReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ListKeyReason::MissingField { segment } => {
+                write!(f, "the row has no field `{segment}`")
+            }
+            ListKeyReason::DuplicateField { segment } => {
+                write!(f, "the row declares the field `{segment}` more than once")
+            }
+            ListKeyReason::NotAnObject { segment } => {
+                write!(f, "`{segment}` is not an object, so the path cannot continue")
+            }
+            ListKeyReason::NotAnIdentity { kind } => {
+                write!(f, "the key is {kind}, not a string or a safe integer")
+            }
+            ListKeyReason::NotASafeInteger => write!(
+                f,
+                "the key number is not an integer within the safe range (a fraction, an infinity, NaN or beyond 2^53-1)"
+            ),
+            ListKeyReason::Duplicate { first_row } => {
+                write!(f, "the row repeats the key row {first_row} already rendered")
+            }
+            ListKeyReason::RowShape {
+                roots,
+                stray_content,
+            } => write!(
+                f,
+                "the row must render exactly one root element to carry its key ({roots} root element{}{})",
+                if *roots == 1 { "" } else { "s" },
+                if *stray_content {
+                    ", with text, a range or an island envelope beside it"
+                } else {
+                    ""
+                }
+            ),
+            ListKeyReason::AuthoredKey => write!(
+                f,
+                "the row root carries an authored data-forma-key; the attribute is reserved for the row identity"
+            ),
+            ListKeyReason::UnbalancedRow => write!(
+                f,
+                "the row closes an element it did not open or leaves one open, so it has no single balanced root"
+            ),
+        }
+    }
+}
+
 /// Errors that can occur when parsing FMIR binary data.
 ///
 /// Marked `#[non_exhaustive]`: new failure modes are added as the parser is
@@ -253,6 +378,10 @@ pub enum IrError {
         /// Maximum complete envelope bytes.
         limit: usize,
     },
+    /// RENDER-503: a keyed list row has no usable identity, repeats another
+    /// row's key, or did not render one root element to carry it
+    /// (FORMA-181). No partial page is returned.
+    InvalidListKey(Box<ListKeyViolation>),
     /// Total LIST item iterations exceeded the walker's per-render budget.
     /// Distinct from [`IrError::ListDepthExceeded`], which bounds *nesting*.
     ListBudgetExceeded {
@@ -407,6 +536,18 @@ impl fmt::Display for IrError {
             }
             IrError::IslandStateLimitExceeded { limit } => {
                 write!(f, "RENDER-502: island state exceeded {limit} encoded bytes")
+            }
+            IrError::InvalidListKey(violation) => {
+                let ListKeyViolation {
+                    list_offset,
+                    row,
+                    path,
+                    reason,
+                } = violation.as_ref();
+                write!(
+                    f,
+                    "RENDER-503: LIST at bytecode offset {list_offset}, row {row}, key path `{path}`: {reason}"
+                )
             }
             IrError::ListBudgetExceeded { max } => {
                 write!(f, "total LIST iterations exceeded the budget of {max}")
