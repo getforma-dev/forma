@@ -13,6 +13,7 @@ import { contentNs, SVG_NS, MATHML_NS, withNamespace } from './namespace.js';
 import { isEventHandlerAttr } from '../security/url-safety.js';
 import { prepareAttribute } from './adoption-attributes.js';
 import { prepareStyle, prepareRaw, type PreparedRaw } from './adoption-content.js';
+import { warnInnerHtmlChildren } from './trusted-html.js';
 import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
 import { AdoptionControls, type ControlToken } from './adoption-controls.js';
 import { checkIslandClaim, isRegisteredIslandComponent, matchAdoptionChild, type ValidatedIsland } from './island-state.js';
@@ -162,7 +163,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       const initial=typeof value==='function'?scope.observe(value as ()=>unknown,next=>binding.write(next,beforeReplace)):value;
       raw=binding=prepareRaw(target,initial);
     });
-    if(raw?.ownsContent)return;
+    if(raw?.ownsContent){warnInnerHtmlChildren(desc.props,desc.children);return;}
     const children=()=>{
       if(area){if(!valueProp)textarea(target,desc.children);return;}
       const nested=dom.children(target),inner=contentNs(target);
