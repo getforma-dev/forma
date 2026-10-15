@@ -209,3 +209,41 @@ fn default_eight_mib_limit_includes_large_head_metadata_exactly() {
     assert_eq!(error.code(), "RENDER-301");
     assert_eq!(error.counts().unwrap().bytes, small.counts.bytes);
 }
+
+#[test]
+fn reviewer_browser_shell_counts_escaped_metadata_at_the_exact_request_limit() {
+    let manifest = manifest();
+    let json = serde_json::json!({"message":"<é😀".repeat(32)});
+    let input = super::RenderFixture {
+        title: "<é😀 & \"title\"",
+        route_pattern: "/shell",
+        manifest: &manifest,
+        config_json: Some(&json),
+        body_class: None,
+        personality_css: None,
+        body_prefix: None,
+        render_mode: super::RenderPath::Phase1ClientMount,
+        ir_module: None,
+        slots: None,
+    };
+    let reference = super::render_shell(&input, &RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked();
+    let exact = reference.html.len();
+    let accepted = super::render_shell(&input, &budget(exact))
+        .unwrap()
+        .into_parts_unchecked();
+    assert_eq!(accepted.html.len(), exact);
+    assert!(accepted.html.contains("&lt;é😀 &amp; &quot;title&quot;"));
+    assert!(accepted.html.contains("\\u003cé😀"));
+    assert!(!accepted.html.contains("data-island-state"));
+    assert_eq!(accepted.counts.bytes, 0);
+    let error = super::render_shell(&input, &budget(exact - 1)).unwrap_err();
+    assert_eq!(error.code(), "RENDER-301");
+    assert_eq!(error.route(), "/shell");
+    assert_eq!(error.counts().unwrap().bytes, 0);
+    assert_eq!(
+        super::render_shell(&input, &budget(0)).unwrap_err().code(),
+        "RENDER-301"
+    );
+}

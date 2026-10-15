@@ -403,7 +403,7 @@ fn the_same_server_binds_and_serves_after_all_handlers_finalize() {
 #[test]
 fn every_reviewed_v3_refusal_happens_before_bind() {
     let manifest = try_load_manifest::<ReviewedV3>().expect("reviewed manifest");
-    let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/window-expectations.tsv");
+    let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/state-expectations.tsv");
     let errors = load_ir_modules::<ReviewedV3>(&manifest).expect_err("fault fixtures");
     let mut refused = 0;
     for row in index.lines().skip(1) {
@@ -418,7 +418,7 @@ fn every_reviewed_v3_refusal_happens_before_bind() {
             refused += 1;
         }
     }
-    assert_eq!(refused, 60);
+    assert_eq!(refused, 62);
     assert_eq!(errors.len(), refused);
     let (started, bound) = spawn::<ReviewedV3>(Loader::Default);
     match started.recv_timeout(Duration::from_secs(5)) {

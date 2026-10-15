@@ -632,7 +632,7 @@ impl SectionTable {
 }
 
 // ---------------------------------------------------------------------------
-// Opcode enum (12 active opcodes; six reserved v2 values)
+// Opcode enum (13 active opcodes; six reserved v2 values)
 //
 // Six unused v2 values remain reserved forever: Switch, TryStart, Fallback,
 // Preload, Comment and ListItemKey. From v3 they are refused at load and have
