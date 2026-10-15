@@ -3,9 +3,11 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { dirname, resolve, join, basename, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
+import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const NPM = ['core', 'compiler', 'build', 'create-app'];
@@ -237,7 +239,8 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
   }
   return { manifest, lock };
 }
-export function stageCargoLock(text, packages, local = false, rootName) {
+export function stageCargoLock(text, packages, local = false, rootName, recorded) {
+  if (!local && recorded) return mergeRecordedCargoLock(text, packages, recorded);
   if (local) assertCargoCandidateLock(text, packages, rootName);
   return text.split(/(?=\[\[package\]\])/).map(block => {
     const name = /^name = "([^"]+)"/m.exec(block)?.[1];
@@ -249,9 +252,33 @@ export function stageCargoLock(text, packages, local = false, rootName) {
     return block.replace(/^checksum = "[^"]+"/m, `checksum = "${candidate.sha256}"`);
   }).join('');
 }
+export function packedCargoGraph(root, packages, out) {
+  const scratch = mkdtempSync(join(tmpdir(), 'forma-packed-cargo-'));
+  try {
+    const metadata = [];
+    for (const p of packages.filter(p => p.registry === 'crates')) {
+      const file = join(out, p.file);
+      assert.equal(digest(file), p.sha256, `${p.name}: packed archive checksum changed`);
+      run('tar', ['-xzf', file, '-C', scratch]);
+      const dir = join(scratch, `${p.name}-${p.version}`);
+      const lock = join(dir, 'Cargo.lock');
+      const before = existsSync(lock) ? readFileSync(lock) : null;
+      // --no-deps reads the normalized packed manifest without resolving an
+      // unpublished dependency. --locked --offline prevent repairs/network.
+      const graph = JSON.parse(run('cargo', ['metadata', '--no-deps', '--format-version', '1', '--locked', '--offline', '--manifest-path', join(dir, 'Cargo.toml')], scratch));
+      assert.equal(graph.resolve, null, 'packed manifest inspection resolved dependencies');
+      assert.equal(graph.packages.length, 1);
+      assert.equal(graph.packages[0].name, p.name); assert.equal(graph.packages[0].version, p.version);
+      assert.deepEqual(existsSync(lock) ? readFileSync(lock) : null, before, 'packed metadata inspection changed its lock');
+      metadata.push(graph.packages[0]);
+    }
+    return { lock: readFileSync(join(root, 'Cargo.lock'), 'utf8'), packages: metadata };
+  } finally { rmSync(scratch, { recursive: true, force: true }); }
+}
 export function stageTemplates(root, packages, out) {
   const originals = new Map();
   const stagedFiles = new Map();
+  const cargoGraph = existsSync(join(root, 'Cargo.lock')) ? packedCargoGraph(root, packages, out) : undefined;
   // Compute every replacement before touching the tree, so a malformed second template
   // cannot leave the first template staged when packing fails.
   for (const template of ['minimal', 'dashboard']) {
@@ -267,7 +294,7 @@ export function stageTemplates(root, packages, out) {
       return `${prefix}=${candidate.version}"`;
     });
     stagedFiles.set(join(dir, 'Cargo.toml'), cargo);
-    stagedFiles.set(join(dir, 'Cargo.lock'), stageCargoLock(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), packages));
+    stagedFiles.set(join(dir, 'Cargo.lock'), stageCargoLock(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), packages, false, undefined, cargoGraph));
   }
   try { for (const [path, bytes] of stagedFiles) writeFileSync(path, bytes); }
   catch (error) { for (const [path, bytes] of originals) writeFileSync(path, bytes); throw error; }
