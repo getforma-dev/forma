@@ -81,7 +81,7 @@ All four patterns work under strict CSP. Internally, string styles are parsed by
 
 ### "Refused to apply inline style" on `<style>` tags
 
-**Cause:** A `<style>` tag is missing its `nonce` attribute. `forma-server`'s `render_page()` adds nonces to the personality CSS `<style>` tag automatically. If you create `<style>` elements in JavaScript, they won't have nonces.
+**Cause:** A `<style>` tag is missing its `nonce` attribute. Forma-server's checked renderers add their nonce to the personality CSS `<style>` tag automatically. If you create `<style>` elements in JavaScript, they won't have nonces.
 
 **Fix:** Use CSS classes instead of dynamic `<style>` injection. Or use `el.style.property = value` (CSSOM) which is not blocked.
 
