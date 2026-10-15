@@ -4,6 +4,7 @@
  * FMIR generation and the esbuild SSR integration.
  */
 
+export { getSsrEntryProducts, type SsrEntryProduct } from './ssr-product.js';
 export { formaSsrPlugin, generateRealIr, type SsrPluginOptions, type IrResult } from './esbuild-ssr-plugin.js';
 export {
   DIAGNOSTIC_CATALOGUE,
