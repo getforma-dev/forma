@@ -1,7 +1,7 @@
 import { afterEach, expect, it } from 'vitest';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { build } from 'esbuild';
 import * as compiler from '../src/index';
 import { renderDefaults } from './helpers/render';
@@ -34,7 +34,8 @@ it('omits the static native page renderer while preserving its IR and root impor
   expect(js).not.toMatch(/\bmount\(/);
   expect(compiler.getSsrEntryProducts(result)[0]).toMatchObject({ mode: 'ssr', browserRequired: false, islands: [] });
   expect(js).not.toMatch(/(?:from|import)\s*[('"]+formajs(?:['"/])|@getforma\/core\/server/);
-  const ir = result.outputFiles!.find(file=>file.path.endsWith('/app.ir'))!.contents;
+  // esbuild reports native paths; on Windows the separator is a backslash.
+  const ir = result.outputFiles!.find(file=>basename(file.path)==='app.ir')!.contents;
   expect(renderDefaults(ir)).toBe('<p>native SSR</p>');
 });
 
