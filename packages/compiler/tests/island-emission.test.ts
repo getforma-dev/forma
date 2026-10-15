@@ -41,6 +41,15 @@ describe('declared island writer integration',()=>{
       'export function Badge(p:{label?:string;count?:number;ready?:boolean}){const [label]=createSignal(p.label??"fallback");const [count]=createSignal(p.count??42);const [ready]=createSignal(p.ready??true);return h("p",{"data-ready":ready},label,count);}');
     expect(result.islands).toHaveLength(3);
   });
+  it('normalizes optional access only on a known non-null declared props root',()=>{
+    const page='import {Badge} from "./island";export function Page(p:{count?:number}){return h("main",null,Badge({count:p.count}));}';
+    const island='export function Badge(p:{count?:number}){const [n]=createSignal(p?.count??42);return h("b",null,n);}';
+    const optional=emit('optional-root',page,island),direct=emit('optional-root',page,island.replace('p?.count','p.count'));
+    expect(optional.binary).toEqual(direct.binary);
+    expect(()=>emit('bad','import {Badge} from "./island";export function Page(){return Badge({user:null});}',
+      'export function Badge(p:{user?:{count:number}}){const [n]=createSignal(p.user?.count??42);return h("b",null,n);}')).toThrow(/BUILD-610.*optional access/);
+    expect(()=>emit('bad',page,'export function Badge(p:{count?:number}){const [n]=createSignal(p?.count??42);return h("b",null,n?.());}')).toThrow(/BUILD-610/);
+  });
   it('refuses registered recursion through the same declaration or an imported alias',()=>{
     for(const alias of [false,true])expect(()=>emit('recursive','import {Badge} from "./island";export function Page(){return Badge({label:"loop"});}',
       `${alias?'import {Badge as Again} from "./island";':''}export function Badge(p:{label:string}){return h("p",null,${alias?'Again':'Badge'}({label:p.label}));}`)).toThrow(/BUILD-610.*recursive registered island/);

@@ -9,7 +9,10 @@ and checks native HTML and projected per-occurrence state.
 Cases cover ordered repeated fields, optional nullish local seeds, nested list
 row snapshots, closed aggregate projection and browserOnly's empty native host.
 The closed-nullish case also pairs omitted/null call inputs with fallback seeds
-and verifies that zero, false and empty strings remain values.
+and verifies that zero, false and empty strings remain values. The optional-root
+case proves `props?.count` on a declared, non-null props root has exactly the
+same wire identity as `props.count`, retaining 1001 and defaulting only nullish
+values. Nullable intermediate accesses and optional calls still refuse.
 No timestamps, absolute temporary source paths or generated call IDs occur in
 the contract digest. The current binary hashes are in `manifest.json`.
 

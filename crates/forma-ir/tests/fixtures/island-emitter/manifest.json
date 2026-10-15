@@ -17,6 +17,10 @@
       "bytes": 734,
       "sha256": "a54af73a0bd883c387f6d322e8ab4830cdbf90155a45b29b4ce5429db4387898"
     },
+    "optional-root.ir": {
+      "bytes": 396,
+      "sha256": "5c48e61516540312bc3c7a135576029cd56c9c12a662e0079bf5c02fb1ddfd39"
+    },
     "repeated.ir": {
       "bytes": 412,
       "sha256": "2093d47caf249d9c65d069917a60668c6eafb2dafc4971e971faba0a7fd8095b"

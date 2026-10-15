@@ -58,6 +58,16 @@ export function propPath(node: t.Node | null | undefined, scope: PropsScope | un
       if (path) invalid(scope, node, `${node.callee.name}(declared prop) coercion is not in the SSR subset; pass the rendered value as a declared prop`);
     }
   }
+  if (t.isOptionalMemberExpression(node)) {
+    if(node.optional&&t.isIdentifier(node.object)&&localName(node.object,scope)&&scope.objects.has(node.object.name)) {
+      const key=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
+      if(key===undefined)invalid(scope,node,'a declared prop requires a literal field name');
+      const path=scope.objects.get(node.object.name)!.get(key);
+      if(!path)invalid(scope,node,`field ${key} is absent from the declared props`);
+      return path;
+    }
+    return undefined;
+  }
   if (t.isMemberExpression(node)) {
     const key = !node.computed && t.isIdentifier(node.property) ? node.property.name : t.isStringLiteral(node.property) ? node.property.value : undefined;
     if (t.isIdentifier(node.object) && localName(node.object, scope) && scope.objects.has(node.object.name)) {

@@ -7,6 +7,7 @@ fn render(name: &str, props: Value) -> (String, Value) {
         "repeated" => include_bytes!("fixtures/island-emitter/repeated.ir"),
         "nullish" => include_bytes!("fixtures/island-emitter/nullish.ir"),
         "closed-nullish" => include_bytes!("fixtures/island-emitter/closed-nullish.ir"),
+        "optional-root" => include_bytes!("fixtures/island-emitter/optional-root.ir"),
         "rows" => include_bytes!("fixtures/island-emitter/rows.ir"),
         "aggregate" => include_bytes!("fixtures/island-emitter/aggregate.ir"),
         "browser" => include_bytes!("fixtures/island-emitter/browser.ir"),
@@ -60,6 +61,19 @@ fn closed_optional_inputs_fold_before_native_coalesce_type_validation() {
         state["i"][2]["p"],
         json!({"label":"","count":0,"ready":false})
     );
+}
+
+#[test]
+fn optional_root_access_keeps_the_handler_value_and_only_defaults_null() {
+    let (html, state) = render("optional-root", json!({"count":1001}));
+    assert!(html.contains("1001"));
+    assert!(!html.contains("42"));
+    assert_eq!(state["i"][0]["p"], json!({"count":1001}));
+    for missing in [json!({}), json!({"count":null})] {
+        let (html, state) = render("optional-root", missing);
+        assert!(html.contains("42"));
+        assert_eq!(state["i"][0]["p"], json!({}));
+    }
 }
 
 #[test]
