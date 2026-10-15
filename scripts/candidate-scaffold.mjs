@@ -2,9 +2,10 @@
 // The candidate gate consumes DS11 bytes. It never resolves unpublished Forma versions.
 import assert from 'node:assert/strict';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, pack, packedRuntimeLock, stageNpmLock, stageCargoLock, assertNpmTemplateLock, assertCargoCandidateLock } from './release-set.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 
@@ -122,15 +123,21 @@ export function requireHeavyResults(report) {
 
 export function runCandidate(context, reportPath) {
   const rawReport = join(context.work, 'vitest.json');
-  const result = spawnSync(process.execPath, [join(ROOT,'node_modules/vitest/vitest.mjs'),'run','--reporter=default','--reporter=json',`--outputFile.json=${rawReport}`], {
+  const require = createRequire(join(ROOT,'packages/create-app/package.json'));
+  const runner = join(dirname(require.resolve('vitest/package.json')), 'vitest.mjs');
+  const result = spawnSync(process.execPath, [runner,'run','--reporter=default','--reporter=json',`--outputFile.json=${rawReport}`], {
     cwd:join(ROOT,'packages/create-app'), stdio:'inherit', windowsHide:true,
-    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_CLI:context.cli, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
+    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_CLI:context.cli, FORMA_SCAFFOLD_REPORT_DIR:context.work, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
   });
   const report = {schema:1, passed:false, mode:context.mode ?? 'candidate', commit:context.commit, recordSha256:context.recordSha256, platform:process.platform};
   try {
     assert.equal(result.error, undefined); assert.equal(result.status, 0, 'scaffold suite command failed');
     report.cases = requireHeavyResults(json(rawReport)); report.passed = true;
-  } finally {save(reportPath, report);}
+  } finally {
+    const observations = join(context.work,'observations.jsonl');
+    report.observations = existsSync(observations) ? readFileSync(observations,'utf8').trim().split('\n').filter(Boolean).map(line=>JSON.parse(line)) : [];
+    save(reportPath, report);
+  }
   return report;
 }
 

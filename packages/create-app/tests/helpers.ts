@@ -96,6 +96,11 @@ export function auditSignatures(admin: string) {
     : run('npm', ['audit', 'signatures'], admin);
 }
 
+export function recordObservation(name: string, details: Record<string, unknown>) {
+  const directory = process.env.FORMA_SCAFFOLD_REPORT_DIR;
+  if (directory) fs.appendFileSync(path.join(directory, 'observations.jsonl'), JSON.stringify({name, ...details}) + '\n');
+}
+
 /** Run a command; `env` overrides variables, e.g. `FORMA_STRICT` for a build. */
 export function run(cmd: string, args: string[], cwd: string, timeout = 900_000, env: Record<string, string> = {}) {
   const invocation = commandInvocation(cmd, args);

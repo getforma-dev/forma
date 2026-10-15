@@ -37,3 +37,21 @@ The repository's `scripts/template-lock-seeds.test.mjs` and
 `scripts/release-template-source.test.mjs` cover preparation, hash boundaries,
 unchanged Rust source and restoration. Historical template guidance is in
 [the migration archive](../../../docs/archive/2026-10-15-template-slice1/README.md).
+
+## Slice 1 qualification
+
+The historical FORMA-165 gate required one physical esbuild copy. Slice 1
+preserves the old external resolution `node_modules/esbuild@0.28.2` and the
+current recorded build closure at
+`node_modules/@getforma/build/node_modules/esbuild@0.28.1`. The minimal lock
+also records an optional compiler-local 0.28.1 peer copy; npm may omit it when
+the top-level peer already satisfies the compiler. This changes the earlier
+single-copy guarantee. The scaffold gate requires every installed copy to
+match a recorded location/version and every required recorded copy to exist;
+its report records the actual inventory and optional omissions. No external
+pin is upgraded to force deduplication. Final stable deduplication remains a
+slice 3 decision, alongside the remaining template/release cleanup.
+
+The distinct server count 7 check reads raw HTTP before JavaScript. The current
+whole-page mount retains its browser default 0; adopting differing handler
+state during activation remains slice 2, after the state-block work.

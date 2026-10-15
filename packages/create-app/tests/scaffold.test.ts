@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEMPLATES, validateProjectName } from '../src/scaffold';
-import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures } from './helpers';
+import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures, recordObservation } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -261,11 +261,26 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const esbuildCopies = (JSON.parse(esbuild.stdout) as Array<{ location: string; version: string }>).map(
       (node) => `${node.location.replace(/\\/g, '/')}@${node.version}`,
     );
-    const lockedEsbuild = Object.entries<{ version: string }>(JSON.parse(npmLock.toString()).packages)
+    const lockedEsbuild = Object.entries<{ version: string; optional?: boolean }>(JSON.parse(npmLock.toString()).packages)
       .filter(([location]) => /(?:^|\/)node_modules\/esbuild$/.test(location))
-      .map(([location, node]) => `${location}@${node.version}`);
-    expect(esbuildCopies.sort(), 'npm installed an unrecorded esbuild copy').toEqual(lockedEsbuild.sort());
-    expect(lockedEsbuild.some(copy => copy.startsWith('node_modules/esbuild@'))).toBe(true);
+      .map(([location, node]) => ({copy:`${location}@${node.version}`, optional:node.optional === true}));
+    for (const copy of esbuildCopies) expect(lockedEsbuild.some(entry => entry.copy === copy), `unrecorded installed copy ${copy}`).toBe(true);
+    for (const entry of lockedEsbuild.filter(entry => !entry.optional)) expect(esbuildCopies, `missing required copy ${entry.copy}`).toContain(entry.copy);
+    expect(esbuildCopies.some(copy => copy.startsWith('node_modules/esbuild@'))).toBe(true);
+    const resolutions = run(process.execPath, ['-e', `
+      const {createRequire}=require('node:module'),{join,relative,dirname}=require('node:path'),fs=require('node:fs');
+      const result={};
+      for(const name of ['@getforma/build','@getforma/compiler']) {
+        const owner=join(process.cwd(),'node_modules',name,'package.json'); if(!fs.existsSync(owner))continue;
+        const file=createRequire(owner).resolve('esbuild/package.json');
+        result[name]=relative(process.cwd(),dirname(file)).split(require('node:path').sep).join('/')+'@'+JSON.parse(fs.readFileSync(file)).version;
+      }
+      console.log(JSON.stringify(result));
+    `], admin);
+    expect(resolutions.status, resolutions.stderr).toBe(0);
+    const consumers = JSON.parse(resolutions.stdout) as Record<string, string>;
+    for (const copy of Object.values(consumers)) expect(esbuildCopies).toContain(copy);
+    recordObservation(`${template}: esbuild inventory`, { installed:esbuildCopies.sort(), consumers, optionalOmitted:lockedEsbuild.filter(entry => entry.optional && !esbuildCopies.includes(entry.copy)).map(entry => entry.copy) });
 
     const build = run('npm', ['run', 'build'], admin);
     expect(build.status, build.stdout + build.stderr).toBe(0);

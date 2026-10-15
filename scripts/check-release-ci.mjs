@@ -22,6 +22,8 @@ export function checkJobs(response) {
   }
   const check = response.jobs.find(j => j.name === 'check');
   assert(check.steps?.some(s => s.conclusion === 'success' && /one command|R17/i.test(s.name)), 'R17/probes step did not execute');
+  const pack = response.jobs.find(j => j.name === 'candidate-pack');
+  assert(pack.steps?.some(s => s.conclusion === 'success' && s.name === 'Pack committed candidates and record ten-file restoration'), 'candidate-pack: pack step did not execute');
   for (const name of ['candidate-scaffold (ubuntu-latest)', 'candidate-scaffold (windows-latest)']) {
     const job = response.jobs.find(j => j.name === name);
     assert(job.steps?.some(s => s.conclusion === 'success' && s.name === 'Packed candidate full scaffold suite'), `${name}: full scaffold step did not execute`);
