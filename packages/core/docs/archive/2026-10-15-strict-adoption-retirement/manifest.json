@@ -309,6 +309,55 @@
       "commit": "bca44dc4647d3f7a9fb85c3276112848bcb7a240",
       "sha256": "bfc14f6aa62205e9375c5693e52a50dc7ca70d6420659718b6d77ce751202e69",
       "bytes": 10255
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate.test.ts",
+      "archive": "packages/core/src/dom/__tests__/activate.test.ts.txt",
+      "commit": "7b818634430e55bca65321cc5765c93b995b9fb2",
+      "sha256": "a316bf59796660d70aebf204f9cb0bd32c207134f2e554889affa18b4e4407eb",
+      "bytes": 5901
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-triggers.test.ts",
+      "archive": "packages/core/src/dom/__tests__/activate-triggers.test.ts.txt",
+      "commit": "7b818634430e55bca65321cc5765c93b995b9fb2",
+      "sha256": "ed707552e7bca9980b9e2382b6376517d2697334bcb03c10bc7059a5c1d3b35c",
+      "bytes": 7873
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-reactivate.test.ts",
+      "archive": "packages/core/src/dom/__tests__/activate-reactivate.test.ts.txt",
+      "commit": "7b818634430e55bca65321cc5765c93b995b9fb2",
+      "sha256": "937d9ad5ba438931a0a74d066dfeda437c09d52c169d24a6ea6e04d96621ac9b",
+      "bytes": 3502
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-isolation.test.ts",
+      "archive": "packages/core/src/dom/__tests__/activate-isolation.test.ts.txt",
+      "commit": "7b818634430e55bca65321cc5765c93b995b9fb2",
+      "sha256": "6b473f7605fcd54ba3dcdf97846ab4d888d4254e9aa06158ea1e2f5f3b46ded6",
+      "bytes": 10989
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/activate-visible.test.ts",
+      "archive": "packages/core/src/dom/__tests__/activate-visible.test.ts.txt",
+      "commit": "7b818634430e55bca65321cc5765c93b995b9fb2",
+      "sha256": "316dfbad7f4e4c935dd7a074b0688e363aaf9cde38c15bb52e14f5d2953ec022",
+      "bytes": 5473
+    },
+    {
+      "original": "packages/core/src/dom/__tests__/deactivate.test.ts",
+      "archive": "packages/core/src/dom/__tests__/deactivate.test.ts.txt",
+      "commit": "7b818634430e55bca65321cc5765c93b995b9fb2",
+      "sha256": "f02394d0b6cb185f43a00285083f8f455b482e079d1d172877458d4b7100f6da",
+      "bytes": 5678
+    },
+    {
+      "original": "packages/core/probes/corpus.json",
+      "archive": "packages/core/probes/corpus.json.txt",
+      "commit": "729eab672709af67ff4c6e52cb27e70f82ad60be",
+      "sha256": "66f3bd80b90b0089b0536d383e57c17d41bccb9b51cde0730c63a1f9fe57ba33",
+      "bytes": 142674
     }
   ]
 }
