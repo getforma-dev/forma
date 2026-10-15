@@ -26,5 +26,5 @@
 00a2  01 00                                 props schema: object_count 1
 00a4  01 00                                 object 0: field_count 1
 00a6  02 00 00 00 03 00 00 00 03 00 00 00   field: name str 2, file str 3, line 3, column 23
-00b2  17 00 00 00                         
+00b2  17 00 00 00
 00b6  02                                    type 0x02 string

@@ -100,6 +100,7 @@ chunk("slots: count 1", sl[0:2]); chunk("slot 0: name str 2, Text, Server, defau
 chunk("islands: count 0", isl)
 chunk("props schema: object_count 1", ps[0:2]); chunk("object 0: field_count 1", ps[2:4])
 chunk("field: name str 2, file str 3, line 3, column 23", ps[4:20]); chunk("type 0x02 string", ps[20:21])
+lines = [line.rstrip() for line in lines]
 print("\n".join(lines))
 assert off == len(module)
 (here / "example.ir").write_bytes(module)
