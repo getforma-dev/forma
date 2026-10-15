@@ -80,7 +80,7 @@ it('keeps development network-only while failed watch cycles preserve metadata a
     expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).toBe(original);
     expect(readFileSync(join(outputDir, 'sw.js'), 'utf8')).toBe(worker);
     await change(() => renderer('3.1.0'));
-    expect(readFileSync(join(outputDir, 'app.js'), 'utf8')).toContain('new entry');
+    expect(readFileSync(join(outputDir, manifest().aliases['app.js']), 'utf8')).toContain('new entry');
     expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).not.toBe(original);
     digests(manifest(), outputDir);
     expect(readFileSync(join(outputDir, 'sw.js'), 'utf8')).toBe(worker);

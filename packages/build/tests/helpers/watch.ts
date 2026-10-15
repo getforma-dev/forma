@@ -78,7 +78,7 @@ export async function watching(config: BuildConfig, body: (watcher: Watcher) => 
   const watcher: Watcher = {
     manifest: () => {
       expect(child.exitCode, output).toBeNull();
-      return JSON.parse(readFileSync(join(config.outputDir, 'manifest.json'), 'utf8'));
+      try { return JSON.parse(readFileSync(join(config.outputDir, 'manifest.json'), 'utf8')); } catch (error) { throw new Error(String(error)+'\n'+output); }
     },
     output: () => output,
     ready: async () => vi.waitFor(() => {

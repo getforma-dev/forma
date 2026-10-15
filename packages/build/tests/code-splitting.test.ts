@@ -83,7 +83,7 @@ describe('Opt-in ESM code splitting', () => {
     expect(result.manifest.routes['/phone'].ir).toBeDefined(); expect(result.manifest.routes['/desktop'].ir).toBeUndefined();
     expect(readdirSync(dist).filter(file => file.endsWith('.ir'))).toHaveLength(1);
   });
-  it('updates the watched graph and removes obsolete chunks instead of accumulating them', async () => {
+  it('switches the watched graph while retaining files referenced by an older manifest', async () => {
     const { src, dist, config } = fixture();
     await watching(config, async ({ manifest }) => {
       // Each read waits for the state it asserts: the watcher rewrites the
@@ -91,14 +91,14 @@ describe('Opt-in ESM code splitting', () => {
       // not yet mean a manifest that lists it.
       const before = await vi.waitFor(() => { const current = manifest(); expect(current.routes['/phone'].modulepreload).toHaveLength(1); return current; }, { timeout: 5000 });
       const oldChunks = chunks(dist);
-      expect(before.routes['/phone'].js).toEqual(['phone.js']);
+      expect(before.routes['/phone'].js[0]).toMatch(/^phone\.[A-Z0-9]{8}\.js$/);
+      const held=Object.values(before.aliases).map(file=>({file,bytes:readFileSync(join(dist,file as string))}));
       writeFileSync(join(src, 'later.ts'), 'import { singleton } from "./shared"; export const later = singleton; export const label = "WATCHED_CHANGE";');
       const after = await vi.waitFor(() => { const current = manifest(); expect(listedChunks(current).some(file => !oldChunks.includes(file))).toBe(true); return current; }, { timeout: 5000 });
-      expect(after.routes['/phone'].js).toEqual(['phone.js']);
-      // The obsolete chunk is removed before the manifest that drops it is
-      // written, so the disk and the manifest now agree.
-      expect(chunks(dist).sort()).toEqual(listedChunks(after).sort());
-      expect(chunks(dist)).toHaveLength(oldChunks.length);
+      expect(after.routes['/phone'].js[0]).not.toBe(before.routes['/phone'].js[0]);
+      for(const old of held)expect(readFileSync(join(dist,old.file as string))).toEqual(old.bytes);
+      for(const file of listedChunks(after))expect(chunks(dist)).toContain(file);
+      expect(chunks(dist).length).toBeGreaterThan(oldChunks.length);
       expect(readFileSync(join(dist, 'sw.js'), 'utf8')).toContain('network-only');
     });
   }, 15_000);

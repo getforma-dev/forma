@@ -1,8 +1,11 @@
+import {readSourceFile} from './source-snapshot';
+import {realpathSync} from 'node:fs';
 /** Resolve literal activation registrations to original lexical declarations. */
-import { readFileSync } from 'node:fs';
+
 import { dirname } from 'node:path';
 import { parse } from '@babel/parser';
-import traverse from '@babel/traverse';
+import _traverse from '@babel/traverse';
+const traverse=(typeof _traverse==='function'?_traverse:(_traverse as any).default) as typeof _traverse;
 import * as t from '@babel/types';
 import { resolveFilePath, type ModuleLoader } from './module-loader';
 import { readImportBindings, resolveExportedFunction, type ComponentFunction } from './export-resolver';
@@ -23,20 +26,22 @@ export interface RegisteredIsland {
 }
 export interface IslandRegistry {
   resolve(name: string, file: string): RegisteredIsland | undefined;
+  entries(): readonly {island:RegisteredIsland;local:string;start:number;end:number}[];
 }
 export const rawModuleLoader: ModuleLoader = (from, specifier) => {
   if (!specifier.startsWith('.')) return null;
   const file = resolveFilePath(dirname(from), specifier);
-  return file ? { path: file, source: readFileSync(file, 'utf8') } : null;
+  return file ? { path: file, source: readSourceFile(file) } : null;
 };
 const key = (node: t.Node): string | undefined => t.isIdentifier(node) || t.isStringLiteral(node) ? (t.isIdentifier(node) ? node.name : node.value) : undefined;
 const callable = (node: t.Node | null | undefined): node is ComponentFunction => t.isFunctionDeclaration(node) || t.isFunctionExpression(node) || t.isArrowFunctionExpression(node);
 
 export function createIslandRegistry(entry: string): IslandRegistry {
+  entry=realpathSync(entry);
   const sources = new Map<string,string>();
   const source = (file: string): string => {
     let value = sources.get(file);
-    if (value === undefined) { value = readFileSync(file, 'utf8'); sources.set(file, value); }
+    if (value === undefined) { value = readSourceFile(file); sources.set(file, value); }
     return value;
   };
   function fail(file: string, node: t.Node, message: string): never {
@@ -45,6 +50,7 @@ export function createIslandRegistry(entry: string): IslandRegistry {
   type Target = {identity:string;file:string;source:string;fn:ComponentFunction;mode:IslandRenderMode};
   const targets = new Map<string,Target | undefined>();
   const target = (local: string, file: string): Target | undefined => {
+    file=realpathSync(file);
     const cacheKey = `${file}\0${local}`;
     if (targets.has(cacheKey)) return targets.get(cacheKey);
     targets.set(cacheKey, undefined);
@@ -79,14 +85,15 @@ export function createIslandRegistry(entry: string): IslandRegistry {
     targets.set(cacheKey, result); return result;
   };
   const registered = new Map<string,RegisteredIsland>(), names = new Set<string>();
-  const registry: IslandRegistry = {resolve(local,file) { const found = target(local,file); return found ? registered.get(found.identity) : undefined; }};
+  const entries: {island:RegisteredIsland;local:string;start:number;end:number}[]=[];
+  const registry: IslandRegistry = {entries:()=>entries,resolve(local,file) { const found = target(local,file); return found ? registered.get(found.identity) : undefined; }};
   const ast = parse(source(entry), {sourceType:'module',plugins:['typescript','jsx']});
   traverse(ast, { CallExpression(path) {
     if (!t.isIdentifier(path.node.callee)) return;
     const binding = path.scope.getBinding(path.node.callee.name), declaration = binding?.path.node;
     if (!t.isImportSpecifier(declaration) || key(declaration.imported) !== 'activateIslands') return;
     const imported = binding!.path.parentPath?.node;
-    if (!t.isImportDeclaration(imported) || !['@getforma/core','formajs'].includes(imported.source.value)) return;
+    if (!t.isImportDeclaration(imported) || imported.importKind==='type' || declaration.importKind==='type' || !['@getforma/core','formajs'].includes(imported.source.value)) return;
     const arg = path.node.arguments[0];
     if (!t.isObjectExpression(arg)) fail(entry, path.node, 'activateIslands needs a literal registry');
     for (const property of arg.properties) {
@@ -110,6 +117,7 @@ export function createIslandRegistry(entry: string): IslandRegistry {
         });
       }};
       registered.set(found.identity,item); names.add(name);
+      entries.push({island:item,local:property.value.name,start:property.start!,end:property.end!});
     }
   }});
   return registry;

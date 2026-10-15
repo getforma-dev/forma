@@ -32,7 +32,7 @@ it('preserves runtime h() and the root core import while emitting a native FMIR 
   expect(js).toContain('from "@getforma/core"');
   expect(js).toContain('h("p", null, "native SSR")');
   expect(js).not.toMatch(/(?:from|import)\s*[('"]+formajs(?:['"/])|@getforma\/core\/server/);
-  const ir = readFileSync(join(root, 'app.ir'));
+  const ir = result.outputFiles!.find(file=>file.path.endsWith('/app.ir'))!.contents;
   expect(renderDefaults(ir)).toBe('<p>native SSR</p>');
 });
 

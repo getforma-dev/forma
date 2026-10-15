@@ -1,3 +1,4 @@
+import {readSourceFile, resolveSourceFile} from './source-snapshot';
 /**
  * Forma Compiler - Module Loader
  *
@@ -11,7 +12,7 @@
  * across files is a filesystem operation, not an AST one.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { registerSourceMap } from './diagnostics.js';
@@ -38,6 +39,7 @@ export type ModuleLoader = (
 export function resolveFilePath(fromDir: string, importPath: string): string | null {
   const base = resolve(fromDir, importPath);
 
+  return resolveSourceFile(base, () => {
   // Try exact path
   if (existsSync(base) && !isDirectory(base)) return base;
 
@@ -52,6 +54,7 @@ export function resolveFilePath(fromDir: string, importPath: string): string | n
   }
 
   return null;
+  });
 }
 
 /**
@@ -78,7 +81,7 @@ function isDirectory(filePath: string): boolean {
  */
 export function loadComponentSource(filePath: string): string | null {
   try {
-    return transformJsxSource(readFileSync(filePath, 'utf8'), filePath);
+    return transformJsxSource(readSourceFile(filePath), filePath);
   } catch {
     return null;
   }

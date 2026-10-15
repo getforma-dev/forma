@@ -25,8 +25,16 @@ import { formaSsrPlugin } from "@getforma/compiler";
 // Used by @getforma/build, not typically called directly
 ```
 
-The plugin writes exactly one file per page: `<page>.ir`. The island table lives
-inside that binary; callers who want it as data use `generateRealIr(entry)`,
+Use esbuild `write: false`. The plugin appends `<page>.ir` to the returned
+`outputFiles`, alongside the browser output, and never writes files itself.
+Publish these files only after the complete esbuild call succeeds. `@getforma/build`
+handles publication, rollback and watched generations. `write: true` is refused.
+
+One captured source graph produces the FMIR and browser registration metadata.
+A distinct `clientEntryPoint` must resolve the same island declarations as
+`entryPoint`; matching spelling alone is insufficient. Source/type edits during
+compilation refuse the product and can be retried. Browser routes (`ssr: false`)
+do not use this transform. The island table lives inside the binary; callers who want it as data use `generateRealIr(entry)`,
 which returns `{ binary, islands }`. (Through 0.2.0 the plugin also dropped a
 `<page>.islands.json` sidecar into the output directory — build metadata in the
 served asset tree, read by nothing but a since-removed `@getforma/build` step.)

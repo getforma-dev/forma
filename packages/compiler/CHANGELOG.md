@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Paired island compilation — FORMA-103
+
+- Generate browser registration metadata and FMIR from one captured source graph; compare resolved declarations and canonical contracts for distinct browser/SSR entries. Type-only dependencies join the same watcher.
+- Require esbuild `write: false` and return IR with browser `outputFiles`. The plugin never writes before the complete build succeeds. Mid-build source changes refuse publication.
+
 ### Fixed — FORMA-103 entry prerequisite
 
 - Resolve a top-level page declared in its own entry file through the same declared-props path as an imported page. Expression callbacks, single-return blocks and direct references retain the page contract; genuine inline trees remain local. Shadowed or reassigned root identities fail BUILD-610 before emitting an unrelated schema.
