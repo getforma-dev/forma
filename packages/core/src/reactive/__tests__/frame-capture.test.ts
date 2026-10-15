@@ -32,7 +32,7 @@ async function bundledSignals(define: Record<string, string>): Promise<SignalPro
   return await import(/* @vite-ignore */ url) as SignalProbe;
 }
 
-function checkSignals(probe: SignalProbe, capture: boolean): void {
+function checkSignals(probe: SignalProbe, capture: boolean): Array<[unknown, unknown]> {
   const captured: Array<[unknown, unknown]> = [];
   const pair = probe.withAdoptionSink({ capture: (get, set) => captured.push([get, set]) },
     () => probe.createSignal(1));
@@ -58,22 +58,23 @@ function checkSignals(probe: SignalProbe, capture: boolean): void {
   custom[1](previous => ({ value: previous.value + 1 }));
   expect(custom[0]()).toEqual({ value: 2 });
   expect(captured).toHaveLength(capture ? 1 : 0);
+  return captured;
 }
 
 describe('frame signal capture capability', () => {
   it('omits capture only in the frame while retaining ordinary tuple and setter behavior', async () => {
-    checkSignals(await bundledSignals({ ...FRAME_DEFINE }), false);
+    expect(checkSignals(await bundledSignals({ ...FRAME_DEFINE }), false)).toHaveLength(0);
   });
 
   it('retains actual getter/setter capture in the normal production build', async () => {
-    checkSignals(await bundledSignals({ ...PROD_DEFINE }), true);
+    expect(checkSignals(await bundledSignals({ ...PROD_DEFINE }), true)).toHaveLength(1);
   });
 
   it('retains capture when tooling does not define the frame flag', async () => {
-    checkSignals(await bundledSignals({ [DEV_BUILD_FLAG]: 'false' }), true);
+    expect(checkSignals(await bundledSignals({ [DEV_BUILD_FLAG]: 'false' }), true)).toHaveLength(1);
   });
 
   it('retains capture when importing the raw source directly', () => {
-    checkSignals({ createSignal, withAdoptionSink }, true);
+    expect(checkSignals({ createSignal, withAdoptionSink }, true)).toHaveLength(1);
   });
 });
