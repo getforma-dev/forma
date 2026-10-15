@@ -146,6 +146,23 @@ describe('actual local signal authority', () => {
 });
 
 describe('checked seeds and reversible commit', () => {
+  it('revokes writable authority when either its creation or use group is disposed', () => {
+    for (const disposeCreation of [true, false]) {
+      const target = scope(), creation = target.group(() => text());
+      const use = target.group(() => __adoptionWritable(creation.value.pair[0], creation.value.pair[0], 'string', 9));
+      if (disposeCreation) creation.dispose(); else use.dispose();
+      expect(() => target.queueEdit(use.value, 'typed')).toThrow('FORMA_E_HYDRATE_INPUT_TARGET');
+      expect(creation.value.pair[0]()).toBe('server');
+    }
+  });
+
+  it('refuses a queued seed when its described row is disposed before sealing', () => {
+    const target = scope(), row = target.group(() => text());
+    target.queueEdit(row.value.read, 'typed'); row.dispose();
+    expect(() => target.seal()).toThrow('FORMA_E_HYDRATE_VALUE');
+    expect(row.value.pair[0]()).toBe('server');
+  });
+
   it('queues equal shared-getter edits once and refuses conflicts before any assignment', () => {
     const target = scope(), local = target.run(() => text());
     target.queueEdit(local.read, 'a'); target.queueEdit(local.read, 'a');

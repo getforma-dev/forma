@@ -20,6 +20,18 @@ import {
 } from './root.js';
 import { setCleanupCollector } from './cleanup.js';
 import { reportError } from './dev.js';
+import { deferAdoptionEffect } from './adoption-hooks.js';
+
+// A live adopted callback's nested effects inherit its failure boundary. This
+// is dynamically scoped around execution and restored even when it throws.
+let adoptionFailure: ((error: unknown) => void) | undefined;
+
+/** @internal A committed ref may construct effects owned by the same island. */
+export function withAdoptionEffectFailure<T>(failure: (error: unknown) => void, fn: () => T): T {
+  const previous = adoptionFailure;
+  adoptionFailure = failure;
+  try { return fn(); } finally { adoptionFailure = previous; }
+}
 
 // ---------------------------------------------------------------------------
 // Cleanup array pool — avoids allocating a new array every effect re-run
@@ -151,6 +163,10 @@ export function internalEffect(fn: () => void): () => void {
 }
 
 export function createEffect(fn: () => void | (() => void)): () => void {
+  return deferAdoptionEffect(fail => createEffectNow(fn, fail)) ?? createEffectNow(fn, adoptionFailure);
+}
+
+function createEffectNow(fn: () => void | (() => void), failure?: (error: unknown) => void): () => void {
   // Capture the owner active at creation time so this effect's disposer is owned
   // by whatever created it — a root, or (for a nested effect) the parent effect's
   // current child-owner. This replaces a hasActiveRoot() snapshot so nested
@@ -170,6 +186,7 @@ export function createEffect(fn: () => void | (() => void)): () => void {
   let cleanupBag: (() => void)[] | undefined;
   let nextCleanup: (() => void) | undefined;
   let nextCleanupBag: (() => void)[] | undefined;
+  let failed = false;
 
   const addCleanup = (cb: () => void) => {
     if (nextCleanupBag !== undefined) {
@@ -215,6 +232,8 @@ export function createEffect(fn: () => void | (() => void)): () => void {
     // registered on later runs.) The single-cleanup/pooled-array promotion below
     // keeps the zero/one-cleanup case allocation-free.
     const prevCollector = setCleanupCollector(addCleanup);
+    const previousFailure = adoptionFailure;
+    adoptionFailure = failure;
 
     try {
       // Run the body with this effect's child-owner installed so any nested
@@ -231,14 +250,16 @@ export function createEffect(fn: () => void | (() => void)): () => void {
         cleanup = nextCleanup;
       }
     } catch (e) {
-      reportError(e, 'effect');
       if (nextCleanupBag !== undefined) {
         cleanupBag = nextCleanupBag;
       } else if (nextCleanup !== undefined) {
         cleanup = nextCleanup;
       }
+      if (failure) { failed = true; failure(e); }
+      else reportError(e, 'effect');
     } finally {
       setCleanupCollector(prevCollector);
+      adoptionFailure = previousFailure;
     }
   };
 
@@ -253,13 +274,13 @@ export function createEffect(fn: () => void | (() => void)): () => void {
     do {
       if (node) node.flags &= ~PENDING; // clear before running so we detect a fresh set
       runOnce();
+      if (failed) break;
       if (node === undefined || (node.flags & PENDING) === 0) break;
       if (++reentrantRuns >= MAX_REENTRANT_RUNS) {
         node.flags &= ~PENDING;
-        reportError(
-          new Error(`createEffect exceeded ${MAX_REENTRANT_RUNS} self-triggered re-runs (cycle?)`),
-          'effect',
-        );
+        const error = new Error(`createEffect exceeded ${MAX_REENTRANT_RUNS} self-triggered re-runs (cycle?)`);
+        if (failure) { failed = true; failure(error); }
+        else reportError(error, 'effect');
         break;
       }
     } while (true);

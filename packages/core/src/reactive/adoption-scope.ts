@@ -1,29 +1,15 @@
-/**
- * Private FORMA-104 preparation seam. Not yet connected to the DOM adopter.
- * The compiler hooks carry function identity; the planner carries DOM policy.
- */
-import { effect as rawEffect, getActiveSub, setActiveSub } from 'alien-signals';
+/** Private compiled signal authority layered over unprivileged preparation. */
+import { setActiveSub } from 'alien-signals';
 import { checkIslandClaim, type ValidatedIsland } from '../dom/island-state.js';
-import { withAdoptionSink, type AdoptionCodec, type AdoptionSink } from './adoption-hooks.js';
-import { openBatch, closeBatchWithoutRoot } from './batch.js';
-import { createUnownedRoot } from './root.js';
-import { reportError } from './dev.js';
+import type { AdoptionCodec } from './adoption-hooks.js';
+import { AdoptionLifecycle, AdoptionScopeError, type PreparationGroup, type PreparationOptions } from './adoption-lifecycle.js';
 import type { SignalGetter, SignalSetter } from './signal.js';
+export { AdoptionScopeError } from './adoption-lifecycle.js';
 
-type Phase = 'preparing' | 'validated' | 'seeding' | 'live' | 'aborted';
-type Code = 'FORMA_E_HYDRATE_INPUT_TARGET' | 'FORMA_E_HYDRATE_INPUT_CONFLICT'
-  | 'FORMA_E_HYDRATE_VALUE' | 'FORMA_E_HYDRATE_STRUCTURE';
 type Value = string | number | boolean | string[];
-type Local = { get: SignalGetter<unknown>; set: SignalSetter<unknown> };
-type Binding = { local: Local; codec: AdoptionCodec; site: number };
+type Local = { get: SignalGetter<unknown>; set: SignalSetter<unknown>; group: PreparationGroup };
+type Binding = { local: Local; codec: AdoptionCodec; site: number; group: PreparationGroup };
 type Edit = Binding & { before: Value; baseline: Value; next: Value };
-
-export class AdoptionScopeError extends Error {
-  constructor(readonly code: Code, readonly site?: number) {
-    super(`[forma] ${code}`);
-    this.name = 'AdoptionScopeError';
-  }
-}
 
 function untracked<T>(read: () => T): T {
   const previous = setActiveSub(undefined);
@@ -50,75 +36,43 @@ function equal(a: unknown, b: Value): boolean {
     : Object.is(a, b);
 }
 
-/** @internal Constructed only after the existing document preflight. */
-export class AdoptionScope implements AdoptionSink {
-  private state: Phase = 'preparing';
-  private invalidated = false;
-  private batchOpen = false;
-  private readonly builtins = new WeakMap<SignalGetter<unknown>, SignalSetter<unknown>>();
+/** @internal Only the original checked 103 object permits local seed authority. */
+export class AdoptionScope extends AdoptionLifecycle {
+  private readonly builtins = new WeakMap<SignalGetter<unknown>, Local>();
   private readonly locals = new WeakMap<SignalGetter<unknown>, Local>();
   private readonly bindings = new WeakMap<() => unknown, Binding>();
   private readonly edits = new Map<SignalGetter<unknown>, Edit>();
-  private readonly disposers: (() => void)[] = [];
-  // alien-signals 3.1.2 Dirty/Pending, also used by effect.ts's self-write guard.
-  private readonly readers: { flags: number }[] = [];
 
-  constructor(private readonly island: ValidatedIsland) {
+  constructor(private readonly island: ValidatedIsland, options: PreparationOptions = {}) {
+    super(options);
     checkIslandClaim(island);
     if (island.registration.mode !== 0) throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
   }
-
-  get phase(): Phase { return this.state; }
-
-  private require(phase: Phase): void {
-    if (this.state !== phase) throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
-  }
-
-  /** Run one component/branch/row construction in an owned, synchronous scope. */
-  run<T>(fn: () => T): T {
-    this.require('preparing');
-    let result!: T;
-    let failed = false;
-    let error: unknown;
-    let dispose!: () => void;
-    // Catch inside the raw scope so even a thrown component leaves us a disposer.
-    // Verified by: src/reactive/__tests__/adoption-scope.test.ts > "a component throw disposes prior and partially constructed readers"
-    withAdoptionSink(this, () => createUnownedRoot(rootDispose => {
-      dispose = rootDispose;
-      try { result = fn(); } catch (cause) { failed = true; error = cause; }
-    }));
-    if (this.state === 'aborted') dispose();
-    else this.disposers.push(dispose);
-    if (failed) {
-      this.abort();
-      throw error;
-    }
-    return result;
-  }
+  protected override check(): void { checkIslandClaim(this.island); super.check(); }
 
   capture<T>(get: SignalGetter<T>, set: SignalSetter<T>): void {
-    if (this.state === 'preparing') this.builtins.set(get, set as SignalSetter<unknown>);
+    if (this.state === 'preparing' && this.currentGroup.alive) {
+      this.builtins.set(get, { get, set: set as SignalSetter<unknown>, group: this.currentGroup });
+    }
   }
-
   enroll<T>(_site: number, [get, set]: [SignalGetter<T>, SignalSetter<T>]): void {
-    if (this.state !== 'preparing' || this.builtins.get(get) !== set) return;
-    this.locals.set(get, { get, set: set as SignalSetter<unknown> });
+    const local = this.builtins.get(get);
+    if (this.state === 'preparing' && local?.set === set && local.group.alive) this.locals.set(get, local);
   }
-
   writable<T>(read: () => T, get: SignalGetter<T>, codec: AdoptionCodec, site: number): () => T {
     const local = this.locals.get(get);
-    if (this.state !== 'preparing' || !local) return read;
+    if (this.state !== 'preparing' || !local?.group.alive || !this.currentGroup.alive) return read;
     const wrapper = () => read();
-    this.bindings.set(wrapper, { local, codec, site });
+    this.bindings.set(wrapper, { local, codec, site, group: this.currentGroup });
     return wrapper;
   }
 
-  /** The planner calls this only after detecting a real normalized early edit. */
-  queueEdit(read: () => unknown, value: unknown): void {
+  /** Called only after the DOM planner detects a real normalized early edit. */
+  override queueEdit(read: () => unknown, value: unknown): void {
     this.require('preparing');
     try {
       const binding = this.bindings.get(read);
-      if (!binding) throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_TARGET');
+      if (!binding?.group.alive || !binding.local.group.alive) throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_TARGET');
       const before = untracked(binding.local.get);
       if (!accepts(binding.codec, value) || !accepts(binding.codec, before)) {
         throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_TARGET', binding.site);
@@ -128,94 +82,19 @@ export class AdoptionScope implements AdoptionSink {
         throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_CONFLICT', binding.site);
       }
       if (!prior) this.edits.set(binding.local.get, { ...binding, before, baseline: copy(before), next: copy(value) });
-    } catch (cause) {
-      this.abort();
-      throw cause;
-    }
-  }
-
-  /** Track one initial reader while its eventual writer remains dormant. */
-  observe<T>(read: () => T, write: (value: T) => void): T {
-    this.require('preparing');
-    let initial!: T;
-    let first = true;
-    let failed = false;
-    let error: unknown;
-    const dispose = rawEffect(() => {
-      if (first) {
-        first = false;
-        this.readers.push(getActiveSub()!);
-        // The effect constructor must return its disposer even on a throwing read.
-        // Verified by: src/reactive/__tests__/adoption-scope.test.ts > "a throwing first reader removes its partial computed dependency"
-        try { initial = read(); } catch (cause) { failed = true; error = cause; }
-      } else if (this.state === 'live') {
-        try { write(read()); } catch (cause) { this.abort(); reportError(cause, 'adoption binding'); }
-      } else {
-        this.invalidated = true;
-      }
-    });
-    if (this.state === 'aborted') dispose();
-    else this.disposers.push(dispose);
-    if (failed) { this.abort(); throw error; }
-    if (this.state === 'aborted') throw new AdoptionScopeError('FORMA_E_HYDRATE_STRUCTURE');
-    return initial;
-  }
-
-  private checkPrepared(): void {
-    checkIslandClaim(this.island);
-    if (this.invalidated || this.readers.some(reader => (reader.flags & (16 | 32)) !== 0)) {
-      throw new AdoptionScopeError('FORMA_E_HYDRATE_VALUE');
-    }
-  }
-
-  seal(): void {
-    this.require('preparing');
-    try { this.checkPrepared(); this.state = 'validated'; }
-    catch (cause) { this.abort(); throw cause; }
-  }
-
-  /** Hold the batch through the planner's final claim/range checks. */
-  seed(): void {
-    this.require('validated');
-    try {
-      this.checkPrepared();
-      for (const edit of this.edits.values()) {
-        if (!equal(untracked(edit.local.get), edit.baseline)) throw new AdoptionScopeError('FORMA_E_HYDRATE_VALUE', edit.site);
-      }
-      openBatch();
-      this.batchOpen = true;
-      this.state = 'seeding';
-      for (const edit of this.edits.values()) edit.local.set(edit.next);
     } catch (cause) { this.abort(); throw cause; }
   }
-
-  publish(): void {
-    this.require('seeding');
-    try {
-      checkIslandClaim(this.island);
-      this.state = 'live';
-      this.edits.clear();
-      this.closeBatch();
-    } catch (cause) { this.abort(); throw cause; }
+  protected override checkSeeds(): void {
+    for (const edit of this.edits.values()) {
+      if (!edit.group.alive || !edit.local.group.alive) throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_TARGET', edit.site);
+      if (!equal(untracked(edit.local.get), edit.baseline)) throw new AdoptionScopeError('FORMA_E_HYDRATE_VALUE', edit.site);
+    }
   }
-
-  private closeBatch(): void {
-    if (!this.batchOpen) return;
-    this.batchOpen = false;
-    closeBatchWithoutRoot();
+  protected override applySeeds(): void { for (const edit of this.edits.values()) edit.local.set(edit.next); }
+  protected override rollbackSeeds(): void {
+    // Default createSignal assignments only: no updater or equality callback.
+    // Restore the exact original array reference before releasing the batch.
+    for (const edit of this.edits.values()) edit.local.set(edit.before);
   }
-
-  abort(): void {
-    if (this.state === 'aborted') return;
-    const rollback = this.state === 'seeding';
-    this.state = 'aborted';
-    for (const dispose of this.disposers.splice(0)) dispose();
-    // Only recorded default createSignal setters can reach this loop. Their
-    // scalar/array values bypass updater functions and custom equality callbacks.
-    // Verified by: src/reactive/__tests__/adoption-scope.test.ts > "rolls back built-in assignments before releasing the batch"
-    if (rollback) for (const edit of this.edits.values()) edit.local.set(edit.before);
-    this.edits.clear();
-    this.readers.length = 0;
-    this.closeBatch();
-  }
+  protected override clearSeeds(): void { this.edits.clear(); }
 }
