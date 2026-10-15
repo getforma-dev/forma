@@ -349,14 +349,17 @@ fn keyed_fixtures_render_their_unkeyed_originals_plus_exactly_the_row_keys() {
 #[test]
 fn keyed_fixtures_refuse_duplicate_missing_and_non_identity_keys_as_render_503() {
     let offset = key_paths("aggregate-fallback")[0].0;
+    // The diagnostic names the LIST, both row ordinals and the path, never the key: it is the
+    // row's data (here a stand-in for a private value).
     let duplicate = refusal(
         "aggregate-fallback",
-        json!({"rows":[{"id":"a"},{"id":"b"},{"id":"a"}]}),
+        json!({"rows":[{"id":"secret-7"},{"id":"b"},{"id":"secret-7"}]}),
     );
     assert_eq!(
         duplicate,
-        format!("RENDER-503: LIST at bytecode offset {offset}, row 2, key path `id`: duplicate key \"a\" already rendered by row 0")
+        format!("RENDER-503: LIST at bytecode offset {offset}, row 2, key path `id`: the row repeats the key row 0 already rendered")
     );
+    assert!(!duplicate.contains("secret"), "{duplicate}");
     // CRLF and LF are one identity (a number and its decimal string are pinned in the walker's
     // own tests: the declared schema types this fixture's `id` as a string).
     for rows in [
@@ -364,14 +367,14 @@ fn keyed_fixtures_refuse_duplicate_missing_and_non_identity_keys_as_render_503()
         json!([{"id":"a\rb"},{"id":"a\nb"}]),
     ] {
         assert!(refusal("aggregate-fallback", json!({"rows":rows}))
-            .contains("row 1, key path `id`: duplicate key"));
+            .contains("row 1, key path `id`: the row repeats the key row 0 already rendered"));
     }
     // `-0` and `0` collide; `"1"` and `"01"` do not.
     assert!(refusal(
         "rows",
         json!({"rows":[{"id":0,"user":{"name":"a"}},{"id":-0.0,"user":{"name":"b"}}]})
     )
-    .contains("duplicate key \"0\""));
+    .contains("row 1, key path `id`: the row repeats the key row 0 already rendered"));
     let (html, _) = render(
         "aggregate-fallback",
         json!({"rows":[{"id":"01"},{"id":"1"}]}),

@@ -32,16 +32,31 @@
 
 use crate::format::ListKeyReason;
 use crate::slot::SlotValue;
-use crate::text::normalize_text;
+use crate::text::{normalize_text, normalized_chars};
 
 /// `Number.MAX_SAFE_INTEGER`: the largest magnitude an ECMAScript number
 /// holds exactly, and the bound of the key domain's integers.
 const MAX_SAFE_INTEGER: f64 = 9_007_199_254_740_991.0;
 
-/// The canonical key text of `row` at `path`, or why there is none.
+/// The canonical key text of `row` at `path`, or why there is none:
+/// [`key_value_at`] then [`canonical_key_text`].
 ///
 /// `path` is the list's key path resolved to field names, in order.
+#[cfg(test)]
 pub(crate) fn canonical_list_key(row: &SlotValue, path: &[&str]) -> Result<String, ListKeyReason> {
+    canonical_key_text(key_value_at(row, path)?)
+}
+
+/// The row's value at `path`, read from the row's own fields only.
+///
+/// Every segment but the last must name a field holding an object; the last
+/// names the identity. A missing field, a field declared twice (ambiguous,
+/// not first-wins) or a non-object on the way refuses. No array index, no
+/// prototype, no coercion.
+pub(crate) fn key_value_at<'v>(
+    row: &'v SlotValue,
+    path: &[&str],
+) -> Result<&'v SlotValue, ListKeyReason> {
     let mut current = row;
     for segment in path {
         let SlotValue::Object(fields) = current else {
@@ -64,7 +79,25 @@ pub(crate) fn canonical_list_key(row: &SlotValue, path: &[&str]) -> Result<Strin
             segment: (*segment).to_string(),
         })?;
     }
-    canonical_key_text(current)
+    Ok(current)
+}
+
+/// Whether `value`'s canonical text would be longer than `budget` bytes.
+///
+/// Counted on the normalized characters without building the text, stopping
+/// as soon as the budget is passed, so a key that could never be written
+/// within the output budget costs no allocation. A number's text is at most
+/// 17 bytes and is not counted; a value outside the domain is refused by
+/// [`canonical_key_text`] instead.
+pub(crate) fn normalized_len_exceeds(value: &SlotValue, budget: usize) -> bool {
+    let SlotValue::Text(text) = value else {
+        return false;
+    };
+    let mut total = 0usize;
+    normalized_chars(text).any(|c| {
+        total += c.len_utf8();
+        total > budget
+    })
 }
 
 /// The canonical text of one identity value.
@@ -85,19 +118,6 @@ pub(crate) fn canonical_key_text(value: &SlotValue) -> Result<String, ListKeyRea
         SlotValue::Bool(_) => Err(ListKeyReason::NotAnIdentity { kind: "a boolean" }),
         SlotValue::Array(_) => Err(ListKeyReason::NotAnIdentity { kind: "an array" }),
         SlotValue::Object(_) => Err(ListKeyReason::NotAnIdentity { kind: "an object" }),
-    }
-}
-
-/// A key as a diagnostic shows it: whole when short, else its first
-/// characters and a mark, so a message never carries an unbounded value.
-pub(crate) fn key_preview(key: &str) -> String {
-    const SHOWN: usize = 48;
-    if key.chars().count() <= SHOWN {
-        key.to_string()
-    } else {
-        let mut shown: String = key.chars().take(SHOWN).collect();
-        shown.push('\u{2026}');
-        shown
     }
 }
 
@@ -265,11 +285,17 @@ mod tests {
     }
 
     #[test]
-    fn a_diagnostic_preview_is_bounded_and_counts_characters_not_bytes() {
-        assert_eq!(key_preview("short"), "short");
-        let long: String = "é".repeat(100);
-        let preview = key_preview(&long);
-        assert_eq!(preview.chars().count(), 49);
-        assert!(preview.ends_with('\u{2026}'));
+    fn the_budget_check_counts_normalized_bytes_and_stops_at_the_budget() {
+        let text = |s: &str| SlotValue::Text(s.into());
+        // NUL is one byte in and three out; CRLF two in and one out.
+        assert!(!normalized_len_exceeds(&text("\0"), 3));
+        assert!(normalized_len_exceeds(&text("\0"), 2));
+        assert!(!normalized_len_exceeds(&text("a\r\nb"), 3));
+        assert!(normalized_len_exceeds(&text("a\r\nb"), 2));
+        assert!(!normalized_len_exceeds(&text(""), 0));
+        assert!(normalized_len_exceeds(&text("é"), 1));
+        // Numbers and non-identities are not counted here.
+        assert!(!normalized_len_exceeds(&SlotValue::Number(1e15), 0));
+        assert!(!normalized_len_exceeds(&SlotValue::Null, 0));
     }
 }

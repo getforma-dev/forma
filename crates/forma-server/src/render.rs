@@ -753,16 +753,13 @@ mod tests {
             list_offset: 30,
             row: 2,
             path: "user.id".into(),
-            reason: ListKeyReason::Duplicate {
-                first_row: 0,
-                key: "a".into(),
-            },
+            reason: ListKeyReason::Duplicate { first_row: 0 },
         })));
         assert_eq!(keyed.code(), "RENDER-503");
         assert_eq!(keyed.component_path(), ["Rows".to_string()]);
         let text = keyed.to_string();
         assert!(
-            text.contains("RENDER-503: LIST at bytecode offset 30, row 2, key path `user.id`: duplicate key \"a\" already rendered by row 0"),
+            text.contains("RENDER-503: LIST at bytecode offset 30, row 2, key path `user.id`: the row repeats the key row 0 already rendered"),
             "{text}"
         );
         assert_eq!(walk(IrError::InvalidOpcode(0xff)).code(), "RENDER-102");

@@ -172,24 +172,29 @@ pub enum ListKeyReason {
     /// ±(2^53 − 1): a fraction, an infinity, NaN or a larger magnitude.
     NotASafeInteger,
     /// Another row of the same list execution already rendered this key.
+    /// The key itself is not carried: it is the row's data, and a
+    /// diagnostic names positions, never private values.
     Duplicate {
         /// Zero-based position of the row that rendered it first.
         first_row: usize,
-        /// The canonical key text both rows share, shortened for the message.
-        key: String,
     },
     /// The row body did not render exactly one root element to carry the
-    /// key: no element, more than one, or text or a dynamic range beside it.
+    /// key: no element, more than one, or text, a dynamic range or an island
+    /// envelope that does not wholly enclose the root beside it.
     RowShape {
         /// Elements opened directly at the row's level.
         roots: usize,
-        /// Whether text or a marker was written directly at the row's level.
+        /// Whether text, a range, or an island envelope that does not wholly
+        /// enclose the root was written directly at the row's level.
         stray_content: bool,
     },
     /// The row's root carries an authored `data-forma-key` (static or
     /// dynamic); the attribute is the compiler-written identity and nothing
     /// else may set it.
     AuthoredKey,
+    /// The row closed an element it did not open, or left one open at its
+    /// end, so its root is not one balanced element at the row's level.
+    UnbalancedRow,
 }
 
 impl fmt::Display for ListKeyReason {
@@ -211,8 +216,8 @@ impl fmt::Display for ListKeyReason {
                 f,
                 "the key number is not an integer within the safe range (a fraction, an infinity, NaN or beyond 2^53-1)"
             ),
-            ListKeyReason::Duplicate { first_row, key } => {
-                write!(f, "duplicate key {key:?} already rendered by row {first_row}")
+            ListKeyReason::Duplicate { first_row } => {
+                write!(f, "the row repeats the key row {first_row} already rendered")
             }
             ListKeyReason::RowShape {
                 roots,
@@ -222,7 +227,7 @@ impl fmt::Display for ListKeyReason {
                 "the row must render exactly one root element to carry its key ({roots} root element{}{})",
                 if *roots == 1 { "" } else { "s" },
                 if *stray_content {
-                    ", with text or a dynamic range beside it"
+                    ", with text, a range or an island envelope beside it"
                 } else {
                     ""
                 }
@@ -230,6 +235,10 @@ impl fmt::Display for ListKeyReason {
             ListKeyReason::AuthoredKey => write!(
                 f,
                 "the row root carries an authored data-forma-key; the attribute is reserved for the row identity"
+            ),
+            ListKeyReason::UnbalancedRow => write!(
+                f,
+                "the row closes an element it did not open or leaves one open, so it has no single balanced root"
             ),
         }
     }
