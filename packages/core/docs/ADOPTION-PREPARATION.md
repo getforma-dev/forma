@@ -31,3 +31,17 @@ Controls: `review-content.test.ts`, `review-content-template-native.spec.ts`,
 `review-content-noscript-native.spec.ts` and the strict CSP/Trusted Types cases in
 `adoption-content.spec.ts`. Original reviewer failures are retained in the
 external FORMA-104 evidence directory.
+
+## Staged activation error contract
+
+The [FORMA-104 diagnostic catalogue](../../../docs/DIAGNOSTICS.md#staged-island-adoption-diagnostics-forma-104)
+records the approved codes and target `forma:error` detail. This remains staged
+until the private planner is connected to activation and its event/status
+controls pass. Private helper errors alone do not establish that integration.
+
+The target event identifies component, occurrence and optional structural
+binding location without disclosing props, input values or request payload.
+Pre-commit failure retains served content except for the required error status;
+post-commit callback failure cannot undo application writes already performed.
+State/schema preflight remains earlier and writes nothing. This documentation
+does not change ordinary CSR reporting or add a callable public error API.
