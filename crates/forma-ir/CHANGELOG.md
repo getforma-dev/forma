@@ -6,12 +6,16 @@
   `LIST` it names, every row's value at the key path becomes the row root's
   `data-forma-key`, as canonical text: a string under value rule 1, a safe integer in
   decimal (`-0` as `0`). A row whose value at the path is missing, declared twice, behind a
-  non-object, or not a string or safe integer, two rows of one list execution sharing a key,
-  a row without exactly one root element at its own level, or an authored `data-forma-key`
-  on that root refuse the whole render with the new `IrError::InvalidListKey`
-  (`ListKeyViolation`: LIST offset, zero-based row, path, `ListKeyReason`; displayed as
-  `RENDER-503`). A `LIST` without an entry writes no key and renders byte-identically to
-  before. New crate-private `keys` module; shared vectors
+  non-object, or not a string or safe integer, two rows of one list execution sharing a key
+  (each execution of a LIST is its own scope), a row without exactly one balanced root
+  element at its own level (a registered child's island envelope may wholly enclose it), or
+  an authored `data-forma-key` on that root refuse the whole render with the new
+  `IrError::InvalidListKey` (`ListKeyViolation`: LIST offset, zero-based row, path,
+  `ListKeyReason`; displayed as `RENDER-503`; a duplicate names both rows, never the key).
+  The key path is resolved once per LIST execution; a string key is charged to the output
+  budget before it is built; the slot journal, the keyed-row guard and the list depth are
+  restored before any error propagates. A `LIST` without an entry writes no key and renders
+  byte-identically to before. New crate-private `keys` module; shared vectors
   `tests/fixtures/parity/keys.json` (read by core's `key-text.test.ts` too); the
   js-emitter contract feeds every keyed list the identity its module declares and the
   `list-same-source` golden now carries the keys (original archived under

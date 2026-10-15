@@ -107,8 +107,9 @@ that still refuses).
 
 **Keyed rows (FORMA-181, DR-8).** A `LIST` named by FMIR section `0x0006` is
 keyed: the walker reads each row's value at the key path and writes its
-canonical text as the row root's `data-forma-key`, and core's adoption
-matches rows by that text. The identity domain is a string or a safe
+canonical text as the row root's `data-forma-key` (checkpoint B), and core's
+adoption is to match rows by that text (checkpoint C; until then core's
+existing list adoption compares the attribute with its own key in order). The identity domain is a string or a safe
 integer. A string key is `N(s)` of rule 1, applied to the key text (the key
 as data in the state envelope stays exact); a number key must be an integer
 within ±(2^53 − 1) and prints as its decimal integer, `-0` as `0`. So `1` and
@@ -124,9 +125,12 @@ canonical text are duplicates. Rust: `crates/forma-ir/src/keys.rs`
 `normalizeDomText`, plus the unpaired-surrogate refusal a Rust string cannot
 express). Shared vectors: `crates/forma-ir/tests/fixtures/parity/keys.json`
 (`values`, `collisions`, `paths`), read by `crates/forma-ir/src/keys.rs` tests
-and `packages/core/src/dom/__tests__/key-text.test.ts`; the actual
-compiler-to-walker key HTML is pinned by `crates/forma-ir/tests/island_emitter.rs`
-and the `list-same-source` golden of the js-emitter contract.
+and `packages/core/src/dom/__tests__/key-text.test.ts`; the walker's row
+guard (one balanced root per row, a registered child's envelope, duplicate
+scopes per list execution, the refusals) by `crates/forma-ir/src/walker.rs` >
+`keyed_rows`; the actual compiler-to-walker key HTML by
+`crates/forma-ir/tests/island_emitter.rs` (`keyed_shapes_*` and the other
+keyed fixtures) and the `list-same-source` golden of the js-emitter contract.
 
 The output budget counts the bytes actually written: a NUL grows from one byte
 to three, so the escapers check each normalized character's encoded length
