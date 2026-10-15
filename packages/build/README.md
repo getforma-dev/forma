@@ -209,7 +209,7 @@ The build then writes `dist/formajs-frame.global.js` from the
   the bundles import has no frame runtime (older than 2.1.0) or no core is
   found, `BUILD-806` when the runtime is empty, not UTF-8, or contains
   `</script` or `<!--` (in any case), a carriage return or a NUL, and
-  `BUILD-807` as above, and `BUILD-820` when esbuild cannot minify it. The
+  `BUILD-807` as above, and `BUILD-823` when esbuild cannot minify it. The
   `BUILD-806` check runs on core's file and again on the minified bytes. Each
   fails the build with or without strict mode (`docs/DIAGNOSTICS.md`).
 - **Watch mode** writes it unhashed as `forma-runtime.js`, and the dev manifest
@@ -271,7 +271,7 @@ a route ships.
 
 | Step | What happens |
 |------|-------------|
-| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`, and `BUILD-820` when it cannot be minified) |
+| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`, and `BUILD-823` when it cannot be minified) |
 | **Frame runtime** | (Optional, `previewFrame: true`) Writes the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, minified (core's file stays readable; watch mode copies it unchanged), as `forma-runtime.js`, hashed with the other assets and left uncompressed |
 | **Bundle** | esbuild bundles each entry point with JSX transform (`jsxFactory: "h"`) |
 | **CSS** | Runs Tailwind CLI or concatenates CSS files |

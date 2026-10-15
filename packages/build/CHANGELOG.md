@@ -15,14 +15,14 @@
   forma-server computes for the frame's policy are those of the bytes served.
   `BUILD-806`'s check (`</script`, `<!--`, a carriage return, a NUL, not UTF-8,
   empty) runs on core's file as before and again on the minified bytes.
-- **`BUILD-820`** is new: esbuild cannot parse core's frame runtime for ES2022
+- **`BUILD-823`** is new: esbuild cannot parse core's frame runtime for ES2022
   (a file something rewrote). It fails the build before anything is written,
   strict mode or not.
 - The size report's **frame-document row** reports the served bytes and, in
   `sourceRaw`, core's file before the build minified it.
 - **Watch mode copies core's bytes unchanged**, as before: a development
   build, readable in the browser's tools.
-- Tests: `tests/preview-frame.test.ts` > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published", "the minified runtime does what core's does, and two builds write the same bytes", "BUILD-820: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"; the frame e2e lane (`e2e/frame/`) asserts the served file is minified, named and listed by its own hash, embedded and allowed by forma-server, and run in Chromium under the hash-only policy.
+- Tests: `tests/preview-frame.test.ts` > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published", "the minified runtime does what core's does, and two builds write the same bytes", "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"; the frame e2e lane (`e2e/frame/`) asserts the served file is minified, named and listed by its own hash, embedded and allowed by forma-server, and run in Chromium under the hash-only policy.
 
 ## Unreleased — the size report with route classes and ceilings (FORMA-190)
 

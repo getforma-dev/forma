@@ -48,7 +48,7 @@
  *   rewrites them before the script runs, so it would not match its hash),
  *   checked on core's file and again on the bytes the build would write.
  *   BUILD-805 when there is no runtime to copy, BUILD-806 when it cannot be
- *   inlined, BUILD-807 when the bundles import more than one, BUILD-820 when
+ *   inlined, BUILD-807 when the bundles import more than one, BUILD-823 when
  *   esbuild cannot minify it. Each fails the build, strict mode or not.
  *
  * Verified by: packages/build/tests/preview-frame.test.ts
@@ -98,7 +98,7 @@ const CATALOGUE = {
     why: "Core's dist/formajs-frame.global.js is empty, not UTF-8, or contains `</script`, `<!--`, a carriage return or a NUL: it is inlined as it is into the frame's `<script>` and allowed by its hash, so it would end early or not match its hash, and forma-server would refuse it (FRAME-103).",
     fix: 'Reinstall @getforma/core and leave the file as published: no editor, formatter, patch or CRLF checkout may rewrite it.',
   },
-  'BUILD-820': {
+  'BUILD-823': {
     why: "`previewFrame` is on, and esbuild cannot minify dist/formajs-frame.global.js of the @getforma/core the bundles import: a production build writes the frame's runtime minified, so the file must be JavaScript esbuild can parse for ES2022.",
     fix: 'Reinstall @getforma/core and leave the file as published: no editor, formatter or patch may rewrite it.',
   },
@@ -335,7 +335,7 @@ function inlineProblem(bytes: Uint8Array): { reason: string; index?: number; tex
  * stays inlinable; the check on the output is there for the day it does not.
  *
  * Verified by: packages/build/tests/preview-frame.test.ts > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published"
- * Verified by: packages/build/tests/preview-frame.test.ts > "BUILD-820: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"
+ * Verified by: packages/build/tests/preview-frame.test.ts > "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"
  * Verified by: packages/build/tests/preview-frame-minified-check.test.ts > "BUILD-806: bytes the build would write that hold </script fail the build, before anything is written"
  */
 async function minified(read: FrameRuntime): Promise<FrameRuntime> {
@@ -356,7 +356,7 @@ async function minified(read: FrameRuntime): Promise<FrameRuntime> {
     const first = (error as { errors?: Array<{ text: string; location?: { line: number; column: number } | null }> }).errors?.[0];
     const at = first?.location ? { line: first.location.line, column: first.location.column + 1 } : {};
     throw refusal(
-      'BUILD-820',
+      'BUILD-823',
       `@getforma/core ${read.version}'s ${FRAME_RUNTIME_SOURCE} cannot be minified: ${first?.text ?? (error as Error).message}`,
       { file: read.source, ...at },
     );

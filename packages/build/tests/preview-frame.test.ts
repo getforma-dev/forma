@@ -242,16 +242,16 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
     expect(readFileSync(join(second.dist, again.manifest.aliases['forma-runtime.js']!)).equals(written)).toBe(true);
   }, 30_000);
 
-  it('BUILD-820: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was', async () => {
+  it('BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was', async () => {
     const good = fixture({});
     await build(good.config);
     const before = snapshot(good.dist);
     const bad = fixture({ frame: 'window.__formaFrame = (;\n' });
     const error = await refusal({ ...bad.config, previewFrame: true });
-    expect(error.message).toMatch(/^@getforma\/build: BUILD-820 /);
+    expect(error.message).toMatch(/^@getforma\/build: BUILD-823 /);
     expect(error.message).toContain('dist/formajs-frame.global.js');
     expect(error.diagnostics).toHaveLength(1);
-    expect(error.diagnostics![0]).toMatchObject({ code: 'BUILD-820', severity: 'error', page: '' });
+    expect(error.diagnostics![0]).toMatchObject({ code: 'BUILD-823', severity: 'error', page: '' });
     // Before anything is written: no output directory, nothing beside it.
     expect(existsSync(bad.dist)).toBe(false);
     expect(readdirSync(bad.root).sort()).toEqual(['node_modules', 'package.json', 'src']);
