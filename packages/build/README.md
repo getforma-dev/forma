@@ -221,7 +221,7 @@ The build then copies `dist/formajs-frame.global.js` from the
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route, what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile) beside the application's; printed and returned as `BuildResult.sizes`. **N2's gate:** a route whose Forma code is over 25,500 B gzip -9 fails the build with `BUILD-819` before anything is written (decision brief L-55; the ceiling is not configurable) |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-55, DR-35; the ceilings are not configurable): Forma's code at most 25,500 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 ## Configuration
@@ -238,7 +238,9 @@ const config: BuildConfig = {
   ],
   routes: {                          // each route needs both js and css; [] for none
     "/": { js: ["home"], css: ["home"] },
-    "/dashboard": { js: ["dashboard"], css: ["dashboard"] },
+    // canvas: true declares a page that hosts many modules: its JavaScript may
+    // be 365 KiB gzip -9 instead of 75 KiB (the size report's ceilings)
+    "/dashboard": { js: ["dashboard"], css: ["dashboard"], canvas: true },
   },
   outputDir: "dist",
 

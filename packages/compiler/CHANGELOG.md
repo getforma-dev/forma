@@ -11,6 +11,7 @@
 ### The diagnostic catalogue — FORMA-021
 
 - `BUILD-819`, the build package's size-report gate: a route whose Forma code (`@getforma/core` and `alien-signals` as bundled) is over N2's ceiling of 25,500 B gzip -9 (decision brief L-55). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/route-size.test.ts`; no page triggers it.
+- `BUILD-819` now covers every ceiling of the size report's route classes (FORMA-190): a route's JavaScript over 75 KiB, or 365 KiB for a route declared `canvas: true`, and any script on a route with no interactive region, beside Forma's code over 25,500 B. Title, why and fix are reworded; the code and its place are unchanged.
 
 ### Conditional description seam — FORMA-104
 

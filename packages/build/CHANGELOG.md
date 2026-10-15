@@ -1,5 +1,41 @@
 # Changelog
 
+## Unreleased — the size report with route classes and ceilings (FORMA-190)
+
+- **One report, extended.** The size report of FORMA-021 now classifies each
+  route (DR-35) and holds it to its class's ceilings, gzip -9 with 1 KB =
+  1,000 B and 1 KiB = 1,024 B: `no-interactive-region` (a server-rendered page
+  without an island, or a route that lists no script) ships no JavaScript, a
+  service worker counted; `islands` and `whole-page-mount` (a declared
+  `ssr: false` entry, or any route of an application built without `ssr`) carry
+  at most 25,500 B of Forma code (N2, unchanged) and at most 75 KiB of
+  JavaScript in all; a route declared `canvas: true` may ship 365 KiB. A route
+  over a ceiling fails the build with `BUILD-819`, now naming the route, its
+  class and each figure against its ceiling (the code is the same; its message
+  and catalogue entry cover the new ceilings).
+- `RouteMapping.canvas` (optional boolean) declares a route a canvas: a page
+  that hosts many modules. It raises only the JavaScript ceiling of a route that
+  has JavaScript; anything else but `true` or `false` is refused before the
+  build writes anything.
+- The generated `sw.js` counts as JavaScript in each route that lists a script
+  (forma-server registers it only on such pages) and is reported as a row of its
+  own. With `previewFrame`, a **frame document** row reports the runtime
+  forma-server inlines into every preview document (raw, gzip -9, Brotli; it is
+  not a route's and carries no ceiling here: core's package gate holds it).
+- **Written beside the manifest.** A production build writes `size-report.json`
+  next to `manifest.json` (and prints the report): the routes with class,
+  ceilings, files, Forma and application bytes and verdict, the worker, the
+  frame row. The file holds no clock reading, so the same sources are the same
+  bytes (the application embeds this directory); forma-server refuses to serve
+  it, as it refuses the manifest. The manifest does not list it.
+- **Build times** (N7) by phase (`bundle`, `hash`, `compress`, `manifest`) are
+  printed with the report and returned in `BuildResult.sizeReport.times`; they
+  are not in the file, for the same reason.
+- `BuildResult.sizeReport` is the whole report; `BuildResult.sizes` stays, the
+  same route objects, with the new fields `class`, `canvas`, `worker`,
+  `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
+  empty). Both are empty in watch mode.
+
 ## Unreleased — the size report per route and N2's gate (FORMA-021)
 
 - A production build reports, per route, what the route loads cold (its `js`

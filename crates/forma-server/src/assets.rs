@@ -97,12 +97,15 @@ pub fn try_load_module_preloads<A: Embed>() -> Result<crate::ModulePreloads, Str
 /// Files that must never be served through the asset route.
 ///
 /// `manifest.json` exposes the full route table, asset graph and per-route
-/// size budgets, and nothing client-side fetches it. A direct `.br`/`.gz`
+/// size budgets, and nothing client-side fetches it. The same goes for
+/// `size-report.json`, the build's size report written beside it
+/// (FORMA-190): every route with its class, ceilings and bytes. A direct `.br`/`.gz`
 /// request would return compressed bytes with no `Content-Encoding`, i.e. a
 /// corrupt response. IR modules are server input and are never public assets — those siblings are only ever reachable through content
 /// negotiation below.
 fn is_denied(filename: &str) -> bool {
     filename == "manifest.json"
+        || filename == "size-report.json"
         || filename.ends_with(".ir")
         || filename.ends_with(".br")
         || filename.ends_with(".gz")
@@ -520,6 +523,9 @@ mod tests {
         // .br/.gz request would return compressed bytes with no
         // Content-Encoding.
         assert!(is_denied("manifest.json"));
+        // The build's size report sits beside the manifest (FORMA-190) and
+        // lists the same route table with each route's bytes.
+        assert!(is_denied("size-report.json"));
         assert!(is_denied("page.abc12345.ir"));
         assert!(is_denied("app.a1b2c3d4.js.br"));
         assert!(is_denied("app.a1b2c3d4.js.gz"));
