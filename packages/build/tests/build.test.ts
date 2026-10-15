@@ -320,6 +320,42 @@ describe('@getforma/build — functional', () => {
     expect(manifest.routes['/'].css).toEqual([hashedCss]);
   }, 15_000);
 
+  it('refuses a missing local Tailwind CLI without fetching a tool or replacing existing output', async () => {
+    const entryFile = join(srcDir, 'app.ts');
+    const cssFile = join(srcDir, 'main.css');
+    writeFileSync(entryFile, 'export const x = 1;\n');
+    writeFileSync(cssFile, '.safe { color: green; }\n');
+    mkdirSync(outDir);
+    writeFileSync(join(outDir, 'old.txt'), 'previous complete build');
+    // A local npx stand-in prevents the pre-fix path from accessing a network.
+    const bin = join(tmpRoot, 'bin');
+    const marker = join(tmpRoot, 'fetched-tool');
+    mkdirSync(bin);
+    const stub = join(bin, 'npx.mjs');
+    writeFileSync(stub, `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, 'npx ran');\nprocess.exit(86);\n`);
+    writeFileSync(join(bin, 'npx'), `#!${process.execPath}\nimport ${JSON.stringify(stub)};\n`);
+    chmodSync(join(bin, 'npx'), 0o755);
+    writeFileSync(join(bin, 'npx.cmd'), `@"${process.execPath}" "${stub}" %*\r\n`);
+    const oldPath = process.env.PATH;
+    process.env.PATH = `${bin}${delimiter}${oldPath ?? ''}`;
+    const oldCwd = process.cwd();
+    process.chdir(tmpRoot);
+    try {
+      await expect(build({
+        entryPoints: [{ entry: entryFile, outfile: 'app.js' }],
+        routes: { '/': { js: ['app'], css: ['main'] } },
+        cssEntries: [{ input: cssFile, outfile: 'main.css', tailwind: true }],
+        outputDir: outDir,
+      })).rejects.toThrow('Install @tailwindcss/cli locally');
+      expect(existsSync(marker)).toBe(false);
+      expect(readFileSync(join(outDir, 'old.txt'), 'utf8')).toBe('previous complete build');
+      expect(readdirSync(outDir)).toEqual(['old.txt']);
+    } finally {
+      process.chdir(oldCwd);
+      process.env.PATH = oldPath;
+    }
+  });
+
   // ---- Test 7: Build creates output directory if it doesn't exist --------
   it('creates outputDir if it does not already exist', async () => {
     const entryFile = join(srcDir, 'app.ts');

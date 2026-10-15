@@ -185,7 +185,7 @@ jobs:
       # `npm ci` installs exactly what package-lock.json records and fails when
       # it disagrees with package.json; `npm install` may resolve anew and
       # rewrite it (FORMA-010, DR-32).
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm test --workspaces
       - run: npx tsc --noEmit -p packages/create-app
@@ -210,7 +210,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run build -w packages/compiler -w packages/build
       - run: npm test -w packages/compiler -w packages/build
       # SR8 through the package as an application installs it (FORMA-126),
@@ -235,13 +235,13 @@ jobs:
         with:
           key: windows
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-      - run: cargo test --workspace
-      - run: cargo doc --workspace --no-deps
+      - run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+      - run: cargo test --locked --workspace
+      - run: cargo doc --locked --workspace --no-deps
       - name: Verify WASM build
-        run: cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
+        run: cargo build --locked --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
       - name: The wasm exports' deprecation reaches a caller
-        run: cargo test -p forma-ir --doc --features wasm
+        run: cargo test --locked -p forma-ir --doc --features wasm
 
   # Run the suite where `usize` is 32 bits, as it is on wasm32, the target
   # forma-ir ships a build for. Offset arithmetic that cannot wrap on 64-bit
@@ -264,7 +264,7 @@ jobs:
           key: i686
       - name: Install 32-bit toolchain
         run: sudo apt-get update && sudo apt-get install -y gcc-multilib
-      - run: cargo test --workspace --target i686-unknown-linux-gnu
+      - run: cargo test --locked --workspace --target i686-unknown-linux-gnu
 
   # forma-server has code that exists only in release builds
   # (`cfg(not(debug_assertions))`): the per-type file-name cache behind
@@ -287,8 +287,8 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: release
-      - run: cargo clippy -p forma-server --all-targets --all-features --release -- -D warnings
-      - run: cargo test -p forma-server --release
+      - run: cargo clippy --locked -p forma-server --all-targets --all-features --release -- -D warnings
+      - run: cargo test --locked -p forma-server --release
 
   # The crates publish different `rust-version` values and each is load-bearing
   # on crates.io/docs.rs, so each is built at exactly the declared version.
@@ -332,14 +332,27 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    # The action fetches the RustSec advisory DB over the network; everything
-    # else is local. 10 is ~5x a typical 2m run.
-    timeout-minutes: 10
+    # A cold locked cargo-deny install compiles the tool; later runs cache it.
+    # Advisory data must be fetched successfully on every run.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          command: check
+          node-version: 24.22.0
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install reviewed cargo-deny from its release lockfile
+        run: cargo install cargo-deny --version 0.20.2 --locked
+      - name: Fresh advisory data, locked root and e2e graphs
+        run: |
+          bash scripts/check-advisories.sh
+          bash scripts/check-advisories.sh e2e/Cargo.toml
+          cargo deny --locked check
+      - name: Supply-chain regression tests
+        run: |
+          ruby scripts/check-supply-chain.rb
+          node --test scripts/tests/supply-chain.test.mjs
 
   # `[patch.crates-io]` silently falls back to the PUBLISHED forma-ir if the
   # local version stops satisfying forma-server's requirement, which would
@@ -359,7 +372,7 @@ jobs:
           key: patch-is-live
       - name: forma-server must resolve forma-ir from this workspace
         run: |
-          cargo tree -p forma-server -i forma-ir | tee /tmp/tree.txt
+          cargo tree --locked -p forma-server -i forma-ir | tee /tmp/tree.txt
           grep -q "crates/forma-ir" /tmp/tree.txt \
             || { echo "::error::forma-server is building against the PUBLISHED forma-ir, not this tree"; exit 1; }
       # The patch above also masks a requirement looser than the tree's
@@ -528,7 +541,7 @@ jobs:
           key: cargo-registry-${{ runner.os }}-${{ hashFiles('packages/create-app/templates/**/Cargo.toml') }}
           restore-keys: |
             cargo-registry-${{ runner.os }}-
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       # SR2 (FORMA-180, the A2 audit's F11): the install this job builds from
       # carries the npm registry's signatures.
       - run: npm audit signatures

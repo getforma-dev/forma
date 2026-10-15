@@ -51,7 +51,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       # The engine is installed in two halves, each from a cache when it can
       # be, each bounded with one retry (FORMA-179). The system packages come

@@ -4,6 +4,8 @@
 
 ### Changed
 
+- FORMA-117: CSS builds require a locally installed `@tailwindcss/cli`; a missing CLI fails before replacing output and never falls back to fetching `npx`.
+
 - **A production build prints its own summary, under `outputDir`** (A2 audit
   F3, FORMA-180). 0.3.1's bundling pass ran esbuild at `logLevel: 'info'`
   with the staging directory as its `outdir`, so its summary named

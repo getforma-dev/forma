@@ -20,13 +20,13 @@ npm run check
 
 `npm run check` ([`scripts/check.sh`](scripts/check.sh)) is the gate CI runs
 on every push and pull request, and the one command that builds every package
-in both languages and runs every test. It needs Node 20 or later and a stable
+in both languages and runs every test. It uses Node 24.22.0 (the pinned build toolchain in `.node-version`) and a stable
 Rust toolchain with `rustfmt`, `clippy` and the `wasm32-unknown-unknown`
 target. Its steps, for when you want one of them alone:
 
 | Step | Command |
 |---|---|
-| Install the npm workspace exactly as the lockfile records it | `npm ci` |
+| Install the npm workspace exactly as the lockfile records it | `npm ci --ignore-scripts` |
 | The crates: format, lint, tests, docs, the wasm32 build | `cargo fmt --all --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo test --workspace`, `cargo doc --workspace --no-deps`, `cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features` |
 | The npm packages: builds and unit suites | `npm run build`, `npm test --workspaces` (or `-w packages/<name>`) |
 | Core's gates: types, size, packaging, probe anchors | `npm run typecheck -w packages/core`, `npm run check:size -w packages/core`, `npm run check:pack -w packages/core`, `cd packages/core && node scripts/run-probes.mjs --check` |
@@ -93,7 +93,7 @@ there.
   for the whole graph, so each crate builds its declared Rust with `--locked`
   and the lock the release packs is the one CI tests.
 - `package-lock.json` is the one npm lockfile; the packages have none of their
-  own. `npm ci` installs it; `npm install` may resolve anew and rewrite it, so
+  own. `npm ci --ignore-scripts` installs it; `npm install` may resolve anew and rewrite it, so
   run that only when you mean to change a dependency, and say so in the PR.
 - Package names and versions are each package's own; do not bump a version in
   a PR. Add CHANGELOG lines under the package's `## [Unreleased]` heading.
@@ -115,3 +115,21 @@ maintenance branches of the old repositories.
 4. Update the affected package's CHANGELOG under `[Unreleased]`, and any
    document whose claims your change makes untrue.
 5. Describe the mutation probe you ran against your new tests.
+
+## Dependency policy (FORMA-117)
+
+Run `bash scripts/install-deps.sh` to install the committed npm graph without lifecycle scripts.
+The repository's `.npmrc` keeps ordinary installs scripts-off too. `allowScripts` records the
+reviewed esbuild versions; current builds use its locked optional platform binaries without
+running any install hook. A new native dependency must prove it builds under this policy.
+The templates ship `_npmrc` (npm excludes `.npmrc` from tarballs); scaffolding restores its name.
+
+`bash scripts/check-advisories.sh` audits production npm dependencies for the workspace and both
+templates, then the locked Rust graph. It explicitly fetches the advisory DB, so an unavailable
+source fails instead of accepting stale data. The CI deny job also checks the e2e graph and all
+Cargo license/source rules. `advisories.yml` repeats the check weekly; Dependabot maintains the
+GitHub Action SHA pins. cargo-deny 0.20.2 is installed with its published lockfile.
+
+A CSS build requires a local `@tailwindcss/cli`; builds never fetch it with `npx`. `alien-signals`
+is pinned exactly to 3.1.2. The private workspace uses the pinned Node build toolchain while
+Node 20/22 compatibility jobs exercise the published packages' existing runtime floors.
