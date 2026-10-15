@@ -274,6 +274,10 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'A declared SSR route has no compiled module, or a manifest reference has no corresponding output asset.',
     'Fix the compilation or route configuration before serving this build; a browser route must be explicitly declared.'),
 
+  entry('BUILD-818', 'Worker metadata cannot authenticate an asset',
+    'A protected immutable JS/CSS/WASM filename or its full canonical SHA-384 digest is invalid.',
+    'Generate the worker from the completed manifest after final asset bytes are written; do not substitute a filename hash or abbreviated digest.'),
+
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);
 

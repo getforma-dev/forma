@@ -31,7 +31,9 @@ describe('Opt-in ESM code splitting', () => {
     const { dist, config } = fixture(); const result = await build({ ...config, serviceWorker: 'on-demand' });
     const worker = readFileSync(join(dist, 'sw.js'), 'utf8');
     expect(worker).toContain('on-demand immutable assets only'); expect(worker).not.toContain('addAll');
-    const allowed = JSON.parse(worker.match(/const ASSET_URLS = new Set\((\[.*\])\);/)![1]) as string[];
+    const table = JSON.parse(worker.match(/const ASSET_INTEGRITY = new Map\((\[.*\])\);/)![1]) as [string, string][];
+    const allowed = table.map(([url]) => url);
+    for (const [url, integrity] of table) expect(integrity).toBe(result.manifest.assets[url.slice('/_assets/'.length)].integrity);
     expect(allowed.sort()).toEqual([...new Set(Object.values(result.manifest.aliases))].filter(name => name.endsWith('.js')).map(name => '/_assets/' + name).sort());
     expect(allowed).not.toContain('/_assets/phone.js'); expect(allowed).not.toContain('/household');
   });

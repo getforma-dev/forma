@@ -396,7 +396,7 @@ fn manifest() -> AssetManifest {
         app: "ledger".into(),
         aliases: HashMap::new(),
         build: "h".into(),
-        assets: HashMap::new(),
+        assets: super::fixture_assets(&routes),
         routes,
     }
 }

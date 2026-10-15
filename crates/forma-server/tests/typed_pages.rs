@@ -375,7 +375,7 @@ mod reload {
         };
         let mut incompatible: serde_json::Value = serde_json::from_slice(&manifest_bytes).unwrap();
         incompatible["writer"] = "4.0.0".into();
-        incompatible["assets"]["fresh.js"] = serde_json::json!({"immutable":false});
+        incompatible["assets"]["fresh.js"] = serde_json::json!({"immutable":false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"});
         incompatible["routes"]["/"]["js"] = serde_json::json!(["fresh.js"]);
         let rejected_candidates = [
             Some(incompatible.to_string().into_bytes()),
@@ -475,7 +475,7 @@ mod reload {
             write("manifest.json", manifest_bytes.clone());
             assert!(render().contains("local-only"));
             let mut next = baseline.clone();
-            next["assets"]["fresh.js"] = serde_json::json!({"immutable": false});
+            next["assets"]["fresh.js"] = serde_json::json!({"immutable": false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"});
             next["routes"]["/"]["js"] = serde_json::json!(["fresh.js"]);
             match change {
                 "add" => next["routes"]["/added"] = baseline["routes"]["/empty"].clone(),
@@ -507,7 +507,7 @@ mod reload {
             assert!(render().contains("edited-two"));
             // A compatible asset-only build then updates the complete pair.
             let mut compatible = baseline.clone();
-            compatible["assets"]["fresh.js"] = serde_json::json!({"immutable": false});
+            compatible["assets"]["fresh.js"] = serde_json::json!({"immutable": false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"});
             compatible["routes"]["/"]["js"] = serde_json::json!(["fresh.js"]);
             write("manifest.json", compatible.to_string().into_bytes());
             let html = render();
@@ -533,7 +533,7 @@ mod reload {
             .contains("local-only"));
         let mut next: serde_json::Value =
             serde_json::from_slice(&Assets::get("manifest.json").unwrap().data).unwrap();
-        next["assets"]["fresh.js"] = serde_json::json!({"immutable":false});
+        next["assets"]["fresh.js"] = serde_json::json!({"immutable":false,"integrity":"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"});
         next["routes"]["/"]["js"] = serde_json::json!(["fresh.js"]);
         write("manifest.json", next.to_string().into_bytes());
         write("home.ir", b"broken".to_vec());

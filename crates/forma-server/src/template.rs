@@ -1,13 +1,19 @@
 use crate::csp::CspNonce;
 use crate::head::HeadLink;
-use crate::render::RenderCtx;
+use crate::render::{RenderCtx, RenderError};
 use crate::types::{AssetManifest, PageConfig};
 
 /// Resolved asset URLs for a route — shared between Phase 1 and Phase 2 paths.
 struct ResolvedAssets {
     fonts: Vec<String>,
-    css_urls: Vec<String>,
-    js_urls: Vec<String>,
+    css_urls: Vec<Resource>,
+    js_urls: Vec<Resource>,
+}
+
+/// A resource whose manifest digest was checked before any document is emitted.
+struct Resource {
+    url: String,
+    integrity: String,
 }
 
 /// Escape text for an HTML attribute value or text content.
@@ -21,14 +27,13 @@ pub(crate) fn escape_html(s: &str) -> String {
 /// Build the common `<head>` content shared by both render paths.
 ///
 /// `preloads` and `links` are the typed homes a [`RenderCtx`] carries;
-/// a render without one passes neither, and its head is byte-identical to
-/// 0.2.1's.
+/// a render without one passes neither. External resource tags always include SRI.
 fn build_head(
     title: &str,
     nonce: &str,
     assets: &ResolvedAssets,
     personality_css: Option<&str>,
-    preloads: &[String],
+    preloads: &[Resource],
     links: &[HeadLink],
 ) -> String {
     let mut head = String::with_capacity(2048);
@@ -47,8 +52,9 @@ fn build_head(
     // CSS stylesheets
     for css in &assets.css_urls {
         head.push_str(&format!(
-            "<link rel=\"stylesheet\" href=\"{}\">\n",
-            escape_html(css)
+            "<link rel=\"stylesheet\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
+            escape_html(&css.url),
+            escape_html(&css.integrity)
         ));
     }
 
@@ -59,9 +65,10 @@ fn build_head(
     // warm-cache round trip and gain a console violation.
     for js in &assets.js_urls {
         head.push_str(&format!(
-            "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\">\n",
+            "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
             escape_html(nonce),
-            escape_html(js)
+            escape_html(&js.url),
+            escape_html(&js.integrity)
         ));
     }
 
@@ -71,9 +78,10 @@ fn build_head(
     // modules and repeats (`ModulePreloads`).
     for file in preloads {
         head.push_str(&format!(
-            "<link rel=\"modulepreload\" nonce=\"{}\" href=\"/_assets/{}\">\n",
+            "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
             escape_html(nonce),
-            escape_html(file)
+            escape_html(&file.url),
+            escape_html(&file.integrity)
         ));
     }
 
@@ -107,20 +115,43 @@ fn build_head(
     head
 }
 
+/// Resolve each resource through this response's manifest snapshot.
+fn resource(manifest: &AssetManifest, file: &str, route: &str) -> Result<Resource, RenderError> {
+    let metadata = manifest
+        .assets
+        .get(file)
+        .filter(|meta| crate::types::valid_integrity(&meta.integrity))
+        .ok_or_else(|| RenderError::Manifest {
+            route: route.into(),
+            message: format!(
+                "resource {file:?} requires canonical SHA-384 integrity in this manifest"
+            ),
+        })?;
+    Ok(Resource {
+        url: format!("/_assets/{file}"),
+        integrity: metadata.integrity.clone(),
+    })
+}
+
 /// Resolve asset URLs from the manifest for a given route pattern.
-fn resolve_assets(manifest: &AssetManifest, route_pattern: &str) -> ResolvedAssets {
+fn resolve_assets(
+    manifest: &AssetManifest,
+    route_pattern: &str,
+) -> Result<ResolvedAssets, RenderError> {
     let route = manifest.route(route_pattern);
-    ResolvedAssets {
+    let resolve = |files: &[String]| {
+        files
+            .iter()
+            .map(|file| resource(manifest, file, route_pattern))
+            .collect::<Result<Vec<_>, _>>()
+    };
+    Ok(ResolvedAssets {
         fonts: route
             .map(|r| r.fonts.iter().map(|f| format!("/_assets/{f}")).collect())
             .unwrap_or_default(),
-        css_urls: route
-            .map(|r| r.css.iter().map(|f| format!("/_assets/{f}")).collect())
-            .unwrap_or_default(),
-        js_urls: route
-            .map(|r| r.js.iter().map(|f| format!("/_assets/{f}")).collect())
-            .unwrap_or_default(),
-    }
+        css_urls: resolve(route.map_or(&[], |r| &r.css))?,
+        js_urls: resolve(route.map_or(&[], |r| &r.js))?,
+    })
 }
 
 /// Build shared body fragments (class attr, prefix, escaped JSON data, page JS tag).
@@ -132,7 +163,7 @@ struct BodyParts {
     sw_script: String,
 }
 
-fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> BodyParts {
+fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> BodyParts {
     let body_class_attr = config
         .body_class
         .map(|c| format!(" class=\"{}\"", escape_html(c)))
@@ -161,8 +192,9 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[String]) -> Bod
         .last()
         .map(|url| {
             format!(
-                "<script type=\"module\" nonce=\"{nonce}\" src=\"{}\"></script>",
-                escape_html(url)
+                "<script type=\"module\" nonce=\"{nonce}\" src=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\"></script>",
+                escape_html(&url.url),
+                escape_html(&url.integrity)
             )
         })
         .unwrap_or_default();
@@ -188,17 +220,26 @@ pub(crate) fn write_document(
     nonce: &CspNonce,
     ssr_body: Option<&str>,
     ctx: &RenderCtx,
-) -> String {
+) -> Result<String, RenderError> {
     // Defence in depth: CspNonce already rejects anything attribute- or
     // directive-significant, so this never changes a real nonce.
     let nonce_attr = escape_html(nonce.as_str());
-    let assets = resolve_assets(config.manifest, config.route_pattern);
+    let assets = resolve_assets(config.manifest, config.route_pattern)?;
+    let mut preloads = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for file in ctx.module_preloads(config.route_pattern) {
+        let url = format!("/_assets/{file}");
+        if assets.js_urls.iter().any(|asset| asset.url == url) || !seen.insert(file) {
+            continue;
+        }
+        preloads.push(resource(config.manifest, file, config.route_pattern)?);
+    }
     let head = build_head(
         config.title,
         &nonce_attr,
         &assets,
         config.personality_css,
-        ctx.module_preloads(config.route_pattern),
+        &preloads,
         ctx.head_links(),
     );
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
@@ -227,7 +268,7 @@ pub(crate) fn write_document(
     html.push('\n');
     html.push_str(&parts.sw_script);
     html.push_str("</body>\n</html>");
-    html
+    Ok(html)
 }
 
 #[cfg(test)]
@@ -448,7 +489,7 @@ mod tests {
             app: "ledger".into(),
             aliases: HashMap::new(),
             build: "test".to_string(),
-            assets: HashMap::new(),
+            assets: crate::render_contract::fixture_assets(&routes),
             routes,
         };
 

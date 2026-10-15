@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — verified production workers (FORMA-111)
+
+- Production workers use finalized immutable manifest metadata and full SHA-384,
+  including lazy chunks. Cache hits and network responses are verified before
+  serving; corrupt entries are refetched without HTTP-cache reuse. Verification
+  failures cannot fall back to unchecked bytes. Storage failures still permit a
+  verified network response.
+- On-demand is the sole production policy and the default. `precache` fails
+  configuration validation; historical fixtures remain preserved. Per-app waiting,
+  retirement patterns and the exact development worker bytes remain unchanged.
+
+
 ## [Unreleased]
 
 ### Changed — FORMA-112

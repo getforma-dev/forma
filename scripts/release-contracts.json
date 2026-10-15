@@ -13,5 +13,6 @@
     "FORMA-191": "release measurements"
   },
   "trustedTypes": "enforced-v1",
-  "boundRender": "finalized-v1"
+  "boundRender": "finalized-v1",
+  "assetIntegrity": "sha384-v1"
 }
