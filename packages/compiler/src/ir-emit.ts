@@ -176,6 +176,11 @@ export class IrEmitContext {
     return id;
   }
 
+  /** Closed provenance is distinct from a schema hint, including literal null. */
+  constantSlot(id: number): { value: unknown } | undefined {
+    return this.constants.has(id) ? { value: this.constants.get(id) } : undefined;
+  }
+
   /** Begin capturing slot ids referenced while walking an island subtree. */
   beginSlotCapture(): void {
     this.slotCaptureStack.push(new Set<number>());

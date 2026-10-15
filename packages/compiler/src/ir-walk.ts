@@ -601,6 +601,8 @@ export interface WalkContext {
   loadModule?: ModuleLoader;
   /** Set of visited component names for cycle detection. */
   visited?: Set<string>;
+  /** Active registered declarations, independent of local/import spellings. */
+  islandStack?: ReadonlySet<string>;
   /** Current depth for sub-component resolution (max 3). */
   depth?: number;
   /** List item bindings: "paramName.propName" → target slot id.
@@ -1291,9 +1293,14 @@ export function walkCallExpression(
   // Rule 10: Sub-component calls
   if (t.isIdentifier(node.callee)) {
     const componentName = node.callee.name;
-    const registered = !walkCtx.propsScope?.references.has(node.callee)
+    const lexical = walkCtx.propsScope?.references.get(node.callee);
+    const registered = (!lexical || lexical.scope.path.isProgram())
       ? walkCtx.islandRegistry?.resolve(componentName, walkCtx.sourceFile!) : undefined;
     if (registered) {
+      if (walkCtx.islandStack?.has(registered.identity)) {
+        const at = originalPosition(walkCtx.sourceFile!, node.loc?.start ?? {line:1,column:0});
+        throw new PropsSchemaError(walkCtx.sourceFile!, at.line, at.column, `recursive registered island ${registered.name} is outside the native SSR subset`);
+      }
       const analysis = registered.analyze();
       const schemas = walkCtx.islandSchemas ??= new Map();
       let schemaObject = schemas.get(registered.identity);
@@ -1316,8 +1323,10 @@ export function walkCallExpression(
       ctx.emit(OP_ISLAND_START); ctx.emitU16(id);
       if (sub) {
         const visited = new Set(walkCtx.visited); visited.add(componentName);
+        const childContext = inlinedWalkContext(walkCtx, ctx, sub, componentName, visited, chainLink(walkCtx,componentName,node), scope);
+        childContext.islandStack = new Set([...(walkCtx.islandStack ?? []), registered.identity]);
         walkCallExpression(sub.returnNode as t.CallExpression, hName, ctx,
-          inlinedWalkContext(walkCtx, ctx, sub, componentName, visited, chainLink(walkCtx,componentName,node), scope));
+          childContext);
       } else {
         const div=ctx.addString('div');ctx.emit(OP_OPEN_TAG);ctx.emitU32(div);ctx.emitU16(0);ctx.emit(OP_CLOSE_TAG);ctx.emitU32(div);
       }

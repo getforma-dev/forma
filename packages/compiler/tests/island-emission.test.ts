@@ -36,6 +36,15 @@ describe('declared island writer integration',()=>{
       'export function Badge(p:{label:string}){return h("b",null,p.label);}');
     expect(getIslands(result.binary)).toHaveLength(1);expect(getIslands(result.binary)[0]!.slotIds).toHaveLength(1);
   });
+  it('folds closed omitted and null inputs while retaining zero false and empty inputs',()=>{
+    const result=emit('closed-nullish','import {Badge} from "./island";export function Page(){return h("main",null,Badge({}),Badge({label:null,count:null,ready:null}),Badge({label:"",count:0,ready:false}));}',
+      'export function Badge(p:{label?:string;count?:number;ready?:boolean}){const [label]=createSignal(p.label??"fallback");const [count]=createSignal(p.count??42);const [ready]=createSignal(p.ready??true);return h("p",{"data-ready":ready},label,count);}');
+    expect(result.islands).toHaveLength(3);
+  });
+  it('refuses registered recursion through the same declaration or an imported alias',()=>{
+    for(const alias of [false,true])expect(()=>emit('recursive','import {Badge} from "./island";export function Page(){return Badge({label:"loop"});}',
+      `${alias?'import {Badge as Again} from "./island";':''}export function Badge(p:{label:string}){return h("p",null,${alias?'Again':'Badge'}({label:p.label}));}`)).toThrow(/BUILD-610.*recursive registered island/);
+  });
   it('preserves closed aggregate call inputs and omits optional absent fields from projected state',()=>{
     const result=emit('aggregate','import {Badge} from "./island";export function Page(){return h("main",null,Badge({data:{names:["first",null,"last"],ignored:"strip"}}));}',
       'export function Badge(p:{data:{names:(string|null)[]};note?:string}){return h("b",null,"fixed");}');

@@ -8,6 +8,8 @@ and checks native HTML and projected per-occurrence state.
 
 Cases cover ordered repeated fields, optional nullish local seeds, nested list
 row snapshots, closed aggregate projection and browserOnly's empty native host.
+The closed-nullish case also pairs omitted/null call inputs with fallback seeds
+and verifies that zero, false and empty strings remain values.
 No timestamps, absolute temporary source paths or generated call IDs occur in
 the contract digest. The current binary hashes are in `manifest.json`.
 
