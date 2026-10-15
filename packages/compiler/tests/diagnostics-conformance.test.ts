@@ -32,6 +32,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import * as esbuild from 'esbuild';
 
+import { EntryPolicyError } from '../src/entry-policy';
 import { DIAGNOSTIC_CATALOGUE, collectDiagnostics, type Diagnostic } from '../src/diagnostics';
 import { formaSsrPlugin, generateRealIr } from '../src/esbuild-ssr-plugin';
 import { originalPosition, registerSourceMap } from '../src/diagnostics';
@@ -84,7 +85,7 @@ function compile(dir: string): { diagnostics: Diagnostic[]; lines: string[] } {
     lines.push(args.map(String).join(' '));
   });
   try {
-    const { diagnostics } = collectDiagnostics(() => { try { return generateRealIr(entryOf(dir)); } catch (error) { if (!(error instanceof PropsSchemaError)) throw error; return null; } });
+    const { diagnostics } = collectDiagnostics(() => { try { return generateRealIr(entryOf(dir)); } catch (error) { if (!(error instanceof PropsSchemaError || error instanceof EntryPolicyError)) throw error; return null; } });
     return { diagnostics, lines };
   } finally {
     spy.mockRestore();

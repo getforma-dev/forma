@@ -568,6 +568,14 @@ The page's declared props or their binding expression cannot be represented by t
 
 The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/fail/page.tsx) and [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-610/pass/page.tsx) pin original TSX positions.
 
+### BUILD-611 Unsupported islands-only entry or static route
+
+**Why.** The selected native entry cannot be rewritten without dropping a used mount result or argument effects, or its static route requests executable assets. This refusal is mandatory without strict mode. The compiler authenticates the actual named core import (including aliases), the original native page declaration, and each emitted island contract.
+
+**Fix.** Use one standalone imported core `mount(Page, '#app')` or `mount(() => Page(), '#app')` as a compile-time native root. Keep activation outside that invocation. If the browser entry has a different root, make it activation-only; do not assign/export the removed mount result. Move required argument effects outside an omitted empty activation call. A static route must have no extra script entry or module preload.
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-611/fail/app.tsx) and [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-611/pass/app.tsx) pin original entry positions.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
