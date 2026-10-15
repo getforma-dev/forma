@@ -8,8 +8,9 @@ type Key = 'value' | 'checked' | 'selected' | 'text';
 type Initial = string | number | boolean | null | undefined | readonly string[];
 declare const tokenBrand: unique symbol;
 export type ControlToken = { readonly [tokenBrand]: true };
-export interface ControlBinding { element: Element; key: Key; initial: unknown; codec?: AdoptionCodec }
-export interface ControlObservation { readonly token: ControlToken; readonly edited: boolean; readonly value: unknown }
+export type ControlKind = 'initial' | 'binding';
+export interface ControlBinding { element: Element; key: Key; initial: unknown; codec?: AdoptionCodec; kind?: ControlKind }
+export interface ControlObservation { readonly token: ControlToken; readonly kind: ControlKind; readonly edited: boolean; readonly value: unknown }
 type Attributes = readonly (readonly [string, string])[];
 type Snapshot = {
   element: Control; parent: Node | null; previous: Node | null; next: Node | null;
@@ -18,10 +19,10 @@ type Snapshot = {
   options: HTMLOptionElement[]; selectedOptions: boolean[]; files: File[];
   selection: readonly [number | null, number | null, string | null];
 };
-type Binding = { snapshot: Snapshot; key: Key; initial: Initial; codec?: AdoptionCodec; token: ControlToken };
+type Binding = { snapshot: Snapshot; key: Key; initial: Initial; codec?: AdoptionCodec; kind: ControlKind; token: ControlToken };
 type Group = { name: string; form: HTMLFormElement | null; members: HTMLInputElement[] };
 const HTML = 'http://www.w3.org/1999/xhtml';
-const MODEL_ATTRS = new Set(['type','name','value','checked','selected','min','max','step','multiple','size','disabled','readonly','required','maxlength','minlength','pattern','label']);
+const MODEL_ATTRS = new Set(['type','name','value','alpha','colorspace','checked','selected','min','max','step','multiple','size','disabled','readonly','required','maxlength','minlength','pattern','label']);
 function structure(): never { throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE'); }
 function mismatch(): never { throw new AdoptionDomError('FORMA_E_HYDRATE_VALUE'); }
 function target(): never { throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_TARGET'); }
@@ -104,14 +105,15 @@ export class AdoptionControls {
     const ordered=[...this.snapshots].sort(([a],[b])=>a===b?0:a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1);
     this.snapshots.clear();for(const [element,item]of ordered)this.snapshots.set(element,item);
   }
-  add({element,key,initial:value,codec}:ControlBinding):ControlToken {
+  add({element,key,initial:value,codec,kind='binding'}:ControlBinding):ControlToken {
     if(!this.host||this.observations||!control(element)||!this.owned.has(element))structure();
+    if(kind!=='initial'&&kind!=='binding')structure();
     const tag=element.localName;
     if(!['value','checked','selected','text'].includes(key))structure();
     if((key==='checked'&&tag!=='input')||(key==='selected'&&tag!=='option')||(key==='text'&&tag!=='textarea'))structure();
     if(this.bindings.some(binding=>binding.snapshot.element===element&&(binding.key===key||((key==='text'||key==='value')&&(binding.key==='text'||binding.key==='value')))))structure();
     const token=Object.freeze({}) as ControlToken;
-    this.bindings.push({snapshot:this.snapshots.get(element)!,key,initial:initial(value),codec,token});return token;
+    this.bindings.push({snapshot:this.snapshots.get(element)!,key,initial:initial(value),codec,kind,token});return token;
   }
   private mirror(expected:boolean):Map<Control,Control> {
     const doc=this.document!.implementation.createHTMLDocument(),map=new Map<Control,Control>(),forms=new Map<HTMLFormElement,HTMLFormElement>();
@@ -210,7 +212,9 @@ export class AdoptionControls {
     const result=this.bindings.map(binding=>{
       const baseline=this.observed(defaults.get(binding.snapshot.element)!,binding.key),live=this.live(binding);
       const edited=(Array.isArray(baseline)&&Array.isArray(live)?!same(baseline,live):!Object.is(baseline,live))||(binding.snapshot.type==='file'&&binding.snapshot.files.length>0);
-      return Object.freeze({token:binding.token,edited,value:edited?this.converted(binding):this.rawValue(binding)});
+      // Literal initialization has no reader or seed authority. The owner must
+      // preserve its edit; reactive readers still require a reversible codec.
+      return Object.freeze({token:binding.token,kind:binding.kind,edited,value:edited&&binding.kind==='binding'?this.converted(binding):this.rawValue(binding)});
     });
     this.observations=Object.freeze(result);return this.observations;
   }

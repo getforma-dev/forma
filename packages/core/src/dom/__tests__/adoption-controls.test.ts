@@ -15,14 +15,14 @@ describe('read-only control default and edit observations',()=>{
   const input=get<HTMLInputElement>('i'),area=get<HTMLTextAreaElement>('t'),box=get<HTMLInputElement>('c');
   const setters=[vi.spyOn(input,'value','set'),vi.spyOn(area,'value','set'),vi.spyOn(box,'checked','set')];
   const controls=new AdoptionControls(host),tokens=[controls.add({element:input,key:'value',initial:'saved'}),controls.add({element:area,key:'text',initial:'notes'}),controls.add({element:box,key:'checked',initial:true})];
-  expect(controls.finish()).toEqual(tokens.map((token,i)=>({token,edited:false,value:['saved','notes',true][i]})));controls.check();
+  expect(controls.finish()).toEqual(tokens.map((token,i)=>({token,kind:'binding',edited:false,value:['saved','notes',true][i]})));controls.check();
   expect(new Set(tokens).size).toBe(3);expect(tokens.every(Object.isFrozen)).toBe(true);expect(observer.takeRecords()).toEqual([]);setters.forEach(setter=>{expect(setter).not.toHaveBeenCalled();setter.mockRestore();});observer.disconnect();
  });
  it('returns explicit edited text and boolean observations without altering either default',()=>{
   const {host,get}=fixture('<input id="i" value="saved"><input id="c" type="checkbox" checked>');
   const input=get<HTMLInputElement>('i'),box=get<HTMLInputElement>('c');input.value='typed';box.checked=false;
   const controls=new AdoptionControls(host),one=controls.add({element:input,key:'value',initial:'saved',codec:'string'}),two=controls.add({element:box,key:'checked',initial:true,codec:'boolean'});
-  expect(controls.finish()).toEqual([{token:one,edited:true,value:'typed'},{token:two,edited:true,value:false}]);
+  expect(controls.finish()).toEqual([{token:one,kind:'binding',edited:true,value:'typed'},{token:two,kind:'binding',edited:true,value:false}]);
   expect(input.defaultValue).toBe('saved');expect(box.defaultChecked).toBe(true);expect(input.value).toBe('typed');expect(box.checked).toBe(false);
  });
  it('validates every default before considering an edited readonly binding',()=>{
@@ -66,7 +66,7 @@ describe('read-only control default and edit observations',()=>{
   const {host,get}=fixture('<select id="s" multiple><option value="a" selected>A</option><option value="b">B</option><option value="c" selected>C</option></select>');
   const select=get<HTMLSelectElement>('s');select.options[0].selected=false;select.options[1].selected=true;
   const initial=['a','c'],controls=new AdoptionControls(host),token=controls.add({element:select,key:'value',initial,codec:'string-array'});initial.push('b');
-  const result=controls.finish();expect(result).toEqual([{token,edited:true,value:['b','c']}]);expect(Object.isFrozen(result[0].value)).toBe(true);expect(select.options[0].hasAttribute('selected')).toBe(true);
+  const result=controls.finish();expect(result).toEqual([{token,kind:'binding',edited:true,value:['b','c']}]);expect(Object.isFrozen(result[0].value)).toBe(true);expect(select.options[0].hasAttribute('selected')).toBe(true);
  });
  it('validates selected bindings against complete option topology',()=>{
   const {host,get}=fixture('<select><option id="a" value="a" selected>A</option><option id="b" value="b">B</option></select>');
@@ -80,7 +80,7 @@ describe('read-only control default and edit observations',()=>{
  });
  it('converts only finite number/range edits with the explicit numeric codec',()=>{
   const {host,get}=fixture('<input id="n" type="number" value="7">');get<HTMLInputElement>('n').value='8.5';
-  const controls=new AdoptionControls(host),token=controls.add({element:get('n'),key:'value',initial:7,codec:'number'});expect(controls.finish()).toEqual([{token,edited:true,value:8.5}]);
+  const controls=new AdoptionControls(host),token=controls.add({element:get('n'),key:'value',initial:7,codec:'number'});expect(controls.finish()).toEqual([{token,kind:'binding',edited:true,value:8.5}]);
   const empty=fixture('<input id="n" type="number" value="7">');empty.get<HTMLInputElement>('n').value='';const refused=new AdoptionControls(empty.host);refused.add({element:empty.get('n'),key:'value',initial:7,codec:'number'});expect(()=>refused.finish()).toThrowError(code('FORMA_E_HYDRATE_INPUT_TARGET'));
  });
  it('captures live values before component code and refuses later changes',()=>{
@@ -115,6 +115,19 @@ describe('read-only control default and edit observations',()=>{
  });
  it('rechecks live observations when finish is requested again',()=>{
   const {host,get}=fixture('<input id="i" value="saved">');const controls=new AdoptionControls(host);controls.add({element:get('i'),key:'value',initial:'saved'});controls.finish();get<HTMLInputElement>('i').value='later';expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_VALUE'));
+ });
+ it('preserves static value checked and textarea edits with explicit initial-only observations',()=>{
+  const {host,get}=fixture('<input id="i" value="saved"><input id="c" type="checkbox" checked><textarea id="t">notes</textarea>');
+  const input=get<HTMLInputElement>('i'),box=get<HTMLInputElement>('c'),area=get<HTMLTextAreaElement>('t');input.value='typed';box.checked=false;area.value='edited notes';
+  const writes=[vi.spyOn(input,'value','set'),vi.spyOn(box,'checked','set'),vi.spyOn(area,'value','set')];
+  const controls=new AdoptionControls(host);controls.add({element:input,key:'value',initial:'saved',kind:'initial'});controls.add({element:box,key:'checked',initial:true,kind:'initial'});controls.add({element:area,key:'text',initial:'notes',kind:'initial'});
+  expect(controls.finish().map(({kind,edited,value})=>({kind,edited,value}))).toEqual([{kind:'initial',edited:true,value:'typed'},{kind:'initial',edited:true,value:false},{kind:'initial',edited:true,value:'edited notes'}]);controls.check();writes.forEach(write=>{expect(write).not.toHaveBeenCalled();write.mockRestore();});
+ });
+ it('validates static defaults before preserving an early edit',()=>{
+  const {host,get}=fixture('<input id="i" value="server">');get<HTMLInputElement>('i').value='user';const controls=new AdoptionControls(host);controls.add({element:get('i'),key:'value',initial:'wrong',kind:'initial'});expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_VALUE'));expect(get<HTMLInputElement>('i').value).toBe('user');
+ });
+ it('does not infer static initialization from a missing reactive codec',()=>{
+  for(const kind of [undefined,'binding'] as const){const {host,get}=fixture('<input id="i" value="server">');get<HTMLInputElement>('i').value='user';const controls=new AdoptionControls(host);controls.add({element:get('i'),key:'value',initial:'server',kind});expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_INPUT_TARGET'));}
  });
  it('rejects stale ownership, duplicate bindings and use after idempotent release',()=>{
   const {host,get}=fixture('<input id="i">');const controls=new AdoptionControls(host);controls.add({element:get('i'),key:'value',initial:''});expect(()=>controls.add({element:get('i'),key:'value',initial:''})).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));controls.finish();controls.release();controls.release();expect(()=>controls.check()).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));
