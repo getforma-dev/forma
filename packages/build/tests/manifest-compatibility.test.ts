@@ -13,7 +13,7 @@ function fixture() {
   const entry = join(root, 'app.ts'); writeFileSync(entry, 'export const message = "healthy";');
   return {root, entry, outputDir: join(root, 'dist')};
 }
-afterEach(() => { vi.restoreAllMocks(); roots.splice(0).forEach(root => rmSync(root, {recursive: true, force: true})); });
+afterEach(() => { vi.restoreAllMocks(); roots.splice(0).forEach(root => rmSync(root, {recursive: true, force: true, maxRetries: 10, retryDelay: 50})); });
 
 describe('manifest2 compatibility through real builds', () => {
   it('emits a suffix-free writer, named browser route, aliases and full uncompressed SHA384 metadata', async () => {
