@@ -95,6 +95,16 @@ function typedMarkup(value: unknown): string {
   // the existing coded typed-policy refusal, before any parser/cache fast path.
   return rawHtml(field && 'value' in field ? field.value : undefined, 'innerHTML');
 }
+function preparedMarkup(element: Element, value: unknown): string {
+  const sink = typedMarkup(value);
+  // The inert oracle cannot know this document's scripting mode. HTML noscript
+  // switches between parsed content and raw text according to that mode; do
+  // not guess it or parse inside a live document. Ordinary CSR is unchanged.
+  if (element.namespaceURI === 'http://www.w3.org/1999/xhtml' && element.localName === 'noscript') {
+    throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');
+  }
+  return sink;
+}
 /** Validate in the real element's fragment-parsing context, keeping the
  * TrustedHTML object typed at both detached and later live sinks. Raw marker
  * text is opaque; the caller must not ask AdoptionDom to parse these children. */
@@ -106,7 +116,7 @@ export function prepareRaw(element: Element, initial: unknown): PreparedRaw {
     ? (element as HTMLTemplateElement).content : element;
   let previous: string | null = null;
   if (ownsContent) {
-    const sink = typedMarkup(initial), expected = context(element);
+    const sink = preparedMarkup(element, initial), expected = context(element);
     expected.innerHTML = sink;
     if (expected.innerHTML !== element.innerHTML) mismatch();
     previous = String(sink);
@@ -119,7 +129,7 @@ export function prepareRaw(element: Element, initial: unknown): PreparedRaw {
         previous = null;
         return;
       }
-      const sink = typedMarkup(next), markup = String(sink);
+      const sink = preparedMarkup(element, next), markup = String(sink);
       if (markup === previous) return;
       beforeReplace?.();
       element.innerHTML = sink;

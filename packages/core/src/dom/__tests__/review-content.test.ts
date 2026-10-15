@@ -32,3 +32,22 @@ it('clears the actual template content once while preserving its fragment identi
  expect(teardowns).toBe(1);expect(content.childNodes.length).toBe(0);expect(element.innerHTML).toBe('');
  plan.write({__html:trustedHtml('<i>B</i>')});expect(element.innerHTML).toBe('<i>B</i>');expect(element.content).toBe(content);
 });
+
+
+it('refuses typed HTML noscript in live and inert documents without changing fallback or granting a later raw transition',()=>{
+ for(const doc of [document,document.implementation.createHTMLDocument()]){
+  const element=doc.createElement('noscript');element.textContent='<br/>';
+  const original=element.firstChild,typed={__html:trustedHtml('<br/>')};
+  expect(()=>prepareRaw(element,{__html:'<br/>'})).toThrow('FORMA_E_RAW_INNER_HTML');
+  expect(()=>prepareRaw(element,typed)).toThrowError(expect.objectContaining({code:'FORMA_E_HYDRATE_STRUCTURE'}));
+  expect(()=>prepareRaw(element,{__html:trustedHtml('')})).toThrowError(expect.objectContaining({code:'FORMA_E_HYDRATE_STRUCTURE'}));
+  for(const fallback of [null,false]){
+   const plan=prepareRaw(element,fallback);expect(plan.ownsContent).toBe(false);let calls=0;
+   expect(()=>plan.write(typed,()=>calls++)).toThrowError(expect.objectContaining({code:'FORMA_E_HYDRATE_STRUCTURE'}));
+   expect(()=>plan.write({__html:'<br/>'},()=>calls++)).toThrow('FORMA_E_RAW_INNER_HTML');
+   expect(calls).toBe(0);expect(element.firstChild).toBe(original);
+  }
+  const plan=prepareRaw(element,null);let calls=0;plan.write(false,()=>calls++);plan.write(null,()=>calls++);
+  expect(calls).toBe(1);expect(element.firstChild).toBeNull();
+ }
+});

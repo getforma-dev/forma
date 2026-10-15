@@ -101,3 +101,20 @@ test('contextual raw normalization retains ancestor form and MathML integration 
  });
  expect(result).toEqual({mutations:0,positive:1,results:[{id:'form',code:'PASS',same:true,html:'<input name="x">',namespace:'http://www.w3.org/1999/xhtml'},{id:'math',code:'PASS',same:true,html:'<a href="/x">kept</a>',namespace:'http://www.w3.org/1999/xhtml'}],violations:[]});
 });
+
+test('noscript context refusal preserves live and inert fallback under typed policy',async({page})=>{
+ await serve(page,'<noscript id="raw"><br/></noscript>');
+ const result=await page.evaluate(async()=>{
+  const {prepareRaw,trustedHtml,observeMutations}=await import('/adoption-content.mjs' as string),live=document.getElementById('raw')!,inert=document.implementation.createHTMLDocument().createElement('noscript');inert.textContent='<br/>';
+  const finish=observeMutations(),results=[],value={__html:trustedHtml('<br/>')};let calls=0;
+  for(const element of [live,inert]){
+   const original=element.firstChild,codes=[];
+   for(const candidate of [value,{__html:'<br/>'}]){try{prepareRaw(element,candidate);codes.push('PASS');}catch(error){codes.push(String(error).includes('FORMA_E_RAW_INNER_HTML')?'RAW':(error as any).code);}}
+   const plan=prepareRaw(element,null);try{plan.write(value,()=>calls++);codes.push('PASS');}catch(error){codes.push((error as any).code);}
+   results.push({codes,owns:plan.ownsContent,same:element.firstChild===original});
+  }
+  const observation=await finish(),plan=prepareRaw(live,false);plan.write(null,()=>calls++);plan.write(false,()=>calls++);
+  await new Promise(resolve=>setTimeout(resolve,0));return{...observation,results,calls,empty:live.childNodes.length,violations:(window as any).violations};
+ });
+ expect(result).toEqual({mutations:0,positive:1,results:Array.from({length:2},()=>({codes:['FORMA_E_HYDRATE_STRUCTURE','RAW','FORMA_E_HYDRATE_STRUCTURE'],owns:false,same:true})),calls:1,empty:0,violations:[]});
+});
