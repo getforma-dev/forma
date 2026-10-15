@@ -47,4 +47,16 @@ describe('prepared event listener boundaries',()=>{
   let stop:()=>void=()=>{};const ordinary=h('button',{onClick:()=>{stop=createEffect(()=>{value();outside();});}},'ordinary') as HTMLButtonElement;ordinary.click();plan.dispose();setValue(1);expect(runs).toHaveBeenCalledOnce();expect(outside).toHaveBeenCalledTimes(2);stop();
  });
 
+ it('propagates initial adopted h reader failure and disposes its partial callback work',()=>{
+  const host=fixture(),[value,setValue]=createSignal(0),runs=vi.fn(),after=vi.fn(),failure=vi.fn(),cause=Error('initial reader');
+  const plan=prepareAdoption(host,()=>h('button',{onClick(){h('p',null,()=>{createEffect(()=>{value();runs();});throw cause;});after();}},'run'),{failure});
+  plan.commit();host.click();expect(after).not.toHaveBeenCalled();expect(failure).toHaveBeenCalledExactlyOnceWith(cause,'FORMA_E_HYDRATE_EFFECT');expect(plan.phase).toBe('aborted');
+  setValue(1);expect(runs).toHaveBeenCalledOnce();plan.dispose();
+ });
+ it('drains later public h reader work created after reentrant adoption disposal',()=>{
+  const host=fixture(),[generation,setGeneration]=createSignal(0),[value,setValue]=createSignal(0),runs=vi.fn(),failure=vi.fn();
+  const plan=prepareAdoption(host,()=>h('button',{onClick(){h('p',null,()=>{if(generation()){plan.dispose();createEffect(()=>{value();runs();});}return 'kept';});}},'run'),{failure});
+  plan.commit();host.click();setGeneration(1);expect(plan.phase).toBe('aborted');expect(runs).toHaveBeenCalledOnce();setValue(1);expect(runs).toHaveBeenCalledOnce();expect(failure).not.toHaveBeenCalled();
+ });
+
 });
