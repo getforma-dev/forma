@@ -6,8 +6,8 @@
 use crate::format::{
     le_u16, le_u32, limit, IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, SectionTable,
     SlotEntry, SlotSource, SlotType, HEADER_SIZE, MAX_ISLANDS, MAX_STRINGS, SECTION_BYTECODE,
-    SECTION_ISLANDS, SECTION_KEY_PATHS, SECTION_PROPS_SCHEMA, SECTION_REQUIRED, SECTION_SLOTS,
-    SECTION_SOURCE_POSITIONS, SECTION_STRINGS,
+    SECTION_ISLANDS, SECTION_ISLAND_CONTRACTS, SECTION_KEY_PATHS, SECTION_PROPS_SCHEMA,
+    SECTION_REQUIRED, SECTION_SLOTS, SECTION_SOURCE_POSITIONS, SECTION_STRINGS,
 };
 use crate::schema::{self, Cursor, KeyPath, PropsSchema, SourcePosition};
 
@@ -380,6 +380,7 @@ pub struct IrModule {
     pub source_positions: Vec<SourcePosition>,
     /// Complete original encoding retained for canonical dumps and lossless roundtrips.
     raw: Vec<u8>,
+    pub(crate) contracts: Option<crate::contracts::Contracts>,
     /// Dense `slot_id` → index into `slots.entries()`, `NO_INDEX` if absent.
     /// Replaces a linear scan per DYN_TEXT/DYN_ATTR/SHOW_IF/LIST opcode.
     slot_index: Vec<u32>,
@@ -397,6 +398,7 @@ impl IrModule {
         section_table.validate(data.len())?;
         for section in &section_table.sections {
             if !(SECTION_BYTECODE..=SECTION_SOURCE_POSITIONS).contains(&section.id)
+                && section.id != SECTION_ISLAND_CONTRACTS
                 && section.flags & SECTION_REQUIRED != 0
             {
                 return Err(IrError::UnknownRequiredSection {
@@ -415,6 +417,18 @@ impl IrModule {
             let start = section.offset as usize;
             data.get(start..start + section.size as usize)
                 .ok_or(IrError::InvalidSection)
+        };
+        if let Some(section) = section_table.get(SECTION_ISLAND_CONTRACTS) {
+            if section.flags != SECTION_REQUIRED {
+                return Err(IrError::InvalidSchema("island contracts must be required"));
+            }
+        }
+        let contracts = if section_table.get(SECTION_ISLAND_CONTRACTS).is_some() {
+            Some(crate::contracts::Contracts::parse(payload(
+                SECTION_ISLAND_CONTRACTS,
+            )?)?)
+        } else {
+            None
         };
         let strings = StringTable::parse(payload(SECTION_STRINGS)?)?;
         let slots = SlotTable::parse(payload(SECTION_SLOTS)?)?;
@@ -436,6 +450,7 @@ impl IrModule {
             key_paths: Vec::new(),
             source_positions: Vec::new(),
             raw: data.to_vec(),
+            contracts,
         };
         let starts = module.validation_starts()?;
         if section_table.get(SECTION_KEY_PATHS).is_some() {
@@ -450,6 +465,13 @@ impl IrModule {
             )?;
         }
         Ok(module)
+    }
+
+    /// Validated canonical binding/schema bytes for one static island, for diagnostics.
+    /// These bytes are identity metadata, not executable instructions or a binding bypass.
+    pub fn island_contract_bytes(&self, id: u16) -> Option<(&[u8], &[u8])> {
+        let contract = self.contracts.as_ref()?.islands.get(&id)?;
+        Some((&contract.binding_bytes, &contract.schema_bytes))
     }
 
     /// Original bytes, including unknown optional sections and island extensions.
@@ -558,6 +580,11 @@ impl IrModule {
                 return Err(IrError::InvalidSchema("island object index out of range"));
             }
         }
+        if let Some(contracts) = &self.contracts {
+            contracts.validate(self, &starts)?;
+        } else if !self.islands.is_empty() || starts.iter().any(|(_, op)| *op == Opcode::Coalesce) {
+            return Err(IrError::MissingSection(SECTION_ISLAND_CONTRACTS));
+        }
         Ok(starts)
     }
 
@@ -627,6 +654,12 @@ impl IrModule {
                     pos = bounded(pos, 2, end, op_start)?;
                 }
                 Opcode::ShowElse => {} // Historical stray separator is a no-op.
+                Opcode::Coalesce => {
+                    self.check_slot(read_u16_at(ops, pos, end)?)?;
+                    self.check_slot(read_u16_at(ops, pos + 2, end)?)?;
+                    self.check_slot(read_u16_at(ops, pos + 4, end)?)?;
+                    pos = bounded(pos, 6, end, op_start)?;
+                }
                 Opcode::Prop => {
                     self.check_slot(read_u16_at(ops, pos, end)?)?;
                     self.strings.get(read_u32_at(ops, pos + 2, end)?)?;

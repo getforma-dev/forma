@@ -386,6 +386,14 @@ impl SlotData {
         Ok(data)
     }
 
+    pub(crate) fn apply_module_constants(&mut self, module: &IrModule) {
+        if let Some(contracts) = &module.contracts {
+            for (&id, value) in &contracts.constants {
+                self.replace(id, value.clone());
+            }
+        }
+    }
+
     /// Create SlotData pre-populated from the IR slot table defaults.
     /// Server-sourced slots with no default -> Null.
     /// Client-sourced slots with defaults -> parsed from default_bytes.

@@ -644,6 +644,8 @@ pub enum Opcode {
     /// Extract a named property from an Object slot into a target slot.
     /// Format: src_slot_id(u16) + prop_str_idx(u32) + target_slot_id(u16)
     Prop = OP_PROP,
+    /// Select fallback only when source is Null. `source u16 + fallback u16 + destination u16`.
+    Coalesce = OP_COALESCE,
 }
 
 impl Opcode {
@@ -662,6 +664,7 @@ impl Opcode {
             OP_ISLAND_START => Ok(Opcode::IslandStart),
             OP_ISLAND_END => Ok(Opcode::IslandEnd),
             OP_PROP => Ok(Opcode::Prop),
+            OP_COALESCE => Ok(Opcode::Coalesce),
             _ => Err(IrError::InvalidOpcode(b)),
         }
     }

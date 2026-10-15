@@ -34,6 +34,7 @@
     deny(clippy::unwrap_used, clippy::expect_used, clippy::panic)
 )]
 
+mod contracts;
 /// On-disk FMIR layout: header, section table, opcodes, and the table entry
 /// types. See `docs/FMIR-FORMAT.md` for the stability contract.
 pub mod format;
