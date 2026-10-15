@@ -55,6 +55,11 @@ describe('declared island writer integration',()=>{
       'export const Badge=browserOnly((p:{label:string})=>window.arbitrary(p));');
     expect(result.islands[0]!.contract?.mode).toBe('browserOnly');
   });
+  it('emits the typed roundtrip contract for independent native-to-browser state controls',()=>{
+    const fields='label:string;value:number;date:Date;maybe?:string;list:(number|null)[];nested:{active:boolean}';
+    emit('roundtrip',`import {Badge} from "./island";export function Page(p:{${fields}}){return h("main",null,Badge(p));}`,
+      `export function Badge(p:{${fields}}){return h("p",null,p.label,p.value);}`);
+  });
   it('refuses missing or incompatible declared input and numeric Date impostors',()=>{
     for(const args of ['{}','{label:2}'])expect(()=>emit('bad','import {Badge} from "./island";export function Page(){return Badge('+args+');}',
       'export function Badge(p:{label:string}){return h("p",null,p.label);}')).toThrow(/BUILD-610/);
