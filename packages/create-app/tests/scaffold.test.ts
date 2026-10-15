@@ -42,15 +42,20 @@ describe('scaffolding', () => {
       dest = path.join(tmp, name);
     });
 
-    it('produces exactly the template tree, with _gitignore restored', () => {
+    it('produces exactly the template tree, with configuration dotfiles restored', () => {
       const expected = listFiles(path.join(TEMPLATES_DIR, template))
-        .map((f) => (path.basename(f) === '_gitignore' ? f.replace(/_gitignore$/, '.gitignore') : f))
+        .map((f) => f.replace(/(^|\/)_gitignore$/, '$1.gitignore').replace(/(^|\/)_npmrc$/, '$1.npmrc'))
         .filter((f) => !f.startsWith('.git/'))
         .sort();
       const actual = listFiles(dest)
         .filter((f) => !f.startsWith('.git/'))
         .sort();
       expect(actual).toEqual(expected);
+    });
+
+    it('restores the scripts-off npm policy and never leaves _npmrc in a scaffold', () => {
+      expect(fs.readFileSync(path.join(dest, 'admin', '.npmrc'), 'utf8')).toContain('ignore-scripts=true');
+      expect(fs.existsSync(path.join(dest, 'admin', '_npmrc'))).toBe(false);
     });
 
     it('leaves no unreplaced placeholder anywhere', () => {
@@ -239,7 +244,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
 
     // `npm ci` and `--locked` install exactly the template's lockfiles and
     // fail if either disagrees with its manifest (DR-32).
-    const install = run('npm', ['ci', '--no-audit', '--no-fund'], admin);
+    const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
     expect(install.status, install.stderr).toBe(0);
 
     // SR2: every package the lockfile installed carries the npm registry's
@@ -285,7 +290,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const dest = path.join(tmp, name);
     const admin = path.join(dest, 'admin');
 
-    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+    expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
     const build = run('npm', ['run', 'build:ssr'], admin);
     const out = build.stdout + build.stderr;
@@ -332,7 +337,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
     const dest = path.join(tmp, name);
     const admin = path.join(dest, 'admin');
-    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+    expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
     const build = run('npm', ['run', 'build:ssr'], admin);
     expect(build.status, build.stdout + build.stderr).toBe(0);
     const cargo = run('cargo', ['build', '--locked'], dest);
@@ -391,7 +396,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const name = 'e2e-strict';
     expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
     const admin = path.join(tmp, name, 'admin');
-    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+    expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
     const appPath = path.join(admin, 'src', 'home', 'app.tsx');
     const app = fs.readFileSync(appPath, 'utf8');
@@ -427,7 +432,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const dest = path.join(tmp, name);
     const admin = path.join(dest, 'admin');
 
-    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+    expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
     expect(run('npm', ['run', 'build'], admin).status).toBe(0);
     expect(run('cargo', ['build', '--locked'], dest).status).toBe(0);
 
@@ -547,7 +552,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const name = 'e2e-ssr-key';
     expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
     const admin = path.join(tmp, name, 'admin');
-    expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+    expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
     const app = fs.readFileSync(path.join(admin, 'src', 'home', 'app.tsx'), 'utf8');
     const probe = app.replace(`<h1>${name}</h1>`, '<h1>ssr-entry-probe</h1>');
@@ -585,7 +590,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(runCli([name, '--template', template], tmp).status).toBe(0);
       const dest = path.join(tmp, name);
       const admin = path.join(dest, 'admin');
-      expect(run('npm', ['ci', '--no-audit', '--no-fund'], admin).status).toBe(0);
+      expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
       const pages = pageRoutes(fs.readFileSync(path.join(dest, 'src', 'main.rs'), 'utf8'));
       expect(pages.length, 'no page route found in main.rs').toBeGreaterThan(0);

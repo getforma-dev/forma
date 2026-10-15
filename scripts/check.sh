@@ -33,8 +33,10 @@ cd "$(dirname "$0")/.."
 started=$(date +%s)
 step() { echo; echo "### $* ($(( $(date +%s) - started ))s)"; }
 
-step "npm ci"
-npm ci
+step "npm ci --ignore-scripts"
+npm ci --ignore-scripts
+step "npm advisory gate (fails closed)"
+npm audit --omit=dev
 step "npm audit signatures"
 npm audit signatures
 
@@ -43,16 +45,16 @@ node scripts/generate-fmir-constants.mjs --check
 
 step "cargo fmt --all --check"
 cargo fmt --all --check
-step "cargo clippy --workspace --all-targets --all-features -- -D warnings"
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-step "cargo test --workspace"
-cargo test --workspace
-step "cargo doc --workspace --no-deps"
-cargo doc --workspace --no-deps
+step "cargo clippy --locked --workspace --all-targets --all-features -- -D warnings"
+cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+step "cargo test --locked --workspace"
+cargo test --locked --workspace
+step "cargo doc --locked --workspace --no-deps"
+cargo doc --locked --workspace --no-deps
 step "forma-ir builds for wasm32 with the wasm feature"
-cargo build --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
+cargo build --locked --target wasm32-unknown-unknown -p forma-ir --features wasm --no-default-features
 step "the wasm exports' deprecation reaches a caller"
-cargo test -p forma-ir --doc --features wasm
+cargo test --locked -p forma-ir --doc --features wasm
 
 step "npm run build (compiler, build, core, create-app)"
 npm run build
@@ -68,7 +70,7 @@ node packages/build/scripts/test-raw-lint-bin.mjs
 
 step "FMIR contract: this compiler's corpus is the one forma-ir has committed"
 npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"
-cargo test -p forma-ir --test js_emitter_contract
+cargo test --locked -p forma-ir --test js_emitter_contract
 if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)" ]; then
   echo "::error::the compiler no longer emits the .ir bytes and canonical .dump texts committed in crates/forma-ir/tests/fixtures/js-emitter:"
   git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter
