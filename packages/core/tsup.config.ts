@@ -35,16 +35,16 @@ function defines() {
  * chain scanners such as Socket.dev and Snyk).
  *
  * This is what makes the build-time dev flag real rather than decorative:
- * esbuild only inlines a `const` bound to a folded literal into its use sites
- * when syntax minification is on. Without it `__DEV__` is a constant nothing
- * reads at build time and `if (__DEV__) console.warn(…)` survives into the
- * shipped bytes.
- *
- * Inlining also stops at chunk boundaries, so the code-split entries keep some
- * unreachable `__DEV__ && …` calls. See src/reactive/dev.ts for what that does
- * and does not guarantee.
+ * with syntax minification on, esbuild folds each `typeof __FORMA_DEV_BUILD__
+ * …` guard to its literal while parsing and deletes the branch it guards.
+ * Without it the guard survives into the shipped bytes, unreachable but paid
+ * for. The guard sits at every warning site (FORMA-021 C1): esbuild never
+ * inlines a `const` into its use sites, so an imported or module-level
+ * `__DEV__` folds only where tsup's Rollup pass runs, which the standard
+ * runtime IIFE and the frame have none of. See src/reactive/dev.ts.
  *
  * Verified by: src/__tests__/build-artifacts.test.ts > "the allowlist interpreter is actually in the bundle"
+ * Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
  */
 function applyEsbuildOptions(options: { alias?: Record<string, string>; pure?: string[]; minifySyntax?: boolean }, pure?: string[]) {
   options.alias = formaAlias;

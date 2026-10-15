@@ -65,7 +65,7 @@
   "tags": [
    "security"
   ],
-  "find": "  if (isEventHandlerAttr(key)) {\n    if (__DEV__) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
+  "find": "  if (isEventHandlerAttr(key)) {\n    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
   "replace": "  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
   "note": "h() static path writes ONCLICK as an inline handler"
  },
@@ -85,7 +85,7 @@
   "tags": [
    "security"
   ],
-  "find": "  if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {\n    if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n    return;\n  }\n  // The string the URL guard checked",
+  "find": "  if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {\n    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');\n    return;\n  }\n  // The string the URL guard checked",
   "replace": "  // The string the URL guard checked",
   "note": "h() static attribute path writes javascript: URLs"
  },
@@ -111,7 +111,7 @@
   "tags": [
    "security"
   ],
-  "find": "    if (isUnsafeAttrWrite(el.localName, key, strVal)) {\n      if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
+  "find": "    if (isUnsafeAttrWrite(el.localName, key, strVal)) {\n      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
   "replace": "",
   "note": "reactive xlink:href writes javascript: URLs"
  },
@@ -1097,8 +1097,8 @@
   "id": "show/no-lasttruthy-guard",
   "file": "src/dom/show.ts",
   "tags": [],
-  "find": "    if (truthy === lastTruthy) {",
-  "replace": "    if (false && truthy === lastTruthy) {",
+  "find": "    if (truthy === lastTruthy) return;",
+  "replace": "    if (false && truthy === lastTruthy) return;",
   "note": "show re-renders branch on every effect run (identity churn)"
  },
  {
@@ -1167,8 +1167,8 @@
   "id": "switch/no-scoop-back",
   "file": "src/dom/switch.ts",
   "tags": [],
-  "find": "        let scooped = 0;\n        while (startMarker.nextSibling && startMarker.nextSibling !== endMarker) {\n          currentNode.appendChild(startMarker.nextSibling);\n          scooped++;\n        }",
-  "replace": "        let scooped = 0;",
+  "find": "        // Scoop DOM nodes back into the fragment for cache reuse\n        while (startMarker.nextSibling && startMarker.nextSibling !== endMarker) {\n          currentNode.appendChild(startMarker.nextSibling);\n        }\n",
+  "replace": "        // Scoop DOM nodes back into the fragment for cache reuse\n",
   "note": "cached fragment branch not scooped back — 3rd visit renders empty/duplicated"
  },
  {

@@ -25,3 +25,11 @@ e2e/frame/out/
 
 # P17 owns and removes these temporary packed-template checkouts.
 /.release-verify-*/
+
+# The full-stack lane's FormaJS bundles, written fresh from packages/core/dist
+# by e2e/sync-fixtures.sh (check.sh runs it first). A committed copy is only
+# ever stale: the one tracked until 2026-10-15 predated trustedHtml() and
+# failed e2e/full-stack.spec.ts whenever the sync had not run. Same rule as
+# packages/core/.gitignore for core's own copy.
+e2e/fixtures/formajs-runtime.global.js
+e2e/fixtures/formajs.global.js
