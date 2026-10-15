@@ -2,6 +2,16 @@
 
 The retired Node renderer measurements are preserved in the [pre-removal record](archive/2026-10-15-legacy-apis/PERFORMANCE.md). Remaining measurements retain their original run metadata; this removal is not a new benchmark run.
 
+**Historical measurement boundary.** The tables and numerical conclusions below
+retain their original run metadata. The strict-adoption path now prepares and
+commits connected, matching DOM fixtures; `bench/hydrate.bench.ts` was migrated
+without recording new timings. The old repairing walker, whole-page mount and
+legacy props-channel measurements are not comparable to that current fixture.
+No current adoption speed, size acceptance or complete 3.0 qualification follows
+from these numbers. Re-run the intended fixture and record its exact source
+before making a new comparison; do not overwrite the old baseline as though it
+measured this implementation.
+
 The product thesis is fine-grained surgical updates and small fast bundles. The
 bundle half is gated in CI by `scripts/check-size.mjs`. This document is the
 other half: a re-runnable benchmark suite over the hot paths, and the numbers it
@@ -81,8 +91,8 @@ same reason. That is a real property of the workload, not a measurement artifact
   makes p95 and spread comparable across runs and machines.
 - **Fixtures are asserted before they are timed.** Several `describe` bodies
   prove the thing under test actually happened — that adoption reused the SSR
-  node rather than replacing it, that island props arrived through both
-  channels, that every expression in the engine comparison re-runs and
+  node rather than replacing it, that historical island props arrived through both
+  legacy channels (the current fixture uses declared head state), that every expression in the engine comparison re-runs and
   re-renders on a write. Four bugs in this suite's own history each made a
   subject look *faster* than its own control: a reactive binding that never read
   its signal, islands activating with `null` props, expressions that did not
@@ -141,7 +151,8 @@ the same guarantee is available for an integer compare.
 
 #### The fix
 
-`activateIslands` and `hydrateIslandRoot` (`src/dom/activate.ts`) now maintain a
+At the measured revision, `activateIslands` and `hydrateIslandRoot`
+(`src/dom/activate.ts`) maintained a
 count of scheduled-or-active islands, and `deactivateIslandsIn` returns
 immediately when it is zero. An island cannot acquire anything worth tearing down
 — a deferred trigger's observer, idle timer or interaction listeners, or a
@@ -161,7 +172,7 @@ Verified by: `src/dom/__tests__/list-disposal.test.ts` > "scans every removed ro
 Verified by: `src/dom/__tests__/list-disposal.test.ts` > "still deactivates a live island after a different island was deactivated"
 Verified by: `src/dom/__tests__/list-disposal.test.ts` > "still deactivates a live island after the same island was deactivated twice"
 Verified by: `src/dom/__tests__/list-disposal.test.ts` > "stops scanning after an island whose hydrate function threw"
-Verified by: `src/dom/__tests__/list-disposal.test.ts` > "moves the count to the element that replaced an empty island shell"
+Verified by: `src/dom/__tests__/list-disposal.test.ts` > "moves the count to the replacement of an explicit BrowserOnly island"
 
 Measured with `npm run bench:compare` (5 runs) against the committed baseline,
 i.e. the same instrument and the same machine that found the regression:
@@ -232,9 +243,10 @@ one unguarded writer would turn the identity check into a bypass:
 - **The cache object is per element and never reused.** `h()` allocates a fresh
   `Object.create(null)` the first time an element gets a dynamic prop; nothing
   clears or transplants one.
-- **Hydration adoption does not touch it.** `applyDynamicProps`
-  (`src/dom/hydrate.ts`) runs `isUnsafeAttrWrite` on every run and writes no cache
-  entry, so it cannot seed one the guard has not seen.
+- **At the measured revision, hydration adoption did not touch it.** The now-retired
+  `applyDynamicProps` ran `isUnsafeAttrWrite` on every run without seeding that
+  cache. Current strict preparation uses separate checked bindings; this old
+  performance argument is not a source map for the new walker.
 - **`el.localName`, the guard's other input, cannot change** for the life of the
   element, so a cache hit really is the same (element, attribute, value) triple.
 
@@ -414,7 +426,7 @@ happy-dom's array-backed child lists, not Forma's per-row bookkeeping, and the
 floors that prove it are in
 [`createList` initial render](#createlist-initial-render-where-the-superlinearity-comes-from).
 
-**Adopting server-rendered DOM beats building it.** With the HTML parse
+**In this historical run, adopting server-rendered DOM was cheaper than building it.** With the HTML parse
 subtracted from both sides (see the happy-dom caveat above), adopting 1000 keyed
 SSR rows costs **3.06 ms** against **7.23 ms** to build the same list client-side
 — **2.4× cheaper**. For a non-list page with 480 reactive text bindings, adoption
@@ -422,12 +434,13 @@ costs **4.28 ms** against **7.07 ms** to render it client-side, **1.65×**. Both
 understate the real gap: in a browser the parse the SSR path needs is native,
 while the client-render path still has to build every node from JavaScript.
 
-**Islands are cheap enough to have a lot of.** 100 islands activate in 6.6 ms
+**Historical island activation cost.** 100 islands activate in 6.6 ms
 including adoption of every shell — about **66 µs per island**. The two props
 channels do not separate cleanly: the shared `<script>` block is slightly cheaper
 at 10 islands (472 µs vs 512 µs) and this run had it slightly dearer at 100
-(7.68 ms vs 6.56 ms) while the A/B runs had them level, so pick the channel on
-payload size, not on parse time.
+(7.68 ms vs 6.56 ms) while the A/B runs had them level. These two legacy
+channels are now removed; the figures do not guide current state-envelope or
+activation choices.
 
 **Server rendering is near-linear and fast.** 3 KB of HTML in 46 µs, 316 KB in
 5.73 ms, 1.6 MB in 31.4 ms — 500× the tree for 680× the time. Resolving a getter

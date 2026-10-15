@@ -4,17 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Internal preparation seam — FORMA-104 (dependent work)
+### Strict island activation — FORMA-104 development integration
 
-- Add private scoped enrollment of actual default-equality `createSignal` pairs, compiler-facing tuple/read hooks, checked seed values and batched rollback. Captured, substituted and custom-equality setters cannot be enrolled by these hooks.
-- Stage exact DOM snapshots/marker cursors and shared preparation ownership. Per-row groups dispose independently; public effects/refs stay dormant until publication, and callback failures after commit dispose their island without claiming to undo application writes. The direct-adoption kernel has no compiled signal enrollment authority.
-- Stage lazy h/direct-child/Show/list descriptions. Nested child matching retains each host's original component identity and compares declared values against its private original state, including intrinsic Date epochs; child-mutated props do not replace that baseline. No activation dispatch changes in this checkpoint.
-- Stage the compiler-internal DOM conditional hook: ordinary execution keeps one test read and one selected branch call; private description retains the original readers for the strict walker without evaluating them.
-- Ordinary controls cover instance identity, dormant read cleanup after construction failures and unchanged client signal behavior. The seam is not connected to activation or the DOM walker yet; this checkpoint does not claim read-only adoption or early-input preservation in a page.
+- Connect the checked transaction to compiled SSR activation. It requires one matching owned Element, validates before publication, and makes zero initial DOM writes on success. Private phase replaces success-status/SSR-marker writes. Empty SSR, imperative Node/void returns and mismatches no longer select a repair or client fallback.
+- Defer owned effects, refs and listeners until validation. A refused owner preserves original content, makes one error-status write and emits one bubbling `forma:error` with bounded identity/binding context and no props or payload. Earlier state preflight remains entirely write-free. Later failures dispose owned work without claiming rollback of application side effects.
+- Preserve early edits only through compiler-proven local signal associations and reversible codecs; validate server defaults first, reject conflicts and hold seed notifications until commit. Literal initial controls preserve edits without seeding. Public `hydrateIsland()` uses strict caller-owned preparation but grants no compiled setter authority.
+- Keep textarea/title text exact: no marker stripping or initial default repair. List diagnostics report known client items and actual DOM extent, not an inferred row count. Initial key-order parity remains required until FORMA-181.
+- Preserve old tests/docs in the exact retirement archive and migrate current controls to matching preparation or explicit refusal. Historical benchmark figures remain historical; no fresh timing, bundle-size acceptance or overall FORMA-104 completion is claimed. Two later namespace/materializer qualification failures remain open.
+
 ### Staged whole-page mount retirement — FORMA-105
 
 - `mount()` refuses a `data-forma-ssr` target with `FORMA_E_MOUNT_SSR` before component/root/effect/listener creation or DOM writes. Ordinary Browser mounting, explicit browserOnly islands and public caller-owned `hydrateIsland()` are retained.
-- Adoption-specific regression tests now call the retained public hydrator under explicit roots; the old mount/fallback assertions are archived exactly. Strict island adoption (FORMA-104), compiler static/entry selection and the template successor remain separate integration gates.
+- Adoption-specific regression tests now call the retained public hydrator under explicit roots; the old mount/fallback assertions are archived exactly. Strict activation is now connected; compiler/static entry selection, the template successor and final packed qualification remain separate acceptance gates.
 
 ### Typed raw boundaries — FORMA-109
 

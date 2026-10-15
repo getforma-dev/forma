@@ -462,15 +462,15 @@ function handleInnerHTML(el: Element, _key: string, value: unknown): void {
 
 /**
  * Bind `value`, a `dangerouslySetInnerHTML` prop (static or a function), to
- * `el`'s content: h()'s reactive path and adoption's (FORMA-176), one writer so
- * the two cannot drift.
+ * `el`'s content on the ordinary h() path. Strict adoption instead validates
+ * through prepareRaw before publishing its later typed writer.
  *
  * - Only a `trustedHtml()` value reaches the raw sink. It is recorded as
  *   current only once written, so a failed write cannot suppress a later
  *   accepted write of the same markup.
  * - `null` and `false` empty the element and forget the markup, so the same
  *   markup after either sentinel is written again.
- * - `adopt` makes the first run an adoption (DR-5): markup the server's
+ * - The retained internal `adopt` flag skips the first matching write: markup the server's
  *   element already holds is not written again ({@link holdsMarkup}), and a
  *   first `null` keeps the server's content, the children adoption bound, as
  *   h() shows its children until markup arrives.
@@ -479,7 +479,7 @@ function handleInnerHTML(el: Element, _key: string, value: unknown): void {
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "A → null → A shows A again, client-rendered and adopted"
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "adoption writes nothing where the server already holds the markup"
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives"
- * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused string does not block the same markup sent later as trustedHtml(), client-rendered and adopted"
+ * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused string aborts adoption while ordinary CSR accepts later trusted markup"
  */
 export function bindInnerHTML(el: Element, value: unknown, adopt: boolean): void {
   let first = adopt;

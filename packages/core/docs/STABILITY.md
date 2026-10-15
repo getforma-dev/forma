@@ -22,7 +22,7 @@ package shows it as `@deprecated` in its types. See
 | `createStore` (deep reactivity) | **Stable** | Membership changes (`Object.keys`, spread, `for…in`) are not reactive by design |
 | Components (`defineComponent`, lifecycle) | **Stable** | |
 | Context (`createContext`, `provide`, `inject`) | **Stable** | |
-| Islands (`activateIslands`, disposal, triggers) | **Stable** | 193 tests across 12 dedicated files † |
+| Islands (`activateIslands`, disposal, triggers) | **3.0 development** | 153 tests across 12 dedicated files †; strict activation is integrated, while full size, materialization and packed acceptance remain open. |
 | `createHistory` (undo/redo) | **Stable** | Takes a `[get, set]` tuple; returns a controls object, not a tuple |
 | `createReducer` | **Stable** | |
 | `createResource` / `createSuspense` | **Stable** | Abortable; the Suspense boundary is captured at resource creation |
@@ -66,9 +66,10 @@ Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a production build c
 
 ## Development builds
 
-Every dev-only diagnostic in core sits behind `__DEV__`: the deprecations
-above, hydration mismatches, props the renderer drops, raw-HTML sinks, a
-signal's debug name. `__DEV__` is true in a development build, which is one of:
+Development-only warnings sit behind `__DEV__`: remaining deprecations,
+props the renderer drops, raw-HTML/children ambiguity and a signal's debug name.
+Strict hydration refusals and raw-type violations also report in production;
+they do not disappear when this flag is false. `__DEV__` is true in a development build, which is one of:
 
 - **The installed package, resolved with the `development` export
   condition.** Each subpath's `import` and `require` branch has a
@@ -86,7 +87,7 @@ signal's debug name. `__DEV__` is true in a development build, which is one of:
   `production`; in a browser bundle of the source, which has no `process`, only
   with the global `__FORMA_DEV__` set.
 
-Everything else is a production build and logs none of it: the installed
+Everything else is a production build and logs none of these development-only warnings: the installed
 package resolved without the condition (the files under `dist/` but
 `dist/dev/`), and every CDN bundle. **The CDN bundles have no development
 build**: `formajs-runtime.global.js`, its hardened and short-named copies, and
@@ -122,9 +123,11 @@ development build logs `FORMA_W_TT_POLICY_REFUSED` once for each name.
 
 Children given beside `dangerouslySetInnerHTML` (a function, or a value that is
 not `null`, `undefined` or `false`) log `FORMA_W_INNER_HTML_CHILDREN` once in a
-development build, from h() or from adoption: h() renders the markup and then
-the children until the markup next changes, the compiler's walker only the children, and adoption keeps the markup and
-binds none of the children. Give the element one or the other.
+development build, from h() or from adoption. Ordinary h() retains its existing behavior; strict
+adoption validates matching raw content as opaque and binds none of the
+children beside non-null markup. An initial null/false value permits fallback
+children. Compiler raw-content parity is separate qualification; give the
+element one content source.
 
 Verified by `src/dom/__tests__/trusted-html.test.ts` > "every raw sink refuses strings before parsing, including an already cached trusted value"
 Verified by `src/dom/__tests__/trusted-html.test.ts` > "h refuses script elements in every HTML spelling before construction"
@@ -141,6 +144,6 @@ agrees. That is the only kind of number worth putting in a document — every
 other row here is a statement about *behaviour*, which is what a stability
 table is for.
 
-If you need current measurements rather than status, they are in
-[`PERFORMANCE.md`](PERFORMANCE.md), each with the run-to-run noise floor next
-to it.
+[`PERFORMANCE.md`](PERFORMANCE.md) preserves measured historical baselines
+with their noise floors. The strict-adoption benchmark fixtures have changed;
+those old timings are not current 3.0 measurements or a cross-version comparison.
