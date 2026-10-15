@@ -54,7 +54,36 @@ describe('FMIR v3 wire contract', () => {
     expect(baseWriterVersion('3.2.7-alpha.1+build.6')).toEqual([3, 2, 7]);
     expect(() => baseWriterVersion('3.2')).toThrow();
     expect(() => baseWriterVersion('65536.0.0')).toThrow(/u16/);
-    for (const version of ['3.1.0', '3.0.1', '2.9.0']) expect(() => readFmirContainer(fixture(`LOAD-108-writer-${version}.ir`))).toThrow(/LOAD-108/);
+    expect(readFmirContainer(fixture('LOAD-108-writer-3.0.1.ir')).writer).toEqual([3, 0, 1]);
+    for (const version of ['3.1.0', '2.9.0']) expect(() => readFmirContainer(fixture(`LOAD-108-writer-${version}.ir`))).toThrow(/LOAD-108/);
+  });
+  it('runs the shared compatibility table through actual encoded headers', () => {
+    const pairs = JSON.parse(readFileSync(resolve(root, 'crates/forma-ir/tests/fixtures/compatibility/version-pairs.json'), 'utf8')) as {reader: string; writer: string; accepted: boolean}[];
+    const sections = readFmirContainer(fixture('PASS-good-a.ir')).sections;
+    for (const {reader, writer, accepted} of pairs) {
+      const bytes = encodeFmirSections(sections, baseWriterVersion(writer));
+      const read = () => readFmirContainer(bytes, baseWriterVersion(reader));
+      if (accepted) expect(read().writer).toEqual(baseWriterVersion(writer));
+      else expect(read).toThrow(`writer ${baseWriterVersion(writer).join('.')} is outside reader ${baseWriterVersion(reader).join('.')}`);
+    }
+  });
+  it('preserves the exact-stage fixture table and uses the shared window overlay', () => {
+    const rows = (name: string) => readFileSync(resolve(fixtures, name), 'utf8').trim().split('\n').slice(1).map(line => line.split('\t'));
+    const historical = new Map(rows('index.tsv').map(([name, expected]) => [name, expected]));
+    const changes: string[] = [];
+    for (const [name, expected] of rows('window-expectations.tsv')) {
+      if (historical.get(name) !== expected) changes.push(name);
+      // The diagnostic container reader validates header/table sections. Rust's
+      // production loader additionally validates each payload and opcode operand.
+      if (name.startsWith('LOAD-108-') || expected === 'PASS') {
+        if (expected === 'PASS') {
+          const bytes = fixture(name), module = readFmirContainer(bytes);
+          expect(encodeFmirSections(module.sections, module.writer), name).toEqual(bytes);
+        } else expect(() => readFmirContainer(fixture(name)), name).toThrow(expected);
+      }
+    }
+    expect(changes).toEqual(['LOAD-108-writer-3.0.1.ir']);
+    expect(historical.get(changes[0])).toBe('LOAD-108');
   });
   it('pins streaming CRC and skips rather than zero-fills its field', () => {
     expect(crc32(enc.encode('123456789'))).toBe(C.CRC_CHECK_VALUE);

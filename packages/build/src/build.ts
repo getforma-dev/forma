@@ -9,6 +9,10 @@
  */
 
 import * as esbuild from 'esbuild';
+import { generateManifest } from './manifest.js';
+import { BUILD_WRITER_VERSION, checkProjectCompatibility, requireCompatibleCompiler, resolveAppName } from './compatibility.js';
+import { compatibilityGuard } from './compatibility-watch.js';
+import { duplicateCoreDiagnostic } from './core-instances.js';
 import { createHash } from 'node:crypto';
 import {
   cpSync,
@@ -34,10 +38,8 @@ import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './prev
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
   DiagnosticsCollector,
-  compilerMissing,
   isInsideOutputDir,
   resolveDiagnosticOptions,
-  workerWithoutAppDiagnostic,
   strictFailure,
   writeDiagnosticsJson,
   type CompilerDiagnostic,
@@ -241,25 +243,6 @@ function shown(value: unknown): string {
 }
 
 /**
- * BUILD-802 (deprecated in 0.3.1): `serviceWorker` is set but `app` is not,
- * so the worker is 0.3.0's, with the cache names every Forma application on
- * the origin shares and an immediate takeover. Said once per `build()` call,
- * production and watch alike, on the console and in `BuildResult.warnings`.
- *
- * Verified by: packages/build/tests/build.test.ts > "warns when serviceWorker is set without app, naming the 3.0.0 change, and is silent with app"
- */
-function workerWithoutApp(config: BuildConfig): string | undefined {
-  if (config.serviceWorker === undefined || config.app !== undefined) return undefined;
-  return (
-    `BUILD-802 serviceWorker is set without app: this is 0.3.0's worker, whose caches every ` +
-    `Forma application on the origin shares and which takes over open tabs at once. Set app to ` +
-    `the name the server passes to forma-server's sw::ServiceWorker::for_app for caches per ` +
-    `application and build and a waiting upgrade; from 3.0.0 a worker is written only for a ` +
-    `named app.`
-  );
-}
-
-/**
  * Reject configurations whose output cannot be correct, BEFORE anything is
  * written. The first four checks close a silent failure mode; the fifth
  * turns a crash into a message:
@@ -301,7 +284,7 @@ function validateConfig(config: BuildConfig): void {
   const app: unknown = config.app;
   if (app !== undefined && (typeof app !== 'string' || !APP_NAME.test(app))) {
     problems.push(
-      `app is ${shown(app)}: use 1 to 63 of a-z, 0-9 and -, starting with a letter or digit ` +
+      `BUILD-815 app is ${shown(app)}: use 1 to 63 of a-z, 0-9 and -, starting with a letter or digit ` +
         `(the name forma-server's sw::ServiceWorker::for_app takes)`,
     );
   }
@@ -426,101 +409,6 @@ function printBundleSummary(metafiles: esbuild.Metafile[], assets: Record<string
 // Manifest Generation
 // ---------------------------------------------------------------------------
 
-function generateManifest(
-  config: BuildConfig,
-  assets: Record<string, string>,
-  staticDependencies: Record<string, string[]> = {},
-): { manifest: AssetManifest; warnings: string[] } {
-  const distDir = config.outputDir;
-  const BUDGET_THRESHOLD = config.budgetThreshold ?? 200_000;
-  const warnings: string[] = [];
-
-  // Build hash: SHA-256 of all hashed filenames sorted and joined
-  const buildHash = createHash('sha256')
-    .update(Object.values(assets).sort().join(','))
-    .digest('hex');
-
-  // Collect font files (stable names, not hashed)
-  const fonts = readdirSync(distDir)
-    .filter((f) => f.endsWith('.woff2'))
-    .sort();
-
-  // Build route manifest
-  const routes: Record<string, RouteManifest> = {};
-
-  for (const [route, mapping] of Object.entries(config.routes)) {
-    const jsFiles = mapping.js.map(
-      (name) => assets[`${name}.js`] ?? `${name}.js`,
-    );
-    const cssFiles = mapping.css.map(
-      (name) => assets[`${name}.css`] ?? `${name}.css`,
-    );
-    const modulepreload = [...new Set(jsFiles.flatMap(file => staticDependencies[file] ?? []))].filter(file => !jsFiles.includes(file));
-
-    // Use route-level fonts if specified, otherwise all fonts
-    const routeFonts = mapping.fonts ?? fonts;
-
-    // Calculate total size using brotli sizes when available
-    let totalSize = 0;
-    for (const f of new Set([...jsFiles, ...modulepreload, ...cssFiles])) {
-      const brPath = join(distDir, `${f}.br`);
-      const origPath = join(distDir, f);
-      if (existsSync(brPath)) {
-        totalSize += statSync(brPath).size;
-      } else if (existsSync(origPath)) {
-        totalSize += statSync(origPath).size;
-      }
-    }
-    // Add font sizes (uncompressed — woff2 is already compressed)
-    for (const f of routeFonts) {
-      const fp = join(distDir, f);
-      if (existsSync(fp)) {
-        totalSize += statSync(fp).size;
-      }
-    }
-
-    const routeEntry: RouteManifest = {
-      js: jsFiles,
-      ...(modulepreload.length ? { modulepreload } : {}),
-      css: cssFiles,
-      fonts: routeFonts,
-      total_size_br: totalSize,
-      budget_warn_threshold: BUDGET_THRESHOLD,
-    };
-
-    // If SSR mode, check for .ir files and add to route manifest
-    if (config.ssr) {
-      const pageName = mapping.js[0];
-      if (pageName) {
-        const irFile = `${pageName}.ir`;
-        if (assets[irFile]) {
-          routeEntry.ir = assets[irFile];
-        }
-      }
-    }
-
-    routes[route] = routeEntry;
-
-    // Budget warning
-    if (totalSize > BUDGET_THRESHOLD) {
-      const kb = (totalSize / 1024).toFixed(1);
-      const msg = `Budget exceeded: ${route} -> ${kb}KB (threshold: ${BUDGET_THRESHOLD / 1024}KB)`;
-      warnings.push(msg);
-      console.warn(`   Warning: ${msg}`);
-    }
-  }
-
-  // Assemble manifest
-  const manifest: AssetManifest = {
-    version: 1,
-    build_hash: buildHash,
-    assets,
-    routes,
-  };
-
-  return { manifest, warnings };
-}
-
 // ---------------------------------------------------------------------------
 // Service Worker Generation
 // ---------------------------------------------------------------------------
@@ -593,9 +481,9 @@ const WATCH_RESOLUTION: Pick<esbuild.BuildOptions, 'conditions' | 'define'> = {
  * of which core the bundles import (preview-frame.ts) bundles each entry in
  * memory with these same options, so its answer is the bundles'.
  */
-function sharedOptions(config: BuildConfig): Partial<esbuild.BuildOptions> {
+function sharedOptions(config: BuildConfig, compatibility?: () => void): Partial<esbuild.BuildOptions> {
   return {
-    plugins: [serverDirectiveGuard()],
+    plugins: [serverDirectiveGuard(), ...(compatibility ? [compatibilityGuard(process.cwd(), compatibility)] : [])],
     bundle: true,
     format: 'esm',
     target: 'es2022',
@@ -694,7 +582,7 @@ async function watchServerRenderedPages(
       sourcemap: false,
       logLevel: 'silent',
       plugins: [
-        serverDirectiveGuard(),
+        ...(shared.plugins ?? []),
         { name: 'forma-ir-clock', setup(builder) { builder.onStart(() => { started = performance.now(); }); } },
         // Under --strict a page with an error is not published: the
         // compiler's errors reach the publisher below as esbuild errors.
@@ -760,13 +648,30 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   // previous build's output on its way to failing.
   validateConfig(userConfig);
   // `strict` from the config, else FORMA_STRICT (FORMA-119).
-  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig) };
+  const project = process.cwd();
+  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app) };
+  let compiler: typeof import('@getforma/compiler') | undefined;
+  try { compiler = await import('@getforma/compiler'); }
+  catch (error) {
+    let cause: unknown = error;
+    for (let depth = 0; depth < 8 && cause && (cause as NodeJS.ErrnoException).code !== 'ERR_MODULE_NOT_FOUND'; depth++) cause = (cause as Error).cause;
+    if ((cause as NodeJS.ErrnoException | undefined)?.code !== 'ERR_MODULE_NOT_FOUND' || !(cause as Error).message.includes("'@getforma/compiler'")) throw error;
+  }
+  if (compiler) {
+    if (!('COMPILER_WRITER_VERSION' in compiler) || !Array.isArray(compiler.COMPILER_WRITER_VERSION) || compiler.COMPILER_WRITER_VERSION.length !== 3) throw new Error('BUILD-809 installed @getforma/compiler has no compatible writer-version metadata; install the same Forma release set');
+    requireCompatibleCompiler(compiler.COMPILER_WRITER_VERSION);
+  }
+  if (config.ssr && !compiler) throw new Error('BUILD-801 SSR requires @getforma/compiler; install a compatible compiler before building');
+  const writers = [
+    { name: '@getforma/build', version: BUILD_WRITER_VERSION },
+    ...(config.ssr && compiler ? [{ name: '@getforma/compiler', version: compiler.COMPILER_WRITER_VERSION }] : []),
+  ];
+  const compatibility = () => { checkProjectCompatibility(project, writers, config.ssr === true); };
+  const compatibilityWarnings = checkProjectCompatibility(project, writers, config.ssr === true);
   await assertNoServerFunctions(config, sharedOptions(config));
   // What the config itself deprecates, each said once per build() call,
   // production and watch alike, on the console and in BuildResult.warnings.
-  const deprecations = [workerWithoutApp(config)].filter(
-    (line): line is string => line !== undefined,
-  );
+  const deprecations = compatibilityWarnings;
   for (const line of deprecations) console.warn(`Warning: ${line}`);
   const withDeprecations = (result: BuildResult): BuildResult =>
     deprecations.length > 0 ? { ...result, warnings: [...result.warnings, ...deprecations] } : result;
@@ -778,12 +683,12 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   const frame = config.previewFrame === true
     ? await readFrameRuntime(config, sharedOptions(config), config.strict === true)
     : undefined;
-  if (config.watch) return withDeprecations(await buildInto(config, config.outputDir, frame));
+  if (config.watch) return withDeprecations(await buildInto(config, config.outputDir, frame, compiler, compatibility));
 
   const staging = createStagingDirectory(config.outputDir);
   let result: BuildResult;
   try {
-    result = await buildInto({ ...config, outputDir: staging }, config.outputDir, frame);
+    result = await buildInto({ ...config, outputDir: staging }, config.outputDir, frame, compiler, compatibility);
   } catch (err) {
     rmSync(staging, { recursive: true, force: true });
     throw err;
@@ -800,7 +705,7 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
  * the preview frame's runtime, already read and checked, when `previewFrame`
  * is on.
  */
-async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRuntime): Promise<BuildResult> {
+async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRuntime | undefined, compiler: typeof import('@getforma/compiler') | undefined, compatibility: () => void): Promise<BuildResult> {
   const distDir = config.outputDir;
   const createdDir = !existsSync(distDir);
 
@@ -830,7 +735,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
     const frameAssets: Record<string, string> = frame ? { [FRAME_RUNTIME_ASSET]: FRAME_RUNTIME_ASSET } : {};
 
     // ── esbuild shared config ─────────────────────────────────────────
-    const shared = sharedOptions(config);
+    const shared = sharedOptions(config, compatibility);
 
     // ── Lazy-load SSR plugin only when needed ─────────────────────────
     let formaSsrPlugin: SsrPluginFactory | undefined;
@@ -839,9 +744,6 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
     // of them; watch mode hands it to each page's plugin.
     const strict = config.strict === true;
     const collector = new DiagnosticsCollector(strict, config.entryPoints.map((entry) => basename(entry.outfile, '.js')));
-    // BUILD-802, which build() has already printed, joins the report.
-    const workerDeprecation = workerWithoutApp(config);
-    if (workerDeprecation) collector.addBuildLevel(workerWithoutAppDiagnostic(workerDeprecation));
     const pluginShared: SsrPluginShared = {
       onDiagnostics: collector.onDiagnostics,
       ...(config.watch && strict ? { strict: true } : {}),
@@ -849,27 +751,19 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
 
     if (config.ssr) {
       console.log('SSR mode enabled — emitting IR files');
-      try {
-        const mod = await import('@getforma/compiler');
-        formaSsrPlugin = mod.formaSsrPlugin;
-        // A compiler that predates coded diagnostics would let --strict pass
-        // a page it never checked: refuse instead (fail closed).
-        if (strict && !('collectDiagnostics' in mod)) {
-          throw new Error(
-            'strict mode (strict: true or FORMA_STRICT=1) needs @getforma/compiler 0.3.7 or later, which reports coded diagnostics; '
-            + 'the installed compiler does not, so the build cannot check its pages.',
-          );
-        }
-      } catch (error) {
-        if ((error as Error).message.startsWith('strict mode (strict: true or FORMA_STRICT=1) needs')) throw error;
-        console.warn(
-          'Warning: BUILD-801 @getforma/compiler not available for SSR. Skipping IR emission.',
-        );
-        collector.addBuildLevel(compilerMissing());
-      }
+      formaSsrPlugin = compiler!.formaSsrPlugin;
+      if (typeof formaSsrPlugin !== 'function') throw new Error('BUILD-809 installed compiler has no supported formaSsrPlugin');
     }
 
     let graph: SplitGraph | undefined;
+    const coreGraphs = new Map<string, esbuild.Metafile>();
+    let duplicateCore: ReturnType<typeof duplicateCoreDiagnostic>;
+    const recordCoreGraph = (key: string, metafile: esbuild.Metafile) => {
+      coreGraphs.set(key, metafile);
+      const next = duplicateCoreDiagnostic([...coreGraphs.values()]);
+      if (next && next.message !== duplicateCore?.message) console.warn(`${next.code}: ${next.message}`);
+      duplicateCore = next;
+    };
     const splitOptions: esbuild.BuildOptions = {
       ...shared,
       entryPoints: config.entryPoints.map(entry => ({ in: entry.entry, out: basename(entry.outfile, '.js') })),
@@ -879,7 +773,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
       entryNames: config.watch ? '[name]' : '[name].[hash]',
       chunkNames: 'chunk.[hash]',
       assetNames: 'asset.[hash]',
-      plugins: [serverDirectiveGuard(), ...(config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
+      plugins: [...(shared.plugins ?? []), ...(config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
         page: basename(entry.outfile, '.js'),
         outDir: distDir,
         entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
@@ -895,17 +789,23 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
       // first two rewrites it.
       const irAssets: Record<string, string> = {};
       let lastManifest = '';
-      const writeDevManifest = () => {
-        const { manifest, warnings } = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies);
-        manifest.build_hash = 'dev';
+      let ready!: (value: ReturnType<typeof generateManifest>) => void;
+      const firstManifest = new Promise<ReturnType<typeof generateManifest>>(resolve => { ready = resolve; });
+      const writeDevManifest = (): ReturnType<typeof generateManifest> | undefined => {
+        let result: ReturnType<typeof generateManifest>;
+        try { result = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies); }
+        catch (error) {
+          if (!(error as Error).message.startsWith('BUILD-817')) throw error;
+          console.warn(`Dev manifest not published: ${(error as Error).message}; waiting for valid output`);
+          return undefined;
+        }
+        const { manifest, warnings } = result;
+        if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
         const text = JSON.stringify(manifest, null, 2) + '\n';
-        // Replaced by rename: the application's server reads this file while
-        // the watcher rewrites it. Unchanged content is not rewritten, so a
-        // server restarted on a change to the output is not restarted for
-        // nothing.
         if (text !== lastManifest) writeFileAtomic(join(distDir, 'manifest.json'), text);
         lastManifest = text;
-        return { manifest, warnings };
+        ready(result);
+        return result;
       };
 
       // Server-rendered pages: each page's module is watched over its SSR
@@ -921,13 +821,16 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
         let previousFiles = new Set<string>();
         const ctx = await esbuild.context({
           ...splitOptions,
+          write: false,
           // Not the SSR plugins: the pages' modules are watched above.
-          plugins: [serverDirectiveGuard(), {
+          plugins: [...(shared.plugins ?? []), {
             name: 'forma-split-manifest',
             setup(builder) {
               builder.onEnd(result => {
                 if (result.errors.length || !result.metafile) return;
+                recordCoreGraph('split', result.metafile);
                 graph = splitGraph(result.metafile, config.entryPoints, distDir);
+                for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
                 // Only remove outputs belonging to the previous successful
                 // graph. CSS/fonts/IR and failed-build diagnostics stay intact.
                 for (const file of previousFiles) if (!graph.files.has(file)) rmSync(join(distDir, file), { force: true });
@@ -945,20 +848,31 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
           ...shared,
           entryPoints: [entry.entry],
           outfile: join(distDir, entry.outfile),
+          metafile: true,
+          write: false,
+          plugins: [...(shared.plugins ?? []), {name: 'forma-core-report', setup(builder) {
+            builder.onEnd(result => {
+              if (result.errors.length || !result.metafile) return;
+              for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
+              recordCoreGraph(entry.outfile, result.metafile);
+              writeDevManifest();
+            });
+          }}],
         });
+        await ctx.rebuild();
         await ctx.watch();
       }
 
       // The dev manifest, with identity mappings (unhashed filenames), so the
       // server can boot without a production build.
-      const { manifest, warnings } = writeDevManifest();
+      const { manifest, warnings } = writeDevManifest() ?? await firstManifest;
       console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
 
       // Generate a dev service worker so /sw.js doesn't 404
       generateServiceWorker(config, {}, 'dev');
 
       // The pages' first compilation; each rebuild replaces its page's own.
-      const diagnostics = collector.all();
+      const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
       if (config.diagnosticsJson) writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
 
       return {
@@ -1010,9 +924,12 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
       }),
     );
 
+    duplicateCore = duplicateCoreDiagnostic(metafiles);
+    if (duplicateCore) console.warn(`${duplicateCore.code}: ${duplicateCore.message}`);
+
     // ── SSR diagnostics: the JSON report, then strict mode ────────────
     // Every page is compiled by now, so a strict failure names them all.
-    const diagnostics = collector.all();
+    const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
     if (config.diagnosticsJson) {
       const written = writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
       console.log(`   SSR diagnostics written: ${written} (${diagnostics.length})`);
@@ -1035,25 +952,26 @@ async function buildInto(config: BuildConfig, shownDir: string, frame?: FrameRun
     compressAssets(distDir, new Set(frameFile ? [frameFile] : []));
 
     // ── Manifest generation ───────────────────────────────────────────
-    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies);
+    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies, graph?.files);
+    if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
 
     writeFileSync(
       join(distDir, 'manifest.json'),
       JSON.stringify(manifest, null, 2) + '\n',
     );
     console.log(
-      `\nManifest written: ${shownDir}/manifest.json (build_hash: ${manifest.build_hash.slice(0, 12)}...)`,
+      `\nManifest written: ${shownDir}/manifest.json (build: ${manifest.build.slice(0, 12)}...)`,
     );
 
     // ── Service worker generation ─────────────────────────────────────
     const fetchedAssets = frameFile
       ? Object.fromEntries(Object.entries(assets).filter(([name]) => name !== FRAME_RUNTIME_ASSET))
       : assets;
-    generateServiceWorker(config, fetchedAssets, manifest.build_hash);
+    generateServiceWorker(config, fetchedAssets, manifest.build);
 
     return {
       manifest,
-      buildHash: manifest.build_hash,
+      buildHash: manifest.build,
       warnings,
       diagnostics,
     };

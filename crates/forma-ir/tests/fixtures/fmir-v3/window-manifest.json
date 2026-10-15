@@ -1,0 +1,952 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "ledger",
+  "build": "reviewed-v3",
+  "aliases": {},
+  "assets": {
+    "LOAD-102-bad-signature.ir": {
+      "immutable": false
+    },
+    "LOAD-102-pre-v3-version-7.ir": {
+      "immutable": false
+    },
+    "LOAD-102-v2-module.ir": {
+      "immutable": false
+    },
+    "LOAD-103-duplicate-section-id.ir": {
+      "immutable": false
+    },
+    "LOAD-103-gap-between-sections.ir": {
+      "immutable": false
+    },
+    "LOAD-103-header-pad-nonzero.ir": {
+      "immutable": false
+    },
+    "LOAD-103-island-entry-len-short.ir": {
+      "immutable": false
+    },
+    "LOAD-103-island-fields-exceed-entry-len.ir": {
+      "immutable": false
+    },
+    "LOAD-103-island-offset-not-start.ir": {
+      "immutable": false
+    },
+    "LOAD-103-island-reserved-nonzero.ir": {
+      "immutable": false
+    },
+    "LOAD-103-island-schema-object-out-of-range.ir": {
+      "immutable": false
+    },
+    "LOAD-103-island-start-unknown-id.ir": {
+      "immutable": false
+    },
+    "LOAD-103-island-trigger-unknown.ir": {
+      "immutable": false
+    },
+    "LOAD-103-keypath-duplicate-list.ir": {
+      "immutable": false
+    },
+    "LOAD-103-keypath-offset-not-list.ir": {
+      "immutable": false
+    },
+    "LOAD-103-keypath-segment-past-table.ir": {
+      "immutable": false
+    },
+    "LOAD-103-keypath-zero-segments.ir": {
+      "immutable": false
+    },
+    "LOAD-103-offset-in-header.ir": {
+      "immutable": false
+    },
+    "LOAD-103-position-offset-not-boundary.ir": {
+      "immutable": false
+    },
+    "LOAD-103-position-unordered.ir": {
+      "immutable": false
+    },
+    "LOAD-103-region-does-not-tile.ir": {
+      "immutable": false
+    },
+    "LOAD-103-reserved-flag-bit.ir": {
+      "immutable": false
+    },
+    "LOAD-103-reserved-opcode-0x09.ir": {
+      "immutable": false
+    },
+    "LOAD-103-schema-duplicate-field-name.ir": {
+      "immutable": false
+    },
+    "LOAD-103-schema-name-past-table.ir": {
+      "immutable": false
+    },
+    "LOAD-103-schema-object-count-zero.ir": {
+      "immutable": false
+    },
+    "LOAD-103-schema-object-cycle.ir": {
+      "immutable": false
+    },
+    "LOAD-103-schema-object-index-out-of-range.ir": {
+      "immutable": false
+    },
+    "LOAD-103-schema-optional-of-optional.ir": {
+      "immutable": false
+    },
+    "LOAD-103-schema-unknown-type-tag.ir": {
+      "immutable": false
+    },
+    "LOAD-103-section-trailing-bytes.ir": {
+      "immutable": false
+    },
+    "LOAD-103-slot-default-not-parsable.ir": {
+      "immutable": false
+    },
+    "LOAD-103-slot-id-undeclared.ir": {
+      "immutable": false
+    },
+    "LOAD-103-slot-name-past-table.ir": {
+      "immutable": false
+    },
+    "LOAD-103-slot-type-unknown.ir": {
+      "immutable": false
+    },
+    "LOAD-103-str-idx-past-table.ir": {
+      "immutable": false
+    },
+    "LOAD-103-string-count-fits-ceiling-not-bytes.ir": {
+      "immutable": false
+    },
+    "LOAD-103-string-not-utf8.ir": {
+      "immutable": false
+    },
+    "LOAD-103-string-past-section.ir": {
+      "immutable": false
+    },
+    "LOAD-103-table-does-not-fit.ir": {
+      "immutable": false
+    },
+    "LOAD-103-table-reserved-nonzero.ir": {
+      "immutable": false
+    },
+    "LOAD-103-unassigned-opcode-0x13.ir": {
+      "immutable": false
+    },
+    "LOAD-103-unordered-table.ir": {
+      "immutable": false
+    },
+    "LOAD-103-zero-length-required-section.ir": {
+      "immutable": false
+    },
+    "LOAD-104-crc-field-flipped.ir": {
+      "immutable": false
+    },
+    "LOAD-104-crc-flipped-bytecode.ir": {
+      "immutable": false
+    },
+    "LOAD-104-crc-flipped-strings.ir": {
+      "immutable": false
+    },
+    "LOAD-104-crc-flipped-table.ir": {
+      "immutable": false
+    },
+    "LOAD-104-long-by-one.ir": {
+      "immutable": false
+    },
+    "LOAD-104-short-by-one.ir": {
+      "immutable": false
+    },
+    "LOAD-105-missing-schema-section.ir": {
+      "immutable": false
+    },
+    "LOAD-105-missing-strings-section.ir": {
+      "immutable": false
+    },
+    "LOAD-106-unknown-required-0x0100.ir": {
+      "immutable": false
+    },
+    "LOAD-107-island-count-4097.ir": {
+      "immutable": false
+    },
+    "LOAD-107-keypath-count-past-lists.ir": {
+      "immutable": false
+    },
+    "LOAD-107-schema-type-nesting-17.ir": {
+      "immutable": false
+    },
+    "LOAD-107-section-count-65.ir": {
+      "immutable": false
+    },
+    "LOAD-107-string-count-max.ir": {
+      "immutable": false
+    },
+    "LOAD-108-writer-2.9.0.ir": {
+      "immutable": false
+    },
+    "LOAD-108-writer-3.0.1.ir": {
+      "immutable": false
+    },
+    "LOAD-108-writer-3.1.0.ir": {
+      "immutable": false
+    },
+    "PASS-good-a.ir": {
+      "immutable": false
+    },
+    "PASS-good-b.ir": {
+      "immutable": false
+    },
+    "PASS-pass-flipped-dyn-text.ir": {
+      "immutable": false
+    },
+    "PASS-positions-absent.ir": {
+      "immutable": false
+    },
+    "PASS-private-optional-0x8000.ir": {
+      "immutable": false
+    },
+    "PASS-unknown-optional-0x0100.ir": {
+      "immutable": false
+    },
+    "app.js": {
+      "immutable": false
+    }
+  },
+  "routes": {
+    "/PASS-good-a.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "PASS-good-a.ir",
+      "mode": "ssr"
+    },
+    "/PASS-good-b.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "PASS-good-b.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-102-bad-signature.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-102-bad-signature.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-102-v2-module.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-102-v2-module.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-102-pre-v3-version-7.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-102-pre-v3-version-7.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-108-writer-3.1.0.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-108-writer-3.1.0.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-108-writer-3.0.1.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-108-writer-3.0.1.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-108-writer-2.9.0.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-108-writer-2.9.0.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-104-short-by-one.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-104-short-by-one.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-104-long-by-one.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-104-long-by-one.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-104-crc-flipped-bytecode.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-104-crc-flipped-bytecode.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-104-crc-flipped-strings.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-104-crc-flipped-strings.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-104-crc-flipped-table.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-104-crc-flipped-table.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-104-crc-field-flipped.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-104-crc-field-flipped.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-header-pad-nonzero.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-header-pad-nonzero.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-table-reserved-nonzero.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-table-reserved-nonzero.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-reserved-flag-bit.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-reserved-flag-bit.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-duplicate-section-id.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-duplicate-section-id.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-unordered-table.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-unordered-table.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-offset-in-header.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-offset-in-header.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-gap-between-sections.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-gap-between-sections.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-table-does-not-fit.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-table-does-not-fit.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-zero-length-required-section.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-zero-length-required-section.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-string-not-utf8.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-string-not-utf8.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-string-past-section.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-string-past-section.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-section-trailing-bytes.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-section-trailing-bytes.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-slot-name-past-table.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-slot-name-past-table.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-slot-type-unknown.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-slot-type-unknown.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-slot-default-not-parsable.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-slot-default-not-parsable.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-reserved-opcode-0x09.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-reserved-opcode-0x09.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-unassigned-opcode-0x13.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-unassigned-opcode-0x13.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-str-idx-past-table.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-str-idx-past-table.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-slot-id-undeclared.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-slot-id-undeclared.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-region-does-not-tile.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-region-does-not-tile.ir",
+      "mode": "ssr"
+    },
+    "/PASS-pass-flipped-dyn-text.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "PASS-pass-flipped-dyn-text.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-island-entry-len-short.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-island-entry-len-short.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-island-fields-exceed-entry-len.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-island-fields-exceed-entry-len.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-island-reserved-nonzero.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-island-reserved-nonzero.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-island-trigger-unknown.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-island-trigger-unknown.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-island-offset-not-start.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-island-offset-not-start.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-island-schema-object-out-of-range.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-island-schema-object-out-of-range.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-island-start-unknown-id.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-island-start-unknown-id.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-schema-object-count-zero.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-schema-object-count-zero.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-schema-unknown-type-tag.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-schema-unknown-type-tag.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-schema-optional-of-optional.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-schema-optional-of-optional.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-schema-object-cycle.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-schema-object-cycle.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-schema-object-index-out-of-range.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-schema-object-index-out-of-range.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-schema-duplicate-field-name.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-schema-duplicate-field-name.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-schema-name-past-table.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-schema-name-past-table.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-107-schema-type-nesting-17.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-107-schema-type-nesting-17.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-keypath-offset-not-list.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-keypath-offset-not-list.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-keypath-zero-segments.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-keypath-zero-segments.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-keypath-segment-past-table.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-keypath-segment-past-table.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-keypath-duplicate-list.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-keypath-duplicate-list.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-107-keypath-count-past-lists.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-107-keypath-count-past-lists.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-position-offset-not-boundary.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-position-offset-not-boundary.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-position-unordered.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-position-unordered.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-105-missing-schema-section.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-105-missing-schema-section.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-105-missing-strings-section.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-105-missing-strings-section.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-106-unknown-required-0x0100.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-106-unknown-required-0x0100.ir",
+      "mode": "ssr"
+    },
+    "/PASS-unknown-optional-0x0100.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "PASS-unknown-optional-0x0100.ir",
+      "mode": "ssr"
+    },
+    "/PASS-private-optional-0x8000.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "PASS-private-optional-0x8000.ir",
+      "mode": "ssr"
+    },
+    "/PASS-positions-absent.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "PASS-positions-absent.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-107-string-count-max.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-107-string-count-max.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-103-string-count-fits-ceiling-not-bytes.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-103-string-count-fits-ceiling-not-bytes.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-107-section-count-65.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-107-section-count-65.ir",
+      "mode": "ssr"
+    },
+    "/LOAD-107-island-count-4097.ir": {
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0,
+      "ir": "LOAD-107-island-count-4097.ir",
+      "mode": "ssr"
+    }
+  }
+}

@@ -9,8 +9,11 @@
 //! use forma_server::sw::{self, ServiceWorker};
 //!
 //! // Ledger: pages register /sw.js, which serves the worker its build wrote.
-//! sw::configure(ServiceWorker::for_app("ledger")?.enabled())?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! // After loading and validating the manifest, before binding:
+//! # fn startup(manifest: &forma_server::AssetManifest) -> Result<(), Box<dyn std::error::Error>> {
+//! sw::configure_for_manifest(ServiceWorker::for_app("ledger")?.enabled(), manifest)?;
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! Left unconfigured, the setting is [`ServiceWorker::off`]: no page registers
@@ -35,7 +38,7 @@
 //!   [`ServiceWorker::for_app`].
 //! - **Cache name**: `forma:<app>:<build>`, where `<build>` is the build's
 //!   identity as the build writes it (today the first 12 hex digits of
-//!   `build_hash`) and carries no `:`. The `forma:` prefix (a colon, not v1's
+//!   `build`) and carries no `:`. The `forma:` prefix (a colon, not v1's
 //!   hyphen) is new, so no v1 or 0.3.0 worker, all of which delete `forma-`
 //!   names, ever deletes one.
 //! - **v1's names** (builds up to 0.3.0): `forma-dev`, `forma-` and 12
@@ -194,7 +197,7 @@ static SETTING: OnceLock<ServiceWorker> = OnceLock::new();
 ///
 /// [`AlreadyConfigured`] if it was set before, or if a render or `/sw.js`
 /// already read the default; the setting in force stays.
-pub fn configure(worker: ServiceWorker) -> Result<(), AlreadyConfigured> {
+fn set(worker: ServiceWorker) -> Result<(), AlreadyConfigured> {
     let mut offered = Some(worker);
     let current = SETTING.get_or_init(|| offered.take().unwrap_or_default());
     match offered {
@@ -203,6 +206,91 @@ pub fn configure(worker: ServiceWorker) -> Result<(), AlreadyConfigured> {
             current: current.clone(),
         }),
     }
+}
+
+/// A refused startup setting; the current setting is never changed on error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ConfigureError {
+    /// A page/request or earlier configuration already fixed the process setting.
+    AlreadyConfigured(AlreadyConfigured),
+    /// An enabled worker needs a validated application manifest.
+    ManifestRequired,
+    /// The manifest fails its common schema or version checks.
+    InvalidManifest(String),
+    /// The worker was configured for a different application.
+    ApplicationMismatch {
+        /// Application written by the build.
+        manifest: String,
+        /// Application explicitly chosen for the worker.
+        worker: String,
+    },
+}
+impl ConfigureError {
+    /// Existing setting, if a prior configuration caused this refusal.
+    pub fn current(&self) -> Option<&ServiceWorker> {
+        match self {
+            Self::AlreadyConfigured(e) => Some(e.current()),
+            _ => None,
+        }
+    }
+}
+impl fmt::Display for ConfigureError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::AlreadyConfigured(e)=>e.fmt(f),
+            Self::ManifestRequired=>f.write_str("enabled service worker requires configure_for_manifest(worker, &manifest) before binding"),
+            Self::InvalidManifest(e)=>f.write_str(e),
+            Self::ApplicationMismatch{manifest,worker}=>write!(f,"MANIFEST-104 manifest application {manifest:?} differs from worker for_app {worker:?}"),
+        }
+    }
+}
+impl std::error::Error for ConfigureError {}
+
+/// Configure an off worker at startup. Enabled workers require
+/// [`configure_for_manifest`] so application identity is checked before binding.
+pub fn configure(worker: ServiceWorker) -> Result<(), ConfigureError> {
+    if let Some(current) = SETTING.get() {
+        return Err(ConfigureError::AlreadyConfigured(AlreadyConfigured {
+            current: current.clone(),
+        }));
+    }
+    if worker.is_enabled() {
+        return Err(ConfigureError::ManifestRequired);
+    }
+    set(worker).map_err(ConfigureError::AlreadyConfigured)
+}
+
+/// Validate the manifest and match an enabled worker's application before fixing
+/// the setting. Call at startup and refuse to bind on error. Validation does not
+/// read `configured()` or seal an unconfigured process's default.
+pub fn configure_for_manifest(
+    worker: ServiceWorker,
+    manifest: &crate::AssetManifest,
+) -> Result<(), ConfigureError> {
+    manifest
+        .validate()
+        .map_err(ConfigureError::InvalidManifest)?;
+    if worker.is_enabled() && worker.app() != Some(manifest.app.as_str()) {
+        return Err(ConfigureError::ApplicationMismatch {
+            manifest: manifest.app.clone(),
+            worker: worker.app().unwrap_or_default().to_string(),
+        });
+    }
+    set(worker).map_err(ConfigureError::AlreadyConfigured)
+}
+
+/// Check a reload against an already enabled worker without fixing defaults.
+pub(crate) fn validate_manifest_app(manifest: &crate::AssetManifest) -> Result<(), String> {
+    if let Some(worker) = SETTING.get().filter(|w| w.is_enabled()) {
+        if worker.app() != Some(manifest.app.as_str()) {
+            return Err(ConfigureError::ApplicationMismatch {
+                manifest: manifest.app.clone(),
+                worker: worker.app().unwrap_or_default().into(),
+            }
+            .to_string());
+        }
+    }
+    Ok(())
 }
 
 /// This process's setting: what [`configure`] set, or [`ServiceWorker::off`].

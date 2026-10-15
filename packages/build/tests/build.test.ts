@@ -1,7 +1,7 @@
 import { readFmirContainer } from '../../compiler/src/fmir';
 import { SECTION_ISLANDS } from '../../compiler/src/fmir-constants';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { build } from '../src/build';
+import { build } from './helpers/named-build';
 import * as publicApi from '../src/index';
 import type { BuildConfig, AssetManifest } from '../src/types';
 import { APP_NAME_VECTORS } from './helpers/app-name-vectors';
@@ -82,24 +82,24 @@ describe('@getforma/build — functional', () => {
 
     // Required top-level fields
     expect(manifest).toHaveProperty('version');
-    expect(manifest).toHaveProperty('build_hash');
+    expect(manifest).toHaveProperty('build');
     expect(manifest).toHaveProperty('assets');
     expect(manifest).toHaveProperty('routes');
 
-    expect(manifest.version).toBe(1);
-    expect(typeof manifest.build_hash).toBe('string');
-    expect(manifest.build_hash.length).toBeGreaterThan(0);
+    expect(manifest.version).toBe(2);
+    expect(typeof manifest.build).toBe('string');
+    expect(manifest.build.length).toBeGreaterThan(0);
 
     // The original "app.js" should be hashed to "app.<8hex>.js"
-    const hashedAppJs = manifest.assets['app.js'];
+    const hashedAppJs = manifest.aliases['app.js'];
     expect(hashedAppJs).toBeDefined();
     expect(hashedAppJs).toMatch(/^app\.[0-9a-f]{8}\.js$/);
 
     // Result object should agree with disk manifest
-    expect(result.manifest.build_hash).toBe(manifest.build_hash);
+    expect(result.manifest.build).toBe(manifest.build);
     expect(result.warnings).toEqual([]);
     expect(readFileSync(join(outDir, 'sw.js'), 'utf8')).toContain(
-      `const CACHE_NAME = "forma-${manifest.build_hash.slice(0, 12)}";`,
+      `const CACHE_NAME = "forma:fixture:${manifest.build.slice(0, 12)}";`,
     );
   }, 15_000);
 
@@ -115,7 +115,7 @@ describe('@getforma/build — functional', () => {
       outputDir: outDir,
       watch: true,
     });
-    expect(result.manifest.build_hash).toBe('dev');
+    expect(result.manifest.build).toBe('dev');
     expect(result.manifest.routes['/'].css).toEqual(['app.css']);
     const worker = readFileSync(join(outDir, 'sw.js'), 'utf8');
     expect(worker).toContain("fetch(event.request, { cache: 'no-store' })");
@@ -140,7 +140,7 @@ describe('@getforma/build — functional', () => {
       readFileSync(join(outDir, 'manifest.json'), 'utf8'),
     );
 
-    const hashedFilename = manifest.assets['app.js'];
+    const hashedFilename = manifest.aliases['app.js'];
     expect(hashedFilename).toBeDefined();
 
     // The hashed file must actually exist on disk
@@ -173,7 +173,7 @@ describe('@getforma/build — functional', () => {
       readFileSync(join(outDir, 'manifest.json'), 'utf8'),
     );
 
-    const hashedJs = manifest.assets['app.js'];
+    const hashedJs = manifest.aliases['app.js'];
     expect(hashedJs).toBeDefined();
 
     // .br and .gz should exist alongside the hashed file
@@ -239,8 +239,8 @@ describe('@getforma/build — functional', () => {
     );
 
     // Both assets should be present and hashed
-    const hashedApp = manifest.assets['app.js'];
-    const hashedDash = manifest.assets['dashboard.js'];
+    const hashedApp = manifest.aliases['app.js'];
+    const hashedDash = manifest.aliases['dashboard.js'];
 
     expect(hashedApp).toBeDefined();
     expect(hashedDash).toBeDefined();
@@ -311,7 +311,7 @@ describe('@getforma/build — functional', () => {
       readFileSync(join(outDir, 'manifest.json'), 'utf8'),
     );
 
-    const hashedCss = manifest.assets['main.css'];
+    const hashedCss = manifest.aliases['main.css'];
     expect(hashedCss).toBeDefined();
     expect(hashedCss).toMatch(/^main\.[0-9a-f]{8}\.css$/);
 
@@ -401,11 +401,11 @@ describe('@getforma/build — functional', () => {
     // Both names exist and hold identical bytes — the server inlines the
     // unhashed one, the browser fetches the hashed one.
     expect(existsSync(join(outDir, 'app.js'))).toBe(true);
-    expect(readFileSync(join(outDir, manifest.assets['app.js']!), 'utf8')).toBe(
+    expect(readFileSync(join(outDir, manifest.aliases['app.js']!), 'utf8')).toBe(
       readFileSync(join(outDir, 'app.js'), 'utf8'),
     );
     // The route still points at the hashed name, not the inlined copy.
-    expect(manifest.routes['/']!.js).toEqual([manifest.assets['app.js']]);
+    expect(manifest.routes['/']!.js).toEqual([manifest.aliases['app.js']]);
   }, 15_000);
 
   // ---- Test 9: budget warnings ------------------------------------------
@@ -585,7 +585,7 @@ describe('@getforma/build — functional', () => {
       const { manifest } = await build({ ...config, serviceWorker });
       const worker = readFileSync(join(outDir, 'sw.js'), 'utf8');
       // The name forma-server's sw::ServiceWorker::for_app("ledger") retires.
-      expect(worker).toContain(`const CACHE_NAME = "forma:ledger:${manifest.build_hash.slice(0, 12)}";`);
+      expect(worker).toContain(`const CACHE_NAME = "forma:ledger:${manifest.build.slice(0, 12)}";`);
       expect(worker).not.toContain('skipWaiting');
       expect(worker).not.toContain('clients.claim');
     }
@@ -618,60 +618,15 @@ describe('@getforma/build — functional', () => {
     }
   }, 60_000);
 
-  it('warns when serviceWorker is set without app, naming the 3.0.0 change, and is silent with app', async () => {
-    const entryFile = join(srcDir, 'app.ts');
-    writeFileSync(entryFile, 'export const x = 1;\n');
-    const config: BuildConfig = {
-      entryPoints: [{ entry: entryFile, outfile: 'app.js' }],
-      routes: { '/': { js: ['app'], css: [] } },
-      outputDir: outDir,
-    };
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      const said = () => warn.mock.calls.map((call) => String(call[0])).filter((line) => line.includes('BUILD-802'));
-      for (const serviceWorker of ['precache', 'on-demand'] as const) {
-        warn.mockClear();
-        const { warnings } = await build({ ...config, serviceWorker });
-        const entries = warnings.filter((w) => w.includes('BUILD-802'));
-        expect(entries, serviceWorker).toHaveLength(1);
-        expect(entries[0]).toContain('3.0.0');
-        expect(entries[0]).toContain('sw::ServiceWorker::for_app');
-        expect(said(), 'printed once per build').toHaveLength(1);
-
-        warn.mockClear();
-        const named = await build({ ...config, serviceWorker, app: 'ledger' });
-        expect(named.warnings.filter((w) => w.includes('BUILD-802'))).toEqual([]);
-        expect(said()).toEqual([]);
-      }
-      // No serviceWorker at all: nothing asked for, nothing said.
-      warn.mockClear();
-      const plain = await build(config);
-      expect(plain.warnings.filter((w) => w.includes('BUILD-802'))).toEqual([]);
-      expect(said()).toEqual([]);
-
-      // Watch mode warns too (a CSS-only route, so no esbuild watcher stays alive).
-      const cssFile = join(srcDir, 'app.css');
-      writeFileSync(cssFile, 'main { color: red; }');
-      const watchConfig: BuildConfig = {
-        entryPoints: [],
-        routes: { '/': { js: [], css: ['app'] } },
-        cssEntries: [{ input: cssFile, outfile: 'app.css' }],
-        outputDir: join(tmpRoot, 'watch-dist'),
-        watch: true,
-        serviceWorker: 'on-demand',
-      };
-      warn.mockClear();
-      const watched = await build(watchConfig);
-      expect(watched.warnings.filter((w) => w.includes('BUILD-802'))).toHaveLength(1);
-      expect(said()).toHaveLength(1);
-      warn.mockClear();
-      const watchedNamed = await build({ ...watchConfig, outputDir: join(tmpRoot, 'watch-dist-2'), app: 'ledger' });
-      expect(watchedNamed.warnings.filter((w) => w.includes('BUILD-802'))).toEqual([]);
-      expect(said()).toEqual([]);
-    } finally {
-      warn.mockRestore();
+  it('writes a named manifest and worker without the retired unnamed-worker warning', async () => {
+    const entry = join(srcDir, 'app.ts'); writeFileSync(entry, 'export const x = 1;');
+    for (const serviceWorker of ['precache', 'on-demand'] as const) {
+      const result = await build({entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir: outDir, app: 'ledger', serviceWorker});
+      expect(result.manifest.app).toBe('ledger');
+      expect(result.warnings.filter(w => w.includes('BUILD-802'))).toEqual([]);
+      expect(readFileSync(join(outDir, 'sw.js'), 'utf8')).toContain(`forma:ledger:${result.manifest.build.slice(0, 12)}`);
     }
-  }, 60_000);
+  });
 
 });
 
@@ -774,8 +729,8 @@ describe('@getforma/build — atomic output (L-21)', () => {
 
     const files = readdirSync(outDir);
     expect(files).not.toContain('stale.js');
-    expect(files).toContain(result.manifest.assets['app.js']);
-    expect(readFileSync(join(outDir, result.manifest.assets['app.js']!), 'utf8')).toContain('second good build');
+    expect(files).toContain(result.manifest.aliases['app.js']);
+    expect(readFileSync(join(outDir, result.manifest.aliases['app.js']!), 'utf8')).toContain('second good build');
     expect(readdirSync(tmpRoot).sort()).toEqual(['dist', 'fonts', 'src']);
   }, 30_000);
 });
@@ -875,7 +830,7 @@ describe('@getforma/build — SSR output', () => {
 
     // The page really does have an island, so this test is not vacuous: the
     // IR is bigger than the ~136-byte placeholder and the route is wired to it.
-    const irName = manifest.assets['app.ir'];
+    const irName = manifest.aliases['app.ir'];
     expect(irName).toMatch(/^app\.[0-9a-f]{8}\.ir$/);
     expect(manifest.routes['/']!.ir).toBe(irName);
     const ir = readFileSync(join(outDir, irName!));
@@ -895,7 +850,7 @@ describe('@getforma/build — SSR output', () => {
     // compressed and manifested, so consumers had to delete them by hand.
     const stray = readdirSync(outDir).filter((f) => f.includes('.islands.'));
     expect(stray).toEqual([]);
-    expect(Object.keys(manifest.assets).filter((k) => k.includes('.islands.'))).toEqual([]);
+    expect(Object.keys(manifest.aliases).filter((k) => k.includes('.islands.'))).toEqual([]);
   }, 30_000);
 
   it('emits one .ir per entry for a multi-route build', async () => {
@@ -929,10 +884,10 @@ describe('@getforma/build — SSR output', () => {
     // per-entry byproducts to clean up (the ksx ledger's #12: the scrub had to
     // be repeated for every entry).
     expect(manifestResult.manifest.routes['/']!.ir).toBe(
-      manifestResult.manifest.assets['app.ir'],
+      manifestResult.manifest.aliases['app.ir'],
     );
     expect(manifestResult.manifest.routes['/about']!.ir).toBe(
-      manifestResult.manifest.assets['about.ir'],
+      manifestResult.manifest.aliases['about.ir'],
     );
     expect(manifestResult.manifest.routes['/']!.ir)
       .not.toBe(manifestResult.manifest.routes['/about']!.ir);
@@ -988,7 +943,7 @@ describe('@getforma/build — the production build\'s console summary (FORMA-180
     // with forward slashes on every platform (so on Windows too).
     const shown = outDir.split(sep).join('/');
     for (const name of ['app.js', 'about.js']) {
-      const hashed = manifest!.assets[name]!;
+      const hashed = manifest!.aliases[name]!;
       expect(hashed).toMatch(/^(app|about)\.[0-9a-f]{8}\.js$/);
       expect(stdout).toContain(`${shown}/${hashed}`);
     }
@@ -1011,7 +966,7 @@ describe('@getforma/build — the production build\'s console summary (FORMA-180
     const { manifest, output, stdout } = await buildInChild(config(['app', 'about'], true), tmpRoot, scratch);
     expect(manifest).toBeDefined();
 
-    const hashedEntries = ['app.js', 'about.js'].map((name) => manifest!.assets[name]!);
+    const hashedEntries = ['app.js', 'about.js'].map((name) => manifest!.aliases[name]!);
     const chunks = readdirSync(outDir).filter((f) => /^chunk\.[0-9A-Z]+\.js$/.test(f));
     expect(chunks.length).toBeGreaterThan(0);
     const shown = outDir.split(sep).join('/');

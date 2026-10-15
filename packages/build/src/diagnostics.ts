@@ -78,7 +78,7 @@ export class DiagnosticsCollector {
     this.byPage.set(page, diagnostics.map((d) => this.toBuildDiagnostic(d, page)));
   };
 
-  /** A diagnostic the build itself reports (BUILD-801, BUILD-802), not a page's. */
+  /** A diagnostic the build itself reports, not a page's. */
   addBuildLevel(diagnostic: CompilerDiagnostic): void {
     this.buildLevel.push(this.toBuildDiagnostic(diagnostic, ''));
   }
@@ -112,41 +112,6 @@ export class DiagnosticsCollector {
       ...(d.chain ? { chain: d.chain } : {}),
     };
   }
-}
-
-/**
- * BUILD-801: SSR was asked for, and @getforma/compiler cannot be loaded. The
- * build reports it itself, since there is no compiler to.
- */
-export function compilerMissing(): CompilerDiagnostic {
-  return {
-    code: 'BUILD-801',
-    file: '',
-    line: 0,
-    column: 0,
-    message: '@getforma/compiler not available for SSR. Skipping IR emission.',
-    why: 'The build was asked for server-rendered modules but cannot load @getforma/compiler, so it writes none.',
-    fix: 'Install @getforma/compiler (a peer dependency of @getforma/build), or turn `ssr` off.',
-    strict: true,
-  };
-}
-
-/**
- * BUILD-802: `serviceWorker` without `app` (FORMA-130's deprecation), in the
- * report beside the line the build prints. A note: --strict does not fail on
- * a deprecation, which is not a construct the server cannot render.
- */
-export function workerWithoutAppDiagnostic(message: string): CompilerDiagnostic {
-  return {
-    code: 'BUILD-802',
-    file: '',
-    line: 0,
-    column: 0,
-    message: message.replace(/^BUILD-802 /, ''),
-    why: "The worker is 0.3.0's: its caches are shared by every Forma application on the origin, and it takes over open tabs at once. From 3.0.0 a worker is written only for a named app.",
-    fix: "Set `app` to the name the server passes to forma-server's `sw::ServiceWorker::for_app`.",
-    strict: false,
-  };
 }
 
 /**

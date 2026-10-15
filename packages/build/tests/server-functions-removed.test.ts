@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, existsSync, realpathSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { build } from '../src/build';
+import { build } from './helpers/named-build';
 import { watching } from './helpers/watch';
 
 const scratch: string[] = [];
@@ -41,8 +41,8 @@ describe.each([false, true])('server functions removed (codeSplitting=%s)', code
   ])('allows comments, ordinary strings and matching parser syntax in .%s: %s', async (extension, source) => {
     const f = fixture(source, extension);
     const result = await build({ ...f.config, codeSplitting });
-    expect(Object.keys(result.manifest).sort()).toEqual(['assets', 'build_hash', 'routes', 'version']);
-    expect(readFileSync(join(f.outputDir, result.manifest.assets['app.js']), 'utf8')).toContain(source.includes('ordinary') ? 'ordinary' : 'use server');
+    expect(Object.keys(result.manifest).sort()).toEqual(['aliases', 'app', 'assets', 'build', 'routes', 'version', 'writer']);
+    expect(readFileSync(join(f.outputDir, result.manifest.aliases['app.js']), 'utf8')).toContain(source.includes('ordinary') ? 'ordinary' : 'use server');
   });
   it('rejects the initial watch build without deleting last good output', async () => {
     const f = fixture('"use server"; export const secret = "private";');
@@ -53,7 +53,7 @@ describe.each([false, true])('server functions removed (codeSplitting=%s)', code
     const f = fixture('export const label = "public-before";');
     await watching({ ...f.config, codeSplitting }, async ({ manifest, output }) => {
       await vi.waitFor(() => {
-        expect(manifest().build_hash).toBe('dev');
+        expect(manifest().build).toBe('dev');
         expect(readFileSync(join(f.outputDir, 'app.js'), 'utf8')).toContain('public-before');
       }, { timeout: 10_000 });
       const bundle = join(f.outputDir, 'app.js');

@@ -60,7 +60,7 @@ fn load<A: Embed>(origin: &str) -> (Option<PreviewFrame>, Value) {
         Ok(manifest) => manifest,
         Err(error) => return (None, json!({ "ok": false, "code": null, "error": error })),
     };
-    let asset = manifest.assets.get(FRAME_RUNTIME_ASSET).cloned();
+    let asset = manifest.aliases.get(FRAME_RUNTIME_ASSET).cloned();
     match PreviewFrame::load::<A>(&manifest, origin) {
         Ok(frame) => {
             let embedded = asset.as_deref().and_then(A::get).map(|file| file.data.len());

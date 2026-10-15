@@ -3,6 +3,7 @@ import { build } from '@getforma/build';
 const isSsr = process.argv.includes('--ssr');
 
 await build({
+  app: '{{APP_NAME}}',
   entryPoints: [
     { entry: 'src/home/app.tsx', outfile: 'home.js' },
   ],

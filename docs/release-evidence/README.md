@@ -108,3 +108,66 @@ error-propagation checks; the independent control above uses actual npm cryptogr
 verification. Local logs and original reports remain in `work/FORMA-185/` and
 `work/review-FORMA-185-production/signature-control/`. The prepublication gate remains
 closed (`liveReleaseReady: false`).
+
+## Manifest 2 and compatibility window (FORMA-112)
+
+The distinct `v3-window-set.json` records seven unpublished3.0.0-dev artifacts
+packed from `2da1837f6dd6efae6b561e91aca2b368d7c20e43`. The same revision's
+verifier passed in39.996seconds (`v3-window-p17.json`), with19 recorded checks:
+
+- Exact packed Cargo locks passed fresh advisory checks, and the packed CLI
+  installed outside the checkout from its declared locked runtime closure.
+- Registry signature auditing covered3 CLI,64 minimal-template and49 dashboard
+  installed registry locations; unpublished candidate archives were authenticated
+  by their pinned DS11 hashes. Nested locations are recorded explicitly.
+- The packed compiler emitted the unchanged14-case corpus and canonical dumps;
+  the packed reader's10 corpus tests passed with all42 binary/dump/HTML hashes
+  unchanged and golden regeneration disabled.
+- Both packed templates installed/build/served and completed browser interaction.
+  Manifest2 app/writer/mode/aliases and final-uncompressed SHA-384 metadata passed.
+- Corrupt IR and a valid newer-minor IR were refused before bind. Each template
+  refused schema1, missingapp and a newer-minor manifest. Each enabled checked
+  worker started for a matching app and refused a mismatched app, naming both.
+
+`v3-window-template-restore.json` proves every source template manifest and lock
+was restored byte-for-byte after packing. Staged Cargo requirements now match
+candidate locks, and new npm runtime edges come only from the committed workspace
+lock; existing external template resolutions remain unchanged. This is a packed
+compatibility slice, not completion of FORMA-144's final template API migration.
+
+The set/report `pending` field is the input state before this qualification run;
+it still names112's final packed gate. After the recorded passing result, the live
+source policy removes only that pending112 entry. All later contracts and
+`liveReleaseReady: false` remain. Historical A2 and partial185 JSON is unchanged.
+No tag, publication, user-application migration or live service change occurred.
+
+The full local repository gate passed in164seconds at2c667d2. A subsequent
+one-line BUILD-815 prefix and main37 ancestry merge passed30 focused build tests;
+these are included in the2da1837 artifacts. Independent review found and the tests
+caught two real regressions before correction: esbuild could remove the last
+browser bundle after an invalid watch rebuild, and a dangling nearer Cargo.lock
+link could be skipped for a favorable ancestor. Both now have failing-then-passing
+controls, with split/non-split and valid-link/missing-file controls.
+
+`v3-window-renderer-3.1.json` records the isolated production3.1.0-dev renderer
+build accepting older/same/patch writers and refusing3.2 module/manifest writers
+before OS binding; its Cargo lock hash stayed identical. The recurring command
+is `node scripts/test-renderer-window.mjs`. The ordinary replay of the preserved
+185 independent corpus passed140/140 with zero changed expectations; all input
+hashes are in `v3-window-independent-probes.json`. No new fuzz/input-generation
+experiment was performed. The67 frozen fixture bytes and original exact-stage
+index remain preserved, with an explicit current-policy overlay accepting the
+3.0.1 patch fixture.
+
+Reproduce with the pinned build tools and scriptless workspace install:
+
+```sh
+npm run check
+node scripts/release-set.mjs pack /absolute/owned/output --dry-run
+node scripts/verify-release-set.mjs /absolute/owned/output /absolute/owned/p17.json
+```
+
+Local artifacts and logs are retained in `work/FORMA-112/ds11-window-1`,
+`p17-window-1.log`, `full-check-112.log`, `renderer-3.1-final/` and
+`independent-probes-replay/`. Exact-head hosted CI and independent review are
+required separately before merging PR38.

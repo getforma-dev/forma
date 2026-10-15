@@ -51,22 +51,9 @@ export interface BuildConfig {
   /** Production worker policy; default precaches CSS/fonts. On-demand caches
    * only requested manifest-listed immutable code/style/WASM assets. */
   serviceWorker?: 'precache' | 'on-demand';
-  /**
-   * The application's name, for its service worker (DR-25, FORMA-130). The
-   * same string the server passes to forma-server's
-   * `sw::ServiceWorker::for_app`: 1 to 63 of `a-z`, `0-9` and `-`, starting
-   * with a letter or digit.
-   *
-   * With it, the production worker names its cache `forma:<app>:<build>`,
-   * deletes on activation only v1's cache names and this application's older
-   * caches (never another application's), and waits for the previous build's
-   * worker to control no tab instead of taking over (no `skipWaiting()`, no
-   * `clients.claim()`). forma-server 0.2.2 serves it only to an application
-   * that enables its worker; otherwise `/sw.js` is forma-server's retiring
-   * worker, which deletes these same caches. Without it, the worker is
-   * 0.3.0's, kept for a server not yet on forma-server 0.2.2. The development
-   * (watch) worker ignores it.
-   */
+  /** Application/worker ID: 1–63 lowercase letters, digits or hyphens, starting
+   * with a letter or digit. If omitted, a valid nearest Cargo package name is
+   * used. Otherwise supply it explicitly; it is always written to manifest2. */
   app?: string;
   /**
    * Copy `@getforma/core`'s preview-frame runtime into the output, for
@@ -77,7 +64,7 @@ export interface BuildConfig {
    * never core's `dist/forma-runtime.js`, the CDN alias of the auto-mounting
    * runtime) from the core the bundles import, byte for byte, as
    * `forma-runtime.<hash>.js`, and names it in the manifest under
-   * `assets["forma-runtime.js"]`, where `PreviewFrame::load` reads it at start
+   * `aliases["forma-runtime.js"]`, where `PreviewFrame::load` reads it at start
    * and allows it by its SHA-256 hash. Which core: before anything is
    * written, each entry is bundled in memory with the bundles' own esbuild
    * options (so `formaAlias`, resolved from the working directory, and
@@ -130,6 +117,7 @@ export interface BuildConfig {
 // ---------------------------------------------------------------------------
 
 export interface RouteManifest {
+  mode: 'ssr' | 'browser';
   js: string[];
   /** Static ESM dependencies only; dynamic import() chunks are intentionally excluded. */
   modulepreload?: string[];
@@ -140,10 +128,23 @@ export interface RouteManifest {
   ir?: string;
 }
 
+export interface AssetMetadata {
+  /** The build guarantees this exact filename is immutable, independent of its spelling. */
+  immutable: boolean;
+  /** Full SHA-384 of the uncompressed file; enforcement is implemented separately. */
+  integrity: string;
+  /** Older deployment artifact retained by the deployment-identity implementation. */
+  retained?: boolean;
+}
+
 export interface AssetManifest {
-  version: number;
-  build_hash: string;
-  assets: Record<string, string>;
+  version: 2;
+  writer: string;
+  app: string;
+  /** Opaque build ID; input-derived deployment identity is a separate contract. */
+  build: string;
+  aliases: Record<string, string>;
+  assets: Record<string, AssetMetadata>;
   routes: Record<string, RouteManifest>;
 }
 

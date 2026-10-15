@@ -79,7 +79,7 @@ const send = (page: Page, message: unknown): Promise<void> =>
 
 test('the build\'s forma-runtime.js is core\'s frame runtime byte for byte, and forma-server\'s PreviewFrame::load accepts it from the embedded output', () => {
   const core = coreFrame();
-  expect(lane.on.manifest.assets['forma-runtime.js']).toBe(lane.on.asset);
+  expect(lane.on.manifest.aliases['forma-runtime.js']).toBe(lane.on.asset);
   expect(lane.on.asset).toMatch(/^forma-runtime\.[0-9a-f]{8}\.js$/);
   expect(readFileSync(join(lane.on.dist, lane.on.asset)).equals(core)).toBe(true);
   // Not core's CDN alias of the auto-mounting runtime, which shares the name.
@@ -140,10 +140,10 @@ test('in Chromium the frame runs that runtime under its hash-only policy and mou
 });
 
 test('with previewFrame off the manifest names no runtime and forma-server refuses the frame with FRAME-101', () => {
-  expect(Object.keys(lane.off.manifest.assets)).toEqual(['app.js']);
+  expect(Object.keys(lane.off.manifest.aliases)).toEqual(['app.js']);
   expect(report.off).toMatchObject({ ok: false, code: 'FRAME-101' });
   // The setting adds the runtime and nothing else: the same bundle and routes.
-  expect(lane.off.manifest.assets['app.js']).toBe(lane.on.manifest.assets['app.js']);
+  expect(lane.off.manifest.aliases['app.js']).toBe(lane.on.manifest.aliases['app.js']);
   expect(lane.off.manifest.routes).toEqual(lane.on.manifest.routes);
 });
 
@@ -166,6 +166,7 @@ test('a runtime neither may inline: the build refuses it with BUILD-806, and for
 
     const { build } = await import(pathToFileURL(join(REPO, 'packages', 'build', 'dist', 'index.js')).href);
     const error = await build({
+      app: 'e2e-frame',
       entryPoints: [{ entry: join(root, 'src', 'app.ts'), outfile: 'app.js' }],
       routes: { '/': { js: ['app'], css: [] } },
       outputDir: join(root, 'dist'),

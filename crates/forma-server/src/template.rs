@@ -444,40 +444,24 @@ mod tests {
     /// Build a minimal AssetManifest with no routes for testing.
     fn empty_manifest() -> AssetManifest {
         AssetManifest {
-            version: 1,
-            build_hash: "test".to_string(),
+            version: 2,
+            writer: "3.0.0".into(),
+            app: "ledger".into(),
+            aliases: HashMap::new(),
+            build: "test".to_string(),
             assets: HashMap::new(),
             routes: HashMap::new(),
         }
     }
 
     #[test]
-    fn a_legacy_manifest_cannot_restore_the_removed_wasm_bootstrap() {
-        let manifest: AssetManifest = serde_json::from_value(serde_json::json!({
-            "version": 1, "build_hash": "legacy", "assets": {},
-            "routes": {"/": {"js": ["app.js"], "css": [], "fonts": [], "total_size_br": 0, "budget_warn_threshold": 0}},
-            "wasm": {"loader": "legacy-loader.js", "binary": "legacy.wasm"}
+    fn a_legacy_manifest_is_refused_before_removed_wasm_fields_can_be_used() {
+        let error = serde_json::from_value::<AssetManifest>(serde_json::json!({
+            "version":1,"build_hash":"legacy","assets":{},"routes":{},
+            "wasm":{"loader":"legacy-loader.js","binary":"legacy.wasm"}
         }))
-        .expect("old unknown manifest fields remain ignored until manifest v2");
-        let page = render_page(&PageConfig {
-            title: "Supported browser shell",
-            route_pattern: "/",
-            manifest: &manifest,
-            config_script: None,
-            config_json: None,
-            body_class: None,
-            personality_css: None,
-            body_prefix: None,
-            render_mode: RenderMode::Phase1ClientMount,
-            ir_module: None,
-            slots: None,
-        });
-        assert!(page.html.contains("/_assets/app.js"));
-        assert!(page.html.contains("<div id=\"app\"></div>"));
-        assert!(!page.html.contains("__FORMA_WASM__"));
-        assert!(!page.html.contains("legacy-loader.js"));
-        assert!(!page.html.contains("legacy.wasm"));
-        assert!(!page.csp.contains("wasm-unsafe-eval"));
+        .unwrap_err();
+        assert!(error.to_string().contains("MANIFEST-101"));
     }
 
     /// Build a valid IR module that renders "<p>hello</p>".
@@ -711,6 +695,8 @@ mod tests {
         routes.insert(
             "/test".to_string(),
             RouteAssets {
+                mode: crate::RouteMode::Browser,
+                modulepreload: Vec::new(),
                 js: vec!["\"><script>alert(1)</script>".to_string()],
                 css: vec!["\"><script>alert(2)</script>".to_string()],
                 fonts: vec!["\"><script>alert(3)</script>".to_string()],
@@ -720,8 +706,11 @@ mod tests {
             },
         );
         let manifest = AssetManifest {
-            version: 1,
-            build_hash: "test".to_string(),
+            version: 2,
+            writer: "3.0.0".into(),
+            app: "ledger".into(),
+            aliases: HashMap::new(),
+            build: "test".to_string(),
             assets: HashMap::new(),
             routes,
         };

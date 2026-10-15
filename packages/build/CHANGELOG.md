@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Changed — FORMA-112
+
+- Manifest 2 records the numeric writer, application, route modes, aliases and filename-keyed immutable/SHA-384 metadata. The final deployment identity remains FORMA-186 and integrity enforcement remains FORMA-111.
+- Before output writes, validate the nearest Cargo.lock against the manifest/SSR writers and any installed optional compiler against the build. Recheck watched locks; a failed browser rebuild retains the last valid outputs.
+- Require a valid app or already-valid nearest Cargo package name (BUILD-815). Report multiple physical core copies in production (BUILD-816), including equal versions; symlink aliases of one copy remain quiet. Refuse missing declared output (BUILD-817). Existing raw-lint810–814 meanings stay unchanged.
+- Replace the unnamed-worker BUILD-802 bridge and missing-compiler SSR fallback with early errors. Browser builds still do not require the optional compiler. See the compatibility guide for checked server worker startup.
+
 ### Removed — FORMA-110
 
 - Removed the `wasm` configuration key, `wasm-pack` invocation, walker artifact copying and `manifest.wasm`; retired their `BUILD-803`/`BUILD-804` deprecations. Native Rust rendering and browser island updates remain supported.

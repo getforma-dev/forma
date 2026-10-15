@@ -20,7 +20,7 @@ use crate::{AssetManifest, RenderMode};
 ///
 /// FMIR v3 checks length and CRC before parsing sections (`LOAD-104`). Missing
 /// or unknown required sections use `LOAD-105`/`LOAD-106`; limits `LOAD-107`,
-/// exact writer-version mismatches `LOAD-108`. Codes come from forma-ir.
+/// incompatible writer versions `LOAD-108`. Codes come from forma-ir.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IrLoadError {
     /// The route pattern that failed.
@@ -116,8 +116,8 @@ struct Loaded {
 /// hides one: the strict loaders hand every failure to their caller, which
 /// refuses to start.
 ///
-/// A route with no `ir` field in the manifest is NOT an error — it simply has
-/// no IR and renders Phase 1. A route that DECLARES an `.ir` file which is not
+/// An explicit browser route has no module. An SSR route must declare one;
+/// schema validation refuses a missing declaration before any module reads. A route that DECLARES an `.ir` file which is not
 /// embedded IS an error: that is a build/embed skew, and it used to fall
 /// through silently with no log line and no `render_modes` entry, i.e. exactly
 /// indistinguishable from the legitimate case.
@@ -129,10 +129,21 @@ fn load_from(
     let mut render_modes = HashMap::new();
     let mut loaded = Vec::new();
     let mut errors = Vec::new();
+    if let Err(reason) = manifest.validate() {
+        errors.push(IrLoadError {
+            route: "<manifest>".into(),
+            ir_file: "manifest.json".into(),
+            reason,
+        });
+        return (render_modes, loaded, errors);
+    }
 
     for (route_pattern, route_assets) in &manifest.routes {
+        if route_assets.mode == crate::RouteMode::Browser {
+            render_modes.insert(route_pattern.clone(), RenderMode::Phase1ClientMount);
+            continue;
+        }
         let Some(ref ir_filename) = route_assets.ir else {
-            // No IR declared for this route — nothing to load, not a failure.
             continue;
         };
 
@@ -212,12 +223,12 @@ fn embedded<A: Embed>(name: &str) -> Option<Cow<'static, [u8]>> {
 /// build degrades instead of refusing to start: a corrupt module's route is
 /// served as an empty shell for the life of the process.
 ///
-/// Routes with no `.ir` field in the manifest are not included in the returned
-/// map — callers should treat absent routes as `Phase1ClientMount`.
+/// Every valid manifest route has an explicit mode entry, including browser routes.
+/// The schema-2 manifest is validated even through this retiring entry point.
 ///
 /// Deprecated: [`load_ir_modules_strict`] is the default loader from
-/// 0.2.2, and 3.0.0 removes this one. It behaves exactly as at 0.2.1, and in
-/// debug builds logs its deprecation once per process.
+/// 0.2.2; its removal belongs to FORMA-107. It still degrades broken modules and
+/// logs its deprecation once per process in debug builds.
 #[deprecated(
     since = "0.2.2",
     note = "serves a corrupt module's route as an empty shell for the life of the process; \
@@ -587,11 +598,14 @@ mod dev {
             }
             match serde_json::from_slice::<AssetManifest>(&bytes) {
                 Ok(manifest) => {
-                    for (route, assets) in manifest.routes {
-                        if let Some(ir) = assets.ir {
-                            self.names.insert(route, ir);
-                        }
-                    }
+                    self.names = manifest
+                        .routes
+                        .into_iter()
+                        .filter_map(|(route, assets)| assets.ir.map(|file| (route, file)))
+                        .collect();
+                    // A valid explicit browser mode removes SSR. Invalid manifests
+                    // above leave every prior name/module untouched.
+                    self.pages.retain(|route, _| self.names.contains_key(route));
                 }
                 Err(e) => tracing::warn!(
                     "manifest.json does not parse ({e}); the module names stay as they were \
@@ -619,6 +633,12 @@ mod tests {
         routes.insert(
             route.to_string(),
             RouteAssets {
+                mode: if ir.is_some() {
+                    crate::RouteMode::Ssr
+                } else {
+                    crate::RouteMode::Browser
+                },
+                modulepreload: Vec::new(),
                 js: vec![],
                 css: vec![],
                 fonts: vec![],
@@ -628,9 +648,24 @@ mod tests {
             },
         );
         AssetManifest {
-            version: 1,
-            build_hash: "test".to_string(),
-            assets: HashMap::new(),
+            version: 2,
+            writer: "3.0.0".into(),
+            app: "ledger".into(),
+            aliases: HashMap::new(),
+            build: "test".to_string(),
+            assets: ir
+                .into_iter()
+                .map(|f| {
+                    (
+                        f.to_string(),
+                        crate::AssetMetadata {
+                            immutable: false,
+                            integrity: None,
+                            retained: false,
+                        },
+                    )
+                })
+                .collect(),
             routes,
         }
     }
@@ -698,7 +733,7 @@ mod tests {
         let manifest = manifest_with_ir("/", None);
         let (render_modes, ir_modules) =
             load_ir_modules_strict::<Fixtures>(&manifest).expect("must not error");
-        assert!(render_modes.is_empty());
+        assert_eq!(render_modes.get("/"), Some(&RenderMode::Phase1ClientMount));
         assert!(ir_modules.is_empty());
     }
 }
@@ -764,6 +799,7 @@ mod reload_tests {
             .iter()
             .map(|(route, ir)| {
                 let mut assets = serde_json::json!({
+                    "mode": if ir.is_some(){"ssr"}else{"browser"},
                     "js": ["app.js"], "css": [], "fonts": [],
                     "total_size_br": 0, "budget_warn_threshold": 0
                 });
@@ -773,7 +809,14 @@ mod reload_tests {
                 (route.to_string(), assets)
             })
             .collect();
-        serde_json::json!({"version": 1, "build_hash": "dev", "assets": {}, "routes": routes})
+        let mut assets = serde_json::Map::new();
+        assets.insert("app.js".into(), serde_json::json!({"immutable":false}));
+        for route in routes.values() {
+            if let Some(ir) = route.get("ir").and_then(|v| v.as_str()) {
+                assets.insert(ir.into(), serde_json::json!({"immutable":false}));
+            }
+        }
+        serde_json::json!({"version": 2, "writer":"3.0.0", "app":"ledger", "build": "dev", "aliases":{}, "assets": assets, "routes": routes})
             .to_string()
             .into_bytes()
     }
@@ -990,11 +1033,28 @@ mod reload_tests {
                     "{logged:?}"
                 );
 
-                // A manifest that stops naming a route's module: the last
-                // module stays.
-                disk.write("manifest.json", manifest_json(&[("/", None)]));
+                // Valid JSON with an incompatible writer is refused by the
+                // same validator as startup, retaining the last good modules.
+                let mut incompatible: serde_json::Value =
+                    serde_json::from_slice(&manifest_json(&[("/", Some("page.2.ir"))])).unwrap();
+                incompatible["writer"] = "3.1.0".into();
+                disk.write("manifest.json", incompatible.to_string().into_bytes());
                 assert_eq!(html(modules.get("/", &read)), "<p>renamed</p>");
                 assert_eq!(html(modules.get("/late", &read)), "<p>late</p>");
+                assert!(warnings
+                    .0
+                    .lock()
+                    .unwrap()
+                    .last()
+                    .unwrap()
+                    .1
+                    .contains("MANIFEST-102"));
+
+                // A valid explicit browser route removes SSR; a removed route
+                // is no longer served from the previous module either.
+                disk.write("manifest.json", manifest_json(&[("/", None)]));
+                assert!(modules.get("/", &read).is_none());
+                assert!(modules.get("/late", &read).is_none());
             });
         }
     }

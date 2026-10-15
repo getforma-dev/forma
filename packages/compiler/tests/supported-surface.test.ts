@@ -16,7 +16,7 @@ it('exposes native FMIR compilation without the retired plugin APIs or Vite peer
   expect(compiler.formaSsrPlugin).toBeTypeOf('function');
   expect(compiler.generateRealIr).toBeTypeOf('function');
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  expect(pkg.peerDependencies).toEqual({ esbuild: '>=0.17.0' });
+  expect(pkg.peerDependencies).toEqual({ esbuild: '>=0.17.0', '@getforma/core': '^3.0.0 || =3.0.0-dev' });
 });
 
 it('preserves runtime h() and the root core import while emitting a native FMIR module', async () => {
@@ -34,4 +34,12 @@ it('preserves runtime h() and the root core import while emitting a native FMIR 
   expect(js).not.toMatch(/(?:from|import)\s*[('"]+formajs(?:['"/])|@getforma\/core\/server/);
   const ir = readFileSync(join(root, 'app.ir'));
   expect(renderDefaults(ir)).toBe('<p>native SSR</p>');
+});
+
+it('exports only documented compilation, emission and diagnostic entrypoints', () => {
+  expect(Object.keys(compiler).sort()).toEqual([
+    'COMPILER_WRITER_VERSION', 'DIAGNOSTIC_CATALOGUE', 'FmirContainerError', 'IrEmitContext',
+    'baseWriterVersion', 'collectDiagnostics', 'crc32', 'diagnosticEntry', 'dumpFmir',
+    'encodeFmirSections', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'makeDiagnostic', 'readFmirContainer',
+  ].sort());
 });

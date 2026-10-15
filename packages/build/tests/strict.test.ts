@@ -13,7 +13,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, sym
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { build } from '../src/build';
+import { build } from './helpers/named-build';
 import { resolveDiagnosticOptions } from '../src/diagnostics';
 import type { BuildConfig, BuildDiagnostic } from '../src/types';
 
@@ -117,11 +117,12 @@ describe('--strict', () => {
     );
   }, 30_000);
 
-  it('reports BUILD-802 (serviceWorker without app) as a note --strict does not fail on', async () => {
+  it('uses the required application identity without a legacy unnamed-worker diagnostic', async () => {
     const entries = { home: page('home', [`mount(() => h('main', null, 'clean'), '#app');`]) };
     const result = await build(config(entries, { strict: true, serviceWorker: 'precache' }));
-    expect(result.diagnostics.map((d) => [d.code, d.severity, d.page])).toEqual([['BUILD-802', 'note', '']]);
-    expect(result.warnings.some((w) => w.startsWith('BUILD-802 '))).toBe(true);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.manifest.app).toBe('fixture');
+    expect(result.warnings.some((w) => w.startsWith('BUILD-802 '))).toBe(false);
   }, 30_000);
 
   it('passes a clean build, and never fails on a note', async () => {

@@ -6,6 +6,7 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   NEVER_COPY,
+  applicationName,
   TEMPLATE_INFO,
   TEMPLATES,
   placeCargoLockRoot,
@@ -174,6 +175,7 @@ ${bold('Examples:')}
     // Replace ALL placeholder variants
     replacePlaceholders(dest, {
       '{{PROJECT_NAME}}': projectName,
+      '{{APP_NAME}}': applicationName(projectName),
       '{{project-name}}': projectName,
     });
 

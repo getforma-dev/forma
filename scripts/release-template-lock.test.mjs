@@ -87,3 +87,40 @@ test('packed CLI executes with only its declared locked runtime closure and refu
     assert.throws(() => packedRuntimeLock(packed, unpinned, 'packages/create-app'), /integrity-pinned archive/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('candidate runtime additions use a recorded nested closure without changing existing template resolutions', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-template-new-deps-'));
+  try {
+    const previous = archive(dir, 'old-leaf', { name: 'forma-test-leaf', version: '1.0.0', type: 'module', main: 'index.js' }, { 'index.js': 'export default 1;\n' });
+    const leaf = archive(dir, 'new-leaf', { name: 'forma-test-leaf', version: '2.0.0', type: 'module', main: 'index.js', scripts: { postinstall: 'node -e "process.exit(1)"' } }, { 'index.js': 'export default 42;\n' });
+    const runtime = archive(dir, 'runtime', { name: 'forma-test-runtime', version: '1.0.0', type: 'module', main: 'index.js', dependencies: { 'forma-test-leaf': '^2.0.0' } }, { 'index.js': 'export { default } from "forma-test-leaf";\n' });
+    archive(dir, 'build', { name: '@getforma/build', version: '3.0.0', type: 'module', main: 'index.js', dependencies: { 'forma-test-runtime': '^1.0.0' }, peerDependencies: { '@getforma/compiler': '^3.0.0' }, peerDependenciesMeta: { '@getforma/compiler': { optional: true } } }, { 'index.js': 'export { default } from "forma-test-runtime";\n' });
+    const packages = [{ registry: 'npm', name: '@getforma/build', version: '3.0.0', file: 'build.tgz' }];
+    const manifest = { private: true, type: 'module', dependencies: { '@getforma/build': '^0.3.1', 'forma-test-leaf': '1.0.0' } };
+    const lock = { lockfileVersion: 3, packages: { '': manifest, 'node_modules/@getforma/build': { version: '0.3.1' }, 'node_modules/forma-test-leaf': previous } };
+    const source = { lockfileVersion: 3, packages: {
+      'node_modules/forma-test-runtime': runtime,
+      'node_modules/forma-test-leaf': leaf,
+      // A workspace peer must be supplied by the release set, never grafted.
+      'node_modules/@getforma/compiler': { resolved: 'packages/compiler', link: true },
+    } };
+    const shipped = stageNpmLock(manifest, lock, packages, dir, false, source);
+    assert.deepEqual(shipped.lock.packages['node_modules/forma-test-leaf'], previous);
+    const nested = 'node_modules/@getforma/build/node_modules/forma-test-runtime/node_modules/forma-test-leaf';
+    assert.equal(shipped.lock.packages[nested].integrity, leaf.integrity);
+    assert(!shipped.lock.packages['node_modules/@getforma/build/node_modules/@getforma/compiler']);
+    assert.deepEqual(stageNpmLock(manifest, lock, packages, dir, false, source), shipped, 'staging is deterministic');
+    const local = stageNpmLock(shipped.manifest, shipped.lock, packages, dir, true);
+    const app = join(dir, 'app'); mkdirSync(app);
+    save(join(app, 'package.json'), local.manifest); save(join(app, 'package-lock.json'), local.lock);
+    const before = digest(join(app, 'package-lock.json'));
+    run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund', '--offline'], app, { stdio: 'pipe' });
+    assert.equal(digest(join(app, 'package-lock.json')), before);
+    const output = run(process.execPath, ['--input-type=module', '-e', 'import value from "@getforma/build"; import old from "forma-test-leaf"; console.log(value, old);'], app, { stdio: 'pipe', env: { ...process.env, NODE_PATH: '' } });
+    assert.equal(output.trim(), '42 1');
+    const missing = structuredClone(source); delete missing.packages['node_modules/forma-test-leaf'];
+    assert.throws(() => stageNpmLock(manifest, lock, packages, dir, false, missing), /absent from the recorded lock/);
+    const unpinned = structuredClone(source); delete unpinned.packages['node_modules/forma-test-leaf'].integrity;
+    assert.throws(() => stageNpmLock(manifest, lock, packages, dir, false, unpinned), /integrity-pinned archive/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

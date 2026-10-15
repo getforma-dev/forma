@@ -148,8 +148,8 @@ fn a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table() {
     assert!(error.contains("route /"), "{error}");
     assert!(error.contains("https://cdn.example/evil.js"), "{error}");
     assert!(error.contains("not one of the build's files"), "{error}");
-    // The same manifest is otherwise a manifest: the refusal is the preload's.
-    assert!(try_load_manifest::<Foreign>().is_ok());
+    // Every loading path shares the same reference validation.
+    assert!(try_load_manifest::<Foreign>().is_err());
     // And the table for a build whose preloads are all its own loads.
     let table = try_load_module_preloads::<Split>().expect("loads");
     assert_eq!(table.route("/"), ["chunk.SHARED01.js", "chunk.HOMEONLY.js"]);
@@ -162,6 +162,8 @@ fn styled_manifest() -> AssetManifest {
     routes.insert(
         "/".to_string(),
         RouteAssets {
+            mode: forma_server::RouteMode::Browser,
+            modulepreload: Vec::new(),
             js: vec!["app.1.js".into()],
             css: vec!["s.2.css".into()],
             fonts: vec![],
@@ -171,8 +173,11 @@ fn styled_manifest() -> AssetManifest {
         },
     );
     AssetManifest {
-        version: 1,
-        build_hash: "h".into(),
+        version: 2,
+        writer: "3.0.0".into(),
+        app: "ledger".into(),
+        aliases: HashMap::new(),
+        build: "h".into(),
         assets: HashMap::new(),
         routes,
     }

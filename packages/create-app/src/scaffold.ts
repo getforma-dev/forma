@@ -6,6 +6,7 @@
  * importing it cannot start a prompt inside a test runner.
  */
 import * as fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 
 export const TEMPLATES = ['dashboard', 'minimal'];
@@ -131,6 +132,15 @@ export function validateProjectName(name: string): string | null {
     return refuse('Windows refuses a device name (con, prn, aux, nul, com1-com9, lpt1-lpt9) as a directory name');
   }
   return null;
+}
+
+/** Stable worker/manifest ID without narrowing the CLI's accepted project names. */
+export function applicationName(project: string): string {
+  const invalid = validateProjectName(project);
+  if (invalid) throw new Error(invalid);
+  if (/^[a-z0-9][a-z0-9-]{0,62}$/.test(project)) return project;
+  const prefix = project.replaceAll('_', '-').slice(0, 38);
+  return `${prefix}-${createHash('sha256').update(project).digest('hex').slice(0, 24)}`;
 }
 
 // `.lock` because a template's Cargo.lock names the crate by its placeholder.

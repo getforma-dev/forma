@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed — FORMA-112
+
+- Scaffold a separate deterministic APP_NAME for manifest 2, preserving all accepted project names and keeping normalized names distinct with a digest suffix.
+- Development source templates retain A2 pins; packing stages the exact npm/Cargo candidate requirements, checksums and new recorded external runtime closure, then restores source bytes. Final template API migration remains FORMA-144.
+
 ### Changed
 
 - FORMA-117: both templates disable dependency lifecycle scripts through their shipped `.npmrc`, with reviewed install-script decisions recorded in `allowScripts`.

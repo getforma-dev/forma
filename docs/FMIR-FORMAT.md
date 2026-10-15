@@ -2,13 +2,15 @@
 
 This is the maintained wire contract for the Rust reader in `crates/forma-ir` and the
 TypeScript writer in `packages/compiler`. FORMA-185 implements this contract on the merged
-repository. The development set is `3.0.0-dev`; both languages encode and compare base version
-`3.0.0` exactly. This staging version does not constitute a release. FORMA-112 owns the later
-compatibility window and release contract.
+repository. FORMA-112 adds the major/minor compatibility window: readers accept writers of
+the same major up to their own minor, ignoring patch. The development set is `3.0.0-dev`;
+wire versions contain only the base triple `3.0.0`. This staging version is not a release.
 
 The independently reviewed specification and its example were recovered from the interrupted
-FORMA-114 author task. The 24-byte header, CRC exclusion range, exact version comparison and
-load-time string-reference checks incorporate the lead's final B1–B3/S1–S10 decisions.
+FORMA-114 author task. The 24-byte header, CRC exclusion range and load-time string-reference
+checks incorporate the lead's final B1–B3/S1–S10 decisions. The intermediate exact-triple
+version rule is preserved in [the FORMA-185 contract](archive/2026-10-15-FMIR-FORMAT-exact-stage.md);
+only version acceptance broadens in FORMA-112.
 The byte grammar below is normative. Consumer features assigned to later tickets are identified
 explicitly; applications do not migrate as part of this format change.
 
@@ -25,7 +27,7 @@ everything around them:
 | Required content | bytecode, strings, slots, islands | bytecode, strings, slots, islands (with schema reference and digest), props schema; key paths where rows are keyed |
 | Optional content | none possible | source positions; reserved ids for 114b's build identity and deployment |
 | Opcodes | 18 defined (`0x01`-`0x12`), 12 emitted | 12; `0x09`, `0x0D`-`0x11` reserved for good |
-| Versioning | exact match on `2` | exact base major/minor/patch match in FORMA-185; FORMA-112 adds the major/minor window; both versions named on refusal |
+| Versioning | exact match on `2` | same major, writer minor no greater than reader minor, patch ignored; both versions named on refusal |
 | Readers | forma-ir 0.2.x, the WASM walker | forma-ir 3.x only; no v2 reader (L-18) |
 
 ---
@@ -64,11 +66,12 @@ bytes at Q1.
 
 **Writer version.** The set's version (DR-26; one version for seven packages, FORMA-112) as three
 little-endian u16: `03 00 00 00 00 00` for 3.0.0. A prerelease build writes its base version:
-`3.0.0-dev` and `3.0.0-alpha.1` both write `3,0,0`. In FORMA-185 the reader accepts only three
-u16 values equal to its own `CARGO_PKG_VERSION` base major, minor and patch; prerelease suffixes
-and build metadata are not encoded or compared. A different patch is a mismatch too. Reject
-with `LOAD-108`, naming both versions. FORMA-112 adds design 1's compatibility window (same
-major, writer minor no greater than reader minor, patch ignored); the encoding does not change.
+`3.0.0-dev` and `3.0.0-alpha.1` both write `3,0,0`. A reader accepts iff the writer's
+major equals its own `CARGO_PKG_VERSION` major and the writer's minor is no greater than its
+own minor. Patch is ignored; prerelease suffixes and build metadata are never encoded.
+A 3.1 reader accepts 3.0 and 3.1 writers and refuses 3.2, 2.x and 4.x. Refuse with `LOAD-108`,
+naming both versions. The same predicate and shared version-pair fixtures govern manifest
+startup and build-time Cargo.lock checks. Renderer-first minor upgrades are supported.
 
 **Body length.** Must equal the file's length minus 24 exactly. A module has no trailing bytes
 (v2 allowed them silently). A mismatch is `LOAD-104`; use checked arithmetic for `24 + body_len`.
@@ -148,7 +151,7 @@ id. For an otherwise accepted writer version, an unknown optional diagnostics se
 skipped; a section the reader must understand is flagged required, and the reader refuses by
 name rather than silently dropping meaning (DR-28; design 1 L85, PNG's critical and ancillary
 chunks). The version check runs first: a 3.0.0 reader in this ticket never reaches the table of a
-3.1.0 writer. FORMA-112 defines the later compatibility window.
+3.1.0 writer. The major/minor window refuses that newer writer.
 
 ---
 
@@ -404,7 +407,7 @@ A compiler that one day emits one of these constructs assigns a new byte with a 
 rather than reviving the old meaning: `SWITCH` had no hydration marker and no default case
 (`ARCHITECTURE.md` L941), `PRELOAD` wrote no nonce (`walker.rs` L1337-L1343), and `LIST_ITEM_KEY`
 could not key rows (the historical v2 contract). Bytes `0x13`-`0xFF` are unassigned; a 3.x minor may assign one (design 1
-L82), and a 3.0 reader refuses a module carrying it, which the exact-version rule here, and FORMA-112's later window, also require.
+L82), and a 3.0 reader refuses a module carrying it, which the major/minor window also requires.
 
 Enum values keep their meaning (`FMIR-FORMAT.md` L143-L145): `SlotType` 1-5, `SlotSource` 0-1,
 `IslandTrigger` 1-4. `PropsMode` is removed with its field (5.4).
@@ -444,7 +447,7 @@ chose at FORMA-121.
 | `LOAD-105` | A required section is missing (named) | new | `MissingSection(u16)` |
 | `LOAD-106` | An unknown section is flagged required (id, writer's version, reader's version) | new | `UnknownRequiredSection { id, writer }` |
 | `LOAD-107` | A count or size passes a ceiling before allocation (which, the ceiling, the value) | new | `LimitExceeded { limit: &'static str, max, actual }` |
-| `LOAD-108` | The writer's version differs from this reader's triple (both named; window added by FORMA-112) | new | `UnsupportedWriter { writer: [u16; 3], reader: [u16; 3] }` |
+| `LOAD-108` | The writer's major differs or its minor is newer than the reader's (both versions named) | new | `UnsupportedWriter { writer: [u16; 3], reader: [u16; 3] }` |
 
 `IrError::code()` lives in forma-ir and is the sole source of codes; forma-server re-exports it.
 `IrError` is `#[non_exhaustive]` from 3.0.0. The v2 variants `BadMagic`, `UnsupportedVersion`
@@ -525,13 +528,14 @@ This is well-formed wrong output; only the unchanged HTML goldens and parity sui
 A restamped reserved opcode such as 0x09 instead produces `LOAD-103`.
 
 Drop the final byte: `LOAD-104 length mismatch`, declared body 159 versus actual 158. Set the
-writer triple to 3.1.0 or 3.0.1 and restamp: both are `LOAD-108` against reader 3.0.0 in this
-ticket (exact triples). Append optional section 0x0100 and rebuild table/length/CRC: PASS and
+writer triple to 3.1.0 and restamp: `LOAD-108` against reader 3.0.0. A restamped 3.0.1
+writer is accepted under the patch-independent window. Append optional section 0x0100 and rebuild table/length/CRC: PASS and
 identical render; required flag set instead yields `LOAD-106`, naming writer and reader versions.
 
 The production TypeScript encoder reproduces this 183-byte example exactly. The independent
 Python encoder at `scripts/fmir-spec/example.py` and its `listing.txt` are a separate oracle;
-`crates/forma-ir/tests/fixtures/fmir-v3/index.tsv` describes every frozen fault and expected code.
+`crates/forma-ir/tests/fixtures/fmir-v3/index.tsv` preserves the exact-stage expected codes;
+`window-expectations.tsv` is the explicit current expectation table.
 
 ---
 
@@ -543,8 +547,7 @@ Python encoder at `scripts/fmir-spec/example.py` and its `listing.txt` are a sep
 - **There is no 2.x reader for v3** (L-18; DR-28 migration step 1: "no v2 reader kept, since a
   binary never mixes format versions"). forma-ir 0.2.x answers `BadMagic` to a v3 module
   (`format.rs` L332-L335); nothing is added to make it do more. The server module loader is `crates/forma-server/src/ir.rs`; it delegates parsing to the one v3 reader. FORMA-107 removes its deprecated lenient entry point. fAuth migrates after the final release in FORMA-152.
-- **Within 3.x**: this ticket accepts its own base version triple exactly (3). FORMA-112 adds
-  the window: same major, writer minor not above reader minor, patch ignored. Everything
+- **Within 3.x**: the window is same major, writer minor not above reader minor, patch ignored. Everything
   a 3.x minor adds is one of: a new opcode byte, a new enum value, a new section id, a trailing
   field in a length-prefixed entry (5.4), or a new schema type tag; a 3.0 reader meeting any of
   them refuses by the window or by `LOAD-103`/`LOAD-106`, never mis-reads. Changing an existing
@@ -584,8 +587,10 @@ island digest generation and keyed-row behavior belong to FORMA-102, FORMA-105 a
 this writer exposes their typed wire encoders and emits empty page schema object 0 where no
 schema is yet supplied. Default AST emission remains unkeyed, preserving the frozen HTML.
 
-The 67 independent fixtures in `tests/fixtures/fmir-v3` include six accepted modules and 61
-refusals. `fmir_v3.rs` checks exact codes; the server's `strict_loader.rs` checks every refusal
+The 67 independent fixtures in `tests/fixtures/fmir-v3` preserve the exact-stage bytes and
+`index.tsv`. FORMA-112's explicit `window-expectations.tsv` accepts the existing 3.0.1 module,
+so seven are accepted and 60 refused. `fmir_v3.rs` checks the current codes; the server's
+`strict_loader.rs` checks every refusal
 through the real strict loader and proves the fixture server binds no port. Positive modules
 in that batch remain accepted. Additional tests cover all string-operand shapes, exact limits,
 10,000-level recursive inputs, and canonical reconstruction. The standard CRC vector and

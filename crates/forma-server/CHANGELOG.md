@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Compatibility — FORMA-112
+
+- Validate schema-2 manifests and module compatibility before startup; use explicit browser/SSR modes and filename-keyed immutable metadata, including retained assets. Enabled service workers require configure_for_manifest and a matching app; failed validation does not seal defaults. Development reload shares the validator and preserves last good state on refusal.
+
 ### Removed — FORMA-110
 
 - Removed `AssetManifest::wasm`, `WasmAssets` and the `window.__FORMA_WASM__` page bootstrap. Unknown legacy manifest fields cannot reactivate the loader. `csp_is_strict` explicitly rejects `wasm-unsafe-eval`.

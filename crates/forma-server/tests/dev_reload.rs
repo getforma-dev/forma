@@ -55,7 +55,7 @@ fn page(text: &str) -> Vec<u8> {
 }
 
 /// The dev manifest the watch mode writes: identity names, `build_hash` "dev".
-const DEV_MANIFEST: &str = r#"{"version":1,"build_hash":"dev","assets":{"app.js":"app.js","page.ir":"page.ir"},"routes":{"/":{"js":["app.js"],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0,"ir":"page.ir"}}}"#;
+const DEV_MANIFEST: &str = r#"{"version":2,"writer":"3.0.0","app":"ledger","build":"dev","aliases":{"app.js":"app.js","page.ir":"page.ir"},"assets":{"app.js":{"immutable":false},"page.ir":{"immutable":false}},"routes":{"/":{"js":["app.js"],"css":[],"fonts":[],"total_size_br":0,"budget_warn_threshold":0,"ir":"page.ir","mode":"ssr"}}}"#;
 
 /// The application's handler: the route's module as it is now, rendered.
 fn serve(manifest: &AssetManifest, modules: &IrModules<DevDist>) -> String {

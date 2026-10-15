@@ -15,6 +15,7 @@ export type {
   CssEntry,
   RouteMapping,
   AssetManifest,
+  AssetMetadata,
   RouteManifest,
   BuildDiagnostic,
   BuildDiagnosticChainLink,

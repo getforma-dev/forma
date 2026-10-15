@@ -48,6 +48,8 @@ step "cargo clippy --locked --workspace --all-targets --all-features -- -D warni
 cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 step "cargo test --locked --workspace"
 cargo test --locked --workspace
+step "actual renderer 3.1 accepts older writers and refuses 3.2 before bind"
+node scripts/test-renderer-window.mjs
 step "cargo doc --locked --workspace --no-deps"
 cargo doc --locked --workspace --no-deps
 
@@ -55,6 +57,8 @@ step "npm run build (compiler, build, core, create-app)"
 npm run build
 step "npm test --workspaces"
 npm test --workspaces
+step "packed compiler API and actual optional-compiler compatibility"
+node --test scripts/compatibility-package.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core

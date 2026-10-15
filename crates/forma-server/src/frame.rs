@@ -223,9 +223,12 @@ impl PreviewFrame {
     ///
     /// Verified by: crates/forma-server/tests/preview_frame.rs > "a_frame_without_its_runtime_is_a_coded_error_at_start"
     pub fn load<A: Embed>(manifest: &AssetManifest, app_origin: &str) -> Result<Self, FrameError> {
+        manifest
+            .validate()
+            .map_err(|e| FrameError::new("FRAME-101", e))?;
         let app_origin = csp::check_origin(app_origin)
             .map_err(|reason| FrameError::new("FRAME-104", format!("{app_origin:?}: {reason}")))?;
-        let Some(file) = manifest.assets.get(FRAME_RUNTIME_ASSET) else {
+        let Some(file) = manifest.aliases.get(FRAME_RUNTIME_ASSET) else {
             return Err(FrameError::new(
                 "FRAME-101",
                 format!(

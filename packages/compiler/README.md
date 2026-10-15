@@ -36,8 +36,10 @@ served asset tree, read by nothing but a since-removed `@getforma/build` step.)
 The compiler emits [FMIR v3](../../docs/FMIR-FORMAT.md): a 24-byte header,
 a section table, and required bytecode, strings, slots, islands and page props
 schema. CRC-32 covers every byte except its own four-byte field. The writer's
-base major/minor/patch comes from the compiler package version and must match
-forma-ir's base version exactly; `3.0.0-dev` and `3.0.0` both encode `3,0,0`.
+base major/minor/patch comes from the compiler package version. A reader accepts
+its own major and writer minors up to its own; patch numbers do not restrict
+compatibility. `3.0.0-dev` and `3.0.0` both encode `3,0,0`. Upgrade the renderer
+first and follow the [compatibility contract](../../docs/compatibility.md).
 Use aligned compiler and Rust packages and rebuild older `.ir` files. V2 modules
 are refused with a rebuild diagnostic.
 
@@ -353,28 +355,22 @@ prop (`{ title() {…} }`), and a props argument that is not an object literal
 (`h('div', props, …)` — which drops *every* attribute on the element).
 `dangerouslySetInnerHTML` is deliberately not server-rendered, and now says so.
 
-## Component Analyzer
+## Public entrypoints
 
-Parses entry points to extract component trees, signal defaults, and island boundaries for IR emission.
+The package root exports compilation (`formaSsrPlugin`, `generateRealIr`) and
+explicit tooling APIs: `IrEmitContext` and its schema/key-path/source-position
+types; `DIAGNOSTIC_CATALOGUE`, `collectDiagnostics`, `diagnosticEntry`,
+`formatDiagnostic`, `makeDiagnostic` and their diagnostic types; and FMIR
+inspection/encoding (`readFmirContainer`, `dumpFmir`, `encodeFmirSections`,
+`crc32`, `baseWriterVersion`, `COMPILER_WRITER_VERSION`, `FmirContainerError`,
+`WriterVersion`, `FmirSection`). The release packed-set verifier uses the same
+public inspection APIs as consumers.
 
-```ts
-import { readFileSync } from "node:fs";
-import { ComponentAnalyzer } from "@getforma/compiler";
-
-// Every method takes SOURCE TEXT plus the filename it came from — the analyzer
-// never reads the filesystem itself. The constructor's baseDir is the directory
-// relative imports are resolved against by the caller.
-const analyzer = new ComponentAnalyzer("src");
-
-const entrySource = readFileSync("src/app.ts", "utf8");
-const entry = analyzer.parseEntryPoint(entrySource, "src/app.ts");
-
-const pageSource = readFileSync("src/HomePage.ts", "utf8");
-const page = analyzer.parseComponentFile(pageSource, "src/HomePage.ts", entry.componentName);
-```
-
-Most projects want `generateRealIr(entryPointPath)` instead, which drives the
-whole pipeline (analyzer + walker + emitter) and returns `{ binary, islands }`.
+`generateRealIr(entryPointPath)` drives component analysis, resolution, walking
+and emission. Those implementation modules, including `ComponentAnalyzer`,
+`walkHTree`, signal scopes and export resolvers, are private. Direct subpath
+imports are not package exports. The runtime surface is pinned by
+`supported-surface.test.ts`; package verification checks the built artifact.
 
 ## When Do You Need This?
 
@@ -387,6 +383,7 @@ whole pipeline (analyzer + walker + emitter) and returns `{ binary, islands }`.
 ## Peer Dependencies
 
 - `esbuild >=0.17.0` (optional — for esbuild SSR plugin)
+- `@getforma/core ^3.0.0` for the current minor; the coordinated `3.0.0-dev` package is an explicit prerelease alternative. Patch differences are compatible.
 
 ## Part of the Forma Stack
 

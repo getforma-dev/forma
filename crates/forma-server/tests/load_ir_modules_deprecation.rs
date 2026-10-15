@@ -73,7 +73,7 @@ fn load_ir_modules_logs_its_deprecation_once_per_process_in_debug_builds() {
         for _ in 0..3 {
             // Still degrades as at 0.2.1: the log is the only change.
             let (modes, _) = forma_server::load_ir_modules::<Flipped>(&manifest);
-            assert_eq!(modes.len(), 6);
+            assert_eq!(modes.len(), 7);
         }
     });
     let expected = if cfg!(debug_assertions) { 1 } else { 0 };

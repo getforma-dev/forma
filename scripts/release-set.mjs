@@ -40,11 +40,22 @@ export function assertReleaseSet(packages, tag) {
   return version;
 }
 function internal(name) { return name.startsWith('@getforma/') || CRATES.includes(name); }
-function updateRequirements(p, version) {
+export function compatibilityPeer(version) {
+  assert(SEMVER.test(version), 'peer range requires a supported package version');
+  const [major, minor] = version.split('.');
+  const stable = `^${major}.${minor}.0`;
+  // npm excludes prereleases from ordinary carets: opt into this coordinated
+  // prerelease only, without admitting a future minor's prerelease.
+  return version.includes('-') ? `${stable} || =${version}` : stable;
+}
+function updateRequirements(p, version, owner = p.name) {
   for (const kind of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
     for (const name of Object.keys(p[kind] ?? {})) if (internal(name)) p[kind][name] = `=${version}`;
   }
+  const peer = owner === '@getforma/compiler' ? '@getforma/core' : owner === '@getforma/build' ? '@getforma/compiler' : null;
+  if (peer) p.peerDependencies = { ...p.peerDependencies, [peer]: compatibilityPeer(version) };
 }
+
 export function versionFiles(root, version) {
   assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3, 'expected a 3.x-or-later release version or X.Y.Z-dev');
   const files = new Map();
@@ -70,7 +81,8 @@ export function versionFiles(root, version) {
   const lock = JSON.parse(read('package-lock.json'));
   for (const [path, p] of Object.entries(lock.packages)) {
     if (NPM.some(name => path === `packages/${name}`)) p.version = version;
-    updateRequirements(p, version);
+    const member = NPM.find(name => path === `packages/${name}`);
+    updateRequirements(p, version, member ? `@getforma/${member}` : p.name);
   }
   files.set('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
   for (const path of ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock']) {
@@ -176,9 +188,10 @@ export function packedRuntimeLock(packed, sourceLock, sourcePath) {
   return { manifest, lock };
 }
 
-// Preserve every third-party resolution. Only candidate package versions, dependency metadata,
-// URLs and checksums change; npm ci will refuse a stale third-party graph.
-export function stageNpmLock(manifest, lock, packages, artifactDir, local = false) {
+// Preserve existing third-party resolutions. New candidate dependencies receive an isolated
+// closure copied from the committed workspace lock, never a fresh registry resolution.
+// npm ci validates the resulting ranges and bytes; P17's local substitution cannot repair it.
+export function stageNpmLock(manifest, lock, packages, artifactDir, local = false, sourceLock) {
   if (local) assertNpmTemplateLock(manifest, lock, packages, artifactDir);
   lock = structuredClone(lock); manifest = structuredClone(manifest);
   for (const candidate of packages.filter(p => p.registry === 'npm')) {
@@ -197,6 +210,26 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
     const packed = JSON.parse(run('tar', ['-xOf', file, 'package/package.json']));
     for (const kind of packedMetadata) {
       if (packed[kind]) entry[kind] = packed[kind]; else delete entry[kind];
+    }
+    if (sourceLock) {
+      // Candidate peers are supplied by the seven-package release set. External
+      // edges resolve through the exact workspace graph, including transitive peers.
+      const external = structuredClone(packed);
+      for (const kind of [...dependencyKinds, 'peerDependencies', 'peerDependenciesMeta']) {
+        if (external[kind]) external[kind] = Object.fromEntries(Object.entries(external[kind]).filter(([name]) => !internal(name)));
+      }
+      const member = NPM.find(name => `@getforma/${name}` === candidate.name);
+      assert(member, `unrecognized npm release member ${candidate.name}`);
+      const closure = packedRuntimeLock(external, sourceLock, `packages/${member}`).lock;
+      for (const [path, dependency] of Object.entries(closure.packages)) {
+        if (!path) continue;
+        const target = `${key}/${path}`;
+        if (lock.packages[target]) {
+          // Preserve an existing nested resolution too; reject a conflict rather
+          // than silently replacing a previously reviewed third-party archive.
+          for (const field of ['version', 'resolved', 'integrity']) assert.equal(lock.packages[target][field], dependency[field], `${target}: existing external resolution conflicts with recorded candidate closure`);
+        } else lock.packages[target] = dependency;
+      }
     }
   }
   for (const kind of ['dependencies', 'devDependencies', 'optionalDependencies']) {
@@ -223,10 +256,17 @@ export function stageTemplates(root, packages, out) {
   // cannot leave the first template staged when packing fails.
   for (const template of ['minimal', 'dashboard']) {
     const dir = join(root, 'packages/create-app/templates', template);
-    for (const name of ['admin/package.json', 'admin/package-lock.json', 'Cargo.lock']) originals.set(join(dir, name), readFileSync(join(dir, name)));
-    const staged = stageNpmLock(json(join(dir, 'admin/package.json')), json(join(dir, 'admin/package-lock.json')), packages, out);
+    for (const name of ['admin/package.json', 'admin/package-lock.json', 'Cargo.toml', 'Cargo.lock']) originals.set(join(dir, name), readFileSync(join(dir, name)));
+    const staged = stageNpmLock(json(join(dir, 'admin/package.json')), json(join(dir, 'admin/package-lock.json')), packages, out, false, existsSync(join(root, 'package-lock.json')) ? json(join(root, 'package-lock.json')) : undefined);
     stagedFiles.set(join(dir, 'admin/package.json'), JSON.stringify(staged.manifest, null, 2) + '\n');
     stagedFiles.set(join(dir, 'admin/package-lock.json'), JSON.stringify(staged.lock, null, 2) + '\n');
+    const cargo = readFileSync(join(dir, 'Cargo.toml'), 'utf8').replace(/^(forma-(?:ir|ir-derive|server) = ")[^"]+"/gm, (line, prefix) => {
+      const name = prefix.split(' ')[0];
+      const candidate = packages.find(p => p.registry === 'crates' && p.name === name);
+      assert(candidate, `template has no release candidate for ${name}`);
+      return `${prefix}=${candidate.version}"`;
+    });
+    stagedFiles.set(join(dir, 'Cargo.toml'), cargo);
     stagedFiles.set(join(dir, 'Cargo.lock'), stageCargoLock(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), packages));
   }
   try { for (const [path, bytes] of stagedFiles) writeFileSync(path, bytes); }

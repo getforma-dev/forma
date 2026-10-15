@@ -140,7 +140,14 @@ fn check_module(bytes: &[u8]) -> Option<IrModule> {
         payload_count += 1;
     }
     assert_eq!(payload_count, module.sections.sections.len());
-    assert_eq!(stamp_body(&body), bytes, "canonical dump lost module bytes");
+    let mut rebuilt = stamp_body(&body);
+    // Accepted older-minor/different-patch writers retain their original header.
+    for (i, value) in module.header.writer.iter().enumerate() {
+        rebuilt[8 + i * 2..10 + i * 2].copy_from_slice(&value.to_le_bytes());
+    }
+    let crc = crate::format::crc32(&[&rebuilt[..18], &rebuilt[22..]]);
+    rebuilt[18..22].copy_from_slice(&crc.to_le_bytes());
+    assert_eq!(rebuilt, bytes, "canonical dump lost module bytes");
     Some(module)
 }
 

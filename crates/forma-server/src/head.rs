@@ -13,7 +13,6 @@
 //!
 //! [`PageConfig::config_json`]: crate::PageConfig::config_json
 
-use serde::Deserialize;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
@@ -40,36 +39,20 @@ pub struct ModulePreloads {
     routes: Arc<HashMap<String, Vec<String>>>,
 }
 
-/// The two manifest fields the table is read from.
-#[derive(Deserialize)]
-struct Manifest {
-    assets: HashMap<String, String>,
-    routes: HashMap<String, Route>,
-}
-
-#[derive(Deserialize)]
-struct Route {
-    #[serde(default)]
-    js: Vec<String>,
-    #[serde(default)]
-    modulepreload: Vec<String>,
-}
-
 impl ModulePreloads {
     /// Read the table from `manifest.json`'s text.
     ///
-    /// Each listed file must be one of the build's own files, a value in the
-    /// manifest's `assets`, or the table is refused: a preload carries the
+    /// Each listed file must be one of the build's own files, a key in the
+    /// manifest's `assets` keys, or the table is refused: a preload carries the
     /// page's nonce, so it may name only what the build wrote. A route's own
     /// modules (`js`), which forma-server already preloads, and repeats are
     /// left out.
     ///
     /// Verified by: crates/forma-server/tests/typed_homes.rs > "a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table"
     pub(crate) fn from_manifest_json(json: &str) -> Result<Self, String> {
-        let manifest: Manifest = serde_json::from_str(json)
-            .map_err(|e| format!("Failed to parse manifest.json: {e}"))?;
+        let manifest = crate::AssetManifest::from_json(json)?;
         let built: std::collections::HashSet<&str> =
-            manifest.assets.values().map(String::as_str).collect();
+            manifest.assets.keys().map(String::as_str).collect();
         let mut routes = HashMap::new();
         for (route, assets) in &manifest.routes {
             let mut files: Vec<String> = Vec::new();
@@ -329,11 +312,11 @@ mod tests {
 
     fn manifest_with_preloads(preloads: &[&str]) -> String {
         serde_json::json!({
-            "version": 1,
-            "build_hash": "h",
-            "assets": {"home.js": "home.A1B2C3D4.js", "chunk.X.js": "chunk.X.js"},
+            "version": 2, "writer":"3.0.0", "app":"ledger", "build":"h",
+            "aliases": {"home.js": "home.A1B2C3D4.js", "chunk.X.js": "chunk.X.js"},
+            "assets": {"home.A1B2C3D4.js":{"immutable":true}, "chunk.X.js":{"immutable":true}},
             "routes": {"/": {
-                "js": ["home.A1B2C3D4.js"],
+                "mode":"browser", "js": ["home.A1B2C3D4.js"],
                 "modulepreload": preloads,
                 "css": [], "fonts": [], "total_size_br": 0, "budget_warn_threshold": 0
             }}
@@ -370,10 +353,7 @@ mod tests {
         assert_eq!(table.route("/"), ["chunk.X.js"]);
         // A manifest that is not one fails as the manifest loader does.
         let error = ModulePreloads::from_manifest_json("{").expect_err("not JSON");
-        assert!(
-            error.starts_with("Failed to parse manifest.json"),
-            "{error}"
-        );
+        assert!(error.starts_with("manifest.json:"), "{error}");
     }
 
     #[test]

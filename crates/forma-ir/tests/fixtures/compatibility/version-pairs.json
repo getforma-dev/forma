@@ -1,0 +1,15 @@
+[
+  {"reader":"3.1.4","writer":"3.1.4","accepted":true},
+  {"reader":"3.1.4","writer":"3.1.0","accepted":true},
+  {"reader":"3.1.4","writer":"3.1.99","accepted":true},
+  {"reader":"3.1.4","writer":"3.0.9","accepted":true},
+  {"reader":"3.1.4","writer":"3.2.0","accepted":false},
+  {"reader":"3.1.4","writer":"2.1.4","accepted":false},
+  {"reader":"3.1.4","writer":"4.1.4","accepted":false},
+  {"reader":"3.1.4-dev","writer":"3.1.4-dev","accepted":true},
+  {"reader":"3.1.4","writer":"3.1.4-dev","accepted":true},
+  {"reader":"3.1.4-dev","writer":"3.1.4-alpha.1","accepted":true},
+  {"reader":"3.0.0-dev","writer":"3.0.1","accepted":true},
+  {"reader":"3.0.0-dev","writer":"3.1.0","accepted":false},
+  {"reader":"3.0.0-dev","writer":"3.0.0-dev","accepted":true}
+]
