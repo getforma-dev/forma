@@ -2,6 +2,37 @@
 
 ## [Unreleased]
 
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first pre-release of 3.0.0: milestone M2 of PLAN-merge-and-3.0.0 (FORMA-145 step 2,
+FORMA-187's M2 exit), published from this repository by the unified release workflow as one
+seven-package set. On crates.io: `forma-ir`, `forma-ir-derive` and `forma-server` 3.0.0-alpha.1
+(Cargo pre-release versions; plain requirements exclude them). On npm: `@getforma/core`,
+`@getforma/compiler`, `@getforma/build` and `@getforma/create-app` 3.0.0-alpha.1 under the
+`next` dist-tag; `latest` stays at the 2.x and 0.x lines, so `npm install` does not pick the
+alpha up (L-41). No application takes a pre-release (L-54). The GitHub Release names the
+milestone, the pending gates and every artefact's SHA-256; the release is timed against G6.
+
+This alpha carries the breaking changes listed below, the gates of the alpha in
+`scripts/release-contracts.json`: FORMA-110, 185, 112, 102, 107, 109, 111 and 144 slice 1.
+Pending before the beta (M3), not in this alpha: FORMA-103, 104, 105, 181, 182, 183, 184,
+144 slice 2, 188's fixture applications and 021's ratchet; that work is on the integration
+branch `codex/forma-upgrade-review`. N2 is restated per L-55 (D6 taken, DR-35's fallback):
+at most 25,500 B gzip of Forma code per route (26,000 if the safe cuts slip), Brotli reported
+beside it, with the core and browser-ESM package caps ratcheting to 46,500 B after the safe
+cuts C1 to C3 (naming FORMA-103 and 104). Neither the restated ceiling nor the ratcheted caps
+nor the cuts are on `main`: this alpha ships under the previous caps (core 30,000 and browser
+ESM 29,000 B gzip), which its gate passes; the restated figures arrive with the beta.
+
+Release mechanics of this pull request, beside the version script's seven manifests, three
+Cargo locks, npm lock and template seeds: core's documentation-truth test treats a pre-release
+like `-dev` (the CDN snippets, CSP history and support table keep naming the last stable
+release, 2.1.0, which is what `latest` serves); the compiler's supported-surface test computes
+the core peer from the package version (`^3.0.0 || =3.0.0-alpha.1`, the window the version
+script writes); the `forma-ir` and `forma-server` READMEs, which ship inside the crates, name
+`=3.0.0-alpha.1`. The post-release pull request returns `main` to `3.0.0-dev`.
+
+
 ### Removed — FORMA-110
 
 - Removed core's server functions, Node SSR and WASM entry points; the compiler's Vite plugins and their standalone transforms; and the WASM walker feature, build step, manifest field and server bootstrap. Browser islands continue to use `h()` and native Rust SSR remains supported.

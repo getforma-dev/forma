@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — verified production workers (FORMA-111)
+## [Unreleased]
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.3.1. Part of the seven-package set 3.0.0-alpha.1; the verified production workers (FORMA-111), manifest 2 and the start-time checks (FORMA-112) and the removals (FORMA-110) below are the alpha's gates. The per-build size report with route classes (FORMA-190) and the restated N2 ceiling (L-55: 25,500 B gzip per route) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
+
+### Verified production workers — FORMA-111
 
 - Production workers use finalized immutable manifest metadata and full SHA-384,
   including lazy chunks. Cache hits and network responses are verified before
@@ -12,7 +18,7 @@
   retirement patterns and the exact development worker bytes remain unchanged.
 
 
-## [Unreleased]
+### Earlier unreleased entries, also in this alpha
 
 ### Changed — FORMA-112
 

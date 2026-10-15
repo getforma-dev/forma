@@ -170,7 +170,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir"
-version = "3.0.0-dev"
+version = "3.0.0-alpha.1"
 dependencies = [
  "forma-ir-derive",
  "serde_json",
@@ -179,7 +179,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir-derive"
-version = "3.0.0-dev"
+version = "3.0.0-alpha.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -188,7 +188,7 @@ dependencies = [
 
 [[package]]
 name = "forma-server"
-version = "3.0.0-dev"
+version = "3.0.0-alpha.1"
 dependencies = [
  "axum",
  "base64",
