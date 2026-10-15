@@ -63,3 +63,48 @@ After integrating the reviewed corrections and the server fixture port fix, the
 full repository gate passed in 127 seconds. Generated browser bundles were saved
 in local evidence and restored; they are reproducible test outputs, not source
 changes for this release-workflow PR. Final-head hosted CI is checked separately.
+
+## FMIR v3 development integration (FORMA-185)
+
+The source set at `f7d99761ff6fe6e9e76528c09cfd8ced92ced914` packs all seven
+`3.0.0-dev` artifacts without publishing. `v3-development-set.json` records their
+hashes and the actual v3-development contract. The source templates retain A2 pins.
+
+Three reports are preserved, all with `passed: false`:
+
+- `v3-development-p17-initial.json`: packed crate advisories, isolated CLI install
+  and the packed v3 corpus passed; npm signature audit then queried an unpublished
+  exact internal dependency and failed with ETARGET.
+- `v3-development-p17-projection-guard.json`: the audit-copy graph check caught
+  candidate devDependencies becoming active workspace edges. Only that inactive
+  development metadata is now omitted from candidate audit copies.
+- `v3-development-p17.json`: the corrected verifier authenticated the three local
+  candidate archives and audited all 24 installed minimal-template registry package
+  locations, plus the packed CLI's three registry dependencies. It records their
+  exact versions, locations, URLs and integrity values. The packed v3 writer triple,
+  canonical dumps and all ten Rust corpus tests passed; the minimal frontend built.
+  Cargo then correctly refused the A2 template requirements against v3 candidates
+  with `--locked`. FORMA-144 owns that migration. Full template acceptance, browser
+  interaction and corrupt-template-module checks are not claimed for this v3 run.
+
+The final report uses the signature-projection verifier introduced by this change
+to replay the already packed f7d9976 artifacts; it is not a claim that the artifact
+source and verifier were the same revision. No source template file was changed.
+
+The Codex lead independently ran the real npm signature verifier against a bounded
+local HTTP registry. `v3-development-signature-control.json` records that the
+unprojected unpublished candidate/peer edge fails, both external versions (root and
+nested) are audited after projection, inactive candidate devDependencies are not
+activated, and malformed ECDSA signatures still fail with EINTEGRITYSIGNATURE.
+This integration control is deliberately outside the unit-test glob because npm
+also initializes its TUF client. Reproduce it with Node24.22.0 on PATH:
+
+```sh
+node scripts/controls/release-signatures.mjs scripts/audit-release-signatures.mjs /absolute/path/to/control-result.json
+```
+
+Ordinary release-helper tests use injected audit responses only for structural and
+error-propagation checks; the independent control above uses actual npm cryptographic
+verification. Local logs and original reports remain in `work/FORMA-185/` and
+`work/review-FORMA-185-production/signature-control/`. The prepublication gate remains
+closed (`liveReleaseReady: false`).
