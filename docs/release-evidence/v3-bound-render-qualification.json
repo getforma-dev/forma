@@ -60,7 +60,7 @@
     },
     "scope": "Walker refusal and end-to-end typed render are separate measurements. Checked props conversion and document assembly are not included in walker time. No total latency below 1ms is claimed."
   },
-  "independentReview": "Lead approved the public API, repairable finalization, shared registry sealing, typed extension points, immutable reload snapshots, combined topology refusal controls and source staging. A bounded independent concurrency test was incorporated. Final package authentication and exact-head hosted CI remain separate merge gates.",
+  "independentReview": "Lead approved the public API, repairable finalization, shared registry sealing, typed extension points, immutable reload snapshots, combined topology refusal controls and source staging. A bounded independent concurrency test was incorporated. The lead independently authenticated the final seven archive hashes and VCS source, three internal crate checksum edges, ten restored template files and all 22 P17 results, including both enforced Trusted Types templates. Exact-head hosted CI remains a separate merge gate.",
   "scope": "Only normal implementation and existing or narrow functional controls. No application tree, tag or registry publication changed. Source A2 templates are unchanged; the hash-authenticated candidate-only adapter is temporary until FORMA-144. FORMA-103 activation and remaining FORMA-185/188/191 qualification are separate.",
   "generatedFixtures": "Two historically stale e2e JS bundles were saved outside the checkout after the full gate and restored to committed bytes; current built runtime artifacts were consumed by tests.",
   "preservedAttempts": [
@@ -82,5 +82,14 @@
     "typed-pages-final-portability.log": "f4e10c994f6e8f376a3be22aad6b0544c3cdccce6ad4847cb9b2c0dea5270908",
     "pack-107-acceptance.log": "ecdaaf5072d7a4c77f83dcfc387b3a78f9659c8cb502d56c76a807893dc31496",
     "p17-107-acceptance.log": "6b442554a1034a5881fd20df85bb0b4f42bb50f14ef84e31a79876ea964a13e5"
+  },
+  "evidenceAncestry": {
+    "artifactSource": "858666fcfde5476c48fe997d3bcf48e805bc2078",
+    "integratedDependencyEvidence": [
+      "c5ac4fc8bec271a364a715bad1b4889346380fe7",
+      "3e6a3c4c50f284438cf1f96cdb854e4726363614"
+    ],
+    "verifiedThrough": "c84a1cebdb0c8baf755192ad6ab6a773b9481d2c",
+    "delta": "Only docs/release-evidence files differ from the artifact source; no packed production source changed."
   }
 }
