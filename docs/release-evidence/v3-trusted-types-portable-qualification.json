@@ -14,7 +14,7 @@
     },
     "priorFailureLog": "ci-38678153954-windows-rust.log"
   },
-  "priorQualification": "v3-trusted-types-qualification.json records the complete159-second gate and all109 native/browser/type/size checks; no109 production behavior changed in this follow-up.",
+  "priorQualification": "v3-trusted-types-qualification.json records the complete 159-second gate and all FORMA-109 native/browser/type/size checks; no FORMA-109 production behavior changed in this follow-up.",
   "packed": {
     "passed": true,
     "tests": 22,

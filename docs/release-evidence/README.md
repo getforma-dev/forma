@@ -299,20 +299,20 @@ contracts and measurements are still separate; liveReleaseReady remains false.
 
 ## Portable date boundary follow-up
 
-The current109 artifacts are `v3-trusted-types-portable-set.json` from
-`2110f01b745b2caea767b277fad39c486fce7aad`. All22 P17 checks pass in59.826
+The current FORMA-109 artifacts are `v3-trusted-types-portable-set.json` from
+`2110f01b745b2caea767b277fad39c486fce7aad`. All 22 P17 checks pass in 59.826
 seconds, both templates retain enforced policies with native Trusted Types and
 zero CSP events/page errors, and all ten source template files restore exactly.
-The original1c032095 artifacts and reports above remain unchanged.
+The original 1c032095 artifacts and reports above remain unchanged.
 
 Windows cannot represent the original typed Pages test's out-of-range SystemTime,
-so its fixture panicked before testing the renderer. The shared102 follow-up
+so its fixture panicked before testing the renderer. The shared FORMA-102 follow-up
 extracts the existing conversion into a private duration helper and tests both
 signed numeric boundaries directly on every platform; representable SystemTime
 cases retain the public-path tests. The lead reviewed the behavior-preserving
 change, and the local private conversion and seven typed Pages controls passed.
 Because crate source changed, all seven artifacts and their actual packed tests
 were rebuilt. `v3-trusted-types-portable-qualification.json` links the earlier
-full109 qualification and preserves the new source, hashes and Windows failure
+full FORMA-109 qualification and preserves the new source, hashes and Windows failure
 log. Later dependency evidence/documentation commits do not change these packed
 production bytes; final-head hosted CI remains required separately.
