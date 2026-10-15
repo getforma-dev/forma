@@ -219,7 +219,10 @@ fn static_ssr_refuses_a_stale_preload_table_even_when_the_asset_is_retained() {
     let preloads = assets::try_load_module_preloads::<Files>().unwrap();
     assert_eq!(preloads.route("/"), ["chunk.js"]);
     let mut manifest = install(false, false, false);
-    manifest.assets.get_mut("chunk.js").unwrap().retained = true;
+    let chunk = manifest.assets.get_mut("chunk.js").unwrap();
+    // A retained file is immutable (FORMA-186: the manifest refuses one that is not).
+    chunk.retained = true;
+    chunk.immutable = true;
     // Retention is valid metadata, not permission for a static route to fetch JS.
     manifest.validate().unwrap();
     let error = page(&manifest)
