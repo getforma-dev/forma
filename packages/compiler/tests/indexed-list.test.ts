@@ -121,3 +121,19 @@ it('retains a synchronous indexed row helper', () => {
  const source=page().replace('function Page', "function Row(){return h('li',null,'row');}function Page").replace("item=>h('li',null,()=>item().label)", 'item=>Row()');
  expect(emit(source).failure).toBeUndefined();
 });
+
+it.each([
+ "const unused=createKeyedRows([{id:'a'},{id:'a'}],row=>row.id);",
+ "createKeyedRows([{id:'a'}],row=>row.id);",
+])('refuses a module-scope original factory: %s', setup => {
+ const source=imports+setup+"function Page(){return h('main',null,'page');}mount(Page,'#app');";
+ expect(emit(source).failure).toMatchObject({code:'BUILD-622'});
+});
+it('does not confuse an unrelated module-scope helper with the original factory',()=>{
+ const source="import {h,mount} from '@getforma/core';function createKeyedRows(){return 1;}const unused=createKeyedRows();function Page(){return h('main',null,'page');}mount(Page,'#app');";
+ expect(emit(source).failure).toBeUndefined();
+});
+it('leaves an ordinary Browser-only module without a native page alone',()=>{
+ const source=imports.replace('h,mount,','h,')+"const unused=createKeyedRows([{id:'a'},{id:'a'}],row=>row.id);document.body.appendChild(h('main',null,'browser'));";
+ const result=emit(source);expect(result.failure).toBeUndefined();expect(result.result).toBeNull();
+});

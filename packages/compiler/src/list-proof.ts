@@ -329,7 +329,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    const contains=(node:t.Node)=>!!node.loc&&(node.loc.start.line<at.line||node.loc.start.line===at.line&&node.loc.start.column<=column)&&(node.loc.end.line>at.line||node.loc.end.line===at.line&&node.loc.end.column>=column);
    const target=[...mod.functions.values()].filter(contains).sort((a,b)=>b.start!-a.start!)[0];
    if(!target)return;
-   for(const [node,path] of mod.paths)if(t.isCallExpression(node)&&core(mod,node.callee)==='createKeyedRows'&&path.getFunctionParent()?.node===target)validateFactory(mod,node);
+   for(const [node,path] of mod.paths)if(t.isCallExpression(node)&&core(mod,node.callee)==='createKeyedRows'&&(!path.getFunctionParent()||path.getFunctionParent()?.node===target))validateFactory(mod,node);
   },
   original(file:string,source:string,node:t.CallExpression):ListSite {
    const mod=module(file,source),path=mod.calls.find(path=>path.node.start===node.start&&path.node.end===node.end);
