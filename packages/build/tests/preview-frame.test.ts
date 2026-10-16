@@ -319,7 +319,7 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
     const error = await refusal({ ...config, previewFrame: true });
     expect(error.message).toMatch(/^@getforma\/build: BUILD-806 /);
     expect(error.message).toMatch(reason);
-    expect(error.message).toContain('https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md');
+    expect(error.message).toContain('https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md');
     // The core as esbuild found it: its real path.
     expect(error.diagnostics![0]).toMatchObject({ code: 'BUILD-806', severity: 'error', file: realpathSync(frameFile) });
     expect(snapshot(dist)).toEqual(good);

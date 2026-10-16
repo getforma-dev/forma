@@ -5,7 +5,6 @@ import { execFileSync } from 'node:child_process';
 import { IrEmitContext, type SchemaType, type PropsSchema } from '../src/ir-emit';
 import { baseWriterVersion, COMPILER_WRITER_VERSION, crc32, dumpFmir, encodeFmirSections, readFmirContainer } from '../src/fmir';
 import * as C from '../src/fmir-constants';
-import { generatePlaceholderIr } from '../src/esbuild-ssr-plugin';
 
 const root = resolve(__dirname, '../../..');
 const fixtures = resolve(root, 'crates/forma-ir/tests/fixtures/fmir-v3');
@@ -143,12 +142,12 @@ describe('FMIR v3 wire contract', () => {
     }
     expect(encodeFmirSections(decoded)).toEqual(bytes);
   });
-  it('roundtrips every valid spec fixture and emits a required empty page schema for placeholders', () => {
+  it('roundtrips every valid spec fixture and emits a required empty schema for a bare encoder', () => {
     for (const name of readdirSync(fixtures).filter(name => name.startsWith('PASS-'))) {
       const bytes = fixture(name), module = readFmirContainer(bytes);
       expect(encodeFmirSections(module.sections, module.writer), name).toEqual(bytes);
     }
-    const module = readFmirContainer(generatePlaceholderIr('page'));
+    const module = readFmirContainer(new IrEmitContext().toBinary());
     expect(module.sections.map(s => [s.id, s.flags])).toEqual([[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [10, 1]]);
     expect([...module.sections[4]!.bytes]).toEqual([1, 0, 0, 0]);
     expect(() => new IrEmitContext().toBinary()).not.toThrow();

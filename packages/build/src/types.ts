@@ -105,16 +105,9 @@ export interface BuildConfig {
   /** Files that should keep unhashed copies (e.g. for server-inlined assets).
    * A zero-JS SSR owner cannot request executable server inlining. */
   serverInlined?: string[];
-  /**
-   * Fail the build on every coded SSR diagnostic but a note (FORMA-119,
-   * DR-1): each construct the compiler cannot represent, with its code, file,
-   * line and column, all reported at once. Off by default, where they stay
-   * warnings. When unset, `FORMA_STRICT=1` in the environment turns it on; the
-   * build reads no command-line flag, so a build script that takes `--strict`
-   * maps it here, as it does `--ssr` and `--watch`. Needs
-   * `@getforma/compiler` 0.3.7 or later. In watch mode a page with an error
-   * keeps its last good module.
-   */
+  /** Legacy compatibility option. SSR publication always requires the 3.0
+   * server-renderable subset. False and FORMA_STRICT=0 cannot downgrade errors.
+   * Every page is checked; watch retains its previous good product on failure. */
   strict?: boolean;
   /**
    * Also write every SSR diagnostic as JSON to this path (relative to the
@@ -179,12 +172,12 @@ export interface BuildDiagnosticChainLink {
 
 /**
  * One coded SSR diagnostic (FORMA-119). The catalogue, one entry per code
- * with its fix, is forma-tools' `docs/DIAGNOSTICS.md`.
+ * with its fix, is `packages/compiler/docs/subset.md`.
  */
 export interface BuildDiagnostic {
   /** The stable code, e.g. `BUILD-101`. */
   code: string;
-  /** `error` under `--strict`, `warning` without it; `note` never fails a build. */
+  /** Unsupported SSR constructs are always `error`; `note` never fails a build. */
   severity: 'error' | 'warning' | 'note';
   /** The page (entry outfile without `.js`) whose module reported it. */
   page: string;

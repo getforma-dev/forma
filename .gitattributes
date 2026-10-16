@@ -71,3 +71,10 @@ docs/archive/2026-10-15-pre-key-adoption/** -text
 docs/archive/2026-10-15-pre-attribute-values/** -text
 
 docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
+
+# FORMA-101: authenticated historical sources/products and live migration ledgers.
+docs/archive/FORMA-101-* -text
+docs/archive/FORMA-101-*/** -text
+packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/*.ts text eol=lf
+packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/*.ts text eol=lf
+packages/compiler/tests/attribute-values-archive.test.ts text eol=lf

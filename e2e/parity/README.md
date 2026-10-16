@@ -184,7 +184,7 @@ report is `expected-divergent` only when every difference in it is matched. The 
 skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
 run as an unexpected pass, so the entry is removed the day its fix lands.
 
-The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
+The recorded findings (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
@@ -195,12 +195,17 @@ The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found 
 | F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | FORMA-016: core's `createShow` takes a string or number branch as a text node |
 | F6 | `aggregate-fallback`: a keyed row whose string key holds CR or NUL; the walker writes the rule-1 key text, core's adoption compares the raw key (`String(key)`) and refuses the island | P2 mutation and activation error | FORMA-181, checkpoint C (adoption by `canonicalKeyText`) |
 
-F4 can never become equal: the server has no value to write. In warning mode the compiler reports
-BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
-(`docs/DIAGNOSTICS.md`; DR-1's release-A bridge). DR-1 makes strict the only mode in release B
-(3.0.0, FORMA-101), where BUILD-206 is a build error. The difference then ends because the page no
-longer compiles, not because the trees agree; the corpus fixture has to move the attribute behind
-`browserOnly()` or drop it, and the entry fails the run as an unexpected pass.
+F1, F2, F3 and F6 are resolved by the integrated list-source, attribute-value and
+keyed-adoption changes. F4's original unknown getter is preserved byte-exact in
+[the strict corpus archive](../../docs/archive/FORMA-101-strict-corpus/README.md)
+and tested as a source-located BUILD-206 publication refusal even with
+`strict:false`. The admitted live page uses a closed `createSignal('/docs')`;
+the real compiler/native renderer and browser now agree on its actual href.
+The preceding run proved the old F4 entry an unexpected pass before its removal.
+The duplicate-name scopes original similarly remains a BUILD-503 refusal, while
+the live page uses `panelCount` and preserves its actual defaults. Corpus emission
+requires zero error diagnostics. F5 remains in `expected-divergent.json` pending
+the separate text-branch fix; it is still executed and must still diverge.
 
 ## The corpus and its ratchet
 

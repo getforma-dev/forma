@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "b0376441aff2187290ce37d751f66b098e7b5f72",
+  "sha256": {
+    "packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/app.ts": {
+      "bytes": 524,
+      "sha256": "6d93ab99a201653a49c3d009b1915385991cba67fb491579dd6265d6f136bed8"
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/page.ts": {
+      "bytes": 1986,
+      "sha256": "5b475323020e8ac206492304bface444ecc573fd956eaad2cb66f51162cd0d42"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.ir": {
+      "bytes": 700,
+      "sha256": "ce269a921cec1c11cff90687d90756f0aebbb8146b09dc08538a7ae1dcdf5405"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.dump": {
+      "bytes": 1565,
+      "sha256": "0e1975a03912bcb17769d29616f14ab6ff65497cd95b3a314146d8ed48385933"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.html": {
+      "bytes": 1284,
+      "sha256": "95de660efb9524f64d486f5859da6588fc96bcfb52ee3d70f9f933291d4bfdbd"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.state.json": {
+      "bytes": 242,
+      "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/panel.ts": {
+      "bytes": 1499,
+      "sha256": "114b2e76db602a05133da67cf95f0ea9936dfd71fd092bfc3499d0a418db5ac9"
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/app.ts": {
+      "bytes": 1572,
+      "sha256": "e47a0080cb935e9b3ee723ad8c3453129669c8b1ab2c42a9affff7b726ea9bae"
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/page.ts": {
+      "bytes": 1742,
+      "sha256": "09f14ccdad80ba041806c6377c8a91d461561332fe3bd883f87957782a30278d"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.ir": {
+      "bytes": 675,
+      "sha256": "2e5aece32db10165fc66895a1baf4456d827eebc690a30fc3fc9732bb37bd668"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.dump": {
+      "bytes": 1515,
+      "sha256": "2e6f73af875990f0c8b8724c5145ffa0e6a81a4a5b75a911126ce0efe3503dd9"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.html": {
+      "bytes": 1548,
+      "sha256": "8a7e6933f4f65de0f728a1ec5e2e4285c7910cc7c2e5541bef817c5d38a721d4"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.state.json": {
+      "bytes": 242,
+      "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+    },
+    "packages/compiler/tests/attribute-values-archive.test.ts": {
+      "bytes": 2600,
+      "sha256": "56e3f50ff22f01ca70ffb660748f82fd72240a1c29a9c2de461a9341ea97d499"
+    }
+  }
+}

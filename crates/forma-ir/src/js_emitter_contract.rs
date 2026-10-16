@@ -517,6 +517,22 @@ fn closed_list_defaults_render_real_rows_in_both_projections() {
     assert!(html.contains("grace"));
 }
 
+/// The strict near misses keep the meaningful values, not merely valid bytes.
+#[test]
+fn strict_corpus_near_misses_render_their_real_defaults() {
+    let attributes = parse_case("dynamic-attrs");
+    let html = walk_to_html(&attributes, &default_slots(&attributes)).unwrap();
+    assert!(html.contains("href=\"/docs\""));
+    assert!(html.contains(" value>") || html.contains(" value=\"\""));
+
+    let scopes = parse_case("sub-component-scopes");
+    let html = walk_to_html(&scopes, &default_slots(&scopes)).unwrap();
+    assert!(html.contains("panel is-open"));
+    assert!(html.contains(">THEN</p>"));
+    assert!(html.contains("-->7<!--"));
+    assert!(html.contains("data-ready=\"true\""));
+}
+
 #[test]
 fn every_island_entry_walks_as_a_fragment() {
     let mut islands_seen = 0usize;

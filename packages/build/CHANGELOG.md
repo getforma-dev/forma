@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Mandatory SSR admission — FORMA-101
+
+- Default SSR, legacy false flags and direct compiler builds all refuse unsupported native constructs. Complete per-entry diagnostic reports use error severity; failed production and watch cycles preserve the prior product. The published subset and catalogue live at `packages/compiler/docs/subset.md`.
+
 ### N2 is 27,500 B (L-58)
 
 - The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is

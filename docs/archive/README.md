@@ -150,3 +150,6 @@ carry actual archive checksums. Island adoption remains a later slice.
 - [Signal defaults before explicit closed constants](2026-10-15-state-signal-defaults/README.md): original array/object warning and handler-injection advice, replaced by FORMA-103 native constant provenance.
 
 - [Boolean attribute review originals](2026-10-15-boolean-attribute-review/README.md): FORMA-182 native/core tests before scalar-presence correction, authenticated at b5f1905.
+- [FORMA-101 strict subset migration](FORMA-101-strict-subset/README.md): original warning-only/placeholder guides, tests and list-source evidence; replaced by mandatory native admission and explicit select ownership.
+
+- [FORMA-101 strict corpus originals](FORMA-101-strict-corpus/README.md): exact BUILD-206 unknown-getter and BUILD-503 duplicate-name pages with their pre-migration native products; executable publication refusals remain beside the admitted corpus.
