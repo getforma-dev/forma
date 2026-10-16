@@ -14,6 +14,7 @@ export interface SplitGraph {
  * both static and dynamic imports; preserve this graph as one immutable unit. */
 export function splitGraph(meta: Metafile, entries: BuildEntry[], outputDir: string,
   browserEntries: ReadonlySet<string> = new Set(entries.map(entry => entry.outfile)),
+  entryIdentities: ReadonlyMap<string,string> = new Map(),
 ): SplitGraph {
   const assets: Record<string, string> = {};
   const files = new Set<string>();
@@ -22,7 +23,9 @@ export function splitGraph(meta: Metafile, entries: BuildEntry[], outputDir: str
   for (const [path, output] of outputs) {
     if (resolve(outputDir, output.file) !== path) throw new Error('Split build emitted a nested output; the manifest requires flat asset filenames.');
     if (!output.value.entryPoint || !output.file.endsWith('.js')) continue;
-    const entry = entries.find(candidate => realpathSync(candidate.entry) === realpathSync(resolve(output.value.entryPoint!))
+    const entry = entries.find(candidate => (entryIdentities.has(candidate.outfile)
+      ? entryIdentities.get(candidate.outfile) === output.value.entryPoint
+      : !output.value.entryPoint!.startsWith('forma-browser-entry:') && realpathSync(candidate.entry) === realpathSync(resolve(output.value.entryPoint!)))
       && (output.file === candidate.outfile || output.file.startsWith(`${basename(candidate.outfile, '.js')}.`)));
     if (entry) entryOutputs.set(entry.outfile, path);
   }
