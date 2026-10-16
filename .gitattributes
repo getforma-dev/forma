@@ -194,3 +194,6 @@ docs/archive/FORMA-108-guide-residue/** -text
 # Original nested P17 failure and actual files-only transfer qualification.
 docs/archive/p17-nested-evidence/** -text
 docs/evidence/p17-nested-evidence/** -text
+
+# Exact pre-repair Node policy sources and hosted warning evidence.
+docs/archive/forma-maintenance-node-pin/** -text

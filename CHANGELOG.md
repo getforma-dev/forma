@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- Maintenance CI, release browser checks and nightly qualification now use the declared Node build pin. Parsed policy controls reject maintenance selector and private engine drift while retaining the published packages’ dated compatibility matrix.
+
 - Authenticate the complete nested P17 evidence tree with a dedicated manifest, preserving the flat DS11 artifact contract. Run the existing packed deployment drill before mandatory performance checks so a measurement failure retains all earlier functional results.
 
 - Watch tests wait for every initial nonsplit entry context before editing files, preventing another context's initial build from satisfying the requested rebuild. A real three-entry barrier control preserves the failure; watch deadlines and production behavior are unchanged.

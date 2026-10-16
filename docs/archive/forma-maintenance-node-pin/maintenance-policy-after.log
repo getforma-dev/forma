@@ -1,0 +1,28 @@
+✔ actual release workflow retains failed P17 bytes without changing publish success dependencies (98.915333ms)
+✔ release evidence refuses missing failure retention (95.736417ms)
+✔ release evidence refuses failure-only upload loses successful proof (101.100542ms)
+✔ release evidence refuses different evidence path (117.400208ms)
+✔ release evidence refuses different artifact name (98.084458ms)
+✔ release evidence refuses missing-file warning (97.121667ms)
+✔ release evidence refuses unpinned evidence action (100.849167ms)
+✔ release evidence refuses upload before P17 (100.591542ms)
+✔ release evidence refuses duplicate evidence upload (102.528375ms)
+✔ release evidence refuses ignored P17 failure (95.676ms)
+✔ release evidence refuses ignored verify failure (92.916792ms)
+✔ release evidence refuses success record runs after failure (92.974ms)
+✔ release evidence refuses P17 condition skips verification (97.00425ms)
+✔ release evidence refuses P17 shell swallows failure (104.409833ms)
+✔ release evidence refuses record replaces proof hash (113.442083ms)
+✔ release evidence refuses publisher ignores failed needs (100.365ms)
+✔ release evidence refuses publisher drops verify dependency (97.638167ms)
+✔ N8 adds Node 26 at its exact UTC boundary, with no unsupported older line (1.785834ms)
+✔ actual workflow and manifests agree; seeded claim, matrix and execution drift fail (1201.082625ms)
+✔ maintenance pin drift refuses without replacing published compatibility lines (2487.248959ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3742.445
