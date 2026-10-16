@@ -194,8 +194,8 @@ export const BOOLEAN_ATTRS: ReadonlySet<string> = new Set([
 
 // ---------------------------------------------------------------------------
 // Element prototype cache. Rationale, not a measurement: one detached element
-// per common tag is created on first use, and every later h('div') shallow-
-// clones it instead of going back through createElement's tag-name validation.
+// is created when its HTML tag is first requested, and every h() for that tag
+// shallow-clones it instead of calling createElement again.
 // (An earlier version of this comment asserted "cloneNode is a C++ memcpy" and
 // that it is "faster than createElement" — engine internals nobody here has
 // benchmarked. The behaviour that IS load-bearing is that a clone is a fresh,
@@ -207,16 +207,6 @@ let ELEMENT_PROTOS: Record<string, HTMLElement> | null = null;
 function getProto(tag: string): HTMLElement {
   if (!ELEMENT_PROTOS) {
     ELEMENT_PROTOS = Object.create(null);
-    // Pre-create prototypes for the 30 most common HTML tags
-    for (const t of [
-      'div', 'span', 'p', 'a', 'li', 'ul', 'ol', 'button', 'input',
-      'label', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'section', 'header',
-      'footer', 'main', 'nav', 'table', 'tr', 'td', 'th', 'tbody',
-      'img', 'form', 'select', 'option', 'textarea', 'i', 'b', 'strong',
-      'em', 'small', 'article', 'aside', 'details', 'summary',
-    ]) {
-      ELEMENT_PROTOS![t] = document.createElement(t);
-    }
   }
   return ELEMENT_PROTOS![tag] ?? (ELEMENT_PROTOS![tag] = document.createElement(tag));
 }
@@ -1019,9 +1009,8 @@ export function h(
     return { type: 'element', tag: tagName, props: props ?? null, children } as unknown as HTMLElement;
   }
 
-  // "Flexible Wings" exploit: for HTML elements, clone a pre-created prototype
-  // instead of calling createElement. cloneNode(false) is a single C++ memcpy
-  // that copies the element's internal state without parsing the tag string.
+  // HTML elements shallow-clone a cached, detached prototype. The cache is
+  // populated only for requested tags; no engine-specific speed is assumed.
   // Skip the SVG Set lookup entirely when the tag is in the proto cache (hot path).
   let el: Element;
   // A dual-use tag (a, title, script, style, font) is checked before the proto
