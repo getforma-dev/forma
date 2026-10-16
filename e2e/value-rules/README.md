@@ -97,4 +97,8 @@ rule-1 comparisons when a per-batch native subprocess waited indefinitely for
 stdin EOF. Its partial report remains `passed:false`; a process sample and
 logs are preserved in the release work evidence. Independent review also
 required the explicit adoption-liveness/no-op controls above. This partial
-attempt is not a full qualification; the final harness requires a new run.
+attempt is not a full qualification; the repaired full run is recorded below.
+
+The repaired full qualification on clean `9dbf7c13283ac3d66cfda4731125a5a6958db96f` passed seven million admitted
+comparisons plus 123,118 expected refusals in 1184.333s. See the
+[exact report and evidence](../../docs/release-evidence/value-rules-qualification.md).
