@@ -181,8 +181,10 @@ describe('list adoption row-count check', () => {
     });
     warn.mockRestore();
 
-    // Keyed count mismatches retain the specific count refusal before row walking.
-    expect(received).toEqual([[CODE, 'hydration']]);
+    // Keyed rows are matched by key (FORMA-181 checkpoint C): a key on one side only is
+    // FORMA_E_HYDRATE_KEY before any row is walked. FORMA-123's count check stays the
+    // diagnostic for unkeyed rows (original in docs/archive/2026-10-15-pre-key-adoption/).
+    expect(received).toEqual([['FORMA_E_HYDRATE_KEY', 'hydration']]);
     expect(document.querySelector('[data-forma-island="0"]')!.getAttribute('data-forma-status')).toBe('error');
     const now = Array.from(document.querySelectorAll('li'));
     expect(now).toEqual([a, b, c]);
