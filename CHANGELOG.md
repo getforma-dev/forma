@@ -10,6 +10,13 @@
 
 ## [Unreleased]
 
+- L63 records mobile startup target misses explicitly. Fresh twenty-run routes
+  require per-run maximum-task p95 at most75ms and no application/unattributed
+  task above100ms, retaining the50ms target, response and whole-page TBT gates.
+  Only same-trace proved pre-application browser layout is attributed separately;
+  all raw tasks and compressed traces remain authenticated in bounded DS12 evidence.
+
+
 - Update the workspace browser runner to Playwright 1.64.1, whose official Firefox transport assigns a unique channel identity after COOP browsing-context replacement. Preserve the deployment drill's response headers, navigation assertions and timeouts; the dashboard template keeps its existing separate 1.64.1 lock.
 
 - Maintenance CI, release browser checks and nightly qualification now use the declared Node build pin. Parsed policy controls reject maintenance selector and private engine drift while retaining the published packages’ dated compatibility matrix.

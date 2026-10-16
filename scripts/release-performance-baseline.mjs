@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {SEMVER, NPM, CRATES} from './release-set.mjs';
+import {RELEASE_RECORD_MAX_BYTES,readBoundedBody} from './release-record-limits.mjs';
 
 import {PERFORMANCE_CONTRACT} from './release-performance-spec.mjs';
 export {PERFORMANCE_CONTRACT,N1_SHAPES} from './release-performance-spec.mjs';
@@ -106,8 +107,8 @@ export async function readPerformanceBaseline({currentTag, before, token=process
   assert.equal(assets?.length, 1, 'DS12: previous release has no unique record asset');
   const asset=assets[0];
   assert(/^sha256:[a-f0-9]{64}$/.test(asset.digest), 'DS12: GitHub asset has no SHA-256 digest');
-  assert(Number.isInteger(asset.size) && asset.size>0 && asset.size<=32*1024*1024, 'DS12: invalid record size');
-  const bytes = Buffer.from(await (await request(asset.url, 'application/octet-stream')).arrayBuffer());
+  assert(Number.isInteger(asset.size) && asset.size>0 && asset.size<=RELEASE_RECORD_MAX_BYTES, 'DS12: invalid record size');
+  const bytes = await readBoundedBody(await request(asset.url, 'application/octet-stream'), RELEASE_RECORD_MAX_BYTES);
   assert.equal(bytes.length, asset.size, 'DS12: asset length differs');
   const digest=sha256(bytes);
   assert.equal(`sha256:${digest}`, asset.digest, 'DS12: asset digest differs');

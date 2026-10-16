@@ -12,7 +12,7 @@ import {arch,cpus,platform,release,tmpdir,totalmem} from 'node:os';
 const sha = value => createHash('sha256').update(value).digest('hex');
 const LIMIT = 1_048_576;
 // L-61: 12ms describes raw JSON.parse; complete public decoding must stay
-// within 30ms for every measured sample. N3's separate whole-task 50ms gate stays.
+// within 30ms for every measured sample. N3's separate startup policy and 50ms target stay independently recorded.
 export const DECODER_PROFILE = Object.freeze({
   browser: 'chromium', cpuSlowdown: 4, warmupsPerShape: 5, samplesPerShape: 40,
   stateBytes: LIMIT, maxSampleMs: 30, freshDocumentPerSample: true,

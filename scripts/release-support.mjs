@@ -1,12 +1,14 @@
 // FORMA-189: pure release-record validation, recall plan and support arithmetic.
 // Reading this module never accesses a credential, network or registry.
 import assert from 'node:assert/strict';
+import {RELEASE_RECORD_MAX_BYTES} from './release-record-limits.mjs';
 import { createHash } from 'node:crypto';
 import { assertReleaseSet, CRATES, NPM } from './release-set.mjs';
 
 const identities = [...NPM.map(name => `npm:@getforma/${name}`), ...CRATES.map(name => `crates:${name}`)].sort();
 const unifiedTag = /^v(?:[3-9]|[1-9]\d+)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?$/;
 export function readRecordedSet(bytes, expectedSha256) {
+  assert(bytes.byteLength > 0 && bytes.byteLength <= RELEASE_RECORD_MAX_BYTES, 'DS12 invalid record byte size');
   assert.match(expectedSha256 ?? '', /^[a-f0-9]{64}$/, 'a trusted release-record SHA-256 is required');
   assert.equal(createHash('sha256').update(bytes).digest('hex'), expectedSha256, 'release-record checksum mismatch');
   const record = JSON.parse(bytes);

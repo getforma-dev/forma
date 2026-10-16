@@ -1,0 +1,29 @@
+{
+  "node": "24.22.0",
+  "finite": {
+    "argv": [
+      "node",
+      "--test",
+      "--test-concurrency=2",
+      "scripts/release-performance-attribution.test.mjs",
+      "scripts/release-record-limits.test.mjs",
+      "scripts/release-record-download.test.mjs",
+      "scripts/release-performance-mobile-phases.test.mjs",
+      "scripts/release-performance-contract.test.mjs",
+      "scripts/release-performance-evidence.test.mjs",
+      "scripts/release-performance-baseline.test.mjs",
+      "scripts/release-support-history.test.mjs",
+      "scripts/release-support.test.mjs",
+      "scripts/release-performance-journal.test.mjs",
+      "scripts/release-performance-durability.test.mjs",
+      "scripts/release-performance-child-evidence.test.mjs",
+      "scripts/release-performance-finalization.test.mjs",
+      "scripts/release-record.test.mjs"
+    ],
+    "exitCode": 0,
+    "tests": 58,
+    "skips": 0,
+    "durationMs": 1457.317042
+  },
+  "scope": "No fresh browser, runtime build, or timing campaign. The retained trace check is diagnostic source validation only."
+}

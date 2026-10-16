@@ -1,0 +1,246 @@
+{
+  "base": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "acceptance": false,
+  "reason": "Source and finite checks only; new actual110ms control and fresh20runs per route are pending.",
+  "source": [
+    {
+      "file": ".gitattributes",
+      "bytes": 11464,
+      "sha256": "53ea13e5a1f2cf03b3f98ae9cab3e2b5447a97da33df9c88769e791813c9aff7"
+    },
+    {
+      "file": "CHANGELOG.md",
+      "bytes": 52493,
+      "sha256": "39ba0c93f7ae01e75f34e01d40619f01368cf313202ccf234aed066564ee8bf5"
+    },
+    {
+      "file": "docs/RELEASING.md",
+      "bytes": 22393,
+      "sha256": "4730f2c49a41a8f51f21869f1126a0552081a357ef715f2949d45202db195852"
+    },
+    {
+      "file": "docs/release/3.0-GATE-DISPOSITIONS.md",
+      "bytes": 7593,
+      "sha256": "2dcc4050f7791aa9d2824042a32a6b5d36a5f7c9871e13d930395fe7f279a9b8"
+    },
+    {
+      "file": "scripts/check.sh",
+      "bytes": 8904,
+      "sha256": "02c584786f4a8f6025e5993381f1411184a23d8c0a7556d1de75927a41415b76"
+    },
+    {
+      "file": "scripts/release-performance-attribution.mjs",
+      "bytes": 8232,
+      "sha256": "2666e5f68f8ccc89959438ef6f13793bc26423c3e6886f78c9fdc73b4a41c10a"
+    },
+    {
+      "file": "scripts/release-performance-attribution.test.mjs",
+      "bytes": 7559,
+      "sha256": "eff567487abe82037da04f1b6b173660c7a052dd84d1cdae4722485c0ce9030c"
+    },
+    {
+      "file": "scripts/release-performance-baseline.mjs",
+      "bytes": 7914,
+      "sha256": "db71784889ff673ba178a8ebd356915afea4f8079532fcb48d8053021527f908"
+    },
+    {
+      "file": "scripts/release-performance-contract.mjs",
+      "bytes": 15478,
+      "sha256": "e83e94e22e6f32dca7063b4c4742513ec6205bf8f1076b98b3d9f7d890e5dae8"
+    },
+    {
+      "file": "scripts/release-performance-contract.test.mjs",
+      "bytes": 4888,
+      "sha256": "65ab79364d5a7163bec2fe1ab85e26080a94845b4a1cf14f88cc4d91261e0b3f"
+    },
+    {
+      "file": "scripts/release-performance-decoder.mjs",
+      "bytes": 16243,
+      "sha256": "0c507f873cb51143ee3d17efcf0bf82236328c5ef87ef64720e48a2478bfc85e"
+    },
+    {
+      "file": "scripts/release-performance-mobile-phases.test.mjs",
+      "bytes": 2127,
+      "sha256": "3b7875a6a0f259009377b20e39ffebf67e80f8d9923470b857bf9382f7560d04"
+    },
+    {
+      "file": "scripts/release-performance-mobile.mjs",
+      "bytes": 8335,
+      "sha256": "5f470ba3c6554b3af35ae1df38a79ca5a1383f457a696f7db0873f195d6269d6"
+    },
+    {
+      "file": "scripts/release-performance-spec.mjs",
+      "bytes": 1300,
+      "sha256": "5a371e6d9f6999b7c67030ae176e3e5699534f3054a972b392f6e37af7043197"
+    },
+    {
+      "file": "scripts/release-performance-test-fixtures.mjs",
+      "bytes": 6898,
+      "sha256": "906d07c6f6c4871165242e95642ef86804bd76bfae6f2e31b6294400d95e277d"
+    },
+    {
+      "file": "scripts/release-performance-trace-fixtures.mjs",
+      "bytes": 1876,
+      "sha256": "bc348e174d7182e4b0186a778730081e40889cbf9217a68488af6fac799b563a"
+    },
+    {
+      "file": "scripts/release-performance.mjs",
+      "bytes": 8466,
+      "sha256": "97e4c3ff8f9e42aea516a6a4d889cd0044308927abb612ea042a094871a66a9c"
+    },
+    {
+      "file": "scripts/release-record-download.test.mjs",
+      "bytes": 2682,
+      "sha256": "15d9af02134e0ed4da9b23f43eab252441309a880daa91a94d98c3832338dae2"
+    },
+    {
+      "file": "scripts/release-record-limits.mjs",
+      "bytes": 1502,
+      "sha256": "fe44cddfe35f35746135b948d320011c1ff879ad7da03990ac43fe32ca5399a9"
+    },
+    {
+      "file": "scripts/release-record-limits.test.mjs",
+      "bytes": 1398,
+      "sha256": "7982782a2157a8ca4696fb8cb0288ddb185407c3948aea7742927441b6787510"
+    },
+    {
+      "file": "scripts/release-support-history.mjs",
+      "bytes": 6211,
+      "sha256": "ba554b274920f22bbbb245cc038dda71a145e67c00b25d588105c30898cab732"
+    },
+    {
+      "file": "scripts/release-support.mjs",
+      "bytes": 10204,
+      "sha256": "707d869285dbaf55486580199ffa6b0d764b585f5f4be8f56bd643fac245970f"
+    }
+  ],
+  "originals": [
+    {
+      "file": "docs/archive/forma-191-startup-policy/ORIGINALS.json",
+      "bytes": 2889,
+      "sha256": "67f213b88029b491397ac6c6e948657881f9cab9469433ab7590b06f1ee963ce"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/.gitattributes",
+      "bytes": 11295,
+      "sha256": "e9b4205d93d234ba5510fe8af18b0428341094c2d91c89ea0065f7de05e7930b"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/CHANGELOG.md",
+      "bytes": 52086,
+      "sha256": "223c9db7fb66958e9fa036d223257b2962a15bd28f94e957aeb744ca9a8410f9"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/docs/RELEASING.md",
+      "bytes": 21175,
+      "sha256": "6efcc6edeaae56445f94c1888e1c8809dfa739ae3816b24f2c56cf2a7d8f158b"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/docs/release/3.0-GATE-DISPOSITIONS.md",
+      "bytes": 6498,
+      "sha256": "cd117164e9956095469c2cc7cee85a2be3c4d22dcf8133cfa36f9bed720ea4d8"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/check.sh",
+      "bytes": 8775,
+      "sha256": "d765ac004bcf1170494b46556248c6d3a1cf7b7bd886ce37fae74ca0dc360253"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-baseline.mjs",
+      "bytes": 7802,
+      "sha256": "9e7b70ec7dfb85103cfaa921dec3b87692badcce1c8539f10c1c7c061a7c955f"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-contract.mjs",
+      "bytes": 14776,
+      "sha256": "eccc640ce266c9221f21c5307c2a8bd4e7939e56949e81b8641e933659c166e6"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-contract.test.mjs",
+      "bytes": 4872,
+      "sha256": "eb46e507f2ea9462733743a55a858383fff5ef2dc615f61f28a10e561ed32923"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-decoder.mjs",
+      "bytes": 16211,
+      "sha256": "42a3c6e74f1f2c6c32f7cff9f1b39460eb16df2af1c295d082e3c04571b2acea"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-evidence.test.mjs",
+      "bytes": 4811,
+      "sha256": "5cebe3cdce76f0e33f608847a4178938c6b26dc6b65dfdcf6c8e499941932e9c"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-mobile-phases.test.mjs",
+      "bytes": 1141,
+      "sha256": "d4a56a6311512c83a315b74b31deab3df7f81210f16e17e7ee56a63aa6eae748"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-mobile.mjs",
+      "bytes": 7697,
+      "sha256": "f6881757a2c51fc1d7b1de5695128472dfb2a209dc5abfaa2cd3e09f52d985ad"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-spec.mjs",
+      "bytes": 962,
+      "sha256": "cc7b528c3264141130dad2a277524a25a319cf7ead57d0f6c67f0241a8846e4e"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance-test-fixtures.mjs",
+      "bytes": 6984,
+      "sha256": "2f71ea4534970ff7e6aed08e5b4210e1bb4913abc208730afc6e802171545973"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-performance.mjs",
+      "bytes": 8338,
+      "sha256": "f2052a116ab57c2223af41c1f7647e56fde4afd51f0f2bed045ff2082e602613"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-support-history.mjs",
+      "bytes": 6619,
+      "sha256": "462a8183ac9e0f48415d35fc89cebf5d8e46133682472e44e66ffe3a8336ea2f"
+    },
+    {
+      "file": "docs/archive/forma-191-startup-policy/original-source/scripts/release-support.mjs",
+      "bytes": 10021,
+      "sha256": "338eb4964e2a93ca5c4213ef219426347c46e621f0d7b441b8602d1d8a4db3b2"
+    }
+  ],
+  "evidence": [
+    {
+      "file": "docs/evidence/forma-191-startup-policy/COMMANDS.json",
+      "bytes": 1080,
+      "sha256": "70c50d0c6df641a4f5ed3a520e24a653fa000a533544a7f75866c29c7db74431"
+    },
+    {
+      "file": "docs/evidence/forma-191-startup-policy/README.md",
+      "bytes": 5045,
+      "sha256": "4373a09335727c20d7d946e1b72a8b3899df3fd7099902562ee661ddb991c2ea"
+    },
+    {
+      "file": "docs/evidence/forma-191-startup-policy/final-finite.log",
+      "bytes": 5925,
+      "sha256": "550fbbd37f441b3a2812d22aa78a99e902eec669523b02c65bf59b83a3ee98fd"
+    },
+    {
+      "file": "docs/evidence/forma-191-startup-policy/first-finite.log",
+      "bytes": 4524,
+      "sha256": "c4311babbbc6c7a037ab3a91970d378a204659552c1d853e705b1b6763c7132e"
+    },
+    {
+      "file": "docs/evidence/forma-191-startup-policy/retained-trace-attribution-corrected.json",
+      "bytes": 1302,
+      "sha256": "758c22a6b6a023a6f568d1b036e9feba8e7e5defd235ac12555e6b3d86bb2c7b"
+    },
+    {
+      "file": "docs/evidence/forma-191-startup-policy/retained-trace-attribution.json",
+      "bytes": 1312,
+      "sha256": "c3768e41b9e1da0d2c061740571deeb80b7e4362e62c49c236376c6c219ecb00"
+    },
+    {
+      "file": "docs/evidence/forma-191-startup-policy/script-catchup-source.json",
+      "bytes": 3905,
+      "sha256": "221085c77dc5ddceb71579fe650d5fc79a34a2b434e00f296f21e76a75d10044"
+    }
+  ]
+}
