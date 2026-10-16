@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "originalSourceCommit": "e19aad7aa73b0eb9cbe17da4d5372075bd8dc788",
+  "originalPath": "packages/core/examples/csp/index.html",
+  "files": [
+    {
+      "path": "original-index.html",
+      "bytes": 1529,
+      "sha256": "daaf922743482ccd55db5f1930079f62abb11d560897218fbe753c6d735da01d"
+    }
+  ]
+}

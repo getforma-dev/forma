@@ -167,3 +167,6 @@ docs/archive/forma-watch-readiness/** -text
 
 # Exact dynamic fetch fixture source and authoritative integrated failure.
 docs/archive/FORMA-108-fetch-fixture/** -text
+
+# Preserve the original shipped CSP example as byte-exact qualification evidence.
+docs/archive/FORMA-108-csp-example/** -text
