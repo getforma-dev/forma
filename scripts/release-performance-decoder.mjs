@@ -3,10 +3,11 @@
 // it does not rewrite its archived results or interpret them as public timing.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {createServer} from 'node:http';
-import {join} from 'node:path';
-import {arch,cpus,platform,release,totalmem} from 'node:os';
+import {join,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {arch,cpus,platform,release,tmpdir,totalmem} from 'node:os';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const LIMIT = 1_048_576;
@@ -41,12 +42,37 @@ export function decoderPayload(fixture) {
   let value;
   if(fixture.id === 'ascii-string') value = 'x'.repeat(LIMIT - Buffer.byteLength(envelope('')));
   else {
-    value = Array.from({length:20_000},()=> 'x'.repeat(48));
-    value[value.length-1] += 'x'.repeat(LIMIT - Buffer.byteLength(envelope(value)));
+    // Two-byte and four-byte UTF-8 scalars in every string, including astral
+    // surrogate pairs. Pad by encoded bytes, not JavaScript string length.
+    value = Array.from({length:20_000},()=> 'é😀'.repeat(8));
+    const remaining = LIMIT - Buffer.byteLength(envelope(value));
+    value[value.length-1] += 'é😀'.repeat(Math.floor(remaining/6)) + 'x'.repeat(remaining%6);
   }
   const text = envelope(value);
   assert.equal(Buffer.byteLength(text),LIMIT); assert(!text.includes('<'));
   return {text,value,bytes:LIMIT,sha256:sha(text),valueSha256:sha(JSON.stringify(value))};
+}
+export async function verifyDecoderCompiler(compilerPath) {
+  const artifactPath=join(compilerPath,'dist/index.js');
+  const {generateRealIr}=await import(pathToFileURL(artifactPath).href);
+  const directory=mkdtempSync(join(tmpdir(),'forma-decoder-contract-'));
+  const fixtures=[];
+  try {
+    for(const fixture of DECODER_FIXTURES) {
+      const source=decoderSource(fixture.type),entry=join(directory,'app.ts');
+      writeFileSync(entry,source);
+      const result=generateRealIr(entry);
+      assert.equal(result?.islands.length,1,'decoder: candidate compiler did not emit the fixture');
+      const contract=result.islands[0].contract;
+      assert.equal(contract?.mode,'ssr');
+      const registration={h:contract.digest,mode:0,schema:contract.schema};
+      assert.deepEqual(registration,{h:fixture.h,mode:0,schema:fixture.schema},'decoder: candidate registration drift');
+      assert.equal(sha(result.binary),fixture.irSha256,'decoder: candidate IR drift');
+      assert.equal(sha(source),fixture.sourceSha256);
+      fixtures.push({id:fixture.id,sourceSha256:sha(source),irSha256:sha(result.binary),registration});
+    }
+    return {file:'dist/index.js',sha256:sha(readFileSync(artifactPath)),fixtures};
+  } finally {rmSync(directory,{recursive:true,force:true});}
 }
 const sortedSummary = samples => {
   const values = samples.map(s=>s.elapsedMs).sort((a,b)=>a-b);
@@ -63,6 +89,7 @@ function checkObservation(observation,payload,negative=false) {
   if(negative) {
     assert.equal(observation.elapsedMs,null,'decoder: a refused input reached the component');
     assert.equal(observation.valueSha256,null);
+    assert.equal(observation.valueLength,null);
     assert.equal(observation.consoleErrors.length,1);
     assert.match(observation.consoleErrors[0],/^\[forma\] FORMA_E_ISLAND_STATE:/);
   } else {
@@ -81,6 +108,9 @@ export function validateDecoder(report) {
   assert.equal(report.artifact?.file,'dist/forma.esm.js');
   assert(/^[a-f0-9]{64}$/.test(report.artifact.sha256));
   assert(Number.isSafeInteger(report.artifact.bytes)&&report.artifact.bytes>0);
+  assert.equal(report.compiler?.file,'dist/index.js');assert(/^[a-f0-9]{64}$/.test(report.compiler.sha256));
+  assert.deepEqual(report.compiler.fixtures,DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}})),
+    'decoder: candidate compiler regeneration evidence absent or changed');
   for(const key of ['node','platform','release','architecture','cpu']) assert(typeof report.machine?.[key]==='string'&&report.machine[key].length>0,`decoder: missing machine ${key}`);
   for(const key of ['logicalCpus','memoryBytes']) assert(Number.isSafeInteger(report.machine[key])&&report.machine[key]>0);
   assert.deepEqual(report.cases?.map(row=>row.id),DECODER_FIXTURES.map(f=>f.id));
@@ -108,6 +138,8 @@ export function validateDecoder(report) {
     assert.equal(control.payloadBytes,Buffer.byteLength(texts[index]));
     assert.equal(control.payloadSha256,sha(texts[index]));
     checkObservation(control.observation,first,true);
+    assert(control.observation.consoleErrors[0].includes(index===0?'state block exceeds one MiB':'invalid state JSON'),
+      'decoder: control failed for a different reason');
   }
   return report;
 }
@@ -115,7 +147,10 @@ export function validateDecoder(report) {
 // Return every observation even when its duration exceeds the budget. The
 // caller must persist the result before validateDecoder enforces acceptance.
 // onSample additionally lets the release owner preserve an interrupted attempt.
-export async function measurePackedDecoder({corePath,onSample=()=>{}}) {
+export async function measurePackedDecoder({corePath,compilerPath=resolve(corePath,'../compiler'),onSample=()=>{}}) {
+  // P17 supplies sibling installed packed packages. No source imports or
+  // bundling participate in the timed path; compiler proof finishes first.
+  const compiler=await verifyDecoderCompiler(compilerPath);
   const artifact=readFileSync(join(corePath,'dist/forma.esm.js'));
   const specs=DECODER_FIXTURES.map(fixture=>({...fixture,...decoderPayload(fixture)}));
   const documents=specs.map(spec=>({spec,text:spec.text}));
@@ -173,7 +208,7 @@ export async function measurePackedDecoder({corePath,onSample=()=>{}}) {
     const cpu=cpus();
     const report={schema:1,pilot:false,profile:{...DECODER_PROFILE},recordedAt:new Date().toISOString(),
       browserVersion:browser.version(),responsePolicy:null,
-      artifact:{file:'dist/forma.esm.js',sha256:sha(artifact),bytes:artifact.length},
+      artifact:{file:'dist/forma.esm.js',sha256:sha(artifact),bytes:artifact.length},compiler,
       machine:{node:process.version,platform:platform(),release:release(),architecture:arch(),cpu:cpu[0]?.model,logicalCpus:cpu.length,memoryBytes:totalmem()},cases:[],controls:[]};
     const errors=[],consoleErrors=[];
     page.on('pageerror',error=>errors.push(error.message));
