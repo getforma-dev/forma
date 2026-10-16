@@ -575,7 +575,7 @@ export async function verify(dir, reportPath) {
         report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report });
       }
       if (set.contracts.deploymentSkew === 'native-v1') {
-        report.deploymentSkew = await verifyPackedSkew({ set, scratch, browser, firefox, webkit, test });
+        report.deploymentSkew = await verifyPackedSkew({ set, dir, scratch, browser, firefox, webkit, test });
       }
     } finally { await browser.close(); }
     // A live set publishes only for the milestone its tag names, and only when every gate of

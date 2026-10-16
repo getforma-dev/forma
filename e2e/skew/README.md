@@ -38,3 +38,9 @@ candidate commit along with its sources. Its feature graph excludes the unrelate
 optional `tracing-core` → `valuable` edge. Every retained third-party version and checksum matches
 the workspace seed; the packed build changes only the Forma set version and runs `cargo build --locked`.
 The original workspace-pruned seed's locked-build refusal is preserved as qualification evidence.
+
+The packed drill installs all three npm libraries and their pinned dependency closure in a fresh
+project outside the checkout, with lifecycle scripts disabled and unchanged lock bytes. Each
+library's dependencies and peers must resolve inside that project; candidate archives and registry
+signatures are audited before any deployment is built. Merely unpacking core beside the harness
+can miss a nested dependency, as the preserved first P17 failure demonstrated.
