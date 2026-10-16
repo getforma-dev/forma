@@ -518,7 +518,8 @@ describe('minimal template', () => {
       expect(result!.islands.map(island => island.name)).toEqual(['Counter']);
       expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint])).toEqual([['count', 3]]);
     } finally { rmrf(dir); }
-  });
+    // Actual packed Windows CLI/staging reached 10.571s, before compilation.
+  }, 60_000);
   it('declares the same count prop in its page and Rust handler with a distinct server seed', () => {
     const app = fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/admin/src/home/app.tsx'), 'utf8');
     const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/src/main.rs'), 'utf8'));
