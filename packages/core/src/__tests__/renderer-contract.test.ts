@@ -39,7 +39,7 @@ import { h } from '../dom/element';
 import { prepareRaw, prepareStyle } from '../dom/adoption-content';
 import { trustedHtml } from '../dom/trusted-html';
 import { prepareAdoption } from '../dom/adoption';
-import { mount, unmount } from '../runtime';
+import { mountFixture, unmountFixture } from './runtime-fixture';
 import { URL_ATTRS } from '../security/url-safety';
 import { compileHandler, runHandler } from '../expr/index';
 import { hostObject } from '../expr/host';
@@ -267,7 +267,7 @@ const SINKS: Sink[] = [
         `<div data-forma-state='${stateAttr({ v: value, b: BENIGN_VALUE })}'>` +
         `<${tag} id="probe" data-bind:${name}="{v}" data-bind:${BENIGN_ATTR}="{b}"></${tag}>` +
         `</div>`;
-      mount(box);
+      mountFixture(box);
       const el = box.querySelector('#probe');
       if (!el) throw new Error(`data-bind fixture produced no <${tag}>`);
       return el;
@@ -277,7 +277,7 @@ const SINKS: Sink[] = [
       box.innerHTML =
         `<div data-forma-state='${stateAttr({ t: text })}'>` +
         `<${tag} id="probe" data-text="{t}"></${tag}></div>`;
-      mount(box);
+      mountFixture(box);
       return box.querySelector('#probe')!;
     },
   },
@@ -322,7 +322,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const dispose of disposers.splice(0)) dispose();
   for (const box of containers.splice(0)) {
-    unmount(box);
+    unmountFixture(box);
     box.remove();
   }
 });

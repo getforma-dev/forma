@@ -9,7 +9,7 @@ import { capabilityCases } from '../packages/core/e2e/hostile-widgets/capabiliti
 
 const browserRoot = join(ROOT, 'packages/core/e2e/hostile-widgets');
 const expressionRoot = join(ROOT, 'packages/core/scripts');
-const harnessFiles = ['catalogue.mjs', 'browser-case.mjs', 'capabilities.mjs', 'observers.mjs', 'server.mjs', 'run.mjs', 'probe-provenance.json'];
+const harnessFiles = ['catalogue.mjs', 'browser-case.mjs', 'capabilities.mjs', 'observers.mjs', 'server.mjs', 'run.mjs', 'probe-provenance.json', 'explicit-controls.mjs'];
 const ordered = values => values.slice().sort();
 const hash = value => assert.match(value ?? '', /^[a-f0-9]{64}$/, 'missing security proof hash');
 export const securityHarnessHashes = () => Object.fromEntries(harnessFiles.map(name => [name, digest(join(browserRoot, name))]));
@@ -41,6 +41,17 @@ export function validateHostileProof(report, { commit, runtimeSha256, harnessSou
     assert.equal(observer.executions, 1); assert.equal(observer.outsideReads, 1);
     assert.equal(observer.response, 200); assert.equal(observer.unexpectedResponse, 404);
     assert.equal(observer.trustedTypesRefused, true);
+  }
+  assert.deepEqual(ordered(report.explicitMount.map(item => item.id)), ordered(profiles.flatMap(profile => ['no-auto', 'omitted-compiled', 'omitted-reviewed'].map(id => `${id}/${profile}`))), 'explicit mount controls missing or duplicated');
+  for (const control of report.explicitMount) {
+    assert.equal(control.unauthorizedRequests, 0);
+    if (control.id.startsWith('no-auto/')) { assert.equal(control.served, 'raw'); assert.equal(control.injected, 'raw'); }
+    else {
+      assert.equal(control.live, true); assert.equal(control.reach, 'confined');
+      assert.equal(control.failed, 'data-fetch denied: the mount grants no fetch');
+      assert.equal(control.activations, 0); assert.equal(control.outsideReads, 0);
+      assert.deepEqual(control.codes, ['FORMA_E_GRANT_FETCH', 'FORMA_E_GRANT_NAVIGATE']);
+    }
   }
   hash(report.catalogueSha256); hash(runtimeSha256);
   return report;

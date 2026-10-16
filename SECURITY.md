@@ -23,6 +23,8 @@ Report security vulnerabilities to **victor@getforma.dev**. Do not open public i
 
 **Threat model — read this first.** FMIR is a **trusted input**. `forma-ir` validates structure and bounds so that malformed IR cannot read out of bounds, panic, or abort the process. It does *not* treat the IR itself as hostile content that must be neutralised: tag names, attribute names and static attribute values come from the module's own string table, and while names are now validated against an HTML name charset, an IR file you did not compile can still choose what markup your page contains. **Only run IR produced by a compiler you trust.**
 
+For 3.0, every FMIR module must come from the application's own build. A module from any other source requires M9 before admission. M9, M10 and design5 are deferred; 3.0 does not provide an untrusted-module admission mechanism. Structural validation does not establish who produced a module (SA4).
+
 Given that boundary:
 
 - Dynamic HTML text and attribute *values* are escaped (`&`, `<`, `>`, `"`)

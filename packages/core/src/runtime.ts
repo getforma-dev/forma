@@ -2316,7 +2316,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // target and never to the data target.
         // Verified by: src/__tests__/runtime-fetch-timeout.test.ts > "a data-fetch to a stalled endpoint aborts at 30 s into its error: target"
         // Verified by: src/__tests__/runtime-fetch-timeout.test.ts > "a data-fetch answered before 30 s lands in its target and is never aborted"
-        // Verified by: src/__tests__/runtime-fetch-timeout.test.ts > "unmount() stops every in-flight request of a polling data-fetch, and removing the element does too"
+        // Verified by: src/__tests__/runtime-fetch-timeout.test.ts > "handle.unmount() stops every in-flight request of a polling data-fetch, and disposal after removing the root does too"
         // Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a 404 with a JSON body lands in the error: target, not the data target"
         // Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a fetch grant's timeout shortens the abort"
         const inflight = new Set<() => void>();

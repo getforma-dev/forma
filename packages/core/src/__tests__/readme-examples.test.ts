@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * Executable proof for the documented code samples that are NOT the flagship
  * block or the directive table.
@@ -39,7 +40,7 @@ describe('documented HTML runtime snippets', () => {
   });
 
   afterEach(() => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     runtime.clearDiagnostics();
     vi.unstubAllGlobals();
@@ -55,7 +56,7 @@ describe('documented HTML runtime snippets', () => {
         <button data-on:click="{count = 0}">Reset</button>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const out = container.querySelector('p') as HTMLParagraphElement;
@@ -120,7 +121,7 @@ describe('documented HTML runtime snippets', () => {
         ${cases.map(([, expr], i) => `<p id="c${i}" data-text="${expr}"></p>`).join('')}
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     cases.forEach(([label, , expected], i) => {
@@ -148,7 +149,7 @@ describe('documented HTML runtime snippets', () => {
         <p id="done" data-text="{item.done}"></p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const click = async (id: string): Promise<void> => {
@@ -201,6 +202,7 @@ describe('documented HTML runtime snippets', () => {
   it('data-fetch loads into a state key and $refetch re-runs it, both without eval', async () => {
     let calls = 0;
     const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200,
       json: async () => ({ title: `load-${++calls}` }),
     }));
     vi.stubGlobal('fetch', fetchMock);
@@ -212,10 +214,10 @@ describe('documented HTML runtime snippets', () => {
         <button id="again" data-on:click="{$refetch('items')}">Reload</button>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container, { grants: { fetch: { paths: ['/api/items'] } } });
     await tick();
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/items', { method: 'GET', signal: expect.any(AbortSignal) });
+    expect(fetchMock).toHaveBeenCalledWith('/api/items', { method: 'GET', signal: expect.any(AbortSignal), credentials: 'omit', redirect: 'error' });
     expect(container.querySelector('#out')!.textContent).toBe('load-1');
 
     (container.querySelector('#again') as HTMLButtonElement).click();
@@ -246,7 +248,7 @@ describe('documented HTML runtime snippets', () => {
         ${cases.map(([, expr], i) => `<p id="u${i}" data-text="${expr}">kept</p>`).join('')}
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     cases.forEach(([label], i) => {

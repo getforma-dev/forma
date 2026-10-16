@@ -13,7 +13,8 @@
  * a diagnostic carries the reason.
  */
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
-import { mount, unmount, getDiagnostics, clearDiagnostics, setDiagnostics } from '../../runtime';
+import { getDiagnostics, clearDiagnostics } from '../../runtime';
+import { mountFixture, unmountFixture } from '../../__tests__/runtime-fixture';
 
 function tick(): Promise<void> {
   return new Promise((r) => setTimeout(r, 0));
@@ -23,7 +24,6 @@ describe('$el safe proxy', () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    setDiagnostics(true);
     clearDiagnostics();
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -32,9 +32,8 @@ describe('$el safe proxy', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
-    setDiagnostics(false);
     clearDiagnostics();
     vi.restoreAllMocks();
   });
@@ -46,7 +45,7 @@ describe('$el safe proxy', () => {
         <p id="p" data-text="${expr}">kept</p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
     return container.querySelector('#p')!;
   }
@@ -72,7 +71,7 @@ describe('$el safe proxy', () => {
         <i id="i" class="a b" data-text="{$el.className}"></i>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     expect(container.querySelector('#s')!.textContent).toBe('hello');
@@ -88,7 +87,7 @@ describe('$el safe proxy', () => {
         <button id="toggle" data-on:click="{$el.classList.toggle('on')}">Toggle</button>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     const add = container.querySelector('#add') as HTMLButtonElement;
@@ -113,7 +112,7 @@ describe('$el safe proxy', () => {
         <div id="bad" data-on:click="{$el.style.cssText = 'color:red'}">Bulk</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     const ok = container.querySelector('#ok') as HTMLElement;
@@ -139,7 +138,7 @@ describe('$el safe proxy', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     const input = container.querySelector('#in') as HTMLInputElement;
@@ -166,7 +165,7 @@ describe('$el safe proxy', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     expect(container.querySelector('#ok')!.textContent).toBe('wrap');
@@ -186,7 +185,7 @@ describe('$el safe proxy', () => {
         <p id="ok" data-text="{$refs.myInput.tagName}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     expect(container.querySelector('#leak')!.textContent).toBe('kept');
@@ -206,7 +205,7 @@ describe('$el safe proxy', () => {
         <p id="leak" data-text="{leak}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     const input = container.querySelector('#in') as HTMLInputElement;
