@@ -294,17 +294,19 @@ test('a detached real-Node description reports STRUCTURE while a healthy sibling
     const events:unknown[]=[];
     document.addEventListener('forma:error',event=>events.push((event as CustomEvent).detail));
     const original=document.querySelector('[data-forma-component="Detached"]')!,child=original.firstChild;
-    let mountReturned=false;
-    mount(()=>{throw new Error('the removed native page mount must not execute');},'#app');mountReturned=true;
+    let mountError='',mountCalls=0;
+    try { mount(()=>{mountCalls++;return h('main',null);},'#app'); }
+    catch(error) { mountError=(error as Error).message; }
     (window as any).__healthyCalls=0;
     const metadata={h:'0123456789abcdef',schema:[[]],mode:0 as const};
     activateIslands({
       Detached:__islandRegistration(()=>document.createElement('span'),metadata),
       Healthy:__islandRegistration(()=>h('button',{id:'healthy',onClick:()=>{(window as any).__healthyCalls++;}},'healthy'),metadata),
     });
-    return {mountReturned,events,sameOriginal:document.querySelector('[data-forma-component="Detached"]')===original&&original.firstChild===child};
+    return {mountError,mountCalls,events,sameOriginal:document.querySelector('[data-forma-component="Detached"]')===original&&original.firstChild===child};
   });
-  expect(observed.mountReturned).toBe(true);expect(observed.sameOriginal).toBe(true);
+  expect(observed.mountError).toBe('FORMA_E_MOUNT_SSR: mount cannot render a server-marked root; use declared activateIslands');
+  expect(observed.mountCalls).toBe(0);expect(observed.sameOriginal).toBe(true);
   expect(observed.events).toHaveLength(1);
   expect(observed.events[0]).toMatchObject({island:'Detached',occurrence:0,code:'FORMA_E_HYDRATE_STRUCTURE'});
   await expect(page.locator('[data-forma-component="Detached"]')).toHaveAttribute('data-forma-status','error');
