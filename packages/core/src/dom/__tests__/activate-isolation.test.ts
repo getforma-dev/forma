@@ -133,7 +133,8 @@ describe('sanitizePropsDeep', () => {
     it.each(['__proto__', 'constructor', 'prototype'])(
       `refuses nested %s when Object.${lock} prevents deletion`,
       key => {
-        const child = Object[lock](JSON.parse(`{"${key}":{"polluted":true},"keep":1}`));
+        const value = JSON.parse(`{"${key}":{"polluted":true},"keep":1}`);
+        const child = lock === 'freeze' ? Object.freeze(value) : Object.seal(value);
         const props = { nested: [child] };
         const target = {};
 
