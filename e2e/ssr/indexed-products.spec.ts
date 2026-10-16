@@ -1,6 +1,6 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
-import { join } from 'node:path';
-import { realpathSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { arch, cpus, platform, release } from 'node:os';
 import { SSR_ORIGIN } from './origin';
 
@@ -108,7 +108,32 @@ test('indexed products: complete public set in 2000 rows stays within a frame an
     // Prebuild next-item values outside timing; the measured operation is the
     // actual public handle.set, including lookup, key validation and DOM effects.
     for (let i = 0; i < 5000; i++) { handles.small.set('row-0', values[i % 2]); handles.large.set('row-0', values[i % 2]); }
-    const batch = 256, rounds = 101;
+    // Measure clock granularity before choosing one shared batch size. This is
+    // calibration, not acceptance sampling: no ratio or result drives retries.
+    let previous = performance.now();
+    const ticks: number[] = [], clockBegan = previous;
+    while (ticks.length < 16 && performance.now() - clockBegan < 250) {
+      const now = performance.now();
+      if (now > previous) { ticks.push(now - previous); previous = now; }
+    }
+    const clockResolution = ticks.length ? Math.min(...ticks) : 0;
+    const targetDuration = Math.max(8, 64 * clockResolution);
+    let batch = 256;
+    const maximumBatch = 1_048_576, calibration: { batch: number; small: number; large: number }[] = [];
+    for (;;) {
+      const elapsed = { batch, small: 0, large: 0 };
+      for (const name of ['small', 'large'] as const) {
+        const began = performance.now();
+        for (let i = 0; i < batch; i++) handles[name].set('row-0', values[i % 2]);
+        elapsed[name] = performance.now() - began;
+      }
+      calibration.push(elapsed);
+      if (Math.min(elapsed.small, elapsed.large) >= targetDuration || batch === maximumBatch) break;
+      batch *= 2;
+    }
+    const resolved = clockResolution > 0 && ticks.length === 16
+      && Math.min(calibration.at(-1)!.small, calibration.at(-1)!.large) >= targetDuration;
+    const rounds = resolved ? 101 : 0;
     for (let round = 0; round < rounds; round++) {
       // Alternate order to avoid assigning every earlier/JIT/GC slot to one size.
       for (const name of (round % 2 ? ['large', 'small'] : ['small', 'large']) as ('small' | 'large')[]) {
@@ -129,9 +154,14 @@ test('indexed products: complete public set in 2000 rows stays within a frame an
       noOp[name].push((performance.now() - began) / batch);
     }
     const spread = Object.fromEntries(Object.entries(samples).map(([name, values]) => [name, { min: Math.min(...values), p05: quantile(values, 0.05), max: Math.max(...values) }]));
-    return { noOp, spread, protocol: '101 alternating paired samples; each sample is mean complete set duration across 256 edits; 5000 warmup edits per owner; single-operation maxima sampled separately', batch, rounds, samples, summary, maximumSingle, rows: [document.querySelectorAll('#small li').length, document.querySelectorAll('#large li').length], labels: [...document.querySelectorAll('#small li:first-child b, #large li:first-child b')].map(node => node.textContent), userAgent: navigator.userAgent };
+    return { noOp, spread, clock: { ticks, resolution: clockResolution, targetDuration, maximumBatch, calibration, resolved }, protocol: '101 alternating paired samples of one shared calibrated batch; each sample is mean complete public set duration including synchronous DOM writes; 5000 warmup edits per owner; clock calibration seeks at least 64 ticks and 8ms per batch; no acceptance retries; single-operation maxima sampled separately', batch, rounds, samples, summary, maximumSingle, rows: [document.querySelectorAll('#small li').length, document.querySelectorAll('#large li').length], labels: [...document.querySelectorAll('#small li:first-child b, #large li:first-child b')].map(node => node.textContent), userAgent: navigator.userAgent };
   });
-  await info.attach('indexed-public-set.json', { body: JSON.stringify({ ...report, machine: { platform: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model, logicalCpus: cpus().length }, engine: info.project.name }, null, 2), contentType: 'application/json' });
+  const evidence = info.outputPath('indexed-public-set.json');
+  mkdirSync(dirname(evidence), { recursive: true });
+  writeFileSync(evidence, JSON.stringify({ ...report, machine: { platform: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model, logicalCpus: cpus().length }, engine: info.project.name }, null, 2) + '\n');
+  await info.attach('indexed-public-set.json', { path: evidence, contentType: 'application/json' });
+  expect(report.clock.resolved, 'clock resolution is insufficient at the bounded maximum batch; no timing acceptance is possible').toBe(true);
+  expect(report.rounds).toBe(101);
   expect(report.rows).toEqual([200, 2000]); expect(report.labels).toEqual(['Timing B', 'Timing B']);
   expect(report.summary.small.median).toBeGreaterThan(0);
   expect(report.maximumSingle).toBeLessThan(16); expect(report.summary.large.p95).toBeLessThan(16);
@@ -150,5 +180,5 @@ test('indexed products: a corrupted owned hole refuses its island while the neig
     return { retained: target.data, neighbor: document.querySelector('#small li b')!.textContent, failed: document.querySelector('#large')!.getAttribute('data-forma-status'), errors: (window as any).__indexedErrors.length };
   });
   expect(result).toEqual({ retained: 'external', neighbor: 'neighbor live', failed: 'error', errors: 1 });
-  expect(errors).toEqual([]);
+  expect(errors).toEqual(['[forma] FORMA_E_HYDRATE_STRUCTURE (island "IndexedRows", id=1)']);
 });
