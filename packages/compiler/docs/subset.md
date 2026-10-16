@@ -492,6 +492,8 @@ name: browser property order and parsed duplicate HTML attributes can disagree.
 
 ### BUILD-611 — Unsupported islands-only entry or static route
 
+A compiled entry may use standalone top-level `await activateIslands(...)` when later module initialization needs load readiness. When every registration is pruned, the compiler retains `await (void 0)` and its async module checkpoint. The ordinary standalone call remains supported; consumed, nested or chained completion expressions and effectful arguments in a pruned call remain outside this entry rewrite.
+
 **Why.** The selected native entry cannot be rewritten without discarding used results or effects, or its static route mapping requests executable assets; the build fails even without strict mode.
 
 **Fix.** Use one standalone imported core mount selecting the native page, keep activation outside it, and use an activation-only browser entry when the browser root differs. Static routes must have no extra script entry or module preload.
