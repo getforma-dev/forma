@@ -270,6 +270,7 @@ function project(input: Record<string, unknown>, schema: IslandSchema): Record<s
         if (kind === 'string' || kind === 'boolean' || kind === 'number') {
           // These immutable leaves need no nested work frame. Keep the same
           // per-value budget and type checks while copying into a fresh array.
+          out.length = work.value.length;
           for (let i = 0; i < work.value.length; i++) {
             const item = work.value[i];
             if (++count > MAX_STATE_BYTES || typeof item !== kind

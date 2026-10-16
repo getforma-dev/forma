@@ -28,9 +28,11 @@ describe('bounded primitive array projection',()=>{
   for(const vector of vectors)it(`retains every ${vector.element.kind} value and fresh array ownership`,()=>{
     const f=fixture(vector.element,vector.input),first=value(f.read());
     expect(first).toEqual(vector.expected??vector.input);
+    expect(Object.keys(first)).toEqual(vector.input.map((_,index)=>String(index)));
     if(first[0] instanceof Date)first[0].setTime(1);
     first[0]='changed';first.push('extra');
     const second=value(f.read());expect(second).toEqual(vector.expected??vector.input);expect(second).not.toBe(first);
+    expect(Object.keys(second)).toEqual(vector.input.map((_,index)=>String(index)));
   });
   for(const vector of vectors)it(`retains empty ${vector.element.kind} arrays`,()=>{
     expect(value(fixture(vector.element,[]).read())).toEqual([]);
@@ -61,7 +63,7 @@ describe('bounded primitive array projection',()=>{
     const count=Math.floor((1_048_576-encode([]).length+1)/3);
     const input=Array.from({length:count},()=>''),json=encode(input),text=json+' '.repeat(1_048_576-json.length);
     const f=fixture({kind:'string'},input,text),actual=value(f.read());
-    expect(actual).toHaveLength(count);expect(actual.every(item=>item==='')).toBe(true);
+    expect(actual).toHaveLength(count);expect(Object.keys(actual)).toHaveLength(count);expect(actual.every(item=>item==='')).toBe(true);
     expect(code(fixture({kind:'string'},input,text+' ').read())).toBe('FORMA_E_ISLAND_STATE');
   });
   it('keeps the UTF-8 bound distinct from JavaScript length for multibyte arrays',()=>{
