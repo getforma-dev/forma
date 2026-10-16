@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 
 - `activateIslands()` now returns load-readiness as `Promise<void>` and yields between whole load-island transactions after a cooperative 12 ms slice, including preflight time. Overlapping calls share queued ownership, input promotes pending SSR activation without event replay, and trigger setup failures remain isolated. This changes completion semantics; callers requiring all load islands must await the result. Deferred triggers settle once armed, and a single island or preflight remains atomic rather than subject to a hard duration bound.
 
+- FORMA-193's reviewed activation stack measures 48,602 B gzip for the core entry and 48,836 B for browser ESM. Under L-58, their package gates become measured +300 B: 48,902 and 49,136 B. The three runtime bundle gates remain unchanged. This package adjustment does not change N2's 28,000 B per-route ceiling: the current Counter SSR route measures 26,213 B and the indexed SSR route measures 28,071 B, which still fails N2 and requires resolution before release.
+
 - Allocate detached HTML prototypes when their tags are first requested, instead of creating 40 common-tag prototypes on the first `h()` call. Later calls still return independent shallow clones; this change makes no timing-gate claim.
 
 - Share exact `className`/`htmlFor`/`tabIndex` normalization between static/reactive `h()` writes and adoption. HTML and SVG attributes now use the same declared alias policy; ordinary browser object property order remains intact.

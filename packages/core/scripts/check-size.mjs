@@ -43,7 +43,9 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * row focus and INV1 policies measures 47,310 and 47,398 B; L-58 re-anchors
  * these gates to measured +300 B: 47,610 and 47,698 B.
  * The separately measured indexed-row stack was 47,994 and 48,148 B;
- * its approved L-58 gates are 48,294 and 48,448 B pending combined measurement. They are
+ * its approved L-58 gates were 48,294 and 48,448 B. The reviewed FORMA-193
+ * cooperative activation stack measures 48,602 and 48,836 B; L-58 re-anchors
+ * these package gates to measured +300 B: 48,902 and 49,136 B. They are
  * ratchets like the runtime gates below, not a budget: the budget is N2,
  * Forma's code per route, which @getforma/build measures and fails
  * (route-size.ts).
@@ -87,7 +89,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 48294,
+    limit: 48902,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {
@@ -97,7 +99,7 @@ export const GATES = [
   },
   {
     entry: 'dist/forma.esm.js',
-    limit: 48448,
+    limit: 49136,
     note: 'CDN browser ESM bundle (self-contained, inlines alien-signals)',
   },
   {
