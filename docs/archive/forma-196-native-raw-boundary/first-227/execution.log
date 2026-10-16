@@ -1,0 +1,12 @@
+srcdoc-static {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+srcdoc-declared {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+srcdoc-mixed-case {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+script-html {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+script-html-case {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+script-svg {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+safe-iframe {"compiler":true,"nativeStatus":0,"build":false,"rawLint":0}
+literal-style {"compiler":true,"nativeStatus":0,"build":false,"rawLint":0}
+srcdoc-null {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+srcdoc-false {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}
+   IR: BUILD-207 attribute 'srcdoc' on <iframe> is trustedHtml(...), which the compiler cannot evaluate in /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/typed-srcdoc/src/page.ts:2:65 — the attribute is OMITTED from the server-rendered HTML and hydration does not re-apply a non-function prop, so it never appears — inline the literal, use a module-level const, or wrap it in a function (`() => …`) for a reactive binding
+typed-srcdoc {"compiler":true,"nativeStatus":0,"build":false,"rawLint":1}

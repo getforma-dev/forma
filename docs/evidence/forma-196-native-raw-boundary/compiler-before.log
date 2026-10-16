@@ -1,0 +1,23 @@
+✘ [ERROR] Could not resolve "/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/packages/compiler/packages/compiler/vitest.config.ts"
+
+failed to load config from /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/packages/compiler/packages/compiler/vitest.config.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Build failed with 1 error:
+error: Could not resolve "/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/packages/compiler/packages/compiler/vitest.config.ts"
+    at failureErrorWithLog (/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:1748:15)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:1207:25
+    at runOnEndCallbacks (/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:1588:45)
+    at buildResponseToResult (/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:1205:7)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:1232:16
+    at responseCallbacks.<computed> (/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:884:9)
+    at handleIncomingPacket (/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:939:12)
+    at Socket.readFromStdout (/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/node_modules/esbuild/lib/main.js:862:7)
+    at Socket.emit (node:events:514:28)
+    at addChunk (node:internal/streams/readable:569:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}
+
+
+

@@ -1,0 +1,11 @@
+srcdoc-static true 
+srcdoc-declared true 
+srcdoc-mixed-case true 
+script-html true 
+script-html-case true 
+script-svg true 
+safe-iframe true 
+literal-style true 
+srcdoc-null true 
+srcdoc-false true 
+typed-srcdoc false FormaStrictBuildError: @getforma/build: 1 SSR diagnostic is an error; 3.0 requires the published server-renderable subset:

@@ -1,0 +1,38 @@
+[
+  {
+    "level": "warn",
+    "text": "Warning: BUILD-809 no Cargo.lock found from /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227; forma-server compatibility cannot be checked until startup"
+  },
+  {
+    "level": "log",
+    "text": "SSR mode enabled — emitting IR files"
+  },
+  {
+    "level": "log",
+    "text": "   IR emitted (real): home.ir (195 bytes, 0 islands)"
+  },
+  {
+    "level": "log",
+    "text": "   1 assets hashed"
+  },
+  {
+    "level": "log",
+    "text": "   0 files compressed (brotli 11 + gzip 9)"
+  },
+  {
+    "level": "log",
+    "text": "\n   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;\n   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.\n   /  no interactive region  no JavaScript\n   Service worker   sw.js  3,014 B raw, 1,365 B gzip, 1,143 B Brotli; counted in the JavaScript of each route that has JavaScript\n   Build time       12 ms: bundle 12 ms, hash 0 ms, compress 0 ms, manifest 0 ms"
+  },
+  {
+    "level": "log",
+    "text": "\nManifest written: /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/script-html-case/build-with-app/manifest.json (build: 70c867a2b154...)"
+  },
+  {
+    "level": "log",
+    "text": "Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/script-html-case/build-with-app/size-report.json"
+  },
+  {
+    "level": "log",
+    "text": "   SW generated: dist/sw.js (verified on-demand assets)"
+  }
+]

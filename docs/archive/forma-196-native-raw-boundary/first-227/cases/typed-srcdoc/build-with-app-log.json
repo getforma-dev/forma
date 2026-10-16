@@ -1,0 +1,18 @@
+[
+  {
+    "level": "warn",
+    "text": "Warning: BUILD-809 no Cargo.lock found from /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227; forma-server compatibility cannot be checked until startup"
+  },
+  {
+    "level": "log",
+    "text": "SSR mode enabled — emitting IR files"
+  },
+  {
+    "level": "warn",
+    "text": "   IR: BUILD-207 attribute 'srcdoc' on <iframe> is trustedHtml(...), which the compiler cannot evaluate in /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/typed-srcdoc/src/page.ts:2:65 — the attribute is OMITTED from the server-rendered HTML and hydration does not re-apply a non-function prop, so it never appears — inline the literal, use a module-level const, or wrap it in a function (`() => …`) for a reactive binding"
+  },
+  {
+    "level": "log",
+    "text": "   IR emitted (real): home.ir (192 bytes, 0 islands)"
+  }
+]

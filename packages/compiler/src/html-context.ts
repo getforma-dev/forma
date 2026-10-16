@@ -61,7 +61,7 @@ const interactive=(tag:string,props:t.Node|undefined,file:string):boolean=>ALWAY
  ||tag==='img'&&present(props,'usemap',file)||tag==='input'&&!hiddenInput(props,file);
 const labelable=(tag:string,props:t.Node|undefined,file:string)=>LABELABLE.has(tag)||tag==='input'&&!hiddenInput(props,file);
 function compatible(a:Conditions,b:Conditions):boolean {for(const [key,value] of a)if(b.has(key)&&b.get(key)!==value)return false;return true;}
-function fail(file:string,node:t.Node,code:'BUILD-610'|'BUILD-618'|'BUILD-619'|'BUILD-620',detail:string):never {
+function fail(file:string,node:t.Node,code:'BUILD-610'|'BUILD-618'|'BUILD-619'|'BUILD-620'|'BUILD-623'|'BUILD-624',detail:string):never {
  const at=originalPosition(file,node.loc?.start??{line:1,column:0});throw new PropsSchemaError(file,at.line,at.column,detail,code);
 }
 export function htmlBranch(context:HtmlContext|undefined,branch:symbol,value:boolean):HtmlContext|undefined {
@@ -71,6 +71,9 @@ export function htmlList(context:HtmlContext|undefined):HtmlContext|undefined {r
 export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,props:t.Node|undefined,node:t.Node,file:string):HtmlContext {
  const context=parent??{ancestors:[],conditions:new Map(),repetition:0},ancestors=context.ancestors;
  const tag=tagName.toLowerCase(),parentFrame=ancestors.at(-1);
+ // FMIR cannot carry core's reviewed raw-markup brand. Its native subtree
+ // must also preserve h()'s unconditional bundle-only script boundary.
+ if(tag==='script')fail(file,node,'BUILD-623','script elements are refused by core h(); load code through the page bundle, not a component script element');
  let namespace=parentFrame?.childNamespace??'html';
  if(parentFrame?.namespace==='math'&&['mi','mo','mn','ms','mtext'].includes(parentFrame.tag)&&['mglyph','malignmark'].includes(tag))namespace='math';
  if(namespace==='html'&&tag==='svg')namespace='svg';else if(namespace==='html'&&tag==='math')namespace='math';
@@ -101,6 +104,8 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
  if(t.isObjectExpression(props))for(const entry of props.properties){
   if(!t.isObjectProperty(entry)||entry.computed)continue;
   const name=key(entry.key);if(name===undefined||/^on/i.test(name)||name==='ref')continue;
+  if(name.toLowerCase()==='srcdoc'&&!t.isNullLiteral(entry.value)&&!t.isBooleanLiteral(entry.value,{value:false})&&!unboundUndefined(entry.value,file))
+   fail(file,entry,'BUILD-624','native srcdoc cannot prove a trustedHtml() value: declared strings are data, not reviewed raw markup; use a safe iframe src or an explicit Browser-mode trustedHtml() sink');
   for(const ns of attributeNamespaces){const detail=foreignAttributeMismatch(name,ns);if(detail)fail(file,entry,'BUILD-610',detail);}
  }
  const htmlAncestors=ancestors.filter(frame=>frame.namespace==='html');
@@ -135,11 +140,11 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
  return {...context,ancestors:[...ancestors,frame]};
 }
 export function checkRawTextChildren(tag:string,children:readonly t.Node[],file:string):void {
- if(!['style','script'].includes(tag.toLowerCase()))return;
+ if(tag.toLowerCase()!=='style')return;
  for(const child of children) {
   let value=child;while(t.isTSAsExpression(value)||t.isTSTypeAssertion(value)||t.isTSNonNullExpression(value)||t.isTSSatisfiesExpression(value)||t.isParenthesizedExpression(value))value=value.expression;
   if(t.isStringLiteral(value)||t.isNumericLiteral(value)||t.isBooleanLiteral(value)||t.isNullLiteral(value))continue;
   if(unboundUndefined(value,file))continue;
-  fail(file,child,'BUILD-620',`dynamic or reactive child of <${tag}> is executable CSS/JavaScript content; keep authored literal text here and pass data through ordinary text or declared attributes`);
+  fail(file,child,'BUILD-620',`dynamic or reactive child of <${tag}> is executable CSS content; keep authored literal text here and pass data through ordinary text or declared attributes`);
  }
 }

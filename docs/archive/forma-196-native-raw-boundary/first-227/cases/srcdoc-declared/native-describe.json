@@ -1,0 +1,6 @@
+{
+  "status": 0,
+  "signal": null,
+  "stdout": "{\"islands\":[],\"keys\":[],\"schema\":[[{\"name\":\"markup\",\"type\":{\"kind\":\"string\"}}]],\"slots\":[{\"default\":\"\",\"id\":0,\"name\":\"markup\",\"source\":\"server\",\"type\":\"text\"}]}\n",
+  "stderr": ""
+}

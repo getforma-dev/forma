@@ -73,10 +73,10 @@ const rootsGood:[string,string,string?,string?][]=[
 ];
 describe('finite HTML context admission',()=>{
  it.each(repaired)('%s refuses with618 and a source location',(name,tree)=>{const got=emit(page(tree));expect(got.result,name).toBeNull();expect(got.failure).toMatchObject({code:'BUILD-618'});const d=got.diagnostics.find(d=>d.code==='BUILD-618');expect(d?.line).toBeGreaterThan(0);expect(d?.column).toBeGreaterThan(0);});
- it.each(near)('%s remains admitted',(name,tree)=>{const got=emit(page(tree));expect(got.failure,name).toBeUndefined();expect(got.diagnostics).toEqual([]);expect(got.result!.binary.length).toBeGreaterThan(0);});
+ it.each(near)('%s follows its preserved source disposition',(name,tree)=>{const got=emit(page(tree));if(name==='static script'){expect(got.failure).toMatchObject({code:'BUILD-623'});expect(got.result).toBeNull();return;}expect(got.failure,name).toBeUndefined();expect(got.diagnostics).toEqual([]);expect(got.result!.binary.length).toBeGreaterThan(0);});
  it('carries ancestry through an imported helper',()=>{const got=emit(page("h('p',null,Block())","import {Block} from './block';"),{'block.ts':imports+"export function Block(){return h('div',null,'block');}"});expect(got.failure).toMatchObject({code:'BUILD-618'});expect(got.diagnostics.find(d=>d.code==='BUILD-618')?.file).toMatch(/block\.ts$/);});
  it.each(["h('main',null,h('title',null,'Page'))","h('svg',null,h('foreignObject',null,h('title',null,'Page')))"])('refuses component HTML title %s',tree=>{const got=emit(page(tree));expect(got.failure).toMatchObject({code:'BUILD-619'});expect(got.diagnostics.find(d=>d.code==='BUILD-619')?.fix).toContain('render');});
- it.each(['style','script'])('refuses reactive %s content',tag=>{const got=emit(island(`h('section',null,h('${tag}',null,text))`,'',"const [text]=createSignal('safe');"));expect(got.failure).toMatchObject({code:'BUILD-620'});});
+ it.each(['style','script'])('refuses reactive %s content',tag=>{const got=emit(island(`h('section',null,h('${tag}',null,text))`,'',"const [text]=createSignal('safe');"));expect(got.failure).toMatchObject({code:tag==='script'?'BUILD-623':'BUILD-620'});});
 });
 describe('SSR registered island owned roots',()=>{
  it.each(rootsBad)('%s refuses with621',(name,tree,extra,body)=>{const got=emit(island(tree,extra,body));expect(got.result,name).toBeNull();expect(got.failure).toMatchObject({code:'BUILD-621'});expect(got.diagnostics.find(d=>d.code==='BUILD-621')?.line).toBeGreaterThan(0);});
@@ -98,7 +98,14 @@ it('preserves every archived source/product hash and canonical admitted near mis
  for(const [name,tree] of near){
   const original=manifest.cases.find((item:any)=>item.name===name),transition=ledger.transitions.find((item:any)=>item.name===name);
   expect(original.sha256,name).not.toBeNull();expect(page(tree),name).toBe(original.source);
-  const got=emit(page(tree));expect(got.failure).toBeUndefined();
+  const got=emit(page(tree));
+  if(name==='static script'){
+   const rawTransition=JSON.parse(readFileSync(join(archive,'../forma-196-native-raw-boundary/transition.json'),'utf8'));
+   expect(rawTransition.previousManifestSha256).toBe(sha(readFileSync(join(archive,'manifest.json'))));
+   expect(rawTransition.case).toEqual(original);expect(rawTransition.sourceSha256).toBe(sha(page(tree)));
+   expect(rawTransition.currentDiagnostic).toBe('BUILD-623');expect(got.failure).toMatchObject({code:'BUILD-623'});expect(got.result).toBeNull();continue;
+  }
+  expect(got.failure).toBeUndefined();
   if(transition){
    expect(transition.previousIrSha256,name).toBe(original.sha256);
    expect(sha(page(tree)),name).toBe(transition.sourceSha256);
@@ -117,7 +124,7 @@ it('labels inside list rows each own their one control',()=>{const got=emit(page
 it('a browserOnly server host still obeys its surrounding parser context',()=>{const got=emit(page("h('p',null,Client())","const Client=browserOnly(()=>h('div',null,'client'));activateIslands({Client});"));expect(got.failure).toMatchObject({code:'BUILD-618'});});
 it('proves a single Fragment through a relative barrel helper',()=>{const got=emit(island('Helper()',"import {Helper} from './barrel';"),{'barrel.ts':"export {Helper} from './helper';",'helper.tsx':imports+"export function Helper(){return <><section>one</section></>;}"});expect(got.failure).toBeUndefined();expect(got.diagnostics).toEqual([]);});
 it('refuses the multiple roots of an imported helper',()=>{const got=emit(island('Helper()',"import {Helper} from './barrel';"),{'barrel.ts':"export {Helper} from './helper';",'helper.tsx':imports+"export function Helper(){return <><b>one</b><i>two</i></>;}"});expect(got.failure).toMatchObject({code:'BUILD-621'});});
-it.each(['style','script'])('does not admit a constant-returning reactive %s reader',tag=>{expect(emit(page(`h('${tag}',null,()=> 'authored')`)).failure).toMatchObject({code:'BUILD-620'});});
+it.each(['style','script'])('does not admit a constant-returning reactive %s reader',tag=>{expect(emit(page(`h('${tag}',null,()=> 'authored')`)).failure).toMatchObject({code:tag==='script'?'BUILD-623':'BUILD-620'});});
 it('refuses reactive parser repair even when its initial branch is empty',()=>{expect(emit(page("h('p',null,createShow(()=>false,()=>h('div',null,'block'),()=>null))")).failure).toMatchObject({code:'BUILD-618'});});
 it('allows ordinary fragment ranges inside an owned island host',()=>{const got=emit(island("h('section',null,h(Fragment,null,h('b',null,'one'),h('i',null,'two')))"));expect(got.failure).toBeUndefined();expect(got.diagnostics).toEqual([]);});
 

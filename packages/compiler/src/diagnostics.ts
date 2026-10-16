@@ -211,8 +211,8 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'An HTML title emitted inside the component does not own the page document title.',
     'Pass the page title to the server render call; an SVG title remains component content.'),
   entry('BUILD-620', 'Dynamic child in executable text content',
-    'A dynamic or reactive style/script child enters a CSS or JavaScript context that ordinary HTML escaping cannot make safe.',
-    'Keep authored literal style/script text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.'),
+    'A dynamic or reactive style child enters a CSS context that ordinary HTML escaping cannot make safe.',
+    'Keep authored literal style text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.'),
   entry('BUILD-621', 'SSR island without one stable owned Element',
     'The registered SSR component has text, empty, multiple, conditional/control-flow, async/generator, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.',
     'Return one authored Element, directly or through an ordinary synchronous resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.'),
@@ -220,6 +220,13 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-622', 'Indexed rows without matching eager native validation',
     'An indexed factory validates its initial keys eagerly, but a deferred, conditional, unused or unproved LIST cannot perform the same native validation. Optional or derived initial arrays, effectful key callbacks, eager handle or initial-data mutations and unknown escapes also lack a matching native contract.',
     'Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths. Keep declared initial arrays and their ancestors unmodified and unescaped during construction. Mutate or expose them or the handle only in proved deferred intrinsic event callbacks, including immutable local handler aliases.'),
+
+  entry('BUILD-623', 'Script element outside the bundle contract',
+    'Core h() refuses script elements in every namespace and spelling; emitting one natively would bypass that bundle-only contract.',
+    'Load executable code through the page bundle. Native component script elements, including literal, external and inert-type forms, are not supported.'),
+  entry('BUILD-624', 'Raw srcdoc outside the native data contract',
+    'Native props and FMIR string attributes cannot prove the reviewed trustedHtml brand required by core srcdoc; escaping a string does not establish that trust.',
+    'Use a safe iframe src or an explicit Browser-mode trustedHtml sink. Literal null and false remain omitted attributes; other supported absence forms retain their existing behavior.'),
 
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
