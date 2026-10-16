@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "sourceCommit": "b3d1904cab6bb93b46ad960abcfe5fb5fa586c5f",
+  "scope": "Source mutation qualification and actual read-only observations only. No enabled protection or delivered alert claim.",
+  "files": {
+    "npm-readonly-corrected.json": "101eb5b18bc494261df7c4d4eaf227a1dbbc24d52fb6496b750f79274dca677c",
+    "environments-readonly-first.json": "21d714e563138396259806cdf1074837bb8bceff4953a4ff1af6e228b8807c37",
+    "identities-readonly.json": "d62bfddf07fb7ee7a4b35f66515dd62aa663b06db96b07682286dbf8fb7cfe1a",
+    "npm-readonly-first.json": "02ef70870d3b2ab079e1925de09d83c86ee2a304ad7f16c0e6d9284d1d0d08df",
+    "mutations-first/qualification.json": "8c2a4d11a6ba14d51fb03a5e656e6dc88e6274ef33c562c6e25a2a8917db516c",
+    "mutations-first/text-fast-before.log": "8e5d1b61f8cffb551d5f1bdad9939721c7add7c12fbfe12e52c62e90419f4c3d",
+    "mutations-first/text-fast-mutant.log": "9367a89381c1315c08efe07796078583e3dd5bf6539516a102a3c27350aba902",
+    "mutations-corrected/name-tail-corrected.log": "0ad5c266cbaed1b7a98dd3377502f74cdc6b90f41225fffc838b316c7485ef60",
+    "mutations-corrected/qualification.json": "f6371faf24e9af800bcb2794313c69ad292be4273f3b7e9e7adcd6866900ce50",
+    "mutations-corrected/script-policy-mutant.log": "ea501e8ce91a426dc136a5c76eb894c7866ff04aa9d813de9900e15789fada3b",
+    "mutations-corrected/script-policy-before.log": "5a0bbedc1ae32f938088474594e9a07320a337823762360a73533fab7a48e4df",
+    "mutations-corrected/text-fast-before.log": "d013a5790368655566ff80b1d6cf2d1aeda2a2b4d611e2be22575af2d4bf0f46",
+    "mutations-corrected/text-fast-mutant.log": "8efdd590d829a74e311c9356b745f807d82ca2a58e8e79c8b4a828265f0654bb",
+    "mutations-corrected/name-tail-before.log": "cee76ade78eae663f3ff130c4b4733e1f89df6da08079eb55df2ecd7616147b7",
+    "mutations-corrected/name-tail-mutant.log": "dd5d335baa85c27e260e57354fd53e482364cd44532a618341b03e978d29cdc2",
+    "mutations-corrected/text-bounded-corrected.log": "b52df545e2c806061518389f340acc9a4b7f994b90494438fd202721a9af3008",
+    "mutations-corrected/text-fast-corrected.log": "4f866ba7212313baca6ba9b3c09a78063bcd2f878e452b2556081d8a0459de75",
+    "mutations-corrected/attribute-bounded-corrected.log": "d1cb391951733da74aacde55c2c62b09e446f716549f9dea30fe745c47bcee3a",
+    "mutations-corrected/attribute-bounded-before.log": "e2f825355133c39e409cad02afc0f5a9d37123ef0af54a172f1e264d5872048d",
+    "mutations-corrected/script-policy-corrected.log": "373f491c30d0ad7b9a32ac47f03928e071e3db52e673439f2849ea3bbe01e8e9",
+    "mutations-corrected/attribute-bounded-mutant.log": "8434faff80c0848f36d51c027f543fe58e7b5122be2874100cff77ae2f33ad03",
+    "mutations-corrected/attribute-fast-corrected.log": "1421bc515b601c41de04a6c0ed3f27e86f45bc5e631ddb10a0ab2f5df50ae8d7",
+    "mutations-corrected/attribute-fast-before.log": "393ca4c571235f8e18b95e6d55a81cafd7119a5ae586052db5a39380c4c0f700",
+    "mutations-corrected/text-bounded-before.log": "857db6cb2cf14af3a039d9d96347820f546faab512de6a6ecf19b8ba058d1ef1",
+    "mutations-corrected/attribute-fast-mutant.log": "5eea235a74d41b0de14f7020c7684c2a38ad7ea5f0a45271670e9c422eed27f3",
+    "mutations-corrected/text-bounded-mutant.log": "28a2add687036dea118257a2af346fd6b3b6968347865c2e4fe95905c3f60077"
+  }
+}
