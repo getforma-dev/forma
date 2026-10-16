@@ -6,7 +6,7 @@
 
 - Indexed handle admission refuses eager mutation and unknown escapes hidden in variable initializers (BUILD-622). Original lexical handle aliases and provably deferred intrinsic event callbacks, including local handler aliases, remain supported; no mutation evaluator or runtime restriction was added.
 
-- Add compiler proof and native lowering for `createKeyedRows` with the two-argument `createList` overload. Original lexical factories, required/closed arrays, synchronous key paths and unconditional component LISTs are required (BUILD-622); item getters keep row provenance without acquiring signal capture or early-edit writeback authority. Existing corpus bytes and the LIST/PROP/key-path wire contract are unchanged. Product and performance qualification belongs to the following FORMA-181 stage.
+- Add compiler proof and native lowering for `createKeyedRows` with the two-argument `createList` overload. Original lexical factories, required/closed arrays, synchronous key paths and unconditional component LISTs are required (BUILD-622); item getters keep row provenance without acquiring signal capture or early-edit writeback authority. Existing corpus bytes and the LIST/PROP/key-path wire contract are unchanged. Actual typed native/browser qualification and the unchanged indexed-operation timing requirements pass across three engines on the integrated local stack; exact source, products and raw samples are retained in `docs/evidence/forma-181-indexed/integrated/`.
 
 ### Lexical JSX SVG namespaces — FORMA-171
 
