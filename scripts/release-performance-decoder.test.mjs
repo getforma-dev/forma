@@ -16,11 +16,15 @@ test('both finite payload shapes pin the complete UTF-8 envelope to exactly one 
     else {assert.equal(decoded.length,20_000);assert(decoded.every(value=>/^(?:é😀)+x*$/.test(value)));assert(Buffer.byteLength(payload.text)>payload.text.length);}
   }
 });
-test('the twelve-millisecond boundary is inclusive for every sample of both shapes',()=>{
-  assert.doesNotThrow(()=>validateDecoder(valid()));
+test('the L-61 thirty-millisecond boundary is inclusive for every sample of both shapes',()=>{
+  const boundary=valid();
+  for(const row of boundary.cases){for(const sample of row.samples)sample.elapsedMs=30;row.summary={minMs:30,medianMs:30,p95Ms:30,maxMs:30};}
+  assert.doesNotThrow(()=>validateDecoder(boundary));
+  const historical=valid();historical.profile.maxSampleMs=12;
+  assert.throws(()=>validateDecoder(historical),/actual measurement profile differs/);
   for(const index of [0,1]) {
-    const report=valid();report.cases[index].samples[39].elapsedMs=12.0001;
-    assert.throws(()=>validateDecoder(report),/sample 40: exceeds 12ms/);
+    const report=valid();report.cases[index].samples[39].elapsedMs=30.0001;
+    assert.throws(()=>validateDecoder(report),/sample 40: exceeds 30ms/);
   }
 });
 test('raw sample provenance cannot be replaced by claimed passing summaries',()=>{
