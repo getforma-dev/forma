@@ -139,6 +139,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   * a `try`, a loop) would make the key or the row shape depend on data, which DR-8 refuses at
   * build time rather than at adoption. */
  function singleReturn(mod:Module,fn:ComponentFunction,code:'BUILD-612'|'BUILD-613',what:string):t.Expression {
+  if(fn.async||fn.generator)fail(mod,fn,code,`${what} must be synchronous, not async or a generator`);
   if(!t.isBlockStatement(fn.body))return fn.body;
   let found:t.Expression|undefined;
   for(const statement of fn.body.body) {

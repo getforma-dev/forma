@@ -105,3 +105,19 @@ it('admits an inline original factory in an unregistered root return',()=>{
  const source=page().replace(factory,'').replace('createList(rows,','createList(createKeyedRows(p.rows,item=>item.id),');
  expect(emit(source).failure).toBeUndefined();
 });
+
+// The helper must itself return an Element: an async/generator helper returns
+// a Promise/iterator even when its authored return expression is an Element.
+it.each(['async function', 'function*'])('refuses %s row helpers on both indexed and legacy lists', prefix => {
+ for (const indexed of [true, false]) {
+  const source = imports.replace('activateIslands', 'createSignal,activateIslands')
+   + `${prefix} Row(){return h('li',null,'row');} function Page(){`
+   + (indexed ? "const rows=createKeyedRows([{id:'a'}],item=>item.id);" : "const [rows]=createSignal([{id:'a'}]);")
+   + "return h('ul',null,createList(rows," + (indexed ? '' : 'item=>item.id,') + "item=>Row()));}mount(Page,'#app');";
+  expect(emit(source).failure).toMatchObject({code:'BUILD-613'});
+ }
+});
+it('retains a synchronous indexed row helper', () => {
+ const source=page().replace('function Page', "function Row(){return h('li',null,'row');}function Page").replace("item=>h('li',null,()=>item().label)", 'item=>Row()');
+ expect(emit(source).failure).toBeUndefined();
+});
