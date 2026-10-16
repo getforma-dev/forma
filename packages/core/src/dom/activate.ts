@@ -36,7 +36,7 @@ type LoadWork = ((event?: Event | false) => void) & { ready: Promise<void> };
 const loadQueue = new Set<LoadWork>();
 const pendingLoad = new WeakMap<HTMLElement, LoadWork>();
 const loadEvents = ['pointerdown', 'focusin', 'click'] as const;
-let loadEnrolling = 0, loadRunning = false;
+let loadBusy = 0;
 let loadTimer: ReturnType<typeof setTimeout> | undefined;
 
 function reportActivationError(error: unknown): void {
@@ -55,8 +55,7 @@ function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, Valida
     // Deletion is the atomic take shared by FIFO, input promotion and cancel.
     // Keep pendingLoad until finally so reentrant callers share real readiness.
     if (!loadQueue.delete(work)) return;
-    const running = loadRunning;
-    loadRunning = true;
+    loadBusy++;
     try {
       let failed = false;
       if (!loadQueue.size) {
@@ -71,9 +70,7 @@ function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, Valida
       else hydrateIslandRoot(value, children);
     } catch (error) { setupFailed(value.host, error); }
     finally {
-      pendingLoad.delete(value.host); complete(); loadRunning = running;
-      // Input promotion is synchronous; reentrant activation joins this FIFO.
-      if (!running && !loadEnrolling && loadQueue.size && loadTimer === undefined) loadTimer = setTimeout(drainLoads, 0);
+      pendingLoad.delete(value.host); complete(); loadBusy--; scheduleLoads();
     }
   }) as LoadWork;
   work.ready = new Promise<void>(resolve => { complete = resolve; });
@@ -82,22 +79,19 @@ function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, Valida
 }
 
 function drainLoads(deadline = performance.now() + 12): void {
-  loadTimer = undefined; loadRunning = true;
+  loadTimer = undefined; loadBusy++;
   try {
     for (const work of loadQueue) {
       if (performance.now() >= deadline) break;
       work();
     }
   } finally {
-    loadRunning = false;
-    if (loadQueue.size) loadTimer = setTimeout(drainLoads, 0);
+    loadBusy--; scheduleLoads();
   }
 }
 
-function startLoads(deadline: number): void {
-  if (!loadQueue.size || loadEnrolling || loadRunning || loadTimer !== undefined) return;
-  if (performance.now() < deadline) drainLoads(deadline);
-  else loadTimer = setTimeout(drainLoads, 0);
+function scheduleLoads(): void {
+  if (!loadBusy && loadQueue.size && loadTimer === undefined) loadTimer = setTimeout(drainLoads, 0);
 }
 
 const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
@@ -227,10 +221,10 @@ export function activateIslands(
   const children = new Map<Element, ValidatedIsland>();
   for (const result of checked) if ('value' in result) children.set(result.host, result.value);
   const ready: Promise<void>[] = [];
-  const scheduled: { value: ValidatedIsland; trigger: string; work?: LoadWork }[] = [];
-  loadEnrolling++;
+  loadBusy++;
   try {
-    // Reserve the entire admitted set before any trigger can invoke user code.
+    // Native observer/idle/input callbacks run after enrollment. Reserve and
+    // arm every host before starting loads; depth also guards diagnostic reentry.
     for (const result of checked) {
       if ('error' in result) { reportActivationError(result.error); continue; }
       const value = result.value, island = value.host;
@@ -249,11 +243,6 @@ export function activateIslands(
       const work = trigger === 'visible' || trigger === 'idle' || trigger === 'interaction'
         ? undefined : queueLoad(value, children);
       if (work) ready.push(work.ready);
-      scheduled.push({ value, trigger, work });
-    }
-    for (const { value, trigger, work } of scheduled) {
-      const island = value.host;
-      if (activationPhase.get(island) !== 'scheduled') continue;
       try {
         if (work) {
           // Retained SSR targets can receive the same event after priority activation.
@@ -296,7 +285,8 @@ export function activateIslands(
       }
     }
   } finally {
-    loadEnrolling--; startLoads(deadline);
+    loadBusy--;
+    if (!loadBusy && loadTimer === undefined) drainLoads(deadline);
   }
   return Promise.all(ready).then(() => {});
 }

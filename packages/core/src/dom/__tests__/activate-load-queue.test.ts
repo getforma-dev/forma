@@ -28,6 +28,23 @@ describe('shared load scheduling', () => {
     expect(good).toHaveBeenCalledOnce();
   });
 
+  it('finishes native trigger enrollment before a diagnostic reentrant request can drain loads', async () => {
+    document.body.innerHTML = host('A') + host('Bad') + host('Good', 'interaction') + `<aside>${host('B')}</aside>`;
+    installState();
+    const block = document.head.querySelector('script')!, state = JSON.parse(block.textContent!);
+    state.i[1] = null; block.textContent = JSON.stringify(state);
+    const seen: string[] = [];
+    const registry = emptyRegistry({
+      A: () => {seen.push('A'); document.querySelector<HTMLElement>('[data-forma-component="Good"]')!.dispatchEvent(new Event('pointerdown')); now += 13; return tree('A');},
+      Bad: () => tree('Bad'), Good: () => {seen.push('Good'); return tree('Good');}, B: () => {seen.push('B'); return tree('B');},
+    });
+    vi.spyOn(console, 'error').mockImplementationOnce(() => {void activateIslands(registry, document.querySelector('aside')!);});
+    const ready = activateIslands(registry);
+    expect(seen).toEqual(['A', 'Good']);
+    vi.runAllTimers(); await ready;
+    expect(seen).toEqual(['A', 'Good', 'B']);
+  });
+
   it('counts atomic preflight time against the first slice and resolves after actual load completion', async () => {
     document.body.innerHTML = host('A'); installState();
     const component = vi.fn(() => tree('A'));
