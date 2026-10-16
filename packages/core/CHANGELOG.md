@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Stop listener installation when a reentrant callback disposes the adoption plan. The currently installing callback is removed even if disposal happens before native attachment or installation then throws; unrelated listeners are retained.
+
 - Reduce temporary allocation while capturing an adoption DOM snapshot. The constructor keeps the same observed fields, traversal order, template contents, opaque child boundaries and validation, without an intermediate position object or work record per node.
 - Store captured attribute namespace/local/value triples without a temporary object per attribute, and reuse private property-descriptor pairs after taking the complete descriptor snapshot. Attribute checks, descriptor order, accessor refusal and symbol handling are unchanged.
 

@@ -462,7 +462,14 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         if(listeners.length){
           const Controller=host.ownerDocument.defaultView?.AbortController??AbortController;
           for(const item of listeners){
-            item.controller=new Controller();item.element.addEventListener(item.event,item.listener,{signal:item.controller.signal});
+            if(scope.phase!=='validated')refuse();
+            item.controller=new Controller();
+            try{item.element.addEventListener(item.event,item.listener,{signal:item.controller.signal});}
+            finally{
+              // Installation can reenter teardown before or after native add,
+              // including an attach-then-throw. Remove this exact callback too.
+              if(scope.phase!=='validated')item.element.removeEventListener(item.event,item.listener);
+            }
           }
         }
         scope.seed();scope.publish();
