@@ -60,11 +60,11 @@ Gzipped sizes, measured by `npm run check:size` on the 3.0.0-dev build at `91a50
 
 | Artifact | Gzipped | CI limit |
 |---|---|---|
-| `@getforma/core` entry + every chunk it imports | 48,602 B | 48,902 B |
-| CDN HTML runtime (`formajs-runtime.global.js`) | 39,203 B | 41,500 B |
-| CDN HTML runtime, hardened (`formajs-runtime-hardened.global.js`) | 37,629 B | 40,500 B |
-| CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 48,836 B | 49,136 B |
-| Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 38,687 B | 40,000 B |
+| `@getforma/core` entry + every chunk it imports | 47.5 KiB (48,602 B) | 48,902 B |
+| CDN HTML runtime (`formajs-runtime.global.js`) | 38.3 KiB (39,203 B) | 41,500 B |
+| CDN HTML runtime, hardened (`formajs-runtime-hardened.global.js`) | 36.7 KiB (37,629 B) | 40,500 B |
+| CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 47.7 KiB (48,836 B) | 49,136 B |
+| Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 37.8 KiB (38,687 B) | 40,000 B |
 
 The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less: the measured Counter route loads 26,213 B gzip -9 of Forma code, which `@getforma/build` reports per route and fails over 28,000 B (N2, decision brief L-59). The current indexed SSR route measures 28,071 B and still fails that route limit; the L-58 package caps above do not waive N2. The first and fourth rows grew from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). The gzipped figures are a measurement and rot; the CI limits are not, because a test reads them back out of the gate script.
 
