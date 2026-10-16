@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createHash} from 'node:crypto';
-import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderSource,decoderPayload,validateDecoder} from './release-performance-decoder.mjs';
+import {fileURLToPath} from 'node:url';
+import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderSource,decoderPayload,validateDecoder,verifyDecoderCompiler} from './release-performance-decoder.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 // Synthetic finite validator inputs only. These figures are never used as
@@ -18,13 +19,19 @@ function valid() {
   const first=decoderPayload(DECODER_FIXTURES[0]);
   const controls=['oversize-one-byte','malformed-json'].map((id,i)=>{
     const text=i===0?first.text+' ':first.text.slice(0,-1);
-    const errors=['[forma] FORMA_E_ISLAND_STATE: refused fixture'];
+    const errors=[`[forma] FORMA_E_ISLAND_STATE: ${i===0?'state block exceeds one MiB':'invalid state JSON'}`];
     return {id,payloadBytes:Buffer.byteLength(text),payloadSha256:sha(text),observation:{elapsedMs:null,calls:0,valueSha256:null,
       valueLength:null,mutations:0,hostStatus:'pending',stateBlocks:1,pageErrors:[],consoleErrors:errors,browserConsoleErrors:errors,policyViolations:[]}};
   });
   return {schema:1,pilot:false,profile:{...DECODER_PROFILE},responsePolicy:DECODER_CSP,browserVersion:'test-only',recordedAt:'2026-10-15T00:00:00.000Z',
-    artifact:{file:'dist/forma.esm.js',sha256:'a'.repeat(64),bytes:100},machine:{node:'test',platform:'test',release:'test',architecture:'test',cpu:'test',logicalCpus:1,memoryBytes:1},cases,controls};
+    artifact:{file:'dist/forma.esm.js',sha256:'a'.repeat(64),bytes:100},
+    compiler:{file:'dist/index.js',sha256:'a'.repeat(64),fixtures:DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}}))},
+    machine:{node:'test',platform:'test',release:'test',architecture:'test',cpu:'test',logicalCpus:1,memoryBytes:1},cases,controls};
 }
+test('the actual candidate compiler regenerates the frozen source/IR/registration proof',async()=>{
+  const compiler=await verifyDecoderCompiler(process.env.FORMA_DECODER_COMPILER_PATH??fileURLToPath(new URL('../packages/compiler/',import.meta.url)));
+  assert.match(compiler.sha256,/^[a-f0-9]{64}$/);assert.equal(compiler.fixtures.length,2);
+});
 test('both finite payload shapes pin the complete UTF-8 envelope to exactly one MiB',()=>{
   for(const fixture of DECODER_FIXTURES) {
     const payload=decoderPayload(fixture);
@@ -33,7 +40,7 @@ test('both finite payload shapes pin the complete UTF-8 envelope to exactly one 
     const decoded=JSON.parse(payload.text).i[0].p.value;
     assert.deepEqual(decoded,payload.value);
     if(fixture.id==='ascii-string')assert.match(decoded,/^x+$/);
-    else {assert.equal(decoded.length,20_000);assert(decoded.every(value=>/^x+$/.test(value)));}
+    else {assert.equal(decoded.length,20_000);assert(decoded.every(value=>/^(?:é😀)+x*$/.test(value)));assert(Buffer.byteLength(payload.text)>payload.text.length);}
   }
 });
 test('the twelve-millisecond boundary is inclusive for every sample of both shapes',()=>{
@@ -57,6 +64,7 @@ test('profile, public artifact, machine, actual CSP and compiler registration ar
     r=>{r.pilot=true;},r=>{r.profile.cpuSlowdown=1;},r=>{r.profile.start='private preflight';},
     r=>{r.profile.retries=1;},r=>{r.responsePolicy="script-src 'self'";},
     r=>{r.artifact.file='src/dom/island-state.ts';},r=>{r.artifact.sha256='';},
+    r=>{delete r.compiler;},r=>{r.compiler.fixtures=[];},r=>{r.compiler.sha256='';},
     r=>{r.machine.cpu='';},r=>{r.machine.logicalCpus=0;},r=>{r.recordedAt='';},
     r=>{r.cases[0].registration={...r.cases[0].registration,h:'0'.repeat(16)};},
     r=>{r.cases[0].sourceSha256='c'.repeat(64);},r=>{r.cases[0].irSha256='c'.repeat(64);},
@@ -76,5 +84,6 @@ test('oversize and malformed controls need actual refusal observations before co
     r=>{r.controls[0].observation.calls=1;},r=>{r.controls[0].observation.elapsedMs=1;},
     r=>{r.controls[0].observation.mutations=1;},r=>{r.controls[1].observation.consoleErrors=[];r.controls[1].observation.browserConsoleErrors=[];},
     r=>{r.controls[1].observation.consoleErrors=['different failure'];r.controls[1].observation.browserConsoleErrors=['different failure'];},
+    r=>{const errors=['[forma] FORMA_E_ISLAND_STATE: missing first head state block'];r.controls[0].observation.consoleErrors=errors;r.controls[0].observation.browserConsoleErrors=errors;},
   ]) {const report=valid();mutate(report);assert.throws(()=>validateDecoder(report));}
 });
