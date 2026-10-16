@@ -164,3 +164,6 @@ docs/archive/FORMA-108-root-full-stack/** -text
 
 # Byte-exact watch-readiness original source and failure evidence.
 docs/archive/forma-watch-readiness/** -text
+
+# Exact dynamic fetch fixture source and authoritative integrated failure.
+docs/archive/FORMA-108-fetch-fixture/** -text
