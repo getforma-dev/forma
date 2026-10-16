@@ -49,6 +49,12 @@ function setupFailed(island: HTMLElement, error: unknown): void {
   reportActivationError(error);
 }
 
+function removeInteraction(island: HTMLElement, listener: EventListener): void {
+  island.removeEventListener('pointerdown', listener, true);
+  island.removeEventListener('focusin', listener, true);
+  delete (island as any).__formaInteractionHandler;
+}
+
 function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, ValidatedIsland>): LoadWork {
   let complete!: () => void;
   const work = ((event?: Event | false) => {
@@ -240,14 +246,8 @@ export function activateIslands(
       delete (island as any).__formaDisposed;
       trackIsland(island); activationPhase.set(island, 'scheduled');
       const trigger = island.getAttribute('data-forma-hydrate');
-      const work = trigger === 'visible' || trigger === 'idle' || trigger === 'interaction'
-        ? undefined : queueLoad(value, children);
-      if (work) ready.push(work.ready);
       try {
-        if (work) {
-          // Retained SSR targets can receive the same event after priority activation.
-          for (const type of loadEvents) island.addEventListener(type, work, true);
-        } else if (trigger === 'visible') {
+        if (trigger === 'visible') {
           const observer = new IntersectionObserver(entries => {
             for (const entry of entries) {
               if (!entry.isIntersecting) continue;
@@ -266,16 +266,19 @@ export function activateIslands(
             const handle = setTimeout(hydrate, 200);
             (island as any).__formaIdleCancel = () => clearTimeout(handle);
           }
-        } else {
+        } else if (trigger === 'interaction') {
           const hydrate = () => {
-            island.removeEventListener('pointerdown', hydrate, true);
-            island.removeEventListener('focusin', hydrate, true);
-            delete (island as any).__formaInteractionHandler;
+            removeInteraction(island, hydrate);
             hydrateIslandRoot(value, children);
           };
           (island as any).__formaInteractionHandler = hydrate;
           island.addEventListener('pointerdown', hydrate, { capture: true, once: true });
           island.addEventListener('focusin', hydrate, { capture: true, once: true });
+        } else {
+          const work = queueLoad(value, children);
+          ready.push(work.ready);
+          // Retained SSR targets can receive the same event after priority activation.
+          for (const type of loadEvents) island.addEventListener(type, work, true);
         }
       } catch (error) {
         setupFailed(island, error);
@@ -311,11 +314,7 @@ export function deactivateIsland(el: HTMLElement): void {
     delete (el as any).__formaObserver;
   }
   const interactionHandler = (el as any).__formaInteractionHandler as EventListener | undefined;
-  if (interactionHandler) {
-    el.removeEventListener('pointerdown', interactionHandler, true);
-    el.removeEventListener('focusin', interactionHandler, true);
-    delete (el as any).__formaInteractionHandler;
-  }
+  if (interactionHandler) removeInteraction(el, interactionHandler);
   pendingLoad.get(el)?.(false);
   const idleCancel = (el as any).__formaIdleCancel as (() => void) | undefined;
   if (idleCancel) {
