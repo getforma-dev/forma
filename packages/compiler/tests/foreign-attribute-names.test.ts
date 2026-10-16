@@ -69,6 +69,9 @@ describe('native foreign attribute spelling and namespace proof',()=>{
   it('checks original registered reactive roots',()=>{
     expect(()=>entry(`${head} import {mount} from '@getforma/core'; function Bad(p:{value:string}){const[value]=createSignal(p.value);return h('svg',{TabIndex:value});} function Page(){return Bad({value:'1'});} activateIslands({Bad});mount(Page,'#app');`)).toThrow(/BUILD-610.*attribute/s);
   });
+  it('keeps browserOnly bodies outside native attribute proof',()=>{
+    expect(()=>entry(`${head} import {mount,browserOnly} from '@getforma/core'; const Browser=browserOnly(()=>h('svg',{TabIndex:1,'data-Foo':'x'})); function Page(){return h('main',null,Browser());} activateIslands({Browser});mount(Page,'#app');`)).not.toThrow();
+  });
   it('checks list/helper context without changing component prop names',()=>{
     expect(()=>compile(`h('svg',null,createList(rows,item=>item.id,item=>h('g',{TabIndex:1})))`,`const[rows]=createSignal([{id:'a'}]);`)).toThrow(/BUILD-610.*attribute/s);
     expect(()=>emitDeclaredPage(`${head} function Child(p:{TabIndex:string}){return h('svg',{'data-safe':p.TabIndex});} export function Page(){return Child({TabIndex:'x'});}`)).not.toThrow();

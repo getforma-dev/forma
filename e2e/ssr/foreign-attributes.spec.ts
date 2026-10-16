@@ -5,6 +5,7 @@ import {SSR_ORIGIN} from './origin';
 test.beforeAll(async()=>expect(await fetch(`${SSR_ORIGIN}/__site`).then(r=>r.json())).toEqual({site:join(realpathSync(__dirname),'out','site'),built:true}));
 for(const mode of ['native','browser'])test(`${mode}: foreign attribute identity and integration points remain live`,async({page})=>{
   const errors:string[]=[],held:Route[]=[];let release=mode==='browser';
+  const cursor=await fetch(`${SSR_ORIGIN}/__csp-reports`).then(response=>response.json()).then(report=>report.cursor as number);
   page.on('pageerror',error=>errors.push(error.message));page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
   await page.addInitScript(()=>{(window as any).__foreignErrors=[];document.addEventListener('forma:error',event=>(window as any).__foreignErrors.push((event as CustomEvent).detail));document.addEventListener('securitypolicyviolation',event=>(window as any).__foreignErrors.push(event.violatedDirective));});
   await page.route('**/_assets/*.js',route=>release?route.continue():void held.push(route));
@@ -34,4 +35,6 @@ for(const mode of ['native','browser'])test(`${mode}: foreign attribute identity
   expect(await snapshot()).toEqual(initial);await page.locator('#update-foreign').click();
   expect(await snapshot()).toEqual({...initial,label:'changed',xlink:'changed',definition:'updated',html:Array.from({length:2},()=>['http://www.w3.org/1999/xhtml','1','changed'])});
   expect(await page.evaluate(()=>(window as any).__foreignErrors)).toEqual([]);expect(errors).toEqual([]);
+  const reports=await fetch(`${SSR_ORIGIN}/__csp-reports?after=${cursor}`).then(response=>response.json());
+  expect(reports.reports.filter((report:{document:string})=>report.document===`/foreign-attributes/${mode==='browser'?'csr':''}`)).toEqual([]);
 });
