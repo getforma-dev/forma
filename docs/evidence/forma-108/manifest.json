@@ -7,8 +7,8 @@
   "packedTarSha256": "8ebf5bf72b9a10636a5cb2e203d8882b852380547f43e8b287e7c884f05d553e",
   "files": {
     "README.md": {
-      "bytes": 8518,
-      "sha256": "7ca4ff9e8e1c4bb796d02c7cef46c5e80341ee8c3c8f7fb8dcd3ab5f05710405"
+      "bytes": 9434,
+      "sha256": "2ac4f1c1795d7cb91f9a867b6086e74545f81ee8fe3c9135d734ce25126b41be"
     },
     "browser-csp-corrected.log": {
       "bytes": 1469,
@@ -74,6 +74,18 @@
       "bytes": 254,
       "sha256": "7d3fedbde52781f353f003304fae46c60961a41699b0f65c9270676729f2704b"
     },
+    "fetch-fixture/corrected.json": {
+      "bytes": 6377,
+      "sha256": "3295c3e47262c5ee9604d791a7cd84a838c3f9dad3476745b0b67ed7ae544950"
+    },
+    "fetch-fixture/corrected.log": {
+      "bytes": 1327,
+      "sha256": "4c4073cfa0f95bdfbe39c3273429c6e1df9fdfc8520104bd9023508003756f32"
+    },
+    "fetch-fixture/qualification.json": {
+      "bytes": 1156,
+      "sha256": "64f6d90348a536773c39a37224e1430e613f50e33efa73e27c0872bb114b74d3"
+    },
     "l50-current-metadata.json": {
       "bytes": 608,
       "sha256": "ae86b210ea6ded5b6e97941adb27f22a5b0c451f153304124694048c14419830"
@@ -129,6 +141,18 @@
     "packed-security-108-first.log": {
       "bytes": 682,
       "sha256": "e5eb26f69c314d19ab378b71a1461cdac665f96e50333450b7dca96a774e31f4"
+    },
+    "root-full-stack/qualification.json": {
+      "bytes": 2264,
+      "sha256": "499898161f93724d4ad636f4002b635a052419f27b338a450ddc083acec674cf"
+    },
+    "root-full-stack/root-full-stack-disposal-corrected.json": {
+      "bytes": 7094,
+      "sha256": "3e8768983b682fa2e3b65b9efe3a1cc105d83ae75f521861084f2408ba0662ca"
+    },
+    "root-full-stack/root-full-stack-disposal-corrected.log": {
+      "bytes": 1228,
+      "sha256": "fe74ee38ff1e89f7be48fe4e073a7e04306f246bffa6b04fc5008483ece7defa"
     },
     "run-l50-final.sh": {
       "bytes": 1886,
@@ -373,18 +397,6 @@
     "runtime-mutations-complete.log": {
       "bytes": 144,
       "sha256": "b498f3a7966482ac12de74b1e4d43de137ac8e9231a4c04d7af928df68294ecf"
-    },
-    "root-full-stack/qualification.json": {
-      "bytes": 2264,
-      "sha256": "499898161f93724d4ad636f4002b635a052419f27b338a450ddc083acec674cf"
-    },
-    "root-full-stack/root-full-stack-disposal-corrected.json": {
-      "bytes": 7094,
-      "sha256": "3e8768983b682fa2e3b65b9efe3a1cc105d83ae75f521861084f2408ba0662ca"
-    },
-    "root-full-stack/root-full-stack-disposal-corrected.log": {
-      "bytes": 1228,
-      "sha256": "fe74ee38ff1e89f7be48fe4e073a7e04306f246bffa6b04fc5008483ece7defa"
     }
   },
   "combinedSourceCommit": "0d3d570f7b248097e12fd038178bba738c31f348",
