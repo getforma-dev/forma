@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "2c7d4f6849f5ff82cc5f245df09894cc2ce7a898",
+  "role": "Pre-FORMA-181 checkpoint C originals: the core list adoption tests whose expectations checkpoint C changes on purpose (initial keyed order, keyed counts and duplicate served keys). Byte-exact; never edited to make a new implementation pass.",
+  "sha256": {
+    "packages/core/src/dom/__tests__/adoption-list.test.ts.txt": {
+      "bytes": 18621,
+      "sha256": "eb63844b2d783ae7a35991c36fef4f9d5ce69c3221378efc43a58ee039306ef4"
+    },
+    "packages/core/src/dom/__tests__/list-adoption-count.test.ts.txt": {
+      "bytes": 28516,
+      "sha256": "d42ad32dafdbceda78ac329cd0d1c8765656dd983abfe47cd1860af43515be4b"
+    },
+    "packages/core/src/dom/__tests__/list-hydration.test.ts.txt": {
+      "bytes": 24324,
+      "sha256": "f43f504b6a0593d616b1397fd9a8528410c912cdcc70e61020dd2e63d886aca0"
+    }
+  }
+}
