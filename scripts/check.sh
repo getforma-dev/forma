@@ -101,6 +101,7 @@ bash e2e/sync-fixtures.sh
 bash e2e/ssr/build.sh
 bash e2e/frame/build.sh
 bash e2e/fixtures/apps/build.sh
+bash e2e/skew/build.sh
 # After the build: the servers embed what it wrote, and the embed needs the folders to exist.
 step "fixture applications' servers: rustfmt and clippy (FORMA-188; an e2e workspace member)"
 cargo fmt --manifest-path e2e/fixtures/apps/Cargo.toml --check

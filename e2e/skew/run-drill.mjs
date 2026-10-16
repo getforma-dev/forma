@@ -47,10 +47,14 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
   const proxy = await createBalancer(native.origins);
   const { state, origin } = proxy;
   const context = await browser.newContext({ serviceWorkers: 'block' });
-  const checks = [], events = new Map(), navigation = new Map();
+  context.setDefaultTimeout(10_000);
+  context.setDefaultNavigationTimeout(10_000);
+  const checks = [], events = new Map(), navigation = new Map(), errors = new Map();
   const mark = index => checks.push(SKEW_DRILL_CHECKS[index]);
   async function newPage(mode = 'normal') {
     const page = await context.newPage(); events.set(page, []); navigation.set(page, 0);
+    errors.set(page, []);
+    page.on('pageerror', error => errors.get(page).push(error.message));
     page.on('framenavigated', frame => { if (frame === page.mainFrame() && frame.url().startsWith(origin)) navigation.set(page, navigation.get(page) + 1); });
     page.on('console', message => { if (message.text().startsWith('SKEW_EVENT ')) events.get(page).push(JSON.parse(message.text().slice(11))); });
     await page.addInitScript(mode => {
@@ -65,12 +69,13 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
   const text = (page, selector) => page.locator(selector).textContent();
   async function active(page, label, path = '/') {
     await page.goto(origin + path);
-    await page.waitForFunction(() => document.querySelector('#increment') && (location.pathname === '/csr' || document.querySelector('[data-forma-status="active"]')));
+    await page.waitForFunction(() => document.querySelector('#increment'));
     assert.equal(await page.locator('#counter').getAttribute('data-source'), label);
     assert.equal(await text(page, '#server-label'), path === '/csr' ? 'browser' : label);
     assert.equal(await text(page, '#count'), path === '/csr' ? '0' : '7');
     await page.click('#increment');
     await until(() => text(page, '#count'), value => value === (path === '/csr' ? '1' : '8'), 'counter did not update');
+    assert.equal(await page.locator('[data-forma-status="error"], [data-forma-status="skew"]').count(), 0);
     assert.deepEqual(events.get(page), []);
   }
   async function panel(page, index, expected) {
@@ -80,7 +85,9 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
   async function inert(mode, path, reload) {
     const page = await newPage(mode);
     const before = state.log.length;
-    await page.goto(origin + path);
+    // The tripwire can deliberately reload before Firefox's first load event.
+    // Commit the initial navigation, then observe the actual events and Documents.
+    await page.goto(origin + path, { waitUntil: 'commit' });
     await until(() => events.get(page), value => value.length === (reload ? 2 : 1), 'skew event count');
     await page.waitForTimeout(300);
     assert.equal(navigation.get(page), reload ? 2 : 1, 'unexpected navigation loop');
@@ -99,7 +106,7 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
     assert.equal(state.log.slice(before).filter(row => row.pathname === path).length, reload ? 2 : 1);
     // A third real Document must still be refused without another automatic reload.
     if (reload) {
-      await page.reload(); await until(() => events.get(page).length, value => value === 3, 'third Document event');
+      await page.reload({ waitUntil: 'commit' }); await until(() => events.get(page).length, value => value === 3, 'third Document event');
       await page.waitForTimeout(200); assert.equal(navigation.get(page), 3); assert.equal(events.get(page)[2].reload, false);
     }
     await page.close();
@@ -144,6 +151,13 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
     state.fault = undefined; const browserPage = await newPage(); await active(browserPage, 'S', '/csr');
     state.fault = 'mismatch'; await inert('normal', '/csr', true); await inert('blocked', '/csr', false); await inert('cancel', '/csr', false); mark(10);
     assert.deepEqual(checks, SKEW_DRILL_CHECKS);
+    for (const failures of errors.values()) assert.deepEqual(failures, [], 'unexpected page error during the drill');
     return { checks, builds: Object.fromEntries(Object.entries(deployments).map(([name, item]) => [name, item.manifest.build])), requests: state.log };
-  } finally { await context.close(); await proxy.close(); await native.close(); }
+  } catch (error) {
+    error.message += `\nCompleted drill checks: ${JSON.stringify(checks)}\nLast requests: ${JSON.stringify(state.log.slice(-15))}`;
+    throw error;
+  } finally {
+    // A browser timeout must not prevent termination of the owned native server.
+    await Promise.allSettled([context.close(), proxy.close(), native.close()]);
+  }
 }

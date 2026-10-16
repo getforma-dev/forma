@@ -1,0 +1,34 @@
+# Deployment drill
+
+This lane builds five real distributions with the current build package, embeds them in five
+native servers, and places a deterministic HTTP balancer in front of them. The servers load real
+FMIR, bind typed `Props`, finalize every native route, return `PageResponse`, and serve hashed assets
+through `serve_asset`. The Browser route has its own explicit entry and empty shell.
+
+`A` is the initial release. `B` retains A; `B2` rebuilds the identical B inputs and must reproduce
+every output byte. `C` retains B and drops A. `S` is a security release that retains nothing.
+Eight panels are loaded only on user clicks. Their hashed URLs come from the page's own manifest
+through typed props, so a stale tab cannot silently switch to a new release's panel. The application's
+retry increments a query parameter to avoid the browser's cache of a failed module fetch; core
+does not own this import or retry.
+
+`runSkewDrill` exports eleven named checks consumed by both the repository spec and P17. They keep
+two old tabs alive through rolling deployment, rollback and re-upgrade, compare retained HTTP bytes
+and immutable cache headers, and check third-generation and security revocation. A deliberate proxy
+fault changes only the root's identity attribute; bundle bytes, SRI and document policies remain
+unchanged. The guard must leave the native page or Browser shell inert, dispatch its cancelable event,
+reload exactly once with usable storage, and never reload when storage is blocked or the event is
+canceled. Missing identity and normal positive interaction are also required.
+
+Run after `npm ci --ignore-scripts`:
+
+```sh
+npm run build
+CARGO_BUILD_JOBS=3 bash e2e/skew/build.sh
+npx playwright test --config e2e/skew/playwright.config.ts --workers 2
+```
+
+R17 runs the Chromium spec with the other lanes. P17 builds the same sources with its isolated
+packed libraries and locked packed crates, then runs all three engines. The source commit and hashes,
+build identities, exact check inventory and HTTP observations are recorded in the packed report.
+The helper is repository infrastructure and is not a published package export.

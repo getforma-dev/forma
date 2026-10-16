@@ -169,6 +169,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "forma-e2e-skew"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "forma-ir",
+ "forma-server",
+ "rust-embed",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "forma-fixture-apps"
 version = "0.0.0"
 dependencies = [

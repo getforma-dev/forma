@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync, symlinkSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync, symlinkSync, existsSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -21,19 +21,31 @@ export async function buildSkewApps({ build, coreDir, outputDir = join(here, 'ou
   mkdirSync(join(source, 'node_modules/@getforma'), { recursive: true });
   const coreLink = join(source, 'node_modules/@getforma/core');
   if (!existsSync(coreLink)) symlinkSync(resolve(coreDir), coreLink, 'dir');
+  assert.equal(realpathSync(coreLink), realpathSync(coreDir), 'skew inputs resolved a different core than the caller supplied');
   writeFileSync(join(source, 'package.json'), '{"type":"module"}\n');
   writeFileSync(join(source, 'app.ts'), `import { mount, activateIslands } from '@getforma/core';
 import { Page, Counter } from './page';
 activateIslands({ Counter });
 mount(() => Page({ count: 0, label: 'browser', panels: [] }), '#app');\n`);
+  // Independent Browser entry: the separate regression for one source used in
+  // both modes remains in the compiler/build qualification queue.
+  writeFileSync(join(source, 'browser.ts'), `import { mount } from '@getforma/core';
+import { BrowserPage } from './browser-page';
+mount(BrowserPage, '#app');\n`);
   const deployments = {};
   for (const name of ['A', 'B', 'B2', 'C', 'S']) {
     const label = name === 'B2' ? 'B' : name;
     writeFileSync(join(source, 'label.ts'), `export const label = ${JSON.stringify(label)};\n`);
+    writeFileSync(join(source, 'browser-page.ts'), `import { h, createSignal } from '@getforma/core';
+export function BrowserPage() {
+  const [count, setCount] = createSignal(0);
+  return h('section', { id: 'counter', 'data-source': ${JSON.stringify(label)} },
+    h('span', { id: 'server-label' }, 'browser'), h('span', { id: 'count' }, () => count()),
+    h('button', { id: 'increment', onClick: () => setCount(count() + 1) }, 'Increment'));
+}\n`);
     for (let index = 1; index <= 8; index++) writeFileSync(join(source, `panel-${index}.ts`),
       `import { label } from './label'; export const text = label + ':panel-${index}';\n`);
     writeFileSync(join(source, 'page.ts'), `import { h, createSignal } from '@getforma/core';
-import { label } from './label';
 type Props = { count: number; label: string; panels: string[] };
 export function Counter(props: Props) {
   const [count, setCount] = createSignal(props.count);
@@ -45,7 +57,7 @@ export function Counter(props: Props) {
       setPanel(loaded.text);
     } catch { setPanel('retry:' + index); }
   }
-  return h('section', { id: 'counter', 'data-source': label },
+  return h('section', { id: 'counter', 'data-source': ${JSON.stringify(label)} },
     h('span', { id: 'server-label' }, props.label),
     h('span', { id: 'count' }, () => count()),
     h('button', { id: 'increment', onClick: () => setCount(count() + 1) }, 'Increment'),
@@ -59,7 +71,7 @@ export function Page(props: Props) { return h('main', null, Counter(props)); }\n
       app: 'forma-skew', codeSplitting: true, ssr: true,
       entryPoints: [
         { entry: join(source, 'app.ts'), outfile: 'app.js' },
-        { entry: join(source, 'app.ts'), outfile: 'browser.js', ssr: false },
+        { entry: join(source, 'browser.ts'), outfile: 'browser.js', ssr: false },
         ...Array.from({ length: 8 }, (_, index) => ({ entry: join(source, `panel-${index + 1}.ts`), outfile: `panel-${index + 1}.js`, ssr: false })),
       ],
       routes: { '/': { js: ['app'], css: [] }, '/csr': { js: ['browser'], css: [] } },
