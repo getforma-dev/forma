@@ -53,6 +53,7 @@ const CASES = {
   'edited-controls': 'island',
   'ledger-arrival': 'island',
   'keyed-moves': 'island',
+  'keyed-indexed': 'island',
   'browser-only': 'island',
 } as const;
 type CaseName = keyof typeof CASES;
