@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Extend indexed initial-value proof to declared arrays and their ancestors: eager writes, mutating methods and unknown escapes before or after the factory refuse BUILD-622. Immutable declared-data aliases, array-length reads, disjoint props and deferred intrinsic events retain admission within the existing component subset.
+
 - Indexed handle admission refuses eager mutation and unknown escapes hidden in variable initializers (BUILD-622). Original lexical handle aliases and provably deferred intrinsic event callbacks, including local handler aliases, remain supported; no mutation evaluator or runtime restriction was added.
 
 - Add compiler proof and native lowering for `createKeyedRows` with the two-argument `createList` overload. Original lexical factories, required/closed arrays, synchronous key paths and unconditional component LISTs are required (BUILD-622); item getters keep row provenance without acquiring signal capture or early-edit writeback authority. Existing corpus bytes and the LIST/PROP/key-path wire contract are unchanged. Product and performance qualification belongs to the following FORMA-181 stage.

@@ -302,6 +302,52 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   if(!found||found.constantViolations.length||active.has(found))return false;
   active.add(found);try{return found.referencePaths.every(use=>deferred(mod,use,active));}finally{active.delete(found);}
  }
+ function laterUse(mod:Module,path:NodePath,owner:NodePath):boolean {
+  for(let cursor:NodePath|null=path.parentPath;cursor&&cursor!==owner;cursor=cursor.parentPath)if(cursor.isFunction()&&deferred(mod,cursor))return true;
+  return false;
+ }
+ type DataPath={binding:Binding;parts:(string|undefined)[]};
+ function dataPath(mod:Module,input:t.Node,active=new Set<Binding>()):DataPath|undefined {
+  const node=unwrap(input);
+  if(t.isMemberExpression(node)||t.isOptionalMemberExpression(node)) {
+   const base=dataPath(mod,node.object,active);if(!base)return undefined;
+   const name=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)||t.isNumericLiteral(node.property)?String(node.property.value):undefined;
+   return {binding:base.binding,parts:[...base.parts,name]};
+  }
+  if(!t.isIdentifier(node))return undefined;
+  const found=mod.paths.get(node)?.scope.getBinding(node.name);if(!found||active.has(found))return undefined;
+  if(found.kind==='param')return {binding:found,parts:[]};
+  const decl=found.path.node;
+  if(found.constantViolations.length||!t.isVariableDeclarator(decl)||!t.isIdentifier(decl.id)||!decl.init)return undefined;
+  active.add(found);try{return dataPath(mod,decl.init,active);}finally{active.delete(found);}
+ }
+ /** Declared initial arrays retain their server value through construction. Read
+  * disjoint props freely; any possibly shared array/ancestor must not escape to
+  * an eager call or write. Aliases stay subject to the same original-path proof. */
+ function initialUses(mod:Module,factory:t.CallExpression,owner:NodePath):void {
+  const initial=factory.arguments[0],source=initial&&dataPath(mod,initial);if(!source)return;
+  for(const [node,path] of mod.paths) {
+   if(!path.isReferencedIdentifier()||!t.isIdentifier(node))continue;
+   let value=expressionPath(path);
+   while(value.parentPath&&(value.parentPath.isMemberExpression()||value.parentPath.isOptionalMemberExpression())&&value.parentPath.node.object===value.node)value=expressionPath(value.parentPath);
+   const read=dataPath(mod,value.node);if(!read||read.binding!==source.binding)continue;
+   if(read.parts.some((part,i)=>i<source.parts.length&&part!==undefined&&source.parts[i]!==undefined&&part!==source.parts[i]))continue;
+   if(laterUse(mod,path,owner))continue;
+   const parent=value.parentPath;
+   const write=parent?.isAssignmentExpression()&&parent.node.left===value.node||parent?.isUpdateExpression()||parent?.isUnaryExpression({operator:'delete'});
+   if(!write) {
+    if(parent?.isCallExpression()&&parent.node.arguments[0]===value.node&&core(mod,parent.node.callee)==='createKeyedRows')continue;
+    if(parent?.isVariableDeclarator()&&parent.node.init===value.node&&t.isIdentifier(parent.node.id)) {
+     const alias=parent.scope.getBinding(parent.node.id.name);if(alias&&!alias.constantViolations.length)continue;
+    }
+    // An array's own length is scalar, so merely reading it cannot expose the
+    // array or a shared row. Writes to length still refuse above.
+    if(read.parts.length===source.parts.length+1&&read.parts.at(-1)==='length'&&source.parts.every((part,i)=>part!==undefined&&part===read.parts[i]))continue;
+    if(parent?.isBinaryExpression()&&['===','!=='].includes(parent.node.operator)||parent?.isUnaryExpression()&&['!','typeof','void'].includes(parent.node.operator))continue;
+   }
+   fail(mod,node,'BUILD-622','declared indexed initial rows and their ancestors must remain unmodified and unescaped until construction; use immutable aliases, pure reads or deferred intrinsic events');
+  }
+ }
  function handleUses(mod:Module,factory:t.CallExpression,owner:NodePath):void {
   for(const [node,path] of mod.paths) {
    if(!path.isReferencedIdentifier()||!t.isIdentifier(node)||keyedFactory(node,ref=>mod.paths.get(ref)?.scope.getBinding(ref.name),callee=>core(mod,callee)==='createKeyedRows')!==factory)continue;
@@ -310,9 +356,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    if(parent?.isVariableDeclarator()&&parent.node.init===value.node&&t.isIdentifier(parent.node.id)) {
     const alias=parent.scope.getBinding(parent.node.id.name);if(alias&&!alias.constantViolations.length)continue;
    }
-   let later=false;
-   for(let cursor:NodePath|null=path.parentPath;cursor&&cursor!==owner;cursor=cursor.parentPath)if(cursor.isFunction()&&deferred(mod,cursor)){later=true;break;}
-   if(!later)fail(mod,node,'BUILD-622','indexed handle can only feed its native LIST or a proved deferred intrinsic event; eager mutations and unknown escapes have no native equivalent');
+   if(!laterUse(mod,path,owner))fail(mod,node,'BUILD-622','indexed handle can only feed its native LIST or a proved deferred intrinsic event; eager mutations and unknown escapes have no native equivalent');
   }
  }
  /** The factory validates eagerly. Native must execute its matching LIST on the
@@ -330,6 +374,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    if(!statement?.isReturnStatement()||owner.node.body.body.some(item=>item!==statement.node&&!t.isVariableDeclaration(item)&&!t.isFunctionDeclaration(item)&&!t.isTSTypeAliasDeclaration(item)&&!t.isTSInterfaceDeclaration(item)&&!t.isEmptyStatement(item)))fail(mod,factory,'BUILD-622','indexed factory needs a single unconditional component return containing its LIST');
   }
   handleUses(mod,factory,owner);
+  initialUses(mod,factory,owner);
   const key=factory.arguments[1];
   if(!t.isArrowFunctionExpression(key)||key.async||t.isBlockStatement(key.body)||key.params.length!==1||!t.isIdentifier(key.params[0]))fail(mod,key??factory,'BUILD-622','indexed key callback must be a pure expression reading its own row property path');
   const parts=keyPath(mod,key.body,binding(mod,key.params[0],'BUILD-612'));
