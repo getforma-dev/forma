@@ -16,7 +16,7 @@ export async function runPreflight(load: () => Promise<Engine>): Promise<{ admit
   let engine: Engine;
   try { engine = await load(); } finally { Array.from = original; }
   const ast = engine.compileExpression('Array.from(shape)');
-  const scope = { getters: { shape: () => shape } };
+  const scope = { getters: { shape: () => shape }, setters: {} };
   deepStrictEqual(engine.evaluateExpression(ast, scope, { steps: 0, cost: 249_986 }), Array(4).fill(undefined));
   strictEqual(calls, 1, 'admitted call must reach the captured native witness');
   let code = '';
