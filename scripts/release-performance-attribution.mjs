@@ -82,9 +82,11 @@ export function attributeMobileTasks(lhr,trace) {
         if(e.name==='LayoutImageUnsized' && (e.cat!=='devtools.timeline' || e.ph!=='I' || e.args?.data?.frameId!==frame || !Number.isInteger(e.args?.data?.nodeId) || e.args.data.nodeId<=0))return false;
         if(e.name==='ResourceChangePriority'){
           const data=e.args?.data,requestId=data?.requestId;
-          if(e.cat!=='devtools.timeline' || e.ph!=='X' || typeof requestId!=='string' || !requestId || !['VeryLow','Low','Medium','High','VeryHigh'].includes(data.priority))return false;
-          const sends=thread.filter(candidate=>candidate.name==='ResourceSendRequest' && candidate.cat==='devtools.timeline' && candidate.ph==='I' && candidate.dur===undefined && candidate.ts>=origin && candidate.ts<=e.ts && candidate.args?.data?.requestId===requestId && candidate.args.data.frame===frame && candidate.args.data.resourceType==='Image' && candidate.args.data.initiator?.type==='parser' && candidate.args.data.initiator.url===lhr.requestedUrl);
+          if(e.cat!=='devtools.timeline' || e.ph!=='X' || !nonnegative(e.dur) || typeof requestId!=='string' || !requestId || !['VeryLow','Low','Medium','High','VeryHigh'].includes(data.priority))return false;
+          const sends=thread.filter(candidate=>candidate.name==='ResourceSendRequest' && candidate.ts>=origin && candidate.ts<=e.ts && candidate.args?.data?.requestId===requestId);
           if(sends.length!==1)return false;
+          const send=sends[0];
+          if(send.cat!=='devtools.timeline' || send.ph!=='I' || send.dur!==undefined || send.args.data.frame!==frame || send.args.data.resourceType!=='Image' || send.args.data.initiator?.type!=='parser' || send.args.data.initiator.url!==lhr.requestedUrl)return false;
         }
         if(e.name==='EventDispatch' && !['resize','pagereveal'].includes(e.args?.data?.type))return false;
         if(e.name==='WebDXFeatureUsage' && e.args?.scriptId!==-1)return false;
