@@ -2,7 +2,7 @@ import {afterEach,expect,it} from 'vitest';
 import {build,context,type Plugin} from 'esbuild';
 import {mkdirSync,mkdtempSync,realpathSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {dirname,join} from 'node:path';
+import {basename,dirname,join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {formaSsrPlugin,generateRealIr} from '../src/esbuild-ssr-plugin';
 import {getSsrEntryProducts} from '../src/ssr-product';
@@ -20,7 +20,7 @@ function fixture(){
 it('maps the virtual root to the same physical product snapshot and native bytes',async()=>{
  const f=fixture(),result=await build(f.options);const product=getSsrEntryProducts(result)[0];
  expect(product).toMatchObject({page:'ssr',sourceEntry:f.entry,browserEntry:f.entry});
- expect(Buffer.from(result.outputFiles!.find(file=>file.path.endsWith('/ssr.ir'))!.contents)).toEqual(Buffer.from(generateRealIr(f.entry)!.binary));
+ expect(Buffer.from(result.outputFiles!.find(file=>basename(file.path)==='ssr.ir')!.contents)).toEqual(Buffer.from(generateRealIr(f.entry)!.binary));
  expect(Object.values(result.metafile!.outputs).map(output=>output.entryPoint)).toContain('forma-browser-entry:browser.js');
  for(const output of result.outputFiles!){mkdirSync(dirname(output.path),{recursive:true});writeFileSync(output.path,output.contents);}
  writeFileSync(join(f.root,'run.mjs'),`import {singleton as a} from './dist/ssr.js';import {singleton as b} from './dist/browser.js';console.log(JSON.stringify({mounts:globalThis.mounts,same:a===b}));`);
