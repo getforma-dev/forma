@@ -46,6 +46,7 @@ import { SSR_ORIGIN as ORIGIN } from './origin';
 const CASES = {
   'generic-state': 'island',
   'mixed-entry': 'island',
+  namespaces: 'island',
   'root-fragment': 'static',
   'textarea-child': 'island',
   'textarea-value': 'island',

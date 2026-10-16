@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Lexical JSX SVG namespaces — FORMA-171
+
+- Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.
+- Compiler and build loaders share the original source snapshot with adoption hooks and SSR/Browser entry ownership. Handwritten `h`, separate component bodies, custom JSX factories and the deferred dynamic SVG title adoption boundary keep their existing contracts.
+
 ### Shared physical SSR and Browser entries — FORMA-186
 
 - Split builds separate graph-wide component hooks from SSR-only entry edits. A paired Browser entry reads the same captured source with component hooks and its original mount/registry, while native metadata continues to name the actual physical source. Changes during either load refuse the whole paired result.

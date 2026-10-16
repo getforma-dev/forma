@@ -867,3 +867,27 @@ physical entry retain its SSR identity; a re-exporting facade does not opt into
 a second whole-page mount. Keep reusable components and module singletons in
 ordinary shared modules and declare the mount source itself as the Browser
 entry.
+
+### JSX SVG namespaces
+
+With the default `h` JSX factory imported from `@getforma/core` (or the legacy
+`formajs` alias), lexical SVG children such as `<svg><a><title>Icon</title></a></svg>`
+are created in the SVG namespace. HTML inside `foreignObject`, `desc` and `title`
+and the existing MathML integration points keep their original namespace.
+The build emits a private per-file factory; it adds no code to core. Props,
+spreads and children evaluate once in their original order, before element
+creation. The compiler composes these edits with adoption hooks on the same
+captured source for SSR and Browser entries, leaving native IR unchanged.
+
+Inline function children and control-flow callbacks within the JSX subtree inherit
+that lexical namespace; JSX in an attribute expression does not.
+This applies to lexical JSX. A separately declared component returning `<a>`
+has no known lexical SVG parent; use the existing `svg()` scope or a known-parent
+reactive child for that case. Handwritten `h` calls are unchanged. An authored
+custom JSX factory, automatic JSX runtime, or a file with an inner custom `h`
+binding retains its own factory behavior. The existing script construction
+refusal and the deferred dynamic SVG title adoption limitation still apply.
+
+The actual native/CSR/adoption namespace vectors are exercised by
+`e2e/ssr/namespaces.spec.ts`; unit controls cover evaluation order, source drift,
+SSR/Browser ownership, custom factories and generated-name collisions.
