@@ -210,3 +210,6 @@ docs/evidence/playwright-firefox-channel/** -text
 
 # Preserve the actual WebKit failure and native baseline byte-for-byte.
 docs/archive/webkit-native-select-baseline/** -text
+
+# Preserve the first exact select-repair qualification and frame failures.
+docs/evidence/webkit-native-select-baseline/** -text
