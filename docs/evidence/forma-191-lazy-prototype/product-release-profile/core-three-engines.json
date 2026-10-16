@@ -1,0 +1,708 @@
+{
+  "config": {
+    "argv": [
+      "/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin/node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "packages/core/playwright.config.ts",
+      "core-regressions.spec.ts",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results"
+    ],
+    "configFile": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/playwright.config.ts",
+    "rootDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 10000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 10000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 10000,
+        "use": {
+          "baseURL": "http://localhost:35629",
+          "headless": true,
+          "browserName": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 10000,
+        "use": {
+          "baseURL": "http://localhost:35629",
+          "headless": true,
+          "browserName": "firefox"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "firefox"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://localhost:35629",
+          "headless": true,
+          "browserName": "webkit"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "webkit"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 2,
+    "webServer": {
+      "command": "npx serve e2e/fixtures -l 35629 --no-clipboard",
+      "port": 35629,
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "core-regressions.spec.ts",
+      "file": "core-regressions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "HTML prototype clones keep template and form-control state private",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 83,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:44.541Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-7b9337a7b895fc97508a",
+          "file": "core-regressions.spec.ts",
+          "line": 20,
+          "column": 1
+        },
+        {
+          "title": "controlled input, textarea, checkbox and non-first selections survive real user edits",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 144,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:44.758Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-4f83ea11ebc4e622332f",
+          "file": "core-regressions.spec.ts",
+          "line": 71,
+          "column": 1
+        },
+        {
+          "title": "multiple select changes update the browser live selection collection",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 71,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:44.909Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-23dee6075c6452153706",
+          "file": "core-regressions.spec.ts",
+          "line": 101,
+          "column": 1
+        },
+        {
+          "title": "same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 68,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:44.987Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-912951eb33e322fcba8e",
+          "file": "core-regressions.spec.ts",
+          "line": 115,
+          "column": 1
+        },
+        {
+          "title": "SSR adoption refuses mismatched older properties and keeps matching controls live",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 87,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:45.065Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-f179f80202cdd58e2731",
+          "file": "core-regressions.spec.ts",
+          "line": 147,
+          "column": 1
+        },
+        {
+          "title": "HTML prototype clones keep template and form-control state private",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 829,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:44.541Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-d900b948be9be35af015",
+          "file": "core-regressions.spec.ts",
+          "line": 20,
+          "column": 1
+        },
+        {
+          "title": "controlled input, textarea, checkbox and non-first selections survive real user edits",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 482,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:45.883Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-d723738d5b98d9d49d0b",
+          "file": "core-regressions.spec.ts",
+          "line": 71,
+          "column": 1
+        },
+        {
+          "title": "multiple select changes update the browser live selection collection",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 206,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:46.373Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-66f2116ebd8e02e4c6bd",
+          "file": "core-regressions.spec.ts",
+          "line": 101,
+          "column": 1
+        },
+        {
+          "title": "same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 199,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:46.588Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-6c8b8fe4182bfcca378e",
+          "file": "core-regressions.spec.ts",
+          "line": 115,
+          "column": 1
+        },
+        {
+          "title": "SSR adoption refuses mismatched older properties and keeps matching controls live",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 243,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:46.793Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-b4834db817541529d64d",
+          "file": "core-regressions.spec.ts",
+          "line": 147,
+          "column": 1
+        },
+        {
+          "title": "HTML prototype clones keep template and form-control state private",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 285,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:45.428Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-5b42fd4242e430508db9",
+          "file": "core-regressions.spec.ts",
+          "line": 20,
+          "column": 1
+        },
+        {
+          "title": "controlled input, textarea, checkbox and non-first selections survive real user edits",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 315,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:45.941Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-976484ae7f226d1ceb88",
+          "file": "core-regressions.spec.ts",
+          "line": 71,
+          "column": 1
+        },
+        {
+          "title": "multiple select changes update the browser live selection collection",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 232,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:46.263Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-bfec831f6fc65fd32b18",
+          "file": "core-regressions.spec.ts",
+          "line": 101,
+          "column": 1
+        },
+        {
+          "title": "same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 196,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:46.503Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-43081666d48483b2c1d0",
+          "file": "core-regressions.spec.ts",
+          "line": 115,
+          "column": 1
+        },
+        {
+          "title": "SSR adoption refuses mismatched older properties and keeps matching controls live",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 244,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:46.706Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f3045060669c87886268-4310bd374d5aa7e634b2",
+          "file": "core-regressions.spec.ts",
+          "line": 147,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-16T09:40:43.369Z",
+    "duration": 3915.2590000000005,
+    "expected": 15,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

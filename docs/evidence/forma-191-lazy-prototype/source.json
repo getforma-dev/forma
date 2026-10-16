@@ -1,0 +1,41 @@
+{
+  "base": "cf869f8302ea0a07d144f39b808a8452485df970",
+  "head": "fe2ba420a6e7e382eb8b18a6c96d3e6be76a9efa",
+  "files": [
+    {
+      "path": "packages/core/src/dom/element.ts",
+      "bytes": 48043,
+      "sha256": "52cfc8f6f9b689662dda06c125656d86810f3353130b21e17e8cfa4238b82f51"
+    },
+    {
+      "path": "packages/core/e2e/core-regressions.spec.ts",
+      "bytes": 10210,
+      "sha256": "3fa57832d69554bcce79d965e856b2697fe2b315af7c1923925d39ed6f0dfcbe"
+    },
+    {
+      "path": "e2e/fixtures/apps/apps.spec.ts",
+      "bytes": 16712,
+      "sha256": "ecadbe83193c43108a888ffbf6ad332e234373f7c7776da774e5a809e8e15cd0"
+    },
+    {
+      "path": "e2e/fixtures/apps/README.md",
+      "bytes": 7129,
+      "sha256": "6b3fab0a0a05269071b5bfc5a3c678ba6917976e13e451b368129f5a7451003f"
+    },
+    {
+      "path": "packages/core/src/dom/__tests__/element-prototype-cache.test.ts",
+      "bytes": 8253,
+      "sha256": "fd022550021ecc30b7fb416cee663d7aac28451d4db863c08318ff2d756ceca3"
+    },
+    {
+      "path": "packages/core/CHANGELOG.md",
+      "bytes": 163533,
+      "sha256": "392ad514458328be09a70993832f6a97ed85271e768a933daa51f83aa4603283"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 222318,
+      "sha256": "06c9440fc0700441b3560566d3abb850a78a98bd3f420b7c8d8b53523743ea90"
+    }
+  ]
+}

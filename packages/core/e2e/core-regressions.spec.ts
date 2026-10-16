@@ -17,6 +17,57 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/core-regression.html');
 });
 
+test('HTML prototype clones keep template and form-control state private', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const coreUrl = '/core-regression.mjs';
+    const { h } = await import(coreUrl);
+    const template = h('template') as HTMLTemplateElement;
+    template.content.appendChild(document.createTextNode('private template'));
+    const input = h('input') as HTMLInputElement;
+    input.value = 'private input'; input.defaultValue = 'private default';
+    input.checked = true; input.defaultChecked = true; input.disabled = true;
+    const textarea = h('textarea') as HTMLTextAreaElement;
+    textarea.value = 'private textarea'; textarea.defaultValue = 'private default';
+    const option = h('option') as HTMLOptionElement;
+    option.textContent = 'private option'; option.value = 'private value';
+    option.selected = true; option.defaultSelected = true; option.disabled = true;
+    const form = h('form') as HTMLFormElement;
+    form.setAttribute('data-private', 'first'); form.append(input, textarea);
+
+    const nextTemplate = h('template') as HTMLTemplateElement;
+    const nextInput = h('input') as HTMLInputElement;
+    const nextTextarea = h('textarea') as HTMLTextAreaElement;
+    // Observe the option before insertion: a select may select its first option.
+    const nextOption = h('option') as HTMLOptionElement;
+    const nextForm = h('form') as HTMLFormElement;
+    class Custom extends HTMLElement { readonly state = { touched: false }; }
+    customElements.define('forma-prototype-private', Custom);
+    const custom = h('forma-prototype-private') as Custom;
+    custom.state.touched = true;
+    const nextCustom = h('forma-prototype-private') as Custom;
+    return {
+      changed: [template.content.textContent, input.value, input.checked, textarea.value,
+        option.selected, option.defaultSelected, form.elements.length, custom.state.touched],
+      independent: [template !== nextTemplate, input !== nextInput, textarea !== nextTextarea,
+        option !== nextOption, form !== nextForm, custom !== nextCustom, custom.state !== nextCustom.state],
+      template: [nextTemplate.content.childNodes.length, nextTemplate.attributes.length],
+      input: [nextInput.value, nextInput.defaultValue, nextInput.checked, nextInput.defaultChecked,
+        nextInput.disabled, nextInput.attributes.length],
+      textarea: [nextTextarea.value, nextTextarea.defaultValue, nextTextarea.childNodes.length],
+      option: [nextOption.textContent, nextOption.value, nextOption.selected, nextOption.defaultSelected,
+        nextOption.disabled, nextOption.hasAttribute('selected'), nextOption.attributes.length],
+      form: [nextForm.elements.length, nextForm.childNodes.length, nextForm.attributes.length],
+      custom: [custom instanceof Custom, nextCustom instanceof Custom, nextCustom.state.touched],
+    };
+  });
+  expect(result).toEqual({
+    changed: ['private template', 'private input', true, 'private textarea', true, true, 2, true],
+    independent: [true, true, true, true, true, true, true],
+    template: [0, 0], input: ['', '', false, false, false, 0], textarea: ['', '', 0],
+    option: ['', '', false, false, false, false, 0], form: [0, 0, 0], custom: [true, true, false],
+  });
+});
+
 test('controlled input, textarea, checkbox and non-first selections survive real user edits', async ({ page }) => {
   await page.evaluate(async () => {
     const coreUrl = '/core-regression.mjs';

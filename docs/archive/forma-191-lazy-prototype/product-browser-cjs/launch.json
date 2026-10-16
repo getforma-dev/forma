@@ -1,0 +1,19 @@
+{
+  "source": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+  "output": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-cjs",
+  "purpose": "lazy prototype build and scoped real-browser correctness; no performance measurement",
+  "adapterHashes": {
+    "adapter.mjs": "6dd5549cb0299bc157b9a026abd70748d24a97cf95eae2aaa8fa1b23a554ef00",
+    "run.mjs": "ac30e9a380abf460ce9fe15140399db11a08b1590c968bc4ee6bdf888074234a",
+    "owned-processes.py": "70893ecf5a37cf206faf958830654d65b03645601c5d24942c69ab12d73e4866",
+    "adapter.test.mjs": "e6a52f13b8f0691ae51f11d9608e3a6da5ad9f66d7752c37efde5cda479d5091",
+    "launcher.test.mjs": "dcb0714e0fdf31728fe8158d39810e94fc780a760f0d9c47b7d806d5b44f2560"
+  },
+  "work": "/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-continuation-HlnS2J",
+  "startedAt": "2026-10-16T09:31:58.196Z",
+  "overallTimeoutSeconds": 300,
+  "maxLogBytes": 67108864,
+  "partialQualification": true,
+  "p17Passed": false,
+  "performanceAccepted": false
+}

@@ -1,0 +1,16 @@
+{
+  "base": "dc43901dcb3cd44d927b44067775bf7767920343",
+  "status": "source-only, not executed",
+  "files": [
+    {
+      "path": "packages/core/e2e/core-regressions.spec.ts",
+      "sha256": "3fa57832d69554bcce79d965e856b2697fe2b315af7c1923925d39ed6f0dfcbe",
+      "bytes": 10210
+    },
+    {
+      "path": "packages/core/CHANGELOG.md",
+      "sha256": "392ad514458328be09a70993832f6a97ed85271e768a933daa51f83aa4603283",
+      "bytes": 163533
+    }
+  ]
+}

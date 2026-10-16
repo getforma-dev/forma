@@ -1,0 +1,13 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run src/dom/__tests__/element-prototype-cache.test.ts --maxWorkers=2
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+
+
+ Test Files  1 passed (1)
+      Tests  51 passed (51)
+   Start at  05:09:24
+   Duration  506ms (transform 128ms, setup 0ms, import 34ms, tests 218ms, environment 161ms)
+
