@@ -43,12 +43,37 @@ lists and relative imports. Keep those helpers unregistered inside the owning
 select island, or move the boundary to the select or an outer element. An
 unbound select does not acquire value ownership merely by existing.
 
-LIST row-root proof is enforced by BUILD-613. **The independent proof that an
-SSR island's own root is one owned Element, and the finite parser-repair refusal
-set, are still the FORMA-139 release gate.** This document does not claim those
-checks are implemented. General HTML repair inference and a tag-nesting validator
-are outside this compiler contract; known unproved shapes cannot be advertised
-as supported before that gate lands.
+LIST row-root proof remains BUILD-613. An SSR island must also prove one stable
+owned Element (BUILD-621), directly or through immutable local/imported helpers.
+A transparent Fragment around exactly one Element is valid. Root Show/List or
+conditional markers, text, no root, several roots, and an entire root owned by
+another registered island are refused. Keep dynamic ranges and child islands
+inside the authored host. A browserOnly component retains its separate server
+host. Binding-description inspection alone does not authorize native publication.
+
+BUILD-618 enforces the finite3.0 nesting list through helpers, branches and lists:
+p-closing HTML tags; nested a/form; li and dt/dd starts closing an ancestor;
+option outside select and nested option/optgroup closing; interactive descendants
+of a/button and content beyond a label's one labelled control. Explicit siblings,
+nested lists, a label's own control and mutually exclusive alternative controls
+remain valid. A repeated list cannot supply one label with several controls.
+Attribute-sensitive interactive categories retain their conditions (for example,
+input type=hidden and an a without href are not interactive). The option/select
+rule is this release's deliberately narrow subset, not every current HTML model.
+
+HTML component title is BUILD-619; pass document title to the server render call.
+SVG title remains valid. Dynamic/reactive children in style/script are BUILD-620;
+use immediate authored literal text and pass data through ordinary safe sinks.
+Named constants and template expressions still enter the existing dynamic opcode
+path and are refused here; no separate executable-text evaluator is introduced. Namespaces and
+HTML integration points are tracked only to apply these finite checks correctly.
+No broader parser-repair inference or general HTML validator is claimed.
+See the [finite source corpus](../tests/html-context.test.ts) and
+[original products](../../../docs/archive/FORMA-139-html-context/README.md).
+Primary references: [in-body parsing](https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inbody),
+[a content](https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element),
+[button content](https://html.spec.whatwg.org/multipage/form-elements.html#the-button-element),
+[label association](https://html.spec.whatwg.org/multipage/forms.html#the-label-element).
 
 ## Reports and migration
 
@@ -470,6 +495,46 @@ their real lifecycle tests.
 **Build result.** Error: publication is refused.
 
 [Refusal fixture](../tests/fixtures/conformance/BUILD-617/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-617/pass/).
+
+### BUILD-618 — HTML nesting outside the finite native subset
+
+**Why.** The authored tree contains a listed parser-repaired nesting or interactive-content conflict, so parsed native HTML cannot preserve the authored ownership.
+
+**Fix.** Use explicit sibling elements, keep phrasing content inside p, place options inside select, and give interactive content and each labelled control their own valid host.
+
+**Build result.** Error: publication is refused.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-618/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-618/pass/).
+
+### BUILD-619 — Document title inside a component
+
+**Why.** An HTML title emitted inside the component does not own the page document title.
+
+**Fix.** Pass the page title to the server render call; an SVG title remains component content.
+
+**Build result.** Error: publication is refused.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-619/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-619/pass/).
+
+### BUILD-620 — Dynamic child in executable text content
+
+**Why.** A dynamic or reactive style/script child enters a CSS or JavaScript context that ordinary HTML escaping cannot make safe.
+
+**Fix.** Keep authored literal style/script text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.
+
+**Build result.** Error: publication is refused.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-620/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-620/pass/).
+
+### BUILD-621 — SSR island without one stable owned Element
+
+**Why.** The registered SSR component has text, empty, multiple, conditional/control-flow, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.
+
+**Fix.** Return one authored Element, directly or through an ordinary resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.
+
+**Build result.** Error: publication is refused.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-621/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-621/pass/).
 
 ### BUILD-701 — Plain array child (`.map()` without createList)
 

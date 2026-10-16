@@ -1,0 +1,510 @@
+{
+  "base": "d0bec877b403ec3591f1edffd3587ed7c2858901",
+  "cases": [
+    {
+      "name": "block in p",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('p',null,h('div',null,'block'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "00",
+      "diagnostics": [],
+      "bytes": 160,
+      "sha256": "359b8ee51f41583db6d8ad47338b8293c44736c519d7d799f78106be023db52d"
+    },
+    {
+      "name": "nested anchor",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('a',null,h('span',null,h('a',{href:'/x'},'link')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "01",
+      "diagnostics": [],
+      "bytes": 190,
+      "sha256": "2ba87962c1c80820d5f42e70004bac65e2086c8f8d31c4961d81c40b01daa587"
+    },
+    {
+      "name": "nested form",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('form',null,h('section',null,h('form',null,'nested')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "02",
+      "diagnostics": [],
+      "bytes": 180,
+      "sha256": "bb0246aad431e1cf4edc3ded2204f9b0b0d7a2487aa30d8ae3d8e5e90b1947e8"
+    },
+    {
+      "name": "li closing ancestor",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('ul',null,h('li',null,'one',h('li',null,'two')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "03",
+      "diagnostics": [],
+      "bytes": 180,
+      "sha256": "3e9bc12114b3d5942f40a9408db917c7912a4103c7e30d7c84f4d92c350c2aba"
+    },
+    {
+      "name": "dt closing dd",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('dl',null,h('dd',null,'one',h('dt',null,'two')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "04",
+      "diagnostics": [],
+      "bytes": 184,
+      "sha256": "c906f069c85df32222d3bada70ff7e8ddeb2033e499f9ca5508b8615fbb50324"
+    },
+    {
+      "name": "dd closing dt",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('dl',null,h('dt',null,'one',h('dd',null,'two')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "05",
+      "diagnostics": [],
+      "bytes": 184,
+      "sha256": "dd4e7f61211cb219c8894b1aa3803ba676101655fb38e112f9fe1f475699d238"
+    },
+    {
+      "name": "option outside select",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('div',null,h('option',{value:'a'},'A'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "06",
+      "diagnostics": [],
+      "bytes": 179,
+      "sha256": "20c51388a0fdef72eb49e1a57ed9b65322c9c014b91a45660f6aa875964e3da6"
+    },
+    {
+      "name": "option closes option",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('select',null,h('option',null,'A',h('option',null,'B')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "07",
+      "diagnostics": [],
+      "bytes": 184,
+      "sha256": "dacce99fe06714c5ab81d588045cf426acfd3632eb6d7a26e4feae229fc1b57f"
+    },
+    {
+      "name": "optgroup closes option",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('select',null,h('option',null,'A',h('optgroup',{label:'G'},h('option',null,'B'))));}\nmount(()=>Page(),'#app');\n",
+      "stem": "08",
+      "diagnostics": [],
+      "bytes": 224,
+      "sha256": "c82fbfbc8541ee66cf067cd10ff726a83caab4871aecb8eb9b3143d6b3e118d0"
+    },
+    {
+      "name": "optgroup closes optgroup",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('select',null,h('optgroup',{label:'A'},h('optgroup',{label:'B'},h('option',null,'B'))));}\nmount(()=>Page(),'#app');\n",
+      "stem": "09",
+      "diagnostics": [],
+      "bytes": 224,
+      "sha256": "834c0877ce704ec6fbe8b535a7b5f7bc48ea69470fa20f65e1846cde6e0fbe60"
+    },
+    {
+      "name": "button inside anchor",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('a',{href:'/x'},h('span',null,h('button',null,'go')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "10",
+      "diagnostics": [],
+      "bytes": 196,
+      "sha256": "08c64f387b26be3eb8bb844511b93cd6f3b9e27d70f4214e8b37d32f5e441192"
+    },
+    {
+      "name": "input inside button",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('button',null,h('input',{type:'text'}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "11",
+      "diagnostics": [],
+      "bytes": 170,
+      "sha256": "30dd0e0e056b154055e6a3def77ff7f510f1e659e024d2163d7d6b74250f89e1"
+    },
+    {
+      "name": "nested button",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('button',null,h('button',null,'go'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "12",
+      "diagnostics": [],
+      "bytes": 157,
+      "sha256": "49612e7a8c899328dc15bde4e4fcb59298ced1ce741e82e130dff82293bd93a8"
+    },
+    {
+      "name": "interactive label extra",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('label',null,h('input',{id:'x'}),h('a',{href:'/x'},'other'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "13",
+      "diagnostics": [],
+      "bytes": 209,
+      "sha256": "011248cc54d30da59e049db2f2dd10bb38c27918982a85e637c6307e9261606e"
+    },
+    {
+      "name": "two label controls",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('label',null,h('input',{id:'x'}),h('input',{id:'y'}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "14",
+      "diagnostics": [],
+      "bytes": 182,
+      "sha256": "8c69bcf5bbce1490272058426ed416cadbbb7abe5619d3221453c962c73e92c4"
+    },
+    {
+      "name": "wrong explicit labelled control",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('label',{htmlFor:'x'},h('input',{id:'y'}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "15",
+      "diagnostics": [],
+      "bytes": 184,
+      "sha256": "0409084f61726541ebe45e21e833b4ba3cf45ba77020fb66035c073e4ebacc09"
+    },
+    {
+      "name": "phrasing p",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('p',null,'text',h('span',null,'inline'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "16",
+      "diagnostics": [],
+      "bytes": 173,
+      "sha256": "95b30c27f86e8a15bb6ed967189eb49dea00ad6fe29db8d6e82d0e07b2433079"
+    },
+    {
+      "name": "sibling anchors",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('div',null,h('a',{href:'/a'},'A'),h('a',{href:'/b'},'B'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "17",
+      "diagnostics": [],
+      "bytes": 206,
+      "sha256": "f4a8a6bb9daa878987b33be68839643385568fe0258fa41d4d3ffdc66e3286e7"
+    },
+    {
+      "name": "sibling forms",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('div',null,h('form',null,'A'),h('form',null,'B'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "18",
+      "diagnostics": [],
+      "bytes": 179,
+      "sha256": "a5ea8607a531543f6ba65d10ddd4014f91be065d8fa10d8e8b38893e5a4f4c20"
+    },
+    {
+      "name": "nested list",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('ul',null,h('li',null,'A',h('ul',null,h('li',null,'B'))));}\nmount(()=>Page(),'#app');\n",
+      "stem": "19",
+      "diagnostics": [],
+      "bytes": 188,
+      "sha256": "1b728a2247dd1fb826f4d1f1b57597f0b7ebbfd0cb3098758dec4374f11ea023"
+    },
+    {
+      "name": "definition siblings",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('dl',null,h('dt',null,'A'),h('dd',null,'B'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "20",
+      "diagnostics": [],
+      "bytes": 180,
+      "sha256": "3cad509e5469c9023751c9c52d81ebaf4d4aef1880a27825835492a0a345d3b5"
+    },
+    {
+      "name": "option siblings",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('select',null,h('option',{value:'a'},'A'),h('optgroup',{label:'G'},h('option',{value:'b'},'B')));}\nmount(()=>Page(),'#app');\n",
+      "stem": "21",
+      "diagnostics": [],
+      "bytes": 253,
+      "sha256": "fc3ec91f9841217243030385511458a67a13a36bbd800a67c4c51eb4fd741acb"
+    },
+    {
+      "name": "anchor phrasing",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('a',{href:'/x'},h('span',null,'go'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "22",
+      "diagnostics": [],
+      "bytes": 176,
+      "sha256": "3d460fafae99ef0d60ca6b321bdf627374068156501650232fd266e7d0ed28fb"
+    },
+    {
+      "name": "button noninteractive link",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('button',null,h('a',null,'anchor name'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "23",
+      "diagnostics": [],
+      "bytes": 169,
+      "sha256": "2dd4ff9d3f30d73f24cb43dad5f2c05815f39729fb9af334ef3db1e2d74c8c3e"
+    },
+    {
+      "name": "button hidden input",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('button',null,h('input',{type:'hidden',value:'x'}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "24",
+      "diagnostics": [],
+      "bytes": 190,
+      "sha256": "36de9aca00018dda379c5adcc08ad317339ddb601994812e57675cfc9373c179"
+    },
+    {
+      "name": "label implicit control",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('label',null,h('span',null,'Name'),h('input',{id:'x'}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "25",
+      "diagnostics": [],
+      "bytes": 193,
+      "sha256": "94d608c8c8b0efb5645e1a7d188ad7acf5f306cd6ffebaa76916a0ed64e19f1c"
+    },
+    {
+      "name": "label explicit control",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('label',{htmlFor:'x'},h('input',{id:'x'}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "26",
+      "diagnostics": [],
+      "bytes": 181,
+      "sha256": "b4513e4fd5f3a349e330112793cb0106da70b349ef7be321b3a91c437529ea17"
+    },
+    {
+      "name": "label sibling control",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('div',null,h('label',{htmlFor:'x'},'Name'),h('input',{id:'x'}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "27",
+      "diagnostics": [],
+      "bytes": 209,
+      "sha256": "30bbde54d96ba0452e8e7947ac8634dd9239c15f9b3c7b856006a6badfcfc50f"
+    },
+    {
+      "name": "static style",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('section',null,h('style',null,'.x{color:red}'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "28",
+      "diagnostics": [],
+      "bytes": 176,
+      "sha256": "a38079cc58e84f62e0d63aaaff5591a1946819b7369a8ebcaa4235311d1a9e45"
+    },
+    {
+      "name": "static script",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('section',null,h('script',null,'void 0;'));}\nmount(()=>Page(),'#app');\n",
+      "stem": "29",
+      "diagnostics": [],
+      "bytes": 171,
+      "sha256": "2e123da6beeeffdd0c7957263e4debcb82c94773dac7cb89844ca2776ec70544"
+    },
+    {
+      "name": "SVG title",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('svg',null,h('title',null,'Chart'),h('circle',{r:2}));}\nmount(()=>Page(),'#app');\n",
+      "stem": "30",
+      "diagnostics": [],
+      "bytes": 198,
+      "sha256": "c2b80e72030496eed77a49e91b5159ab87433d375bf1170d8810151143b788e7"
+    },
+    {
+      "name": "multiple Fragment",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return <><b>one</b><i>two</i></>;}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "31",
+      "diagnostics": [],
+      "bytes": 250,
+      "sha256": "57b62ba5b84597cd07dafcdc085089a024b3976620a39223017513754bee6603"
+    },
+    {
+      "name": "text",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return 'text';}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "32",
+      "diagnostics": [
+        "BUILD-610"
+      ],
+      "sha256": null
+    },
+    {
+      "name": "empty",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return null;}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "33",
+      "diagnostics": [
+        "BUILD-610"
+      ],
+      "sha256": null
+    },
+    {
+      "name": "empty Fragment",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return <></>;}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "34",
+      "diagnostics": [],
+      "bytes": 200,
+      "sha256": "c8a6a46e32749dac130e277171088688fb60f684f564753dec45241abd80b925"
+    },
+    {
+      "name": "root Show",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return createShow(()=>true,()=>h('b',null,'one'),()=>h('i',null,'two'));}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "35",
+      "diagnostics": [],
+      "bytes": 296,
+      "sha256": "25813b1568e57ea917aab875fbf8c4844b365f5b9b5dacff5b9d250c6515b06d"
+    },
+    {
+      "name": "root List",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\nconst [rows]=createSignal([{id:'a',label:'A'},{id:'b',label:'B'}]);\nexport function Island(){return createList(rows,r=>r.id,r=>h('b',null,r.label));}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "36",
+      "diagnostics": [],
+      "bytes": 471,
+      "sha256": "d9958cc9bc9e13f719981266c5d6f5151288030735e19be1ecd9b3b55580bb1e"
+    },
+    {
+      "name": "root conditional",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return true?h('b',null,'one'):h('i',null,'two');}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "37",
+      "diagnostics": [
+        "BUILD-610"
+      ],
+      "sha256": null
+    },
+    {
+      "name": "helper control root",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\nfunction Helper(){return createShow(()=>true,()=>h('b',null,'one'),()=>h('i',null,'two'));}\nexport function Island(){return Helper();}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "38",
+      "diagnostics": [
+        "BUILD-103",
+        "BUILD-610"
+      ],
+      "sha256": null
+    },
+    {
+      "name": "helper multiple root",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\nfunction Helper(){return <><b>one</b><i>two</i></>;}\nexport function Island(){return Helper();}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "39",
+      "diagnostics": [],
+      "bytes": 250,
+      "sha256": "57b62ba5b84597cd07dafcdc085089a024b3976620a39223017513754bee6603"
+    },
+    {
+      "name": "direct Element",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return h('section',null,'one');}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "40",
+      "diagnostics": [],
+      "bytes": 231,
+      "sha256": "cb581c500c9d024276434c627efb9da14a29558d5bb42f207df6843047a773f8"
+    },
+    {
+      "name": "one Fragment",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return <><section>one</section></>;}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "41",
+      "diagnostics": [],
+      "bytes": 231,
+      "sha256": "cb581c500c9d024276434c627efb9da14a29558d5bb42f207df6843047a773f8"
+    },
+    {
+      "name": "transparent h Fragment",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return h(Fragment,null,h('section',null,'one'));}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "42",
+      "diagnostics": [
+        "BUILD-610"
+      ],
+      "sha256": null
+    },
+    {
+      "name": "resolved helper",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\nfunction Helper(){return h('section',null,'one');}\nexport function Island(){return Helper();}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "43",
+      "diagnostics": [],
+      "bytes": 231,
+      "sha256": "cb581c500c9d024276434c627efb9da14a29558d5bb42f207df6843047a773f8"
+    },
+    {
+      "name": "interior Show",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Island(){return h('section',null,createShow(()=>true,()=>h('b',null,'one'),()=>h('i',null,'two')));}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "44",
+      "diagnostics": [],
+      "bytes": 317,
+      "sha256": "563c5325f8d1ea21420e3949981345ad9a90560cad8696711b4494ca9e187d1c"
+    },
+    {
+      "name": "interior List",
+      "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\nconst [rows]=createSignal([{id:'a',label:'A'},{id:'b',label:'B'}]);\nexport function Island(){return h('section',null,createList(rows,r=>r.id,r=>h('b',null,r.label)));}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n",
+      "stem": "45",
+      "diagnostics": [],
+      "bytes": 492,
+      "sha256": "41d51491376150c3590fbfabd8dabb91712719fcf077bbc0c0b4809398680534"
+    }
+  ],
+  "files": {
+    "00.ir": "359b8ee51f41583db6d8ad47338b8293c44736c519d7d799f78106be023db52d",
+    "00.render.json": "a6f4becf09959318614fe983d12a28bbd8591ec64c5ea9ddb6b58d82ad77039f",
+    "00.tsx": "fb1c9750ee24a62198f9405eae5e98f198d7c4ba118f9ac10cf74b60d4b7549d",
+    "01.ir": "2ba87962c1c80820d5f42e70004bac65e2086c8f8d31c4961d81c40b01daa587",
+    "01.render.json": "5fcba5a0ae5781fc261c47e2ebcb518b96c5b997e55a7f9c424680b72d54e619",
+    "01.tsx": "4e9fa5e3ca71ca416f84d907abed915256a6cd722a5d46a214bc5d1897b4c277",
+    "02.ir": "bb0246aad431e1cf4edc3ded2204f9b0b0d7a2487aa30d8ae3d8e5e90b1947e8",
+    "02.render.json": "aa7c21ec65340bb30c6d6c6909196e152e79c4b2d2e9b090da8aa40d893158ec",
+    "02.tsx": "1b9251bb0d30c6d705d91db0714e76a298d1ab813b09a7c5d26335277f27594a",
+    "03.ir": "3e9bc12114b3d5942f40a9408db917c7912a4103c7e30d7c84f4d92c350c2aba",
+    "03.render.json": "00a233cacefb8791969457ba5e996431167bd28d39f03b2ea7d02ec790cc413a",
+    "03.tsx": "5548c08b1eb9a22a99a5a1d2899bc617fede46679554a5015600e6d7dd6f9d0e",
+    "04.ir": "c906f069c85df32222d3bada70ff7e8ddeb2033e499f9ca5508b8615fbb50324",
+    "04.render.json": "f579c11b298a130b04cad51582e1bd74dd6cabf66f3af9967fad348edb267616",
+    "04.tsx": "b669966a7068ac0d624e2c7e4c54c90650c34825ccfe8832c5af63b046f22a91",
+    "05.ir": "dd4e7f61211cb219c8894b1aa3803ba676101655fb38e112f9fe1f475699d238",
+    "05.render.json": "1248caed035019e163844801d5d42e6f876b15a29142d039d428313d64feffbe",
+    "05.tsx": "5ca7fbcfbd83e16d5ed0d16f530b20606022ff7ff6bbc1ba536ad10d56446ac3",
+    "06.ir": "20c51388a0fdef72eb49e1a57ed9b65322c9c014b91a45660f6aa875964e3da6",
+    "06.render.json": "da74c74b8f8eb76e6c014f87892bd600b2123e8dd3074b8d80112053a88c85ab",
+    "06.tsx": "3036f49d024c8ba7b00282721016c5de61dda9b19317c88f8bc6d4df3c23ff87",
+    "07.ir": "dacce99fe06714c5ab81d588045cf426acfd3632eb6d7a26e4feae229fc1b57f",
+    "07.render.json": "71b353c31a67a33ca62f36335fbc70dca85e1e8c55029557e882a5fdbc8489ef",
+    "07.tsx": "8ad69bf9d2021175c72d3f29b270c8fbc809025562e6cb17aa44a76d58b0041d",
+    "08.ir": "c82fbfbc8541ee66cf067cd10ff726a83caab4871aecb8eb9b3143d6b3e118d0",
+    "08.render.json": "cd1ebad101d4a8e67d07c3222dd24252dd726bd218f4c5a3f0b5783c4a2a5f5f",
+    "08.tsx": "2fc4879edc8fa339a533ccb65dcaec13db8b5e48795b6b9fec142e2a77fc5f0c",
+    "09.ir": "834c0877ce704ec6fbe8b535a7b5f7bc48ea69470fa20f65e1846cde6e0fbe60",
+    "09.render.json": "f6067adfb10c0cf74e19e73d50601881712de22d1aa82cd14d62c82bb03afa47",
+    "09.tsx": "13712c32eb056ad4f1d62b47a154f3d1c821bbc4b4b067be5165482b2162f60b",
+    "10.ir": "08c64f387b26be3eb8bb844511b93cd6f3b9e27d70f4214e8b37d32f5e441192",
+    "10.render.json": "8c5984b2e3f09c72eda18c4cba39ac2b7ff00f0319b21fd1e7d957c743192847",
+    "10.tsx": "b6e187541ad49277ffc805d5cfd3b2b8ae2237fa73030696ca4e30cdbfe5ff2d",
+    "11.ir": "30dd0e0e056b154055e6a3def77ff7f510f1e659e024d2163d7d6b74250f89e1",
+    "11.render.json": "89c85a317d41f6a6e98e41aca56c097a797805ed810036f3254a3bdd83df02aa",
+    "11.tsx": "ff2643c8bad2b26d3a6da938b59e9f14837cc97c6b564bf2a00387cbced005dd",
+    "12.ir": "49612e7a8c899328dc15bde4e4fcb59298ced1ce741e82e130dff82293bd93a8",
+    "12.render.json": "9a5ae9d014fa5e07a743d34679681d63b5057ba4a9002fd27e4019778630328b",
+    "12.tsx": "3277d10fdaac3bb90f7916ead615e4d7d15dbe0bde8e79ec188c31c4248d4365",
+    "13.ir": "011248cc54d30da59e049db2f2dd10bb38c27918982a85e637c6307e9261606e",
+    "13.render.json": "df1dc38b3a237094f76a6b02c3954fb1a64545e6ecfbeb5f27323ac9ce18057f",
+    "13.tsx": "7f6ccfc02b7b7f864304422c937f4e7ef1d77d4fbb2691b06150f67f731dd764",
+    "14.ir": "8c69bcf5bbce1490272058426ed416cadbbb7abe5619d3221453c962c73e92c4",
+    "14.render.json": "1049c635fa49c057b79ceee75f574ca01044f4fa81b4513c6a329670deadc597",
+    "14.tsx": "28978c0a80afa6bd7ce43812b2d2918b94273a3b1a53c6485d776125b834bafc",
+    "15.ir": "0409084f61726541ebe45e21e833b4ba3cf45ba77020fb66035c073e4ebacc09",
+    "15.render.json": "6c26411bf40ff63e275bd94adba6ef6a0885a52c85610895bda32cd2e9ee1822",
+    "15.tsx": "864e8eb29c916b02fdfb2e2c99e258ee3dd1116f7e20e85c12319b70479ca73b",
+    "16.ir": "95b30c27f86e8a15bb6ed967189eb49dea00ad6fe29db8d6e82d0e07b2433079",
+    "16.render.json": "afe9f5a295e6a539811ddf70e5bfa16759658b67be043ed66c62dafe17eaff73",
+    "16.tsx": "7c03bf7f3a39b69f6a15def9d844538085f6d0dad8523996fc3f218a34ad22a7",
+    "17.ir": "f4a8a6bb9daa878987b33be68839643385568fe0258fa41d4d3ffdc66e3286e7",
+    "17.render.json": "301230648242a9f678d16c7509d154faee346ee43fd23e559bf9541922ac56b5",
+    "17.tsx": "1a1c02f09250be8f68a6dc285932b07a2505ab58987ab0fe41335096a031a106",
+    "18.ir": "a5ea8607a531543f6ba65d10ddd4014f91be065d8fa10d8e8b38893e5a4f4c20",
+    "18.render.json": "072d1834c5fcf14d1b110b942ff54fb40b4a67e4d288059fadeabbc8a5f88187",
+    "18.tsx": "301781d3d9a5f1cc97919d101cc00daec4b511db1d5691e5c1a4683f2f393f16",
+    "19.ir": "1b728a2247dd1fb826f4d1f1b57597f0b7ebbfd0cb3098758dec4374f11ea023",
+    "19.render.json": "7755dbad0cc12b463ab75bfcc59a02e8ceb296fbda206f619fd39899fce0701b",
+    "19.tsx": "19ca1e783219d65b57b98b838e78494eb874c3ac36f269f7884181015092372c",
+    "20.ir": "3cad509e5469c9023751c9c52d81ebaf4d4aef1880a27825835492a0a345d3b5",
+    "20.render.json": "ab2b9b97825ee2138cd33149eece8071f9e1f34a98168dba55d3875b81ebb5b3",
+    "20.tsx": "9528eb515cda4832599e1612f619c6940daaf9671a7cd5af060cf5776ff92fb9",
+    "21.ir": "fc3ec91f9841217243030385511458a67a13a36bbd800a67c4c51eb4fd741acb",
+    "21.render.json": "d57492f42f8ad850e2175eb7328376d05fd637de33f31e18fa328b4255f6c9b3",
+    "21.tsx": "b7ae1939bb494a6dc2f0133751c7a179cb841c330a7ad13e61761d8497d779c7",
+    "22.ir": "3d460fafae99ef0d60ca6b321bdf627374068156501650232fd266e7d0ed28fb",
+    "22.render.json": "1636619902552f629a910c78e094663f57cdd69cc6bf63b86f5638d150bcf197",
+    "22.tsx": "2790eedf79592ced6ac5ef1e31331f9ab3115b671f8fae6c0789e4eea7d0eedd",
+    "23.ir": "2dd4ff9d3f30d73f24cb43dad5f2c05815f39729fb9af334ef3db1e2d74c8c3e",
+    "23.render.json": "77ab1d25187a375d4d05239a222a2c203ac82105760056829f8c794f2a04f4e4",
+    "23.tsx": "47dce0fe0f9ec9ab3bddd8119bf060cf303bbaa2d22ed160f6d4f71eeabebefe",
+    "24.ir": "36de9aca00018dda379c5adcc08ad317339ddb601994812e57675cfc9373c179",
+    "24.render.json": "337a40b79d816a12f21923613483485692454536a190ac052e0d28ff114cef0e",
+    "24.tsx": "5768d378a19e514006fccdc1b46eb6d17a79daa4387562cb4611a84a0ce0992c",
+    "25.ir": "94d608c8c8b0efb5645e1a7d188ad7acf5f306cd6ffebaa76916a0ed64e19f1c",
+    "25.render.json": "65974f83ba539cac0375b746398bb5391d29526f0b971ccc9ca4be24a825542c",
+    "25.tsx": "4ab4e4f18e2eb287f6fe1d1e753717fc0f788dc8c89dc8b5a6bd77b97256bb7e",
+    "26.ir": "b4513e4fd5f3a349e330112793cb0106da70b349ef7be321b3a91c437529ea17",
+    "26.render.json": "b1d904cdb8d4ce5d0e3cc2de5490243a6811718aaa252c603d1598e355be039e",
+    "26.tsx": "ec39d32034a2ef070fc7c9ece332fed3c3d8b38718e89698cf12cd99d6bcfd44",
+    "27.ir": "30bbde54d96ba0452e8e7947ac8634dd9239c15f9b3c7b856006a6badfcfc50f",
+    "27.render.json": "ab5dd2395b00bcafcc9b80d2b247ec31c255dcbe91d7d992e6f8db3a4b821732",
+    "27.tsx": "9c77893c2cd95a70705533de472f00a3c03ce5965a6a87c8cfa7884b9d9398e8",
+    "28.ir": "a38079cc58e84f62e0d63aaaff5591a1946819b7369a8ebcaa4235311d1a9e45",
+    "28.render.json": "eedb45368b137be1bdc9509dcb504d84405fdb376d193ab5b40a10dd531a82c1",
+    "28.tsx": "3a8372cbddee94b8e76c47f7a5ff1e127d696b2f1755b7bf1c24354084392814",
+    "29.ir": "2e123da6beeeffdd0c7957263e4debcb82c94773dac7cb89844ca2776ec70544",
+    "29.render.json": "d8e81f21a1f9296ef73aec1e249ad7eaaa706ad519a8e1bd5a4a28b0e5effaa6",
+    "29.tsx": "600b953a0a55ba9fedbc809c9409030e9674e6ec42327d3ecdb8fefd7caf8d21",
+    "30.ir": "c2b80e72030496eed77a49e91b5159ab87433d375bf1170d8810151143b788e7",
+    "30.render.json": "8f6523b3139ac36442e8c28a1cc48ed95c04dbc983d492bdcb9e6922c501dae4",
+    "30.tsx": "c3e578d1fe63cb21309864733aa90bf504b9773c20c2cf8e3b3a4c4be8078955",
+    "31.ir": "57b62ba5b84597cd07dafcdc085089a024b3976620a39223017513754bee6603",
+    "31.render.json": "788f7ac7998061cd322dc73142e99e0baec6584914f2b6d8b954ddf4003fb345",
+    "31.tsx": "dce9fa178a7f0cb29fdcdb3ddee4c657e498dc948fa10d96401d0fcb32f6860f",
+    "32.tsx": "7d6de599e055f211734d007a7a5be93657b12868800466e9bdc1716277f965d3",
+    "33.tsx": "6fbbc89a4b8cb43e78cb78b61c08e829e12f3f15d570a03b46c073ffeb026ecf",
+    "34.ir": "c8a6a46e32749dac130e277171088688fb60f684f564753dec45241abd80b925",
+    "34.render.json": "00a56667a45d25586930149e392f3717da0088abf93b021d10460a4c66546fee",
+    "34.tsx": "a26da35702b9152e79d00560ef944aaf1a5da6e052b927360bfa8d8e49dba25f",
+    "35.ir": "25813b1568e57ea917aab875fbf8c4844b365f5b9b5dacff5b9d250c6515b06d",
+    "35.render.json": "014cadc48009d13131f0982cb9a842dcdd9adaa65fe728b808b4a744c0070741",
+    "35.tsx": "ce27f052bdf28efc75655004a12fc820550422427503c7a21e9da8e86fde42ad",
+    "36.ir": "d9958cc9bc9e13f719981266c5d6f5151288030735e19be1ecd9b3b55580bb1e",
+    "36.render.json": "708a00ce325acddf8155b43b8f932faa472705a1c663a71f6017a7690cca271f",
+    "36.tsx": "70744c0f679ba32c402b5c45565765bc2d5d3d484614e3e6b3d8fda41bdedc9a",
+    "37.tsx": "3e8daf04d6b256b886099d34f79fd60fd36fc57425a0ffdf28c7d475fc64e408",
+    "38.tsx": "cd99a5a2714eee2667133df71dbf6fbf7d67b67c23ea3793ba7bf45c699e2f18",
+    "39.ir": "57b62ba5b84597cd07dafcdc085089a024b3976620a39223017513754bee6603",
+    "39.render.json": "788f7ac7998061cd322dc73142e99e0baec6584914f2b6d8b954ddf4003fb345",
+    "39.tsx": "05d80ac5bbb53672540615ca12944b47ff0289b4e6eb48cb802059bb042ff10f",
+    "40.ir": "cb581c500c9d024276434c627efb9da14a29558d5bb42f207df6843047a773f8",
+    "40.render.json": "92983237a1aa4d817205a3240591bef5075f924284294a9949a31233014d5505",
+    "40.tsx": "fd7331d274dee6aec73ecc31d9d195d4b5a93960fce8cb057d4b55fb4f083c0f",
+    "41.ir": "cb581c500c9d024276434c627efb9da14a29558d5bb42f207df6843047a773f8",
+    "41.render.json": "92983237a1aa4d817205a3240591bef5075f924284294a9949a31233014d5505",
+    "41.tsx": "9fc2bd4854428efdb174574ef078150aacdca83e11bd41aa5af46591c4e34d40",
+    "42.tsx": "b2cfa03ada6fa136f1f7a14ab2f0227cdb2006508039d55eefa8a8a4af88289d",
+    "43.ir": "cb581c500c9d024276434c627efb9da14a29558d5bb42f207df6843047a773f8",
+    "43.render.json": "92983237a1aa4d817205a3240591bef5075f924284294a9949a31233014d5505",
+    "43.tsx": "ec09ee1c942253c543507fd2ed36fdffdfae361cb7824a5cf1e159dd353f3350",
+    "44.ir": "563c5325f8d1ea21420e3949981345ad9a90560cad8696711b4494ca9e187d1c",
+    "44.render.json": "68e8d8959b9d22ecdfa2b2657dd4369de1a8790ac2688b787824c70b5407c913",
+    "44.tsx": "6860afa6cef344dee1b32cbb98b94a3abec4d37550b63309a90acaec0b4d598d",
+    "45.ir": "41d51491376150c3590fbfabd8dabb91712719fcf077bbc0c0b4809398680534",
+    "45.render.json": "42074931f4d100d3e8c48478e3bf8137d32e48b4284c87ed6b5195df60e62e6f",
+    "45.tsx": "77c2a60e29002b94ec99d3dfdbac4377b9ac33f3d9176e34768ea9d4f6e2cbc8"
+  },
+  "nativeSource": "d0bec877b403ec3591f1edffd3587ed7c2858901 (native Rust unchanged in139)"
+}

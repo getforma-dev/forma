@@ -91,3 +91,6 @@ packages/compiler/tests/fixtures/conformance/BUILD-107/pass/app.tsx text eol=lf
 packages/compiler/tests/list-source.test.ts text eol=lf
 packages/compiler/tests/keyed-list-archive.test.ts text eol=lf
 packages/compiler/tests/keyed-list-proof.test.ts text eol=lf
+
+# Authentic pre-139 compiler source/product evidence, never checkout-normalized.
+docs/archive/FORMA-139-html-context/** -text
