@@ -38,7 +38,7 @@ test('candidate authentication refuses changed record, changed archive, other so
 test('candidate gate refuses omitted, skipped and failed existing heavy cases even if the process reports success', () => {
   const cases=REQUIRED_HEAVY.map(title=>({title,status:'passed',ancestorTitles:['scaffolded projects build (FORMA_SCAFFOLD_E2E=1)']}));
   const report=assertionResults=>({success:true,testResults:[{assertionResults}]});
-  assert.equal(requireHeavyResults(report(cases)).heavy,18);
+  assert.equal(requireHeavyResults(report(cases)).heavy,19);
   for(const status of ['pending','skipped','failed']) assert.throws(()=>requireHeavyResults(report(cases.map((p,i)=>i? p:{...p,status}))));
   assert.throws(()=>requireHeavyResults(report(cases.slice(1))),/did not run/);
   assert.throws(()=>requireHeavyResults(report([...cases,cases[0]])),/exactly once/);
