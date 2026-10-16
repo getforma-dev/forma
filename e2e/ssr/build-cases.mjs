@@ -39,6 +39,7 @@ const expectedIslands = {
   'mixed-entry': ['Local', 'Panel'],
   namespaces: ['NamespaceVectors'],
   'edited-controls': ['Controls'],
+  'sanitized-controls': ['SanitizedControls'],
   'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],
   'keyed-moves': ['KeyedRows'],

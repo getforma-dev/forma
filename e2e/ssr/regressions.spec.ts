@@ -53,6 +53,7 @@ const CASES = {
   title: 'island',
   select: 'island',
   'edited-controls': 'island',
+  'sanitized-controls': 'island',
   'ledger-arrival': 'island',
   'keyed-moves': 'island',
   'keyed-indexed': 'island',

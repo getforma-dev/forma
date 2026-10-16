@@ -279,6 +279,43 @@ test('components returning real DOM nodes are refused without replacing original
   expect(errors.filter((e) => e.includes('FORMA_E_HYDRATE_STRUCTURE'))).toHaveLength(3);
 });
 
+test('a detached real-Node description reports STRUCTURE while a healthy sibling activates',async({page})=>{
+  // The admitted native subset uses descriptions, not component-returned DOM
+  // nodes. This runtime defense deliberately uses a forged source shape to
+  // prove the production refusal event and independent sibling activation.
+  await serve(page,'<main id="app" data-forma-ssr>'+
+    '<div data-forma-island="0" data-forma-component="Detached" data-forma-state="0" data-forma-h="0123456789abcdef"><span>server</span></div>'+
+    '<button id="healthy" data-forma-island="1" data-forma-component="Healthy" data-forma-state="1" data-forma-h="0123456789abcdef" data-forma-status="pending">healthy</button></main>',2);
+  const consoleErrors:string[]=[],uncaught:string[]=[];
+  page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
+  page.on('pageerror',error=>uncaught.push(error.message));
+  const observed=await page.evaluate(async()=>{
+    const {h,mount,activateIslands,__islandRegistration}=await import('/adoption-core.mjs' as string);
+    const events:unknown[]=[];
+    document.addEventListener('forma:error',event=>events.push((event as CustomEvent).detail));
+    const original=document.querySelector('[data-forma-component="Detached"]')!,child=original.firstChild;
+    let mountReturned=false;
+    mount(()=>{throw new Error('the removed native page mount must not execute');},'#app');mountReturned=true;
+    (window as any).__healthyCalls=0;
+    const metadata={h:'0123456789abcdef',schema:[[]],mode:0 as const};
+    activateIslands({
+      Detached:__islandRegistration(()=>document.createElement('span'),metadata),
+      Healthy:__islandRegistration(()=>h('button',{id:'healthy',onClick:()=>{(window as any).__healthyCalls++;}},'healthy'),metadata),
+    });
+    return {mountReturned,events,sameOriginal:document.querySelector('[data-forma-component="Detached"]')===original&&original.firstChild===child};
+  });
+  expect(observed.mountReturned).toBe(true);expect(observed.sameOriginal).toBe(true);
+  expect(observed.events).toHaveLength(1);
+  expect(observed.events[0]).toMatchObject({island:'Detached',occurrence:0,code:'FORMA_E_HYDRATE_STRUCTURE'});
+  await expect(page.locator('[data-forma-component="Detached"]')).toHaveAttribute('data-forma-status','error');
+  await expect(page.locator('[data-forma-component="Detached"]')).toHaveText('server');
+  await expect(page.locator('#healthy')).toHaveAttribute('data-forma-status','pending');
+  await page.locator('#healthy').click();
+  expect(await page.evaluate(()=>(window as any).__healthyCalls)).toBe(1);
+  expect(consoleErrors).toHaveLength(1);expect(consoleErrors[0]).toContain('FORMA_E_HYDRATE_STRUCTURE');
+  expect(uncaught).toEqual([]);
+});
+
 test('an option bound to undefined submits its text, client-rendered and adopted', async ({ page }) => {
   await serve(page,
     '<form id="csr"></form>' +
