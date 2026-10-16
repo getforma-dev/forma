@@ -10,7 +10,8 @@
   <title>FormaJS CSP Example</title>
 </head>
 <body>
-  <div id="csp-example" data-forma-state='{
+  <main id="csp-example">
+  <div data-forma-state='{
     "count": 0,
     "query": "",
     "items": ["Apples", "Bananas", "Cherries", "Dates", "Elderberries"]
@@ -35,6 +36,7 @@
     <h2>…and a handler whose whole body is a method call</h2>
     <button data-on:click="{$el.classList.toggle('active')}">Toggle a class on myself</button>
   </div>
+  </main>
   <script src="../../dist/forma-runtime-csp.js"></script>
   <script src="./mount.js"></script>
 </body>

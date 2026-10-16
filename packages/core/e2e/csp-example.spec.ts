@@ -75,7 +75,7 @@ test('the shipped CSP example explicitly owns its counter, filter and DOM handle
   await expect(page.locator('script[src]')).toHaveCount(2);
   expect(await page.locator('script[src]').evaluateAll(nodes => nodes.map(node => node.getAttribute('src'))))
     .toEqual(['../../dist/forma-runtime-csp.js', './mount.js']);
-  const count = page.locator('#csp-example > p').first();
+  const count = page.locator('#csp-example > div > p').first();
   await expect(count).toHaveText('0');
   await page.getByRole('button', { name: 'Increment', exact: true }).click();
   await expect(count).toHaveText('1');
