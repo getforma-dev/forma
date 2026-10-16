@@ -12,8 +12,8 @@
  * A SURVIVOR is always news: it means a property nothing in the suite defends.
  *
  * Why this and not Stryker: Stryker generates thousands of mutants, most of
- * them equivalent or uninteresting, and takes hours. This corpus takes ~15
- * minutes and every mutant in it is a defect shape we have already been bitten
+ * them equivalent or uninteresting. This curated run also takes substantial
+ * time with strict serial evidence; every mutant is a defect shape we have been bitten
  * by, so the score is meaningful rather than merely large. Every probe written
  * during a bug investigation gets committed here, which is what makes the audit
  * compound instead of expire.
@@ -30,7 +30,7 @@ import { spawnSync } from 'node:child_process';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { cleanProbeBaseline, classifyProbe } from './probe-results.mjs';
+import { cleanProbeBaseline, classifyProbe, recoverableProbeFailure } from './probe-results.mjs';
 import { expressionProbeFloor } from './expression-probe-floor.mjs';
 
 const ROOT = process.cwd();
@@ -117,6 +117,11 @@ function baseline(label) {
   try { return cleanProbeBaseline(r.text, r.processResult); }
   catch (error) { console.error(`unqualified ${label}: ${error.message}; raw evidence: ${runDir}`); process.exit(1); }
 }
+function verifyRestoredSources() {
+  for (const [path, original] of originals) {
+    if (!readFileSync(path).equals(Buffer.from(original))) throw new Error(`source was not restored: ${path}`);
+  }
+}
 persist(); // A failed new baseline cannot leave old canonical mutation results.
 const before = baseline('baseline-before');
 console.log(`clean baseline: ${before.filter(test => test.state === 'passed').length} executed tests; ${runDir}`);
@@ -125,6 +130,7 @@ for (const [index, p] of selected.entries()) {
   const abs = resolve(ROOT, p.file), original = originals.get(abs);
   if (readFileSync(abs, 'utf8') !== original) throw new Error(`source changed before mutation: ${p.file}`);
   const row = { id: p.id, file: p.file, tags: p.tags ?? [], note: p.note, equivalent: p.equivalent ?? null };
+  let recoverable = false;
   try {
     writeFileSync(abs, original.replace(/\r\n/g, '\n').split(p.find).join(p.replace));
     const label = `mutant-${index}-${p.id.replace(/[^a-zA-Z0-9_-]/g, '_')}`, r = execute(label);
@@ -134,13 +140,31 @@ for (const [index, p] of selected.entries()) {
       Object.assign(row, result, { status: result.caught ? 'CAUGHT' : p.equivalent ? 'EQUIVALENT' : 'SURVIVED' });
     } catch (error) {
       Object.assign(row, { status: 'UNQUALIFIED', killedBy: null, error: error.message }); invalid = true;
+      recoverable = recoverableProbeFailure(r.text, r.processResult, before);
     }
     results.push(row); persist();
     console.log(`${p.id.padEnd(44)} ${row.status}${row.killedBy ? `  ${row.killedBy}` : ''}`);
   } finally {
     writeFileSync(abs, original);
   }
-  if (invalid) break;
+  // A completed body exception is useful evidence but never a kill. Continue
+  // only after exact source restoration and a fresh, unchanged clean baseline.
+  // invalid stays sticky: collecting later evidence cannot rescue this run.
+  if (row.status === 'UNQUALIFIED') {
+    if (!recoverable) break;
+    const label = `recovery-${index}`, recovery = { evidence: `${runDir}/${label}.json`, passed: false };
+    row.recovery = recovery;
+    try {
+      verifyRestoredSources();
+      const r = execute(label);
+      cleanProbeBaseline(r.text, r.processResult);
+      if (classifyProbe(r.text, r.processResult, before).caught) throw new Error('recovery baseline failed');
+      verifyRestoredSources();
+      recovery.passed = true;
+    } catch (error) { recovery.error = error.message; }
+    persist();
+    if (!recovery.passed) break;
+  }
 }
 // One restored run for the campaign, not another suite for every mutation.
 const afterRun = execute('baseline-after');

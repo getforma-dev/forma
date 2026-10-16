@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanProbeBaseline, classifyProbe } from './probe-results.mjs';
+import { cleanProbeBaseline, classifyProbe, recoverableProbeFailure } from './probe-results.mjs';
 
 const processResult = { status: 0, signal: null, error: null };
 const assertion = { name: 'AssertionError', code: '', message: 'expected false to be true', stack: 'AssertionError: expected false to be true\n at spec.test.ts:4', assertion: true };
@@ -78,4 +78,46 @@ test('only observed test-failure bail can interrupt a qualifying assertion run',
   }
   const passed = report(); passed.reason = 'interrupted'; passed.cancellations = ['test-failure'];
   assert.throws(() => classifyProbe(encode(passed), { ...processResult, status: 1 }, clean()), /without an assertion/);
+});
+
+function bodyError() {
+  const data = failed(); data.reason = 'interrupted'; data.cancellations = ['test-failure'];
+  data.modules[0].tests[0].errors = [{ ...assertion, name: 'TypeError', message: "Cannot read properties of undefined (reading 'aborted')", assertion: false }];
+  return data;
+}
+const recover = (data, process = {}) => recoverableProbeFailure(encode(data), { ...processResult, status: 1, ...process }, clean());
+test('a completed body exception allows recovery but still cannot count as a kill', () => {
+  assert.equal(recover(bodyError()), true);
+  assert.throws(() => classify(bodyError()), /without an assertion/);
+  assert.equal(recover(failed()), false, 'assertions need no recovery');
+});
+test('recovery rejects process, timeout, collection, hook and unhandled failures', () => {
+  for (const process of [{ status: null }, { status: 2 }, { status: 0 }, { error: 'spawn failed' }, { signal: 'SIGTERM' }]) {
+    assert.equal(recover(bodyError(), process), false);
+  }
+  for (const mutate of [
+    data => { data.processTimeout = true; },
+    data => { data.modules[0].tests[0].errors[0].message = 'Test timed out in 20ms.'; },
+    data => { data.modules[0].tests[0].errors[0].code = 'ENOENT'; },
+    data => { data.modules[0].tests[0].errors[0].name = 'WorkerError'; },
+    data => data.modules[0].errors.push({ message: 'transform failed' }),
+    data => data.incompleteHooks.push('beforeEach'),
+    data => data.unhandledErrors.push({ message: 'unhandled rejection' }),
+    data => { data.cancellations = ['unknown']; },
+    data => { data.modules[0].tests[0].finished = false; },
+    data => { data.modules[0].tests[0].id = 'not-in-baseline'; },
+    data => { data.modules[0].tests[0].retryCount = 1; },
+    data => { data.modules[0].state = 'queued'; },
+    // A first body Error must not hide later invalid report structure.
+    data => data.modules.push({ file: '/other.test.ts', state: 'failed', errors: [{ message: 'compile failed' }], tests: [] }),
+  ]) { const data = bodyError(); mutate(data); assert.equal(recover(data), false); }
+  for (const text of ['', '{', 'null', '{}']) assert.equal(recoverableProbeFailure(text, { ...processResult, status: 1 }, clean()), false);
+});
+test('recovery requires every started test to have completed and failed tests to pass in baseline', () => {
+  const baseline = clean(); baseline.push({ ...baseline[0], id: 'two', name: 'second test' });
+  const data = bodyError();
+  data.modules[0].tests.push({ ...data.modules[0].tests[0], id: 'two', name: 'second test', state: 'pending', finished: false, errors: [] });
+  assert.equal(recoverableProbeFailure(encode(data), { ...processResult, status: 1 }, baseline), false);
+  const skipped = clean(); skipped[0].state = 'skipped'; skipped.push(baseline[1]);
+  assert.equal(recoverableProbeFailure(encode(bodyError()), { ...processResult, status: 1 }, skipped), false);
 });
