@@ -97,3 +97,6 @@ docs/archive/FORMA-139-html-context/** -text
 
 # FORMA-139: byte-exact original R17 title fixture and observed CI refusal.
 docs/archive/FORMA-139-e2e-title/** -text
+
+# Exact native multi-entry failure products.
+/docs/archive/FORMA-186-native-multiple-entries/** -text
