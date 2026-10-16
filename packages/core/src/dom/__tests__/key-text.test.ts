@@ -51,8 +51,8 @@ describe('FORMA-182 key text seam (FORMA-181)', () => {
     expect(shared).toHaveBeenCalledWith('a\r\nb');
     shared.mockClear();
     expect(canonicalKeyText(7)).toBe('7');
-    expect(() => canonicalKeyText('\uD800')).toThrow(RangeError);
-    expect(() => canonicalKeyText(null)).toThrow(TypeError);
+    expect(canonicalKeyText('\uD800')).toBeUndefined();
+    expect(canonicalKeyText(null)).toBeUndefined();
     expect(shared).not.toHaveBeenCalled();
   });
   it('carries no independent normalizer of its own and imports the shared one', () => {
@@ -66,8 +66,9 @@ describe('FORMA-182 key text seam (FORMA-181)', () => {
     expect(canonicalKeyText(0)).toBe('0');
     expect(canonicalKeyText(9007199254740991)).toBe('9007199254740991');
     expect(canonicalKeyText(-9007199254740991)).toBe('-9007199254740991');
-    for (const bad of [9007199254740992, -9007199254740992, 1.5, NaN, Infinity, -Infinity]) expect(() => canonicalKeyText(bad), String(bad)).toThrow(RangeError);
-    for (const bad of [null, undefined, true, false, {}, [], new Date(0)]) expect(() => canonicalKeyText(bad), String(bad)).toThrow(TypeError);
+    // Outside the domain the result is undefined (checkpoint C: adoption reports FORMA_E_HYDRATE_KEY).
+    for (const bad of [9007199254740992, -9007199254740992, 1.5, NaN, Infinity, -Infinity]) expect(canonicalKeyText(bad), String(bad)).toBeUndefined();
+    for (const bad of [null, undefined, true, false, {}, [], new Date(0), 1n]) expect(canonicalKeyText(bad), String(bad)).toBeUndefined();
     expect(canonicalKeyText('')).toBe('');
     expect(canonicalKeyText('01')).toBe('01');
     expect(canonicalKeyText('1')).toBe(canonicalKeyText(1));
@@ -76,20 +77,20 @@ describe('FORMA-182 key text seam (FORMA-181)', () => {
     expect(canonicalKeyText('a\r\nb')).toBe(canonicalKeyText('a\nb'));
     expect(canonicalKeyText('\0')).toBe(canonicalKeyText('�'));
     // The surrogate refusal is 181's key-domain rule, checked before the shared helper runs.
-    for (const bad of ['\uD800', 'a\uDC00', '\uDBFF\uDBFF', '\uDC00\uD800', '\uD800\r\n']) expect(() => canonicalKeyText(bad), JSON.stringify(bad)).toThrow(RangeError);
+    for (const bad of ['\uD800', 'a\uDC00', '\uDBFF\uDBFF', '\uDC00\uD800', '\uD800\r\n']) expect(canonicalKeyText(bad), JSON.stringify(bad)).toBeUndefined();
   });
   it('computes the same canonical key as the native walker for every shared vector (crates/forma-ir/tests/fixtures/parity/keys.json)', () => {
     expect(keyVectors.values.length).toBeGreaterThanOrEqual(20);
     for (const { id, value, expected, refused } of keyVectors.values) {
-      if (refused) expect(() => canonicalKeyText(value), id).toThrow();
+      if (refused) expect(canonicalKeyText(value), id).toBeUndefined();
       else expect(canonicalKeyText(value), id).toBe(expected);
     }
     for (const { id, values: [a, b], collide } of keyVectors.collisions) {
       expect(canonicalKeyText(a) === canonicalKeyText(b), id).toBe(collide);
     }
     for (const { id, row, path, expected, refused } of keyVectors.paths) {
-      const read = () => canonicalKeyText(readPath(row, path));
-      if (refused) expect(read, id).toThrow();
+      const read = () => { try { return canonicalKeyText(readPath(row, path)); } catch { return undefined; } };
+      if (refused) expect(read(), id).toBeUndefined();
       else expect(read(), id).toBe(expected);
     }
   });

@@ -43,5 +43,7 @@ A panic, sanitizer report, exceeded resource budget, invalid accepted structure 
 is a finding. An ordinary parse/render error is not. Minimize a finding with `cargo fuzz tmin`,
 put the input under `regressions/<target>/`, and add a test that states the violated guarantee.
 Fix it before a release; an unresolved nightly finding blocks a tag. The initial regression
-files are adapter controls, not claims that production bugs were discovered. Evidence of the
-local qualification run and deliberate test mutation is in `evidence/QUALIFICATION.md`.
+files are adapter controls, not claims that production bugs were discovered; the `seeded-*`
+files are the minimised findings of the seeded-bug qualification (FMIR-FORMAT §11.4), each
+replayed with its guarantee by `seeded_decoder_defects_are_caught_deterministically`. Evidence of
+the local qualification runs and deliberate test mutations is in `evidence/QUALIFICATION.md`.
