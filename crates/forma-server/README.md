@@ -1,6 +1,6 @@
 # forma-server
 
-Typed server rendering and explicit browser shells for the Forma stack. This checkout prepares the unpublished `3.0.0-beta.1` candidate; release qualification remains pending. Cargo prerelease versions need explicit requirements. After the coordinated beta is published:
+Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0-beta.1` prerelease and require its coordinated publication. Cargo prerelease versions need explicit requirements:
 
 ```toml
 [dependencies]

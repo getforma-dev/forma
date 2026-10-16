@@ -11,8 +11,8 @@ The Vite plugins (`formaCompiler`, `formaServer`), `compileFormaJSX` and `transf
 
 ## Install
 
-This checkout prepares the unpublished `3.0.0-beta.1` candidate. After its
-coordinated publication, select that prerelease explicitly:
+These examples target the `3.0.0-beta.1` prerelease and require its coordinated
+publication. Select that prerelease explicitly:
 
 ```bash
 npm install -D @getforma/compiler@3.0.0-beta.1

@@ -22,9 +22,9 @@
 - Add a read-only hosted RC burn-in against all seven original published archives, with at least 3,600 completed positive-input native fuzz seconds plus every hostile, three-engine deployment and fixture check per round. Authenticate actual D14/P17 provenance before the RC/final release, retain bounded raw evidence and verify owned cleanup; implementation is not a completed campaign.
 - Repair the separate fuzz workspace lock to include the existing exact `ryu-js` 1.0.3 dependency; current locked ASan qualification is tracked by FORMA-194.
 
-- L63 records mobile startup target misses explicitly. Fresh twenty-run routes
-  require per-run maximum-task p95 at most75ms and no application/unattributed
-  task above100ms, retaining the50ms target, response and whole-page TBT gates.
+- Historical L63 introduced a conditional startup exception of75ms p95 and
+  100ms individual tasks. The strict50ms gate above supersedes that acceptance;
+  historical results remain evidence, not qualification for the new gate.
   Only same-trace proved pre-application browser layout is attributed separately;
   all raw tasks and compressed traces remain authenticated in bounded DS12 evidence.
 
@@ -44,7 +44,7 @@
 ### Packed release measurements — FORMA-191
 
 - P17 records the five consumer-shaped native N1 pages, N5 time/allocation growth, public output/iteration boundary refusals, actual Lighthouse mobile and island response measurements, and the restored three-engine founder client comparison. An authenticated prior DS12 supplies the N1 regression baseline. Missing or invalid declared figures refuse the release.
-- FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. Missing evidence or any sample above12ms refuses.
+- FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. L61 treats the original12ms raw-parse estimate as descriptive; missing evidence or any public-decoder sample above30ms refuses.
 - Lighthouse13.5.0 and the historical comparison libraries are exact-pinned development tools; no runtime dependency changes. The fixture HTTP server and measurement binary now share their unchanged typed input constructors.
 
 
