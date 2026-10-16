@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+- FORMA-182 qualification: use `ryu-js` 1.0.3 for ECMAScript number formatting.
+  Rust's `LowerExp` chose the wrong shortest decimal at exact ties: binary64
+  `c2eeb5cf467752d4` rendered as `-270129723325078.63` instead of JavaScript's
+  `-270129723325078.62`. Shared vectors retain the seeded counterexample,
+  its positive counterpart and adjacent binary64 values. Negative zero,
+  exponent thresholds and non-finite spellings retain their existing contract.
+  The dependency has no default runtime dependencies, supports Rust 1.71,
+  and is licensed Apache-2.0 OR BSL-1.0.
+- FORMA-182 qualification: the frozen FORMA-026 namespace vectors now live in
+  `tests/fixtures/parity/namespaces.json`; a native test builds FMIR from each
+  tree and checks the real walker's output. The script reference remains a
+  client construction refusal. This adds no namespace-stack policy.
+
+- FORMA-181 checkpoint C (review follow-ups of B): `ListKeyViolation` is `#[non_exhaustive]`
+  with a constructor, `ListKeyViolation::new`; a key path segment holding a dot or a bracket,
+  or an empty one, is quoted in the diagnostic (`["user.id"]`); a row's key is held once (one
+  `Rc<str>` shared by the duplicate set and the row's guard). `keys.json` string vectors carry
+  the `served` markup the walker writes, pinned by a walker test and decoded by the three
+  browser engines in core's `keyed-adoption.spec.ts`.
+
 ### Shared attribute-name and URL policy — FORMA-140
 
 - Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.

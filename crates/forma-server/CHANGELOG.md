@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Ordinary document metadata — FORMA-182
+
+- Normalize CRLF/CR to LF and NUL to U+FFFD before escaping ordinary title,
+  body class, typed head fields and resource URL values on both SSR and browser
+  shell paths. Shared rule-1 vectors cover both actual document writers.
+  Request state, configuration JSON, nonces, integrity digests, build identity
+  and raw CSS retain their existing encoding. URL refusal and exact complete
+  document byte-budget checks remain active.
+
 ### Attribute values — FORMA-182
 
 - Pages render through forma-ir's attribute table (rule 6, finding F2): a `true` on a non-boolean attribute is written as `name="true"` (`tests/typed_pages.rs` asserts `data-enabled="true"` on a keyed row where it asserted the bare name).
