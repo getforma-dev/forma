@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- FORMA-183: the integrated P1/P2/P3 corpus now blocks R17 at step 1 with 100 generated states per declared schema. Firefox and WebKit parity block release at 10 states. Every gate requires an empty expected-divergent list and retains the actual counts and timing report.
+
 ### Lexical JSX SVG namespaces — FORMA-171
 
 - Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.
