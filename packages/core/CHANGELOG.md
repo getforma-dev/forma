@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Reduce temporary allocation while capturing an adoption DOM snapshot. The constructor keeps the same observed fields, traversal order, template contents, opaque child boundaries and validation, without an intermediate position object or work record per node.
+
 ### Avoid unused control-oracle startup work — FORMA-191
 
 - Attribute snapshots use deterministic code-unit ordering without initializing locale collation. Strict adoption scans document radio peers only when it owns a named radio group, and skips detached form oracles when no control bindings can read them. Every topology, focus, captured-value and radio-peer check remains in place before empty observations are returned.

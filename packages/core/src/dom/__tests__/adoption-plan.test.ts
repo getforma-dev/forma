@@ -270,3 +270,22 @@ describe('inert template content snapshots',()=>{
     expect(()=>dom.assertUnchanged()).not.toThrow();
   });
 });
+
+
+describe('mixed inert and opaque snapshot traversal',()=>{
+  it.each([
+    ['connected opaque child',0,null],
+    ['ordinary sibling',1,'FORMA_E_HYDRATE_VALUE'],
+    ['inert island-looking child',2,'FORMA_E_HYDRATE_VALUE'],
+    ['nested template child',3,'FORMA_E_HYDRATE_VALUE'],
+  ] as const)('keeps %s ownership while interleaving both traversal states',(_label,index,code)=>{
+    const {host}=fixture('<template><b data-forma-island="inert">inert</b><template><i>deep</i></template></template><article data-forma-island="connected"><em>opaque</em></article><p>owned</p>');
+    const template=host.firstElementChild as HTMLTemplateElement;
+    const nested=template.content.querySelector('template') as HTMLTemplateElement;
+    const targets=[host.querySelector('em')!.firstChild!,host.querySelector('p')!.firstChild!,template.content.querySelector('b')!.firstChild!,nested.content.querySelector('i')!.firstChild!];
+    const dom=new AdoptionDom(host);dom.assertUnchanged();
+    targets[index].nodeValue='changed';
+    if(code)expect(()=>dom.assertUnchanged()).toThrowError(expect.objectContaining({code}));
+    else expect(()=>dom.assertUnchanged()).not.toThrow();
+  });
+});

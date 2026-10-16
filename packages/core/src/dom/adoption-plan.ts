@@ -87,13 +87,16 @@ export class AdoptionDom {
     }
     // Explicit stack: static element depth is not the FMIR control-flow depth.
     // There is no new blanket node/depth limit on otherwise admitted output.
-    const pending: {node:Node;inert:boolean}[] = [{node:host,inert:false}];
+    // Parallel stacks avoid a temporary work object for every visited node.
+    // Keep their push/pop order paired, including inert template fragments.
+    const pending: Node[] = [host], inertStack: boolean[] = [false];
     while (pending.length) {
-      const {node,inert} = pending.pop()!;
+      const node = pending.pop()!, inert = inertStack.pop()!;
       const element = node.nodeType === 1 ? node as Element : null;
       const opaque = !inert && node !== host && !!element?.hasAttribute('data-forma-island');
       this.nodes.set(node, {
-        ...position(node), first: node.firstChild, last: node.lastChild,
+        node, parent: node.parentNode, previous: node.previousSibling, next: node.nextSibling,
+        first: node.firstChild, last: node.lastChild,
         data: node.nodeType === 3 || node.nodeType === 8 ? (node as CharacterData).data : null,
         attributes: element ? Array.from(element.attributes, attr => ({
           namespace: attr.namespaceURI, local: attr.localName, value: attr.value,
@@ -101,12 +104,14 @@ export class AdoptionDom {
         opaque,
       });
       if (!opaque) {
-        for (let child = node.lastChild; child; child = child.previousSibling) pending.push({node:child,inert});
+        for (let child = node.lastChild; child; child = child.previousSibling) {
+          pending.push(child); inertStack.push(inert);
+        }
         // Template descendants are inert content, not connected child islands.
         // Verified by: src/dom/__tests__/adoption-plan.test.ts > "refuses changed %s captured before component execution"
         if(element?.namespaceURI===HTML_NS&&element.localName==='template'){
           const template=element as HTMLTemplateElement,fragment=template.content;
-          this.templates.set(template,fragment);pending.push({node:fragment,inert:true});
+          this.templates.set(template,fragment);pending.push(fragment);inertStack.push(true);
         }
       }
     }
