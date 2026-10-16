@@ -20,12 +20,13 @@ export function splitGraph(meta: Metafile, entries: BuildEntry[], outputDir: str
   const files = new Set<string>();
   const outputs = new Map(Object.entries(meta.outputs).map(([path, value]) => [resolve(path), { file: basename(path), value }]));
   const entryOutputs = new Map<string, string>();
+  const virtualIdentities = new Set(entryIdentities.values());
   for (const [path, output] of outputs) {
     if (resolve(outputDir, output.file) !== path) throw new Error('Split build emitted a nested output; the manifest requires flat asset filenames.');
     if (!output.value.entryPoint || !output.file.endsWith('.js')) continue;
     const entry = entries.find(candidate => (entryIdentities.has(candidate.outfile)
       ? entryIdentities.get(candidate.outfile) === output.value.entryPoint
-      : !output.value.entryPoint!.startsWith('forma-browser-entry:') && realpathSync(candidate.entry) === realpathSync(resolve(output.value.entryPoint!)))
+      : !virtualIdentities.has(output.value.entryPoint!) && realpathSync(candidate.entry) === realpathSync(resolve(output.value.entryPoint!)))
       && (output.file === candidate.outfile || output.file.startsWith(`${basename(candidate.outfile, '.js')}.`)));
     if (entry) entryOutputs.set(entry.outfile, path);
   }
