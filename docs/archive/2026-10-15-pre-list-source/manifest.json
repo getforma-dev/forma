@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "49c614619d1a43f92620b532fa046182d8026952",
+  "role": "Pre-F1 originals (FORMA-183 finding F1, assigned to FORMA-181): the list-same-source corpus sources, whose createList passed a plain array that core 3.0 calls as a function. Byte-exact; the archived page still compiles and is asserted to refuse with BUILD-616.",
+  "sha256": {
+    "sources/list-same-source/app.ts": {
+      "bytes": 389,
+      "sha256": "d15c7503e8b9026155d3cdf90ed706a69101534aa157df245d657de944ec2761"
+    },
+    "sources/list-same-source/page.ts": {
+      "bytes": 941,
+      "sha256": "5b3c459a21c216af4b7e8a4445689f343e51c2e6f2b7122281e84534fdf1d26c"
+    }
+  }
+}

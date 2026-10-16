@@ -61,11 +61,21 @@ export interface Entry {
   readonly diagnostics: readonly string[];
 }
 
-/** The module's `app.ts` (or `.tsx`) through the compiler's SSR plugin, as an application's build runs it. */
-export async function bundleEntry(name: string, corpusDir: string): Promise<Entry> {
-  const dir = resolve(REPO, corpusDir, name);
-  const entry = ['app.ts', 'app.tsx'].map(file => resolve(dir, file)).find(file => existsSync(file));
-  if (!entry) throw new Error(`${dir} has no app.ts or app.tsx`);
+/** A module-exported setter for P3: the file exporting it and its export name (corpus.json's `transition`). */
+export interface Transition { readonly file: string; readonly export: string }
+
+/**
+ * The module's entry (`app.ts`) through the compiler's SSR plugin, as an application's build runs
+ * it. With a transition, the bundle's entry is a two-line wrapper that imports the app entry (so
+ * activation runs as it would) and re-exports the setter as `__parityTransition` from the same
+ * module graph, so the setter reaches the activated islands' own instances.
+ */
+export async function bundleEntry(name: string, entryFile: string, transition?: Transition): Promise<Entry> {
+  const entry = resolve(REPO, entryFile);
+  if (!existsSync(entry)) throw new Error(`${name}: no entry ${entry}`);
+  const input = transition
+    ? { stdin: { contents: `import ${JSON.stringify(entry)};\nexport { ${transition.export} as __parityTransition } from ${JSON.stringify(resolve(REPO, transition.file))};\n`, resolveDir: dirname(entry), loader: 'ts' as const } }
+    : { entryPoints: [entry] };
   // The plugin logs one line per emission and each diagnostic; the harness keeps the diagnostics
   // with the module instead, and its own report is the output.
   const log = console.log, warn = console.warn;
@@ -76,7 +86,7 @@ export async function bundleEntry(name: string, corpusDir: string): Promise<Entr
   try {
     result = await esbuild.build({
       ...common,
-      entryPoints: [entry],
+      ...input,
       outdir: resolve('/parity-out', name),
       plugins: [coreExternal, formaSsrPlugin({ page: name, outDir: resolve('/parity-out', name), entryPoint: entry, strict: false, onDiagnostics: found => {
         for (const d of found) diagnostics.push(`${d.code} ${d.file.slice(REPO.length)}:${d.line} ${d.message.split(' — ')[0]}`);
