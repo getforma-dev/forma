@@ -121,6 +121,52 @@ describe('first-head document authority', () => {
   });
 });
 
+describe('state UTF8 byte admission before JSON parsing', () => {
+  const units = [
+    ['ASCII edge', '\x7f'], ['two-byte start', '\x80'], ['two-byte end', '\u07ff'],
+    ['three-byte start', '\u0800'], ['before surrogates', '\ud7ff'], ['BMP end', '\uffff'],
+    ['astral pair', '\ud800\udc00'], ['astral final pair', '\udbff\udfff'],
+    ['lone high surrogate', '\ud800'], ['lone low surrogate', '\udfff'],
+    ['lone high then pair', '\ud800\ud800\udc00'], ['reversed surrogates', '\udc00\ud800'],
+  ] as const;
+  it.each(units)('%s keeps exact byte boundaries and the raw string value', (_name, unit) => {
+    const encoder = new TextEncoder(), limit = 1_048_576;
+    const emptyText = JSON.stringify(envelope([{ value: '' }]));
+    const marker = '"value":"', at = emptyText.indexOf(marker) + marker.length;
+    const prefix = emptyText.slice(0, at), suffix = emptyText.slice(at);
+    // Preserve raw lone UTF-16 surrogates in DOM textContent: JSON.stringify
+    // would escape them and would not exercise TextEncoder replacement bytes.
+    const room = limit - encoder.encode(emptyText).length, size = encoder.encode(unit).length;
+    const repeated = unit.repeat(Math.floor(room / size));
+    // Adjacent reversed pairs can form a valid pair across repetitions. Pad
+    // against the encoded repeated text, not a sum of isolated unit costs.
+    const value = repeated + 'x'.repeat(room - encoder.encode(repeated).length);
+    const text = prefix + value + suffix;
+    expect(encoder.encode(text).length).toBe(limit);
+    expect(valid(preflightIslands({ Test: registration(schema({ kind: 'string' })) }, page(undefined, host(0), text))[0]!).props.value).toBe(value);
+    const tooLarge = prefix + value + 'x' + suffix;
+    expect(encoder.encode(tooLarge).length).toBe(limit + 1);
+    const doc = page(undefined, host(0), tooLarge), registry = { Test: registration(schema({ kind: 'string' })) };
+    const parse = vi.spyOn(JSON, 'parse');
+    try {
+      const result = preflightIslands(registry, doc)[0]!;
+      expect(code(result)).toBe('FORMA_E_ISLAND_STATE');
+      expect('error' in result && result.error.message).toContain('exceeds one MiB');
+      expect(parse).not.toHaveBeenCalled();
+    } finally { parse.mockRestore(); }
+  });
+  it('rejects the UTF16 lower bound before parsing invalid JSON', () => {
+    const doc = page(undefined, host(0), '{'.repeat(1_048_577)), registry = { Test: registration() };
+    const parse = vi.spyOn(JSON, 'parse');
+    try {
+      const result = preflightIslands(registry, doc)[0]!;
+      expect(code(result)).toBe('FORMA_E_ISLAND_STATE');
+      expect('error' in result && result.error.message).toContain('exceeds one MiB');
+      expect(parse).not.toHaveBeenCalled();
+    } finally { parse.mockRestore(); }
+  });
+});
+
 describe('entry and original-host isolation', () => {
   it('retains valid sibling state among many unclaimed malformed entries', () => {
     const entries = Array.from({ length: 4096 }, () => null) as unknown[];

@@ -1,0 +1,5 @@
+FormaStrictBuildError: @getforma/build: 1 SSR diagnostic is an error; 3.0 requires the published server-renderable subset:
+/Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/svg-case-proof-after/cases/probe/app.tsx:2:108  BUILD-610  BUILD-610 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/svg-case-proof-after/cases/probe/app.tsx:2:108: attribute TabIndex parses as tabindex in svg; use the canonical spelling tabindex or Browser mode
+    why: The declared data or expression cannot be represented by the closed native contract; publication is refused.
+    fix: Declare supported typed props and pass computed values as their own props from the handler, use a closed literal-default signal, or move the component behind a registered browserOnly() boundary.
+Each code, with its fix: https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md

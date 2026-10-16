@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Share exact `className`/`htmlFor`/`tabIndex` normalization between static/reactive `h()` writes and adoption. HTML and SVG attributes now use the same declared alias policy; ordinary browser object property order remains intact.
+
 - FORMA-129: skip every descendant of a detached list template when binding a captured parent scope. Nested row bindings retain their own item scope, including detached and shadow-root mounts; real forbidden row expressions still report their diagnostics.
 
 - FORMA-129: tiered `data-fetch` refuses redirects before another URL can escape its grant. Network/redirect rejection before a response has stable generic `FORMA_E_FETCH_REQUEST` error-target text; existing HTTP, JSON and abort handling remains intact. The old tierless path remains unchanged until FORMA-108 retires it.

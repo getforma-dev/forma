@@ -1,0 +1,4 @@
+{
+  "code": "BUILD-610",
+  "message": "BUILD-610 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/svg-case-proof-after/cases/probe/app.tsx:2:108: attribute TabIndex parses as tabindex in svg; use the canonical spelling tabindex or Browser mode"
+}

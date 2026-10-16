@@ -80,6 +80,8 @@ node --test scripts/release-support.test.mjs scripts/release-support-history.tes
 ruby scripts/check-toolchain-policy.rb
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
 node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs
+step "packed decoder: actual built compiler regenerates the timed contracts"
+node --test scripts/decoder-compiler-package.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core
