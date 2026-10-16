@@ -154,6 +154,24 @@ export function activateIslands(
   const checked = preflightIslands(registry, root);
   const children = new Map<Element,ValidatedIsland>();
   for(const result of checked)if('value'in result)children.set(result.host,result.value);
+  // PROTOTYPE: reserve every host before executing load work, then yield only
+  // between complete per-island adoption transactions. This changes completion.
+  const loads: (ValidatedIsland | undefined)[] = [];
+  let next = 0, pending = 0, timer: ReturnType<typeof setTimeout> | undefined;
+  const drain = () => {
+    timer = undefined;
+    const deadline = performance.now() + 12;
+    while (next < loads.length) {
+      const value = loads[next]; loads[next++] = undefined;
+      if (value) {
+        pending--;
+        delete (value.host as any).__formaLoadCancel;
+        hydrateIslandRoot(value, children);
+      }
+      if (performance.now() >= deadline) break;
+    }
+    if (pending) timer = setTimeout(drain, 0);
+  };
   for (const result of checked) {
     if ('error' in result) { console.error(result.error.message); continue; }
     const value = result.value;
@@ -222,10 +240,16 @@ export function activateIslands(
       island.addEventListener('pointerdown', hydrate, { capture: true, once: true });
       island.addEventListener('focusin', hydrate, { capture: true, once: true });
     } else {
-      // load (default) — hydrate immediately
-      hydrateIslandRoot(value,children);
+      const index = loads.length;
+      loads.push(value); pending++;
+      (island as any).__formaLoadCancel = () => {
+        if (!loads[index]) return;
+        loads[index] = undefined;
+        if (--pending === 0) { clearTimeout(timer); loads.length = 0; }
+      };
     }
   }
+  if (pending) drain();
 }
 
 /**
@@ -256,6 +280,8 @@ export function deactivateIsland(el: HTMLElement): void {
     el.removeEventListener('focusin', interactionHandler, true);
     delete (el as any).__formaInteractionHandler;
   }
+  const loadCancel = (el as any).__formaLoadCancel as (() => void) | undefined;
+  if (loadCancel) { loadCancel(); delete (el as any).__formaLoadCancel; }
   const idleCancel = (el as any).__formaIdleCancel as (() => void) | undefined;
   if (idleCancel) {
     idleCancel();
