@@ -1,6 +1,6 @@
 // P17 owns the installed packed fixture project until all measurements finish.
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {mkdirSync,mkdtempSync,rmSync,openSync,writeFileSync,fsyncSync,closeSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {ROOT,json,run,digest} from './release-set.mjs';
@@ -22,7 +22,32 @@ export function performanceTarget(set,env=process.env){
  assert.equal(requested.slice(1).split('-')[0],set.contracts.version,'performance target differs from the candidate base version');
  return {tag:requested,rehearsal:true};
 }
-export async function verifyPackedPerformance({staged,set,test,target,before,report}){
+// These files outlive disposable packed fixtures and the process itself. Each
+// observation is flushed after timing; interruption cannot erase earlier runs.
+function durableWrite(file,value,flag){
+ const fd=openSync(file,flag);
+ try{writeFileSync(fd,JSON.stringify(value)+'\n');fsyncSync(fd);}finally{closeSync(fd);}
+}
+export async function recordPackedDecoder({corePath,compilerPath,evidenceDirectory,attempt,provenance,measure=measurePackedDecoder}){
+ assert(typeof evidenceDirectory==='string'&&evidenceDirectory.length>0,'decoder: durable evidence directory required');
+ mkdirSync(evidenceDirectory,{recursive:true});
+ const directory=mkdtempSync(join(evidenceDirectory,'decoder-attempt-'));
+ const observations=join(directory,'observations.jsonl'),complete=join(directory,'report.json');
+ attempt.decoderEvidence={directory,observations,complete};
+ durableWrite(join(directory,'attempt.json'),provenance,'wx');
+ durableWrite(observations,{kind:'start',provenance},'wx');
+ attempt.decoderObservations=[];
+ const result=await measure({corePath,compilerPath,onSample:sample=>{
+  durableWrite(observations,{kind:'observation',...sample},'a');
+  attempt.decoderObservations.push(sample);
+ }});
+ durableWrite(complete,result,'wx');
+ attempt.decoder=result;
+ validateDecoder(result);
+ delete attempt.decoderObservations;
+ return result;
+}
+export async function verifyPackedPerformance({staged,set,test,target,before,report,evidenceDirectory}){
  const {project,targetDir}=staged,output=mkdtempSync(join(tmpdir(),'forma-performance-'));
  const nativePath=join(output,'native.json'),clientPath=join(output,'client.json');
  const attempt=report.performanceAttempt={contract:PERFORMANCE_CONTRACT,targetTag:target.tag,rehearsal:target.rehearsal,mobile:[]};
@@ -33,11 +58,7 @@ export async function verifyPackedPerformance({staged,set,test,target,before,rep
   });
   let decoder;
   await test('performance: public packed decoder, forty samples per one-MiB shape at four-times CPU slowdown',async()=>{
-   attempt.decoderObservations=[];
-   decoder=await measurePackedDecoder({corePath:join(project,'node_modules/@getforma/core'),compilerPath:join(project,'node_modules/@getforma/compiler'),onSample:sample=>attempt.decoderObservations.push(sample)});
-   attempt.decoder=decoder;
-   validateDecoder(decoder);
-   delete attempt.decoderObservations;
+   decoder=await recordPackedDecoder({corePath:join(project,'node_modules/@getforma/core'),compilerPath:join(project,'node_modules/@getforma/compiler'),evidenceDirectory,attempt,provenance:{contract:PERFORMANCE_CONTRACT,commit:set.commit,targetTag:target.tag,rehearsal:target.rehearsal}});
   });
   await test('performance: ordinary release binaries use the same exact packed crate lock',async()=>{
    for(const key of Object.keys(process.env))assert(!key.startsWith('CARGO_PROFILE_RELEASE_'),'performance requires the default application release profile');

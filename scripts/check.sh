@@ -77,7 +77,7 @@ node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
-node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs scripts/release-performance-baseline.test.mjs scripts/release-performance-contract.test.mjs scripts/release-performance-evidence.test.mjs scripts/release-performance-decoder.test.mjs
+node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs scripts/release-performance-baseline.test.mjs scripts/release-performance-contract.test.mjs scripts/release-performance-evidence.test.mjs scripts/release-performance-decoder.test.mjs scripts/release-performance-durability.test.mjs
 step "packed decoder: actual built compiler regenerates the timed contracts"
 node --test scripts/release-performance-decoder-compiler.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"

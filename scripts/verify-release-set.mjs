@@ -3,7 +3,7 @@
 // from the tagged tree's committed lock. No OIDC permission is needed here.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -574,7 +574,7 @@ export async function verify(dir, reportPath) {
       // The fixture applications (FORMA-188): the same sources and checks as the source lane, against the
       // packed set. The deployment drill uses those same packed libraries and crates in all engines.
       if (set.contracts.fixtureApps) {
-        report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report, performanceTarget: measurementTarget, before: new Date(started).toISOString() });
+        report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report, performanceTarget: measurementTarget, before: new Date(started).toISOString(), evidenceDirectory: dirname(resolve(reportPath)) });
       }
       if (set.contracts.deploymentSkew === 'native-v1') {
         report.deploymentSkew = await verifyPackedSkew({ set, dir, scratch, browser, firefox, webkit, test });
