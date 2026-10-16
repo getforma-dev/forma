@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
+import {readFileSync} from 'node:fs';
 import {attributeMobileTasks,encodeMobileTrace,decodeMobileTrace,summarizeMobileStartup,MOBILE_TRACE_MAX_BYTES} from './release-performance-attribution.mjs';
 import {validateMobile,validateMobileControls} from './release-performance-contract.mjs';
 import {mobile,controlObservations} from './release-performance-test-fixtures.mjs';
@@ -9,6 +10,8 @@ import {traceFixture,traceMeasurement} from './release-performance-trace-fixture
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const kind=(lhr,trace)=>attributeMobileTasks(lhr,trace).tasks[0].kind;
 const pptrSource='//# sourceURL=pptr:internal';
+// Actual pinned Lighthouse13.5.0 wrapper from the retained cc0 run17 trace.
+const idleCheckSource=readFileSync(new URL('./fixtures/lighthouse-idle-check.txt',import.meta.url),'utf8');
 const lighthouseSource=['(() => {','      const Promise = globalThis.__nativePromise || globalThis.Promise;','const URL = globalThis.__nativeURL || globalThis.URL;','const performance = globalThis.__nativePerformance || globalThis.performance;','const fetch = globalThis.__nativeFetch || globalThis.fetch;','      ','      ;','      (() => {','      window.__nativePromise = window.Promise;','      window.__nativeURL = window.URL;','      window.__nativePerformance = window.performance;','      window.__nativeFetch = window.fetch;','      window.__ElementMatches = window.Element.prototype.matches;','      window.__HTMLElementBoundingClientRect = window.HTMLElement.prototype.getBoundingClientRect;','    })();','    })()','    //# sourceURL=_lighthouse-eval.js'].join('\n');
 function navigationFixture(){
  const origin=1000000,frame='test-frame',url='http://fixture.invalid/',navigationId='document-request';
@@ -57,6 +60,95 @@ function navigationFixture(){
  return {lhr,trace};
 }
 
+function idleCheckFixture(){
+ const {lhr,trace}=navigationFixture(),events=trace.traceEvents;
+ const origin=events[0].ts,frame=events[0].args.frame,url=lhr.requestedUrl,start=origin+7000000;
+ const compile=events.find(e=>e.name==='v8.compileModule');compile.args.data.scriptId=5;
+ const event=(name,offset,dur,cat,args,ph='X')=>({name,ph,pid:10,tid:20,ts:start+offset,...dur===undefined?{}:{dur},cat,args});
+ events.push({...event('ScriptCatchup',-6699000,4,'disabled-by-default-devtools.v8-source-rundown',{data:{executionContextId:1,hasSourceUrl:false,isModule:true,isolate:'test-isolate',scriptId:5,url:`${url}app.js`}})});
+ events.push(
+  event('RunTask',0,90745,'disabled-by-default-devtools.timeline',{}),
+  event('EvaluateScript',6469,82442,'disabled-by-default-devtools.timeline',{}),
+  event('ScriptCatchup',57892,718,'disabled-by-default-devtools.v8-source-rundown',{data:{executionContextId:4,hasSourceUrl:true,isModule:false,isolate:'test-isolate',scriptId:10,sourceUrl:'_lighthouse-eval.js',url:''}}),
+  event('ScriptCatchup',58661,212,'disabled-by-default-devtools.v8-source-rundown-sources',{data:{isolate:'test-isolate',length:2573,scriptId:10,sourceText:idleCheckSource}}),
+  event('RunMicrotasks',73929,12791,'v8.execute',{microtask_count:2}),
+  {...event('TimerInstall',79234,undefined,'devtools.timeline',{data:{frame,sampleTraceId:1,singleShot:true,timeout:150,timerId:4,stackTrace:[['',26,5],['checkTimeSinceLastLongTaskInPage',22,10],['',40,3],['',41,7]].map(([functionName,lineNumber,columnNumber])=>({functionName,lineNumber,columnNumber,scriptId:'10',url:'_lighthouse-eval.js'}))}},'I'),s:'t'},
+ );
+ lhr.audits['long-tasks'].details.items=[{startTime:7000,duration:90.745}];
+ const defaults=traceFixture().lhr;
+ Object.assign(lhr,{lighthouseVersion:defaults.lighthouseVersion,configSettings:defaults.configSettings,environment:defaults.environment});
+ lhr.audits['total-blocking-time']=defaults.audits['total-blocking-time'];
+ lhr.audits['largest-contentful-paint']=defaults.audits['largest-contentful-paint'];
+ lhr.audits['long-tasks'].details.type='table';
+ return {lhr,trace};
+}
+
+test('only exact isolated pinned Lighthouse idle checks are excluded, independently of time',()=>{
+ const exact=idleCheckFixture();assert.equal(kind(exact.lhr,exact.trace),'isolated-lighthouse-idle-check');
+ const mainSource=exact.trace.traceEvents.find(e=>e.args?.data?.sourceText===lighthouseSource);
+ mainSource.ph='I';mainSource.s='t';delete mainSource.dur;
+ assert.equal(kind(exact.lhr,exact.trace),'isolated-lighthouse-idle-check');
+ mainSource.s='g';assert.equal(kind(exact.lhr,exact.trace),'application-or-unattributed');
+ const named=(events,name)=>events.find(e=>e.name===name);
+ const idleMeta=events=>events.find(e=>e.name==='ScriptCatchup' && e.cat.endsWith('v8-source-rundown') && e.args.data.scriptId===10);
+ const idleSource=events=>events.find(e=>e.name==='ScriptCatchup' && e.cat.endsWith('v8-source-rundown-sources') && e.args.data.scriptId===10);
+ const module=events=>events.find(e=>e.name==='ScriptCatchup' && e.args?.data?.isModule===true);
+ for(const change of [
+  events=>events.push({...structuredClone(named(events,'TimerInstall')),name:'FunctionCall'}),
+  events=>events.push({...structuredClone(named(events,'TimerInstall')),name:'UnknownAuditWork'}),
+  events=>events.push(structuredClone(named(events,'RunMicrotasks'))),
+  events=>events.splice(events.indexOf(named(events,'RunMicrotasks')),1),
+  events=>{named(events,'RunMicrotasks').args.microtask_count=3;},
+  events=>{named(events,'RunMicrotasks').ts=named(events,'EvaluateScript').ts-1;},
+  events=>{named(events,'EvaluateScript').args.data={url:'http://fixture.invalid/app.js'};},
+  events=>{named(events,'TimerInstall').args.data.frame='foreign-frame';},
+  events=>{named(events,'TimerInstall').args.data.timeout=151;},
+  events=>{named(events,'TimerInstall').args.data.singleShot=false;},
+  events=>{named(events,'TimerInstall').args.data.sampleTraceId=0;},
+  events=>{named(events,'TimerInstall').args.data.timerId=0;},
+  events=>{named(events,'TimerInstall').ts=named(events,'RunMicrotasks').ts-1;},
+  events=>{named(events,'TimerInstall').args.data.stackTrace[0].scriptId='11';},
+  events=>{named(events,'TimerInstall').args.data.stackTrace[1].functionName='applicationCallback';},
+  events=>{named(events,'TimerInstall').args.data.stackTrace[1].lineNumber++;},
+  events=>{named(events,'TimerInstall').args.data.stackTrace[0].url='http://fixture.invalid/app.js';},
+  events=>{named(events,'TimerInstall').args.data.stackTrace.pop();},
+  events=>{idleMeta(events).args.data.executionContextId=1;},
+  events=>{idleMeta(events).args.data.executionContextId=0;},
+  events=>{idleMeta(events).args.data.sourceUrl='another-audit.js';},
+  events=>{idleMeta(events).args.data.isolate='unbound-isolate';},
+  events=>{idleSource(events).args.data.scriptId=11;},
+  events=>{idleSource(events).args.data.sourceText=idleCheckSource.replace('firstAttemptTs','otherAttemptTs');},
+  events=>{idleSource(events).args.data.length++;},
+  events=>{idleSource(events).ts=idleMeta(events).ts;},
+  events=>events.push({...structuredClone(idleMeta(events)),ts:idleMeta(events).ts-200000}),
+  events=>{module(events).args.data.executionContextId=4;},
+  events=>{module(events).args.data.frame='foreign-frame';},
+  events=>events.splice(events.indexOf(module(events)),1),
+  events=>events.push(structuredClone(named(events,'v8.compileModule'))),
+  events=>{named(events,'v8.compileModule').args.data.scriptId=99;},
+  events=>{const main=events.find(e=>e.name==='ScriptCatchup' && e.args?.data?.sourceText===lighthouseSource);main.args.data.sourceText+=' ';main.args.data.length++;},
+  events=>events.push({...structuredClone(events[0]),ts:named(events,'EvaluateScript').ts-1}),
+ ]){
+  const {lhr,trace}=idleCheckFixture();change(trace.traceEvents);assert.equal(kind(lhr,trace),'application-or-unattributed');
+ }
+});
+
+test('proven audit exclusion retains all raw costs and the independent57ms refusal',()=>{
+ const rows=mobile();
+ for(const row of rows){
+  for(const run of row.runs){const {lhr,trace}=idleCheckFixture();run.lighthouse=traceMeasurement(lhr,trace);}
+  row.startup=summarizeMobileStartup(row.runs);
+ }
+ validateMobile(rows);
+ assert.equal(rows[0].startup.maxTaskMs,0);
+ assert.equal(rows[0].startup.wholePageTargetMiss,true);
+ assert.equal(rows[0].runs[0].lighthouse.longTasks[0].duration,90.745);
+ rows[0].runs[0].activation.longTasks=[{startTime:100,duration:57}];
+ rows[0].startup=summarizeMobileStartup(rows[0].runs);
+ assert.equal(rows[0].startup.maxTaskMs,57);
+ assert.throws(()=>validateMobile(rows),/over50ms/);
+});
+
 test('only complete same-navigation browser layout before observed script is excluded',()=>{
  const {lhr,trace}=traceFixture({duration:120,scriptAt:300});
  assert.equal(kind(lhr,trace),'pre-application-browser-layout');
@@ -84,7 +176,7 @@ test('only complete same-navigation browser layout before observed script is exc
  ]){const copy=structuredClone(trace);edit(copy);assert.equal(kind(lhr,copy),'application-or-unattributed');}
  const unmatched=structuredClone(lhr);unmatched.audits['long-tasks'].details.items[0].startTime+=1;
  assert.equal(kind(unmatched,trace),'application-or-unattributed');
- // A late audit task receives no origin exemption, even without an app URL.
+ // A late task without exact audit source/context proof still counts in full.
  const late=traceFixture({startTime:7000,duration:110,scriptAt:200});
  assert.equal(kind(late.lhr,late.trace),'application-or-unattributed');
 });
@@ -230,7 +322,7 @@ function withDurations(values,{observer=false,layout=false}={}){
 }
 test('strict startup requires twenty runs with every counted task at most50ms',()=>{
  const rows=withDurations(Array(20).fill(50));validateMobile(rows);
- assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v2');
+ assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v3');
  assert.equal(rows[0].startup.targetMiss,false);assert.equal(rows[0].startup.p95MaxTaskMs,50);assert.equal(rows[0].startup.maxTaskMs,50);
  for(const edit of [r=>r[0].runs.pop(),r=>r[0].pilot=true,r=>r[0].startup.targetMiss=true,r=>r[0].startup.policy.maxTaskMs=100,r=>r[0].startup.runMaximaMs[0]=0,r=>delete r[0].runs[0].lighthouse.trace,r=>r[0].runs[0].lighthouse.attribution.tasks[0].kind='pre-application-browser-layout']){
   const copy=structuredClone(rows);edit(copy);assert.throws(()=>validateMobile(copy));
@@ -253,6 +345,9 @@ test('historical L63 policy evidence cannot stand in for a fresh strict campaign
   for(const run of row.runs)run.lighthouse.attribution.policy='L63-startup-v1';
  }
  assert.throws(()=>validateMobile(rows),/attribution differs/);
+ const v2=withDurations(Array(20).fill(50));
+ for(const row of v2){row.startup.policy.id='N3-startup-strict50-v2';for(const run of row.runs)run.lighthouse.attribution.policy='N3-startup-strict50-v2';}
+ assert.throws(()=>validateMobile(v2),/attribution differs/);
 });
 test('pure layout attribution never erases whole-page TBT, independent observations or mixed tasks',()=>{
  const rows=withDurations(Array(20).fill(120),{layout:true});validateMobile(rows);

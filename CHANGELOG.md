@@ -10,13 +10,12 @@
 
 ## [Unreleased]
 
-- Keep N3's unchanged 50 ms application/activation limit while distinguishing a
-  positively proved main-document commit from island work. The new v2 policy
-  requires the exact navigation/frame/request/parser chain before the first
-  application script and source-binds the pinned Lighthouse/Puppeteer bootstrap;
-  unknown, mixed and application tasks still count, and every raw whole-page
-  task remains recorded. Earlier failed runs remain failed evidence and a fresh
-  complete campaign is required.
+- N3 startup attribution v3 keeps the unchanged 50 ms application/activation limit
+  and v2's exact pre-application layout/navigation proofs. It additionally
+  separates the pinned Lighthouse idle check only with complete source, isolated
+  context, same-frame, nesting and timer-stack evidence. This is measurement-only;
+  unknown, mixed, application and independent observer tasks still count, all raw
+  costs remain visible, and earlier failed reports remain failed.
 
 - Restore strict mobile startup qualification: every application/unattributed task and every independent observer task must be at most50ms across all twenty cold runs per route. Keep conservative pre-application layout attribution, descriptive p95, raw whole-page measurements and the existing response/TBT requirements. Historical L63 results remain historical; exception retirement requires a fresh complete pass.
 

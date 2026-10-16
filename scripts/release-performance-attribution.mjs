@@ -188,7 +188,50 @@ const exactNavigationBootstrap = ({children,thread,task,end,frame,navigationId,u
   if(preload.length!==1 || !inside(preload[0],append) || preload[0].args?.data?.requestId!==scripts[0].args.data.requestId || preload[0].args.data.url!==scripts[0].args.data.url)return false;
   return exactBootstrapRundown(children);
 };
-const excludedKinds = new Set(['pre-application-browser-layout','pre-application-navigation-audit-bootstrap']);
+// Lighthouse13.5.0 wait-for-condition.js evaluates this exact wrapper with
+// useIsolation:true. A URL or a late timestamp alone never establishes origin.
+const idleSource={length:2573,sha256:'cd46c6127fbe327e1821308af46a058857f7fdb3279ddb3f01dcc461bfe2e3b8'};
+const idleStack=[['',26,5],['checkTimeSinceLastLongTaskInPage',22,10],['',40,3],['',41,7]];
+const insideSpan=(child,parent)=>child.ts>=parent.ts && child.ts+(child.dur??0)<=parent.ts+parent.dur;
+const boundSource=(metadata,thread,expected,frame,instantSource=false)=>{
+  const data=metadata?.args?.data;
+  if(metadata?.name!=='ScriptCatchup' || metadata.cat!=='disabled-by-default-devtools.v8-source-rundown' || metadata.ph!=='X' || !nonnegative(metadata.dur) || refs(metadata).some(ref=>ref!==frame) || data?.url!=='' || data.sourceUrl!=='_lighthouse-eval.js' || data.hasSourceUrl!==true || data.isModule!==false || typeof data.isolate!=='string' || !data.isolate || !Number.isSafeInteger(data.scriptId) || data.scriptId<=0 || !Number.isSafeInteger(data.executionContextId) || data.executionContextId<=0)return null;
+  const matching=thread.filter(e=>e.name==='ScriptCatchup' && e.args?.data?.isolate===data.isolate && e.args.data.scriptId===data.scriptId);
+  const sources=matching.filter(e=>e.cat==='disabled-by-default-devtools.v8-source-rundown-sources');
+  if(matching.length!==2 || sources.length!==1)return null;
+  const source=sources[0],body=source.args.data;
+  const sourceShape=source.ph==='X' && nonnegative(source.dur) || instantSource && source.ph==='I' && source.s==='t' && source.dur===undefined;
+  if(!sourceShape || refs(source).some(ref=>ref!==frame) || source.ts<metadata.ts+metadata.dur || body.length!==expected.length || typeof body.sourceText!=='string' || Buffer.byteLength(body.sourceText)!==expected.length || hash(Buffer.from(body.sourceText))!==expected.sha256)return null;
+  return source;
+};
+const exactIsolatedIdleCheck=({children,thread,task,end,frame,url,origin})=>{
+  if(children.length!==5 || children.some(e=>!eventInside(e,task,end) || refs(e).some(ref=>ref!==frame)))return false;
+  const one=(name,cat)=>{const found=children.filter(e=>e.name===name && e.cat===cat);return found.length===1?found[0]:null;};
+  const evaluate=one('EvaluateScript','disabled-by-default-devtools.timeline'),microtasks=one('RunMicrotasks','v8.execute'),timer=one('TimerInstall','devtools.timeline');
+  const metadata=one('ScriptCatchup','disabled-by-default-devtools.v8-source-rundown'),source=boundSource(metadata,thread,idleSource,frame);
+  if(!evaluate || !microtasks || !timer || !source || !children.includes(source))return false;
+  if(evaluate.ph!=='X' || !nonnegative(evaluate.dur) || Object.keys(evaluate.args??{}).length!==0 || microtasks.ph!=='X' || !nonnegative(microtasks.dur) || microtasks.args?.microtask_count!==2 || Object.keys(microtasks.args).length!==1)return false;
+  if(!insideSpan(metadata,evaluate) || !insideSpan(source,evaluate) || !insideSpan(microtasks,evaluate) || source.ts+source.dur>microtasks.ts || !insideSpan(timer,microtasks))return false;
+  const data=metadata.args.data,timing=timer.args?.data;
+  if(timer.ph!=='I' || timer.s!=='t' || timer.dur!==undefined || timing?.frame!==frame || timing.timeout!==150 || timing.singleShot!==true || !Number.isSafeInteger(timing.timerId) || timing.timerId<=0 || !Number.isSafeInteger(timing.sampleTraceId) || timing.sampleTraceId<=0)return false;
+  if(!Array.isArray(timing.stackTrace) || timing.stackTrace.length!==idleStack.length || !timing.stackTrace.every((entry,i)=>entry.scriptId===String(data.scriptId) && entry.url==='_lighthouse-eval.js' && entry.functionName===idleStack[i][0] && entry.lineNumber===idleStack[i][1] && entry.columnNumber===idleStack[i][2]))return false;
+  // Bind the audit context to a different context from the actually compiled
+  // application module and exact main-world bootstrap in this same navigation.
+  // Do not hardcode Chromium's context/script numbers from a particular run.
+  const modules=thread.filter(e=>e.name==='ScriptCatchup' && e.cat==='disabled-by-default-devtools.v8-source-rundown' && e.ph==='X' && nonnegative(e.dur) && e.ts>=origin && e.ts<task.ts && e.args?.data?.isolate===data.isolate && e.args.data.isModule===true);
+  const mainContexts=new Set();
+  for(const module of modules){
+    const main=module.args.data;
+    if(refs(module).some(ref=>ref!==frame) || !Number.isSafeInteger(main.executionContextId) || main.executionContextId<=0 || main.executionContextId===data.executionContextId || !Number.isSafeInteger(main.scriptId) || main.scriptId<=0 || !sameOrigin(main.url,url))return false;
+    const compiles=thread.filter(e=>e.name==='v8.compileModule' && e.cat==='v8,devtools.timeline' && e.ph==='X' && nonnegative(e.dur) && e.ts>=origin && e.ts<=module.ts && e.args?.data?.scriptId===main.scriptId && e.args.data.url===main.url && e.args.fileName===main.url);
+    if(compiles.length!==1 || refs(compiles[0]).some(ref=>ref!==frame))return false;
+    mainContexts.add(main.executionContextId);
+  }
+  if(mainContexts.size!==1)return false;
+  const bootstrap=thread.filter(e=>e.ts>=origin && e.ts<task.ts && e.args?.data?.isolate===data.isolate && mainContexts.has(e.args.data.executionContextId) && boundSource(e,thread,auditBootstrapSources.get('_lighthouse-eval.js'),frame,true));
+  return bootstrap.length===1;
+};
+const excludedKinds = new Set(['pre-application-browser-layout','pre-application-navigation-audit-bootstrap','isolated-lighthouse-idle-check']);
 
 export function attributeMobileTasks(lhr,trace) {
   const events = trace?.traceEvents;
@@ -242,6 +285,7 @@ export function attributeMobileTasks(lhr,trace) {
       // never proof that no application code ran. Preserve the whole task cost.
       if(firstScriptUs!==null && end<=firstScriptUs && task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && pure && layout){kind='pre-application-browser-layout';reason='same-navigation-pure-layout-before-first-script';}
       else if(task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && exactNavigationBootstrap({children,thread,task,end,frame,navigationId,url:lhr.requestedUrl,firstScriptUs})){kind='pre-application-navigation-audit-bootstrap';reason='same-navigation-document-commit-before-application-script';}
+      else if(task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && exactIsolatedIdleCheck({children,thread,task,end,frame,url:lhr.requestedUrl,origin})){kind='isolated-lighthouse-idle-check';reason='same-navigation-pinned-source-isolated-audit-idle-check';}
     }
     return {index,startTime:row.startTime,duration:row.duration,kind,reason,traceIndex};
   });
