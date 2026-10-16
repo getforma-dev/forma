@@ -151,7 +151,7 @@ const PRODUCTION: Options[] = [
   // `(function(exports){…})({})`, which publint correctly reads as CommonJS
   // served under an ESM `.js` extension — which is why this artifact is
   // reachable only by URL and not through the exports map. It is gated at
-  // 28,000 B gzip by scripts/check-size.mjs.
+  // 40,500 B gzip by scripts/check-size.mjs.
   {
     entry: { 'formajs-runtime-hardened': 'src/runtime.ts' },
     format: ['iife'],

@@ -78,7 +78,7 @@ needed for clients with an old worker.
 Test both template route modes, the native counter’s 7 → 8 → 0 updates, retained
 nodes and input state during activation, a static About navigation without
 script requests, and distinct response nonces with `Cache-Control: no-store`.
-Inspect the emitted size report at the current 28,000-byte Forma-code ceiling.
+Inspect the emitted size report at the current 28,100-byte Forma-code ceiling.
 Forma's release P17 repeats the packed-template checks against authenticated
 candidate archives; this source guide does not replace that evidence.
 
