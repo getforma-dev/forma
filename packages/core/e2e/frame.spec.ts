@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { createHash } from 'node:crypto';
-import { createServer, type Socket } from 'node:net';
+import { createServer } from 'node:http';
+import { type Socket } from 'node:net';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -162,20 +163,35 @@ test('a message of any other type changes nothing, and a port posted later is ig
 /** A TCP listener that counts the connections made to it (the A2 audit's method). */
 async function tcpCounter(port: number): Promise<{ count(): number; close(): Promise<void> }> {
   let connections = 0;
+  const errors: Error[] = [];
   const sockets = new Set<Socket>();
-  const server = createServer((socket) => {
+  // The host Image control speaks HTTP. Answer it after reading its request;
+  // ending a raw socket immediately caused WebKit to reset and reconnect.
+  const server = createServer((request, response) => {
+    request.resume();
+    response.writeHead(204, { Connection: 'close' });
+    response.end();
+  });
+  server.on('error', (error) => errors.push(error));
+  server.on('clientError', (error, socket) => { errors.push(error); socket.destroy(); });
+  // Count the TCP connection itself, including preconnects with no request.
+  server.on('connection', (socket) => {
     connections++;
     sockets.add(socket);
+    socket.on('error', (error) => errors.push(error));
     socket.on('close', () => sockets.delete(socket));
-    socket.end();
   });
-  await new Promise<void>((resolve) => server.listen(port, '127.0.0.1', resolve));
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', () => { server.off('error', reject); resolve(); });
+  });
   return {
     count: () => connections,
-    close: () => new Promise<void>((resolve) => {
+    close: async () => {
       for (const socket of sockets) socket.destroy();
-      server.close(() => resolve());
-    }),
+      await new Promise<void>((resolve) => server.close((error) => { if (error) errors.push(error); resolve(); }));
+      if (errors.length) throw new AggregateError(errors, 'TCP counter received network errors');
+    },
   };
 }
 

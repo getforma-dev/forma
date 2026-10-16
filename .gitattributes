@@ -213,3 +213,6 @@ docs/archive/webkit-native-select-baseline/** -text
 
 # Preserve the first exact select-repair qualification and frame failures.
 docs/evidence/webkit-native-select-baseline/** -text
+
+# Preserve the exact phase-only frame TCP diagnostic and original failures.
+docs/archive/frame-tcp-control-diagnostic/** -text

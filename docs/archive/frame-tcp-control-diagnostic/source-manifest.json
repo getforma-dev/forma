@@ -1,0 +1,32 @@
+{
+  "source": "58df2a79e96de906b5418228ec81818ca2537950",
+  "parent": "ee03d1cc19a2029ff5a79baa6df1284bf480eec8",
+  "files": [
+    {
+      "path": "frame-original.spec.ts",
+      "bytes": 16435,
+      "sha256": "f34b77b3cc0d668af66d34eaed586d4040846dbf1cdd6c388ae517191d34d583"
+    },
+    {
+      "path": "frame-diagnostic.spec.ts",
+      "bytes": 17535,
+      "sha256": "4401b9ee220a08e2d3dccef6ca6b8bdd3d4bbdd98bf7e3cd59e5b78174e33b9c"
+    },
+    {
+      "path": "command.json",
+      "bytes": 851,
+      "sha256": "690d711b27067479362ac82d4c8738911ef82c20dc63e29c4048acfe331d44f1"
+    },
+    {
+      "path": "PROPOSAL.md",
+      "bytes": 1221,
+      "sha256": "bca19dfd59366d3845b97839edb4faccfc7aa08f4e8cfbbc73c3e186d37c43eb"
+    }
+  ],
+  "existingRuntime": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/dist/formajs-frame.global.js",
+    "bytes": 159821,
+    "sha256": "9c3db2043219ebcf322ed5db59fd7f7d864b322c37e962ca54c3ccfa5db8b5f3"
+  },
+  "execution": "not-run; requires independent source approval and heavy lane"
+}

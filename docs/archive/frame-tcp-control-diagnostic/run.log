@@ -1,0 +1,115 @@
+[WebServer] (node:12756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:12787) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:12794) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TCP_PHASE {"port":3903,"sequence":1,"event":"positive-control-start","phase":"protected","connections":0}
+TCP_PHASE {"port":3903,"sequence":2,"event":"accepted","phase":"positive-control","connections":1,"connection":1,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3903,"sequence":3,"event":"accepted","phase":"positive-control","connections":2,"connection":2,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3903,"sequence":4,"event":"socket-error","phase":"positive-control","connections":2,"connection":1,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3903,"sequence":5,"event":"socket-error","phase":"positive-control","connections":2,"connection":2,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3903,"sequence":6,"event":"accepted","phase":"positive-control","connections":3,"connection":3,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3903,"sequence":7,"event":"socket-error","phase":"positive-control","connections":3,"connection":3,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3903,"sequence":8,"event":"accepted","phase":"positive-control","connections":4,"connection":4,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3903,"sequence":9,"event":"closed","phase":"closing","connections":4,"errors":3}
+  ✘  1 [webkit] › e2e/frame.spec.ts:198:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (2.3s)
+(node:12816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TCP_PHASE {"port":3906,"sequence":1,"event":"positive-control-start","phase":"protected","connections":0}
+TCP_PHASE {"port":3906,"sequence":2,"event":"accepted","phase":"positive-control","connections":1,"connection":1,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3906,"sequence":3,"event":"socket-error","phase":"positive-control","connections":1,"connection":1,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3906,"sequence":4,"event":"accepted","phase":"positive-control","connections":2,"connection":2,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3906,"sequence":5,"event":"socket-error","phase":"positive-control","connections":2,"connection":2,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3906,"sequence":6,"event":"accepted","phase":"positive-control","connections":3,"connection":3,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3906,"sequence":7,"event":"socket-error","phase":"positive-control","connections":3,"connection":3,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3906,"sequence":8,"event":"accepted","phase":"positive-control","connections":4,"connection":4,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3906,"sequence":9,"event":"closed","phase":"closing","connections":4,"errors":3}
+  ✘  2 [webkit] › e2e/frame.spec.ts:247:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (2.0s)
+(node:12856) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TCP_PHASE {"port":3909,"sequence":1,"event":"positive-control-start","phase":"protected","connections":0}
+TCP_PHASE {"port":3909,"sequence":2,"event":"accepted","phase":"positive-control","connections":1,"connection":1,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3909,"sequence":3,"event":"accepted","phase":"positive-control","connections":2,"connection":2,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3909,"sequence":4,"event":"socket-error","phase":"positive-control","connections":2,"connection":1,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3909,"sequence":5,"event":"socket-error","phase":"positive-control","connections":2,"connection":2,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3909,"sequence":6,"event":"accepted","phase":"positive-control","connections":3,"connection":3,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3909,"sequence":7,"event":"accepted","phase":"positive-control","connections":4,"connection":4,"acceptedPhase":"positive-control"}
+TCP_PHASE {"port":3909,"sequence":8,"event":"socket-error","phase":"positive-control","connections":4,"connection":3,"acceptedPhase":"positive-control","code":"ECONNRESET","message":"read ECONNRESET"}
+TCP_PHASE {"port":3909,"sequence":9,"event":"closed","phase":"closing","connections":4,"errors":3}
+  ✘  3 [webkit] › e2e/frame.spec.ts:295:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (2.0s)
+
+
+  1) [webkit] › e2e/frame.spec.ts:198:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href 
+
+    AggregateError: TCP counter 3903 captured socket errors
+
+      191 |       report('closed', { errors: errors.length });
+      192 |       // Diagnostic only: recording an error must never turn it into a pass.
+    > 193 |       if (errors.length) throw new AggregateError(errors, `TCP counter ${port} captured socket errors`);
+          |                                ^
+      194 |     },
+      195 |   };
+      196 | }
+        at Object.close (/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/e2e/frame.spec.ts:193:32)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/e2e/frame.spec.ts:232:5
+
+    Error: read ECONNRESET
+
+    Error: read ECONNRESET
+
+    Error: read ECONNRESET
+
+    Error Context: ../../../../FORMA-webkit-select-baseline/socket-diagnostic/test-results/frame-a-module-s-link-open-edc15-efetch-preload-a-bound-href-webkit/error-context.md
+
+  2) [webkit] › e2e/frame.spec.ts:247:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() 
+
+    AggregateError: TCP counter 3906 captured socket errors
+
+      191 |       report('closed', { errors: errors.length });
+      192 |       // Diagnostic only: recording an error must never turn it into a pass.
+    > 193 |       if (errors.length) throw new AggregateError(errors, `TCP counter ${port} captured socket errors`);
+          |                                ^
+      194 |     },
+      195 |   };
+      196 | }
+        at Object.close (/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/e2e/frame.spec.ts:193:32)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/e2e/frame.spec.ts:291:5
+
+    Error: read ECONNRESET
+
+    Error: read ECONNRESET
+
+    Error: read ECONNRESET
+
+    Error Context: ../../../../FORMA-webkit-select-baseline/socket-diagnostic/test-results/frame-a-module-s-link-surv-21274-er-render-and-after-update--webkit/error-context.md
+
+  3) [webkit] › e2e/frame.spec.ts:295:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects 
+
+    AggregateError: TCP counter 3909 captured socket errors
+
+      191 |       report('closed', { errors: errors.length });
+      192 |       // Diagnostic only: recording an error must never turn it into a pass.
+    > 193 |       if (errors.length) throw new AggregateError(errors, `TCP counter ${port} captured socket errors`);
+          |                                ^
+      194 |     },
+      195 |   };
+      196 | }
+        at Object.close (/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/e2e/frame.spec.ts:193:32)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/e2e/frame.spec.ts:325:5
+
+    Error: read ECONNRESET
+
+    Error: read ECONNRESET
+
+    Error: read ECONNRESET
+
+    Error Context: ../../../../FORMA-webkit-select-baseline/socket-diagnostic/test-results/frame-a-module-s-iframe-sr-693a3--bound-and-nothing-connects-webkit/error-context.md
+
+  3 failed
+    [webkit] › e2e/frame.spec.ts:198:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href 
+    [webkit] › e2e/frame.spec.ts:247:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() 
+    [webkit] › e2e/frame.spec.ts:295:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects 
