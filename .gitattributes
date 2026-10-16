@@ -161,3 +161,6 @@ docs/archive/release-p17-failure-retention/** -text
 # Original fixture tool path and actual hosted failure are byte-authenticated.
 docs/archive/forma-144-fixture-tool/** -text
 docs/archive/FORMA-108-root-full-stack/** -text
+
+# Byte-exact watch-readiness original source and failure evidence.
+docs/archive/forma-watch-readiness/** -text

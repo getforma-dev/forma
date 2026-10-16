@@ -9,6 +9,19 @@ import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemp
 
 const contracts = () => json(join(ROOT, 'scripts/release-contracts.json'));
 const seededContract = mutate => { const c = contracts(); mutate(c); return c; };
+test('L-57 external application runs are informational while documentation and the real RC soak still block', () => {
+  const c = contracts();
+  const final = releaseMilestone(c, '3.0.0');
+  for (const ticket of ['FORMA-192', 'FORMA-147']) {
+    assert.equal(c.informational[ticket].status, 'not-run');
+    assert(!final.blocking.some(gate => gate.startsWith(`${ticket} (`)));
+    for (const milestone of Object.values(c.milestones)) assert(!(ticket in milestone.gates));
+  }
+  assert.equal(c.milestones.rc.gates['FORMA-141'].status, 'done');
+  assert.equal(c.milestones.final.gates['FORMA-146'].status, 'done');
+  assert(final.blocking.some(gate => gate.startsWith('FORMA-145 documentation (rc)')));
+  assert(final.blocking.some(gate => gate.startsWith('FORMA-145 soak (final)')));
+});
 test('milestone gate: the checked-in contract lets the alpha publish; beta, rc and final still wait', () => {
   const alpha = assertMilestoneReady(contracts(), '3.0.0-alpha.1');
   assert.equal(alpha.name, 'alpha'); assert.equal(alpha.plan, 'M2'); assert.equal(alpha.ready, true); assert.deepEqual(alpha.blocking, []);
