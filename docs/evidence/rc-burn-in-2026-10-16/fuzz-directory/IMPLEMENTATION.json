@@ -1,0 +1,17 @@
+{
+  "baseCommit": "4cbd098dfe6180c566ee07128219addf1077a0f2",
+  "source": {
+    "path": "scripts/release-burn-in-stage.mjs",
+    "bytes": 8110,
+    "sha256": "9dbe2fa8a47b4a8afd3e08b40036fb3e1e33fdc261acb74ff066062c0b63c8cb"
+  },
+  "original": {
+    "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/release-burn-in-stage.original.mjs",
+    "bytes": 8090,
+    "sha256": "0624bc056939d57ff5dd90a10ae2169c3616ef82625f70a710da8fc41d33dcb3"
+  },
+  "scope": "Explicit supported cargo-fuzz directory; no other command or input change",
+  "localCargoExecuted": false,
+  "localTestsExecuted": false,
+  "actualCorrectedSetupPassed": false
+}
