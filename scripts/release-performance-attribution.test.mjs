@@ -32,12 +32,48 @@ test('only complete same-navigation browser layout before observed script is exc
   t=>t.traceEvents.push({...t.traceEvents[3],name:'EventDispatch',args:{data:{type:'click'}}}),
   t=>t.traceEvents.push({...t.traceEvents[3],name:'WebDXFeatureUsage',args:{scriptId:42}}),
   t=>t.traceEvents.push({...t.traceEvents[0],ts:1000002}),
+  t=>{const later={...structuredClone(t.traceEvents[0]),ts:1000002};delete later.args.data.documentLoaderURL;t.traceEvents.push(later);},
  ]){const copy=structuredClone(trace);edit(copy);assert.equal(kind(lhr,copy),'application-or-unattributed');}
  const unmatched=structuredClone(lhr);unmatched.audits['long-tasks'].details.items[0].startTime+=1;
  assert.equal(kind(unmatched,trace),'application-or-unattributed');
  // A late audit task receives no origin exemption, even without an app URL.
  const late=traceFixture({startTime:7000,duration:110,scriptAt:200});
  assert.equal(kind(late.lhr,late.trace),'application-or-unattributed');
+});
+test('same-frame image layout metadata is excluded only with its exact parser request provenance',()=>{
+ const fixture=()=>traceFixture({duration:65.767,startTime:2062.797,scriptAt:2660.165,imageLayout:true});
+ const exact=fixture();
+ exact.trace.traceEvents.push({...structuredClone(exact.trace.traceEvents[0]),ts:exact.trace.traceEvents[0].ts+1200000,args:{...structuredClone(exact.trace.traceEvents[0].args),data:{...structuredClone(exact.trace.traceEvents[0].args.data),documentLoaderURL:'',navigationId:'renderer-timing-placeholder'}}});
+ exact.lhr.audits['long-tasks'].details.items.push({duration:60.473,startTime:2660.165});
+ exact.trace.traceEvents.push({...exact.trace.traceEvents.find(event=>event.name==='v8.evaluateModule'),name:'RunTask',ph:'X',dur:60473});
+ assert.deepEqual(attributeMobileTasks(exact.lhr,exact.trace).tasks.map(({kind,reason,traceIndex})=>({kind,reason,matched:traceIndex!==null})),[
+  {kind:'pre-application-browser-layout',reason:'same-navigation-pure-layout-before-first-script',matched:true},
+  {kind:'application-or-unattributed',reason:'not-proven-pre-application-layout',matched:true},
+ ]);
+ const edit=(change)=>{const {lhr,trace}=fixture();change(trace.traceEvents);return kind(lhr,trace);};
+ const named=(events,name)=>events.find(event=>event.name===name);
+ for(const change of [
+  events=>{named(events,'LayoutImageUnsized').args.data.frameId='other-frame';},
+  events=>{delete named(events,'LayoutImageUnsized').args.data.frameId;},
+  events=>{delete named(events,'LayoutImageUnsized').args.data.nodeId;},
+  events=>{named(events,'LayoutImageUnsized').args.data.nodeId=0;},
+  events=>{named(events,'LayoutImageUnsized').cat='unknown';},
+  events=>{named(events,'LayoutImageUnsized').ph='X';},
+  events=>events.splice(events.indexOf(named(events,'ResourceSendRequest')),1),
+  events=>events.push(structuredClone(named(events,'ResourceSendRequest'))),
+  events=>{named(events,'ResourceSendRequest').cat='unknown';},
+  events=>{named(events,'ResourceSendRequest').ph='X';},
+  events=>{named(events,'ResourceSendRequest').dur=1;},
+  events=>{named(events,'ResourceSendRequest').args.data.frame='other-frame';},
+  events=>{named(events,'ResourceSendRequest').args.data.initiator.type='script';},
+  events=>{named(events,'ResourceSendRequest').args.data.initiator.url='http://other.invalid/';},
+  events=>{named(events,'ResourceSendRequest').args.data.resourceType='Script';},
+  events=>{named(events,'ResourceSendRequest').ts=named(events,'ResourceChangePriority').ts+1;},
+  events=>{delete named(events,'ResourceChangePriority').args.data.requestId;},
+  events=>{named(events,'ResourceChangePriority').args.data.priority='Unknown';},
+  events=>{named(events,'ResourceChangePriority').cat='unknown';},
+  events=>{named(events,'ResourceChangePriority').ph='I';},
+ ])assert.equal(edit(change),'application-or-unattributed');
 });
 test('missing, malformed or ambiguous trace identity refuses instead of inventing attribution',()=>{
  const {lhr,trace}=traceFixture();
