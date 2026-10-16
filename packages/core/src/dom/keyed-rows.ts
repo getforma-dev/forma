@@ -16,7 +16,6 @@ interface Entry<T> {
   readonly key: string;
   readonly value: (next: T) => void;
   readonly get: () => T;
-  current: T;
 }
 type Source<T> = () => Entry<T>[];
 const sources = new WeakMap<object, Source<unknown>>();
@@ -29,9 +28,7 @@ export function keyedRowsSource<T>(value: unknown): Source<T> | undefined {
 function reject(reason: string): never { throw new TypeError('createKeyedRows: ' + reason); }
 
 function canonical(value: unknown): string {
-  const key = canonicalKeyText(value);
-  if (key === undefined) reject('invalid key');
-  return key;
+  return canonicalKeyText(value) ?? reject('invalid key');
 }
 
 /**
@@ -63,8 +60,8 @@ export function createKeyedRows<T>(initial: readonly T[], keyFn: (item: T) => st
         // Raw data signals grant no compiler capture or input writeback authority.
         // The public item accessor never exposes their overloaded setter.
         const value = signal(item);
-        prior = { key, current: item, value, get: () => value() };
-      } else if (!Object.is(prior.current, item)) changed.push([prior, item]);
+        prior = { key, value, get: () => value() };
+      } else if (!Object.is(prior.get(), item)) changed.push([prior, item]);
       planned.set(key, prior);
     }
     return { planned, changed };
@@ -73,13 +70,11 @@ export function createKeyedRows<T>(initial: readonly T[], keyFn: (item: T) => st
   const handle = Object.freeze({
     set(key: string | number, next: T): void {
       const selected = validate(() => {
-        const keyText = canonical(key), selected = entries.get(keyText);
-        if (!selected) reject('missing key');
+        const keyText = canonical(key), selected = entries.get(keyText) ?? reject('missing key');
         if (canonical(keyFn(next)) !== keyText) reject('changed key');
-        return selected;
+        return Object.is(selected.get(), next) ? undefined : selected;
       });
-      if (Object.is(selected.current, next)) return;
-      selected.current = next; selected.value(next);
+      selected?.value(next);
     },
     replace(nextItems: readonly T[]): void {
       const { planned, changed } = candidate(nextItems);
@@ -87,7 +82,7 @@ export function createKeyedRows<T>(initial: readonly T[], keyFn: (item: T) => st
       // before flushing any observer, so shared views see one coherent replacement.
       entries = planned;
       batch(() => {
-        for (const [prior, item] of changed) { prior.current = item; prior.value(item); }
+        for (const [prior, item] of changed) prior.value(item);
         ordered([...planned.values()]);
       });
     },

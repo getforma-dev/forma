@@ -547,7 +547,7 @@ export function createList<T>(
 ): DocumentFragment {
   const indexed = keyedRowsSource<T>(items);
   if (indexed) {
-    if (arguments.length !== 2) throw new TypeError('createList: indexed rows accept only a row getter callback');
+    if (arguments.length !== 2) throw new TypeError('createList: indexed rows need one callback');
     const render = keyFn as (item: () => T, index: () => number) => HTMLElement;
     return createArrayList(indexed, entry => entry.key, (entry, index) => {
       const node = render(entry.get, index);
