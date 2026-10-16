@@ -1,0 +1,19 @@
+✔ 3.0.0-dev: template ranges preserve exact locks and unchanged typed Rust source (289.589958ms)
+✔ 3.0.0-beta.1: template ranges preserve exact locks and unchanged typed Rust source (209.488625ms)
+✔ 3.0.0: template ranges preserve exact locks and unchanged typed Rust source (205.287083ms)
+✔ all ten source, manifest and lock files restore after a packaging callback fails (178.277917ms)
+✔ identified source seeds preserve every external resolution across dev, alpha, beta and stable preparation (122.1135ms)
+✔ prepared source seeds remain preparable after alpha, beta and stable versions are written (42.692333ms)
+✔ source seeds reject missing or malformed external npm and Cargo hashes (4.27625ms)
+✔ bundled entries must belong to an authenticated external parent archive (2.677416ms)
+✔ source seeds refuse unknown or mixed internal npm packages and requirements (5.029792ms)
+✔ source seeds refuse unknown crates, mixed versions, stale internal hashes and invalid graph edges (3.803041ms)
+✔ seed identity and both templates are validated before staging writes or archive access (33.142083ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 940.409166

@@ -1,0 +1,29 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx build.ts --strict",
+    "dev": "tsx build.ts --watch --strict",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
+  },
+  "dependencies": {
+    "@getforma/core": "=3.0.0-dev"
+  },
+  "devDependencies": {
+    "@getforma/build": "=3.0.0-dev",
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/cli": "^4.1.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents": false,
+    "@parcel/watcher": false
+  }
+}
