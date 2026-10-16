@@ -26,7 +26,7 @@ import {closedBinding,closedSlot,closedHint,closedListRows,emitClosedText,type C
 import { parse } from '@babel/parser';
 import type * as T from '@babel/types';
 import * as t from '@babel/types';
-import {attributeName} from './attribute-name';
+import {attributeName,attributeCollisionKey} from './attribute-name';
 import {
   IrEmitContext,
   SLOT_SOURCE_CLIENT,
@@ -1115,11 +1115,12 @@ export function walkHTree(
 
       // `ref` is a callback, not an attribute — nothing to render.
       if (key === 'ref') continue;
-      if(attributeNames.has(key)) {
+      const collisionKey=attributeCollisionKey(rawKey);
+      if(attributeNames.has(collisionKey)) {
         const file=walkCtx.sourceFile??'',at=originalPosition(file,prop.loc?.start??{line:1,column:0});
         throw new PropsSchemaError(file,at.line,at.column,`multiple props map to native attribute ${key}; keep one canonical attribute`);
       }
-      attributeNames.add(key);
+      attributeNames.add(collisionKey);
 
       // A method-valued prop (`{ title() { … } }`) is a function the walker
       // has no binding form for once it is not an event handler.

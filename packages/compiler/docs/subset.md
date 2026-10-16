@@ -12,8 +12,11 @@ explicitly. There is no silent placeholder IR or warning-only SSR escape hatch.
   module constants and the supported static table unrolling forms.
 - Attribute props `className`, `htmlFor` and `tabIndex` use native names `class`,
   `for` and `tabindex`, including reactive bindings. Other spellings stay as
-  written. One native element cannot repeat a normalized attribute name, such
-  as `class` together with `className`; use one spelling (BUILD-610).
+  written. One native element cannot repeat an alias-normalized, ASCII-folded
+  attribute name, such as `class` with `className` or `tabIndex` with `TabIndex`;
+  use one spelling (BUILD-610). HTML tokenization also folds attribute tokens
+  on SVG and MathML before their namespace adjustments, so this collision
+  proof applies to every native element without rewriting its emitted names.
 - Named local components and relative source imports, including supported export
   aliases, with at most three inlining levels. npm component implementations and
   recursive composition are outside this subset.

@@ -10,7 +10,7 @@ import { resolveExportedFunction, resolveExportedSignal, resolveImportedConstant
 import type { ModuleLoader } from './module-loader';
 import { PropsSchemaError } from './props-schema';
 import * as C from './fmir-constants';
-import {attributeName} from './attribute-name';
+import {attributeName,attributeCollisionKey} from './attribute-name';
 
 export interface IslandBindingOptions {
   props: readonly string[];
@@ -641,8 +641,9 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       const rawKey = name(field.key); if (rawKey === undefined) fail(env.module, field, 'native attribute name is unknown');
       if (/^on/i.test(rawKey) || rawKey === 'ref') continue;
       const key=attributeName(rawKey);
-      if(names.has(key))fail(env.module,field,`multiple props map to native attribute ${key}; keep one canonical attribute`);
-      names.add(key);
+      const collisionKey=attributeCollisionKey(rawKey);
+      if(names.has(collisionKey))fail(env.module,field,`multiple props map to native attribute ${key}; keep one canonical attribute`);
+      names.add(collisionKey);
       if (scalar(unwrap(field.value)) || staticRowRead(field.value, env)) continue;
       records.push({ kind: 'attribute', name: key, value: expression(field.value, env) });
       if (key === 'value' || key === 'checked' || key === 'selected') recordWritable(field.value, env, field.shorthand ? key : undefined);
