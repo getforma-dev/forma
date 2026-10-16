@@ -5,15 +5,70 @@
   "props": "declared-v1",
   "stateBlock": "declared-v1",
   "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
-  "liveReleaseReady": false,
-  "pending": {
-    "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
-    "FORMA-144": "slice 2 integrated packed adoption/static-route acceptance and slice 3 final release cleanup",
-    "FORMA-188": "fixture applications and skew drill",
-    "FORMA-191": "release measurements"
+  "version": "3.0.0",
+  "milestones": {
+    "alpha": {
+      "plan": "M2",
+      "tags": "v3.0.0-alpha.N: npm next, Cargo -alpha.N",
+      "gates": {
+        "FORMA-110": { "status": "done", "scope": "server functions, the WASM walker and Node rendering removed" },
+        "FORMA-185": { "status": "done", "scope": "FMIR v3 writer and reader on main, seeded-fault replay, the nightly fuzz observed" },
+        "FORMA-112": { "status": "done", "scope": "one version, the compatibility window checked at install, build and start" },
+        "FORMA-102": { "status": "done", "scope": "declared page data, the derived Rust type and the start-time bind" },
+        "FORMA-107": { "status": "done", "scope": "render returns the result, strict loading only, declared route modes, per-page limits" },
+        "FORMA-109": { "status": "done", "scope": "PageResponse only, Trusted Types enforced" },
+        "FORMA-111": { "status": "done", "scope": "the worker's digest checks, integrity on every tag, precache mode removed" },
+        "FORMA-144 slice 1": { "status": "done", "scope": "both templates on the 3.0 API, packed and verified by P17" }
+      }
+    },
+    "beta": {
+      "plan": "M3",
+      "tags": "v3.0.0-beta.N: npm next, Cargo -beta.N",
+      "gates": {
+        "FORMA-103": { "status": "pending", "scope": "island props in one JSON block, compiler-bound seeding" },
+        "FORMA-104": { "status": "pending", "scope": "adoption writes nothing on its first run, coded mismatch errors" },
+        "FORMA-105": { "status": "pending", "scope": "islands only, literal registry, identity digest" },
+        "FORMA-181": { "status": "pending", "scope": "keyed rows" },
+        "FORMA-182": { "status": "pending", "scope": "the marker vocabulary and the seven value rules with shared vectors" },
+        "FORMA-183": { "status": "pending", "scope": "the parity harness and its corpus, blocking in CI" },
+        "FORMA-184": { "status": "pending", "scope": "renderBoth(component, state) in Forma's own suite" },
+        "FORMA-144 slice 2": { "status": "pending", "scope": "island state adoption in the templates: the integrated packed adoption and static-route acceptance" },
+        "FORMA-188 fixture applications": { "status": "pending", "scope": "the three fixture applications in P17" },
+        "FORMA-021 ratchet": { "status": "pending", "scope": "the safe cuts landed and the size gate green at the restated ceiling" }
+      }
+    },
+    "rc": {
+      "plan": "M4",
+      "tags": "v3.0.0-rc.N: npm next, Cargo -rc.N",
+      "gates": {
+        "FORMA-101": { "status": "pending", "scope": "the published server-renderable subset and coded build errors" },
+        "FORMA-139": { "status": "pending", "scope": "the conformance corpus, a fixture and a near miss per code" },
+        "FORMA-108": { "status": "pending", "scope": "the hostile corpus with zero executions" },
+        "FORMA-186": { "status": "pending", "scope": "the deployment identity and inert-or-reload on a skew" },
+        "FORMA-188 skew drill": { "status": "pending", "scope": "the skew drill green in P17" },
+        "FORMA-190": { "status": "pending", "scope": "the size report green on both templates at the recorded ceiling" },
+        "FORMA-141": { "status": "pending", "scope": "the upgrade guide and the stability record" },
+        "FORMA-116": { "status": "pending", "scope": "CODEOWNERS, alerts and the probes" },
+        "FORMA-189": { "status": "pending", "scope": "the recall script and SECURITY.md generated from the release record" },
+        "FORMA-145 audit": { "status": "pending", "scope": "the whole-release audit on another model with an empty blocking list (D14)" }
+      }
+    },
+    "final": {
+      "plan": "M5",
+      "tags": "v3.0.0: npm latest, Cargo 3.0.0",
+      "gates": {
+        "FORMA-144 slice 3": { "status": "pending", "scope": "final template and release cleanup" },
+        "FORMA-191": { "status": "pending", "scope": "the per-release measurements in P17" },
+        "FORMA-192": { "status": "pending", "scope": "the read-only gate runs against the rc with coded counts" },
+        "FORMA-147": { "status": "pending", "scope": "the fAuth login spike at the restated G3" },
+        "FORMA-146": { "status": "pending", "scope": "Q10 to Q13 recorded" },
+        "FORMA-145 soak": { "status": "pending", "scope": "the rc's 7-day soak on next (D7)" }
+      }
+    }
   },
   "trustedTypes": "enforced-v1",
   "boundRender": "finalized-v1",
   "assetIntegrity": "sha384-v1",
-  "sourceTemplates": "islands-v1"
+  "sourceTemplates": "islands-v1",
+  "fixtureApps": "declared-v1"
 }

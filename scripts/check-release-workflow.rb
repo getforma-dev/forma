@@ -4,8 +4,15 @@
 # command allowlist, so a check in dead code/after exit/in a function cannot masquerade as
 # a gate. The first-party publish helper has separate tests; no dependency code is installed.
 require 'yaml'
+require 'json'
 
 WORKFLOW = '.github/workflows/release.yml'
+# The contract file states which tickets gate which milestone; the scripts refuse a
+# milestone whose gates (or an earlier milestone's) are open. The lint keeps that
+# statement well-formed: no global switch can stand in for the per-milestone gates.
+CONTRACTS = 'scripts/release-contracts.json'
+MILESTONES = %w[alpha beta rc final].freeze
+GATE_KEY = %r{\AFORMA-\d{3}( [A-Za-z0-9()./-]+)*\z}.freeze
 PUBLISH = { 'publish-crates' => 'crates', 'publish-npm' => 'npm' }.freeze
 VERIFY = 'bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"'
 NEEDS = {
@@ -118,10 +125,53 @@ def violations(doc)
   out
 end
 
+def contract_violations(contracts)
+  out = []
+  return ['C0 contract file must be a mapping'] unless contracts.is_a?(Hash)
+  out << 'C4 a global publish switch (liveReleaseReady, pending) cannot stand beside the milestones' if contracts.key?('liveReleaseReady') || contracts.key?('pending')
+  out << 'C5 the contract must name the one release version its gates are written for (X.Y.Z, 3.0.0 or later)' unless contracts['version'].is_a?(String) && contracts['version'].match?(/\A(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\z/) && contracts['version'].split('.').first.to_i >= 3
+  milestones = contracts['milestones']
+  return out + ['C1 contract must name exactly alpha, beta, rc and final, in that order'] unless milestones.is_a?(Hash) && milestones.keys == MILESTONES
+  seen = {}
+  milestones.each do |name, m|
+    well_formed = m.is_a?(Hash) && m['plan'].to_s.match?(/\AM\d\z/) && m['gates'].is_a?(Hash) && !m['gates'].empty?
+    out << "C2 #{name} needs a plan milestone and non-empty gates" unless well_formed
+    next unless m.is_a?(Hash) && m['gates'].is_a?(Hash)
+    m['gates'].each do |ticket, gate|
+      out << "C2 #{name}: #{ticket} is not a ticket gate" unless ticket.is_a?(String) && ticket.match?(GATE_KEY)
+      stated = gate.is_a?(Hash) && %w[done pending].include?(gate['status']) && gate['scope'].is_a?(String) && !gate['scope'].strip.empty?
+      out << "C2 #{name}: #{ticket} needs a done/pending status and a scope" unless stated
+      out << "C3 #{ticket} gates both #{seen[ticket]} and #{name}" if seen.key?(ticket)
+      seen[ticket] = name
+    end
+  end
+  out
+end
+
 doc = YAML.safe_load(File.read(WORKFLOW), aliases: false)
 doc['on'] = doc.delete(true) if doc.is_a?(Hash) && doc.key?(true)
-errors = violations(doc)
+contracts = JSON.parse(File.read(CONTRACTS))
+errors = violations(doc) + contract_violations(contracts)
 if ARGV.include?('--self-test') && errors.empty?
+  contract_seeds = [
+    ['global ready switch', 'C4', ->(c) { c['liveReleaseReady'] = true }],
+    ['legacy pending list', 'C4', ->(c) { c['pending'] = {} }],
+    ['missing release version', 'C5', ->(c) { c.delete('version') }],
+    ['pre-release as the contract version', 'C5', ->(c) { c['version'] = '3.0.0-alpha.1' }],
+    ['milestone removed', 'C1', ->(c) { c['milestones'].delete('beta') }],
+    ['milestone added', 'C1', ->(c) { c['milestones']['ga'] = c['milestones']['final'] }],
+    ['milestones out of order', 'C1', ->(c) { m = c['milestones']; c['milestones'] = { 'final' => m['final'], 'alpha' => m['alpha'], 'beta' => m['beta'], 'rc' => m['rc'] } }],
+    ['unknown gate status', 'C2', ->(c) { c['milestones']['beta']['gates'].values.first['status'] = 'skipped' }],
+    ['gate without scope', 'C2', ->(c) { c['milestones']['alpha']['gates']['FORMA-110']['scope'] = ' ' }],
+    ['gate that is not a ticket', 'C2', ->(c) { c['milestones']['rc']['gates']['founder says so'] = { 'status' => 'done', 'scope' => 'x' } }],
+    ['milestone without gates', 'C2', ->(c) { c['milestones']['final']['gates'] = {} }],
+    ['milestone without plan', 'C2', ->(c) { c['milestones']['alpha'].delete('plan') }],
+    ['gate in two milestones', 'C3', ->(c) { c['milestones']['beta']['gates']['FORMA-110'] = { 'status' => 'done', 'scope' => 'again' } }]
+  ]
+  contract_seeds.each do |name, rule, mutate|
+    seeded = Marshal.load(Marshal.dump(contracts)); mutate.call(seeded)
+    errors << "self-test failed to reject contract #{name} with #{rule}" unless contract_violations(seeded).any? { |v| v.start_with?(rule) }
+  end
   seeds = [
     ['branch trigger', 'T1', ->(d) { d['on']['push']['branches'] = ['main'] }],
     ['dispatch trigger', 'T1', ->(d) { d['on']['workflow_dispatch'] = nil }],
@@ -158,8 +208,11 @@ if ARGV.include?('--self-test') && errors.empty?
     seeded = Marshal.load(Marshal.dump(doc)); mutate.call(seeded)
     errors << "self-test failed to reject #{name} with #{rule}" unless violations(seeded).any? { |v| v.start_with?(rule) }
   end
-  puts "#{seeds.length} SR13/SR43 seeded violations rejected" if errors.empty?
+  puts "#{seeds.length} SR13/SR43 workflow and #{contract_seeds.length} milestone-contract seeded violations rejected" if errors.empty?
   errors << 'release helper tests failed' unless system('node', '--test', *Dir.glob('scripts/release*.test.mjs').sort)
 end
 abort(errors.join("\n")) unless errors.empty?
-puts 'release workflow: tag → exact CI → locked pack + three engines → P17 → crates → npm → record; credential jobs constrained'
+ready = MILESTONES.select do |name|
+  MILESTONES[0..MILESTONES.index(name)].all? { |m| contracts['milestones'][m]['gates'].values.all? { |g| g['status'] == 'done' } }
+end
+puts "release workflow: tag → exact CI → locked pack + three engines → P17 → crates → npm → record; credential jobs constrained; milestones ready to publish: #{ready.empty? ? 'none' : ready.join(', ')}"

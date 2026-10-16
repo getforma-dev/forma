@@ -54,8 +54,8 @@ jobs:
     # runner; the two browser install steps are bounded on their own.
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -85,7 +85,7 @@ jobs:
           echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
       # apt checks each restored archive against the signed package index
       # before it installs it, and downloads again any that differs.
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/playwright-apt
           key: playwright-apt-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}-chromium
@@ -127,7 +127,7 @@ jobs:
           fresh=(/var/cache/apt/archives/*.deb)
           if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
           echo "${#fresh[@]} archives kept for the cache"
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium
@@ -149,7 +149,7 @@ jobs:
       - name: R17's command
         run: npm run check
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: playwright-report
@@ -161,22 +161,25 @@ jobs:
           retention-days: 7
 
   # The parity harness over its corpus (FORMA-183, DR-9; e2e/parity/README.md):
-  # every corpus module at its states through the server's typed path, its
+  # every module of step 1 at 100 states through the server's typed path, its
   # document parsed in Chromium against core's render of the same state (P1),
-  # and the production entry's activation over it making zero mutation records
-  # (P2), with e2e/parity/expected-divergent.json applied. It fails on an
-  # unexpected difference, refusal or error, or on an expected difference that
-  # no longer occurs. Non-blocking until step 1's expected list is empty for P1
-  # and P2; then the run joins scripts/check.sh and this job is removed. The
-  # harness's own tests already run, blocking, inside `check`.
+  # the production entry's activation over it making zero mutation records
+  # (P2), and a module's setter moving the page to the next state against that
+  # state's fresh render (P3), with e2e/parity/expected-divergent.json applied.
+  # It fails on an unexpected difference, refusal or error, or on an expected
+  # difference that no longer occurs. Non-blocking until step 1's expected
+  # list is empty for P1 and P2; then the run joins scripts/check.sh and this
+  # job is removed. The harness's own tests already run, blocking, in `check`;
+  # Firefox and WebKit run per release (e2e-engines.yml).
   parity:
     permissions:
       contents: read
     runs-on: ubuntu-latest
     continue-on-error: true
-    # MEASURED locally: step 0 (14 modules, 23 states) runs in 2 to 3 s once the
-    # builds exist; npm ci, the four builds, the Rust example and the Chromium
-    # install dominate. 20 bounds a cold cache on a slow runner.
+    # MEASURED: step 0 (14 modules, 23 states) ran in 4.3 s here (the job
+    # 1m22s); step 1 at 100 states (28 modules, 1,018 states) in about 100 s
+    # locally, about 100 ms a state in the browser. 20 bounds a cold cache on a
+    # slow runner; the figure for this shape is recorded in FORMA-183's log.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -202,7 +205,7 @@ jobs:
         timeout-minutes: 10
         run: npx playwright install --with-deps chromium
       - name: Parity over the corpus
-        run: node e2e/parity/src/run.mts --report "$RUNNER_TEMP/parity/report.jsonl"
+        run: node e2e/parity/src/run.mts --step 1 --states 100 --report "$RUNNER_TEMP/parity/report.jsonl"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -227,8 +230,8 @@ jobs:
       matrix:
         node-version: [20, 22, 24]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -255,8 +258,8 @@ jobs:
     # builds, 3s for the suites. 20 bounds the install on a slow runner.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -281,7 +284,7 @@ jobs:
     # MEASURED in forma's CI: 6.5m on windows (run #16). 20 is ~3x.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           components: rustfmt, clippy
@@ -303,7 +306,7 @@ jobs:
     # MEASURED: 5.3m in forma's CI (run #16, healthy runner). 20 is ~4x.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           targets: i686-unknown-linux-gnu
@@ -328,7 +331,7 @@ jobs:
     # MEASURED: 34s in forma's CI on a cold key. 20 leaves room for a slow runner.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           components: clippy
@@ -363,7 +366,7 @@ jobs:
           - crate: forma-server
             rust: "1.85"
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: ${{ matrix.rust }}
@@ -384,8 +387,8 @@ jobs:
     # Advisory data must be fetched successfully on every run.
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.0
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
@@ -413,7 +416,7 @@ jobs:
     # locally; cold it is dominated by the registry index fetch.
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
@@ -458,10 +461,10 @@ jobs:
       # rhysd/actionlint`: signed by the release workflow at refs/tags/v1.7.12).
       ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
           package-manager-cache: false
@@ -498,10 +501,10 @@ jobs:
     outputs:
       record-sha256: ${{ steps.pack.outputs.record-sha256 }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version
           package-manager-cache: false
@@ -516,7 +519,7 @@ jobs:
       - name: Pack committed candidates and record ten-file restoration
         id: pack
         run: node scripts/candidate-scaffold.mjs pack "$RUNNER_TEMP/candidate artifacts"
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: scaffold-candidates
           path: ${{ runner.temp }}/candidate artifacts
@@ -534,10 +537,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version
           package-manager-cache: false
@@ -545,14 +548,14 @@ jobs:
         with:
           toolchain: '1.93.1'
       - name: Cache downloaded Cargo registry only
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
           key: candidate-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: candidate-registry-${{ runner.os }}-
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: scaffold-candidates
           path: ${{ runner.temp }}/candidate artifacts
@@ -572,7 +575,7 @@ jobs:
         run: node --input-type=module -e "import {prepareCandidate,runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process'; const tmp=process.env.RUNNER_TEMP; const sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(); runCandidate(prepareCandidate(join(tmp,'candidate artifacts'),process.env.RECORD_SHA256,sha,join(tmp,'candidate scaffold')),join(tmp,'candidate-scaffold-report.json'));"
       - name: Preserve scaffold evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: candidate-scaffold-${{ matrix.os }}
           path: |
@@ -594,8 +597,8 @@ jobs:
       ready: ${{ steps.check.outputs.ready }}
       missing: ${{ steps.check.outputs.missing }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version
           package-manager-cache: false
@@ -615,10 +618,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version
           package-manager-cache: false
@@ -626,7 +629,7 @@ jobs:
         with:
           toolchain: '1.93.1'
       - name: Cache downloaded Cargo registry only
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             ~/.cargo/registry/index
@@ -642,7 +645,7 @@ jobs:
         run: node --input-type=module -e "import {preparePublished} from './scripts/published-scaffold.mjs'; import {runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; const tmp=process.env.RUNNER_TEMP; runCandidate(await preparePublished(join(tmp,'published scaffold')),join(tmp,'published-scaffold-report.json'));"
       - name: Preserve registry scaffold evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: published-scaffold-${{ matrix.os }}
           path: |

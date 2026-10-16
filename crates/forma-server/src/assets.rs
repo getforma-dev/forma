@@ -713,7 +713,6 @@ mod tests {
         }
     }
 
-    // Verified by: crates/forma-server/src/assets.rs > "denied_names_are_never_served"
     #[tokio::test]
     async fn an_embedded_size_report_is_not_served_through_the_route() {
         assert!(is_embedded::<WithReport>("size-report.json"));

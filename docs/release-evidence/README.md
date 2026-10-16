@@ -1,5 +1,79 @@
 # FORMA-187 non-publishing evidence
 
+## The first live publish: 3.0.0-alpha.2 (milestone M2), 2026-10-15
+
+`v3.0.0-alpha.2` on `119c12c` published through the unified workflow: release run
+38771766038, exact-commit CI run 38769339489; every job green (`check` 15 s, `pack` 60 s,
+the three engines, `verify` 3 min 25 s, `publish-crates` 35 s, `publish-npm` 5 min 58 s
+including registry visibility polling, `record` 23 s). The GitHub Release "Forma
+3.0.0-alpha.2 (alpha, M2)" is a pre-release carrying `release-record.json`, `p17.json` and
+`SHA256SUMS`. **G6's first real figure: 768.9 seconds** from the tag-triggered workflow's
+`created_at` (16:46:16Z) to the acknowledged Release write (16:59:04.9Z), queue included;
+772 seconds from the tag push (16:46:12Z) to the Release's publication (16:59:04Z). Target
+1,800 seconds: met. `alpha-published-release-record.json` is the Release's record (DS12);
+`alpha-published-SHA256SUMS` is the run's DS11 record.
+
+The runbook's L7, the P17 replay on the published bytes: the four npm tarballs and the
+three `.crate` files were downloaded from registry.npmjs.org and static.crates.io (User-Agent
+`design-doc-factory-research/1.0`), set beside the run's `release-set.json` and `Cargo.lock`,
+and every file matched the run's DS11 record (`shasum -a 256 -c SHA256SUMS`: nine OK, the
+Release's `SHA256SUMS` byte-identical to the run's). P17 from the `v3.0.0-alpha.2` checkout,
+workspace unbuilt, milestone enforced (`dryRun: false`): `alpha-published-p17.json`,
+`passed: true`, 34 checks in 81.2 seconds, milestone alpha (M2) ready, the four internal
+edges of the packed set resolved inside it, both templates installed from the published
+bytes, built, served and interacted with.
+
+The runbook's L8, the fault-injection check the plan names: the published `forma-ir` crate
+unpacked beside the tag's `fuzz/regressions` (four committed regressions), its lock resolving
+`forma-ir-derive 3.0.0-alpha.2` from crates.io at the recorded checksum (`--locked`):
+`fmir_v3` 8 passed, `fuzz_regressions` 6 passed.
+
+Before it, `v3.0.0-alpha.1` on `8ba2930` (run 38764599499) stopped in `verify`'s P17 and
+published nothing: the harness resolved the packed build's optional compiler peer through
+the unbuilt workspace link. Fixed in PR 54 (`scripts/release-packed-resolution.mjs`); the
+version was not retagged.
+
+## The milestone-aware gate (first alpha preparation)
+
+Runs on a Mac (Node 24.22.0, Cargo 1.93.1) on 2026-10-15 at the committed tree
+`30dec78` of PR 49 (the branch after `main` `6afe461`, which carries PR 48, was merged
+in, plus the review fixes); nothing was tagged or published. The script is
+`work/FORMA-187-alpha/tmp/r2-rehearsal.sh`, its log beside it.
+
+`alpha-gate-dev-dry-run-{set,p17}.json` and `-SHA256SUMS`: the packed set of that tree
+as it is, at `3.0.0-dev`, `pack --dry-run`; `commit` is `30dec78` and the tree was
+clean, so the set is reproducible from the branch. 33 P17 checks passed in 68.7 seconds.
+Set and report carry `milestone: null`, which is what a `-dev` set records: no milestone
+publishes it. The packed `forma-ir` crate, unpacked beside the tree's `fuzz/regressions`
+with the packed derive crate patched in by path, passed `fmir_v3` 8 and
+`fuzz_regressions` 6 (the runbook's L8 command).
+
+`alpha-gate-alpha-live-{set,p17}.json` and `-SHA256SUMS`: the live path, not a dry run.
+The same tree after `node scripts/release-set.mjs version 3.0.0-alpha.1`, committed to a
+throwaway commit `49f0243` (so the live pack's clean-tree check could pass; it is not on
+the branch and the set's `commit` names it), rebuilt and packed with
+`GITHUB_REF_NAME=v3.0.0-alpha.1 GITHUB_RUN_ID=0` and no `--dry-run`: `dryRun: false`,
+`tag: v3.0.0-alpha.1`, `milestone: { name: "alpha", plan: "M2", ready: true, blocking: [],
+later: { beta, rc, final } }`, which `pack` resolved through `assertMilestoneReady`
+before packing. P17 on that set, with the milestone enforced (the live branch of
+`verify-release-set.mjs`), passed 33 checks in 94.3 seconds. `verifyIdentity` from
+`release-publish.mjs`, under the publish job's environment (`GITHUB_SHA` the throwaway
+commit, the tag, run 0), accepted the set. The tree was then reset to `30dec78`.
+
+`alpha-gate-refusals.log`: the negative controls. `verifyIdentity` refused five tampered
+copies of the live set: `FORMA-185` set `pending` in the recorded contract; `milestone.ready`
+forged `true` over a pending `FORMA-144 slice 1`; the contract's `version` set to `3.1.0`;
+`liveReleaseReady` beside the milestones; `dryRun: true`. With the manifests at
+`3.0.0-beta.1` and a live ref `v3.0.0-beta.1`, `release-set.mjs pack` refused before packing
+a single file, naming every open beta gate ("beta (M3) still waits for: FORMA-103 (beta)
+...; nothing may publish"); with the manifests at `3.1.0-alpha.1` and `v3.1.0-alpha.1`, it
+refused with "the contract gates 3.0.0, not 3.1.0". Both output directories stayed empty.
+
+The contract names `version` `3.0.0`, the alpha's gates done (FORMA-110, 185, 112, 102,
+107, 109, 111, 144 slice 1) and the beta's, rc's and final's pending; the lint's self-test
+rejects 32 workflow and 13 contract seeds and ends with `milestones ready to publish:
+alpha`. The alpha day's ordered steps are in `docs/release/ALPHA-RUNBOOK.md`.
+
 The A2 report tests the exact seven previously published archives retained by
 FORMA-113 in `tmp/a2-tarballs`, `tmp/a2-crates` and the founder-published derive
 0.0.0 archive. The accompanying manifest names their hashes. `commit` identifies
@@ -481,3 +555,28 @@ owned process-tree closure. Every existing refusal/recovery assertion and
 separate malformed-metadata control remains. Both full build suites pass
 238/238 on Node22 and Node24 after the test-only correction. These changes do
 not alter packaged production bytes; final hosted acceptance is still required.
+
+## FORMA-188: P17 over the fixture applications and its measurement step
+
+`fixture-apps-p17.json` (with `fixture-apps-set.json`, the dry-run DS11 record) is P17 run by hand on the
+integration branch's `3.0.0-dev` set with the contract `fixtureApps: "declared-v1"`: **passed, 44 checks,
+147.1 s** on an Apple M1 Pro (10 CPUs, 16 GiB, Node 24.22.0, rustc 1.93.1), against G6's 1,800 s. DS11 was
+packed at `8f783b4` (the three FORMA-188 branches merged with the integration head `2c7d4f6`); the scripts ran
+from the next commit, which declares esbuild in the staged project. The fixture block took about 38 s of it:
+the isolated locked install and signature audit 4.1 s, the four packed strict builds 3.5 s, the Rust servers
+built from the packed crates on the pruned lock 13.8 s, then each packed server judged in Chromium (ledger
+0.9 s, fauth 5.3 s, ksx 2.2 s, bench 7.8 s): 15 pages (variants included), zero mutation records, the server's
+values kept, the islands working. Forma's code per fixture route, gzip -9, against N2's 25,500 B (`n2` rows
+carry Brotli and the application's own bytes): ledger `/household` 25,366; fauth `/t/:slug/login` 25,374,
+`/platform/onboarding` 25,373, `/platform/benchmark` 25,415; ksx `/check` 25,373; the six bench pages
+25,317 to 25,318. The walker's counts of the consumer-shaped pages: 298, 1,497, 9,995, 15,053 and 19,961
+nodes, and 904 for the page of 100 islands (the `shapes` rows).
+
+This run had the workspace builds present, so the existing worker-integrity test is not the faithful
+rehearsal of the verify job: with `packages/*/dist` removed it fails on this branch at "packed build verifies
+cached and network bytes" (`ERR_MODULE_NOT_FOUND` on the workspace compiler), the alpha.1 failure, whose fix
+(`release-packed-resolution`) is on `main` and reaches the integration branch with its merge. The fixture
+block does not depend on the checkout's builds: its staging, run alone with the builds removed, installs the
+packed libraries outside the checkout, proves each import resolves inside the install, and builds all four
+applications with the packed `build()` (5.6 s); the build hashes of all four applications built with the packed set equal those of the working
+tree's build (`7b976f527291`, `dccd4063fcb2`, `e4164a114b44`, `8e9620ba2f21`). The `cargo` and browser stages need the same machine as any P17 run.
