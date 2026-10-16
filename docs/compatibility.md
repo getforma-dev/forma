@@ -77,10 +77,11 @@ Absent identities remain unchecked. Public `hydrateIsland` and application-owned
 imports are outside this guard. See core's [deployment contract](../packages/core/docs/ISLANDS.md#deployment-mismatch).
 
 `aliases` maps logical filenames to output filenames. `assets` maps each output
-filename to `{ immutable, integrity?, retained? }`. The build emits SHA-384/base64
+filename to `{ immutable, integrity, retained? }`. The build emits SHA-384/base64
 integrity from final uncompressed bytes; compressed sidecars, the manifest and
-worker are excluded. The server validates the digest syntax when present;
-FORMA-111 still owns byte-integrity enforcement. `retained: true` marks a file of the
+worker are excluded. The server requires canonical full digests, including for retained entries,
+and rendered external script/stylesheet/modulepreload resources carry that
+integrity with anonymous crossorigin. See [full asset digests](UPGRADING-3.0.md#full-asset-digests). `retained: true` marks a file of the
 previous release that the build copied in for tabs still open on it (FORMA-186,
 `previousDist`; one generation, checked against the previous manifest's SHA-384);
 a retained entry is always `immutable`.
@@ -123,7 +124,10 @@ An enabled worker now requires this checked startup call before binding:
 
 ```rust
 let manifest = forma_server::assets::try_load_manifest::<Assets>()?;
-let (_, modules) = forma_server::load_ir_modules_strict::<Assets>(&manifest)?;
+let pages = forma_server::load_ir_modules::<Assets>(&manifest)?;
+let home = pages.bind::<HomeProps>("home")?;
+// Bind every other SSR route here as well.
+pages.finalize()?;
 forma_server::sw::configure_for_manifest(
     forma_server::sw::ServiceWorker::for_app("ledger")?.enabled(),
     &manifest,
@@ -139,9 +143,9 @@ startup call; upgrading ranges and rebuilding alone is not a complete migration.
 Direct manifest consumers also migrate `build_hash` to `build` and logical asset
 lookups to `aliases`; construct mode/metadata fields when constructing manifests.
 
-This task does not edit user applications. The source templates retain A2
-consumer pins until FORMA-144's final API migration. Packing temporarily stages
-exact candidate npm/Cargo requirements and locked checksums. Candidate external
+The source templates use the typed Pages API and exact coordinated version
+seeds. Packing stages stable caret or exact prerelease requirements plus the
+tested candidate versions and hashes in the locks. Candidate external
 runtime additions come only from the committed workspace lock, nested beneath
 the candidate; existing template third-party resolutions stay unchanged. Every
 source manifest and lock is restored after packing, including failed staging.
@@ -170,20 +174,21 @@ Preview-frame byte compatibility remains its separate stricter check.
 
 ## Cross-contract ownership and tests (design §6.8)
 
-A listed future owner is not a claim that its contract is complete.
+These are implementation and qualification entry points. Current release
+readiness still requires the milestone gates and authenticated candidate evidence.
 
 | Contract | Owner | Cross-boundary gate / remaining work |
 |---|---|---|
 | Seven-package version and window | forma-server | Shared version pairs; actual npm peers/packed build; actual renderer 3.1; DS11 exact-version assertions (112/187). |
 | FMIR layout/opcodes | forma-ir | Frozen v3 faults, TS emission/Rust parse, private 14-case HTML/dump corpus (185). Window overlay changes only the patch fixture expectation; binary bytes and historical index remain untouched. |
 | Published compiler subset | compiler | Per-code failing/near-miss conformance corpus and compiler/build tests. Later subset changes retain their own tickets. |
-| Props schema | forma-ir | V3 schema/default load validation (185); typed derive/bind mutation suite remains 102/103. |
-| Markers, escaping/value and URL rules | core | `js_emitter_contract` HTML goldens, core malicious-value/URL and hydration tests. Later declared-props qualification remains separate. |
-| State block/island set/digests | core | Current activation/serialization tests and packed template interactions; declared-props/state contract is still pending, not supplied by manifest 2. |
-| Deployment identity | core | The identity is computed and compiled in (`identity.test.ts`) and forma-server stamps the root (`template.rs` tests); retention is FORMA-186 slice 2; core's compare and the drill follow (186/188). |
+| Props schema | forma-ir | V3 schema/default load validation (185); typed derive/bind comparer/value and compile-refusal suites (102/103). |
+| Markers, escaping/value and URL rules | core | `js_emitter_contract` HTML goldens, core malicious-value/URL and hydration tests. Shared value/name/URL vectors and generated three-engine parity retain the declared-data boundaries. |
+| State block/island set/digests | core | Declared-schema state preflight, original host/occurrence claims, zero-write adoption and actual packed template interactions; see core ISLANDS/ISLAND-STATE. |
+| Deployment identity | core | Two-pass identity emission and root stamping, Document-scoped skew guard, one-generation retention/security-mark refusal, and the actual fixture skew drill (186/188). |
 | Manifest schema 2 | forma-server | Real build metadata, Rust schema/mode/ref/cache checks, packed minimal/dashboard load and before-bind negative controls (112/P17). |
-| Trusted Types policy names | forma-server | Existing CSP/Trusted Types browser/server tests; 109's full enforcement remains its own work. |
-| Compiler import names | compiler | `supported-surface.test.ts` keeps root core/runtime h imports and excludes removed imports; packed runtime/declaration surface test; 110 removes legacy plugins. |
+| Trusted Types policy names | forma-server | Native response and Browser-shell CSP/Trusted Types enforcement, named raw-entry boundaries and three-engine browser controls (109). |
+| Compiler import names | compiler | `supported-surface.test.ts` keeps root core/runtime h imports and excludes removed imports; packed runtime/declaration surface test; legacy plugins and package deep imports are removed (110). |
 
 ## Reproduction and rollback
 
