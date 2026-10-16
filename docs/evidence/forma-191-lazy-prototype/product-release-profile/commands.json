@@ -1,0 +1,160 @@
+[
+  {
+    "name": "invalid-profile-collection",
+    "args": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "../root-three-engine-cjs.config.ts",
+      "e2e/fixtures/apps/apps.spec.ts",
+      "--grep",
+      "fixture application fauth",
+      "--workers=2",
+      "--list",
+      "--reporter=list"
+    ],
+    "expectedCode": 1,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:39:59.803Z",
+    "code": 1,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:00.797Z"
+  },
+  {
+    "name": "debug-headers",
+    "args": [
+      "node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/profile-gate/capture-headers.mjs",
+      "debug",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/debug-response"
+    ],
+    "expectedCode": 0,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:40:00.798Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:00.904Z"
+  },
+  {
+    "name": "release-fauth-native",
+    "args": [
+      "cargo",
+      "build",
+      "--quiet",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "e2e/fixtures/apps/Cargo.toml",
+      "--bin",
+      "fixture-fauth"
+    ],
+    "expectedCode": 0,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:40:00.905Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:15.667Z"
+  },
+  {
+    "name": "release-headers",
+    "args": [
+      "node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/profile-gate/capture-headers.mjs",
+      "release",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/release-response"
+    ],
+    "expectedCode": 0,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:40:15.668Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:15.742Z"
+  },
+  {
+    "name": "fauth-three-engines",
+    "args": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "../root-three-engine-cjs.config.ts",
+      "e2e/fixtures/apps/apps.spec.ts",
+      "--grep",
+      "fixture application fauth",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results"
+    ],
+    "expectedCode": 0,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:40:15.803Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:34.191Z"
+  },
+  {
+    "name": "namespaces-three-engines",
+    "args": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "../root-three-engine-cjs.config.ts",
+      "e2e/ssr/namespaces.spec.ts",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results"
+    ],
+    "expectedCode": 0,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:40:34.192Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:39.756Z"
+  },
+  {
+    "name": "conditional-three-engines",
+    "args": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "e2e/ssr/beta-acceptance.config.ts",
+      "conditional-element.spec.ts",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/conditional-test-results"
+    ],
+    "expectedCode": 0,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:40:39.757Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:42.795Z"
+  },
+  {
+    "name": "core-three-engines",
+    "args": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "packages/core/playwright.config.ts",
+      "core-regressions.spec.ts",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results"
+    ],
+    "expectedCode": 0,
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:40:42.795Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:40:47.295Z"
+  }
+]

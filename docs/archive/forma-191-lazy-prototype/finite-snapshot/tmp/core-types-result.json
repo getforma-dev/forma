@@ -1,0 +1,11 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "typecheck",
+    "-w",
+    "packages/core"
+  ],
+  "exitCode": 0,
+  "finishedAt": "2026-10-16T09:08:44.120265+00:00"
+}

@@ -1,0 +1,19 @@
+{
+  "command": [
+    "npm",
+    "test",
+    "-w",
+    "packages/core",
+    "--",
+    "src/dom/__tests__/element.test.ts",
+    "src/dom/__tests__/namespace-resolution.test.ts",
+    "src/dom/__tests__/adoption-materialize.test.ts",
+    "src/dom/__tests__/adoption-callback-mode.test.ts",
+    "src/dom/__tests__/adoption-conditional-generations.test.ts",
+    "src/dom/__tests__/adoption-listener-installation.test.ts",
+    "src/dom/__tests__/list-disposal.test.ts",
+    "--maxWorkers=2"
+  ],
+  "exitCode": 0,
+  "finishedAt": "2026-10-16T09:08:39.559178+00:00"
+}

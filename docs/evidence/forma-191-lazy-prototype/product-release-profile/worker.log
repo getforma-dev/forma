@@ -1,0 +1,207 @@
+START invalid-profile-collection ["npx","playwright","test","--config","../root-three-engine-cjs.config.ts","e2e/fixtures/apps/apps.spec.ts","--grep","fixture application fauth","--workers=2","--list","--reporter=list"]
+
+Error: invalid FORMA_FIXTURE_PROFILE
+
+   at fixtures/apps/apps.spec.ts:28
+
+  26 | const TARGET = process.env.CARGO_TARGET_DIR ?? resolve(HERE, '../../target');
+  27 | const PROFILE = process.env.FORMA_FIXTURE_PROFILE ?? 'debug';
+> 28 | if (PROFILE !== 'debug' && PROFILE !== 'release') throw new Error('invalid FORMA_FIXTURE_PROFILE');
+     |                                                         ^
+  29 | const EXE = process.platform === 'win32' ? '.exe' : '';
+  30 | const PORT_BASE = Number(process.env.FORMA_FIXTURE_PORT_BASE || 0);
+  31 | if (!Number.isInteger(PORT_BASE) || PORT_BASE < 0 || PORT_BASE > 65500) throw new Error('invalid FORMA_FIXTURE_PORT_BASE');
+    at Object.<anonymous> (/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts:28:57)
+
+Error: No tests found.
+Make sure that arguments are regular expressions matching test files.
+You may need to escape symbols like "$" or "*" and quote the arguments.
+Listing tests:
+Total: 0 tests in 0 files
+END invalid-profile-collection {"code":1,"signal":null}
+START debug-headers ["node","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/profile-gate/capture-headers.mjs","debug","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/debug-response"]
+END debug-headers {"code":0,"signal":null}
+START release-fauth-native ["cargo","build","--quiet","--locked","--release","--manifest-path","e2e/fixtures/apps/Cargo.toml","--bin","fixture-fauth"]
+END release-fauth-native {"code":0,"signal":null}
+START release-headers ["node","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/profile-gate/capture-headers.mjs","release","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/release-response"]
+END release-headers {"code":0,"signal":null}
+START fauth-three-engines ["npx","playwright","test","--config","../root-three-engine-cjs.config.ts","e2e/fixtures/apps/apps.spec.ts","--grep","fixture application fauth","--workers=2","--reporter=line,json","--output","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results"]
+[WebServer] (node:373) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:435) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:439) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 51 tests using 2 workers
+
+(node:441) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:112:9 › fixture application fauth › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+[2/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:112:9 › fixture application fauth › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+[3/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[4/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[5/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work
+[6/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[7/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work
+[8/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work
+[9/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[10/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work
+[11/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[12/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work
+[13/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[14/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work
+[15/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[16/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[17/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work
+[18/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work
+[19/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[20/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[21/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work
+[22/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work
+[23/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:174:9 › fixture application fauth: other branches › every extra check in lib/behaviours.mjs is run by name
+[24/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/quote/login: a tenant named with script and markup renders as text and runs nothing
+[25/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/unknown/login: an unknown tenant is a 404, not a page
+[26/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[27/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch
+[28/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work
+(node:523) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[29/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:112:9 › fixture application fauth › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+[30/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[31/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[32/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work
+[33/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work
+[34/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:174:9 › fixture application fauth: other branches › every extra check in lib/behaviours.mjs is run by name
+[35/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/quote/login: a tenant named with script and markup renders as text and runs nothing
+[36/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/unknown/login: an unknown tenant is a 404, not a page
+[37/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch
+[38/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[39/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work
+[40/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[41/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work
+[42/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[43/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work
+[44/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[45/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work
+[46/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[47/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work
+[48/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:174:9 › fixture application fauth: other branches › every extra check in lib/behaviours.mjs is run by name
+[49/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/quote/login: a tenant named with script and markup renders as text and runs nothing
+[50/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/unknown/login: an unknown tenant is a 404, not a page
+[51/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch
+  51 passed (17.9s)
+END fauth-three-engines {"code":0,"signal":null}
+START namespaces-three-engines ["npx","playwright","test","--config","../root-three-engine-cjs.config.ts","e2e/ssr/namespaces.spec.ts","--workers=2","--reporter=line,json","--output","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results"]
+[WebServer] (node:660) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:705) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 12 tests using 2 workers
+
+(node:711) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:710) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+
+
+[1/12] [chromium] › e2e/ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+[2/12] [firefox] › e2e/ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+[3/12] [chromium] › e2e/ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+[4/12] [chromium] › e2e/ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+[5/12] [chromium] › e2e/ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+(node:733) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[6/12] [webkit] › e2e/ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+[7/12] [firefox] › e2e/ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+[8/12] [firefox] › e2e/ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+[9/12] [webkit] › e2e/ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+[10/12] [firefox] › e2e/ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+[11/12] [webkit] › e2e/ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+[12/12] [webkit] › e2e/ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+  12 passed (5.0s)
+END namespaces-three-engines {"code":0,"signal":null}
+START conditional-three-engines ["npx","playwright","test","--config","e2e/ssr/beta-acceptance.config.ts","conditional-element.spec.ts","--workers=2","--reporter=line,json","--output","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/conditional-test-results"]
+[WebServer] (node:810) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 3 tests using 2 workers
+
+(node:817) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/3] [firefox] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+[2/3] [chromium] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+(node:828) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[3/3] [webkit] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+  3 passed (2.4s)
+END conditional-three-engines {"code":0,"signal":null}
+START core-three-engines ["npx","playwright","test","--config","packages/core/playwright.config.ts","core-regressions.spec.ts","--workers=2","--reporter=line,json","--output","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/core-test-results"]
+[WebServer] (node:907) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:939) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 15 tests using 2 workers
+
+(node:940) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:941) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+
+
+[1/15] [firefox] › packages/core/e2e/core-regressions.spec.ts:20:1 › HTML prototype clones keep template and form-control state private
+[2/15] [chromium] › packages/core/e2e/core-regressions.spec.ts:20:1 › HTML prototype clones keep template and form-control state private
+[3/15] [chromium] › packages/core/e2e/core-regressions.spec.ts:71:1 › controlled input, textarea, checkbox and non-first selections survive real user edits
+[4/15] [chromium] › packages/core/e2e/core-regressions.spec.ts:101:1 › multiple select changes update the browser live selection collection
+[5/15] [chromium] › packages/core/e2e/core-regressions.spec.ts:115:1 › same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM
+[6/15] [chromium] › packages/core/e2e/core-regressions.spec.ts:147:1 › SSR adoption refuses mismatched older properties and keeps matching controls live
+(node:954) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[7/15] [webkit] › packages/core/e2e/core-regressions.spec.ts:20:1 › HTML prototype clones keep template and form-control state private
+[8/15] [firefox] › packages/core/e2e/core-regressions.spec.ts:71:1 › controlled input, textarea, checkbox and non-first selections survive real user edits
+[9/15] [webkit] › packages/core/e2e/core-regressions.spec.ts:71:1 › controlled input, textarea, checkbox and non-first selections survive real user edits
+[10/15] [webkit] › packages/core/e2e/core-regressions.spec.ts:101:1 › multiple select changes update the browser live selection collection
+[11/15] [firefox] › packages/core/e2e/core-regressions.spec.ts:101:1 › multiple select changes update the browser live selection collection
+[12/15] [webkit] › packages/core/e2e/core-regressions.spec.ts:115:1 › same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM
+[13/15] [firefox] › packages/core/e2e/core-regressions.spec.ts:115:1 › same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM
+[14/15] [webkit] › packages/core/e2e/core-regressions.spec.ts:147:1 › SSR adoption refuses mismatched older properties and keeps matching controls live
+[15/15] [firefox] › packages/core/e2e/core-regressions.spec.ts:147:1 › SSR adoption refuses mismatched older properties and keeps matching controls live
+  15 passed (3.9s)
+END core-three-engines {"code":0,"signal":null}

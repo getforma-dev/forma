@@ -1,0 +1,47 @@
+{
+  "code": 0,
+  "signal": null,
+  "reason": null,
+  "normalHandshake": true,
+  "workerEnded": true,
+  "identity": {
+    "pid": 152,
+    "ppid": 142,
+    "pgid": 152,
+    "status": 2,
+    "startSec": 1792143599,
+    "startUsec": 506433
+  },
+  "descendantProof": {
+    "complete": true,
+    "root": {
+      "pid": 152,
+      "ppid": 142,
+      "pgid": 152,
+      "status": 2,
+      "startSec": 1792143599,
+      "startUsec": 506433
+    },
+    "captured": [
+      {
+        "pid": 152,
+        "ppid": 142,
+        "pgid": 152,
+        "status": 2,
+        "startSec": 1792143599,
+        "startUsec": 506433
+      }
+    ],
+    "stopRoot": false,
+    "remainingOwnedPids": [],
+    "liveAncestryCleanup": true,
+    "historicalOwnershipUnproved": false
+  },
+  "logBytes": 22634,
+  "ownedWorkRemoved": true,
+  "preservedWork": null,
+  "cleanupError": null,
+  "finishedAt": "2026-10-16T09:40:48.800Z",
+  "p17Passed": false,
+  "performanceAccepted": false
+}

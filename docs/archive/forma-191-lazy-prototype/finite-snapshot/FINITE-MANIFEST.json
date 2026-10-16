@@ -1,0 +1,136 @@
+{
+  "sourceHead": "dc43901dcb3cd44d927b44067775bf7767920343",
+  "scope": "finite raw outcomes, original source/control, executed wrappers, and source-only future plan; no browser or timing evidence",
+  "files": [
+    {
+      "path": "BROWSER-PLAN.md",
+      "bytes": 4677,
+      "sha256": "e9850b75ee266bf4316c635b36060054d6ab54622c809535dda53f3b0b45e9b4"
+    },
+    {
+      "path": "FINITE-QUALIFICATION.md",
+      "bytes": 3606,
+      "sha256": "dcc61bdd0aa69bd6f0b386debd933dba72c79cfcc23ebe58ce5e2d256c79d55b"
+    },
+    {
+      "path": "PLAN.md",
+      "bytes": 4045,
+      "sha256": "6534551b41a27aba5072c8208a9fa846ee9d19c3ba731f67cf6ed11cee9221a1"
+    },
+    {
+      "path": "root-three-engine.config.ts",
+      "bytes": 592,
+      "sha256": "86d327f072193b2c747602c1b061ea84b6c76e1810306956d42d362afe946e32"
+    },
+    {
+      "path": "tmp/cache-controls-after.log",
+      "bytes": 1804,
+      "sha256": "54a98df0960f38ae1560b71d936370bdc3780d466b14b856903b8ee7bd8a05e5"
+    },
+    {
+      "path": "tmp/cache-controls-before.log",
+      "bytes": 65631,
+      "sha256": "cf2676153cdd81e6d8a706710d1b6eaba583ccbc05ea5b53daa3d506e5cfb991"
+    },
+    {
+      "path": "tmp/cache-controls-corrected-after.log",
+      "bytes": 381,
+      "sha256": "8f17ba0a7e6e44ff643c61f459d759d473de4d488f270d10afedb2d7d75f0f73"
+    },
+    {
+      "path": "tmp/cache-controls-corrected-before.log",
+      "bytes": 64804,
+      "sha256": "4aeea34e583255b20a4eb59ab031f37955f0a58f716ea2b804dfd76dbb325a93"
+    },
+    {
+      "path": "tmp/cache-controls-corrected-results.json",
+      "bytes": 735,
+      "sha256": "717ab2ed53ae9ec946d3ace1b20b5560cd1e903cafca59911297bbc8edcf0b06"
+    },
+    {
+      "path": "tmp/cache-controls-results.json",
+      "bytes": 735,
+      "sha256": "6315dd28196cfcd9cc0f477d95a5a6c0d3b1e109ccb4540c3aa068b73e9b1e7a"
+    },
+    {
+      "path": "tmp/candidate-controls.diff",
+      "bytes": 8567,
+      "sha256": "0e3e3c245835df6b53d896386047c4158bd2318dd06995a35d4134a04b92a503"
+    },
+    {
+      "path": "tmp/candidate-source-hashes.json",
+      "bytes": 757,
+      "sha256": "b0fc73e9484a76233f8fa67490955da7661b73a19a870865beebbf582a806d51"
+    },
+    {
+      "path": "tmp/candidate-source.diff",
+      "bytes": 2512,
+      "sha256": "89dda5ca2dff5b924675fdd3ea5b00a0a5d25064985edf2982c10765c27f99aa"
+    },
+    {
+      "path": "tmp/controls/element-prototype-cache.test.ts",
+      "bytes": 8108,
+      "sha256": "683c6c9ab7c066b73b73384017d3e4f58c6e57f8fedb0885fae4537102cf65cb"
+    },
+    {
+      "path": "tmp/core-types-result.json",
+      "bytes": 161,
+      "sha256": "f148f04cba5a56d8b1fad2a53569ebc08efbcdb8ea82fc98d4d74a4fb4e9c8eb"
+    },
+    {
+      "path": "tmp/core-types.log",
+      "bytes": 54,
+      "sha256": "b4d0ae90960eaac9debc2258b68be6a4c6af1ecaf2474294fe3990730e8ab31c"
+    },
+    {
+      "path": "tmp/corrected-core-types.log",
+      "bytes": 54,
+      "sha256": "b4d0ae90960eaac9debc2258b68be6a4c6af1ecaf2474294fe3990730e8ab31c"
+    },
+    {
+      "path": "tmp/corrected-finite-results.json",
+      "bytes": 844,
+      "sha256": "a3f99cd420f6ea0781b553751867cf1bc68484f3a909c5bdb5397d9243eb8a30"
+    },
+    {
+      "path": "tmp/corrected-finite.log",
+      "bytes": 717,
+      "sha256": "2bcbcf47e327e7152c6387f9e8f1da93a70d10901c6c9e3648e19273c89e5926"
+    },
+    {
+      "path": "tmp/existing-behavior-result.json",
+      "bytes": 559,
+      "sha256": "228a7aaf1ea031a640a93d32aaa22758c165ffc9aea77809818a6112e335fa14"
+    },
+    {
+      "path": "tmp/existing-behavior.log",
+      "bytes": 667,
+      "sha256": "11d4650b811274a025440fc798cdac81a004921ccd9954ff7a82ea108fb0f6d3"
+    },
+    {
+      "path": "tmp/install-result.json",
+      "bytes": 181,
+      "sha256": "225ba428713f4c93c877b6e287cb85dd0a5a36a3ce952939143dc6f185538c77"
+    },
+    {
+      "path": "tmp/install.log",
+      "bytes": 143,
+      "sha256": "baded00129e8ce4d32798d4ebba0b5bb4c0cbb33bd6104935cb2b2526f4eed3a"
+    },
+    {
+      "path": "tmp/original/element.ts",
+      "bytes": 48640,
+      "sha256": "fa740cbdf1d645f5e537ecd0f31d0f2145ff2c9da00ced51130924dab0677e9c"
+    },
+    {
+      "path": "tmp/run-cache-controls-corrected.py",
+      "bytes": 2256,
+      "sha256": "64a05128e2b22fc56586f0b18e3f88021102addba5c07df5e5ca5a637c729a01"
+    },
+    {
+      "path": "tmp/run-cache-controls.py",
+      "bytes": 2216,
+      "sha256": "923e953a0c978406a24c66d842e0db3f070db9c7560571a085b0fe203dab9a83"
+    }
+  ]
+}

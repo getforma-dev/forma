@@ -207,3 +207,7 @@ docs/archive/skew-expected-reload/** -text
 # Original Playwright graph and actual transport investigation retain exact bytes.
 docs/archive/playwright-firefox-channel/** -text
 docs/evidence/playwright-firefox-channel/** -text
+
+# Byte-exact lazy native prototype originals and scoped correctness evidence.
+docs/archive/forma-191-lazy-prototype/** -text
+docs/evidence/forma-191-lazy-prototype/** -text

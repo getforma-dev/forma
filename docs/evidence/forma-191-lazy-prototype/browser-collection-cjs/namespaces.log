@@ -1,0 +1,14 @@
+Listing tests:
+  [chromium] › ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+  [chromium] › ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+  [chromium] › ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+  [chromium] › ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+  [firefox] › ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+  [firefox] › ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+  [firefox] › ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+  [firefox] › ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+  [webkit] › ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+  [webkit] › ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+  [webkit] › ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+  [webkit] › ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+Total: 12 tests in 1 file

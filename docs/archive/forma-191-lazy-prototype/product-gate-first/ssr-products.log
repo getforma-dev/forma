@@ -1,0 +1,362 @@
+FormaJS: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core (24a6c0b0)
+forma:   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma (24a6c0b0)
+SSR mode enabled — emitting IR files
+   IR emitted (real): attribute-aliases.ir (1014 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/attribute-aliases/attribute-aliases-csr.f3372c3c.js  73.9kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/attribute-aliases/attribute-aliases.f0a34872.js  75.7kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,908 of 28,000 B  JavaScript 27,684 of 76,800 B  (Brotli: Forma 23,170, JavaScript 24,692)  attribute-aliases.f0a34872.js
+   /csr  whole-page mount  Forma 25,230 of 28,000 B  JavaScript 26,978 of 76,800 B  (Brotli: Forma 22,579, JavaScript 24,076)  attribute-aliases-csr.f3372c3c.js
+   Service worker   sw.js  3,229 B raw, 1,534 B gzip, 1,305 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       314 ms: bundle 146 ms, hash 1 ms, compress 166 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/attribute-aliases/manifest.json (build: 5ba68703378b...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/attribute-aliases/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built attribute-aliases: attribute-aliases.f0a34872.js + attribute-aliases.f8360134.ir (islands: AttributeAliases); /csr: attribute-aliases-csr.f3372c3c.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): browser-only.ir (529 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/browser-only/browser-only.43cf9d94.js  75.6kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/browser-only/browser-only-csr.f3cf6acf.js  73.9kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,974 of 28,000 B  JavaScript 27,661 of 76,800 B  (Brotli: Forma 23,234, JavaScript 24,679)  browser-only.43cf9d94.js
+   /csr  whole-page mount  Forma 25,338 of 28,000 B  JavaScript 27,040 of 76,800 B  (Brotli: Forma 22,694, JavaScript 24,153)  browser-only-csr.f3cf6acf.js
+   Service worker   sw.js  3,219 B raw, 1,533 B gzip, 1,307 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       240 ms: bundle 72 ms, hash 1 ms, compress 167 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/browser-only/manifest.json (build: 33149a55810c...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/browser-only/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built browser-only: browser-only.43cf9d94.js + browser-only.fbed7055.ir (islands: Chart); /csr: browser-only-csr.f3cf6acf.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): conditional-element.ir (940 bytes, 2 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/conditional-element/conditional-element.d9fe5e26.js  75.6kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/conditional-element/conditional-element-csr.c54bbd7a.js  73.6kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,962 of 28,000 B  JavaScript 27,647 of 76,800 B  (Brotli: Forma 23,211, JavaScript 24,651)  conditional-element.d9fe5e26.js
+   /csr  whole-page mount  Forma 25,227 of 28,000 B  JavaScript 26,902 of 76,800 B  (Brotli: Forma 22,610, JavaScript 24,041)  conditional-element-csr.c54bbd7a.js
+   Service worker   sw.js  3,233 B raw, 1,537 B gzip, 1,307 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       239 ms: bundle 72 ms, hash 1 ms, compress 166 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/conditional-element/manifest.json (build: 1729e6224849...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/conditional-element/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built conditional-element: conditional-element.d9fe5e26.js + conditional-element.bc17a2bb.ir (islands: ConditionalElement, ConditionalElement); /csr: conditional-element-csr.c54bbd7a.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): edited-controls.ir (954 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/edited-controls/edited-controls.8825469a.js  76.0kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/edited-controls/edited-controls-csr.a9da3644.js  73.9kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,951 of 28,000 B  JavaScript 27,765 of 76,800 B  (Brotli: Forma 23,165, JavaScript 24,731)  edited-controls.8825469a.js
+   /csr  whole-page mount  Forma 25,220 of 28,000 B  JavaScript 26,977 of 76,800 B  (Brotli: Forma 22,587, JavaScript 24,104)  edited-controls-csr.a9da3644.js
+   Service worker   sw.js  3,225 B raw, 1,530 B gzip, 1,313 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       246 ms: bundle 77 ms, hash 1 ms, compress 168 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/edited-controls/manifest.json (build: e451c681f463...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/edited-controls/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built edited-controls: edited-controls.8825469a.js + edited-controls.afcf598d.ir (islands: Controls); /csr: edited-controls-csr.a9da3644.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): foreign-attributes.ir (1395 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/foreign-attributes/foreign-attributes-csr.e46326bc.js  74.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/foreign-attributes/foreign-attributes.6dbf31a4.js  76.0kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,916 of 28,000 B  JavaScript 27,773 of 76,800 B  (Brotli: Forma 23,212, JavaScript 24,804)  foreign-attributes.6dbf31a4.js
+   /csr  whole-page mount  Forma 25,233 of 28,000 B  JavaScript 27,071 of 76,800 B  (Brotli: Forma 22,612, JavaScript 24,187)  foreign-attributes-csr.e46326bc.js
+   Service worker   sw.js  3,231 B raw, 1,538 B gzip, 1,306 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       232 ms: bundle 63 ms, hash 1 ms, compress 168 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/foreign-attributes/manifest.json (build: cc597dcfb070...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/foreign-attributes/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built foreign-attributes: foreign-attributes.6dbf31a4.js + foreign-attributes.5ca853ed.ir (islands: ForeignAttributes); /csr: foreign-attributes-csr.e46326bc.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): generic-state.ir (512 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/generic-state/generic-state-csr.a32c324e.js  73.6kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/generic-state/generic-state.ae1442a0.js  75.4kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,911 of 28,000 B  JavaScript 27,555 of 76,800 B  (Brotli: Forma 23,149, JavaScript 24,556)  generic-state.ae1442a0.js
+   /csr  whole-page mount  Forma 25,229 of 28,000 B  JavaScript 26,870 of 76,800 B  (Brotli: Forma 22,574, JavaScript 23,979)  generic-state-csr.a32c324e.js
+   Service worker   sw.js  3,221 B raw, 1,530 B gzip, 1,305 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       229 ms: bundle 60 ms, hash 1 ms, compress 168 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/generic-state/manifest.json (build: 07bf7c4236d9...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/generic-state/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built generic-state: generic-state.ae1442a0.js + generic-state.f9358e63.ir (islands: Counter); /csr: generic-state-csr.a32c324e.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): keyed-indexed.ir (1602 bytes, 2 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-indexed/keyed-indexed-csr.8124afd5.js  79.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-indexed/keyed-indexed.d6259c6d.js  80.9kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 27,755 of 28,000 B  JavaScript 29,546 of 76,800 B  (Brotli: Forma 24,757, JavaScript 26,295)  keyed-indexed.d6259c6d.js
+   /csr  whole-page mount  Forma 27,097 of 28,000 B  JavaScript 28,888 of 76,800 B  (Brotli: Forma 24,161, JavaScript 25,698)  keyed-indexed-csr.8124afd5.js
+   Service worker   sw.js  3,221 B raw, 1,530 B gzip, 1,305 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       276 ms: bundle 96 ms, hash 1 ms, compress 179 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-indexed/manifest.json (build: b5ead40c7b04...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-indexed/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built keyed-indexed: keyed-indexed.d6259c6d.js + keyed-indexed.fe37ee61.ir (islands: IndexedRows, IndexedRows); /csr: keyed-indexed-csr.8124afd5.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): keyed-moves.ir (813 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-moves/keyed-moves-csr.a83c4efb.js  78.0kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-moves/keyed-moves.f8e03d12.js  79.9kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 27,339 of 28,000 B  JavaScript 29,086 of 76,800 B  (Brotli: Forma 24,339, JavaScript 25,839)  keyed-moves.f8e03d12.js
+   /csr  whole-page mount  Forma 26,695 of 28,000 B  JavaScript 28,402 of 76,800 B  (Brotli: Forma 23,766, JavaScript 25,230)  keyed-moves-csr.a83c4efb.js
+   Service worker   sw.js  3,217 B raw, 1,528 B gzip, 1,305 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       248 ms: bundle 71 ms, hash 1 ms, compress 176 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-moves/manifest.json (build: 00e06e7d312c...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/keyed-moves/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built keyed-moves: keyed-moves.f8e03d12.js + keyed-moves.38cf2564.ir (islands: KeyedRows); /csr: keyed-moves-csr.a83c4efb.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): ledger-arrival.ir (1096 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/ledger-arrival/ledger-arrival-csr.741d0ce6.js  74.9kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/ledger-arrival/ledger-arrival.94ec04a8.js  76.8kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,229 of 28,000 B  JavaScript 28,086 of 76,800 B  (Brotli: Forma 23,373, JavaScript 24,966)  ledger-arrival.94ec04a8.js
+   /csr  whole-page mount  Forma 25,570 of 28,000 B  JavaScript 27,399 of 76,800 B  (Brotli: Forma 22,861, JavaScript 24,430)  ledger-arrival-csr.741d0ce6.js
+   Service worker   sw.js  3,223 B raw, 1,536 B gzip, 1,307 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       248 ms: bundle 79 ms, hash 1 ms, compress 168 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/ledger-arrival/manifest.json (build: 7f94afd6b5e7...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/ledger-arrival/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built ledger-arrival: ledger-arrival.94ec04a8.js + ledger-arrival.13d41a03.ir (islands: Arrival); /csr: ledger-arrival-csr.741d0ce6.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): mixed-entry.ir (994 bytes, 2 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/mixed-entry/mixed-entry.7QMDWT4S.js  409b
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/mixed-entry/mixed-entry-csr.V5DGHEDY.js  394b
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/mixed-entry/chunk.NLNH6HBQ.js  535b
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/mixed-entry/mixed-entry-addon.5P6TVBKU.js  321b
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/mixed-entry/chunk.X5QYVLIY.js  80.4kb
+
+   9 assets hashed
+   5 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 27,732 of 28,000 B  JavaScript 30,361 of 76,800 B  (Brotli: Forma 24,724, JavaScript 27,011)  mixed-entry.7QMDWT4S.js mixed-entry-addon.5P6TVBKU.js chunk.NLNH6HBQ.js chunk.X5QYVLIY.js
+   /csr  whole-page mount  Forma 27,704 of 28,000 B  JavaScript 30,079 of 76,800 B  (Brotli: Forma 24,702, JavaScript 26,781)  mixed-entry-csr.V5DGHEDY.js chunk.NLNH6HBQ.js chunk.X5QYVLIY.js
+   Service worker   sw.js  3,544 B raw, 1,751 B gzip, 1,522 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       177 ms: bundle 80 ms, hash 0 ms, compress 96 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/mixed-entry/manifest.json (build: bd1420ddae5c...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/mixed-entry/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built mixed-entry: mixed-entry.7QMDWT4S.js, mixed-entry-addon.5P6TVBKU.js + mixed-entry.e91d4108.ir (islands: Local, Panel); /csr: mixed-entry-csr.V5DGHEDY.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): namespaces.ir (1786 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/namespaces/namespaces-csr.6b05c1c2.js  76.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/namespaces/namespaces.8aaa0ad7.js  77.8kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,187 of 28,000 B  JavaScript 28,387 of 76,800 B  (Brotli: Forma 23,404, JavaScript 25,307)  namespaces.8aaa0ad7.js
+   /csr  whole-page mount  Forma 25,509 of 28,000 B  JavaScript 27,707 of 76,800 B  (Brotli: Forma 22,797, JavaScript 24,699)  namespaces-csr.6b05c1c2.js
+   Service worker   sw.js  3,215 B raw, 1,530 B gzip, 1,305 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       254 ms: bundle 83 ms, hash 1 ms, compress 170 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/namespaces/manifest.json (build: 849ff7705db0...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/namespaces/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built namespaces: namespaces.8aaa0ad7.js + namespaces.9692233d.ir (islands: NamespaceVectors); /csr: namespaces-csr.6b05c1c2.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): root-fragment.ir (209 bytes, 0 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/root-fragment/root-fragment-csr.f2185a3f.js  18.4kb
+
+   2 assets hashed
+   1 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     no interactive region  no JavaScript
+   /csr  whole-page mount       Forma 7,106 of 28,000 B  JavaScript 8,613 of 76,800 B  (Brotli: Forma 6,477, JavaScript 7,752)  root-fragment-csr.f2185a3f.js
+   Service worker   sw.js  3,108 B raw, 1,458 B gzip, 1,231 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       59 ms: bundle 41 ms, hash 0 ms, compress 18 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/root-fragment/manifest.json (build: 1cb406974507...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/root-fragment/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built root-fragment: no script + root-fragment.788e23e9.ir (islands: none); /csr: root-fragment-csr.f2185a3f.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): sanitized-controls.ir (2061 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/sanitized-controls/sanitized-controls.d436b272.js  77.3kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/sanitized-controls/sanitized-controls-csr.90418fe9.js  75.1kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,778 of 28,000 B  JavaScript 28,052 of 76,800 B  (Brotli: Forma 23,008, JavaScript 24,979)  sanitized-controls.d436b272.js
+   /csr  whole-page mount  Forma 25,126 of 28,000 B  JavaScript 27,305 of 76,800 B  (Brotli: Forma 22,469, JavaScript 24,356)  sanitized-controls-csr.90418fe9.js
+   Service worker   sw.js  3,231 B raw, 1,536 B gzip, 1,312 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       267 ms: bundle 97 ms, hash 1 ms, compress 169 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/sanitized-controls/manifest.json (build: ab4982a8f111...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/sanitized-controls/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built sanitized-controls: sanitized-controls.d436b272.js + sanitized-controls.0d54df3d.ir (islands: SanitizedControls); /csr: sanitized-controls-csr.90418fe9.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): select.ir (566 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/select/select.f640e2a8.js  75.5kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/select/select-csr.4c435184.js  73.6kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,921 of 28,000 B  JavaScript 27,588 of 76,800 B  (Brotli: Forma 23,246, JavaScript 24,674)  select.f640e2a8.js
+   /csr  whole-page mount  Forma 25,222 of 28,000 B  JavaScript 26,878 of 76,800 B  (Brotli: Forma 22,563, JavaScript 23,981)  select-csr.4c435184.js
+   Service worker   sw.js  3,207 B raw, 1,530 B gzip, 1,305 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       216 ms: bundle 51 ms, hash 0 ms, compress 165 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/select/manifest.json (build: 3e91b59520f3...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/select/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built select: select.f640e2a8.js + select.e703f491.ir (islands: Picker); /csr: select-csr.4c435184.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): textarea-child.ir (445 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-child/textarea-child-csr.500081d7.js  73.5kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-child/textarea-child.c0973c6d.js  75.4kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,919 of 28,000 B  JavaScript 27,556 of 76,800 B  (Brotli: Forma 23,208, JavaScript 24,604)  textarea-child.c0973c6d.js
+   /csr  whole-page mount  Forma 25,220 of 28,000 B  JavaScript 26,847 of 76,800 B  (Brotli: Forma 22,573, JavaScript 23,961)  textarea-child-csr.500081d7.js
+   Service worker   sw.js  3,223 B raw, 1,533 B gzip, 1,303 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       216 ms: bundle 51 ms, hash 1 ms, compress 164 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-child/manifest.json (build: fbfcfb5c72cc...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-child/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built textarea-child: textarea-child.c0973c6d.js + textarea-child.45df6efc.ir (islands: Editor); /csr: textarea-child-csr.500081d7.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): textarea-value.ir (461 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-value/textarea-value-csr.de3d44f9.js  73.5kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-value/textarea-value.332fac91.js  75.4kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,921 of 28,000 B  JavaScript 27,560 of 76,800 B  (Brotli: Forma 23,202, JavaScript 24,603)  textarea-value.332fac91.js
+   /csr  whole-page mount  Forma 25,221 of 28,000 B  JavaScript 26,851 of 76,800 B  (Brotli: Forma 22,562, JavaScript 23,954)  textarea-value-csr.de3d44f9.js
+   Service worker   sw.js  3,223 B raw, 1,533 B gzip, 1,306 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       252 ms: bundle 70 ms, hash 1 ms, compress 181 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-value/manifest.json (build: fe27dd31fa6e...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/textarea-value/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built textarea-value: textarea-value.332fac91.js + textarea-value.28962907.ir (islands: Editor); /csr: textarea-value-csr.de3d44f9.js
+SSR mode enabled — emitting IR files
+   IR emitted (real): title.ir (439 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/title/title-csr.9c926580.js  73.5kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/title/title.b0061eaa.js  75.3kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 25,912 of 28,000 B  JavaScript 27,534 of 76,800 B  (Brotli: Forma 23,195, JavaScript 24,582)  title.b0061eaa.js
+   /csr  whole-page mount  Forma 25,223 of 28,000 B  JavaScript 26,842 of 76,800 B  (Brotli: Forma 22,608, JavaScript 23,992)  title-csr.9c926580.js
+   Service worker   sw.js  3,205 B raw, 1,525 B gzip, 1,300 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       240 ms: bundle 63 ms, hash 1 ms, compress 176 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/title/manifest.json (build: 018800005a59...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/build/title/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+built title: title.b0061eaa.js + title.a0eea611.ir (islands: Heading); /csr: title-csr.9c926580.js
+rendered attribute-aliases: index.html (Phase 2), csr.html (Phase 1), module attribute-aliases.f8360134.ir
+rendered browser-only: index.html (Phase 2), csr.html (Phase 1), module browser-only.fbed7055.ir
+rendered conditional-element: index.html (Phase 2), csr.html (Phase 1), module conditional-element.bc17a2bb.ir
+rendered edited-controls: index.html (Phase 2), csr.html (Phase 1), module edited-controls.afcf598d.ir
+rendered foreign-attributes: index.html (Phase 2), csr.html (Phase 1), module foreign-attributes.5ca853ed.ir
+rendered generic-state: index.html (Phase 2), csr.html (Phase 1), module generic-state.f9358e63.ir
+rendered keyed-indexed: index.html (Phase 2), csr.html (Phase 1), module keyed-indexed.fe37ee61.ir
+rendered keyed-moves: index.html (Phase 2), csr.html (Phase 1), module keyed-moves.38cf2564.ir
+rendered ledger-arrival: index.html (Phase 2), csr.html (Phase 1), module ledger-arrival.13d41a03.ir
+rendered mixed-entry: index.html (Phase 2), csr.html (Phase 1), module mixed-entry.e91d4108.ir
+rendered namespaces: index.html (Phase 2), csr.html (Phase 1), module namespaces.9692233d.ir
+rendered root-fragment: index.html (Phase 2), csr.html (Phase 1), module root-fragment.788e23e9.ir
+rendered sanitized-controls: index.html (Phase 2), csr.html (Phase 1), module sanitized-controls.0d54df3d.ir
+rendered select: index.html (Phase 2), csr.html (Phase 1), module select.e703f491.ir
+rendered textarea-child: index.html (Phase 2), csr.html (Phase 1), module textarea-child.45df6efc.ir
+rendered textarea-value: index.html (Phase 2), csr.html (Phase 1), module textarea-value.28962907.ir
+rendered title: index.html (Phase 2), csr.html (Phase 1), module title.a0eea611.ir
+✓ SSR e2e site built in /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/ssr/out/site/

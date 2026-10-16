@@ -1,0 +1,35 @@
+{
+  "from": "24a6c0b0157baa434524ffc8431041ebb1b3854b",
+  "to": "fe2ba420a6e7e382eb8b18a6c96d3e6be76a9efa",
+  "onlyChangedPaths": [
+    "e2e/fixtures/apps/README.md",
+    "e2e/fixtures/apps/apps.spec.ts"
+  ],
+  "identities": [
+    {
+      "path": "packages/core",
+      "before": "ac157eb972551f49587c782b4147415ef5ecdf7d",
+      "after": "ac157eb972551f49587c782b4147415ef5ecdf7d"
+    },
+    {
+      "path": "packages/compiler",
+      "before": "e6a1ed266d0463879aa4136f56aa9edfd07b6eb0",
+      "after": "e6a1ed266d0463879aa4136f56aa9edfd07b6eb0"
+    },
+    {
+      "path": "packages/build",
+      "before": "f81ab151125abc9ad564bac4da46980330572576",
+      "after": "f81ab151125abc9ad564bac4da46980330572576"
+    },
+    {
+      "path": "crates",
+      "before": "3dc143f7198033186363d1147ef04a19e17f79e8",
+      "after": "3dc143f7198033186363d1147ef04a19e17f79e8"
+    },
+    {
+      "path": "package-lock.json",
+      "before": "225f61b0f797a7de71ffaa2a37eef0662d69b609",
+      "after": "225f61b0f797a7de71ffaa2a37eef0662d69b609"
+    }
+  ]
+}

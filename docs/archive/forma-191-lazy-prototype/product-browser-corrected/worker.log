@@ -1,0 +1,4 @@
+START fauth-three-engines ["npx","playwright","test","--config","../root-three-engine.config.mts","e2e/fixtures/apps/apps.spec.ts","--grep","fixture application fauth","--workers=2","--reporter=line,json","--output","/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results"]
+Error: config.webServer.command cannot be empty
+
+END fauth-three-engines {"code":1,"signal":null}

@@ -1,0 +1,19 @@
+
+Error: invalid FORMA_FIXTURE_PROFILE
+
+   at fixtures/apps/apps.spec.ts:28
+
+  26 | const TARGET = process.env.CARGO_TARGET_DIR ?? resolve(HERE, '../../target');
+  27 | const PROFILE = process.env.FORMA_FIXTURE_PROFILE ?? 'debug';
+> 28 | if (PROFILE !== 'debug' && PROFILE !== 'release') throw new Error('invalid FORMA_FIXTURE_PROFILE');
+     |                                                         ^
+  29 | const EXE = process.platform === 'win32' ? '.exe' : '';
+  30 | const PORT_BASE = Number(process.env.FORMA_FIXTURE_PORT_BASE || 0);
+  31 | if (!Number.isInteger(PORT_BASE) || PORT_BASE < 0 || PORT_BASE > 65500) throw new Error('invalid FORMA_FIXTURE_PORT_BASE');
+    at Object.<anonymous> (/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts:28:57)
+
+Error: No tests found.
+Make sure that arguments are regular expressions matching test files.
+You may need to escape symbols like "$" or "*" and quote the arguments.
+Listing tests:
+Total: 0 tests in 0 files

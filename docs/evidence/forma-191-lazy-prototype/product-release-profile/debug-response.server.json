@@ -1,0 +1,9 @@
+{
+  "binary": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/target/debug/fixture-fauth",
+  "profile": "debug",
+  "log": "FORMA_LISTENING http://127.0.0.1:49652\n",
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  }
+}

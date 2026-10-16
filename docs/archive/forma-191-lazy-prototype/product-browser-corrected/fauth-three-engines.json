@@ -1,0 +1,184 @@
+{
+  "config": {
+    "argv": [
+      "/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin/node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "../root-three-engine.config.mts",
+      "e2e/fixtures/apps/apps.spec.ts",
+      "--grep",
+      "fixture application fauth",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results"
+    ],
+    "configFile": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/root-three-engine.config.mts",
+    "rootDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 30000,
+        "use": {
+          "browserName": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 30000,
+        "use": {
+          "browserName": "firefox"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "firefox"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 30000,
+        "use": {
+          "browserName": "webkit"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "webkit"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "Error: config.webServer.command cannot be empty",
+      "stack": "Error: config.webServer.command cannot be empty"
+    }
+  ],
+  "stats": {
+    "startTime": "2026-10-16T09:27:52.659Z",
+    "duration": 3.70799999999997,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

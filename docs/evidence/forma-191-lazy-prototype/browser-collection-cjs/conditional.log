@@ -1,0 +1,5 @@
+Listing tests:
+  [chromium] › conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+  [firefox] › conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+  [webkit] › conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+Total: 3 tests in 1 file

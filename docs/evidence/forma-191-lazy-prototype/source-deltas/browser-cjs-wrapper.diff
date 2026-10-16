@@ -1,0 +1,13 @@
+--- original-root-three-engine.config.ts
++++ root-three-engine-cjs.config.ts
+@@ -1,8 +1,7 @@
+ import base from './forma/playwright.config';
+-import { dirname, join } from 'node:path';
+-import { fileURLToPath } from 'node:url';
++import { join } from 'node:path';
+ 
+-const root = join(dirname(fileURLToPath(import.meta.url)), 'forma');
++const root = join(__dirname, 'forma');
+ export default {
+   ...base,
+   testDir: join(root, 'e2e'),

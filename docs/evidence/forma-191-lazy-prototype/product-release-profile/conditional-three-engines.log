@@ -1,0 +1,22 @@
+[WebServer] (node:810) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 3 tests using 2 workers
+
+(node:817) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/3] [firefox] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+[2/3] [chromium] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+(node:828) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[3/3] [webkit] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners
+  3 passed (2.4s)

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/product-browser-cjs/run.mjs",
+    "sha256": "ca2d72eed6a51c557311ca9ee3a85cdd1a0e023b448c5e3c1567119dd3988565"
+  },
+  {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/product-browser-cjs/worker.mjs",
+    "sha256": "57e2d376c003d4080d29399c9da7a2a8be5ed811b8f86dbbdf48443e10a9440e"
+  },
+  {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/root-three-engine-cjs.config.ts",
+    "sha256": "9386f0ad33677052ab228ea4bcb687fd74af1f75c48d9e5cf66e4996aca52ae4"
+  },
+  {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/product-browser/collect.py",
+    "sha256": "3d3f00844290f0e800983c7c146e6d1ec4974e1b6624f0c261b261e20126252f"
+  }
+]

@@ -1,0 +1,2673 @@
+{
+  "config": {
+    "argv": [
+      "/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin/node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "../root-three-engine-cjs.config.ts",
+      "e2e/fixtures/apps/apps.spec.ts",
+      "--grep",
+      "fixture application fauth",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results"
+    ],
+    "configFile": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/root-three-engine-cjs.config.ts",
+    "rootDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000,
+        "use": {
+          "baseURL": "http://localhost:35627",
+          "headless": true,
+          "browserName": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000,
+        "use": {
+          "baseURL": "http://localhost:35627",
+          "headless": true,
+          "browserName": "firefox"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "firefox"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/fauth-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000,
+        "use": {
+          "baseURL": "http://localhost:35627",
+          "headless": true,
+          "browserName": "webkit"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "webkit"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "fixtures/apps/apps.spec.ts",
+      "file": "fixtures/apps/apps.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "fixture application fauth",
+          "file": "fixtures/apps/apps.spec.ts",
+          "line": 106,
+          "column": 8,
+          "specs": [
+            {
+              "title": "builds in strict mode with nothing above a note, one native module per route, and one script per route with islands",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:17.595Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-376efbd1c01dfeda96f0",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 112,
+              "column": 9
+            },
+            {
+              "title": "/t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 231,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:17.682Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-c6015a7d74252e2eb10a",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 967,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:18.183Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-19cef8da63a4c283d825",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 105,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:19.155Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-63dab331f1b630cb6396",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 722,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:19.266Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-715e0c9c12a38ba3eab4",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 95,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:19.993Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-fd9e19e55a11d1b54aa2",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 675,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:20.093Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-d61719051550185eef53",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 100,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:20.773Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-9c77fa7bd8ae299d7d5a",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 669,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:20.878Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-06d885242a19d6806d7c",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 114,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:21.552Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-6e33e209a140adbb4b9b",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 782,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:21.677Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-72e705c4f3e0ee75c469",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 98,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:22.464Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-f94e9ab4c368d638bd08",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 652,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:22.567Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-f54ba9cb5521b750dd04",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "builds in strict mode with nothing above a note, one native module per route, and one script per route with islands",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:17.591Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-189595d78528cbf85ad1",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 112,
+              "column": 9
+            },
+            {
+              "title": "/t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 842,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:17.677Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-cd2546dcdca7084061c6",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1014,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:19.429Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-d12338d894dc3e51241f",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 189,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:20.447Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-b2abfafee67eb7dd9c07",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 801,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:20.642Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-acf928395bf56c8c5cdb",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 216,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:21.449Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-faf45c50167b0082f13e",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 755,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:21.676Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-7e56004394fca97b6d42",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 203,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:22.437Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-7dec5ac21efa85de9852",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 816,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:22.647Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-01d0feeb31f7c0d1a81b",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 239,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.469Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-2329967ef8559c272dee",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1089,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.715Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-1c2be5b4eb3aabf896fb",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 204,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:24.822Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-f1fc80ef0c1de70734cb",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 759,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:25.030Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-f73aa708f1177dcafcc1",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "builds in strict mode with nothing above a note, one native module per route, and one script per route with islands",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.901Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-926bc97bc317a3692ca4",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 112,
+              "column": 9
+            },
+            {
+              "title": "/t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 744,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.988Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-22fb7d94c4af6b00c50e",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1220,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:25.242Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-77dc4745668f333890ee",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 361,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:26.468Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-7e87d495f467885acf58",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1005,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:26.834Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-a61c02380b84ece62c72",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 354,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:27.846Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-140265a1463313d2099d",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 920,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:28.206Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-8eb5287b18058f04ba09",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 402,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:29.131Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-ff9738dbb442cf7c5925",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 975,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:29.539Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-300541a148526313bcdf",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 368,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:30.520Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-cc639dc2df53bd957983",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1068,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:30.901Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-d2828c1764dc776d465a",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 360,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:31.974Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-0487142cb8019e8637f2",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 129,
+              "column": 13
+            },
+            {
+              "title": "/platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                        "line": 106,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 950,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:32.339Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/fixtures/apps/apps.spec.ts",
+                            "line": 106,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-cc523381c2beaf298e8d",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 142,
+              "column": 13
+            }
+          ]
+        },
+        {
+          "title": "fixture application fauth: other branches",
+          "file": "fixtures/apps/apps.spec.ts",
+          "line": 170,
+          "column": 8,
+          "specs": [
+            {
+              "title": "every extra check in lib/behaviours.mjs is run by name",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.232Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-dc18b6401aeda2ec6824",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 174,
+              "column": 9
+            },
+            {
+              "title": "/t/quote/login: a tenant named with script and markup renders as text and runs nothing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 156,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.296Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-e045d6abfee7deda9972",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "/t/unknown/login: an unknown tenant is a 404, not a page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.458Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-d78ea248a6d52e407dcb",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "/t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 107,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:23.471Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-0be33a70be57d394a467",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "every extra check in lib/behaviours.mjs is run by name",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:25.800Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-22dc4ba51d25285d779d",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 174,
+              "column": 9
+            },
+            {
+              "title": "/t/quote/login: a tenant named with script and markup renders as text and runs nothing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 228,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:25.862Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-c84c870958d41f8896f5",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "/t/unknown/login: an unknown tenant is a 404, not a page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 9,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:26.094Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-01612ef5ccd543df851f",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "/t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 193,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:26.107Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-6c1199b9c2df9d6d01df",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "every extra check in lib/behaviours.mjs is run by name",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:33.300Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-6b9ac82a651df93b82d2",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 174,
+              "column": 9
+            },
+            {
+              "title": "/t/quote/login: a tenant named with script and markup renders as text and runs nothing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 385,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:33.362Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-c798811a20b2f04d4c86",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "/t/unknown/login: an unknown tenant is a 404, not a page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:33.753Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-18edfc610024f30752a4",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            },
+            {
+              "title": "/t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 367,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T09:40:33.766Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b8b749353657f36692e8-6493bceb4eceb95f7efb",
+              "file": "fixtures/apps/apps.spec.ts",
+              "line": 180,
+              "column": 11
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-16T09:40:16.319Z",
+    "duration": 17856.627,
+    "expected": 51,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

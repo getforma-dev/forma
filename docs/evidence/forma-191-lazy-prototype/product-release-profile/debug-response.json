@@ -1,0 +1,24 @@
+{
+  "profile": "debug",
+  "binary": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e/target/debug/fixture-fauth",
+  "binarySha256": "c16b0ab665b4deca2391056436841484e148ba060d299c79700492d227aa9eef",
+  "path": "/t/acme/login",
+  "origin": "http://127.0.0.1:49652",
+  "status": 200,
+  "headers": {
+    "cache-control": "no-store",
+    "content-length": "3398",
+    "content-security-policy": "default-src 'none'; script-src 'nonce-epOhqEmtoYfTtAr/IUrtybV9aS//LkGnFJyX2Adl+FI=' 'strict-dynamic' 'self'; style-src 'nonce-epOhqEmtoYfTtAr/IUrtybV9aS//LkGnFJyX2Adl+FI=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+    "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+    "content-type": "text/html; charset=utf-8",
+    "cross-origin-opener-policy": "same-origin",
+    "date": "Fri, 16 Oct 2026 09:40:00 GMT",
+    "permissions-policy": "geolocation=(), camera=(), microphone=()",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-content-type-options": "nosniff",
+    "x-fixture-counts": "nodes=39; bytes=2209; list=0"
+  },
+  "bodyBytes": 3398,
+  "bodySha256": "7b0bd8618646aeae37f722777d789ccbadd5327ca4940f2ec8c310f110d2cebc",
+  "capturedAt": "2026-10-16T09:40:00.873Z"
+}
