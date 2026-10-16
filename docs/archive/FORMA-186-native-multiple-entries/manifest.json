@@ -1,0 +1,75 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "e2e-ssr",
+  "build": "923ea4429c980142",
+  "aliases": {
+    "mixed-entry.YGVBLNMV.js": "mixed-entry.YGVBLNMV.js",
+    "chunk.GUIJACKW.js": "chunk.GUIJACKW.js",
+    "chunk.KDTMCUSE.js": "chunk.KDTMCUSE.js",
+    "mixed-entry-csr.FLNYPDVR.js": "mixed-entry-csr.FLNYPDVR.js",
+    "mixed-entry-addon.BVOME6HA.js": "mixed-entry-addon.BVOME6HA.js",
+    "mixed-entry.js": "mixed-entry.YGVBLNMV.js",
+    "mixed-entry-csr.js": "mixed-entry-csr.FLNYPDVR.js",
+    "mixed-entry-addon.js": "mixed-entry-addon.BVOME6HA.js",
+    "mixed-entry.ir": "mixed-entry.e91d4108.ir"
+  },
+  "assets": {
+    "chunk.GUIJACKW.js": {
+      "immutable": true,
+      "integrity": "sha384-QTJd0NE/SVY7wGFmKt6jJFFTbXQpLpbCZasgNKHSqaCi84Ih3wWQT+7naiVcF+bb"
+    },
+    "chunk.KDTMCUSE.js": {
+      "immutable": true,
+      "integrity": "sha384-K7rcS/0WvNSOmoDJ1OIj08AjQihz66IJZJViZPYO4QsKr0wlyqGXmxgGD7E1EF5i"
+    },
+    "mixed-entry-addon.BVOME6HA.js": {
+      "immutable": true,
+      "integrity": "sha384-iPaZMcxu0uQOvEQxYQDpEBkBE4tQuUVB5zFdCI2FQbG7NNX3KSjKF+ocefhG7Bpe"
+    },
+    "mixed-entry-csr.FLNYPDVR.js": {
+      "immutable": true,
+      "integrity": "sha384-nMGC9ErJ2sCr1QMTahy2YRaD1dOK4KFDPSW/o8W3KLtUhlBCrARI/zpCfySpgqJY"
+    },
+    "mixed-entry.YGVBLNMV.js": {
+      "immutable": true,
+      "integrity": "sha384-iFbg5mZ/LpX4JR5H+RGpGOD/LbKRGcYUiu0mH1+Rt48+W9Hg6s38Pgw4Ub/k3bSG"
+    },
+    "mixed-entry.e91d4108.ir": {
+      "immutable": true,
+      "integrity": "sha384-Rdj44BcGM3byheDwax3QOL/MWLrt39ARUcyqyx/VF9KxhPmldkH+8X7byesCTH42"
+    }
+  },
+  "routes": {
+    "/": {
+      "mode": "ssr",
+      "js": [
+        "mixed-entry.YGVBLNMV.js",
+        "mixed-entry-addon.BVOME6HA.js"
+      ],
+      "modulepreload": [
+        "chunk.GUIJACKW.js",
+        "chunk.KDTMCUSE.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 25109,
+      "budget_warn_threshold": 200000,
+      "ir": "mixed-entry.e91d4108.ir"
+    },
+    "/csr": {
+      "mode": "browser",
+      "js": [
+        "mixed-entry-csr.FLNYPDVR.js"
+      ],
+      "modulepreload": [
+        "chunk.GUIJACKW.js",
+        "chunk.KDTMCUSE.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 24891,
+      "budget_warn_threshold": 200000
+    }
+  }
+}

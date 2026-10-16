@@ -9,7 +9,8 @@ use std::path::{Path, PathBuf};
 
 use forma_ir::PageProps;
 use forma_server::{
-    load_ir_modules, render_browser_shell, AssetManifest, PageConfig, PageResponse, RenderCtx,
+    load_ir_modules, render_browser_shell, AssetManifest, PageConfig, PageResponse,
+    PolicyExtensions, RenderCtx,
 };
 use rust_embed::Embed;
 use std::borrow::Cow;
@@ -43,6 +44,12 @@ struct ArrivalProps {
     arrival_status: String,
     arrival_summary: bool,
 }
+// This fixture is served over plain HTTP. Use the public HTTP reporting API
+// with a real receiver rather than an endpoint-free debug diagnostic policy.
+fn fixture_ctx() -> RenderCtx {
+    RenderCtx::new().with_policy(PolicyExtensions::new().report_uri("/__csp-reports"))
+}
+
 #[derive(PageProps)]
 struct KeyedMoveRow {
     id: String,
@@ -60,7 +67,7 @@ fn render_typed<P: PageProps>(
     let pages = load_ir_modules::<FixtureAssets>(manifest).map_err(|e| format!("{e:?}"))?;
     let page = pages.bind::<P>(ROUTE).map_err(|e| format!("{e:?}"))?;
     pages.finalize().map_err(|e| format!("{e:?}"))?;
-    Ok(page.render(props, &RenderCtx::new().with_title(title))?)
+    Ok(page.render(props, &fixture_ctx().with_title(title))?)
 }
 
 /// The route every case is built and rendered under.
@@ -192,7 +199,7 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
             personality_css: None,
             body_prefix: None,
         },
-        &RenderCtx::new(),
+        &fixture_ctx(),
     )?;
     fs::create_dir_all(out)?;
     for (file, is_ssr, response) in [("index", true, ssr), ("csr", false, csr)] {

@@ -9,6 +9,7 @@
  *   /<case>/          the Phase 2 page (server-rendered by forma's walker)
  *   /<case>/csr       the same build, client-rendered (Phase 1)
  *   /_assets/<file>   the case bundles and modules
+ *   /__csp-reports   bounded native-policy report receiver and cursor evidence
  *   /sw.js            an empty worker: render_page registers /sw.js on every page
  *   /__site           which site this server serves, and whether it is built:
  *                     regressions.spec.ts refuses to run against another
@@ -24,9 +25,11 @@ import { createServer } from 'node:http';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createCspReports } from './csp-reports.mjs';
 
 const site = join(realpathSync(dirname(fileURLToPath(import.meta.url))), 'out', 'site');
 const port = Number(process.argv[2] ?? 3458);
+const reports = createCspReports();
 
 const TYPES = { '.js': 'text/javascript; charset=utf-8', '.ir': 'application/octet-stream' };
 
@@ -39,7 +42,9 @@ function inside(root, path) {
 }
 
 createServer((req, res) => {
-  const path = new URL(req.url ?? '/', 'http://localhost').pathname;
+  const url = new URL(req.url ?? '/', 'http://localhost');
+  const path = url.pathname;
+  if (path === '/__csp-reports') { void reports.handle(req, res, url); return; }
 
   if (path === '/__site') {
     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
@@ -47,7 +52,10 @@ createServer((req, res) => {
     return;
   }
 
-  const page = /^\/([a-z0-9-]+)\/(csr)?$/.exec(path);
+  // A unique document path keeps concurrent browser reporting controls distinct.
+  // It serves the same native document and headers as the ordinary positive case.
+  const control = /^\/__csp-control\/[a-f0-9-]{36}$/.test(path);
+  const page = /^\/([a-z0-9-]+)\/(csr)?$/.exec(control ? '/generic-state/' : path);
   if (page) {
     const name = page[2] ? 'csr' : 'index';
     const html = inside(site, `${page[1]}/${name}.html`);

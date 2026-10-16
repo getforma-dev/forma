@@ -23,6 +23,7 @@ import {
   writeFileSync,
   renameSync,
   statSync,
+  realpathSync,
   existsSync,
 } from 'node:fs';
 import { join, extname, basename, dirname, sep } from 'node:path';
@@ -579,6 +580,7 @@ type SsrPluginFactory = (opts: {
   outDir: string;
   entryPoint?: string;
   clientEntryPoint?: string;
+  browserEntryPoints?: readonly { path: string; entryPoint: string }[];
   strict?: boolean;
   onDiagnostics?: (diagnostics: CompilerDiagnostic[], page: string) => void;
 }) => esbuild.Plugin;
@@ -748,12 +750,19 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       if (typeof formaSsrPlugin !== 'function') throw new Error('BUILD-809 installed compiler has no supported formaSsrPlugin');
     }
 
+    // Only colliding explicit Browser roots need a second module identity.
+    // Imports below the entry remain in the same graph, including core.
+    const nativeClients=new Set(config.ssr?config.entryPoints.filter(entry=>entry.ssr!==false).map(entry=>realpathSync(entry.entry)):[]);
+    const browserAliases=new Map(config.codeSplitting?config.entryPoints.filter(entry=>entry.ssr===false&&nativeClients.has(realpathSync(entry.entry)))
+      .map(entry=>[entry.outfile,{path:`forma-browser-entry:${entry.outfile}`,entryPoint:entry.entry}]):[]);
+    const graphEntries=new Map([...browserAliases].map(([outfile,alias])=>[outfile,alias.path]));
+
     let graph: SplitGraph | undefined;
     let products: EntryProducts = new Map();
     const classify = (result: esbuild.BuildResult, entries: readonly BuildEntry[]) => {
       if (!result.metafile) throw new Error('BUILD-611 entry result is missing its output graph');
       const candidates = entryProducts(config, entries, result, compiler?.getSsrEntryProducts);
-      const nextGraph = splitGraph(result.metafile, [...entries], distDir, browserEntries(config, entries, candidates));
+      const nextGraph = splitGraph(result.metafile, [...entries], distDir, browserEntries(config, entries, candidates), graphEntries);
       const outputs = (result.outputFiles ?? []).filter(file => file.path.endsWith('.ir') || nextGraph.files.has(basename(file.path)));
       const metafile = { ...result.metafile, outputs: Object.fromEntries(Object.entries(result.metafile.outputs)
         .filter(([file]) => nextGraph.files.has(basename(file)))) };
@@ -774,6 +783,8 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         outDir: distDir,
         entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
         clientEntryPoint: entry.entry,
+        browserEntryPoints: entries.find(candidate=>candidate.ssr!==false&&realpathSync(candidate.entry)===realpathSync(entry.entry))===entry
+          ? [...browserAliases.values()].filter(alias=>realpathSync(alias.entryPoint)===realpathSync(entry.entry)) : [],
         ...options,
       })) : [];
     // One shared graph (`codeSplitting`), or one bundle per entry; both passes
@@ -781,7 +792,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     // from these.
     const splitOptionsFor = (options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
       ...options,
-      entryPoints: config.entryPoints.map(entry => ({ in: entry.entry, out: basename(entry.outfile, '.js') })),
+      entryPoints: config.entryPoints.map(entry => ({ in: browserAliases.get(entry.outfile)?.path ?? entry.entry, out: basename(entry.outfile, '.js') })),
       outdir: distDir,
       splitting: true,
       metafile: true,

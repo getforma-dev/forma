@@ -198,8 +198,10 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> B
         })
         .unwrap_or_default();
 
+    // Route `js` contains declared entry modules in order. Dependency chunks
+    // live in the separate modulepreload table and must not execute eagerly.
     let page_js_tag = js_urls
-        .last()
+        .iter()
         .map(|url| {
             format!(
                 "<script type=\"module\" nonce=\"{nonce}\" src=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\"></script>",
@@ -207,7 +209,8 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> B
                 escape_html(&url.integrity)
             )
         })
-        .unwrap_or_default();
+        .collect::<Vec<_>>()
+        .join("\n");
 
     // Registration belongs only to pages that publish a JavaScript entry.
     // Static pages never bootstrap a worker, even in an enabled application.

@@ -962,3 +962,109 @@ fn a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders()
         .unwrap();
     assert!(good.into_parts_unchecked().html.contains("empty-local"));
 }
+
+#[test]
+fn typed_ssr_and_browser_execute_every_declared_entry_but_not_preload_chunks() {
+    use forma_server::{render_browser_shell, AssetManifest, Limits, PageConfig};
+    use std::borrow::Cow;
+    use std::sync::OnceLock;
+    static MANIFEST: OnceLock<Vec<u8>> = OnceLock::new();
+    struct PreloadManifest;
+    impl Embed for PreloadManifest {
+        fn get(name: &str) -> Option<rust_embed::EmbeddedFile> {
+            if name != "manifest.json" {
+                return None;
+            }
+            let mut file = Assets::get(name)?;
+            file.data = Cow::Owned(MANIFEST.get()?.clone());
+            Some(file)
+        }
+        fn iter() -> impl Iterator<Item = Cow<'static, str>> {
+            std::iter::once(Cow::Borrowed("manifest.json"))
+        }
+    }
+    // These native serialization controls use metadata for empty modules. The
+    // actual compiled two-entry/shared-chunk execution is tested in e2e/ssr.
+    let mut json: serde_json::Value =
+        serde_json::from_slice(&Assets::get("manifest.json").unwrap().data).unwrap();
+    let integrity = "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb";
+    for file in ["owner.js", "addon.js", "preload-only.js"] {
+        json["assets"][file] = serde_json::json!({"immutable": false, "integrity": integrity});
+    }
+    for route in ["/", "/client"] {
+        json["routes"][route]["js"] = serde_json::json!(["owner.js", "addon.js"]);
+        json["routes"][route]["modulepreload"] = serde_json::json!(["preload-only.js"]);
+    }
+    let text = serde_json::to_string(&json).unwrap();
+    MANIFEST.set(text.as_bytes().to_vec()).unwrap();
+    let manifest = AssetManifest::from_json(&text).unwrap();
+    let preloads = forma_server::assets::try_load_module_preloads::<PreloadManifest>().unwrap();
+    let ctx = RenderCtx::new().with_module_preloads(&preloads);
+    let pages = load_ir_modules::<Assets>(&manifest).unwrap();
+    let page = pages.bind::<Handler>("home").unwrap();
+    bind_empty(&pages);
+    pages.finalize().unwrap();
+    let shell = PageConfig {
+        title: "Browser",
+        route_pattern: "/client",
+        manifest: &manifest,
+        config_json: None,
+        body_class: None,
+        personality_css: None,
+        body_prefix: None,
+    };
+    let data = props();
+    let outputs = [
+        page.render(&data, &ctx).unwrap(),
+        render_browser_shell(&shell, &ctx).unwrap(),
+    ];
+    let mut sizes = Vec::new();
+    for output in outputs {
+        let parts = output.into_parts_unchecked();
+        let tags: Vec<_> = parts
+            .html
+            .split("<script type=\"module\"")
+            .skip(1)
+            .map(|tail| {
+                format!(
+                    "<script type=\"module\"{}",
+                    tail.split("</script>").next().unwrap()
+                )
+            })
+            .collect();
+        assert_eq!(
+            tags.len(),
+            2,
+            "every declared entry must execute: {}",
+            parts.html
+        );
+        for (tag, file) in tags.iter().zip(["owner.js", "addon.js"]) {
+            assert!(tag.contains(&format!("src=\"/_assets/{file}\"")), "{tag}");
+            assert!(tag.contains(&format!("nonce=\"{}\"", parts.nonce)), "{tag}");
+            assert!(tag.contains(&format!("integrity=\"{integrity}\"")), "{tag}");
+            assert!(tag.contains("crossorigin=\"anonymous\""), "{tag}");
+        }
+        assert!(parts.html.contains("href=\"/_assets/preload-only.js\""));
+        assert!(!parts.html.contains("src=\"/_assets/preload-only.js\""));
+        sizes.push(parts.html.len());
+    }
+    // Full document charging includes both entry tags, not just the final one.
+    let limited = |bytes| {
+        ctx.clone().with_limits(Limits {
+            max_output_bytes: bytes,
+            ..Limits::default()
+        })
+    };
+    assert_eq!(
+        page.render(&data, &limited(sizes[0] - 1))
+            .unwrap_err()
+            .code(),
+        "RENDER-301"
+    );
+    assert_eq!(
+        render_browser_shell(&shell, &limited(sizes[1] - 1))
+            .unwrap_err()
+            .code(),
+        "RENDER-301"
+    );
+}

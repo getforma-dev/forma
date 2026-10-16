@@ -1,0 +1,7 @@
+# Native multiple-entry first failure
+
+These are byte-exact native products from the mixed-entry qualification at `e6d6b689f8be876c823f3bede2af197225bd471b`. The route manifest declares the SSR owner and a separate Browser add-on as two `js` entries; its two dependency chunks are separately named by `modulepreload`. The SSR entry bundle contains the identity observation and actual island activation. The native HTML only executes the final add-on: the owner is merely a modulepreload, so it never runs.
+
+All three engines fail the actual retained-node/live-interaction test at `mixedEntryIdentity` being absent. The broad no-error row passes because an absent owner does not activate or dispatch an error. The same source's explicit Browser route mounts and updates correctly in all three engines. The full first browser log is preserved at the path and hash in the ledger; its fourth failure is the separately diagnosed WebKit CSP report receiver schema.
+
+The renderer used `js_urls.last()` despite `RouteMapping.js` being configured entry base names and the native `RouteAssets.js` contract naming modules in load order. The repair executes every declared entry with nonce/SRI/crossorigin while leaving dependency-only modulepreloads as hints. Public typed SSR/Browser tests cover exact entry count/order, no chunk script, and the complete document output budget; the actual mixed-entry browser test must prove island/ad-on liveness and shared core/module identity.

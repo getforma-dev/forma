@@ -18,7 +18,7 @@ export interface EntryCompilation {
   readonly edits:readonly SourceEdit[];
 }
 interface Participant {epoch:number;done:boolean;input?:EntryCompilation}
-interface Prepared {snapshot:SourceSnapshot;sources:Map<string,string>}
+interface Prepared {snapshot:SourceSnapshot;sources:Map<string,string>;browserSources:Map<string,string>}
 
 /** One setup group is captured by its callbacks; later contexts cannot replace it. */
 class CompilationContext {
@@ -50,6 +50,7 @@ class CompilationContext {
       for(const directory of input.snapshot.directories)snapshot.directories.add(directory);
     }
     const byFile=new Map<string,SourceEdit[]>();
+    const entryEdits=new Map<string,SourceEdit[]>();
     // A refused native contribution never lends partial instrumentation authority.
     // Its owning onEnd retains the original source-located diagnostic.
     if(inputs.every(input=>input.valid)) {
@@ -59,22 +60,29 @@ class CompilationContext {
       const hooks=withSourceSnapshot(snapshot,()=>collectAdoptionEdits(registries));
       for(const [file,edits] of hooks)byFile.set(file,[...edits]);
       for(const input of inputs)if(input.entry) {
-        const edits=byFile.get(input.entry)??[];
+        const edits=entryEdits.get(input.entry)??[];
         for(const edit of input.edits)if(!edits.some(previous=>previous.start===edit.start&&previous.end===edit.end&&previous.text===edit.text))edits.push(edit);
-        byFile.set(input.entry,edits);
+        entryEdits.set(input.entry,edits);
       }
     }
-    const sources=new Map(snapshot.files);
-    for(const [file,edits] of byFile) {
-      const source=snapshot.files.get(file);
-      if(source===undefined)throw new PropsSchemaError(file,1,1,'compiler edits have no original source snapshot');
-      try {sources.set(file,applySourceEdits(source,edits));}
-      catch(error) {throw new PropsSchemaError(file,1,1,`conflicting original compiler edits: ${(error as Error).message}`);}
-    }
-    this.prepared={snapshot,sources};return this.prepared;
+    // Component hooks have one graph-wide meaning. Entry policy (mount removal
+    // and registration metadata) belongs only to the SSR entry identity.
+    const transform=(includeEntryPolicy:boolean)=>{
+      const editsByFile=new Map([...byFile].map(([file,edits])=>[file,[...edits]]));
+      if(includeEntryPolicy)for(const [file,edits] of entryEdits)editsByFile.set(file,[...(editsByFile.get(file)??[]),...edits]);
+      const sources=new Map(snapshot.files);
+      for(const [file,edits] of editsByFile) {
+        const source=snapshot.files.get(file);
+        if(source===undefined)throw new PropsSchemaError(file,1,1,'compiler edits have no original source snapshot');
+        try {sources.set(file,applySourceEdits(source,edits));}
+        catch(error) {throw new PropsSchemaError(file,1,1,`conflicting original compiler edits: ${(error as Error).message}`);}
+      }
+      return sources;
+    };
+    this.prepared={snapshot,sources:transform(true),browserSources:transform(false)};return this.prepared;
   }
-  read(file:string):{contents:string;watchFiles:string[];watchDirs:string[]}|undefined {
-    const prepared=this.prepare(),source=prepared.sources.get(realpathSync(file));
+  read(file:string,entryPolicy=true):{contents:string;watchFiles:string[];watchDirs:string[]}|undefined {
+    const prepared=this.prepare(),source=(entryPolicy?prepared.sources:prepared.browserSources).get(realpathSync(file));
     if(source===undefined)return undefined;
     return {contents:source,watchFiles:[...prepared.snapshot.files.keys(),...prepared.snapshot.dependencies],watchDirs:[...prepared.snapshot.directories]};
   }
@@ -90,7 +98,7 @@ export function registerSsrPlugin(plugin:Plugin):Plugin {factories.add(plugin.se
 
 export function joinSsrCompilation(build:PluginBuild,setup:Setup):{
   begin():void;complete(input:EntryCompilation):void;
-  read(file:string):ReturnType<CompilationContext['read']>;unchanged():boolean;
+  read(file:string,entryPolicy?:boolean):ReturnType<CompilationContext['read']>;unchanged():boolean;
 } {
   // esbuild creates a fresh PluginBuild per setup but shares initialOptions.
   // All onStart callbacks finish before onLoad. A later setup using the same
@@ -105,5 +113,5 @@ export function joinSsrCompilation(build:PluginBuild,setup:Setup):{
   if(context.expected.size!==expected.size||[...expected].some(member=>!context!.expected.has(member)))throw new Error('BUILD-611 SSR plugin membership changed during setup');
   context.participants.set(setup,{epoch:0,done:false});
   const captured=context;
-  return {begin:()=>captured.begin(setup),complete:input=>captured.complete(setup,input),read:file=>captured.read(file),unchanged:()=>captured.unchanged()};
+  return {begin:()=>captured.begin(setup),complete:input=>captured.complete(setup,input),read:(file,entryPolicy)=>captured.read(file,entryPolicy),unchanged:()=>captured.unchanged()};
 }

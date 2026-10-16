@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "e6d6b689f8be876c823f3bede2af197225bd471b",
+  "files": {
+    "index.html": "f9091137c06a1a125610e75820009463750fd19e85185c0ca26b3775244b0559",
+    "index.headers.json": "00a3ff6393441679d555fb343adc76429121c6555534c7154a6129eb59b7c107",
+    "manifest.json": "aa5ac98f72fdcb4e4dfc6e2ae2a50f7defc476c08a76247064de34af2b134974",
+    "mixed-entry.YGVBLNMV.js": "c8b412d7df2781f5f1cf936525456c5d30f81e3b83f197932c85bacc5db7d635",
+    "fullBrowserLog": {
+      "externalPath": "work/FORMA-186-shared-entry/qualification-three-engine.log",
+      "sha256": "4278183e910445a27ad63fb5544a0984a9f92f4a234bfbaf77dd293b6894d66b",
+      "result": "110 passed,4 failed;three SSR multiple-entry failures andone separate WebKit reporting-schema failure"
+    }
+  }
+}
