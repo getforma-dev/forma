@@ -233,13 +233,13 @@ export function activateIslands(
         ready.push(pending.ready);
         continue;
       }
-      if (activationPhase.has(island) || (island as any).__formaScheduled) continue;
+      if (activationPhase.has(island)) continue;
       try { checkIslandClaim(value); } catch (error) {
         reportActivationError(error); continue;
       }
       delete (island as any).__formaDisposed;
       trackIsland(island); activationPhase.set(island, 'scheduled');
-      const trigger = island.getAttribute('data-forma-hydrate') || 'load';
+      const trigger = island.getAttribute('data-forma-hydrate');
       const work = trigger === 'visible' || trigger === 'idle' || trigger === 'interaction'
         ? undefined : queueLoad(value, children);
       if (work) ready.push(work.ready);
@@ -248,7 +248,6 @@ export function activateIslands(
           // Retained SSR targets can receive the same event after priority activation.
           for (const type of loadEvents) island.addEventListener(type, work, true);
         } else if (trigger === 'visible') {
-          (island as any).__formaScheduled = true;
           const observer = new IntersectionObserver(entries => {
             for (const entry of entries) {
               if (!entry.isIntersecting) continue;
@@ -259,7 +258,6 @@ export function activateIslands(
           (island as any).__formaObserver = observer;
           observer.observe(island);
         } else if (trigger === 'idle') {
-          (island as any).__formaScheduled = true;
           const hydrate = () => hydrateIslandRoot(value, children);
           if (typeof requestIdleCallback === 'function') {
             const handle = requestIdleCallback(hydrate);
@@ -269,7 +267,6 @@ export function activateIslands(
             (island as any).__formaIdleCancel = () => clearTimeout(handle);
           }
         } else {
-          (island as any).__formaScheduled = true;
           const hydrate = () => {
             island.removeEventListener('pointerdown', hydrate, true);
             island.removeEventListener('focusin', hydrate, true);
@@ -325,7 +322,6 @@ export function deactivateIsland(el: HTMLElement): void {
     idleCancel();
     delete (el as any).__formaIdleCancel;
   }
-  delete (el as any).__formaScheduled;
   // Nothing above is left to tear down, so this island no longer forces list
   // rows to be scanned. Marker-guarded, so the documented idempotence of this
   // function cannot double-decrement and hide an island that is still live.
@@ -371,9 +367,8 @@ function hydrateIslandRoot(value:ValidatedIsland,children:ReadonlyMap<Element,Va
   const root=value.host;
   if((root as any).__formaDisposed||activationPhase.get(root)!=='scheduled')return;
   try{checkIslandClaim(value);}catch(error){
-    deactivateIsland(root);console.error(error instanceof Error?error.message:error);return;
+    deactivateIsland(root);reportActivationError(error);return;
   }
-  delete (root as any).__formaScheduled;
   activationPhase.set(root,'preparing');
   const componentName=root.getAttribute('data-forma-component')!,occurrence=value.occurrence;
   let plan:PreparedAdoption|undefined,scope:AdoptionScope|undefined,disposeRoot:(()=>void)|undefined,activeRoot:Element=root,reported=false,initialDiagnostic:AdoptionDiagnostic|undefined;
@@ -382,7 +377,7 @@ function hydrateIslandRoot(value:ValidatedIsland,children:ReadonlyMap<Element,Va
   const failed=(error:unknown,fallback='FORMA_E_HYDRATE_COMPONENT')=>{
     if(reported)return;reported=true;
     dispose();delete (activeRoot as any).__formaDispose;untrackIsland(activeRoot);activationPhase.set(activeRoot,'error');
-    if(error instanceof IslandStateError){console.error(error.message);return;}
+    if(error instanceof IslandStateError){reportActivationError(error);return;}
     activeRoot.setAttribute('data-forma-status','error');
     const code=isHydrateError(error)?error.code:fallback;
     const context=currentAdoptionDiagnostic()??initialDiagnostic;
