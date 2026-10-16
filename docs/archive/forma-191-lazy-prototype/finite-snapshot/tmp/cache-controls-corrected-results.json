@@ -1,0 +1,26 @@
+{
+  "sourceBase": "cf869f8302ea0a07d144f39b808a8452485df970",
+  "command": [
+    "npm",
+    "test",
+    "-w",
+    "packages/core",
+    "--",
+    "src/dom/__tests__/element-prototype-cache.test.ts",
+    "--maxWorkers=2"
+  ],
+  "node": "v24.22.0",
+  "sourceSha256": "52cfc8f6f9b689662dda06c125656d86810f3353130b21e17e8cfa4238b82f51",
+  "originalSha256": "fa740cbdf1d645f5e537ecd0f31d0f2145ff2c9da00ced51130924dab0677e9c",
+  "testSha256": "fd022550021ecc30b7fb416cee663d7aac28451d4db863c08318ff2d756ceca3",
+  "startedAt": "2026-10-16T09:09:23.643383+00:00",
+  "before": {
+    "exitCode": 1
+  },
+  "candidateRestored": true,
+  "testUnchanged": true,
+  "after": {
+    "exitCode": 0
+  },
+  "finishedAt": "2026-10-16T09:09:25.474343+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "../PLAN.md": "6534551b41a27aba5072c8208a9fa846ee9d19c3ba731f67cf6ed11cee9221a1",
+  "../tmp/original/element.ts": "fa740cbdf1d645f5e537ecd0f31d0f2145ff2c9da00ced51130924dab0677e9c",
+  "../tmp/controls/element-prototype-cache.test.ts": "683c6c9ab7c066b73b73384017d3e4f58c6e57f8fedb0885fae4537102cf65cb",
+  "packages/core/src/dom/element.ts": "52cfc8f6f9b689662dda06c125656d86810f3353130b21e17e8cfa4238b82f51",
+  "packages/core/src/dom/__tests__/element-prototype-cache.test.ts": "683c6c9ab7c066b73b73384017d3e4f58c6e57f8fedb0885fae4537102cf65cb",
+  "../tmp/candidate-source.diff": "89dda5ca2dff5b924675fdd3ea5b00a0a5d25064985edf2982c10765c27f99aa",
+  "../tmp/candidate-controls.diff": "0e3e3c245835df6b53d896386047c4158bd2318dd06995a35d4134a04b92a503"
+}

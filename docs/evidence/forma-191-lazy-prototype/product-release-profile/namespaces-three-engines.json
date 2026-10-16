@@ -1,0 +1,626 @@
+{
+  "config": {
+    "argv": [
+      "/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin/node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "../root-three-engine-cjs.config.ts",
+      "e2e/ssr/namespaces.spec.ts",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results"
+    ],
+    "configFile": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/root-three-engine-cjs.config.ts",
+    "rootDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000,
+        "use": {
+          "baseURL": "http://localhost:35627",
+          "headless": true,
+          "browserName": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000,
+        "use": {
+          "baseURL": "http://localhost:35627",
+          "headless": true,
+          "browserName": "firefox"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "firefox"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-release-profile/namespaces-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "snapshotDir": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/e2e",
+        "testIgnore": [
+          "parity/**"
+        ],
+        "testMatch": [
+          "fixtures/apps/apps.spec.ts",
+          "ssr/namespaces.spec.ts"
+        ],
+        "timeout": 15000,
+        "use": {
+          "baseURL": "http://localhost:35627",
+          "headless": true,
+          "browserName": "webkit"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "webkit"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "ssr/namespaces.spec.ts",
+      "file": "ssr/namespaces.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "actual typed native products parse to the six canonical namespace trees",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 145,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:36.110Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-323685ab6db6970c7254",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 21,
+          "column": 5
+        },
+        {
+          "title": "compiled fresh JSX preserves namespace vectors and the script refusal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 178,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:36.416Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-f314ad1f0d4d8917b444",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 24,
+          "column": 5
+        },
+        {
+          "title": "compiled namespaces adopt the same nodes with zero writes and live signal bindings",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 162,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:36.602Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-507f2fa85ac76b7eba34",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 31,
+          "column": 5
+        },
+        {
+          "title": "inline SVG callbacks preserve namespaces initially and on real branch updates",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 367,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:36.771Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-3a5a90a9e5efc60dc57a",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 45,
+          "column": 5
+        },
+        {
+          "title": "actual typed native products parse to the six canonical namespace trees",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 920,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:36.115Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-60254210523e88a4990f",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 21,
+          "column": 5
+        },
+        {
+          "title": "compiled fresh JSX preserves namespace vectors and the script refusal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 480,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:37.577Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-a560af842b4b7aab8019",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 24,
+          "column": 5
+        },
+        {
+          "title": "compiled namespaces adopt the same nodes with zero writes and live signal bindings",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 282,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:38.066Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-01b5f24e4df3671ea4dd",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 31,
+          "column": 5
+        },
+        {
+          "title": "inline SVG callbacks preserve namespaces initially and on real branch updates",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 474,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:38.355Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-fd7f0a965ee4b67e2bd1",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 45,
+          "column": 5
+        },
+        {
+          "title": "actual typed native products parse to the six canonical namespace trees",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 520,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:37.422Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-77329f4c527ef74dfb93",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 21,
+          "column": 5
+        },
+        {
+          "title": "compiled fresh JSX preserves namespace vectors and the script refusal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 451,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:38.200Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-5c5976e207b60f86742e",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 24,
+          "column": 5
+        },
+        {
+          "title": "compiled namespaces adopt the same nodes with zero writes and live signal bindings",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 456,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:38.660Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-ebf99b56f0e28e31845a",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 31,
+          "column": 5
+        },
+        {
+          "title": "inline SVG callbacks preserve namespaces initially and on real branch updates",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 15000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 588,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T09:40:39.122Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "0c423fa0c769a34544f5-72c0581b37c005af6b8d",
+          "file": "ssr/namespaces.spec.ts",
+          "line": 45,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-16T09:40:34.772Z",
+    "duration": 4969.147,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,1165 @@
+/**
+ * Forma DOM - Element
+ *
+ * Hyperscript-style element factory (`h`) and Fragment helper.
+ * Backed by alien-signals via forma/reactive.
+ *
+ * Supports both HTML and SVG elements with automatic namespace detection.
+ * Provides event listener cleanup via AbortController.
+ */
+
+import { internalEffect, __DEV__ } from 'forma/reactive';
+import { adoptionListener } from '../reactive/adoption-events.js';
+import { describingAdoption, __adoptionChild } from './adoption-description.js';
+import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
+import { isFormControlProperty, writeFormControlProperty, isReactiveTextOnly, childText } from './form-control.js';
+import {
+  isDangerousUrl,
+  isEventHandlerAttr,
+  isRawHtmlAttr,
+  isSafeAttrName,
+  isUnsafeAttrWrite,
+  isUrlAttr,
+} from '../security/url-safety.js';
+import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, refuseScriptElement, type TrustedHtml } from './trusted-html.js';
+// Rule 1 (FORMA-182, docs/parity-rules.md): every ordinary text child and
+// scalar attribute value is written normalized, per value, so the DOM h()
+// builds is the DOM the browser parses from the walker's HTML. Raw HTML,
+// style and event sinks keep their own typed paths and are not routed here.
+import { normalizeDomText } from './normalize-text.js';
+import { attributeName } from './attribute-name.js';
+
+declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the dropped-prop warnings leave the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
+
+/**
+ * Symbol used as JSX Fragment factory. h(Fragment, null, ...children) returns DocumentFragment.
+ *
+ * Typed as a callable for TypeScript's JSX checker — at runtime it's a symbol
+ * that h() detects via `tag === Fragment`. esbuild transforms `<>...</>` into
+ * `h(Fragment, null, ...)` which never actually calls Fragment.
+ */
+export const Fragment: (props: { children?: unknown }) => DocumentFragment =
+  Symbol.for('forma.fragment') as any;
+
+// ---------------------------------------------------------------------------
+// SVG namespace and tag detection
+// ---------------------------------------------------------------------------
+
+export { SVG_NS, MATHML_NS };
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+/**
+ * Tags that exist in BOTH HTML and SVG, so their namespace must be resolved by
+ * where they go, not by name: the content namespace of their parent (see
+ * namespace.ts), HTML when that is not known.
+ */
+const DUAL_USE_SVG_TAGS = new Set(['a', 'title', 'script', 'style', 'font']);
+
+/**
+ * Run `build()` with SVG as the namespace of the content being built, so the
+ * tags that are both HTML and SVG (`a`, `title`, `script`, `style`, `font`)
+ * are created in SVG.
+ *
+ * `h()` builds a child before its parent exists, so in a hand-written tree
+ * such a tag is HTML unless the tree is built inside `svg()`. Where the parent
+ * is known, `h()` takes its namespace without `svg()`: a reactive child, a
+ * control-flow helper's renders once it is in the document, a portal into an
+ * SVG, `mount()` into an SVG element, and what adoption creates. Inside
+ * `svg()`, build a `foreignObject`'s, `desc`'s or `title`'s content outside it,
+ * where it is HTML.
+ *
+ * ```ts
+ * const icon = svg(() => h('svg', { viewBox: '0 0 10 10' }, h('a', { href: '#' })));
+ * ```
+ *
+ * Verified by: src/dom/__tests__/namespace-resolution.test.ts > "a title or an a passed to h() before its svg parent exists stays HTML, and is SVG inside svg()"
+ */
+export function svg<T extends Node>(build: () => T): T {
+  return withNamespace(SVG_NS, build);
+}
+
+/** Known SVG tag names for O(1) lookup. */
+const SVG_TAGS = new Set([
+  'svg',
+  'path',
+  'circle',
+  'rect',
+  'line',
+  'polyline',
+  'polygon',
+  'ellipse',
+  'g',
+  'text',
+  'tspan',
+  'textPath',
+  'defs',
+  'use',
+  'symbol',
+  'clipPath',
+  'mask',
+  'pattern',
+  'marker',
+  'linearGradient',
+  'radialGradient',
+  'stop',
+  'filter',
+  'feGaussianBlur',
+  'feColorMatrix',
+  'feOffset',
+  'feBlend',
+  'feMerge',
+  'feMergeNode',
+  'feComposite',
+  'feFlood',
+  'feMorphology',
+  'feTurbulence',
+  'feDisplacementMap',
+  'feImage',
+  'foreignObject',
+  'animate',
+  'animateTransform',
+  'animateMotion',
+  'set',
+  'image',
+  'switch',
+  'desc',
+  'title',
+  'metadata',
+  'mpath',
+  'view',
+  'feComponentTransfer',
+  'feFuncR',
+  'feFuncG',
+  'feFuncB',
+  'feFuncA',
+  'feConvolveMatrix',
+  'feDiffuseLighting',
+  'feSpecularLighting',
+  'feDistantLight',
+  'fePointLight',
+  'feSpotLight',
+  'feTile',
+  'feDropShadow',
+]);
+
+/**
+ * MathML Core's element names, created in the MathML namespace wherever they
+ * appear, as `SVG_TAGS` are in SVG. None is an HTML element name.
+ */
+const MATHML_TAGS = new Set([
+  'math', 'maction', 'annotation', 'annotation-xml', 'merror', 'mfrac', 'mi', 'mmultiscripts', 'mn', 'mo',
+  'mover', 'mpadded', 'mphantom', 'mprescripts', 'mroot', 'mrow', 'ms', 'mspace', 'msqrt', 'mstyle', 'msub',
+  'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover', 'semantics', 'mglyph', 'malignmark',
+]);
+
+/**
+ * The HTML boolean attributes: the ones a `true` writes bare and a `false`
+ * removes (FORMA-182 rule 6's attribute table, docs/parity-rules.md). Every
+ * other attribute is written as the value's string, `true` as "true". The
+ * walker's HTML_BOOLEAN_ATTRIBUTES is the same list, and both suites read it
+ * from crates/forma-ir/tests/fixtures/parity/attributes.json.
+ * Verified by: src/dom/__tests__/value-rule-6-attributes.test.ts > "%s is presence on every writer; its data- twin is the word"
+ */
+export const BOOLEAN_ATTRS: ReadonlySet<string> = new Set([
+  'disabled',
+  'checked',
+  'readonly',
+  'required',
+  'autofocus',
+  'autoplay',
+  'controls',
+  'default',
+  'defer',
+  'formnovalidate',
+  'hidden',
+  'ismap',
+  'loop',
+  'multiple',
+  'muted',
+  'nomodule',
+  'novalidate',
+  'open',
+  'playsinline',
+  'reversed',
+  'selected',
+  'async',
+]);
+
+// ---------------------------------------------------------------------------
+// Element prototype cache. Rationale, not a measurement: one detached element
+// per common tag is created on first use, and every later h('div') shallow-
+// clones it instead of going back through createElement's tag-name validation.
+// (An earlier version of this comment asserted "cloneNode is a C++ memcpy" and
+// that it is "faster than createElement" — engine internals nobody here has
+// benchmarked. The behaviour that IS load-bearing is that a clone is a fresh,
+// detached, attribute-free element, which the tests cover.)
+// ---------------------------------------------------------------------------
+
+let ELEMENT_PROTOS: Record<string, HTMLElement> | null = null;
+
+function getProto(tag: string): HTMLElement {
+  if (!ELEMENT_PROTOS) {
+    ELEMENT_PROTOS = Object.create(null);
+    // Pre-create prototypes for the 30 most common HTML tags
+    for (const t of [
+      'div', 'span', 'p', 'a', 'li', 'ul', 'ol', 'button', 'input',
+      'label', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'section', 'header',
+      'footer', 'main', 'nav', 'table', 'tr', 'td', 'th', 'tbody',
+      'img', 'form', 'select', 'option', 'textarea', 'i', 'b', 'strong',
+      'em', 'small', 'article', 'aside', 'details', 'summary',
+    ]) {
+      ELEMENT_PROTOS![t] = document.createElement(t);
+    }
+  }
+  return ELEMENT_PROTOS![tag] ?? (ELEMENT_PROTOS![tag] = document.createElement(tag));
+}
+
+// ---------------------------------------------------------------------------
+// Event name cache — memoizes the `onClick` → `click` conversion so repeated
+// bindings of the same prop name do not re-run slice + toLowerCase.
+// ---------------------------------------------------------------------------
+
+const EVENT_NAMES: Record<string, string> = Object.create(null);
+
+function eventName(key: string): string {
+  return EVENT_NAMES[key] ?? (EVENT_NAMES[key] = key.slice(2).toLowerCase());
+}
+
+// ---------------------------------------------------------------------------
+// Symbol-based AbortController storage (avoids WeakMap overhead)
+// ---------------------------------------------------------------------------
+
+const ABORT_SYM = Symbol.for('forma-abort');
+
+/**
+ * @internal Get or lazily create the AbortController an element's listeners
+ * are attached with, the one {@link cleanup} aborts for ordinary h() elements.
+ */
+export function getAbortController(el: Element): AbortController {
+  let controller = (el as any)[ABORT_SYM] as AbortController | undefined;
+  if (!controller) {
+    controller = new AbortController();
+    (el as any)[ABORT_SYM] = controller;
+  }
+  return controller;
+}
+
+/**
+ * Remove all event listeners previously attached via `h()` on the given element.
+ *
+ * Calls `AbortController.abort()` for the element, which automatically removes
+ * every listener that was registered with its signal. The controller is then
+ * deleted so a fresh one is created if the element is reused.
+ */
+export function cleanup(el: Element): void {
+  const controller = (el as any)[ABORT_SYM] as AbortController | undefined;
+  if (controller) {
+    controller.abort();
+    delete (el as any)[ABORT_SYM];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Attribute diffing cache (avoids redundant DOM writes)
+// ---------------------------------------------------------------------------
+
+const CACHE_SYM = Symbol.for('forma-attr-cache');
+const DYNAMIC_CHILD_SYM = Symbol.for('forma-dynamic-child');
+
+function getCache(el: Element): Record<string, unknown> {
+  return (el as any)[CACHE_SYM] ?? ((el as any)[CACHE_SYM] = Object.create(null));
+}
+
+// ---------------------------------------------------------------------------
+// Prop handler functions (extracted for dispatch table)
+// ---------------------------------------------------------------------------
+
+type PropHandler = (el: Element, key: string, value: unknown) => void;
+
+/**
+ * Dev-only diagnostic for a prop the attribute-safety guards refused to write.
+ * Silent in production, mirroring the SSR renderer, which drops the same props
+ * without failing the render.
+ */
+function warnDropped(el: Element, key: string, reason: string): void {
+  console.warn(
+    `[forma] Dropped ${reason} prop "${key}" on <${el.localName}> — the SSR ` +
+    `renderer drops it too, so allowing it here would re-introduce at hydration ` +
+    `exactly what the server refused to emit.`,
+  );
+}
+
+/**
+ * `__html` of a `dangerouslySetInnerHTML` value: a `trustedHtml()` value,
+ * otherwise a coded TypeError before any DOM write.
+ */
+function innerHtmlOf(value: unknown): unknown {
+  if (value === null || typeof value !== 'object' || !('__html' in (value as any))) {
+    throw new TypeError(
+      'FORMA_E_RAW_INNER_HTML: dangerouslySetInnerHTML requires { __html: trustedHtml() }, got ' + typeof value,
+    );
+  }
+  const html = (value as { __html: unknown }).__html;
+  if (!isTrustedHtml(html)) {
+    throw new TypeError(
+      'FORMA_E_RAW_INNER_HTML: dangerouslySetInnerHTML requires trustedHtml(), got ' + typeof html,
+    );
+  }
+  return html;
+}
+
+/**
+ * Handle class / className prop. The value follows the attribute table of the
+ * value rules (docs/parity-rules.md, rules 5 and 6): null, undefined and false
+ * remove the attribute (the walker omits a DYN_ATTR whose slot is Null or
+ * false); anything else, `true` included, is its string under rule 1.
+ * Verified by: src/dom/__tests__/value-rule-5-null.test.ts > "$id: a null or undefined attribute is absent, static, reactive and on adoption, and a later null removes it"
+ */
+function handleClass(el: Element, _key: string, value: unknown): void {
+  const write = (raw: unknown): void => {
+    const v = raw == null || raw === false ? null : normalizeDomText(String(raw));
+    const cache = getCache(el);
+    if (cache['class'] === v) return;
+    cache['class'] = v;
+    if (v === null) el.removeAttribute('class');
+    else if (el instanceof HTMLElement) el.className = v;
+    else el.setAttribute('class', v);
+  };
+  if (typeof value === 'function') internalEffect(() => write((value as () => unknown)()));
+  else write(value);
+}
+
+/**
+ * Parse a CSS string (e.g. "color: red; font-size: 14px") into a style object.
+ * Uses camelCase keys for CSSOM assignment via Object.assign(el.style, ...).
+ * This avoids el.style.cssText which is blocked by strict CSP style-src policies.
+ */
+/** @internal Source-private shared CSS grammar; not a package export. */
+export function parseCssString(css: string): Record<string, string> {
+  const obj: Record<string, string> = {};
+  for (const decl of css.split(';')) {
+    const colon = decl.indexOf(':');
+    if (colon < 0) continue;
+    const prop = decl.slice(0, colon).trim();
+    const val = decl.slice(colon + 1).trim();
+    if (prop && val) {
+      // kebab-case → camelCase (e.g. "font-size" → "fontSize")
+      const camel = prop.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+      obj[camel] = val;
+    }
+  }
+  return obj;
+}
+
+/** Apply a style object to an element via CSSOM (CSP-safe). */
+/** @internal Source-private shared CSSOM writer; not a package export. */
+export function applyStyleObj(el: Element, obj: Record<string, string>, prevKeys: string[]): string[] {
+  const style = (el as HTMLElement | SVGElement).style;
+  const nextKeys = Object.keys(obj);
+  for (const k of prevKeys) {
+    if (!(k in obj)) {
+      style.removeProperty(k.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()));
+    }
+  }
+  Object.assign(style, obj);
+  return nextKeys;
+}
+
+/**
+ * Handle the `style` prop.
+ *
+ * A style string is parsed into declarations and written one property at a time
+ * through the CSSOM (`el.style.foo = …` / `removeProperty`). Two consequences,
+ * both load-bearing:
+ *
+ * - `cssText` is never assigned, and neither is the `style` content attribute.
+ *   A `style-src` policy without `'unsafe-inline'` blocks writing that
+ *   attribute but permits CSSOM property writes, which is why this path works
+ *   on a CSP-hardened page. (The browser still reflects the resulting
+ *   declaration block back into the attribute — that reflection is the
+ *   browser's, not ours, and CSP does not block it.)
+ * - A reactive style RECONCILES: a declaration present on the previous run and
+ *   absent on this one is removed individually, rather than the whole block
+ *   being rewritten.
+ *
+ * Verified by: src/dom/__tests__/element.test.ts > "reconciles a reactive style per declaration instead of rewriting the block"
+ * Verified by: src/dom/__tests__/element.test.ts > "never assigns cssText anywhere in the element factory"
+ */
+function handleStyle(el: Element, _key: string, value: unknown): void {
+  if (typeof value === 'function') {
+    let prevKeys: string[] = [];
+    internalEffect(() => {
+      const v = (value as () => string | Record<string, string>)();
+      if (typeof v === 'string') {
+        const cache = getCache(el);
+        if (cache['style'] === v) return;
+        cache['style'] = v;
+        prevKeys = applyStyleObj(el, parseCssString(v), prevKeys);
+      } else if (v && typeof v === 'object') {
+        prevKeys = applyStyleObj(el, v as Record<string, string>, prevKeys);
+      }
+    });
+  } else if (typeof value === 'string') {
+    const cache = getCache(el);
+    if (cache['style'] === value) return;
+    cache['style'] = value;
+    applyStyleObj(el, parseCssString(value), []);
+  } else if (value && typeof value === 'object') {
+    Object.assign((el as HTMLElement | SVGElement).style, value);
+  }
+}
+
+/**
+ * Handle event handler props (onClick, onInput, etc.). Cached eventName.
+ *
+ * A non-function value is DROPPED rather than registered. `h('button', {onclick:
+ * 'alert(1)'})` is the inline-handler shape the SSR renderer refuses, and
+ * registering the string as a listener does not make it run — it makes
+ * `dispatchEvent` throw `listener.call is not a function` the first time the
+ * element is clicked, taking every other listener on that element down with it.
+ * Refusing it here is what makes the client agree with the server.
+ *
+ * Verified by: src/__tests__/renderer-contract.test.ts > "a refused handler attribute does not become a live listener"
+ */
+function handleEvent(el: Element, key: string, value: unknown): void {
+  // A DOM EventListener is a function or an object with a handleEvent method;
+  // anything else (a string, a number, a plain object) is not callable.
+  const listenable =
+    typeof value === 'function' ||
+    (typeof value === 'object' && value !== null &&
+      typeof (value as { handleEvent?: unknown }).handleEvent === 'function');
+  if (!listenable) {
+    if (value == null) return;
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
+    return;
+  }
+  const controller = getAbortController(el);
+  el.addEventListener(
+    eventName(key),
+    adoptionListener(value as EventListenerOrEventListenerObject),
+    { signal: controller.signal },
+  );
+}
+
+/**
+ * Handle dangerouslySetInnerHTML prop.
+ *
+ * **Security:** No sanitization is performed. Never pass user-controlled
+ * strings through `__html` — this will create an XSS vulnerability.
+ * Only use with trusted, server-generated markup, wrapped in `trustedHtml()`
+ * (DR-19): a `TrustedHTML` reaches the sink as it is, so a page enforcing
+ * Trusted Types accepts it. Plain strings are refused before the sink in all builds.
+ *
+ * Supports both static `{ __html }` values and reactive functions that return
+ * one. `null` empties the element through `replaceChildren()`, which no
+ * Trusted Types policy checks: core itself writes no string to an HTML sink.
+ *
+ * Verified by: src/dom/__tests__/trusted-html.test.ts > "core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()"
+ */
+function handleInnerHTML(el: Element, _key: string, value: unknown): void {
+  if (typeof value === 'function') {
+    bindInnerHTML(el, value, false);
+  } else {
+    if (value == null) {
+      el.replaceChildren();
+      return;
+    }
+    el.innerHTML = rawHtml(innerHtmlOf(value), 'innerHTML');
+  }
+}
+
+/**
+ * Bind `value`, a `dangerouslySetInnerHTML` prop (static or a function), to
+ * `el`'s content on the ordinary h() path. Strict adoption instead validates
+ * through prepareRaw before publishing its later typed writer.
+ *
+ * - Only a `trustedHtml()` value reaches the raw sink. It is recorded as
+ *   current only once written, so a failed write cannot suppress a later
+ *   accepted write of the same markup.
+ * - `null` and `false` empty the element and forget the markup, so the same
+ *   markup after either sentinel is written again.
+ * - The retained internal `adopt` flag skips the first matching write: markup the server's
+ *   element already holds is not written again ({@link holdsMarkup}), and a
+ *   first `null` keeps the server's content, the children adoption bound, as
+ *   h() shows its children until markup arrives.
+ *
+ * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "an adopted reactive dangerouslySetInnerHTML shows its content, follows its signal through null and back, and matches client rendering ($name)"
+ * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "A → null → A shows A again, client-rendered and adopted"
+ * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "adoption writes nothing where the server already holds the markup"
+ * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives"
+ * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused string aborts adoption while ordinary CSR accepts later trusted markup"
+ */
+export function bindInnerHTML(el: Element, value: unknown, adopt: boolean): void {
+  let first = adopt;
+  const write = (resolved: unknown): void => {
+    const adopting = first;
+    first = false;
+    const cache = getCache(el);
+    if (resolved == null || resolved === false) {
+      cache['innerHTML'] = null;
+      if (!adopting && el.firstChild) el.replaceChildren();
+      return;
+    }
+    const html = innerHtmlOf(resolved);
+    const markup = String(html);
+    if (cache['innerHTML'] === markup) return;
+    const sink = rawHtml(html, 'innerHTML');
+    if (!adopting || !holdsMarkup(el, markup, sink)) el.innerHTML = sink;
+    cache['innerHTML'] = markup;
+  };
+  if (typeof value === 'function') {
+    internalEffect(() => { write((value as () => unknown)()); });
+  } else {
+    write(value);
+  }
+}
+
+/**
+ * True when `el`'s content already is what `sink` (whose text is `markup`)
+ * parses to: byte-equal to the browser's serialisation, or equal to it once
+ * `sink` is parsed through a `<template>` and serialised the same way. A
+ * server writes markup as it was given, and `<br/>`, single quotes, `&#39;`,
+ * an unclosed `<p>` or a `<table>` without `<tbody>` all serialise
+ * differently, so byte equality alone would rewrite the server's nodes (an
+ * iframe reloads, typed text is lost: DR-5). The parse writes `sink` itself,
+ * so `trustedHtml()` stays typed. Raw strings have already been refused.
+ *
+ * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "markup the server wrote in a form the browser serialises differently is not rewritten: %j"
+ */
+function holdsMarkup(el: Element, markup: string, sink: string): boolean {
+  const current = el.innerHTML;
+  if (current === markup) return true;
+  // An empty element (the walker's) holds no markup to compare: write, with
+  // no parse first. The typed admission check also runs for an empty target.
+  // Verified by: src/dom/__tests__/trusted-html.test.ts > "adopted and client reactive strings are refused before the browser sink"
+  if (current === '') return false;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = sink;
+  return tpl.innerHTML === current;
+}
+
+/**
+ * Handle xlink: namespaced SVG attributes.
+ *
+ * `xlink:href` is a URL attribute — on `<use>` it dereferences into a document
+ * context — so every write goes through the same guard as `href`/`src`; a
+ * rejected value removes the attribute rather than leaving a stale one.
+ *
+ * Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops a javascript: xlink:href on <use>"
+ */
+function handleXLink(el: Element, key: string, value: unknown): void {
+  const localName = key.slice(6); // strip "xlink:" prefix
+  const write = (v: unknown): void => {
+    if (v == null || v === false) {
+      el.removeAttributeNS(XLINK_NS, localName);
+      return;
+    }
+    // The guard classifies the raw string (a NUL anywhere refuses); the
+    // normalized string is what is written.
+    const raw = String(v), strVal = normalizeDomText(raw);
+    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
+      el.removeAttributeNS(XLINK_NS, localName);
+      return;
+    }
+    el.setAttributeNS(XLINK_NS, key, strVal);
+  };
+
+  if (typeof value === 'function') {
+    internalEffect(() => { write((value as () => unknown)()); });
+  } else {
+    write(value);
+  }
+}
+
+/** Handle boolean attributes (disabled, checked, etc.). */
+function handleBooleanAttr(el: Element, key: string, value: unknown): void {
+  if (typeof value === 'function') {
+    internalEffect(() => {
+      const v = (value as () => boolean)();
+      const cache = getCache(el);
+      if (cache[key] === v) return;
+      cache[key] = v;
+      if (v) {
+        el.setAttribute(key, '');
+      } else {
+        el.removeAttribute(key);
+      }
+    });
+  } else {
+    const cache = getCache(el);
+    if (cache[key] === value) return;
+    cache[key] = value;
+    if (value) {
+      el.setAttribute(key, '');
+    } else {
+      el.removeAttribute(key);
+    }
+  }
+}
+
+/**
+ * Handle generic attributes with setAttribute/removeAttribute.
+ *
+ * This is the tail of the prop dispatch, so it is where an attacker-supplied
+ * prop name/value lands. Two writes are refused here, matching what the SSR
+ * renderer's `renderAttr` refuses:
+ *
+ * - any `on…`-named prop, in any casing. `applyProp`'s fast path only routes
+ *   lowercase `on` to addEventListener, so `ONCLICK`/`Onerror` would otherwise
+ *   reach setAttribute — which ASCII-lowercases qualified names on HTML
+ *   elements and produces a live inline handler.
+ * - a URL attribute carrying a script-executing scheme, checked against the
+ *   element's tag so an image sink can still take `data:image/svg+xml`.
+ *
+ * A rejected reactive value removes the attribute instead of leaving the
+ * previous (accepted) one in place, so the DOM never disagrees with the cache.
+ *
+ * The identity check runs BEFORE the URL guard. That is safe by construction,
+ * not a trade: `cache[key]` only ever holds a string this same guard already
+ * accepted, because the reject path stores `null` (never the refused string)
+ * and no other handler writes this key — `class`/`className`/`style`/
+ * `dangerouslySetInnerHTML` and every boolean attribute are routed to their own
+ * handler by `applyProp` and cache under their own key, and none of those keys
+ * is URL-bearing. `el.localName`, the guard's other input, cannot change for the
+ * life of the element. So a cache hit means this exact (element, attribute,
+ * value) triple already passed, and re-running an allocating `String.replace`
+ * plus two regexes to then write nothing is pure cost.
+ *
+ * Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops an uppercase-cased function prop instead of stringifying it into an attribute"
+ * Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops a javascript: src on a reactive binding and removes the stale safe value"
+ * Verified by: src/dom/__tests__/element-url-safety.test.ts > "a refused URL leaves no cache entry that would let the same string through unchecked"
+ * Verified by: src/dom/__tests__/element-url-safety.test.ts > "runs the URL guard once per distinct value, not once per flush"
+ */
+function handleGenericAttr(el: Element, key: string, value: unknown): void {
+  if (isEventHandlerAttr(key)) {
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
+    return;
+  }
+  // `key` is fixed for this binding, so the (allocating) URL-attribute lookup
+  // happens once, not on every reactive re-run.
+  const urlAttr = isUrlAttr(key);
+
+  const write = (v: unknown): void => {
+    const cache = getCache(el);
+    if (v != null && v !== false) {
+      checkRawAttr(key, v);
+      // Normalized before the cache, so an equivalent value is not rewritten;
+      // the URL guard classifies the raw string (a NUL anywhere refuses) and
+      // the normalized string is what is written and remembered.
+      // Verified by: src/dom/__tests__/normalize-text.test.ts > "h() attributes write $id normalized: static, dynamic, class and xlink"
+      const raw = String(v), strVal = normalizeDomText(raw);
+      // Already written, already guarded — see the note above the function.
+      if (cache[key] === strVal) return;
+      if (!urlAttr || !isDangerousUrl(raw, el.localName)) {
+        // The string the URL guard checked is the string written: an object
+        // is converted once, above. Only trusted HTML for `srcdoc` is written
+        // as itself, so a TrustedHTML reaches that sink typed (DR-19).
+        // Verified by: src/__tests__/renderer-contract.test.ts > "writes %s as the string the URL guard checked, not a second conversion"
+        el.setAttribute(key, typeof v === 'object' && isRawHtmlAttr(key) && isTrustedHtml(v) ? htmlOf(v) : strVal);
+        cache[key] = strVal;
+        return;
+      }
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
+    }
+    if (cache[key] === null) return;
+    cache[key] = null;
+    el.removeAttribute(key);
+  };
+
+  if (typeof value === 'function') {
+    internalEffect(() => { write((value as () => unknown)()); });
+  } else {
+    write(value);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Prop dispatch table (O(1) Map lookup replaces sequential if/else chain)
+// ---------------------------------------------------------------------------
+
+const PROP_HANDLERS = new Map<string, PropHandler>();
+
+// Register specific prop handlers
+PROP_HANDLERS.set('class', handleClass);
+PROP_HANDLERS.set('className', handleClass);
+PROP_HANDLERS.set('style', handleStyle);
+PROP_HANDLERS.set('ref', () => {}); // no-op, handled in h()
+PROP_HANDLERS.set('dangerouslySetInnerHTML', handleInnerHTML);
+
+// Register boolean attrs into the dispatch table
+for (const attr of BOOLEAN_ATTRS) {
+  PROP_HANDLERS.set(attr, handleBooleanAttr);
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/** Apply a single prop to an element (supports both HTML and SVG). */
+function applyProp(el: Element, key: string, value: unknown): void {
+  key = attributeName(key);
+  if (isFormControlProperty(el, key)) {
+    if (typeof value === 'function') {
+      internalEffect(() => writeFormControlProperty(el, key, (value as () => unknown)()));
+    } else {
+      writeFormControlProperty(el, key, value);
+    }
+    return;
+  }
+  // "Twin Chassis" exploit: inline check for the #1 most common prop
+  // String === is ~2ns vs Map.get() ~8ns. Saves 75% dispatch time for 'class'.
+  if (key === 'class') { handleClass(el, key, value); return; }
+
+  // 2. Event handler detection (2-char check, faster than startsWith)
+  // Events are the #2 most common prop type — check before Map.
+  // Deliberately case-SENSITIVE: only `onClick`-style props become listeners.
+  // Other casings (`ONCLICK`) fall through to handleGenericAttr, which drops
+  // them rather than writing an inline handler attribute — the same rule the
+  // SSR renderer applies, so a tree renders identically on both sides.
+  if (key.charCodeAt(0) === 111 /* 'o' */ && key.charCodeAt(1) === 110 /* 'n' */ && key.length > 2) {
+    handleEvent(el, key, value); return;
+  }
+
+  // 3. Dispatch table for remaining known props (className, style, boolean attrs)
+  const handler = PROP_HANDLERS.get(key);
+  if (handler) { handler(el, key, value); return; }
+
+  // 4. xlink: namespace (rare, check last)
+  if (key.charCodeAt(0) === 120 /* 'x' */ && key.startsWith('xlink:')) {
+    handleXLink(el, key, value); return;
+  }
+
+  // 5. Generic attribute fallback
+  handleGenericAttr(el, key, value);
+}
+
+// ---------------------------------------------------------------------------
+// "Blown Diffuser" — static prop fast path (no cache, no effects)
+// Used only during h() initial element creation for non-function prop values.
+// Saves: getCache() lookup, cache diff check, cache write — per static prop.
+// ---------------------------------------------------------------------------
+
+function applyStaticProp(el: Element, key: string, value: unknown): void {
+  key = attributeName(key);
+  if (value == null || value === false) return;
+
+  if (key === 'class' || key === 'className') {
+    const v = normalizeDomText(String(value));
+    if (el instanceof HTMLElement) {
+      el.className = v;
+    } else {
+      el.setAttribute('class', v);
+    }
+    return;
+  }
+
+  if (key === 'style') {
+    if (typeof value === 'string') {
+      applyStyleObj(el, parseCssString(value), []);
+    } else if (value && typeof value === 'object') {
+      Object.assign((el as HTMLElement | SVGElement).style, value);
+    }
+    return;
+  }
+
+  if (key === 'dangerouslySetInnerHTML') {
+    el.innerHTML = rawHtml(innerHtmlOf(value), 'innerHTML');
+    return;
+  }
+
+  // xlink: namespace
+  if (key.charCodeAt(0) === 120 /* x */ && key.startsWith('xlink:')) {
+    const raw = String(value), strVal = normalizeDomText(raw);
+    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
+      return;
+    }
+    el.setAttributeNS(XLINK_NS, key, strVal);
+    return;
+  }
+
+  // Boolean attrs
+  if (BOOLEAN_ATTRS.has(key)) {
+    if (value) el.setAttribute(key, '');
+    return;
+  }
+
+  // Generic tail. This is the fast path an attacker-supplied prop reaches, so
+  // it refuses the same writes as handleGenericAttr (and as the SSR renderer):
+  // any `on…`-named prop — including the `value === true` case, which would
+  // otherwise emit a bare `ONCLICK` attribute — and script-scheme URLs, checked
+  // against the element's tag.
+  // Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops on* props in the value===true branch"
+  if (isEventHandlerAttr(key)) {
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
+    return;
+  }
+  checkRawAttr(key, value);
+
+  // `true` is the word "true" off the boolean set (rule 6's attribute table,
+  // docs/parity-rules.md: the walker writes the same), else the value's string.
+  const raw = String(value), strVal = normalizeDomText(raw);
+  if (isUrlAttr(key) && isDangerousUrl(raw, el.localName)) {
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
+    return;
+  }
+  // The string the URL guard checked is the string written: an object is
+  // converted once, above. Only trusted HTML for `srcdoc` is written as
+  // itself, so a TrustedHTML reaches that sink typed (DR-19).
+  // Verified by: src/__tests__/renderer-contract.test.ts > "writes %s as the string the URL guard checked, not a second conversion"
+  el.setAttribute(key, typeof value === 'object' && isRawHtmlAttr(key) && isTrustedHtml(value) ? htmlOf(value) : strVal);
+}
+
+/** Append a single child to a parent node. */
+function appendChild(parent: Node, child: unknown): void {
+  // Rationale for the branch ORDER, not a measured claim: the Node check is
+  // first because nested h() calls are the common child in this codebase's own
+  // trees, and `instanceof` on a primitive is rejected without walking a
+  // prototype chain, so putting it first costs the other branches nothing.
+  // (The earlier version of this comment asserted "70%+ of children are Nodes"
+  // and "saves 3-5 comparisons"; neither figure was ever measured.)
+  if (child instanceof Node) {
+    parent.appendChild(child);
+    return;
+  }
+
+  // "Track Limits": new Text() bypasses Document.createTextNode's validation.
+  // Verified by: src/dom/__tests__/normalize-text.test.ts > "h() children write $id normalized on the single, multiple, reactive and array paths"
+  if (typeof child === 'string') {
+    parent.appendChild(new Text(normalizeDomText(child)));
+    return;
+  }
+
+  // Null/false/true → skip (React-style conditional pattern)
+  if (child == null || child === false || child === true) {
+    return;
+  }
+
+  if (typeof child === 'number') {
+    parent.appendChild(new Text(String(child)));
+    return;
+  }
+
+  // Function child: reactive binding via signal getter.
+  // The return value determines the binding type:
+  //   - Node (from h() call) → append/replace as element
+  //   - Array (from .map()) → wrap in DocumentFragment, append/replace
+  //   - primitive (string/number/null) → bind as text
+  if (typeof child === 'function') {
+    if (parent instanceof Element) {
+      (parent as any)[DYNAMIC_CHILD_SYM] = true;
+    }
+    let currentNode: Node | null = null;
+    // Fragment children are tracked separately because DocumentFragment
+    // empties itself on appendChild — we need to remove children manually.
+    let currentFragChildren: Node[] | null = null;
+    // The parent is known here, so what the child builds takes its content's
+    // namespace from the start.
+    // Verified by: src/dom/__tests__/namespace-resolution.test.ts > "a function child inside an svg builds in the SVG namespace on every run"
+    const ns = insertNs(parent);
+
+    // Helper: remove all tracked fragment children or the single current node
+    const clearCurrent = () => {
+      if (currentFragChildren) {
+        for (const c of currentFragChildren) {
+          if (c.parentNode === parent) parent.removeChild(c);
+        }
+        currentFragChildren = null;
+      }
+      if (currentNode && currentNode.parentNode === parent) {
+        parent.removeChild(currentNode);
+      }
+      currentNode = null;
+    };
+
+    internalEffect(() => {
+      const v = withNamespace(ns, child as () => unknown);
+
+      // Array return (e.g. from .map()) → wrap in DocumentFragment
+      let resolved: unknown = v;
+      if (Array.isArray(v)) {
+        const frag = document.createDocumentFragment();
+        for (const item of v) {
+          // A nested array is skipped, as it always was; the tracing that
+          // named it hung on an undocumented `__FORMA_DEBUG__` global and went
+          // with createShow's and createSwitch's (FORMA-021 C2).
+          if (item instanceof Node) frag.appendChild(item);
+          else if (!Array.isArray(item) && item != null && item !== false && item !== true) {
+            frag.appendChild(new Text(normalizeDomText(String(item))));
+          }
+        }
+        // Empty array → treat as null (no DOM output)
+        resolved = frag.childNodes.length > 0 ? frag : null;
+      }
+
+      if (resolved instanceof Node) {
+        // Clear previous state (fragment children or single node)
+        clearCurrent();
+
+        // Track fragment children before appendChild empties the fragment
+        const isNewFrag = resolved instanceof DocumentFragment;
+        if (isNewFrag) {
+          currentFragChildren = Array.from(resolved.childNodes);
+        }
+
+        // Insert the new node/fragment
+        parent.appendChild(resolved);
+        currentNode = isNewFrag ? null : (resolved as Node);
+      } else if (resolved == null || resolved === false || resolved === true) {
+        // Null/false/true/empty array — remove current content
+        clearCurrent();
+      } else {
+        // Primitive value — bind as text
+        // Clear fragment children if transitioning from array → primitive
+        if (currentFragChildren) {
+          for (const c of currentFragChildren) {
+            if (c.parentNode === parent) parent.removeChild(c);
+          }
+          currentFragChildren = null;
+        }
+        const text = normalizeDomText(typeof resolved === 'symbol' ? String(resolved) : String(resolved ?? ''));
+        if (!currentNode) {
+          currentNode = new Text(text);
+          parent.appendChild(currentNode);
+        } else if (currentNode.nodeType === 3) {
+          // In-place text update — avoids DOM removal/insertion
+          (currentNode as Text).data = text;
+        } else {
+          const tn = new Text(text);
+          parent.replaceChild(tn, currentNode);
+          currentNode = tn;
+        }
+      }
+    });
+    return;
+  }
+
+  if (Array.isArray(child)) {
+    for (const item of child) {
+      appendChild(parent, item);
+    }
+    return;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a real DOM element with optional props and children.
+ *
+ * Supports both HTML and SVG elements. SVG tags are detected automatically
+ * and created with the correct SVG namespace. Inside a `foreignObject`,
+ * children switch back to the HTML namespace.
+ *
+ * Event listeners are attached with an AbortController signal so they can
+ * be removed in bulk via `cleanup(el)`.
+ *
+ * Hyperscript-style API:
+ * ```ts
+ * h('div', { class: 'container', onClick: handleClick },
+ *   h('span', null, 'Hello'),
+ *   h('span', null, name),  // name is a signal getter
+ * )
+ *
+ * h('svg', { viewBox: '0 0 24 24', fill: 'none' },
+ *   h('path', { d: 'M12 2L2 22h20L12 2z', stroke: 'currentColor' }),
+ * )
+ * ```
+ */
+// Overloads: function component, Fragment, string
+/** Named raw props remain typed even though other attributes are extensible. */
+export type ElementProps = Record<string, unknown> & {
+  dangerouslySetInnerHTML?: { __html: TrustedHtml } | (() => { __html: TrustedHtml } | null | false) | null | false;
+  srcdoc?: TrustedHtml | (() => TrustedHtml | null | false) | null | false;
+};
+export function h(tag: (props: Record<string, unknown>) => unknown, props?: Record<string, unknown> | null, ...children: unknown[]): Node;
+export function h(tag: typeof Fragment, props?: null, ...children: unknown[]): DocumentFragment;
+export function h(tag: string, props?: ElementProps | null, ...children: unknown[]): HTMLElement;
+export function h(
+  tag: string | typeof Fragment | ((props: Record<string, unknown>) => unknown),
+  props?: Record<string, unknown> | null,
+  ...children: unknown[]
+): HTMLElement | DocumentFragment {
+  // Function component: call with merged props + children
+  if (typeof tag === 'function' && tag !== Fragment) {
+    const mergedProps = { ...(props ?? {}), children };
+    if (describingAdoption) return __adoptionChild(undefined, tag, [mergedProps]) as HTMLElement;
+    return tag(mergedProps) as unknown as HTMLElement;
+  }
+
+  // Fragment: return DocumentFragment with children. During adoption description it is a
+  // descriptor like any element, so adoption can walk its children as a range
+  // of the server's nodes instead of receiving a detached fragment it cannot
+  // match to anything.
+  // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text under a caller-owned adoption root"
+  if (tag === Fragment) {
+    if (describingAdoption) return { type: 'fragment', children } as unknown as DocumentFragment;
+    const frag = document.createDocumentFragment();
+    for (const child of children) {
+      appendChild(frag, child);
+    }
+    return frag;
+  }
+
+  // After the Fragment guard above, tag is guaranteed to be a string
+  const tagName = tag as string;
+  refuseScriptElement(tagName);
+
+  if (describingAdoption) {
+    return { type: 'element', tag: tagName, props: props ?? null, children } as unknown as HTMLElement;
+  }
+
+  // "Flexible Wings" exploit: for HTML elements, clone a pre-created prototype
+  // instead of calling createElement. cloneNode(false) is a single C++ memcpy
+  // that copies the element's internal state without parsing the tag string.
+  // Skip the SVG Set lookup entirely when the tag is in the proto cache (hot path).
+  let el: Element;
+  // A dual-use tag (a, title, script, style, font) is checked before the proto
+  // cache, which holds its HTML prototype: it takes the namespace of the
+  // content being built (namespace.ts), which is HTML for a child built
+  // before its parent exists, unless the tree is inside svg().
+  if (DUAL_USE_SVG_TAGS.has(tagName)) {
+    const ns = getNamespace();
+    el = ns ? document.createElementNS(ns, tagName) : getProto(tagName).cloneNode(false) as HTMLElement;
+  } else if (ELEMENT_PROTOS && ELEMENT_PROTOS[tagName]) {
+    el = ELEMENT_PROTOS[tagName]!.cloneNode(false) as HTMLElement;
+  } else if (SVG_TAGS.has(tagName)) {
+    el = document.createElementNS(SVG_NS, tagName);
+  } else if (MATHML_TAGS.has(tagName)) {
+    el = document.createElementNS(MATHML_NS, tagName);
+  } else {
+    el = getProto(tagName).cloneNode(false) as HTMLElement;
+  }
+
+  return fillElement(el, props, children) as unknown as HTMLElement;
+}
+
+
+/**
+ * The half of h() that runs once the element exists: props, children, live
+ * form values, then the ref. The private live materializer resolves children
+ * after props establish the actual content namespace. Ordinary h() omits it.
+ */
+export function fillElement<E extends Element>(
+  el: E,
+  props: Record<string, unknown> | null | undefined,
+  children: unknown[],
+  resolveChildren?: () => {
+    children: unknown[]; target: Element | DocumentFragment;
+    textReader?: (read: () => string) => () => string;
+  },
+): E {
+  // Children beside dangerouslySetInnerHTML: h() renders the markup, then
+  // them, until the markup next changes; ./ssr and adoption keep the markup.
+  // Said once, in development (FORMA-176).
+  warnInnerHtmlChildren(props, children);
+  // Props are split into a static and a dynamic path. Static props
+  // (string/number/boolean literals) are written once and never re-read, so
+  // they skip the attribute cache entirely; only function-valued props need it,
+  // to diff against the previous value on re-runs. An element with no dynamic
+  // prop therefore never allocates a cache object.
+  // Verified by: src/dom/__tests__/element.test.ts > "allocates no attribute cache for an element with only static props"
+  let formProps: string[] | undefined;
+  if (props) {
+    let hasDynamic = false;
+    for (const key in props) {
+      if (key === 'ref' || !isSafeAttrName(key)) continue;
+      const value = props[key];
+
+      // A select cannot select an option until its children exist, and input
+      // type/multiple must be configured before writing live form state.
+      if (isFormControlProperty(el, key)) {
+        (formProps ??= []).push(key);
+        continue;
+      }
+
+      // Event handlers: no cache needed, direct binding. Case-sensitive by
+      // design — see applyProp; other casings are dropped downstream instead of
+      // becoming inline handler attributes.
+      if (key.charCodeAt(0) === 111 /* o */ && key.charCodeAt(1) === 110 /* n */ && key.length > 2) {
+        handleEvent(el, key, value);
+        continue;
+      }
+
+      // Dynamic prop (function value, not event): needs cache + effect
+      if (typeof value === 'function') {
+        if (!hasDynamic) {
+          // Lazy-allocate cache only when first dynamic prop is found
+          (el as any)[CACHE_SYM] = Object.create(null);
+          hasDynamic = true;
+        }
+        applyProp(el, key, value);
+        continue;
+      }
+
+      // Static prop: zero-cache fast path — direct DOM write
+      applyStaticProp(el, key, value);
+    }
+  }
+
+  const resolved = resolveChildren?.();
+  if (resolved) children = resolved.children;
+  const target = resolved?.target ?? el;
+
+  // Append children — fast path for single string/number child avoids
+  // Text node allocation + separate appendChild. el.textContent is a single
+  // native C++ call that combines both operations.
+  const childLen = children.length;
+  if (el instanceof HTMLTextAreaElement && isReactiveTextOnly(children)) {
+    const read = resolved?.textReader?.(() => childText(children)) ?? (() => childText(children));
+    internalEffect(() => writeFormControlProperty(el, 'text', read()));
+  } else if (childLen === 1) {
+    const only = children[0];
+    if (typeof only === 'string') {
+      target.textContent = normalizeDomText(only);
+    } else if (typeof only === 'number') {
+      target.textContent = String(only);
+    } else {
+      appendChild(target, only);
+    }
+  } else if (childLen > 1) {
+    for (const child of children) {
+      appendChild(target, child);
+    }
+  }
+
+  if (formProps && props) {
+    for (const key of formProps) applyProp(el, key, props[key]);
+  }
+
+  // Call ref after element is fully constructed, including live form values.
+  if (props && typeof props['ref'] === 'function') {
+    (props['ref'] as (el: Element) => void)(el);
+  }
+
+  return el;
+}
+
+/**
+ * Create a DocumentFragment from children.
+ *
+ * ```ts
+ * fragment(
+ *   h('li', null, 'one'),
+ *   h('li', null, 'two'),
+ * )
+ * ```
+ */
+export function fragment(...children: unknown[]): DocumentFragment {
+  if (describingAdoption) return { type: 'fragment', children } as unknown as DocumentFragment;
+  const frag = document.createDocumentFragment();
+  for (const child of children) {
+    appendChild(frag, child);
+  }
+  return frag;
+}

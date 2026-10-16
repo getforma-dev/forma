@@ -1,0 +1,8 @@
+{
+  "debugBinary": "c16b0ab665b4deca2391056436841484e148ba060d299c79700492d227aa9eef",
+  "releaseBinary": "115f00af47e7ee128e2705b84495d5969eef7d77f52947bbb7f7ac8ef17a7d11",
+  "enforcedPolicyEqualAfterNonceNormalization": true,
+  "enforcedPolicy": "default-src 'none'; script-src 'nonce-<per-response>' 'strict-dynamic' 'self'; style-src 'nonce-<per-response>' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+  "debugReportOnly": "require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+  "releaseReportOnly": null
+}

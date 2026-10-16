@@ -1,0 +1,21 @@
+{
+  "head": "fe2ba420a6e7e382eb8b18a6c96d3e6be76a9efa",
+  "productHead": "24a6c0b0157baa434524ffc8431041ebb1b3854b",
+  "onlyChangedPaths": [
+    "e2e/fixtures/apps/README.md",
+    "e2e/fixtures/apps/apps.spec.ts"
+  ],
+  "files": [
+    {
+      "path": "e2e/fixtures/apps/README.md",
+      "bytes": 7129,
+      "sha256": "6b3fab0a0a05269071b5bfc5a3c678ba6917976e13e451b368129f5a7451003f"
+    },
+    {
+      "path": "e2e/fixtures/apps/apps.spec.ts",
+      "bytes": 16712,
+      "sha256": "ecadbe83193c43108a888ffbf6ad332e234373f7c7776da774e5a809e8e15cd0"
+    }
+  ],
+  "priorFiniteScope": "dc43901d and 24a6c0b; no new-head finite replay claim"
+}

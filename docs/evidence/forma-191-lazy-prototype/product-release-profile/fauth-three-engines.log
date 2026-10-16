@@ -1,0 +1,76 @@
+[WebServer] (node:373) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:435) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:439) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 51 tests using 2 workers
+
+(node:441) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:112:9 › fixture application fauth › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+[2/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:112:9 › fixture application fauth › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+[3/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[4/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[5/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work
+[6/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[7/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work
+[8/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work
+[9/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[10/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work
+[11/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[12/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work
+[13/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[14/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work
+[15/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[16/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[17/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work
+[18/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work
+[19/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[20/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[21/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work
+[22/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work
+[23/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:174:9 › fixture application fauth: other branches › every extra check in lib/behaviours.mjs is run by name
+[24/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/quote/login: a tenant named with script and markup renders as text and runs nothing
+[25/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/unknown/login: an unknown tenant is a 404, not a page
+[26/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[27/51] [chromium] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch
+[28/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work
+(node:523) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[29/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:112:9 › fixture application fauth › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+[30/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[31/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[32/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work
+[33/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work
+[34/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:174:9 › fixture application fauth: other branches › every extra check in lib/behaviours.mjs is run by name
+[35/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/quote/login: a tenant named with script and markup renders as text and runs nothing
+[36/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/unknown/login: an unknown tenant is a 404, not a page
+[37/51] [firefox] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch
+[38/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[39/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work
+[40/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[41/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work
+[42/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[43/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work
+[44/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[45/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work
+[46/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+[47/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work
+[48/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:174:9 › fixture application fauth: other branches › every extra check in lib/behaviours.mjs is run by name
+[49/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/quote/login: a tenant named with script and markup renders as text and runs nothing
+[50/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/unknown/login: an unknown tenant is a 404, not a page
+[51/51] [webkit] › e2e/fixtures/apps/apps.spec.ts:180:11 › fixture application fauth: other branches › /t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch
+  51 passed (17.9s)

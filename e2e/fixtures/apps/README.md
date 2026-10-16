@@ -31,6 +31,20 @@ bash e2e/fixtures/apps/build.sh        # links the working tree, builds every ap
 npx playwright test e2e/fixtures/apps # the spec (the root run picks it up; so does `npm run check`)
 ```
 
+The spec defaults to the ordinary `e2e/target/debug` binaries. To check the same built apps with
+release servers, compile the release binaries and select that profile explicitly:
+
+```sh
+CARGO_BUILD_JOBS=3 cargo build --quiet --locked --release --manifest-path e2e/fixtures/apps/Cargo.toml
+FORMA_FIXTURE_PROFILE=release npx playwright test e2e/fixtures/apps --workers=2
+```
+
+`FORMA_FIXTURE_PROFILE` accepts only `debug` or `release`; it selects `<target>/<profile>/fixture-<name>`
+and does not compile anything. `CARGO_TARGET_DIR`, when set, still selects the target directory.
+Without a configured reporting endpoint, development servers send an additional Trusted Types
+Report-Only policy that WebKit reports as a configuration error; release servers omit that
+development-only header. Both profiles keep the enforced policy and all browser-error assertions.
+
 The servers take `FORMA_PORT` (default 0). The spec gives each one `FORMA_FIXTURE_PORT_BASE` plus its
 index when that variable is set, so several clones can run it at once. The servers add one header,
 `x-fixture-counts: nodes=…; bytes=…; list=…`, the walker's own counts, so a page's size is measured by

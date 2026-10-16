@@ -1,0 +1,47 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run src/dom/__tests__/element-prototype-cache.test.ts --maxWorkers=2
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts (51 tests | 1 failed) 175ms
+     × keeps template content and form-control state out of later clones 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > keeps template content and form-control state out of later clones
+AssertionError: expected [ false, undefined ] to deeply equal [ false, false ]
+
+- Expected
++ Received
+
+  [
+    false,
+-   false,
++   undefined,
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:79:53
+     77|     option.selected = true; option.defaultSelected = true;
+     78|     const fresh = element.h('option') as HTMLOptionElement;
+     79|     expect([fresh.selected, fresh.defaultSelected]).toEqual([false, fa…
+       |                                                     ^
+     80|   });
+     81|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 50 passed (51)
+   Start at  05:07:56
+   Duration  437ms (transform 97ms, setup 0ms, import 30ms, tests 175ms, environment 140ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+npm error workspace @getforma/core@3.0.0-dev
+npm error location /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+npm error command failed
+npm error command sh -c vitest run src/dom/__tests__/element-prototype-cache.test.ts --maxWorkers=2

@@ -1,0 +1,97 @@
+[
+  {
+    "name": "core-build",
+    "args": [
+      "npm",
+      "run",
+      "build",
+      "-w",
+      "packages/core"
+    ],
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:19:57.253Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:20:02.702Z"
+  },
+  {
+    "name": "core-sizes",
+    "args": [
+      "npm",
+      "run",
+      "check:size",
+      "-w",
+      "packages/core"
+    ],
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:20:02.702Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:20:02.903Z"
+  },
+  {
+    "name": "ssr-products",
+    "args": [
+      "bash",
+      "e2e/ssr/build.sh"
+    ],
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:20:02.920Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:20:40.809Z"
+  },
+  {
+    "name": "fauth-products",
+    "args": [
+      "node",
+      "e2e/fixtures/apps/build.mjs",
+      "fauth"
+    ],
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:20:40.810Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:20:41.736Z"
+  },
+  {
+    "name": "fauth-native",
+    "args": [
+      "cargo",
+      "build",
+      "--quiet",
+      "--locked",
+      "--manifest-path",
+      "e2e/fixtures/apps/Cargo.toml",
+      "--bin",
+      "fixture-fauth"
+    ],
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:20:41.736Z",
+    "code": 0,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:20:57.152Z"
+  },
+  {
+    "name": "fauth-three-engines",
+    "args": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "../root-three-engine.config.ts",
+      "e2e/fixtures/apps/apps.spec.ts",
+      "--grep",
+      "fixture application fauth",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-gate-first/fauth-test-results"
+    ],
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:20:57.217Z",
+    "code": 1,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:20:58.070Z"
+  }
+]

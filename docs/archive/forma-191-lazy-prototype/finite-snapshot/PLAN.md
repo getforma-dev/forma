@@ -1,0 +1,20 @@
+# FORMA-191 lazy HTML prototypes — source candidate
+
+Base: `cf869f8302ea0a07d144f39b808a8452485df970`, isolated checkout `FORMA-191-lazy-prototype/forma`, branch `forma-191-lazy-prototype`. All earlier qualification/evidence clones remain untouched. No dependency installation, test, build, browser or measurement has run in this checkout.
+
+The production change deletes the eager40-tag loop from getProto. The singleton null-prototype map is still initialized before native creation; the original successful lookup/cache-assignment expression and every h dispatch, adoption return, script refusal, clone/fill/listener path are unchanged. Two inaccurate surrounding comments are corrected. No per-Document cache or scheduling changes. This is an unqualified candidate, not a fix claim for the50ms mobile gate or the12ms decoder gate.
+
+Observable scope: native createElement call count/order now depends on requested tags. Reentrant/throwing factory hooks no longer see unrelated eager requests; a reentrant successfully created other tag remains cached. The singleton is still shared within a module; an environment that replaces global document between tag requests may now create an as-yet-unused tag from that later Document, whereas eager common-tag entries came from the first initialization. These are explicit differences; no cross-Document redesign or universal hook-observability claim.
+
+New `element-prototype-cache.test.ts` resets modules before every case. It exercises each of the40 former common tags as the first request, uncommon/defined custom tags, native creation reuse with fresh attribute/child-free independent clones, template/form state, warmed HTML versus SVG/MathML/dual-use tags, adoption's zero-creation behavior, script refusal before allocation, cross-tag reentry, and recovery after a throwing native call that already created another tag. The old source and exact new test file are retained under `tmp/original/` and `tmp/controls/` for genuine fail-before/pass-after evidence later. No surrogate timing test or implementation source-regex test is added.
+
+## Proposed next controls, awaiting lane authorization
+
+Explicit PATH starts `/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin`; Cargo jobs3; every Vitest command below uses maxWorkers2. Install exact lock once with `npm ci --ignore-scripts`; preserve lock hash. This is needed because this new owned clone has no node_modules.
+
+1. First run only the new51 cold-cache controls against the archived base element.ts, preserving the candidate file and restoring it in finally. Save exact original/candidate/test hashes and raw result. Expected first failures name unwanted native creations; do not relabel unrelated fixture failures as intended controls.
+2. Run those same controls against the candidate. Commands from repository root: `npm test -w packages/core -- src/dom/__tests__/element-prototype-cache.test.ts --maxWorkers=2`. Preserve all original outcomes; adjust a bad test only with explicit source/evidence disposition.
+3. Existing functional suite reuse, same config/root/cap: element.test.ts, namespace-resolution.test.ts, adoption-materialize.test.ts, adoption-callback-mode.test.ts, adoption-conditional-generations.test.ts, adoption-listener-installation.test.ts and list-disposal.test.ts. Core `npm run typecheck -w packages/core` follows. No duplicate login/disposal fixture.
+4. After independent source/finite review only: core build/size gates and actual existing typed fauth login branch behavior, then scoped namespace/disposal browser controls. Exact command/product plan will be reviewed against the then-frozen candidate; preserve the previous package and all new artifact hashes. No acceptance timing in these semantic checks.
+
+Any later cold interaction trace/paired observation requires a separate root-approved plan with the unchanged observer window, timestamps linking factory work to its actual task, all observations retained and no acceptance retry. Current failed timing remains open regardless of these finite tests.

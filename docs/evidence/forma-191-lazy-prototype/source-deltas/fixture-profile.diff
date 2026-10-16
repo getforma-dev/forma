@@ -1,0 +1,47 @@
+diff --git a/e2e/fixtures/apps/README.md b/e2e/fixtures/apps/README.md
+index bc14696d..91a62425 100644
+--- a/e2e/fixtures/apps/README.md
++++ b/e2e/fixtures/apps/README.md
+@@ -31,6 +31,20 @@ bash e2e/fixtures/apps/build.sh        # links the working tree, builds every ap
+ npx playwright test e2e/fixtures/apps # the spec (the root run picks it up; so does `npm run check`)
+ ```
+ 
++The spec defaults to the ordinary `e2e/target/debug` binaries. To check the same built apps with
++release servers, compile the release binaries and select that profile explicitly:
++
++```sh
++CARGO_BUILD_JOBS=3 cargo build --quiet --locked --release --manifest-path e2e/fixtures/apps/Cargo.toml
++FORMA_FIXTURE_PROFILE=release npx playwright test e2e/fixtures/apps --workers=2
++```
++
++`FORMA_FIXTURE_PROFILE` accepts only `debug` or `release`; it selects `<target>/<profile>/fixture-<name>`
++and does not compile anything. `CARGO_TARGET_DIR`, when set, still selects the target directory.
++Without a configured reporting endpoint, development servers send an additional Trusted Types
++Report-Only policy that WebKit reports as a configuration error; release servers omit that
++development-only header. Both profiles keep the enforced policy and all browser-error assertions.
++
+ The servers take `FORMA_PORT` (default 0). The spec gives each one `FORMA_FIXTURE_PORT_BASE` plus its
+ index when that variable is set, so several clones can run it at once. The servers add one header,
+ `x-fixture-counts: nodes=…; bytes=…; list=…`, the walker's own counts, so a page's size is measured by
+diff --git a/e2e/fixtures/apps/apps.spec.ts b/e2e/fixtures/apps/apps.spec.ts
+index 82379b7c..c1646c36 100644
+--- a/e2e/fixtures/apps/apps.spec.ts
++++ b/e2e/fixtures/apps/apps.spec.ts
+@@ -24,6 +24,8 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
+ const HERE = __dirname;
+ const OUT = join(HERE, 'out');
+ const TARGET = process.env.CARGO_TARGET_DIR ?? resolve(HERE, '../../target');
++const PROFILE = process.env.FORMA_FIXTURE_PROFILE ?? 'debug';
++if (PROFILE !== 'debug' && PROFILE !== 'release') throw new Error('invalid FORMA_FIXTURE_PROFILE');
+ const EXE = process.platform === 'win32' ? '.exe' : '';
+ const PORT_BASE = Number(process.env.FORMA_FIXTURE_PORT_BASE || 0);
+ if (!Number.isInteger(PORT_BASE) || PORT_BASE < 0 || PORT_BASE > 65500) throw new Error('invalid FORMA_FIXTURE_PORT_BASE');
+@@ -50,7 +52,7 @@ const APPS = Object.keys(INDEX.apps);
+ interface Running { origin: string; stop: () => Promise<void>; output: () => string }
+ 
+ async function start(name: string): Promise<Running> {
+-  const binary = join(TARGET, 'debug', `fixture-${name}${EXE}`);
++  const binary = join(TARGET, PROFILE, `fixture-${name}${EXE}`);
+   expect(existsSync(binary) && existsSync(join(OUT, name, 'dist', 'manifest.json')), `fixture ${name} is not built; run e2e/fixtures/apps/build.sh (npm run test:e2e does)`).toBe(true);
+   const port = PORT_BASE ? PORT_BASE + APPS.indexOf(name) : 0;
+   const child: ChildProcess = spawn(binary, [], { env: { ...process.env, FORMA_PORT: String(port) }, stdio: ['ignore', 'pipe', 'pipe'] });

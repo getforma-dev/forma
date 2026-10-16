@@ -24,6 +24,8 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
 const HERE = __dirname;
 const OUT = join(HERE, 'out');
 const TARGET = process.env.CARGO_TARGET_DIR ?? resolve(HERE, '../../target');
+const PROFILE = process.env.FORMA_FIXTURE_PROFILE ?? 'debug';
+if (PROFILE !== 'debug' && PROFILE !== 'release') throw new Error('invalid FORMA_FIXTURE_PROFILE');
 const EXE = process.platform === 'win32' ? '.exe' : '';
 const PORT_BASE = Number(process.env.FORMA_FIXTURE_PORT_BASE || 0);
 if (!Number.isInteger(PORT_BASE) || PORT_BASE < 0 || PORT_BASE > 65500) throw new Error('invalid FORMA_FIXTURE_PORT_BASE');
@@ -50,7 +52,7 @@ const APPS = Object.keys(INDEX.apps);
 interface Running { origin: string; stop: () => Promise<void>; output: () => string }
 
 async function start(name: string): Promise<Running> {
-  const binary = join(TARGET, 'debug', `fixture-${name}${EXE}`);
+  const binary = join(TARGET, PROFILE, `fixture-${name}${EXE}`);
   expect(existsSync(binary) && existsSync(join(OUT, name, 'dist', 'manifest.json')), `fixture ${name} is not built; run e2e/fixtures/apps/build.sh (npm run test:e2e does)`).toBe(true);
   const port = PORT_BASE ? PORT_BASE + APPS.indexOf(name) : 0;
   const child: ChildProcess = spawn(binary, [], { env: { ...process.env, FORMA_PORT: String(port) }, stdio: ['ignore', 'pipe', 'pipe'] });

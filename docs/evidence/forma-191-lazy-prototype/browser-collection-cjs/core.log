@@ -1,0 +1,17 @@
+Listing tests:
+  [chromium] › core-regressions.spec.ts:20:1 › HTML prototype clones keep template and form-control state private
+  [chromium] › core-regressions.spec.ts:71:1 › controlled input, textarea, checkbox and non-first selections survive real user edits
+  [chromium] › core-regressions.spec.ts:101:1 › multiple select changes update the browser live selection collection
+  [chromium] › core-regressions.spec.ts:115:1 › same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM
+  [chromium] › core-regressions.spec.ts:147:1 › SSR adoption refuses mismatched older properties and keeps matching controls live
+  [firefox] › core-regressions.spec.ts:20:1 › HTML prototype clones keep template and form-control state private
+  [firefox] › core-regressions.spec.ts:71:1 › controlled input, textarea, checkbox and non-first selections survive real user edits
+  [firefox] › core-regressions.spec.ts:101:1 › multiple select changes update the browser live selection collection
+  [firefox] › core-regressions.spec.ts:115:1 › same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM
+  [firefox] › core-regressions.spec.ts:147:1 › SSR adoption refuses mismatched older properties and keeps matching controls live
+  [webkit] › core-regressions.spec.ts:20:1 › HTML prototype clones keep template and form-control state private
+  [webkit] › core-regressions.spec.ts:71:1 › controlled input, textarea, checkbox and non-first selections survive real user edits
+  [webkit] › core-regressions.spec.ts:101:1 › multiple select changes update the browser live selection collection
+  [webkit] › core-regressions.spec.ts:115:1 › same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM
+  [webkit] › core-regressions.spec.ts:147:1 › SSR adoption refuses mismatched older properties and keeps matching controls live
+Total: 15 tests in 1 file

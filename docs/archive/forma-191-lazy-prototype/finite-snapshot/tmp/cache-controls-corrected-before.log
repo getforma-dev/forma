@@ -1,0 +1,2943 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run src/dom/__tests__/element-prototype-cache.test.ts --maxWorkers=2
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+
+stderr | src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > span creates only its requested prototype and returns independent clones
+[forma] Duplicate @getforma/core instance detected (2 copies loaded). Signals, the owner tree, the component registry and the island registry are per-copy, so state created through one copy is invisible to the other. Usual causes: mixing `import` and `require` of @getforma/core in one process, or loading '@getforma/core' alongside '@getforma/core/runtime-hardened' or '@getforma/core/browser', which bundle their own private copy of the core.
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts (51 tests | 49 failed) 221ms
+     × div creates only its requested prototype and returns independent clones 121ms
+     × span creates only its requested prototype and returns independent clones 3ms
+     × p creates only its requested prototype and returns independent clones 2ms
+     × a creates only its requested prototype and returns independent clones 2ms
+     × li creates only its requested prototype and returns independent clones 2ms
+     × ul creates only its requested prototype and returns independent clones 3ms
+     × ol creates only its requested prototype and returns independent clones 3ms
+     × button creates only its requested prototype and returns independent clones 2ms
+     × input creates only its requested prototype and returns independent clones 3ms
+     × label creates only its requested prototype and returns independent clones 4ms
+     × h1 creates only its requested prototype and returns independent clones 2ms
+     × h2 creates only its requested prototype and returns independent clones 2ms
+     × h3 creates only its requested prototype and returns independent clones 2ms
+     × h4 creates only its requested prototype and returns independent clones 2ms
+     × h5 creates only its requested prototype and returns independent clones 2ms
+     × h6 creates only its requested prototype and returns independent clones 2ms
+     × section creates only its requested prototype and returns independent clones 2ms
+     × header creates only its requested prototype and returns independent clones 2ms
+     × footer creates only its requested prototype and returns independent clones 4ms
+     × main creates only its requested prototype and returns independent clones 2ms
+     × nav creates only its requested prototype and returns independent clones 2ms
+     × table creates only its requested prototype and returns independent clones 1ms
+     × tr creates only its requested prototype and returns independent clones 2ms
+     × td creates only its requested prototype and returns independent clones 1ms
+     × th creates only its requested prototype and returns independent clones 2ms
+     × tbody creates only its requested prototype and returns independent clones 2ms
+     × img creates only its requested prototype and returns independent clones 1ms
+     × form creates only its requested prototype and returns independent clones 3ms
+     × select creates only its requested prototype and returns independent clones 1ms
+     × option creates only its requested prototype and returns independent clones 1ms
+     × textarea creates only its requested prototype and returns independent clones 1ms
+     × i creates only its requested prototype and returns independent clones 2ms
+     × b creates only its requested prototype and returns independent clones 2ms
+     × strong creates only its requested prototype and returns independent clones 2ms
+     × em creates only its requested prototype and returns independent clones 1ms
+     × small creates only its requested prototype and returns independent clones 1ms
+     × article creates only its requested prototype and returns independent clones 1ms
+     × aside creates only its requested prototype and returns independent clones 1ms
+     × details creates only its requested prototype and returns independent clones 2ms
+     × summary creates only its requested prototype and returns independent clones 2ms
+     × keeps uncommon output creation lazy and independent 2ms
+     × keeps uncommon video creation lazy and independent 2ms
+     × keeps uncommon template creation lazy and independent 2ms
+     × keeps uncommon forma-unknown-prototype creation lazy and independent 1ms
+     × preserves registered custom-element construction and independent returned instances 2ms
+     × initializes the shared map before a native factory reenters for another tag 2ms
+     × does not cache a failed creation and preserves a successful reentrant tag 2ms
+     × does not warm prototypes during adoption description or execute element callbacks 2ms
+     × refuses script before native creation or cache initialization in either mode 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 49 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > div creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'div' ]
+
+- Expected
++ Received
+
+  [
+    "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > span creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'span' ]
+
+- Expected
++ Received
+
+  [
++   "div",
+    "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > p creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'p' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
+    "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > a creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'a' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
+    "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > li creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'li' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
+    "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > ul creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'ul' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
+    "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > ol creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'ol' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
+    "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > button creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'button' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
+    "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > input creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'input' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
+    "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > label creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'label' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
+    "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > h1 creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'h1' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
+    "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > h2 creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'h2' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
+    "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > h3 creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'h3' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
+    "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > h4 creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'h4' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
+    "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > h5 creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'h5' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
+    "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > h6 creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'h6' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
+    "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > section creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'section' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
+    "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > header creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'header' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
+    "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > footer creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'footer' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
+    "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > main creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'main' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
+    "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > nav creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'nav' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
+    "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > table creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'table' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
+    "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > tr creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'tr' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
+    "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > td creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'td' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
+    "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > th creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'th' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
+    "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > tbody creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'tbody' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
+    "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > img creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'img' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
+    "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > form creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'form' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
+    "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > select creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'select' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
+    "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > option creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'option' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
+    "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > textarea creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'textarea' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
+    "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > i creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'i' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
+    "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > b creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'b' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
+    "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > strong creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'strong' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
+    "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > em creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'em' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
+    "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > small creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'small' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
+    "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > article creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'article' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
+    "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > aside creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'aside' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
+    "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > details creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'details' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
+    "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > summary creates only its requested prototype and returns independent clones
+AssertionError: expected [ Array(40) ] to deeply equal [ 'summary' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
+    "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:36:53
+     34|     const first = element.h(tag) as HTMLElement;
+     35|     const second = element.h(tag) as HTMLElement;
+     36|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     37|     expect(first).not.toBe(second);
+     38|     expect(first.localName).toBe(tag);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > keeps uncommon output creation lazy and independent
+AssertionError: expected [ Array(41) ] to deeply equal [ 'output' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+    "output",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:62:53
+     60|     expect(second.attributes.length).toBe(0);
+     61|     expect(second.childNodes.length).toBe(0);
+     62|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     63|   });
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > keeps uncommon video creation lazy and independent
+AssertionError: expected [ Array(41) ] to deeply equal [ 'video' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+    "video",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:62:53
+     60|     expect(second.attributes.length).toBe(0);
+     61|     expect(second.childNodes.length).toBe(0);
+     62|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     63|   });
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > keeps uncommon template creation lazy and independent
+AssertionError: expected [ Array(41) ] to deeply equal [ 'template' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+    "template",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:62:53
+     60|     expect(second.attributes.length).toBe(0);
+     61|     expect(second.childNodes.length).toBe(0);
+     62|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     63|   });
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > keeps uncommon forma-unknown-prototype creation lazy and independent
+AssertionError: expected [ Array(41) ] to deeply equal [ 'forma-unknown-prototype' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+    "forma-unknown-prototype",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:62:53
+     60|     expect(second.attributes.length).toBe(0);
+     61|     expect(second.childNodes.length).toBe(0);
+     62|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     63|   });
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > preserves registered custom-element construction and independent returned instances
+AssertionError: expected [ Array(41) ] to deeply equal [ 'forma-proto-custom-1' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+    "forma-proto-custom-1",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:95:53
+     93|     expect(first.privateValue).not.toBe(second.privateValue);
+     94|     expect(first).not.toBe(second);
+     95|     expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
+       |                                                     ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > initializes the shared map before a native factory reenters for another tag
+AssertionError: expected [ Array(40) ] to deeply equal [ 'button', 'span' ]
+
+- Expected
++ Received
+
+  [
+-   "button",
++   "div",
+    "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:107:53
+    105|     const button = element.h('button') as HTMLElement;
+    106|     const anotherSpan = element.h('span') as HTMLElement;
+    107|     expect(native.mock.calls.map(([name]) => name)).toEqual(['button',…
+       |                                                     ^
+    108|     expect(nested?.localName).toBe('span');
+    109|     expect(anotherSpan).not.toBe(nested);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > does not cache a failed creation and preserves a successful reentrant tag
+AssertionError: expected [ 'div', 'span', 'p', 'a', 'li', …(4) ] to deeply equal [ 'button', 'span', 'button' ]
+
+- Expected
++ Received
+
+  [
+-   "button",
++   "div",
+    "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
+    "button",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:129:53
+    127|     expect((element.h('button') as HTMLElement).localName).toBe('butto…
+    128|     element.h('button');
+    129|     expect(native.mock.calls.map(([name]) => name)).toEqual(['button',…
+       |                                                     ^
+    130|   });
+    131|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > does not warm prototypes during adoption description or execute element callbacks
+AssertionError: expected [ Array(40) ] to deeply equal [ 'p' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
+    "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
++   "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:156:53
+    154|     expect(ref).not.toHaveBeenCalled();
+    155|     element.h('p');
+    156|     expect(native.mock.calls.map(([name]) => name)).toEqual(['p']);
+       |                                                     ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/49]⎯
+
+ FAIL  src/dom/__tests__/element-prototype-cache.test.ts > cold HTML prototype cache > refuses script before native creation or cache initialization in either mode
+AssertionError: expected [ Array(40) ] to deeply equal [ 'button' ]
+
+- Expected
++ Received
+
+  [
++   "div",
++   "span",
++   "p",
++   "a",
++   "li",
++   "ul",
++   "ol",
+    "button",
++   "input",
++   "label",
++   "h1",
++   "h2",
++   "h3",
++   "h4",
++   "h5",
++   "h6",
++   "section",
++   "header",
++   "footer",
++   "main",
++   "nav",
++   "table",
++   "tr",
++   "td",
++   "th",
++   "tbody",
++   "img",
++   "form",
++   "select",
++   "option",
++   "textarea",
++   "i",
++   "b",
++   "strong",
++   "em",
++   "small",
++   "article",
++   "aside",
++   "details",
++   "summary",
+  ]
+
+ ❯ src/dom/__tests__/element-prototype-cache.test.ts:168:53
+    166|     expect(nativeNs).not.toHaveBeenCalled();
+    167|     element.h('button');
+    168|     expect(native.mock.calls.map(([name]) => name)).toEqual(['button']…
+       |                                                     ^
+    169|   });
+    170| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/49]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  49 failed | 2 passed (51)
+   Start at  05:09:23
+   Duration  570ms (transform 116ms, setup 0ms, import 31ms, tests 221ms, environment 145ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+npm error workspace @getforma/core@3.0.0-dev
+npm error location /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+npm error command failed
+npm error command sh -c vitest run src/dom/__tests__/element-prototype-cache.test.ts --maxWorkers=2

@@ -213,6 +213,10 @@ docs/archive/skew-expected-reload/** -text
 docs/archive/playwright-firefox-channel/** -text
 docs/evidence/playwright-firefox-channel/** -text
 
+# Byte-exact lazy native prototype originals and scoped correctness evidence.
+docs/archive/forma-191-lazy-prototype/** -text
+docs/evidence/forma-191-lazy-prototype/** -text
+
 # Preserve the original FORMA-116 rollout and approved L-60 disposition evidence.
 docs/archive/forma-116-live-deferral/** -text
 docs/evidence/forma-116-live-deferral/** -text
