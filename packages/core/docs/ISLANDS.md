@@ -24,6 +24,26 @@ requested host before arming any trigger or invoking any component. Each accepte
 component then runs in an isolated reactive root; a failed sibling does not
 prevent another valid island from activating.
 
+`activateIslands()` returns a `Promise<void>` for the requested **load** islands.
+Preflight and claim reservation remain synchronous. Load activation uses a
+cooperative 12 ms slice, counted from before preflight, and yields between whole
+islands through browser timer tasks. The first slice runs before the call returns
+when preflight leaves time; an individual preflight or island can exceed the
+slice, and repeated separate application calls are not a hard task-duration bound. Await the result when subsequent code requires load activation to finish.
+The promise resolves after those islands activate, fail in isolation, or are
+disposed, including requested load work already pending from another call.
+Visible, idle and interaction islands complete their part when their triggers
+are armed; the promise does not wait for those future triggers. Synchronous
+preflight exceptions still throw, and isolated component errors still use the
+existing diagnostics rather than rejecting the promise.
+
+Queued load islands listen for pointerdown, focusin and click so their first
+input can promote that island synchronously before normal event handling. This
+priority path retains the original event and native default action; it does not
+replay events or split an island transaction. Input promotion can exceed the
+background slice. Other islands continue in FIFO order, and disposal releases
+pending activation and its temporary listeners.
+
 This is the 3.0 development contract. Legacy `(element, props)` registrations,
 `data-forma-props` and `#__forma_islands` no longer provide SSR state. Rebuild the
 page and browser entry together. An uncompiled SSR callback is refused; a
@@ -359,7 +379,7 @@ already-loaded registration activates. This does not control bundle fetching:
 
 | Trigger | When it hydrates | Use case |
 |---|---|---|
-| `load` (default) | Immediately on page load | Above-the-fold content |
+| `load` (default) | First available slice, then queued browser tasks | Above-the-fold content |
 | `visible` | When the island enters the viewport | Below-the-fold components |
 | `idle` | During browser idle time | Non-critical functionality |
 | `interaction` | On first `pointerdown` or `focusin` | Skeleton + skin pattern |

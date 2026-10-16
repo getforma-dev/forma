@@ -45,7 +45,7 @@ test('100 fixed native values preserve all eight declared kinds through real bro
         hostCount: document.querySelectorAll('[data-forma-island]').length };
       return h('p', null, props.label, props.value);
     }, ${JSON.stringify(registration)});
-    activateIslands({ Badge });
+    await activateIslands({ Badge });
     window.__roundtripDone = true;
   ` }));
   let current: Case;
