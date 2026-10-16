@@ -23,7 +23,7 @@ now and the rules it runs by.
 | `src/suite.mts` | The pipeline: prepare, serve, browse, report. |
 | `src/expected.mts`, `expected-divergent.json` | Known divergences as data, and the unexpected-pass rule. |
 | `src/run.mts` | The suite over the corpus: totals, structural classes, wall time by phase, the verdict. |
-| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 owns the public form. |
+| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 adds the internal explicit-state form. |
 | `corpus.json` | Step 0: the 14 js-emitter modules; step 1: the props-contract page, the P3 fixture and the island-emitter family. |
 | `fixtures/transition/` | The P3 fixture: one island seeded from declared props, whose module exports the setter. |
 | `tests/` | `node --test`: the generator, the comparison and the expected list on hand-written cases; the serializer against Chromium's parser; the server half, including the typed path and its refusal table; `renderBoth` and the suite end to end, including seeded server changes that P1 and P2 must report; step 1, the family's exact rebuild, P3 equal state after state and P3 failing on a wrong setter (`tests/fixtures/transition-off-by-one/`). |
@@ -188,12 +188,7 @@ The recorded findings (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 fo
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
-| F1 | `list-same-source`: the source passes a plain array to `createList`, which core 3.0 calls as an accessor (`items is not a function`) | P1 error | FORMA-181, after checkpoint C: the compiler refuses a non-function list source with a code |
-| F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`, and at step 1 `nullish` and `closed-nullish` `p[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
-| F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
-| F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | FORMA-016: core's `createShow` takes a string or number branch as a text node |
-| F6 | `aggregate-fallback`: a keyed row whose string key holds CR or NUL; the walker writes the rule-1 key text, core's adoption compares the raw key (`String(key)`) and refuses the island | P2 mutation and activation error | FORMA-181, checkpoint C (adoption by `canonicalKeyText`) |
 
 F1, F2, F3 and F6 are resolved by the integrated list-source, attribute-value and
 keyed-adoption changes. F4's original unknown getter is preserved byte-exact in
@@ -204,8 +199,13 @@ the real compiler/native renderer and browser now agree on its actual href.
 The preceding run proved the old F4 entry an unexpected pass before its removal.
 The duplicate-name scopes original similarly remains a BUILD-503 refusal, while
 the live page uses `panelCount` and preserves its actual defaults. Corpus emission
-requires zero error diagnostics. F5 remains in `expected-divergent.json` pending
-the separate text-branch fix; it is still executed and must still diverge.
+requires zero error diagnostics. The integrated FORMA-016 text-branch fix also
+resolves F5; its earlier unexpected-pass report is preserved. With both fixes
+present, `expected-divergent.json` is empty and every live case must agree.
+
+Checkpoint C resolves F6: the merged integration run on 2026-10-15 observed both canonical-key adoption entries as unexpected passes, with all 99 P2 checks equal. The two resolved entries were removed; the original failure report is preserved in the release work evidence.
+
+The F2/F3 attribute fixes were verified against the expanded 28-module corpus on 2026-10-15: all six listed entries became unexpected passes. Their removal leaves only F4 and F5; the original failing expectation report is preserved in the release work evidence.
 
 ## The corpus and its ratchet
 
@@ -255,3 +255,25 @@ The key check against the expected key text (`data-forma-key` is lifted from the
 expected text per row is FORMA-181's `canonicalKeyText` once rows are mapped to their list), the
 switch to blocking (when step 1's expected list is empty for P1 and P2), and step 3's fixture
 applications (FORMA-188).
+
+## Render one component at an explicit state (Forma-internal)
+
+`src/test-utils.mts` exports `renderBoth(component, state, options?)` for tests in this repository.
+The component is a name from `corpus.json` or a `CorpusEntry` source descriptor; the helper compiles
+that entry and renders the exact JSON state through the typed Rust renderer and core in a browser.
+It returns the P1 report, including `server.tree`, `client.tree`, native HTML and any first difference
+or refusal. It does not apply expected-divergent exemptions. The suite separately checks P2 and P3.
+
+```ts
+import { renderBoth } from './src/test-utils.mts';
+const report = await renderBoth('nested-islands', {
+  panelClass: 'panel', badgeTitle: 'a specific regression',
+});
+assert.equal(report.verdict, 'equal');
+assert.deepEqual(report.server.tree, report.client.tree);
+```
+
+Chromium is the default; `options.engine` selects another engine and `options.browser` reuses a
+caller-owned browser without closing it. The helper closes browsers it creates, including on
+failure. `renderBoth` is not a supported `@getforma/core` export (Q11, L-57, FORMA-184).
+FORMA-016 verification on the expanded corpus removes F5 only after an actual unexpected pass: all 28 typed modules and 118 states complete, with props-contract text branches agreeing. Historical step-1 findings above remain the discovery record.

@@ -21,6 +21,8 @@ import { getNamespace, insertNs, withNamespace } from './namespace.js';
 import { keyedRowsSource, type KeyedRows } from './keyed-rows.js';
 import { cleanup } from './element.js';
 
+import { branchNode } from './normalize-text.js';
+
 declare const __FORMA_DEV_BUILD__: boolean | undefined;
 // Every development warning below is guarded by the build flag at its site, in
 // the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
@@ -536,13 +538,13 @@ export function createList<T>(
 export function createList<T>(
   items: () => T[],
   keyFn: (item: T) => string | number,
-  renderFn: (item: T, index: () => number) => HTMLElement,
+  renderFn: (item: T, index: () => number) => HTMLElement | string | number,
   options?: CreateListOptions,
 ): DocumentFragment;
 export function createList<T>(
   items: (() => T[]) | KeyedRows<T>,
   keyFn: ((item: T) => string | number) | ((item: () => T, index: () => number) => HTMLElement),
-  renderFn?: (item: T, index: () => number) => HTMLElement,
+  renderFn?: (item: T, index: () => number) => HTMLElement | string | number,
   options?: CreateListOptions,
 ): DocumentFragment {
   const indexed = keyedRowsSource<T>(items);
@@ -564,7 +566,7 @@ export function createList<T>(
 function createArrayList<T>(
   items: () => T[],
   keyFn: (item: T) => string | number,
-  renderFn: (item: T, index: () => number) => HTMLElement,
+  renderFn: (item: T, index: () => number) => HTMLElement | string | number,
   options?: CreateListOptions,
 ): DocumentFragment {
   if (describingAdoption) {
@@ -612,7 +614,7 @@ function createArrayList<T>(
       dispose();
       throw failure;
     }
-    return { element: element!, dispose };
+    return { element: branchNode(element) as HTMLElement, dispose };
   };
 
   internalEffect(() => {

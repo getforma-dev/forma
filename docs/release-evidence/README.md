@@ -555,3 +555,54 @@ owned process-tree closure. Every existing refusal/recovery assertion and
 separate malformed-metadata control remains. Both full build suites pass
 238/238 on Node22 and Node24 after the test-only correction. These changes do
 not alter packaged production bytes; final hosted acceptance is still required.
+
+## FORMA-188: P17 over the fixture applications and its measurement step
+
+`fixture-apps-p17.json` (with `fixture-apps-set.json`, the dry-run DS11 record) is P17 run by hand on the
+integration branch's `3.0.0-dev` set with the contract `fixtureApps: "declared-v1"`: **passed, 44 checks,
+147.1 s** on an Apple M1 Pro (10 CPUs, 16 GiB, Node 24.22.0, rustc 1.93.1), against G6's 1,800 s. DS11 was
+packed at `8f783b4` (the three FORMA-188 branches merged with the integration head `2c7d4f6`); the scripts ran
+from the next commit, which declares esbuild in the staged project. The fixture block took about 38 s of it:
+the isolated locked install and signature audit 4.1 s, the four packed strict builds 3.5 s, the Rust servers
+built from the packed crates on the pruned lock 13.8 s, then each packed server judged in Chromium (ledger
+0.9 s, fauth 5.3 s, ksx 2.2 s, bench 7.8 s): 15 pages (variants included), zero mutation records, the server's
+values kept, the islands working. Forma's code per fixture route, gzip -9, against N2's 25,500 B (`n2` rows
+carry Brotli and the application's own bytes): ledger `/household` 25,366; fauth `/t/:slug/login` 25,374,
+`/platform/onboarding` 25,373, `/platform/benchmark` 25,415; ksx `/check` 25,373; the six bench pages
+25,317 to 25,318. The walker's counts of the consumer-shaped pages: 298, 1,497, 9,995, 15,053 and 19,961
+nodes, and 904 for the page of 100 islands (the `shapes` rows).
+
+This run had the workspace builds present, so the existing worker-integrity test is not the faithful
+rehearsal of the verify job: with `packages/*/dist` removed it fails on this branch at "packed build verifies
+cached and network bytes" (`ERR_MODULE_NOT_FOUND` on the workspace compiler), the alpha.1 failure, whose fix
+(`release-packed-resolution`) is on `main` and reaches the integration branch with its merge. The fixture
+block does not depend on the checkout's builds: its staging, run alone with the builds removed, installs the
+packed libraries outside the checkout, proves each import resolves inside the install, and builds all four
+applications with the packed `build()` (5.6 s); the build hashes of all four applications built with the packed set equal those of the working
+tree's build (`7b976f527291`, `dccd4063fcb2`, `e4164a114b44`, `8e9620ba2f21`). The `cargo` and browser stages need the same machine as any P17 run.
+
+## FORMA-188: list islands and an unbuilt-workspace packed rehearsal
+
+`fixture-list-islands-{set,p17,rehearsal}.json` and `fixture-list-islands-SHA256SUMS`
+record the clean source commit `990b3080c60784e9283ae31eec38277a1693d755`, which
+includes the reviewed integration/main synchronization and the 27,500 B N2 policy.
+All four `packages/*/dist` directories were removed after packing and remained
+absent after the full P17 run. The packed dependency-resolution guard, template
+checks and fixture checks passed in **130.482 seconds** on Node 24.22.0, with
+`CARGO_BUILD_JOBS=3`. This resolves the unbuilt-workspace rehearsal gap recorded
+in the preceding historical fixture report; those original records stay intact.
+
+The fAuth result rows and ksx controller chips now belong to their interactive
+islands. Both read actual typed server arrays, adopt their keyed rows without
+writes, reverse the existing nodes and continue handling input. The updated
+state oracle checks those arrays. All 15 fixture page/variant observations record
+zero initial mutations; the source fixture lane passed 55/55 with two Playwright
+workers. The accepted list-island fixture is also built with the packed build
+and its complete emitted size report is retained.
+
+All 12 N2 rows pass, with the largest Forma share **26,755 of 27,500 B gzip -9**
+on ksx `/check`; the positive list island measures 26,506 B. Both Forma and total
+JavaScript ceilings and verdicts are checked against `size-report.json`.
+The seven archives are an unpublished `3.0.0-dev` dry run. This records fixture
+qualification, not the separate deployment-skew drill or a release milestone's
+completion. No tag or registry publication was made.

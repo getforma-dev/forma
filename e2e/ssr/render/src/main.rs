@@ -72,11 +72,12 @@ fn indexed_rows(count: &serde_json::Value) -> Result<Vec<KeyedMoveRow>, Box<dyn 
 fn render_typed<P: PageProps>(
     manifest: &AssetManifest,
     props: &P,
+    title: &str,
 ) -> Result<PageResponse, Box<dyn Error>> {
     let pages = load_ir_modules::<FixtureAssets>(manifest).map_err(|e| format!("{e:?}"))?;
     let page = pages.bind::<P>(ROUTE).map_err(|e| format!("{e:?}"))?;
     pages.finalize().map_err(|e| format!("{e:?}"))?;
-    Ok(page.render(props, &RenderCtx::new().with_title(TITLE))?)
+    Ok(page.render(props, &RenderCtx::new().with_title(title))?)
 }
 
 /// The route every case is built and rendered under.
@@ -138,6 +139,11 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
     } else {
         serde_json::json!({})
     };
+    let title = if name == "title" {
+        "Server-owned fixture title"
+    } else {
+        TITLE
+    };
     let ssr = match name {
         "generic-state" => render_typed(
             &manifest,
@@ -147,6 +153,7 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     .and_then(|n| n.try_into().ok())
                     .ok_or("missing u32 count")?,
             },
+            title,
         )?,
         "keyed-indexed" => render_typed(
             &manifest,
@@ -154,6 +161,7 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                 small: indexed_rows(&input["small"])?,
                 large: indexed_rows(&input["large"])?,
             },
+            title,
         )?,
         "keyed-moves" => render_typed(
             &manifest,
@@ -170,6 +178,7 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     })
                     .collect::<Result<Vec<_>, Box<dyn Error>>>()?,
             },
+            title,
         )?,
         "ledger-arrival" => render_typed(
             &manifest,
@@ -190,8 +199,9 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     .as_bool()
                     .ok_or("missing arrivalSummary")?,
             },
+            title,
         )?,
-        _ => render_typed(&manifest, &Empty {})?,
+        _ => render_typed(&manifest, &Empty {}, title)?,
     };
     // The paired CSR comparison (Phase 1) is the case's explicit Browser route,
     // `/csr`, which the build declared `ssr: false` from the same entry: its
@@ -199,7 +209,7 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
     // island activation (FORMA-105, DR-6).
     let csr = render_browser_shell(
         &PageConfig {
-            title: TITLE,
+            title,
             route_pattern: CSR_ROUTE,
             manifest: &manifest,
             config_json: None,

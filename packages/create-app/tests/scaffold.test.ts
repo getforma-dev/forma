@@ -42,7 +42,8 @@ describe('scaffolding', () => {
       const res = runCli([name, '--template', template], tmp);
       expect(res.status, res.stderr || res.stdout).toBe(0);
       dest = path.join(tmp, name);
-    });
+      // Windows candidate CLI/staging exceeded the old 10s hook budget.
+    }, 60_000);
 
     it('produces exactly the template tree, with configuration dotfiles restored', () => {
       const expected = listFiles(path.join(TEMPLATES_DIR, template))

@@ -1,5 +1,6 @@
 import {keyedFactory,type ListProof,type ListSite} from './list-proof';
 import {closedExpression} from './closed-expression';
+import {enterHtmlElement,checkRawTextChildren,htmlBranch,htmlList,type HtmlContext} from './html-context';
 import {closedBinding,closedSlot,closedHint,closedListRows,emitClosedText,type ClosedEnvironment,type ClosedRows} from './closed-bindings';
 /**
  * Forma Compiler - IR Walk Engine
@@ -611,6 +612,8 @@ export interface WalkContext {
   /** Declared page/child prop paths; independent from source variable names. */
   propsScope?: PropsScope;
   islandRegistry?: IslandRegistry;
+  /** Finite parser and interactive-content ancestry, shared through helpers. */
+  htmlContext?: HtmlContext;
   closedRows?: ClosedRows;
   islandSchemas?: Map<string, number>;
   /** File-level constant arrays (for Rule 9 static unroll). */
@@ -1032,6 +1035,8 @@ export function walkHTree(
       `registered SSR island ${walkCtx.islandOwner.name} places <${tag}> across a value-bound <select> owned by ${walkCtx.boundSelect.chain}; keep the option/optgroup helper unregistered within that owner, or move the island boundary to the owning select or an outer element`,
       'BUILD-617');
   }
+  const htmlContext=enterHtmlElement(walkCtx.htmlContext,tag,args[1],node,walkCtx.sourceFile??'');
+  checkRawTextChildren(tag,args.slice(2),walkCtx.sourceFile??'');
   const tagStrIdx = ctx.addString(tag);
   const isVoid = VOID_TAGS.has(tag);
 
@@ -1351,9 +1356,10 @@ export function walkHTree(
   // or omitted values must not become a new restriction or change FMIR bytes.
   const valueKey = controlTag === 'select' ? ctx.stringIndex('value') : undefined;
   const ownsValue = valueKey !== undefined && [...staticAttrs, ...dynAttrs].some(attr => attr.keyIdx === valueKey);
+  const contextualWalk={...walkCtx,htmlContext};
   const childContext: WalkContext = controlTag === 'select'
-    ? { ...walkCtx, boundSelect: ownsValue ? { owner: walkCtx.islandOwner?.identity, chain: `${chainSoFar(walkCtx).map(link => link.component).join(' > ')} > select` } : undefined }
-    : walkCtx;
+    ? { ...contextualWalk, boundSelect: ownsValue ? { owner: walkCtx.islandOwner?.identity, chain: `${chainSoFar(walkCtx).map(link => link.component).join(' > ')} > select` } : undefined }
+    : contextualWalk;
 
   // Process children (3rd+ args)
   for (let i = 2; i < args.length; i++) {
@@ -1438,6 +1444,7 @@ export function walkCallExpression(
         const at = originalPosition(walkCtx.sourceFile!, node.loc?.start ?? {line:1,column:0});
         throw new PropsSchemaError(walkCtx.sourceFile!, at.line, at.column, `recursive registered island ${registered.name} is outside the native SSR subset`);
       }
+      registered.proveRoot();
       const analysis = registered.analyze();
       const schemas = walkCtx.islandSchemas ??= new Map();
       let schemaObject = schemas.get(registered.identity);
@@ -1466,6 +1473,7 @@ export function walkCallExpression(
         walkCallExpression(sub.returnNode as t.CallExpression, hName, ctx,
           childContext);
       } else {
+        enterHtmlElement(walkCtx.htmlContext,'div',undefined,node,walkCtx.sourceFile??'');
         const div=ctx.addString('div');ctx.emit(OP_OPEN_TAG);ctx.emitU32(div);ctx.emitU16(0);ctx.emit(OP_CLOSE_TAG);ctx.emitU32(div);
       }
       ctx.emit(OP_ISLAND_END); ctx.emitU16(id);
@@ -2120,7 +2128,8 @@ function emitTernaryShowIf(
 
   // Emit then-branch
   const thenStart = ctx.opcodeLen();
-  emitBranchContent(cond.consequent, hName, ctx, walkCtx, childIndex);
+  const htmlChoice=Symbol('conditional');
+  emitBranchContent(cond.consequent, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)}, childIndex);
   const thenLen = ctx.opcodeLen() - thenStart;
 
   // SHOW_ELSE marker
@@ -2128,7 +2137,7 @@ function emitTernaryShowIf(
 
   // Emit else-branch
   const elseStart = ctx.opcodeLen();
-  emitBranchContent(cond.alternate, hName, ctx, walkCtx, childIndex);
+  emitBranchContent(cond.alternate, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)}, childIndex);
   const elseLen = ctx.opcodeLen() - elseStart;
 
   // Back-patch lengths
@@ -2162,12 +2171,13 @@ function emitCreateShow(
   const elseLenPos = ctx.opcodeLen();
   ctx.emitU32(0);
 
+  const htmlChoice=Symbol('show');
   // Then-branch: second argument (index 1)
   const thenStart = ctx.opcodeLen();
   if (node.arguments.length > 1) {
     const thenArg = node.arguments[1];
     if (thenArg && !t.isSpreadElement(thenArg)) {
-      emitCreateShowBranch(thenArg as t.Expression, hName, ctx, walkCtx);
+      emitCreateShowBranch(thenArg as t.Expression, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)});
     }
   }
   const thenLen = ctx.opcodeLen() - thenStart;
@@ -2180,7 +2190,7 @@ function emitCreateShow(
   if (node.arguments.length > 2) {
     const elseArg = node.arguments[2];
     if (elseArg && !t.isSpreadElement(elseArg)) {
-      emitCreateShowBranch(elseArg as t.Expression, hName, ctx, walkCtx);
+      emitCreateShowBranch(elseArg as t.Expression, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)});
     }
   }
   const elseLen = ctx.opcodeLen() - elseStart;
@@ -2465,6 +2475,7 @@ function emitCreateList(
   const listWalkCtx: WalkContext = {
     ...walkCtx,
     listItemBindings: bindings,
+    htmlContext:htmlList(walkCtx.htmlContext),
     closedRows:closedItems?closedListRows(mapFn,closedItems,itemSlotId,walkCtx.closedRows,!!factory):walkCtx.closedRows,
     propsScope: declaredArray !== undefined && walkCtx.propsScope ? listPropsScope(walkCtx.propsScope, mapFn, arraySource!, itemSlotId,!!factory) : walkCtx.propsScope,
   };

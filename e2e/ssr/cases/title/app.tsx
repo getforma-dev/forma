@@ -1,10 +1,6 @@
-// A reactive <title> element inside a component. Audit verification run 2: its
-// text before JavaScript is the marker text. It never becomes document.title,
-// because render_page writes the page's own <title> in <head> first.
-//
-// Since 3.0.0 (FORMA-105, DR-6) a server-rendered page activates only its
-// islands, so the reactive part is the island Heading, seeded from a declared
-// prop; the page around it is static HTML.
+// FORMA-139: the server render call owns the document title. The island
+// updates an ordinary heading; the original component HTML title is retained
+// as a BUILD-619 negative fixture under docs/archive/FORMA-139-e2e-title.
 import { h, mount, activateIslands, createSignal } from '@getforma/core';
 
 function Heading(props: { text: string }) {
@@ -12,7 +8,7 @@ function Heading(props: { text: string }) {
   return (
     <section>
       <div id="title-host">
-        <title id="tt">{() => heading()}</title>
+        <h1 id="heading">{() => heading()}</h1>
       </div>
       <button id="update" onClick={() => setHeading('updated')}>update</button>
     </section>

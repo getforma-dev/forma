@@ -8,6 +8,8 @@
 
 - Add compiler proof and native lowering for `createKeyedRows` with the two-argument `createList` overload. Original lexical factories, required/closed arrays, synchronous key paths and unconditional component LISTs are required (BUILD-622); item getters keep row provenance without acquiring signal capture or early-edit writeback authority. Existing corpus bytes and the LIST/PROP/key-path wire contract are unchanged. Product and performance qualification belongs to the following FORMA-181 stage.
 
+- FORMA-139: refuse the finite parser/interactive-content nesting conflicts (BUILD-618), component HTML title (619), dynamic style/script children (620), and SSR island roots lacking one stable owned Element (621). Preserve transparent one-Element Fragments and helpers; keep ranges inside their host. Exact original source/products and canonical admitted near misses are retained. SVG title, browserOnly client bodies, and the existing keyed-row613 proof keep their separate contracts.
+
 ### Native LIST sources must carry real rows — FORMA-101
 
 - A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
@@ -20,7 +22,6 @@
 - **Rendered output changes with no source change.** A static `true` attribute is bare only on an HTML boolean attribute (`HTML_BOOLEAN_ATTRIBUTES` in `src/value-rules.ts`, core's list); on any other it is the word, `data-live="true"`, `class="true"`, where it was bare (F2). A reactive boolean still lands in a `TYPE_BOOL` slot, which the walker now writes by the same rule.
 - An attribute whose server value is the empty string is written as a static `name=""` (F3): a signal created with `''` bound to an attribute (`value: () => query()`, `value: query`) or a value that evaluates to `''`. A client slot cannot carry an empty default (zero default bytes read as null), so the server used to drop the attribute where `h()` writes it. The js-emitter `dynamic-attrs` module regenerates; `tests/ssr-render.test.ts`'s stated limit "omits an attribute whose value evaluates to the empty string" became "writes an attribute whose server value is the empty string".
 - Tests: `tests/value-rule-6-attributes.test.ts` (the shared `compiled` shapes and the boolean set), `tests/attribute-values-archive.test.ts` (the archived corpus outputs and their ledger).
-
 ### Strict server-renderable subset — FORMA-101
 
 - SSR builds and the direct plugin now refuse every unsupported native construct, including default builds and legacy `strict:false`/`FORMA_STRICT=0`. The build reports every entry's available diagnostics and retains prior output on failure. Removed the obsolete placeholder helper; original guides and tests remain archived.
@@ -56,6 +57,7 @@
 
 - `BUILD-819`, the build package's size-report gate: a route whose Forma code (`@getforma/core` and `alien-signals` as bundled) is over N2's ceiling of 25,500 B gzip -9 (decision brief L-55). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/route-size.test.ts`; no page triggers it.
 - `BUILD-819` now covers every ceiling of the size report's route classes (FORMA-190): a route's JavaScript over 75 KiB, or 365 KiB for a route declared `canvas: true`, and any script on a route with no interactive region, beside Forma's code over 25,500 B. Title, why and fix are reworded; the code and its place are unchanged.
+- `BUILD-823`, the build package's refusal of a preview-frame runtime esbuild cannot minify (FORMA-190: a production build writes the frame's runtime minified into the application's output). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/preview-frame.test.ts`; no page triggers it.
 
 ### Conditional description seam — FORMA-104
 

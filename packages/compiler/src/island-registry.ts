@@ -1,3 +1,4 @@
+import {createIslandRootProofs} from './island-root-proof';
 import {readSourceFile} from './source-snapshot';
 import {isCoreCall} from './entry-policy';
 import {realpathSync} from 'node:fs';
@@ -24,6 +25,7 @@ export interface RegisteredIsland {
   mode: IslandRenderMode;
   declared: DeclaredPageProps;
   analyze(): IslandBindings;
+  proveRoot(): void;
 }
 export interface IslandRegistry {
   resolve(name: string, file: string): RegisteredIsland | undefined;
@@ -86,6 +88,7 @@ export function createIslandRegistry(entry: string): IslandRegistry {
     targets.set(cacheKey, result); return result;
   };
   const registered = new Map<string,RegisteredIsland>(), names = new Set<string>();
+  const proveRoot=createIslandRootProofs(rawModuleLoader,identity=>registered.has(identity));
   const entries: {island:RegisteredIsland;local:string;start:number;end:number}[]=[];
   const registry: IslandRegistry = {entries:()=>entries,resolve(local,file) { const found = target(local,file); return found ? registered.get(found.identity) : undefined; }};
   const ast = parse(source(entry), {sourceType:'module',plugins:['typescript','jsx']});
@@ -106,7 +109,7 @@ export function createIslandRegistry(entry: string): IslandRegistry {
       try { canonicalIslandSchema(declared.schema, 0); }
       catch (error) { fail(found.file, found.fn, String(error)); }
       let analyzed: IslandBindings | undefined;
-      const item: RegisteredIsland = {...found,name,declared,analyze() {
+      const item: RegisteredIsland = {...found,name,declared,proveRoot() { if(found.mode==='ssr') proveRoot(found.source,found.file,found.fn); },analyze() {
         return analyzed ??= analyzeIslandBindings(found.source, found.file, name, {
           functionStart:found.fn.start ?? undefined,props:declared.schema[0]!.map(field=>field.name),mode:found.mode,loadModule:rawModuleLoader,
           registration:(file,local)=>registry.resolve(local,file)?.name,

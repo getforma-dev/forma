@@ -16,6 +16,7 @@
 import { internalEffect, untrack, createRoot, registerDisposer } from 'forma/reactive';
 import { describingAdoption } from './adoption-description.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
+import { branchNode, type Branch } from './normalize-text.js';
 
 /**
  * Conditionally render content based on a reactive boolean.
@@ -35,8 +36,8 @@ import { getNamespace, insertNs, withNamespace } from './namespace.js';
  */
 export function createShow(
   when: () => unknown,
-  thenFn: () => Node,
-  elseFn: () => Node | null = () => null,
+  thenFn: () => Branch,
+  elseFn: () => Branch = () => null,
 ): DocumentFragment {
   if (describingAdoption) {
     return { type: 'show', condition: when, whenTrue: thenFn, whenFalse: elseFn } as unknown as DocumentFragment;
@@ -94,10 +95,10 @@ export function createShow(
     const branchFn = truthy ? thenFn : elseFn;
     if (branchFn) {
       let branchDispose!: () => void;
-      currentNode = createRoot((dispose) => {
+      currentNode = branchNode(createRoot((dispose) => {
         branchDispose = dispose;
         return untrack(() => withNamespace(ns, branchFn));
-      });
+      }));
       currentDispose = branchDispose;
     } else {
       currentNode = null;
