@@ -26,7 +26,10 @@ function runNumber(value, name) {
 export async function qualificationEvidence({ set, reportPath, directory, env = process.env, root = ROOT }) {
   assert.equal(basename(reportPath), 'p17.json', 'P17 report filename differs');
   const runId = runNumber(env.GITHUB_RUN_ID, 'GITHUB_RUN_ID');
-  const runAttempt = runNumber(env.GITHUB_RUN_ATTEMPT, 'GITHUB_RUN_ATTEMPT');
+  const recordAttempt = runNumber(env.GITHUB_RUN_ATTEMPT, 'GITHUB_RUN_ATTEMPT');
+  // A record-only retry must still point to the attempt that produced P17.
+  const runAttempt = runNumber(env.P17_RUN_ATTEMPT, 'P17_RUN_ATTEMPT');
+  assert(runAttempt <= recordAttempt, 'P17 names a future workflow attempt');
   assert.equal(String(set.run), String(runId), 'DS11 belongs to another workflow run');
   assert.equal(set.commit, env.GITHUB_SHA, 'DS11 belongs to another commit');
   await verifyEvidence(dirname(reportPath), env.P17_MANIFEST_SHA256);

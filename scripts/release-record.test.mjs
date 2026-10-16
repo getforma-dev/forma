@@ -39,7 +39,7 @@ async function evidenceFixture(t, { rc = false } = {}) {
   writeFileSync(reportPath, encode(report)); writeFileSync(join(p17, 'raw/trace.json'), '[1,2,3]\n');
   const manifestSha256 = await recordEvidence(p17);
   const set = { commit, run: '12345', tag: rc ? 'v3.0.0-rc.1' : 'v3.0.0-beta.1' };
-  const env = { GITHUB_SHA: commit, GITHUB_RUN_ID: '12345', GITHUB_RUN_ATTEMPT: '2', P17_MANIFEST_SHA256: manifestSha256 };
+  const env = { GITHUB_SHA: commit, GITHUB_RUN_ID: '12345', GITHUB_RUN_ATTEMPT: '2', P17_RUN_ATTEMPT: '2', P17_MANIFEST_SHA256: manifestSha256 };
   return { root, directory, reportPath, set, env, report, p17, git };
 }
 
@@ -47,6 +47,8 @@ test('DS12 names the actual authenticated nested P17 artifact without requiring 
   const f = await evidenceFixture(t), result = await qualificationEvidence(f);
   assert.deepEqual(result.fields, { p17Evidence: { runId: 12345, runAttempt: 2, artifactName: 'release-p17', manifestSha256: f.env.P17_MANIFEST_SHA256 } });
   assert.deepEqual(result.assets, []); assert.deepEqual(result.report, f.report);
+  const retry = await qualificationEvidence({ ...f, env: { ...f.env, GITHUB_RUN_ATTEMPT: '3' } });
+  assert.equal(retry.fields.p17Evidence.runAttempt, 2, 'record-only retry preserves the successful verifier attempt');
   writeFileSync(join(f.p17, 'raw/trace.json'), 'changed actual raw evidence');
   await assert.rejects(qualificationEvidence(f), /tree differs/);
 });
@@ -57,6 +59,7 @@ test('DS12 refuses absent, malformed or mismatched workflow and manifest identit
     { ...f.env, GITHUB_RUN_ID: '12346' }, { ...f.env, GITHUB_RUN_ID: '012345' },
     { ...f.env, GITHUB_RUN_ATTEMPT: '0' }, { ...f.env, GITHUB_RUN_ATTEMPT: undefined },
     { ...f.env, GITHUB_RUN_ATTEMPT: '9007199254740992' }, { ...f.env, GITHUB_SHA: 'a'.repeat(40) },
+    { ...f.env, P17_RUN_ATTEMPT: undefined }, { ...f.env, P17_RUN_ATTEMPT: '0' }, { ...f.env, P17_RUN_ATTEMPT: '3' },
     { ...f.env, P17_MANIFEST_SHA256: undefined }, { ...f.env, P17_MANIFEST_SHA256: 'a'.repeat(64) },
   ]) await assert.rejects(qualificationEvidence({ ...f, env }));
 });

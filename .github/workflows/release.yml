@@ -100,6 +100,7 @@ jobs:
     timeout-minutes: 25
     outputs:
       report-sha256: ${{ steps.record.outputs.report-sha256 }}
+      p17-run-attempt: ${{ steps.record.outputs.p17-run-attempt }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -142,6 +143,7 @@ jobs:
         run: |
           REPORT_SHA256=$(node scripts/release-evidence.mjs record "$RUNNER_TEMP/p17")
           echo "report-sha256=$REPORT_SHA256" >> "$GITHUB_OUTPUT"
+          echo "p17-run-attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         # Keep actual failed P17 diagnostics; verify still fails and blocks publishing.
         if: always()
@@ -257,4 +259,5 @@ jobs:
           RELEASE_STARTED_AT: ${{ needs.check.outputs.started-at }}
           CI_RUN: ${{ needs.check.outputs.ci-run }}
           P17_MANIFEST_SHA256: ${{ needs.verify.outputs.report-sha256 }}
+          P17_RUN_ATTEMPT: ${{ needs.verify.outputs.p17-run-attempt }}
         run: node scripts/release-record.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"
