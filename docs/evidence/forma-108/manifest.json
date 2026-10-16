@@ -7,8 +7,8 @@
   "packedTarSha256": "8ebf5bf72b9a10636a5cb2e203d8882b852380547f43e8b287e7c884f05d553e",
   "files": {
     "README.md": {
-      "bytes": 11315,
-      "sha256": "1f9526bae6cc14994cf99dea680a9bbb4f398af5f992788ccf3b0bbafe91a666"
+      "bytes": 11597,
+      "sha256": "221eaebf4a922fe111a1af045678b3a4e147fc35181254b6be903f40d6e52f00"
     },
     "browser-csp-corrected.log": {
       "bytes": 1469,
@@ -77,6 +77,18 @@
     "csp-example/corrected.log": {
       "bytes": 1339,
       "sha256": "d19d7e9d587fc63d8b0703d6fdabe902081618bce1717fdde6da48210e642cb1"
+    },
+    "csp-example/default-none-qualification.json": {
+      "bytes": 1840,
+      "sha256": "05d41182087d0c5356f1da4f2d64d376ecd2d6041059df1bfea1495ef018ff2a"
+    },
+    "csp-example/default-none.json": {
+      "bytes": 6392,
+      "sha256": "38d46bae270f3f114b310bfcc14f1b4ca492f37ca2f8b2b61a22ca6dea9a4795"
+    },
+    "csp-example/default-none.log": {
+      "bytes": 1339,
+      "sha256": "fdd1661a16bfd1be2353d90a5a0fa3b8269cb20b98c27d9d0593e113fd504c19"
     },
     "csp-example/qualification.json": {
       "bytes": 1998,
