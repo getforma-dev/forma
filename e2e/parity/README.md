@@ -184,18 +184,24 @@ report is `expected-divergent` only when every difference in it is matched. The 
 skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
 run as an unexpected pass, so the entry is removed the day its fix lands.
 
-The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
+The recorded findings (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
 
-F4 can never become equal: the server has no value to write. In warning mode the compiler reports
-BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
-(`docs/DIAGNOSTICS.md`; DR-1's release-A bridge). DR-1 makes strict the only mode in release B
-(3.0.0, FORMA-101), where BUILD-206 is a build error. The difference then ends because the page no
-longer compiles, not because the trees agree; the corpus fixture has to move the attribute behind
-`browserOnly()` or drop it, and the entry fails the run as an unexpected pass.
+F1, F2, F3 and F6 are resolved by the integrated list-source, attribute-value and
+keyed-adoption changes. F4's original unknown getter is preserved byte-exact in
+[the strict corpus archive](../../docs/archive/FORMA-101-strict-corpus/README.md)
+and tested as a source-located BUILD-206 publication refusal even with
+`strict:false`. The admitted live page uses a closed `createSignal('/docs')`;
+the real compiler/native renderer and browser now agree on its actual href.
+The preceding run proved the old F4 entry an unexpected pass before its removal.
+The duplicate-name scopes original similarly remains a BUILD-503 refusal, while
+the live page uses `panelCount` and preserves its actual defaults. Corpus emission
+requires zero error diagnostics. The integrated FORMA-016 text-branch fix also
+resolves F5; its earlier unexpected-pass report is preserved. With both fixes
+present, `expected-divergent.json` is empty and every live case must agree.
 
 Checkpoint C resolves F6: the merged integration run on 2026-10-15 observed both canonical-key adoption entries as unexpected passes, with all 99 P2 checks equal. The two resolved entries were removed; the original failure report is preserved in the release work evidence.
 

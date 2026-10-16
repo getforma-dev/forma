@@ -20,7 +20,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { generateRealIr, dumpFmir } from '../dist/index.js';
+import { generateRealIr, collectDiagnostics, dumpFmir } from '../dist/index.js';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const CORPUS_DIR = resolve(scriptDir, '../tests/fixtures/ir-corpus');
@@ -75,7 +75,14 @@ for (const name of cases) {
 
   let result;
   try {
-    result = generateRealIr(entryPoint);
+    const emission = collectDiagnostics(() => generateRealIr(entryPoint));
+    const errors = emission.diagnostics.filter(diagnostic => diagnostic.strict);
+    if (errors.length > 0) {
+      console.error(`  FAIL ${name}: publication refused: ${errors.map(diagnostic => diagnostic.code).join(', ')}`);
+      failed++;
+      continue;
+    }
+    result = emission.result;
   } catch (err) {
     console.error(`  FAIL ${name}: ${err instanceof Error ? err.message : err}`);
     failed++;
@@ -83,9 +90,7 @@ for (const name of cases) {
   }
 
   if (!result) {
-    // The plugin would fall back to placeholder IR here. A corpus case that
-    // compiles to a placeholder pins nothing.
-    console.error(`  FAIL ${name}: generateRealIr returned null (would fall back to placeholder IR)`);
+    console.error(`  FAIL ${name}: generateRealIr returned null (no native product; publication refused)`);
     failed++;
     continue;
   }

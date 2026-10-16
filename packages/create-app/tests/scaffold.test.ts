@@ -42,7 +42,8 @@ describe('scaffolding', () => {
       const res = runCli([name, '--template', template], tmp);
       expect(res.status, res.stderr || res.stdout).toBe(0);
       dest = path.join(tmp, name);
-    });
+      // Windows candidate CLI/staging exceeded the old 10s hook budget.
+    }, 60_000);
 
     it('produces exactly the template tree, with configuration dotfiles restored', () => {
       const expected = listFiles(path.join(TEMPLATES_DIR, template))
@@ -93,10 +94,9 @@ describe('scaffolding', () => {
       const out = res.stdout.replace(/\x1b\[[0-9;]*m/g, '');
       expect(out).toMatch(/^\s*npm ci$/m);
       expect(out).not.toMatch(/\bnpm install\b/);
-      // It scaffolds a second project, which took up to 2,297 ms on the
-      // Windows scaffold leg: 7 s is about 3x that, where vitest's 5 s default
-      // was barely 2x (FORMA-179).
-    }, 7_000);
+      // Packed Windows CLI + candidate staging reached 10.929s. Each child
+      // is bounded at 25s by runCli; both fit this explicit process budget.
+    }, 60_000);
 
     it('writes a .gitignore and no _gitignore', () => {
       expect(fs.existsSync(path.join(dest, '.gitignore'))).toBe(true);

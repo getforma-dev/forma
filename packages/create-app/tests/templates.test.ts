@@ -220,12 +220,13 @@ describe.each(TEMPLATES)('%s template', (template) => {
   });
 
   it('packs the install policy under _npmrc so npm does not silently drop it', () => {
-    const packed = run('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], REPO_ROOT);
+    // Windows npm pack took 5.540s; bound both the child and its test at 60s.
+    const packed = run('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], REPO_ROOT, 60_000);
     expect(packed.status, packed.stderr).toBe(0);
     const paths = JSON.parse(packed.stdout)[0].files.map((f: { path: string }) => f.path);
     expect(paths).toContain(`templates/${template}/admin/_npmrc`);
     expect(fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', '_npmrc'), 'utf8')).toContain('ignore-scripts=true');
-  });
+  }, 60_000);
 
   it('ships an npm lockfile that agrees with package.json and resolves only from the npm registry', () => {
     // The templates ship their lockfiles (DR-32): a new project installs the
@@ -517,7 +518,8 @@ describe('minimal template', () => {
       expect(result!.islands.map(island => island.name)).toEqual(['Counter']);
       expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint])).toEqual([['count', 3]]);
     } finally { rmrf(dir); }
-  });
+    // Actual packed Windows CLI/staging reached 10.571s, before compilation.
+  }, 60_000);
   it('declares the same count prop in its page and Rust handler with a distinct server seed', () => {
     const app = fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/admin/src/home/app.tsx'), 'utf8');
     const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/src/main.rs'), 'utf8'));

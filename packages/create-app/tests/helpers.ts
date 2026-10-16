@@ -78,13 +78,17 @@ export function runCli(args: string[], cwd: string, env: Record<string, string> 
   const result = spawnSync(process.execPath, [CLI, ...args], {
     cwd,
     encoding: 'utf8',
+    // Two bounded child processes fit the CLI-backed tests' 60s budget.
+    timeout: 25_000,
     // An empty stdin makes `prompts` give up instead of waiting forever if a
     // future change ever makes one of these paths interactive.
     input: '',
     env: { ...process.env, FORCE_COLOR: '0', ...env },
   });
+  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, result.stdout].filter(Boolean).join('\n');
   if (CANDIDATE_CONTEXT && result.status === 0 && args[0] && !args[0].startsWith('-') && !args.includes('--dry-run')) {
-    const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', maxBuffer:64*1024*1024, env:process.env});
+    const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', timeout:25_000, maxBuffer:64*1024*1024, env:process.env});
+    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, staged.stdout].filter(Boolean).join('\n');
     if (staged.status !== 0) return staged;
   }
   return result;

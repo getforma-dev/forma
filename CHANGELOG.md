@@ -19,6 +19,14 @@
 - Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
 
 
+### Strict server-renderable subset — FORMA-101
+
+- SSR builds and the direct plugin now refuse every unsupported native construct, including default builds and legacy `strict:false`/`FORMA_STRICT=0`. The build reports every entry's available diagnostics and retains prior output on failure. Removed the obsolete placeholder helper; original guides and tests remain archived.
+- Published `packages/compiler/docs/subset.md` as the admission contract and diagnostic catalogue. BUILD-617 refuses an independently registered option/optgroup island beneath another owner's value-bound select; unregistered helpers within the select owner and unbound selects remain admitted.
+- Callable LIST sources now also need declared array props or closed literal-default signals (BUILD-610). The preserved list-same-source corpus is migrated to real two-row local defaults, with native rendering assertions; BUILD-616 retains its separate non-callable meaning. Island-own-root and finite parser-repair proof remain the FORMA-139 gate.
+- The corpus emitter now rejects error diagnostics. The original unknown href getter and duplicate signal-name page remain authenticated BUILD-206/503 publication negatives; live examples use a real closed href and `panelCount`. Their regenerated products carry a before/after ledger, preserve all other corpus modules, and remove F4 only after native/browser equality proves the old exception an unexpected pass.
+
+
 ### Value rules 2 to 7 — FORMA-182
 
 - Rule 2, numbers in ECMAScript formatting: stated in `docs/parity-rules.md` with the shared vector file `crates/forma-ir/tests/fixtures/parity/numbers.json` (29 lexemes with their `Number.prototype.toString` spelling), read by forma-ir's walker suite and by core's, where the engine is the oracle. No code changed: the walker's `format_js_number` already agrees on every vector.
