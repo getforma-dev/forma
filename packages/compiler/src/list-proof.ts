@@ -15,11 +15,21 @@ const traverse=(typeof _traverse==='function'?_traverse:(_traverse as any).defau
 const callable=(node:t.Node|null|undefined):node is ComponentFunction=>t.isFunctionDeclaration(node)||t.isFunctionExpression(node)||t.isArrowFunctionExpression(node);
 const unwrap=(input:t.Node):t.Node=>{let node=input;while(t.isTSAsExpression(node)||t.isTSTypeAssertion(node)||t.isTSNonNullExpression(node)||t.isTSSatisfiesExpression(node)||t.isParenthesizedExpression(node))node=node.expression;return node;};
 const field=(node:t.Node):string|undefined=>t.isIdentifier(node)||t.isJSXIdentifier(node)?node.name:t.isStringLiteral(node)?node.value:undefined;
-export interface ListProof {readonly file:string;readonly start:number;readonly end:number;readonly key:readonly string[];readonly root:{file:string;start:number;end:number}}
+export interface ListProof {readonly file:string;readonly start:number;readonly end:number;readonly key:readonly string[];readonly root:{file:string;start:number;end:number};readonly indexed?:t.CallExpression}
 /** A resolved original core `createList` site. Resolution is separate from proof so the legacy
  * shape checks (BUILD-107 in the walker, the BUILD-610 callback check in island analysis) keep
  * their precedence: `prove()` runs only after a call has all three arguments in their old form. */
-export interface ListSite {readonly file:string;readonly start:number;readonly end:number;prove():ListProof}
+export interface ListSite {readonly file:string;readonly start:number;readonly end:number;readonly indexed:boolean;prove():ListProof}
+/** Follow immutable local handle aliases to the actual factory call. The caller
+ * supplies lexical import identity; a same-spelled function or object is not proof. */
+export function keyedFactory(node:t.Node|undefined,lookup:(node:t.Identifier)=>Binding|undefined,isFactory:(callee:t.Node)=>boolean,seen=new Set<Binding>()):t.CallExpression|undefined {
+ if(!node)return undefined;node=unwrap(node);
+ if(t.isCallExpression(node))return isFactory(node.callee)?node:undefined;
+ if(!t.isIdentifier(node))return undefined;
+ const found=lookup(node),decl=found?.path.node;
+ if(!found||found.constantViolations.length||seen.has(found)||!t.isVariableDeclarator(decl)||!t.isIdentifier(decl.id)||!decl.init)return undefined;
+ seen.add(found);return keyedFactory(decl.init,lookup,isFactory,seen);
+}
 interface Module {file:string;source:string;paths:Map<t.Node,NodePath>;calls:NodePath<t.CallExpression>[];functions:Map<number,ComponentFunction>}
 const rawLoad:ModuleLoader=(from,specifier)=>{
  if(!specifier.startsWith('.')&&!specifier.startsWith('/'))return null;
@@ -33,7 +43,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   traverse(ast,{enter(path){paths.set(path.node,path);if(callable(path.node))functions.set(path.node.start!,path.node);},CallExpression(path){if(isCoreCall(path,'createList'))calls.push(path);}});
   const result={file,source,paths,calls,functions};modules.set(file,result);return result;
  }
- function fail(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'|'BUILD-616',detail:string):never {
+ function fail(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'|'BUILD-616'|'BUILD-622',detail:string):never {
   throw new PropsSchemaError(mod.file,node.loc?.start.line??1,(node.loc?.start.column??0)+1,detail,code);
  }
  function binding(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'):Binding {
@@ -129,6 +139,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   * a `try`, a loop) would make the key or the row shape depend on data, which DR-8 refuses at
   * build time rather than at adoption. */
  function singleReturn(mod:Module,fn:ComponentFunction,code:'BUILD-612'|'BUILD-613',what:string):t.Expression {
+  if(fn.async||fn.generator)fail(mod,fn,code,`${what} must be synchronous, not async or a generator`);
   if(!t.isBlockStatement(fn.body))return fn.body;
   let found:t.Expression|undefined;
   for(const statement of fn.body.body) {
@@ -260,22 +271,156 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    if(declared&&!callable(declared.node)){const what=literal(target,unwrap(declared.node));if(what)refuse(`${what} (imported)`);}
   }
  }
+ /** Only intrinsic event props defer a callback by contract. A custom component
+  * can invoke its on... prop while rendering, so it is not an event boundary. */
+ function eventPosition(mod:Module,path:NodePath):boolean {
+  if(path.isObjectMethod()&&path.node.kind!=='method')return false;
+  const parent=path.parentPath;
+  if(parent?.isJSXExpressionContainer()) {
+   const prop=parent.parentPath,opening=prop.parentPath;
+   return prop.isJSXAttribute()&&t.isJSXIdentifier(prop.node.name)&&/^on/i.test(prop.node.name.name)
+    &&!!opening?.isJSXOpeningElement()&&t.isJSXIdentifier(opening.node.name)&&/^[a-z]/.test(opening.node.name.name);
+  }
+  const prop=path.isObjectMethod()?path:parent?.isObjectProperty()&&parent.node.value===path.node?parent:undefined;
+  if(!prop||prop.node.computed||!/^on/i.test(field(prop.node.key)??''))return false;
+  const object=prop.parentPath,call=object?.parentPath;
+  return !!object?.isObjectExpression()&&!!call?.isCallExpression()&&call.node.arguments[1]===object.node
+   &&t.isStringLiteral(call.node.arguments[0])&&core(mod,call.node.callee)==='h';
+ }
+ function expressionPath(path:NodePath):NodePath {
+  while(path.parentPath&&(t.isTSAsExpression(path.parentPath.node)||t.isTSTypeAssertion(path.parentPath.node)
+   ||t.isTSNonNullExpression(path.parentPath.node)||t.isTSSatisfiesExpression(path.parentPath.node)||t.isParenthesizedExpression(path.parentPath.node)))path=path.parentPath;
+  return path;
+ }
+ /** A named local callback is deferred only if every use has that proof. This
+  * includes immutable handler aliases, but never guesses about an escaping call. */
+ function deferred(mod:Module,input:NodePath,active=new Set<Binding>()):boolean {
+  const path=expressionPath(input);if(eventPosition(mod,path))return true;
+  const parent=path.parentPath;
+  const found=path.isFunctionDeclaration()&&path.node.id?path.scope.getBinding(path.node.id.name)
+   :parent?.isVariableDeclarator()&&parent.node.init===path.node&&t.isIdentifier(parent.node.id)?parent.scope.getBinding(parent.node.id.name):undefined;
+  if(!found||found.constantViolations.length||active.has(found))return false;
+  active.add(found);try{return found.referencePaths.every(use=>deferred(mod,use,active));}finally{active.delete(found);}
+ }
+ function laterUse(mod:Module,path:NodePath,owner:NodePath):boolean {
+  for(let cursor:NodePath|null=path.parentPath;cursor&&cursor!==owner;cursor=cursor.parentPath)if(cursor.isFunction()&&deferred(mod,cursor))return true;
+  return false;
+ }
+ type DataPath={binding:Binding;parts:(string|undefined)[]};
+ function dataPath(mod:Module,input:t.Node,active=new Set<Binding>()):DataPath|undefined {
+  const node=unwrap(input);
+  if(t.isMemberExpression(node)||t.isOptionalMemberExpression(node)) {
+   const base=dataPath(mod,node.object,active);if(!base)return undefined;
+   const name=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)||t.isNumericLiteral(node.property)?String(node.property.value):undefined;
+   return {binding:base.binding,parts:[...base.parts,name]};
+  }
+  if(!t.isIdentifier(node))return undefined;
+  const found=mod.paths.get(node)?.scope.getBinding(node.name);if(!found||active.has(found))return undefined;
+  if(found.kind==='param')return {binding:found,parts:[]};
+  const decl=found.path.node;
+  if(found.constantViolations.length||!t.isVariableDeclarator(decl)||!t.isIdentifier(decl.id)||!decl.init)return undefined;
+  active.add(found);try{return dataPath(mod,decl.init,active);}finally{active.delete(found);}
+ }
+ /** Declared initial arrays retain their server value through construction. Read
+  * disjoint props freely; any possibly shared array/ancestor must not escape to
+  * an eager call or write. Aliases stay subject to the same original-path proof. */
+ function initialUses(mod:Module,factory:t.CallExpression,owner:NodePath):void {
+  const initial=factory.arguments[0],source=initial&&dataPath(mod,initial);if(!source)return;
+  for(const [node,path] of mod.paths) {
+   if(!path.isReferencedIdentifier()||!t.isIdentifier(node))continue;
+   let value=expressionPath(path);
+   while(value.parentPath&&(value.parentPath.isMemberExpression()||value.parentPath.isOptionalMemberExpression())&&value.parentPath.node.object===value.node)value=expressionPath(value.parentPath);
+   const read=dataPath(mod,value.node);if(!read||read.binding!==source.binding)continue;
+   if(read.parts.some((part,i)=>i<source.parts.length&&part!==undefined&&source.parts[i]!==undefined&&part!==source.parts[i]))continue;
+   if(laterUse(mod,path,owner))continue;
+   const parent=value.parentPath;
+   const write=parent?.isAssignmentExpression()&&parent.node.left===value.node||parent?.isUpdateExpression()||parent?.isUnaryExpression({operator:'delete'});
+   if(!write) {
+    if(parent?.isCallExpression()&&parent.node.arguments[0]===value.node&&core(mod,parent.node.callee)==='createKeyedRows')continue;
+    if(parent?.isVariableDeclarator()&&parent.node.init===value.node&&t.isIdentifier(parent.node.id)) {
+     const alias=parent.scope.getBinding(parent.node.id.name);if(alias&&!alias.constantViolations.length)continue;
+    }
+    // An array's own length is scalar, so merely reading it cannot expose the
+    // array or a shared row. Writes to length still refuse above.
+    if(read.parts.length===source.parts.length+1&&read.parts.at(-1)==='length'&&source.parts.every((part,i)=>part!==undefined&&part===read.parts[i]))continue;
+    if(parent?.isBinaryExpression()&&['===','!=='].includes(parent.node.operator)||parent?.isUnaryExpression()&&['!','typeof','void'].includes(parent.node.operator))continue;
+   }
+   fail(mod,node,'BUILD-622','declared indexed initial rows and their ancestors must remain unmodified and unescaped until construction; use immutable aliases, pure reads or deferred intrinsic events');
+  }
+ }
+ function handleUses(mod:Module,factory:t.CallExpression,owner:NodePath):void {
+  for(const [node,path] of mod.paths) {
+   if(!path.isReferencedIdentifier()||!t.isIdentifier(node)||keyedFactory(node,ref=>mod.paths.get(ref)?.scope.getBinding(ref.name),callee=>core(mod,callee)==='createKeyedRows')!==factory)continue;
+   const value=expressionPath(path),parent=value.parentPath;
+   if(parent?.isCallExpression()&&parent.node.arguments[0]===value.node&&core(mod,parent.node.callee)==='createList')continue;
+   if(parent?.isVariableDeclarator()&&parent.node.init===value.node&&t.isIdentifier(parent.node.id)) {
+    const alias=parent.scope.getBinding(parent.node.id.name);if(alias&&!alias.constantViolations.length)continue;
+   }
+   if(!laterUse(mod,path,owner))fail(mod,node,'BUILD-622','indexed handle can only feed its native LIST or a proved deferred intrinsic event; eager mutations and unknown escapes have no native equivalent');
+  }
+ }
+ /** The factory validates eagerly. Native must execute its matching LIST on the
+  * same unconditional return path, so a hidden branch cannot skip key validation. */
+ function indexedUse(mod:Module,factory:t.CallExpression,path:NodePath<t.CallExpression>):void {
+  const owner=mod.paths.get(factory)?.getFunctionParent(),listOwner=path.getFunctionParent();
+  if(!owner||owner!==listOwner)fail(mod,factory,'BUILD-622','indexed rows need an unconditional LIST in the factory’s own component');
+  let cursor:NodePath|null=path;
+  while(cursor?.parentPath&&cursor.parentPath!==owner){
+   if(cursor.isConditionalExpression()||cursor.isLogicalExpression()||cursor.isFunction()||cursor.isIfStatement()||cursor.isLoop()||cursor.isSwitchStatement()||cursor.isTryStatement())fail(mod,cursor.node,'BUILD-622','indexed LIST cannot defer eager key validation behind a branch or callback');
+   cursor=cursor.parentPath;
+  }
+  if(t.isBlockStatement(owner.node.body)) {
+   const statement=path.findParent(parent=>parent.parentPath===owner.get('body'));
+   if(!statement?.isReturnStatement()||owner.node.body.body.some(item=>item!==statement.node&&!t.isVariableDeclaration(item)&&!t.isFunctionDeclaration(item)&&!t.isTSTypeAliasDeclaration(item)&&!t.isTSInterfaceDeclaration(item)&&!t.isEmptyStatement(item)))fail(mod,factory,'BUILD-622','indexed factory needs a single unconditional component return containing its LIST');
+  }
+  handleUses(mod,factory,owner);
+  initialUses(mod,factory,owner);
+  const key=factory.arguments[1];
+  if(!t.isArrowFunctionExpression(key)||key.async||t.isBlockStatement(key.body)||key.params.length!==1||!t.isIdentifier(key.params[0]))fail(mod,key??factory,'BUILD-622','indexed key callback must be a pure expression reading its own row property path');
+  const parts=keyPath(mod,key.body,binding(mod,key.params[0],'BUILD-612'));
+  if(!parts.length)fail(mod,key,'BUILD-622','indexed key callback needs a nonempty own-row property path');
+ }
  function prove(mod:Module,path:NodePath<t.CallExpression>):ListProof {
-  const call=path.node,[items,key,row]=call.arguments;
-  if(items&&!t.isSpreadElement(items)&&!t.isArgumentPlaceholder(items))source(mod,items,items);
+  const call=path.node,items=call.arguments[0];
+  const indexed=keyedFactory(items,node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows');
+  if(indexed&&(call.arguments.length!==2||indexed.arguments.length!==2||!t.isExpression(indexed.arguments[0])))fail(mod,call,'BUILD-622','indexed LIST needs createKeyedRows(initialArray, keyFn) and createList(rows, renderRow) with no extra arguments');
+  if(indexed)indexedUse(mod,indexed,path);
+  const key=indexed?indexed.arguments[1]:call.arguments[1],row=indexed?call.arguments[1]:call.arguments[2];
+  if(!indexed&&items&&!t.isSpreadElement(items)&&!t.isArgumentPlaceholder(items))source(mod,items,items);
   if(!callable(key)||!t.isIdentifier(key.params[0]))fail(mod,key??call,'BUILD-612','LIST key must be an inline function with a named row parameter');
   const body=singleReturn(mod,key,'BUILD-612','LIST key function');
   const parameter=binding(mod,key.params[0],'BUILD-612'),keyParts=keyPath(mod,body,parameter);
   if(!keyParts.length)fail(mod,body,'BUILD-612','LIST key cannot be the row itself; use a nonempty path such as row.id');
+  if(indexed&&callable(row)&&(row.async||t.isFunctionExpression(row)&&row.generator))fail(mod,row,'BUILD-622','indexed row callback must execute synchronously');
   if(!callable(row)||!t.isIdentifier(row.params[0]))fail(mod,row??call,'BUILD-613','LIST row needs an inline callback with a named item');
   const result=singleReturn(mod,row,'BUILD-613','LIST row callback');
   const found=roots(mod,result,new Set());if(found.length!==1)fail(mod,result,'BUILD-613','LIST row must contain exactly one stable owned Element');
-  return {file:mod.file,start:call.start!,end:call.end!,key:keyParts,root:found[0]!};
+  return {file:mod.file,start:call.start!,end:call.end!,key:keyParts,root:found[0]!,indexed};
+ }
+ function validateFactory(mod:Module,factory:t.CallExpression):void {
+  const uses=mod.calls.filter(path=>keyedFactory(path.node.arguments[0],node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows')===factory);
+  if(!uses.length)fail(mod,factory,'BUILD-622','eager indexed factory has no unconditional native LIST');
+  for(const use of uses)prove(mod,use);
  }
  function site(mod:Module,path:NodePath<t.CallExpression>):ListSite {
-  return {file:mod.file,start:path.node.start!,end:path.node.end!,prove:()=>prove(mod,path)};
+  return {file:mod.file,start:path.node.start!,end:path.node.end!,indexed:!!keyedFactory(path.node.arguments[0],node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows'),prove:()=>prove(mod,path)};
  }
  return {
+  factory(file:string,source:string,node:t.CallExpression):void {
+   const mod=module(file,source),factory=[...mod.paths.keys()].find(item=>t.isCallExpression(item)&&item.start===node.start&&item.end===node.end) as t.CallExpression|undefined;
+   if(!factory||core(mod,factory.callee)!=='createKeyedRows')fail(mod,node,'BUILD-622','indexed factory must resolve to the original core import');
+   validateFactory(mod,factory);
+  },
+  component(file:string,fn:ComponentFunction):void {
+   const mod=module(file,readSourceFile(file));
+   const location=fn.loc?.start??fn.body.loc?.start??(t.isBlockStatement(fn.body)?fn.body.body.find(node=>node.loc)?.loc?.start:undefined);
+   if(!location)return;
+   const at=originalPosition(file,location),column=at.column-1;
+   const contains=(node:t.Node)=>!!node.loc&&(node.loc.start.line<at.line||node.loc.start.line===at.line&&node.loc.start.column<=column)&&(node.loc.end.line>at.line||node.loc.end.line===at.line&&node.loc.end.column>=column);
+   const target=[...mod.functions.values()].filter(contains).sort((a,b)=>b.start!-a.start!)[0];
+   if(!target)return;
+   for(const [node,path] of mod.paths)if(t.isCallExpression(node)&&core(mod,node.callee)==='createKeyedRows'&&(!path.getFunctionParent()||path.getFunctionParent()?.node===target))validateFactory(mod,node);
+  },
   original(file:string,source:string,node:t.CallExpression):ListSite {
    const mod=module(file,source),path=mod.calls.find(path=>path.node.start===node.start&&path.node.end===node.end);
    if(!path)fail(mod,node,'BUILD-612','LIST call does not resolve to the original core createList import');

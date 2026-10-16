@@ -190,6 +190,55 @@ Static item fields (`src: item.art`) bake into the element when the row renders
 — the row is re-created when its key changes. Function props
 (`src: () => coverUrl()`) are reactive and update the attribute in place.
 
+### Indexed item replacement
+
+`createKeyedRows(initial, keyFn)` stores plain items by their canonical keys.
+Pass that handle to the two-argument `createList(rows, renderRow)` overload;
+the row callback receives a stable read-only item getter and the usual index getter.
+Replace items through the handle; passing an argument to the item getter cannot write it.
+
+```ts
+import { createKeyedRows, createList, h } from "@getforma/core";
+
+const rows = createKeyedRows([
+  { id: 1, label: "Alice" },
+  { id: 2, label: "Bob" },
+], item => item.id);
+
+createList(rows, (item, index) => h("li", null,
+  h("span", { title: () => item().label }, () => item().label),
+  h("button", { onClick: () => console.log(item()) }, "Inspect"),
+  () => String(index()),
+));
+
+rows.set(1, { id: 1, label: "Alicia" });
+rows.replace([{ id: 2, label: "Bob" }, { id: 1, label: "Alicia" }]);
+```
+
+`set(key, nextItem)` replaces one existing item. Its canonical key must stay
+the same; missing keys and key changes throw before any value is published.
+Passing the same object is a no-op. Reactive holes read the current item through
+`item()`; a one-time read outside a reactive callback remains a snapshot. The
+row factory, node identity and index are unchanged by `set`.
+
+`replace(nextItems)` changes membership or order. It validates the complete
+dense array and all keys before publishing any retained values, then batches
+the change. Retained keys keep their getters and row nodes; removed rows dispose
+their views. Several lists may share one handle and dispose independently.
+Directly mutating an input object does not notify readers.
+
+Keys follow the keyed-adoption domain: well-formed strings or safe integers.
+Numeric `1` and string `"1"` identify the same key; string line endings and NUL
+follow the shared text normalization. Duplicate canonical keys, sparse arrays,
+fractions and lone surrogates throw. Key callbacks must not reenter mutation
+of the same collection. The indexed overload takes no options and supplies
+no early-edit writeback authority for editable controls.
+
+For native SSR, create the collection inside the component that returns its
+unconditional list, and mutate it through deferred intrinsic event handlers.
+The [indexed native subset](../../compiler/docs/subset.md#indexed-row-updates)
+defines the declared-data and original-binding proof required for admission.
+
 ---
 
 ## Store — deep reactivity
@@ -511,7 +560,7 @@ The sections above cover application APIs with non-obvious semantics.
 | Ownership | `createRoot`, `createUnownedRoot`, `getOwner`, `runWithOwner`, `onCleanup`, `onError`, `trackDisposer` |
 | Introspection | `isSignal`, `isComputed`, `isEffect`, `isEffectScope`, `getBatchDepth`, `trigger`, `getSignalName` |
 | Rendering | `h`, `svg`, `Fragment`, `fragment`, `createText`, `mount`, `template`, `templateMany` |
-| Control flow | `createShow`, `createSwitch`, `createList`, `reconcileList`, `createPortal`, `createSuspense`, `createErrorBoundary`, `cleanup` |
+| Control flow | `createShow`, `createSwitch`, `createList`, `createKeyedRows`, `reconcileList`, `createPortal`, `createSuspense`, `createErrorBoundary`, `cleanup` |
 | Components | `defineComponent`, `disposeComponent`, `onMount`, `onUnmount`, `createContext`, `provide`, `inject`, `unprovide` |
 | State | `createStore`, `createHistory`, `persist(source, key, options?)` — mirrors a `[get, set]` pair into `localStorage` |
 | Islands | `activateIslands`, `hydrateIsland`, `deactivateIsland`, `deactivateAllIslands`, `sanitizePropsDeep`, `browserOnly(component)` — a component that renders in the browser alone ([ISLANDS.md](ISLANDS.md#browser-only-components-browseronly)) |

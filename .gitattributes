@@ -97,6 +97,9 @@ packages/compiler/tests/list-source.test.ts text eol=lf
 packages/compiler/tests/keyed-list-archive.test.ts text eol=lf
 packages/compiler/tests/keyed-list-proof.test.ts text eol=lf
 
+# Actual N3 timing/product evidence hashes are byte-exact across checkouts.
+docs/evidence/forma-181-indexed/*.json -text
+
 # Authentic pre-139 compiler source/product evidence, never checkout-normalized.
 docs/archive/FORMA-139-html-context/** -text
 
@@ -105,3 +108,4 @@ docs/archive/FORMA-139-e2e-title/** -text
 
 # Exact native multi-entry failure products.
 /docs/archive/FORMA-186-native-multiple-entries/** -text
+docs/evidence/forma-181-indexed/integrated/*.json -text
