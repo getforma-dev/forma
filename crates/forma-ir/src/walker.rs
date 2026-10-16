@@ -2628,6 +2628,53 @@ mod tests {
         assert_eq!(html, r#"<div title="a&quot;b">"#);
     }
 
+    #[test]
+    fn security_probe_bounded_text_escaping() {
+        let data = build_declared_fixture(&["xxxxxxxxxx<"], &[], &encode_text(0), &[]);
+        let module = IrModule::parse(&data).unwrap();
+        let expected = "xxxxxxxxxx&lt;";
+        let limits = WalkLimits {
+            max_output_bytes: expected.len(),
+            ..WalkLimits::default()
+        };
+        assert_eq!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), limits).as_deref(),
+            Ok(expected)
+        );
+        let short = WalkLimits {
+            max_output_bytes: expected.len() - 1,
+            ..limits
+        };
+        assert!(matches!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), short),
+            Err(IrError::OutputLimitExceeded { .. })
+        ));
+    }
+
+    #[test]
+    fn security_probe_bounded_attribute_escaping() {
+        let opcodes = encode_open_tag(0, &[(1, 2)]);
+        let data = build_declared_fixture(&["div", "title", "xxxxxxxxxx\""], &[], &opcodes, &[]);
+        let module = IrModule::parse(&data).unwrap();
+        let expected = "<div title=\"xxxxxxxxxx&quot;\">";
+        let limits = WalkLimits {
+            max_output_bytes: expected.len(),
+            ..WalkLimits::default()
+        };
+        assert_eq!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), limits).as_deref(),
+            Ok(expected)
+        );
+        let short = WalkLimits {
+            max_output_bytes: expected.len() - 1,
+            ..limits
+        };
+        assert!(matches!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), short),
+            Err(IrError::OutputLimitExceeded { .. })
+        ));
+    }
+
     // -- Test 6: walk_empty_element ----------------------------------------
 
     #[test]

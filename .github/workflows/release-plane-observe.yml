@@ -1,0 +1,75 @@
+# Detective, fail open with respect to publishing. These read-only snapshots
+# are an outbox, not proof that an external notification was delivered.
+name: Release plane observations
+on:
+  create:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: release-plane-observations
+  cancel-in-progress: false
+jobs:
+  observe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+      - name: Collect the actual event and environment settings
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_KIND: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release-plane"
+          # Only completed successful observations become comparison baselines.
+          # API/download/parse errors fail this detector; they are never absence.
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release-plane-observe.yml/runs?status=success&per_page=1" > "$RUNNER_TEMP/release-plane/history.json"
+          prior=$(node -e 'const fs=require("node:fs"),d=JSON.parse(fs.readFileSync(process.argv[1]));if(!Array.isArray(d.workflow_runs)||!Number.isSafeInteger(d.total_count))throw Error("invalid run history");if(d.workflow_runs.length){const n=d.workflow_runs[0].id;if(!Number.isSafeInteger(n))throw Error("invalid run id");process.stdout.write(String(n));}else if(d.total_count!==0)throw Error("missing run");' "$RUNNER_TEMP/release-plane/history.json")
+          baseline=()
+          if [ -n "$prior" ]; then
+            gh run download "$prior" --repo "$GITHUB_REPOSITORY" --name release-plane-observations --dir "$RUNNER_TEMP/release-plane-previous"
+            node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const report=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/release-plane-previous/environments.json','utf8'));
+          assert.equal(report.complete,true);assert.equal(report.mode,'environments');assert.equal(report.repository,'getforma-dev/forma');
+          writeFileSync(process.env.RUNNER_TEMP+'/release-plane/baseline.json',JSON.stringify(report.snapshot));
+          JS
+            baseline=(--baseline "$RUNNER_TEMP/release-plane/baseline.json")
+          fi
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const event=JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH,'utf8'));
+          if(process.env.EVENT_KIND==='push'){
+            assert(/^[a-f0-9]{40}$/.test(event.before)&&!/^[0]+$/.test(event.before),'initial branch push requires external inspection');
+            assert(/^[a-f0-9]{40}$/.test(event.after));
+            const paths=execFileSync('git',['diff','--name-only','-z',event.before,event.after],{encoding:'utf8'}).split('\0').filter(Boolean);
+            writeFileSync(process.env.RUNNER_TEMP+'/release-plane/paths.json',JSON.stringify(paths));
+          }
+          JS
+          if [ "$EVENT_KIND" = create ] || [ "$EVENT_KIND" = push ]; then
+            paths=()
+            if [ "$EVENT_KIND" = push ]; then paths=(--paths "$RUNNER_TEMP/release-plane/paths.json"); fi
+            node scripts/release-plane-observe.mjs event --kind "$EVENT_KIND" --payload "$GITHUB_EVENT_PATH" --delivery "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" "${paths[@]}" --out "$RUNNER_TEMP/release-plane/event.json"
+          fi
+          node scripts/release-plane-observe.mjs environments "${baseline[@]}" --out "$RUNNER_TEMP/release-plane/environments.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: release-plane-observations
+          path: ${{ runner.temp }}/release-plane/
+          if-no-files-found: error
+          retention-days: 30
