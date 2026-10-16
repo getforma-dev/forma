@@ -12,7 +12,7 @@
     "build": "npm run build -w packages/compiler && npm run build -w packages/build && npm run build -w packages/core && npm run build -w packages/create-app",
     "test": "npm test --workspaces",
     "emit:corpus": "npm run emit:corpus -w packages/compiler --",
-    "test:e2e": "bash e2e/sync-fixtures.sh && bash e2e/ssr/build.sh && bash e2e/frame/build.sh && npx playwright test",
+    "test:e2e": "bash e2e/sync-fixtures.sh && bash e2e/ssr/build.sh && bash e2e/frame/build.sh && bash e2e/fixtures/apps/build.sh && npx playwright test",
     "test:e2e:ci": "npx playwright test",
     "check": "bash scripts/check.sh"
   },

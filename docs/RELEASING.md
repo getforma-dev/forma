@@ -214,6 +214,37 @@ A run over the previously published A2 archives is recorded separately from newl
 packed merged-tree candidates; the latter include 117's scripts-off policy changes
 and are not claimed byte-identical to the old release. Neither dry run publishes.
 
+## Fixture applications and the measurement step (FORMA-188)
+
+The contract record carries `fixtureApps: "declared-v1"`. For such a set P17 also runs the fixture
+applications of `e2e/fixtures/apps/` against DS11, after the templates:
+
+1. The project is staged in `os.tmpdir()`, outside the checkout, from the committed sources (each file is
+   compared with `git show <commit>:` so a dirty tree cannot be what a tag verified). The three libraries
+   install from DS11's tarballs by `npm ci --ignore-scripts` on a lock built from the tagged tree's own
+   `package-lock.json` (the same staging as the templates, `stageNpmLock`); the signatures are audited as
+   for the templates; and every `@getforma/*` import of the installed libraries is proved to resolve inside
+   the install, never to a workspace link of the checkout (the alpha.1 failure).
+2. Every application is built with the **packed** `build()` in strict mode: anything above a note fails.
+3. The Rust servers build from DS11's crates (`[patch.crates-io]` to the extracted archives, as for the
+   templates) on a lock pruned from `e2e/Cargo.lock` to the crate's graph, third-party versions and
+   checksums untouched, `cargo build --locked`.
+4. Each packed server is started and judged by the same `lib/verify-page.mjs` and `lib/behaviours.mjs` the
+   source lane's `apps.spec.ts` uses: the server's values before any script, strict adoption that writes
+   nothing, the islands working afterwards; the extra checks (a hostile tenant name, an unknown tenant, the
+   other branches); and the packed compiler's refusal of the shapes `negative/` holds.
+
+The measurement step (`scripts/release-measurements.mjs`) then fails P17 naming a figure and both numbers
+when P17's wall time passes G6's 1,800 s, when Forma's code on any fixture route passes N2's ceiling
+(read from the packed build's own constant, never written in the step, and cross-checked against the build's verdict for the route; gzip -9; L-55; the build refuses it too, BUILD-819), or when a fixture route has no figure; and records,
+with the machine and profile, in `report.measurements` (which `release-record.mjs` embeds in DS12 and
+summarises in one line of the Release's notes): P17's time, N2 per route in gzip and Brotli beside the
+application's own bytes, and the walker's node, byte and list counts of the consumer-shaped pages
+(recorded, not gated). FORMA-191 adds N1, N3 and N5 rows to the same record. The skew drill is not called
+yet: it is FORMA-186's lane, and `stageFixtureProject()` returns what its call will take.
+
+Rehearse it as the runner sees it: commit, `pack` a dry-run DS11, delete `packages/*/dist`, then run P17.
+
 ## Staged response contract (FORMA-109)
 
 The DS11 contract records `trustedTypes: "enforced-v1"`. P17 reads the actual

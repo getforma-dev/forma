@@ -284,6 +284,20 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-819', "A route is over its size ceiling",
     "What the route loads cold is over the ceiling of its class (decision brief L-58, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 27,500 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.",
     "Trim what the route imports from @getforma/core or ships of its own, split the route, or declare a page that hosts many modules a canvas; the ceilings are policy, not an option. The report above the failure shows each route's class, Forma code and JavaScript beside the ceilings."),
+  entry('BUILD-820', 'The previous release for retention is not usable',
+    "previousDist names something that is not the previous release's dist/: a path that does not exist or is not a directory, one with no readable manifest.json, another application's dist, a watch build's, one whose asset names are not flat file names, or a directory that is, holds or sits inside outputDir (which the build replaces whole).",
+    "Pass the directory of the release that is live, kept apart from outputDir, or leave previousDist out for a first deploy. A dist built by an earlier schema retains nothing and says so; that is not this error."),
+  entry('BUILD-821', 'A retained asset cannot be vouched for',
+    "A file the previous manifest lists is missing from the previous dist, is not a regular file, or its bytes no longer match the SHA-384 the manifest recorded; or this build emitted a file of the same name with other bytes. The build will not copy bytes it cannot vouch for into a release browsers execute, and it fails before writing any output.",
+    "Keep the whole release artifact unaltered, as the build wrote it, and pass that directory. If the previous dist was damaged, restore it from the artifact store, or build this release as a security release (security: true) to retain nothing."),
+  entry('BUILD-822', 'FORMA_SECURITY_RELEASE is not a value the build understands',
+    "The environment variable that marks a release as a security release (nothing is retained from the previous release) holds a value other than 1, true, 0, false or empty. Reading an unknown value as unmarked would retain a revoked build's assets in the release that exists to remove them, so the build refuses it.",
+    "Set FORMA_SECURITY_RELEASE=1 (or true) for a release that fixes a vulnerability, or unset it."),
+
+
+  entry('BUILD-823', 'Preview frame runtime that cannot be minified',
+    "`previewFrame` is on, and esbuild cannot minify dist/formajs-frame.global.js of the @getforma/core the bundles import: a production build writes the frame's runtime minified (its bytes are on every preview document), so the file must be JavaScript esbuild can parse for ES2022.",
+    'Reinstall @getforma/core and leave the file as published: no editor, formatter or patch may rewrite it.'),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);

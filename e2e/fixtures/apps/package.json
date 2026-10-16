@@ -1,0 +1,5 @@
+{
+  "name": "forma-fixture-apps",
+  "private": true,
+  "description": "The fixture applications (FORMA-188): consumer-shaped pages, written fresh, built by @getforma/build in strict mode and served by forma-server. Dependencies are not declared here: build.sh links the working tree, and P17 stages the packed set (scripts/release-fixture-apps.mjs)."
+}

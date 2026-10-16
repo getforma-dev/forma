@@ -1,0 +1,7 @@
+/* Fixture styles for the button-check screen: a status strip, a roster and a grid of chips. */
+body { font-family: system-ui, sans-serif; margin: 0; background: #101216; color: #e6e8ec; }
+.check { max-width: 60rem; margin: 1.5rem auto; padding: 0 1rem; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem; list-style: none; padding: 0; }
+.chip { border: 1px solid #3a3f4a; border-radius: 0.375rem; padding: 0.5rem; }
+.chip.lit { background: #2b6cb0; }
+.roster { display: flex; gap: 1rem; list-style: none; padding: 0; }
