@@ -113,3 +113,6 @@ docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
 
 docs/evidence/forma-116/** -text
+
+# FORMA-116: preserve pre-convergence workflow and policy source bytes.
+docs/archive/forma-116-maintenance-node/** -text
