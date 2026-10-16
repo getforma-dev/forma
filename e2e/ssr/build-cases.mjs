@@ -35,6 +35,7 @@ const assetsDir = join(outDir, 'site', '_assets');
  * loads no JavaScript at all, so its `/` route has an empty `js` list.
  */
 const expectedIslands = {
+  'foreign-attributes': ['ForeignAttributes'],
   'attribute-aliases': ['AttributeAliases'],
   'browser-only': ['Chart'],
   'mixed-entry': ['Local', 'Panel'],
