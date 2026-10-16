@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- FORMA-139: refuse the finite parser/interactive-content nesting conflicts (BUILD-618), component HTML title (619), dynamic style/script children (620), and SSR island roots lacking one stable owned Element (621). Preserve transparent one-Element Fragments and helpers; keep ranges inside their host. Exact original source/products and canonical admitted near misses are retained. SVG title, browserOnly client bodies, and the existing keyed-row613 proof keep their separate contracts.
+
 ### Shared attribute-name and URL policy — FORMA-140
 
 - Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
