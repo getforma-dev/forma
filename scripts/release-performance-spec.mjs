@@ -24,9 +24,10 @@ export const MOBILE_PROFILE=Object.freeze({
   "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36"
 });
 
-// Strict startup qualification; historical L63 evidence remains historical.
-// Restoring the gate is not proof that a fresh full campaign has passed it.
+// Strict startup qualification; v2 positively separates exact pre-application
+// navigation/bootstrap work as well as layout. Historical policies and failed
+// evidence remain historical. A fresh full campaign is still required.
 export const MOBILE_STARTUP_POLICY = Object.freeze({
- id:'N3-startup-strict50-v1',targetMs:50,maxTaskMs:50,
+ id:'N3-startup-strict50-v2',targetMs:50,maxTaskMs:50,
  runsPerRoute:20,responseAfterPaintMs:500,p95TbtMs:200,
 });

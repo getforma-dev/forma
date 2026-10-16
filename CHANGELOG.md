@@ -10,6 +10,14 @@
 
 ## [Unreleased]
 
+- Keep N3's unchanged50ms application/activation limit while distinguishing a
+  positively proved main-document commit from island work. The new v2 policy
+  requires the exact navigation/frame/request/parser chain before the first
+  application script and source-binds the pinned Lighthouse/Puppeteer bootstrap;
+  unknown, mixed and application tasks still count, and every raw whole-page
+  task remains recorded. Earlier failed runs remain failed evidence and a fresh
+  complete campaign is required.
+
 - Restore strict mobile startup qualification: every application/unattributed task and every independent observer task must be at most50ms across all twenty cold runs per route. Keep conservative pre-application layout attribution, descriptive p95, raw whole-page measurements and the existing response/TBT requirements. Historical L63 results remain historical; exception retirement requires a fresh complete pass.
 
 - Await real module evaluation before closing packed template and fixture adoption observations; native bootstraps await cooperative load completion without reactivating islands (FORMA-199).
