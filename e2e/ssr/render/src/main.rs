@@ -153,6 +153,7 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     })
                     .collect::<Result<Vec<_>, Box<dyn Error>>>()?,
             },
+            title,
         )?,
         "ledger-arrival" => render_typed(
             &manifest,
