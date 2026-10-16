@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "meaning": "Authentic first corpus-oracle calibration failures. No production fix is represented by these files.",
+  "files": {
+    "activation-target-trace.log": "253b57f3979b6faa1d2a3da5e00541aea2fd529501c647f9a3696818c8111343",
+    "activation.json": "61c4c9d423f64f6c436a552a4a5165da057978eef2413efa628753347ec40adf",
+    "activation.log": "6c4bd56a521ef97128e0105e6bccd27e7527b62e07c01cfaa48ed1d8cd4939df",
+    "arrow-block.json": "08f49192c9f776d75ca5ea91fccc9583805e0a7943b40162e59a4a55d27e84a9",
+    "arrow-block.log": "f21d21ffac58318d134e6071747cd12e99f8f1db72fccc43647e55c5ccd40234",
+    "capabilities-before-activation.mjs": "86121c5bc6efbcff30251b2ac11e51aa3fab1b86cfca8d7bce692513bc9cf196",
+    "catalogue-before-svg.mjs": "ef16e980e8e5de1a004f7283238ae52e99a4ecc51aabb0374d2e4a02c80d2e29",
+    "fetch-newline.json": "723326393178eb5a0dd7ec63c1d0e966d89776724f7ca043e7a11fa7621c6b41",
+    "fetch-newline.log": "15a434c0d67965635d568d86f29d6a277ffd8bd720e52a434e29475edf5013cf",
+    "function-call.json": "f3e9078bd2d95b85a524186cd9a5154d48f3fb28534a807a60425ce441b8b46f",
+    "function-call.log": "c65829ec2320e76fbb5e15c2ff34ccc777bb354beb7b43da24c990e0f4bce406",
+    "import-call.json": "79034a0f68550c1b073f3e77db36197618f9c386be17415cfdcdca3cafcff951",
+    "import-call.log": "e0e6fad03ac9ba483f94439de5ef7d9277fda5e30429202ee08d1ffe251b81ea",
+    "svg-image.json": "14c95513d6d997ab8e12768f09437b6eb2f9b85ff1d069b5b9b67734efedd6db",
+    "svg-image.log": "71e8310d6921d5b667b5dc452c0c265bfb599f711d293e298aa79bb0aaedfb02"
+  }
+}

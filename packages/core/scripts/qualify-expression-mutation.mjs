@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const out = join(root, 'fuzz/expressions/out');
+assert(process.argv.length === 2 || process.argv.length === 3 && /^--out-dir=.+$/.test(process.argv[2]), 'usage: qualify-expression-mutation.mjs [--out-dir=path]');
+const out = process.argv[2] ? resolve(process.argv[2].slice('--out-dir='.length)) : join(root, 'fuzz/expressions/out');
 await mkdir(out, { recursive: true });
 const summary = { schema: 1, seed: 1290300, cases: 100_000, passed: false, runs: [] };
 try {

@@ -42,7 +42,10 @@ export async function runBrowserCase(input) {
   } else if (input.kind === 'expression') {
     const expression = input.payload;
     switch (input.context) {
-      case 'computed': extra = ` data-computed="derived = ${attr(expression)}"`; markup = p('derived'); break;
+      case 'computed': extra = ` data-computed="derived = ${attr(expression)}"`;
+        // Syntax refusal occurs while binding, before a getter exists. Other
+        // refusals must be reached through the lazy computed getter.
+        markup = input.code === 'FORMA_E_UNSUPPORTED' ? '<p id="out">computed syntax refusal</p>' : p('derived'); break;
       case 'text': markup = p(expression); break;
       case 'show': markup = `<p id="out" data-show="${binding(expression)}">untouched</p>`; break;
       case 'if': markup = `<p id="out" data-if="${binding(expression)}">untouched</p>`; break;
@@ -68,6 +71,10 @@ export async function runBrowserCase(input) {
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     eq(root.querySelector('#alive')?.textContent, '3', 'live mount control');
     const codes = runtime.getDiagnostics().map(item => item.code);
+    const expectedCode = input.kind === 'expression' ? input.code : input.kind === 'fetch' ? 'FORMA_E_GRANT_FETCH' : input.kind === 'value' && input.context === 'srcdoc' ? 'FORMA_E_RUNTIME_SRCDOC' : null;
+    if (expectedCode ? codes.length === 0 || codes.some(code => code !== expectedCode) : codes.length !== 0) {
+      throw new Error(`${input.id}: expected only ${expectedCode ?? 'no diagnostics'}, actual ${JSON.stringify(codes)}`);
+    }
     if (input.kind === 'fetch') {
       eq(node().getAttribute('data-fetch'), `GET ${input.payload} → fetched |error:failed`, 'fetch payload bytes');
       if (!codes.includes('FORMA_E_GRANT_FETCH')) throw new Error(`${input.id}: missing fetch refusal: ${codes}`);

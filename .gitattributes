@@ -114,3 +114,7 @@ docs/archive/FORMA-129-list-template/** -text
 packages/core/probes/corpus.json text eol=lf
 packages/core/e2e/hostile-widgets/*.mjs text eol=lf
 packages/core/e2e/hostile-widgets/probe-provenance.json text eol=lf
+
+# FORMA-129: original calibration failures and actual source qualification bytes.
+docs/archive/FORMA-129-matrix-expectations/** -text
+docs/evidence/forma-129/** -text

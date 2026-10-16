@@ -1,0 +1,191 @@
+{
+  "schema": 1,
+  "seed": 1290300,
+  "cases": 100000,
+  "timeoutMs": 120000,
+  "node": "v24.22.0",
+  "sourceCommit": "9cdcacdb53790097cb81966c4c9b23584ff8622c",
+  "sourceClean": true,
+  "sourceSha256": "812cdd8a82656b196d51febc89057b9b79ef9330db38babf384f7433341124a4",
+  "mutation": {
+    "name": "remove-array-from",
+    "path": "src/expr/cost.ts",
+    "beforeSha256": "5eb865f49f37bc74d860c681f297f44aa79b9f5f73ba9ce895739506b965ee83",
+    "afterSha256": "97a4b9cc2da7a0bf8d0d0f309052a522d31751c464e91c666c5202d1d9c94721",
+    "removedSource": "rows((_, a, room) => {\n  const x = a[0];\n  if (typeof x === 'string' || isArray(x)) return len(x);\n  const text = weigh(x, room);\n  return text > room ? text : text + count((x as { length?: unknown } | null)?.length);\n}, 'Array.from');"
+  },
+  "workerSha256": "c1a5376c4b233a06b33c2e85eaeda1e96126dbf17cc2569989aaa66ab080cadf",
+  "engineSha256": "fdd07b44b00212c8a3a0b39009cec70697dff2c04edbe3d574030963244b513d",
+  "passed": false,
+  "status": "failed",
+  "report": {
+    "seed": 1290300,
+    "requested": 100000,
+    "completed": 37,
+    "admitted": 37,
+    "refused": 0,
+    "families": {
+      "array.filter": 1,
+      "array.flatMap": 1,
+      "array.map": 1,
+      "array.reverse": 1,
+      "array.slice": 1,
+      "string.concat": 1,
+      "string.endsWith": 1,
+      "string.slice": 1,
+      "string.startsWith": 1,
+      "string.substring": 1,
+      "string.includes": 1,
+      "string.indexOf": 1,
+      "string.lastIndexOf": 1,
+      "string.trim": 1,
+      "string.trimEnd": 1,
+      "string.trimStart": 1,
+      "string.toLowerCase": 1,
+      "string.toUpperCase": 1,
+      "array.includes": 1,
+      "array.indexOf": 1,
+      "array.lastIndexOf": 1,
+      "array.every": 1,
+      "array.reduce": 1,
+      "array.some": 1,
+      "array.concat": 1,
+      "string.padEnd": 1,
+      "string.padStart": 1,
+      "Object.entries": 1,
+      "Object.keys": 1,
+      "Object.values": 1,
+      "array.flat": 1,
+      "array.join": 1,
+      "array.sort": 1,
+      "string.repeat": 1,
+      "string.replace": 1,
+      "string.replaceAll": 1,
+      "string.split": 1
+    },
+    "astKinds": {
+      "Call": 38,
+      "Member": 38,
+      "Identifier": 53,
+      "Arrow": 6,
+      "Binary": 6,
+      "Literal": 30,
+      "ArrayLit": 1,
+      "Unary": 3
+    },
+    "elapsedMs": 4.098625000000002
+  },
+  "failure": {
+    "index": 37,
+    "input": {
+      "operation": "Array.from",
+      "source": "Array.from(shape)",
+      "state": {
+        "shape": {
+          "length": 32
+        }
+      },
+      "expected": [
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        }
+      ],
+      "minimumCost": 42
+    }
+  },
+  "error": "expression campaign seed1290300 case37: cost undercharge for Array.from: actual 0, independent floor 42",
+  "stack": "Error: expression campaign seed1290300 case37: cost undercharge for Array.from: actual 0, independent floor 42\n    at runCampaign (file:///private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-expr-fuzz-QS5How/worker.mjs:2599:13)\n    at file:///private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-expr-fuzz-QS5How/worker.mjs:2695:18\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)"
+}

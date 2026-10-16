@@ -1,4 +1,4 @@
-# Expression campaign foundation
+# Expression campaign qualification
 
 This repository-internal harness executes real parsed/validated expressions and handlers, compares their values or state changes with a bounded generative semantic model, and checks actual charged units against an independent table of minimum native-call costs. It does not import production cost functions to calculate its oracle. The production row-name inventory is checked only after numerical assertions, so it cannot replace the removed-cost mutation control.
 
@@ -10,4 +10,4 @@ The per-merge test replays committed bounded regressions and a1,160-case fixed s
 
 `node scripts/qualify-expression-mutation.mjs` runs the same100,000-case campaign before, with, and after removing the actual `Array.from` registration in an owned scratch copy. It requires a numerical undercharge failure on the bounded input, records both source hashes and the unchanged-source replay, and cannot pass by an inventory check alone. The nightly expression job requires this independently of the aggregate mutation floor and retains all reports on failure.
 
-The full100,000-case qualification, named residual record and hostile-widget browser matrix remain pending. No production budget or grant is changed here.
+The clean9cdcacdb qualification passed100000cases before and after the actual removed-row control (87148admitted,12852coded refusals), plus all12 named current L50 boundaries. Exact reports and the actual4x timing record are in docs/evidence/forma-129. Historical1716/1200 and53–99ms provenance remains separate from current expectations; Greek9000 still reached61.2ms here. The expression-specific85% nightly mutation floor rejects missing/stale/process-only kills, independently of unrelated mutation results. P17 reruns the current private-source campaign with candidate-commit provenance; stored evidence is never substituted for a new release run. No production budget is changed by the harness.

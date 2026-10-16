@@ -8,7 +8,13 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const runtime = resolve(here, '../../dist/formajs-runtime.global.js');
+const options = new Map();
+for (const arg of process.argv.slice(2)) {
+  const match = /^--(runtime|out-dir)=(.+)$/.exec(arg);
+  assert(match && !options.has(match[1]), `invalid or duplicate argument ${arg}`);
+  options.set(match[1], match[2]);
+}
+const runtime = resolve(options.get('runtime') ?? resolve(here, '../../dist/formajs-runtime.global.js'));
 const source = await readFile(runtime, 'utf8');
 // Remove only the actual emitted selector-grant refusal in a scratch copy of
 // the production artifact. No framework source or independent observer changes.
@@ -18,7 +24,7 @@ const mutant = source.replace(anchor, '      // FORMA-129: removed selector gran
 const temporary = await mkdtemp(join(tmpdir(), 'forma-widget-guard-'));
 const mutantPath = join(temporary, 'runtime.js');
 await writeFile(mutantPath, mutant);
-const out = join(here, 'out'); await mkdir(out, { recursive: true });
+const out = resolve(options.get('out-dir') ?? join(here, 'out')); await mkdir(out, { recursive: true });
 const summary = { schema: 1, passed: false, originalSha256: createHash('sha256').update(source).digest('hex'), mutantSha256: createHash('sha256').update(mutant).digest('hex'), removedSource: anchor, runs: [] };
 try {
   for (const mode of ['before', 'mutant', 'corrected']) {

@@ -4,27 +4,108 @@
   "records": [
     {
       "id": "L50-non-latin-search",
-      "historical": {"version": "2.0.3", "approximateRefusalRows": 1716, "reason": "All text above Latin-1 was priced at one-half unit per character."},
-      "current": {"introduced": "2.1.0", "admittedRows": [900, 1717, 9000, 9090], "refusedRows": [9200], "code": "FORMA_E_BUDGET", "scripts": ["ASCII", "Greek"], "reason": "L-50 retains restored one-sixteenth middle-script case tier; the current limiting boundary is the step budget. Georgian/Cherokee retain their higher cost."},
+      "historical": {
+        "version": "2.0.3",
+        "approximateRefusalRows": 1716,
+        "reason": "All text above Latin-1 was priced at one-half unit per character."
+      },
+      "current": {
+        "introduced": "2.1.0",
+        "admittedRows": [
+          900,
+          1717,
+          9000,
+          9090
+        ],
+        "refusedRows": [
+          9200
+        ],
+        "code": "FORMA_E_BUDGET",
+        "scripts": [
+          "ASCII",
+          "Greek"
+        ],
+        "reason": "L-50 retains restored one-sixteenth middle-script case tier; the current limiting boundary is the step budget. Georgian/Cherokee retain their higher cost."
+      },
       "source": "src/expr/__tests__/ordinary-search.test.ts"
     },
     {
       "id": "L50-reduce-plus",
-      "historical": {"approximateRefusalRows": 1200, "reason": "Repeated string growth over a name list consumes cumulative allocation units; the number is approximate and depends on actual names."},
-      "current": {"admittedRows": 1000, "refusedRows": 1500, "nameLength": 20, "separatorLength": 2, "code": "FORMA_E_BUDGET", "measurementRows": 1150},
+      "historical": {
+        "approximateRefusalRows": 1200,
+        "reason": "Repeated string growth over a name list consumes cumulative allocation units; the number is approximate and depends on actual names."
+      },
+      "current": {
+        "admittedRows": 1000,
+        "refusedRows": 1500,
+        "nameLength": 20,
+        "separatorLength": 2,
+        "code": "FORMA_E_BUDGET",
+        "measurementRows": 1150
+      },
       "source": "src/expr/__tests__/string-growth.test.ts"
     },
     {
       "id": "L50-event-budget-reset",
-      "historical": {"behavior": "Distinct browser events may each begin a budget within one task."},
-      "current": {"behavior": "Handlers reached by one bubbling event share a meter; a distinct external event starts a fresh meter. An event dispatched inside an interpreter evaluation remains in its enclosing meter.", "residual": true},
+      "historical": {
+        "behavior": "Distinct browser events may each begin a budget within one task."
+      },
+      "current": {
+        "behavior": "Handlers reached by one bubbling event share a meter; a distinct external event starts a fresh meter. An event dispatched inside an interpreter evaluation remains in its enclosing meter.",
+        "residual": true
+      },
       "source": "src/__tests__/runtime-task-budget.test.ts",
-      "controls": ["the handlers one event reaches share one budget", "a binding a keystroke updates starts on a fresh budget"]
+      "controls": [
+        "the handlers one event reaches share one budget",
+        "a binding a keystroke updates starts on a fresh budget"
+      ]
     },
     {
       "id": "L50-repeated-binding-time",
-      "historical": {"milliseconds": [53, 99], "cpuThrottle": 4, "kind": "observed wall-clock residual, not a machine-independent cap"},
-      "current": {"reason": "Preserve the recorded residual. Refusal work after a wait is now bounded by the separately documented FORMA-173 allowance; content-dependent work and distinct events remain explicit limitations. Current timing is recorded alongside history, never asserted equal to it.", "timingQualification": "pending"},
+      "historical": {
+        "milliseconds": [
+          53,
+          99
+        ],
+        "cpuThrottle": 4,
+        "kind": "observed wall-clock residual, not a machine-independent cap"
+      },
+      "current": {
+        "reason": "Preserve the recorded residual. Refusal work after a wait is now bounded by the separately documented FORMA-173 allowance; content-dependent work and distinct events remain explicit limitations. Current timing is recorded alongside history, never asserted equal to it.",
+        "timingQualification": {
+          "runtimeSha256": "b9a14f2596b4ec1924297b51146c28efba4926b13b3a83b02c1b773b3495e23c",
+          "sourceCommit": "9cdcacdb53790097cb81966c4c9b23584ff8622c",
+          "chromium": "151.0.7922.34",
+          "cpu": "Apple M1 Pro,10cores",
+          "cpuThrottle": 4,
+          "runsPerCase": 5,
+          "loadAverage": [
+            3.2,
+            4.5,
+            4.1
+          ],
+          "basis": "maximum of worst actual task per run; legacy measurement harness before FORMA108; historical53\u201399ms retained separately",
+          "maxMs": {
+            "S6": 6.9,
+            "F1": 16.6,
+            "F2": 11.7,
+            "F3": 11.5,
+            "F4": 12.2,
+            "F5": 14.4,
+            "O3": 61.2
+          },
+          "over50ms": {
+            "S6": 0,
+            "F1": 0,
+            "F2": 0,
+            "F3": 0,
+            "F4": 0,
+            "F5": 0,
+            "O3": 4
+          },
+          "result": "Current Greek9000 content-dependent search remains above50ms in4/5runs; recorded accepted L50 residual, no cost/threshold change."
+        }
+      },
       "source": "scripts/measure-task-budget.mjs",
       "command": "node scripts/measure-task-budget.mjs --runs=5 --rate=4 --only=F,O3,S6"
     }

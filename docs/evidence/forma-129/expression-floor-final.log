@@ -1,0 +1,10 @@
+✔ other component kills cannot hide an expression survivor below its floor (0.645208ms)
+✔ missing, stale, duplicated and unobserved process failures never count as expression kills (0.710542ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50.292083

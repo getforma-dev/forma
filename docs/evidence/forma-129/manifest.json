@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "sourceCommit": "9cdcacdb53790097cb81966c4c9b23584ff8622c",
+  "scope": "Actual clean-source qualification before the stricter diagnostic oracle and current-release packed execution seam; subsequent source deltas require their own replay.",
+  "files": {
+    "expression-floor-final.log": "ba3a5041753b8852c02a43df415b7eefc557c15694fcb0a7147ccd3765a92cf4",
+    "expression-mutation-before.json": "8534d0b91a15e42780a7b866ca4b3a7fda25a28d499f8ee7961f50fca20081ec",
+    "expression-mutation-corrected.json": "f75e4bb9882f7911c961664fa599cfefbbdcba4c5eb477deb9c9af217d6afeae",
+    "expression-mutation-mutant.json": "fe84951933723b9d1db9f909d31a4802eb21918340eab15fdf1c1edb19fe9f3f",
+    "expression-mutation-qualification.json": "b1fb60d276a49bf6785cb4f87ce77090c0f3b9eb228db6b34873b40da89cdecb",
+    "expression-residual-100k-final.log": "d06989fa4f5904435fcd465b0846afee370a5668091e87614144fbfc9c01fb79",
+    "expression-residual-unit-final.log": "8ac948173ad82895abae78a059126933a92d6a03d0fad3b0e1a425a175485471",
+    "hostile-guard-before.json": "e988dac4050e3926275813139b6ca70d35d2533c564c0774cc1a5eacb992c86d",
+    "hostile-guard-corrected.json": "f377150be8451909bb961f6a1800795d3087392037070f1ec69890b88ed924a0",
+    "hostile-guard-mutant.json": "e3349d206a4a9ed17efb9dd8296fa2b3ce0117ac5dac6523ac2825c392a3289b",
+    "hostile-guard-qualification.json": "0988940df50bf0d7042781007d07ac450bffec1cfe61d82db87b3e2e18f367f4",
+    "hostile-qualification.json": "69c45fb8cb64fad11a8aa2e2e2ff8ba2289052d9cbe3f2f764d9210fb7545963",
+    "matrix-1686-final.log": "829f5190ba6d9e1d8ba74b64877c5d46056b397631bc46b124831d02f0e5d6da",
+    "matrix-1686-guard.log": "f2d02a91b9b7d71434fa534c485c6823ec6af0f8d641908ad8df32aa09272678",
+    "residual-timing-final.log": "35a26d7984c48d636b6ee173d529a79dd34bcc4c464a1113affbabaf791fa5d2"
+  }
+}
