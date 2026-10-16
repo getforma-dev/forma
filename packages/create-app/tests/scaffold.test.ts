@@ -674,7 +674,9 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
     const app = fs.readFileSync(path.join(admin, 'src', 'home', 'app.tsx'), 'utf8');
-    const shared = app.slice(0, app.indexOf('activateIslands({ Counter });'))
+    const activation = app.indexOf('await activateIslands({ Counter });');
+    expect(activation, 'minimal entry must contain its complete awaited activation statement').toBeGreaterThanOrEqual(0);
+    const shared = app.slice(0, activation)
       .replace(`<h1>${name}</h1>`, '<h1>ssr-entry-probe</h1>')
       .replace('function Counter(', 'export function Counter(').replace('function Home(', 'export function Home(');
     expect(shared).toContain('ssr-entry-probe');
