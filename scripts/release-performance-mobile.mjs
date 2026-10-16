@@ -40,7 +40,9 @@ export function activationInstrumentation({kind,longTask}) {
   if(!result.done)requestAnimationFrame(tick);
  }
  if(longTask)addEventListener('DOMContentLoaded',()=>{const startTime=performance.now(),until=startTime+110;while(performance.now()<until){}result.injectedTask={startTime,endTime:performance.now()};},{once:true});
- setTimeout(()=>{result.done=true;},8000);requestAnimationFrame(tick);
+ setTimeout(()=>{result.done=true;},8000);
+ const start=()=>requestAnimationFrame(tick);
+ if(document.readyState==='loading')addEventListener('DOMContentLoaded',start,{once:true});else start();
 }
 export async function measureActivation(url,kind,{disabled=false,longTask=false}={}){
  const {chromium}=await import('@playwright/test');
