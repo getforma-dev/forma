@@ -33,8 +33,7 @@ type ActivationPhase = 'scheduled'|'preparing'|'live'|'error'|'disposed';
 const activationPhase = new WeakMap<Element,ActivationPhase>();
 
 type LoadWork = ((event?: Event | false) => void) & { ready: Promise<void> };
-const loadQueue = new Set<LoadWork>();
-const pendingLoad = new WeakMap<HTMLElement, LoadWork>();
+const pendingLoad = new Map<HTMLElement, LoadWork>();
 const loadEvents = ['pointerdown', 'focusin', 'click'] as const;
 let loadBusy = 0;
 let loadTimer: ReturnType<typeof setTimeout> | undefined;
@@ -57,17 +56,15 @@ function removeInteraction(island: HTMLElement, listener: EventListener): void {
 
 function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, ValidatedIsland>): LoadWork {
   let complete!: () => void;
+  let consumed = false;
   const work = ((event?: Event | false) => {
-    // Deletion is the atomic take shared by FIFO, input promotion and cancel.
-    // Keep pendingLoad until finally so reentrant callers share real readiness.
-    if (!loadQueue.delete(work)) return;
+    // FIFO, input promotion and cancel share one take. Retain the map entry
+    // through hydration so overlapping callers still join its real readiness.
+    if (consumed) return;
+    consumed = true;
     loadBusy++;
     try {
       let failed = false;
-      if (!loadQueue.size) {
-        const timer = loadTimer; loadTimer = undefined;
-        try { clearTimeout(timer); } catch (error) { failed = true; reportActivationError(error); }
-      }
       for (const type of loadEvents) {
         try { value.host.removeEventListener(type, work, true); }
         catch (error) { failed = true; reportActivationError(error); }
@@ -76,18 +73,23 @@ function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, Valida
       else hydrateIslandRoot(value, children);
     } catch (error) { setupFailed(value.host, error); }
     finally {
-      pendingLoad.delete(value.host); complete(); loadBusy--; scheduleLoads();
+      pendingLoad.delete(value.host); complete();
+      if (!pendingLoad.size) {
+        const timer = loadTimer; loadTimer = undefined;
+        try { clearTimeout(timer); } catch (error) { reportActivationError(error); }
+      }
+      loadBusy--; scheduleLoads();
     }
   }) as LoadWork;
   work.ready = new Promise<void>(resolve => { complete = resolve; });
-  loadQueue.add(work); pendingLoad.set(value.host, work);
+  pendingLoad.set(value.host, work);
   return work;
 }
 
 function drainLoads(deadline = performance.now() + 12): void {
   loadTimer = undefined; loadBusy++;
   try {
-    for (const work of loadQueue) {
+    for (const work of pendingLoad.values()) {
       if (performance.now() >= deadline) break;
       work();
     }
@@ -97,7 +99,7 @@ function drainLoads(deadline = performance.now() + 12): void {
 }
 
 function scheduleLoads(): void {
-  if (!loadBusy && loadQueue.size && loadTimer === undefined) loadTimer = setTimeout(drainLoads, 0);
+  if (!loadBusy && pendingLoad.size && loadTimer === undefined) loadTimer = setTimeout(drainLoads, 0);
 }
 
 const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
