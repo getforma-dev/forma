@@ -1,5 +1,5 @@
-// The smallest island that brings a keyed list into the browser. L-58 admits its
-// reconciler under N2; both source and packed lanes record its actual size report.
+// L-58 admits the client-list island under the current N2 policy. apps.spec.ts builds this
+// entry and checks the emitted route bytes, ceilings and verdict. Never served.
 import { h, mount, activateIslands, createSignal, createList } from '@getforma/core';
 
 type Row = { id: number; name: string };

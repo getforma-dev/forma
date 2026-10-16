@@ -296,3 +296,36 @@ describe('--strict in watch mode', () => {
     });
   }, 30_000);
 });
+
+describe('FORMA-182 value rules 6 and 7 without --strict', () => {
+  it('reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are', async () => {
+    // Both are mandatory refusals (docs/DIAGNOSTICS.md: "an error, and an
+    // error without strict mode"); a default build fails on them, so its
+    // report must not label them warnings.
+    const entries = {
+      text: page('text', [
+        `const [done] = createSignal(false);`,
+        `mount(() => h('main', null, h('p', null, () => done())), '#app');`,
+      ]),
+      condition: page('condition', [
+        `const [count] = createSignal(0);`,
+        `mount(() => h('main', null, () => count() ? h('b', null, 'some') : h('i', null, 'none')), '#app');`,
+      ]),
+    };
+    for (const [name, code] of [['text', 'BUILD-614'], ['condition', 'BUILD-615']] as const) {
+      const report = join(tmpRoot, `${name}-diagnostics.json`);
+      let failure: (Error & { diagnostics?: BuildDiagnostic[] }) | undefined;
+      try {
+        await build(config({ [name]: entries[name] }, { strict: false, diagnosticsJson: report }));
+      } catch (err) {
+        failure = err as Error & { diagnostics?: BuildDiagnostic[] };
+      }
+      expect(failure, name).toBeDefined();
+      expect(String(failure)).toContain(code);
+      const json = JSON.parse(readFileSync(report, 'utf8'));
+      expect(json.strict).toBe(false);
+      expect(json.diagnostics.map((d: BuildDiagnostic) => [d.page, d.code, d.line, d.severity])).toEqual([[name, code, 3, 'error']]);
+      expect(existsSync(outDir)).toBe(false);
+    }
+  }, 30_000);
+});

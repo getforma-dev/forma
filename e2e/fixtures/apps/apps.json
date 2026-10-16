@@ -858,7 +858,7 @@
     {
       "name": "list-island",
       "entry": "positive/list-island/app.tsx",
-      "why": "L-58: a client-side keyed list is admitted by N2; the packed and source lanes record its Forma bytes from size-report.json"
+      "why": "L-58 admits a client createList island within the emitted route size policy; the fixture must build with a passing report."
     }
   ]
 }

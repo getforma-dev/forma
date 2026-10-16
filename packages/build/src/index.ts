@@ -8,8 +8,8 @@
 
 export { build } from './build.js';
 // The runtime surface stays `build` alone; the size report's shapes are types.
-// N2's ceiling (FORMA_CODE_CEILING_GZIP, route-size.ts) is policy, not an option.
-export type { ByteSizes, RouteSize, RouteSizeFile } from './route-size.js';
+// N2's ceilings (route-size.ts) are policy, not options.
+export type { BuildTimes, ByteSizes, FileSize, RouteCeilings, RouteClass, RouteSize, RouteSizeFile, SizeReport } from './route-size.js';
 
 export type {
   BuildConfig,

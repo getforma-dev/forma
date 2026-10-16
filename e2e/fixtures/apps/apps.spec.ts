@@ -222,7 +222,7 @@ test.describe('activation is required, not assumed', () => {
   });
 });
 
-test.describe('fixtures at the declared type and size boundaries', () => {
+test.describe('fixture type refusals and accepted N2 shapes', () => {
   const negative = (INDEX as unknown as { negative: { name: string; entry: string; code: string; message: string; file?: string }[] }).negative;
   const buildOne = async (name: string) => {
     const { buildNegative } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
@@ -251,15 +251,24 @@ test.describe('fixtures at the declared type and size boundaries', () => {
     expect(result.diagnostics.some((each: { code: string; message: string }) => each.code === entry.code && each.message.includes(entry.message))).toBe(true);
   });
 
-  test('an island holding a client-side list builds inside the packed size policy (L-58)', async () => {
+  test('an island holding a client-side list builds inside the emitted size policy (L-58)', async () => {
     const { buildPositive } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
     const { build } = await import(pathToFileURL(join(HERE, 'node_modules', '@getforma', 'build', 'dist', 'index.js')).href);
-    const { n2Rows, assertN2, readPackedSizes } = await import(pathToFileURL(resolve(HERE, '../../../scripts/release-measurements.mjs')).href);
-    const result = await buildPositive({ build, outRoot: OUT, name: 'list-island' });
-    const rows = assertN2(n2Rows('list-island', readPackedSizes(result.outputDir)), [{ app: 'list-island', route: '/' }]);
-    expect(rows).toHaveLength(1);
-    expect(rows[0].formaGzip).toBeGreaterThan(0);
-    expect(rows[0].passed).toBe(true);
+    const { sizeReport } = await buildPositive({ build, outRoot: OUT, name: 'list-island' });
+    expect(sizeReport.version).toBe(1);
+    expect(sizeReport.routes).toHaveLength(1);
+    const [route] = sizeReport.routes;
+    expect(route.route).toBe('/');
+    expect(route.class).toBe('islands');
+    expect(route.canvas).toBe(false);
+    expect(route.ceilings.forma).toBe(sizeReport.ceilings.forma);
+    expect(route.ceilings.javascript).toBe(sizeReport.ceilings.page);
+    expect(route.forma.gzip).toBeGreaterThan(0);
+    expect(route.forma.gzip).toBeLessThanOrEqual(route.ceilings.forma);
+    expect(route.javascript.gzip).toBeGreaterThan(0);
+    expect(route.javascript.gzip).toBeLessThanOrEqual(route.ceilings.javascript);
+    expect(route.exceeded).toEqual([]);
+    expect(route.over).toBe(false);
   });
 });
 

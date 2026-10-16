@@ -52,7 +52,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  *
  * Until 3.0.0 the two runtime gates are ratchets, not the size target
  * (decision brief L-51: N2 is, gated per route by @getforma/build's size
- * report at 25,500 B gzip -9 of Forma code, L-55's restatement of DR-35): a
+ * report at 27,500 B gzip -9 of Forma code, L-58's restatement of DR-35): a
  * change that passes one raises it to its new measured size rounded up to the
  * next 500 B, and its CHANGELOG entry states the growth; a change that only
  * refactors never raises one. FORMA-021's cuts put every runtime IIFE back

@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased — N2 is 27,500 B (L-58)
+
+- The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
+  **27,500 B gzip -9**, up from 25,500 B: the founder's decision L-58 (decision
+  brief commit `f27cce6`), one ceiling for all routes, 1 KB = 1,000 B. An island
+  holding a client `createList` loads 26,366 B of Forma code (FORMA-188's
+  `negative/list-island`), over the old figure and under the new. `BUILD-819`,
+  `size-report.json` (`ceilings.forma`, each route's `ceilings.forma`) and the
+  printed report read the constant; the page and canvas JavaScript ceilings (75
+  and 365 KiB) are unchanged. Not configurable.
+
+## Unreleased — the size report with route classes and ceilings (FORMA-190)
+
+- **One report, extended.** The size report of FORMA-021 now classifies each
+  route (DR-35) and holds it to its class's ceilings, gzip -9 with 1 KB =
+  1,000 B and 1 KiB = 1,024 B: `no-interactive-region` (a server-rendered page
+  without an island, or a route that lists no script) ships no JavaScript, a
+  service worker counted; `islands` and `whole-page-mount` (a declared
+  `ssr: false` entry, or any route of an application built without `ssr`) carry
+  at most 25,500 B of Forma code (N2, unchanged) and at most 75 KiB of
+  JavaScript in all; a route declared `canvas: true` may ship 365 KiB. A route
+  over a ceiling fails the build with `BUILD-819`, now naming the route, its
+  class and each figure against its ceiling (the code is the same; its message
+  and catalogue entry cover the new ceilings).
+- `RouteMapping.canvas` (optional boolean) declares a route a canvas: a page
+  that hosts many modules. It raises only the JavaScript ceiling of a route that
+  has JavaScript; anything else but `true` or `false` is refused before the
+  build writes anything.
+- The generated `sw.js` counts as JavaScript in each route that lists a script
+  (forma-server registers it only on such pages) and is reported as a row of its
+  own. With `previewFrame`, a **frame document** row reports the runtime
+  forma-server inlines into every preview document (raw, gzip -9, Brotli; it is
+  not a route's and carries no ceiling here: core's package gate holds it).
+- **Written beside the manifest.** A production build writes `size-report.json`
+  next to `manifest.json` (and prints the report): the routes with class,
+  ceilings, files, Forma and application bytes and verdict, the worker, the
+  frame row. The file holds no clock reading, so the same sources are the same
+  bytes (the application embeds this directory); forma-server refuses to serve
+  it, as it refuses the manifest. The manifest does not list it.
+- **Build times** (N7) by phase (`bundle`, `hash`, `compress`, `manifest`) are
+  printed with the report and returned in `BuildResult.sizeReport.times`; they
+  are not in the file, for the same reason.
+- `BuildResult.sizeReport` is the whole report; `BuildResult.sizes` stays, the
+  same route objects, with the new fields `class`, `canvas`, `worker`,
+  `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
+  empty). Both are empty in watch mode.
 ## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
 
 - `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
@@ -62,6 +108,10 @@
 
 
 ## [Unreleased]
+
+### Value rules 6 and 7 are mandatory refusals in the report — FORMA-182
+
+- The diagnostics report and `result.diagnostics` label `BUILD-614` (a boolean in text) and `BUILD-615` (a condition that is not boolean-typed) `error` with or without `--strict`, as they do `BUILD-610` to `BUILD-613`. The compiler refuses both whatever the mode, so a default build already failed on them, but its report and `--diagnostics-json` called them `warning`. Verified by `tests/strict.test.ts` > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are".
 
 ### Static SSR entry products — FORMA-105
 
