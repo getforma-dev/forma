@@ -36,7 +36,7 @@ test('L-60 defers live governance only; source probes and other release gates st
   invalid.milestones.rc.gates['FORMA-116'].status = 'deferred';
   assert.throws(() => releaseMilestone(invalid, '3.0.0'), /done\/pending status/);
 });
-test('L-57 external application runs are informational while documentation and the real RC soak still block', () => {
+test('L-57 external application runs are informational while documentation and the required RC burn-in still block', () => {
   const c = contracts();
   const final = releaseMilestone(c, '3.0.0');
   for (const ticket of ['FORMA-192', 'FORMA-147']) {
