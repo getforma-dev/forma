@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { CRATES, NPM, ROOT, json, digest, run, assertReleaseSet } from './release-set.mjs';
+import { CRATES, NPM, ROOT, SEMVER, json, digest, run, assertReleaseSet, assertMilestoneReady } from './release-set.mjs';
 
 export function verifyIdentity(set, dir) {
   assert.equal(set.schema, 1);
@@ -12,8 +12,12 @@ export function verifyIdentity(set, dir) {
   assert.equal(set.commit, process.env.GITHUB_SHA, 'source commit differs from packed set');
   assert.equal(set.tag, process.env.GITHUB_REF_NAME, 'tag differs from packed set');
   assert.equal(String(set.run), process.env.GITHUB_RUN_ID, 'artifacts belong to another run');
-  assert.equal(set.contracts.liveReleaseReady, true, 'milestone contract hooks are not ready');
-  assertReleaseSet(set.packages, set.tag);
+  const version = assertReleaseSet(set.packages, set.tag);
+  // The milestone is resolved again here from the contract the pack job recorded, so a
+  // packed set cannot carry a readiness claim its own contract does not support.
+  const milestone = assertMilestoneReady(set.contracts, version);
+  assert.equal(set.milestone?.name, milestone.name, 'packed set names another milestone');
+  assert.equal(set.milestone?.ready, true, 'packed set was not ready for its milestone');
   assert.deepEqual(set.packages.filter(p => p.registry === 'crates').map(p => p.name), CRATES);
   assert.deepEqual(set.packages.filter(p => p.registry === 'npm').map(p => p.name), NPM.map(n => `@getforma/${n}`));
   for (const p of set.packages) {
@@ -37,6 +41,16 @@ export async function registryStatus(p, dir, request = fetch, timeout = 20_000) 
     assert.equal(data.dist?.integrity, `sha512-${digest(join(dir, p.file), 'sha512', 'base64')}`, `${p.name}@${p.version} already exists with different bytes`);
   }
   return 'present';
+}
+// npm 11 refuses a prerelease on latest: -alpha.N, -beta.N and -rc.N go to next, finals to
+// latest. Cargo takes the pre-release version itself; no tag is involved there.
+export function npmPublishArgs(p, file) {
+  assert(SEMVER.test(p.version) && !p.version.endsWith('-dev'), `${p.name}@${p.version}: not a publishable version`);
+  return ['publish', file, '--ignore-scripts', '--provenance', '--access', 'public', '--tag', p.version.includes('-') ? 'next' : 'latest'];
+}
+export function cargoPublishArgs(crates) {
+  for (const p of crates) assert(SEMVER.test(p.version) && !p.version.endsWith('-dev'), `${p.name}@${p.version}: not a publishable version`);
+  return ['publish', ...crates.flatMap(p => ['-p', p.name]), '--no-verify', '--locked'];
 }
 // The same deadline bounds each request and sleep; no extra request is allowed after it.
 export async function waitForPackage(p, dir, milliseconds, { request = fetch, now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
@@ -79,13 +93,13 @@ export async function main() {
     }
   }
   const crates = registry === 'crates' ? pending.filter(p => p.registry === 'crates') : [];
-  if (crates.length) run('cargo', ['publish', ...crates.flatMap(p => ['-p', p.name]), '--no-verify', '--locked'], ROOT, { stdio: 'inherit' });
+  if (crates.length) run('cargo', cargoPublishArgs(crates), ROOT, { stdio: 'inherit' });
   // Fixed deadline, hard failure if the newly uploaded bytes cannot be verified. The official
   // cargo workspace publisher already waits for dependency availability in topological order.
   const deadline = Date.now() + 15 * 60_000;
   for (const p of crates) await waitForPackage(p, dir, deadline - Date.now());
   for (const p of registry === 'npm' ? pending.filter(p => p.registry === 'npm') : []) {
-    run('npm', ['publish', join(dir, p.file), '--ignore-scripts', '--provenance', '--access', 'public', '--tag', p.version.includes('-') ? 'next' : 'latest'], ROOT, { stdio: 'inherit' });
+    run('npm', npmPublishArgs(p, join(dir, p.file)), ROOT, { stdio: 'inherit' });
     await waitForPackage(p, dir, 5 * 60_000);
   }
 }

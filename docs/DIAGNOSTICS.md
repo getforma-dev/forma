@@ -694,6 +694,40 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/
 [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/pass/app.tsx) pin the
 original TSX position of the condition.
 
+### BUILD-616 List source that is not a function
+
+**Why.** FORMA-183's parity harness, finding F1: core's `createList(items, key, row)` calls
+`items()` to read the rows, so a list source that is not a function fails in the browser with
+`items is not a function` even though the native module renders it (the page's list array is a
+named slot the module never evaluates). The compiler refuses a source it can prove is not a
+function: a literal (an array, an object, a string, a number, `null`, `undefined`), a binding
+whose value is one (an immutable local binding, or an immutable named export of an imported module),
+a provably immutable data-valued core getter result (`rows()` from `createSignal`,
+`createComputed` or `createMemo`), or a field that an inline parameter type
+declares as data (`p.rows` with `p: { rows: Row[] }`). A function, a getter, and anything the
+compiler cannot see through (an untyped parameter's field, another call's result) stay admitted.
+A signal may hold a function and a computed callback may return one. A captured signal setter
+prevents using its initializer as proof; object fields can change through aliases or getter reads,
+so their initial values are not proof either. Callable and unknown results pass this callability check.
+The refusal names the call's own argument. This refusal is mandatory without strict mode.
+
+Callable sources still need native value provenance. A declared array prop or a
+closed literal-default signal is admitted through its getter or an explicit
+callback. An arbitrary getter, derived filter/map, mutable getter result or
+unproved function field is refused separately with BUILD-610. The current
+list-same-source corpus uses a two-row signal and renders both projections in
+Rust and core; its previous empty-native stage is preserved under
+`docs/archive/FORMA-101-unproved-list-sources/`.
+
+**Fix.** Pass the getter itself or a function returning the rows: `createList(rows, …)` with
+`const [rows] = createSignal([...])` or `createList(() => p.rows, …)`.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-616/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-616/pass/app.tsx) pin the
+original TSX position of the list.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
@@ -802,7 +836,7 @@ Printed as `@getforma/build: BUILD-805 @getforma/core 2.0.3 at <dir> (imported b
 
 ### BUILD-806 Preview frame runtime that cannot be inlined
 
-**Why.** Core's dist/formajs-frame.global.js is empty, not UTF-8, or contains `</script`, `<!--`, a carriage return or a NUL: it is inlined as it is into the frame's `<script>` and allowed by its hash, so it would end early or not match its hash, and forma-server would refuse it (FRAME-103).
+**Why.** Core's dist/formajs-frame.global.js is empty, not UTF-8, or contains `</script`, `<!--`, a carriage return or a NUL (the same check runs on the minified bytes a production build would write): it is inlined as it is into the frame's `<script>` and allowed by its hash, so it would end early or not match its hash, and forma-server would refuse it (FRAME-103).
 
 **Fix.** Reinstall @getforma/core and leave the file as published: no editor, formatter, patch or CRLF checkout may rewrite it.
 
@@ -1038,6 +1072,60 @@ ceiling passes, a route one byte over fails naming the route and its bytes" and
 "fails the build with BUILD-819 when a route's Forma code is over the ceiling,
 leaving no output".
 
+### BUILD-820 The previous release for retention is not usable
+
+`previousDist` (FORMA-186, DR-29, L-25) names something that is not the previous
+release's `dist/`: a path that does not exist or is not a directory, a directory
+with no readable `manifest.json`, another application's dist (its `app` differs), a
+watch build's (`build` is `dev`), a manifest listing an asset whose name is not a
+flat file name, or a directory that is, holds or sits inside `outputDir`, which the
+build replaces whole. It is checked before anything is bundled, and the build fails
+without writing. A previous dist whose manifest is not schema 2 (the first 3.0.0
+deploy over a 2.x release) is not this error: nothing is retained, and the build
+says so.
+
+**Fix.** Pass the directory of the release that is live, kept apart from
+`outputDir`, or leave `previousDist` out for a first deploy. Verified by
+`packages/build/tests/retention.test.ts` > "refuses %s (BUILD-820)".
+
+### BUILD-821 A retained asset cannot be vouched for
+
+A file the previous manifest lists immutable is missing from the previous dist, is
+not a regular file (a link or a directory), or its bytes no longer match the SHA-384
+the manifest recorded for it; or this build emitted a file of the same name with
+other bytes than the previous release recorded. Retained files are executed by
+browsers under this release's name, so the build copies only bytes it can check, and
+fails before writing any output rather than let its own manifest re-bless whatever
+was copied.
+
+**Fix.** Keep the whole release artifact unaltered and pass that directory. If it
+was damaged, restore it from the artifact store, or mark this release security
+(`security: true` or `FORMA_SECURITY_RELEASE=1`) to retain nothing. Verified by
+`packages/build/tests/retention.test.ts` > "refuses bytes that do not match the
+recorded SHA-384, a missing file, a link and a directory (BUILD-821)".
+
+### BUILD-822 FORMA_SECURITY_RELEASE is not a value the build understands
+
+`FORMA_SECURITY_RELEASE` marks a release that fixes a vulnerability: nothing is
+retained from the previous release (SR45). It is read as `FORMA_STRICT` is, trimmed and
+case-insensitive: `1` or `true` marks, unset, empty, `0` or `false` leaves it unmarked,
+and any other value fails the build, since reading `yes` as unmarked would retain a
+revoked build's assets in the release that exists to remove them.
+
+**Fix.** Set it to `1` (or `true`), or unset it. Verified by
+`packages/build/tests/retention.test.ts` > "reads FORMA_SECURITY_RELEASE as FORMA_STRICT
+is read, and refuses any other value (BUILD-822)".
+
+### BUILD-823 Preview frame runtime that cannot be minified
+
+**Why.** `previewFrame` is on, and esbuild cannot minify `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import. A production build writes the frame's runtime minified into the application's output (forma-server writes its bytes into every preview document under `no-store`; core's published file stays readable), so the file must be JavaScript esbuild can parse for ES2022.
+
+**Fix.** Reinstall `@getforma/core` and leave the file as published: no editor, formatter or patch may rewrite it.
+
+**In strict mode.** An error, and without strict mode too: the build fails before it writes anything.
+
+Printed with the file, line and column esbuild reports, as `@getforma/build: BUILD-823 <core>/dist/formajs-frame.global.js:1:24: @getforma/core 2.1.0's dist/formajs-frame.global.js cannot be minified: Unexpected ";"` (`packages/build/tests/preview-frame.test.ts` > "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"). Watch mode copies the runtime unchanged and does not minify it.
+
 ### Native island request state
 
 | Code | Boundary | Meaning |
@@ -1071,7 +1159,8 @@ unchanged.
 | Code | Boundary | Meaning and corrective action |
 | --- | --- | --- |
 | `FORMA_E_HYDRATE_NODE` | node matching; retained code | The expected node kind, tag or namespace does not match the served node. Keep the server and client component structure consistent; adoption does not replace the node. |
-| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts of an unkeyed list differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_KEY` | keyed list matching (FORMA-181) | A served keyed row and the client's items do not pair by canonical key: a key on one side only, a served key twice, a served row without `data-forma-key` beside keyed rows, two client keys with the same canonical text (1 and `"1"`), or a client key outside the domain (not a string or a safe integer, or a string with an unpaired surrogate). Refused before any row runs, writing nothing. Give the client the server's rows (in any order) with their own keys. |
 | `FORMA_E_HYDRATE_MARKER` | marker validation | A required marker is missing, malformed, duplicated, out of range or incorrectly nested. Preserve the compiler/native marker grammar and paired output. |
 | `FORMA_E_HYDRATE_STRUCTURE` | structural validation | A claimed node/range, topology or ownership relationship is invalid or changed during preparation, or the private walker cannot validate the context. Do not move or replace the prepared structure before commit. The [private raw noscript limitation](../packages/core/docs/ADOPTION-PREPARATION.md) also uses this code. |
 | `FORMA_E_HYDRATE_VALUE` | initial value/default validation | Initial text, attributes, branch/list values or normalized control defaults disagree with the served content/state, or a prepared observation was invalidated. Fix the initial server/client disagreement; do not rely on an early user edit to hide it. |

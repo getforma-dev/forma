@@ -119,15 +119,17 @@ that still refuses).
 **Keyed rows (FORMA-181, DR-8).** A `LIST` named by FMIR section `0x0006` is
 keyed: the walker reads each row's value at the key path and writes its
 canonical text as the row root's `data-forma-key` (checkpoint B), and core's
-adoption is to match rows by that text (checkpoint C; until then core's
-existing list adoption compares the attribute with its own key in order). The identity domain is a string or a safe
+strict adoption binds each client item to the served row whose decoded
+attribute equals the item's canonical key, in any order and without a write
+(checkpoint C). The identity domain is a string or a safe
 integer. A string key is `N(s)` of rule 1, applied to the key text (the key
 as data in the state envelope stays exact); a number key must be an integer
 within ±(2^53 − 1) and prints as its decimal integer, `-0` as `0`. So `1` and
 `"1"` are one row, `1` and `"01"` are two, and `"a\r\nb"` and `"a\nb"` are one.
 `null`, booleans, arrays, objects, fractions, infinities and NaN are not
-identities: the walker refuses the render (`RENDER-503`) and core refuses the
-value. The path is read against the row's own fields only (every segment but
+identities: the walker refuses the render (`RENDER-503`); core's
+`canonicalKeyText` returns undefined for them and adoption refuses the island
+(`FORMA_E_HYDRATE_KEY`, as for a key on one side only or a repeated key). The path is read against the row's own fields only (every segment but
 the last an object field, the last an identity; missing, repeated or
 non-object refuses), and two rows of one list execution with the same
 canonical text are duplicates. Rust: `crates/forma-ir/src/keys.rs`
@@ -136,12 +138,18 @@ canonical text are duplicates. Rust: `crates/forma-ir/src/keys.rs`
 `normalizeDomText`, plus the unpaired-surrogate refusal a Rust string cannot
 express). Shared vectors: `crates/forma-ir/tests/fixtures/parity/keys.json`
 (`values`, `collisions`, `paths`), read by `crates/forma-ir/src/keys.rs` tests
-and `packages/core/src/dom/__tests__/key-text.test.ts`; the walker's row
+and `packages/core/src/dom/__tests__/key-text.test.ts`; each string vector's
+`served` markup is pinned against the walker (`walker.rs` >
+`every_shared_key_vector_is_written_as_its_served_markup`) and decoded by
+Chromium, Firefox and WebKit to its canonical text, then adopted keyed by the
+raw value without a write (`packages/core/e2e/keyed-adoption.spec.ts`); the walker's row
 guard (one balanced root per row, a registered child's envelope, duplicate
 scopes per list execution, the refusals) by `crates/forma-ir/src/walker.rs` >
 `keyed_rows`; the actual compiler-to-walker key HTML by
 `crates/forma-ir/tests/island_emitter.rs` (`keyed_shapes_*` and the other
-keyed fixtures) and the `list-same-source` golden of the js-emitter contract.
+keyed fixtures) and the `list-same-source` golden of the js-emitter contract;
+adoption by key by `packages/core/src/dom/__tests__/adoption-keyed-list.test.ts`
+and the browser spec above.
 
 The output budget counts the bytes actually written: a NUL grows from one byte
 to three, so the escapers check each normalized character's encoded length

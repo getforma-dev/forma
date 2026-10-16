@@ -1,6 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { changelogEntry } from './release-record.mjs';
+import { join } from 'node:path';
+import { changelogEntry, releaseNotes, releaseTitle } from './release-record.mjs';
+import { ROOT, json, releaseMilestone } from './release-set.mjs';
+
+test('the GitHub Release names the milestone, where it went on npm, and every gate still open before later milestones', () => {
+  const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
+  const milestone = releaseMilestone(contracts, '3.0.0-alpha.1');
+  const set = { tag: 'v3.0.0-alpha.1', commit: 'a'.repeat(40), run: 1, contracts, milestone, packages: [{ name: 'forma-ir', version: '3.0.0-alpha.1', sha256: 'b'.repeat(64) }] };
+  const notes = releaseNotes(set, { ciRun: 2, elapsedSeconds: 12.34 }, '## [3.0.0-alpha.1]\n\nFirst alpha.', milestone);
+  assert.match(notes, /^## \[3\.0\.0-alpha\.1\]\n\nFirst alpha\.\n\nMilestone: alpha \(M2\), pre-release on npm `next`\./);
+  assert.match(notes, /\n- before beta \(M3\): .*FORMA-188 fixture applications: the three fixture applications in P17/);
+  assert.match(notes, /\n- before rc \(M4\): .*FORMA-145 audit/);
+  assert.match(notes, /\n- before final \(M5\): .*FORMA-191: the per-release measurements in P17/);
+  assert.match(notes, /\| forma-ir \| 3\.0\.0-alpha\.1 \| `b{64}` \|/);
+  assert.match(notes, /Tag-event run to record: 12\.3 seconds/);
+  assert.equal(releaseTitle('3.0.0-alpha.1', milestone), 'Forma 3.0.0-alpha.1 (alpha, M2)');
+  const done = structuredClone(contracts);
+  for (const m of Object.values(done.milestones)) for (const gate of Object.values(m.gates)) gate.status = 'done';
+  const final = releaseMilestone(done, '3.0.0');
+  const finalNotes = releaseNotes({ ...set, tag: 'v3.0.0', contracts: done, milestone: final }, { ciRun: 2, elapsedSeconds: 1 }, '## [3.0.0]\n\nFinal.', final);
+  assert.match(finalNotes, /Milestone: final \(M5\), npm `latest`\./);
+  assert.match(finalNotes, /Pending before later milestones: none\./);
+  assert.equal(releaseTitle('3.0.0', final), 'Forma 3.0.0 (final, M5)');
+  assert.throws(() => releaseNotes(set, { ciRun: 2, elapsedSeconds: 1 }, 'x', releaseMilestone(contracts, '3.0.0-beta.1')), /ready milestone/);
+});
 
 test('release notes retain paragraphs, bullets and subheadings up to the next release', () => {
   const entry = '## [3.0.0] - 2026-10-15\n\nNew wire format.\n\n### Upgrading\n\n- Recompile IR.\n- Keep the packages aligned.\n\nSecond paragraph.';
