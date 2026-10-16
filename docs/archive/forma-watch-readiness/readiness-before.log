@@ -1,0 +1,45 @@
+
+> @getforma/build@3.0.0-dev test
+> vitest run --maxWorkers=2 tests/watch-readiness.test.ts
+
+
+ RUN  v3.2.7 /Users/victorvillacis/dev/Forma/work/FORMA-watch-readiness/forma/packages/build
+
+ ❯ tests/watch-readiness.test.ts (2 tests | 1 failed) 520ms
+   × waits for every actual initial watch context before allowing edits (split=false) 217ms
+     → third real context is still unregistered: expected 'ready' to be 'blocked' // Object.is equality
+   ✓ waits for every actual initial watch context before allowing edits (split=true)  303ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/watch-readiness.test.ts > waits for every actual initial watch context before allowing edits (split=false)
+AssertionError: third real context is still unregistered: expected 'ready' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "ready"
+
+ ❯ tests/watch-readiness.test.ts:70:69
+     68|           },{timeout:10000});
+     69|           const result=await Promise.race([ready.then(()=>'ready'),new…
+     70|           expect(result,'third real context is still unregistered').to…
+       |                                                                     ^
+     71|         } finally {
+     72|           clearTimeout(timer);
+ ❯ Module.watching tests/helpers/watch.ts:98:5
+ ❯ tests/watch-readiness.test.ts:60:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  01:36:07
+   Duration  701ms (transform 31ms, setup 0ms, collect 38ms, tests 520ms, environment 0ms, prepare 41ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/victorvillacis/dev/Forma/work/FORMA-watch-readiness/forma/packages/build
+npm error workspace @getforma/build@3.0.0-dev
+npm error location /Users/victorvillacis/dev/Forma/work/FORMA-watch-readiness/forma/packages/build
+npm error command failed
+npm error command sh -c vitest run --maxWorkers=2 tests/watch-readiness.test.ts
