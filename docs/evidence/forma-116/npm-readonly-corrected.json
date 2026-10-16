@@ -1,0 +1,671 @@
+{
+  "schema": 1,
+  "repository": "getforma-dev/forma",
+  "mode": "npm",
+  "recordedAt": "2026-10-16T04:13:20.927Z",
+  "complete": true,
+  "delivered": false,
+  "snapshot": {
+    "schema": 1,
+    "repository": "getforma-dev/forma",
+    "packages": {
+      "@getforma/core": {
+        "0.1.0": {
+          "integrity": "sha512-w45nfa8Xp6MjelKbtt09UCOfy5wYexEPE4NuSVelr2WgsL+UKf6LRrcieJkbkQ5V9ITYbDJg8oFjs/thTWpLeQ==",
+          "deprecated": null
+        },
+        "0.1.1": {
+          "integrity": "sha512-LUxGpakX6G5RTk1JnWV6rhYmH3WEC5xzWav90grMVnZQ2XIa/+DpRH2aOM8cdTAu8c3YZ/zQyVLT3OerldeFjg==",
+          "deprecated": null
+        },
+        "0.2.0": {
+          "integrity": "sha512-I2vuhWmLTwDSk7yxECySB5Pn5K1kJlS0ACzEcKZg8keVHavRh028R3UhHaO6s0tAmH90pSbAtqZgGdTAKJ+6qQ==",
+          "deprecated": null
+        },
+        "0.3.0": {
+          "integrity": "sha512-A4wSE/cD2SCSLAxXRhjgOSy8X09glrOjl+n4hQzsFib2hV2HQ5Of6iz+/CgYsN5kcTQD8Ds/bQkI76U/TA6Jug==",
+          "deprecated": null
+        },
+        "0.3.1": {
+          "integrity": "sha512-fcTx6y8kVtN1M2quVIjczql0UDdJJ/66MunjQwUiTY4Qp8uij4gBnZJbnhmR0qSuVozocvy9MbsH6n/+IDFHgw==",
+          "deprecated": null
+        },
+        "0.6.1": {
+          "integrity": "sha512-B39n+yNt+u/qG8G6rvUkZCq7DaJ2skown900mp9AM0fkjiU9yKTOcKEKgcRexBjN+gJDLIfYHNmYDnTh43JMSA==",
+          "deprecated": null
+        },
+        "0.8.1": {
+          "integrity": "sha512-BPo7HJMWNmGADxYYGnwOz8lSMe0rt2QSCASxW3tfI1eeOC4wPvEqNsF9cK00OrxFpdybnnsEhPZNYDj43JrXSA==",
+          "deprecated": null
+        },
+        "0.8.2": {
+          "integrity": "sha512-aYUsdhHUHLjpb7/I3XXCIWnvVJZcKTl4Rf2cmdpQuEPn4YDgf6em7RfQ4m2EQGALJ6NFTUs7fcA2xml70JVMDA==",
+          "deprecated": null
+        },
+        "0.9.0": {
+          "integrity": "sha512-MXoOcwxj5+GuWYPpVRpwSP0Gtf3MAOG3WXYhNVsbbqsIUrvE2Of4NJadH3xeN4Q/eH5cDoMlvc2dTj0ZumDsEg==",
+          "deprecated": null
+        },
+        "0.9.1": {
+          "integrity": "sha512-vhn3fRcVTyZXhkmhlzb83Kj7b7DPivuRwKUlhdM3HXLfUeoR5wrH8wJ3BoiBORrer9m9rGaHIuyzn+yZcGh6zw==",
+          "deprecated": null
+        },
+        "1.0.0": {
+          "integrity": "sha512-i8KEq+HS4pTYi5ydJK2xa2p4VDMtIT60AHxI6tVMkOcLE9OzZ5s1EEAdz/tHZjnSq/azze27VUfBF0xcVMwstg==",
+          "deprecated": null
+        },
+        "1.0.1": {
+          "integrity": "sha512-7gai95v9nDeZvBRkSIKCCYzLtmZOi5M6M7mIfFMpd06a8q+4UhNHTl8rapk83xZTQNsXwigol2OhDjZpk9rkLQ==",
+          "deprecated": null
+        },
+        "1.0.10": {
+          "integrity": "sha512-GlpPFOuZOLbWLzwPBAuMBlHI6bHQgXjQSJdRZzTL0405gOmWNDNSmMsiQ4PK91qCiQwKNc6UCkze07LPjWvnPg==",
+          "deprecated": null
+        },
+        "1.0.2": {
+          "integrity": "sha512-D6JuidhkLMjm65PJ9iVe1ttFTGC1qQuOCBcrVUOZnKGunsBxg9Wg3Bt3dM18R1gYxo79cG/akHcGac+mQP2XYw==",
+          "deprecated": null
+        },
+        "1.0.3": {
+          "integrity": "sha512-gmGAwF5sH0uA3axkE26XK0a2jl5nG21OSmxstg2EwNk8YSPOXDJKXGoagFGJofVaIsPBuTYWzpQR1eaRd8Egjw==",
+          "deprecated": null
+        },
+        "1.0.4": {
+          "integrity": "sha512-PMU81y4jEedxBrHdD+oVLpjVnHZyIj4l7asHOvsqclJV5zsryc9IfDLyzv4/vaJqAmy4DIWPY9O1x/zkvbeh0w==",
+          "deprecated": null
+        },
+        "1.0.5": {
+          "integrity": "sha512-ivEw76PqZ/e2W05rBcnXqFP+syUikuJj+KY7Qkj5AScz6FbbNiR1lxLIftVHD7WDoQDvptAhFm0r5fNg+ED5bA==",
+          "deprecated": null
+        },
+        "1.0.6": {
+          "integrity": "sha512-U1+rohcw2E9s2rCa+UDy666NrcTqVyCS8FpXttAKxJ9NgI6Nu1GsNVZnqdHbaWYuBJx9lSDgOuJINLEsUaSsbA==",
+          "deprecated": null
+        },
+        "1.0.7": {
+          "integrity": "sha512-YaJRt/sHVyTD4hw1pXl/+fVtNSRrAJldUqddZZNQHE7jnlyGKTBiq+l4/hD+jDn7V633gzbVpOUx5+k4DbJy/Q==",
+          "deprecated": null
+        },
+        "1.0.8": {
+          "integrity": "sha512-3e0R2BiI6xXvR1zoLRbPak6h3JkpayWj9nm51ncUlKVqyPv0QlDvD5G2gfNduew/amTGmsidWEo1tTLfIE8YQQ==",
+          "deprecated": null
+        },
+        "1.0.9": {
+          "integrity": "sha512-ikzf36+DTxv1IsXEPjx1A8qFZFx22rJ5Rn5Tst9j+MGeClXj7YTis2+4EacDd2kKOLFdAKxcvsNR/31qCQmBtg==",
+          "deprecated": null
+        },
+        "1.1.0": {
+          "integrity": "sha512-ZpWxDLpSrvVvBTl1CGN52g46Cyz8jutG1yueDTBDFTlE6wPjYRfjwpGmFcFX8TsjIIpEpLMsD4ElVp8gzPnoqw==",
+          "deprecated": null
+        },
+        "1.2.0": {
+          "integrity": "sha512-vRuvMIbzQYtKwMRtYbkQPGWEFNocTYrXv81/ChpqYuJ0kjKnTcuC68jcUTnveSFiv5sojrVeYgL2avP9RuJs+Q==",
+          "deprecated": null
+        },
+        "1.3.0": {
+          "integrity": "sha512-ydtjN6zmY8eDHdZoQ+z3nsAgYyW2tVAbC+O1SazjHjBG5JDTsMgxH2ZIxgVeF6qk3sD2RsixwXKXSmMF32fKNw==",
+          "deprecated": null
+        },
+        "1.4.0": {
+          "integrity": "sha512-UWl7dss3FZrz82m5iB0sj3iA8Wfyupt6Ef5sdKHMueyxBSytj+Jf/oQo5tYhgedF5espVTj1nSny9aJ+n8q+xw==",
+          "deprecated": null
+        },
+        "1.5.0": {
+          "integrity": "sha512-sbbiNPvNmZZjYDIoPWq/LJTfxcr8JG50YIaVlflpxN4roVXA9u+Irb8q8LHt4qyOncEf4Fr4Hkj/bLo2TSsqIA==",
+          "deprecated": null
+        },
+        "2.0.0": {
+          "integrity": "sha512-NmluX3AObTfWGiLByFQZzUF0mlrTufpiOUVBqw7jS9RG6Mvxyq8nz9EtbtNfPiFgUSFZAYAmtKHoVcixNENtyg==",
+          "deprecated": null
+        },
+        "2.0.1": {
+          "integrity": "sha512-QcSEt5tEJjgCdS++NFV3wKrm5JOHIIxZ03Zueifn0NqfRC00k4/xgCb6T4dnW/m88ref+4I/0mKC0rqQ9PKnSQ==",
+          "deprecated": null
+        },
+        "2.0.2": {
+          "integrity": "sha512-B8LD1CDtE1fb/u9pD/FKGRU20WGHr+ZKurwN0z3hw0vhW8GzwcOXpGoJ49vQO9fVperQ8wDgxu3j0TTs8utORg==",
+          "deprecated": null
+        },
+        "2.0.3": {
+          "integrity": "sha512-xpcZQ/qFGsd7an6yAWDf2A8ixNtBPTnDor0Kwl3QVg8onJtvowmaCAgNF7m71k0zfjnu1ThZJUY6gXmxo4pxTw==",
+          "deprecated": null
+        },
+        "2.1.0": {
+          "integrity": "sha512-szY8Z/61Ge/mV18t2CHxrNpnpygaVg2bUpaaPJNop7Gvv4RR7UyjMNKU0MELI7s3Y6AZ8814ptDLGAecfZkczg==",
+          "deprecated": null
+        },
+        "3.0.0-alpha.2": {
+          "integrity": "sha512-mmwiX+syNnst3cZNhV+vk9tErl74afwa8XNJvqoPwiyMm/OXV2INI4CHU1soXsAy+k4DomSSSxwPzAAgeDkjUw==",
+          "deprecated": null
+        }
+      },
+      "@getforma/compiler": {
+        "0.1.0": {
+          "integrity": "sha512-usJoZKXSWKi/1XOPrIQpi6HwPOcbMNYLUh1wPaLuwEgWu0rlN14/MdyUoUnofOo6+lbmhs58MchOT7+OYXyuhw==",
+          "deprecated": null
+        },
+        "0.1.1": {
+          "integrity": "sha512-pJwnUfUSqPyjIUMnp0jM3w4YKkXsqUVuzT0DhQ4TRpum9qlWKDHBT3Bkr9rDtph4ZWbLHtrcqlqep0f/YS1rBA==",
+          "deprecated": null
+        },
+        "0.1.2": {
+          "integrity": "sha512-DJdeMbAdr5a9yTLKZU4BvwbCwHMO1xDh1efm4VlZGIbYOl+hBdzK8+rE9JYzqKX6Mh74JdaOraau0QD/BihhAw==",
+          "deprecated": null
+        },
+        "0.1.3": {
+          "integrity": "sha512-1Fd524jdqH9hwCq0uoS81/j+t2j0POhwQB9LLSQxtlcS2AdqsDJTxx5V6SVS08VKLOoD+pPe1s1Uc01YgbPFWw==",
+          "deprecated": null
+        },
+        "0.1.4": {
+          "integrity": "sha512-qzuevCy99sTizHpJbOCNicEV9Pi+DWOyIhaQ3a6hDDkn4E2+/93nwg4lyFfet74NmFlkOy9BYCTd1HNRYRiG6w==",
+          "deprecated": null
+        },
+        "0.1.5": {
+          "integrity": "sha512-iNI6DLrLXhBLfL+8a1fMk0b6NnYerJugPE8yWgyPkCya/CNalTNikWKUjTLWau7N06FnLTXK9Bsv8atyJ55IAw==",
+          "deprecated": null
+        },
+        "0.1.6": {
+          "integrity": "sha512-EYDC1XvJZIOj1ieH3lhZAkW4uK3IZNpNvH49C+DcraAp+e3h6eMmUekOZLrPwPhDyle0BkhBndbuj5nZty5Ong==",
+          "deprecated": null
+        },
+        "0.1.7": {
+          "integrity": "sha512-vUUohfdSwrIb6MT8pqLM/9oXkXRZgMaOG2761zyYpAJuuYWdW3RDf8EJmyjpIKwMAlOKE4AFczNWqWOOL0jjyw==",
+          "deprecated": null
+        },
+        "0.1.8": {
+          "integrity": "sha512-lQjmtZfIJPG7QOh5th/2RKF9OmNL65TXwenubh1eiTCl74Ya7xUbT65HjnnJbB/8TlgpuAp8ff+Uk1tstDIAMA==",
+          "deprecated": null
+        },
+        "0.2.0": {
+          "integrity": "sha512-KlnbTI/DZJXFf8yJigsl2zsTqZBZ3ic3WZZbNgfPsaNRQLmjToSuMUtb9WkmJwzFIrm/nCpR2dbKOtgq6nTw6w==",
+          "deprecated": null
+        },
+        "0.3.0": {
+          "integrity": "sha512-3tHId21BRztK/T5aa3iRVhSuT8ZGngKj6JGjvTTizv/BJGmkANLR0PD6RInBCkHMVj7jmlXU5WSYanLC6xguTA==",
+          "deprecated": null
+        },
+        "0.3.1": {
+          "integrity": "sha512-ZsMi/IlDKODe/PTC3ZxCUT3W0ANJEE8BL1t/EhmJ7OdU/B5h1zL6pmKN/N553REo7U4hXW9ZtzfxWK7eTjIMdQ==",
+          "deprecated": null
+        },
+        "0.3.2": {
+          "integrity": "sha512-EWGsNzWiv/qOMemwqdEX2r4yXN8R6f1ej5RCA6hAdP/a3jl1xroNCUyA2O2HjZkbu4k1scSELXbPWljtq8snIA==",
+          "deprecated": null
+        },
+        "0.3.3": {
+          "integrity": "sha512-KN7rrZFpUw6lRCegUFx1hZe85MG5nnhBgczaaZRAPnZ/s1/f8i/31+ZZFx5NaeR+p60v5KCBOgrH0e6OdRW2TQ==",
+          "deprecated": null
+        },
+        "0.3.4": {
+          "integrity": "sha512-ikcOwnEwhqOPNo3HyJkgj4u28pfQ0rRpdD6MmSikNsTwHcQ/7eOr7VZqCSmk5XFGsTXjj1wcuDuCBOCbBHKFaA==",
+          "deprecated": null
+        },
+        "0.3.5": {
+          "integrity": "sha512-/vQjKCneCzWVkt4Suxq7Z9VYnd0RJS3Og7VvL7sLl76XVA3eM9eED4eDf7sm3j58t+ssIEhhYtOuS0QIt50bIg==",
+          "deprecated": null
+        },
+        "0.3.6": {
+          "integrity": "sha512-i6aMQRpSCw7rzZMeOn+uOXvBnyt/Iv+pVck1pYISA3IPkO/ASRwQSf1GabE12ZKm2Gk22mHzynnSQBzkOsaA7A==",
+          "deprecated": null
+        },
+        "0.3.7": {
+          "integrity": "sha512-Of9pAQUhdjuGy1eK+2YP4T9VRdP91WHicsn720lI8EDnlG9+5Ou1mgHR21jxsdPQCvvX958HBNkDiH6YgQNl9Q==",
+          "deprecated": null
+        },
+        "3.0.0-alpha.2": {
+          "integrity": "sha512-0/QipFx9e7pPlJj+qHaCGpYqXKnkqxx2EHU5u0yJ8jjOjHsY1ngAytUVvrrtiCFhPsKlyu5g53BxnRCCBEshDQ==",
+          "deprecated": null
+        }
+      },
+      "@getforma/build": {
+        "0.1.0": {
+          "integrity": "sha512-7vqyKq/eaDh1e3dN1bde/JWTpzQCph1csJfGfi6ytt+TLKl0vLHxo5PfaPdGAryhOC+azHUX12sl8Q5ildwuYA==",
+          "deprecated": null
+        },
+        "0.1.1": {
+          "integrity": "sha512-Pyo5wKqW0vd0O8LVBvKt/5CflRq40awfKUcKo/0woEMDAVPdjGu20hgjqE138XLjZfYLzObNRZJV7UESEprAKw==",
+          "deprecated": null
+        },
+        "0.1.2": {
+          "integrity": "sha512-QBbbfrRuOdBLe9sZwdasOW6V1hF2xyWdkVkPb2WFksUGjxiRg4FPR/9YAceXA4Bey5imfBI12tv8UfhWqCt1qg==",
+          "deprecated": null
+        },
+        "0.1.3": {
+          "integrity": "sha512-ejTlYj0MNPDODCSmLIKHQXuqYVtmvsnP9//7AxILz32gbB+QJe9IIhGDTomI2G7HIgtni1P1aZ/8FniI4UnxPA==",
+          "deprecated": null
+        },
+        "0.1.4": {
+          "integrity": "sha512-utkzWwjNkYZRUx6XYPnCKGFfEadIttsBTWz0RreijkRUkZxOMr3nrSBkm90kWtw/XPMWQUwXO6JtJnnh0CknSg==",
+          "deprecated": null
+        },
+        "0.1.5": {
+          "integrity": "sha512-dcmpvYh/2D0mRI61S2ZS43pDIujjSd0j/MZJE7S6GWxg5jJ8d/Hf464Y1/ezk5orULqIJpIFuxJ8Q4n+RVDVWg==",
+          "deprecated": null
+        },
+        "0.1.6": {
+          "integrity": "sha512-H5mDlyty18wMLy6IGs9AamlTO/FC/BLYuGK4rrydIhnF/VRioDE4bcP7ltBzUh4Rt92UT2jYioqbGDjJshZvng==",
+          "deprecated": null
+        },
+        "0.1.7": {
+          "integrity": "sha512-idf6dNXUxa7dooIdQJvxyLhgBSBaiJvfIImBGfMPGUCBrYxyL38Qomw/A8PG0LOwpgKQd7thXrGJKo+lHrLVBw==",
+          "deprecated": null
+        },
+        "0.1.8": {
+          "integrity": "sha512-buvkZQMuAvmVJwoeCZfendWQ/NudMSU2U80tDjLUsbnsPQNMNAFWaWjEFBZUMjlXAGsVNrWfgyj07j3uKRyoaw==",
+          "deprecated": null
+        },
+        "0.1.9": {
+          "integrity": "sha512-DLcoJF6bYv+c7MEGzHm1S2+9MnSglFIXZCf8cpj5LCwtnSCmiImyECfGcDmvoMM9PAwpxU5YEWqHyTlRD0FVIw==",
+          "deprecated": null
+        },
+        "0.2.0": {
+          "integrity": "sha512-YYIob66b3pn1RDmHWSsbVwmX31FwP1peEK0SddRzQkLmi+bgbe+rMK+Fv3ZSJb/d52glVh1w5rAeCA/ixzHM8Q==",
+          "deprecated": null
+        },
+        "0.3.0": {
+          "integrity": "sha512-EIQqxiN9scGyLhNOqmOSJvV017PPrBHQApxhd7YLbNjIhM4zZ1yRIIORlYAgHVapbc6y3CAG6MZ8534eP6kzzw==",
+          "deprecated": null
+        },
+        "0.3.1": {
+          "integrity": "sha512-Kx0ZorqZ3lj99riKZx2AB7Z7pGv8i7aitxtNAKGQ/Kbz9GzCy4t+VIhHjwdPSy914Dasvgs6ZUO+AIsG5rW3QA==",
+          "deprecated": null
+        },
+        "3.0.0-alpha.2": {
+          "integrity": "sha512-WSjvtcQwDHovDe0OOr5mSegsvJIeI5Dd1i41QdB1IWhny77zPVzRoRTYtFXKBg4QQFC2ApbOKRz0Iaq5W6EsRQ==",
+          "deprecated": null
+        }
+      },
+      "@getforma/create-app": {
+        "0.1.0": {
+          "integrity": "sha512-CYv4SVFwueNGEX0IMausxUanZP5Yw30EuVTb8+CRy+IgFUeOJX4WJD61X/KWUO88jUUPlwAe5U/xtfUJ9LDvaA==",
+          "deprecated": null
+        },
+        "0.1.1": {
+          "integrity": "sha512-h7Mmpf7pBwZhy46AcKuWazXrd49/o944tv5emAK+57sktKnCrgrU7P1Utf5zrU30pcRFbFhSXl7Iw3saEcRaKw==",
+          "deprecated": null
+        },
+        "0.1.2": {
+          "integrity": "sha512-+WQ9zthP7iOecEX7v8jgwj5L3dlFrKkqK7mdVjaw8qHZcKsffxugq8/SA9AdLtp3xeC5mSH8PM8do1gsRyuZlw==",
+          "deprecated": null
+        },
+        "0.2.0": {
+          "integrity": "sha512-CudGCxOJx7fbG2xeVPR3VUxtg9yyKpmYqcHm8AnhNqHqXVg1/6Y12vj3Y8qB+hy8rrJMB96bUuo4p9P7hoWohw==",
+          "deprecated": null
+        },
+        "0.3.0": {
+          "integrity": "sha512-WXrWagfcijJDarCnWKLX5xmNLnvcxHbK8rBnjD5EV3vsvoBWTkSHU3tFoWuy21xLGhhINHr8OOtnbELZwcqkKw==",
+          "deprecated": null
+        },
+        "0.4.0": {
+          "integrity": "sha512-xf52wXDv8KGuEopJNW6z9j2fm5YVh2a4x/cgpqONHbxQIDHaKqbZISA9dr+Sk52theklaxyEFzFN5TM1pnWcYQ==",
+          "deprecated": null
+        },
+        "0.4.1": {
+          "integrity": "sha512-xi3YDZQy5+O/ockWPag5yhiYZlaWtuwfAS3ftRhcng5Qk0R8qL7B4cfuYm+n5YoaYYL2gfUnu/zYfjT+Cz8Wbg==",
+          "deprecated": null
+        },
+        "0.4.2": {
+          "integrity": "sha512-5ICGWi2tj4SKFPUaYt1QEqarv4QSTU4+aWrrI8axPz2zKm71Wn3STV912yNc1nynvtdrPMrqGJ7NKIZfoa7vwA==",
+          "deprecated": null
+        },
+        "0.5.0": {
+          "integrity": "sha512-8WNto81ouuqFbeO+EgDvBGMt6xau3R4+88o8XsYzsc4cNET71ATnwPhZMUEgtg+AxsTWPqjhIgRQ6cukPNBe4Q==",
+          "deprecated": null
+        },
+        "0.6.0": {
+          "integrity": "sha512-9N5KiYfh/Qf6B9r6rwRRpLzvtVZNnlO+NEVd1Blg6iLjvRsSS6iRhOfLeLeS38jcr6OCIwaEwR4b71NusiAv7A==",
+          "deprecated": null
+        },
+        "0.6.1": {
+          "integrity": "sha512-7aEQcnskLVl1it2rzGHe6L1WtcfOqVzX0JcMAWflhI+/Hrlu1cD55vLPSIod4iAbdude5jv3ch+0SzBloZ7t7g==",
+          "deprecated": null
+        },
+        "0.6.2": {
+          "integrity": "sha512-rAkhrtqGJ+ePOGEGy5i/CJRsriJxAZsuzl66yRVH3X1NA8hw/O2qqtsBVguEIsdjIGucAA1JAX9FWHCI+LdhCg==",
+          "deprecated": null
+        },
+        "3.0.0-alpha.2": {
+          "integrity": "sha512-MdWpKfXvR1LP+eNM2hGZeYAHxhivLL+XpyM+8JsQiH3uBT5NVjSCEVrpk7b2re2IaD+Xh7jiQ+3PflmaFJg1UQ==",
+          "deprecated": null
+        }
+      }
+    }
+  },
+  "alerts": [
+    {
+      "id": "npm-baseline:99e20bf77043d037485bf249f0988a68a7ba96bf51e15f7e7fb959c5986e55d2",
+      "kind": "npm-baseline-established",
+      "repository": "getforma-dev/forma",
+      "detective": true,
+      "delivered": false,
+      "details": {
+        "snapshot": {
+          "schema": 1,
+          "repository": "getforma-dev/forma",
+          "packages": {
+            "@getforma/core": {
+              "0.1.0": {
+                "integrity": "sha512-w45nfa8Xp6MjelKbtt09UCOfy5wYexEPE4NuSVelr2WgsL+UKf6LRrcieJkbkQ5V9ITYbDJg8oFjs/thTWpLeQ==",
+                "deprecated": null
+              },
+              "0.1.1": {
+                "integrity": "sha512-LUxGpakX6G5RTk1JnWV6rhYmH3WEC5xzWav90grMVnZQ2XIa/+DpRH2aOM8cdTAu8c3YZ/zQyVLT3OerldeFjg==",
+                "deprecated": null
+              },
+              "0.2.0": {
+                "integrity": "sha512-I2vuhWmLTwDSk7yxECySB5Pn5K1kJlS0ACzEcKZg8keVHavRh028R3UhHaO6s0tAmH90pSbAtqZgGdTAKJ+6qQ==",
+                "deprecated": null
+              },
+              "0.3.0": {
+                "integrity": "sha512-A4wSE/cD2SCSLAxXRhjgOSy8X09glrOjl+n4hQzsFib2hV2HQ5Of6iz+/CgYsN5kcTQD8Ds/bQkI76U/TA6Jug==",
+                "deprecated": null
+              },
+              "0.3.1": {
+                "integrity": "sha512-fcTx6y8kVtN1M2quVIjczql0UDdJJ/66MunjQwUiTY4Qp8uij4gBnZJbnhmR0qSuVozocvy9MbsH6n/+IDFHgw==",
+                "deprecated": null
+              },
+              "0.6.1": {
+                "integrity": "sha512-B39n+yNt+u/qG8G6rvUkZCq7DaJ2skown900mp9AM0fkjiU9yKTOcKEKgcRexBjN+gJDLIfYHNmYDnTh43JMSA==",
+                "deprecated": null
+              },
+              "0.8.1": {
+                "integrity": "sha512-BPo7HJMWNmGADxYYGnwOz8lSMe0rt2QSCASxW3tfI1eeOC4wPvEqNsF9cK00OrxFpdybnnsEhPZNYDj43JrXSA==",
+                "deprecated": null
+              },
+              "0.8.2": {
+                "integrity": "sha512-aYUsdhHUHLjpb7/I3XXCIWnvVJZcKTl4Rf2cmdpQuEPn4YDgf6em7RfQ4m2EQGALJ6NFTUs7fcA2xml70JVMDA==",
+                "deprecated": null
+              },
+              "0.9.0": {
+                "integrity": "sha512-MXoOcwxj5+GuWYPpVRpwSP0Gtf3MAOG3WXYhNVsbbqsIUrvE2Of4NJadH3xeN4Q/eH5cDoMlvc2dTj0ZumDsEg==",
+                "deprecated": null
+              },
+              "0.9.1": {
+                "integrity": "sha512-vhn3fRcVTyZXhkmhlzb83Kj7b7DPivuRwKUlhdM3HXLfUeoR5wrH8wJ3BoiBORrer9m9rGaHIuyzn+yZcGh6zw==",
+                "deprecated": null
+              },
+              "1.0.0": {
+                "integrity": "sha512-i8KEq+HS4pTYi5ydJK2xa2p4VDMtIT60AHxI6tVMkOcLE9OzZ5s1EEAdz/tHZjnSq/azze27VUfBF0xcVMwstg==",
+                "deprecated": null
+              },
+              "1.0.1": {
+                "integrity": "sha512-7gai95v9nDeZvBRkSIKCCYzLtmZOi5M6M7mIfFMpd06a8q+4UhNHTl8rapk83xZTQNsXwigol2OhDjZpk9rkLQ==",
+                "deprecated": null
+              },
+              "1.0.10": {
+                "integrity": "sha512-GlpPFOuZOLbWLzwPBAuMBlHI6bHQgXjQSJdRZzTL0405gOmWNDNSmMsiQ4PK91qCiQwKNc6UCkze07LPjWvnPg==",
+                "deprecated": null
+              },
+              "1.0.2": {
+                "integrity": "sha512-D6JuidhkLMjm65PJ9iVe1ttFTGC1qQuOCBcrVUOZnKGunsBxg9Wg3Bt3dM18R1gYxo79cG/akHcGac+mQP2XYw==",
+                "deprecated": null
+              },
+              "1.0.3": {
+                "integrity": "sha512-gmGAwF5sH0uA3axkE26XK0a2jl5nG21OSmxstg2EwNk8YSPOXDJKXGoagFGJofVaIsPBuTYWzpQR1eaRd8Egjw==",
+                "deprecated": null
+              },
+              "1.0.4": {
+                "integrity": "sha512-PMU81y4jEedxBrHdD+oVLpjVnHZyIj4l7asHOvsqclJV5zsryc9IfDLyzv4/vaJqAmy4DIWPY9O1x/zkvbeh0w==",
+                "deprecated": null
+              },
+              "1.0.5": {
+                "integrity": "sha512-ivEw76PqZ/e2W05rBcnXqFP+syUikuJj+KY7Qkj5AScz6FbbNiR1lxLIftVHD7WDoQDvptAhFm0r5fNg+ED5bA==",
+                "deprecated": null
+              },
+              "1.0.6": {
+                "integrity": "sha512-U1+rohcw2E9s2rCa+UDy666NrcTqVyCS8FpXttAKxJ9NgI6Nu1GsNVZnqdHbaWYuBJx9lSDgOuJINLEsUaSsbA==",
+                "deprecated": null
+              },
+              "1.0.7": {
+                "integrity": "sha512-YaJRt/sHVyTD4hw1pXl/+fVtNSRrAJldUqddZZNQHE7jnlyGKTBiq+l4/hD+jDn7V633gzbVpOUx5+k4DbJy/Q==",
+                "deprecated": null
+              },
+              "1.0.8": {
+                "integrity": "sha512-3e0R2BiI6xXvR1zoLRbPak6h3JkpayWj9nm51ncUlKVqyPv0QlDvD5G2gfNduew/amTGmsidWEo1tTLfIE8YQQ==",
+                "deprecated": null
+              },
+              "1.0.9": {
+                "integrity": "sha512-ikzf36+DTxv1IsXEPjx1A8qFZFx22rJ5Rn5Tst9j+MGeClXj7YTis2+4EacDd2kKOLFdAKxcvsNR/31qCQmBtg==",
+                "deprecated": null
+              },
+              "1.1.0": {
+                "integrity": "sha512-ZpWxDLpSrvVvBTl1CGN52g46Cyz8jutG1yueDTBDFTlE6wPjYRfjwpGmFcFX8TsjIIpEpLMsD4ElVp8gzPnoqw==",
+                "deprecated": null
+              },
+              "1.2.0": {
+                "integrity": "sha512-vRuvMIbzQYtKwMRtYbkQPGWEFNocTYrXv81/ChpqYuJ0kjKnTcuC68jcUTnveSFiv5sojrVeYgL2avP9RuJs+Q==",
+                "deprecated": null
+              },
+              "1.3.0": {
+                "integrity": "sha512-ydtjN6zmY8eDHdZoQ+z3nsAgYyW2tVAbC+O1SazjHjBG5JDTsMgxH2ZIxgVeF6qk3sD2RsixwXKXSmMF32fKNw==",
+                "deprecated": null
+              },
+              "1.4.0": {
+                "integrity": "sha512-UWl7dss3FZrz82m5iB0sj3iA8Wfyupt6Ef5sdKHMueyxBSytj+Jf/oQo5tYhgedF5espVTj1nSny9aJ+n8q+xw==",
+                "deprecated": null
+              },
+              "1.5.0": {
+                "integrity": "sha512-sbbiNPvNmZZjYDIoPWq/LJTfxcr8JG50YIaVlflpxN4roVXA9u+Irb8q8LHt4qyOncEf4Fr4Hkj/bLo2TSsqIA==",
+                "deprecated": null
+              },
+              "2.0.0": {
+                "integrity": "sha512-NmluX3AObTfWGiLByFQZzUF0mlrTufpiOUVBqw7jS9RG6Mvxyq8nz9EtbtNfPiFgUSFZAYAmtKHoVcixNENtyg==",
+                "deprecated": null
+              },
+              "2.0.1": {
+                "integrity": "sha512-QcSEt5tEJjgCdS++NFV3wKrm5JOHIIxZ03Zueifn0NqfRC00k4/xgCb6T4dnW/m88ref+4I/0mKC0rqQ9PKnSQ==",
+                "deprecated": null
+              },
+              "2.0.2": {
+                "integrity": "sha512-B8LD1CDtE1fb/u9pD/FKGRU20WGHr+ZKurwN0z3hw0vhW8GzwcOXpGoJ49vQO9fVperQ8wDgxu3j0TTs8utORg==",
+                "deprecated": null
+              },
+              "2.0.3": {
+                "integrity": "sha512-xpcZQ/qFGsd7an6yAWDf2A8ixNtBPTnDor0Kwl3QVg8onJtvowmaCAgNF7m71k0zfjnu1ThZJUY6gXmxo4pxTw==",
+                "deprecated": null
+              },
+              "2.1.0": {
+                "integrity": "sha512-szY8Z/61Ge/mV18t2CHxrNpnpygaVg2bUpaaPJNop7Gvv4RR7UyjMNKU0MELI7s3Y6AZ8814ptDLGAecfZkczg==",
+                "deprecated": null
+              },
+              "3.0.0-alpha.2": {
+                "integrity": "sha512-mmwiX+syNnst3cZNhV+vk9tErl74afwa8XNJvqoPwiyMm/OXV2INI4CHU1soXsAy+k4DomSSSxwPzAAgeDkjUw==",
+                "deprecated": null
+              }
+            },
+            "@getforma/compiler": {
+              "0.1.0": {
+                "integrity": "sha512-usJoZKXSWKi/1XOPrIQpi6HwPOcbMNYLUh1wPaLuwEgWu0rlN14/MdyUoUnofOo6+lbmhs58MchOT7+OYXyuhw==",
+                "deprecated": null
+              },
+              "0.1.1": {
+                "integrity": "sha512-pJwnUfUSqPyjIUMnp0jM3w4YKkXsqUVuzT0DhQ4TRpum9qlWKDHBT3Bkr9rDtph4ZWbLHtrcqlqep0f/YS1rBA==",
+                "deprecated": null
+              },
+              "0.1.2": {
+                "integrity": "sha512-DJdeMbAdr5a9yTLKZU4BvwbCwHMO1xDh1efm4VlZGIbYOl+hBdzK8+rE9JYzqKX6Mh74JdaOraau0QD/BihhAw==",
+                "deprecated": null
+              },
+              "0.1.3": {
+                "integrity": "sha512-1Fd524jdqH9hwCq0uoS81/j+t2j0POhwQB9LLSQxtlcS2AdqsDJTxx5V6SVS08VKLOoD+pPe1s1Uc01YgbPFWw==",
+                "deprecated": null
+              },
+              "0.1.4": {
+                "integrity": "sha512-qzuevCy99sTizHpJbOCNicEV9Pi+DWOyIhaQ3a6hDDkn4E2+/93nwg4lyFfet74NmFlkOy9BYCTd1HNRYRiG6w==",
+                "deprecated": null
+              },
+              "0.1.5": {
+                "integrity": "sha512-iNI6DLrLXhBLfL+8a1fMk0b6NnYerJugPE8yWgyPkCya/CNalTNikWKUjTLWau7N06FnLTXK9Bsv8atyJ55IAw==",
+                "deprecated": null
+              },
+              "0.1.6": {
+                "integrity": "sha512-EYDC1XvJZIOj1ieH3lhZAkW4uK3IZNpNvH49C+DcraAp+e3h6eMmUekOZLrPwPhDyle0BkhBndbuj5nZty5Ong==",
+                "deprecated": null
+              },
+              "0.1.7": {
+                "integrity": "sha512-vUUohfdSwrIb6MT8pqLM/9oXkXRZgMaOG2761zyYpAJuuYWdW3RDf8EJmyjpIKwMAlOKE4AFczNWqWOOL0jjyw==",
+                "deprecated": null
+              },
+              "0.1.8": {
+                "integrity": "sha512-lQjmtZfIJPG7QOh5th/2RKF9OmNL65TXwenubh1eiTCl74Ya7xUbT65HjnnJbB/8TlgpuAp8ff+Uk1tstDIAMA==",
+                "deprecated": null
+              },
+              "0.2.0": {
+                "integrity": "sha512-KlnbTI/DZJXFf8yJigsl2zsTqZBZ3ic3WZZbNgfPsaNRQLmjToSuMUtb9WkmJwzFIrm/nCpR2dbKOtgq6nTw6w==",
+                "deprecated": null
+              },
+              "0.3.0": {
+                "integrity": "sha512-3tHId21BRztK/T5aa3iRVhSuT8ZGngKj6JGjvTTizv/BJGmkANLR0PD6RInBCkHMVj7jmlXU5WSYanLC6xguTA==",
+                "deprecated": null
+              },
+              "0.3.1": {
+                "integrity": "sha512-ZsMi/IlDKODe/PTC3ZxCUT3W0ANJEE8BL1t/EhmJ7OdU/B5h1zL6pmKN/N553REo7U4hXW9ZtzfxWK7eTjIMdQ==",
+                "deprecated": null
+              },
+              "0.3.2": {
+                "integrity": "sha512-EWGsNzWiv/qOMemwqdEX2r4yXN8R6f1ej5RCA6hAdP/a3jl1xroNCUyA2O2HjZkbu4k1scSELXbPWljtq8snIA==",
+                "deprecated": null
+              },
+              "0.3.3": {
+                "integrity": "sha512-KN7rrZFpUw6lRCegUFx1hZe85MG5nnhBgczaaZRAPnZ/s1/f8i/31+ZZFx5NaeR+p60v5KCBOgrH0e6OdRW2TQ==",
+                "deprecated": null
+              },
+              "0.3.4": {
+                "integrity": "sha512-ikcOwnEwhqOPNo3HyJkgj4u28pfQ0rRpdD6MmSikNsTwHcQ/7eOr7VZqCSmk5XFGsTXjj1wcuDuCBOCbBHKFaA==",
+                "deprecated": null
+              },
+              "0.3.5": {
+                "integrity": "sha512-/vQjKCneCzWVkt4Suxq7Z9VYnd0RJS3Og7VvL7sLl76XVA3eM9eED4eDf7sm3j58t+ssIEhhYtOuS0QIt50bIg==",
+                "deprecated": null
+              },
+              "0.3.6": {
+                "integrity": "sha512-i6aMQRpSCw7rzZMeOn+uOXvBnyt/Iv+pVck1pYISA3IPkO/ASRwQSf1GabE12ZKm2Gk22mHzynnSQBzkOsaA7A==",
+                "deprecated": null
+              },
+              "0.3.7": {
+                "integrity": "sha512-Of9pAQUhdjuGy1eK+2YP4T9VRdP91WHicsn720lI8EDnlG9+5Ou1mgHR21jxsdPQCvvX958HBNkDiH6YgQNl9Q==",
+                "deprecated": null
+              },
+              "3.0.0-alpha.2": {
+                "integrity": "sha512-0/QipFx9e7pPlJj+qHaCGpYqXKnkqxx2EHU5u0yJ8jjOjHsY1ngAytUVvrrtiCFhPsKlyu5g53BxnRCCBEshDQ==",
+                "deprecated": null
+              }
+            },
+            "@getforma/build": {
+              "0.1.0": {
+                "integrity": "sha512-7vqyKq/eaDh1e3dN1bde/JWTpzQCph1csJfGfi6ytt+TLKl0vLHxo5PfaPdGAryhOC+azHUX12sl8Q5ildwuYA==",
+                "deprecated": null
+              },
+              "0.1.1": {
+                "integrity": "sha512-Pyo5wKqW0vd0O8LVBvKt/5CflRq40awfKUcKo/0woEMDAVPdjGu20hgjqE138XLjZfYLzObNRZJV7UESEprAKw==",
+                "deprecated": null
+              },
+              "0.1.2": {
+                "integrity": "sha512-QBbbfrRuOdBLe9sZwdasOW6V1hF2xyWdkVkPb2WFksUGjxiRg4FPR/9YAceXA4Bey5imfBI12tv8UfhWqCt1qg==",
+                "deprecated": null
+              },
+              "0.1.3": {
+                "integrity": "sha512-ejTlYj0MNPDODCSmLIKHQXuqYVtmvsnP9//7AxILz32gbB+QJe9IIhGDTomI2G7HIgtni1P1aZ/8FniI4UnxPA==",
+                "deprecated": null
+              },
+              "0.1.4": {
+                "integrity": "sha512-utkzWwjNkYZRUx6XYPnCKGFfEadIttsBTWz0RreijkRUkZxOMr3nrSBkm90kWtw/XPMWQUwXO6JtJnnh0CknSg==",
+                "deprecated": null
+              },
+              "0.1.5": {
+                "integrity": "sha512-dcmpvYh/2D0mRI61S2ZS43pDIujjSd0j/MZJE7S6GWxg5jJ8d/Hf464Y1/ezk5orULqIJpIFuxJ8Q4n+RVDVWg==",
+                "deprecated": null
+              },
+              "0.1.6": {
+                "integrity": "sha512-H5mDlyty18wMLy6IGs9AamlTO/FC/BLYuGK4rrydIhnF/VRioDE4bcP7ltBzUh4Rt92UT2jYioqbGDjJshZvng==",
+                "deprecated": null
+              },
+              "0.1.7": {
+                "integrity": "sha512-idf6dNXUxa7dooIdQJvxyLhgBSBaiJvfIImBGfMPGUCBrYxyL38Qomw/A8PG0LOwpgKQd7thXrGJKo+lHrLVBw==",
+                "deprecated": null
+              },
+              "0.1.8": {
+                "integrity": "sha512-buvkZQMuAvmVJwoeCZfendWQ/NudMSU2U80tDjLUsbnsPQNMNAFWaWjEFBZUMjlXAGsVNrWfgyj07j3uKRyoaw==",
+                "deprecated": null
+              },
+              "0.1.9": {
+                "integrity": "sha512-DLcoJF6bYv+c7MEGzHm1S2+9MnSglFIXZCf8cpj5LCwtnSCmiImyECfGcDmvoMM9PAwpxU5YEWqHyTlRD0FVIw==",
+                "deprecated": null
+              },
+              "0.2.0": {
+                "integrity": "sha512-YYIob66b3pn1RDmHWSsbVwmX31FwP1peEK0SddRzQkLmi+bgbe+rMK+Fv3ZSJb/d52glVh1w5rAeCA/ixzHM8Q==",
+                "deprecated": null
+              },
+              "0.3.0": {
+                "integrity": "sha512-EIQqxiN9scGyLhNOqmOSJvV017PPrBHQApxhd7YLbNjIhM4zZ1yRIIORlYAgHVapbc6y3CAG6MZ8534eP6kzzw==",
+                "deprecated": null
+              },
+              "0.3.1": {
+                "integrity": "sha512-Kx0ZorqZ3lj99riKZx2AB7Z7pGv8i7aitxtNAKGQ/Kbz9GzCy4t+VIhHjwdPSy914Dasvgs6ZUO+AIsG5rW3QA==",
+                "deprecated": null
+              },
+              "3.0.0-alpha.2": {
+                "integrity": "sha512-WSjvtcQwDHovDe0OOr5mSegsvJIeI5Dd1i41QdB1IWhny77zPVzRoRTYtFXKBg4QQFC2ApbOKRz0Iaq5W6EsRQ==",
+                "deprecated": null
+              }
+            },
+            "@getforma/create-app": {
+              "0.1.0": {
+                "integrity": "sha512-CYv4SVFwueNGEX0IMausxUanZP5Yw30EuVTb8+CRy+IgFUeOJX4WJD61X/KWUO88jUUPlwAe5U/xtfUJ9LDvaA==",
+                "deprecated": null
+              },
+              "0.1.1": {
+                "integrity": "sha512-h7Mmpf7pBwZhy46AcKuWazXrd49/o944tv5emAK+57sktKnCrgrU7P1Utf5zrU30pcRFbFhSXl7Iw3saEcRaKw==",
+                "deprecated": null
+              },
+              "0.1.2": {
+                "integrity": "sha512-+WQ9zthP7iOecEX7v8jgwj5L3dlFrKkqK7mdVjaw8qHZcKsffxugq8/SA9AdLtp3xeC5mSH8PM8do1gsRyuZlw==",
+                "deprecated": null
+              },
+              "0.2.0": {
+                "integrity": "sha512-CudGCxOJx7fbG2xeVPR3VUxtg9yyKpmYqcHm8AnhNqHqXVg1/6Y12vj3Y8qB+hy8rrJMB96bUuo4p9P7hoWohw==",
+                "deprecated": null
+              },
+              "0.3.0": {
+                "integrity": "sha512-WXrWagfcijJDarCnWKLX5xmNLnvcxHbK8rBnjD5EV3vsvoBWTkSHU3tFoWuy21xLGhhINHr8OOtnbELZwcqkKw==",
+                "deprecated": null
+              },
+              "0.4.0": {
+                "integrity": "sha512-xf52wXDv8KGuEopJNW6z9j2fm5YVh2a4x/cgpqONHbxQIDHaKqbZISA9dr+Sk52theklaxyEFzFN5TM1pnWcYQ==",
+                "deprecated": null
+              },
+              "0.4.1": {
+                "integrity": "sha512-xi3YDZQy5+O/ockWPag5yhiYZlaWtuwfAS3ftRhcng5Qk0R8qL7B4cfuYm+n5YoaYYL2gfUnu/zYfjT+Cz8Wbg==",
+                "deprecated": null
+              },
+              "0.4.2": {
+                "integrity": "sha512-5ICGWi2tj4SKFPUaYt1QEqarv4QSTU4+aWrrI8axPz2zKm71Wn3STV912yNc1nynvtdrPMrqGJ7NKIZfoa7vwA==",
+                "deprecated": null
+              },
+              "0.5.0": {
+                "integrity": "sha512-8WNto81ouuqFbeO+EgDvBGMt6xau3R4+88o8XsYzsc4cNET71ATnwPhZMUEgtg+AxsTWPqjhIgRQ6cukPNBe4Q==",
+                "deprecated": null
+              },
+              "0.6.0": {
+                "integrity": "sha512-9N5KiYfh/Qf6B9r6rwRRpLzvtVZNnlO+NEVd1Blg6iLjvRsSS6iRhOfLeLeS38jcr6OCIwaEwR4b71NusiAv7A==",
+                "deprecated": null
+              },
+              "0.6.1": {
+                "integrity": "sha512-7aEQcnskLVl1it2rzGHe6L1WtcfOqVzX0JcMAWflhI+/Hrlu1cD55vLPSIod4iAbdude5jv3ch+0SzBloZ7t7g==",
+                "deprecated": null
+              },
+              "0.6.2": {
+                "integrity": "sha512-rAkhrtqGJ+ePOGEGy5i/CJRsriJxAZsuzl66yRVH3X1NA8hw/O2qqtsBVguEIsdjIGucAA1JAX9FWHCI+LdhCg==",
+                "deprecated": null
+              },
+              "3.0.0-alpha.2": {
+                "integrity": "sha512-MdWpKfXvR1LP+eNM2hGZeYAHxhivLL+XpyM+8JsQiH3uBT5NVjSCEVrpk7b2re2IaD+Xh7jiQ+3PflmaFJg1UQ==",
+                "deprecated": null
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

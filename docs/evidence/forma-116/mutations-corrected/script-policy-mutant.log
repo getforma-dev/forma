@@ -1,0 +1,19 @@
+   Compiling forma-server v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.67s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/target/debug/deps/forma_server-654682ffb379a24b)
+
+running 1 test
+test csp::tests::csp_is_strict ... 
+thread 'csp::tests::csp_is_strict' (1635632) panicked at crates/forma-server/src/csp.rs:1372:9:
+without strict-dynamic the 'self' host-source is still honoured
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    csp::tests::csp_is_strict
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 111 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p forma-server --lib`

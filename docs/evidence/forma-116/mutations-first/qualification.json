@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "passed": false,
+  "commit": "dffb2443b0ce770be25ed674e55958107248fef5",
+  "scratch": "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-x3rnt9o0",
+  "startedAt": 1792123822.074131,
+  "probes": [
+    {
+      "id": "text-fast",
+      "test": "walker::tests::walk_text_escaping",
+      "path": "crates/forma-ir/src/walker.rs",
+      "mutantSha256": "1cdb2ba0a39b6fff908fe857e65f69ad546ee9056c6731a254d4b79e71de7912",
+      "runs": [
+        {
+          "mode": "before",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "text-fast-before.log",
+          "sha256": "8e5d1b61f8cffb551d5f1bdad9939721c7add7c12fbfe12e52c62e90419f4c3d"
+        },
+        {
+          "mode": "mutant",
+          "exit": 101,
+          "verdict": "invalid",
+          "log": "text-fast-mutant.log",
+          "sha256": "9367a89381c1315c08efe07796078583e3dd5bf6539516a102a3c27350aba902"
+        }
+      ]
+    }
+  ],
+  "sourceSha256": {
+    "crates/forma-ir/src/walker.rs": "9e0934093a5f27f183a6ae140db6056bd81e20141e9e5e3d32de1b9eed561ec7",
+    "crates/forma-server/src/csp.rs": "730ef695389b74b1d916f6c10cc26573f27291a07a79045832a5c27c5d8a6245"
+  },
+  "error": "text-fast/mutant: invalid; see /Users/victorvillacis/dev/Forma/work/FORMA-116-recovery/tmp/mutations-first/text-fast-mutant.log",
+  "elapsedSeconds": 9.51026701927185,
+  "sourceRestored": true
+}

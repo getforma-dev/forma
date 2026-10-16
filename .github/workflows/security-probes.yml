@@ -1,0 +1,37 @@
+name: Security mutation probes
+on:
+  pull_request:
+    branches: [main, codex/forma-upgrade-review]
+    paths:
+      - 'crates/forma-ir/**'
+      - 'crates/forma-server/**'
+      - 'Cargo.*'
+      - 'scripts/security-mutation-probes*'
+      - '.github/workflows/security-probes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: security-probes-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  security-probes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CARGO_BUILD_JOBS: 3
+      CARGO_TERM_COLOR: never
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+      - name: Qualifier rejects missing tests and compiler failures
+        run: python3 scripts/security-mutation-probes.test.py
+      - name: Compile actual production mutations and corrected replays
+        run: python3 scripts/security-mutation-probes.py --out "$RUNNER_TEMP/security-probes"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: security-mutation-probes
+          path: ${{ runner.temp }}/security-probes/
+          if-no-files-found: error
+          retention-days: 14

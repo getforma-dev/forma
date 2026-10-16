@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "e6c60dea187dd47a9295c7094b5a3b36692be5b9",
+  "scope": "pre-convergence governance workflow and toolchain policy originals",
+  "files": [
+    {
+      "source": ".github/workflows/release-plane-observe.yml",
+      "archive": "docs/archive/forma-116-maintenance-node/originals/.github/workflows/release-plane-observe.yml",
+      "bytes": 4259,
+      "sha256": "858034b2c0976378792eeef1b02061bb9b1a7c4fde862f0261ef57491fd1963b"
+    },
+    {
+      "source": "scripts/check-toolchain-policy.rb",
+      "archive": "docs/archive/forma-116-maintenance-node/originals/scripts/check-toolchain-policy.rb",
+      "bytes": 3345,
+      "sha256": "54727684441d7a286ebf35d041fe67606b428f0aa8d0fb6a123483894b240702"
+    },
+    {
+      "source": "scripts/toolchain-policy.test.mjs",
+      "archive": "docs/archive/forma-116-maintenance-node/originals/scripts/toolchain-policy.test.mjs",
+      "bytes": 2861,
+      "sha256": "60e3ff065fd4e0bc062864b627be2ed7bfe88eafb4b00013ed8b0d41b769949c"
+    }
+  ]
+}

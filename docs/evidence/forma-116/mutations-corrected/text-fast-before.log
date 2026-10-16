@@ -1,0 +1,28 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling once_cell v1.21.4
+   Compiling serde_json v1.0.154
+   Compiling syn v2.0.119
+   Compiling syn v3.0.9
+   Compiling tracing-core v0.1.36
+   Compiling itoa v1.0.18
+   Compiling pin-project-lite v0.2.17
+   Compiling memchr v2.8.3
+   Compiling serde v1.0.229
+   Compiling serde_derive v1.0.229
+   Compiling tracing-attributes v0.1.31
+   Compiling forma-ir-derive v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/crates/forma-ir-derive)
+   Compiling ryu-js v1.0.3
+   Compiling tracing v0.1.44
+   Compiling forma-ir v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/crates/forma-ir)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.61s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/target/debug/deps/forma_ir-6752e66e3505d20f)
+
+running 1 test
+test walker::tests::walk_text_escaping ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 253 filtered out; finished in 0.00s
+
