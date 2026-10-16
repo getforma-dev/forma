@@ -1,0 +1,198 @@
+
+> @getforma/build@3.0.0-dev test
+> vitest run --maxWorkers=2 tests/watch-readiness.test.ts tests/static-product.test.ts tests/watch-process.test.ts
+
+
+ RUN  v3.2.7 /Users/victorvillacis/dev/Forma/work/FORMA-watch-readiness/forma/packages/build
+
+stdout | tests/static-product.test.ts > keeps the configured separate native owner while its activation-only browser candidate becomes static (split=false)
+SSR mode enabled — emitting IR files
+
+stdout | tests/static-product.test.ts > keeps the configured separate native owner while its activation-only browser candidate becomes static (split=false)
+   IR emitted (real): home.ir (154 bytes, 0 islands)
+
+stdout | tests/static-product.test.ts > keeps the configured separate native owner while its activation-only browser candidate becomes static (split=false)
+   IR emitted (real): live.ir (320 bytes, 1 islands)
+
+stdout | tests/static-product.test.ts > keeps the configured separate native owner while its activation-only browser candidate becomes static (split=false)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-XNdBbL/dist/browser.b33303ce.js  89b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-XNdBbL/dist/live.28ee5653.js  596b
+
+   5 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /         no interactive region  no JavaScript
+   /live     islands                Forma 55 of 28,000 B  JavaScript 2,043 of 76,800 B  (Brotli: Forma 47, JavaScript 1,748)  live.28ee5653.js
+   /browser  whole-page mount       Forma 40 of 28,000 B  JavaScript 1,713 of 76,800 B  (Brotli: Forma 33, JavaScript 1,465)  browser.b33303ce.js
+   Service worker   sw.js  3,308 B raw, 1,604 B gzip, 1,376 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       95 ms: bundle 90 ms, hash 1 ms, compress 3 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-XNdBbL/dist/manifest.json (build: c693086ff602...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-XNdBbL/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+stdout | tests/static-product.test.ts > keeps browser code for a request-conditional island definition (split=false)
+SSR mode enabled — emitting IR files
+
+stdout | tests/static-product.test.ts > keeps browser code for a request-conditional island definition (split=false)
+   IR emitted (real): home.ir (368 bytes, 1 islands)
+
+stdout | tests/static-product.test.ts > keeps browser code for a request-conditional island definition (split=false)
+   IR emitted (real): live.ir (320 bytes, 1 islands)
+
+stdout | tests/static-product.test.ts > keeps browser code for a request-conditional island definition (split=false)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-fzQJsf/dist/browser.b531ff9f.js  89b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-fzQJsf/dist/home.36ecc8ed.js  289b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-fzQJsf/dist/live.47d595e6.js  596b
+
+   6 assets hashed
+   4 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /         islands           Forma 64 of 28,000 B  JavaScript 1,941 of 76,800 B  (Brotli: Forma 51, JavaScript 1,654)  home.36ecc8ed.js
+   /live     islands           Forma 55 of 28,000 B  JavaScript 2,116 of 76,800 B  (Brotli: Forma 47, JavaScript 1,817)  live.47d595e6.js
+   /browser  whole-page mount  Forma 40 of 28,000 B  JavaScript 1,789 of 76,800 B  (Brotli: Forma 32, JavaScript 1,534)  browser.b531ff9f.js
+   Service worker   sw.js  3,412 B raw, 1,680 B gzip, 1,447 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       64 ms: bundle 60 ms, hash 1 ms, compress 3 ms, manifest 0 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-fzQJsf/dist/manifest.json (build: bacdeaad246b...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-fzQJsf/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+stdout | tests/static-product.test.ts > publishes native static, island and explicit Browser routes from actual compiler products (split=false)
+SSR mode enabled — emitting IR files
+
+stdout | tests/static-product.test.ts > publishes native static, island and explicit Browser routes from actual compiler products (split=false)
+   IR emitted (real): home.ir (154 bytes, 0 islands)
+
+stdout | tests/static-product.test.ts > publishes native static, island and explicit Browser routes from actual compiler products (split=false)
+   IR emitted (real): live.ir (320 bytes, 1 islands)
+
+stdout | tests/static-product.test.ts > publishes native static, island and explicit Browser routes from actual compiler products (split=false)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-GyN7Km/dist/browser.b33303ce.js  89b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-GyN7Km/dist/live.28ee5653.js  596b
+
+   5 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /         no interactive region  no JavaScript
+   /live     islands                Forma 55 of 28,000 B  JavaScript 2,043 of 76,800 B  (Brotli: Forma 47, JavaScript 1,748)  live.28ee5653.js
+   /browser  whole-page mount       Forma 40 of 28,000 B  JavaScript 1,713 of 76,800 B  (Brotli: Forma 33, JavaScript 1,465)  browser.b33303ce.js
+   Service worker   sw.js  3,308 B raw, 1,604 B gzip, 1,376 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       53 ms: bundle 50 ms, hash 1 ms, compress 2 ms, manifest 0 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-GyN7Km/dist/manifest.json (build: c693086ff602...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-GyN7Km/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+ ✓ tests/watch-readiness.test.ts (2 tests) 822ms
+   ✓ waits for every actual initial watch context before allowing edits (split=false)  517ms
+   ✓ waits for every actual initial watch context before allowing edits (split=true)  305ms
+ ✓ tests/watch-process.test.ts (1 test) 38ms
+stdout | tests/static-product.test.ts > keeps the configured separate native owner while its activation-only browser candidate becomes static (split=true)
+SSR mode enabled — emitting IR files
+
+stdout | tests/static-product.test.ts > keeps the configured separate native owner while its activation-only browser candidate becomes static (split=true)
+   IR emitted (real): home.ir (154 bytes, 0 islands)
+   IR emitted (real): live.ir (320 bytes, 1 islands)
+
+stdout | tests/static-product.test.ts > keeps the configured separate native owner while its activation-only browser candidate becomes static (split=true)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-W4VfuE/dist/live.JMNF7YAY.js  326b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-W4VfuE/dist/browser.W43UYH3G.js  99b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-W4VfuE/dist/chunk.AVN4JCHK.js  79b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-W4VfuE/dist/chunk.R2MBSC5Y.js  72b
+
+   9 assets hashed
+   5 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /         no interactive region  no JavaScript
+   /live     islands                Forma 103 of 28,000 B  JavaScript 2,131 of 76,800 B  (Brotli: Forma 86, JavaScript 1,833)  live.JMNF7YAY.js chunk.AVN4JCHK.js
+   /browser  whole-page mount       Forma 81 of 28,000 B  JavaScript 1,967 of 76,800 B  (Brotli: Forma 64, JavaScript 1,686)  browser.W43UYH3G.js chunk.AVN4JCHK.js
+   Service worker   sw.js  3,518 B raw, 1,749 B gzip, 1,515 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       41 ms: bundle 36 ms, hash 1 ms, compress 3 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-W4VfuE/dist/manifest.json (build: e43b4a14cf7e...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-W4VfuE/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+stdout | tests/static-product.test.ts > keeps browser code for a request-conditional island definition (split=true)
+SSR mode enabled — emitting IR files
+
+stdout | tests/static-product.test.ts > keeps browser code for a request-conditional island definition (split=true)
+   IR emitted (real): home.ir (368 bytes, 1 islands)
+   IR emitted (real): live.ir (320 bytes, 1 islands)
+
+stdout | tests/static-product.test.ts > keeps browser code for a request-conditional island definition (split=true)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/home.EB3KKSA7.js  310b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/live.6376TPEV.js  342b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/chunk.WBJP4ZFT.js  101b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/browser.VEHARSLV.js  99b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/chunk.KCHDBBI5.js  79b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/chunk.W3NTJDTI.js  72b
+
+   12 assets hashed
+   7 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /         islands           Forma 148 of 28,000 B  JavaScript 2,373 of 76,800 B  (Brotli: Forma 126, JavaScript 2,050)  home.EB3KKSA7.js chunk.WBJP4ZFT.js chunk.KCHDBBI5.js
+   /live     islands           Forma 146 of 28,000 B  JavaScript 2,383 of 76,800 B  (Brotli: Forma 125, JavaScript 2,064)  live.6376TPEV.js chunk.WBJP4ZFT.js chunk.KCHDBBI5.js
+   /browser  whole-page mount  Forma 81 of 28,000 B  JavaScript 2,108 of 76,800 B  (Brotli: Forma 68, JavaScript 1,830)  browser.VEHARSLV.js chunk.KCHDBBI5.js
+   Service worker   sw.js  3,727 B raw, 1,890 B gzip, 1,646 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       46 ms: bundle 39 ms, hash 1 ms, compress 5 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/manifest.json (build: e75ee30763dc...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TsBMxE/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+stdout | tests/static-product.test.ts > publishes native static, island and explicit Browser routes from actual compiler products (split=true)
+SSR mode enabled — emitting IR files
+
+stdout | tests/static-product.test.ts > publishes native static, island and explicit Browser routes from actual compiler products (split=true)
+   IR emitted (real): home.ir (154 bytes, 0 islands)
+   IR emitted (real): live.ir (320 bytes, 1 islands)
+
+stdout | tests/static-product.test.ts > publishes native static, island and explicit Browser routes from actual compiler products (split=true)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TRZrru/dist/live.73CU63K7.js  326b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TRZrru/dist/browser.QESZHSSB.js  99b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TRZrru/dist/chunk.YJ452XTP.js  79b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TRZrru/dist/chunk.F2AUONEN.js  72b
+
+   9 assets hashed
+   5 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /         no interactive region  no JavaScript
+   /live     islands                Forma 103 of 28,000 B  JavaScript 2,134 of 76,800 B  (Brotli: Forma 87, JavaScript 1,844)  live.73CU63K7.js chunk.YJ452XTP.js
+   /browser  whole-page mount       Forma 81 of 28,000 B  JavaScript 1,970 of 76,800 B  (Brotli: Forma 69, JavaScript 1,709)  browser.QESZHSSB.js chunk.YJ452XTP.js
+   Service worker   sw.js  3,518 B raw, 1,752 B gzip, 1,523 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       39 ms: bundle 35 ms, hash 1 ms, compress 3 ms, manifest 0 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TRZrru/dist/manifest.json (build: 5af5457f67d5...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-static-product-TRZrru/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+ ✓ tests/static-product.test.ts (8 tests) 1923ms
+   ✓ keeps the configured separate native owner while its activation-only browser candidate becomes static (split=false)  427ms
+   ✓ keeps accepted metadata and old referenced bytes through static→island→refusal→static watch (split=false)  579ms
+   ✓ keeps accepted metadata and old referenced bytes through static→island→refusal→static watch (split=true)  578ms
+
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  01:36:26
+   Duration  2.21s (transform 300ms, setup 0ms, collect 223ms, tests 2.78s, environment 0ms, prepare 99ms)
+
