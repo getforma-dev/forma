@@ -9,5 +9,5 @@
 # exist on a clean clone, so `cargo test --workspace` at the root must not try
 # to compile it. The root Cargo.toml excludes `e2e`.
 [workspace]
-members = ["ssr/render", "frame/server"]
+members = ["ssr/render", "frame/server", "skew/server"]
 resolver = "2"
