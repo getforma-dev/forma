@@ -44,11 +44,11 @@ describe('deployment identity before public activation', () => {
     expect(p.events).toHaveLength(1); expect(p.events[0]!.detail).toEqual({ page: 'page-build', bundle: 'bundle-build', reload: true });
     expect(p.events[0]!.cancelable).toBe(true); expect(p.events[0]!.target).toBe(p.doc); expect(p.reload).toHaveBeenCalledTimes(1);
   });
-  it.each(['equal', 'absent-page', 'absent-bundle', 'empty-page', 'empty-bundle'])('%s preserves valid activation and Browser mount', mode => {
+  it.each(['equal', 'absent-page', 'absent-bundle', 'empty-page', 'empty-bundle'])('%s preserves valid activation and Browser mount', async mode => {
     const p = page(mode === 'absent-page' ? null : mode === 'empty-page' ? '' : mode === 'equal' ? 'bundle-build' : 'page-build');
     if (mode === 'absent-bundle') vi.stubGlobal('__FORMA_BUILD__', undefined);
     if (mode === 'empty-bundle') vi.stubGlobal('__FORMA_BUILD__', '');
-    activateIslands(p.registry, p.doc); expect(p.component).toHaveBeenCalledTimes(1);
+    await activateIslands(p.registry, p.doc); expect(p.component).toHaveBeenCalledTimes(1);
     const target = p.doc.createElement('aside'); p.app.append(target);
     const render = vi.fn(() => h('button', null, 'mounted')); const dispose = mount(render, target);
     expect(render).toHaveBeenCalledOnce(); expect(target.textContent).toBe('mounted'); dispose(); expect(target.childNodes).toHaveLength(0);
@@ -64,9 +64,9 @@ describe('deployment identity before public activation', () => {
     activateIslands(p.registry, p.app);
     expect(p.component).not.toHaveBeenCalled(); expect(p.events[0]!.detail.page).toBe('page-build');
   });
-  it('descendant identities do not supply an absent page identity', () => {
+  it('descendant identities do not supply an absent page identity', async () => {
     const p = page(null); p.app.firstElementChild!.setAttribute('data-forma-build', 'page-build');
-    activateIslands(p.registry, p.doc); expect(p.component).toHaveBeenCalledOnce(); expect(p.events).toHaveLength(0);
+    await activateIslands(p.registry, p.doc); expect(p.component).toHaveBeenCalledOnce(); expect(p.events).toHaveLength(0);
   });
   it('mount refuses before its component and returns an inert idempotent disposer', () => {
     const p = page(); const target = p.doc.createElement('aside'); target.textContent = 'preserved'; p.app.append(target);

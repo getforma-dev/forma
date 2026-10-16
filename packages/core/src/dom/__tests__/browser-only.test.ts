@@ -38,11 +38,11 @@ function serverHost(props?: object): void {
 }
 
 describe('browserOnly', () => {
-  it('registered in activateIslands, renders the component in its empty host, from the server props', () => {
+  it('registered in activateIslands, renders the component in its empty host, from the server props', async () => {
     const Chart = browserOnly(ChartImpl);
     serverHost({ title: 'Sales', points: 3 });
 
-    activateIslands({ Chart: compiled(Chart, [[{ name: 'title', type: { kind: 'optional', inner: { kind: 'string' } } }, { name: 'points', type: { kind: 'optional', inner: { kind: 'number' } } }]], 1) });
+    await activateIslands({ Chart: compiled(Chart, [[{ name: 'title', type: { kind: 'optional', inner: { kind: 'string' } } }, { name: 'points', type: { kind: 'optional', inner: { kind: 'number' } } }]], 1) });
 
     const chart = document.getElementById('chart')!;
     expect(chart).not.toBeNull();
@@ -58,7 +58,7 @@ describe('browserOnly', () => {
     expect(chart.textContent).toContain('Sales: 4 points');
   });
 
-  it('gives the component empty props when the host carries none', () => {
+  it('gives the component empty props when the host carries none', async () => {
     const seen: unknown[] = [];
     const Chart = browserOnly((props: { title?: string }) => {
       seen.push(props);
@@ -66,7 +66,7 @@ describe('browserOnly', () => {
     });
     serverHost();
 
-    activateIslands({ Chart: compiled(Chart, [[{ name: 'title', type: { kind: 'optional', inner: { kind: 'string' } } }]], 1) });
+    await activateIslands({ Chart: compiled(Chart, [[{ name: 'title', type: { kind: 'optional', inner: { kind: 'string' } } }]], 1) });
 
     expect(seen).toEqual([{}]);
     expect(document.getElementById('canvas')).not.toBeNull();

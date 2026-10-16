@@ -32,14 +32,16 @@ for (const mode of ['mismatch', 'cancel', 'storage-access', 'storage-read', 'sto
             window.guard.events.push({ ...event.detail, cancelable: event.cancelable, documentTarget: event.target === document });
             if (mode === 'cancel') event.preventDefault();
           });
-          const observer = new MutationObserver(() => {});
+          const initialRecords = [];
+          const observer = new MutationObserver(batch => initialRecords.push(...batch));
           observer.observe(document.querySelector('#island'), { subtree: true, childList: true, characterData: true, attributes: true });
-          activateIslands({ Counter: __islandRegistration(() => {
+          await activateIslands({ Counter: __islandRegistration(() => {
             window.guard.components++;
             const [value, set] = createSignal('ready');
             return h('div', { id: 'island' }, h('button', { title: value, onClick: () => set('changed') }, 'go'));
           }, { h: '0123456789abcdef', schema: [[]], mode: 0 }) }, document.querySelector('#app'));
-          window.guard.initialWrites = observer.takeRecords().filter(record => record.attributeName !== 'data-forma-status').map(record => record.attributeName || record.type);
+          initialRecords.push(...observer.takeRecords());
+          window.guard.initialWrites = initialRecords.filter(record => record.attributeName !== 'data-forma-status').map(record => record.attributeName || record.type);
           observer.disconnect();
           const dispose = mount(() => { window.guard.mounts++; return h('button', null, 'mounted'); }, document.querySelector('#mount'));
           if (mode !== 'equal') { dispose(); dispose(); }

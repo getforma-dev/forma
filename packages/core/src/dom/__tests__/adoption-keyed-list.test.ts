@@ -234,7 +234,7 @@ describe('keyed list adoption (FORMA-181 checkpoint C)', () => {
 describe('keyed list refusal isolation (FORMA-181 checkpoint C)', () => {
   afterEach(() => { document.body.innerHTML = ''; document.head.querySelectorAll('[data-island-state]').forEach(node => node.remove()); });
 
-  it('a duplicate served key fails only its own island with FORMA_E_HYDRATE_KEY; the neighbouring keyed island activates', () => {
+  it('a duplicate served key fails only its own island with FORMA_E_HYDRATE_KEY; the neighbouring keyed island activates', async () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="Broken"><ul><!--f:l0-->${served([['a', 'A'], ['a', 'A'], ['b', 'B']])}<!--/f:l0--></ul></div>` +
       `<div data-forma-island="1" data-forma-component="Fine"><ul><!--f:l0-->${served([['a', 'A'], ['b', 'B']])}<!--/f:l0--></ul></div>`;
@@ -247,7 +247,7 @@ describe('keyed list refusal isolation (FORMA-181 checkpoint C)', () => {
     const island = (rows: string[]) => () => h('div', null, h('ul', null,
       createList(() => rows, row => row, row => h('li', { onClick: () => clicked.push(row) }, row.toUpperCase()))));
     try {
-      activateIslands(emptyRegistry({ Broken: island(['a', 'b']), Fine: island(['b', 'a']) }));
+      await activateIslands(emptyRegistry({ Broken: island(['a', 'b']), Fine: island(['b', 'a']) }));
     } finally { off(); quiet.mockRestore(); }
     expect(received).toEqual(['FORMA_E_HYDRATE_KEY:hydration']);
     expect(broken!.getAttribute('data-forma-status')).toBe('error');

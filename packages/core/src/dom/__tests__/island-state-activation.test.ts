@@ -42,19 +42,22 @@ describe('state preflight precedes every activation side effect', () => {
     expect(error).toHaveBeenCalledTimes(4); expect(error.mock.calls.every(call => String(call[0]).includes('FORMA_E_ISLAND_'))).toBe(true);
     expect(hasScheduledOrActiveIslands()).toBe(false); observer.disconnect();
   });
-  it('validates every requested props object before the first component runs', () => {
+  it('validates every requested props object before the first component runs', async () => {
     const doc = page(['load', 'load']);
     const seen: number[] = [];
-    activateIslands({
+    // Force the second island into the shared timer drain so this assertion
+    // verifies readiness rather than depending on host speed.
+    vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValue(13);
+    await activateIslands({
       C0: registration(props => { seen.push(props.value); doc.head.querySelector('script')!.textContent = JSON.stringify({ v: 1, s: [], i: [{ h: H, p: { value: 7 } }, { h: H, p: { value: 42 } }] }); return h('div', null, h('span', null, 'server-0')); }),
       C1: registration(props => { seen.push(props.value); return h('div', null, h('span', null, 'server-1')); }),
     }, doc);
     expect(seen).toEqual([1001, 1001]);
   });
-  it('rechecks a later immediate host after an earlier component changes its markers', () => {
+  it('rechecks a later immediate host after an earlier component changes its markers', async () => {
     const doc = page(['load', 'load']), second = doc.querySelector('[data-forma-state="1"]')!;
     const skipped = vi.fn(), error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    activateIslands({ C0: registration(() => { second.setAttribute('data-forma-h', 'ffffffffffffffff'); return h('div', null, h('span', null, 'server-0')); }), C1: registration(skipped) }, doc);
+    await activateIslands({ C0: registration(() => { second.setAttribute('data-forma-h', 'ffffffffffffffff'); return h('div', null, h('span', null, 'server-0')); }), C1: registration(skipped) }, doc);
     expect(skipped).not.toHaveBeenCalled(); expect(second.getAttribute('data-forma-status')).toBe('pending');
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
   });
@@ -73,11 +76,11 @@ describe('state preflight precedes every activation side effect', () => {
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
     expect(hasScheduledOrActiveIslands()).toBe(false);
   });
-  it.each([0, 1] as const)('refuses a detached later immediate host before mode %s component execution', mode => {
+  it.each([0, 1] as const)('refuses a detached later immediate host before mode %s component execution', async mode => {
     const doc = page(['load', 'load']), second = doc.querySelector('[data-forma-state="1"]')!;
     const skipped = vi.fn(), error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const before = second.outerHTML;
-    activateIslands({ C0: registration(() => { second.remove(); return h('div', null, h('span', null, 'server-0')); }), C1: registration(skipped, mode) }, doc);
+    await activateIslands({ C0: registration(() => { second.remove(); return h('div', null, h('span', null, 'server-0')); }), C1: registration(skipped, mode) }, doc);
     expect(skipped).not.toHaveBeenCalled(); expect(second.outerHTML).toBe(before);
     expect(second.ownerDocument).toBe(doc); expect(doc.contains(second)).toBe(false);
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
@@ -96,19 +99,19 @@ describe('state preflight precedes every activation side effect', () => {
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
     expect(hasScheduledOrActiveIslands()).toBe(false); observer.disconnect();
   });
-  it('runs a valid sibling while an individually malformed entry stays unchanged', () => {
+  it('runs a valid sibling while an individually malformed entry stays unchanged', async () => {
     const doc = page(['load', 'load']); doc.head.querySelector('script')!.textContent = JSON.stringify({ v: 1, s: [], i: [null, { h: H, p: { value: 7 } }] });
     const bad = vi.fn(), good = vi.fn(() => h('div', null, h('span', null, 'server-1'))); vi.spyOn(console, 'error').mockImplementation(() => {});
     const first = doc.querySelector('[data-forma-state="0"]')!, before = first.outerHTML;
-    activateIslands({ C0: registration(bad), C1: registration(good) }, doc);
+    await activateIslands({ C0: registration(bad), C1: registration(good) }, doc);
     expect(bad).not.toHaveBeenCalled(); expect(first.outerHTML).toBe(before); expect(good).toHaveBeenCalledExactlyOnceWith({ value: 7 });
   });
-  it('seeds distinct local signals from1001 before first effects and preserves imported captures', () => {
+  it('seeds distinct local signals from1001 before first effects and preserves imported captures', async () => {
     const doc = page(), observed: number[] = [];
     const [captured, setCaptured] = createSignal(5);
     let updateFirst: (value: number) => void = () => {};
     let second: () => number = () => 0;
-    activateIslands({ C0: registration(props => {
+    await activateIslands({ C0: registration(props => {
       const [a, setA] = createSignal(props.value ?? 42), [b] = createSignal(props.value);
       updateFirst = setA; second = b;
       createEffect(() => { observed.push(a() + captured()); });
@@ -117,12 +120,12 @@ describe('state preflight precedes every activation side effect', () => {
     expect(observed).toEqual([1006]); updateFirst(7); expect(second()).toBe(1001);
     setCaptured(8); expect(observed).toEqual([1006, 12, 15]);
   });
-  it('never admits a later injected host on repeated calls', () => {
+  it('never admits a later injected host on repeated calls', async () => {
     const doc = page(), component = vi.fn(() => h('div', null, h('span', null, 'server-0'))), error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const registry = { C0: registration(component) }; activateIslands(registry, doc);
+    const registry = { C0: registration(component) }; await activateIslands(registry, doc);
     const clone = doc.querySelector('[data-forma-island]')!.cloneNode(true) as HTMLElement;
     clone.setAttribute('data-forma-status', 'pending'); doc.body.appendChild(clone);
-    activateIslands(registry, doc);
+    await activateIslands(registry, doc);
     expect(component).toHaveBeenCalledTimes(1); expect(clone.getAttribute('data-forma-status')).toBe('pending');
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
   });

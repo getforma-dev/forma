@@ -692,14 +692,14 @@ describe('island isolation for throwing bindings', () => {
     document.body.innerHTML = '';
   });
 
-  it('a binding that throws while being built fails only its own island', () => {
+  it('a binding that throws while being built fails only its own island', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Broken" data-forma-status="pending"><p title="x">SSR content stays</p></div><div data-forma-island="1" data-forma-component="Working" data-forma-status="pending"><p><!--f:t0-->OK<!--/f:t0--></p></div>`;
     installState();
 
     let setMsg!: (v: string) => void;
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       // The component builds fine; its reactive attribute binding throws on the
       // first (synchronous) run, which must surface to island activation.
       Broken: () => h('div', null, h('p', { title: () => { throw new Error('binding blew up'); } }, 'SSR content stays')),
@@ -721,14 +721,14 @@ describe('island isolation for throwing bindings', () => {
     errorSpy.mockRestore();
   });
 
-  it('a binding that throws on a shared-signal update does not freeze the other island', () => {
+  it('a binding that throws on a shared-signal update does not freeze the other island', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Fragile" data-forma-status="pending"><p><!--f:t0-->0<!--/f:t0--></p></div><div data-forma-island="1" data-forma-component="Display" data-forma-status="pending"><p><!--f:t0-->0<!--/f:t0--></p></div>`;
     installState();
 
     const [count, setCount] = createSignal(0);
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       // Island 0 is fine at hydration time and breaks on the first update.
       Fragile: () => h('div', null, h('p', null, () => {
         if (count() > 0) throw new Error('island 0 binding is broken');
