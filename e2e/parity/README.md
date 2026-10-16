@@ -23,7 +23,7 @@ now and the rules it runs by.
 | `src/suite.mts` | The pipeline: prepare, serve, browse, report. |
 | `src/expected.mts`, `expected-divergent.json` | Known divergences as data, and the unexpected-pass rule. |
 | `src/run.mts` | The suite over the corpus: totals, structural classes, wall time by phase, the verdict. |
-| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 owns the public form. |
+| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 adds the internal explicit-state form. |
 | `corpus.json` | Step 0: the 14 js-emitter modules; step 1: the props-contract page, the P3 fixture and the island-emitter family. |
 | `fixtures/transition/` | The P3 fixture: one island seeded from declared props, whose module exports the setter. |
 | `tests/` | `node --test`: the generator, the comparison and the expected list on hand-written cases; the serializer against Chromium's parser; the server half, including the typed path and its refusal table; `renderBoth` and the suite end to end, including seeded server changes that P1 and P2 must report; step 1, the family's exact rebuild, P3 equal state after state and P3 failing on a wrong setter (`tests/fixtures/transition-off-by-one/`). |
@@ -250,4 +250,24 @@ expected text per row is FORMA-181's `canonicalKeyText` once rows are mapped to 
 switch to blocking (when step 1's expected list is empty for P1 and P2), and step 3's fixture
 applications (FORMA-188).
 
+## Render one component at an explicit state (Forma-internal)
+
+`src/test-utils.mts` exports `renderBoth(component, state, options?)` for tests in this repository.
+The component is a name from `corpus.json` or a `CorpusEntry` source descriptor; the helper compiles
+that entry and renders the exact JSON state through the typed Rust renderer and core in a browser.
+It returns the P1 report, including `server.tree`, `client.tree`, native HTML and any first difference
+or refusal. It does not apply expected-divergent exemptions. The suite separately checks P2 and P3.
+
+```ts
+import { renderBoth } from './src/test-utils.mts';
+const report = await renderBoth('nested-islands', {
+  panelClass: 'panel', badgeTitle: 'a specific regression',
+});
+assert.equal(report.verdict, 'equal');
+assert.deepEqual(report.server.tree, report.client.tree);
+```
+
+Chromium is the default; `options.engine` selects another engine and `options.browser` reuses a
+caller-owned browser without closing it. The helper closes browsers it creates, including on
+failure. `renderBoth` is not a supported `@getforma/core` export (Q11, L-57, FORMA-184).
 FORMA-016 verification on the expanded corpus removes F5 only after an actual unexpected pass: all 28 typed modules and 118 states complete, with props-contract text branches agreeing. Historical step-1 findings above remain the discovery record.
