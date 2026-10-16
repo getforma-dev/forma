@@ -61,7 +61,7 @@ fn hash(bytes: &[u8]) -> String {
         .collect()
 }
 fn percentile(sorted: &[u64], numerator: usize, denominator: usize) -> u64 {
-    sorted[((sorted.len() * numerator + denominator - 1) / denominator) - 1]
+    sorted[(sorted.len() * numerator).div_ceil(denominator) - 1]
 }
 struct Prepared {
     module: Arc<IrModule>,
@@ -212,35 +212,34 @@ fn boundaries() -> Value {
     console
         .render(&props, &RenderCtx::new().with_limits(exact))
         .expect("exact combined output/iteration budgets pass");
-    let iteration = console
-        .render(
-            &props,
-            &RenderCtx::new().with_limits(WalkLimits {
-                max_list_iterations: counts.list_iterations - 1,
-                ..exact
-            }),
-        )
-        .err()
-        .expect("one iteration over refuses");
-    let output = console
-        .render(
-            &props,
-            &RenderCtx::new().with_limits(WalkLimits {
-                max_output_bytes: complete_bytes - 1,
-                ..exact
-            }),
-        )
-        .err()
-        .expect("one output byte over refuses");
+    let iteration = match console.render(
+        &props,
+        &RenderCtx::new().with_limits(WalkLimits {
+            max_list_iterations: counts.list_iterations - 1,
+            ..exact
+        }),
+    ) {
+        Err(error) => error,
+        Ok(_) => panic!("one iteration over refuses"),
+    };
+    let output = match console.render(
+        &props,
+        &RenderCtx::new().with_limits(WalkLimits {
+            max_output_bytes: complete_bytes - 1,
+            ..exact
+        }),
+    ) {
+        Err(error) => error,
+        Ok(_) => panic!("one output byte over refuses"),
+    };
     assert_eq!(iteration.code(), "RENDER-302");
     assert_eq!(output.code(), "RENDER-301");
     json!({"route":"/pages/1500","exactBytes":complete_bytes,"exactIterations":counts.list_iterations,"exactPass":true,"onePastIteration":{"code":iteration.code(),"limit":counts.list_iterations-1},"onePastOutput":{"code":output.code(),"limit":complete_bytes-1},"partialHtmlReturned":false})
 }
 fn main() {
-    assert!(
-        !cfg!(debug_assertions),
-        "N1 requires the ordinary application release profile"
-    );
+    if cfg!(debug_assertions) {
+        panic!("N1 requires the ordinary application release profile");
+    }
     let args: Vec<String> = std::env::args().skip(1).collect();
     assert!(
         args.len() == 2 || args.len() == 3,

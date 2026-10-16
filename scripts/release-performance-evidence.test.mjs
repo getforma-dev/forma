@@ -17,3 +17,9 @@ test('a comparable DS12 must contain the same complete evidence required of the 
  assert.equal(validateBaselineRecord(baseline(),context).status,'comparable');
  for(const edit of [p=>delete p.n1[0].samplesNanoseconds,p=>p.n5.points[0]={rows:100},p=>p.mobile[0].runs[0].lighthouse.rawLhr='{}',p=>p.client.browsers.chromium.runtime.forma.mount_1={}]){const r=baseline();edit(r.measurements.measurements.performance);assert.throws(()=>validateBaselineRecord(r,context));}
 });
+test('release metadata checks import without any optional browser tooling installed',async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const loader=`export async function resolve(specifier,context,next){if(/^(?:lighthouse|chrome-launcher|@playwright\\/test)(?:\\/|$)/.test(specifier))throw Object.assign(new Error('Browser tooling unavailable: '+specifier),{code:'ERR_MODULE_NOT_FOUND'});return next(specifier,context);}`;
+ const imports=['release-performance-baseline.mjs','release-performance-contract.mjs','verify-release-set.mjs'].map(file=>`await import(${JSON.stringify(new URL(file,import.meta.url).href)});`).join('\n');
+ execFileSync(process.execPath,['--no-warnings','--experimental-loader',`data:text/javascript,${encodeURIComponent(loader)}`,'--input-type=module','-e',imports],{stdio:'pipe'});
+});

@@ -2,9 +2,6 @@
 // All browser/network throttling is local to the owned browser, never the machine.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import lighthouse from 'lighthouse';
-import * as chromeLauncher from 'chrome-launcher';
-import {chromium} from '@playwright/test';
 import {MOBILE_PROFILE} from './release-performance-spec.mjs';
 export {MOBILE_PROFILE} from './release-performance-spec.mjs';
 import {percentile,validateActivation} from './release-performance-contract.mjs';
@@ -45,6 +42,7 @@ export function activationInstrumentation({kind,longTask}) {
  setTimeout(()=>{result.done=true;},8000);requestAnimationFrame(tick);
 }
 export async function measureActivation(url,kind,{disabled=false,longTask=false}={}){
+ const {chromium}=await import('@playwright/test');
  const browser=await chromium.launch({headless:true});
  try{
   const screen=MOBILE_PROFILE.screenEmulation;
@@ -63,6 +61,8 @@ export async function measureActivation(url,kind,{disabled=false,longTask=false}
  }finally{await browser.close();}
 }
 export async function audit(url,{saveArtifacts}={}){
+ const [{default:lighthouse},chromeLauncher,{chromium},{defaultSettings}]=await Promise.all([import('lighthouse'),import('chrome-launcher'),import('@playwright/test'),import('lighthouse/core/config/constants.js')]);
+ assert.deepEqual({...MOBILE_PROFILE,throttling:{...defaultSettings.throttling},screenEmulation:{...defaultSettings.screenEmulation},emulatedUserAgent:defaultSettings.emulatedUserAgent},MOBILE_PROFILE,'installed Lighthouse preset differs from the pinned measurement contract');
  const chrome=await chromeLauncher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox'],logLevel:'error'});
  try{
   const result=await lighthouse(url,{port:chrome.port,logLevel:'error',output:'json',onlyCategories:['performance'],...MOBILE_PROFILE});
