@@ -1,8 +1,8 @@
 // The shared P17 observers must cover yielded module evaluation, not a network-idle guess.
 import {createServer} from 'node:http';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {test,expect} from '@playwright/test';
-import {verifyMinimalIsland} from '../../../scripts/release-template-islands.mjs';
-import {verifyIslandPage} from './lib/verify-page.mjs';
 
 const manifest={routes:{'/':{mode:'ssr',js:['entry.js'],css:[],ir:'home.ir'}}};
 async function fixture(lateWrite:boolean, run:(origin:string,evaluations:()=>number)=>Promise<void>){
@@ -25,6 +25,10 @@ async function fixture(lateWrite:boolean, run:(origin:string,evaluations:()=>num
 }
 for(const kind of ['minimal','fixture'] as const){
  test(`${kind}: a write after yielded module evaluation starts remains inside adoption observation`,async({browser})=>{
+  // Match apps.spec.ts and P17's native ESM imports. A static import from this
+  // CommonJS spec makes Playwright transform the shared .mjs as CommonJS first.
+  const {verifyMinimalIsland}=await import(pathToFileURL(join(__dirname,'../../../scripts/release-template-islands.mjs')).href);
+  const {verifyIslandPage}=await import(pathToFileURL(join(__dirname,'lib/verify-page.mjs')).href);
   await fixture(true,async origin=>{
    const observed=kind==='minimal'?verifyMinimalIsland(browser,origin,manifest,7,{timeout:5000})
     :verifyIslandPage(browser,origin,'/',manifest,{timeout:5000,expected:{serverValues:[{selector:'.count span',text:'7'}],hosts:{Counter:1},state:{Counter:[{count:7}]}},interact:async page=>{await page.getByRole('button',{name:'Increment',exact:true}).click();await expect(page.locator('.count span')).toHaveText('8');return true;}});
