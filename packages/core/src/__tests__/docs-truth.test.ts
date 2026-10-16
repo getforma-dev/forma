@@ -249,6 +249,16 @@ describe('"Verified by" citations', () => {
   };
 
   function historicalTest(file: string): string {
+    if (file === 'src/__tests__/docs-truth.test.ts') {
+      // The historical ledger describes the published CDN header. FORMA-108's
+      // unreleased source now documents explicit local mounts instead. Resolve
+      // the old assertion in its authenticated original, never a renamed test.
+      const archive = '../../docs/archive/FORMA-108-documentation-checks';
+      const manifest = JSON.parse(read(`${archive}/manifest.json`));
+      const bytes = readFileSync(resolve(ROOT, archive, 'docs-truth.test.ts'));
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(manifest.files['docs-truth.test.ts']);
+      return bytes.toString('utf8');
+    }
     const entry = retirement.files.find((item) => item.original === `packages/core/${file}`);
     if (entry) {
       const bytes = readFileSync(resolve(ROOT, retirementRoot, entry.archive));
