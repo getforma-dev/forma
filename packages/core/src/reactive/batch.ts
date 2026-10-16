@@ -45,7 +45,7 @@ export function openBatch(): void {
  * flushes run as a re-run outside any root does, so what they create is owned
  * by no caller. Strict adoption closes its held seed batch through this boundary.
  *
- * Verified by: src/dom/__tests__/list-adoption-count.test.ts > "another island's later row keeps its reactive binding after a refused adoption"
+ * Verified by: src/dom/__tests__/list-adoption-count.test.ts > "another root's batch flush cannot own a list row created by the flush"
  */
 export function closeBatchWithoutRoot(): void {
   runWithoutRoot(endBatch);

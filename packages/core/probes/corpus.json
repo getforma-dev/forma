@@ -845,7 +845,7 @@
   ],
   "find": "  runWithoutRoot(endBatch);",
   "replace": "  endBatch();",
-  "note": "adoption's batch flushes with the failing island's root current, so another island's row created by the flush is owned by it and loses its bindings when it is disposed. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"another island's row created while a failing island adopts keeps its reactive binding\""
+  "note": "a held adoption batch flushes with an unrelated caller root current, so another list's row created by the flush is owned by that caller and loses its bindings when the caller is disposed. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"another root's batch flush cannot own a list row created by the flush\""
  },
  {
   "id": "reactive/untrack-noop",

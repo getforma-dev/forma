@@ -17,6 +17,7 @@ import { createSignal, createRoot, onError } from 'forma/reactive';
 import { h } from '../element';
 import { mount } from '../mount';
 import { adoptInRoot } from './helpers/owned-adoption.js';
+import { openBatch, closeBatchWithoutRoot } from '../../reactive/batch';
 import { activateIslands } from '../activate';
 import { createShow } from '../show';
 import { createList } from '../list';
@@ -420,6 +421,38 @@ describe('list adoption row-count check', () => {
     expect(lis.map((li) => li.textContent)).toEqual(['r0', 'r1']);
     for (const li of lis) li.click();
     expect(clicks).toEqual(['r0', 'r1']);
+  });
+
+  it("another root's batch flush cannot own a list row created by the flush", () => {
+    document.body.innerHTML = '<div id="list"></div>';
+    const [rows, setRows] = createSignal(['r0']);
+    const [tag, setTag] = createSignal('');
+    const unmount = mount(
+      () => h('ul', null, createList(rows, (row) => row, (row) => h('li', null, () => `${row}:${tag()}`))),
+      document.getElementById('list')!,
+    );
+    let disposeCaller = () => {};
+    try {
+      createRoot((dispose) => {
+        disposeCaller = dispose;
+        openBatch();
+        setRows(['r0', 'r1']);
+        closeBatchWithoutRoot();
+      });
+      expect(Array.from(document.querySelectorAll('li'), (li) => li.textContent)).toEqual(['r0:', 'r1:']);
+
+      // The row created by the flush belongs to the list, not to the unrelated
+      // root that happened to close the batch. Disposing that root cannot sever
+      // the new row's reactive binding.
+      disposeCaller();
+      for (const next of ['t', 'u', 'v']) {
+        setTag(next);
+        expect(Array.from(document.querySelectorAll('li'), (li) => li.textContent)).toEqual([`r0:${next}`, `r1:${next}`]);
+      }
+    } finally {
+      disposeCaller();
+      unmount();
+    }
   });
 
   it("another island's later row keeps its reactive binding after a refused adoption", async () => {
