@@ -18,6 +18,14 @@ export const SKEW_DRILL_CHECKS = [
   'explicit Browser mount obeys the same skew boundary',
 ];
 
+/** Only Firefox's demonstrated same-Document reload interruption may reach the existing oracle. */
+export function isExpectedReloadInterruption(error, { mode, reload, target, event, bundle }) {
+  if (mode !== 'normal' || reload !== true || error?.name !== 'Error' || !/^[0-9a-f]{16}$/.test(bundle ?? '')) return false;
+  const expected = `page.goto: Navigation to "${target}" is interrupted by another navigation to "${target}"`;
+  return error.message?.split('\n')[0] === expected
+    && event?.page === 'injected-S' && event.bundle === bundle && event.reload === true;
+}
+
 async function until(read, predicate, label, timeout = 10_000) {
   const end = Date.now() + timeout; let value;
   do { value = await read(); if (predicate(value)) return value; await new Promise(resolve => setTimeout(resolve, 25)); } while (Date.now() < end);
@@ -49,7 +57,7 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
   const context = await browser.newContext({ serviceWorkers: 'block' });
   context.setDefaultTimeout(10_000);
   context.setDefaultNavigationTimeout(10_000);
-  const checks = [], events = new Map(), navigation = new Map(), errors = new Map();
+  const checks = [], events = new Map(), navigation = new Map(), errors = new Map(), navigationInterruptions = [];
   const mark = index => checks.push(SKEW_DRILL_CHECKS[index]);
   async function newPage(mode = 'normal') {
     const page = await context.newPage(); events.set(page, []); navigation.set(page, 0);
@@ -87,7 +95,12 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
     const before = state.log.length;
     // The tripwire can deliberately reload before Firefox's first load event.
     // Commit the initial navigation, then observe the actual events and Documents.
-    await page.goto(origin + path, { waitUntil: 'commit' });
+    try { await page.goto(origin + path, { waitUntil: 'commit' }); }
+    catch (error) {
+      const event = events.get(page)[0];
+      if (!isExpectedReloadInterruption(error, { mode, reload, target: origin + path, event, bundle: deployments.S.manifest.build })) throw error;
+      navigationInterruptions.push({ target: origin + path, name: error.name, message: error.message, stack: error.stack, firstEvent: event });
+    }
     await until(() => events.get(page), value => value.length === (reload ? 2 : 1), 'skew event count');
     await page.waitForTimeout(300);
     assert.equal(navigation.get(page), reload ? 2 : 1, 'unexpected navigation loop');
@@ -152,7 +165,7 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
     state.fault = 'mismatch'; await inert('normal', '/csr', true); await inert('blocked', '/csr', false); await inert('cancel', '/csr', false); mark(10);
     assert.deepEqual(checks, SKEW_DRILL_CHECKS);
     for (const failures of errors.values()) assert.deepEqual(failures, [], 'unexpected page error during the drill');
-    return { checks, builds: Object.fromEntries(Object.entries(deployments).map(([name, item]) => [name, item.manifest.build])), requests: state.log };
+    return { checks, builds: Object.fromEntries(Object.entries(deployments).map(([name, item]) => [name, item.manifest.build])), requests: state.log, navigationInterruptions };
   } catch (error) {
     // Playwright caches stack before this catch. Preserve that original stack
     // explicitly: appending only message loses the evidence printed by P17.

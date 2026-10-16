@@ -7,6 +7,7 @@ import { verify } from './verify-release-set.mjs';
 import { ROOT } from './release-set.mjs';
 import { pruneCargoLock } from './release-fixture-apps.mjs';
 import { runInNewContext } from 'node:vm';
+import { isExpectedReloadInterruption } from '../e2e/skew/run-drill.mjs';
 
 test('the standalone deployment lock preserves pinned dependencies without unrelated workspace features', () => {
   const version = '9.9.9';
@@ -68,4 +69,30 @@ test('the actual final packed call sequence finishes skew before a mandatory per
   assert.deepEqual(report.deploymentSkew, { checked: true });
   assert.equal(report.passed, false);
   assert.equal(report.fixtures, undefined, 'a failed mandatory measurement cannot manufacture a successful fixture report');
+});
+
+
+test('only the observed same-target intentional reload interruption reaches the unchanged drill oracle', () => {
+  const actual = JSON.parse(readFileSync(join(ROOT, 'docs/archive/skew-expected-reload/actual-skew-diagnostics.json'), 'utf8'));
+  const page = actual.pages.at(-1), event = JSON.parse(page.events[0]);
+  const log = readFileSync(join(ROOT, 'docs/archive/skew-expected-reload/first-packed-verify.log'), 'utf8');
+  const line = log.split('\n').find(line => line.startsWith('P17: page.goto: Navigation to '));
+  assert(line, 'the actual packed failure must supply the original interruption message');
+  const error = new Error(line.slice('P17: '.length));
+  const input = { mode: 'normal', reload: true, target: page.url, event, bundle: event.bundle };
+  assert.equal(isExpectedReloadInterruption(error, input), true);
+  for (const change of [
+    { mode: 'blocked' }, { mode: 'cancel' }, { reload: false },
+    { target: page.url + '/other' }, { target: page.url.replace('127.0.0.1', 'localhost') },
+    { event: undefined }, { event: { ...event, page: 'other' } },
+    { event: { ...event, bundle: 'different' } }, { event: { ...event, reload: false } },
+    { bundle: 'different' }, { bundle: undefined, event: { ...event, bundle: undefined } },
+  ]) assert.equal(isExpectedReloadInterruption(error, { ...input, ...change }), false, JSON.stringify(change));
+  for (const message of [
+    'page.goto: Timeout 10000ms exceeded.',
+    'page.goto: net::ERR_CONNECTION_REFUSED',
+    error.message.replace(`another navigation to "${page.url}"`, `another navigation to "${page.url}/other"`),
+    error.message.replace(`Navigation to "${page.url}"`, `Navigation to "${page.url}/other"`),
+  ]) assert.equal(isExpectedReloadInterruption(new Error(message), input), false, message);
+  assert.equal(isExpectedReloadInterruption(Object.assign(new Error(error.message), { name: 'TimeoutError' }), input), false);
 });
