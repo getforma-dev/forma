@@ -2,7 +2,7 @@
  * FormaJS Full-Stack E2E Tests
  *
  * Verifies the complete Forma pipeline in a real browser:
- *   1. HTML Runtime (data-* directives) — zero JS, reactive via CDN
+ *   1. HTML Runtime (data-* directives) — explicitly owned reviewed markup
  *   2. Programmatic h() API — createSignal + h() + mount()
  *   3. Reviewed template path — template(trustedHtml()) + cloneNode()
  *
@@ -89,6 +89,21 @@ test.describe('HTML Runtime — data-* directives', () => {
 
   test('$refs resolves data-ref elements', async ({ page }) => {
     await expect(page.locator('#rt-ref-check')).toHaveText('ref-found');
+  });
+
+  test('binds only the owned root and stops responding when its handle unmounts', async ({ page }) => {
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+    await page.click('#rt-outside-inc');
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+    // The same bundle is demonstrably live inside the explicitly handed root.
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('1');
+    await page.evaluate(() => {
+      (window as Window & { fullStackRuntimeHandle: { unmount(): void } }).fullStackRuntimeHandle.unmount();
+    });
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('1');
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
   });
 });
 

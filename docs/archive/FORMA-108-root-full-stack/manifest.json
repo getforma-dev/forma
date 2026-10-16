@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "sourceCommit": "9e867e4a534c9ba625e301e2c19c9e829e504f56",
+  "ciRun": 38857234217,
+  "ciJob": 116831595193,
+  "files": [
+    {
+      "path": "original/e2e/fixtures/full-stack.html",
+      "originalPath": "e2e/fixtures/full-stack.html",
+      "bytes": 3200,
+      "sha256": "e289334a0cd0c207d62917349ab1965499d6d257e8d116d88c69db09e65e76fb"
+    },
+    {
+      "path": "original/e2e/full-stack.spec.ts",
+      "originalPath": "e2e/full-stack.spec.ts",
+      "bytes": 7862,
+      "sha256": "500da6311b34089354a3c977a18a3e7e34cc491ad963619f2cd648b8519988e6"
+    },
+    {
+      "path": "original/e2e/README.md",
+      "originalPath": "e2e/README.md",
+      "bytes": 16464,
+      "sha256": "abadbffa871a841a66d36939d84fa920867368d58506fea003f566445dc597d6"
+    },
+    {
+      "path": "original/playwright.config.ts",
+      "originalPath": "playwright.config.ts",
+      "bytes": 1385,
+      "sha256": "a34197f72ef2b5dd34a7561b7263d5fafdc7e3500bceb5f2062e967054d8c4f9"
+    },
+    {
+      "path": "ci-38857234217-check.log",
+      "bytes": 924784,
+      "sha256": "2faed3275d644ddcb2da0876d5e2bfd5958a2370479648bdc13031bd7e232ff2"
+    }
+  ]
+}
