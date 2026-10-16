@@ -276,3 +276,27 @@ describe('archived pre-key-adoption tests', () => {
     }
   });
 });
+
+// A low-level unkeyed range has no server identity attributes, but its client key function
+// still feeds the shared canonical cache. It does not bypass that cache's value domain.
+describe('unkeyed low-level list key domain (FORMA-181 checkpoint D)', () => {
+  it.each([['fraction', 1.5], ['lone surrogate', '\uD800']] as const)('refuses a %s before any row callback or DOM write', async (_name, key) => {
+    const f = fixture('<li>row</li>'), original = [...f.host.childNodes];
+    const render = vi.fn(() => h('li', null, 'row'));
+    expect(() => prepareAdoption(f.host, list(() => [{ id: key, text: 'row' }], render))).toThrow('FORMA_E_HYDRATE_KEY');
+    await drain();
+    expect(render).not.toHaveBeenCalled();
+    expect([...f.host.childNodes]).toEqual(original);
+    expect(f.records()).toEqual([]);
+    f.disconnect();
+  });
+  it.each([['safe integer', 1], ['supplementary Unicode', '\u{1F642}']] as const)('admits the %s near miss without adding identity attributes', async (_name, key) => {
+    const f = fixture('<li>row</li>'), original = [...f.host.childNodes];
+    const plan = prepareAdoption(f.host, list(() => [{ id: key, text: 'row' }]));
+    plan.commit(); await drain();
+    expect([...f.host.childNodes]).toEqual(original);
+    expect(f.host.querySelector('li')!.hasAttribute('data-forma-key')).toBe(false);
+    expect(f.records()).toEqual([]);
+    plan.dispose(); f.disconnect();
+  });
+});

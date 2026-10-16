@@ -610,7 +610,7 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   // Validate before anything is written: a config error must not touch the
   // previous build's output on its way to failing.
   validateConfig(userConfig);
-  // `strict` from the config, else FORMA_STRICT (FORMA-119).
+  // 3.0 strict-only publication; validate legacy flag spelling.
   const project = process.cwd();
   // A release marked security retains nothing (L-16, SR45); the environment marks it too, and
   // a `false` in the configuration does not unmark it: the mark can only be forgotten safely.
@@ -717,7 +717,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       const target = join(distDir, FRAME_RUNTIME_ASSET);
       if (config.watch) writeFileAtomic(target, frame.bytes);
       else writeFileSync(target, frame.bytes);
-      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}`);
+      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}${frame.minified ? `; minified ${frame.sourceBytes.toLocaleString('en-US')} -> ${frame.bytes.length.toLocaleString('en-US')} B` : ''}`);
     }
     // The dev manifest names it as itself, as it names every watched asset.
     const frameAssets: Record<string, string> = frame ? { [FRAME_RUNTIME_ASSET]: FRAME_RUNTIME_ASSET } : {};
@@ -729,9 +729,8 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
 
     // ── Lazy-load SSR plugin only when needed ─────────────────────────
     let formaSsrPlugin: SsrPluginFactory | undefined;
-    // Every page's coded diagnostics (FORMA-119). A production build applies
-    // --strict itself, once every page is compiled, so the failure lists all
-    // of them; watch mode hands it to each page's plugin.
+    // Every page refuses unsupported native contracts. Production waits for
+    // every entry before returning the aggregate diagnostic report.
     const strict = config.strict === true;
     const collector = new DiagnosticsCollector(strict, config.entryPoints.map((entry) => basename(entry.outfile, '.js')));
     const pluginShared: SsrPluginShared = {
@@ -1028,21 +1027,19 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     duplicateCore = duplicateCoreDiagnostic(metafiles);
     if (duplicateCore) console.warn(`${duplicateCore.code}: ${duplicateCore.message}`);
 
-    // ── SSR diagnostics: the JSON report, then strict mode ────────────
-    // Every page is compiled by now, so a strict failure names them all.
+    // ── SSR diagnostics: the JSON report, then publication refusal ─────
+    // Every page is compiled by now, so the aggregate failure names them all.
     const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
     if (config.diagnosticsJson) {
       const written = writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
       console.log(`   SSR diagnostics written: ${written} (${diagnostics.length})`);
     }
-    // Wait for every entry before removing staging or writing the report. A
-    // mandatory compiler refusal stays fatal even when strict mode is off.
+    // Every entry has completed. Report all source diagnostics before a
+    // bundler failure so strict-only publication never hides later pages.
+    const errors = collector.errors();
+    if (errors.length > 0) throw strictFailure(errors);
     if (buildFailures.length) throw buildFailures[0];
     if (firstPassFailure) throw firstPassFailure;
-    if (strict) {
-      const errors = collector.errors();
-      if (errors.length > 0) throw strictFailure(errors);
-    }
 
     mark('bundle');
 
@@ -1099,7 +1096,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       ceilings: REPORT_CEILINGS,
       routes: sizes,
       worker,
-      ...(frameFile ? { frame: frameSize(frameFile, distDir) } : {}),
+      ...(frameFile && frame ? { frame: frameSize(frameFile, distDir, frame.sourceBytes) } : {}),
       times,
     };
     console.log(`\n${formatSizeReport(sizeReport).join('\n')}`);

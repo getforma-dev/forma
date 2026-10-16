@@ -676,6 +676,10 @@ export interface WalkContext {
   visited?: Set<string>;
   /** Active registered declarations, independent of local/import spellings. */
   islandStack?: ReadonlySet<string>;
+  /** Registered activation owner, preserved through ordinary helpers. */
+  islandOwner?: { identity: string; name: string };
+  /** Nearest select's native value belongs to this activation owner. */
+  boundSelect?: { owner: string | undefined; chain: string };
   /** Current depth for sub-component resolution (max 3). */
   depth?: number;
   /** List item bindings: "paramName.propName" → target slot id.
@@ -1016,6 +1020,15 @@ export function walkHTree(
   }
 
   const tag = tagArg.value;
+  const controlTag = tag.toLowerCase();
+  if ((controlTag === 'option' || controlTag === 'optgroup') && walkCtx.boundSelect && walkCtx.islandOwner
+      && walkCtx.boundSelect.owner !== walkCtx.islandOwner.identity) {
+    const file = walkCtx.sourceFile ?? '';
+    const at = originalPosition(file, node.loc?.start ?? { line: 1, column: 0 });
+    throw new PropsSchemaError(file, at.line, at.column,
+      `registered SSR island ${walkCtx.islandOwner.name} places <${tag}> across a value-bound <select> owned by ${walkCtx.boundSelect.chain}; keep the option/optgroup helper unregistered within that owner, or move the island boundary to the owning select or an outer element`,
+      'BUILD-617');
+  }
   const tagStrIdx = ctx.addString(tag);
   const isVoid = VOID_TAGS.has(tag);
 
@@ -1329,6 +1342,16 @@ export function walkHTree(
     ctx.emitU16(dyn.slotId);
   }
 
+  // A select controls the option defaults in its entire native subtree. An
+  // independent child island has no authenticated parent value, so it cannot
+  // own those option bindings. Read the actual emitted value attribute: absent
+  // or omitted values must not become a new restriction or change FMIR bytes.
+  const valueKey = controlTag === 'select' ? ctx.stringIndex('value') : undefined;
+  const ownsValue = valueKey !== undefined && [...staticAttrs, ...dynAttrs].some(attr => attr.keyIdx === valueKey);
+  const childContext: WalkContext = controlTag === 'select'
+    ? { ...walkCtx, boundSelect: ownsValue ? { owner: walkCtx.islandOwner?.identity, chain: `${chainSoFar(walkCtx).map(link => link.component).join(' > ')} > select` } : undefined }
+    : walkCtx;
+
   // Process children (3rd+ args)
   for (let i = 2; i < args.length; i++) {
     const childArg = args[i];
@@ -1336,12 +1359,12 @@ export function walkHTree(
 
     // Handle spread elements (Rule 9)
     if (t.isSpreadElement(childArg)) {
-      emitSpreadChild(childArg, hName, ctx, walkCtx);
+      emitSpreadChild(childArg, hName, ctx, childContext);
       continue;
     }
 
     const child = childArg as t.Expression;
-    emitChild(child, hName, ctx, walkCtx, i);
+    emitChild(child, hName, ctx, childContext, i);
   }
 
   // CLOSE_TAG
@@ -1436,6 +1459,7 @@ export function walkCallExpression(
         const visited = new Set(walkCtx.visited); visited.add(componentName);
         const childContext = inlinedWalkContext(walkCtx, ctx, sub, componentName, visited, chainLink(walkCtx,componentName,node), scope);
         childContext.islandStack = new Set([...(walkCtx.islandStack ?? []), registered.identity]);
+        childContext.islandOwner = { identity: registered.identity, name: registered.name };
         walkCallExpression(sub.returnNode as t.CallExpression, hName, ctx,
           childContext);
       } else {

@@ -42,7 +42,7 @@ import { ScanError, scanHtml, scanScript } from './raw-lint-script.js';
 export { RAW_EXITS } from './raw-lint-exits.js';
 
 /** Where the codes are documented. */
-const CATALOGUE_URL = 'https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md';
+const CATALOGUE_URL = 'https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md';
 
 /** The allowlist's file name, read from the working directory when none is named. */
 export const DEFAULT_ALLOWLIST = 'forma-raw-allowlist.json';

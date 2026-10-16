@@ -6,11 +6,9 @@
 // island files. Nothing had a method for this file.
 import { h, createSignal, createShow } from 'formajs';
 
-// A SECOND `count`, deliberately: `Card` in page.ts declares one too. They are
-// different signals at runtime and must not share a slot, so the second one
-// the walk reaches becomes `count#2` — and the compiler says so at build time,
-// because injecting `count` would otherwise silently fill only the first.
-const [count] = createSignal(7);
+// A distinct getter name stays in the published subset. The original second
+// `count` is preserved as an explicit BUILD-503 refusal in the strict archive.
+const [panelCount] = createSignal(7);
 const [open] = createSignal(true);
 
 export function Panel() {
@@ -25,6 +23,6 @@ export function Panel() {
       () => h('p', { class: 'on' }, 'THEN'),
       () => h('p', { class: 'off' }, 'ELSE'),
     ),
-    h('b', null, () => count()),
+    h('b', null, () => panelCount()),
   );
 }
