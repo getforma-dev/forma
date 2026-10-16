@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- FORMA-181 checkpoint C (review follow-ups of B): `ListKeyViolation` is `#[non_exhaustive]`
+  with a constructor, `ListKeyViolation::new`; a key path segment holding a dot or a bracket,
+  or an empty one, is quoted in the diagnostic (`["user.id"]`); a row's key is held once (one
+  `Rc<str>` shared by the duplicate set and the row's guard). `keys.json` string vectors carry
+  the `served` markup the walker writes, pinned by a walker test and decoded by the three
+  browser engines in core's `keyed-adoption.spec.ts`.
 - FORMA-181 checkpoint B (DR-8, L-7): the walker reads FMIR section `0x0006`. For each
   `LIST` it names, every row's value at the key path becomes the row root's
   `data-forma-key`, as canonical text: a string under value rule 1, a safe integer in

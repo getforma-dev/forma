@@ -87,7 +87,7 @@ struct KeyedRow {
     /// The key path, dotted, for the row's diagnostics.
     path: Rc<str>,
     /// The canonical key, until the row's root element takes it.
-    key: Option<String>,
+    key: Option<Rc<str>>,
     /// [`WalkState::element_depth`] when the row's body started.
     entry_depth: usize,
     /// Elements opened at `entry_depth` so far.
@@ -255,7 +255,7 @@ impl WalkState {
 
     /// An element is being opened: if it is the innermost keyed row's root,
     /// count it and hand back the key it carries.
-    fn open_row_root(&mut self) -> Option<String> {
+    fn open_row_root(&mut self) -> Option<Rc<str>> {
         let row = self.keyed_row_at_entry_depth()?;
         row.roots += 1;
         row.key.take()
@@ -1333,13 +1333,31 @@ impl<'m> ListKey<'m> {
             .iter()
             .map(|segment| strings.get(*segment))
             .collect::<Result<Vec<&str>, IrError>>()?;
-        let path = Rc::from(segments.join("."));
+        let path = Rc::from(dotted_path(&segments));
         Ok(ListKey {
             list_offset,
             segments,
             path,
         })
     }
+}
+
+/// A key path for a diagnostic: segments joined by dots, and a segment that
+/// a dot would make ambiguous (empty, or holding `.`, `[` or `]`) quoted in
+/// brackets, so `user.id` is two fields and `["user.id"]` is one.
+fn dotted_path(segments: &[&str]) -> String {
+    let mut path = String::new();
+    for segment in segments {
+        if segment.is_empty() || segment.contains(['.', '[', ']']) {
+            path.push_str(&format!("[{segment:?}]"));
+        } else {
+            if !path.is_empty() {
+                path.push('.');
+            }
+            path.push_str(segment);
+        }
+    }
+    path
 }
 
 /// What one execution of a LIST iterates (see [`walk_list_rows`]).
@@ -1353,10 +1371,11 @@ struct ListRows<'a, 'm> {
 
 /// Walk every row of one LIST execution.
 ///
-/// Every error leaves the walk state as the rows found it: the slot journal
-/// is unwound to the row's mark and a keyed row's guard is popped before the
-/// error propagates, and the caller restores the list depth. No partial page
-/// is returned either way: an error ends the whole walk.
+/// Before any error propagates, the slot journal is unwound to the row's mark
+/// and a keyed row's guard is popped, and the caller restores the list depth.
+/// The rest of the walk state (the element depth, an open start tag, the
+/// island stack) is not restored: a `WalkState` serves one walk, and an error
+/// ends that walk, which returns no partial page.
 fn walk_list_rows(
     module: &IrModule,
     slots: &mut SlotData,
@@ -1392,7 +1411,8 @@ fn walk_list_rows(
     // fits in what is left of the budget, and every admitted key is then
     // written, escaped, on its row's root, so the keys held here never
     // outgrow the output.
-    let mut seen_keys: HashMap<String, usize> = HashMap::new();
+    // One allocation per key: the set and the row's guard share it.
+    let mut seen_keys: HashMap<Rc<str>, usize> = HashMap::new();
     for (ordinal, item) in rows.items.iter().enumerate() {
         // Total across all depths, never decremented: depth alone does not
         // bound volume, and four nested LISTs over the same array give n^4
@@ -1419,12 +1439,14 @@ fn walk_list_rows(
             if crate::keys::normalized_len_exceeds(value, limit.saturating_sub(out.len())) {
                 return Err(IrError::OutputLimitExceeded { limit });
             }
-            let text = crate::keys::canonical_key_text(value).map_err(refuse)?;
+            let text: Rc<str> = crate::keys::canonical_key_text(value)
+                .map_err(refuse)?
+                .into();
             if let Some(&first_row) = seen_keys.get(&text) {
                 // The two ordinals, never the key: it is the row's data.
                 return Err(refuse(ListKeyReason::Duplicate { first_row }));
             }
-            seen_keys.insert(text.clone(), ordinal);
+            seen_keys.insert(Rc::clone(&text), ordinal);
             state.keyed_rows.push(KeyedRow {
                 list_offset: key.list_offset,
                 ordinal,
@@ -1486,12 +1508,12 @@ fn walk_list_rows(
 
 /// The whole-render refusal for one keyed row (RENDER-503).
 fn list_key_error(list_offset: u32, row: usize, path: &str, reason: ListKeyReason) -> IrError {
-    IrError::InvalidListKey(Box::new(ListKeyViolation {
+    IrError::InvalidListKey(Box::new(ListKeyViolation::new(
         list_offset,
         row,
-        path: path.to_string(),
+        path,
         reason,
-    }))
+    )))
 }
 
 /// A refusal inside the innermost keyed row, or `fallback` when the walk is in
@@ -6649,6 +6671,349 @@ mod tests {
         }
     }
 
+    // -- FORMA-182 rules 2 to 7: the shared value-rule vectors ---------------
+    //
+    // One JSON file per rule under tests/fixtures/parity/, each read by this
+    // crate and by @getforma/core's per-rule suites (packages/core/src/dom/
+    // __tests__/value-rule-<n>-*.test.ts); the compiled shapes of rules 4, 6
+    // and 7 are read by @getforma/compiler's (packages/compiler/tests/
+    // value-rule-<n>-*.test.ts). Every case walks the real opcode stream.
+    mod value_rule_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const NUMBERS: &str = include_str!("../tests/fixtures/parity/numbers.json");
+        const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
+        const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
+        const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
+        const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
+
+        fn cases(file: &str, section: &str) -> Vec<Value> {
+            let all: Value = serde_json::from_str(file).unwrap();
+            all[section].as_array().unwrap().clone()
+        }
+
+        fn field<'a>(case: &'a Value, key: &str) -> &'a str {
+            case[key].as_str().unwrap()
+        }
+
+        /// A DYN_TEXT range as the walker writes it (an empty value is held
+        /// by a zero-width space).
+        fn marker(id: u16, text: &str) -> String {
+            let inner = if text.is_empty() {
+                "\u{200B}".to_string()
+            } else {
+                text.to_string()
+            };
+            format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
+        }
+
+        /// The text a browser shows: marker comments and the empty-range
+        /// zero-width spaces removed.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
+        fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
+            if actual != expected {
+                failures.push(format!(
+                    "{label}: expected {expected:?}, walker wrote {actual:?}"
+                ));
+            }
+        }
+
+        fn finish(failures: Vec<String>) {
+            assert!(
+                failures.is_empty(),
+                "{} disagreeing vector(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        /// What a vector's JSON value reads as on the page: null is empty,
+        /// a string itself, a number or boolean its JSON spelling.
+        fn vector_text(value: &Value) -> String {
+            match value {
+                Value::Null => String::new(),
+                Value::String(s) => s.clone(),
+                other => other.to_string(),
+            }
+        }
+
+        /// A slot value from a vector's JSON value: a string, a number, a
+        /// boolean or null (the shapes the vectors use).
+        fn slot_value(value: &Value) -> SlotValue {
+            match value {
+                Value::Null => SlotValue::Null,
+                Value::Bool(b) => SlotValue::Bool(*b),
+                Value::Number(n) => SlotValue::Number(n.as_f64().unwrap()),
+                Value::String(s) => SlotValue::Text(s.clone()),
+                other => panic!("unsupported vector value {other}"),
+            }
+        }
+
+        #[test]
+        fn rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute() {
+            let mut failures = Vec::new();
+            for case in cases(NUMBERS, "values") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr("title", slot)
+                    .close("span");
+                let want = format!(
+                    "<p>{}</p><span id=\"ok\" title=\"{expected}\"></span>",
+                    marker(slot, expected)
+                );
+                check(
+                    &mut failures,
+                    &format!("numbers/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits() {
+            // The admission itself is tests/page_props.rs (encode_props on
+            // the integer origin). Here: an admitted value's text is exact,
+            // and a float origin formats by rule 2 whatever its magnitude.
+            let mut failures = Vec::new();
+            for case in cases(INTEGERS, "exact") {
+                if !case["admitted"].as_bool().unwrap() {
+                    continue;
+                }
+                let (id, lexeme) = (field(&case, "id"), field(&case, "lexeme"));
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, lexeme));
+                check(
+                    &mut failures,
+                    &format!("integers/exact/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            for case in cases(INTEGERS, "floatOrigin") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, expected));
+                check(
+                    &mut failures,
+                    &format!("integers/floatOrigin/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_5_null_writes_nothing_as_text_attribute_and_textarea_child() {
+            let mut failures = Vec::new();
+            for case in cases(NULL, "children") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let values = case["children"].as_array().unwrap();
+
+                // Dynamic children: each value in its own range; a Null range
+                // is held by the zero-width space and shows nothing.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("p", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                let rendered = page.render();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic (visible text)"),
+                    &visible(&rendered),
+                    &format!("<p>{expected}</p>"),
+                );
+                // The exact ranges, which the three-engine replay
+                // (packages/core/e2e/value-rules.spec.ts) serves: a Null range
+                // holds only the zero-width space.
+                let ranges: String = slots
+                    .iter()
+                    .zip(values)
+                    .map(|(slot, value)| marker(*slot, &vector_text(value)))
+                    .collect();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic"),
+                    &rendered,
+                    &format!("<p>{ranges}</p>"),
+                );
+                if rendered.contains("null") {
+                    failures.push(format!(
+                        "null/children/{id}: the word null was written: {rendered:?}"
+                    ));
+                }
+
+                // Inside a textarea the same children compose to the value.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("textarea", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} textarea"),
+                    &page.render(),
+                    &format!("<textarea>{expected}</textarea>"),
+                );
+            }
+            for case in cases(NULL, "attribute") {
+                let (id, attribute) = (field(&case, "id"), field(&case, "attribute"));
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Null);
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close("span");
+                check(
+                    &mut failures,
+                    &format!("null/attribute/{id}"),
+                    &page.render(),
+                    "<span id=\"ok\"></span>",
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence() {
+            // The build error itself is the compiler's (BUILD-614). What the
+            // walker writes for the admitted `String(flag)` is DYN_TEXT on the
+            // boolean slot, and an attribute bound to a boolean is bare or
+            // absent.
+            let mut failures = Vec::new();
+            for case in cases(BOOLEAN_TEXT, "nearMissText") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/nearMissText/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            // The mixed idiom `() => ready() && 'Go'`: the compiler gives its
+            // Text slot no default at false and the string at true.
+            for case in cases(BOOLEAN_TEXT, "idiom") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let mut page = Page::new();
+                let slot = page.slot(if expected.is_empty() {
+                    SlotValue::Null
+                } else {
+                    SlotValue::Text(expected.to_string())
+                });
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/idiom/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            // The same attributes core's suite and the three-engine replay
+            // check: a boolean attribute and `class`.
+            for case in cases(BOOLEAN_TEXT, "attribute") {
+                let id = field(&case, "id");
+                let value = case["value"].as_bool().unwrap();
+                let present = case["present"].as_bool().unwrap();
+                for attribute in ["disabled", "class"] {
+                    let mut page = Page::new();
+                    let slot = page.slot(SlotValue::Bool(value));
+                    page.open("input", &[("id", "ok")])
+                        .dyn_attr(attribute, slot)
+                        .close("input");
+                    let want = if present {
+                        format!("<input id=\"ok\" {attribute}></input>")
+                    } else {
+                        "<input id=\"ok\"></input>".to_string()
+                    };
+                    check(
+                        &mut failures,
+                        &format!("boolean-text/attribute/{id} {attribute}"),
+                        &page.render(),
+                        &want,
+                    );
+                }
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_7_a_boolean_condition_selects_the_branch() {
+            // The type refusal itself is the compiler's (BUILD-615); a
+            // compiled SHOW_IF reads a Bool slot, and its range is what core's
+            // suite and the three-engine replay adopt.
+            let mut failures = Vec::new();
+            for case in cases(CONDITIONS, "walker") {
+                let (id, branch) = (field(&case, "id"), field(&case, "branch"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("div", &[])
+                    .show_if(
+                        slot,
+                        |p| {
+                            p.open("b", &[]).text("then").close("b");
+                        },
+                        |p| {
+                            p.open("i", &[]).text("else").close("i");
+                        },
+                    )
+                    .close("div");
+                let inner = if branch == "then" {
+                    "<b>then</b>"
+                } else {
+                    "<i>else</i>"
+                };
+                check(
+                    &mut failures,
+                    &format!("conditions/walker/{id}"),
+                    &page.render(),
+                    &format!("<div><!--f:s{slot}-->{inner}<!--/f:s{slot}--></div>"),
+                );
+            }
+            finish(failures);
+        }
+    }
+
     /// FORMA-181 checkpoint B: keyed rows. Hand-built modules with a real FMIR section
     /// `0x0006`, so the walker's own refusals (RENDER-503) are reached without the
     /// compiler's source proof in front of them, and the unkeyed low-level form is pinned
@@ -7374,6 +7739,49 @@ mod tests {
             .unwrap_err();
             assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 1 });
             assert_eq!(failure.counts.list_iterations, 0);
+        }
+
+        /// FORMA-181 checkpoint C: the `served` markup of every keys.json vector is exactly
+        /// what this walker writes for that key, because the browser spec parses that markup
+        /// in Chromium, Firefox and WebKit and checks it decodes to the canonical text
+        /// (packages/core/e2e/keyed-adoption.spec.ts). A change to the attribute escaping
+        /// fails here before it can drift from what the browsers were shown.
+        #[test]
+        fn every_shared_key_vector_is_written_as_its_served_markup() {
+            let vectors: serde_json::Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/keys.json")).unwrap();
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let mut checked = 0;
+            for case in vectors["values"].as_array().unwrap() {
+                let Some(served) = case.get("served").and_then(serde_json::Value::as_str) else {
+                    continue;
+                };
+                let row = object(vec![(
+                    "id",
+                    crate::slot::json_to_slot_value(&case["value"]),
+                )]);
+                assert_eq!(
+                    walk_to_html(&module, &rows(vec![row])).unwrap(),
+                    format!(
+                        "<!--f:l0--><li data-forma-key=\"{served}\"><span></span></li><!--/f:l0-->"
+                    ),
+                    "{}",
+                    case["id"]
+                );
+                checked += 1;
+            }
+            assert!(
+                checked >= 20,
+                "the vector file lost its served markup: {checked}"
+            );
+        }
+
+        #[test]
+        fn a_diagnostic_path_quotes_a_segment_a_dot_would_make_ambiguous() {
+            assert_eq!(dotted_path(&["user", "id"]), "user.id");
+            assert_eq!(dotted_path(&["user.id"]), "[\"user.id\"]");
+            assert_eq!(dotted_path(&["a", "b.c", "d"]), "a[\"b.c\"].d");
+            assert_eq!(dotted_path(&["", "x[0]"]), "[\"\"][\"x[0]\"]");
         }
     }
 }

@@ -127,8 +127,10 @@ pub struct IslandStateViolation {
 /// value is not a row identity, when two rows of one list execution share a
 /// key, or when the row did not render exactly one root element to carry it.
 /// Boxed in [`IrError`] so the path and ordinals do not enlarge every common
-/// error.
+/// error. `#[non_exhaustive]`: a field can be added without a breaking
+/// change; build one with [`ListKeyViolation::new`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ListKeyViolation {
     /// Byte offset of the `LIST` opcode in the bytecode, as section `0x0006`
     /// names it.
@@ -136,10 +138,29 @@ pub struct ListKeyViolation {
     /// Zero-based position of the refused row in the array this execution of
     /// the list iterated.
     pub row: usize,
-    /// The key path, dotted (`id`, `user.id`).
+    /// The key path, dotted (`id`, `user.id`); a segment holding a dot or a
+    /// bracket, or an empty one, is quoted in brackets (`["user.id"]`).
     pub path: String,
     /// What was wrong with the row's key.
     pub reason: ListKeyReason,
+}
+
+impl ListKeyViolation {
+    /// A keyed row's refusal: the LIST's bytecode offset, the zero-based row,
+    /// the key path as diagnostics show it, and the reason.
+    pub fn new(
+        list_offset: u32,
+        row: usize,
+        path: impl Into<String>,
+        reason: ListKeyReason,
+    ) -> Self {
+        ListKeyViolation {
+            list_offset,
+            row,
+            path: path.into(),
+            reason,
+        }
+    }
 }
 
 /// Why a keyed row was refused ([`ListKeyViolation::reason`]).

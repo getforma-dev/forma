@@ -636,6 +636,64 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/
 [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx) pin the
 original TSX position of the list.
 
+### BUILD-614 Boolean in text
+
+**Why.** FORMA-182, value rule 6 ([parity rules](parity-rules.md)): `h()` writes nothing for a
+boolean child whatever its value, while the walker writes `true` or `false` for a boolean slot,
+so a boolean read into text either breaks parity between the server's HTML and the browser's
+DOM or shows nothing at all. The compiler refuses a text position whose value it can prove is
+boolean: a declared boolean prop (optional included), a signal whose default is a boolean, a
+closed boolean (an aggregate field, a list-row field, a module-level `const` initialized with
+`true` or `false`), or an expression that can only be a boolean (`!ready()`, `count() > 0`, `a()
+&& b()` of booleans), read eagerly or through a getter, as a child or as a `createShow` or
+ternary branch. A boolean literal child writes nothing on both sides and is admitted. A mixed
+expression whose boolean result stands for nothing (`ready() && 'Go'`) is admitted: eagerly it
+folds, and through a getter the server writes an empty range when its default is the boolean,
+as the browser does. This refusal is mandatory without strict mode.
+
+**Fix.** The message gives the form that builds for its source. Write the word with
+`String(flag)` on a non-optional declared boolean (it binds the text to the boolean slot, which
+the walker writes as the word `String()` gives), on a boolean signal, and on an expression the
+compiler evaluates (they fold to the same word). On an optional declared boolean (`String()`
+would print `undefined` when it is absent), a closed value or a module `const` (`String()` of
+those is not folded), write the word with a ternary, `() => (flag ? 'yes' : 'no')`. For
+content, use `createShow(() => flag(), …)` or a ternary.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/pass/app.tsx) pin the
+original TSX position of the text.
+
+### BUILD-615 Condition that is not boolean-typed
+
+**Why.** FORMA-182, value rule 7 ([parity rules](parity-rules.md)): the walker picks a
+`SHOW_IF` branch by the condition's value, with ECMAScript truthiness for anything that is not a
+boolean, and a page whose condition is a number or a string only imitates what the author meant
+(React's `{count && …}` printing `0` is the shape kept out). The compiler refuses a
+`createShow` condition or a ternary test it can prove is not boolean-typed: a declared prop of
+another type (an optional boolean is admitted: absent reads as false on both sides), a signal
+whose literal default is a number, a string or `null`, a closed value (an aggregate or list-row
+field, a module-level `const`) of another type, a literal, or an expression whose result is not
+always a boolean (`a() && count()`, `name() || 'x'`). A signal getter passed to `createShow`
+itself (`createShow(count, …)`) is read as its call, since `createShow` calls it; a getter named
+without its call anywhere else in a condition (`() => open ? a : b`, `() => open`,
+`ready() && open`) is a function, always truthy in the browser, and is refused with a message
+naming the missing call. A boolean signal, a negation, a comparison,
+`Boolean(x)`, `&&` and `||` of booleans, and a module-level boolean `const` are admitted, and
+`Boolean(x)` and the module `const` are folded, so the server renders the branch the browser
+takes. A condition the compiler cannot type at all stays BUILD-302. This refusal is mandatory
+without strict mode.
+
+**Fix.** Compare explicitly so the condition is a boolean: `() => count() > 0`,
+`() => name() !== ''`, `() => item() !== null`, or `!!x` when truthiness is what is meant.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/pass/app.tsx) pin the
+original TSX position of the condition.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
@@ -953,8 +1011,8 @@ decision brief L-55):
 | Class | Chosen by | Forma's code | All of the route's JavaScript |
 | --- | --- | --- | --- |
 | `no-interactive-region` | a server-rendered route whose page has no island, or a route that lists no script | none | none: a service worker counted |
-| `islands` | a server-rendered route with at least one island | 25,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
-| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as islands |
+| `islands` | a server-rendered route with at least one island | 27,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
+| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 27,500 B | as islands |
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed from
 the bundler's metafile (each input's share of the file's raw bytes, applied to
@@ -1013,7 +1071,8 @@ unchanged.
 | Code | Boundary | Meaning and corrective action |
 | --- | --- | --- |
 | `FORMA_E_HYDRATE_NODE` | node matching; retained code | The expected node kind, tag or namespace does not match the served node. Keep the server and client component structure consistent; adoption does not replace the node. |
-| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts of an unkeyed list differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_KEY` | keyed list matching (FORMA-181) | A served keyed row and the client's items do not pair by canonical key: a key on one side only, a served key twice, a served row without `data-forma-key` beside keyed rows, two client keys with the same canonical text (1 and `"1"`), or a client key outside the domain (not a string or a safe integer, or a string with an unpaired surrogate). Refused before any row runs, writing nothing. Give the client the server's rows (in any order) with their own keys. |
 | `FORMA_E_HYDRATE_MARKER` | marker validation | A required marker is missing, malformed, duplicated, out of range or incorrectly nested. Preserve the compiler/native marker grammar and paired output. |
 | `FORMA_E_HYDRATE_STRUCTURE` | structural validation | A claimed node/range, topology or ownership relationship is invalid or changed during preparation, or the private walker cannot validate the context. Do not move or replace the prepared structure before commit. The [private raw noscript limitation](../packages/core/docs/ADOPTION-PREPARATION.md) also uses this code. |
 | `FORMA_E_HYDRATE_VALUE` | initial value/default validation | Initial text, attributes, branch/list values or normalized control defaults disagree with the served content/state, or a prepared observation was invalidated. Fix the initial server/client disagreement; do not rely on an early user edit to hide it. |
