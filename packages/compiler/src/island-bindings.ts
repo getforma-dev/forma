@@ -104,7 +104,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     if (binding.constantViolations.length) fail(mod, at, `binding ${binding.identifier.name} is reassigned; no stable native identity exists`);
   }
   function coreName(node: t.Node, mod: Module): string | undefined {
-    if (!t.isIdentifier(node)) return undefined;
+    if (!t.isIdentifier(node) && !t.isJSXIdentifier(node)) return undefined;
     const binding = mod.references.get(node);
     if (!binding) return node.name === 'h' || node.name === 'Fragment' ? node.name : undefined;
     const declaration = binding.path.node;
@@ -671,6 +671,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     if (t.isJSXElement(node)) {
       const opening = node.openingElement;
       if (!t.isJSXIdentifier(opening.name)) fail(env.module, opening, 'native component tag needs a lexical identifier');
+      if (coreName(opening.name,env.module)==='Fragment') { for (const item of node.children) render(item,env,records); return; }
       const fields: t.ObjectMember[] = [];
       for (const attribute of opening.attributes) {
         if (!t.isJSXAttribute(attribute) || !t.isJSXIdentifier(attribute.name)) fail(env.module, attribute, 'native attributes need explicit names');
@@ -699,6 +700,7 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       if (core === 'h') {
         const tag = node.arguments[0], props = node.arguments[1];
         if (!tag) fail(env.module, node, 'h has no tag');
+        if (coreName(tag,env.module)==='Fragment') { for (const item of node.arguments.slice(2)) render(item,env,records); return; }
         if (t.isStringLiteral(tag)) {
           if (props && !t.isNullLiteral(props)) { if (!t.isObjectExpression(props)) fail(env.module, props, 'native h attributes need an object'); attributes(props.properties, env, records); }
           const children = node.arguments.slice(2);

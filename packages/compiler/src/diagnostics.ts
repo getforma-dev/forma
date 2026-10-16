@@ -204,6 +204,19 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'The native select value overrides option defaults across an independently registered SSR island, but that child receives no authenticated parent selection value; its own declared inputs cannot prove the selected state.',
     'Keep the option or optgroup helper unregistered inside the owning select island, or move the island boundary to the owning select or an outer element. A whole route may explicitly use ssr:false.'),
 
+  entry('BUILD-618', 'HTML nesting outside the finite native subset',
+    'The authored tree contains a listed parser-repaired nesting or interactive-content conflict, so parsed native HTML cannot preserve the authored ownership.',
+    'Use explicit sibling elements, keep phrasing content inside p, place options inside select, and give interactive content and each labelled control their own valid host.'),
+  entry('BUILD-619', 'Document title inside a component',
+    'An HTML title emitted inside the component does not own the page document title.',
+    'Pass the page title to the server render call; an SVG title remains component content.'),
+  entry('BUILD-620', 'Dynamic child in executable text content',
+    'A dynamic or reactive style/script child enters a CSS or JavaScript context that ordinary HTML escaping cannot make safe.',
+    'Keep authored literal style/script text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.'),
+  entry('BUILD-621', 'SSR island without one stable owned Element',
+    'The registered SSR component has text, empty, multiple, conditional/control-flow, async/generator, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.',
+    'Return one authored Element, directly or through an ordinary synchronous resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.'),
+
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
     "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",

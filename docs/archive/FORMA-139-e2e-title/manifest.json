@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "d360dd4ff21b6af79eec26ef67bc8b0c675b6173",
+  "files": {
+    "e2e/ssr/cases/title/app.tsx": "f8416ebc00eaab3710c65f8d076c43aa0d00559176c10879c60a0c6e5f1a505b",
+    "e2e/ssr/regressions.spec.ts": "877b2cfb6290baa4962e32ac2e904a6561f91481bf63fe2611ecfd3708086cbc",
+    "e2e/ssr/render/src/main.rs": "af9a8e5688084db98926765180822fac4ad3746229544c32c75e4ecbfec63836",
+    "ci-first-failure.log": "cb72b1919d382d7fc9320cd7207161781411ad8e948d7cd9377029431dc62e43"
+  },
+  "fullCiLogSha256": "36291f057866cebd7c6c0ce9c36189d1d6fabcb8371c5f2b02a3d06d93f4a931"
+}
