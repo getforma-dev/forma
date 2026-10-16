@@ -4,12 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Indexed item replacement — FORMA-181 core stage
+### Indexed item replacement — FORMA-181
 
 - `createKeyedRows(initial, keyFn)` supplies a nominal keyed collection to the two-argument `createList(rows, renderRow)` overload. The callback receives a stable item getter and index getter. `set` validates and replaces an existing canonical key, notifying that item's readers without rerunning row factories or structural reconciliation; `replace` validates the whole candidate and batches retained values with membership/order changes. Missing keys, key changes, sparse arrays and duplicate canonical keys refuse before publication.
 - Views retain their owned effects and listeners independently. Internal item signals grant no early-edit writeback authority. Adopted text holes check their own retained markers, parent, ownership and last-written text before a live write; detached or rewritten holes abort through the existing owner failure path. Initial whole-island validation is unchanged.
-- The reviewed indexed implementation with the deployment guard measures 47,994 B gzip for the core entry (+997 B) and 48,148 B for browser ESM (+1,053 B). L-58 re-anchors their gates to measured +300 B: 48,294 and 48,448 B. All three runtime bundles remain at the prior guard stack's measured sizes and under unchanged gates. The actual typed 200/2,000-row route passes L-59 at 27,724 B Forma gzip for SSR and 27,077 B for Browser mounting, against N2's 28,000 B ceiling. This size result does not claim timing acceptance.
-- Typed native products and three-engine functional controls verify adoption, selected-row DOM writes, movement, focus, selection, current listeners, disposal and isolated tamper refusal. The actual 200/2,000-row N3 timing qualification remains pending; these functional and size checks make no release-performance claim.
+- The reviewed indexed implementation with the deployment guard measures 47,994 B gzip for the core entry (+997 B) and 48,148 B for browser ESM (+1,053 B). L-58 re-anchors their gates to measured +300 B: 48,294 and 48,448 B. All three runtime bundles remain at the prior guard stack's measured sizes and under unchanged gates. The actual typed 200/2,000-row route passes L-59 at 27,724 B Forma gzip for SSR and 27,077 B for Browser mounting, against N2's 28,000 B ceiling. The original over-budget measurement remains recorded in the qualification evidence.
+- Typed native products and three-engine functional controls verify adoption, selected-row DOM writes, movement, focus, selection, current listeners, disposal and isolated tamper refusal. The serial three-engine public-set measurement passes the unchanged N3 median/p95 ratio and 16 ms limits on Apple M1 Pro: largest median ratio 1.01150, largest p95 ratio 1.01786, sampled single-edit maximum 1 ms. Raw calibrated samples and actual products are recorded in `docs/evidence/forma-181-indexed/`; final integrated release qualification remains separate.
 
 ### Retained row focus — FORMA-181 checkpoint D, first slice
 

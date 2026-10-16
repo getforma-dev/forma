@@ -234,6 +234,11 @@ fractions and lone surrogates throw. Key callbacks must not reenter mutation
 of the same collection. The indexed overload takes no options and supplies
 no early-edit writeback authority for editable controls.
 
+For native SSR, create the collection inside the component that returns its
+unconditional list, and mutate it through deferred intrinsic event handlers.
+The [indexed native subset](../../compiler/docs/subset.md#indexed-row-updates)
+defines the declared-data and original-binding proof required for admission.
+
 ---
 
 ## Store — deep reactivity

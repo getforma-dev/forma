@@ -1,0 +1,262 @@
+{
+  "schema": 1,
+  "sourceCommit": "f4183e831f8fa3141601fcfc46091e2c7c44d4ce",
+  "node": "v24.22.0",
+  "nativeProfile": "release",
+  "files": {
+    "e2e/ssr/cases/keyed-indexed/app.tsx": {
+      "bytes": 362,
+      "sha256": "6238e80775408c72db2943f26fe2464b47c715c990dca46610b7939bf01184b6"
+    },
+    "e2e/ssr/cases/keyed-indexed/page.tsx": {
+      "bytes": 1388,
+      "sha256": "25c60cbb5746a37b9e674eee0f366a706b0cb3483467b1a2191fd816718573a9"
+    },
+    "e2e/ssr/cases/keyed-indexed/slots.json": {
+      "bytes": 27,
+      "sha256": "29918876949dbcb4c24f71497e6be14fea1caf8bf67636ab44022c95ff1b24c5"
+    },
+    "e2e/ssr/render/src/main.rs": {
+      "bytes": 8663,
+      "sha256": "a710ccbc1026e5926c5ac26270e607d75e096ff48e15948f8a10a9bbaf339e83"
+    },
+    "e2e/ssr/build.sh": {
+      "bytes": 3359,
+      "sha256": "b4e288b02d884df1c78dec209ce6dfb2c33dcef35702faae7d4eb2e6eb313a0c"
+    },
+    "e2e/ssr/indexed-products.spec.ts": {
+      "bytes": 14525,
+      "sha256": "97e258ce00a2c354968ccb0c2c9702c34ff6ac96117d8225366e684cec99eab1"
+    },
+    "e2e/target/release/forma-e2e-render": {
+      "bytes": 1580752,
+      "sha256": "9b60aec4356773ddbdcd0853828235d00ddaee2fc230b2d279ce931afd0fdb23"
+    },
+    "packages/compiler/dist/index.js": {
+      "bytes": 398443,
+      "sha256": "3035c6ca1260ab65f9c188b22aba124c7556b7994754a1b216a6cdc0026c3774"
+    },
+    "packages/build/dist/index.js": {
+      "bytes": 92656,
+      "sha256": "751d19b68a99fcba58a00e55e74beb0502b2d82764457f6965cb7f387f7e7e1b"
+    },
+    "packages/core/dist/index.js": {
+      "bytes": 33741,
+      "sha256": "6b24a21512c07a462c1f64bb716287b86eff8f16c88c84b51b94f4daf907cd3c"
+    },
+    "e2e/ssr/out/build/keyed-indexed/manifest.json": {
+      "bytes": 1253,
+      "sha256": "d179b45f3c1f2f949c197df774aea22ad0b62fe85758c24689cf70fa04db6893"
+    },
+    "e2e/ssr/out/build/keyed-indexed/size-report.json": {
+      "bytes": 2098,
+      "sha256": "bc33f61122d74cce628ad50c0ec27884fd5b177656e6678265f45aa1405023b3"
+    },
+    "e2e/ssr/out/build/keyed-indexed/keyed-indexed.fe37ee61.ir": {
+      "bytes": 1602,
+      "sha256": "fe37ee61ae6366642d30d30d00063547f5f068f7bf545aeed924a36410f5f560"
+    },
+    "e2e/ssr/out/build/keyed-indexed/keyed-indexed.8598a65f.js": {
+      "bytes": 82484,
+      "sha256": "8598a65fe4207e9d87b6db924c8581ad4a024690f510f60b9e3a9f7024f61a8a"
+    },
+    "e2e/ssr/out/site/_assets/keyed-indexed.fe37ee61.ir": {
+      "bytes": 1602,
+      "sha256": "fe37ee61ae6366642d30d30d00063547f5f068f7bf545aeed924a36410f5f560"
+    },
+    "e2e/ssr/out/site/_assets/keyed-indexed.8598a65f.js": {
+      "bytes": 82484,
+      "sha256": "8598a65fe4207e9d87b6db924c8581ad4a024690f510f60b9e3a9f7024f61a8a"
+    },
+    "e2e/ssr/out/site/keyed-indexed/index.html": {
+      "bytes": 410452,
+      "sha256": "f5e672c04a036469dcaaf5cd3da6106e2ed516b2bf393ef62e8f4307a8c14e4b"
+    },
+    "e2e/ssr/out/site/keyed-indexed/index.headers.json": {
+      "bytes": 761,
+      "sha256": "0c96d8496d643745fafcde740091fb499e3a49af30ba1d20942ee5b00678630a"
+    }
+  },
+  "nativeDump": {
+    "bytes": 3407,
+    "sha256": "486205318a1769a304ca8189ed2d1470fb3934b354770ac95fba087f4d0a1cba"
+  },
+  "nativeState": {
+    "bytes": 83090,
+    "sha256": "220b068db48d0cf4cadd20884ddb3974b42839e96403dad96d85ab1e096f0624",
+    "rows": [
+      {
+        "name": "small",
+        "count": 200,
+        "first": {
+          "id": "row-0",
+          "label": "Label 0"
+        },
+        "last": {
+          "id": "row-199",
+          "label": "Label 199"
+        }
+      },
+      {
+        "name": "large",
+        "count": 2000,
+        "first": {
+          "id": "row-0",
+          "label": "Label 0"
+        },
+        "last": {
+          "id": "row-1999",
+          "label": "Label 1999"
+        }
+      }
+    ]
+  },
+  "routeBudgets": {
+    "version": 1,
+    "ceilings": {
+      "forma": 28000,
+      "page": 76800,
+      "canvas": 373760
+    },
+    "routes": [
+      {
+        "route": "/",
+        "class": "islands",
+        "canvas": false,
+        "files": [
+          {
+            "file": "keyed-indexed.8598a65f.js",
+            "raw": 82484,
+            "gzip": 27986,
+            "brotli": 24954,
+            "forma": {
+              "raw": 81712,
+              "gzip": 27724,
+              "brotli": 24720
+            }
+          }
+        ],
+        "raw": 82484,
+        "gzip": 27986,
+        "brotli": 24954,
+        "forma": {
+          "raw": 81712,
+          "gzip": 27724,
+          "brotli": 24720
+        },
+        "application": {
+          "raw": 772,
+          "gzip": 262,
+          "brotli": 234
+        },
+        "worker": {
+          "raw": 3221,
+          "gzip": 1534,
+          "brotli": 1308
+        },
+        "javascript": {
+          "raw": 85705,
+          "gzip": 29520,
+          "brotli": 26262
+        },
+        "ceilings": {
+          "forma": 28000,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      },
+      {
+        "route": "/csr",
+        "class": "whole-page-mount",
+        "canvas": false,
+        "files": [
+          {
+            "file": "keyed-indexed-csr.8c3ad50b.js",
+            "raw": 80668,
+            "gzip": 27339,
+            "brotli": 24370,
+            "forma": {
+              "raw": 79896,
+              "gzip": 27077,
+              "brotli": 24137
+            }
+          }
+        ],
+        "raw": 80668,
+        "gzip": 27339,
+        "brotli": 24370,
+        "forma": {
+          "raw": 79896,
+          "gzip": 27077,
+          "brotli": 24137
+        },
+        "application": {
+          "raw": 772,
+          "gzip": 262,
+          "brotli": 233
+        },
+        "worker": {
+          "raw": 3221,
+          "gzip": 1534,
+          "brotli": 1308
+        },
+        "javascript": {
+          "raw": 83889,
+          "gzip": 28873,
+          "brotli": 25678
+        },
+        "ceilings": {
+          "forma": 28000,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      }
+    ],
+    "worker": {
+      "file": "sw.js",
+      "raw": 3221,
+      "gzip": 1534,
+      "brotli": 1308
+    }
+  },
+  "registration": {
+    "mode": "ssr",
+    "digest": "7c7f126594e01a8e",
+    "schema": [
+      [
+        {
+          "name": "name",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "rows",
+          "type": {
+            "kind": "array",
+            "element": {
+              "kind": "object",
+              "object": 1
+            }
+          }
+        }
+      ],
+      [
+        {
+          "name": "id",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "label",
+          "type": {
+            "kind": "string"
+          }
+        }
+      ]
+    ]
+  }
+}
