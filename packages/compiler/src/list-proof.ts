@@ -271,6 +271,50 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    if(declared&&!callable(declared.node)){const what=literal(target,unwrap(declared.node));if(what)refuse(`${what} (imported)`);}
   }
  }
+ /** Only intrinsic event props defer a callback by contract. A custom component
+  * can invoke its on... prop while rendering, so it is not an event boundary. */
+ function eventPosition(mod:Module,path:NodePath):boolean {
+  if(path.isObjectMethod()&&path.node.kind!=='method')return false;
+  const parent=path.parentPath;
+  if(parent?.isJSXExpressionContainer()) {
+   const prop=parent.parentPath,opening=prop.parentPath;
+   return prop.isJSXAttribute()&&t.isJSXIdentifier(prop.node.name)&&/^on/i.test(prop.node.name.name)
+    &&!!opening?.isJSXOpeningElement()&&t.isJSXIdentifier(opening.node.name)&&/^[a-z]/.test(opening.node.name.name);
+  }
+  const prop=path.isObjectMethod()?path:parent?.isObjectProperty()&&parent.node.value===path.node?parent:undefined;
+  if(!prop||prop.node.computed||!/^on/i.test(field(prop.node.key)??''))return false;
+  const object=prop.parentPath,call=object?.parentPath;
+  return !!object?.isObjectExpression()&&!!call?.isCallExpression()&&call.node.arguments[1]===object.node
+   &&t.isStringLiteral(call.node.arguments[0])&&core(mod,call.node.callee)==='h';
+ }
+ function expressionPath(path:NodePath):NodePath {
+  while(path.parentPath&&(t.isTSAsExpression(path.parentPath.node)||t.isTSTypeAssertion(path.parentPath.node)
+   ||t.isTSNonNullExpression(path.parentPath.node)||t.isTSSatisfiesExpression(path.parentPath.node)||t.isParenthesizedExpression(path.parentPath.node)))path=path.parentPath;
+  return path;
+ }
+ /** A named local callback is deferred only if every use has that proof. This
+  * includes immutable handler aliases, but never guesses about an escaping call. */
+ function deferred(mod:Module,input:NodePath,active=new Set<Binding>()):boolean {
+  const path=expressionPath(input);if(eventPosition(mod,path))return true;
+  const parent=path.parentPath;
+  const found=path.isFunctionDeclaration()&&path.node.id?path.scope.getBinding(path.node.id.name)
+   :parent?.isVariableDeclarator()&&parent.node.init===path.node&&t.isIdentifier(parent.node.id)?parent.scope.getBinding(parent.node.id.name):undefined;
+  if(!found||found.constantViolations.length||active.has(found))return false;
+  active.add(found);try{return found.referencePaths.every(use=>deferred(mod,use,active));}finally{active.delete(found);}
+ }
+ function handleUses(mod:Module,factory:t.CallExpression,owner:NodePath):void {
+  for(const [node,path] of mod.paths) {
+   if(!path.isReferencedIdentifier()||!t.isIdentifier(node)||keyedFactory(node,ref=>mod.paths.get(ref)?.scope.getBinding(ref.name),callee=>core(mod,callee)==='createKeyedRows')!==factory)continue;
+   const value=expressionPath(path),parent=value.parentPath;
+   if(parent?.isCallExpression()&&parent.node.arguments[0]===value.node&&core(mod,parent.node.callee)==='createList')continue;
+   if(parent?.isVariableDeclarator()&&parent.node.init===value.node&&t.isIdentifier(parent.node.id)) {
+    const alias=parent.scope.getBinding(parent.node.id.name);if(alias&&!alias.constantViolations.length)continue;
+   }
+   let later=false;
+   for(let cursor:NodePath|null=path.parentPath;cursor&&cursor!==owner;cursor=cursor.parentPath)if(cursor.isFunction()&&deferred(mod,cursor)){later=true;break;}
+   if(!later)fail(mod,node,'BUILD-622','indexed handle can only feed its native LIST or a proved deferred intrinsic event; eager mutations and unknown escapes have no native equivalent');
+  }
+ }
  /** The factory validates eagerly. Native must execute its matching LIST on the
   * same unconditional return path, so a hidden branch cannot skip key validation. */
  function indexedUse(mod:Module,factory:t.CallExpression,path:NodePath<t.CallExpression>):void {
@@ -285,6 +329,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    const statement=path.findParent(parent=>parent.parentPath===owner.get('body'));
    if(!statement?.isReturnStatement()||owner.node.body.body.some(item=>item!==statement.node&&!t.isVariableDeclaration(item)&&!t.isFunctionDeclaration(item)&&!t.isTSTypeAliasDeclaration(item)&&!t.isTSInterfaceDeclaration(item)&&!t.isEmptyStatement(item)))fail(mod,factory,'BUILD-622','indexed factory needs a single unconditional component return containing its LIST');
   }
+  handleUses(mod,factory,owner);
   const key=factory.arguments[1];
   if(!t.isArrowFunctionExpression(key)||key.async||t.isBlockStatement(key.body)||key.params.length!==1||!t.isIdentifier(key.params[0]))fail(mod,key??factory,'BUILD-622','indexed key callback must be a pure expression reading its own row property path');
   const parts=keyPath(mod,key.body,binding(mod,key.params[0],'BUILD-612'));

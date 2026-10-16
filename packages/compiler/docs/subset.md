@@ -53,6 +53,11 @@ arrays refuse with BUILD-622. A native component module cannot eagerly create
 a collection at module scope; create it inside the component owning its LIST. Multiple unconditional views of the same handle
 are admitted. The runtime API can share independently disposed views; this
 compiler restriction does not broaden initial adoption or writable state.
+Handle aliases may feed those LISTs. Other handle use must be inside a proved
+deferred intrinsic event callback; local named handlers and immutable handler
+aliases are admitted when every use stays deferred. Eager set/replace calls,
+IIFEs, extracted methods and unknown escapes refuse with BUILD-622. A custom
+component onClick prop is not assumed to defer execution.
 Internal item getters never become captured createSignal slots, early-edit
 inputs or authenticated writeback sites. Browser-only routes retain ordinary
 runtime usage. Existing three-argument list source rules remain unchanged.
@@ -496,9 +501,9 @@ their real lifecycle tests.
 
 ### BUILD-622 — Indexed rows without matching eager native validation
 
-**Why.** An indexed factory validates its initial keys eagerly, but a deferred, conditional, unused or unproved LIST cannot perform the same native validation. Optional or derived initial arrays and effectful key callbacks also lack a matching native contract.
+**Why.** An indexed factory validates its initial keys eagerly, but a deferred, conditional, unused or unproved LIST cannot perform the same native validation. Optional or derived initial arrays, effectful key callbacks, eager handle mutations and unknown handle escapes also lack a matching native contract.
 
-**Fix.** Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths.
+**Fix.** Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths. Mutate or expose the handle only in proved deferred intrinsic event callbacks, including immutable local handler aliases.
 
 [Refusal fixture](../tests/fixtures/conformance/BUILD-622/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-622/pass/).
 
