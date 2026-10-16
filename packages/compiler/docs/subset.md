@@ -34,6 +34,28 @@ explicitly. There is no silent placeholder IR or warning-only SSR escape hatch.
   explicitly registered `browserOnly(Impl)` component. A route may opt out of
   SSR with `ssr: false`; no partial native fallback is invented.
 
+## Indexed row updates
+
+`createKeyedRows(initialRows, row => row.id)` and the two-argument
+`createList(rows, item => h('li', null, () => item().label))` use the same
+native LIST, PROP, and key-path section as the array-getter API. The factory
+must resolve to the original core import through immutable local aliases.
+Initial rows must be a required declared array (including required ancestors)
+or a closed dense literal array. Keys use a synchronous expression callback
+reading a literal property path of its own row, and each synchronous row callback
+returns one stable Element. The item parameter is a zero-argument getter;
+read fields as `item().field`, not `item.field`.
+
+The factory eagerly validates all keys in the browser. Its native component
+must therefore contain its LIST unconditionally in the same return. Deferred
+or conditional LISTs, unused factories, effectful keys and optional initial
+arrays refuse with BUILD-622. Multiple unconditional views of the same handle
+are admitted. The runtime API can share independently disposed views; this
+compiler restriction does not broaden initial adoption or writable state.
+Internal item getters never become captured createSignal slots, early-edit
+inputs or authenticated writeback sites. Browser-only routes retain ordinary
+runtime usage. Existing three-argument list source rules remain unchanged.
+
 ## Ownership and parser boundaries
 
 A value-owning `<select>` and its option state must share the same activation
@@ -470,6 +492,14 @@ their real lifecycle tests.
 **Build result.** Error: publication is refused.
 
 [Refusal fixture](../tests/fixtures/conformance/BUILD-617/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-617/pass/).
+
+### BUILD-622 — Indexed rows without matching eager native validation
+
+**Why.** An indexed factory validates its initial keys eagerly, but a deferred, conditional, unused or unproved LIST cannot perform the same native validation. Optional or derived initial arrays and effectful key callbacks also lack a matching native contract.
+
+**Fix.** Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-622/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-622/pass/).
 
 ### BUILD-701 — Plain array child (`.map()` without createList)
 

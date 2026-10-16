@@ -1,4 +1,5 @@
-import type {ListProof,ListSite} from './list-proof';
+import {keyedFactory,type ListProof,type ListSite} from './list-proof';
+import {closedExpression} from './closed-expression';
 import {closedBinding,closedSlot,closedHint,closedListRows,emitClosedText,type ClosedEnvironment,type ClosedRows} from './closed-bindings';
 /**
  * Forma Compiler - IR Walk Engine
@@ -50,7 +51,7 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
-import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propType, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
@@ -2310,7 +2311,7 @@ function emitCreateList(
   };
 
   // Need at least 3 arguments: dataSignal, keyFn, mapFn
-  if (node.arguments.length < 3) {
+  if (!site?.indexed && node.arguments.length < 3) {
     bailOut(
       `was called with ${node.arguments.length} argument(s)`,
       'SSR needs all three of createList(source, keyFn, mapFn)',
@@ -2318,7 +2319,7 @@ function emitCreateList(
     return;
   }
 
-  const mapArg = node.arguments[2];
+  const mapArg = node.arguments[site?.indexed?1:2];
   if (!mapArg || t.isSpreadElement(mapArg) || !isFunctionExpr(mapArg)) {
     bailOut(
       `has a third argument that is ${mapArg ? describeNode(mapArg) : 'missing'} rather than a function`,
@@ -2380,8 +2381,29 @@ function emitCreateList(
   // Declared arrays read the root server value; local arrays and their named
   // debugging/projection slots stay CLIENT-owned. Retain local labels used by
   // the frozen corpus harness; their names never grant handler binding access.
-  const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
-  const closedArray=declaredArray===undefined?closedBinding(node.arguments[0],ctx,closedEnv(walkCtx)):undefined;
+  const factory=proof?.indexed;
+  const loweredFactory=factory?keyedFactory(node.arguments[0],node=>walkCtx.propsScope?.references.get(node),callee=>{
+    if(!callee.loc||!factory.callee.loc)return false;
+    const at=originalPosition(walkCtx.sourceFile!,callee.loc.start);
+    return at.line===factory.callee.loc.start.line&&at.column===factory.callee.loc.start.column+1;
+  }):undefined;
+  const arraySource=factory?(loweredFactory?.arguments[0]??factory.arguments[0]):node.arguments[0];
+  const declaredArray = propSlot(arraySource, walkCtx.propsScope, ctx);
+  let closedArray=declaredArray===undefined&&!factory?closedBinding(arraySource,ctx,closedEnv(walkCtx)):undefined;
+  if(factory) {
+    const fail=(message:string):never=>{const at=originalPosition(walkCtx.sourceFile!,node.loc?.start??{line:1,column:0});throw new PropsSchemaError(walkCtx.sourceFile!,at.line,at.column,message,'BUILD-622');};
+    if(declaredArray!==undefined) {
+      const path=propPath(arraySource,walkCtx.propsScope)!;
+      // Optional arrays or ancestors can throw eagerly in the browser, whereas
+      // ordinary LIST treats absent values as empty. Require total array data.
+      for(let i=1;i<=path.length;i++)if(propType(path.slice(0,i),walkCtx.propsScope!,arraySource!).kind==='optional')fail('indexed initial rows must be a required declared array with required ancestors');
+      if(propType(path,walkCtx.propsScope!,arraySource!).kind!=='array')fail('indexed initial rows must be a declared array');
+    } else {
+      let value:unknown;try{value=closedExpression(arraySource!,walkCtx.sourceFile!);}catch{fail('indexed initial rows must be a required declared array or closed literal array');}
+      if(!Array.isArray(value))fail('indexed initial rows must be a closed dense array');
+      const initial=value;closedArray={values:[initial],slot:()=>ctx.addConstantSlot(initial,TYPE_ARRAY)};
+    }
+  }
   let sourceShape = node.arguments[0];
   while (sourceShape && (t.isTSAsExpression(sourceShape) || t.isTSNonNullExpression(sourceShape)
     || t.isTSSatisfiesExpression(sourceShape) || t.isParenthesizedExpression(sourceShape))) sourceShape = sourceShape.expression;
@@ -2389,7 +2411,7 @@ function emitCreateList(
   // can call that source. F1 deliberately leaves mutable values undecided;
   // native admission still requires a getter binding or explicit callback.
   const sourceCallable = t.isIdentifier(sourceShape) || t.isArrowFunctionExpression(sourceShape) || t.isFunctionExpression(sourceShape);
-  if (walkCtx.listProof && (!sourceCallable || (declaredArray === undefined && !closedArray))) {
+  if (walkCtx.listProof && !factory && (!sourceCallable || (declaredArray === undefined && !closedArray))) {
     const file = walkCtx.sourceFile ?? '';
     const at = originalPosition(file, node.arguments[0]?.loc?.start ?? node.loc?.start ?? { line: 1, column: 0 });
     throw new PropsSchemaError(file, at.line, at.column,
@@ -2398,7 +2420,7 @@ function emitCreateList(
   if(closedArray&&closedArray.values.some(value=>!Array.isArray(value)&&value!==null))throw new PropsSchemaError(walkCtx.sourceFile??'',node.loc?.start.line??1,(node.loc?.start.column??0)+1,'createList closed source must be an array');
   const closedItems=closedArray?.values.flatMap(value=>Array.isArray(value)?value:[]);
   const arraySlotId = declaredArray ?? closedArray?.slot() ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
-  const itemSlotId = closedItems ? ctx.addTemporarySlot(closedHint(closedItems,closedEnv(walkCtx),node)) : declaredArray !== undefined ? ctx.addTemporarySlot(listItemHint(walkCtx.propsScope!,node.arguments[0]!)) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
+  const itemSlotId = closedItems ? ctx.addTemporarySlot(closedHint(closedItems,closedEnv(walkCtx),node)) : declaredArray !== undefined ? ctx.addTemporarySlot(listItemHint(walkCtx.propsScope!,arraySource!)) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
 
   // Scan the body for param.prop member accesses to determine which
   // properties need PROP extraction opcodes.
@@ -2441,8 +2463,8 @@ function emitCreateList(
   const listWalkCtx: WalkContext = {
     ...walkCtx,
     listItemBindings: bindings,
-    closedRows:closedItems?closedListRows(mapFn,closedItems,itemSlotId,walkCtx.closedRows):walkCtx.closedRows,
-    propsScope: declaredArray !== undefined && walkCtx.propsScope ? listPropsScope(walkCtx.propsScope, mapFn, node.arguments[0]!, itemSlotId) : walkCtx.propsScope,
+    closedRows:closedItems?closedListRows(mapFn,closedItems,itemSlotId,walkCtx.closedRows,!!factory):walkCtx.closedRows,
+    propsScope: declaredArray !== undefined && walkCtx.propsScope ? listPropsScope(walkCtx.propsScope, mapFn, arraySource!, itemSlotId,!!factory) : walkCtx.propsScope,
   };
 
   if (t.isCallExpression(bodyExpr) && t.isIdentifier(bodyExpr.callee) && bodyExpr.callee.name === hName) {

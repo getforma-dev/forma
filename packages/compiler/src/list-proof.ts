@@ -15,11 +15,21 @@ const traverse=(typeof _traverse==='function'?_traverse:(_traverse as any).defau
 const callable=(node:t.Node|null|undefined):node is ComponentFunction=>t.isFunctionDeclaration(node)||t.isFunctionExpression(node)||t.isArrowFunctionExpression(node);
 const unwrap=(input:t.Node):t.Node=>{let node=input;while(t.isTSAsExpression(node)||t.isTSTypeAssertion(node)||t.isTSNonNullExpression(node)||t.isTSSatisfiesExpression(node)||t.isParenthesizedExpression(node))node=node.expression;return node;};
 const field=(node:t.Node):string|undefined=>t.isIdentifier(node)||t.isJSXIdentifier(node)?node.name:t.isStringLiteral(node)?node.value:undefined;
-export interface ListProof {readonly file:string;readonly start:number;readonly end:number;readonly key:readonly string[];readonly root:{file:string;start:number;end:number}}
+export interface ListProof {readonly file:string;readonly start:number;readonly end:number;readonly key:readonly string[];readonly root:{file:string;start:number;end:number};readonly indexed?:t.CallExpression}
 /** A resolved original core `createList` site. Resolution is separate from proof so the legacy
  * shape checks (BUILD-107 in the walker, the BUILD-610 callback check in island analysis) keep
  * their precedence: `prove()` runs only after a call has all three arguments in their old form. */
-export interface ListSite {readonly file:string;readonly start:number;readonly end:number;prove():ListProof}
+export interface ListSite {readonly file:string;readonly start:number;readonly end:number;readonly indexed:boolean;prove():ListProof}
+/** Follow immutable local handle aliases to the actual factory call. The caller
+ * supplies lexical import identity; a same-spelled function or object is not proof. */
+export function keyedFactory(node:t.Node|undefined,lookup:(node:t.Identifier)=>Binding|undefined,isFactory:(callee:t.Node)=>boolean,seen=new Set<Binding>()):t.CallExpression|undefined {
+ if(!node)return undefined;node=unwrap(node);
+ if(t.isCallExpression(node))return isFactory(node.callee)?node:undefined;
+ if(!t.isIdentifier(node))return undefined;
+ const found=lookup(node),decl=found?.path.node;
+ if(!found||found.constantViolations.length||seen.has(found)||!t.isVariableDeclarator(decl)||!t.isIdentifier(decl.id)||!decl.init)return undefined;
+ seen.add(found);return keyedFactory(decl.init,lookup,isFactory,seen);
+}
 interface Module {file:string;source:string;paths:Map<t.Node,NodePath>;calls:NodePath<t.CallExpression>[];functions:Map<number,ComponentFunction>}
 const rawLoad:ModuleLoader=(from,specifier)=>{
  if(!specifier.startsWith('.')&&!specifier.startsWith('/'))return null;
@@ -33,7 +43,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   traverse(ast,{enter(path){paths.set(path.node,path);if(callable(path.node))functions.set(path.node.start!,path.node);},CallExpression(path){if(isCoreCall(path,'createList'))calls.push(path);}});
   const result={file,source,paths,calls,functions};modules.set(file,result);return result;
  }
- function fail(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'|'BUILD-616',detail:string):never {
+ function fail(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'|'BUILD-616'|'BUILD-622',detail:string):never {
   throw new PropsSchemaError(mod.file,node.loc?.start.line??1,(node.loc?.start.column??0)+1,detail,code);
  }
  function binding(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'):Binding {
@@ -260,22 +270,53 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
    if(declared&&!callable(declared.node)){const what=literal(target,unwrap(declared.node));if(what)refuse(`${what} (imported)`);}
   }
  }
+ /** The factory validates eagerly. Native must execute its matching LIST on the
+  * same unconditional return path, so a hidden branch cannot skip key validation. */
+ function indexedUse(mod:Module,factory:t.CallExpression,path:NodePath<t.CallExpression>):void {
+  const owner=mod.paths.get(factory)?.getFunctionParent(),listOwner=path.getFunctionParent();
+  if(!owner||owner!==listOwner)fail(mod,factory,'BUILD-622','indexed rows need an unconditional LIST in the factory’s own component');
+  let cursor:NodePath|null=path;
+  while(cursor?.parentPath&&cursor.parentPath!==owner){
+   if(cursor.isConditionalExpression()||cursor.isLogicalExpression()||cursor.isFunction()||cursor.isIfStatement()||cursor.isLoop()||cursor.isSwitchStatement()||cursor.isTryStatement())fail(mod,cursor.node,'BUILD-622','indexed LIST cannot defer eager key validation behind a branch or callback');
+   cursor=cursor.parentPath;
+  }
+  if(t.isBlockStatement(owner.node.body)) {
+   const statement=path.findParent(parent=>parent.parentPath===owner.get('body'));
+   if(!statement?.isReturnStatement()||owner.node.body.body.some(item=>item!==statement.node&&!t.isVariableDeclaration(item)&&!t.isFunctionDeclaration(item)&&!t.isTSTypeAliasDeclaration(item)&&!t.isTSInterfaceDeclaration(item)&&!t.isEmptyStatement(item)))fail(mod,factory,'BUILD-622','indexed factory needs a single unconditional component return containing its LIST');
+  }
+  const key=factory.arguments[1];
+  if(!t.isArrowFunctionExpression(key)||key.async||t.isBlockStatement(key.body)||key.params.length!==1||!t.isIdentifier(key.params[0]))fail(mod,key??factory,'BUILD-622','indexed key callback must be a pure expression reading its own row property path');
+  const parts=keyPath(mod,key.body,binding(mod,key.params[0],'BUILD-612'));
+  if(!parts.length)fail(mod,key,'BUILD-622','indexed key callback needs a nonempty own-row property path');
+ }
  function prove(mod:Module,path:NodePath<t.CallExpression>):ListProof {
-  const call=path.node,[items,key,row]=call.arguments;
-  if(items&&!t.isSpreadElement(items)&&!t.isArgumentPlaceholder(items))source(mod,items,items);
+  const call=path.node,items=call.arguments[0];
+  const indexed=keyedFactory(items,node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows');
+  if(indexed&&(call.arguments.length!==2||indexed.arguments.length!==2||!t.isExpression(indexed.arguments[0])))fail(mod,call,'BUILD-622','indexed LIST needs createKeyedRows(initialArray, keyFn) and createList(rows, renderRow) with no extra arguments');
+  if(indexed)indexedUse(mod,indexed,path);
+  const key=indexed?indexed.arguments[1]:call.arguments[1],row=indexed?call.arguments[1]:call.arguments[2];
+  if(!indexed&&items&&!t.isSpreadElement(items)&&!t.isArgumentPlaceholder(items))source(mod,items,items);
   if(!callable(key)||!t.isIdentifier(key.params[0]))fail(mod,key??call,'BUILD-612','LIST key must be an inline function with a named row parameter');
   const body=singleReturn(mod,key,'BUILD-612','LIST key function');
   const parameter=binding(mod,key.params[0],'BUILD-612'),keyParts=keyPath(mod,body,parameter);
   if(!keyParts.length)fail(mod,body,'BUILD-612','LIST key cannot be the row itself; use a nonempty path such as row.id');
+  if(indexed&&callable(row)&&(row.async||t.isFunctionExpression(row)&&row.generator))fail(mod,row,'BUILD-622','indexed row callback must execute synchronously');
   if(!callable(row)||!t.isIdentifier(row.params[0]))fail(mod,row??call,'BUILD-613','LIST row needs an inline callback with a named item');
   const result=singleReturn(mod,row,'BUILD-613','LIST row callback');
   const found=roots(mod,result,new Set());if(found.length!==1)fail(mod,result,'BUILD-613','LIST row must contain exactly one stable owned Element');
-  return {file:mod.file,start:call.start!,end:call.end!,key:keyParts,root:found[0]!};
+  return {file:mod.file,start:call.start!,end:call.end!,key:keyParts,root:found[0]!,indexed};
  }
  function site(mod:Module,path:NodePath<t.CallExpression>):ListSite {
-  return {file:mod.file,start:path.node.start!,end:path.node.end!,prove:()=>prove(mod,path)};
+  return {file:mod.file,start:path.node.start!,end:path.node.end!,indexed:!!keyedFactory(path.node.arguments[0],node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows'),prove:()=>prove(mod,path)};
  }
  return {
+  factory(file:string,source:string,node:t.CallExpression):void {
+   const mod=module(file,source),factory=[...mod.paths.keys()].find(item=>t.isCallExpression(item)&&item.start===node.start&&item.end===node.end) as t.CallExpression|undefined;
+   if(!factory||core(mod,factory.callee)!=='createKeyedRows')fail(mod,node,'BUILD-622','indexed factory must resolve to the original core import');
+   const uses=mod.calls.filter(path=>keyedFactory(path.node.arguments[0],node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows')===factory);
+   if(!uses.length)fail(mod,factory,'BUILD-622','eager indexed factory has no unconditional native LIST');
+   for(const use of uses)prove(mod,use);
+  },
   original(file:string,source:string,node:t.CallExpression):ListSite {
    const mod=module(file,source),path=mod.calls.find(path=>path.node.start===node.start&&path.node.end===node.end);
    if(!path)fail(mod,node,'BUILD-612','LIST call does not resolve to the original core createList import');
