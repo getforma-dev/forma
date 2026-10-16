@@ -166,6 +166,10 @@ An unkeyed range is consumed by the actual row descriptions. A logical row can
 contain multiple nodes, shared literal Text or no nodes, so its server row count
 cannot be inferred from child-element count. LIST_COUNT diagnostics report the
 known client item count and exact remaining/exhausted DOM extent instead.
+Its client key function still feeds the shared canonical cache: fractional numbers
+and lone surrogates refuse with `FORMA_E_HYDRATE_KEY` before any row callback or
+DOM write, even when the served range has no `data-forma-key` attributes. Safe
+integers and valid Unicode strings are admitted without adding those attributes.
 Matching empty ranges remain empty until a later array update; they never
 trigger an implicit browser mount. State/props must describe the same initial
 items used by the native renderer.
