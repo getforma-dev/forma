@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — the client list fixture is admitted (FORMA-188, L-58)
+
+- Move the client-list island fixture to the positive corpus after the accepted N2 increase. Its strict build must emit one island route with positive Forma/JavaScript byte counts below the report's own ceilings and an empty exceeded verdict; the obsolete BUILD-819 wording assertion is removed.
+
 ## [Unreleased]
 
 ### Value rules 2 to 7 — FORMA-182
