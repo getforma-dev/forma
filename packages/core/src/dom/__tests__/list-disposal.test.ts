@@ -187,6 +187,7 @@ describe('island teardown on row removal', () => {
   it('deactivates an island inside a removed row', async () => {
     const disposed: number[] = [];
     const [items, setItems] = createSignal([{ id: 1 }, { id: 2 }]);
+    const rows = new Map<number, HTMLElement>();
 
     createRoot(() => {
       const frag = createList(
@@ -194,12 +195,13 @@ describe('island teardown on row removal', () => {
         (item) => item.id,
         (item) => {
           const row = document.createElement('div');
-          activateIslandIn(row, item.id, (id) => disposed.push(id));
+          rows.set(item.id, row);
           return row;
         },
       );
-      mountFragment(frag);
+      document.body.appendChild(mountFragment(frag));
     });
+    for (const id of [1, 2]) activateIslandIn(rows.get(id)!, id, (value) => disposed.push(value));
     await Promise.all(activationReady);
 
     expect(disposed).toEqual([]);
@@ -217,20 +219,23 @@ describe('island teardown on row removal', () => {
   it('deactivates an island that IS the removed row element', async () => {
     const disposed: number[] = [];
     const [items, setItems] = createSignal([{ id: 1 }, { id: 2 }]);
+    let root!: HTMLElement;
 
     createRoot(() => {
       const frag = createList(
         items,
         (item) => item.id,
-        (item) => activateIslandIn(
-          document.createElement('div'),
-          item.id,
-          (id) => disposed.push(id),
-        ),
+        (item) => originalHosts.get(item.id)!,
       );
-      mountFragment(frag);
+      root = mountFragment(frag);
+      document.body.appendChild(root);
     });
-    await Promise.all(activationReady);
+    let next = 1;
+    await activateIslands(emptyRegistry({ Widget: () => {
+      const id = next++;
+      registerDisposer(() => disposed.push(id));
+      return h('span', null, 'ssr');
+    } }), root);
 
     setItems([{ id: 2 }]);
     expect(disposed).toEqual([1]);
@@ -243,8 +248,9 @@ describe('island teardown on row removal', () => {
     const disposed: number[] = [];
     const parent = document.createElement('div');
     const rowA = document.createElement('div');
-    activateIslandIn(rowA, 1, (id) => disposed.push(id));
+    document.body.appendChild(parent);
     parent.appendChild(rowA);
+    activateIslandIn(rowA, 1, (id) => disposed.push(id));
     await Promise.all(activationReady);
 
     let finish: (() => void) | undefined;
@@ -334,6 +340,7 @@ describe('the scheduled-or-active island count', () => {
     const disposed: number[] = [];
     const holder = document.createElement('div');
     const other = activateIslandIn(holder, 1, (id) => disposed.push(id));
+    let row!: HTMLElement;
 
     const [items, setItems] = createSignal([{ id: 2 }]);
     createRoot(() => {
@@ -341,13 +348,13 @@ describe('the scheduled-or-active island count', () => {
         items,
         (item) => item.id,
         (item) => {
-          const row = document.createElement('div');
-          activateIslandIn(row, item.id, (id) => disposed.push(id));
+          row = document.createElement('div');
           return row;
         },
       );
-      mountFragment(frag);
+      document.body.appendChild(mountFragment(frag));
     });
+    activateIslandIn(row, 2, (id) => disposed.push(id));
     await Promise.all(activationReady);
 
     deactivateIsland(other);
@@ -362,6 +369,7 @@ describe('the scheduled-or-active island count', () => {
     const disposed: number[] = [];
     const holder = document.createElement('div');
     const other = activateIslandIn(holder, 1, (id) => disposed.push(id));
+    let row!: HTMLElement;
 
     const [items, setItems] = createSignal([{ id: 2 }]);
     createRoot(() => {
@@ -369,13 +377,13 @@ describe('the scheduled-or-active island count', () => {
         items,
         (item) => item.id,
         (item) => {
-          const row = document.createElement('div');
-          activateIslandIn(row, item.id, (id) => disposed.push(id));
+          row = document.createElement('div');
           return row;
         },
       );
-      mountFragment(frag);
+      document.body.appendChild(mountFragment(frag));
     });
+    activateIslandIn(row, 2, (id) => disposed.push(id));
     await Promise.all(activationReady);
 
     // deactivateIsland is documented idempotent; the second call must not
