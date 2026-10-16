@@ -16,6 +16,39 @@ function host(name: string, trigger = 'load') {
 }
 
 describe('shared load scheduling', () => {
+  it('queues even the first load until a timer while readiness remains pending', async () => {
+    document.body.innerHTML = host('A'); installState();
+    const component = vi.fn(() => tree('A'));
+    let done = false;
+    const ready = activateIslands(emptyRegistry({ A: component })).then(() => { done = true; });
+    expect(component).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(1);
+    await Promise.resolve();
+    expect(done).toBe(false);
+    vi.runAllTimers(); await ready;
+    expect(component).toHaveBeenCalledOnce(); expect(done).toBe(true);
+  });
+
+  it('promotes the first load on its input before the initial timer without completing unrelated work', async () => {
+    document.body.innerHTML = '<main><button data-forma-island="A" data-forma-component="A">A</button></main><aside>' + host('B') + '</aside>'; installState();
+    const button = document.querySelector('button')!, clicks = vi.fn(), second = vi.fn(() => tree('B'));
+    const first = vi.fn(() => h('button', { onClick: clicks }, 'A'));
+    const registry = emptyRegistry({ A: first, B: second });
+    let done = false, overlapDone = false;
+    const ready = activateIslands(registry).then(() => { done = true; });
+    const overlap = activateIslands(registry, document.querySelector('main')!).then(() => { overlapDone = true; });
+    expect(first).not.toHaveBeenCalled(); expect(second).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(overlapDone).toBe(false);
+    button.click(); await overlap;
+    expect(first).toHaveBeenCalledOnce(); expect(clicks).toHaveBeenCalledOnce();
+    expect(second).not.toHaveBeenCalled(); expect(done).toBe(false); expect(overlapDone).toBe(true);
+    expect(vi.getTimerCount()).toBe(1);
+    vi.runAllTimers(); await ready;
+    expect(second).toHaveBeenCalledOnce(); expect(done).toBe(true);
+    expect(first).toHaveBeenCalledOnce(); expect(clicks).toHaveBeenCalledOnce();
+  });
+
   it('does not strand a reserved deferred host when a later refusal reaches a throwing diagnostic', async () => {
     document.body.innerHTML = host('Good', 'interaction') + host('Bad'); installState();
     document.head.querySelector('script')!.textContent = JSON.stringify({v: 1, s: [], i: [{h: '0123456789abcdef', p: {}}, null]});
@@ -40,22 +73,11 @@ describe('shared load scheduling', () => {
     });
     vi.spyOn(console, 'error').mockImplementationOnce(() => {void activateIslands(registry, document.querySelector('aside')!);});
     const ready = activateIslands(registry);
+    expect(seen).toEqual([]);
+    vi.advanceTimersToNextTimer();
     expect(seen).toEqual(['A', 'Good']);
     vi.runAllTimers(); await ready;
     expect(seen).toEqual(['A', 'Good', 'B']);
-  });
-
-  it('counts atomic preflight time against the first slice and resolves after actual load completion', async () => {
-    document.body.innerHTML = host('A'); installState();
-    const component = vi.fn(() => tree('A'));
-    vi.mocked(performance.now).mockReturnValueOnce(0).mockReturnValue(13);
-    let done = false;
-    const ready = activateIslands(emptyRegistry({ A: component }));
-    void ready.then(() => { done = true; });
-    await Promise.resolve();
-    expect(component).not.toHaveBeenCalled(); expect(done).toBe(false);
-    vi.runAllTimers(); await ready;
-    expect(component).toHaveBeenCalledOnce(); expect(done).toBe(true);
   });
 
   it('settles each invocation after its own loads, including cancellation and isolated failure', async () => {
@@ -66,6 +88,7 @@ describe('shared load scheduling', () => {
     const a = activateIslands(registry, document.querySelector('main')!).then(() => { first = true; });
     const b = activateIslands(registry, document.querySelector('aside')!).then(() => { second = true; });
     deactivateIsland(document.querySelector<HTMLElement>('[data-forma-component="B"]')!);
+    vi.advanceTimersToNextTimer();
     await a;
     expect(first).toBe(true); expect(second).toBe(false);
     vi.runAllTimers(); await b;
@@ -87,6 +110,7 @@ describe('shared load scheduling', () => {
     const registry = emptyRegistry({ A: () => { now += 13; return tree('A'); }, B: second });
     let firstDone = false, overlapDone = false;
     const first = activateIslands(registry).then(() => { firstDone = true; });
+    vi.advanceTimersToNextTimer();
     const overlap = activateIslands(registry, document.querySelector('aside')!).then(() => { overlapDone = true; });
     await Promise.resolve();
     expect(firstDone).toBe(false); expect(overlapDone).toBe(false);
@@ -112,6 +136,8 @@ describe('shared load scheduling', () => {
       C: () => { seen.push('C'); return tree('C'); },
     });
     activateIslands(registry, document.querySelector('main')!);
+    expect(seen).toEqual([]);
+    vi.advanceTimersToNextTimer();
     expect(seen).toEqual(['A']);
     expect(vi.getTimerCount()).toBe(1);
     vi.runAllTimers();
@@ -145,7 +171,7 @@ describe('shared load scheduling', () => {
     const failed = vi.fn(() => tree('Broken'));
     const registry = emptyRegistry({ A: () => { seen.push('A'); now += 13; return tree('A'); }, B: () => { seen.push('B'); return tree('B'); }, Broken: failed });
     expect(() => activateIslands(registry)).not.toThrow();
-    expect(seen).toEqual(['A']);
+    expect(seen).toEqual([]);
     vi.runAllTimers();
     expect(seen).toEqual(['A', 'B']);
     expect(failed).not.toHaveBeenCalled();
@@ -162,6 +188,7 @@ describe('shared load scheduling', () => {
     const button = document.querySelector('button')!, clicks = vi.fn();
     const second = vi.fn(() => h('button', { onClick: clicks }, 'B'));
     activateIslands(emptyRegistry({ A: () => { now += 13; return tree('A'); }, B: second }));
+    vi.advanceTimersToNextTimer();
     expect(second).not.toHaveBeenCalled();
     button.dispatchEvent(new Event(type, { bubbles: true }));
     expect(second).toHaveBeenCalledOnce();
@@ -192,6 +219,7 @@ describe('shared load scheduling', () => {
     const registry = emptyRegistry({A: () => {now += 13; return tree('A');}, B: second});
     let done = false, overlap = false;
     const ready = activateIslands(registry).then(() => {done = true;});
+    vi.advanceTimersToNextTimer();
     const other = activateIslands(registry).then(() => {overlap = true;});
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const clear = globalThis.clearTimeout;

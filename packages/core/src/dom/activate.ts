@@ -211,6 +211,7 @@ export function sanitizePropsDeep<T>(props: T): T {
  *          or been disposed. Existing pending loads are included; visible,
  *          idle and interaction work completes its part once its trigger is armed.
  *          Preflight remains synchronous; the function itself is not async.
+ *          Load work starts in a timer unless first input promotes it sooner.
  *
  * Verified by: src/dom/__tests__/activate.test.ts > "error in island 0 does not prevent island 1 from activating"
  */
@@ -222,8 +223,6 @@ export function activateIslands(
   registry: Record<string, (...args: never[]) => unknown>,
   root: ParentNode = document,
 ): Promise<void> {
-  // Preflight is atomic, but its cost belongs to the first cooperative slice.
-  const deadline = performance.now() + 12;
   if (skewed(root)) return Promise.resolve();
   const checked = preflightIslands(registry, root);
   const children = new Map<Element, ValidatedIsland>();
@@ -288,7 +287,7 @@ export function activateIslands(
     }
   } finally {
     loadBusy--;
-    if (!loadBusy && loadTimer === undefined) drainLoads(deadline);
+    scheduleLoads();
   }
   return Promise.all(ready).then(() => {});
 }

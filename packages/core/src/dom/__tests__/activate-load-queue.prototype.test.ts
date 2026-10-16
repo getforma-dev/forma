@@ -15,7 +15,8 @@ describe('load queue prototype',()=>{
  it('finishes whole islands, returns with queued work, then advances in real timer tasks',()=>{
   setup(['A','B','C']);const seen:string[]=[];
   const registry=emptyRegistry(Object.fromEntries(['A','B','C'].map(name=>[name,()=>{seen.push(name);now+=13;return tree(name);}])));
-  activateIslands(registry);expect(seen).toEqual(['A']);expect(vi.getTimerCount()).toBe(1);
+  activateIslands(registry);expect(seen).toEqual([]);expect(vi.getTimerCount()).toBe(1);
+  vi.advanceTimersToNextTimer();expect(seen).toEqual(['A']);expect(vi.getTimerCount()).toBe(1);
   vi.advanceTimersToNextTimer();expect(seen).toEqual(['A','B']);expect(vi.getTimerCount()).toBe(1);
   vi.advanceTimersToNextTimer();expect(seen).toEqual(['A','B','C']);expect(vi.getTimerCount()).toBe(0);
  });
@@ -23,7 +24,8 @@ describe('load queue prototype',()=>{
   const hosts=setup(['A','B','Interaction'],{Interaction:'interaction'});const seen:string[]=[];
   let registry:ReturnType<typeof emptyRegistry>;
   registry=emptyRegistry({A:()=>{expect(typeof (hosts[2] as any).__formaInteractionHandler).toBe('function');activateIslands(registry);seen.push('A');now+=13;return tree('A');},B:()=>{seen.push('B');return tree('B');},Interaction:()=>{seen.push('Interaction');return tree('Interaction');}});
-  activateIslands(registry);expect(seen).toEqual(['A']);
+  activateIslands(registry);expect(seen).toEqual([]);
+  vi.advanceTimersToNextTimer();expect(seen).toEqual(['A']);
   hosts[2]!.dispatchEvent(new Event('pointerdown'));expect(seen).toEqual(['A','Interaction']);
   vi.runAllTimers();expect(seen).toEqual(['A','Interaction','B']);
  });
@@ -44,7 +46,8 @@ describe('load queue prototype',()=>{
  it('isolates a failed island and continues the queued sibling without splitting its adoption',()=>{
   setup(['A','B']);const errors=vi.spyOn(console,'error').mockImplementation(()=>{}),second=vi.fn(()=>tree('B'));
   activateIslands(emptyRegistry({A:()=>{now+=13;throw Error('expected prototype failure');},B:second}));
-  expect(second).not.toHaveBeenCalled();expect(errors).toHaveBeenCalled();
+  expect(second).not.toHaveBeenCalled();expect(errors).not.toHaveBeenCalled();
+  vi.advanceTimersToNextTimer();expect(second).not.toHaveBeenCalled();expect(errors).toHaveBeenCalled();
   vi.runAllTimers();expect(second).toHaveBeenCalledTimes(1);expect(document.querySelector('[data-forma-component="B"] span')!.textContent).toBe('B');
  });
 });

@@ -58,24 +58,24 @@ async function serve(page: Page, kind: 'root'|'descendant'|'nested') {
 for (const kind of ['root', 'descendant'] as const) for (const input of ['pointer', 'keyboard', 'click-only'] as const) {
   test(`queued ${kind} handles the first ${input} action exactly once`, async ({page}) => {
     const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-    expect(await serve(page, kind)).toEqual({order: ['Slow'], queued: 1});
+    expect(await serve(page, kind)).toEqual({order: [], queued: 1});
     if (input === 'pointer') await page.locator('#action').click();
     else if (input === 'keyboard') { await page.locator('#action').focus(); await page.locator('#action').press('Enter'); }
     else await page.evaluate(() => document.getElementById('action')!.click());
     const result = await page.evaluate(() => (window as any).loadQueueControl.finish());
-    expect(result).toEqual({order: ['Slow', 'Target'], events: [{trusted: input !== 'click-only', target: 'action'}], parentClicks: 0, errors: [], mutations: 0, sameButton: true, sameMarkup: true});
+    expect(result).toEqual({order: ['Target', 'Slow'], events: [{trusted: input !== 'click-only', target: 'action'}], parentClicks: 0, errors: [], mutations: 0, sameButton: true, sameMarkup: true});
     expect(errors).toEqual([]);
   });
 }
 
 test('one native click promotes nested queued parent and child once without changing owned nodes', async ({page}) => {
-  expect(await serve(page, 'nested')).toEqual({order: ['Slow'], queued: 1});
+  expect(await serve(page, 'nested')).toEqual({order: [], queued: 1});
   await page.locator('#action').click();
-  expect(await page.evaluate(() => (window as any).loadQueueControl.finish())).toEqual({order: ['Slow', 'Parent', 'Target'], events: [{trusted: true, target: 'action'}], parentClicks: 1, errors: [], mutations: 0, sameButton: true, sameMarkup: true});
+  expect(await page.evaluate(() => (window as any).loadQueueControl.finish())).toEqual({order: ['Parent', 'Target', 'Slow'], events: [{trusted: true, target: 'action'}], parentClicks: 1, errors: [], mutations: 0, sameButton: true, sameMarkup: true});
 });
 
 test('disposing a queued host removes first-input activation and settles readiness', async ({page}) => {
-  expect(await serve(page, 'root')).toEqual({order: ['Slow'], queued: 1});
+  expect(await serve(page, 'root')).toEqual({order: [], queued: 1});
   await page.evaluate(() => (window as any).loadQueueControl.dispose());
   await page.locator('#action').click();
   expect(await page.evaluate(() => (window as any).loadQueueControl.finish())).toEqual({order: ['Slow'], events: [], parentClicks: 0, errors: [], mutations: 0, sameButton: true, sameMarkup: true});
