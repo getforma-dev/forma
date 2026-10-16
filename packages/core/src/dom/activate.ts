@@ -368,7 +368,7 @@ function hydrateIslandRoot(value:ValidatedIsland,children:ReadonlyMap<Element,Va
   const root=value.host;
   if((root as any).__formaDisposed||activationPhase.get(root)!=='scheduled')return;
   try{checkIslandClaim(value);}catch(error){
-    deactivateIsland(root);reportActivationError(error);return;
+    setupFailed(root,error);return;
   }
   activationPhase.set(root,'preparing');
   const componentName=root.getAttribute('data-forma-component')!,occurrence=value.occurrence;
