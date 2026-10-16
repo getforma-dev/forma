@@ -5,7 +5,7 @@ const nonempty = value => typeof value === 'string' && value.trim().length > 0;
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const key = test => `${test.file}\0${test.id}\0${test.name}`;
 
-export function readProbeReport(text, processResult) {
+function inspectProbeReport(text, processResult, assertionsOnly) {
   assert(!processResult.error && !processResult.signal, 'mutation process error, timeout or signal');
   assert(processResult.status === 0 || processResult.status === 1, 'unexpected mutation process exit');
   const report = JSON.parse(text);
@@ -42,9 +42,14 @@ export function readProbeReport(text, processResult) {
           && nonempty(error.message) && typeof error.stack === 'string' && typeof error.assertion === 'boolean', 'invalid structured test error');
       }
       if (test.state === 'failed') {
-        assert(test.errors.length > 0 && test.errors.every(error => error.assertion), 'test failed without an assertion');
+        assert(test.errors.length > 0 && (!assertionsOnly || test.errors.every(error => error.assertion)), 'test failed without an assertion');
       } else assert.equal(test.errors.length, 0, 'errors outside a failed assertion');
       tests.push(row);
+    }
+    if (!assertionsOnly) {
+      if (module.state === 'failed') assert(module.tests.some(test => test.state === 'failed'), 'failed module without failed tests');
+      else if (module.state === 'passed') assert(module.tests.every(test => ['passed', 'skipped'].includes(test.state)), 'incomplete passed module');
+      else assert(module.tests.every(test => !test.started && !test.finished && ['skipped', 'pending'].includes(test.state)), 'inconsistent unexecuted module');
     }
   }
   assert(tests.length > 0, 'no tests collected');
@@ -59,6 +64,32 @@ export function readProbeReport(text, processResult) {
     assert(tests.every(test => test.state === 'passed' || test.state === 'skipped'), 'incomplete test run');
   }
   return { tests, failed };
+}
+
+export function readProbeReport(text, processResult) {
+  return inspectProbeReport(text, processResult, true);
+}
+
+/** Recovery permission only; these failures remain UNQUALIFIED, never kills. */
+export function recoverableProbeFailure(text, processResult, baseline) {
+  try {
+    assert(Array.isArray(baseline) && baseline.some(test => test.state === 'passed'), 'missing clean baseline');
+    const report = inspectProbeReport(text, processResult, false);
+    assert(report.failed.some(test => test.errors.some(error => !error.assertion)), 'no non-assertion test failure');
+    const original = new Map(baseline.map(test => [key(test), test.state]));
+    for (const test of report.tests) {
+      assert(original.has(key(test)), 'test missing from clean baseline');
+      assert(!test.finished || test.started, 'test finished without starting');
+      assert(!test.started || (test.finished && ['passed', 'failed'].includes(test.state)), 'unfinished started test');
+      if (test.state === 'failed') assert.equal(original.get(key(test)), 'passed', 'failed test was not passing in clean baseline');
+      // Vitest reports test deadlines as ordinary Error objects. They must not
+      // enter recovery, even if onTestCaseResult preceded the process exit.
+      assert(test.errors.every(error => !/timed?\s*out|timeout/i.test(`${error.name} ${error.code} ${error.message}`)), 'test or hook timeout');
+      assert(test.errors.every(error => error.assertion || (error.code === ''
+        && ['Error', 'TypeError', 'ReferenceError', 'RangeError', 'SyntaxError', 'URIError', 'EvalError'].includes(error.name))), 'system or unknown error');
+    }
+    return true;
+  } catch { return false; }
 }
 
 export function cleanProbeBaseline(text, processResult) {
