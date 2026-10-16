@@ -138,3 +138,6 @@ docs/archive/FORMA-108-documentation-checks/** -text
 
 # Exact first actual browser migration evidence.
 docs/archive/FORMA-108-browser-migration/** -text
+
+# Original strict qualifier refusal, with byte-exact actual JSON/logs.
+docs/archive/FORMA-108-mutation-reporting/** -text

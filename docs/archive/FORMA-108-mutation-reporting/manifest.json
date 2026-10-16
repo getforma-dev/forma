@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "sourceCommit": "6c3448d31807761106016c56c1c3b2ebc12aae78",
+  "meaning": "Actual first changed-probe run:8 named assertion kills, then ninth correct named assertion refused because Vitest abbreviated expected DOM diagnostic as ellipsis. No17-pass claim. Source restored byte-exact on failure. Revised reporter preserves full assertion text and authenticates actual unhandled errors separately.",
+  "files": {
+    "before.json": "67b70c210f7cce8800b02f0f92219e042a0d9825df933d157f8c9bbe8383c1c9",
+    "tiered-child-scope-drops-mount.log": "6fc6f40e346a5ad51713f40e34fdcfb3392174fb6c8e99830396d95127e05f45",
+    "tiered-refs-unbound.log": "90e099286a7132023a839f13029b7bc9137ac1dffe59b47079eaf3b2b2b0b28e",
+    "tiered-denial-silenced.log": "dacefee246e18f05e7ef962057a8763ded2ce7df57778643ebd4754c444a8d8c",
+    "tiered-non-2xx-as-data.log": "750277f78ce58c1684b07e762aecbb03567f44c33e14e5fc00959328a4bc7191",
+    "tiered-refetch-shared-registry.log": "e76e1cdbd600b193680ddbc1cad06bd2c638620dc89f0dc0834b940c70b25501",
+    "tiered-fetch-denial-sent.log": "e10741df20618d6806c07bbc9a9e925276821e97878512e618e2b29f72a915cc",
+    "tiered-refetch-shared-registry.json": "986a2601459660083d423a46ef194a8896f3b2c463da27d56c9d46099dd67770",
+    "tiered-fetch-denial-sent.json": "5deb6a4a429290940a3ae576156db9ee0c03dfef4fabf07e2cd4dcdb61a79c13",
+    "tiered-denial-silenced.json": "3f7e187307dc287879d546cdf58fd892d56f945e4605b5b3d674619675079ec0",
+    "tiered-fetch-timeout-ignored.log": "6f0bc3fdbe7b6217523325fdaf73febbfa361562b947a2f872da0e88035fb373",
+    "tiered-el-unbound.json": "13a295fdea18dd59a0259d2d7ac1064871d8df17313ee7b00a87458a0d784b63",
+    "tiered-fetch-timeout-ignored.json": "899088e5bad15a107e42e8b02cd7991872554a051d90e9b66dcdf456544bfc0d",
+    "tiered-event-unbound.json": "0935844aab1d7ff9eef66801e957be9e9f992e4eb9a2dc8211a8ab53c901f1d8",
+    "tiered-event-unbound.log": "539c7dcbf8c6a76f0224d6f8a7fa1582277b8fe29141726514f24a75d92d6ed6",
+    "runtime-migration.json": "f7b4b8f48bccc215c1b4dd63eaf36406266d5f81e597028d6f075f87f29bc153",
+    "tiered-el-unbound.log": "0ec003fef396f85f742123be0da7c672151e67804dd9fe9aa6028e7922cb1380",
+    "before.log": "adff242295e02a7d28ea8579f04fa1ebe961bf268c2ddda5f0e2292d0a5ee0af",
+    "tiered-non-2xx-as-data.json": "a1a0d313bfe876b75563bd8e1908581049bc804b3a19bd0210e830c533b41c3e",
+    "tiered-refs-unbound.json": "beca61bc06ce677c99068cc363292ee429f0d87ed1cc6e4995e37c6fa17242ea",
+    "tiered-child-scope-drops-mount.json": "612b77add1549d3d30508ab63598ad56d238ed4d87fc133b1907c062fba105db",
+    "qualifier-first.log": "5dd51aa13f7efa056188cb203c9a30735461be15d07c57e4da12700722f85f9e",
+    "qualify-runtime-migration.mjs": "339eb251c09574ee3c744672079d051e2b020138877f239d3f102ff3684908f0"
+  }
+}

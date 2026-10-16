@@ -35,7 +35,7 @@ const quote = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const assertions = report => report.testResults.flatMap(result => result.assertionResults);
 export function assertIntendedKill(report, control) {
   const [, , title, signature] = control;
-  assert.equal(report.numRuntimeErrorTestSuites ?? 0, 0, 'runtime suite error is not a mutation kill');
+  assert.deepEqual(report.unhandledErrors, [], 'unhandled runtime errors are not mutation kills');
   const failed = assertions(report).filter(row => row.status === 'failed');
   assert(failed.length > 0, 'mutant survived');
   for (const row of failed) {
@@ -62,6 +62,10 @@ export function qualifyRuntimeMigration(output) {
   };
   const report = { schema: 1, passed: false, sourceCommit: git(['rev-parse', 'HEAD']), sourceClean: git(['status', '--porcelain', '--untracked-files=no']) === '', node: process.version,
     corpusSha256: sha(corpusBytes), harnessSha256: sha(readFileSync(fileURLToPath(import.meta.url))), sources: {}, controls: [] };
+  report.harnessSources = Object.fromEntries([
+    'vitest.config.ts', 'vitest.runtime-mutation.config.ts', 'scripts/runtime-mutation-errors.mjs',
+    'scripts/qualify-runtime-migration.mjs', tiered, explicit,
+  ].map(path => [path, sha(readFileSync(join(core, path)))]));
   assert.equal(report.sourceClean, true, 'qualification requires the exact clean tracked source commit');
   const destination = join(output, 'runtime-migration.json');
   const save = () => writeFileSync(destination, JSON.stringify(report, null, 2) + '\n');
@@ -73,22 +77,27 @@ export function qualifyRuntimeMigration(output) {
   }
   const run = (label, files, titles) => {
     const path = join(output, label + '.json');
+    const errorPath = join(output, label + '.errors.json');
     const result = spawnSync(process.execPath, [join(core, 'node_modules/vitest/vitest.mjs'), 'run', ...files,
-      '--maxWorkers=2', '--reporter=json', `--outputFile=${path}`, '--testNamePattern', titles.map(quote).join('|')],
-    { cwd: core, encoding: 'utf8', timeout: 60_000 });
+      '--config=vitest.runtime-mutation.config.ts', '--maxWorkers=2', '--reporter=json',
+      '--reporter=./scripts/runtime-mutation-errors.mjs', `--outputFile=${path}`, '--testNamePattern', titles.map(quote).join('|')],
+    { cwd: core, env: { ...process.env, FORMA_RUNTIME_MUTATION_ERRORS: errorPath }, encoding: 'utf8', timeout: 60_000 });
     writeFileSync(join(output, label + '.log'), `${result.stdout ?? ''}${result.stderr ?? ''}`);
     if (result.error) throw result.error;
     assert(result.status === 0 || result.status === 1, 'abnormal test process exit');
     const bytes = readFileSync(path), proof = JSON.parse(bytes);
-    assert.equal(proof.numRuntimeErrorTestSuites ?? 0, 0);
-    return { exit: result.status, sha256: sha(bytes), proof };
+    const errorBytes = readFileSync(errorPath), errors = JSON.parse(errorBytes);
+    assert(['passed', 'failed'].includes(errors.reason), 'interrupted run is not qualification');
+    assert.deepEqual(errors.errors, [], 'unhandled errors are not qualification');
+    proof.unhandledErrors = errors.errors;
+    return { exit: result.status, sha256: sha(bytes), errorsSha256: sha(errorBytes), proof };
   };
   const allFiles = [...new Set(controls.map(row => row[1]))], allTitles = [...new Set(controls.map(row => row[2]))];
   const green = label => {
     const result = run(label, allFiles, allTitles);
     assert.equal(result.exit, 0, `${label} test process failed`); assert.equal(result.proof.numFailedTests, 0);
     for (const title of allTitles) assert(assertions(result.proof).some(row => row.status === 'passed' && row.fullName.includes(title)), `${label}: control did not execute: ${title}`);
-    return { exit: result.exit, sha256: result.sha256, passed: result.proof.numPassedTests };
+    return { exit: result.exit, sha256: result.sha256, errorsSha256: result.errorsSha256, passed: result.proof.numPassedTests };
   };
   const start = performance.now();
   try {
@@ -103,7 +112,8 @@ export function qualifyRuntimeMigration(output) {
       try {
         const result = run(id.replaceAll('/', '-'), [file], [title]);
         assert.equal(result.exit, 1, `${id}: mutant survived`);
-        row.killedBy = assertIntendedKill(result.proof, control); row.sha256 = result.sha256; row.passed = true;
+        row.killedBy = assertIntendedKill(result.proof, control); row.sha256 = result.sha256;
+        row.errorsSha256 = result.errorsSha256; row.passed = true;
       } finally { writeFileSync(path, original); save(); }
     }
     report.corrected = green('corrected');
