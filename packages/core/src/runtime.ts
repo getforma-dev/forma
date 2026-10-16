@@ -2625,6 +2625,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           const init: RequestInit = { method, signal: ctrl.signal };
           if (verdict) {
             init.credentials = verdict.credentials;
+            // The grant authorizes this URL, not a server's redirect target.
+            // Browsers hide Location on manual redirects, so refuse before a
+            // second request can escape its method/path/cookie boundary.
+            init.redirect = 'error';
             if (mount!.used) {
               mount!.used.methods.add(method);
               mount!.used.paths.add(verdict.path);
@@ -2635,6 +2639,13 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
             .then(r => {
               if (verdict && !r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);
               return r.json();
+            }, err => {
+              // Fetch intentionally gives network and redirect failures the
+              // same rejection. Do not claim to identify which one occurred.
+              if (verdict && !ctrl.signal.aborted) {
+                throw new Error('FORMA_E_FETCH_REQUEST: data-fetch failed before a response; redirects are not followed');
+              }
+              throw err;
             })
             .then(data => {
               if (!inflight.has(stop)) return;

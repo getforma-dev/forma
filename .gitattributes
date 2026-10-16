@@ -103,3 +103,6 @@ docs/archive/FORMA-139-e2e-title/** -text
 
 # FORMA-129: the historical93-probe original is authenticated byte-for-byte.
 docs/archive/FORMA-129-historical-probes/** -text
+
+# FORMA-129: authentic real-server redirect failure and corrected replay.
+docs/archive/FORMA-129-fetch-redirect/** -text

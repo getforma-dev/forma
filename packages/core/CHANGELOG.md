@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-129: tiered `data-fetch` refuses redirects before another URL can escape its grant. Network/redirect rejection before a response has stable generic `FORMA_E_FETCH_REQUEST` error-target text; existing HTTP, JSON and abort handling remains intact. The old tierless path remains unchanged until FORMA-108 retires it.
+
 ### Integrated package size gates — FORMA-181/182
 
 - Keyed adoption (FORMA-181 checkpoint C) and the value rules (FORMA-182) together measure 46,477 B gzip for the core entry and 46,504 B for browser ESM. The latter exceeded the previous 46,500 B gate by 4 B. Under decision L-58, the two package gates are re-anchored to the measured sizes plus 300 B: 46,777 and 46,804 B. The runtime gates remain 41,500, 40,500 and 40,000 B; the route budget remains 27,500 B gzip -9 of Forma code. Measurements come from the actual production build's import graph via `scripts/check-size.mjs`.
