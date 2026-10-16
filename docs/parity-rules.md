@@ -620,3 +620,8 @@ than rendering wrong; a static one is unaffected.
 FORMA-026's SVG and MathML namespace vectors stay at
 `packages/core/src/__tests__/vectors/namespaces.json` until their relocation is
 coordinated; no Rust reader references that file yet.
+
+
+INV1 attribute-name and URL checks are specified in [INV1.md](INV1.md) and share
+`inv1.json` beside these value vectors (FORMA-140). A rejected served attribute
+refuses strict adoption; initial DOM is never repaired.

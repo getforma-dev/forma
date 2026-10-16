@@ -68,7 +68,13 @@ amended by L-56): 16 lowercase hex characters computed from every output of a fi
 bundling pass (bundles, `.ir` modules, css, fonts) and the writers' versions,
 compiled into every JavaScript bundle (`__FORMA_BUILD__` and a banner), and `dev` in
 watch. forma-server stamps it on the page's root (`data-forma-build`, both the
-server-rendered form and the browser shell); core's compare is a later FORMA-186 slice.
+server-rendered form and the browser shell). Before `activateIslands` or `mount`,
+core compares the bundle identity with that root's attribute, freezes the verdict
+per Document, and leaves a mismatched page inert. The cancelable Document event
+`forma:skew` reports `{ page, bundle, reload }`; automatic reload is at most once
+per full page identity in session storage, and unavailable storage prevents it.
+Absent identities remain unchecked. Public `hydrateIsland` and application-owned
+imports are outside this guard. See core's [deployment contract](../packages/core/docs/ISLANDS.md#deployment-mismatch).
 
 `aliases` maps logical filenames to output filenames. `assets` maps each output
 filename to `{ immutable, integrity?, retained? }`. The build emits SHA-384/base64
