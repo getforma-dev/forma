@@ -154,7 +154,21 @@ export async function runSkewDrill({ browser, binary, cwd, deployments }) {
     for (const failures of errors.values()) assert.deepEqual(failures, [], 'unexpected page error during the drill');
     return { checks, builds: Object.fromEntries(Object.entries(deployments).map(([name, item]) => [name, item.manifest.build])), requests: state.log };
   } catch (error) {
-    error.message += `\nCompleted drill checks: ${JSON.stringify(checks)}\nLast requests: ${JSON.stringify(state.log.slice(-15))}`;
+    // Playwright caches stack before this catch. Preserve that original stack
+    // explicitly: appending only message loses the evidence printed by P17.
+    const originalStack = error.stack ?? String(error);
+    const boundedText = value => typeof value === 'string' ? value.slice(0, 2048) : value;
+    const diagnostic = `\nSkew drill diagnostics: ${JSON.stringify({
+      completedChecks: checks.slice(0, SKEW_DRILL_CHECKS.length),
+      lastRequests: state.log.slice(-15).map(row => Object.fromEntries(Object.entries(row).map(([key, value]) => [key, boundedText(value)]))),
+      pages: [...events].slice(-8).map(([page, detail]) => ({
+        url: boundedText(page.url()), navigations: navigation.get(page),
+        events: detail.slice(-8).map(event => JSON.stringify(event).slice(0, 4096)),
+        errors: errors.get(page).slice(-8).map(boundedText),
+      })),
+    })}`;
+    error.message += diagnostic;
+    error.stack = originalStack + diagnostic;
     throw error;
   } finally {
     // A browser timeout must not prevent termination of the owned native server.

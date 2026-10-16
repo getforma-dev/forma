@@ -1,0 +1,145 @@
+{
+  "sourceHead": "e7cbbcfea783f459c469da0a5203083ad4dfba58",
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 1812,
+      "sha256": "ed8d45bace91b8ab0196511fe133b20d6eb15fdad0ec5e917f5a5a8c9cd494d6"
+    },
+    {
+      "file": "control-after-results/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "file": "control-after.log",
+      "bytes": 355,
+      "sha256": "e8914d45a82e5c7484139c568f5cb4cbdfcccd4394c7d1faca8958bca34022e4"
+    },
+    {
+      "file": "control-before-results/.last-run.json",
+      "bytes": 96,
+      "sha256": "8d02ea7122ad835dd04cd7f2e1ebb17b2f57405a4f762a6696ed0c0e49ab39e2"
+    },
+    {
+      "file": "control-before-results/skew-a-real-navigation-tim-67998-ontext-in-its-emitted-stack-firefox/error-context.md",
+      "bytes": 4856,
+      "sha256": "70a8df0d72c28741935f5366d3669b10b96733e41d91b928da7e70c53cde98e7"
+    },
+    {
+      "file": "control-before.log",
+      "bytes": 2747,
+      "sha256": "b9fe46eadc7dfc9199a7c9c047aee8fec17802cbac5da9c21329323f46cb4c52"
+    },
+    {
+      "file": "failure-control.test.ts",
+      "bytes": 3381,
+      "sha256": "a57902cdabc3097a076d4a9bb1df12729af4b927bf84c7bc50237e8328d554fc"
+    },
+    {
+      "file": "first-packed/EVIDENCE-SHA256.json",
+      "bytes": 1954,
+      "sha256": "53218c1b8f3ba27a234fad696f5e766d82c07af0ae3d3e85dce26133176f34ce"
+    },
+    {
+      "file": "first-packed/SUMMARY.json",
+      "bytes": 7337,
+      "sha256": "6ef0385d47fb9d5b0dbacc28e420707feb1b6ac1951d55a58d9ed02f7b224762"
+    },
+    {
+      "file": "first-packed/ds11-record-sha256.txt",
+      "bytes": 65,
+      "sha256": "69c4a6b6d2d5c7d77e89af6495ab45ccfd2e70ee8fd78eb5044f3e1b3cf25862"
+    },
+    {
+      "file": "first-packed/exit.json",
+      "bytes": 111,
+      "sha256": "ceae5f3d93046c64134a3737e9f23f6439e09e47ae1d7304928380f05cd7d144"
+    },
+    {
+      "file": "first-packed/failed-evidence-sha256.txt",
+      "bytes": 65,
+      "sha256": "97abba162e6ab9822527b6da1247d8eca4fc9449db09c9e0cb5ae07abb11dcb9"
+    },
+    {
+      "file": "first-packed/failed-evidence-verify.log",
+      "bytes": 124,
+      "sha256": "2ba33edc8c6eda2e47aaf0216eff7335f75908473ce681d47983f2ad0b8060f8"
+    },
+    {
+      "file": "first-packed/launch-policy.json",
+      "bytes": 534,
+      "sha256": "6dd865cf67ded22fd30755161ca2086fec2852aff621449a666132e88ef6a9ef"
+    },
+    {
+      "file": "first-packed/p17.json",
+      "bytes": 536663,
+      "sha256": "2a71e673f7402fc69eb10b3564521e7076df08099c2c16bf3d35ff8d9f461d44"
+    },
+    {
+      "file": "first-packed/release-set.json",
+      "bytes": 8843,
+      "sha256": "ad171a87759d0817f0cfd934dddae48a27237a3784415b63f86cebc343ea5384"
+    },
+    {
+      "file": "first-packed/verify.log",
+      "bytes": 38595,
+      "sha256": "9f0dd10e1a1fb5c3fb39509254616518c7f567118cddeb15fd9065893a886798"
+    },
+    {
+      "file": "focused-unchanged/SUMMARY.json",
+      "bytes": 1574,
+      "sha256": "a8bdb5bd94c9d96a41e6fa29e2a97c5cc7b7e850e421739e8c0a712d3db7d295"
+    },
+    {
+      "file": "focused-unchanged/host-after.txt",
+      "bytes": 58284,
+      "sha256": "94acb37972e9fedb9bf4f8a384c11bba37d0e327398208c1eca3f5ec42cdae41"
+    },
+    {
+      "file": "focused-unchanged/host-before.txt",
+      "bytes": 58478,
+      "sha256": "c1d37fe210ff69f3e09b5c42257731c3c3a62c5e80743416cc94c6010d7ceb4a"
+    },
+    {
+      "file": "focused-unchanged/instrumentation.diff",
+      "bytes": 1325,
+      "sha256": "ef0a5b2a6e8b2afee6a228c5f3c7a009fb0181067d7379300ee577092ed27865"
+    },
+    {
+      "file": "focused-unchanged/result.json",
+      "bytes": 7807,
+      "sha256": "d56aa14d01541dd931b21bcce879e12e8eff4af4440e14c8db6dbb66fa9c929e"
+    },
+    {
+      "file": "focused-unchanged/run-drill.instrumented.mjs",
+      "bytes": 10471,
+      "sha256": "66d0bd343d30de7fb77e44da745b2b8753d9f492fe34bcd9db53925e37beb2c9"
+    },
+    {
+      "file": "focused-unchanged/run-drill.original.mjs",
+      "bytes": 10121,
+      "sha256": "1769d897ef779e88625e04bc0cc89a32b1f2c9e03ec598127371b34cb1a00875"
+    },
+    {
+      "file": "focused-unchanged/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "focused-unchanged/run.mjs",
+      "bytes": 990,
+      "sha256": "4945012b553dde7b586638ea4a944413665e0d1713d82d4c15bff947a59e1f8e"
+    },
+    {
+      "file": "focused-unchanged/source-hashes.json",
+      "bytes": 545,
+      "sha256": "3798b68353025c9cbffad3e103a9c4c33c03dae5b3e0981085e9177f1a18e0ab"
+    },
+    {
+      "file": "run-drill.original.mjs",
+      "bytes": 10121,
+      "sha256": "1769d897ef779e88625e04bc0cc89a32b1f2c9e03ec598127371b34cb1a00875"
+    }
+  ]
+}

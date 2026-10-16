@@ -197,3 +197,6 @@ docs/evidence/p17-nested-evidence/** -text
 
 # Exact pre-repair Node policy sources and hosted warning evidence.
 docs/archive/forma-maintenance-node-pin/** -text
+
+# Preserve original deployment-drill failures and actual browser controls.
+docs/archive/skew-failure-diagnostics/** -text
