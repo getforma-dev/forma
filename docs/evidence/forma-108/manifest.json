@@ -7,8 +7,8 @@
   "packedTarSha256": "8ebf5bf72b9a10636a5cb2e203d8882b852380547f43e8b287e7c884f05d553e",
   "files": {
     "README.md": {
-      "bytes": 10792,
-      "sha256": "27e60da1620cac8673dc6444f34c805630a7058c23f280572966f90edfd5e3b4"
+      "bytes": 11315,
+      "sha256": "1f9526bae6cc14994cf99dea680a9bbb4f398af5f992788ccf3b0bbafe91a666"
     },
     "browser-csp-corrected.log": {
       "bytes": 1469,
