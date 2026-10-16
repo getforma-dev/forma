@@ -1,0 +1,36 @@
+{
+  "originalCommit": "8bd8b65",
+  "mergedCommit": "44d1a3c7150f2e6a9a8f2c2fff0bd82b8c69aaea",
+  "files": [
+    {
+      "path": "packages/core/scripts/browser-bench.mjs",
+      "bytes": 28823,
+      "sha256": "3f9566fc5c13079f137b73f6840663d51ff62553fee579e526e64f6a806de3e4"
+    },
+    {
+      "path": "packages/core/bench/browser/README.md",
+      "bytes": 2026,
+      "sha256": "feff995fd91e12d2ee5f5fcb6c1e8014c47c1bf02aa0253abf4cbb4c09ecb67f"
+    },
+    {
+      "path": "packages/core/bench/browser/forma-query.fixture.jsx",
+      "bytes": 1889,
+      "sha256": "0287088d51789c0eaaf00db2bcf35e17ef6ca60146cdf677bdb8295628b9a446"
+    },
+    {
+      "path": "packages/core/bench/browser/forma.fixture.jsx",
+      "bytes": 2541,
+      "sha256": "ba3870763d2805072b4d40fb380bbf5dae6a52541f4b8636e29b4f5024830e9d"
+    },
+    {
+      "path": "packages/core/bench/browser/react-query.fixture.jsx",
+      "bytes": 2286,
+      "sha256": "9131caa39d1f51129ff131249ba948fc43bcaaf0b30602a4a987be5499deb08b"
+    },
+    {
+      "path": "packages/core/bench/browser/react.fixture.jsx",
+      "bytes": 2758,
+      "sha256": "8bf5484caaea41f48525875f3c53d5c79894634f98c169421f6a60feeca69dc8"
+    }
+  ]
+}

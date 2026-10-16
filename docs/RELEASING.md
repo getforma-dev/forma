@@ -204,7 +204,7 @@ bash scripts/install-deps.sh
 npm run build
 node scripts/release-set.mjs pack /absolute/path/to/empty-ds11 --dry-run
 bash scripts/release-artifacts.sh record /absolute/path/to/empty-ds11
-node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
+FORMA_PERFORMANCE_TARGET_TAG=v3.0.0-beta.1 node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
 ruby scripts/check-release-workflow.rb --self-test
 bash scripts/test-release-artifacts.sh
 ```
@@ -267,3 +267,9 @@ FORMA-144's later slices remain `pending` gates of the beta and the final.
 ## Finalized rendering in candidate templates
 
 The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates' later slices (FORMA-144 slices 2 and 3) remain pending gates of the beta and the final.
+
+### Per-release performance contract (FORMA-191)
+
+P17 `performance: measured-v1` requires20,000 native walks for each of five consumer-shaped pages in the application release profile, N5 allocation/time growth, public one-past budget refusals,20 cold applied-mobile Lighthouse13.5.0 runs on each of the tenant-login and100-island pages, independent actual event-response observations, and the archived founder comparison in all three browser engines. No timing row may be omitted. Native p99 throughput below1,500,000nodes/s or at/below half the prior DS12 rate fails. TBT p95 must be below200ms; responses must complete within500ms of first paint; no task may exceed50ms. The complete raw Lighthouse reports and configuration, per-walk durations, machine/profile, prior-record digest and client comparisons are embedded in DS12. They are measurements of a lab profile, not a phone claim.
+
+A dry-run P17 must set `FORMA_PERFORMANCE_TARGET_TAG` to its intended release (initially `v3.0.0-beta.1`); its result records `rehearsal: true`. Live P17 uses its actual tag and rejects a different override. The reader authenticates the previous unified GitHub Release record by its API SHA256 and validates exact package set, tag/commit, passed P17 and earlier publication. The first beta may record the verified absence of a performance contract in alpha.2 and establish the baseline. RC/final require a comparable prior DS12; failed fetches, corrupt records or incomplete advertised performance never mean absence.

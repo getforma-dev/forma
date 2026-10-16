@@ -105,3 +105,6 @@ docs/archive/FORMA-139-e2e-title/** -text
 
 # Exact native multi-entry failure products.
 /docs/archive/FORMA-186-native-multiple-entries/** -text
+
+# Original founder comparison source is preserved byte-for-byte on Windows.
+e2e/performance/archive/8bd8b65/** -text

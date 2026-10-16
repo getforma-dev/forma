@@ -17,8 +17,14 @@
     "check": "bash scripts/check.sh"
   },
   "devDependencies": {
+    "@babel/core": "7.29.7",
     "@playwright/test": "^1.62.1",
+    "@tanstack/react-query": "5.101.4",
+    "babel-plugin-react-compiler": "1.0.0",
     "esbuild": "^0.28.1",
+    "lighthouse": "13.5.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "serve": "^14.2.6",
     "tsup": "^8.5.1"
   },

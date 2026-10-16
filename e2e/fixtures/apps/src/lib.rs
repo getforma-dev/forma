@@ -5,6 +5,8 @@
 //! on a bad build, answer a coded render failure with a bare 500, serve the build's
 //! assets, and report the bound address once the socket is owned.
 
+pub mod bench_data;
+
 use std::net::Ipv4Addr;
 
 use axum::http::{header, HeaderValue, StatusCode};

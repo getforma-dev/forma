@@ -104,17 +104,23 @@ export function p17Time(seconds, limit = P17_BUDGET_SECONDS) {
 }
 
 /** The whole step: assemble the record P17 saves, failing when any figure is missing or over. */
-export function completeMeasurements({ machine, seconds, n2, shapes = [], expectedRoutes }) {
+export function completeMeasurements({ machine, seconds, n2, shapes = [], expectedRoutes, performance, performanceContract }) {
   assert(machine?.node && machine?.platform && machine?.profile, 'measurements: the machine and profile block is missing');
   const time = p17Time(seconds);
   assert(time.passed, `P17-time ${fmt(Math.round(seconds))} s over ${fmt(time.limitSeconds)} s`);
   assertN2(n2, expectedRoutes);
-  return { schema: 1, machine, p17: time, n2, shapes };
+  if (performanceContract) {
+    assert.equal(performance?.contract, performanceContract, "SR2: performance record missing");
+    assert.equal(performance.passed, true, "SR2: performance gate failed");
+  }
+  return { schema: 1, machine, p17: time, n2, shapes, ...(performance ? {performance} : {}) };
 }
 
 /** One line for the GitHub Release's notes. */
 export function releaseNotesLine(measurements) {
   const { p17, n2, machine } = measurements;
   const worst = n2.reduce((a, b) => (b.formaGzip > a.formaGzip ? b : a));
-  return `P17 ran ${Math.round(p17.seconds)} s of ${fmt(p17.limitSeconds)} s; the most Forma code on any fixture route is ${fmt(worst.formaGzip)} B of ${fmt(worst.limit)} B gzip -9 (${worst.app} ${worst.route}); measured on ${machine.runner}, ${machine.cpus} CPUs, Node ${machine.node}.`;
+  const performance = measurements.performance;
+  const extra = performance ? ` N1 slowest p99: ${fmt(Math.floor(Math.min(...performance.n1.map(row=>row.p99NodesPerSecond))))} nodes/s; N5 median paired ratio ${performance.n5.medianTimeRatio.toFixed(2)}; mobile worst p95 TBT ${Math.max(...performance.mobile.map(row=>row.p95TbtMs)).toFixed(1)} ms. All three client comparison engines and both public budget refusals are recorded; ${performance.machine.profile}.` : "";
+  return `P17 ran ${Math.round(p17.seconds)} s of ${fmt(p17.limitSeconds)} s; the most Forma code on any fixture route is ${fmt(worst.formaGzip)} B of ${fmt(worst.limit)} B gzip -9 (${worst.app} ${worst.route}); measured on ${machine.runner}, ${machine.cpus} CPUs, Node ${machine.node}.${extra}`;
 }
