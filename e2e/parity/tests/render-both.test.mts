@@ -7,13 +7,14 @@ import assert from 'node:assert/strict';
 import { chromium, type Browser } from '@playwright/test';
 import { summarize } from '../src/compare.mts';
 import { readCorpus, renderBoth } from '../src/render-both.mts';
+import type { PageComponent } from '../src/bundle.mts';
 
 let browser: Browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
 
-const run = (module: string, index: number, alterServerHtml?: (html: string) => string) =>
-  renderBoth({ module, index, seed: 'forma-183', engine: 'chromium', browser, ...(alterServerHtml ? { alterServerHtml } : {}) });
+const run = (module: string, index: number, alterServerHtml?: (html: string) => string, page?: PageComponent) =>
+  renderBoth({ module, index, seed: 'forma-183', engine: 'chromium', browser, ...(alterServerHtml ? { alterServerHtml } : {}), ...(page ? { page } : {}) });
 
 test('corpus.json names the fourteen js-emitter modules, each with an .ir, its entry folder and a page export', () => {
   const corpus = readCorpus();
@@ -61,7 +62,11 @@ test('a server output with one attribute\'s text altered fails P1 naming the fix
 });
 
 test('a twin core cannot build is the report\'s error verdict, not a throw', async () => {
-  const report = await run('list-same-source', 0);
+  // F1 (BUILD-616): the corpus source now passes a function; the archived original passed the
+  // array itself, which core's createList calls, so it stays this test's twin that cannot build.
+  const report = await run('list-same-source', 0, undefined, {
+    file: 'docs/archive/2026-10-15-pre-list-source/sources/list-same-source/page.ts', exportName: 'ListPage', props: 'none',
+  });
   assert.equal(report.verdict, 'error');
   assert.match(report.error ?? '', /items is not a function/);
   assert.ok(report.server.html?.includes('<!--f:l'), 'the server side rendered and is kept');
