@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core
+
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  00:59:58
+   Duration  623ms (transform 219ms, setup 0ms, import 269ms, tests 88ms, environment 177ms)
+

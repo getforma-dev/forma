@@ -141,3 +141,6 @@ docs/archive/FORMA-108-browser-migration/** -text
 
 # Original strict qualifier refusal, with byte-exact actual JSON/logs.
 docs/archive/FORMA-108-mutation-reporting/** -text
+
+# Exact explicit-runtime qualification reports and logs.
+docs/evidence/forma-108/** -text
