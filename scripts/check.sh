@@ -106,5 +106,10 @@ step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
 npx tsc --noEmit -p e2e/parity
 node --test "e2e/parity/tests/*.test.mts"
 
+step "value rules: deterministic generator, actual native metadata, 1,000 comparisons/rule"
+node --test e2e/value-rules/generate.test.mjs
+node e2e/value-rules/metadata.mjs --engine chromium
+node e2e/value-rules/run.mjs --count 1000
+
 echo
 echo "check: every gate passed in $(( $(date +%s) - started ))s"

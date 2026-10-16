@@ -698,7 +698,7 @@ type NsTree = [string, Record<string, unknown> | null, ...unknown[]];
  * parser has no MathML and keeps HTML integration points' content in SVG, so
  * the parsed side is the browsers', not happy-dom's.
  */
-const NS_VECTORS = (JSON.parse(readFileSync(resolve(__dirname, 'vectors/namespaces.json'), 'utf8')) as {
+const NS_VECTORS = (JSON.parse(readFileSync(resolve(__dirname, '../../../../crates/forma-ir/tests/fixtures/parity/namespaces.json'), 'utf8')) as {
   vectors: Array<{ name: string; server: string; tree: NsTree; namespaces: string[] }>;
 }).vectors;
 
