@@ -189,7 +189,6 @@ The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found 
 | | Case | Kind | Clears it |
 |---|---|---|---|
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
-| F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | FORMA-016: core's `createShow` takes a string or number branch as a text node |
 
 F4 can never become equal: the server has no value to write. In warning mode the compiler reports
 BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
@@ -250,3 +249,5 @@ The key check against the expected key text (`data-forma-key` is lifted from the
 expected text per row is FORMA-181's `canonicalKeyText` once rows are mapped to their list), the
 switch to blocking (when step 1's expected list is empty for P1 and P2), and step 3's fixture
 applications (FORMA-188).
+
+FORMA-016 verification on the expanded corpus removes F5 only after an actual unexpected pass: all 28 typed modules and 118 states complete, with props-contract text branches agreeing. Historical step-1 findings above remain the discovery record.
