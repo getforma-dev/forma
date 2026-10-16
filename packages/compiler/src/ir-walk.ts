@@ -94,11 +94,14 @@ const SOURCE_CLIENT = SLOT_SOURCE_CLIENT;
 
 /** Convert a static literal to its string representation for an attribute value. */
 function staticLiteralToAttrString(expr: t.Expression, key: string): string | null {
+  if (HTML_BOOLEAN_ATTRIBUTES.has(key)) {
+    if (t.isStringLiteral(expr) || t.isNumericLiteral(expr) || t.isBooleanLiteral(expr)) return expr.value ? '' : null;
+    return null;
+  }
   if (t.isStringLiteral(expr)) return expr.value;
   if (t.isNumericLiteral(expr)) return String(expr.value);
-  // Rule 6's attribute table: `true` is bare on an HTML boolean attribute and
-  // the word "true" on any other, as h() writes it (finding F2).
-  if (t.isBooleanLiteral(expr)) return expr.value ? (HTML_BOOLEAN_ATTRIBUTES.has(key) ? '' : 'true') : null;
+  // Non-boolean attributes write the word, as h() does (finding F2).
+  if (t.isBooleanLiteral(expr)) return expr.value ? 'true' : null;
   if (t.isNullLiteral(expr)) return null;
   return null;
 }
@@ -377,7 +380,8 @@ function evalToText(val: EvalValue): string {
  * it is also, unavoidably, what an EMPTY STRING default has to encode, because
  * the slot entry has no way to distinguish "" from absent. In text the two
  * render alike (the empty holder); an attribute whose server value is "" is
- * therefore not bound to a slot but written as a static `attr=""`
+ * therefore not bound to a slot: a non-boolean attribute is static `attr=""`,
+ * while an HTML boolean attribute is omitted
  * (emptyServerValue below; FORMA-182 finding F3).
  */
 function defaultBytesFor(val: EvalValue | undefined): Uint8Array {
@@ -388,9 +392,10 @@ function defaultBytesFor(val: EvalValue | undefined): Uint8Array {
 /**
  * Whether a client signal's server value is the empty string. Its slot cannot
  * say so (zero default bytes are "no default", which the walker reads as
- * null and omits), so an attribute bound to it is written as a static
- * `name=""`, as are attributes whose value evaluates to "" (FORMA-182 finding
- * F3, rule 6's attribute table): a client slot is never filled on the server,
+ * null and omits), so a non-boolean attribute bound to it is written as a static
+ * `name=""` (an HTML boolean attribute is omitted). The same applies to values
+ * that evaluate to "" (FORMA-182 finding F3, rule 6's attribute table):
+ * a client slot is never filled on the server,
  * so its default is the value the server writes.
  * Verified by: packages/compiler/tests/value-rule-6-attributes.test.ts
  */
@@ -1127,7 +1132,7 @@ export function walkHTree(
       // signal merely because the legacy signal scope can find that name.
       const directSignal = t.isIdentifier(val) ? closedEnv(walkCtx).signal(val) : undefined;
       if (directSignal && emptyServerValue(directSignal.default)) {
-        staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
         continue;
       }
       if (directSignal) {
@@ -1189,16 +1194,17 @@ export function walkHTree(
         const binding = sigName ? lookupSignal(walkCtx.signalScope, sigName) : undefined;
         let slotId: number;
         if (binding && emptyServerValue(binding.default)) {
-          staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+          if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
           continue;
         }
         if (binding) {
           slotId = binding.slotId;
           ctx.recordSlotRef(slotId);
         } else {
-          const evaluated = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          const rawDefault = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          const evaluated = HTML_BOOLEAN_ATTRIBUTES.has(key) && rawDefault !== undefined ? isTruthy(rawDefault) : rawDefault;
           if (evaluated === '') {
-            staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+            if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
             continue;
           }
           if (evaluated !== undefined && evaluated !== null) {
@@ -1232,8 +1238,11 @@ export function walkHTree(
       // Module-level string const as attr value: d: SIL_BODY → static attribute
       if (t.isIdentifier(val) && walkCtx.stringConstants?.has(val.name)) {
         const keyIdx = ctx.addString(key);
-        const valIdx = ctx.addString(walkCtx.stringConstants.get(val.name)!);
-        staticAttrs.push({ keyIdx, valIdx });
+        const value = walkCtx.stringConstants.get(val.name)!;
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key) || value !== '') {
+          const valIdx = ctx.addString(HTML_BOOLEAN_ATTRIBUTES.has(key) ? '' : value);
+          staticAttrs.push({ keyIdx, valIdx });
+        }
         continue;
       }
 
@@ -1247,9 +1256,10 @@ export function walkHTree(
       // diagnostic, so the attribute shipped with no value and nothing said
       // so. That is what stripped the tooltips off ksx's controls.
       // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a concatenated attribute value into an SSR default"
-      const evaluated = evalNode(val, evalEnv(walkCtx));
+      const rawDefault = evalNode(val, evalEnv(walkCtx));
+      const evaluated = HTML_BOOLEAN_ATTRIBUTES.has(key) && rawDefault !== undefined ? isTruthy(rawDefault) : rawDefault;
       if (evaluated === '') {
-        staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
         continue;
       }
       if (evaluated !== undefined && evaluated !== null) {

@@ -145,3 +145,5 @@ inputs use typed handlers and identified source lock seeds; packed candidates
 carry actual archive checksums. Island adoption remains a later slice.
 
 - [Signal defaults before explicit closed constants](2026-10-15-state-signal-defaults/README.md): original array/object warning and handler-injection advice, replaced by FORMA-103 native constant provenance.
+
+- [Boolean attribute review originals](2026-10-15-boolean-attribute-review/README.md): FORMA-182 native/core tests before scalar-presence correction, authenticated at b5f1905.

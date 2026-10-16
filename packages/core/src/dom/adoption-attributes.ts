@@ -31,7 +31,8 @@ export function prepareAttribute(element:Element,key:string,value:unknown):Prepa
     // anywhere in a URL attribute refuses (the walker does the same).
     // Verified by: src/dom/__tests__/normalize-text.test.ts > "adoption attribute expectations normalize $id before comparison and later writes"
     // Rule 6's attribute table: `true` is bare only on an HTML boolean attribute.
-    const raw=next===true&&BOOLEAN_ATTRS.has(qualified)?'':String(next),result=normalizeDomText(raw);
+    if(BOOLEAN_ATTRS.has(qualified))return next?'':null;
+    const raw=String(next),result=normalizeDomText(raw);
     return isUnsafeAttrWrite(element.localName,qualified,raw)?null:result;
   };
   const initial=normalize(value);

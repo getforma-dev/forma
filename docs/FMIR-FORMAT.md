@@ -234,7 +234,7 @@ stop being named after variables); until it does, the bytecode's operands are sl
 table stays required (Q6 settled). Every `name_str_idx` indexes strings. Every nonempty default
 must be valid UTF-8 and parse for its slot type at load (`LOAD-103`), rather than becoming Null
 on the first render. Empty bytes mean "no default" for every type, so a CLIENT Text slot
-cannot carry the empty string: the compiler writes an attribute whose server value is `""` as a
+cannot carry the empty string: the compiler writes a non-boolean attribute whose server value is `""` as a
 static attribute instead of a `DYN_ATTR` over such a slot (FORMA-182 finding F3,
 `docs/parity-rules.md` rule 6's attribute table), and in text the two render alike. Text accepts any UTF-8;
 Bool accepts exactly `true` or `false`; Number accepts finite decimal text with optional sign,

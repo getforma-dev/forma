@@ -200,8 +200,8 @@ for (const { id, ready, expected } of booleans.idiom) {
 }
 // Rule 6's attribute table (findings F2, F3): presence only on an HTML boolean
 // attribute, the value's string everywhere else, `true` as "true", "" a value.
-interface AttributeVector { id: string; attribute: string; value: boolean | string | null; html: string; dom: string | null }
-const wireOf = (value: boolean | string | null): Wire => value === null ? { absent: 'null' } : typeof value === 'boolean' ? { b: value } : { s: value };
+interface AttributeVector { id: string; attribute: string; value: boolean | string | number | null; html: string; dom: string | null }
+const wireOf = (value: boolean | string | number | null): Wire => value === null ? { absent: 'null' } : typeof value === 'boolean' ? { b: value } : typeof value === 'number' ? { n: Object.is(value, -0) ? '-0' : String(value) } : { s: value };
 for (const { id, attribute, value, html } of vectors<{ values: AttributeVector[] }>('attributes.json').values) {
   for (const reactive of [false, true]) {
     test(`rule 6 attribute ${id} (${reactive ? 'reactive' : 'static'}): the walker's ${html.trim() || 'omission'} adopts without a write`, async ({ page }) => {

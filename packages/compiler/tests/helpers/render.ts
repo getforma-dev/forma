@@ -44,6 +44,7 @@ const OP_SHOW_IF      = 0x07;
 const OP_SHOW_ELSE    = 0x08;
 
 const TYPE_BOOL = 0x02;
+const TYPE_NUMBER = 0x03;
 
 /** U+200B, written as an escape so it survives any editor that strips
  *  invisible characters. The walkers emit it for an empty DYN_TEXT so the
@@ -51,7 +52,7 @@ const TYPE_BOOL = 0x02;
 export const ZWSP = '\u200B';
 
 /** The value a slot holds when nothing has been injected: its own default. */
-type SlotValue = { kind: 'null' } | { kind: 'bool'; value: boolean } | { kind: 'text'; value: string };
+type SlotValue = { kind: 'null' } | { kind: 'bool'; value: boolean } | { kind: 'text'; value: string } | { kind: 'number'; value: number };
 
 function defaultValue(slot: Slot): SlotValue {
   // Empty default bytes mean "no default": the reader leaves the slot Null.
@@ -61,6 +62,7 @@ function defaultValue(slot: Slot): SlotValue {
     if (slot.default === 'false') return { kind: 'bool', value: false };
     return { kind: 'null' };
   }
+  if (slot.typeHint === TYPE_NUMBER) return { kind: 'number', value: Number(slot.default) };
   return { kind: 'text', value: slot.default };
 }
 
@@ -157,15 +159,19 @@ export function renderDefaults(binary: Uint8Array, options: RenderOptions = {}):
           pos += 6;
           if (!pendingTagClose) break;
           // An HTML boolean attribute is ON whenever it is present: absent for
-          // false/null, bare for true; any other attribute takes the word
+          // falsy scalars, bare for truthy scalars; any other attribute takes the word
           // "true" (rule 6's attribute table, as the walker). An empty string
           // is a VALUE (`value=""`), not an absence.
           if (value.kind === 'null') break;
-          if (value.kind === 'bool') {
-            if (value.value) out += BOOLEAN_ATTRIBUTES.has(key) ? ` ${key}` : ` ${key}="true"`;
+          if (BOOLEAN_ATTRIBUTES.has(key)) {
+            if (value.value) out += ` ${key}`;
             break;
           }
-          out += ` ${key}="${escapeAttr(value.value)}"`;
+          if (value.kind === 'bool') {
+            if (value.value) out += ` ${key}="true"`;
+            break;
+          }
+          out += ` ${key}="${escapeAttr(String(value.value))}"`;
           break;
         }
         case OP_SHOW_IF: {
@@ -177,6 +183,7 @@ export function renderDefaults(binary: Uint8Array, options: RenderOptions = {}):
           // Null is false: a slot with no default renders the ELSE branch.
           const condition = value.kind === 'bool' ? value.value
             : value.kind === 'text' ? value.value !== ''
+            : value.kind === 'number' ? Boolean(value.value)
             : false;
 
           const thenStart = pos;

@@ -380,7 +380,9 @@ boolean set (core's `BOOLEAN_ATTRS`: `async`, `autofocus`, `autoplay`,
 `checked`, `controls`, `default`, `defer`, `disabled`, `formnovalidate`,
 `hidden`, `ismap`, `loop`, `multiple`, `muted`, `nomodule`, `novalidate`,
 `open`, `playsinline`, `readonly`, `required`, `reversed`, `selected`) is
-presence: `true` writes it bare, `false` and `null` omit it. Every other
+presence according to scalar truthiness: `true`, a nonempty string (including
+`"false"` and `"0"`), or a nonzero number writes it bare; `false`, `null`,
+`undefined`, `""`, `0` and `-0` omit it. Every other
 attribute, `data-*`, `aria-*`, `class`, `title` and the rest, is the value's
 string: `true` is the word `"true"`, a string is itself, the empty string
 included, and `false` and `null` omit it. Names are matched as written,
@@ -393,7 +395,7 @@ adoption's expectations and later writes
 on `data-live` or `aria-pressed` was bare from the walker and adoption and
 `"true"` from `h()`'s reactive writer, and bare again from its static one
 (F2; FORMA-188 saw `aria-pressed=""`, which ARIA reads as no value). An
-attribute whose server value is the empty string is written: a client slot
+non-boolean attribute whose server value is the empty string is written: a client slot
 cannot carry an empty default (zero default bytes are "no default", which the
 walker reads as `null`), so the compiler writes such an attribute as a static
 `name=""` (a signal created with `''`, or a value that evaluates to `''`);

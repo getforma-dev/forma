@@ -14,17 +14,17 @@ import { createSignal } from '../../reactive/signal.js';
 import { createRoot } from '../../reactive/root.js';
 import { readVectors } from './value-rule-vectors.js';
 
-type Value = boolean | string | null;
+type Value = boolean | string | number | null;
 interface ValueVector { id: string; attribute: string; value: Value; html: string; dom: string | null }
 const table = readVectors<{ booleanAttributes: string[]; values: ValueVector[] }>('attributes.json');
 /** A value that differs from `value` in what it writes, to start a reactive binding from. */
-const other = (value: Value): Value => (value === 'other' ? 'another' : 'other');
+const other = (value: Value, attribute: string): Value => table.booleanAttributes.includes(attribute) ? !value : value === 'other' ? 'another' : 'other';
 
 describe('rule 6 attribute table: one rule on every client writer', () => {
   it.each(table.values)('$id: h() static and reactive and adoption write $dom', ({ attribute, value, dom }) => {
     expect(h('input', { id: 'ok', [attribute]: value }).getAttribute(attribute)).toBe(dom);
     createRoot(() => {
-      const [current, set] = createSignal<Value>(other(value));
+      const [current, set] = createSignal<Value>(other(value, attribute));
       const element = h('input', { id: 'ok', [attribute]: current });
       set(value);
       expect(element.getAttribute(attribute)).toBe(dom);
@@ -34,7 +34,7 @@ describe('rule 6 attribute table: one rule on every client writer', () => {
     const prepared = prepareAttribute(target, attribute, value);
     expect(prepared.initial).toBe(dom);
     target.setAttribute(attribute, 'stale');
-    prepared.write(other(value));
+    prepared.write(other(value, attribute));
     prepared.write(value);
     expect(target.getAttribute(attribute)).toBe(dom);
   });

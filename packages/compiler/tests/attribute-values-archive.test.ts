@@ -30,3 +30,12 @@ describe('archived pre-attribute-values corpus outputs', () => {
     expect(Object.keys(ledger.files).length).toBe(Object.keys(manifest.sha256).length);
   });
 });
+
+it('keeps the boolean-attribute review originals byte-exact', () => {
+  const folder = resolve(ROOT, 'docs/archive/2026-10-15-boolean-attribute-review');
+  const original = JSON.parse(readFileSync(join(folder, 'manifest.json'), 'utf8')) as { files: Record<string, Hash> };
+  expect(Object.keys(original.files).sort()).toEqual(['value-rule-6-attributes.test.ts', 'walker.rs']);
+  for (const [name, expected] of Object.entries(original.files)) {
+    expect(hash(join(folder, name)), name).toEqual({ bytes: expected.bytes, sha256: expected.sha256 });
+  }
+});

@@ -2517,8 +2517,16 @@
   "id": "adoption/true-bare-off-boolean-set",
   "file": "src/dom/adoption-attributes.ts",
   "tags": [],
-  "find": "next===true&&BOOLEAN_ATTRS.has(qualified)?''",
-  "replace": "next===true?''",
+  "find": "const raw=String(next)",
+  "replace": "const raw=next===true?'':String(next)",
   "note": "adoption expects and writes a bare data-*/aria-* attribute for true where the walker and h() write \"true\" (FORMA-182 rule 6's attribute table, F2)"
+ },
+ {
+  "id": "adoption/boolean-falsy-presence",
+  "file": "src/dom/adoption-attributes.ts",
+  "tags": [],
+  "find": "if(BOOLEAN_ATTRS.has(qualified))return next?'':null;",
+  "replace": "if(BOOLEAN_ATTRS.has(qualified))return '';",
+  "note": "An empty string or zero enables a boolean attribute during adoption instead of matching fresh core omission (FORMA-182 F3 review)."
  }
 ]
