@@ -212,3 +212,7 @@ docs/archive/skew-expected-reload/** -text
 # Original Playwright graph and actual transport investigation retain exact bytes.
 docs/archive/playwright-firefox-channel/** -text
 docs/evidence/playwright-firefox-channel/** -text
+
+# Preserve the original FORMA-116 rollout and approved L-60 disposition evidence.
+docs/archive/forma-116-live-deferral/** -text
+docs/evidence/forma-116-live-deferral/** -text

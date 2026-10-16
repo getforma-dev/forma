@@ -1,0 +1,26 @@
+{
+  "base": "9c98162c52156b52b8239879ecc8614e653ffffb",
+  "decision": "L-60 (2026-10-16)",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3185,
+      "sha256": "98ebddc637973e0b173c0305be63c7d7ad0467b3b218ce207bc99aed47f2225f"
+    },
+    {
+      "path": "after.log",
+      "bytes": 1014,
+      "sha256": "f7437a3ba695c1a51e32ae643b0d11ee2fb602d7b77ac059647d5a94910f671a"
+    },
+    {
+      "path": "preserved-source.json",
+      "bytes": 8726,
+      "sha256": "19a796ca8a1f9f25c78acd6867a9302defc555b3224a753c20dd38389d843fde"
+    },
+    {
+      "path": "result.json",
+      "bytes": 484,
+      "sha256": "c7caf438ae368bb5040274731157ed2047ec50724c6ce570b9a5be03a2d6e430"
+    }
+  ]
+}

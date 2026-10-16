@@ -1,10 +1,22 @@
-# FORMA-116: concrete rollout and remaining human actions
+# FORMA-116: retained source controls and deferred live rollout
 
 This proposal applies only to `getforma-dev/forma`. It does not modify an
 application repository or reinstate the declined M1 environment approval.
 Source tests and a local outbox are not evidence of enabled GitHub protections
-or delivered messages. Until the rollout below is completed, FORMA-116 remains
-open. All publishing remains the existing tokenless trusted-publishing workflow.
+or delivered messages. L-60 (approved 2026-10-16) defers the live identity,
+new protection enforcement and external alert rollout beyond 3.0. The reviewed
+source and actual SR14 mutation probes remain in the 3.0 RC gate; that gate is
+still pending until its source/evidence acceptance is recorded. The deferred
+criteria are not passed. All publishing remains the existing tokenless
+trusted-publishing workflow.
+
+The founder accepted that agents continue using the founder GitHub identity,
+without GitHub-enforced separation of their administrator/release authority,
+and that external alert delivery remains unavailable. Existing tag rules,
+independent agent review, every applicable CI job, merge commits only, no
+retagging, D14, all product/performance gates and the real RC soak remain required.
+See [the release disposition](../release/3.0-GATE-DISPOSITIONS.md#live-governance-rollout-l-60-2026-10-16)
+and [the evidence addendum](../evidence/forma-116-live-deferral/README.md).
 
 ## Current observation
 
@@ -16,10 +28,11 @@ creation/update/deletion, with an administrator-role bypass. Both registry
 publishing environments exist. Their lack of human reviewers is the previously
 accepted D3 decision, not an additional blocker.
 
-## Identity and branch protection
+## Future identity and branch protection rollout
 
-The founder must create the distinct agent identity, grant only the repository
-write access it needs, and configure its fine-grained credential with **no
+When the founder resumes the deferred rollout, create the distinct agent
+identity, grant only the repository write access it needs, and configure its
+fine-grained credential with **no
 Workflows or Administration permission**, expiry at most 30 days and rotation
 on suspected exposure. Do not post the credential in a ticket, terminal log or
 chat. Move agent sessions to that identity using the credential manager. These
@@ -36,11 +49,15 @@ path-filtered workflow pending on unrelated changes. The release lead still
 requires **every applicable CI job** to be green, beyond the two server-enforced
 baseline contexts in this proposal.
 
-Land CODEOWNERS and enable protection together after the existing release
-workflow changes have landed, following PLAN P3/D4. From that point, any PR
-touching an owned path waits for the founder's daily batch. An agent cannot
-approve as the founder. Existing PRs authored under the founder identity cannot
-be self-approved by that same identity; resolve their rollout order before
+L-60 supersedes PLAN P3/D4's rollout timing for 3.0. The CODEOWNERS mapping may
+land with the reviewed source; it does not itself enable required code-owner
+review or establish a separate agent identity, though GitHub may request reviews
+from the listed owner. Do not apply the proposed protection as part of this
+source change. At the later coordinated rollout, enable protection after the
+identity transition and then use the founder's daily review batch for owned
+paths. An agent under the distinct identity cannot approve as the founder.
+Existing PRs authored under the founder identity cannot be self-approved by that
+same identity; resolve their rollout order before
 enabling the rules. Do not fake a tag-denial test while authenticated as the
 administrator who is allowed to bypass the tag rules.
 
@@ -50,10 +67,13 @@ code-owned merge; include a copied release workflow. Confirm the existing tag
 rules still allow only the founder's admin role, and re-read organization and
 repository administrators. Never move an existing tag for a control.
 
-## Detective alerts
+## Retained detectors and future external alert delivery
 
 The implementation names each source and writes JSON with `delivered:false`.
-It never sends a notification or changes settings itself. Configure the external
+It never sends a notification or changes settings itself. The internal Actions
+collector can run on its declared create/push triggers and six-hour schedule
+when effective; this is read-only collection, not the deferred external npm
+scheduler or alert delivery. At the future rollout, configure the external
 delivery adapter and founder destination before claiming SR26:
 
 | Change | Source | Implemented detector |
@@ -95,7 +115,7 @@ trusted-publication receipt and its actual external alert/email.
 Seeded local tests exercise all five GitHub change kinds, signature tampering,
 incomplete inputs and npm integrity changes. **Actual one-per-kind delivery,
 the founder destination, webhook hosting/secret, external npm scheduler and
-crates.io email receipt remain human/configuration gates.**
+crates.io email receipt remain deferred future acceptance, not 3.0 release gates.**
 
 ## Mutation qualification
 
