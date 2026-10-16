@@ -10,6 +10,7 @@
 
 import { createUnownedRoot } from 'forma/reactive';
 import { contentNs, withNamespace } from './namespace.js';
+import { skewed } from './skew.js';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -21,7 +22,8 @@ import { contentNs, withNamespace } from './namespace.js';
  * All effects created during the component's render are tracked via
  * `createRoot()` and automatically disposed when unmount is called.
  *
- * `data-forma-ssr` on the container throws `FORMA_E_MOUNT_SSR` before
+ * A deployment mismatch preserves the container and returns an inert disposer.
+ * Otherwise `data-forma-ssr` on the container throws `FORMA_E_MOUNT_SSR` before
  * component/root/effect creation and without changing the server DOM.
  * Use compiler-declared `activateIslands` for SSR interaction. Normal Browser
  * mounting and the separate public `hydrateIsland` API are unchanged.
@@ -48,6 +50,8 @@ export function mount(
   if (!target) {
     throw new Error(`mount: container not found — "${container}"`);
   }
+
+  if (skewed(target)) return () => {};
 
   if (target.hasAttribute('data-forma-ssr')) {
     throw new Error('FORMA_E_MOUNT_SSR: mount cannot render a server-marked root; use declared activateIslands');

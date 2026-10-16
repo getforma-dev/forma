@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Deployment identity guard — FORMA-186 S4
+
+- `activateIslands` and `mount` compare the consuming build identity against forma-server's actual root before any component, preflight or trigger. A mismatch preserves served content, marks island hosts as skew, and dispatches the cancelable Document event `forma:skew` with `{ page, bundle, reload }`. Reload happens at most once per full page identity with working session storage; cancellation or unavailable storage leaves the page inert. Absent identities remain unchecked; direct `hydrateIsland` stays caller owned. Published artifacts retain the guarded free `__FORMA_BUILD__` identifier for the consuming build to define.
+
 ### Shared attribute-name and URL policy — FORMA-140
 
 - Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
