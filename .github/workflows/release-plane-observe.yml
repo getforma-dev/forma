@@ -4,7 +4,7 @@ name: Release plane observations
 on:
   create:
   push:
-    branches: [main]
+    branches: [main, codex/forma-upgrade-review]
   schedule:
     - cron: '17 */6 * * *'
   workflow_dispatch:

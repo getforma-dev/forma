@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
 
 export const REPOSITORY='getforma-dev/forma';
-export const NPM_PACKAGES=['@getforma/core','@getforma/compiler','@getforma/build','create-forma-app'];
+export const NPM_PACKAGES=['@getforma/core','@getforma/compiler','@getforma/build','@getforma/create-app'];
 export const ownedPath=path=>path.startsWith('.github/') || [
  'crates/forma-ir/src/walker.rs','crates/forma-ir/src/text.rs',
  'crates/forma-server/src/csp.rs','crates/forma-server/src/template.rs',

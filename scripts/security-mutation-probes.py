@@ -39,13 +39,24 @@ def mutate(source, probe):
     return source[:start] + body.replace(probe['old'], probe['new']) + source[end:]
 
 
-def outcome(code, output, name):
+def assertion_markers(probe):
+    if probe['id'] == 'name-tail':
+        return ['assertion failed: matches!', 'IrError::InvalidName']
+    if probe['id'] == 'script-policy':
+        return ["without strict-dynamic the 'self' host-source is still honoured"]
+    return ['assertion `left == right` failed']
+
+
+def outcome(code, output, name, markers):
     """Timeouts, compiler errors, zero tests and a different failure never count."""
     if re.search(r'^error(?:\[|: could not compile)', output, re.M) or 'running 1 test\n' not in output:
         return 'invalid'
     if code == 0 and f'test {name} ... ok' in output and '1 passed; 0 failed;' in output:
         return 'pass'
-    if code == 101 and f'test {name} ... FAILED' in output and 'panicked at' in output and '0 passed; 1 failed;' in output:
+    named = re.search(r'^test ' + re.escape(name) + r' \.\.\.(?: FAILED|\s*$)', output, re.M)
+    failed = f'test {name} ... FAILED' in output or re.search(r'^FAILED$', output, re.M)
+    panic = re.search(r"^thread '" + re.escape(name) + r"'(?: \(\d+\))? panicked at ", output, re.M)
+    if code == 101 and named and failed and panic and all(marker in output for marker in markers) and '0 passed; 1 failed;' in output:
         return 'killed'
     return 'invalid'
 
@@ -101,7 +112,7 @@ def main():
                     source.write_text(changed if mode == 'mutant' else original)
                     log = out / (probe['id'] + '-' + mode + '.log')
                     code, output = execute(command, scratch, log, env)
-                    verdict = outcome(code, output, probe['test'])
+                    verdict = outcome(code, output, probe['test'], assertion_markers(probe))
                     row['runs'].append(dict(mode=mode, exit=code, verdict=verdict, log=log.name, sha256=hashlib.sha256(log.read_bytes()).hexdigest()))
                     save()
                     if verdict != ('killed' if mode == 'mutant' else 'pass'):

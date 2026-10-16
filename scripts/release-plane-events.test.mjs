@@ -1,8 +1,13 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import {REPOSITORY,NPM_PACKAGES,classifyEvent,signedWebhook,environmentSnapshot,settingsAlerts,registrySnapshot,registryAlerts} from './release-plane-events.mjs';
 const base={repository:{full_name:REPOSITORY},sender:{login:'operator'}};
+test('the outside registry inventory covers exactly the four actual published npm packages',()=>{
+ const actual=['core','compiler','build','create-app'].map(dir=>JSON.parse(readFileSync(new URL(`../packages/${dir}/package.json`,import.meta.url),'utf8')).name);
+ assert.deepEqual([...NPM_PACKAGES].sort(),actual.sort());
+});
 test('five seeded release-plane changes produce their specific alert',()=>{
  const tag=classifyEvent('create',{...base,ref_type:'tag',ref:'v3.0.0-beta.1'},{delivery:'tag-1'});
  const workflow=classifyEvent('push',{...base,ref:'refs/heads/main'},{delivery:'push-1',changedPaths:['.github/workflows/copied-release.yml']});
