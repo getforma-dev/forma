@@ -23,7 +23,7 @@ const sources = new WeakMap<object, Source<unknown>>();
 
 /** Private nominal lookup: plain objects with similarly named methods are never a collection. */
 export function keyedRowsSource<T>(value: unknown): Source<T> | undefined {
-  return value !== null && typeof value === 'object' ? sources.get(value) as Source<T> | undefined : undefined;
+  return sources.get(value as object) as Source<T> | undefined;
 }
 
 function reject(reason: string): never { throw new TypeError('createKeyedRows: ' + reason); }
@@ -40,7 +40,7 @@ function canonical(value: unknown): string {
  * Inputs are plain data: direct external mutation is not a notifying replacement.
  */
 export function createKeyedRows<T>(initial: readonly T[], keyFn: (item: T) => string | number): KeyedRows<T> {
-  let validating = false;
+  let entries = new Map<string, Entry<T>>(), validating = false;
   const validate = <R>(read: () => R): R => {
     if (validating) reject('cannot reenter validation');
     validating = true;
@@ -48,27 +48,27 @@ export function createKeyedRows<T>(initial: readonly T[], keyFn: (item: T) => st
   };
   const candidate = (items: readonly T[]) => validate(() => {
     if (!Array.isArray(items)) reject('expected dense array');
-    const copy: T[] = [], keys: string[] = [], seen = new Set<string>();
-    // Check the source before copying: slice would fill a hole from an inherited
-    // indexed property and incorrectly turn a sparse input into an admitted array.
+    const copy: T[] = [], planned = new Map<string, Entry<T>>(), changed: [Entry<T>, T][] = [];
+    // Copy every own entry before calling any key function. Inherited indices
+    // must not conceal sparse input, and a key callback must not change later input.
     for (let i = 0, length = items.length; i < length; i++) {
       if (!Object.hasOwn(items, i)) reject('expected dense array');
       copy.push(items[i]!);
     }
-    for (let i = 0; i < copy.length; i++) {
-      const key = canonical(keyFn(copy[i]!));
-      if (seen.has(key)) reject('duplicate key');
-      seen.add(key); keys.push(key);
+    for (const item of copy) {
+      const key = canonical(keyFn(item));
+      if (planned.has(key)) reject('duplicate key');
+      let prior = entries.get(key);
+      if (!prior) {
+        // Raw data signals grant no compiler capture or input writeback authority.
+        // The public item accessor never exposes their overloaded setter.
+        const value = signal(item);
+        prior = { key, current: item, value, get: () => value() };
+      } else if (!Object.is(prior.current, item)) changed.push([prior, item]);
+      planned.set(key, prior);
     }
-    return { items: copy, keys };
+    return { planned, changed };
   });
-  const entry = (key: string, current: T): Entry<T> => {
-    // Internal data signals are deliberately not createSignal sites. They grant
-    // no compiler capture/enrollment or editable-control writeback authority.
-    const value = signal(current);
-    return { key, current, value, get: () => value() };
-  };
-  let entries = new Map<string, Entry<T>>();
   const ordered = signal<Entry<T>[]>([]);
   const handle = Object.freeze({
     set(key: string | number, next: T): void {
@@ -82,13 +82,7 @@ export function createKeyedRows<T>(initial: readonly T[], keyFn: (item: T) => st
       selected.current = next; selected.value(next);
     },
     replace(nextItems: readonly T[]): void {
-      const next = candidate(nextItems), planned = new Map<string, Entry<T>>();
-      const changed: [Entry<T>, T][] = [];
-      for (let i = 0; i < next.items.length; i++) {
-        const key = next.keys[i]!, item = next.items[i]!, prior = entries.get(key);
-        planned.set(key, prior ?? entry(key, item));
-        if (prior && !Object.is(prior.current, item)) changed.push([prior, item]);
-      }
+      const { planned, changed } = candidate(nextItems);
       // No user key callback remains. Commit the map and every retained value
       // before flushing any observer, so shared views see one coherent replacement.
       entries = planned;
