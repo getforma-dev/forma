@@ -55,9 +55,13 @@ function text(value:unknown):string {
   return refuse();
 }
 function ownProps(props:Record<string,unknown>):[string,unknown][] {
-  return Object.entries(Object.getOwnPropertyDescriptors(props)).map(([key,property])=>{
-    if(!('value'in property))refuse();return [key,property.value];
-  });
+  // Snapshot every descriptor before validating, then reuse these private pairs.
+  const entries:[string,unknown][]=Object.entries(Object.getOwnPropertyDescriptors(props));
+  for(const pair of entries){
+    const property=pair[1] as PropertyDescriptor;
+    if(!('value'in property))refuse();pair[1]=property.value;
+  }
+  return entries;
 }
 
 function listenerObject(value:unknown):value is EventListenerObject {

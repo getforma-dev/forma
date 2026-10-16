@@ -49,12 +49,18 @@ export interface AdoptionPiece {
   readonly text:string|null;
 }
 type Position = { node: Node; parent: Node | null; previous: Node | null; next: Node | null };
-type Attribute = { namespace: string | null; local: string; value: string };
+// Flat namespace/local/value triples avoid a temporary object per attribute.
+type Attributes = (string | null)[];
+function attributes(element: Element): Attributes {
+  const values: Attributes = [];
+  for (const attr of element.attributes) values.push(attr.namespaceURI, attr.localName, attr.value);
+  return values;
+}
 type ObservedNode = Position & {
   first: Node | null;
   last: Node | null;
   data: string | null;
-  attributes: Attribute[] | null;
+  attributes: Attributes | null;
   opaque: boolean;
 };
 function position(node: Node): Position {
@@ -98,9 +104,7 @@ export class AdoptionDom {
         node, parent: node.parentNode, previous: node.previousSibling, next: node.nextSibling,
         first: node.firstChild, last: node.lastChild,
         data: node.nodeType === 3 || node.nodeType === 8 ? (node as CharacterData).data : null,
-        attributes: element ? Array.from(element.attributes, attr => ({
-          namespace: attr.namespaceURI, local: attr.localName, value: attr.value,
-        })) : null,
+        attributes: element ? attributes(element) : null,
         opaque,
       });
       if (!opaque) {
@@ -134,8 +138,11 @@ export class AdoptionDom {
       if (item.data !== null && (node as CharacterData).data !== item.data) refuse('FORMA_E_HYDRATE_VALUE');
       if (item.attributes) {
         const element = node as Element;
-        if (element.attributes.length !== item.attributes.length || item.attributes.some(attr =>
-          element.getAttributeNS(attr.namespace, attr.local) !== attr.value)) refuse('FORMA_E_HYDRATE_VALUE');
+        const values = item.attributes;
+        if (element.attributes.length !== values.length / 3) refuse('FORMA_E_HYDRATE_VALUE');
+        for (let i = 0; i < values.length; i += 3) {
+          if (element.getAttributeNS(values[i]!, values[i + 1]!) !== values[i + 2]) refuse('FORMA_E_HYDRATE_VALUE');
+        }
       }
     }
   }

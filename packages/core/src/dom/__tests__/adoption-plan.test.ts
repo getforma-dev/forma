@@ -289,3 +289,18 @@ describe('mixed inert and opaque snapshot traversal',()=>{
     else expect(()=>dom.assertUnchanged()).not.toThrow();
   });
 });
+
+describe('exact attribute snapshot columns',()=>{
+  it.each(['namespace-a','namespace-b','plain','case','extra'] as const)('retains independent %s values on the same foreign element',kind=>{
+    const {host,doc}=fixture('');const child=doc.createElementNS(SVG_NS,'use');host.append(child);
+    child.setAttributeNS('urn:a','a:key','first');child.setAttributeNS('urn:b','b:key','second');
+    child.setAttribute('key','plain');child.setAttribute('Key','case');
+    const dom=new AdoptionDom(host);dom.assertUnchanged();
+    if(kind==='namespace-a')child.setAttributeNS('urn:a','a:key','changed');
+    else if(kind==='namespace-b')child.removeAttributeNS('urn:b','key');
+    else if(kind==='plain')child.setAttribute('key','changed');
+    else if(kind==='case')child.setAttribute('Key','changed');
+    else child.setAttributeNS('urn:c','c:key','new');
+    expect(()=>dom.assertUnchanged()).toThrowError(expect.objectContaining({code:'FORMA_E_HYDRATE_VALUE'}));
+  });
+});
