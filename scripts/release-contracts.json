@@ -71,5 +71,6 @@
   "assetIntegrity": "sha384-v1",
   "sourceTemplates": "islands-v1",
   "fixtureApps": "declared-v1",
-  "deploymentSkew": "native-v1"
+  "deploymentSkew": "native-v1",
+  "performance": "measured-v1"
 }

@@ -16,6 +16,7 @@ import { CRATES, ROOT, digest, json, run, save, stageNpmLock } from './release-s
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { withOwnedServer } from './owned-server.mjs';
 import { assertN2, n2Rows, readPackedSizes, shapeRow } from './release-measurements.mjs';
+import { verifyPackedPerformance } from './release-performance.mjs';
 
 export const FIXTURES = join(ROOT, 'e2e/fixtures/apps');
 const EXCLUDED = new Set(['out', 'node_modules', 'target', 'README.md', 'apps.spec.ts', 'build.sh']);
@@ -229,7 +230,7 @@ export async function stageFixtureProject({ set, dir, cratesDir, targetDir, test
 }
 
 /** Everything P17 runs over the fixtures; returns the record P17 saves under `report.fixtures`. */
-export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, browser, test, report }) {
+export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, browser, test, report, performanceTarget, before, evidenceDirectory }) {
   const { verifyIslandPage } = await import(pathToFileURL(join(FIXTURES, 'lib/verify-page.mjs')).href);
   const { BEHAVIOURS, EXTRAS } = await import(pathToFileURL(join(FIXTURES, 'lib/behaviours.mjs')).href);
   const { buildNegative, buildPositive, readApps } = await import(pathToFileURL(join(FIXTURES, 'lib/build-apps.mjs')).href);
@@ -289,8 +290,9 @@ export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, bro
         assert(found.length > 0 && found.every(each => each.file.endsWith(entry.file) && each.line > 0 && each.column > 0), `${entry.name}: expected ${entry.code} "${entry.message}" with a position, got ${JSON.stringify(result.diagnostics)}`);
       }
     });
+    const performance = performanceTarget ? await verifyPackedPerformance({staged,set,test,target:performanceTarget,before,report,evidenceDirectory}) : undefined;
     return {
-      npmLockSha256: staged.npmLockSha256, cargoLockSha256: staged.cargoLockSha256, signatures: staged.signatures,
+      performance, npmLockSha256: staged.npmLockSha256, cargoLockSha256: staged.cargoLockSha256, signatures: staged.signatures,
       resolution: staged.resolution, apps: Object.fromEntries(Object.entries(staged.reports).map(([app, each]) => [app, { buildHash: each.buildHash, routes: each.routes, seconds: each.seconds }])),
       pages, positives, n2, shapes, expectedRoutes,
     };

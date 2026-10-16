@@ -164,3 +164,19 @@ describe('private prepared descriptor walker',()=>{
     expect(()=>prepareAdoption(host,()=>h('div',null,h(child,null)))).toThrow('FORMA_E_HYDRATE_STRUCTURE');expect(child).not.toHaveBeenCalled();expect(observer.takeRecords()).toEqual([]);observer.disconnect();
   });
 });
+
+describe('attribute descriptor snapshot order',()=>{
+  it.each([false,true])('reads all own descriptors before applying accessor rejection: %s',accessor=>{
+    const {host,observer}=fixture('<p class="one" title="title">text</p>'),getter=vi.fn(()=> 'one'),symbol=Symbol('ignored');
+    const target=Object.create({inherited:'ignored'}) as Record<string|symbol,unknown>;
+    Object.defineProperty(target,'class',accessor?{get:getter,enumerable:false}:{value:'one',enumerable:false});
+    Object.defineProperty(target,'title',{value:'title',enumerable:true});
+    Object.defineProperty(target,symbol,{get:getter,enumerable:true});
+    const reads:PropertyKey[]=[];
+    const props=new Proxy(target,{getOwnPropertyDescriptor(object,key){reads.push(key);return Reflect.getOwnPropertyDescriptor(object,key);}});
+    if(accessor)expect(()=>prepareAdoption(host,()=>h('p',props,'text'))).toThrow('FORMA_E_HYDRATE_STRUCTURE');
+    else {const plan=prepareAdoption(host,()=>h('p',props,'text'));plan.commit();plan.dispose();}
+    expect(reads).toEqual(['class','title',symbol]);expect(getter).not.toHaveBeenCalled();
+    expect(observer.takeRecords()).toEqual([]);observer.disconnect();
+  });
+});

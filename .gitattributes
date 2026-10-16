@@ -127,6 +127,9 @@ packages/core/e2e/hostile-widgets/probe-provenance.json text eol=lf
 docs/archive/FORMA-129-matrix-expectations/** -text
 docs/evidence/forma-129/** -text
 
+# Original founder comparison source is preserved byte-for-byte on Windows.
+e2e/performance/archive/8bd8b65/** -text
+
 # Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text

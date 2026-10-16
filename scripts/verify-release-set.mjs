@@ -3,7 +3,7 @@
 // from the tagged tree's committed lock. No OIDC permission is needed here.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -16,6 +16,7 @@ import { linkPackedPackages, assertPackedResolution } from './release-packed-res
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyPackedFixtures } from './release-fixture-apps.mjs';
 import { verifyPackedSkew } from './release-skew-drill.mjs';
+import { performanceTarget } from './release-performance.mjs';
 import { completeMeasurements, machineProfile } from './release-measurements.mjs';
 import { verifyPackedSecurity } from './release-security.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
@@ -231,6 +232,7 @@ async function verifyPackedBrowserSri(browser, origin, entry) {
 export async function verify(dir, reportPath) {
   assert(!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN, 'P17 must not have an OIDC credential');
   const started = Date.now(), set = json(join(dir, 'release-set.json'));
+  const measurementTarget = performanceTarget(set);
   assert([undefined, null, 'enforced-v1'].includes(set.contracts.trustedTypes), 'P17 has no verifier for the recorded Trusted Types contract');
   assert([null, 'declared-v1'].includes(set.contracts.props), 'P17 has no verifier for the recorded props contract');
   assert([undefined, null, 'finalized-v1'].includes(set.contracts.boundRender), 'P17 has no verifier for the recorded bound rendering contract');
@@ -575,7 +577,7 @@ export async function verify(dir, reportPath) {
       // The fixture applications (FORMA-188): the same sources and checks as the source lane, against the
       // packed set. The deployment drill uses those same packed libraries and crates in all engines.
       if (set.contracts.fixtureApps) {
-        report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report });
+        report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report, performanceTarget: measurementTarget, before: new Date(started).toISOString(), evidenceDirectory: dirname(resolve(reportPath)) });
       }
       if (set.contracts.deploymentSkew === 'native-v1') {
         report.deploymentSkew = await verifyPackedSkew({ set, dir, scratch, browser, firefox, webkit, test });
@@ -593,7 +595,7 @@ export async function verify(dir, reportPath) {
       // N2, the machine and profile; a missing or over-limit figure fails P17 naming it. FORMA-191 adds rows.
       const { n2, shapes, expectedRoutes } = report.fixtures;
       report.measurements = completeMeasurements({
-        machine: machineProfile({ rustc: set.toolchain, npm: set.npm }), seconds: report.elapsedSeconds, n2, shapes, expectedRoutes,
+        machine: machineProfile({ rustc: set.toolchain, npm: set.npm }), seconds: report.elapsedSeconds, n2, shapes, expectedRoutes, performance: report.fixtures.performance, performanceContract: set.contracts.performance,
       });
     }
     report.passed = true;

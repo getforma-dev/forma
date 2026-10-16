@@ -49,12 +49,18 @@ export interface AdoptionPiece {
   readonly text:string|null;
 }
 type Position = { node: Node; parent: Node | null; previous: Node | null; next: Node | null };
-type Attribute = { namespace: string | null; local: string; value: string };
+// Flat namespace/local/value triples avoid a temporary object per attribute.
+type Attributes = (string | null)[];
+function attributes(element: Element): Attributes {
+  const values: Attributes = [];
+  for (const attr of element.attributes) values.push(attr.namespaceURI, attr.localName, attr.value);
+  return values;
+}
 type ObservedNode = Position & {
   first: Node | null;
   last: Node | null;
   data: string | null;
-  attributes: Attribute[] | null;
+  attributes: Attributes | null;
   opaque: boolean;
 };
 function position(node: Node): Position {
@@ -87,26 +93,29 @@ export class AdoptionDom {
     }
     // Explicit stack: static element depth is not the FMIR control-flow depth.
     // There is no new blanket node/depth limit on otherwise admitted output.
-    const pending: {node:Node;inert:boolean}[] = [{node:host,inert:false}];
+    // Parallel stacks avoid a temporary work object for every visited node.
+    // Keep their push/pop order paired, including inert template fragments.
+    const pending: Node[] = [host], inertStack: boolean[] = [false];
     while (pending.length) {
-      const {node,inert} = pending.pop()!;
+      const node = pending.pop()!, inert = inertStack.pop()!;
       const element = node.nodeType === 1 ? node as Element : null;
       const opaque = !inert && node !== host && !!element?.hasAttribute('data-forma-island');
       this.nodes.set(node, {
-        ...position(node), first: node.firstChild, last: node.lastChild,
+        node, parent: node.parentNode, previous: node.previousSibling, next: node.nextSibling,
+        first: node.firstChild, last: node.lastChild,
         data: node.nodeType === 3 || node.nodeType === 8 ? (node as CharacterData).data : null,
-        attributes: element ? Array.from(element.attributes, attr => ({
-          namespace: attr.namespaceURI, local: attr.localName, value: attr.value,
-        })) : null,
+        attributes: element ? attributes(element) : null,
         opaque,
       });
       if (!opaque) {
-        for (let child = node.lastChild; child; child = child.previousSibling) pending.push({node:child,inert});
+        for (let child = node.lastChild; child; child = child.previousSibling) {
+          pending.push(child); inertStack.push(inert);
+        }
         // Template descendants are inert content, not connected child islands.
         // Verified by: src/dom/__tests__/adoption-plan.test.ts > "refuses changed %s captured before component execution"
         if(element?.namespaceURI===HTML_NS&&element.localName==='template'){
           const template=element as HTMLTemplateElement,fragment=template.content;
-          this.templates.set(template,fragment);pending.push({node:fragment,inert:true});
+          this.templates.set(template,fragment);pending.push(fragment);inertStack.push(true);
         }
       }
     }
@@ -129,8 +138,11 @@ export class AdoptionDom {
       if (item.data !== null && (node as CharacterData).data !== item.data) refuse('FORMA_E_HYDRATE_VALUE');
       if (item.attributes) {
         const element = node as Element;
-        if (element.attributes.length !== item.attributes.length || item.attributes.some(attr =>
-          element.getAttributeNS(attr.namespace, attr.local) !== attr.value)) refuse('FORMA_E_HYDRATE_VALUE');
+        const values = item.attributes;
+        if (element.attributes.length !== values.length / 3) refuse('FORMA_E_HYDRATE_VALUE');
+        for (let i = 0; i < values.length; i += 3) {
+          if (element.getAttributeNS(values[i]!, values[i + 1]!) !== values[i + 2]) refuse('FORMA_E_HYDRATE_VALUE');
+        }
       }
     }
   }
