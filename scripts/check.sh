@@ -22,8 +22,8 @@
 #           forma-server) and core's own Playwright suite, all in Chromium
 #   parity  the parity harness's own tests (FORMA-183, e2e/parity/): the state
 #           generator, the comparison, the serializer against Chromium's
-#           parser and renderBoth end to end; the corpus run joins this script
-#           when it turns blocking
+#           parser and renderBoth end to end, then the full step-1 corpus at
+#           100 generated states where a declared schema exists, with no exceptions
 #
 # Needs: Node 24 with npm (`.node-version`; the parity harness's TypeScript runs
 # by Node's type stripping), a stable Rust toolchain with rustfmt, clippy and
@@ -115,7 +115,11 @@ npm run test:e2e -w packages/core
 
 step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
 npx tsc --noEmit -p e2e/parity
-node --test "e2e/parity/tests/*.test.mts"
+node --test --test-concurrency=2 "e2e/parity/tests/*.test.mts"
+
+step "blocking parity: step 1, 100 states, typed P1/P2/P3 with no exceptions"
+node --input-type=module -e 'import assert from "node:assert/strict"; import {readExpected} from "./e2e/parity/src/expected.mts"; assert.equal(readExpected().length, 0, "blocking parity requires an empty expected-divergent list");'
+node e2e/parity/src/run.mts --step 1 --states 100 --report "${RUNNER_TEMP:-$PWD/test-results}/parity/report.jsonl"
 
 step "value rules: deterministic generator, actual native metadata, 1,000 comparisons/rule"
 node --test e2e/value-rules/*.test.mjs
