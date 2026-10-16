@@ -72,7 +72,9 @@ node "$SCRIPT_DIR/build-cases.mjs"
 # dependency this fails loudly; refresh the lock by running
 #   cargo generate-lockfile --manifest-path e2e/Cargo.toml
 # and commit e2e/Cargo.lock.
-cargo run --quiet --locked "${PROFILE_ARGS[@]}" --manifest-path "$SCRIPT_DIR/render/Cargo.toml" -- \
+# Bash 3.2 (macOS) treats an empty array expansion as unset under nounset.
+# Preserve zero debug arguments and exactly one release argument on both shells.
+cargo run --quiet --locked ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"} --manifest-path "$SCRIPT_DIR/render/Cargo.toml" -- \
   "$SCRIPT_DIR/cases" "$SCRIPT_DIR/out/build" "$SCRIPT_DIR/out/site"
 
 echo "✓ SSR e2e site built in $SCRIPT_DIR/out/site/"
