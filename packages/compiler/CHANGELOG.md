@@ -9,6 +9,11 @@
 - **Rendered output changes with no source change.** A static `true` attribute is bare only on an HTML boolean attribute (`HTML_BOOLEAN_ATTRIBUTES` in `src/value-rules.ts`, core's list); on any other it is the word, `data-live="true"`, `class="true"`, where it was bare (F2). A reactive boolean still lands in a `TYPE_BOOL` slot, which the walker now writes by the same rule.
 - An attribute whose server value is the empty string is written as a static `name=""` (F3): a signal created with `''` bound to an attribute (`value: () => query()`, `value: query`) or a value that evaluates to `''`. A client slot cannot carry an empty default (zero default bytes read as null), so the server used to drop the attribute where `h()` writes it. The js-emitter `dynamic-attrs` module regenerates; `tests/ssr-render.test.ts`'s stated limit "omits an attribute whose value evaluates to the empty string" became "writes an attribute whose server value is the empty string".
 - Tests: `tests/value-rule-6-attributes.test.ts` (the shared `compiled` shapes and the boolean set), `tests/attribute-values-archive.test.ts` (the archived corpus outputs and their ledger).
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
 
 ### Value rule 7: conditions are boolean-typed — FORMA-182
 
@@ -22,6 +27,10 @@
 - `String(flag)` on a non-optional declared boolean binds `DYN_TEXT` to the boolean slot (the walker writes the word); the evaluator folds `String()` of a boolean, so `() => String(done())` builds where it was refused, also as a ternary branch, where a `String()`/`Number()` cast the evaluator folds is now a value rather than a component. `String()` of an optional declared boolean stays `BUILD-610`.
 - **Rendered output changes with no source change:** the idiom `() => ready() && 'Go'` at a boolean default no longer serves the word `false` (its slot default is empty, an empty range), and a `true` literal in a ternary branch no longer serves `true` (nothing), matching `h()`. A page compiled by an earlier compiler and adopted by this release's core refuses at that idiom (`FORMA_E_HYDRATE_VALUE`); compiler and core move together in 3.0.0.
 - Migrated `tests/props-bindings.test.ts` (a trailing declared boolean child) and `tests/ssr-emission.test.ts` (a boolean signal read as text to name its slot); the originals are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-614` by `tests/value-rules-archive.test.ts`. The FMIR corpus and the declared-props fixtures are byte-identical.
+
+### A list source must be a function: BUILD-616 — FORMA-181 (FORMA-183 finding F1)
+
+- Core's `createList(items, key, row)` calls `items()` to read the rows, and a page list's source is never evaluated by the native module (its array is a named slot), so a plain array compiled and then failed in the browser with `items is not a function`. The original list proof now refuses, on the page and island paths alike, a source it can prove is not a function: a literal, a binding to one (local, or a named export of an imported module), a provably immutable data-valued core getter result (`rows()`), or a field an inline parameter type declares as data (`p.rows` with `p: { rows: Row[] }`). New mandatory code BUILD-616 with a conformance pair; functions, getters and sources the compiler cannot see through stay admitted. A captured signal setter and mutable object fields prevent using their initial values as proof. The js-emitter corpus case `list-same-source` passes `const todos = () => [...]`; its original source is archived in `docs/archive/2026-10-15-pre-list-source/` (still asserted to refuse), and every compiled output of the case is byte-identical.
 
 ### Keyed rows, checkpoint A: original key-path proof and section 6 — FORMA-181
 

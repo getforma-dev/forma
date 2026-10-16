@@ -80,8 +80,10 @@ imports are outside this guard. See core's [deployment contract](../packages/cor
 filename to `{ immutable, integrity?, retained? }`. The build emits SHA-384/base64
 integrity from final uncompressed bytes; compressed sidecars, the manifest and
 worker are excluded. The server validates the digest syntax when present;
-FORMA-111 still owns byte-integrity enforcement. A `retained` marker can be read,
-but FORMA-186 owns producing and retaining prior builds.
+FORMA-111 still owns byte-integrity enforcement. `retained: true` marks a file of the
+previous release that the build copied in for tabs still open on it (FORMA-186,
+`previousDist`; one generation, checked against the previous manifest's SHA-384);
+a retained entry is always `immutable`.
 
 Routes declare `mode: "ssr" | "browser"`, JS/CSS/fonts, optional static
 `modulepreload`, and an IR filename only for SSR. A declared SSR route without IR

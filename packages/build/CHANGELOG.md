@@ -2,6 +2,31 @@
 
 ## [Unreleased]
 
+### Retention and the security mark — FORMA-186 (DR-29, L-25, L-16, SR45)
+
+- New `BuildConfig.previousDist`: the previous release's `dist/`, kept by the
+  application's pipeline. The build copies that release's own hashed assets into
+  the new `dist/`, listed in the manifest `{ immutable: true, retained: true,
+  integrity }`, so forma-server serves them as immutable and a tab one deploy old
+  still loads its chunks from the one `dist/` the application embeds. One
+  generation (what the previous release retained is not copied again); never
+  `manifest.json`, `sw.js`, `.ir` modules or non-immutable files; a file both
+  builds emit is the new build's own. Each copied file is checked against the
+  SHA-384 the previous manifest recorded: `BUILD-821` for a missing, linked,
+  altered or colliding file, `BUILD-820` for a path that is not a usable previous
+  release (missing, no manifest, another app, a dev build, flat-name violations,
+  overlapping `outputDir`). A schema-1 previous dist retains nothing and says so.
+  Copied before compression, inside the staging directory, so a failure leaves the
+  existing output untouched (L-21). The identity does not depend on it.
+- New `BuildConfig.security` and `FORMA_SECURITY_RELEASE=1`: a release marked
+  security retains nothing from `previousDist` (a `false` does not unmark it).
+  Both option names, and the environment variable, are approved (L-57).
+- `FORMA_SECURITY_RELEASE` is parsed as `FORMA_STRICT` is (trimmed, case-insensitive):
+  `1`/`true` marks, unset/empty/`0`/`false` does not, any other value fails the build
+  with `BUILD-822`, so a mark can never fail open. The previous `dist/` is trusted like
+  the source: the SHA-384 check catches damage or alteration, not a rewritten manifest.
+- Watch mode ignores both options, with a note.
+
 ### N2 is 27,500 B (L-58)
 
 - The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
@@ -48,6 +73,11 @@
   same route objects, with the new fields `class`, `canvas`, `worker`,
   `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
   empty). Both are empty in watch mode.
+
+### BUILD-616 is mandatory — FORMA-181, FORMA-183 finding F1
+
+- The compiler's new BUILD-616 (a `createList` source that is provably not a function) is an
+  error in every mode, like BUILD-610 to BUILD-613.
 
 ### The deployment identity — FORMA-186 (DR-29, L-6 as amended by L-56)
 

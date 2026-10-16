@@ -2358,6 +2358,19 @@ function emitCreateList(
   // the frozen corpus harness; their names never grant handler binding access.
   const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
   const closedArray=declaredArray===undefined?closedBinding(node.arguments[0],ctx,closedEnv(walkCtx)):undefined;
+  let sourceShape = node.arguments[0];
+  while (sourceShape && (t.isTSAsExpression(sourceShape) || t.isTSNonNullExpression(sourceShape)
+    || t.isTSSatisfiesExpression(sourceShape) || t.isParenthesizedExpression(sourceShape))) sourceShape = sourceShape.expression;
+  // A getter result or object field is data provenance, not a proof that core
+  // can call that source. F1 deliberately leaves mutable values undecided;
+  // native admission still requires a getter binding or explicit callback.
+  const sourceCallable = t.isIdentifier(sourceShape) || t.isArrowFunctionExpression(sourceShape) || t.isFunctionExpression(sourceShape);
+  if (walkCtx.listProof && (!sourceCallable || (declaredArray === undefined && !closedArray))) {
+    const file = walkCtx.sourceFile ?? '';
+    const at = originalPosition(file, node.arguments[0]?.loc?.start ?? node.loc?.start ?? { line: 1, column: 0 });
+    throw new PropsSchemaError(file, at.line, at.column,
+      'createList source must read a declared array prop or a closed literal-default signal; pass derived rows as their own declared prop, or move the component behind a registered browserOnly boundary');
+  }
   if(closedArray&&closedArray.values.some(value=>!Array.isArray(value)&&value!==null))throw new PropsSchemaError(walkCtx.sourceFile??'',node.loc?.start.line??1,(node.loc?.start.column??0)+1,'createList closed source must be an array');
   const closedItems=closedArray?.values.flatMap(value=>Array.isArray(value)?value:[]);
   const arraySlotId = declaredArray ?? closedArray?.slot() ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);

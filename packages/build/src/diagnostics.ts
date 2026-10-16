@@ -69,7 +69,7 @@ export function resolveDiagnosticOptions(
  * boolean-typed, FORMA-182's value rules 6 and 7).
  * Verified by: packages/build/tests/strict.test.ts > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are"
  */
-const MANDATORY: ReadonlySet<string> = new Set(['BUILD-610', 'BUILD-611', 'BUILD-612', 'BUILD-613', 'BUILD-614', 'BUILD-615']);
+const MANDATORY: ReadonlySet<string> = new Set(['BUILD-610', 'BUILD-611', 'BUILD-612', 'BUILD-613', 'BUILD-614', 'BUILD-615', 'BUILD-616']);
 
 /**
  * The diagnostics of one build, page by page. A page's latest compilation
