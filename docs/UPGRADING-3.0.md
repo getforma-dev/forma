@@ -38,6 +38,8 @@ Native components require one stable owned Element root. Keep conditional and li
 
 The native compiler rejects unsupported source even without `--strict`; the old placeholder/warning escape is gone. Address the reported code and source position using [the admitted subset](../packages/compiler/docs/subset.md). In particular, boolean-valued text requires an explicit textual representation, conditions must be boolean, and unsupported computed data should become declared presentation props. Attribute omission, boolean presence and string values follow the shared [parity rules](parity-rules.md). Exact `className`, `htmlFor` and `tabIndex` aliases use their native attribute names; duplicate native attribute names, including ASCII case variants in serialized markup, are refused before publication.
 
+Native SVG and MathML attributes must preserve spelling and namespace through HTML parsing. Use canonical SVG names such as `viewBox` and `preserveAspectRatio`, MathML `definitionURL`, and lowercase `data-*`/`aria-*`. Mismatched spellings and unsupported XML/XMLNS or nonstandard XLink namespace forms refuse BUILD-610; use a supported attribute or explicit Browser mode. Standard lowercase XLink forms such as `xlink:href` remain supported on foreign elements. Integration-point children follow their possible namespaces, and this proof does not widen the downstream ASCII-only attribute-name policy. The [admitted subset](../packages/compiler/docs/subset.md#admitted-source) records these finite rules.
+
 ## Mount HTML-runtime markup explicitly
 
 The HTML runtime entry no longer starts on import or watches the document. Replace its tierless `mount`, `reconcile`, `initRuntime`, `destroyRuntime` and global configuration calls with an explicit owner:

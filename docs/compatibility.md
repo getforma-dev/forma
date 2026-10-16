@@ -154,7 +154,7 @@ exact DS11 artifacts; it does not repair a stale shipped lock during installatio
 
 ## Public compiler API and duplicate core
 
-The public runtime exports are `formaSsrPlugin`, `generateRealIr`, `IrEmitContext`,
+The public runtime exports are `formaSsrPlugin`, `generateRealIr`, `getSsrEntryProducts`, `IrEmitContext`,
 `COMPILER_WRITER_VERSION`, `baseWriterVersion`, `FmirContainerError`,
 `readFmirContainer`, `encodeFmirSections`, `dumpFmir`, `crc32`,
 `DIAGNOSTIC_CATALOGUE`, `collectDiagnostics`, `diagnosticEntry`,
@@ -188,7 +188,7 @@ readiness still requires the milestone gates and authenticated candidate evidenc
 | Deployment identity | core | Two-pass identity emission and root stamping, Document-scoped skew guard, one-generation retention/security-mark refusal, and the actual fixture skew drill (186/188). |
 | Manifest schema 2 | forma-server | Real build metadata, Rust schema/mode/ref/cache checks, packed minimal/dashboard load and before-bind negative controls (112/P17). |
 | Trusted Types policy names | forma-server | Native response and Browser-shell CSP/Trusted Types enforcement, named raw-entry boundaries and three-engine browser controls (109). |
-| Compiler import names | compiler | `supported-surface.test.ts` keeps root core/runtime h imports and excludes removed imports; packed runtime/declaration surface test; legacy plugins and package deep imports are removed (110). |
+| Compiler import names | compiler | `supported-surface.test.ts` keeps component-entry `@getforma/core` h imports and excludes removed imports; packed compiler runtime/declaration surface test. `runtime-explicit-mount.test.ts` separately checks the HTML runtime's nine exports, which do not include h; legacy plugins and package deep imports are removed (110/108). |
 
 ## Reproduction and rollback
 
