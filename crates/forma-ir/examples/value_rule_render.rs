@@ -8,7 +8,7 @@ use forma_ir::props::encode_props;
 use forma_ir::{walk_to_html, IrModule, PageProps, SlotData, SlotValue};
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::io::Read;
+use std::io::{BufRead, Read, Write};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[derive(PageProps)]
@@ -181,16 +181,38 @@ fn render(
         Err(error) => json!({"error": error.to_string()}),
     }
 }
-fn main() {
-    let mut input = String::new();
-    std::io::stdin().read_to_string(&mut input).unwrap();
-    let cases: Vec<Value> = serde_json::from_str(&input).unwrap();
+fn render_batch(
+    input: &str,
+    modules: &mut HashMap<String, IrModule>,
+    integer: &IrModule,
+    date: &IrModule,
+) -> Vec<Value> {
+    assert!(input.len() <= 16 * 1024 * 1024, "bounded input only");
+    let cases: Vec<Value> = serde_json::from_str(input).unwrap();
     assert!(cases.len() <= 10_000, "bounded batches only");
+    cases
+        .iter()
+        .map(|case| render(case, modules, integer, date))
+        .collect()
+}
+fn main() {
     let (integer, date) = (schema(SCHEMA_NUMBER), schema(SCHEMA_DATE));
     let mut modules = HashMap::new();
-    let output: Vec<_> = cases
-        .iter()
-        .map(|case| render(case, &mut modules, &integer, &date))
-        .collect();
-    println!("{}", serde_json::to_string(&output).unwrap());
+    if std::env::args().any(|arg| arg == "--stream") {
+        let stdin = std::io::stdin();
+        let stdout = std::io::stdout();
+        let mut output = stdout.lock();
+        for line in stdin.lock().lines() {
+            let values = render_batch(&line.unwrap(), &mut modules, &integer, &date);
+            serde_json::to_writer(&mut output, &values).unwrap();
+            writeln!(output).unwrap();
+            output.flush().unwrap();
+        }
+    } else {
+        // Keep the single-batch replay mode for saved regression inputs.
+        let mut input = String::new();
+        std::io::stdin().read_to_string(&mut input).unwrap();
+        let values = render_batch(&input, &mut modules, &integer, &date);
+        println!("{}", serde_json::to_string(&values).unwrap());
+    }
 }

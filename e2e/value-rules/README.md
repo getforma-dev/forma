@@ -4,7 +4,11 @@ This internal lane compares the real Rust FMIR writer, fresh `h()` DOM and
 strict owned adoption for the seven value rules in `docs/parity-rules.md`.
 It also verifies that adoption retains every node and writes no DOM changes.
 A deliberate native-output mismatch must be caught, and every case's own
-MutationObserver must detect a deliberate control write after adoption.
+MutationObserver must detect a deliberate control write after adoption. A
+paired liveness control then updates a real signal: adopted text and an
+attribute must update on the retained native nodes. The same check with
+adoption disabled must fail, so unchanged native HTML alone cannot satisfy
+the adoption gate.
 
 Run from the repository root with Node 24, the Rust toolchain, npm dependencies
 and Playwright browsers installed:
@@ -19,7 +23,11 @@ CARGO_BUILD_JOBS=3 node e2e/value-rules/metadata.mjs
 million. `--seed` defaults to `1820300`, `--batch` to `1000` (maximum `10000`),
 `--engine` to `chromium` (`firefox` and `webkit` are also supported), and
 `--output` to `e2e/value-rules/out/result.json`. The native executable is built
-in release mode and processes bounded batches. The browser is reused, each
+in release mode and processes bounded newline-framed batches in one persistent
+process. Requests and responses are capped, one request is in flight, each
+batch has a 30-second deadline, and EOF is used only to close the worker.
+Real-process tests cover multiple requests before EOF, a silent worker and
+malformed output. The browser is reused, each
 case gets a fresh subtree, and both reactive roots are disposed per case.
 No per-input browser launch or compiler invocation is involved.
 
@@ -83,3 +91,10 @@ values per rule. Exact final qualification counts/time belong in the result
 artifact and the release record, rather than treating this projection as a
 completed run. Full generated coverage is Chromium; finite metadata and
 value/namespace vectors retain the three-engine gates.
+
+The first full attempt on `6e834ffe` stopped after more than 650,000 successful
+rule-1 comparisons when a per-batch native subprocess waited indefinitely for
+stdin EOF. Its partial report remains `passed:false`; a process sample and
+logs are preserved in the release work evidence. Independent review also
+required the explicit adoption-liveness/no-op controls above. This partial
+attempt is not a full qualification; the final harness requires a new run.

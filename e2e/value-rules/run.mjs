@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium, firefox, webkit } from '@playwright/test';
 import { serveOwnedAdoption } from '../../packages/core/e2e/helpers/owned-adoption.ts';
 import { generate, admission } from './generate.mjs';
+import { nativeWorker } from './native-worker.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const option = (name, fallback) => {
@@ -58,13 +59,38 @@ await page.route('**/core.mjs', route => route.fulfill({ path: core, contentType
 await page.route('**/qualification.html', route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<!doctype html><meta charset="utf-8"><div id="app"></div>' }));
 await page.goto('http://value-rules.invalid/qualification.html');
 await page.evaluate(async () => {
-  const { h, Fragment, createShow, createRoot } = await import('/core.mjs');
+  const { h, Fragment, createShow, createRoot, createSignal } = await import('/core.mjs');
   const { adoptMatching } = await import('/test-owned-adoption.mjs');
   const app = document.getElementById('app');
   const value = input => input.rule === 1 ? input.value : input.rule === 2 || input.rule === 3 ? Number(input.value)
     : input.rule === 4 ? new Date(Number(BigInt(input.value) / 1000000n)).getTime()
     : input.rule === 5 ? input.value === 'null' ? null : undefined : input.value;
   const allNodes = host => { const nodes = []; const walker = document.createTreeWalker(host); for (let node = walker.nextNode(); node; node = walker.nextNode()) nodes.push(node); return nodes; };
+  window.checkAdoptionLive = ({ input, native }, disabled) => {
+    app.innerHTML = native.html;
+    const root = app.firstElementChild, nodes = allNodes(app), html = app.innerHTML;
+    const [read, write] = createSignal(input.value);
+    const make = () => h(input.tag, { [input.attr]: read }, () => input.before, read, () => input.after);
+    const observer = new MutationObserver(() => {});
+    observer.observe(app, { subtree: true, childList: true, characterData: true, attributes: true });
+    let dispose = () => {};
+    try {
+      // The negative control substitutes precisely the no-op this gate must
+      // reject. Both paths begin with the same real native document.
+      if (!disabled) dispose = adoptMatching(() => h(Fragment, null, make()), app);
+      const initialWrites = observer.takeRecords().length;
+      const initialUnchanged = app.innerHTML === html;
+      write('adopted-update');
+      const records = observer.takeRecords(), after = allNodes(app);
+      const kept = after.length === nodes.length && after.every((node, i) => node === nodes[i]);
+      const live = app.firstElementChild === root && kept
+        && root.getAttribute(input.attr) === 'adopted-update'
+        && root.textContent === input.before + 'adopted-update' + input.after
+        && records.some(record => record.type === 'attributes' && record.target === root && record.attributeName === input.attr)
+        && records.some(record => record.type === 'characterData' && root.contains(record.target));
+      return { live, initialWrites, initialUnchanged, kept, updateWrites: records.length };
+    } finally { observer.disconnect(); dispose(); }
+  };
   window.checkCases = entries => {
     for (const { input, native } of entries) {
       const v = value(input);
@@ -116,7 +142,14 @@ await page.evaluate(async () => {
     return null;
   };
 });
-function nativeBatch(inputs) { return JSON.parse(run(binary, [], { input: JSON.stringify(inputs) })); }
+const worker = nativeWorker(binary, ['--stream'], { cwd: root });
+async function nativeBatch(inputs) {
+  try { return await worker.batch(inputs); }
+  catch (error) {
+    writeFileSync(output.replace(/\.json$/, '') + '-failure.json', JSON.stringify({ seed, engine, stage: 'native-transport', inputs, error: String(error) }, null, 2) + '\n');
+    throw error;
+  }
+}
 async function check(inputs, native) {
   assert.equal(native.length, inputs.length, 'native batch count');
   const admitted = [];
@@ -142,13 +175,22 @@ async function check(inputs, native) {
 try {
   // The same differential path must catch a modified native output. Do not
   // count controls as random inputs or auto-update the expected result.
-  const control = generate(seed, 1, 0); control.value = 'sentinel'; control.before = 'before'; control.after = 'after';
-  const correct = nativeBatch([control]);
+  const control = generate(seed, 1, 0); control.value = 'sentinel'; control.before = 'before'; control.after = 'after'; control.attr = 'title';
+  const correct = await nativeBatch([control]);
   await check([control], correct);
   const broken = [{ ...correct[0], html: correct[0].html.replace('sentinel', 'changed') }];
   const caught = await page.evaluate(entries => window.checkCases(entries), [{ input: control, native: broken[0] }]);
   assert(caught, 'differential mismatch positive control was not detected');
   report.controls.nativeMismatch = caught.stage;
+  const pair = { input: control, native: correct[0] };
+  const adopted = await page.evaluate(entry => window.checkAdoptionLive(entry, false), pair);
+  assert(adopted.live && adopted.initialWrites === 0 && adopted.initialUnchanged,
+    `adoption liveness control failed: ${JSON.stringify(adopted)}`);
+  const disabled = await page.evaluate(entry => window.checkAdoptionLive(entry, true), pair);
+  assert(!disabled.live && disabled.updateWrites === 0 && disabled.initialWrites === 0,
+    `disabled adoption was not detected: ${JSON.stringify(disabled)}`);
+  report.controls.adoptionLiveness = adopted;
+  report.controls.disabledAdoption = disabled;
   const started = performance.now();
   for (let rule = 1; rule <= 7; rule++) {
     const began = performance.now();
@@ -157,7 +199,7 @@ try {
     while (compared < count) {
       const inputs = Array.from({ length: Math.min(batch, count - compared) }, (_, i) => generate(seed, rule, offset + i));
       for (const input of inputs) digest.update(JSON.stringify(input) + '\n');
-      const totals = await check(inputs, nativeBatch(inputs));
+      const totals = await check(inputs, await nativeBatch(inputs));
       compared += totals.compared; refused += totals.refused;
       offset += inputs.length;
       assert(offset <= count * 2 + batch, 'generator did not provide enough admitted inputs');
@@ -177,4 +219,4 @@ try {
   report.seconds = (performance.now() - started) / 1000;
   report.finishedAt = new Date().toISOString(); report.passed = true;
   writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
-} finally { await browser.close(); }
+} finally { await worker.close(); await browser.close(); }
