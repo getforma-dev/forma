@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "repository": "getforma-dev/forma",
+  "mode": "environments",
+  "recordedAt": "2026-10-16T04:11:08.542Z",
+  "complete": true,
+  "delivered": false,
+  "snapshot": {
+    "schema": 1,
+    "repository": "getforma-dev/forma",
+    "environments": [
+      {
+        "name": "crates-publish",
+        "can_admins_bypass": true,
+        "protection_rules": [
+          {
+            "id": 68755194,
+            "node_id": "GA_kwDORmaO2s4EGR76",
+            "type": "branch_policy"
+          }
+        ],
+        "deployment_branch_policy": {
+          "protected_branches": false,
+          "custom_branch_policies": true
+        },
+        "branchPolicies": [
+          {
+            "id": 63008971,
+            "name": "ir-v*",
+            "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzAwODk3MQ==",
+            "type": "tag"
+          },
+          {
+            "id": 63008972,
+            "name": "server-v*",
+            "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzAwODk3Mg==",
+            "type": "tag"
+          },
+          {
+            "id": 63095853,
+            "name": "v*",
+            "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzA5NTg1Mw==",
+            "type": "tag"
+          }
+        ]
+      },
+      {
+        "name": "npm-publish",
+        "can_admins_bypass": true,
+        "protection_rules": [
+          {
+            "id": 68846983,
+            "node_id": "GA_kwDORmaO2s4EGoWH",
+            "type": "branch_policy"
+          }
+        ],
+        "deployment_branch_policy": {
+          "protected_branches": false,
+          "custom_branch_policies": true
+        },
+        "branchPolicies": [
+          {
+            "id": 63095852,
+            "name": "v*",
+            "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzA5NTg1Mg==",
+            "type": "tag"
+          }
+        ]
+      }
+    ]
+  },
+  "alerts": [
+    {
+      "id": "environment-baseline:4454d2980163c667f9f351e3a762106091827e03f37015b7172a0eb88215f7de",
+      "kind": "environment-baseline-established",
+      "repository": "getforma-dev/forma",
+      "detective": true,
+      "delivered": false,
+      "details": {
+        "snapshot": {
+          "schema": 1,
+          "repository": "getforma-dev/forma",
+          "environments": [
+            {
+              "name": "crates-publish",
+              "can_admins_bypass": true,
+              "protection_rules": [
+                {
+                  "id": 68755194,
+                  "node_id": "GA_kwDORmaO2s4EGR76",
+                  "type": "branch_policy"
+                }
+              ],
+              "deployment_branch_policy": {
+                "protected_branches": false,
+                "custom_branch_policies": true
+              },
+              "branchPolicies": [
+                {
+                  "id": 63008971,
+                  "name": "ir-v*",
+                  "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzAwODk3MQ==",
+                  "type": "tag"
+                },
+                {
+                  "id": 63008972,
+                  "name": "server-v*",
+                  "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzAwODk3Mg==",
+                  "type": "tag"
+                },
+                {
+                  "id": 63095853,
+                  "name": "v*",
+                  "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzA5NTg1Mw==",
+                  "type": "tag"
+                }
+              ]
+            },
+            {
+              "name": "npm-publish",
+              "can_admins_bypass": true,
+              "protection_rules": [
+                {
+                  "id": 68846983,
+                  "node_id": "GA_kwDORmaO2s4EGoWH",
+                  "type": "branch_policy"
+                }
+              ],
+              "deployment_branch_policy": {
+                "protected_branches": false,
+                "custom_branch_policies": true
+              },
+              "branchPolicies": [
+                {
+                  "id": 63095852,
+                  "name": "v*",
+                  "node_id": "MDE2OkdhdGVCcmFuY2hQb2xpY3k2MzA5NTg1Mg==",
+                  "type": "tag"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

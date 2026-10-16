@@ -111,3 +111,5 @@ docs/archive/FORMA-139-e2e-title/** -text
 # Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
+
+docs/evidence/forma-116/** -text
