@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- Watch tests wait for every initial nonsplit entry context before editing files, preventing another context's initial build from satisfying the requested rebuild. A real three-entry barrier control preserves the failure; watch deadlines and production behavior are unchanged.
+
 - FORMA-183: the integrated P1/P2/P3 corpus now blocks R17 at step 1 with 100 generated states per declared schema. Firefox and WebKit parity block release at 10 states. Every gate requires an empty expected-divergent list and retains the actual counts and timing report.
 
 ### Final template packaging — FORMA-144

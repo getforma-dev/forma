@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "passed": false,
+  "completeMatrix": false,
+  "selection": "value/script/",
+  "node": "v24.22.0",
+  "sourceCommit": "3710e517caa69fbfde701fd26354466095945e63",
+  "sourceClean": false,
+  "catalogueSha256": "d21180522d2238799ab3896484ccb5adb3a0567ed6bad3986cfb36af1beb17a3",
+  "requested": 57,
+  "requestedCapabilityControls": 0,
+  "cases": [
+    {
+      "id": "value/script/state-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3
+    },
+    {
+      "id": "value/script/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4
+    },
+    {
+      "id": "value/script/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4
+    },
+    {
+      "id": "value/script/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4
+    }
+  ],
+  "capabilities": [],
+  "observers": [
+    {
+      "profile": "none",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "trustedTypesRefused": true
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret"
+    }
+  ],
+  "provenance": {
+    "historical": 93,
+    "current": 260,
+    "currentSecurity": 151
+  },
+  "runtimeSha256": "d19a17358c7fe488784265e4efbe960b1e5bedd89e068ef3a9d25996f8920f11",
+  "policy": "default-src 'none'; script-src 'nonce-MZPjOXWNtaODhPq3hOIihKZofHJrUN2m' 'strict-dynamic'; connect-src 'self' ; img-src 'none'; style-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+  "browser": "151.0.7922.34",
+  "current": {
+    "id": "value/script/list-property/none",
+    "kind": "value",
+    "payload": "<script>window.__hostileExec++</script>",
+    "context": "list-property",
+    "profile": "none",
+    "dangerousUrl": false
+  },
+  "error": "page.evaluate: Error: value/script/list-property/none unexpected diagnostic: 1 != 0\n    at eq (eval at evaluate (:311:30), <anonymous>:7:36)\n    at runBrowserCase (eval at evaluate (:311:30), <anonymous>:82:9)\n    at async <anonymous>:337:30\n    at /Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs:60:33",
+  "elapsedMs": 373.725708
+}

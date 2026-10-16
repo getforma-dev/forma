@@ -108,6 +108,25 @@ docs/archive/FORMA-139-e2e-title/** -text
 
 # Exact native multi-entry failure products.
 /docs/archive/FORMA-186-native-multiple-entries/** -text
+
+# FORMA-129: the historical93-probe original is authenticated byte-for-byte.
+docs/archive/FORMA-129-historical-probes/** -text
+
+# FORMA-129: authentic real-server redirect failure and corrected replay.
+docs/archive/FORMA-129-fetch-redirect/** -text
+
+# FORMA-129: observed detached-template failures and corrected unit replay.
+docs/archive/FORMA-129-list-template/** -text
+
+# FORMA-129: source/probe evidence is authenticated across platform checkouts.
+packages/core/probes/corpus.json text eol=lf
+packages/core/e2e/hostile-widgets/*.mjs text eol=lf
+packages/core/e2e/hostile-widgets/probe-provenance.json text eol=lf
+
+# FORMA-129: original calibration failures and actual source qualification bytes.
+docs/archive/FORMA-129-matrix-expectations/** -text
+docs/evidence/forma-129/** -text
+
 # Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
@@ -121,3 +140,6 @@ docs/archive/forma-144-vite7-config/** -text
 
 # Original fixture tool path and actual hosted failure are byte-authenticated.
 docs/archive/forma-144-fixture-tool/** -text
+
+# Byte-exact watch-readiness original source and failure evidence.
+docs/archive/forma-watch-readiness/** -text

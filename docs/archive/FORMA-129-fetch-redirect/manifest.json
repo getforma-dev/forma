@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "originalSourceCommit": "3710e517caa69fbfde701fd26354466095945e63",
+  "originalRuntimeSourceSha256": "780e5b3557e818d507a0f8b84d33f31daec6c92b403042b6a16fa52d69d1ba46",
+  "originalRuntimeBundleSha256": "d19a17358c7fe488784265e4efbe960b1e5bedd89e068ef3a9d25996f8920f11",
+  "files": {
+    "corrected-browser.json": "d8882b2a26babf74e031ba116514a7612ae396fc2a483a7a6d38e3ee85d18e91",
+    "first-failure.json": "eeb3b010ee2764338f6962c63f7c716512a246121942ade5a59528a4764d0d71",
+    "first-failure.log": "9ad7ea7cf0c943345f7298aaa0f2446ba19b1840bc51b6da23753b29e7ff139e",
+    "corrected-browser.log": "9b847ad7ab93cc7b63f26f853c778bebbcd2e72d2c20e641af890e1ceb13615f"
+  }
+}

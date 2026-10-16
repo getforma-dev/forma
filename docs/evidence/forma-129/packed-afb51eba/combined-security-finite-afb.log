@@ -1,0 +1,12 @@
+✔ other component kills cannot hide an expression survivor below its floor (0.826416ms)
+✔ missing, stale, duplicated and unobserved process failures never count as expression kills (1.36725ms)
+✔ P17 refuses partial, stale, duplicated, disconnected and unsafe hostile proof (38.388917ms)
+✔ P17 requires full current-source campaigns and a numerical, bounded real-row mutant (3.96175ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 108.825792
