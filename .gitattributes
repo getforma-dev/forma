@@ -81,3 +81,13 @@ packages/compiler/tests/attribute-values-archive.test.ts text eol=lf
 
 # FORMA-101: preserved pre-native-source originals and wire products are authenticated byte-for-byte.
 docs/archive/FORMA-101-unproved-list-sources/** -text
+
+# FORMA-101: the native LIST migration ledger also hashes these live sources and tests.
+packages/compiler/tests/fixtures/conformance/BUILD-701/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-612/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-616/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-107/pass/app.tsx text eol=lf
+packages/compiler/tests/list-source.test.ts text eol=lf
+packages/compiler/tests/keyed-list-archive.test.ts text eol=lf
+packages/compiler/tests/keyed-list-proof.test.ts text eol=lf
