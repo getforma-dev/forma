@@ -7,8 +7,8 @@
   "packedTarSha256": "8ebf5bf72b9a10636a5cb2e203d8882b852380547f43e8b287e7c884f05d553e",
   "files": {
     "README.md": {
-      "bytes": 6109,
-      "sha256": "80d018a2a095b2eb51e66ed17bbaba66a6e0e5fd3244e92e571dbe407fa0e5d8"
+      "bytes": 7204,
+      "sha256": "44b5e551094ff87388439badb2b654996c3e6386d340aad1a5c3b3e28b7d88d9"
     },
     "browser-csp-corrected.log": {
       "bytes": 1469,
@@ -21,6 +21,34 @@
     "browser-migration.log": {
       "bytes": 32336,
       "sha256": "1e2e6ad97ef0a1af0e6bba69f2aa291853846cbc2a3b7144d2791525b5124370"
+    },
+    "combined-build.log": {
+      "bytes": 7375,
+      "sha256": "6535a5b24d99fe014a7949cb9e08d252a2972f558b1c50cb2f84c350b3b53ec2"
+    },
+    "combined-core.log": {
+      "bytes": 328,
+      "sha256": "6412ae25138c39217fe80e6dbbad505099bc1e5cd3d24e8e48f7ffb5dc6157ec"
+    },
+    "combined-install.log": {
+      "bytes": 143,
+      "sha256": "6f88bbc30af7b610779bd695afdfe6498db0b324e0913d1430ff8955983451b7"
+    },
+    "combined-qualifier-unit.log": {
+      "bytes": 299,
+      "sha256": "3a9dd1d4861d001cdcf5a282b979a4c9b6db20dc3aa41290dbbea304f95b9500"
+    },
+    "combined-size.log": {
+      "bytes": 939,
+      "sha256": "fa9261aa2682359cfd3d867408a5c8e205d6f5c42f52ef65c96fee37fd0fb493"
+    },
+    "combined-types.log": {
+      "bytes": 54,
+      "sha256": "b4d0ae90960eaac9debc2258b68be6a4c6af1ecaf2474294fe3990730e8ab31c"
+    },
+    "combined-version.log": {
+      "bytes": 9,
+      "sha256": "2b796b748c85883d00cfea9775eaa143435f0dc06c69311b444cf0dfc98214bc"
     },
     "core-build.log": {
       "bytes": 7379,
@@ -346,5 +374,6 @@
       "bytes": 144,
       "sha256": "b498f3a7966482ac12de74b1e4d43de137ac8e9231a4c04d7af928df68294ecf"
     }
-  }
+  },
+  "combinedSourceCommit": "0d3d570f7b248097e12fd038178bba738c31f348"
 }
