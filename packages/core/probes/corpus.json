@@ -1633,7 +1633,7 @@
   ],
   "find": "    mount: parent.mount,",
   "replace": "    mount: { ...parent.mount, bound: { ...parent.mount.bound, dom: true, navigate: true } },",
-  "note": "A child scope carries escalated authority instead of its parent's captured mount bound. This valid-context mutant tests the current mandatory-context boundary without counting a missing-context TypeError as a kill. Verified by the generated-tree empty-grants runtime-tiered control."
+  "note": "A child scope carries escalated authority instead of its parent's captured mount bound. This valid-context mutant tests the current mandatory-context boundary without counting a missing-context TypeError as a kill. Verified by the runtime-tiered event-host control: the actual event target must remain confined by its parent mount."
  },
  {
   "id": "tiered/fetch-denial-sent",

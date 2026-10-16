@@ -973,7 +973,7 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "60a5c70e27399160dc38993933910b5dacf386285a19c1d87e022c0ce8a3d008",
+    "sha256": "cd0aaa994e1924a854e16a59cef66855a7a940b5e828a5b79221bb96db81fbe1",
     "total": 252,
     "rows": [
       {
@@ -1952,7 +1952,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-api-regression",
-          "reason": "A child scope carries escalated authority instead of its parent's captured mount bound. This valid-context mutant tests the current mandatory-context boundary without counting a missing-context TypeError as a kill. Verified by the generated-tree empty-grants runtime-tiered control."
+          "reason": "A child scope carries escalated authority instead of its parent's captured mount bound. This valid-context mutant tests the current mandatory-context boundary without counting a missing-context TypeError as a kill. Verified by the runtime-tiered event-host control: the actual event target must remain confined by its parent mount."
         }
       },
       {
