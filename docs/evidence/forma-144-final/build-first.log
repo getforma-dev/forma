@@ -1,0 +1,204 @@
+
+> build
+> npm run build -w packages/compiler && npm run build -w packages/build && npm run build -w packages/core && npm run build -w packages/create-app
+
+
+> @getforma/compiler@3.0.0-dev build
+> tsup src/index.ts --format esm --dts
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 419.51 KB
+ESM ⚡️ Build success in 52ms
+DTS Build start
+DTS ⚡️ Build success in 2714ms
+DTS dist/index.d.ts 17.90 KB
+
+> @getforma/build@3.0.0-dev build
+> tsup src/index.ts src/raw-lint-cli.ts --format esm --dts --external @getforma/compiler
+
+CLI Building entry: src/index.ts, src/raw-lint-cli.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/raw-lint-cli.js 101.67 KB
+ESM dist/index.js        109.08 KB
+ESM ⚡️ Build success in 23ms
+DTS Build start
+DTS ⚡️ Build success in 1218ms
+DTS dist/raw-lint-cli.d.ts 20.00 B
+DTS dist/index.d.ts        19.93 KB
+
+> @getforma/core@3.0.0-dev build
+> node scripts/clean-dist.mjs && tsup && node scripts/post-build.mjs && node scripts/verify-dist.mjs
+
+clean-dist: emptied dist/
+CLI Building entry: {"index":"src/index.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"forma.esm":"src/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-frame":"src/runtime-frame.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"index":"src/index.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core/tsup.config.ts
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+ESM Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+IIFE dist/formajs-frame.global.js 160.62 KB
+IIFE ⚡️ Build success in 60ms
+DTS Build start
+DTS Build start
+IIFE dist/formajs-runtime.global.js     168.22 KB
+IIFE dist/formajs-runtime.global.js.map 544.05 KB
+IIFE ⚡️ Build success in 273ms
+IIFE dist/formajs-runtime-hardened.global.js     164.31 KB
+IIFE dist/formajs-runtime-hardened.global.js.map 583.89 KB
+IIFE ⚡️ Build success in 353ms
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.js".
+ESM dist/dev/tc39-compat.js    526.00 B
+ESM dist/dev/index.js          33.27 KB
+ESM dist/dev/http.js           5.29 KB
+ESM dist/dev/chunk-5N2H2LZM.js 11.01 KB
+ESM dist/dev/chunk-MLOYJZMD.js 4.11 KB
+ESM dist/dev/storage.js        5.18 KB
+ESM dist/dev/runtime.js        137.30 KB
+ESM dist/dev/chunk-QDLVHPHV.js 143.20 KB
+ESM ⚡️ Build success in 1024ms
+ESM dist/dev/runtime-hardened.js 149.83 KB
+ESM ⚡️ Build success in 1030ms
+ESM dist/index.js              33.02 KB
+ESM dist/tc39-compat.js        605.00 B
+ESM dist/http.js               5.36 KB
+ESM dist/storage.js            5.25 KB
+ESM dist/chunk-QMDEYXZ4.js     3.26 KB
+ESM dist/runtime.js            136.24 KB
+ESM dist/chunk-ZBXG25HE.js     140.91 KB
+ESM dist/chunk-HJUFIIUR.js     11.09 KB
+ESM dist/http.js.map           19.14 KB
+ESM dist/storage.js.map        16.91 KB
+ESM dist/index.js.map          129.31 KB
+ESM dist/tc39-compat.js.map    2.41 KB
+ESM dist/runtime.js.map        459.10 KB
+ESM dist/chunk-ZBXG25HE.js.map 430.72 KB
+ESM dist/chunk-HJUFIIUR.js.map 52.84 KB
+ESM dist/chunk-QMDEYXZ4.js.map 24.80 KB
+ESM ⚡️ Build success in 1093ms
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.js".
+ESM dist/forma.esm.js     196.13 KB
+ESM dist/forma.esm.js.map 665.20 KB
+ESM ⚡️ Build success in 1286ms
+CJS dist/dev/chunk-ZHI5EEXV.cjs 4.50 KB
+CJS dist/dev/tc39-compat.cjs    590.00 B
+CJS dist/dev/index.cjs          39.79 KB
+CJS dist/dev/chunk-PATKUBFH.cjs 12.46 KB
+CJS dist/dev/chunk-PWJEQ5LL.cjs 145.07 KB
+CJS dist/dev/http.cjs           5.55 KB
+CJS dist/dev/runtime.cjs        138.24 KB
+CJS dist/dev/storage.cjs        5.27 KB
+CJS ⚡️ Build success in 1287ms
+ESM dist/runtime-hardened.js     147.30 KB
+ESM dist/runtime-hardened.js.map 558.94 KB
+ESM ⚡️ Build success in 1497ms
+CJS dist/storage.cjs            5.34 KB
+CJS dist/tc39-compat.cjs        671.00 B
+CJS dist/chunk-GXLOYZZE.cjs     3.66 KB
+CJS dist/http.cjs               5.62 KB
+CJS dist/chunk-RADJICQN.cjs     12.55 KB
+CJS dist/runtime.cjs            137.18 KB
+CJS dist/chunk-OA4HCVK7.cjs     142.78 KB
+CJS dist/index.cjs              39.54 KB
+CJS dist/tc39-compat.cjs.map    2.45 KB
+CJS dist/chunk-GXLOYZZE.cjs.map 24.84 KB
+CJS dist/storage.cjs.map        16.91 KB
+CJS dist/chunk-RADJICQN.cjs.map 53.03 KB
+CJS dist/http.cjs.map           19.19 KB
+CJS dist/index.cjs.map          129.85 KB
+CJS dist/chunk-OA4HCVK7.cjs.map 431.23 KB
+CJS dist/runtime.cjs.map        459.41 KB
+CJS ⚡️ Build success in 1516ms
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.cjs".
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.cjs".
+DTS ⚡️ Build success in 1401ms
+DTS dist/runtime-hardened.d.ts  13.44 KB
+DTS dist/runtime-hardened.d.cts 13.44 KB
+CJS dist/dev/runtime-hardened.cjs 150.25 KB
+CJS ⚡️ Build success in 1645ms
+CJS dist/runtime-hardened.cjs     147.72 KB
+CJS dist/runtime-hardened.cjs.map 559.00 KB
+CJS ⚡️ Build success in 1650ms
+DTS ⚡️ Build success in 3173ms
+DTS dist/index.d.ts                  56.94 KB
+DTS dist/runtime.d.ts                10.62 KB
+DTS dist/tc39-compat.d.ts            1.21 KB
+DTS dist/http.d.ts                   4.26 KB
+DTS dist/storage.d.ts                2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.ts  2.98 KB
+DTS dist/signal-B5ZKb9uL.d.ts        2.51 KB
+DTS dist/index.d.cts                 56.94 KB
+DTS dist/runtime.d.cts               10.62 KB
+DTS dist/tc39-compat.d.cts           1.21 KB
+DTS dist/http.d.cts                  4.26 KB
+DTS dist/storage.d.cts               2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.cts 2.98 KB
+DTS dist/signal-B5ZKb9uL.d.cts       2.51 KB
+post-build: collapsed duplicate sourceMappingURL footers in 20 file(s)
+post-build: copied dist/formajs-runtime.global.js → dist/forma-runtime.js
+post-build: copied dist/formajs-runtime-hardened.global.js → dist/forma-runtime-csp.js
+post-build: jsx.d.ts copied and referenced in type declarations
+verify-dist: ok (42 JS artifacts checked)
+
+> @getforma/create-app@3.0.0-dev build
+> tsup src/index.ts --format esm
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 12.68 KB
+ESM ⚡️ Build success in 14ms

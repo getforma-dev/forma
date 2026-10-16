@@ -1,9 +1,6 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  mount,
-  unmount,
-  clearDiagnostics,
-} from '../runtime';
+import { clearDiagnostics } from '../runtime';
 
 function waitForEffects(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -19,7 +16,7 @@ describe('CSP parser operator precedence', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
   });
 
@@ -29,7 +26,7 @@ describe('CSP parser operator precedence', () => {
         <p id="out" data-text="{a + b > c}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
     // (3 + 2) = 5 > 4 = true
     expect(container.querySelector('#out')?.textContent).toBe('true');
@@ -41,7 +38,7 @@ describe('CSP parser operator precedence', () => {
         <p id="out" data-text="{a * b + c}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
     // (2 * 3) + 1 = 7
     expect(container.querySelector('#out')?.textContent).toBe('7');
@@ -53,7 +50,7 @@ describe('CSP parser operator precedence', () => {
         <p id="out" data-text="{a - b * c}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
     // 10 - (3 * 2) = 4
     expect(container.querySelector('#out')?.textContent).toBe('4');
@@ -65,7 +62,7 @@ describe('CSP parser operator precedence', () => {
         <p id="out" data-text="{a || b && c}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
     // 0 || (1 && 0) = 0 || 0 = 0
     expect(container.querySelector('#out')?.textContent).toBe('0');
@@ -77,7 +74,7 @@ describe('CSP parser operator precedence', () => {
         <p id="out" data-text="{a > b && c < d}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
     // (5 > 3) && (1 < 2) = true && true = true
     expect(container.querySelector('#out')?.textContent).toBe('true');
@@ -89,7 +86,7 @@ describe('CSP parser operator precedence', () => {
         <p id="out" data-text="{a + b === c}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
     // (2 + 3) === 5 = true
     expect(container.querySelector('#out')?.textContent).toBe('true');

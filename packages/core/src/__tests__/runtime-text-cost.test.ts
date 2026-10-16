@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * FORMA-025: the runtime's own conversions of a result to text are charged.
  *
@@ -39,7 +40,7 @@ describe('the runtime charges its own conversions to text (FORMA-025)', () => {
   beforeEach(async () => {
     await tick();
     runtime.clearDiagnostics();
-    runtime.setDiagnostics(true);
+
     vi.spyOn(console, 'error').mockImplementation(() => {});
     joined = 0;
     stringified = 0;
@@ -58,7 +59,7 @@ describe('the runtime charges its own conversions to text (FORMA-025)', () => {
   });
 
   afterEach(async () => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     await tick();
     runtime.clearDiagnostics();
@@ -73,8 +74,8 @@ describe('the runtime charges its own conversions to text (FORMA-025)', () => {
       <p id="heavy" data-text="{Array.from({length: 1000}).map(() => s)}">server</p>
       <p id="light" data-text="{Array.from({length: 3}).map(() => s.slice(0, 1000))}">server</p>
     </div>`;
+    mountFixture(container);
     const root = container.firstElementChild!;
-    runtime.mount(container);
     const before = Array(1000).fill('ab').join(',');
     expect(view(container.querySelector('#heavy')!.textContent)).toBe(view(before));
     // The same binding over the long string: built for 2,000 units, refused
@@ -99,8 +100,8 @@ describe('the runtime charges its own conversions to text (FORMA-025)', () => {
       <ul id="keyed" data-list="{rows}"><li data-key="{item.name}">row</li></ul>
       <ul id="ok" data-list="{light}"><li>{item.name}</li></ul>
     </div>`;
+    mountFixture(container);
     const root = container.firstElementChild!;
-    runtime.mount(container);
     expect(container.querySelector('#ok')!.textContent).toBe('ab');
     runtime.setScopeValue(root, 'v', BIG);
     // A thousand rows each placing (or keyed by) the long string.

@@ -80,21 +80,31 @@ All three share the same signal graph and reactive engine. Pick one, or mix them
 |---|---|---|
 | **JSX** | `<button onClick={…}>{() => count()}</button>` | a bundler with a JSX transform |
 | **Hyperscript** | `h("button", { onClick: fn }, () => count())` | a bundler |
-| **HTML runtime** | `<button data-on:click="{count++}">` | one `<script>` tag, nothing else |
+| **HTML runtime** | `<button data-on:click="{count++}">` | a runtime script and an explicit mount call |
 
-JSX compiles to `h()` — same function, no JSX-specific runtime. The HTML runtime reads `data-*` attributes out of the page and wires them to the same signals.
+JSX compiles to `h()` — same function, no JSX-specific runtime. The HTML runtime binds reviewed markup handed to `mountMarkup()` to the same signals. Loading the script binds nothing by itself.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@getforma/core@2.1.0/dist/formajs-runtime.global.js"></script>
-
-<div data-forma-state='{ "count": 0 }'>
-  <p data-text="{count}"></p>
-  <button data-on:click="{count++}">+1</button>
-  <button data-on:click="{count = 0}">Reset</button>
-</div>
+<script src="/vendor/formajs-runtime.global.js"></script>
+<main id="counter">
+  <div data-forma-state='{ "count": 0 }'>
+    <p data-text="{count}"></p>
+    <button data-on:click="{count++}">+1</button>
+    <button data-on:click="{count = 0}">Reset</button>
+  </div>
+</main>
+<script src="/counter.js"></script>
 ```
 
-That is a working reactive counter: no JavaScript file, no build step. → [docs/HTML-RUNTIME.md](docs/HTML-RUNTIME.md) for every directive and the expression grammar.
+`counter.js` starts the reviewed counter explicitly (serve this script under your CSP):
+
+```js
+const root = document.getElementById('counter');
+const counter = FormaRuntime.mountMarkup(root, FormaRuntime.trustedHtml(root.innerHTML), { tier: 'reviewed' });
+// counter.update(FormaRuntime.trustedHtml(nextMarkup)); counter.unmount();
+```
+
+The mount grants no fetch, outside-DOM access or navigation unless requested. No build step is required. → [docs/HTML-RUNTIME.md](docs/HTML-RUNTIME.md) for every directive and the expression grammar.
 
 Verified by `src/__tests__/readme-examples.test.ts` > "the intro counter works without eval"
 

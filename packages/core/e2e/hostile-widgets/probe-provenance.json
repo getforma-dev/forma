@@ -13,7 +13,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-api-regression",
-          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: SECURITY.md 'Island props sanitized' — stripping removed"
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: SECURITY.md 'Island props sanitized' \u2014 stripping removed"
         }
       },
       {
@@ -22,7 +22,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: batch() no longer batches — effects run per write"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: batch() no longer batches \u2014 effects run per write"
         }
       },
       {
@@ -31,7 +31,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: bus emit iterates live Set — off() during emit corrupts iteration"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: bus emit iterates live Set \u2014 off() during emit corrupts iteration"
         }
       },
       {
@@ -72,7 +72,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: kebab-case CSS props no longer camelised — string styles silently drop"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: kebab-case CSS props no longer camelised \u2014 string styles silently drop"
         }
       },
       {
@@ -150,7 +150,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: history entries alias live objects — undo/redo returns mutated state"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: history entries alias live objects \u2014 undo/redo returns mutated state"
         }
       },
       {
@@ -200,7 +200,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: ctrl modifier ignored — 's' fires a 'ctrl+s' binding"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: ctrl modifier ignored \u2014 's' fires a 'ctrl+s' binding"
         }
       },
       {
@@ -236,7 +236,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: the LIS rows are the ones skipped-as-in-place — final order corrupted"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: the LIS rows are the ones skipped-as-in-place \u2014 final order corrupted"
         }
       },
       {
@@ -245,7 +245,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: every reused row is moved — LIS optimisation dead"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: every reused row is moved \u2014 LIS optimisation dead"
         }
       },
       {
@@ -254,7 +254,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: LIS always empty — every keyed item moves (O(n) DOM churn, identity loss)"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: LIS always empty \u2014 every keyed item moves (O(n) DOM churn, identity loss)"
         }
       },
       {
@@ -281,7 +281,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: small-list path never taken — all lists go through the Map path"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: small-list path never taken \u2014 all lists go through the Map path"
         }
       },
       {
@@ -290,7 +290,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: large-list Map path never taken — all lists go through the flat scan"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: large-list Map path never taken \u2014 all lists go through the flat scan"
         }
       },
       {
@@ -389,7 +389,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: portal never detaches the previous node — the target accumulates on every re-render and on dispose"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: portal never detaches the previous node \u2014 the target accumulates on every re-render and on dispose"
         }
       },
       {
@@ -398,7 +398,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: string portal selector ignored — always body"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: string portal selector ignored \u2014 always body"
         }
       },
       {
@@ -407,7 +407,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: compile-break sentinel (expect CAUGHT — harness sanity check)"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: compile-break sentinel (expect CAUGHT \u2014 harness sanity check)"
         }
       },
       {
@@ -565,7 +565,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: substring match — https://example.com/guides/javascript now blocked"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: substring match \u2014 https://example.com/guides/javascript now blocked"
         }
       },
       {
@@ -804,7 +804,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-structural-regression",
-          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR attribute values no longer escape double quotes — attribute breakout"
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR attribute values no longer escape double quotes \u2014 attribute breakout"
         }
       },
       {
@@ -822,7 +822,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-structural-regression",
-          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR text nodes no longer escape < > & ' — raw XSS"
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR text nodes no longer escape < > & ' \u2014 raw XSS"
         }
       },
       {
@@ -885,7 +885,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-structural-regression",
-          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR text children emitted raw — live <script> in the page"
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR text children emitted raw \u2014 live <script> in the page"
         }
       },
       {
@@ -921,7 +921,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-api-regression",
-          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: arrays no longer plain — array reactivity path dead"
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: arrays no longer plain \u2014 array reactivity path dead"
         }
       },
       {
@@ -930,7 +930,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: store deepClone becomes identity — snapshots alias live state"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: store deepClone becomes identity \u2014 snapshots alias live state"
         }
       },
       {
@@ -948,7 +948,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: switch branch cache disabled — new node identity each visit"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: switch branch cache disabled \u2014 new node identity each visit"
         }
       },
       {
@@ -957,7 +957,7 @@
         "security": false,
         "disposition": {
           "kind": "non-security-mutation",
-          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: cached fragment branch not scooped back — 3rd visit renders empty/duplicated"
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: cached fragment branch not scooped back \u2014 3rd visit renders empty/duplicated"
         }
       },
       {
@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "6967bde7d4638aeee863e3e383e709d8724a0b4af402298d06d102df2a5cadab",
-    "total": 260,
+    "sha256": "cd0aaa994e1924a854e16a59cef66855a7a940b5e828a5b79221bb96db81fbe1",
+    "total": 252,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
@@ -982,7 +982,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-api-regression",
-          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: SECURITY.md 'Island props sanitized' — stripping removed"
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: SECURITY.md 'Island props sanitized' \u2014 stripping removed"
         }
       },
       {
@@ -1201,7 +1201,7 @@
         "security": true,
         "disposition": {
           "kind": "expression-cost-campaign",
-          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: the case-mapped letterlike symbols (Ω U+2126, K U+212A, Å U+212B) are charged as symbols that map to themselves. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: the case-mapped letterlike symbols (\u03a9 U+2126, K U+212A, \u00c5 U+212B) are charged as symbols that map to themselves. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
         }
       },
       {
@@ -1484,7 +1484,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: substring match — https://example.com/guides/javascript now blocked"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: substring match \u2014 https://example.com/guides/javascript now blocked"
         }
       },
       {
@@ -1628,7 +1628,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-api-regression",
-          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: arrays no longer plain — array reactivity path dead"
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: arrays no longer plain \u2014 array reactivity path dead"
         }
       },
       {
@@ -1924,13 +1924,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "matrix-capability",
-          "families": [
-            "outside",
-            "selector",
-            "activation"
-          ],
-          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a tiered mount's $el is the tierless wrapper: $el.closest('body') reaches the page (SR16, L-36). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
+          "kind": "separate-api-regression",
+          "reason": "a tiered mount's $el is the tierless wrapper: $el.closest('body') reaches the page (SR16, L-36). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
         }
       },
       {
@@ -1938,13 +1933,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "matrix-capability",
-          "families": [
-            "outside",
-            "selector",
-            "activation"
-          ],
-          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: $event in a tiered mount's handler is the tierless wrapper, so $event.target reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
+          "kind": "separate-api-regression",
+          "reason": "$event in a tiered mount's handler is the tierless wrapper, so $event.target reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
         }
       },
       {
@@ -1952,13 +1942,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "matrix-capability",
-          "families": [
-            "outside",
-            "selector",
-            "activation"
-          ],
-          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: $refs in a tiered mount is the tierless wrapper, so $refs.x.closest('section') reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
+          "kind": "separate-api-regression",
+          "reason": "$refs in a tiered mount is the tierless wrapper, so $refs.x.closest('section') reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
         }
       },
       {
@@ -1966,8 +1951,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "separate-structural-regression",
-          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a child scope (each element's, each handler's, each list row's) loses its mount, so its data-fetch is sent as a tierless one and its failures are reported without the mount. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
+          "kind": "separate-api-regression",
+          "reason": "A child scope carries escalated authority instead of its parent's captured mount bound. This valid-context mutant tests the current mandatory-context boundary without counting a missing-context TypeError as a kill. Verified by the runtime-tiered event-host control: the actual event target must remain confined by its parent mount."
         }
       },
       {
@@ -1975,11 +1960,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "matrix-capability",
-          "families": [
-            "fetch"
-          ],
-          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a data-fetch the mount's grants do not cover is sent anyway (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
+          "kind": "separate-api-regression",
+          "reason": "a data-fetch the mount's grants do not cover is sent anyway (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
         }
       },
       {
@@ -2059,17 +2041,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tiered mount's $refetch reaches the page's data-fetch ids. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
-        }
-      },
-      {
-        "id": "tiered/refetch-registers-on-page",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tiered mount's data-fetch-id registers on the page, where the page's $refetch reaches it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
+          "kind": "separate-api-regression",
+          "reason": "Every explicit mount incorrectly shares the same refetch registry. Verified by runtime-tiered-mount $refetch reaches only the fetches of its own mount, which asserts request paths and counts across three actual handles."
         }
       },
       {
@@ -2077,8 +2050,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tierless path (the observer, mount(), the DOMContentLoaded scan) binds markup under a tiered root with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+          "kind": "separate-api-regression",
+          "reason": "Mandatory mountScope context must match the actual nearest owner. The former auto/tierless entry path is removed; this defense-in-depth mutant remains in the corpus without claiming its historical trigger still exists."
         }
       },
       {
@@ -2086,8 +2059,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tierless scope around a tiered root binds the mount's elements against its own scope, with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+          "kind": "separate-api-regression",
+          "reason": "Scope binding must skip a descendant already owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
         }
       },
       {
@@ -2095,13 +2068,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "matrix-capability",
-          "families": [
-            "outside",
-            "selector",
-            "activation"
-          ],
-          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a scope around a tiered root gets $refs to the mount's elements. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+          "kind": "separate-api-regression",
+          "reason": "Scope ref collection must skip a descendant owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
         }
       },
       {
@@ -2109,8 +2077,8 @@
         "source": "src/runtime.ts",
         "security": true,
         "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a denied grant is silent when the mount's diagnostics are off: SR37's coded diagnostic for every denial is lost. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a mount takes its diagnostics switch from its call, not the page\""
+          "kind": "separate-api-regression",
+          "reason": "a denied grant is silent when the mount's diagnostics are off: SR37's coded diagnostic for every denial is lost. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a mount takes its diagnostics switch from its call, not the page\""
         }
       },
       {
@@ -2138,15 +2106,6 @@
         "disposition": {
           "kind": "separate-structural-regression",
           "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a mount whose grants leave out dom reaches the page anyway. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
-        }
-      },
-      {
-        "id": "tiered/prior-bindings-kept",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: bindings a tierless path made under the root before it was handed over keep running, with every power, on nodes the mount has removed. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"bindings a tierless path made under the root go first, with what they rendered\""
         }
       },
       {
@@ -2229,60 +2188,6 @@
         "disposition": {
           "kind": "separate-unreviewed-frame-contract",
           "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the frame mounts unreviewed content in tier (b), with every grant A2 gives by default: its data-fetch is sent. Verified by: src/__tests__/runtime-frame.test.ts > \"takes one port from its parent, renders each module in tier (c) and answers only ready, resize and error\""
-        }
-      },
-      {
-        "id": "frame/auto-mount",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-unreviewed-frame-contract",
-          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the preview frame's runtime mounts the page's data-forma-state on load and watches body, so markup injected outside the root is bound. Verified by: src/__tests__/runtime-frame.test.ts > \"the frame runtime is one classic script a server can inline as it is\""
-        }
-      },
-      {
-        "id": "tiered/mount-switch-ignored",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: data-forma-mount=\"manual\" is ignored: the page auto-mounts and watches body, so markup injected outside a tiered root is bound (SR16 in 2.x). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
-        }
-      },
-      {
-        "id": "tiered/mount-switch-own-script-unread",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a CDN build ignores the switch on its own script element, the place the docs tell a page to put it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the mount switch is read once, from the runtime's own script element\""
-        }
-      },
-      {
-        "id": "tiered/mount-switch-esm-unread",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: an ESM build, which has no script element of its own, never sees the switch on the application's module script. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
-        }
-      },
-      {
-        "id": "tiered/mount-switch-auto-init",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a page with the switch still runs the auto-mount on load. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
-        }
-      },
-      {
-        "id": "tiered/mount-switch-calls-bind",
-        "source": "src/runtime.ts",
-        "security": true,
-        "disposition": {
-          "kind": "separate-mount-lifecycle-regression",
-          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: on a page with the switch, mount(), initRuntime() and reconcile() still bind with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
         }
       },
       {
@@ -2569,6 +2474,2389 @@
         "disposition": {
           "kind": "separate-unreviewed-frame-contract",
           "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: data-bind:srcdoc runs in an unreviewed mount and writes a document the strip never saw, from a value the module chose (formajs#35's review, S2). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported\""
+        }
+      },
+      {
+        "id": "explicit/default-dom",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Omitted grants escape the handed root. Verified by explicit-mount compiled/reviewed omitted-grants controls: actual closest result must remain confined."
+        }
+      },
+      {
+        "id": "explicit/default-navigate",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Omitted grants activate a link. Verified by explicit-mount compiled/reviewed omitted-grants controls: the actual target click listener must never run."
+        }
+      },
+      {
+        "id": "explicit/detached-scope-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Handle disposal incorrectly relies on current DOM ancestry and leaves moved or detached bound scopes active. Both explicit owned-scope cases assert the original counter remains unchanged after disposal and an independent mount stays live."
+        }
+      },
+      {
+        "id": "explicit/ancestry-disposal",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Captured scope ownership is replaced by current DOM ancestry. Both explicit owned-scope cases assert an old detached/moved counter cannot run after its owner handle unmounts."
+        }
+      }
+    ]
+  },
+  "a2": {
+    "path": "docs/archive/FORMA-108-A2-bridge/source/packages/core/probes/corpus.json",
+    "sha256": "6967bde7d4638aeee863e3e383e709d8724a0b4af402298d06d102df2a5cadab",
+    "total": 260,
+    "rows": [
+      {
+        "id": "activate/props-not-sanitized",
+        "source": "src/dom/activate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "batch/no-batching",
+        "source": "src/reactive/batch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "bus/emit-no-snapshot",
+        "source": "src/events/bus.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "bus/once-no-off",
+        "source": "src/events/bus.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/attr-null-not-removed",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/class-null-written",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/static-class-true-bare",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/generic-url-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/parseCss-drops-camel",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/static-onattr-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/static-true-bare",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/static-url-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/style-cssText-instead-of-cssom",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/style-remove-stale-off",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/xlink-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "element/function-child-outside-namespace",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "element/no-mathml",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/array-index-write-unbounded",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/budget-edge-off-by-one",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/budget-not-cumulative",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/compound-assign-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/computed-key-unbounded",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/concat-args-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-array-from-length-ignored",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-array-search-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-flat-depth-ignored",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-object-keys-unweighted",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-repeat-count-ignored",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-replaceall-one-occurrence",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-scan-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-sliced-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-sort-linear",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-sparse-scan-unrowed",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-trim-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/costly-letterlike-too-broad",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/costly-set-too-broad",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/costly-set-too-narrow",
+        "source": "src/expr/cost.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/data-args-charged",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/data-args-text-charged",
+        "source": "src/expr/cost.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/dom-method-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/flatmap-results-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/fn-callback-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/host-write-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/loose-equality-charges-all",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/loose-equality-charges-none",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/lowercase-wide-as-latin1",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/object-keys-of-object-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/operator-coercion-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/preflight-args-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/preflight-cost-row-skipped",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/replace-receiver-insert-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/split-pieces-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/template-coercion-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/uppercase-tiers-flattened",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/weigh-elements-skipped",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/weigh-string-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "form-control/option-null-submits-empty",
+        "source": "src/dom/form-control.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "history/clone-identity",
+        "source": "src/state/history.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "http/ws-random-unchecked",
+        "source": "src/http/ws.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "http/ws-reconnect-no-jitter",
+        "source": "src/http/ws.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "hydrate/fallback-ignores-parent-namespace",
+        "source": "src/dom/namespace.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "hydrate/foreignObject-content-in-svg",
+        "source": "src/dom/namespace.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "keyboard/no-ctrl-check",
+        "source": "src/events/keyboard.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "keyboard/no-meta-check",
+        "source": "src/events/keyboard.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/dup-key-bucket-collapse",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/dup-key-bucket-shift",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/lis-flag-inverted",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/lis-flags-never-set",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/lis-returns-empty",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/no-onInsert-hook",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/public-update-replaces-row",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/removal-skipped",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/rows-outside-namespace",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/small-threshold-1",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "list/small-threshold-huge",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "mount/container-namespace-ignored",
+        "source": "src/dom/mount.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "mutate/setAttr-true-branch",
+        "source": "src/dom-utils/mutate.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "mutate/setStyle-drop-undef-guard",
+        "source": "src/dom-utils/mutate.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "mutate/setText-uses-innerHTML",
+        "source": "src/dom-utils/mutate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "namespace/desc-content-svg",
+        "source": "src/dom/namespace.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "namespace/mathml-token-content-mathml",
+        "source": "src/dom/namespace.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "observe/onIntersect-noop",
+        "source": "src/dom-utils/observe.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "observe/onResize-noop",
+        "source": "src/dom-utils/observe.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "persist/migrate-off",
+        "source": "src/state/persist.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "persist/skip-validate",
+        "source": "src/state/persist.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "portal/no-remove-prev",
+        "source": "src/dom/portal.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "portal/target-namespace-ignored",
+        "source": "src/dom/portal.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "portal/target-string-ignored",
+        "source": "src/dom/portal.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "reactive/batch-flush-under-caller-root",
+        "source": "src/reactive/batch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "reactive/untrack-noop",
+        "source": "src/reactive/untrack.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "reconcile/remove-all-skips-hook",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/bind-false-not-removed",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/bind-guard-off",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/bind-no-eventhandler",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/bind-tag-not-forwarded",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/data-fetch-no-timeout",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/data-fetch-outlives-teardown",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/data-fetch-timeout-message-from-engine",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/data-fetch-timer-outlives-answer",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/attrname-allow-quote",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/attrname-allows-slash",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/eventhandler-case-sensitive",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/parsestate-no-proto-strip",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/scheme-re-unanchored",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/svg-any-tag-is-image",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/unsafe-attr-write-url-off",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-action",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-background",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-data",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-formaction",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-poster",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-xlink",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "sec/url-dangerous-off",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "show/branch-outside-namespace",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "show/no-branch-dispose",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "show/no-fragment-sweep",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "show/no-lasttruthy-guard",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "storage/local-skip-validate",
+        "source": "src/storage/local.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "store/array-version-not-subscribed",
+        "source": "src/state/store.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "store/arrays-not-wrapped",
+        "source": "src/state/store.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "store/deepClone-identity",
+        "source": "src/state/store.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "store/no-array-method-patch",
+        "source": "src/state/store.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "switch/cache-never-reused",
+        "source": "src/dom/switch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "switch/cases-outside-namespace",
+        "source": "src/dom/switch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "switch/no-scoop-back",
+        "source": "src/dom/switch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "traverse/siblings-includes-self",
+        "source": "src/dom-utils/traverse.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/grow-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/template-grow-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/compound-grow-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/compare-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/parse-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/sort-strings-unweighed",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/array-search-long-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/string-args-full-weight",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/string-args-free",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/case-cap-after-call",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/nested-eval-fresh-budget",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/spend-not-handed-back",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/refused-charge-kept",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/meter-not-passed",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/deferral-reported",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/handler-event-shares-stale-meter",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/data-text-unpriced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/list-rows-unpriced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/persist-unpriced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/model-input-stale-meter",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/fresh-rope-copy-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/oversized-charge-deferred",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cost-counted-to-whole-budget",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/units-deferral-counts-steps",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/deferral-leaves-room",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/waiting-cap-zero",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/cap-admits-lower-bound",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/waiting-allowance-unbounded",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "expr/refusals-not-counted",
+        "source": "src/expr/interp.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "runtime/dispatch-resets-cap",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/reach-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/reach-root-inside",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/reach-drops-bound",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/grants-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/navigate-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/selector-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/scope-budget-ignored",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "selector/combinator-accepted",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "selector/function-args-unchecked",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "selector/any-function",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/el-unbound",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/event-unbound",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/refs-unbound",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/child-scope-drops-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/fetch-denial-sent",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/no-fetch-grant-allows",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/fetch-method-unchecked",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/fetch-prefix-sibling",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/fetch-escaped-separator",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/fetch-prefix-any-origin",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/fetch-cookies-always",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/non-2xx-as-data",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/fetch-timeout-ignored",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/refetch-shared-registry",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/refetch-registers-on-page",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The page-wide registry and tierless registration path were removed. Current tiered/refetch-shared-registry mutates the actual per-mount registry allocation and tests cross-mount isolation."
+        }
+      },
+      {
+        "id": "tiered/tierless-binds-under-root",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Historical tierless test attribution removed; current defense-in-depth mutation retained without claiming a new kill."
+        }
+      },
+      {
+        "id": "tiered/outer-scope-binds-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Historical tierless test attribution removed; current defense-in-depth mutation retained without claiming a new kill."
+        }
+      },
+      {
+        "id": "tiered/outer-refs-into-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Historical tierless test attribution removed; current defense-in-depth mutation retained without claiming a new kill."
+        }
+      },
+      {
+        "id": "tiered/tierless-disposes-mount",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The tierless unmount/destroyRuntime entry points were removed. New explicit/ancestry-disposal and explicit/detached-scope-kept mutate actual handle ownership and retained scope cleanup."
+        }
+      },
+      {
+        "id": "tiered/denial-silenced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/denials-shared-across-mounts",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/unreviewed-any-origin",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/unreviewed-takes-grants",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/explicit-dom-ignored",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/default-none",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "This old compatibility mutant prevented the A2 default from becoming deny-all in a minor release. The approved3.0 default is now deny-all; explicit/default-dom and explicit/default-navigate mutate the new rule in the opposite direction."
+        }
+      },
+      {
+        "id": "tiered/prior-bindings-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "Tierless binders are removed and cannot have bound handed markup. Actual handle.update removed-node cleanup remains asserted, and explicit/detached-scope-kept covers retained scopes after a DOM move."
+        }
+      },
+      {
+        "id": "tiered/report-fetch-unrecorded",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "tiered/report-uses-unrecorded",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/directive-map-read",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "Global setDirectiveMap/config readers were removed. Actual explicit mount binds every declared directive; exact runtime exports and ignored-global controls retain this public boundary."
+        }
+      },
+      {
+        "id": "tiered/directive-selector-read",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The global directive selector/config reader was removed. Actual explicit mount binds every declared directive; no selector optimization remains to mutate."
+        }
+      },
+      {
+        "id": "runtime/reconcile-no-deprecation",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The tierless reconcile API and its bridge warning were removed. Exact runtime exports prove its absence; explicit/manual-warning covers the surviving obsolete-attribute hint."
+        }
+      },
+      {
+        "id": "selector/pseudo-element",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "selector/host",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "selector/unbalanced",
+        "source": "src/expr/selector.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/port-from-anyone",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/many-ports",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/keeps-listening",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/extra-keys",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/any-type",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/reviewed-tier",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/diagnostics-dropped",
+        "source": "src/runtime-frame.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/auto-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "Automatic scope scanning and the body observer were removed from every runtime, including frame. The actual production frame plus explicit no-auto browser and unit controls cover import/injection behavior without a switch."
+        }
+      },
+      {
+        "id": "frame/source-map",
+        "source": "tsup.config.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/mount-switch-ignored",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The manual opt-out switch no longer controls binding because automatic/tierless binding was removed. Actual no-auto controls run with and without the obsolete attribute; explicit/manual-warning independently checks its development hint."
+        }
+      },
+      {
+        "id": "tiered/mount-switch-own-script-unread",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The manual opt-out switch no longer controls binding because automatic/tierless binding was removed. Actual no-auto controls run with and without the obsolete attribute; explicit/manual-warning independently checks its development hint."
+        }
+      },
+      {
+        "id": "tiered/mount-switch-esm-unread",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The manual opt-out switch no longer controls binding because automatic/tierless binding was removed. Actual no-auto controls run with and without the obsolete attribute; explicit/manual-warning independently checks its development hint."
+        }
+      },
+      {
+        "id": "tiered/mount-switch-auto-init",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The manual opt-out switch no longer controls binding because automatic/tierless binding was removed. Actual no-auto controls run with and without the obsolete attribute; explicit/manual-warning independently checks its development hint."
+        }
+      },
+      {
+        "id": "tiered/mount-switch-calls-bind",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The manual opt-out switch no longer controls binding because automatic/tierless binding was removed. Actual no-auto controls run with and without the obsolete attribute; explicit/manual-warning independently checks its development hint."
+        }
+      },
+      {
+        "id": "tiered/mount-switch-any-value",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retired-api",
+          "reason": "The manual opt-out switch no longer controls binding because automatic/tierless binding was removed. Actual no-auto controls run with and without the obsolete attribute; explicit/manual-warning independently checks its development hint."
+        }
+      },
+      {
+        "id": "trusted/mount-clear-string",
+        "source": "src/dom/mount.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/unmount-clear-string",
+        "source": "src/dom/mount.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/null-clear-string",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/reconcile-writes-trusted-as-string",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/srcdoc-stringified",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/reactive-srcdoc-stringified",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/policy-per-call",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/look-alike-accepted",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/stand-in-unrecognised",
+        "source": "src/dom/trusted-html.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/static-attr-second-conversion",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/reactive-attr-second-conversion",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/reconcile-srcdoc-unminted",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/reconcile-writes-script-attrs",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/runtime-handle-mints-strings",
+        "source": "src/dom/runtime-parser.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/runtime-parser-mints-any-srcdoc",
+        "source": "src/dom/runtime-parser.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/registry-exposes-policy",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/registry-has-prototype",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/reconcile-records-before-write",
+        "source": "src/dom/reconcile.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/policy-refused-silent",
+        "source": "src/dom/trusted-html.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/factory-trusts-any-object",
+        "source": "src/dom/trusted-html.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "trusted/reconcile-string-script-attrs-removed",
+        "source": "src/dom/reconcile.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/closest-unconfined",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/closest-walks-past-root",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/dispatch-activation-ungated",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "tiered/dispatch-activation-case",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "selector/scope",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/inner-html-null-keeps-markup",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "adopt/inner-html-rewritten",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "adopt/inner-html-byte-equality",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "adopt/inner-html-null-first-empties",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/inner-html-children-silent",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "el/inner-html-recorded-before-write",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "adopt/inner-html-empty-parsed",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame/spoofed-diagnostic-forwarded",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame-link/not-stripped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame-link/nested-template-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame-link/refusal-silenced",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "migrated-probe",
+          "reason": "Re-anchored to the current mandatory mount context and actual explicit lifecycle; intended observable security/correctness property retained."
+        }
+      },
+      {
+        "id": "frame-link/reparsed",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame-link/live-check-skipped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame-link/reached-but-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame-srcdoc/not-stripped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "frame-srcdoc/binding-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "adoption/boolean-text-word",
+        "source": "src/dom/adoption.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "adoption/true-bare-off-boolean-set",
+        "source": "src/dom/adoption-attributes.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
+        }
+      },
+      {
+        "id": "adoption/boolean-falsy-presence",
+        "source": "src/dom/adoption-attributes.ts",
+        "security": false,
+        "disposition": {
+          "kind": "retained-probe",
+          "reason": "Unchanged current production mutation retained with its original ID and property."
         }
       }
     ]

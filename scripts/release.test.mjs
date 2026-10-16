@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { selectRun, checkJobs } from './check-release-ci.mjs';
 import { registryStatus, waitForPackage, npmPublishArgs, cargoPublishArgs } from './release-publish.mjs';
-import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, digest, run, json, packCargoWorkspace, milestoneOf, releaseMilestone, assertMilestoneReady, MILESTONES } from './release-set.mjs';
+import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, templateRequirement, digest, run, json, packCargoWorkspace, milestoneOf, releaseMilestone, assertMilestoneReady, MILESTONES } from './release-set.mjs';
 
 const contracts = () => json(join(ROOT, 'scripts/release-contracts.json'));
 const seededContract = mutate => { const c = contracts(); mutate(c); return c; };
@@ -207,17 +207,23 @@ test('template Cargo.lock staging preserves third-party resolutions and never in
   assert(!local.includes('c'.repeat(64)));
   assert.throws(() => stageCargoLock(source.replace('checksum = "old"\n', ''), packages));
 });
-test('staged npm locks point at the actual packed bytes; local P17 substitutions retain all external locks', () => {
+test('stable template ranges advance with the set while development and prereleases stay exact', () => {
+  for (const version of ['3.0.0', '3.2.1', '4.0.0']) assert.equal(templateRequirement(version), `^${version}`);
+  for (const version of ['3.0.0-dev', '3.0.0-alpha.1', '3.0.0-beta.1', '3.0.0-rc.1']) assert.equal(templateRequirement(version), `=${version}`);
+  for (const version of ['2.1.0', '^3.0.0', '3.0.0-rc.0', '3.0.0-next']) assert.throws(() => templateRequirement(version));
+});
+for (const version of ['3.0.0-beta.1', '3.0.0']) test(`staged ${version} npm locks authenticate actual packed bytes despite manifest ranges`, () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-release-test-'));
   try {
     mkdirSync(join(dir, 'package'));
-    writeFileSync(join(dir, 'package/package.json'), JSON.stringify({ name: '@getforma/core', version: '3.0.0', dependencies: { 'alien-signals': '3.1.2' } }));
+    writeFileSync(join(dir, 'package/package.json'), JSON.stringify({ name: '@getforma/core', version, dependencies: { 'alien-signals': '3.1.2' } }));
     run('tar', ['-czf', join(dir, 'core.tgz'), '-C', dir, 'package']);
     const manifest = { dependencies: { '@getforma/core': '^2.1.0', external: '1.0.0' } };
     const lock = { lockfileVersion: 3, packages: { '': manifest, 'node_modules/@getforma/core': { version: '2.1.0' }, 'node_modules/external': { version: '1.0.0', integrity: 'exact-lock' } } };
-    const packages = [{ registry: 'npm', name: '@getforma/core', version: '3.0.0', file: 'core.tgz' }];
+    const packages = [{ registry: 'npm', name: '@getforma/core', version, file: 'core.tgz' }];
     const shipped = stageNpmLock(manifest, lock, packages, dir);
-    assert.equal(shipped.manifest.dependencies['@getforma/core'], '=3.0.0');
+    assert.equal(shipped.manifest.dependencies['@getforma/core'], version.includes('-') ? `=${version}` : `^${version}`);
+    assert.equal(shipped.lock.packages['node_modules/@getforma/core'].version, version);
     assert.equal(shipped.lock.packages['node_modules/@getforma/core'].integrity, `sha512-${digest(join(dir, 'core.tgz'), 'sha512', 'base64')}`);
     assert.deepEqual(shipped.lock.packages['node_modules/external'], lock.packages['node_modules/external']);
     const local = stageNpmLock(shipped.manifest, shipped.lock, packages, dir, true);

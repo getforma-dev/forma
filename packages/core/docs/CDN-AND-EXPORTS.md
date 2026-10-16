@@ -92,7 +92,7 @@ so a bundler never pulls them into an app that does not ask for them.
 | `@getforma/core` | Signals, `h()`, mount, lists, stores, components, islands, events, DOM utils |
 | `@getforma/core/http` | `createFetch`, `fetchJSON`, `createSSE`, `createWebSocket` |
 | `@getforma/core/storage` | `createLocalStorage`, `createSessionStorage`, `createIndexedDB` |
-| `@getforma/core/runtime` | HTML runtime — `initRuntime()`, `mount()`, `unmount()`, `reconcile()`, `trustedHtml()`, `getDiagnostics()` |
+| `@getforma/core/runtime` | HTML runtime — `mountMarkup()`, handle `update()`/`unmount()`, `trustedHtml()`, `getDiagnostics()`; explicit tier and grants |
 | `@getforma/core/runtime-hardened` | The same runtime, bundled without code splitting (alias: `@getforma/core/runtime-csp`) |
 | `@getforma/core/tc39` | TC39-shaped `State` and `Computed` classes |
 

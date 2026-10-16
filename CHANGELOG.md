@@ -18,6 +18,22 @@
 - FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. Missing evidence or any sample above12ms refuses.
 - Lighthouse13.5.0 and the historical comparison libraries are exact-pinned development tools; no runtime dependency changes. The fixture HTTP server and measurement binary now share their unchanged typed input constructors.
 
+
+### Explicit HTML runtime mounts — FORMA-108
+
+- HTML bindings now require `mountMarkup(root, trustedHtml(markup), { tier, grants, config })` and the returned update/unmount handle. Removed auto scanning, the body observer, tierless lifecycle calls and global configuration setters. Omitted grants refuse fetch and activation and confine DOM traversal to the handed root; every fetch keeps the grant's method/path/cookie/timeout policy and treats non-2xx responses as errors.
+- A handle captures its scopes, so unmount also disposes a scope the application detached or moved. Unreviewed refusals retain distinct mount names, tiers and counts. The obsolete manual attribute produces one development-only migration hint; it has no binding authority.
+- Monorepo fixtures and measurement helpers use actual explicit mounts. Byte-exact A2 sources and all260 old mutation records remain archived with per-ID dispositions; current qualification and its nine extra explicit-mount controls are reported separately from historical results. FMIR remains restricted to modules from the application's own build; external module admission requires the deferred M9 boundary.
+
+### Final template packaging — FORMA-144
+
+- Resolve the E2E fixture bundler from the selected core package, including workspace-hoisted installations.
+
+- Match core test and benchmark JSX configuration to the locked Vite 7 transform, and typecheck every Vitest configuration.
+- Stable template manifests use coordinated caret requirements; prereleases and source seeds remain exact. Packed lockfiles still authenticate the exact candidate archives, and failed packaging restores all template source files. Both templates now declare the approved Node 22 floor.
+- Update and deduplicate the workspace test dependencies to patched Vitest 4.1.12 and compatible transitive fixes. The separate dashboard watcher advisory remains documented; its locked graph is not covered by the workspace’s zero-finding audit.
+- Add the 0.6.x template migration guide and record the deliberate retention of both authenticated template esbuild copies. Final packed template, size and release qualification remain required.
+
 ### Lexical JSX SVG namespaces — FORMA-171
 
 - Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.

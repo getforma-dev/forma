@@ -29,9 +29,9 @@ package shows it as `@deprecated` in its types. See
 | `createPortal`, `svg()`, `template()` | **Stable** | |
 | `trustedHtml()`, the raw-HTML entry every raw sink takes | **Stable** | A plain string at a raw sink, and `h('script')`, are refused: see [Deprecated forms](#deprecated-forms). |
 | `data-fetch`, `data-transition:*`, `data-ref` | **Stable** | |
-| Tiered mount (`mountMarkup(root, markup, { tier, grants, config })`) | **Beta** | New in 2.1.0: binds only under the root it is handed, with `fetch`, `dom` and `navigate` grants and a coded diagnostic per denial; see [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants). Leaving out `grants` gives every grant until 3.0.0, which gives none and pins the signature (FORMA-108). |
+| Tiered mount (`mountMarkup(root, markup, { tier, grants, config })`) | **3.0 development** | Every call names a tier. Omitted grants give none; explicit fetch, DOM and navigate grants bound the handed root. The handle owns update/disposal. See [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants). |
 | Preview frame runtime (`dist/formajs-frame.global.js`) | **Beta** | New in 2.1.0: the runtime a server writes inline into the opaque-origin preview frame; renders the module its host sends in tier `'unreviewed'`. Its message protocol (`module` in; `ready`, `resize`, `error` out) may still move before 3.0.0. |
-| `reconcile()` from `@getforma/core/runtime`, and the runtime's auto-mount of `data-forma-state` on load and through a `body` observer | **Deprecated** | Removed in 3.0.0: they bind with every power, wherever markup lands. Mount with `mountMarkup()` and a tier. `reconcile()` logs `FORMA_W_DEPRECATED_RECONCILE`; the auto-mount logs nothing in 2.x. A page turns all of them off now with `data-forma-mount="manual"` on a `<script>` element. |
+| Tierless HTML runtime lifecycle and automatic mounting | **Removed in 3.0.0** | Use `mountMarkup(root, trustedHtml(markup), { tier, grants, config })` and its update/unmount handle. Importing the runtime and DOM changes never bind markup. The obsolete manual attribute grants no authority; development only warns `FORMA_W_MANUAL_MOUNT_REMOVED`. |
 | TC39 Signals compat (`State`, `Computed`) | **Beta** | Tracks an evolving TC39 proposal |
 | Development build (the `development` export condition) | **Beta** | Each subpath's `development` condition selects a twin under `dist/dev/` that keeps the `__DEV__` warnings; the CDN bundles have none. What the warnings say may change in any release. See [Development builds](#development-builds). |
 
@@ -55,14 +55,18 @@ is retained for 2.x users.
 
 Verified by `src/__tests__/package-exports.test.ts` > "publishes the exact v3 surface without server functions, WASM or Node SSR"
 
-## Deprecated entry points
+## Explicit HTML runtime migration
 
-The runtime's `reconcile()` still warns once in development with
-`FORMA_W_DEPRECATED_RECONCILE`. Its removal and the tiered mount defaults belong
-to FORMA-108; use `mountMarkup(root, markup, { tier, grants })`.
+The runtime's `initRuntime`, `destroyRuntime`, `mount`, `unmount`, `reconcile`,
+`setDebug`, `setDiagnostics` and `setDirectiveMap` exports are removed in3.0.0.
+Use `mountMarkup(root, trustedHtml(markup), { tier, grants, config })`,
+`handle.update()` and `handle.unmount()`. The component entry's `mount()` is
+unchanged. No automatic scan, body observer or tierless warning path remains.
+The obsolete `data-forma-mount="manual"` attribute only produces the development
+migration hint `FORMA_W_MANUAL_MOUNT_REMOVED`; production omits that warning.
 
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "reconcile behaves as at 2.0.x and warns once in development"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a production build carries neither the grant report nor reconcile's warning"
+Verified by `src/__tests__/runtime-explicit-mount.test.ts` > "exports only explicit mount lifecycle and host inspection helpers"
+Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a production build carries neither the grant report nor the obsolete manual-switch warning"
 
 ## Development builds
 

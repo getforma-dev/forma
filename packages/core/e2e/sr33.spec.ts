@@ -81,18 +81,19 @@ interface Outcome { code: string | null; value: string; ms: number; hits: number
 /** Mount a binding guarded by `ready`, hand it the fixtures, then time the evaluation `ready = 1` starts. */
 async function run(page: Page, c: Case): Promise<Outcome> {
   await page.evaluate(({ src }) => {
-    const w = window as unknown as { __sr33: { state: Record<string, unknown>; root?: Element }; FormaRuntime: any };
-    w.__sr33.root?.remove();
+    const w = window as unknown as { __sr33: { state: Record<string, unknown>; root?: Element; handle?: { unmount(): void } }; FormaRuntime: any };
+    w.__sr33.handle?.unmount(); w.__sr33.root?.parentElement?.remove();
     const root = document.createElement('div');
     const keys = Object.keys(w.__sr33.state);
     root.setAttribute('data-forma-state', JSON.stringify(Object.fromEntries([['ready', 0], ...keys.map((k) => [k, null])])));
     const p = document.createElement('p');
     p.setAttribute('data-text', `{ready === 0 ? 'idle' : String((${src}) ?? '')}`);
     root.append(p);
-    document.body.append(root);
-    w.FormaRuntime.mount(root);
-    for (const k of keys) w.FormaRuntime.setScopeValue(root, k, w.__sr33.state[k]);
-    w.__sr33.root = root;
+    const host = document.createElement('div'); document.body.append(host);
+    w.__sr33.handle = w.FormaRuntime.mountMarkup(host, w.FormaRuntime.trustedHtml(root.outerHTML), { tier: 'reviewed' });
+    const scope = host.firstElementChild!;
+    for (const k of keys) w.FormaRuntime.setScopeValue(scope, k, w.__sr33.state[k]);
+    w.__sr33.root = scope;
   }, { src: c.src });
   // A fresh task for the timed evaluation, as a page would start one.
   await page.evaluate(() => new Promise((r) => setTimeout(r, 0)));

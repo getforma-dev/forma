@@ -1,0 +1,378 @@
+{
+  "readAt": "2026-10-16T04:28:32.135280+00:00",
+  "packages": [
+    {
+      "name": "vitest",
+      "latest": "5.0.5",
+      "engines": {
+        "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+      },
+      "dependencies": {
+        "chai": "^6.3.0",
+        "obug": "^3.0.0",
+        "std-env": "^4.3.0",
+        "tinyexec": "^1.3.1",
+        "picomatch": "^4.0.7",
+        "tinybench": "^6.2.2",
+        "tinyglobby": "^0.2.17",
+        "@types/chai": "^5.2.2",
+        "expect-type": "^1.4.0",
+        "magic-string": "^1.4.3",
+        "@vitest/mocker": "5.0.5",
+        "es-module-lexer": "^2.3.2",
+        "why-is-node-running": "3.2.1"
+      },
+      "dist": {
+        "shasum": "266e335f4177541e3e60f876e0694f966a9601f2",
+        "tarball": "https://registry.npmjs.org/vitest/-/vitest-5.0.5.tgz",
+        "fileCount": 104,
+        "integrity": "sha512-cPODOMF8YnkiiYtDdHo6n4wWmBrOBBbOIYH2d33M4l3CdNn72h+qMmO6uXffUN6A5AZFXNND/d+krS9mgkXRfg==",
+        "signatures": [
+          {
+            "sig": "MEQCIGTlU8iwofF0ILpfIKdatZtwNzwaLwDun2fF6eGApNkhAiBBhTCdmDJmLME7Vd2ehANaxpHM0aZD5OMmp+3aPGoJmg==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/vitest@5.0.5",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 2817789
+      },
+      "time": "2026-10-15T14:29:01.396Z"
+    },
+    {
+      "name": "@vitest/coverage-v8",
+      "latest": "5.0.5",
+      "engines": null,
+      "dependencies": {
+        "obug": "^3.0.0",
+        "std-env": "^4.3.0",
+        "magicast": "^0.5.5",
+        "tinyrainbow": "^3.2.0",
+        "@bcoe/v8-coverage": "^1.0.2",
+        "ast-v8-to-istanbul": "^1.0.7",
+        "@vitest/istanbul-lib-report": "^1.0.2",
+        "@vitest/istanbul-lib-coverage": "^1.0.2"
+      },
+      "dist": {
+        "shasum": "0d71664390bf0576486996c2fda8a6db683622b7",
+        "tarball": "https://registry.npmjs.org/@vitest/coverage-v8/-/coverage-v8-5.0.5.tgz",
+        "fileCount": 11,
+        "integrity": "sha512-4KpkGdIrSqBihx/JyP/e+S+IKB98etg1XDQiLAxksLfcShnwi1VReGeOT9NI43hLHbknosKp/1CCLn9Zgcs8mg==",
+        "signatures": [
+          {
+            "sig": "MEUCIQDf+aL8z/ZQOCpBs0K4HKiSmmg3S235jb0K5+94lKjOKgIgNd3EPffWhCW6N4yDrTPa+RHx3dkmzHeZdoASajEN3Ao=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2fcoverage-v8@5.0.5",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 29553
+      },
+      "time": "2026-10-15T14:27:49.006Z"
+    },
+    {
+      "name": "tinypool",
+      "latest": "2.2.0",
+      "engines": {
+        "node": "^20.0.0 || >=22.0.0"
+      },
+      "dependencies": null,
+      "dist": {
+        "shasum": "cbd3f850b02f132ad288546bbc14c42cd93b32e5",
+        "tarball": "https://registry.npmjs.org/tinypool/-/tinypool-2.2.0.tgz",
+        "fileCount": 14,
+        "integrity": "sha512-jBrmx4lYmaC9k/mgPbylxs7kBUxHtD8256up+HjLaDFfXScKJQyil+SWXSvhAtT7XHo+yTVlpB81PGmHP8oLSQ==",
+        "signatures": [
+          {
+            "sig": "MEUCIBHvyG81MQ9bVrzh6iE5WGeOCPWUDmUKHsSFY2YsMq/SAiEAtMGkmkgZwq4RXxew4JORJG1oM2OUXFeOXMMHCMeVTl8=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEUCIERxTnBBGW2oZueShyiemc7ufCgGmbrmfX/Oxw7pFkB3AiEA4y2Lmz6isRKVCGW0poYxqTqpJqdOX/AIL1au8m7WfGw="
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/tinypool@2.2.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 50923
+      },
+      "time": "2026-09-13T11:03:40.535Z"
+    },
+    {
+      "name": "serve",
+      "latest": "14.2.6",
+      "engines": {
+        "node": ">= 14"
+      },
+      "dependencies": {
+        "@zeit/schemas": "2.36.0",
+        "ajv": "8.18.0",
+        "arg": "5.0.2",
+        "boxen": "7.0.0",
+        "chalk": "5.0.1",
+        "chalk-template": "0.4.0",
+        "clipboardy": "3.0.0",
+        "compression": "1.8.1",
+        "is-port-reachable": "4.0.0",
+        "serve-handler": "6.1.7",
+        "update-check": "1.5.4"
+      },
+      "dist": {
+        "integrity": "sha512-QEjUSA+sD4Rotm1znR8s50YqA3kYpRGPmtd5GlFxbaL9n/FdUNbqMhxClqdditSk0LlZyA/dhud6XNRTOC9x2Q==",
+        "shasum": "b5e520dfda9b1ed3b824a8e8d4fd6f69e4c6944c",
+        "tarball": "https://registry.npmjs.org/serve/-/serve-14.2.6.tgz",
+        "fileCount": 4,
+        "unpackedSize": 25990,
+        "signatures": [
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEUCICin4C4TpzLgI39ATYk9BPglcx3Y1dd9R7Fls6zBBJUZAiEAmYC8IEdW3yQO9CW0wWutJ7NM7xub7sHnao58wL+dhQs="
+          }
+        ]
+      },
+      "time": "2026-03-03T19:04:55.061Z"
+    },
+    {
+      "name": "compression",
+      "latest": "1.8.2",
+      "engines": {
+        "node": ">= 0.8.0"
+      },
+      "dependencies": {
+        "vary": "~1.1.2",
+        "bytes": "3.1.2",
+        "debug": "2.6.9",
+        "destroy": "1.2.0",
+        "negotiator": "~0.6.4",
+        "on-headers": "~1.1.0",
+        "safe-buffer": "5.2.1",
+        "compressible": "~2.0.18"
+      },
+      "dist": {
+        "shasum": "781397127ae2da00c0c5f7c76bda5b2a9b32a49f",
+        "tarball": "https://registry.npmjs.org/compression/-/compression-1.8.2.tgz",
+        "integrity": "sha512-o8vI5RE5A6EVVOd9o41jKp41aJom+QTEO/Bx8MYNjexMo/Bv2WOjUfZr+aL0WnYSgymUy6zeguqLTsIhV0gMvQ==",
+        "fileCount": 4,
+        "unpackedSize": 20626,
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/compression@1.8.2",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "signatures": [
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEUCIGMm1fOcFWe/9VdRBp1pqEW21vaNgIWm7mONnvQfn+0/AiEA+NLjtpA/s5v31ZXhvVygol3n3EEo0xj0KGMECyrZXJs="
+          }
+        ]
+      },
+      "time": "2026-09-11T11:16:47.669Z"
+    },
+    {
+      "name": "tsup",
+      "latest": "9.0.0",
+      "engines": {
+        "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
+      },
+      "dependencies": {
+        "cac": "^7.1.0",
+        "obug": "^3.0.0",
+        "joycon": "^3.1.1",
+        "rollup": "^4.64.6",
+        "consola": "^3.4.2",
+        "esbuild": "^0.28.2",
+        "sucrase": "^3.35.1",
+        "chokidar": "^5.0.0",
+        "tinyexec": "^1.3.1",
+        "tree-kill": "^1.2.2",
+        "picocolors": "^1.1.1",
+        "tinyglobby": "^0.2.17",
+        "resolve-from": "^5.0.0",
+        "source-map-js": "^1.2.2",
+        "bundle-require": "^5.1.0",
+        "postcss-load-config": "^6.0.1",
+        "fix-dts-default-cjs-exports": "^1.0.1"
+      },
+      "dist": {
+        "shasum": "fb26f1225f5b5987021f350b2568ec618e2a7c3a",
+        "tarball": "https://registry.npmjs.org/tsup/-/tsup-9.0.0.tgz",
+        "integrity": "sha512-DHgb0bfo2gFKybOa8dRFMiHSqzWWhMkfNK0f902VVquWQtDBWExNgidHszjjDKaFd12pWPgzumpWf9nGr3gzFg==",
+        "fileCount": 18,
+        "unpackedSize": 510170,
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/tsup@9.0.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "signatures": [
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEUCIH3Z8nglqy1wk+JHYQKnIwCWOaiK8143Jp1NnDmspE5mAiEArMiGMKxr8XTWUH/VRHZzGGQv74s+V3FZg3kwhf56A1s="
+          }
+        ]
+      },
+      "time": "2026-10-14T13:47:00.379Z"
+    },
+    {
+      "name": "esbuild",
+      "latest": "0.28.2",
+      "engines": {
+        "node": ">=18"
+      },
+      "dependencies": null,
+      "dist": {
+        "shasum": "0f43bd1bad955b72d24e2261e3abe5957ccf0816",
+        "tarball": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+        "fileCount": 7,
+        "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==",
+        "signatures": [
+          {
+            "sig": "MEYCIQCUNxdzUXI/rpHaMMcf/skpuDBkNL7aLEXFFc0dex0NCAIhAMDKoRFFyK2uR0qEIAoCe4pdRrJ3ld2ZCoHNyNuX6ju7",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEUCIQC8VkNobVdJrr03U9huHI7n2VhWQ2shvrTvNYB1Mx8gigIgFkrOTUauuovxR8qg94n81hYvSw6PI2qEQkNiqHkmjcg="
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/esbuild@0.28.2",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 147361
+      },
+      "time": "2026-08-08T20:00:55.454Z"
+    },
+    {
+      "name": "brace-expansion",
+      "latest": "5.0.12",
+      "engines": {
+        "node": "20 || >=22"
+      },
+      "dependencies": {
+        "balanced-match": "^4.0.2"
+      },
+      "dist": {
+        "shasum": "995fbb4750a77c4d16a7dc942ff2ca6ef8e675ec",
+        "tarball": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.12.tgz",
+        "fileCount": 13,
+        "integrity": "sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==",
+        "signatures": [
+          {
+            "sig": "MEQCIAMXX2WNJDJJkVHQORu87Mi5BGgEzbA21nhoBLCd5pVbAiAty43mX29opG/0V0Oh41VVzPRs+bijBdQ3ao+wyviCsg==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIQDZemgdCtGEvGCCV16aS9sGD8McnOAM5EM80gowpoytHwIgNLc7QYBEXho5Tgpn5+IY2fXgSrvXlQejMT/jf5f+++o=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 84997
+      },
+      "time": "2026-09-14T21:59:00.288Z"
+    },
+    {
+      "name": "fast-uri",
+      "latest": "4.2.2",
+      "engines": null,
+      "dependencies": null,
+      "dist": {
+        "shasum": "428437b7ff49d069f1e16be3bdb6597e8cd72cb9",
+        "tarball": "https://registry.npmjs.org/fast-uri/-/fast-uri-4.2.2.tgz",
+        "fileCount": 53,
+        "integrity": "sha512-EwVpUMzLVNOmcWW0zi5G3JJwkopB6XXjnVvNBGfqrMMsVew2hkQWl5e/pe/CfYUeS6jt4cIO2MnamEW7v/7wPw==",
+        "signatures": [
+          {
+            "sig": "MEUCIGE4Wen80I4hiyiUyGmh1FEM2Shd8sNXP1wW276h8hoBAiEAyGrT3tY5ALnjhjvM3uR+n1bbVxzVYkneUifqZAlBgdc=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEYCIQCNT29A5xP74O5w5QIbTFKdGa5TyiCXoRS3NeiMjm/N4QIhAJf7g1CKYNohnwV+J2j2tmmm0YY+0NBHJFVSKADHI7Yc"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/fast-uri@4.2.2",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 312483
+      },
+      "time": "2026-10-10T10:12:05.953Z"
+    },
+    {
+      "name": "markdown-it",
+      "latest": "15.0.3",
+      "engines": null,
+      "dependencies": {
+        "mdurl": "^2.1.0",
+        "argparse": "^3.0.3",
+        "entities": "^8.1.0",
+        "uc.micro": "^3.0.0",
+        "linkify-it": "^6.1.0",
+        "punycode.js": "^2.3.1"
+      },
+      "dist": {
+        "shasum": "2a69a26db9abb63340512bfde0c4f4ae6db671eb",
+        "tarball": "https://registry.npmjs.org/markdown-it/-/markdown-it-15.0.3.tgz",
+        "fileCount": 14,
+        "integrity": "sha512-+Az7Ojz3iRGu8KYMvJ6xVhvrxP3eE+vEtJX75Ow88XBpcQNV/0lGX5ZynIIBftREo4DC2jsveAMDaeltmm8QvQ==",
+        "signatures": [
+          {
+            "sig": "MEQCIFalTcm6r60bJxNf6m5QMpWxQzXtcx8pQt8PJPwN11/2AiAwYhUz2lhQqW4ZO/rbhhtaOAQOBST4ebzH2pWxpwTCoQ==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIQDedvK4QcCGd+MQlLRybOFSdQwJTLsTdLFQ+Y168Hh5XAIgUSr3WHuL3mOQdfD60Y3Cj3klN566cPiIkb+frX8xrwY=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 2064760
+      },
+      "time": "2026-10-16T01:25:15.267Z"
+    },
+    {
+      "name": "source-map-js",
+      "latest": "1.2.2",
+      "engines": {
+        "node": ">=0.10.0"
+      },
+      "dependencies": null,
+      "dist": {
+        "shasum": "79fb88d97535a21cb27162cb05d211b67acea4ab",
+        "tarball": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz",
+        "fileCount": 18,
+        "integrity": "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==",
+        "signatures": [
+          {
+            "sig": "MEUCIQCZPHMjtDeHbdrm8FkXj5rlr8cwbP4XoW93v0jVGGdWcQIgDcavClXA2dNCvB2XyxxKW7ZkgwaSlqeBeaayOtgq3ik=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEQCIAIRiJPeK+kn49RlwVL7LPl5GHFd6PnL/DKFgl/oQu6HAiBd4xIiwYFmu+pXEiZr7YrCXUt4BQ3XkahaDqCpu90zYA=="
+          }
+        ],
+        "unpackedSize": 142723
+      },
+      "time": "2026-09-30T14:08:09.382Z"
+    }
+  ]
+}

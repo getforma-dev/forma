@@ -142,3 +142,33 @@ docs/release-evidence/beta-acceptance/decoder/** -text
 docs/release-evidence/beta-acceptance/products/** -text
 docs/release-evidence/beta-acceptance/first-svg-case/** -text
 docs/release-evidence/beta-acceptance/corrected-foreign/** -text
+
+# FORMA-108: authenticated A2 originals before the explicit-tier migration.
+docs/archive/FORMA-108-A2-bridge/** -text
+
+docs/archive/FORMA-108-owned-scope-cleanup/** -text
+
+# Exact first failure/source bytes for FORMA-108 documentation migration.
+docs/archive/FORMA-108-documentation-checks/** -text
+
+# Exact first actual browser migration evidence.
+docs/archive/FORMA-108-browser-migration/** -text
+
+# Original strict qualifier refusal, with byte-exact actual JSON/logs.
+docs/archive/FORMA-108-mutation-reporting/** -text
+
+# Exact explicit-runtime qualification reports and logs.
+docs/evidence/forma-108/** -text
+
+# FORMA-144 archived sources and qualification evidence use byte-exact hashes.
+docs/archive/forma-144-final-before/** -text
+docs/evidence/forma-144-final/** -text
+
+# Original Vite configuration and its first failure are byte-authenticated.
+docs/archive/forma-144-vite7-config/** -text
+
+# Original release workflow and actual failure-retention controls.
+docs/archive/release-p17-failure-retention/** -text
+
+# Original fixture tool path and actual hosted failure are byte-authenticated.
+docs/archive/forma-144-fixture-tool/** -text
