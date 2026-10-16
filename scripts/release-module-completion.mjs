@@ -1,7 +1,9 @@
 // Await the exact module already requested by the page, without reactivation or
 // a test-only global. The module map shares evaluation, including authored TLA.
 export async function awaitPageModules(page, urls, timeout) {
-  await page.evaluate(async ({urls, timeout}) => {
+  // Keep native browser import outside Vitest/Vite's Node-side import rewrite.
+  // Arguments are JSON data, never interpolated as executable source.
+  await page.evaluate(`(async ({urls, timeout}) => {
     let timer;
     try {
       await Promise.race([
@@ -9,5 +11,5 @@ export async function awaitPageModules(page, urls, timeout) {
         new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('entry module evaluation did not complete')), timeout); }),
       ]);
     } finally { clearTimeout(timer); }
-  }, {urls, timeout});
+  })(${JSON.stringify({urls, timeout})})`);
 }
