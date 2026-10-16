@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Shared physical SSR and Browser entries — FORMA-186
+
+- Split builds separate graph-wide component hooks from SSR-only entry edits. A paired Browser entry reads the same captured source with component hooks and its original mount/registry, while native metadata continues to name the actual physical source. Changes during either load refuse the whole paired result.
+
+
 - FORMA-139: refuse the finite parser/interactive-content nesting conflicts (BUILD-618), component HTML title (619), dynamic style/script children (620), and SSR island roots lacking one stable owned Element (621). Preserve transparent one-Element Fragments and helpers; keep ranges inside their host. Exact original source/products and canonical admitted near misses are retained. SVG title, browserOnly client bodies, and the existing keyed-row613 proof keep their separate contracts.
 
 ### Native LIST sources must carry real rows — FORMA-101

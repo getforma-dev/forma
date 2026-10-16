@@ -107,7 +107,7 @@ cargo fmt --manifest-path e2e/fixtures/apps/Cargo.toml --check
 cargo clippy --locked --manifest-path e2e/fixtures/apps/Cargo.toml --all-targets -- -D warnings
 step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
 npm run test:browser -w packages/build
-node --test scripts/template-islands-browser.test.mjs
+node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.test.mjs
 npx playwright test
 npm run test:e2e -w packages/core
 

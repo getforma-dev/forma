@@ -1,7 +1,7 @@
 /** Private attribute policy shared by read-only validation and later writes.
  * Creating a binding only normalizes its initial value; write() is called by
  * the prepared owner after commit, never to repair the first render. */
-import { isEventHandlerAttr, isRawHtmlAttr, isUnsafeAttrWrite } from '../security/url-safety.js';
+import { isEventHandlerAttr, isRawHtmlAttr, isSafeAttrName, isUnsafeAttrWrite } from '../security/url-safety.js';
 import { AdoptionDomError } from './adoption-plan.js';
 import { rawHtml } from './trusted-html.js';
 import { normalizeDomText } from './normalize-text.js';
@@ -18,10 +18,11 @@ export interface PreparedAttribute {
 
 export function prepareAttribute(element:Element,key:string,value:unknown):PreparedAttribute {
   const qualified=Object.hasOwn(ALIASES,key)?ALIASES[key]!:key;
-  const namespace=qualified.startsWith('xlink:')?XLINK_NS:null;
+  const safe=isSafeAttrName(qualified);
+  const namespace=safe&&qualified.startsWith('xlink:')?XLINK_NS:null;
   const local=namespace?qualified.slice(6):element.namespaceURI==='http://www.w3.org/1999/xhtml'?qualified.toLowerCase():qualified;
   const normalize=(next:unknown):string|null=>{
-    if(next==null||next===false||isEventHandlerAttr(qualified))return null;
+    if(!safe||next==null||next===false||isEventHandlerAttr(qualified))return null;
     // srcdoc keeps the existing typed raw policy before comparison/cache.
     // Other object values never gain an arbitrary coercion path here.
     if(isRawHtmlAttr(qualified))return String(rawHtml(next,'srcdoc'));

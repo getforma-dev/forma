@@ -7,6 +7,17 @@ All notable changes to this project will be documented in this file.
 ### Integrated package size gates — FORMA-181/182
 
 - Keyed adoption (FORMA-181 checkpoint C) and the value rules (FORMA-182) together measure 46,477 B gzip for the core entry and 46,504 B for browser ESM. The latter exceeded the previous 46,500 B gate by 4 B. Under decision L-58, the two package gates are re-anchored to the measured sizes plus 300 B: 46,777 and 46,804 B. The runtime gates remain 41,500, 40,500 and 40,000 B; the route budget remains 27,500 B gzip -9 of Forma code. Measurements come from the actual production build's import graph via `scripts/check-size.mjs`.
+
+### Deployment identity guard — FORMA-186 S4
+
+- The reviewed guard measures 46,997 B for the core entry and 47,095 B for browser ESM, exceeding the previous gates by 220 and 291 B. L-58 re-anchors these two gates to measured +300 B: 47,297 and 47,395 B. All three runtime artifacts are unchanged. The actual Counter route measures 25,585 B of Forma code gzip -9 (Browser mount 24,944 B), both below N2's unchanged 27,500 B ceiling.
+
+- `activateIslands` and `mount` compare the consuming build identity against forma-server's actual root before any component, preflight or trigger. A mismatch preserves served content, marks island hosts as skew, and dispatches the cancelable Document event `forma:skew` with `{ page, bundle, reload }`. Reload happens at most once per full page identity with working session storage; cancellation or unavailable storage leaves the page inert. Absent identities remain unchecked; direct `hydrateIsland` stays caller owned. Published artifacts retain the guarded free `__FORMA_BUILD__` identifier for the consuming build to define.
+
+### Shared attribute-name and URL policy — FORMA-140
+
+- Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
+
 - FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
 
 ### Rule 6's attribute table: findings F2 and F3 — FORMA-182

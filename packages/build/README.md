@@ -848,3 +848,13 @@ deployments, upgrade, rollback and retirement using `forma-server`'s actual
 off-worker response. The release rehearsal injects its unpacked build package into
 the same harness and requires every named observation. Its HTTP-cache clearing is
 limited to the fresh browser context so HTTP caching cannot mask CacheStorage.
+
+When `codeSplitting` is enabled, one physical entry may be configured both as an
+SSR entry and with `ssr: false`. The Browser root keeps its whole-page mount;
+the SSR root keeps only its activation policy. Both use the same captured
+compiler sources and share ordinary dependencies, including core, in one graph.
+Each logical Browser root executes its own entry body. Ordinary imports of that
+physical entry retain its SSR identity; a re-exporting facade does not opt into
+a second whole-page mount. Keep reusable components and module singletons in
+ordinary shared modules and declare the mount source itself as the Browser
+entry.
