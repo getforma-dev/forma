@@ -68,27 +68,41 @@ function withDurations(values,{observer=false,layout=false}={}){
  }
  return rows;
 }
-test('L63 uses twenty per-run maxima, preserves 50ms misses, and enforces inclusive75/100 boundaries',()=>{
- const values=[...Array(19).fill(75),100],rows=withDurations(values);
- validateMobile(rows);assert.equal(rows[0].startup.targetMiss,true);assert.equal(rows[0].startup.p95MaxTaskMs,75);assert.equal(rows[0].startup.maxTaskMs,100);
- assert.throws(()=>validateMobile(withDurations([...Array(18).fill(75),75.0001,100])),/over75ms/);
- assert.throws(()=>validateMobile(withDurations([...Array(19).fill(50),100.0001])),/over100ms/);
- assert.throws(()=>validateMobile(withDurations([...Array(19).fill(50),100.0001],{observer:true})),/over100ms/);
- const exact=withDurations(Array(20).fill(50));validateMobile(exact);assert.equal(exact[0].startup.targetMiss,false);
- const oldNinety=withDurations([...Array(19).fill(50),90]);validateMobile(oldNinety);assert.equal(oldNinety[0].startup.targetMiss,true);
- for(const edit of [r=>r[0].runs.pop(),r=>r[0].pilot=true,r=>r[0].startup.targetMiss=false,r=>r[0].startup.policy.maxTaskMs=101,r=>r[0].startup.runMaximaMs[0]=0,r=>delete r[0].runs[0].lighthouse.trace,r=>r[0].runs[0].lighthouse.attribution.tasks[0].kind='pre-application-browser-layout']){
+test('strict startup requires twenty runs with every counted task at most50ms',()=>{
+ const rows=withDurations(Array(20).fill(50));validateMobile(rows);
+ assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v1');
+ assert.equal(rows[0].startup.targetMiss,false);assert.equal(rows[0].startup.p95MaxTaskMs,50);assert.equal(rows[0].startup.maxTaskMs,50);
+ for(const edit of [r=>r[0].runs.pop(),r=>r[0].pilot=true,r=>r[0].startup.targetMiss=true,r=>r[0].startup.policy.maxTaskMs=100,r=>r[0].startup.runMaximaMs[0]=0,r=>delete r[0].runs[0].lighthouse.trace,r=>r[0].runs[0].lighthouse.attribution.tasks[0].kind='pre-application-browser-layout']){
   const copy=structuredClone(rows);edit(copy);assert.throws(()=>validateMobile(copy));
  }
+});
+test('one task above50ms refuses even when the twenty-run p95 is50ms',()=>{
+ const values=[...Array(19).fill(50),50.0001];
+ for(const options of [{},{layout:true,observer:true}]){
+  const rows=withDurations(values,options);
+  assert.equal(rows[0].startup.p95MaxTaskMs,50);assert.equal(rows[0].startup.targetMiss,true);
+  assert.throws(()=>validateMobile(rows),/over50ms/);
+ }
+ const oldNinety=withDurations([...Array(19).fill(50),90]);
+ assert.equal(oldNinety[0].startup.targetMiss,true);assert.throws(()=>validateMobile(oldNinety),/over50ms/);
+});
+test('historical L63 policy evidence cannot stand in for a fresh strict campaign',()=>{
+ const rows=withDurations(Array(20).fill(50));
+ for(const row of rows){
+  row.startup.policy={...row.startup.policy,id:'L63-startup-v1',p95MaxTaskMs:75,maxTaskMs:100};
+  for(const run of row.runs)run.lighthouse.attribution.policy='L63-startup-v1';
+ }
+ assert.throws(()=>validateMobile(rows),/attribution differs/);
 });
 test('pure layout attribution never erases whole-page TBT, independent observations or mixed tasks',()=>{
  const rows=withDurations(Array(20).fill(120),{layout:true});validateMobile(rows);
  assert.equal(rows[0].runs[0].lighthouse.longTasks[0].duration,120);
  assert.equal(rows[0].startup.maxTaskMs,0);assert.equal(rows[0].startup.targetMiss,false);assert.equal(rows[0].startup.wholePageTargetMiss,true);
- assert.throws(()=>validateMobile(withDurations(Array(20).fill(120),{layout:true,observer:true})),/over100ms/);
+ assert.throws(()=>validateMobile(withDurations(Array(20).fill(120),{layout:true,observer:true})),/over50ms/);
  for(const run of rows[0].runs){const lhr=JSON.parse(run.lighthouse.rawLhr);lhr.audits['total-blocking-time'].numericValue=200;run.lighthouse=traceMeasurement(lhr,decodeMobileTrace(run.lighthouse.trace));}
  rows[0].p95TbtMs=200;assert.throws(()=>validateMobile(rows),/TBT/);
 });
-test('over100ms control requires its actual interval; old90ms remains preserved but is not the new negative',()=>{
+test('the110ms negative control still requires its actual interval, independently of response latency',()=>{
  const good=controlObservations();validateMobileControls(good);
  const old=structuredClone(good);old.slow.injectedTask.endTime=240.2;old.slow.longTasks[0].duration=91;
  assert.throws(()=>validateMobileControls(old),/110 milliseconds/);

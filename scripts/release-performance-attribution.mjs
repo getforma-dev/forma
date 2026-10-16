@@ -1,4 +1,4 @@
-// L63: narrowly attribute pre-application browser layout from the SAME audit.
+// Preserve the L63 same-audit layout proof under strict startup qualification.
 // Full raw traces and Lighthouse tasks remain in DS12. Unknown/mixed tasks count.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
