@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Integrated deployment guard package sizes — FORMA-186
+
+- The reviewed deployment guard, F5 text branches, checkpoint D row focus and INV1 policies together measure 47,310 B gzip for the core entry and 47,398 B for browser ESM. They exceed the previous 47,297/47,395 B gates by 13/3 B. Under L-58, re-anchor these package gates to measured plus 300 B: 47,610/47,698 B. Runtime, hardened runtime and frame gates remain unchanged; their measured sizes are 41,310/40,230/39,658 B. This package-size change is separate from the per-route N2 requirement.
+
 ### Deployment identity guard — FORMA-186 S4
 
 - The reviewed guard measures 46,997 B for the core entry and 47,095 B for browser ESM, exceeding the previous gates by 220 and 291 B. L-58 re-anchors these two gates to measured +300 B: 47,297 and 47,395 B. All three runtime artifacts are unchanged. The actual Counter route measures 25,585 B of Forma code gzip -9 (Browser mount 24,944 B), both below N2's unchanged 27,500 B ceiling.
