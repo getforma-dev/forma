@@ -191,7 +191,6 @@ The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found 
 | F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`, and at step 1 `nullish` and `closed-nullish` `p[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
 | F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
-| F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | FORMA-016: core's `createShow` takes a string or number branch as a text node |
 
 F4 can never become equal: the server has no value to write. In warning mode the compiler reports
 BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
@@ -271,3 +270,4 @@ assert.deepEqual(report.server.tree, report.client.tree);
 Chromium is the default; `options.engine` selects another engine and `options.browser` reuses a
 caller-owned browser without closing it. The helper closes browsers it creates, including on
 failure. `renderBoth` is not a supported `@getforma/core` export (Q11, L-57, FORMA-184).
+FORMA-016 verification on the expanded corpus removes F5 only after an actual unexpected pass: all 28 typed modules and 118 states complete, with props-contract text branches agreeing. Historical step-1 findings above remain the discovery record.

@@ -6627,6 +6627,50 @@ mod tests {
         }
     }
 
+    // -- FORMA-016 F5: a conditional branch that is a scalar -----------------
+    //
+    // The shared vectors (`show-text-branch.json`) are read here and by
+    // @getforma/core's suite, so the bytes the walker writes for a branch
+    // that is a DYN_TEXT and the text core's createShow writes for a branch
+    // that returns a string or a number cannot drift apart.
+    mod show_text_branch_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const VECTORS: &str = include_str!("../tests/fixtures/parity/show-text-branch.json");
+
+        #[test]
+        fn a_dyn_text_branch_is_written_between_the_conditional_markers() {
+            let all: Value = serde_json::from_str(VECTORS).unwrap();
+            let mut failures = Vec::new();
+            let mut walked = 0;
+            for case in all["values"].as_array().unwrap() {
+                if case["clientOnly"].as_bool() == Some(true) {
+                    continue;
+                }
+                walked += 1;
+                let id = case["id"].as_str().unwrap();
+                let mut page = Page::new();
+                let shown = page.slot(SlotValue::Bool(true));
+                let value = page.slot(crate::slot::json_to_slot_value(&case["value"]));
+                page.show_if(
+                    shown,
+                    |p| {
+                        p.dyn_text(value);
+                    },
+                    |_| {},
+                );
+                let want = format!("<!--f:s0-->{}<!--/f:s0-->", case["html"].as_str().unwrap());
+                let got = page.render();
+                if got != want {
+                    failures.push(format!("{id}: expected {want:?}, walker wrote {got:?}"));
+                }
+            }
+            assert!(walked >= 9, "the vectors were not read");
+            assert!(failures.is_empty(), "{}", failures.join("\n"));
+        }
+    }
+
     // -- FORMA-182 rules 2 to 7: the shared value-rule vectors ---------------
     //
     // One JSON file per rule under tests/fixtures/parity/, each read by this
