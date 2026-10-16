@@ -50,7 +50,6 @@ fn fixture_ctx() -> RenderCtx {
     RenderCtx::new().with_policy(PolicyExtensions::new().report_uri("/__csp-reports"))
 }
 
-
 #[derive(PageProps)]
 struct KeyedMoveRow {
     id: String,
