@@ -46,6 +46,9 @@ export class IrEmitContext {
   /** Interned strings in order */
   private strings: string[] = [];
 
+  /** Look up an already-emitted name without interning new bytes. */
+  stringIndex(value: string): number | undefined { return this.stringMap.get(value); }
+
   /** Slot tracking */
   private slots: Array<{ id: number; name: string; typeHint: number; source: number; defaultBytes: Uint8Array }> = [];
   private nextSlotId: number = 0;

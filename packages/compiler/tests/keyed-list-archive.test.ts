@@ -74,7 +74,7 @@ describe('archived pre-keyed-rows sources', () => {
     const superseded = Object.entries(later.files).filter(([, entry]) => entry.before.sha256 !== entry.after.sha256).map(([path]) => path);
     expect(superseded).toEqual(['crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html']);
     for (const [path, entry] of Object.entries(ledger.files)) {
-      const live = readFileSync(join(root, path));
+      const live = readFileSync(join(root, path.startsWith('crates/forma-ir/tests/fixtures/js-emitter/list-same-source.') ? 'docs/archive/FORMA-101-unproved-list-sources' : '', path));
       if (superseded.includes(path)) expect(later.files[path]!.before.sha256, path).toBe(entry.after.sha256);
       else expect(createHash('sha256').update(live).digest('hex'), path).toBe(entry.after.sha256);
       const archivedPath = entry.archived ?? path.replace('crates/forma-ir/tests/fixtures/', '');
@@ -112,7 +112,7 @@ describe('archived pre-native-keys golden', () => {
       'crates/forma-ir/tests/fixtures/js-emitter/list-same-source.state.json',
     ]);
     for (const [path, entry] of Object.entries(ledger.files)) {
-      const live = readFileSync(join(root, path));
+      const live = readFileSync(join(root, path.startsWith('crates/forma-ir/tests/fixtures/js-emitter/list-same-source.') ? 'docs/archive/FORMA-101-unproved-list-sources' : '', path));
       expect(createHash('sha256').update(live).digest('hex'), path).toBe(entry.after.sha256);
       expect(live.length, path).toBe(entry.after.bytes);
       if (entry.archived) {

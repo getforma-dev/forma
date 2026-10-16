@@ -124,7 +124,9 @@ export class AdoptionControls {
     const bound=(element:Control,key:Key)=>expected?this.bindings.find(binding=>binding.snapshot.element===element&&binding.key===key):undefined;
     const copyAttrs=(element:Element,attrs:Attributes):void=>{for(const [name,value]of attrs)if(MODEL_ATTRS.has(name))element.setAttribute(name,value);};
     const applyAttr=(clone:Element,key:string,value:Initial):void=>{
-      // Native initial attributes: true is bare; false/nullish are absent.
+      // Checked/selected use the same scalar truthiness as the live control writer.
+      if(key==='checked'||key==='selected'){if(value)clone.setAttribute(key,'');else clone.removeAttribute(key);return;}
+      // Other native initial attributes: true is bare; false/nullish are absent.
       if(value==null||value===false)clone.removeAttribute(key);else clone.setAttribute(key,value===true?'':text(value));
     };
     const make=(item:Snapshot):Control=>{

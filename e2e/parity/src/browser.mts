@@ -54,6 +54,8 @@ export interface StateInput {
   readonly props: 'none' | 'named' | 'destructured';
   /** Whether the module has a production browser entry (P2 runs only then). */
   readonly entry: boolean;
+  /** P3: the next state's props, which the entry's `__parityTransition` moves the page to. */
+  readonly next?: Json;
   /** Test seam: P2's observer watches a detached element, so the positive control must fail. */
   readonly observeDetached?: boolean;
 }
@@ -88,6 +90,8 @@ export interface PageRun {
   readonly twin: CanonNode | null;
   readonly twinError: string | null;
   readonly p2: P2Result | null;
+  /** P3: the served root after the transition, or what the setter threw. */
+  readonly p3: { readonly live: CanonNode } | { readonly error: string } | null;
   readonly error: string | null;
   /** Console errors, uncaught errors and rejections, by the boot step they happened in. */
   readonly logged: readonly Logged[];
@@ -158,7 +162,7 @@ export class ParityPage {
     } catch (error) {
       const reason = (error instanceof Error ? error.message : String(error)).split('\n')[0];
       return {
-        served: null, twin: null, twinError: null, p2: null, error: `the boot did not finish in ${this.bootTimeout} ms: ${reason}`,
+        served: null, twin: null, twinError: null, p2: null, p3: null, error: `the boot did not finish in ${this.bootTimeout} ms: ${reason}`,
         logged: [], violations: [], pageErrors: [...this.pageErrors],
       };
     }
@@ -167,6 +171,7 @@ export class ParityPage {
       twin: result.twin ?? null,
       twinError: result.twinError ?? null,
       p2: result.p2 ?? null,
+      p3: result.p3 ?? null,
       error: result.error ?? null,
       logged: result.logged ?? [],
       violations: result.violations ?? [],

@@ -8,6 +8,18 @@
   `Rc<str>` shared by the duplicate set and the row's guard). `keys.json` string vectors carry
   the `served` markup the walker writes, pinned by a walker test and decoded by the three
   browser engines in core's `keyed-adoption.spec.ts`.
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+- FORMA-182, rule 6's attribute table (finding F2), **rendered output changes with no source
+  change**: a `DYN_ATTR` over a `true` slot writes the bare name only for an HTML boolean
+  attribute (`HTML_BOOLEAN_ATTRIBUTES`, the same list as core's `BOOLEAN_ATTRS`); on any other
+  attribute it writes the word, `data-live="true"`, `aria-pressed="true"`, `class="true"`, as
+  `h()` does. `false` and `Null` still omit the attribute. Shared vectors
+  `tests/fixtures/parity/attributes.json`; test `walker.rs > value_rule_vectors >
+  rule_6_attribute_values_follow_one_table`; the js-emitter goldens `jsx-page.html` and
+  `sub-component-scopes.html` regenerated, originals archived with a ledger in
+  `docs/archive/2026-10-15-pre-attribute-values/`.
+
 - FORMA-181 checkpoint B (DR-8, L-7): the walker reads FMIR section `0x0006`. For each
   `LIST` it names, every row's value at the key path becomes the row root's
   `data-forma-key`, as canonical text: a string under value rule 1, a safe integer in
@@ -38,6 +50,15 @@
   astral character can no longer overshoot the limit. Crate-private `text::normalized_chars`;
   shared vectors in `tests/fixtures/parity/normalization.json`. The state envelope and
   declared props stay byte-exact.
+
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), a Cargo pre-release version on crates.io that plain requirements exclude. Part of the seven-package set 3.0.0-alpha.1; the FMIR v3 reader with its seeded-bug qualification (FORMA-185), the compatibility window (FORMA-112), `PageProps` (FORMA-102) and the removals (FORMA-110) below are the alpha's gates. The conformance and hostile corpora (FORMA-139, 108) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
+
 - FORMA-102: re-export `PageProps` derive for named structs/unit enums, compare the
   actual FMIR schema by name, and retain a checked module in `props::BoundProps`.
   Projection omits absent object fields, preserves array positions and excludes
@@ -56,6 +77,8 @@
 
 
 ### FMIR v3 (FORMA-185)
+
+- Added the seeded-bug qualification regressions (`fuzz/regressions/*/seeded-*`) and the stable test `seeded_decoder_defects_are_caught_deterministically` that asserts the CRC, section-table bound and string-length guarantees on every pull request.
 
 - Replace the v2 container with the reviewed 24-byte header and CRC over all bytes except the
   stored CRC field; enforce exact Cargo base-version triples and a 16 MiB module ceiling.

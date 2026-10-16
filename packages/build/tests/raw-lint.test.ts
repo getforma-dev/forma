@@ -558,20 +558,20 @@ describe('the command', () => {
 });
 
 describe('the codes and the exits, documented', () => {
-  it('the compiler catalogue and docs/DIAGNOSTICS.md carry BUILD-810 to BUILD-814 as the lint reports them', () => {
-    const doc = readFileSync(resolve(__dirname, '../../../docs/DIAGNOSTICS.md'), 'utf8');
+  it('the compiler catalogue and packages/compiler/docs/subset.md carry BUILD-810 to BUILD-814 as the lint reports them', () => {
+    const doc = readFileSync(resolve(__dirname, '../../compiler/docs/subset.md'), 'utf8');
     expect(RAW_LINT_CATALOGUE.map((c) => c.code)).toEqual(['BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814']);
     for (const c of RAW_LINT_CATALOGUE) {
       expect(DIAGNOSTIC_CATALOGUE.find((e) => e.code === c.code), c.code).toEqual({
         code: c.code, title: c.title, why: c.why, fix: c.fix, strict: c.severity === 'error',
       });
       const section = doc.slice(doc.indexOf(`### ${c.code} `)).split(/\n### /)[0]!;
-      expect(section, c.code).toContain(`### ${c.code} ${c.title}`);
+      expect(section, c.code).toContain(`### ${c.code} — ${c.title}`);
       expect(section, c.code).toContain(`**Why.** ${c.why}`);
       expect(section, c.code).toContain(`**Fix.** ${c.fix}`);
     }
     const report = rawLint({ paths: [join(CORPUS, 'body_prefix')], cwd: tmp, today: TODAY });
-    expect(formatRawLintReport(report)).toContain('https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md');
+    expect(formatRawLintReport(report)).toContain('https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md');
   });
 
   it('the README lists every exit the lint knows', () => {

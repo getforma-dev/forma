@@ -20,6 +20,11 @@ All notable changes to this project will be documented in this file.
 ### Integrated package size gates — FORMA-181/182
 
 - Keyed adoption (FORMA-181 checkpoint C) and the value rules (FORMA-182) together measure 46,477 B gzip for the core entry and 46,504 B for browser ESM. The latter exceeded the previous 46,500 B gate by 4 B. Under decision L-58, the two package gates are re-anchored to the measured sizes plus 300 B: 46,777 and 46,804 B. The runtime gates remain 41,500, 40,500 and 40,000 B; the route budget remains 27,500 B gzip -9 of Forma code. Measurements come from the actual production build's import graph via `scripts/check-size.mjs`.
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+### Rule 6's attribute table: findings F2 and F3 — FORMA-182
+
+- **Rendered output changes with no source change.** `true` is bare only on an HTML boolean attribute (`BOOLEAN_ATTRS`, now exported from `src/dom/element.ts` for adoption); on any other attribute it is the word `"true"` on every writer: `h()`'s static path wrote it bare (`aria-hidden: true` gave `aria-hidden=""`, which ARIA reads as no value; `class: true` gave `class=""`), and adoption expected and wrote it bare (FORMA-188's `aria-pressed=""`), where `h()`'s reactive path and now the walker write `"true"` (`docs/parity-rules.md`, rule 6's attribute table). Verified by `src/dom/__tests__/value-rule-6-attributes.test.ts` and `e2e/value-rules.spec.ts` in three engines; `element.test.ts` and `hydrate-svg.test.ts` migrated from the bare expectation; probes `el/static-class-true-bare`, `el/static-true-bare`, `adoption/true-bare-off-boolean-set`.
 
 ### Value rule 6: a boolean in text writes nothing — FORMA-182
 
@@ -93,6 +98,14 @@ All notable changes to this project will be documented in this file.
 
 - `mount()` refuses a `data-forma-ssr` target with `FORMA_E_MOUNT_SSR` before component/root/effect/listener creation or DOM writes. Ordinary Browser mounting, explicit browserOnly islands and public caller-owned `hydrateIsland()` are retained.
 - Adoption-specific regression tests now call the retained public hydrator under explicit roots; the old mount/fallback assertions are archived exactly. Strict activation is now connected; compiler/static entry selection, the template successor and final packed qualification remain separate acceptance gates.
+
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), published on npm under the `next` dist-tag; `latest` stays 2.1.0 and plain ranges exclude it (L-41). Part of the seven-package set 3.0.0-alpha.1 with `@getforma/compiler`, `@getforma/build`, `@getforma/create-app`, `forma-ir`, `forma-ir-derive` and `forma-server`. The breaking changes below (FORMA-109, 110, 112, 185) are the alpha's gates; island props, adoption, the literal registry, keyed rows and the marker rules (FORMA-103, 104, 105, 181, 182) are pending before the beta on the integration branch. N2 is restated per L-55 to 25,500 B gzip per route with the package caps ratcheting to 46,500 B after the safe cuts; this alpha still ships under the 30,000 (graph) and 29,000 (browser ESM) B gzip caps, which it passes. See the root CHANGELOG for the whole set.
 
 ### Typed raw boundaries — FORMA-109
 

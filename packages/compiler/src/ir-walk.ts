@@ -54,7 +54,7 @@ import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listProp
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
-import { closedKind, moduleLiteral, refuseBooleanText, refuseConditionType, refuseUncalledGetter, valueKind, type KindEnvironment } from './value-rules';
+import { closedKind, HTML_BOOLEAN_ATTRIBUTES, moduleLiteral, refuseBooleanText, refuseConditionType, refuseUncalledGetter, valueKind, type KindEnvironment } from './value-rules';
 import {
   enterComponentScope,
   lookupSignal,
@@ -93,10 +93,15 @@ const SOURCE_SERVER = SLOT_SOURCE_SERVER;
 const SOURCE_CLIENT = SLOT_SOURCE_CLIENT;
 
 /** Convert a static literal to its string representation for an attribute value. */
-function staticLiteralToAttrString(expr: t.Expression): string | null {
+function staticLiteralToAttrString(expr: t.Expression, key: string): string | null {
+  if (HTML_BOOLEAN_ATTRIBUTES.has(key)) {
+    if (t.isStringLiteral(expr) || t.isNumericLiteral(expr) || t.isBooleanLiteral(expr)) return expr.value ? '' : null;
+    return null;
+  }
   if (t.isStringLiteral(expr)) return expr.value;
   if (t.isNumericLiteral(expr)) return String(expr.value);
-  if (t.isBooleanLiteral(expr)) return expr.value ? '' : null;
+  // Non-boolean attributes write the word, as h() does (finding F2).
+  if (t.isBooleanLiteral(expr)) return expr.value ? 'true' : null;
   if (t.isNullLiteral(expr)) return null;
   return null;
 }
@@ -373,13 +378,29 @@ function evalToText(val: EvalValue): string {
  * leaves such a slot Null, which renders as an omitted attribute and empty text.
  * That is the right answer for null and for a value that could not be evaluated;
  * it is also, unavoidably, what an EMPTY STRING default has to encode, because
- * the slot entry has no way to distinguish "" from absent. An attribute whose
- * value evaluates to "" is therefore omitted server-side where the client writes
- * `attr=""` — a documented boundary of the binary format, not a walker choice.
+ * the slot entry has no way to distinguish "" from absent. In text the two
+ * render alike (the empty holder); an attribute whose server value is "" is
+ * therefore not bound to a slot: a non-boolean attribute is static `attr=""`,
+ * while an HTML boolean attribute is omitted
+ * (emptyServerValue below; FORMA-182 finding F3).
  */
 function defaultBytesFor(val: EvalValue | undefined): Uint8Array {
   if (val === undefined || val === null) return new Uint8Array(0);
   return new TextEncoder().encode(String(val));
+}
+
+/**
+ * Whether a client signal's server value is the empty string. Its slot cannot
+ * say so (zero default bytes are "no default", which the walker reads as
+ * null and omits), so a non-boolean attribute bound to it is written as a static
+ * `name=""` (an HTML boolean attribute is omitted). The same applies to values
+ * that evaluate to "" (FORMA-182 finding F3, rule 6's attribute table):
+ * a client slot is never filled on the server,
+ * so its default is the value the server writes.
+ * Verified by: packages/compiler/tests/value-rule-6-attributes.test.ts
+ */
+function emptyServerValue(value: SignalDefault): boolean {
+  return value.type === 'text' && value.default === '';
 }
 
 /**
@@ -655,6 +676,10 @@ export interface WalkContext {
   visited?: Set<string>;
   /** Active registered declarations, independent of local/import spellings. */
   islandStack?: ReadonlySet<string>;
+  /** Registered activation owner, preserved through ordinary helpers. */
+  islandOwner?: { identity: string; name: string };
+  /** Nearest select's native value belongs to this activation owner. */
+  boundSelect?: { owner: string | undefined; chain: string };
   /** Current depth for sub-component resolution (max 3). */
   depth?: number;
   /** List item bindings: "paramName.propName" → target slot id.
@@ -995,6 +1020,15 @@ export function walkHTree(
   }
 
   const tag = tagArg.value;
+  const controlTag = tag.toLowerCase();
+  if ((controlTag === 'option' || controlTag === 'optgroup') && walkCtx.boundSelect && walkCtx.islandOwner
+      && walkCtx.boundSelect.owner !== walkCtx.islandOwner.identity) {
+    const file = walkCtx.sourceFile ?? '';
+    const at = originalPosition(file, node.loc?.start ?? { line: 1, column: 0 });
+    throw new PropsSchemaError(file, at.line, at.column,
+      `registered SSR island ${walkCtx.islandOwner.name} places <${tag}> across a value-bound <select> owned by ${walkCtx.boundSelect.chain}; keep the option/optgroup helper unregistered within that owner, or move the island boundary to the owning select or an outer element`,
+      'BUILD-617');
+  }
   const tagStrIdx = ctx.addString(tag);
   const isVoid = VOID_TAGS.has(tag);
 
@@ -1110,6 +1144,10 @@ export function walkHTree(
       // Reuse lexical provenance so a same-spelled local is never an outer
       // signal merely because the legacy signal scope can find that name.
       const directSignal = t.isIdentifier(val) ? closedEnv(walkCtx).signal(val) : undefined;
+      if (directSignal && emptyServerValue(directSignal.default)) {
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        continue;
+      }
       if (directSignal) {
         const slotId = directSignal.slotId;
         ctx.recordSlotRef(slotId);
@@ -1119,7 +1157,7 @@ export function walkHTree(
 
       // Static literal value -> static attribute pair
       if (isStaticLiteral(val)) {
-        const strVal = staticLiteralToAttrString(val);
+        const strVal = staticLiteralToAttrString(val, key);
         if (strVal !== null) {
           checkLiteralSize(walkCtx, val, strVal, `value of attribute '${key}' on <${tag}>`);
           const keyIdx = ctx.addString(key);
@@ -1168,11 +1206,20 @@ export function walkHTree(
         const sigName = extractSignalName(fn);
         const binding = sigName ? lookupSignal(walkCtx.signalScope, sigName) : undefined;
         let slotId: number;
+        if (binding && emptyServerValue(binding.default)) {
+          if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+          continue;
+        }
         if (binding) {
           slotId = binding.slotId;
           ctx.recordSlotRef(slotId);
         } else {
-          const evaluated = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          const rawDefault = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          const evaluated = HTML_BOOLEAN_ATTRIBUTES.has(key) && rawDefault !== undefined ? isTruthy(rawDefault) : rawDefault;
+          if (evaluated === '') {
+            if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+            continue;
+          }
           if (evaluated !== undefined && evaluated !== null) {
             checkLiteralSize(walkCtx, fn, String(evaluated), `value of attribute '${key}' on <${tag}>`);
           }
@@ -1204,8 +1251,11 @@ export function walkHTree(
       // Module-level string const as attr value: d: SIL_BODY → static attribute
       if (t.isIdentifier(val) && walkCtx.stringConstants?.has(val.name)) {
         const keyIdx = ctx.addString(key);
-        const valIdx = ctx.addString(walkCtx.stringConstants.get(val.name)!);
-        staticAttrs.push({ keyIdx, valIdx });
+        const value = walkCtx.stringConstants.get(val.name)!;
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key) || value !== '') {
+          const valIdx = ctx.addString(HTML_BOOLEAN_ATTRIBUTES.has(key) ? '' : value);
+          staticAttrs.push({ keyIdx, valIdx });
+        }
         continue;
       }
 
@@ -1219,7 +1269,12 @@ export function walkHTree(
       // diagnostic, so the attribute shipped with no value and nothing said
       // so. That is what stripped the tooltips off ksx's controls.
       // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a concatenated attribute value into an SSR default"
-      const evaluated = evalNode(val, evalEnv(walkCtx));
+      const rawDefault = evalNode(val, evalEnv(walkCtx));
+      const evaluated = HTML_BOOLEAN_ATTRIBUTES.has(key) && rawDefault !== undefined ? isTruthy(rawDefault) : rawDefault;
+      if (evaluated === '') {
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        continue;
+      }
       if (evaluated !== undefined && evaluated !== null) {
         checkLiteralSize(walkCtx, val, String(evaluated), `value of attribute '${key}' on <${tag}>`);
       }
@@ -1287,6 +1342,16 @@ export function walkHTree(
     ctx.emitU16(dyn.slotId);
   }
 
+  // A select controls the option defaults in its entire native subtree. An
+  // independent child island has no authenticated parent value, so it cannot
+  // own those option bindings. Read the actual emitted value attribute: absent
+  // or omitted values must not become a new restriction or change FMIR bytes.
+  const valueKey = controlTag === 'select' ? ctx.stringIndex('value') : undefined;
+  const ownsValue = valueKey !== undefined && [...staticAttrs, ...dynAttrs].some(attr => attr.keyIdx === valueKey);
+  const childContext: WalkContext = controlTag === 'select'
+    ? { ...walkCtx, boundSelect: ownsValue ? { owner: walkCtx.islandOwner?.identity, chain: `${chainSoFar(walkCtx).map(link => link.component).join(' > ')} > select` } : undefined }
+    : walkCtx;
+
   // Process children (3rd+ args)
   for (let i = 2; i < args.length; i++) {
     const childArg = args[i];
@@ -1294,12 +1359,12 @@ export function walkHTree(
 
     // Handle spread elements (Rule 9)
     if (t.isSpreadElement(childArg)) {
-      emitSpreadChild(childArg, hName, ctx, walkCtx);
+      emitSpreadChild(childArg, hName, ctx, childContext);
       continue;
     }
 
     const child = childArg as t.Expression;
-    emitChild(child, hName, ctx, walkCtx, i);
+    emitChild(child, hName, ctx, childContext, i);
   }
 
   // CLOSE_TAG
@@ -1394,6 +1459,7 @@ export function walkCallExpression(
         const visited = new Set(walkCtx.visited); visited.add(componentName);
         const childContext = inlinedWalkContext(walkCtx, ctx, sub, componentName, visited, chainLink(walkCtx,componentName,node), scope);
         childContext.islandStack = new Set([...(walkCtx.islandStack ?? []), registered.identity]);
+        childContext.islandOwner = { identity: registered.identity, name: registered.name };
         walkCallExpression(sub.returnNode as t.CallExpression, hName, ctx,
           childContext);
       } else {
@@ -2316,6 +2382,19 @@ function emitCreateList(
   // the frozen corpus harness; their names never grant handler binding access.
   const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
   const closedArray=declaredArray===undefined?closedBinding(node.arguments[0],ctx,closedEnv(walkCtx)):undefined;
+  let sourceShape = node.arguments[0];
+  while (sourceShape && (t.isTSAsExpression(sourceShape) || t.isTSNonNullExpression(sourceShape)
+    || t.isTSSatisfiesExpression(sourceShape) || t.isParenthesizedExpression(sourceShape))) sourceShape = sourceShape.expression;
+  // A getter result or object field is data provenance, not a proof that core
+  // can call that source. F1 deliberately leaves mutable values undecided;
+  // native admission still requires a getter binding or explicit callback.
+  const sourceCallable = t.isIdentifier(sourceShape) || t.isArrowFunctionExpression(sourceShape) || t.isFunctionExpression(sourceShape);
+  if (walkCtx.listProof && (!sourceCallable || (declaredArray === undefined && !closedArray))) {
+    const file = walkCtx.sourceFile ?? '';
+    const at = originalPosition(file, node.arguments[0]?.loc?.start ?? node.loc?.start ?? { line: 1, column: 0 });
+    throw new PropsSchemaError(file, at.line, at.column,
+      'createList source must read a declared array prop or a closed literal-default signal; pass derived rows as their own declared prop, or move the component behind a registered browserOnly boundary');
+  }
   if(closedArray&&closedArray.values.some(value=>!Array.isArray(value)&&value!==null))throw new PropsSchemaError(walkCtx.sourceFile??'',node.loc?.start.line??1,(node.loc?.start.column??0)+1,'createList closed source must be an array');
   const closedItems=closedArray?.values.flatMap(value=>Array.isArray(value)?value:[]);
   const arraySlotId = declaredArray ?? closedArray?.slot() ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);

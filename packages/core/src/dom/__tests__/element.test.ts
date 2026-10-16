@@ -77,9 +77,12 @@ describe('h() — static props', () => {
     expect(el.hasAttribute('data-c')).toBe(false);
   });
 
-  it('true value sets empty attribute', () => {
-    const el = h('div', { 'aria-hidden': true });
-    expect(el.getAttribute('aria-hidden')).toBe('');
+  it('true writes the word on a non-boolean attribute and the bare name on an HTML boolean one', () => {
+    // FORMA-182 rule 6's attribute table (findings F2, FORMA-188): it used to
+    // write aria-hidden="", which ARIA reads as no value; the walker writes "true".
+    const el = h('div', { 'aria-hidden': true, hidden: true });
+    expect(el.getAttribute('aria-hidden')).toBe('true');
+    expect(el.getAttribute('hidden')).toBe('');
   });
 
   it('sets dangerouslySetInnerHTML', () => {

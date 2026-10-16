@@ -314,11 +314,15 @@ describe('what SSR still cannot render, stated exactly', () => {
     expect(warned).toContain('sub.ts');
     expect(warned).toContain('CallExpression');
   });
+});
 
-  it('omits an attribute whose value evaluates to the empty string', () => {
-    // A documented limit of the binary format, not a walker choice: a slot
-    // entry cannot distinguish an empty default from no default, so the server
-    // omits `value` where the client writes `value=""`.
+describe('an empty string is a value (FORMA-182 finding F3)', () => {
+  it('writes an attribute whose server value is the empty string, where it used to omit it', () => {
+    // A slot entry cannot distinguish an empty default from no default (the
+    // walker reads it as null and omits the attribute), so the compiler writes
+    // an attribute whose server value is "" as a static `value=""`, which is
+    // what the client writes. This test used to pin the omission as a stated
+    // limit; docs/parity-rules.md, rule 6's attribute table.
     const html = ssr({
       'app.ts': ENTRY,
       'page.ts': pageAround('Sub()'),
@@ -331,6 +335,8 @@ describe('what SSR still cannot render, stated exactly', () => {
       `,
     });
 
-    expect(html).toBe('<div id="app"><input type="search"></div>');
+    // This renderer prints a static empty value as the bare name; the DOM
+    // value is "" either way.
+    expect(html).toBe('<div id="app"><input type="search" value></div>');
   });
 });

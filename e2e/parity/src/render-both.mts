@@ -5,7 +5,7 @@
  * `renderBoth(component, state)` form; this is the harness's CLI.
  *
  *   node e2e/parity/src/render-both.mts --module nested-islands [--state 3] [--seed forma-183]
- *                                       [--engine chromium|firefox|webkit] [--low-level]
+ *                                       [--browser chromium|firefox|webkit] [--low-level]
  *                                       [--json] [--emit-vector <file>]
  *
  * Exit status: 0 equal, 1 different, 2 the server refused the state or the harness failed.
@@ -16,6 +16,7 @@ import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import type { Browser } from '@playwright/test';
 import { launch, type Engine } from './browser.mts';
+import type { PageComponent } from './bundle.mts';
 import { summarize, type Report } from './compare.mts';
 import { check, prepare, readCorpus, type Timings } from './suite.mts';
 
@@ -36,6 +37,12 @@ export interface RenderBothOptions {
    * alters one attribute's text fails P1 naming the fixture, the state and the node).
    */
   readonly alterServerHtml?: (html: string) => string;
+  /**
+   * Test seam, never set by the CLI: the twin's page source in place of the corpus entry's, over
+   * the same module (F1's error-verdict test renders the archived original page, whose list
+   * source core cannot call).
+   */
+  readonly page?: PageComponent;
 }
 
 /** Every report of one module at one state: P1, then P2 when the page has islands. */
@@ -43,7 +50,7 @@ export async function renderBothReports(options: RenderBothOptions): Promise<Rep
   const corpus = readCorpus();
   const entry = corpus.find(module => module.name === options.module);
   if (!entry) throw new Error(`corpus.json has no module ${options.module}; modules: ${corpus.map(module => module.name).join(', ')}`);
-  const plan = await prepare(entry, { seed: options.seed, states: options.index + 1, indices: [options.index] });
+  const plan = await prepare(options.page ? { ...entry, page: options.page } : entry, { seed: options.seed, states: options.index + 1, indices: [options.index] });
   if (!plan.indices.length) throw new Error(`${entry.name} declares no page props: its one state is 0`);
   const browser = options.browser ?? await launch(options.engine);
   const timings: Timings = { prepare: 0, launch: 0, server: 0, browser: 0 };
@@ -72,17 +79,18 @@ async function main(): Promise<number> {
       module: { type: 'string' },
       state: { type: 'string', default: '0' },
       seed: { type: 'string', default: 'forma-183' },
-      engine: { type: 'string', default: 'chromium' },
+      browser: { type: 'string' },
+      engine: { type: 'string' },
       'low-level': { type: 'boolean', default: false },
       json: { type: 'boolean', default: false },
       'emit-vector': { type: 'string' },
     },
   });
   if (!values.module) {
-    process.stderr.write(`usage: render-both --module <name> [--state n] [--seed s] [--engine chromium|firefox|webkit] [--low-level] [--json] [--emit-vector file]\nmodules: ${readCorpus().map(m => m.name).join(', ')}\n`);
+    process.stderr.write(`usage: render-both --module <name> [--state n] [--seed s] [--browser chromium|firefox|webkit] [--low-level] [--json] [--emit-vector file]\nmodules: ${readCorpus().map(m => m.name).join(', ')}\n`);
     return 2;
   }
-  const engine = values.engine as Engine;
+  const engine = (values.browser ?? values.engine ?? 'chromium') as Engine;
   if (!['chromium', 'firefox', 'webkit'].includes(engine)) throw new Error(`unknown engine ${engine}`);
   const index = Number(values.state);
   if (!Number.isInteger(index) || index < 0) throw new Error(`--state must be a non-negative integer, got ${values.state}`);

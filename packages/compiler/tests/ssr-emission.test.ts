@@ -25,7 +25,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { generateRealIr, generatePlaceholderIr } from '../src/esbuild-ssr-plugin';
+import { generateRealIr } from '../src/esbuild-ssr-plugin';
 import { getIslands, getSlots, parseOpcodeList } from './helpers/fmir';
 
 let tmpDir: string;
@@ -56,25 +56,19 @@ function warnings(): string {
   return warnSpy.mock.calls.map((c) => c.join(' ')).join('\n');
 }
 
-/** The opcode shape `generatePlaceholderIr` produces: one empty div, nothing else. */
-const PLACEHOLDER_SHAPE = parseOpcodeList(generatePlaceholderIr('page'));
+/** Historical empty-div shape: a current build refuses instead of publishing it. */
+const PLACEHOLDER_OPCODE_COUNT = 2;
 
-/**
- * Emit and assert the result is REAL IR, not the placeholder the plugin
- * silently falls back to. `generateRealIr` returning null is that fallback —
- * and it is the ONLY signal, because the plugin then writes a perfectly valid
- * .ir file and the build stays green. Every test that asserts on emitted IR
- * goes through here so none of them can pass on an empty div.
- */
+/** Assert a real native tree; null refuses publication and is never substituted. */
 function emitReal(entryPath: string) {
   const result = generateRealIr(entryPath);
   expect(
     result,
-    `generateRealIr returned null — the page would ship placeholder IR. Warnings:\n${warnings()}`,
+    `generateRealIr returned null — publication would be refused. Warnings:\n${warnings()}`,
   ).not.toBeNull();
   const ops = parseOpcodeList(result!.binary);
   expect(
-    ops.length === PLACEHOLDER_SHAPE.length && ops[0]!.includes('data-forma-page'),
+    ops.length === PLACEHOLDER_OPCODE_COUNT && ops[0]!.includes('data-forma-page'),
     'emitted IR is the placeholder empty-div shell',
   ).toBe(false);
   return result!;
@@ -842,8 +836,8 @@ describe('generateRealIr — diagnostics when a page cannot be resolved', () => 
     const warned = warnings();
     expect(warned).toContain('page.ts');            // the file to edit
     expect(warned).toContain('StringLiteral');      // the construct
-    expect(warned).toContain('placeholder IR');     // the consequence
-    expect(warned).toContain('empty <div id="app">');
+    expect(warned).toContain('publication is refused'); // the consequence
+    expect(warned).not.toContain('falls back');
   });
 
   it('says a name is missing rather than blaming the return statement', () => {

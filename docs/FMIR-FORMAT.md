@@ -233,7 +233,10 @@ L444). FORMA-102 maps declared data as described below (declared props seed sign
 stop being named after variables); until it does, the bytecode's operands are slot ids and this
 table stays required (Q6 settled). Every `name_str_idx` indexes strings. Every nonempty default
 must be valid UTF-8 and parse for its slot type at load (`LOAD-103`), rather than becoming Null
-on the first render. Empty bytes mean "no default" for every type. Text accepts any UTF-8;
+on the first render. Empty bytes mean "no default" for every type, so a CLIENT Text slot
+cannot carry the empty string: the compiler writes a non-boolean attribute whose server value is `""` as a
+static attribute instead of a `DYN_ATTR` over such a slot (FORMA-182 finding F3,
+`docs/parity-rules.md` rule 6's attribute table), and in text the two render alike. Text accepts any UTF-8;
 Bool accepts exactly `true` or `false`; Number accepts finite decimal text with optional sign,
 fraction and exponent; Array accepts `[]` (the existing reader's supported array default); Object
 has no nonempty default in this ticket. The frozen corpus must confirm default compatibility; this makes the
@@ -696,3 +699,37 @@ it, and fixed before the next release: an open finding blocks the tag (design 1 
 Not in scope: the hostile-module corpus and the untrusted mode, deferred with M9 (DR-14, L-13);
 the fuzzing is for the decoder's totality under SA4's trusted module, not for a module an
 application did not build.
+
+### 11.4 Seeded-bug qualification (2026-10-15)
+
+The acceptance test "a seeded decoder bug is found by the fuzzer within one run" was
+qualified by seeding three deliberate defects, one at a time, into a scratch copy of the
+reader (never the production source) and running all four targets for 180 seconds each with
+the nightly job's options (`-timeout=10 -rss_limit_mb=2048 -max_len=65536`, AddressSanitizer,
+`nightly-2026-10-01`, cargo-fuzz 0.13.2, libfuzzer-sys 0.4.13). The corpus was the one
+`seed-corpus.py` builds plus the growth of a 60-second unseeded control run, which found
+nothing (12.1 M, 4.2 M, 1.5 M and 0.97 M executions for `parse_raw`, `parse_body`,
+`parse_mutated` and `walk`).
+
+| Seed | Defect in the scratch reader | Found by (time) | Not found by, and why | Committed input |
+|---|---|---|---|---|
+| A | `IrHeader::parse_for_reader`: the CRC-32 comparison skipped | `parse_raw` 3 s, `walk` 3 s (the same module behind a length prefix; only the `parse_raw` input is committed), in the first corpus pass: the oracle's dump round-trip restamps the correct CRC and `rebuilt != bytes` fires (the input is the fault fixture `LOAD-104-crc-flipped-strings.ir`) | `parse_body`, `parse_mutated` (8.9 M and 3.5 M runs): both restamp the CRC by design, so the skipped check is unobservable there | `parse_raw/seeded-crc-check-skipped`, 183 B |
+| B | `SectionTable::parse`: the table-end bound `end > data.len()` made `end > data.len() + 1` | `parse_body` 4 s, run 1,321: the reserved-field read `data[2..4]` on a 3-byte body panics (`format.rs:551`) | `parse_raw`, `walk` (24.7 M, 1.1 M runs) need a correct CRC over a body the mutator cannot shorten; `parse_mutated` (2.8 M) only XORs bytes of a fixed-length module | `parse_body/seeded-section-table-end-off-by-one`, 3 B |
+| C | `StringTable::parse`: a string's length not checked against the bytes left | all four, 3 to 4 s, in the first corpus pass (`&data[offset..offset + str_len]` panics) | none | `parse_body/seeded-string-length-unchecked`, 70 B (hand-minimised: five sections, one string declaring 65,535 bytes); `parse_mutated/seeded-string-length-unchecked`, 4 B as found |
+
+`cargo fuzz tmin` shrank none of the findings: B's and C's `parse_mutated` inputs are already
+minimal, A's needs a complete length-exact module, and C's `parse_body` finding (159 bytes)
+loses its five tiling sections under byte deletion, so it was minimised by hand and shown to
+reproduce under the seeded build. The committed inputs replay on every pull request through
+
+```sh
+cargo test --locked -p forma-ir --test fuzz_regressions seeded_decoder_defects_are_caught_deterministically
+```
+
+which asserts the guarantee each seed removed (the checksum code for A, `BufferTooShort
+{ expected: 4, actual: 3 }` for B, `BufferTooShort { expected: 65541, actual: 6 }` for C) and
+that no adapter accepts the input. With any one seed re-applied to the scratch copy the test
+fails on that seed's assertion or panics at the seeded line, and the fuzz target replays the
+committed input with exit 77; on the clean reader all four replays exit 0. The run logs, the
+seed diffs and the unminimised artifacts are in the task's work folder
+(`work/FORMA-185-qual/tmp/`); `fuzz/evidence/QUALIFICATION.md` carries the dated record.

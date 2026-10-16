@@ -7,7 +7,7 @@
 //
 //   1. the ROOT PAGE FILE's module scope        (`heading`)
 //   2. an inlined FILE-LOCAL sub-component's body (`count`, `ready` in Card)
-//   3. an inlined CROSS-FILE sub-component's module scope (`count`, `open`
+//   3. an inlined CROSS-FILE sub-component's module scope (`panelCount`, `open`
 //      in panel.ts — a plain component, not an island)
 //   4. below the top level of a scope, inside an `if` block (`note`)
 //
@@ -19,9 +19,8 @@
 // one: both branches produce content, so neither mismatch-repair arm fires and
 // the page shows the wrong branch until the signal changes value.
 //
-// The case also pins the COLLISION rule: `Card` and `panel.ts` each declare a
-// `count`, they are different signals at runtime, and they get `count` and
-// `count#2` — one slot each, carrying their own defaults.
+// The original duplicate `count` source is archived as a BUILD-503 refusal.
+// This admitted page uses `count` and `panelCount`, each with its own default.
 import { mount } from 'formajs';
 import { ScopesPage } from './page';
 

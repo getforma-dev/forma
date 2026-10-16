@@ -4,7 +4,7 @@
  * Every construct the compiler cannot represent in a server-rendered module is
  * reported here, with a stable code, the file, the line and the column, one
  * line of why and one of fix. The catalogue below is the single list of codes;
- * `docs/DIAGNOSTICS.md` documents each one, and a test keeps the two equal.
+ * `packages/compiler/docs/subset.md` documents each one, and a test keeps the two equal.
  *
  * Codes are numbered by family (L-3). BUILD-303, BUILD-408, BUILD-504, BUILD-706 and BUILD-708
  * are retired and reserved after the declared-state migration. Current
@@ -17,7 +17,7 @@
  *   BUILD-3xx  an unresolved text, conditional or list expression
  *   BUILD-4xx  a component the compiler does not inline
  *   BUILD-5xx  a signal the compiler cannot name
- *   BUILD-6xx  the page module itself: a placeholder, or a literal too long
+ *   BUILD-6xx  the page module and its closed native contract
  *   BUILD-7xx  a construct adoption does not handle; `browserOnly()` is the way out
  *   BUILD-8xx  the build package (reported by @getforma/build, catalogued here)
  *   BUILD-9xx  the compiler's own deprecated entry points (logged when called)
@@ -33,7 +33,7 @@
  * 2. It hands the diagnostic, with its location, to the collector the caller
  *    opened with {@link collectDiagnostics}, if any. The SSR plugin opens one
  *    per page; `@getforma/build` gathers them all, writes them as JSON on
- *    request, and under `--strict` fails the build with every one of them.
+ *    request, and always fails publication when any error remains.
  *
  * Verified by: packages/compiler/tests/diagnostics-conformance.test.ts
  */
@@ -52,7 +52,7 @@ export interface DiagnosticEntry {
   /** One line: what to write instead. */
   fix: string;
   /**
-   * Whether `--strict` fails the build on it. False only for explicitly nonfatal build notes.
+   * Whether this is a publication error. False only for explicitly nonfatal build notes.
    */
   strict: boolean;
 }
@@ -94,33 +94,33 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
 
   // ── 2xx: attributes and props ────────────────────────────────────────────
   entry('BUILD-201', 'Props passed as something other than an object literal',
-    'None of the attributes the element carries are rendered on the server.',
+    'The attributes have no explicit native representation, so the build refuses publication.',
     "Pass the attributes as an object literal on the h('tag', { … }) call."),
   entry('BUILD-202', 'Spread props',
-    'The attributes inside `{...rest}` are not rendered on the server.',
+    'Spread attributes have no proved native representation, so the build refuses publication.',
     'List the attributes explicitly on the h() call.'),
   entry('BUILD-203', 'Prop key the compiler cannot name',
-    'A computed key, or a key that is neither an identifier nor a string, drops its attribute from the server-rendered HTML.',
+    'The native attribute key is not proved, so publication is refused instead of dropping it.',
     'Use a plain identifier or string key.'),
   entry('BUILD-204', 'Method-valued prop',
-    'An object method (`{ title() { … } }`) has no binding form, so the attribute is not rendered on the server.',
+    'An object method (`{ title() { … } }`) has no native binding form, so publication is refused.',
     'Write it as an arrow property (`title: () => …`) for a reactive binding.'),
   entry('BUILD-205', 'dangerouslySetInnerHTML',
-    'Raw markup is not rendered from the module: the element ships empty until the browser runs.',
+    'Raw markup has no admitted native tree contract, so publication is refused.',
     `Render the content as h() children, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-206', 'Reactive attribute the compiler cannot evaluate',
-    'The attribute is omitted from the server-rendered HTML and appears only once the browser activates the page.',
-    'Initialize the signals it reads with literal defaults, or fold the value into a module-level const.'),
+    'The reactive attribute has no supported native value, so the build refuses the page instead of publishing HTML with an omitted attribute.',
+    `Pass the computed value as its own declared prop, initialize the signals it reads with literal defaults, or fold the value into a module-level const, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-207', 'Attribute value the compiler cannot evaluate',
-    'The attribute is omitted from the server-rendered HTML, and adoption does not re-apply a value that is not a function, so it never appears.',
-    'Inline the literal, use a module-level const, or wrap the value in a function (`() => …`) for a reactive binding.'),
+    'The attribute has no supported native value, so the build refuses the page instead of publishing HTML with an omitted attribute.',
+    `Pass the computed value as its own declared prop, inline a literal or module-level const, ${BROWSER_ONLY_WAY_OUT}.`),
 
   // ── 3xx: text and conditionals ───────────────────────────────────────────
   entry('BUILD-301', 'Text the compiler cannot evaluate',
     'This unresolved dynamic text expression has no closed native value and ends the build with BUILD-610.',
     'Initialize the signals it reads with literal defaults so the server can render them.'),
   entry('BUILD-302', 'Conditional the compiler cannot evaluate',
-    'The server renders the ELSE branch; if the browser would render the THEN branch, adoption keeps the wrong one until the condition changes value.',
+    'The conditional has no proved native value. Publishing its default ELSE branch could differ from the browser, so publication is refused.',
     'Initialize the signals the condition reads with literal defaults.'),
 
   // ── 4xx: components ──────────────────────────────────────────────────────
@@ -143,42 +143,42 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Return the h() tree directly from the component (an expression body or a top-level `return h(…)`).'),
   entry('BUILD-407', 'Children passed to a component',
-    "The compiler cannot place a component's children: they are not in the server-rendered HTML and appear only after the browser renders the component.",
+    "The compiler cannot place a component's children in the native tree, so publication is refused.",
     'Pass the content as props, or render it inside the component.'),
 
   // ── 5xx: signals ─────────────────────────────────────────────────────────
   entry('BUILD-501', 'Signal default the compiler cannot evaluate',
-    "The signal gets no named slot, so bindings to it land in anonymous slots that render empty on the server and cannot be set by name.",
+    "The signal has no closed native default, so publication is refused instead of inventing an empty binding.",
     'Initialize it with a string, number, boolean or null literal, or a module-level string const.'),
   entry('BUILD-502', 'Signal declared twice in one scope',
-    'Two declarations with different defaults share one slot; the first owns it, so the server renders its default.',
+    'Duplicate declarations cannot establish one unambiguous native default, so publication is refused.',
     'Declare the signal once.'),
   entry('BUILD-503', 'Signal name taken by another scope',
-    "Two scopes declare the same signal name, so this one's slot is renamed (`name#2`); a server setting the plain name fills the other one.",
-    'Declare the signal once and import it, or set the renamed slot by its exact name.'),
+    "The signal name conflicts across scopes and cannot establish one native binding, so publication is refused.",
+    'Give the scopes distinct signal names, or declare the signal once and import it.'),
 
   // ── 6xx: the page module ─────────────────────────────────────────────────
   entry('BUILD-601', 'No mount() call in the entry',
-    'The compiler cannot find the page, so it writes a placeholder module: the server renders an empty `<div id="app">` and nothing shows until the browser runs.',
+    'The compiler cannot find the page, so no native product is emitted and the build refuses publication.',
     "Call mount(() => …, '#app') or activateIslands({ … }) at the top level of the SSR entry, or declare the route `ssr: false`."),
   entry('BUILD-602', 'Page component the compiler cannot resolve',
-    'The page component named in mount() cannot be found or read, so the compiler writes a placeholder module and the server renders an empty `<div id="app">`.',
+    'The page component named in mount() cannot be found or read, so no native product is emitted and the build refuses publication.',
     'Import the page component from a relative path that exports it as a function.'),
   entry('BUILD-603', 'Page root that is not an h() call',
-    'The page returns something other than an h() call, so the compiler writes a placeholder module and the server renders an empty `<div id="app">`.',
+    'The page returns no native tree the compiler can follow, so no native product is emitted and the build refuses publication.',
     'Return the page tree as h() calls (or JSX).'),
   entry('BUILD-604', 'Literal past 65,535 bytes',
-    "FMIR's string table and slot defaults hold at most 65,535 bytes per entry, so the page cannot be encoded and the compiler writes a placeholder module.",
+    "FMIR's string table and slot defaults hold at most 65,535 bytes per entry, so this page cannot be encoded and the build refuses publication.",
     'Load content that long at run time (a handler-filled slot or a fetch), or split it into smaller literals.'),
   entry('BUILD-605', 'Module const past 65,535 bytes',
     'A module-level const that folds to more than 65,535 bytes is not folded, so every use of it is reported where it is read.',
     'Keep folded constants under 65,535 bytes, or load the content at run time.'),
   entry('BUILD-606', 'Module emission failed',
-    'The compiler failed while emitting the page (or writing its module) and fell back to a placeholder module. This is a defect in the compiler or an input it does not expect.',
+    'The compiler failed while emitting the page and cannot produce a native module. Publication is refused; no placeholder module is substituted.',
     'Report it with the message; until it is fixed, declare the route `ssr: false`.'),
   entry('BUILD-610', 'Invalid declared page props',
-    'The declared page data cannot be represented by the closed props schema; the build fails even without strict mode.',
-    'Declare one object parameter using strings, booleans, numbers, Date, string-literal unions, arrays, optional fields and nested object types.'),
+    'The declared data or expression cannot be represented by the closed native contract; publication is refused.',
+    'Declare supported typed props and pass computed values as their own props from the handler, use a closed literal-default signal, or move the component behind a registered browserOnly() boundary.'),
 
   entry('BUILD-611', 'Unsupported islands-only entry or static route',
     'The selected native entry cannot be rewritten without discarding used results or effects, or its static route mapping requests executable assets; the build fails even without strict mode.',
@@ -195,6 +195,14 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-615', 'Condition that is not boolean-typed',
     'A createShow condition or a ternary test reads a value the compiler can prove is not a boolean (a number, a string, null, an object, or a declared, closed or signal value of such a type): the server would pick the branch by ECMAScript truthiness, which a page reading `count` or `name` only imitates (value rule 7, docs/parity-rules.md); the build fails even without strict mode.',
     'Compare explicitly so the condition is a boolean: `() => count() > 0`, `() => name() !== \'\'`, `() => item() !== null`, or `!!x` when truthiness is what is meant.'),
+
+  entry('BUILD-616', 'List source that is not a function',
+    'Core calls a list\'s source to read its rows, and this one is provably not a function (a literal, a binding to one, a provably immutable data-valued getter result, or a field its parameter type declares as data), so the page would fail in the browser with `items is not a function`; the build fails even without strict mode.',
+    'Pass the getter itself or a function returning the rows: `createList(rows, …)` with `const [rows] = createSignal([...])`, `createList(() => p.rows, …)`; callable sources also need a declared array prop or a closed literal-default signal for native rows (BUILD-610).'),
+
+  entry('BUILD-617', 'Registered option island outside its select value owner',
+    'The native select value overrides option defaults across an independently registered SSR island, but that child receives no authenticated parent selection value; its own declared inputs cannot prove the selected state.',
+    'Keep the option or optgroup helper unregistered inside the owning select island, or move the island boundary to the owning select or an outer element. A whole route may explicitly use ssr:false.'),
 
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
@@ -274,7 +282,7 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'A protected immutable JS/CSS/WASM filename or its full canonical SHA-384 digest is invalid.',
     'Generate the worker from the completed manifest after final asset bytes are written; do not substitute a filename hash or abbreviated digest.'),
   entry('BUILD-819', "A route is over its size ceiling",
-    "What the route loads cold is over the ceiling of its class (decision brief L-55, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 27,500 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.",
+    "What the route loads cold is over the ceiling of its class (decision brief L-58, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 27,500 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.",
     "Trim what the route imports from @getforma/core or ships of its own, split the route, or declare a page that hosts many modules a canvas; the ceilings are policy, not an option. The report above the failure shows each route's class, Forma code and JavaScript beside the ceilings."),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────

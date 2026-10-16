@@ -503,6 +503,36 @@ fn every_case_walks_to_html() {
     }
 }
 
+/// FORMA-101: a callable source once emitted empty default lists. Closed local
+/// rows must reach the real walker in both independently keyed projections.
+#[test]
+fn closed_list_defaults_render_real_rows_in_both_projections() {
+    let module = parse_case("list-same-source");
+    let html = walk_to_html(&module, &default_slots(&module)).unwrap();
+    assert_eq!(html.matches("<li").count(), 4);
+    assert_eq!(html.matches("data-forma-key=").count(), 4);
+    assert_eq!(html.matches("Write the corpus").count(), 2);
+    assert_eq!(html.matches("Feed it to Rust").count(), 2);
+    assert!(html.contains("ada"));
+    assert!(html.contains("grace"));
+}
+
+/// The strict near misses keep the meaningful values, not merely valid bytes.
+#[test]
+fn strict_corpus_near_misses_render_their_real_defaults() {
+    let attributes = parse_case("dynamic-attrs");
+    let html = walk_to_html(&attributes, &default_slots(&attributes)).unwrap();
+    assert!(html.contains("href=\"/docs\""));
+    assert!(html.contains(" value>") || html.contains(" value=\"\""));
+
+    let scopes = parse_case("sub-component-scopes");
+    let html = walk_to_html(&scopes, &default_slots(&scopes)).unwrap();
+    assert!(html.contains("panel is-open"));
+    assert!(html.contains(">THEN</p>"));
+    assert!(html.contains("-->7<!--"));
+    assert!(html.contains("data-ready=\"true\""));
+}
+
 #[test]
 fn every_island_entry_walks_as_a_fragment() {
     let mut islands_seen = 0usize;

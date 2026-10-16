@@ -6,6 +6,21 @@
 
 ## [Unreleased]
 
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+### Strict server-renderable subset — FORMA-101
+
+- SSR builds and the direct plugin now refuse every unsupported native construct, including default builds and legacy `strict:false`/`FORMA_STRICT=0`. The build reports every entry's available diagnostics and retains prior output on failure. Removed the obsolete placeholder helper; original guides and tests remain archived.
+- Published `packages/compiler/docs/subset.md` as the admission contract and diagnostic catalogue. BUILD-617 refuses an independently registered option/optgroup island beneath another owner's value-bound select; unregistered helpers within the select owner and unbound selects remain admitted.
+- Callable LIST sources now also need declared array props or closed literal-default signals (BUILD-610). The preserved list-same-source corpus is migrated to real two-row local defaults, with native rendering assertions; BUILD-616 retains its separate non-callable meaning. Island-own-root and finite parser-repair proof remain the FORMA-139 gate.
+- The corpus emitter now rejects error diagnostics. The original unknown href getter and duplicate signal-name page remain authenticated BUILD-206/503 publication negatives; live examples use a real closed href and `panelCount`. Their regenerated products carry a before/after ledger, preserve all other corpus modules, and remove F4 only after native/browser equality proves the old exception an unexpected pass.
+
+
 ### Value rules 2 to 7 — FORMA-182
 
 - Rule 2, numbers in ECMAScript formatting: stated in `docs/parity-rules.md` with the shared vector file `crates/forma-ir/tests/fixtures/parity/numbers.json` (29 lexemes with their `Number.prototype.toString` spelling), read by forma-ir's walker suite and by core's, where the engine is the oracle. No code changed: the walker's `format_js_number` already agrees on every vector.
@@ -16,11 +31,16 @@
 - Rule 6, a boolean in text is a build error. **Breaking:** `BUILD-614` in `@getforma/compiler` refuses a text position whose value is provably boolean (a declared boolean prop, a boolean signal, a closed boolean or module `const`, a negation or comparison, eager or through a getter, as a child or a branch), with or without `--strict`; the message names the fix that builds for its source (`String(flag)` on a non-optional declared boolean, a boolean signal or an evaluable expression; a ternary, `() => (flag ? 'yes' : 'no')`, on an optional prop, a closed value or a module `const`). A boolean literal writes nothing. **Rendered output changes with no source change:** the idiom `() => ready() && 'Go'` at `false` no longer serves the word `false`, a `true` ternary branch no longer serves `true`, and `@getforma/core`'s adoption writes nothing for a boolean text value as `h()` does (a page compiled by an earlier compiler is refused at that idiom: compiler and core move together). Stated with `crates/forma-ir/tests/fixtures/parity/boolean-text.json`, read by the compiler's, forma-ir's and core's suites and the three-engine replay; two compiler test sources migrated, originals archived in `docs/archive/2026-10-15-pre-value-rules/`.
 - Rule 7, conditions are boolean-typed. **Breaking:** `BUILD-615` in `@getforma/compiler` refuses a `createShow` condition or a ternary test it can prove is not a boolean, with or without `--strict`: the common shapes are `createShow(() => count(), …)`, `createShow(count, …)`, and a ternary on a `null`-default or string signal (`() => user() ? a : b`, `() => name() ? …`); the fix is an explicit comparison (`count() > 0`, `user() !== null`, `name() !== ''`) or `!!x`. An untyped condition keeps `BUILD-302`; a module-level boolean `const`, `Boolean(x)` and a boolean getter passed itself now fold, so the server renders the branch the browser takes. `@getforma/build` labels `BUILD-614` and `BUILD-615` errors in its report without `--strict`, as it does `BUILD-610` to `BUILD-613`. Stated with `crates/forma-ir/tests/fixtures/parity/conditions.json`, read by the compiler's, forma-ir's and core's suites and the three-engine replay; one compiler test migrated, its original archived. `docs/parity-rules.md` also carries three written proposals, not code: ARIA states as `"true"`/`"false"`, the walker refusing a non-boolean `SHOW_IF` slot, and a namespace stack for the walker (a dynamic child inside an SVG `title` is refused by adoption today, `FORMA_E_HYDRATE_MARKER`).
 
+### Rule 6's attribute table: findings F2 and F3 — FORMA-182
+
+- **Rendered output changes with no source change.** One rule for a value bound to an attribute, on every writer (the walker, the compiler's static attributes, `h()` static and reactive, adoption): presence only for the HTML boolean set (`disabled`, `hidden`, `checked`, … as `BOOLEAN_ATTRS`), `true` the word `"true"` on every other attribute, the empty string a value, `false` and `null` omitting it. F2: a reactive `true` on `data-live`/`aria-pressed` was bare from the walker and adoption and `"true"` from `h()` (FORMA-188 saw `aria-pressed=""`); now `"true"` everywhere, and a static `data-x: true`/`class: true` is `"true"` too. F3: an attribute whose server value is `""` (`value: () => query()` over `createSignal('')`) was dropped by the server; the compiler now writes it as a static `value=""`. Shared vectors `crates/forma-ir/tests/fixtures/parity/attributes.json`, read by forma-ir's, the compiler's and core's suites and the three-engine replay; js-emitter corpus outputs regenerated with an archived ledger (`docs/archive/2026-10-15-pre-attribute-values/`). When this lands, FORMA-183's expected-divergent entries for F2 (`jsx-page` `data-live`, `sub-component-scopes` `data-ready`) and F3 (`dynamic-attrs` `input[value]`) pass and are removed.
+
 ### The parity harness (FORMA-183)
 
 - `e2e/parity/` holds the harness that keeps the walker and `@getforma/core` equal by test (DR-9): a deterministic, edge-first state generator over a declared props schema, each field rotated into its type's edge list (inside the priority block first) so same-typed fields never share an edge in the first states and every field meets the priority edges within ten, optionals present by one bit of the index each, and list-key fields given unique identities (the shared rule-1 vectors are in its string domain); a comparison of the browser's parse of the server HTML against core's render of the same state, with transport removed only where it is transport (marker comments and core's anchors on both sides; the activation attributes, `data-forma-key` and the U+200B holder on the server side only, a holder matching client `""` or U+200B and counted as `holderAmbiguous`, since the wire cannot tell them apart) and nothing else normalized, attributes compared with their namespace; a one-line report naming the module, the state and the node; and `renderBoth`, which renders one corpus module at one state through both sides. `crates/forma-server/examples/parity_render.rs` is its server half (the walker's low-level path); `e2e/parity/corpus.json` names the 14 corpus modules. Tooling only: no package, crate API or emitted byte changes.
 - `scripts/check.sh` runs the harness's own tests (type check and `node --test`) and, before anything else, stops on a Node without type stripping rather than skipping the step; the root `playwright.config.ts` ignores `e2e/parity/`, whose `*.test.mts` files are `node --test` suites.
 - The suite over the corpus (`e2e/parity/src/run.mts`): each module's states through the application's path (a synthesized manifest, `load_ir_modules`, `Pages::bind` with a harness `PageProps` mirroring the module's own schema, `PageHandle::render`), the server's own document and headers served in Chromium, P1, and P2: the module's production entry, built through `formaSsrPlugin`, activates its islands while a MutationObserver records every DOM write, which must be none. Known divergences are data (`e2e/parity/expected-divergent.json`), and one that stops occurring fails the run. CI runs it as the non-blocking `parity` job and uploads the report. P2 requires every island host activated (deferred `interaction`, `idle` and `visible` triggers are driven in the page; a host that never activates is an error naming it) and runs its positive control (an attribute, a childList and a characterData write) on its own connected observer; a typed-path refusal fails the run unless corpus.json declares the module walker-only; every expected entry must be pinned (a state, or `*` with a path, and a value or message pattern) or the list is refused; a state whose boot does not finish is that state's error. Step 0, 14 modules and 23 states: P1 19 equal, 4 expected-divergent (each naming the ticket that clears it: FORMA-181, FORMA-182 twice, FORMA-101), P2 14 equal; 2 structural classes. P3 and the switch to blocking are the next slices.
+- Step 1 and P3: the corpus gains the props-contract page, the island-emitter family (rebuilt from the compiler's own test and proved exact against each committed `.ir`) and a P3 fixture, 28 modules; P3 moves an activated page to the next state through a module-exported setter and compares it with that state's fresh server render (`no-setter` for a module without one). CI's `parity` job runs step 1 at 100 states (1,018 states); `--browser firefox|webkit` runs it in the other engines, per release, as a non-blocking job of `e2e-engines.yml`. New divergences: F2's case in two more modules, F5 (core's `createShow` and a string branch, FORMA-016) and F6 (adoption by raw key, FORMA-181 checkpoint C).
 
 ### Value rule 1: line endings and NUL — FORMA-182
 
@@ -36,6 +56,57 @@
 
 - `e2e/fixtures/formajs-runtime.global.js` and `e2e/fixtures/formajs.global.js` are no longer tracked; `e2e/sync-fixtures.sh` writes them from `packages/core/dist` and `scripts/check.sh` runs it first. The committed copies predated `trustedHtml()` and failed five cases of `e2e/full-stack.spec.ts` whenever the lane ran without a fresh sync. The spec now refuses to run without the bundles, naming the sync script, and the sync script prints core's build output when that build fails instead of exiting silently. Verified by `e2e/full-stack.spec.ts` > `the bundles are the fresh sync, not a stale copy`.
 
+## [3.0.0-alpha.2] - 2026-10-15
+
+The tag `v3.0.0-alpha.1` on `8ba2930` never published: its release run (38764599499) passed
+`check`, the three engines and `pack`, then `verify` failed in P17 before the publish jobs,
+which were skipped; nothing reached crates.io or npm. The cause was the verification harness,
+not the packages: the packed `@getforma/build` imports its optional compiler peer by name, and
+P17 ran the packed libraries from a scratch directory whose upward module search reached the
+checkout's root `node_modules`, where the workspace link `@getforma/compiler` points at
+`packages/compiler`, which the `verify` job never builds (`ERR_MODULE_NOT_FOUND` on
+`packages/compiler/dist/index.js`). On a built workstation the same search had silently used
+the workspace build instead of the packed bytes, which is why every local dry run passed.
+
+P17 now writes a `node_modules/@getforma` beside the unpacked packages, linking each packed
+library, and proves with Node's own resolver that every bare `@getforma/*` specifier in every
+packed dist resolves inside the packed set (`scripts/release-packed-resolution.mjs`, a new P17
+check before any packed code runs, and `release-packed-resolution.test.mjs`, which reproduces
+the tag's failure in an unbuilt checkout and refuses a built workspace standing in). Since a
+version is never retagged, this alpha is `3.0.0-alpha.2`: the seven packages at the new
+version, their bytes otherwise identical to alpha.1's, and the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first pre-release of 3.0.0: milestone M2 of PLAN-merge-and-3.0.0 (FORMA-145 step 2,
+FORMA-187's M2 exit), published from this repository by the unified release workflow as one
+seven-package set. On crates.io: `forma-ir`, `forma-ir-derive` and `forma-server` 3.0.0-alpha.1
+(Cargo pre-release versions; plain requirements exclude them). On npm: `@getforma/core`,
+`@getforma/compiler`, `@getforma/build` and `@getforma/create-app` 3.0.0-alpha.1 under the
+`next` dist-tag; `latest` stays at the 2.x and 0.x lines, so `npm install` does not pick the
+alpha up (L-41). No application takes a pre-release (L-54). The GitHub Release names the
+milestone, the pending gates and every artefact's SHA-256; the release is timed against G6.
+
+This alpha carries the breaking changes listed below, the gates of the alpha in
+`scripts/release-contracts.json`: FORMA-110, 185, 112, 102, 107, 109, 111 and 144 slice 1.
+Pending before the beta (M3), not in this alpha: FORMA-103, 104, 105, 181, 182, 183, 184,
+144 slice 2, 188's fixture applications and 021's ratchet; that work is on the integration
+branch `codex/forma-upgrade-review`. N2 is restated per L-55 (D6 taken, DR-35's fallback):
+at most 25,500 B gzip of Forma code per route (26,000 if the safe cuts slip), Brotli reported
+beside it, with the core and browser-ESM package caps ratcheting to 46,500 B after the safe
+cuts C1 to C3 (naming FORMA-103 and 104). Neither the restated ceiling nor the ratcheted caps
+nor the cuts are on `main`: this alpha ships under the previous caps (core 30,000 and browser
+ESM 29,000 B gzip), which its gate passes; the restated figures arrive with the beta.
+
+Release mechanics of this pull request, beside the version script's seven manifests, three
+Cargo locks, npm lock and template seeds: core's documentation-truth test treats a pre-release
+like `-dev` (the CDN snippets, CSP history and support table keep naming the last stable
+release, 2.1.0, which is what `latest` serves); the compiler's supported-surface test computes
+the core peer from the package version (`^3.0.0 || =3.0.0-alpha.1`, the window the version
+script writes); the `forma-ir` and `forma-server` READMEs, which ship inside the crates, name
+`=3.0.0-alpha.1`. The post-release pull request returns `main` to `3.0.0-dev`.
+
+
 ### Removed — FORMA-110
 
 - Removed core's server functions, Node SSR and WASM entry points; the compiler's Vite plugins and their standalone transforms; and the WASM walker feature, build step, manifest field and server bootstrap. Browser islands continue to use `h()` and native Rust SSR remains supported.
@@ -44,6 +115,8 @@
 
 
 ### FMIR v3 development staging (FORMA-185)
+
+- Seeded-bug qualification of the decoder fuzzing: three deliberate reader defects (CRC check skipped, section-table bound off by one, string length unchecked) were each found by the nightly targets within seconds; the minimised inputs are committed under `fuzz/regressions/` and replayed on every pull request by `seeded_decoder_defects_are_caught_deterministically` (`docs/FMIR-FORMAT.md` §11.4).
 
 The seven package versions are aligned at `3.0.0-dev` so the compiler and Rust reader can
 compare their exact base version `3.0.0`; nothing is tagged or published. Templates retain
@@ -62,6 +135,15 @@ loader-before-bind checks, stable fuzz replay and a pinned nightly fuzz workflow
   gate, packed template/corpus verification, two minimal publishing jobs and
   compatibility record. A2 dry runs remain non-publishing; milestone contract
   hooks must be completed before the first `v3.0.0-alpha.1` release.
+- FORMA-187 (first alpha): the live gate is milestone-aware. `scripts/release-contracts.json`
+  states which tickets gate the alpha, beta, rc and final; a tag publishes only when every
+  gate of its milestone and the earlier ones is done, checked in pack, P17, both publish jobs
+  and the record. The alpha's gates (110, 185, 112, 102, 107, 109, 111, 144 slice 1) are done;
+  the later milestones' are pending. The GitHub Release names the milestone and the pending
+  list; the contract's `version` (3.0.0) is asserted against the tag's base version. The SR43
+  lint checks the contract's shape with thirteen seeded violations. Pre-releases
+  publish on npm `next` and as Cargo pre-release versions (`npmPublishArgs`, `cargoPublishArgs`,
+  tested). `docs/release/ALPHA-RUNBOOK.md` is the alpha day's ordered runbook.
 
 ### The repository merge (FORMA-113)
 
