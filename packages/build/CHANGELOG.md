@@ -1,6 +1,19 @@
 # Changelog
 
-## Unreleased — the size report with route classes and ceilings (FORMA-190)
+## [Unreleased]
+
+### N2 is 27,500 B (L-58)
+
+- The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
+  **27,500 B gzip -9**, up from 25,500 B: the founder's decision L-58 (decision
+  brief commit `f27cce6`), one ceiling for all routes, 1 KB = 1,000 B. An island
+  holding a client `createList` loads 26,366 B of Forma code (FORMA-188's
+  `negative/list-island`), over the old figure and under the new. `BUILD-819`,
+  `size-report.json` (`ceilings.forma`, each route's `ceilings.forma`) and the
+  printed report read the constant; the page and canvas JavaScript ceilings (75
+  and 365 KiB) are unchanged. Not configurable.
+
+### The size report with route classes and ceilings — FORMA-190
 
 - **One report, extended.** The size report of FORMA-021 now classifies each
   route (DR-35) and holds it to its class's ceilings, gzip -9 with 1 KB =
@@ -36,12 +49,12 @@
   `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
   empty). Both are empty in watch mode.
 
-## Unreleased — BUILD-616 is mandatory (FORMA-181, FORMA-183 finding F1)
+### BUILD-616 is mandatory — FORMA-181, FORMA-183 finding F1
 
 - The compiler's new BUILD-616 (a `createList` source that is provably not a function) is an
   error in every mode, like BUILD-610 to BUILD-613.
 
-## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
+### The deployment identity — FORMA-186 (DR-29, L-6 as amended by L-56)
 
 - `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
   identity: 16 lowercase hex characters, computed first from every output of a
@@ -69,7 +82,7 @@
   after FORMA-021's cuts, becomes about 25,130 B: its headroom under N2's 25,500 B
   falls from 399 B to about 370 B.
 
-## Unreleased — the size report per route and N2's gate (FORMA-021)
+### The size report per route and N2's gate — FORMA-021
 
 - A production build reports, per route, what the route loads cold (its `js`
   files and their `modulepreload` dependencies) in raw, gzip -9 and Brotli-11
@@ -90,20 +103,6 @@
   payload (default 200 KB), is unchanged and separate: it is the application's
   budget, N2 is Forma's.
 
-## Unreleased — verified production workers (FORMA-111)
-
-- Production workers use finalized immutable manifest metadata and full SHA-384,
-  including lazy chunks. Cache hits and network responses are verified before
-  serving; corrupt entries are refetched without HTTP-cache reuse. Verification
-  failures cannot fall back to unchecked bytes. Storage failures still permit a
-  verified network response.
-- On-demand is the sole production policy and the default. `precache` fails
-  configuration validation; historical fixtures remain preserved. Per-app waiting,
-  retirement patterns and the exact development worker bytes remain unchanged.
-
-
-## [Unreleased]
-
 ### Value rules 6 and 7 are mandatory refusals in the report — FORMA-182
 
 - The diagnostics report and `result.diagnostics` label `BUILD-614` (a boolean in text) and `BUILD-615` (a condition that is not boolean-typed) `error` with or without `--strict`, as they do `BUILD-610` to `BUILD-613`. The compiler refuses both whatever the mode, so a default build already failed on them, but its report and `--diagnostics-json` called them `warning`. Verified by `tests/strict.test.ts` > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are".
@@ -118,6 +117,28 @@
 
 - Compile watched browser and native output together, including SSR-only and type-only dependencies. Publish immutable JS/chunk and SHA-256 IR generations, then switch the manifest by rename; retain older files for requests holding an earlier manifest.
 - Stage output and rollback failed replacements, validation or final manifest writes. Watch consumers must use manifest aliases, not stable entry or IR filenames. Production still promotes its complete staging directory.
+
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.3.1. Part of the seven-package set 3.0.0-alpha.1; the verified production workers (FORMA-111), manifest 2 and the start-time checks (FORMA-112) and the removals (FORMA-110) below are the alpha's gates. The per-build size report with route classes (FORMA-190) and the restated N2 ceiling (L-55: 25,500 B gzip per route) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
+
+### Verified production workers — FORMA-111
+
+- Production workers use finalized immutable manifest metadata and full SHA-384,
+  including lazy chunks. Cache hits and network responses are verified before
+  serving; corrupt entries are refetched without HTTP-cache reuse. Verification
+  failures cannot fall back to unchecked bytes. Storage failures still permit a
+  verified network response.
+- On-demand is the sole production policy and the default. `precache` fails
+  configuration validation; historical fixtures remain preserved. Per-app waiting,
+  retirement patterns and the exact development worker bytes remain unchanged.
+
+
+### Earlier unreleased entries, also in this alpha
 
 ### Changed — FORMA-112
 

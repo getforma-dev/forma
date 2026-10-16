@@ -27,6 +27,66 @@ fn replay_every_committed_regression_with_its_real_adapter() {
     }
 }
 
+/// The seeded-bug qualification (FMIR-FORMAT §11.4): each input below was produced by the
+/// nightly targets against a scratch reader carrying one deliberate defect, and each
+/// assertion states the guarantee that defect removed. With the defect re-applied, the
+/// matching assertion panics or fails, so a regression of that check is caught on every PR.
+#[test]
+fn seeded_decoder_defects_are_caught_deterministically() {
+    use forma_ir::fuzz_support::stamp_body;
+    use forma_ir::{IrError, SectionTable, StringTable, HEADER_SIZE};
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fuzz/regressions");
+    let read = |path: &str| fs::read(root.join(path)).unwrap();
+
+    // Seed A: the CRC-32 comparison skipped. A length-exact module whose CRC field is
+    // wrong must be refused with the checksum code, and never reach the dump oracle.
+    let crc_flipped = read("parse_raw/seeded-crc-check-skipped");
+    assert_eq!(crc_flipped.len(), 183);
+    assert!(matches!(
+        IrModule::parse(&crc_flipped),
+        Err(IrError::ChecksumMismatch { .. })
+    ));
+    assert!(!exercise(Target::ParseRaw, &crc_flipped));
+
+    // Seed B: the section-table end bound off by one. A body of three bytes declares
+    // zero sections but has no room for the four-byte table prefix.
+    let short_table = read("parse_body/seeded-section-table-end-off-by-one");
+    assert_eq!(short_table.len(), 3);
+    assert!(matches!(
+        SectionTable::parse(&short_table),
+        Err(IrError::BufferTooShort {
+            expected: 4,
+            actual: 3
+        })
+    ));
+    assert!(!exercise(Target::ParseBody, &short_table));
+
+    // Seed C: a string entry's length not checked against the bytes left. The string
+    // section declares one string of 65,535 bytes and ends after the length prefix.
+    let overrun = read("parse_body/seeded-string-length-unchecked");
+    assert_eq!(overrun.len(), 70);
+    let table = SectionTable::parse(&overrun).unwrap();
+    let strings = table.get(2).unwrap();
+    let start = strings.offset as usize - HEADER_SIZE;
+    let payload = &overrun[start..start + strings.size as usize];
+    assert!(matches!(
+        StringTable::parse(payload),
+        Err(IrError::BufferTooShort {
+            expected: 65_541,
+            actual: 6
+        })
+    ));
+    assert!(matches!(
+        IrModule::parse(&stamp_body(&overrun)),
+        Err(IrError::BufferTooShort { .. })
+    ));
+    assert!(!exercise(Target::ParseBody, &overrun));
+    // The same defect reached through a near-valid mutation of a frozen module.
+    let mutated = read("parse_mutated/seeded-string-length-unchecked");
+    assert_eq!(mutated.len(), 4);
+    assert!(!exercise(Target::ParseMutated, &mutated));
+}
+
 #[test]
 fn frozen_modules_reach_all_four_adapters_and_the_bounded_walker() {
     assert_eq!(SEEDS.len(), 14);
