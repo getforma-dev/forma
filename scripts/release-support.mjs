@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { assertReleaseSet, CRATES, NPM } from './release-set.mjs';
 
 const identities = [...NPM.map(name => `npm:@getforma/${name}`), ...CRATES.map(name => `crates:${name}`)].sort();
+const unifiedTag = /^v(?:[3-9]|[1-9]\d+)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?$/;
 export function readRecordedSet(bytes, expectedSha256) {
   assert.match(expectedSha256 ?? '', /^[a-f0-9]{64}$/, 'a trusted release-record SHA-256 is required');
   assert.equal(createHash('sha256').update(bytes).digest('hex'), expectedSha256, 'release-record checksum mismatch');
@@ -69,7 +70,7 @@ export function supportRecord(releases) {
   assert(Array.isArray(releases), 'expected published release history');
   const tags = new Set();
   for (const release of releases) {
-    assert(/^v(?:[3-9]|[1-9]\d+)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?$/.test(release.tag), 'invalid unified release tag');
+    assert(unifiedTag.test(release.tag), 'invalid unified release tag');
     assert(!tags.has(release.tag), 'duplicate release in support history');
     tags.add(release.tag);
     assert.equal(release.prerelease, release.tag.includes('-'));
@@ -123,8 +124,17 @@ export function assertPublishedHistory(releases, inventory) {
   for (const metadata of all) {
     assert(!byTag.has(metadata.tag_name), 'duplicate tag in release inventory');
     byTag.set(metadata.tag_name, metadata);
-    if (metadata.draft === false && metadata.prerelease === false && /^v(?:[3-9]|[1-9]\d+)\./.test(metadata.tag_name)) {
-      assert(releases.some(r => r.tag === metadata.tag_name), `missing advertised stable record ${metadata.tag_name}`);
+    if (/^v(?:[3-9]|[1-9]\d+)\./.test(metadata.tag_name)) {
+      // Validate omitted entries before filtering: malformed metadata must not
+      // disguise a stable release as a draft or obsolete prerelease.
+      assert(unifiedTag.test(metadata.tag_name), 'invalid unified inventory tag');
+      assert.equal(typeof metadata.draft, 'boolean', 'invalid inventory draft classification');
+      assert.equal(typeof metadata.prerelease, 'boolean', 'invalid inventory prerelease classification');
+      assert.equal(metadata.prerelease, metadata.tag_name.includes('-'), 'inventory prerelease classification disagrees with tag');
+      if (!metadata.draft) {
+        date(metadata.published_at, metadata.tag_name);
+        if (!metadata.prerelease) assert(releases.some(r => r.tag === metadata.tag_name), `missing advertised stable record ${metadata.tag_name}`);
+      }
     }
   }
   for (const release of releases) {

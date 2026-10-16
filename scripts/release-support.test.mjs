@@ -74,3 +74,19 @@ test('complete published inventory cannot hide an advertised stable record or ch
   assert.throws(() => assertPublishedHistory([r], []), /absent/);
   assert.throws(() => assertPublishedHistory([r], [{ ...metadata, published_at: '2026-11-01T00:00:00Z' }]), /contradictory/);
 });
+
+test('omitted unified inventory entries are validated before draft and prerelease filtering', () => {
+  const metadata = { tag_name: 'v3.0.0', published_at: '2026-10-31T23:30:00Z', draft: false, prerelease: false };
+  for (const changed of [
+    { prerelease: true }, { draft: undefined }, { draft: 'false' },
+    { prerelease: 'false', published_at: 'invalid' },
+    { tag_name: 'v3.0.0-beta.1', prerelease: true, published_at: '2026-02-30T00:00:00Z' },
+    { tag_name: 'v3.bad', prerelease: true },
+  ]) assert.throws(() => assertPublishedHistory([], [{ ...metadata, ...changed }]));
+  // Legitimate unpublished drafts and obsolete prereleases require no DS12.
+  assertPublishedHistory([], [
+    { ...metadata, draft: true, published_at: null },
+    { ...metadata, tag_name: 'v3.0.0-beta.1', prerelease: true },
+    { ...metadata, tag_name: 'v4.0.0-rc.1', draft: true, prerelease: true, published_at: null },
+  ]);
+});
