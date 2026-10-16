@@ -199,8 +199,9 @@ the real compiler/native renderer and browser now agree on its actual href.
 The preceding run proved the old F4 entry an unexpected pass before its removal.
 The duplicate-name scopes original similarly remains a BUILD-503 refusal, while
 the live page uses `panelCount` and preserves its actual defaults. Corpus emission
-requires zero error diagnostics. F5 remains in `expected-divergent.json` pending
-the separate text-branch fix; it is still executed and must still diverge.
+requires zero error diagnostics. The integrated FORMA-016 text-branch fix also
+resolves F5; its earlier unexpected-pass report is preserved. With both fixes
+present, `expected-divergent.json` is empty and every live case must agree.
 
 Checkpoint C resolves F6: the merged integration run on 2026-10-15 observed both canonical-key adoption entries as unexpected passes, with all 99 P2 checks equal. The two resolved entries were removed; the original failure report is preserved in the release work evidence.
 
