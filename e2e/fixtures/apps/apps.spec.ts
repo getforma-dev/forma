@@ -18,6 +18,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 import { expect, test, type Page } from '@playwright/test';
 
 const HERE = __dirname;
@@ -29,6 +30,7 @@ if (!Number.isInteger(PORT_BASE) || PORT_BASE < 0 || PORT_BASE > 65500) throw ne
 
 interface Expectation {
   state?: Record<string, unknown>;
+  statePrefix?: Record<string, unknown[]>;
   serverValues?: { selector: string; text: string }[];
 }
 interface Variant extends Expectation { name: string; path: string }
@@ -38,6 +40,7 @@ interface PageEntry extends Expectation {
   entry: string;
   kind: string;
   islands: string[];
+  shape?: { consumer: string; targetNodes: number | null; islands: number };
   variants?: Variant[];
 }
 interface AppEntry { css: string; routes: Record<string, PageEntry> }
@@ -74,6 +77,21 @@ async function start(name: string): Promise<Running> {
 
 const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'));
 const verifier = () => import(pathToFileURL(join(HERE, 'lib', 'verify-page.mjs')).href);
+
+/** Every listed tile counts: one press adds one to the count the server sent (7 stays 7 until it is pressed; 1001 likewise). */
+function tileBehaviour(ids: number[]): Behaviour {
+  return {
+    interact: async (page) => {
+      const before = await Promise.all(ids.map(async (id) => Number(await page.locator(`[data-tile="${id}"] .tile-count`).textContent())));
+      for (const id of ids) await page.locator(`[data-tile="${id}"] .tile-more`).click();
+      for (const [index, id] of ids.entries()) await expect(page.locator(`[data-tile="${id}"] .tile-count`)).toHaveText(String(before[index] + 1));
+      // The switch shows and hides its marker without touching the count.
+      await page.locator(`[data-tile="${ids[0]}"] .tile-switch`).click();
+      await expect(page.locator(`[data-tile="${ids[0]}"] .tile-on`)).toBeVisible();
+      return `${ids.length} tiles counted`;
+    },
+  };
+}
 
 /** What each page does once its island runs, and which of its requests wait for activation (lib/verify-page.mjs). */
 type Behaviour = { hold?: string[]; interact?: (page: Page) => Promise<unknown> };
@@ -132,6 +150,12 @@ const BEHAVIOURS: Record<string, Behaviour> = {
       return 'filter bar and toolbar';
     },
   },
+  'bench /pages/300': tileBehaviour([0]),
+  'bench /pages/1500': tileBehaviour([0, 9]),
+  'bench /pages/10000': tileBehaviour([0, 4]),
+  'bench /pages/15000': tileBehaviour([0, 49]),
+  'bench /pages/20000': tileBehaviour([0, 4]),
+  'bench /pages/islands-100': tileBehaviour(Array.from({ length: 100 }, (_, index) => index)),
   // Each variant reaches the islands that have something to do on it.
   'fauth /t/:slug/login (invite-only tenant)': {
     interact: async (page) => {
@@ -229,12 +253,15 @@ for (const name of APPS) {
           const { verifyIslandPage } = await verifier();
           const manifest = readJson(join(OUT, name, 'dist', 'manifest.json'));
           const states = expectation.state ?? {};
+          const hosts: Record<string, number> = {};
+          for (const island of page.islands) hosts[island] = (hosts[island] ?? 0) + 1;
           const result = await verifyIslandPage(browser, server.origin, route, manifest, {
             path,
             expected: {
               serverValues: expectation.serverValues ?? [],
-              state: Object.fromEntries(Object.entries(states).map(([component, each]) => [component, [each]])),
-              hosts: Object.fromEntries(Object.keys(states).map((component) => [component, 1])),
+              state: expectation.state ? Object.fromEntries(Object.entries(states).map(([component, each]) => [component, [each]])) : undefined,
+              statePrefix: expectation.statePrefix,
+              hosts,
             },
             hold: behaviour.hold ?? [],
             interact: behaviour.interact,
@@ -358,12 +385,29 @@ test.describe('activation is required, not assumed', () => {
   test('a variant whose islands never activate fails its behaviour (the reviewer\'s probe)', async ({ browser }) => {
     const { verifyIslandPage } = await verifier();
     const interact = BEHAVIOURS['ksx /check (no controller)'].interact;
+    const page = INDEX.apps.ksx.routes['/check'];
+    const variant = page.variants!.find(each => each.name === 'no controller')!;
+    const expected = {
+      serverValues: variant.serverValues,
+      state: Object.fromEntries(Object.entries(variant.state!).map(([component, state]) => [component, [state]])),
+      hosts: Object.fromEntries(page.islands.map(component => [component, 1])),
+    };
+    const options = { path: variant.path, expected, interact, timeout: 3000 };
+    const active = await verifyIslandPage(browser, server.origin, '/check', manifest(), options);
+    expect(active.interacted, 'the paired control must reach the live variant behaviour').toBeTruthy();
     // The held script is answered with an empty module: the hosts are in the HTML and nothing ran.
-    await expect(verifyIslandPage(browser, server.origin, '/check', manifest(), { path: '/check?state=empty', interact, scriptBody: '', timeout: 3000 })).rejects.toThrow();
+    let failure: Error | undefined;
+    try {
+      await verifyIslandPage(browser, server.origin, '/check', manifest(), { ...options, scriptBody: '' });
+    } catch (error) { failure = error as Error; }
+    const message = stripVTControlCharacters(failure?.message ?? '');
+    expect(message).toContain('toHaveText');
+    expect(message).toContain('#frames-seen');
+    expect(message).toContain('1002');
   });
 });
 
-test.describe('fixtures the closed type set and N2 refuse', () => {
+test.describe('fixture type refusals and accepted N2 shapes', () => {
   const negative = (INDEX as unknown as { negative: { name: string; entry: string; code: string; message: string; file?: string }[] }).negative;
   const buildOne = async (name: string) => {
     const { buildNegative } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
@@ -392,16 +436,50 @@ test.describe('fixtures the closed type set and N2 refuse', () => {
     expect(result.diagnostics.some((each: { code: string; message: string }) => each.code === entry.code && each.message.includes(entry.message))).toBe(true);
   });
 
-  test('an island holding a client-side list is over N2 today (BUILD-819): the finding, until the ceiling or the list code changes', async () => {
-    const entry = negative.find((each) => each.name === 'list-island')!;
-    const result = await buildOne(entry.name);
-    // If this fails because the build succeeded, N2 now admits a list island: delete this test and
-    // put the list back into the ksx check chips island and the fauth results island (FORMA-188).
-    expect(result.built, 'N2 now admits an island with a client-side list; flip this fixture').toBe(false);
-    expect(result.message).toContain(entry.code);
-    expect(result.message).toContain(entry.message);
-    const bytes = Number(/loads ([\d,]+) B gzip -9 of Forma code/.exec(result.message)?.[1]?.replaceAll(',', ''));
-    const ceiling = Number(/ceiling of ([\d,]+) B/.exec(result.message)?.[1]?.replaceAll(',', ''));
-    expect(bytes).toBeGreaterThan(ceiling);
+  test('an island holding a client-side list builds inside the emitted size policy (L-58)', async () => {
+    const { buildPositive } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
+    const { build } = await import(pathToFileURL(join(HERE, 'node_modules', '@getforma', 'build', 'dist', 'index.js')).href);
+    const { sizeReport } = await buildPositive({ build, outRoot: OUT, name: 'list-island' });
+    expect(sizeReport.version).toBe(1);
+    expect(sizeReport.routes).toHaveLength(1);
+    const [route] = sizeReport.routes;
+    expect(route.route).toBe('/');
+    expect(route.class).toBe('islands');
+    expect(route.canvas).toBe(false);
+    expect(route.ceilings.forma).toBe(sizeReport.ceilings.forma);
+    expect(route.ceilings.javascript).toBe(sizeReport.ceilings.page);
+    expect(route.forma.gzip).toBeGreaterThan(0);
+    expect(route.forma.gzip).toBeLessThanOrEqual(route.ceilings.forma);
+    expect(route.javascript.gzip).toBeGreaterThan(0);
+    expect(route.javascript.gzip).toBeLessThanOrEqual(route.ceilings.javascript);
+    expect(route.exceeded).toEqual([]);
+    expect(route.over).toBe(false);
   });
+});
+
+test.describe('fixture application bench: the consumers\' heaviest pages', () => {
+  const bench = INDEX.apps.bench;
+  let server: Running;
+  test.beforeAll(async () => { server = await start('bench'); });
+  test.afterAll(async () => { await server?.stop(); });
+
+  for (const [route, page] of Object.entries(bench?.routes ?? {})) {
+    test(`${route} (${page.shape?.consumer}): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB`, async ({ request }) => {
+      const response = await request.get(new URL(route, server.origin).href);
+      expect(response.status()).toBe(200);
+      const counts = /nodes=(\d+); bytes=(\d+); list=(\d+)/.exec(response.headers()['x-fixture-counts'] ?? '');
+      expect(counts, 'the server reports the walker\'s counts').toBeTruthy();
+      const nodes = Number(counts![1]);
+      const target = page.shape?.targetNodes;
+      // Every page but the hundred-island one stands for a consumer's figure; a missing figure is a failure, not a skip.
+      if (route !== '/pages/islands-100') expect(target, `${route} has no targetNodes`).toBeTruthy();
+      if (target) expect(Math.abs(nodes - target) / target, `${nodes} nodes against ${target}`).toBeLessThan(0.03);
+      const html = await response.text();
+      expect(html.match(/data-forma-island="/g)?.length).toBe(page.shape?.islands);
+      const envelope = /<script type="application\/json" data-island-state>([^<]*)<\/script>/.exec(html);
+      expect(envelope, 'one inert state envelope').toBeTruthy();
+      expect(envelope![1].length).toBeLessThan(1024 * 1024);
+      expect(JSON.parse(envelope![1]).i.length).toBe(page.shape?.islands);
+    });
+  }
 });

@@ -14,6 +14,7 @@ shaped after (`shapeSource`). P17 builds and serves the same sources against the
 | `ledger/` | `/household` | A household arrival island: strings, one boolean behind a `createShow`, a status line that moves when the island's own request returns, a Retry button. |
 | `fauth/` | `/t/:slug/login`, `/platform/onboarding`, `/platform/benchmark` | Three handlers' worth of props: a tenant's hosted login (an optional logo, a provider enum list, a signup-mode enum, derived booleans), a get-started page (three OAuth booleans and an optional config string), a results page (rows with numbers, an optional failure, a sort enum, an optional error). |
 | `ksx/` | `/check` | A button-check screen: a nested roster payload (`mapper.slots[].bindings[]`), the booleans the old server injected under `show:` names, 1001 frames seen, a grid of chips, a keyboard echo that lights chips by class. |
+| `bench/` | `/pages/300`, `/pages/1500`, `/pages/10000`, `/pages/15000`, `/pages/20000`, `/pages/islands-100` | The consumers' heaviest pages as synthetic data (design.md A4), for FORMA-191's measurements and the parity corpus: a login of about 300 nodes and 2 islands, a console 1,500 and 10, a document 10,000 and 5, a canvas of 50 modules 15,000 and 50, a year of transactions 20,000 and 5, and a page of 100 islands (island 0 seeded 7, island 1 seeded 1001). Rows are page-level lists over a handler-generated dataset; the islands are small `Tile`s. |
 | `negative/` | built only | The shapes the contract refuses, each with its code (see below). |
 
 Each page is one `app.tsx` (the 3.0.0 entry: a literal `activateIslands` and a top-level `mount`), a
@@ -46,6 +47,9 @@ the walker and not guessed.
   and the DOM must show no mutation record and the same nodes (a positive control proves the observer is
   watching); then the page's behaviour must change the DOM, which an island that never activated cannot do.
   The status attribute is not the evidence: a successful adoption leaves `data-forma-status="pending"`;
+- the bench pages: the walker's own node count (the servers report it in `x-fixture-counts`) within 3%
+  of the consumer's figure, the island count exact, the state envelope under 1 MiB, every tile counting
+  on from the value the server sent (7 stays 7, 1001 stays 1001 among a hundred islands);
 - the other branch of each condition (an invite-only tenant, no controller, no results), a hostile tenant
   name that must render as text, an unknown tenant that must be a 404.
 
@@ -60,9 +64,7 @@ the walker and not guessed.
   `#[props(rename = "hasOAuth")]`, and bind says so (BIND-101 names both spellings).
 - **A reactive boolean `aria-pressed` writes `""`** for true and removes the attribute for false, which is
   not the string a screen reader needs; the fixture writes the string in the click.
-- **An island with a client-side list is over N2 today.** Forma's code on the smallest island is 25,084 B
-  gzip -9, `createShow` adds 241 B and `createList` 1,282 B: a route whose island holds a `createList` is
-  about 26.4 KB against the 25,500 B ceiling (26,366 B when first measured, 26,403 B on `49c6146`) (`negative/list-island`, BUILD-819). The studio's chips and the
-  service's results table are lists in islands on the pages these fixtures are shaped like, so the fixtures
-  keep their lists in the page outside every island (server markup, no client code) and reach them by id.
-  The fixture routes measured 25,399 to 25,447 B on the integration head `49c6146` (FORMA-186's identity banner added about 32 B per route), 53 to 101 B under the ceiling, and `negative/list-island` 26,403 B; the figures move with the tree.
+- **L-58 admits an island with a client-side list.** The positive `positive/list-island` entry builds
+  under the accepted N2 policy. Its test reads the emitted `size-report.json`, requires a single
+  island route, and checks both measured byte counts, their report ceilings and the passing verdict.
+  The full ksx/fauth list migration and packed report measurement follow in FORMA-188's integration slice.

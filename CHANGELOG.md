@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — the client list fixture is admitted (FORMA-188, L-58)
+
+- Move the client-list island fixture to the positive corpus after the accepted N2 increase. Its strict build must emit one island route with positive Forma/JavaScript byte counts below the report's own ceilings and an empty exceeded verdict; the obsolete BUILD-819 wording assertion is removed.
+
 ## [Unreleased]
 
 ### Native LIST sources must carry real rows — FORMA-101
@@ -27,7 +31,8 @@
 ### Fixture applications (FORMA-188)
 
 - `e2e/fixtures/apps/`: three applications shaped after consumers' pages (neutral, synthetic labels and values; nothing is taken from an application) (a household arrival island, an authentication service's tenant login, get-started and results pages, a controller studio's button-check screen), each a 3.0.0 page set: TypeScript props types, `#[derive(PageProps)]` handlers bound at start, islands with declared props. They build under `strict: true` with nothing above a note and are served by forma-server. `e2e/fixtures/apps/build.sh` is part of `scripts/check.sh`; `apps.spec.ts` checks, per page, the server's values with JavaScript off, the state envelope against the handler's values, adoption that writes nothing (the island module held, then released, a positive control on the observer) and the page's behaviour.
-- `negative/` holds the shapes the contract refuses: a props type outside the closed type set (BUILD-610 with file, line and column), a condition the compiler would have to evaluate (BUILD-610), and an island holding a client-side list, which is over N2's ceiling today (BUILD-819: about 26.4 KB of Forma code against 25,500 B (26,403 B at `49c6146`)). The pages keep their lists outside islands until the ceiling or the list code changes.
+- `bench/`: the consumers' heaviest pages as synthetic data for FORMA-191's measurements (design.md A4): about 300, 1,500, 10,000, 15,000 and 20,000 nodes by the walker's own count (298, 1,497, 9,995, 15,053 and 19,961) with 2, 10, 5, 50 and 5 islands, and a page of 100 islands whose first two are seeded 7 and 1001. The server reports the walker's counts in an `x-fixture-counts` header.
+- `negative/` holds the shapes the contract refuses: a props type outside the closed type set (BUILD-610 with file, line and column) and a condition the compiler would have to evaluate (BUILD-610). L-58 admits the client-list island in `positive/list-island`; its emitted size report is checked against the current policy. The full page-list migration follows in the integration slice.
 
 ### Value rule 1: line endings and NUL — FORMA-182
 

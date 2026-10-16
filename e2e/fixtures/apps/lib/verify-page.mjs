@@ -46,6 +46,7 @@ const textOf = (page, selector) => page.locator(selector).first().textContent();
  * identical nodes, then run `interact`. Options:
  *   expected.serverValues  [{selector, text}]       exact textContent before and after adoption
  *   expected.state         {Component: [props...]}  the state envelope's occurrences, in order, per component
+ *   expected.statePrefix   {Component: [props...]}  the same, for the first occurrences only (a page of a hundred)
  *   expected.hosts         {Component: count}       island hosts in the served HTML
  *   path                   the URL path to open when it is not the manifest route (a route pattern with a parameter)
  *   hold                   [urlSubstring]           requests the island makes at activation: they stay pending
@@ -110,11 +111,15 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
     (expected.serverValues ?? []).forEach(({ selector, text }, index) => assert.equal(before.values[index], text, `${route}: ${selector} before activation`));
     if (expected.hosts) assert.deepEqual(before.hosts, expected.hosts, `${route}: island hosts in the served HTML`);
     assert.equal(before.blocks, 1, `${route}: exactly one inert state envelope`);
-    if (expected.state) {
+    assert(expected.state || expected.statePrefix, `${route}: the page names neither a state nor a statePrefix to compare with the envelope; a missing oracle is a failure, not a skip`);
+    {
       const byComponent = {};
       const components = [...(await page.evaluate(() => [...document.querySelectorAll('[data-forma-island]')].map(h => [h.getAttribute('data-forma-component'), Number(h.getAttribute('data-forma-state'))])))];
       for (const [component, occurrence] of components) (byComponent[component] ??= []).push(before.state.i[occurrence].p);
-      assert.deepEqual(byComponent, expected.state, `${route}: the state envelope differs from the handler's values`);
+      if (expected.state) assert.deepEqual(byComponent, expected.state, `${route}: the state envelope differs from the handler's values`);
+      for (const [component, head] of Object.entries(expected.statePrefix ?? {})) {
+        assert.deepEqual((byComponent[component] ?? []).slice(0, head.length), head, `${route}: the first ${component} occurrences differ from the handler's values`);
+      }
     }
 
     open();
