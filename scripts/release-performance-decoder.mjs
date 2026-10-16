@@ -11,9 +11,11 @@ import {arch,cpus,platform,release,tmpdir,totalmem} from 'node:os';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const LIMIT = 1_048_576;
+// L-61: 12ms describes raw JSON.parse; complete public decoding must stay
+// within 30ms for every measured sample. N3's separate whole-task 50ms gate stays.
 export const DECODER_PROFILE = Object.freeze({
   browser: 'chromium', cpuSlowdown: 4, warmupsPerShape: 5, samplesPerShape: 40,
-  stateBytes: LIMIT, maxSampleMs: 12, freshDocumentPerSample: true,
+  stateBytes: LIMIT, maxSampleMs: 30, freshDocumentPerSample: true,
   start: 'immediately before packed activateIslands(registry)',
   end: 'first instruction of the registered component',
   registration: 'before start', validation: 'after end', retries: 0,
@@ -126,7 +128,7 @@ export function validateDecoder(report) {
       for(const [i,observation] of observations.entries()) {
         assert.equal(observation.run,i+1,`decoder: duplicate/missing ${phase} run`);
         checkObservation(observation,payload);
-        if(phase==='sample') assert(observation.elapsedMs<=12,`decoder ${row.id} sample ${i+1}: exceeds 12ms`);
+        if(phase==='sample') assert(observation.elapsedMs<=DECODER_PROFILE.maxSampleMs,`decoder ${row.id} sample ${i+1}: exceeds ${DECODER_PROFILE.maxSampleMs}ms`);
       }
     }
     assert.deepEqual(row.summary,sortedSummary(row.samples),'decoder: summary differs from raw samples');

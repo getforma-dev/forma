@@ -26,7 +26,7 @@ test('release metadata checks import without any optional browser tooling instal
 
 test('new and previous DS12 require the public decoder raw observations and enforce every sample',()=>{
  validatePerformanceRecord(performanceRecord());
- for(const edit of [p=>delete p.decoder,p=>p.decoder.cases[1].samples[39].elapsedMs=12.0001,p=>p.decoder.cases[0].samples.pop(),p=>delete p.decoder.compiler]){
+ for(const edit of [p=>delete p.decoder,p=>p.decoder.cases[1].samples[39].elapsedMs=30.0001,p=>p.decoder.cases[0].samples.pop(),p=>delete p.decoder.compiler]){
   const current=performanceRecord();edit(current);assert.throws(()=>validatePerformanceRecord(current));
   const prior=baseline();edit(prior.measurements.measurements.performance);assert.throws(()=>validateBaselineRecord(prior,context));
  }
