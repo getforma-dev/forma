@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Shared attribute-name and URL policy — FORMA-140
+
+- Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
+
 ### Integrated text-branch and row-focus package sizes — FORMA-016/181/182
 
 - The reviewed F5 text branches, Rule 6 attribute fixes and checkpoint D focus preservation together measure 46,823 B gzip for the core entry and 46,833 B for browser ESM. Both exceed the previous 46,777/46,804 B limits. Under L-58, re-anchor these two package limits to measured plus 300 B: 47,123/47,133 B. Runtime, hardened runtime and frame sizes and limits remain unchanged. This package-size adjustment is separate from the founder's L-59 per-route N2 decision, which lands with indexed rows.

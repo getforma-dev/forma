@@ -6,14 +6,14 @@
  * control characters out of a URL before resolving its scheme, so
  * `java\tscript:alert(1)`, `javas\ncript:...` and `\x01javascript:...` all
  * execute even though a naive `/^javascript:/` test does not match them. We
- * normalize the value the same way the browser does *before* testing.
+ * apply Forma's conservative classification normalization *before* testing.
  *
  * This module has no dependencies so it can be pulled into every build variant
  * (standard, hardened/CSP, SSR) cheaply.
  */
 
 // C0 controls + space (0x00-0x20), DEL and C1 controls (0x7F-0x9F). These are
-// exactly the bytes a URL parser ignores/strips when reading the scheme.
+// Forma's conservative classification set; see docs/INV1.md.
 const URL_IGNORED_CHARS_RE = /[\u0000-\u0020\u007F-\u009F]/g;
 
 // Schemes that can execute script or smuggle an active HTML document. Kept
@@ -153,7 +153,10 @@ const SAFE_ATTR_NAME_RE = /^[A-Za-z_:][-A-Za-z0-9_:.]*$/;
 
 /** True if `name` is safe to emit verbatim as an attribute name. */
 export function isSafeAttrName(name: string): boolean {
-  return SAFE_ATTR_NAME_RE.test(name);
+  if (!SAFE_ATTR_NAME_RE.test(name)) return false;
+  // The xlink writer uses setAttributeNS, which needs one nonempty local name.
+  const local = name.startsWith('xlink:') ? name.slice(6) : null;
+  return local === null || (SAFE_ATTR_NAME_RE.test(local) && !local.includes(':'));
 }
 
 /**
@@ -161,8 +164,8 @@ export function isSafeAttrName(name: string): boolean {
  * interpolated into markup with no escaping, so the same charset that stops an
  * attribute name from breaking out of its position stops a tag name from
  * introducing an attribute (`div onload=x`) or closing the tag (`div><script`).
- * It accepts every valid HTML, SVG and custom-element name, so no legitimate
- * tree renders differently.
+ * This deliberately accepts an ASCII subset, matching the native writer.
+ * Unicode names are refused even where the DOM itself would accept them.
  *
  * Verified by: src/security/__tests__/url-safety.test.ts > "rejects tag names that would inject attributes or close the tag"
  */
