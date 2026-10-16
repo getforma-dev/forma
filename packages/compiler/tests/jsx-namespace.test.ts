@@ -2,7 +2,7 @@ import {afterEach,expect,it} from 'vitest';
 import {build,context,type Plugin} from 'esbuild';
 import {mkdirSync,mkdtempSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {dirname,join} from 'node:path';
+import {basename,dirname,join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {formaSsrPlugin,generateRealIr} from '../src/esbuild-ssr-plugin';
 const roots:string[]=[];afterEach(()=>{for(const root of roots.splice(0))rmSync(root,{recursive:true,force:true});});
@@ -19,7 +19,7 @@ function fixture(){
 function namespaces(tree:any):string[]{return typeof tree==='object'&&tree!==null?[`${tree.tag}:${tree.ns}`,...(tree.children??[]).flatMap(namespaces)]:[];}
 it('composes lexical namespace edits with adoption hooks and both entry roles without changing native IR',async()=>{
   const f=fixture(),native=generateRealIr(f.entry)!.binary,result=await build(f.options);
-  expect(Buffer.from(result.outputFiles!.find(file=>file.path.endsWith('/ssr.ir'))!.contents)).toEqual(Buffer.from(native));
+  expect(Buffer.from(result.outputFiles!.find(file=>basename(file.path)==='ssr.ir')!.contents)).toEqual(Buffer.from(native));
   const js=result.outputFiles!.filter(file=>file.path.endsWith('.js')).map(file=>file.text).join('\n');expect(js).toContain('__adoptionSignal');expect(js).toContain('__formaSvg');
   for(const output of result.outputFiles!){mkdirSync(dirname(output.path),{recursive:true});writeFileSync(output.path,output.contents);}
   writeFileSync(join(f.root,'run.mjs'),`await import('./dist/ssr.js');const ssr=globalThis.registry.Icon();const before=globalThis.tree;await import('./dist/browser.js');console.log(JSON.stringify({ssr,browser:globalThis.tree,noSsrMount:before===undefined,hooks:globalThis.hooks}));`);
@@ -40,7 +40,7 @@ it('captures browser-only JSX from the same direct-plugin loader and guards its 
   const f=fixture(),addon=join(f.root,'addon.tsx');const original=`import {h} from '@getforma/core';export const tree=<svg><a/></svg>;`;writeFileSync(addon,original);let mutate=false;
   const drift:Plugin={name:'browser-only-jsx-drift',setup(b){b.onEnd(()=>{if(mutate){mutate=false;writeFileSync(addon,original+'\n// late')}});}};
   const ctx=await context({...f.options,entryPoints:[...f.options.entryPoints,{in:addon,out:'addon'}],plugins:[drift,f.plugin]});
-  try{const before=await ctx.rebuild();expect(before.outputFiles!.find(file=>file.path.endsWith('/addon.js'))!.text).toContain('__formaSvg');mutate=true;await expect(ctx.rebuild()).rejects.toThrow(/BUILD-610.*sources changed/);writeFileSync(addon,original);const after=await ctx.rebuild();expect(after.outputFiles!.map(file=>file.hash)).toEqual(before.outputFiles!.map(file=>file.hash));}finally{await ctx.dispose();}
+  try{const before=await ctx.rebuild();expect(before.outputFiles!.find(file=>basename(file.path)==='addon.js')!.text).toContain('__formaSvg');mutate=true;await expect(ctx.rebuild()).rejects.toThrow(/BUILD-610.*sources changed/);writeFileSync(addon,original);const after=await ctx.rebuild();expect(after.outputFiles!.map(file=>file.hash)).toEqual(before.outputFiles!.map(file=>file.hash));}finally{await ctx.dispose();}
 });
 it('keeps the six canonical namespace JSX vectors inside the admitted native subset',()=>{
   const result=generateRealIr(join(import.meta.dirname,'../../../e2e/ssr/cases/namespaces/app.tsx'));
@@ -49,5 +49,5 @@ it('keeps the six canonical namespace JSX vectors inside the admitted native sub
 it('preserves native dynamic SVG title emission without widening the deferred adoption contract',async()=>{
   const f=fixture();writeFileSync(f.entry,readFileSync(f.entry,'utf8').replace('<title>Icon</title>','<title>{()=>count()}</title>'));
   const native=generateRealIr(f.entry)!.binary,result=await build(f.options);
-  expect(Buffer.from(result.outputFiles!.find(file=>file.path.endsWith('/ssr.ir'))!.contents)).toEqual(Buffer.from(native));
+  expect(Buffer.from(result.outputFiles!.find(file=>basename(file.path)==='ssr.ir')!.contents)).toEqual(Buffer.from(native));
 });
