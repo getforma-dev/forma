@@ -148,6 +148,15 @@ docs/archive/FORMA-108-mutation-reporting/** -text
 # Exact explicit-runtime qualification reports and logs.
 docs/evidence/forma-108/** -text
 
+# Attribute alias transition preserves original source/products byte-for-byte.
+docs/archive/attribute-alias-transition/** -text
+
+# Immutable recovered beta measurements and first-failure evidence.
+docs/release-evidence/beta-acceptance/decoder/** -text
+docs/release-evidence/beta-acceptance/products/** -text
+docs/release-evidence/beta-acceptance/first-svg-case/** -text
+docs/release-evidence/beta-acceptance/corrected-foreign/** -text
+
 # FORMA-144 archived sources and qualification evidence use byte-exact hashes.
 docs/archive/forma-144-final-before/** -text
 docs/evidence/forma-144-final/** -text

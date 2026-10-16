@@ -1,0 +1,82 @@
+[
+  {
+    "file": "build/manifest.json",
+    "bytes": 1313,
+    "sha256": "80b080690154006e97e54a9c0f2e45a88b16d5b5a85da87a0257bd16a4b36fad"
+  },
+  {
+    "file": "build/sanitized-controls-csr.9b935611.js",
+    "bytes": 76890,
+    "sha256": "9b935611cb77b5b88cb5482ef37fa1037039d8138f321fccacec3f519afb145d"
+  },
+  {
+    "file": "build/sanitized-controls-csr.9b935611.js.br",
+    "bytes": 23165,
+    "sha256": "c64a16d2d0377ff43847e6fa9fa89eb1d497b84a8b18d1e97100ae03ea3422ff"
+  },
+  {
+    "file": "build/sanitized-controls-csr.9b935611.js.gz",
+    "bytes": 25846,
+    "sha256": "a115461507af04db7f35eec0299d8dd8ee85bdce5d0fb52a8b21d4dac1a07c07"
+  },
+  {
+    "file": "build/sanitized-controls.0d54df3d.ir",
+    "bytes": 2061,
+    "sha256": "0d54df3d91a41c85f6147e6f6b3f9d6e2bd1258cf81a6128465f417a2828f23f"
+  },
+  {
+    "file": "build/sanitized-controls.5a3fb1ca.js",
+    "bytes": 79055,
+    "sha256": "5a3fb1ca6b7b9332a06e8ab63cd2cc4f1b3c382ace5efc9775825234e966101c"
+  },
+  {
+    "file": "build/sanitized-controls.5a3fb1ca.js.br",
+    "bytes": 23779,
+    "sha256": "64344b393f54795f30f4edb46693942634287ef039baec319729b6b282a18dbe"
+  },
+  {
+    "file": "build/sanitized-controls.5a3fb1ca.js.gz",
+    "bytes": 26576,
+    "sha256": "e03e4920ae5ef87b87a9a2d69f7336e7fefd40d0def31c70bc528aeb41eed952"
+  },
+  {
+    "file": "build/size-report.json",
+    "bytes": 2110,
+    "sha256": "49502bbd6ace1a64ae473fc39035aaaf14e84cdbefa98fc9c66c7570de0f9863"
+  },
+  {
+    "file": "build/sw.js",
+    "bytes": 3231,
+    "sha256": "a2c1be78c853f541e60d32e456be7c92ad7effa0deb446e4736c5d6aed5d0fd4"
+  },
+  {
+    "file": "site/csr.headers.json",
+    "bytes": 929,
+    "sha256": "69f34e93e95c08c87f02dc2b2f5fd41e84232123ccbabfb307815b9f88b9ec91"
+  },
+  {
+    "file": "site/csr.html",
+    "bytes": 734,
+    "sha256": "6e4ffc2105071d3c565a913c00fab560b6200288344e5cda05c8d22973a16523"
+  },
+  {
+    "file": "site/index.headers.json",
+    "bytes": 929,
+    "sha256": "a561b298521b1c35849ff6509b43e7dff6c28ba5c790196091933b1afcc11f6f"
+  },
+  {
+    "file": "site/index.html",
+    "bytes": 2599,
+    "sha256": "155924e780c36c2c5ed19b7c094ad8f05b6b69f047c7f670adc561c16c1ba553"
+  },
+  {
+    "file": "source/e2e/ssr/cases/sanitized-controls/app.tsx",
+    "bytes": 3041,
+    "sha256": "7b6869c583a643023ceab7208b0bc405e9aff562d872d0928af42f2aeb13fefa"
+  },
+  {
+    "file": "source/e2e/ssr/sanitized-controls.spec.ts",
+    "bytes": 6271,
+    "sha256": "aeaed4d1c4c9cb7828fa5da233210505efc045bdbabdbaad51f364ebf6cb46bb"
+  }
+]

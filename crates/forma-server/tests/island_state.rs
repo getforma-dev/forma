@@ -123,3 +123,54 @@ fn public_state_and_document_refusals_are_distinct_and_request_limits_do_not_per
         forma_ir::DEFAULT_MAX_OUTPUT_BYTES
     );
 }
+
+#[test]
+fn public_page_handle_accepts_exactly_one_mib_of_escaped_state_and_refuses_one_more_byte() {
+    fn state(html: &str) -> &str {
+        let open = "<script type=\"application/json\" data-island-state>";
+        assert_eq!(html.matches(open).count(), 1);
+        let begin = html.find(open).unwrap() + open.len();
+        let end = begin + html[begin..].find("</script>").unwrap();
+        assert!(end < html.find("</head>").unwrap());
+        &html[begin..end]
+    }
+
+    let page = page();
+    let mut handler = Handler {
+        value: String::new(),
+        secret: u64::MAX,
+    };
+    let empty = page
+        .render(&handler, &RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked();
+    let payload_bytes = 1_048_576 - state(&empty.html).len();
+    // Measure the escaped UTF-8 block, including its actual public envelope.
+    // Each '<' becomes six ASCII bytes; a trailing ASCII remainder pins the
+    // exact limit independently of the current envelope's length.
+    handler.value = "<".repeat(payload_bytes / 6) + &"x".repeat(payload_bytes % 6);
+    let exact = page
+        .render(&handler, &RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked();
+    let encoded = state(&exact.html);
+    assert_eq!(encoded.len(), 1_048_576);
+    assert!(!encoded.contains('<'));
+    let decoded: serde_json::Value = serde_json::from_str(encoded).unwrap();
+    assert_eq!(decoded["i"][0]["p"], json!({"value": handler.value}));
+
+    handler.value.push('x');
+    // The Result has no PageResponse/partial HTML on refusal. The route and
+    // owning component survive the public error boundary.
+    let error = page.render(&handler, &RenderCtx::new()).unwrap_err();
+    assert_eq!(error.code(), "RENDER-502");
+    assert_eq!(error.route(), "/state");
+    assert_eq!(error.component_path(), ["Panel"]);
+
+    handler.value.pop();
+    let recovered = page
+        .render(&handler, &RenderCtx::new())
+        .unwrap()
+        .into_parts_unchecked();
+    assert_eq!(state(&recovered.html), encoded);
+}

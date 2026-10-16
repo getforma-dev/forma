@@ -1,0 +1,18 @@
+[WebServer] (node:67940) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:67959) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 2 workers
+
+(node:67961) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67960) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/adoption.spec.ts:282:1 › a detached real-Node description reports STRUCTURE while a healthy sibling activates (215ms)
+(node:67970) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [firefox] › e2e/adoption.spec.ts:282:1 › a detached real-Node description reports STRUCTURE while a healthy sibling activates (858ms)
+  ✓  3 [webkit] › e2e/adoption.spec.ts:282:1 › a detached real-Node description reports STRUCTURE while a healthy sibling activates (765ms)
+
+  3 passed (3.0s)

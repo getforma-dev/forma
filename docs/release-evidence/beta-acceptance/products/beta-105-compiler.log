@@ -1,0 +1,70 @@
+
+> @getforma/compiler@3.0.0-dev test
+> vitest run --run tests/fmir-contracts.test.ts tests/island-wire.test.ts tests/island-product.test.ts tests/island-registry.test.ts --maxWorkers=2
+
+
+ RUN  v3.2.7 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/forma/packages/compiler
+
+ ✓ tests/fmir-contracts.test.ts (23 tests) 53ms
+stderr | tests/island-registry.test.ts > declared island registry > refuses unknown expression instead of inventing an unregistered island
+   IR: BUILD-402 component someFunction(...) could not be resolved to a source file in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-w9QXUO/page.ts:2:44 — refused with BUILD-610 because it cannot produce a declared native island contract — use a resolvable relative component import or register a declared browserOnly component
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-w9QXUO/page.ts:2:44: someFunction cannot be represented by a declared native island; use a registered browserOnly component for a client-only body
+
+stderr | tests/island-registry.test.ts > declared island registry > refuses multiple unknown calls instead of inventing an unregistered island
+   IR: BUILD-402 component funcA(...) could not be resolved to a source file in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-O6ElGS/page.ts:2:44 — refused with BUILD-610 because it cannot produce a declared native island contract — use a resolvable relative component import or register a declared browserOnly component
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-O6ElGS/page.ts:2:44: funcA cannot be represented by a declared native island; use a registered browserOnly component for a client-only body
+
+stderr | tests/island-registry.test.ts > declared island registry > refuses computed tag instead of inventing an unregistered island
+   IR: BUILD-103 dynamic tag h(tagName, ...) in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-sCShyk/page.ts:2:33 — refused with BUILD-610 because it cannot produce a declared native island contract — use a literal tag name to render it server-side
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-sCShyk/page.ts:2:31: h(...) cannot be represented by a declared native island; use a registered browserOnly component for a client-only body
+
+stderr | tests/island-registry.test.ts > declared island registry > refuses unsupported spread instead of inventing an unregistered island
+   IR: BUILD-104 spread child ...children in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-cedg0P/page.ts:2:44 — refused with BUILD-610 because it cannot produce a declared native island contract — only `...CONST.map(item => h(...))` over a module-level array of object literals unrolls statically; use createList for runtime data
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-cedg0P/page.ts:2:44: a spread child cannot be represented by a declared native island; use a registered browserOnly component for a client-only body
+
+stderr | tests/island-registry.test.ts > declared island registry > refuses unresolved component instead of inventing an unregistered island
+   IR: BUILD-402 component UnknownComponent(...) could not be resolved to a source file in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-pzPC6M/page.ts:2:44 — refused with BUILD-610 because it cannot produce a declared native island contract — use a resolvable relative component import or register a declared browserOnly component
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-pzPC6M/page.ts:2:44: UnknownComponent cannot be represented by a declared native island; use a registered browserOnly component for a client-only body
+
+stdout | tests/island-product.test.ts > one browser/native compilation product > injects the exact emitted contract into a unary runtime registration and returns both outputs
+   IR emitted (real): app.ir (476 bytes, 1 islands)
+
+stdout | tests/island-product.test.ts > one browser/native compilation product > pairs aliases of the same declaration across distinct entries
+   IR emitted (real): app.ir (476 bytes, 1 islands)
+
+stderr | tests/island-product.test.ts > one browser/native compilation product > refuses same-spelled but different resolved SSR/browser declarations even if their bodies match
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-island-product-BWMAug/app.ts:1:1: island Badge resolves to different SSR and browser declarations
+
+stdout | tests/island-product.test.ts > one browser/native compilation product > refuses a source edit during the build and succeeds on the next complete product
+   IR emitted (real): app.ir (476 bytes, 1 islands)
+
+stderr | tests/island-registry.test.ts > declared island registry > registered recursion refuses instead of emitting an empty shell: return Widget();
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-9QkE55/components.ts:2:33: recursive registered island root helper
+
+stdout | tests/island-product.test.ts > one browser/native compilation product > refuses a source edit during the build and succeeds on the next complete product
+   IR emitted (real): app.ir (476 bytes, 1 islands)
+
+stderr | tests/island-registry.test.ts > declared island registry > registered recursion refuses instead of emitting an empty shell: return h('div',null,Widget());
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-BJMIe5/components.ts:2:46: recursive registered island Widget is outside the native SSR subset
+
+stderr | tests/island-registry.test.ts > declared island registry > missing or incompatible declared input {} refuses
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-OIDoqJ/page.ts:2:74: missing declared island input label
+
+stderr | tests/island-registry.test.ts > declared island registry > missing or incompatible declared input {label:123} refuses
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-TWGx2U/page.ts:2:81: closed island input label does not match its declared type
+
+stderr | tests/island-registry.test.ts > declared island registry > an unresolved nested component refuses the entire candidate, with a fresh valid compile unaffected
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-declared-registry-WNKF8l/components.ts:2:46: unresolved native binding Broken
+
+stdout | tests/island-product.test.ts > one browser/native compilation product > never publishes before a later build error and rejects esbuild write:true
+   IR emitted (real): app.ir (476 bytes, 1 islands)
+
+ ✓ tests/island-product.test.ts (5 tests) 174ms
+ ✓ tests/island-registry.test.ts (30 tests) 179ms
+ ✓ tests/island-wire.test.ts (4 tests) 6ms
+
+ Test Files  4 passed (4)
+      Tests  62 passed (62)
+   Start at  23:56:52
+   Duration  853ms (transform 278ms, setup 0ms, collect 602ms, tests 412ms, environment 0ms, prepare 151ms)
+

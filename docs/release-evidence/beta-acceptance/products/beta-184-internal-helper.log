@@ -1,0 +1,13 @@
+✔ the component and exact supplied state produce equal native/core trees (1147.053375ms)
+✔ a source descriptor works without adding a named corpus entry (120.515917ms)
+✔ a seeded native value error names the component, state and changed attribute (133.092583ms)
+✔ invalid explicit state is a native refusal, never an empty successful comparison (33.41775ms)
+✔ unknown components fail by name before any browser is launched (4.575875ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1838.360542
