@@ -89,7 +89,25 @@ it('preserves every archived source/product hash and canonical admitted near mis
  const archive=join(__dirname,'../../..','docs/archive/FORMA-139-html-context');
  const manifest=JSON.parse(readFileSync(join(archive,'manifest.json'),'utf8'));
  for(const [file,hash] of Object.entries(manifest.files))expect(createHash('sha256').update(readFileSync(join(archive,file))).digest('hex'),file).toBe(hash);
- for(const [name,tree] of near){const original=manifest.cases.find((item:any)=>item.name===name);expect(original.sha256,name).not.toBeNull();const got=emit(page(tree));expect(got.failure).toBeUndefined();expect(createHash('sha256').update(got.result!.binary).digest('hex'),name).toBe(original.sha256);}
+ const transitionDir=join(archive,'../attribute-alias-transition');
+ const ledger=JSON.parse(readFileSync(join(transitionDir,'manifest.json'),'utf8'));
+ const sha=(bytes:string|Uint8Array)=>createHash('sha256').update(bytes).digest('hex');
+ expect(sha(readFileSync(join(archive,'manifest.json')))).toBe(ledger.previousManifestSha256);
+ expect(ledger.transitions.map((item:any)=>item.name)).toEqual(['label explicit control','label sibling control']);
+ for(const [file,hash] of Object.entries(ledger.files))expect(sha(readFileSync(join(transitionDir,file))),file).toBe(hash);
+ for(const [name,tree] of near){
+  const original=manifest.cases.find((item:any)=>item.name===name),transition=ledger.transitions.find((item:any)=>item.name===name);
+  expect(original.sha256,name).not.toBeNull();expect(page(tree),name).toBe(original.source);
+  const got=emit(page(tree));expect(got.failure).toBeUndefined();
+  if(transition){
+   expect(transition.previousIrSha256,name).toBe(original.sha256);
+   expect(sha(page(tree)),name).toBe(transition.sourceSha256);
+   expect(readFileSync(join(transitionDir,transition.sourceFile),'utf8'),name).toBe(original.source);
+   expect(sha(readFileSync(join(transitionDir,transition.currentIrFile))),name).toBe(transition.currentIrSha256);
+   expect(got.result!.binary.length,name).toBe(transition.currentIrBytes);
+  }
+  expect(sha(got.result!.binary),name).toBe(transition?.currentIrSha256??original.sha256);
+ }
 });
 
 it.each(['address','article','aside','blockquote','details','div','dl','fieldset','footer','form','h1','h6','header','hr','main','menu','nav','ol','p','pre','section','table','ul'])('p closing tag %s is source-located',tag=>{expect(emit(page(`h('p',null,h('${tag}',null,'block'))`)).failure).toMatchObject({code:'BUILD-618'});});
@@ -122,7 +140,7 @@ it.each([
 ])('conflicting or shadowed interactive attribute refuses: %s',(tree,extra)=>{expect(emit(page(tree,extra),{},'app.ts').failure).toMatchObject({code:'BUILD-618'});});
 it.each([
  "h('button',null,h('a',{href:undefined},'link'))",
- "h('button',null,h('input',{type:'hidden',type:'hidden'}))",
+ "h('button',null,h('input',{type:'hidden'}))",
  "h('section',null,h('style',null,undefined))",
 ])('proven noninteractive and absent near miss stays admitted: %s',tree=>{expect(emit(page(tree),{},'app.ts').failure).toBeUndefined();});
 it('shadowed undefined is not a raw-text literal exemption',()=>{expect(emit(page("h('section',null,h('style',null,undefined))","const undefined='.x{color:red}';"),{},'app.ts').failure).toMatchObject({code:'BUILD-620'});});
@@ -131,3 +149,8 @@ it.each(['async function','function*'])('%s ordinary root helper is not an Eleme
 
 it('transformed global undefined keeps its attribute absence proof',()=>{expect(emit(page("h('button',null,h('a',{href:undefined},'link'))")).failure).toBeUndefined();});
 it('transformed raw undefined retains the existing native void refusal',()=>{expect(emit(page("h('section',null,h('style',null,undefined))")).failure).toMatchObject({code:'BUILD-610'});});
+
+it('identical duplicate attributes still refuse the native duplicate-name contract',()=>{
+ const source=page("h('button',null,h('input',{type:'hidden',type:'hidden'}))");
+ expect(emit(source,{},'app.ts').failure).toMatchObject({code:'BUILD-610'});
+});

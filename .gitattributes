@@ -109,3 +109,6 @@ docs/archive/FORMA-139-e2e-title/** -text
 # Exact native multi-entry failure products.
 /docs/archive/FORMA-186-native-multiple-entries/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
+
+# Attribute alias transition preserves original source/products byte-for-byte.
+docs/archive/attribute-alias-transition/** -text
