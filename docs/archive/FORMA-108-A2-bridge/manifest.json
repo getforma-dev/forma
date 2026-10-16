@@ -9,6 +9,7 @@
     "packages/core/bench/expression.bench.ts": "d97cd1e45252b028e7fb898dfbe9e72a3045bf31e7e14b5192eb854857dcf589",
     "packages/core/docs/CDN-AND-EXPORTS.md": "97106627a96920ce83c171f9e24a13dbaf002de2d7431fb232565dda27a86271",
     "packages/core/docs/HTML-RUNTIME.md": "4d5c3ff70d2bdfe050b70f30c9b38ae91aecca2148442c143ae964e2878f6cb7",
+    "packages/core/docs/STABILITY.md": "db8d48f1493f8aff9ef39493bdec24842f7ba2a6f9e278e6b0e63f98f32f98b1",
     "packages/core/e2e/csp.spec.ts": "25d04e3490eeec662a7abdb02f59c5112b4d97a2744facf3ef35e7a575e31daa",
     "packages/core/e2e/expr-cost.spec.ts": "506c5c14415cea735532293f02809ec7a6a8d69f2f9ba44de4747d43113550c2",
     "packages/core/e2e/fixtures/expr-cost.html": "4efb20d1ccb966886ad1e8d4597da557ee148758487d31d6fcb7f9be1c58dde0",

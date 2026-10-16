@@ -432,3 +432,19 @@ Replace an automatic or tierless binding with `mountMarkup(root, trustedHtml(mar
 Move diagnostic and budget settings to each call's `config`. There is no global debug or directive-map setter. `data-forma-mount="manual"` is obsolete and may be removed: development logs `FORMA_W_MANUAL_MOUNT_REMOVED` once with the replacement call; production contains no warning. Script `data-forma-*` configuration and `window.__FORMA_RUNTIME_CONFIG` do not change a mount.
 
 Verified by `src/__tests__/runtime-explicit-mount.test.ts` and the actual packed-runtime explicit controls in `e2e/hostile-widgets/explicit-controls.mjs`.
+
+---
+
+## Where to go next
+
+- [`../CSP.md`](../CSP.md) — the full CSP story: what a strict policy blocks,
+  what FormaJS does instead, and the diagnostics you get when an expression is
+  refused.
+- [`API.md`](API.md) — the programmatic API (`createSignal`, `h()`,
+  `createList`, …) that the same signal graph powers.
+- [`CDN-AND-EXPORTS.md`](CDN-AND-EXPORTS.md) — which build to load, and the
+  subpath exports.
+- [`design/CSP-SAFE-EXPRESSION-GRAMMAR.md`](design/CSP-SAFE-EXPRESSION-GRAMMAR.md)
+  — the design record behind the grammar: why it is a subset, where the line is
+  drawn, and which alternatives were rejected. It is history, not a description
+  of current behaviour; this page and [`../SECURITY.md`](../SECURITY.md) are.
