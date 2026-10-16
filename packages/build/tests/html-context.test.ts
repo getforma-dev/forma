@@ -11,7 +11,8 @@ afterEach(()=>{vi.restoreAllMocks();roots.splice(0).forEach(root=>rmSync(root,{r
 const failures=[
  ['BUILD-618',"h('p',null,h('div',null,'block'))"],
  ['BUILD-619',"h('title',null,'wrong owner')"],
- ['BUILD-620',"h('script',null,()=> 'void 0;')"],
+ ['BUILD-623',"h('script',null,()=> 'void 0;')"],
+ ['BUILD-620',"h('style',null,()=> 'p{color:navy}')"],
  ['BUILD-621',"createShow(()=>true,()=>h('b',null,'one'),()=>h('i',null,'two'))"],
 ] as const;
 function fixture(){
@@ -34,6 +35,6 @@ it('watch retains the accepted native module through every refusal then publishe
  const f=fixture();await watching(f.config,async({ready,change,manifest,output})=>{
   await ready();const previous=manifest(),bytes=readFileSync(join(f.config.outputDir,previous.aliases['app.ir']));
   for(const [code,tree] of failures){await change(()=>f.write(tree));expect(output()).toContain(code);expect(manifest()).toEqual(previous);expect(readFileSync(join(f.config.outputDir,previous.aliases['app.ir']))).toEqual(bytes);}
-  await change(()=>f.write("h('section',null,'repaired after all four')"));const repaired=manifest();expect(repaired.aliases['app.ir']).not.toBe(previous.aliases['app.ir']);expect(readFileSync(join(f.config.outputDir,repaired.aliases['app.ir'])).includes(Buffer.from('repaired after all four'))).toBe(true);
+  await change(()=>f.write("h('section',null,'repaired after all refusals')"));const repaired=manifest();expect(repaired.aliases['app.ir']).not.toBe(previous.aliases['app.ir']);expect(readFileSync(join(f.config.outputDir,repaired.aliases['app.ir'])).includes(Buffer.from('repaired after all refusals'))).toBe(true);
  });
 },30_000);
