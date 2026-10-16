@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Integrated text-branch and row-focus package sizes — FORMA-016/181/182
+
+- The reviewed F5 text branches, Rule 6 attribute fixes and checkpoint D focus preservation together measure 46,823 B gzip for the core entry and 46,833 B for browser ESM. Both exceed the previous 46,777/46,804 B limits. Under L-58, re-anchor these two package limits to measured plus 300 B: 47,123/47,133 B. Runtime, hardened runtime and frame sizes and limits remain unchanged. This package-size adjustment is separate from the founder's L-59 per-route N2 decision, which lands with indexed rows.
+
 ### Retained row focus — FORMA-181 checkpoint D, first slice
 
 - A keyed row relocation previously blurred its focused input in Chromium, Firefox and WebKit even though the input node and selection survived. The private live reconciler now uses state-preserving `moveBefore` for retained rows where supported. Its `insertBefore` fallback restores lost focus and text selection only while the owner remains live and no callback has focused another control. Detached new rows still use ordinary insertion.
