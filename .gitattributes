@@ -167,6 +167,9 @@ docs/release-evidence/beta-acceptance/corrected-foreign/** -text
 docs/archive/forma-144-final-before/** -text
 docs/evidence/forma-144-final/** -text
 
+# FORMA-145 preserves prior staged guides byte-for-byte.
+docs/archive/forma-145-guide-before/** -text
+
 # Original Vite configuration and its first failure are byte-authenticated.
 docs/archive/forma-144-vite7-config/** -text
 

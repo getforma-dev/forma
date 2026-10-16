@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- FORMA-145: reconcile the main upgrade, compatibility and declared-props guides with the seven-package release, typed Pages startup, island adoption, explicit runtime ownership, strict native subset and current asset/skew policy. Preserve the prior staged guides and link the template migration. Release qualification and publication remain separate gates.
+
 - P17 keeps completed native, mobile and client measurements in one bounded, byte-authenticated attempt journal outside disposable fixtures. A killed or failing producer retains completed evidence; completion requires unchanged performance validators, verified record hashes and all final metadata. Measurement intervals and acceptance thresholds are unchanged.
 
 - Watch tests wait for every initial nonsplit entry context before editing files, preventing another context's initial build from satisfying the requested rebuild. A real three-entry barrier control preserves the failure; watch deadlines and production behavior are unchanged.
