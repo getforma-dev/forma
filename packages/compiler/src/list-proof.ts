@@ -306,6 +306,11 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   const found=roots(mod,result,new Set());if(found.length!==1)fail(mod,result,'BUILD-613','LIST row must contain exactly one stable owned Element');
   return {file:mod.file,start:call.start!,end:call.end!,key:keyParts,root:found[0]!,indexed};
  }
+ function validateFactory(mod:Module,factory:t.CallExpression):void {
+  const uses=mod.calls.filter(path=>keyedFactory(path.node.arguments[0],node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows')===factory);
+  if(!uses.length)fail(mod,factory,'BUILD-622','eager indexed factory has no unconditional native LIST');
+  for(const use of uses)prove(mod,use);
+ }
  function site(mod:Module,path:NodePath<t.CallExpression>):ListSite {
   return {file:mod.file,start:path.node.start!,end:path.node.end!,indexed:!!keyedFactory(path.node.arguments[0],node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows'),prove:()=>prove(mod,path)};
  }
@@ -313,9 +318,17 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   factory(file:string,source:string,node:t.CallExpression):void {
    const mod=module(file,source),factory=[...mod.paths.keys()].find(item=>t.isCallExpression(item)&&item.start===node.start&&item.end===node.end) as t.CallExpression|undefined;
    if(!factory||core(mod,factory.callee)!=='createKeyedRows')fail(mod,node,'BUILD-622','indexed factory must resolve to the original core import');
-   const uses=mod.calls.filter(path=>keyedFactory(path.node.arguments[0],node=>mod.paths.get(node)?.scope.getBinding(node.name),callee=>core(mod,callee)==='createKeyedRows')===factory);
-   if(!uses.length)fail(mod,factory,'BUILD-622','eager indexed factory has no unconditional native LIST');
-   for(const use of uses)prove(mod,use);
+   validateFactory(mod,factory);
+  },
+  component(file:string,fn:ComponentFunction):void {
+   const mod=module(file,readSourceFile(file));
+   const location=fn.loc?.start??fn.body.loc?.start??(t.isBlockStatement(fn.body)?fn.body.body.find(node=>node.loc)?.loc?.start:undefined);
+   if(!location)return;
+   const at=originalPosition(file,location),column=at.column-1;
+   const contains=(node:t.Node)=>!!node.loc&&(node.loc.start.line<at.line||node.loc.start.line===at.line&&node.loc.start.column<=column)&&(node.loc.end.line>at.line||node.loc.end.line===at.line&&node.loc.end.column>=column);
+   const target=[...mod.functions.values()].filter(contains).sort((a,b)=>b.start!-a.start!)[0];
+   if(!target)return;
+   for(const [node,path] of mod.paths)if(t.isCallExpression(node)&&core(mod,node.callee)==='createKeyedRows'&&path.getFunctionParent()?.node===target)validateFactory(mod,node);
   },
   original(file:string,source:string,node:t.CallExpression):ListSite {
    const mod=module(file,source),path=mod.calls.find(path=>path.node.start===node.start&&path.node.end===node.end);

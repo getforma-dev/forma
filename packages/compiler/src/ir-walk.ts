@@ -656,6 +656,7 @@ export interface WalkContext {
    *  legacy BUILD-107 shape checks. Absent (undefined) only in low-level callers that walk
    *  without original source; the SSR plugin always supplies it. */
   listProof?: (file:string,node:t.CallExpression)=>ListSite|undefined;
+  indexedFactories?: (file:string,fn:ComponentFunction)=>void;
   /** Resolve a sub-component call to its source file and function name.
    *
    *  `fromFile` is the file the CALL appears in, and the resolver must read
@@ -854,6 +855,7 @@ function inlinedWalkContext(
   declaredScope?: PropsScope,
 ): WalkContext {
   const constants = moduleConstantScope(sub.source, sub.filePath, walkCtx.loadModule);
+  walkCtx.indexedFactories?.(sub.filePath,sub.fn);
   const propsScope = declaredScope ?? childPropsScope(walkCtx.propsScope, sub.fn, sub.propsArg, sub.filePath, ctx);
   return {
     ...walkCtx,

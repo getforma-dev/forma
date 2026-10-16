@@ -341,10 +341,12 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
 
     const emptyFn = t.arrowFunctionExpression([], entryInfo.inlineMountBody
       ? t.blockStatement(entryInfo.inlineMountBody) : entryInfo.inlineReturnNode!);
+    listProofs.component(entryPointPath,emptyFn);
     const propsScope = rootPropsScope({ schema: [[]], parameter: { kind: 'none' } }, emptyFn, entryPointPath, ctx);
     const walkCtx: WalkContext = {
       propsScope,
       listProof:(file,node)=>listProofs.lowered(file,node),
+      indexedFactories:(file,fn)=>listProofs.component(file,fn),
       islandRegistry,islandSchemas:new Map(),
       sourceFile: entryPointPath,
       fileConstants,
@@ -456,6 +458,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   const ctx = new IrEmitContext();
   const declaredProps = readPageProps(componentPath, exportedName);
   ctx.setPropsSchema(declaredProps.schema);
+  listProofs.component(rootPath,componentInfo.fn);
   const propsScope = rootPropsScope(declaredProps, componentInfo.fn, rootPath, ctx);
   const signalRegistry = newSignalRegistry();
   const signalScope = enterComponentScope({
@@ -481,6 +484,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   const walkCtx: WalkContext = {
     propsScope,
     listProof:(file,node)=>listProofs.lowered(file,node),
+      indexedFactories:(file,fn)=>listProofs.component(file,fn),
     islandRegistry,islandSchemas:new Map(),
     sourceFile: rootPath,
     fileConstants,

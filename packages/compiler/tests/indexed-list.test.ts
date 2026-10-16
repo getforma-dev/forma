@@ -92,3 +92,16 @@ it('preserves all fourteen existing native corpus modules byte for byte',()=>{
  expect(names).toHaveLength(14);
  for(const name of names){const app=readdirSync(join(corpus,name)).find(file=>/^app\.tsx?$/.test(file))!;expect(Buffer.from(generateRealIr(join(corpus,name,app))!.binary),name).toEqual(readFileSync(join(native,name+'.ir')));}
 });
+
+it.each([
+ page().replace("return h('ul',null,createList(rows,item=>h('li',null,()=>item().label)));", "return h('main',null,'unused');"),
+ imports+"function Page(){const rows=createKeyedRows([{id:'a'}],item=>item.id);const alias=rows;return h('main',null,'unused');}mount(Page,'#app');",
+ imports+"mount(()=>{const rows=createKeyedRows([{id:'a'}],item=>item.id);return h('main',null,'unused');},'#app');",
+ imports+"function Child(){const rows=createKeyedRows([{id:'a'}],item=>item.id);return h('main',null,'unused');}function Page(){return Child();}mount(Page,'#app');",
+])('BUILD-622 applies to unused eager factories outside registration',source=>{
+ expect(emit(source).failure).toMatchObject({code:'BUILD-622'});
+});
+it('admits an inline original factory in an unregistered root return',()=>{
+ const source=page().replace(factory,'').replace('createList(rows,','createList(createKeyedRows(p.rows,item=>item.id),');
+ expect(emit(source).failure).toBeUndefined();
+});
