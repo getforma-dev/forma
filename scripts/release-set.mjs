@@ -23,6 +23,10 @@ export function run(command, args, cwd = ROOT, options = {}) {
   const invocation = commandInvocation(command, args);
   return execFileSync(invocation.command, invocation.args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 * 1024 * 1024, ...options });
 }
+export function assertModuleTrustPolicy(policy) {
+  assert(/FMIR is a \*\*trusted input\*\*/.test(policy) && /Only run IR produced by a compiler you trust/.test(policy), 'SR41: SECURITY.md must state the trusted compiler boundary (SA4)');
+  assert(policy.includes("every FMIR module must come from the application's own build") && policy.includes('any other source requires M9 before admission') && policy.includes('M9, M10 and design5 are deferred'), 'SA4: SECURITY.md must state own-build module provenance and deferred untrusted admission');
+}
 export function setVersions(root = ROOT) {
   const metadata = JSON.parse(run('cargo', ['metadata', '--no-deps', '--format-version', '1'], root));
   return [
@@ -147,6 +151,12 @@ export function versionFiles(root, version) {
 
 const dependencyKinds = ['dependencies', 'devDependencies', 'optionalDependencies'];
 const packedMetadata = ['dependencies', 'peerDependencies', 'peerDependenciesMeta', 'optionalDependencies', 'engines', 'bin'];
+// Source seeds and prereleases stay coordinated exactly. Stable consumers may
+// update within 3.x, while the shipped locks still authenticate the tested set.
+export function templateRequirement(version) {
+  assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3, 'template requirement needs a coordinated 3.x-or-later version');
+  return `${version.includes('-') ? '=' : '^'}${version}`;
+}
 function npmUrl(p) { return `https://registry.npmjs.org/${p.name}/-/${p.name.split('/').at(-1)}-${p.version}.tgz`; }
 export function assertNpmTemplateLock(manifest, lock, packages, artifactDir) {
   assert(lock.packages?.[''], 'template npm lock is missing its root');
@@ -243,7 +253,7 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
     if (!lock.packages[key]) continue;
     const file = join(artifactDir, candidate.file);
     for (const kind of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-      if (manifest[kind]?.[candidate.name]) manifest[kind][candidate.name] = local ? `file:${file}` : `=${candidate.version}`;
+      if (manifest[kind]?.[candidate.name]) manifest[kind][candidate.name] = local ? `file:${file}` : templateRequirement(candidate.version);
     }
     const entry = lock.packages[key];
     entry.resolved = local ? `file:${file}` : npmUrl(candidate);
@@ -364,7 +374,7 @@ export function stageTemplates(root, packages, out) {
       const name = prefix.split(' ')[0];
       const candidate = packages.find(p => p.registry === 'crates' && p.name === name);
       assert(candidate, `template has no release candidate for ${name}`);
-      return `${prefix}=${candidate.version}"`;
+      return `${prefix}${templateRequirement(candidate.version)}"`;
     });
     stagedFiles.set(join(dir, 'Cargo.toml'), cargo);
     stagedFiles.set(join(dir, 'Cargo.lock'), stageCargoLock(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), packages, false, undefined, cargoGraph));
@@ -412,7 +422,7 @@ export function pack(out, dryRun = false) {
     milestone = releaseMilestone(contracts, packages[0].version);
   }
   const policy = readFileSync(join(ROOT, 'SECURITY.md'), 'utf8');
-  assert(/FMIR is a \*\*trusted input\*\*/.test(policy) && /Only run IR produced by a compiler you trust/.test(policy), 'SR41: SECURITY.md must state the trusted compiler boundary (SA4)');
+  assertModuleTrustPolicy(policy);
   packCargoWorkspace(ROOT, packages, out, { dryRun });
   copyFileSync(join(ROOT, 'Cargo.lock'), join(out, 'Cargo.lock'));
   for (const name of NPM.slice(0, 3)) run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages', name));

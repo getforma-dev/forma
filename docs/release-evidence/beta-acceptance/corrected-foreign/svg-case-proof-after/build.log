@@ -1,0 +1,30 @@
+   IR: BUILD-610 BUILD-610 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/svg-case-proof-after/cases/probe/app.tsx:2:108: attribute TabIndex parses as tabindex in svg; use the canonical spelling tabindex or Browser mode
+✘ [ERROR] Could not resolve "@getforma/core"
+
+    ../tmp/svg-case-proof-after/cases/probe/app.tsx:1:51:
+      1 │ import {h,mount,activateIslands,createSignal} from '@getforma/core';
+        ╵                                                    ~~~~~~~~~~~~~~~~
+
+  You can mark the path "@getforma/core" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /BUILD-610.*attribute TabIndex/s. Input:
+
+'Error: Build failed with 1 error:\n' +
+  '../tmp/svg-case-proof-after/cases/probe/app.tsx:1:51: ERROR: Could not resolve "@getforma/core"'
+
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/svg-case-proof-after/build.mjs:12:8
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'Error: Build failed with 1 error:\n' +
+    '../tmp/svg-case-proof-after/cases/probe/app.tsx:1:51: ERROR: Could not resolve "@getforma/core"',
+  expected: /BUILD-610.*attribute TabIndex/s,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.0

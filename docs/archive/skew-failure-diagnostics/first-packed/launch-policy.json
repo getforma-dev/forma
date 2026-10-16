@@ -1,0 +1,12 @@
+{
+  "sourceHead": "e7cbbcfea783f459c469da0a5203083ad4dfba58",
+  "startedAt": "2026-10-16T07:17:51.345618+00:00",
+  "node": "v24.22.0",
+  "cargoBuildJobs": 3,
+  "vitestMaxWorkers": 2,
+  "releaseProfile": "ordinary Cargo release; no profile or Rust flags overrides",
+  "performanceTarget": "v3.0.0-beta.1",
+  "sourceDistAbsentDuringVerification": true,
+  "hostLoad": "Shared host, not claimed idle. Whitelisted snapshots use comm, never args/env.",
+  "scriptSha256": "ff25b780c53145cc185ade08504af49f15e6f36dea1ae1e3aaa3d8399c1a69c5"
+}

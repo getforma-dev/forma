@@ -1,0 +1,41 @@
+✔ only authenticated absent first-beta history establishes a baseline (19.062708ms)
+✔ prior chronology, exact set and successful P17 are mandatory (5.321834ms)
+✔ claimed unknown or incomplete performance never becomes bootstrap (1.425ms)
+✔ release ordering uses numeric versions and prerelease counters (0.127042ms)
+✔ reader verifies GitHub metadata digest and refuses transport or asset faults (13.140125ms)
+✔ malformed newer unified inventory cannot fall back to an older bootstrap record (2.083041ms)
+✔ actual client producer retains the completed metric before its next operation fails (85.248625ms)
+✔ malformed child JSON and failed native validation retain originals without a complete marker (64.416792ms)
+✔ N1 exactfloor passes; belowfloor and equality at half previous fail (72.463917ms)
+✔ pilot, dropped samples, invented rate, quadratic allocation, and swallowed budgets refuse (47.133375ms)
+✔ actual response and every long task matter independently of TBT (0.677542ms)
+✔ missing comparison engines are failures, not an empty timing pass (0.29725ms)
+✔ rehearsals require explicit target; live target is immutable (0.552625ms)
+✔ actual P17 refuses unknown performance contracts before package access; legacy remains readable (22.645875ms)
+✔ both finite payload shapes pin the complete UTF-8 envelope to exactly one MiB (58.594875ms)
+✔ the twelve-millisecond boundary is inclusive for every sample of both shapes (132.228ms)
+✔ raw sample provenance cannot be replaced by claimed passing summaries (289.42ms)
+✔ profile, public artifact, machine, actual CSP and compiler registration are mandatory (299.295334ms)
+✔ real activation must enter once with no mutations, errors or policy violations (182.580042ms)
+✔ oversize and malformed controls need actual refusal observations before component entry (288.781792ms)
+✔ killing an interrupted producer retains its flushed observation outside disposable fixtures (169.122042ms)
+✔ complete failing evidence is flushed before the timing validator refuses (65.780916ms)
+✔ complete restored comparison samples pass; missing, nonfinite and forged values refuse (45.89675ms)
+✔ raw Lighthouse bytes and actual profile agree with every extracted figure (7.079375ms)
+✔ a comparable DS12 must contain the same complete evidence required of the new release (198.730583ms)
+✔ release metadata checks import without any optional browser tooling installed (124.827375ms)
+✔ new and previous DS12 require the public decoder raw observations and enforce every sample (291.455083ms)
+✔ paired mobile controls require the injected task itself and durable raw observations (315.05175ms)
+✔ sequential owners resume the same limits and immutable exact byte hashes (128.451084ms)
+✔ unsafe, oversized, unindexed and truncated records refuse without overwrite (42.062834ms)
+✔ same-length corruption cannot receive a completed manifest (36.561792ms)
+✔ real SIGKILL preserves acknowledged raw LHR and completed native/client checkpoints (100.447875ms)
+✔ a complete Lighthouse result is delivered before a failing activation loses the pair (6.091375ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1423.939875

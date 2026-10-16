@@ -1,0 +1,22 @@
+ok - record prints the SHA-256 of the record it wrote
+ok - record lists every file with its hash
+ok - the untouched set verifies
+ok - a tarball altered by one byte fails
+ok - a replaced tarball with a rewritten record fails
+ok - a file added beside the packed set fails
+ok - a hidden file added beside the packed set fails
+ok - a listed file removed fails
+ok - a directory inside the set fails
+ok - a symbolic link in place of a packed file fails
+ok - an expected hash that is not a SHA-256 fails
+ok - a missing expected hash fails
+ok - a missing record fails
+ok - a record naming a path fails
+ok - a record listing a file twice fails
+ok - a malformed record line fails
+ok - recording an empty directory fails
+ok - recording over an existing record fails
+ok - an identical rebuilt file matches
+ok - a rebuilt file that differs fails
+ok - a rebuilt file the record does not list fails
+release-artifacts: 21 passed, 0 failed

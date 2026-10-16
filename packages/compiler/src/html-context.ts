@@ -6,11 +6,12 @@ import _traverse from '@babel/traverse';
 import {readSourceFile} from './source-snapshot';
 import {PropsSchemaError} from './props-schema';
 import {originalPosition} from './diagnostics';
+import {foreignAttributeMismatch,type AttributeNamespace} from './attribute-name';
 
 type Namespace='html'|'svg'|'math';
 type Conditions=ReadonlyMap<symbol,boolean>;
 interface Label {target:string|symbol|undefined;controls:Conditions[];repetition:number}
-interface ElementContext {tag:string;namespace:Namespace;childNamespace:Namespace;label?:Label;labelControl:boolean}
+interface ElementContext {tag:string;namespace:Namespace;childNamespace:Namespace;attributeNamespaces:readonly AttributeNamespace[];attributeChildren:readonly AttributeNamespace[];label?:Label;labelControl:boolean}
 export interface HtmlContext {ancestors:readonly ElementContext[];conditions:Conditions;repetition:number}
 const UNKNOWN=Symbol('dynamic attribute');
 const P_CLOSE=new Set('address article aside blockquote center details dialog dir div dl fieldset figcaption figure footer header hgroup main menu nav ol p search section summary ul h1 h2 h3 h4 h5 h6 pre listing form li dd dt plaintext table hr xmp'.split(' '));
@@ -60,7 +61,7 @@ const interactive=(tag:string,props:t.Node|undefined,file:string):boolean=>ALWAY
  ||tag==='img'&&present(props,'usemap',file)||tag==='input'&&!hiddenInput(props,file);
 const labelable=(tag:string,props:t.Node|undefined,file:string)=>LABELABLE.has(tag)||tag==='input'&&!hiddenInput(props,file);
 function compatible(a:Conditions,b:Conditions):boolean {for(const [key,value] of a)if(b.has(key)&&b.get(key)!==value)return false;return true;}
-function fail(file:string,node:t.Node,code:'BUILD-618'|'BUILD-619'|'BUILD-620',detail:string):never {
+function fail(file:string,node:t.Node,code:'BUILD-610'|'BUILD-618'|'BUILD-619'|'BUILD-620',detail:string):never {
  const at=originalPosition(file,node.loc?.start??{line:1,column:0});throw new PropsSchemaError(file,at.line,at.column,detail,code);
 }
 export function htmlBranch(context:HtmlContext|undefined,branch:symbol,value:boolean):HtmlContext|undefined {
@@ -76,6 +77,32 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
  let childNamespace=namespace;
  if(namespace==='svg'&&['foreignobject','desc','title'].includes(tag))childNamespace='html';
  if(namespace==='math'&&(['mi','mo','mn','ms','mtext'].includes(tag)||tag==='annotation-xml'&&(prop(props,['encoding'],file)===UNKNOWN||['text/html','application/xhtml+xml'].includes(String(prop(props,['encoding'],file)).toLowerCase()))))childNamespace='html';
+ // An unknown annotation encoding may choose either parser namespace. Keep
+ // this proof separate from the existing conservative ancestry approximation.
+ let inherited:readonly AttributeNamespace[]=parentFrame?.attributeChildren??['html'];
+ if(parentFrame&&['mi','mo','mn','ms','mtext'].includes(parentFrame.tag)&&['mglyph','malignmark'].includes(tag)&&parentFrame.attributeNamespaces.includes('math')){
+  inherited=parentFrame.attributeNamespaces.every(value=>value==='math')?['math']:[...inherited,'math'];
+ }
+ const attributeNamespaces=[...new Set(inherited.map(ns=>{
+  // The tree-construction dispatcher handles a direct svg child of MathML
+  // annotation-xml with HTML rules regardless of the annotation's encoding.
+  if(tag==='svg'&&(ns==='html'||parentFrame?.tag==='annotation-xml'&&parentFrame.attributeNamespaces.includes('math')))return 'svg';
+  return ns==='html'&&tag==='math'?'math':ns;
+ }))] as AttributeNamespace[];
+ const attributeChildren=[...new Set(attributeNamespaces.flatMap((ns):AttributeNamespace[]=>{
+  if(ns==='svg'&&['foreignobject','desc','title'].includes(tag)||ns==='math'&&['mi','mo','mn','ms','mtext'].includes(tag))return ['html'];
+  if(ns==='math'&&tag==='annotation-xml'){
+   const encoding=prop(props,['encoding'],file);
+   if(encoding===UNKNOWN)return ['html','math'];
+   if(['text/html','application/xhtml+xml'].includes(String(encoding).toLowerCase()))return ['html'];
+  }
+  return [ns];
+ }))];
+ if(t.isObjectExpression(props))for(const entry of props.properties){
+  if(!t.isObjectProperty(entry)||entry.computed)continue;
+  const name=key(entry.key);if(name===undefined||/^on/i.test(name)||name==='ref')continue;
+  for(const ns of attributeNamespaces){const detail=foreignAttributeMismatch(name,ns);if(detail)fail(file,entry,'BUILD-610',detail);}
+ }
  const htmlAncestors=ancestors.filter(frame=>frame.namespace==='html');
  let labelControl=false;
  if(namespace==='html') {
@@ -104,7 +131,7 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
   }
  }
  const target=tag==='label'?prop(props,['for','htmlfor'],file):undefined;
- const frame:ElementContext={tag,namespace,childNamespace,labelControl,...(namespace==='html'&&tag==='label'?{label:{target:typeof target==='string'?target:target===undefined?undefined:UNKNOWN,controls:[],repetition:context.repetition}}:{})};
+ const frame:ElementContext={tag,namespace,childNamespace,attributeNamespaces,attributeChildren,labelControl,...(namespace==='html'&&tag==='label'?{label:{target:typeof target==='string'?target:target===undefined?undefined:UNKNOWN,controls:[],repetition:context.repetition}}:{})};
  return {...context,ancestors:[...ancestors,frame]};
 }
 export function checkRawTextChildren(tag:string,children:readonly t.Node[],file:string):void {

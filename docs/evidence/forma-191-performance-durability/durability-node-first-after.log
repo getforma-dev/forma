@@ -1,0 +1,15 @@
+✔ killing an interrupted producer retains its flushed observation outside disposable fixtures (94.184083ms)
+✔ complete failing evidence is flushed before the timing validator refuses (64.911625ms)
+✔ sequential owners resume the same limits and immutable exact byte hashes (65.735958ms)
+✔ unsafe, oversized, unindexed and truncated records refuse without overwrite (18.280833ms)
+✔ same-length corruption cannot receive a completed manifest (27.696958ms)
+✔ real SIGKILL preserves acknowledged raw LHR and completed native/client checkpoints (88.632542ms)
+✔ a complete Lighthouse result is delivered before a failing activation loses the pair (1.782333ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 279.526292

@@ -1,0 +1,107 @@
+{
+  "baseCommit": "dbf3f987a2e3ec4df2613b85b68613fff5d861b0",
+  "recordedAt": "2026-10-16T04:51:02.561860+00:00",
+  "scope": "source/dependency qualification only; no current packed P17 or release readiness claim",
+  "files": [
+    {
+      "file": "build-first.log",
+      "bytes": 8664,
+      "sha256": "f341761e9a5b74b424034691b5448c9e7645b48f790ad2f2086c23ff6aa8767d"
+    },
+    {
+      "file": "core-corrected.log",
+      "bytes": 334,
+      "sha256": "6171cbc60f73bebf8db4dd519b31ca3001841890c35b88d045b7707566538f0b"
+    },
+    {
+      "file": "dashboard-audit.json",
+      "bytes": 2166,
+      "sha256": "520bf1cf39eec5bfdfb1a28bebe0d43a5de32b603bc67722f4e1e36e640052f5"
+    },
+    {
+      "file": "full-audit-corrected.json",
+      "bytes": 364,
+      "sha256": "c19a6d9aadd713f7d7d6a662ebb0fa0e2b8e7f0b6b021daabcb9608d405a398b"
+    },
+    {
+      "file": "install.log",
+      "bytes": 143,
+      "sha256": "954a3d7d934664276eba47b856f76fd641fcb98926c92ea7bbc056beee71d4d1"
+    },
+    {
+      "file": "lock-refresh.log",
+      "bytes": 228,
+      "sha256": "e2f52ed89533bcf975678bbb88324a435987aae8fba131812949411d84ac788e"
+    },
+    {
+      "file": "lock-version-delta.json",
+      "bytes": 66447,
+      "sha256": "a884da1d51689c8f7f9ae963be876eb030e750daacd513573707de3fc81f4ae6"
+    },
+    {
+      "file": "original-full-audit.json",
+      "bytes": 15498,
+      "sha256": "483764c254c895b2607f44965f2b2fe5feba4b1c94b8b55847a93cb91d317a86"
+    },
+    {
+      "file": "ranges-seeds.log",
+      "bytes": 1055,
+      "sha256": "5cb117e1fe1dd9296d25c2bed7b5785198d4283d6e8e3d51e33b56c1b50b36f6"
+    },
+    {
+      "file": "registry-inventory.json",
+      "bytes": 13632,
+      "sha256": "764b975a416df837809a6e78cf84b4f6576bfcffe69fb89d56b0f370cd0db77f"
+    },
+    {
+      "file": "runner-dependencies-install.log",
+      "bytes": 183,
+      "sha256": "3c691b05e06ee1de2bb21fa63b4f226f769c38a27c5fd4afd4bce0a90491a083"
+    },
+    {
+      "file": "scaffold-corrected.log",
+      "bytes": 617,
+      "sha256": "60f5ab39ef1501fd569ec9e5d0b72dcbfe24d73bfe6b5572a5fdf785bc82d1e7"
+    },
+    {
+      "file": "signatures-corrected.log",
+      "bytes": 180,
+      "sha256": "8b80143480cffa36e8faa971b5ce57a71eccad57d91290924a740a1d1dcf8d6f"
+    },
+    {
+      "file": "size-corrected.log",
+      "bytes": 870,
+      "sha256": "4aa0c8a010722f81b7e0d55d87ed70e6c12b460acfa2f5b0e214fd02c4df18d7"
+    },
+    {
+      "file": "tailwind-registry.json",
+      "bytes": 262,
+      "sha256": "262e362926da2fa568d770e75265d2acb494e9998b78d7463fa6a14682907ca4"
+    },
+    {
+      "file": "template-stage-corrected.log",
+      "bytes": 1233,
+      "sha256": "afe9be94598ca22fdd35c6b240ce386d31f5471e1da4006d071a58173b183af4"
+    },
+    {
+      "file": "template-stage-final.log",
+      "bytes": 4804,
+      "sha256": "2aeb1051dc067d11fdddd9141a2780e301fec1919e5d9102e5c9a81519b140f7"
+    },
+    {
+      "file": "transitive-refresh.log",
+      "bytes": 134,
+      "sha256": "0f80362f317104d42f011bd66d64687bf2797934e433fff4ad939156ed8c614d"
+    },
+    {
+      "file": "workspaces-first.log",
+      "bytes": 306892,
+      "sha256": "b3d8151ecd8dae88c3262bfaa0e6fe4d97ffdae82d3bcc2c51416366b8c7bfd8"
+    },
+    {
+      "file": "README.md",
+      "bytes": 3622,
+      "sha256": "fd1d59b6d1da636f5d4fbfe56573da42a3fba99ac05efe51363c2d302859f6e8"
+    }
+  ]
+}

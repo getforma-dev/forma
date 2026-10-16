@@ -1,0 +1,3 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests /Users/victorvillacis/dev/Forma/work/FORMA-191/forma/e2e/fixtures/apps/src/performance_evidence.rs (/Users/victorvillacis/dev/Forma/work/FORMA-191/tmp/native-journal-control/target/debug/deps/forma_journal_control-8a728fb33191000a)
+   Doc-tests forma_journal_control

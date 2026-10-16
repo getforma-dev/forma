@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "entries": [
+    {
+      "path": "p17.json",
+      "type": "file",
+      "bytes": 536663,
+      "sha256": "2a71e673f7402fc69eb10b3564521e7076df08099c2c16bf3d35ff8d9f461d44"
+    },
+    {
+      "path": "security",
+      "type": "directory"
+    },
+    {
+      "path": "security/guard-before.json",
+      "type": "file",
+      "bytes": 16067,
+      "sha256": "d69343a69747468ab85609c3fce23a302946e89db8bcf7ce5aee6a5ae72a00a0"
+    },
+    {
+      "path": "security/guard-corrected.json",
+      "type": "file",
+      "bytes": 16060,
+      "sha256": "d4cf46cbc7d3c5873b7ab9a8cba2c60cea94e6ce5f7968993ecafa7153e790e9"
+    },
+    {
+      "path": "security/guard-mutant.json",
+      "type": "file",
+      "bytes": 6963,
+      "sha256": "c55e42f11009e8e5a1f3c403e337e6d1a67fb6eddbe57461f702ad063849982b"
+    },
+    {
+      "path": "security/guard-qualification.json",
+      "type": "file",
+      "bytes": 918,
+      "sha256": "53807e8d484f71503721c32962bff8584093ea696bb5880e4153a57cd4c71ca4"
+    },
+    {
+      "path": "security/hostile-widgets.json",
+      "type": "file",
+      "bytes": 364908,
+      "sha256": "774246ef3fac54adba3d0ea2accbf4817121b605275c0aa5e8b8ff56d9362960"
+    },
+    {
+      "path": "security/mutation-before.json",
+      "type": "file",
+      "bytes": 5128,
+      "sha256": "c943962010e6de184926dda4927ea909c7f6667030c5d20df48b80a1a45fba95"
+    },
+    {
+      "path": "security/mutation-corrected.json",
+      "type": "file",
+      "bytes": 5128,
+      "sha256": "3f8dba90c9e300165f480f4994e271670bce02226d424f89edc20a0f2e2b8cce"
+    },
+    {
+      "path": "security/mutation-mutant.json",
+      "type": "file",
+      "bytes": 5287,
+      "sha256": "f376e9d3fd22a1aac2f248354e963ec04d95058d3b7b300170f37a07434a2d7b"
+    },
+    {
+      "path": "security/mutation-qualification.json",
+      "type": "file",
+      "bytes": 3535,
+      "sha256": "c60ac557f08b63e41cc580a7076c55d8a2627992274b41c45d7977482f014f7e"
+    }
+  ]
+}

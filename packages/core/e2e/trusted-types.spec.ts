@@ -1,4 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
+
+interface RuntimeBridge {
+  trustedHtml(markup: string): unknown;
+  mountMarkup(root: Element, markup: unknown, options: { tier: 'reviewed' }): { update(markup: unknown): void; unmount(): void };
+}
 import { fileURLToPath } from 'node:url';
 import { serveOwnedAdoption } from './helpers/owned-adoption.js';
 
@@ -132,7 +137,7 @@ for (const { mode, header, disposition } of MODES) {
       const { errors } = await underTrustedTypes(page, header);
       await page.goto('/runtime-bare.html');
       const texts = await page.evaluate(async () => {
-        const w = window as unknown as { FormaRuntime: { mount(el: Element): void; unmount(el: Element): void } };
+        const w = window as unknown as { FormaRuntime: RuntimeBridge };
         // Built with DOM calls: a string written to innerHTML here would be the
         // test's own violation, not core's.
         const root = document.createElement('div');
@@ -148,14 +153,14 @@ for (const { mode, header, disposition } of MODES) {
         const toggle = document.createElement('button');
         toggle.setAttribute('data-on:click', "{open = !open; items = items.concat('c')}");
         root.append(list, shown, toggle);
-        document.body.append(root);
-        w.FormaRuntime.mount(root);
-        toggle.click();
+        const host = document.createElement('div'); document.body.append(host);
+        const handle = w.FormaRuntime.mountMarkup(host, w.FormaRuntime.trustedHtml(root.outerHTML), { tier: 'reviewed' });
+        host.querySelector('button')!.click();
         await new Promise((resolve) => setTimeout(resolve, 0));
-        const after = [...root.querySelectorAll('li')].map((li) => li.textContent).join(',');
-        const open = root.querySelectorAll('p').length;
-        w.FormaRuntime.unmount(root);
-        root.remove();
+        const after = [...host.querySelectorAll('li')].map((li) => li.textContent).join(',');
+        const open = host.querySelectorAll('p').length;
+        handle.unmount();
+        host.remove();
         return { after, open };
       });
       expect(texts).toEqual({ after: 'a,b,c', open: 0 });
@@ -180,7 +185,7 @@ for (const { mode, header, disposition } of MODES) {
       const result = await page.evaluate(async () => {
         const core = await import('/tt-core.mjs' as string);
         const runtime = (window as unknown as {
-          FormaRuntime: { reconcile(el: Element, html: unknown): void; trustedHtml(markup: string): unknown };
+          FormaRuntime: RuntimeBridge;
         }).FormaRuntime;
         const { h, mount, createSignal, setHTMLUnsafe, template, templateMany, trustedHtml } = core;
         const out: Record<string, unknown> = {};
@@ -249,11 +254,11 @@ for (const { mode, header, disposition } of MODES) {
         // trustedHtml() shares the page's `forma` policy with core's.
         const live = document.getElementById('live')!;
         const state = (n: number) => `data-forma-state='{"n":${n}}'`;
-        runtime.reconcile(live, runtime.trustedHtml(`<div data-forma-id="a" ${state(1)}><span data-text="{n}"></span></div>`));
+        const runtimeHandle = runtime.mountMarkup(live, runtime.trustedHtml(`<div data-forma-id="a" ${state(1)}><span data-text="{n}"></span></div>`), { tier: 'reviewed' });
         out.empty = live.textContent;
-        runtime.reconcile(live, runtime.trustedHtml(`<div data-forma-id="a" ${state(1)}><span data-text="{n}"></span></div><p data-forma-id="b">b</p>`));
+        runtimeHandle.update(runtime.trustedHtml(`<div data-forma-id="a" ${state(1)}><span data-text="{n}"></span></div><p data-forma-id="b">b</p>`));
         out.diff = live.textContent;
-        runtime.reconcile(live, runtime.trustedHtml('<p data-forma-id="c">c</p>'));
+        runtimeHandle.update(runtime.trustedHtml('<p data-forma-id="c">c</p>'));
         out.replaced = live.innerHTML;
         // The diff path again, now with a TT-sink attribute changing on a
         // matched element (formajs#29's review, S1): an iframe's srcdoc is
@@ -261,9 +266,9 @@ for (const { mode, header, disposition } of MODES) {
         const framed = (doc: string, handler: string) => runtime.trustedHtml(
           `<div data-forma-id="f"><iframe sandbox="" srcdoc="&lt;p&gt;${doc}&lt;/p&gt;"></iframe>` +
           `<button onclick="${handler}()">x</button></div>`);
-        runtime.reconcile(live, framed('one', 'a'));
-        runtime.reconcile(live, framed('two', 'b'));
-        runtime.reconcile(live, framed('three', 'c'));
+        runtimeHandle.update(framed('one', 'a'));
+        runtimeHandle.update(framed('two', 'b'));
+        runtimeHandle.update(framed('three', 'c'));
         out.morphed = [live.querySelector('iframe')!.getAttribute('srcdoc'), live.querySelector('button')!.getAttribute('onclick')];
         return out;
       });
@@ -295,10 +300,10 @@ test('the shared registry holds no policy object, and its forma-runtime handle m
   const out = await page.evaluate(async () => {
     const core = await import('/tt-core.mjs' as string);
     const runtime = (window as unknown as {
-      FormaRuntime: { reconcile(el: Element, html: unknown): void; trustedHtml(markup: string): unknown };
+      FormaRuntime: RuntimeBridge;
     }).FormaRuntime;
     core.trustedHtml('<b>makes forma</b>');
-    runtime.reconcile(document.getElementById('live')!, runtime.trustedHtml('<p>makes forma-runtime</p>'));
+    runtime.mountMarkup(document.getElementById('live')!, runtime.trustedHtml('<p>makes forma-runtime</p>'), { tier: 'reviewed' });
     const reg = (globalThis as unknown as Record<symbol, Record<string, unknown>>)[Symbol.for('@getforma/core#trusted-types')]!;
     // Every value at the registry's keys, and one level below: none is a policy.
     const policies: string[] = [];
@@ -379,22 +384,23 @@ for (const { mode, header } of MODES) {
       const runtime = (window as any).FormaRuntime;
       const raw = '<p>ordinary fixture</p>';
       const el = document.createElement('div');
+      const handle = runtime.mountMarkup(el, runtime.trustedHtml(raw), { tier: 'reviewed' });
       const calls = [
         () => core.h('div', { dangerouslySetInnerHTML: { __html: raw } }),
         () => core.h('iframe', { srcdoc: raw }),
         () => core.setAttr(document.createElement('iframe'), { srcdoc: raw }),
         () => core.setHTMLUnsafe(el, raw),
         () => core.template(raw), () => core.templateMany(raw),
-        () => runtime.reconcile(el, raw),
+        () => handle.update(raw),
         () => runtime.mountMarkup(el, raw, { tier: 'reviewed' }),
         () => core.h('ScRiPt'),
       ];
       // Populate both cache kinds with reviewed content before trying the raw twin.
-      core.template(core.trustedHtml(raw)); runtime.reconcile(el, runtime.trustedHtml(raw));
+      core.template(core.trustedHtml(raw)); handle.update(runtime.trustedHtml(raw));
       const refused = calls.map(call => { try { call(); return 'accepted'; } catch (error) { return String(error); } });
       return { refused, html: el.innerHTML };
     });
-    const codes = ['FORMA_E_RAW_INNER_HTML', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_RAW_SET_HTML', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_RAW_RECONCILE', 'FORMA_E_MOUNT_ARGS', 'FORMA_E_SCRIPT_ELEMENT'];
+    const codes = ['FORMA_E_RAW_INNER_HTML', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_RAW_SET_HTML', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_MOUNT_ARGS', 'FORMA_E_MOUNT_ARGS', 'FORMA_E_SCRIPT_ELEMENT'];
     out.refused.forEach((error, index) => expect(error).toContain(codes[index]!));
     expect(out.html).toBe('<p>ordinary fixture</p>');
     expect(await violations(page)).toEqual([]);

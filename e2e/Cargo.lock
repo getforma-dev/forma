@@ -188,6 +188,8 @@ dependencies = [
  "forma-ir",
  "forma-server",
  "rust-embed",
+ "serde_json",
+ "sha2",
  "tokio",
  "tracing",
  "tracing-subscriber",

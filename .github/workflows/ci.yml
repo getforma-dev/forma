@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: .node-version
           cache: npm
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
@@ -178,6 +178,17 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+      # Preserve actual source-campaign results even when a later R17 gate fails.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: security-campaigns
+          path: |
+            packages/core/e2e/hostile-widgets/out/*.json
+            packages/core/fuzz/expressions/out/*.json
+          if-no-files-found: warn
+          retention-days: 30
+
   # The npm packages on every Node line they support. The lowest entry here is
   # what packages/core's `engines.node` may claim: a floor no job executes is an
   # untested promise. Keep them in step.
@@ -193,7 +204,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: 24
+          node-version-file: .node-version
       - id: matrix
         run: node scripts/toolchain-matrix.mjs --github-output
 

@@ -1,0 +1,88 @@
+✖ 3.0.0-dev: template ranges preserve exact locks and unchanged typed Rust source (278.3515ms)
+✖ 3.0.0-beta.1: template ranges preserve exact locks and unchanged typed Rust source (203.176875ms)
+✖ 3.0.0: template ranges preserve exact locks and unchanged typed Rust source (196.801666ms)
+✔ all ten source, manifest and lock files restore after a packaging callback fails (176.929333ms)
+✔ identified source seeds preserve every external resolution across dev, alpha, beta and stable preparation (124.071375ms)
+✔ prepared source seeds remain preparable after alpha, beta and stable versions are written (46.327625ms)
+✔ source seeds reject missing or malformed external npm and Cargo hashes (4.081625ms)
+✔ bundled entries must belong to an authenticated external parent archive (2.766666ms)
+✔ source seeds refuse unknown or mixed internal npm packages and requirements (5.156125ms)
+✔ source seeds refuse unknown crates, mixed versions, stale internal hashes and invalid graph edges (3.962ms)
+✔ seed identity and both templates are validated before staging writes or archive access (37.224209ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 8
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 912.544917
+
+✖ failing tests:
+
+test at scripts/release-template-source.test.mjs:42:66
+✖ 3.0.0-dev: template ranges preserve exact locks and unchanged typed Rust source (278.3515ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(cargoManifest.includes(`${name} = "${expected}"`))
+  
+      at file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-template-source.test.mjs:60:57
+      at withStagedTemplates (file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-set.mjs:328:16)
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-template-source.test.mjs:46:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/release-template-source.test.mjs:42:66
+✖ 3.0.0-beta.1: template ranges preserve exact locks and unchanged typed Rust source (203.176875ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(cargoManifest.includes(`${name} = "${expected}"`))
+  
+      at file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-template-source.test.mjs:60:57
+      at withStagedTemplates (file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-set.mjs:328:16)
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-template-source.test.mjs:46:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/release-template-source.test.mjs:42:66
+✖ 3.0.0: template ranges preserve exact locks and unchanged typed Rust source (196.801666ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(cargoManifest.includes(`${name} = "${expected}"`))
+  
+      at file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-template-source.test.mjs:60:57
+      at withStagedTemplates (file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-set.mjs:328:16)
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/scripts/release-template-source.test.mjs:46:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -7,11 +7,9 @@ import { trustedHtml } from '../dom/trusted-html';
  * for element matching. The reconciler replaces morphdom as the single entry
  * point for DOM updates.
  *
- * `reconcile` is NOT exported from runtime.ts yet. ALL tests are expected to
- * FAIL until the reconciler is implemented (Task 4).
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, unmount, reconcile, setDirectiveMap } from '../runtime';
+import { mountFixture, unmountFixture, updateFixture } from './runtime-fixture';
 
 function waitForEffects(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -26,9 +24,8 @@ describe('reconciler', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
-    setDirectiveMap(null);
   });
 
   // ── 1. Fast path: empty container ──────────────────────────────────
@@ -42,7 +39,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       // Container should have the child element
@@ -68,7 +65,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       const children = container.querySelectorAll('[data-forma-id]');
@@ -90,14 +87,14 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       const before = container.querySelector('[data-forma-id="card-1"]');
       expect(before).not.toBeNull();
 
       // Reconcile again with same HTML
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       const after = container.querySelector('[data-forma-id="card-1"]');
@@ -117,7 +114,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       // Mutate state: click the button to increment count
@@ -131,7 +128,7 @@ describe('reconciler', () => {
       expect(display?.textContent).toBe('1');
 
       // Reconcile same HTML again (same state shape)
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       // State should survive — count should still be 1, not reset to 0
@@ -155,7 +152,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, trustedHtml(htmlV1));
+      updateFixture(container, trustedHtml(htmlV1));
       await waitForEffects();
 
       const before = container.querySelector('[data-forma-id="card-1"]');
@@ -163,7 +160,7 @@ describe('reconciler', () => {
       const disposersBefore = (before as any).__formaDisposers;
 
       // Reconcile with attribute change (class added)
-      reconcile(container, trustedHtml(htmlV2));
+      updateFixture(container, trustedHtml(htmlV2));
       await waitForEffects();
 
       const after = container.querySelector('[data-forma-id="card-1"]');
@@ -201,7 +198,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, trustedHtml(htmlV1));
+      updateFixture(container, trustedHtml(htmlV1));
       await waitForEffects();
 
       const el = container.querySelector('[data-forma-id="card-1"]');
@@ -210,7 +207,7 @@ describe('reconciler', () => {
       expect(Array.isArray(disposersBefore)).toBe(true);
 
       // Reconcile with different state keys (year -> rating)
-      reconcile(container, trustedHtml(htmlV2));
+      updateFixture(container, trustedHtml(htmlV2));
       await waitForEffects();
 
       const elAfter = container.querySelector('[data-forma-id="card-1"]');
@@ -242,7 +239,7 @@ describe('reconciler', () => {
       `;
 
       // Initial reconcile
-      reconcile(container, trustedHtml(htmlV1));
+      updateFixture(container, trustedHtml(htmlV1));
       await waitForEffects();
 
       const before = container.querySelector('[data-forma-id="slot-1"]');
@@ -250,7 +247,7 @@ describe('reconciler', () => {
       expect(before!.getAttribute('data-module')).toBe('movie-card');
 
       // Reconcile with different module
-      reconcile(container, trustedHtml(htmlV2));
+      updateFixture(container, trustedHtml(htmlV2));
       await waitForEffects();
 
       const after = container.querySelector('[data-forma-id="slot-1"]');
@@ -293,13 +290,13 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, trustedHtml(htmlBefore));
+      updateFixture(container, trustedHtml(htmlBefore));
       await waitForEffects();
 
       expect(container.querySelectorAll('[data-forma-id]').length).toBe(1);
 
       // Add a second child
-      reconcile(container, trustedHtml(htmlAfter));
+      updateFixture(container, trustedHtml(htmlAfter));
       await waitForEffects();
 
       const children = container.querySelectorAll('[data-forma-id]');
@@ -330,7 +327,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, trustedHtml(htmlBefore));
+      updateFixture(container, trustedHtml(htmlBefore));
       await waitForEffects();
 
       const removedEl = container.querySelector('[data-forma-id="b"]');
@@ -338,7 +335,7 @@ describe('reconciler', () => {
       expect(container.querySelectorAll('[data-forma-id]').length).toBe(2);
 
       // Remove second child
-      reconcile(container, trustedHtml(htmlAfter));
+      updateFixture(container, trustedHtml(htmlAfter));
       await waitForEffects();
 
       expect(container.querySelectorAll('[data-forma-id]').length).toBe(1);
@@ -378,7 +375,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, trustedHtml(htmlOriginal));
+      updateFixture(container, trustedHtml(htmlOriginal));
       await waitForEffects();
 
       // Capture references before reorder
@@ -387,7 +384,7 @@ describe('reconciler', () => {
       const refC = container.querySelector('[data-forma-id="c"]');
 
       // Reorder: C, A, B
-      reconcile(container, trustedHtml(htmlReordered));
+      updateFixture(container, trustedHtml(htmlReordered));
       await waitForEffects();
 
       const children = container.querySelectorAll('[data-forma-id]');
@@ -421,7 +418,7 @@ describe('reconciler', () => {
       `;
 
       // First reconcile — mount and let data-list render its children
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       const listEl = container.querySelector('[data-list]');
@@ -437,7 +434,7 @@ describe('reconciler', () => {
 
       // Reconcile again with same HTML — list children should be untouched
       // (the reconciler should skip directive-owned subtrees)
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       const itemsAfter = listEl!.querySelectorAll('li');
@@ -460,7 +457,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, trustedHtml(html));
+      updateFixture(container, trustedHtml(html));
       await waitForEffects();
 
       const stateEl = container.querySelector('[data-forma-state]');
@@ -484,7 +481,7 @@ describe('reconciler', () => {
         </div>
       `;
 
-      reconcile(container, trustedHtml(html2));
+      updateFixture(container, trustedHtml(html2));
       await waitForEffects();
 
       const stateEls = container.querySelectorAll('[data-forma-state]');
@@ -501,12 +498,12 @@ describe('reconciler', () => {
 
   // ── 8. Apply-like local upgrade (static -> connected without refresh) ─────
 
-  describe('directive map refresh during local apply', () => {
-    it('activates newly added directives immediately when directive map is refreshed', async () => {
+  describe('explicit handle updates during local apply', () => {
+    it('activates newly added directives with an explicit fetch grant', async () => {
       const fetchMock = vi
         .fn()
-        .mockResolvedValueOnce({ json: async () => ({ value: 'Joke A' }) })
-        .mockResolvedValueOnce({ json: async () => ({ value: 'Joke B' }) });
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ value: 'Joke A' }) })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ value: 'Joke B' }) });
       vi.stubGlobal('fetch', fetchMock);
 
       const staticHtml = `
@@ -517,17 +514,12 @@ describe('reconciler', () => {
         </article>
       `;
 
-      // Server map for initial static HTML (no fetch/computed/click directives yet)
-      setDirectiveMap({
-        root: ['data-forma-state'],
-        txt: ['data-text'],
-      });
+      // Static markup starts without fetch/computed/click directives.
 
-      reconcile(container, trustedHtml(staticHtml));
+      updateFixture(container, trustedHtml(staticHtml));
       await waitForEffects();
 
-      const scope = container.querySelector('[data-forma-state]')!;
-      unmount(scope);
+      unmountFixture(container);
       container.innerHTML = '';
 
       const connectedHtml = `
@@ -541,14 +533,9 @@ describe('reconciler', () => {
         </article>
       `;
 
-      // This mirrors app.ts apply fix: refresh directive map before remount/reconcile.
-      setDirectiveMap({
-        root: ['data-forma-state', 'data-fetch', 'data-fetch-id', 'data-computed'],
-        txt: ['data-text'],
-        btn: ['data-on:click'],
-      });
+      // The new mount explicitly grants the new fetch path.
 
-      reconcile(container, trustedHtml(connectedHtml));
+      updateFixture(container, trustedHtml(connectedHtml), { grants: { fetch: { paths: ['/api/data/'] } } });
       await waitForEffects();
       await waitForEffects();
 
@@ -576,10 +563,10 @@ describe('reconciler', () => {
           <p data-forma-id="p1">Hello</p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
 
-      reconcile(container, trustedHtml(`
+      updateFixture(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <p data-forma-id="p1">Hello <strong data-forma-id="s1">world</strong> today</p>
         </div>
@@ -599,10 +586,10 @@ describe('reconciler', () => {
           <p data-forma-id="p1">Hello <strong data-forma-id="s1">world</strong> today</p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
 
-      reconcile(container, trustedHtml(`
+      updateFixture(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <p data-forma-id="p1"><strong data-forma-id="s1">world</strong></p>
         </div>
@@ -620,10 +607,10 @@ describe('reconciler', () => {
           <p data-forma-id="p1"><strong data-forma-id="s1">world</strong></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
 
-      reconcile(container, trustedHtml(`
+      updateFixture(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <p data-forma-id="p1">Greetings <strong data-forma-id="s1">world</strong> and friends</p>
         </div>
@@ -644,10 +631,10 @@ describe('reconciler', () => {
           <span data-forma-id="s1" data-text="name">Alice</span>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
 
-      reconcile(container, trustedHtml(`
+      updateFixture(container, trustedHtml(`
         <div data-forma-state='{"name":"Alice"}'>
           <span data-forma-id="s1" data-text="name">Bob</span>
         </div>
@@ -669,10 +656,10 @@ describe('reconciler', () => {
           <div data-forma-id="a2" data-forma-leaving="">Leaving</div>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
 
-      reconcile(container, trustedHtml(`
+      updateFixture(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <div data-forma-id="a1">Old</div>
           <div data-forma-id="a2">Fresh replacement</div>
@@ -692,12 +679,12 @@ describe('reconciler', () => {
           <div data-forma-id="a2" data-forma-leaving="">Animating out</div>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
 
       const leavingEl = container.querySelector('[data-forma-leaving]')!;
 
-      reconcile(container, trustedHtml(`
+      updateFixture(container, trustedHtml(`
         <div data-forma-state='{"x":1}'>
           <div data-forma-id="a1">Keep</div>
         </div>

@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "originalSourceCommit": "baecf782c791d063f1827cd457b2524b00496101",
+  "files": {
+    "browser-diagnostic.log": "824c2d4b27290270a085dcc0a226ca0b001bbac72c4184932a194ccedc71faf8",
+    "unit-corrected.log": "5244bdcd8243612f19719010603be9177ac0ff769ab6e1d8d461a2dcc096d779",
+    "browser-first-failure.json": "81ac69780989854d67f854d96c32a79b323007ac876443d177e53c846bfb5ada",
+    "unit-first-failure.log": "708cba2c00161d5667692a391c33b40248d8bef0fcbf85a3aa243a9775ddbd19"
+  }
+}

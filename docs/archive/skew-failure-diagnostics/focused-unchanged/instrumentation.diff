@@ -1,0 +1,21 @@
+--- e2e/skew/run-drill.mjs
++++ external/run-drill.instrumented.mjs
+@@ -1,8 +1,8 @@
+ import assert from 'node:assert/strict';
+ import { spawn } from 'node:child_process';
+-import { readFileSync } from 'node:fs';
++import { readFileSync, writeFileSync } from 'node:fs';
+ import { join } from 'node:path';
+-import { createBalancer } from './balancer.mjs';
++import { createBalancer } from 'file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/balancer.mjs';
+ 
+ export const SKEW_DRILL_CHECKS = [
+   'typed native page adopts its own bundle and remains interactive',
+@@ -154,6 +154,7 @@
+     for (const failures of errors.values()) assert.deepEqual(failures, [], 'unexpected page error during the drill');
+     return { checks, builds: Object.fromEntries(Object.entries(deployments).map(([name, item]) => [name, item.manifest.build])), requests: state.log };
+   } catch (error) {
++    writeFileSync(process.env.FORMA_SKEW_DIAGNOSTIC, JSON.stringify({ checks, requests: state.log, pages: [...events].map(([page, detail]) => ({ url: page.url(), events: detail, navigations: navigation.get(page), errors: errors.get(page) })) }, null, 2));
+     error.message += `\nCompleted drill checks: ${JSON.stringify(checks)}\nLast requests: ${JSON.stringify(state.log.slice(-15))}`;
+     throw error;
+   } finally {

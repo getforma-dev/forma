@@ -1,0 +1,10 @@
+{
+  html: `<div data-forma-state="{}"><form id="form"><button type="button" id="trigger" data-on:click="{$dispatch('submit')}">run</button></form><p data-text="{1+2}">3</p></div>`,
+  observed: [
+    { target: 'BUTTON', event: 'submit', bubbles: true },
+    { target: 'BUTTON', event: 'click', bubbles: true },
+    { target: 'FORM', event: 'click', bubbles: true },
+    { target: 'DIV', event: 'click', bubbles: true }
+  ],
+  codes: []
+}

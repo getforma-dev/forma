@@ -1,0 +1,164 @@
+
+ RUN  v3.2.7 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/forma/packages/compiler
+
+stderr | tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > checks original registered reactive roots
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-foreign-names-vfDTt7/app.tsx:1:206: attribute TabIndex parses as tabindex in svg; use the canonical spelling tabindex or Browser mode
+
+ ❯ tests/foreign-attribute-names.test.ts (102 tests | 5 failed) 448ms
+   ✓ native foreign attribute spelling and namespace proof > refuses original SVG spelling TabIndex 24ms
+   ✓ native foreign attribute spelling and namespace proof > refuses original SVG spelling data-Foo 6ms
+   ✓ native foreign attribute spelling and namespace proof > refuses original SVG spelling aria-Label 5ms
+   ✓ native foreign attribute spelling and namespace proof > refuses original SVG spelling viewbox 4ms
+   ✓ native foreign attribute spelling and namespace proof > refuses original SVG spelling VIEWBOX 5ms
+   ✓ native foreign attribute spelling and namespace proof > refuses original SVG spelling preserveaspectratio 8ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling attributeName 6ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling attributeType 5ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling baseFrequency 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling baseProfile 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling calcMode 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling clipPathUnits 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling diffuseConstant 5ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling edgeMode 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling filterUnits 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling glyphRef 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling gradientTransform 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling gradientUnits 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling kernelMatrix 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling kernelUnitLength 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keyPoints 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keySplines 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keyTimes 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling lengthAdjust 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling limitingConeAngle 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerHeight 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerUnits 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerWidth 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling maskContentUnits 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling maskUnits 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling numOctaves 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pathLength 6ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternContentUnits 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternTransform 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternUnits 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtX 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtY 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtZ 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling preserveAlpha 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling preserveAspectRatio 5ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling primitiveUnits 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling refX 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling refY 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling repeatCount 4ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling repeatDur 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling requiredExtensions 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling requiredFeatures 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling specularConstant 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling specularExponent 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling spreadMethod 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling startOffset 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling stdDeviation 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling stitchTiles 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling surfaceScale 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling systemLanguage 6ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling tableValues 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling targetX 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling targetY 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling textLength 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling viewBox 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling viewTarget 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling xChannelSelector 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling yChannelSelector 3ms
+   ✓ native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling zoomAndPan 3ms
+   ✓ native foreign attribute spelling and namespace proof > keeps the exact aliases and ordinary lowercase foreign attributes 2ms
+   ✓ native foreign attribute spelling and namespace proof > admits MathML definitionURL and refuses its unadjusted spelling 5ms
+   ✓ native foreign attribute spelling and namespace proof > admits standard foreign xlink:actuate only with exact namespace spelling 6ms
+   ✓ native foreign attribute spelling and namespace proof > admits standard foreign xlink:arcrole only with exact namespace spelling 5ms
+   ✓ native foreign attribute spelling and namespace proof > admits standard foreign xlink:href only with exact namespace spelling 6ms
+   ✓ native foreign attribute spelling and namespace proof > admits standard foreign xlink:role only with exact namespace spelling 5ms
+   ✓ native foreign attribute spelling and namespace proof > admits standard foreign xlink:show only with exact namespace spelling 6ms
+   ✓ native foreign attribute spelling and namespace proof > admits standard foreign xlink:title only with exact namespace spelling 6ms
+   ✓ native foreign attribute spelling and namespace proof > admits standard foreign xlink:type only with exact namespace spelling 8ms
+   ✓ native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xlink:custom 3ms
+   ✓ native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xlink:Href 2ms
+   ✓ native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xml:lang 2ms
+   ✓ native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xml:space 2ms
+   ✓ native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xmlns 3ms
+   ✓ native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xmlns:xlink 3ms
+   ✓ native foreign attribute spelling and namespace proof > preserves ordinary HTML mixed case, XML null namespace, and unrelated colon names 3ms
+   ✓ native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 4ms
+   ✓ native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 4ms
+   ✓ native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 3ms
+   ✓ native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 4ms
+   ✓ native foreign attribute spelling and namespace proof > checks the integration element itself in its foreign namespace 3ms
+   ✓ native foreign attribute spelling and namespace proof > retains MathML for mglyph under a text integration point 3ms
+   ✓ native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through h('g',{TabIndex:1}) 9ms
+   ✓ native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through Child() 8ms
+   ✓ native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through createShow(visible,()=>h('g',{TabIndex:1})) 3ms
+   ✓ native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through createList(rows,item=>item.id,item=>h('g',{TabIndex:1})) 4ms
+   ✓ native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through h('mtext',null,h('mglyph',{TabIndex:1})) 3ms
+   ✓ native foreign attribute spelling and namespace proof > permits a spelling proved in both possible annotation namespaces 3ms
+   × native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml admits viewBox with null 6ms
+     → expected [Function] to not throw an error but 'PropsSchemaError: BUILD-610 /private/…' was thrown
+   × native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml refuses definitionURL with null 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml admits viewBox with {encoding:'application/xml'} 2ms
+     → expected [Function] to not throw an error but 'PropsSchemaError: BUILD-610 /private/…' was thrown
+   × native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml refuses definitionURL with {encoding:'application/xml'} 2ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml admits viewBox with {encoding:()=>p.encoding} 2ms
+     → expected [Function] to not throw an error but 'PropsSchemaError: BUILD-610 /private/…' was thrown
+   ✓ native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml refuses definitionURL with {encoding:()=>p.encoding} 2ms
+   ✓ native foreign attribute spelling and namespace proof > checks original registered reactive roots 43ms
+   ✓ native foreign attribute spelling and namespace proof > keeps browserOnly bodies outside native attribute proof 5ms
+   ✓ native foreign attribute spelling and namespace proof > checks list/helper context without changing component prop names 5ms
+   ✓ native foreign attribute spelling and namespace proof > does not Unicode-fold names or widen downstream ASCII name admission 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml admits viewBox with null
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml admits viewBox with {encoding:'application/xml'}
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml admits viewBox with {encoding:()=>p.encoding}
+AssertionError: expected [Function] to not throw an error but 'PropsSchemaError: BUILD-610 /private/…' was thrown
+
+- Expected: 
+undefined
+
++ Received: 
+"PropsSchemaError: BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-value-rules-gJMoVp/page.ts:1:182: attribute viewBox parses as viewbox in math; use the canonical spelling viewbox or Browser mode"
+
+ ❯ tests/foreign-attribute-names.test.ts:71:139
+     69|   for(const props of ["null","{encoding:'application/xml'}","{encoding…
+     70|     const page=(attributes:string)=>`${head} export function Page(p:{e…
+     71|     it(`direct svg in MathML annotation-xml admits viewBox with ${prop…
+       |                                                                                                                                           ^
+     72|     it(`direct svg in MathML annotation-xml refuses definitionURL with…
+     73|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml refuses definitionURL with null
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > direct svg in MathML annotation-xml refuses definitionURL with {encoding:'application/xml'}
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:72:142
+     70|     const page=(attributes:string)=>`${head} export function Page(p:{e…
+     71|     it(`direct svg in MathML annotation-xml admits viewBox with ${prop…
+     72|     it(`direct svg in MathML annotation-xml refuses definitionURL with…
+       |                                                                                                                                              ^
+     73|   }
+     74|   it('checks original registered reactive roots',()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 97 passed (102)
+   Start at  01:33:21
+   Duration  963ms (transform 223ms, setup 0ms, collect 364ms, tests 448ms, environment 0ms, prepare 34ms)
+

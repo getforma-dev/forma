@@ -1,0 +1,24 @@
+
+> @getforma/create-app@3.0.0-dev test
+> npm run build && vitest run --maxWorkers=2
+
+
+> @getforma/create-app@3.0.0-dev build
+> tsup src/index.ts --format esm
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 12.68 KB
+ESM ⚡️ Build success in 13ms
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/create-app
+
+
+ Test Files  6 passed (6)
+      Tests  153 passed | 18 skipped (171)
+   Start at  00:39:47
+   Duration  2.54s (transform 365ms, setup 0ms, import 842ms, tests 3.76s, environment 0ms)
+

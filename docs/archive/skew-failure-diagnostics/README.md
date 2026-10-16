@@ -1,0 +1,11 @@
+# Deployment-drill failure evidence
+
+The complete packed rehearsal of source e7cbbcfea783f459c469da0a5203083ad4dfba58 failed after 193.279 seconds and 42 completed checks at Firefox's deliberate mismatch navigation (`page.goto`, 10-second commit deadline). It did not reach fixture/performance qualification. The original report and log remain failed. All seven packed hashes are recorded in release-set.json; the original tarballs and complete authenticated nested security evidence remain in the qualification workspace, identified by first-packed/SUMMARY.json. Copied manifests reference that complete original tree, not this selected archive.
+
+A single focused unchanged Firefox drill against the already-built R17 native products then passed all 11 assertions. Its catch-only instrumentation did not fire. This is a separate diagnostic observation, not a successful full packed rehearsal and not an explanation of the original timeout.
+
+The new control stalls a real mismatched HTTP Document until the original drill's 10-second navigation timeout, then inspects the exact stack string emitted by P17. Before the catch repair, the actual Playwright TimeoutError lost the completed-check/request context from its cached stack; the marker assertion failed. After the repair, the identical control passed, including seven completed checks, the real successful upstream request, and the four page navigation/error records. Timeout, failure identity, all success-path assertions and owned-resource cleanup stay unchanged. The repair adds observability only; it neither fixes nor bypasses the intermittent navigation timeout and changes no performance criterion.
+
+`manifest.json` authenticates every selected original/control file. Prior performance failures and all broader release requirements remain in force.
+
+The final control writes the emitted error to an actual attachment file before assertions, so a successful failure-control run retains the raw diagnostic too. The same control passed Chromium, Firefox and WebKit (3/3 in25.6seconds, two workers); all three cached original errors, seven completed checks, successful upstream mismatch requests and page records are archived under control-durable-three-engines-results. This final test-only persistence adjustment changes no timeout or acceptance assertion.

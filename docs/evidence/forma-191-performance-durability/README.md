@@ -1,0 +1,18 @@
+# Interrupted performance evidence
+
+This qualifies evidence persistence, not runtime speed or a release. The decoder12ms and mobile50ms failures remain unchanged requirements. Original producer source at26e56ea6 and its genuine completed-LHR-loss failure are in `../../archive/forma-191-performance-durability/` with byte hashes.
+
+P17 now owns a fresh evidence directory beside p17.json. Completed logical records are exclusive immutable JSON files followed by a flushed manifest containing sequence, byte count and SHA256. Parent, native child, parent and client child use this same manifest sequentially; count/size accounting never resets across owners. All hashes are verified once before writing a complete marker. An unindexed or same-length altered record refuses completion. Failures retain the original files; no output directory is removed by the measurement producer.
+
+Limits are256 records,8MiB per ordinary record,32MiB per raw LHR and2GiB total indexed record bytes. The manifest itself is bounded to256KiB. A limit fails explicitly. The native child checkpoints five completed N1 shapes, six completed N5 points, N5's complete paired series, public boundaries and the final aggregate. Client checkpoints complete12-sample metrics, memory observations, engines and its aggregate. Mobile persists each completed LHR before beginning activation and each completed activation before the next pair. No record is written inside any timer, allocation-counting interval or measurement sample loop. Interruption inside an unfinished shape/metric does not promise preservation of that unfinished logical record.
+
+Controls run with Node24.22.0, no measurement/browser campaign:
+
+- Original unchanged mobile producer:1 expected failure (completed LHR lost when activation throws),86ms.
+- New journal/mobile plus unchanged decoder interruption controls:7/7,280ms. Includes real Node SIGKILL after acknowledged fsync and same-length record corruption refusal before completion.
+- Actual client producer body with controlled browser dependencies: completes its first12-sample metric, fails its next operation, and retains the first metric. Native validation failure and malformed child JSON preserve originals.2/2,219ms.
+- The actual new Rust journal source was compiled in a small isolated control crate using exact serde_json1.0.154 and sha2 0.11.1 (recorded lock); two native unit controls passed, compile4.26s. This is not a rebuilt fixture product or full release Rust gate.
+- The compiled native test bridge received a Node-created attempt, wrote/fsynced its checkpoint, acknowledged it, and was SIGKILLed. Node then resumed the same manifest, verified all hashes and enforced the shared count ceiling. Sequence1–4 and exact record hashes are in `durability-native-kill.log`. The test bridge's default unit execution does not sleep; only the explicit control environment enables that path.
+- Final performance Node suite:33/33 in1.424s, followed by the actual producer-body metadata-failure control1/1 in129ms. The latter proves a final native executable digest failure retains its attempt and cannot write a complete marker. The formatted native source was recompiled and its two units and real interruption bridge replayed successfully. Total34 finite Node controls; no browser or acceptance measurement was run.
+
+Raw outputs and their digest manifest are retained here. Root independently reviews source before candidate integration. The final candidate still needs normal full native compilation/clippy, R17 and actual packed qualification; no threshold, retry or completion validator was weakened.

@@ -33,7 +33,9 @@ rm -f "$BUILD_LOG"
 echo "Copying fixtures..."
 RUNTIME_BUNDLE="$FORMAJS_DIR/dist/formajs-runtime.global.js"
 ESM_BUNDLE="$FORMAJS_DIR/dist/forma.esm.js"
-ESBUILD_BIN="$FORMAJS_DIR/node_modules/.bin/esbuild"
+# Resolve from the selected package: npm may hoist the declared dependency to
+# the workspace root, while an external FORMAJS_DIR can keep its own install.
+ESBUILD_BIN="$(node -e 'console.log(require.resolve("esbuild/bin/esbuild", { paths: [process.argv[1]] }))' "$FORMAJS_DIR")"
 
 for required_file in "$RUNTIME_BUNDLE" "$ESM_BUNDLE" "$ESBUILD_BIN"; do
   if [ ! -f "$required_file" ]; then

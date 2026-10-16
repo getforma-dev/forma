@@ -47,7 +47,8 @@
         "FORMA-186": { "status": "pending", "scope": "the deployment identity and inert-or-reload on a skew" },
         "FORMA-188 skew drill": { "status": "pending", "scope": "the skew drill green in P17" },
         "FORMA-190": { "status": "pending", "scope": "the size report green on both templates at the recorded ceiling" },
-        "FORMA-141": { "status": "pending", "scope": "the upgrade guide and the stability record" },
+        "FORMA-141": { "status": "done", "scope": "formaAlias warns once per build for every bare formajs importer and preserves the 3.x mapping; reviewed implementation 76df14bf in PR78" },
+        "FORMA-145 documentation": { "status": "pending", "scope": "the complete 3.0 upgrade guide and stability record match the final public surface" },
         "FORMA-116": { "status": "pending", "scope": "CODEOWNERS, alerts and the probes" },
         "FORMA-189": { "status": "pending", "scope": "the recall script and SECURITY.md generated from the release record" },
         "FORMA-145 audit": { "status": "pending", "scope": "the whole-release audit on another model with an empty blocking list (D14)" }
@@ -59,17 +60,21 @@
       "gates": {
         "FORMA-144 slice 3": { "status": "pending", "scope": "final template and release cleanup" },
         "FORMA-191": { "status": "pending", "scope": "the per-release measurements in P17" },
-        "FORMA-192": { "status": "pending", "scope": "the read-only gate runs against the rc with coded counts" },
-        "FORMA-147": { "status": "pending", "scope": "the fAuth login spike at the restated G3" },
-        "FORMA-146": { "status": "pending", "scope": "Q10 to Q13 recorded" },
+        "FORMA-146": { "status": "done", "scope": "Q10 to Q13 and Q14 to Q18 defaults confirmed by the founder in L-57 on 2026-10-15; see docs/release/3.0-GATE-DISPOSITIONS.md" },
         "FORMA-145 soak": { "status": "pending", "scope": "the rc's 7-day soak on next (D7)" }
       }
     }
+  },
+  "informational": {
+    "decision": "L-57 (2026-10-15): application runs do not gate 3.0.0; no application repository is touched",
+    "FORMA-192": { "status": "not-run", "scope": "optional external application builds; excluded from this release task" },
+    "FORMA-147": { "status": "not-run", "scope": "optional external login spike; excluded from this release task" }
   },
   "trustedTypes": "enforced-v1",
   "boundRender": "finalized-v1",
   "assetIntegrity": "sha384-v1",
   "sourceTemplates": "islands-v1",
   "fixtureApps": "declared-v1",
-  "deploymentSkew": "native-v1"
+  "deploymentSkew": "native-v1",
+  "performance": "measured-v1"
 }

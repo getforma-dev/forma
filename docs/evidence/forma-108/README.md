@@ -1,0 +1,68 @@
+# FORMA-108 explicit runtime qualification
+
+This record qualifies the explicit per-mount HTML runtime. It does not stand in for the final integrated release's R17, all-seven-package P17, CI or soak. No application repository was accessed.
+
+The source migration removes tierless/automatic/global runtime entry points and exposes exactly nine runtime values. Every mount declares its tier; omitted grants deny DOM escape, network and navigation. Handles retain ownership of detached or moved scopes and dispose their bindings. Original A2 source and probe inventories remain byte-authenticated under `docs/archive/FORMA-108-A2-bridge/`.
+
+## Source and environment
+
+Core build/full-suite source was frozen at `a235733d9bee50f3494336fdec721d1a5532def9`. Later runtime changes only correct source comments/documentation; the production ownership/diagnostic repair remains `5586654841d46235b93b1ad853bfac6fb4899809`. Source and migration commits received independent lead review. Actual packed proof uses clean `6c3448d31807761106016c56c1c3b2ebc12aae78`; changed-probe qualification uses clean `3c3a48b2855160b0e4734a42b1d268861d3c58e9`.
+
+All local gates use Node24.22.0, Vitest at most two workers and Playwright at most two workers. Runtime IIFE SHA-256 is `828ce6ac426cb7d4f996e8175ae8003014519aa431309e22dde4899543594259`; freshly packed `@getforma/core` tar SHA-256 is `8ebf5bf72b9a10636a5cb2e203d8882b852380547f43e8b287e7c884f05d553e`. Raw reports identify actual browser versions and harness/source hashes.
+
+## Actual results and preserved first failures
+
+- Core build and42-artifact verification pass. All five unchanged gzip caps pass: core48,063/48,294B; browser48,209/48,448B; runtime39,140/41,500B; frame38,618/40,000B; hardened37,596/40,500B.
+- The full core invocation passed3,272/3,275 in32.94s. Its only failures were three stale documentation-truth assertions; the corrected documentation suite passed19/19 in623ms. Both the original failure and intermediate historical-citation failure remain archived. This is combined coverage, not a claim that the first invocation fully passed. Core typecheck passed at the recorded pre-reporter source; the later integrated Vite configuration is qualified separately below.
+- Actual changed browser suites passed183/186 in33.7s across Chromium, Firefox and WebKit. The only failures were the old one-script count in the CSP fixture after explicit mounting introduced a second external application script. Corrected controls assert the actual response CSP header and both exact external URLs;3/3 passed across all engines in3.5s with the original behavior, errors and violation checks retained.
+- The rebuilt frame sandbox/MessageChannel suite passed21/21 across all engines in14.9s, including opaque origin, disposal and zero unexpected connections.
+- Fresh packed candidate runtime passed1,686 hostile cases,30 capability controls and9 explicit-mount controls in28.521434292s. Unauthorized executions, outside reads and requests remain zero; documented authority intentionally granted is measured separately. The actual removed-selector guard failed at the observer, and before/corrected controls passed. No checked-in old report was substituted for candidate execution.
+- Current committed private expression source completed100,000 cases with seed1290300:87,148 admitted and12,852 correctly refused in both before/corrected runs. Removing the real Array.from cost row failed at case37, charged0 against independent floor42. Source and worker hashes and actual mutant bytes are recorded. No generated no-throw-only test counts as equivalence proof.
+- All17 changed/new runtime mutations failed through their named intended assertions; before/corrected each passed15 selected real tests. The actual complete run took16.483265583s, all19 run-level unhandled-error collections were empty, and restored runtime source SHA-256 was verified byte-exact. The original attempt stopped after eight kills because the ninth standard JSON assertion was truncated. That refusal and all raw outputs are preserved under `docs/archive/FORMA-108-mutation-reporting/`. The corrected reporter preserves full assertion text and records actual unhandled errors; it does not weaken assertion signatures.
+
+Current corpus totals252 probes, including147 security probes; all260 original A2 probes and historical93 provenance are authenticated. Fourteen removed-API probes are retired individually and never count as current kills. Three unchanged nested-owner defense controls have no new execution claim. The complete nightly probe campaign and final integrated release gates are separate from this bounded17-control qualification.
+
+## Combined current dependency and configuration gate
+
+Reviewed PR95 `e6014d574e59fd86cf2941391e34dde509ef343f` and PR98 `697898c0732d55ef359e407c91e6c88c1e5028ab` were merged with merge commits, preserving both histories and evidence rules. At clean combined source `0d3d570f7b248097e12fd038178bba738c31f348`, a fresh scripts-off locked install reports zero workspace vulnerabilities. Actual full core3,275/3,275 passes in33.18s on Vitest4.1.12; current full-package typechecking includes every Vitest configuration, including the mutation reporter configuration. Fresh build/42-artifact verification and all five unchanged size caps pass; the two qualifier classifier/fresh-output tests pass. No new failure or source correction was required by this gate.
+
+The rebuilt runtime hash remains exactly `828ce6ac426cb7d4f996e8175ae8003014519aa431309e22dde4899543594259`, matching the prior actual packed/browser/L50 runtime. Earlier failing invocations stay preserved rather than being replaced by this fully green combined run. Final integrated CI and the all-seven-package P17 remain separate release gates.
+
+## Timing
+
+The unchanged migrated L50 helper is measured separately with five runs at4x CPU throttling for F1–F5, S6 and O3. The context-dependent Greek search residual remains an explicit limitation; this record does not assert a universal50ms task guarantee. The one isolated execution on Apple M1 Pro/Chromium151.0.7922.34 measured these worst-task milliseconds:
+
+| Case | Median | Maximum | Runs at least50ms |
+| --- | ---: | ---: | ---: |
+| F1 ten bindings |8.8|18.7|0/5|
+| F2 twenty bindings |9.9|11.8|0/5|
+| F3 mixed sizes |9.5|11.8|0/5|
+| F4 400 over-cap bindings |11.4|11.7|0/5|
+| F5 400 under-cap bindings |13.8|14.7|0/5|
+| S6 reduction,1,150 names |1.9|8.7|0/5|
+| O3 Greek search,9,000 records |50.4|60.7|3/5|
+
+O3 rendered900 results and remains a real slow-search residual, not a passed50ms gate. Source stayed clean at3c and runtime hashes matched before/after. `l50-current.log` and metadata preserve the actual machine/load, browser, output, source and harness hash. Historical measurements retain their original classification; this single current run does not replace them.
+
+## Evidence integrity
+
+`manifest.json` authenticates every raw file below this directory. Original failing invocations remain alongside corrected evidence; no original source, report or timing is overwritten. The packed-core adapter proof here is not the all-seven-package P17 release result, which must execute again on the final candidate.
+
+
+## Root static fixture (later CI correction)
+
+CI38857234217 at9e found nine actual root full-stack failures: that fixture loaded the runtime IIFE without owning any mount. Its byte-exact prior source and full hosted log are in `docs/archive/FORMA-108-root-full-stack/`. Fixture-only a897 adds the required external reviewed/no-grants owner; all existing assertions remain, plus outside-root and explicit-disposal controls. Fresh sync rebuilds core and the component IIFE. The runtime hash is still828ce6ac, identical to the previous packed/security/timing proof.
+
+The first actual three-engine run passed all48 original tests and failed only the3 new disposal tests because they attempted a locator click after unmount cleared the root. That source, raw JSON/log, contexts and fresh sync output remain archived. At independently approved7f2b0b26, the focused3 corrected cases pass: retained real button/text nodes, root empty after unmount, detached button no longer updates retained text, unowned sibling remains inert. The original48 and corrected3 form combined passing coverage; the first51-case invocation is not reported as wholly green. `root-full-stack/qualification.json` pins current source, exact runtime/component bytes and both raw results. Current integrated R17 and all-seven P17 remain required.
+
+## Dynamic data-fetch fixture (integrated R17 correction)
+
+The second integrated R17 at ae7d38f4 passed all147 root browser tests and409/410 core browser tests; its one remaining failure was a dynamically served fetch page that loaded the IIFE without an explicit owner. Original source, complete R17 log and actual failure context are authenticated under `docs/archive/FORMA-108-fetch-fixture/`. At reviewed e7b3d20d, the fixture owns a named root with reviewed tier and GET grants for its two exact declared endpoint paths, no cookies, and the existing30000ms timeout. The entire original test body remains byte-identical. The focused actual replay passed all3 engines in5.6s on Node24, with the unchanged828ce6ac runtime. All virtual-clock boundaries, request count, timeout text and successful sibling assertions remain. This focused correction does not turn the earlier incomplete R17 into a whole-pass claim.
+
+## Shipped strict-CSP example
+
+The active consumer inventory found one additional shipped positive example that loaded the hardened IIFE without a mount. Original HTML is byte-exact under `docs/archive/FORMA-108-csp-example/`. The source-only repair4311d539 preserved the self-only policy and every expression but placed state on the mount boundary itself; actual three-engine replay correctly failed all3 live counter assertions. Its sources, raw reports and contexts remain archived. The reviewed correction14a5656d places the unchanged state owner inside a named main root. That first corrected owner mounted reviewed markup with dom:true and no fetch/navigation grants. Later review identified that local classList.toggle needs no DOM-boundary grant; its grant-bearing source and successful run remain historical below.
+
+The first corrected replay passed3/3 in4.6s across Chromium, Firefox and WebKit on Node24. A real local HTTP server serves the unmodified original, corrected example and existing hardened runtime bytes; each downloaded runtime is hashed against70a816472d37cb8453eb6ba36f94c7829355cbf6d043b26b1309aec0fcec2334. The original stays inert. The live counter/reset/filter/class toggle all work with zero diagnostics/page errors/CSP violations, and an actual injected inline script is refused and observed under the same policy. No production runtime changed. The follow-up independent positive-consumer inventory found no further broken executable IIFE consumer.
+
+The current owner omits all grants: classList.toggle is separately allowlisted and acts on its own element, while dom:true would authorize crossing the mount boundary. This authority reduction changes no expression, CSP or behavioral/security assertion. The focused grant-free replay at clean eb5dfd46 passes all3 engines in4.4s, using the same actual hardened70a81647 bytes and all original-inert/live/CSP controls. `csp-example/default-none-qualification.json` records the new owner/source hashes and actual raw result; the prior successful14a5656d report is preserved at its actual source. The combined release candidate must still rebuild and run its own full qualification.

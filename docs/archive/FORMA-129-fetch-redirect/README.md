@@ -1,0 +1,5 @@
+# Granted fetch redirect boundary
+
+The original strict-CSP/Trusted-Types Chromium replay granted GET only under `/api/widget/` with cookies omitted. The real fixture returned302 from `/api/widget/redirect` to `/api/admin/redirected`; both requests reached the server. This exceeded the initial path grant. The report records the exact requests and source/runtime hashes. Its `sourceClean:false` correctly reflects the then-uncommitted qualification harness. The full original runtime/source bytes are preserved in the lead workspace; the manifest names the original committed production source and both hashes.
+
+After forcing `redirect:error` on every tiered grant verdict,18 actual browser controls passed: explicit none/typical/all profiles crossed with2xx,POST,prefix sibling,dot traversal,encoded separator andredirect cases. The granted redirect reaches its initial URL once and sends no second request; result stays empty and error holds the stable generic pre-response failure. This is a focused correction record, not full hostile-matrix qualification.

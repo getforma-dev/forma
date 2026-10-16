@@ -23,6 +23,12 @@
     </div>
   </section>
 
+  <!-- Deliberately outside the runtime owner's root: these directives stay inert. -->
+  <section id="runtime-unowned" data-forma-state='{"count": 40}'>
+    <p id="rt-outside-count" data-text="{count}">unbound</p>
+    <button id="rt-outside-inc" data-on:click="{count++}">Unowned +1</button>
+  </section>
+
   <!-- ═══════ Test 2: Programmatic h() API ═══════ -->
   <div id="test-h-api"></div>
 
@@ -31,6 +37,8 @@
 
   <!-- Load FormaJS runtime (IIFE) -->
   <script src="formajs-runtime.global.js"></script>
+  <!-- The fixture application explicitly owns the reviewed runtime subtree. -->
+  <script src="full-stack-runtime.js"></script>
 
   <!-- Load the full FormaJS API for programmatic tests -->
   <script src="formajs.global.js"></script>

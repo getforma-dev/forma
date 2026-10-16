@@ -1,0 +1,40 @@
+{
+  "sourceBase": "26e56ea6a0acf986d51579cf2a69033939706712",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 526,
+      "sha256": "24919911eb42efe468b4a16cd50426b40596d5ac279a3ca32588051d4f59fa4e"
+    },
+    {
+      "path": "mobile-first-failure.log",
+      "bytes": 1253,
+      "sha256": "7d8612b163937ad77c589b3a05f2aeb8b11b44e00f9f6438a823712ca4094522"
+    },
+    {
+      "path": "mobile-first-failure.test.mjs",
+      "bytes": 1141,
+      "sha256": "d4a56a6311512c83a315b74b31deab3df7f81210f16e17e7ee56a63aa6eae748"
+    },
+    {
+      "path": "source/e2e/fixtures/apps/src/bin/measure.rs",
+      "bytes": 11459,
+      "sha256": "7edceb75296b99977c2ce03b5ff0377f09ed354c5a09cc7086276a047f465bb4"
+    },
+    {
+      "path": "source/e2e/performance/client/run.mjs",
+      "bytes": 29162,
+      "sha256": "af94e4e4ca935833f2b9e3771fafc152bfb7f662b0d4adff78beba9fd35ca8fb"
+    },
+    {
+      "path": "source/scripts/release-performance-mobile.mjs",
+      "bytes": 7410,
+      "sha256": "4f282cf2eb507ba8abeb2bbeaf0c0b94bfaf5788235125b827dfad97eeb443a7"
+    },
+    {
+      "path": "source/scripts/release-performance.mjs",
+      "bytes": 7276,
+      "sha256": "93255aa66182f3cc9b2584c63b0583c4e7cf171e6dc775c8ad7f70f9bfbdd14f"
+    }
+  ]
+}

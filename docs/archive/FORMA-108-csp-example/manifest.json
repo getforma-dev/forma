@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "originalSourceCommit": "e19aad7aa73b0eb9cbe17da4d5372075bd8dc788",
+  "originalPath": "packages/core/examples/csp/index.html",
+  "files": [
+    {
+      "path": "first-context-chromium.md",
+      "bytes": 8489,
+      "sha256": "9f6aba6495b0112e0c1e0fa8fdecdb471f7cde5f7cc9db433085ce2b05d0736d"
+    },
+    {
+      "path": "first-context-firefox.md",
+      "bytes": 8489,
+      "sha256": "9f6aba6495b0112e0c1e0fa8fdecdb471f7cde5f7cc9db433085ce2b05d0736d"
+    },
+    {
+      "path": "first-context-webkit.md",
+      "bytes": 8489,
+      "sha256": "9f6aba6495b0112e0c1e0fa8fdecdb471f7cde5f7cc9db433085ce2b05d0736d"
+    },
+    {
+      "path": "first-csp-example.spec.ts",
+      "bytes": 6429,
+      "sha256": "d07dd75d78bb0d3eb201ac83af1792ea3636fc981f7f5d17f770e7c0d3495fd0"
+    },
+    {
+      "path": "first-index.html",
+      "bytes": 1582,
+      "sha256": "462bb3aca7ff36356946424d3f99af01a9b7a45698291572b52268ec33b3224f"
+    },
+    {
+      "path": "first-mount.js",
+      "bytes": 376,
+      "sha256": "3513238fcf1741cfca8ee6a59acea02e0eea7c555accb5155178174b7db6b741"
+    },
+    {
+      "path": "first.json",
+      "bytes": 20086,
+      "sha256": "3715c571d575028177ce213707db54a0d3a9775a6ce4268b94a55869ea43eb47"
+    },
+    {
+      "path": "first.log",
+      "bytes": 5643,
+      "sha256": "568126ea745e0aaa40dc1d2218d2aec93b51da7d0189ccc57ff8dffe900c6432"
+    },
+    {
+      "path": "original-index.html",
+      "bytes": 1529,
+      "sha256": "daaf922743482ccd55db5f1930079f62abb11d560897218fbe753c6d735da01d"
+    }
+  ],
+  "firstFailureSourceCommit": "4311d539decd233882aeeeb01b48cd6357c1dff3"
+}

@@ -1,0 +1,181 @@
+{
+  "completedChecks": [
+    "typed native page adopts its own bundle and remains interactive",
+    "rolling instances refuse a missing lazy panel and the application retries it",
+    "one-old tab loads byte-identical retained immutable assets",
+    "rollback keeps old tabs honest and serves a consistent fresh page",
+    "identical re-upgrade serves the same failed panel without reloading the tab",
+    "third release retains exactly one generation",
+    "security release serves no revoked retained assets",
+    "mismatched native page reloads once then stays inert",
+    "blocked storage and cancellation keep mismatched pages inert without reloading",
+    "missing page identity permits ordinary activation"
+  ],
+  "lastRequests": [
+    {
+      "url": "/_assets/panel-4.TN6TIAPF.js?attempt=5",
+      "pathname": "/_assets/panel-4.TN6TIAPF.js",
+      "instance": "C",
+      "status": 200,
+      "cacheControl": "public, max-age=31536000, immutable"
+    },
+    {
+      "url": "/_assets/panel-5.UMCF3ENC.js?attempt=6",
+      "pathname": "/_assets/panel-5.UMCF3ENC.js",
+      "instance": "S",
+      "status": 404,
+      "cacheControl": null
+    },
+    {
+      "url": "/_assets/panel-5.UMCF3ENC.js",
+      "pathname": "/_assets/panel-5.UMCF3ENC.js",
+      "instance": "S",
+      "status": 404,
+      "cacheControl": null
+    },
+    {
+      "url": "/",
+      "pathname": "/",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/_assets/app.YHGHMPWZ.js",
+      "pathname": "/_assets/app.YHGHMPWZ.js",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "public, max-age=31536000, immutable"
+    },
+    {
+      "url": "/_assets/chunk.7VLIMANO.js",
+      "pathname": "/_assets/chunk.7VLIMANO.js",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "public, max-age=31536000, immutable"
+    },
+    {
+      "url": "/",
+      "pathname": "/",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/",
+      "pathname": "/",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/",
+      "pathname": "/",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/",
+      "pathname": "/",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/",
+      "pathname": "/",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/csr",
+      "pathname": "/csr",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/_assets/browser.UYJWLFLC.js",
+      "pathname": "/_assets/browser.UYJWLFLC.js",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "public, max-age=31536000, immutable"
+    },
+    {
+      "url": "/csr",
+      "pathname": "/csr",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    },
+    {
+      "url": "/csr",
+      "pathname": "/csr",
+      "instance": "S",
+      "status": 200,
+      "cacheControl": "no-store"
+    }
+  ],
+  "pages": [
+    {
+      "url": "http://127.0.0.1:57331/",
+      "navigations": 1,
+      "events": [],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:57331/",
+      "navigations": 1,
+      "events": [],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:57331/",
+      "navigations": 3,
+      "events": [
+        "{\"page\":\"injected-S\",\"bundle\":\"2e4687c3d52153a2\",\"reload\":true}",
+        "{\"page\":\"injected-S\",\"bundle\":\"2e4687c3d52153a2\",\"reload\":false}",
+        "{\"page\":\"injected-S\",\"bundle\":\"2e4687c3d52153a2\",\"reload\":false}"
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:57331/",
+      "navigations": 1,
+      "events": [
+        "{\"page\":\"injected-S\",\"bundle\":\"2e4687c3d52153a2\",\"reload\":false}"
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:57331/",
+      "navigations": 1,
+      "events": [
+        "{\"page\":\"injected-S\",\"bundle\":\"2e4687c3d52153a2\",\"reload\":true}"
+      ],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:57331/",
+      "navigations": 1,
+      "events": [],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:57331/csr",
+      "navigations": 1,
+      "events": [],
+      "errors": []
+    },
+    {
+      "url": "http://127.0.0.1:57331/csr",
+      "navigations": 1,
+      "events": [
+        "{\"page\":\"injected-S\",\"bundle\":\"2e4687c3d52153a2\",\"reload\":true}"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-7.PFPYYAVL.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-8.HFZVLKGJ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/app.IP4J3NKP.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/browser.45MZALZC.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/chunk.5P3LFBJE.js  75.8kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-1.VRZL7WBL.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-2.APEDQQHH.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-3.YBMMMC3J.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-4.CUHYIKJP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-5.6SIMUAAG.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/panel-6.UR5IPBIN.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/chunk.KIW65752.js  33b
+
+   23 assets hashed
+   12 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,197 of 28,000 B  JavaScript 28,939 of 76,800 B  (Brotli: Forma 23,460, JavaScript 25,841)  app.IP4J3NKP.js chunk.5P3LFBJE.js
+   /csr  whole-page mount  Forma 26,208 of 28,000 B  JavaScript 28,667 of 76,800 B  (Brotli: Forma 23,469, JavaScript 25,606)  browser.45MZALZC.js chunk.5P3LFBJE.js
+   Service worker   sw.js  4,273 B raw, 2,216 B gzip, 1,936 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       233 ms: bundle 135 ms, hash 0 ms, compress 97 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/manifest.json (build: ab9f5323094b...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/A/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-7.NQANHLE7.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-8.YIAED7GQ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/app.4WCFDGFJ.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/browser.PYDQN4K6.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/chunk.M64XXZDW.js  75.8kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-1.M45V2E7G.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-2.MI2CRZB7.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-3.G32VLDMV.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-4.TLB36GLV.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-5.Y7EKEJ66.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/panel-6.K3VKEKSS.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/chunk.NWF3FQT6.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build ab9f5323094b...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,194 of 28,000 B  JavaScript 29,706 of 76,800 B  (Brotli: Forma 23,441, JavaScript 26,522)  app.4WCFDGFJ.js chunk.M64XXZDW.js
+   /csr  whole-page mount  Forma 26,205 of 28,000 B  JavaScript 29,431 of 76,800 B  (Brotli: Forma 23,450, JavaScript 26,282)  browser.PYDQN4K6.js chunk.M64XXZDW.js
+   Service worker   sw.js  5,549 B raw, 2,986 B gzip, 2,632 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       288 ms: bundle 91 ms, hash 0 ms, compress 195 ms, manifest 2 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/manifest.json (build: 3b6ea31f51c7...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-7.NQANHLE7.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-8.YIAED7GQ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/app.4WCFDGFJ.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/browser.PYDQN4K6.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/chunk.M64XXZDW.js  75.8kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-1.M45V2E7G.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-2.MI2CRZB7.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-3.G32VLDMV.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-4.TLB36GLV.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-5.Y7EKEJ66.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/panel-6.K3VKEKSS.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/chunk.NWF3FQT6.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build ab9f5323094b...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,194 of 28,000 B  JavaScript 29,706 of 76,800 B  (Brotli: Forma 23,441, JavaScript 26,522)  app.4WCFDGFJ.js chunk.M64XXZDW.js
+   /csr  whole-page mount  Forma 26,205 of 28,000 B  JavaScript 29,431 of 76,800 B  (Brotli: Forma 23,450, JavaScript 26,282)  browser.PYDQN4K6.js chunk.M64XXZDW.js
+   Service worker   sw.js  5,549 B raw, 2,986 B gzip, 2,632 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       273 ms: bundle 77 ms, hash 0 ms, compress 195 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/manifest.json (build: 3b6ea31f51c7...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/B2/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-7.KA5EKUK6.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-8.WYR7UPJF.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/app.L3VHPBRS.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/browser.F4CNLO3W.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/chunk.5QNQNIQD.js  75.8kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-1.DKSYRXNI.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-2.LUHITM4E.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-3.TGEG46ZK.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-4.WZPZE4QN.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-5.55JHC4YN.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/panel-6.LZ73F4VF.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/chunk.4Q5QSYVN.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build 3b6ea31f51c7...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,191 of 28,000 B  JavaScript 29,700 of 76,800 B  (Brotli: Forma 23,403, JavaScript 26,472)  app.L3VHPBRS.js chunk.5QNQNIQD.js
+   /csr  whole-page mount  Forma 26,202 of 28,000 B  JavaScript 29,428 of 76,800 B  (Brotli: Forma 23,413, JavaScript 26,252)  browser.F4CNLO3W.js chunk.5QNQNIQD.js
+   Service worker   sw.js  5,549 B raw, 2,987 B gzip, 2,629 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       284 ms: bundle 77 ms, hash 0 ms, compress 206 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/manifest.json (build: e1400d48a80c...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/C/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Security release: the previous dist is ignored and nothing is retained (L-16, SR45)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-7.SSZHI5G6.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-8.D6DF6SVZ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/app.DMWBZBTB.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/browser.MVKCBBUG.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/chunk.7EICFUTU.js  75.8kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-1.JQ7AZXCL.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-2.YPFPUMPS.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-3.XVF5PADV.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-4.VD7B76YA.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-5.UJWK4DAO.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/panel-6.2JEGFBEY.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/chunk.6BFFT2HG.js  33b
+
+   23 assets hashed
+   12 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,196 of 28,000 B  JavaScript 28,943 of 76,800 B  (Brotli: Forma 23,460, JavaScript 25,852)  app.DMWBZBTB.js chunk.7EICFUTU.js
+   /csr  whole-page mount  Forma 26,207 of 28,000 B  JavaScript 28,669 of 76,800 B  (Brotli: Forma 23,469, JavaScript 25,621)  browser.MVKCBBUG.js chunk.7EICFUTU.js
+   Service worker   sw.js  4,273 B raw, 2,221 B gzip, 1,947 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       179 ms: bundle 78 ms, hash 0 ms, compress 98 ms, manifest 3 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/manifest.json (build: 890340a6ce38...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/out/S/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Compiling forma-e2e-skew v0.0.0 (/Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.63s

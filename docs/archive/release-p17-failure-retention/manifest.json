@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "sourceCommit": "5eef0c0e6fc8eba368e1be6bc7aaf76abe1af17a",
+  "files": {
+    "README.md": {
+      "bytes": 2133,
+      "sha256": "24b954469f28bedf7c295cdd4ce58988c38d76aa6929806e9f061309d32e3f35"
+    },
+    "actionlint.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "check-release-workflow.rb.original": {
+      "bytes": 15914,
+      "sha256": "4b363fceac19b4430a04136e84463e36293bc0eef8b4048b1722b4084dc67823"
+    },
+    "release.yml.original": {
+      "bytes": 9821,
+      "sha256": "0b93908f271a38d8ca43669f7299d899437ba5084a6fbbc232e36902cd54cb8a"
+    },
+    "retention-after.log": {
+      "bytes": 1345,
+      "sha256": "21355f932ad55b8a21ea53e36877b290b47f4c4cddd3b63776f8856ca8172454"
+    },
+    "retention-before.log": {
+      "bytes": 1120,
+      "sha256": "7a805dd66ff5cb2c64ad4c0e21ddd69fe215a05451335fca083a0166deb7f9cc"
+    },
+    "workflow-lint.log": {
+      "bytes": 170,
+      "sha256": "01531b313b41385000b0f83c829a152202dbc85416c9093c4131dd93665f8546"
+    },
+    "workflow-self-test.log": {
+      "bytes": 31319,
+      "sha256": "21913c3978560475b80e9841e615f08019377a194a97fb4cb8f06aad779b77c5"
+    }
+  }
+}

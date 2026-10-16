@@ -1,0 +1,20 @@
+
+> @getforma/core@3.0.0-dev check:size
+> node scripts/check-size.mjs
+
+dist/index.js
+  48063 B gzipped (limit 48294, 100%) — core ESM entry + every shared chunk it imports
+  files: chunk-HJUFIIUR.js, chunk-QMDEYXZ4.js, chunk-ZBXG25HE.js, index.js
+  external (not weighed): alien-signals
+dist/formajs-runtime.global.js
+  41387 B gzipped (limit 41500, 100%) — CDN runtime bundle (single self-contained IIFE)
+  files: formajs-runtime.global.js
+dist/forma.esm.js
+  48209 B gzipped (limit 48448, 100%) — CDN browser ESM bundle (self-contained, inlines alien-signals)
+  files: forma.esm.js
+dist/formajs-frame.global.js
+  39735 B gzipped (limit 40000, 99%) — preview frame runtime (one classic script, inlined by the server)
+  files: formajs-frame.global.js
+dist/formajs-runtime-hardened.global.js
+  40309 B gzipped (limit 40500, 100%) — CDN hardened runtime bundle (single self-contained IIFE)
+  files: formajs-runtime-hardened.global.js

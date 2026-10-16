@@ -1,0 +1,673 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completeMatrix": false,
+  "selection": "selector",
+  "node": "v24.22.0",
+  "sourceCommit": "afb51eba8e29e0d9f7f9c40029d4cf70acab2188",
+  "sourceClean": true,
+  "catalogueSha256": "e3c80a2219036509943be5397353e055176f7f5a6bb660fc9e5f2026ed1a2576",
+  "requested": 57,
+  "requestedCapabilityControls": 3,
+  "cases": [
+    {
+      "id": "value/selector-secret/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/state/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/computed/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/text/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/show/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/if/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/model/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/class/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/attribute/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/event/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-text/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-attribute/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-property/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/persist/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/ref/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/srcdoc/typical",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/url/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/form-action/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/image-src/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/svg-xlink/typical",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/state/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/computed/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/text/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/show/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/if/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/model/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/class/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/attribute/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/event/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-text/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-attribute/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-property/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/persist/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/ref/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/srcdoc/all",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/url/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/form-action/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/image-src/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/svg-xlink/all",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "selector/none",
+      "live": true,
+      "value": "unbound",
+      "codes": [
+        "FORMA_E_GRANT_DOM"
+      ],
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "selector/typical",
+      "live": true,
+      "value": "unbound",
+      "codes": [
+        "FORMA_E_GRANT_DOM"
+      ],
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "selector/all",
+      "live": true,
+      "value": "read",
+      "codes": [],
+      "outsideReads": 1,
+      "submits": 0,
+      "requests": []
+    }
+  ],
+  "observers": [
+    {
+      "profile": "none",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "unexpectedResponse": 404,
+      "trustedTypesRefused": true
+    },
+    {
+      "profile": "typical",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "unexpectedResponse": 404,
+      "trustedTypesRefused": true
+    },
+    {
+      "profile": "all",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "unexpectedResponse": 404,
+      "trustedTypesRefused": true
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:63232"
+    },
+    {
+      "method": "GET",
+      "path": "/observer-unexpected",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:63232"
+    },
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:63232"
+    },
+    {
+      "method": "GET",
+      "path": "/observer-unexpected",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:63232"
+    },
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:63232"
+    },
+    {
+      "method": "GET",
+      "path": "/observer-unexpected",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:63232"
+    }
+  ],
+  "harnessSources": {
+    "catalogue.mjs": "e7f1e8f321ca5c1cf96ca90a5be8c0880e0580fb189702026db06478c5c535a9",
+    "browser-case.mjs": "950d3893e973a578a39d8352e94f7e40e55d52880a3ad3a5cb4a8b1d4146bf1a",
+    "capabilities.mjs": "efc0456760d65452bb4d3a2d4bc3aae18dad95727593c2e5d3c88dbf99eadded",
+    "observers.mjs": "56bf79c8f930b7a697a25abf6064d3311e65e80b8b6c8b768cd7d542c6c186d4",
+    "server.mjs": "81835d321462e4097df5e45331d3638f9e996a9bec1ac67e559fd818932dd506",
+    "run.mjs": "2c8ebca705e1ed8c0e9f190b455cb9fcc810895ea7c72398540b6e757f7b586a",
+    "probe-provenance.json": "8f5160f7b386bee90a599221204e967ac9c2435f3a9b09de094bbe9e36fb8921"
+  },
+  "provenance": {
+    "historical": 93,
+    "current": 260,
+    "currentSecurity": 151
+  },
+  "runtimePath": "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma129-packed-security-gnqRoO/packages/core/dist/formajs-runtime.global.js",
+  "runtimeSha256": "b9a14f2596b4ec1924297b51146c28efba4926b13b3a83b02c1b773b3495e23c",
+  "policy": "default-src 'none'; script-src 'nonce-EHspsw5gFOeA+FyqdGehfVG/l3Uswawz' 'strict-dynamic'; connect-src 'self' http://127.0.0.1:63231; img-src 'none'; style-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+  "browser": "151.0.7922.34",
+  "current": {
+    "item": {
+      "id": "selector",
+      "expression": "$el.closest('div').querySelector('[data-secret] span') ? 'read' : 'none'",
+      "allowed": "read",
+      "denied": "unbound",
+      "code": "FORMA_E_GRANT_DOM"
+    },
+    "profile": "all",
+    "id": "selector/all",
+    "otherOrigin": "http://127.0.0.1:63231"
+  },
+  "lastObservation": {
+    "id": "selector/all",
+    "live": true,
+    "value": "read",
+    "codes": [],
+    "outsideReads": 1,
+    "submits": 0
+  },
+  "elapsedMs": 1247.381625
+}

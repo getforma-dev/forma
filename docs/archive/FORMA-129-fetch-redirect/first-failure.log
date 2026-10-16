@@ -1,0 +1,1 @@
+{"passed":false,"completeMatrix":false,"cases":0,"capabilities":1,"elapsedMs":421.984959,"error":"AssertionError [ERR_ASSERTION]: redirect escaped the granted path\n\ntrue !== false\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs:82:45"}
