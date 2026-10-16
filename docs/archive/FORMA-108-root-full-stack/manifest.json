@@ -56,6 +56,30 @@
       "bytes": 212,
       "sha256": "7bc13efb1c40f0bf52d0471d1ef58811d1c7d8b450435126a27d566e0ababd12",
       "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/.last-run.json",
+      "bytes": 194,
+      "sha256": "ebf71cc9cb73ed0cd383263c938d50e63ddaa26c80f973cfc84004d6ef5452fc",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/full-stack-HTML-Runtime-\u2014--34071-ng-when-its-handle-unmounts-chromium/error-context.md",
+      "bytes": 11016,
+      "sha256": "5562a36c9e295e526a530640dbdb095ece33030301dc354537859cec8c008fa2",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/full-stack-HTML-Runtime-\u2014--34071-ng-when-its-handle-unmounts-firefox/error-context.md",
+      "bytes": 11016,
+      "sha256": "5562a36c9e295e526a530640dbdb095ece33030301dc354537859cec8c008fa2",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/full-stack-HTML-Runtime-\u2014--34071-ng-when-its-handle-unmounts-webkit/error-context.md",
+      "bytes": 11016,
+      "sha256": "5562a36c9e295e526a530640dbdb095ece33030301dc354537859cec8c008fa2",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
     }
   ]
 }

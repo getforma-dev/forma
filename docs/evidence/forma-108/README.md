@@ -47,3 +47,10 @@ O3 rendered900 results and remains a real slow-search residual, not a passed50ms
 ## Evidence integrity
 
 `manifest.json` authenticates every raw file below this directory. Original failing invocations remain alongside corrected evidence; no original source, report or timing is overwritten. The packed-core adapter proof here is not the all-seven-package P17 release result, which must execute again on the final candidate.
+
+
+## Root static fixture (later CI correction)
+
+CI38857234217 at9e found nine actual root full-stack failures: that fixture loaded the runtime IIFE without owning any mount. Its byte-exact prior source and full hosted log are in `docs/archive/FORMA-108-root-full-stack/`. Fixture-only a897 adds the required external reviewed/no-grants owner; all existing assertions remain, plus outside-root and explicit-disposal controls. Fresh sync rebuilds core and the component IIFE. The runtime hash is still828ce6ac, identical to the previous packed/security/timing proof.
+
+The first actual three-engine run passed all48 original tests and failed only the3 new disposal tests because they attempted a locator click after unmount cleared the root. That source, raw JSON/log, contexts and fresh sync output remain archived. At independently approved7f2b0b26, the focused3 corrected cases pass: retained real button/text nodes, root empty after unmount, detached button no longer updates retained text, unowned sibling remains inert. The original48 and corrected3 form combined passing coverage; the first51-case invocation is not reported as wholly green. `root-full-stack/qualification.json` pins current source, exact runtime/component bytes and both raw results. Current integrated R17 and all-seven P17 remain required.
