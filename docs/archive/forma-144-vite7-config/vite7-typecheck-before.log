@@ -1,0 +1,14 @@
+
+> @getforma/core@3.0.0-dev typecheck
+> tsc --noEmit
+
+vitest.bench.config.ts(58,3): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'oxc' does not exist in type 'ViteUserConfigExport'.
+npm error Lifecycle script `typecheck` failed with error:
+npm error code 2
+npm error path /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core
+npm error workspace @getforma/core@3.0.0-dev
+npm error location /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core
+npm error command failed
+npm error command sh -c tsc --noEmit

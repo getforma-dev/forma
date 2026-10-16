@@ -104,6 +104,7 @@ if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)"
 fi
 
 step "e2e lanes: fixtures, the SSR site, the preview frame, the fixture applications"
+node --test scripts/sync-fixtures.test.mjs
 bash e2e/sync-fixtures.sh
 bash e2e/ssr/build.sh
 bash e2e/frame/build.sh

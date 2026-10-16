@@ -462,7 +462,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
     for (const name of INTERNAL_NPM) if (all[name]) expect(all[name]).toBe(`=${SOURCE_VERSION}`);
     expect(all['@getforma/core']).toBe(`=${SOURCE_VERSION}`);
     expect(all['@getforma/build']).toBe(`=${SOURCE_VERSION}`);
-    expect(pkg.engines?.node).toBe('>=20.19.0');
+    expect(pkg.engines?.node).toBe('>=22');
   });
 
   it('has a JSX-to-h() tsconfig', () => {

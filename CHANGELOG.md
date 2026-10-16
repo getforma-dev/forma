@@ -10,7 +10,18 @@
 
 ## [Unreleased]
 
+- Watch tests wait for every initial nonsplit entry context before editing files, preventing another context's initial build from satisfying the requested rebuild. A real three-entry barrier control preserves the failure; watch deadlines and production behavior are unchanged.
+
 - FORMA-183: the integrated P1/P2/P3 corpus now blocks R17 at step 1 with 100 generated states per declared schema. Firefox and WebKit parity block release at 10 states. Every gate requires an empty expected-divergent list and retains the actual counts and timing report.
+
+### Final template packaging — FORMA-144
+
+- Resolve the E2E fixture bundler from the selected core package, including workspace-hoisted installations.
+
+- Match core test and benchmark JSX configuration to the locked Vite 7 transform, and typecheck every Vitest configuration.
+- Stable template manifests use coordinated caret requirements; prereleases and source seeds remain exact. Packed lockfiles still authenticate the exact candidate archives, and failed packaging restores all template source files. Both templates now declare the approved Node 22 floor.
+- Update and deduplicate the workspace test dependencies to patched Vitest 4.1.12 and compatible transitive fixes. The separate dashboard watcher advisory remains documented; its locked graph is not covered by the workspace’s zero-finding audit.
+- Add the 0.6.x template migration guide and record the deliberate retention of both authenticated template esbuild copies. Final packed template, size and release qualification remain required.
 
 ### Lexical JSX SVG namespaces — FORMA-171
 

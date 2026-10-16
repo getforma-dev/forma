@@ -1,0 +1,14 @@
+vitest.config.ts FAIL The input was expected to not match the regular expression /WrongFactory|WrongFragment|jsx-runtime|React\.createElement/. Input:
+
+'__vite_ssr_exportName__("tree", () => { try { return tree } catch {} });\n' +
+  'const h = (tag, props, ...children) => ({ tag, props, children });\n' +
+  'const Fragment = "fragment";\n' +
+  'const tree = /* @__PURE__ */ WrongFactory(WrongFragment, null, /* @__PURE__ */ WrongFactory("span", { "data-value": "ok" }, "text"));\n'
+
+vitest.bench.config.ts FAIL The input was expected to not match the regular expression /WrongFactory|WrongFragment|jsx-runtime|React\.createElement/. Input:
+
+'__vite_ssr_exportName__("tree", () => { try { return tree } catch {} });\n' +
+  'const h = (tag, props, ...children) => ({ tag, props, children });\n' +
+  'const Fragment = "fragment";\n' +
+  'const tree = /* @__PURE__ */ WrongFactory(WrongFragment, null, /* @__PURE__ */ WrongFactory("span", { "data-value": "ok" }, "text"));\n'
+

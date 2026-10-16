@@ -147,6 +147,12 @@ export function versionFiles(root, version) {
 
 const dependencyKinds = ['dependencies', 'devDependencies', 'optionalDependencies'];
 const packedMetadata = ['dependencies', 'peerDependencies', 'peerDependenciesMeta', 'optionalDependencies', 'engines', 'bin'];
+// Source seeds and prereleases stay coordinated exactly. Stable consumers may
+// update within 3.x, while the shipped locks still authenticate the tested set.
+export function templateRequirement(version) {
+  assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3, 'template requirement needs a coordinated 3.x-or-later version');
+  return `${version.includes('-') ? '=' : '^'}${version}`;
+}
 function npmUrl(p) { return `https://registry.npmjs.org/${p.name}/-/${p.name.split('/').at(-1)}-${p.version}.tgz`; }
 export function assertNpmTemplateLock(manifest, lock, packages, artifactDir) {
   assert(lock.packages?.[''], 'template npm lock is missing its root');
@@ -243,7 +249,7 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
     if (!lock.packages[key]) continue;
     const file = join(artifactDir, candidate.file);
     for (const kind of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-      if (manifest[kind]?.[candidate.name]) manifest[kind][candidate.name] = local ? `file:${file}` : `=${candidate.version}`;
+      if (manifest[kind]?.[candidate.name]) manifest[kind][candidate.name] = local ? `file:${file}` : templateRequirement(candidate.version);
     }
     const entry = lock.packages[key];
     entry.resolved = local ? `file:${file}` : npmUrl(candidate);
@@ -364,7 +370,7 @@ export function stageTemplates(root, packages, out) {
       const name = prefix.split(' ')[0];
       const candidate = packages.find(p => p.registry === 'crates' && p.name === name);
       assert(candidate, `template has no release candidate for ${name}`);
-      return `${prefix}=${candidate.version}"`;
+      return `${prefix}${templateRequirement(candidate.version)}"`;
     });
     stagedFiles.set(join(dir, 'Cargo.toml'), cargo);
     stagedFiles.set(join(dir, 'Cargo.lock'), stageCargoLock(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), packages, false, undefined, cargoGraph));
