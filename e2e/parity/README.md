@@ -188,8 +188,6 @@ The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found 
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
-| F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`, and at step 1 `nullish` and `closed-nullish` `p[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
-| F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
 
 F4 can never become equal: the server has no value to write. In warning mode the compiler reports
@@ -200,6 +198,8 @@ longer compiles, not because the trees agree; the corpus fixture has to move the
 `browserOnly()` or drop it, and the entry fails the run as an unexpected pass.
 
 Checkpoint C resolves F6: the merged integration run on 2026-10-15 observed both canonical-key adoption entries as unexpected passes, with all 99 P2 checks equal. The two resolved entries were removed; the original failure report is preserved in the release work evidence.
+
+The F2/F3 attribute fixes were verified against the expanded 28-module corpus on 2026-10-15: all six listed entries became unexpected passes. Their removal leaves only F4 and F5; the original failing expectation report is preserved in the release work evidence.
 
 ## The corpus and its ratchet
 

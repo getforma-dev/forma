@@ -61,6 +61,10 @@ docs/archive/2026-10-15-pre-value-rules/** -text
 # shared key vectors are hashed by nothing but read by both suites as exact bytes.
 docs/archive/2026-10-15-pre-native-keys/** -text
 crates/forma-ir/tests/fixtures/parity/*.json text eol=lf
+# FORMA-182 F2/F3: archived pre-attribute-values corpus outputs are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-attribute-values/** -text
+
+docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
 # FORMA-181 F1: the pre-list-source originals are authenticated by SHA-256.
 docs/archive/2026-10-15-pre-list-source/** -text
 # FORMA-181 F1: tests/list-source.test.ts hashes the live corpus sources against the ledger.

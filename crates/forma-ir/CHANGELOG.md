@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+- FORMA-182, rule 6's attribute table (finding F2), **rendered output changes with no source
+  change**: a `DYN_ATTR` over a `true` slot writes the bare name only for an HTML boolean
+  attribute (`HTML_BOOLEAN_ATTRIBUTES`, the same list as core's `BOOLEAN_ATTRS`); on any other
+  attribute it writes the word, `data-live="true"`, `aria-pressed="true"`, `class="true"`, as
+  `h()` does. `false` and `Null` still omit the attribute. Shared vectors
+  `tests/fixtures/parity/attributes.json`; test `walker.rs > value_rule_vectors >
+  rule_6_attribute_values_follow_one_table`; the js-emitter goldens `jsx-page.html` and
+  `sub-component-scopes.html` regenerated, originals archived with a ledger in
+  `docs/archive/2026-10-15-pre-attribute-values/`.
+
 - FORMA-181 checkpoint C (review follow-ups of B): `ListKeyViolation` is `#[non_exhaustive]`
   with a constructor, `ListKeyViolation::new`; a key path segment holding a dot or a bracket,
   or an empty one, is quoted in the diagnostic (`["user.id"]`); a row's key is held once (one

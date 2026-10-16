@@ -233,7 +233,10 @@ L444). FORMA-102 maps declared data as described below (declared props seed sign
 stop being named after variables); until it does, the bytecode's operands are slot ids and this
 table stays required (Q6 settled). Every `name_str_idx` indexes strings. Every nonempty default
 must be valid UTF-8 and parse for its slot type at load (`LOAD-103`), rather than becoming Null
-on the first render. Empty bytes mean "no default" for every type. Text accepts any UTF-8;
+on the first render. Empty bytes mean "no default" for every type, so a CLIENT Text slot
+cannot carry the empty string: the compiler writes a non-boolean attribute whose server value is `""` as a
+static attribute instead of a `DYN_ATTR` over such a slot (FORMA-182 finding F3,
+`docs/parity-rules.md` rule 6's attribute table), and in text the two render alike. Text accepts any UTF-8;
 Bool accepts exactly `true` or `false`; Number accepts finite decimal text with optional sign,
 fraction and exponent; Array accepts `[]` (the existing reader's supported array default); Object
 has no nonempty default in this ticket. The frozen corpus must confirm default compatibility; this makes the
