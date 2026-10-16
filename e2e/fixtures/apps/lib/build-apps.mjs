@@ -102,3 +102,23 @@ export async function buildNegative({ build, root = FIXTURES, outRoot, name }) {
     return { built: false, message: String(error.message), diagnostics };
   }
 }
+
+/** A formerly refused shape now admitted by policy: build it and keep the emitted size report. */
+export async function buildPositive({ build, root = FIXTURES, outRoot, name }) {
+  const entry = readApps(root).positive.find(each => each.name === name);
+  assert(entry, `unknown positive fixture ${name}`);
+  const dir = join(outRoot, 'positive', name);
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  const result = await build({
+    app: `fixture-positive-${name}`,
+    entryPoints: [{ entry: join(root, entry.entry), outfile: 'page.js' }],
+    routes: { '/': { js: ['page'], css: [] } },
+    outputDir: join(dir, 'dist'),
+    ssr: true,
+    strict: true,
+    diagnosticsJson: join(dir, 'diagnostics.json'),
+  });
+  assert.deepEqual(result.diagnostics.filter(each => each.severity !== 'note'), [], `${name}: strict build reported diagnostics`);
+  return { outputDir: join(dir, 'dist'), sizeReport: JSON.parse(readFileSync(join(dir, 'dist', 'size-report.json'), 'utf8')) };
+}

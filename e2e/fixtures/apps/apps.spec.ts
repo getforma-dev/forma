@@ -222,7 +222,7 @@ test.describe('activation is required, not assumed', () => {
   });
 });
 
-test.describe('fixtures the closed type set and N2 refuse', () => {
+test.describe('fixture type refusals and accepted N2 shapes', () => {
   const negative = (INDEX as unknown as { negative: { name: string; entry: string; code: string; message: string; file?: string }[] }).negative;
   const buildOne = async (name: string) => {
     const { buildNegative } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
@@ -251,19 +251,24 @@ test.describe('fixtures the closed type set and N2 refuse', () => {
     expect(result.diagnostics.some((each: { code: string; message: string }) => each.code === entry.code && each.message.includes(entry.message))).toBe(true);
   });
 
-  test('an island holding a client-side list is over N2 today (BUILD-819): the finding, until the ceiling or the list code changes', async () => {
-    const entry = negative.find((each) => each.name === 'list-island')!;
-    const result = await buildOne(entry.name);
-    // If this fails because the build succeeded, N2 now admits a list island: delete this test and
-    // put the list back into the ksx check chips island and the fauth results island (FORMA-188).
-    expect(result.built, 'N2 now admits an island with a client-side list; flip this fixture').toBe(false);
-    expect(result.message).toContain(entry.code);
-    expect(result.message).toContain(entry.message);
-    const size = /Forma code ([\d,]+) B against ([\d,]+) B/.exec(result.message);
-    expect(size, 'BUILD-819 names both the measured Forma code and its ceiling').not.toBeNull();
-    const bytes = Number(size![1].replaceAll(',', ''));
-    const ceiling = Number(size![2].replaceAll(',', ''));
-    expect(bytes).toBeGreaterThan(ceiling);
+  test('an island holding a client-side list builds inside the emitted size policy (L-58)', async () => {
+    const { buildPositive } = await import(pathToFileURL(join(HERE, 'lib', 'build-apps.mjs')).href);
+    const { build } = await import(pathToFileURL(join(HERE, 'node_modules', '@getforma', 'build', 'dist', 'index.js')).href);
+    const { sizeReport } = await buildPositive({ build, outRoot: OUT, name: 'list-island' });
+    expect(sizeReport.version).toBe(1);
+    expect(sizeReport.routes).toHaveLength(1);
+    const [route] = sizeReport.routes;
+    expect(route.route).toBe('/');
+    expect(route.class).toBe('islands');
+    expect(route.canvas).toBe(false);
+    expect(route.ceilings.forma).toBe(sizeReport.ceilings.forma);
+    expect(route.ceilings.javascript).toBe(sizeReport.ceilings.page);
+    expect(route.forma.gzip).toBeGreaterThan(0);
+    expect(route.forma.gzip).toBeLessThanOrEqual(route.ceilings.forma);
+    expect(route.javascript.gzip).toBeGreaterThan(0);
+    expect(route.javascript.gzip).toBeLessThanOrEqual(route.ceilings.javascript);
+    expect(route.exceeded).toEqual([]);
+    expect(route.over).toBe(false);
   });
 });
 

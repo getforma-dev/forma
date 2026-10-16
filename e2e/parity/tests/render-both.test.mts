@@ -1,6 +1,7 @@
-// renderBoth end to end: the real walker, core's dist in Chromium, the comparison. The two cases
-// of the first slice's gate, and the ticket's acceptance test in harness form: a walker output
-// with one attribute's text altered fails P1 naming the fixture, the state and the node.
+// renderBoth end to end: the server's typed path, its document in Chromium, core's dist, the
+// comparison. The two cases of the first slice's gate, and the ticket's acceptance test in harness
+// form: a server output with one attribute's text altered fails P1 naming the fixture, the state
+// and the node.
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium, type Browser } from '@playwright/test';
@@ -14,12 +15,13 @@ after(async () => { await browser?.close(); });
 const run = (module: string, index: number, alterServerHtml?: (html: string) => string) =>
   renderBoth({ module, index, seed: 'forma-183', engine: 'chromium', browser, ...(alterServerHtml ? { alterServerHtml } : {}) });
 
-test('corpus.json names the fourteen js-emitter modules, each with an .ir and a page export', () => {
+test('corpus.json names the fourteen js-emitter modules, each with an .ir, its entry folder and a page export', () => {
   const corpus = readCorpus();
   assert.equal(corpus.length, 14);
   assert.equal(new Set(corpus.map(entry => entry.name)).size, 14);
   for (const entry of corpus) {
     assert.match(entry.ir, new RegExp(`^crates/forma-ir/tests/fixtures/js-emitter/${entry.name}\\.ir$`));
+    assert.equal(entry.corpus, 'packages/compiler/tests/fixtures/ir-corpus');
     assert.match(entry.page.file, new RegExp(`^packages/compiler/tests/fixtures/ir-corpus/${entry.name}/`));
     assert.ok(['none', 'named', 'destructured'].includes(entry.page.props));
   }
@@ -29,7 +31,7 @@ test('corpus.json names the fourteen js-emitter modules, each with an .ir and a 
 test('create-show#0: the walker and core agree on the source state', async () => {
   const report = await run('create-show', 0);
   assert.equal(report.verdict, 'equal', summarize(report));
-  assert.equal(report.serverPath, 'low-level');
+  assert.equal(report.serverPath, 'typed');
   assert.deepEqual(report.state, {});
   assert.ok(report.server.html && report.server.tree && report.client.tree);
   assert.equal(summarize(report), 'P1 create-show#0 equal');
@@ -43,7 +45,7 @@ test('nested-islands#3: a generated state (</script> and a marker\'s spelling in
   assert.ok(report.server.html?.includes('title="&lt;!--f:t0--&gt;"'));
 });
 
-test('a walker output with one attribute\'s text altered fails P1 naming the fixture, the state and the node', async () => {
+test('a server output with one attribute\'s text altered fails P1 naming the fixture, the state and the node', async () => {
   const report = await run('nested-islands', 3, html => html.replace('title="&lt;!--f:t0--&gt;"', 'title="&lt;!--f:t1--&gt;"'));
   assert.equal(report.verdict, 'different');
   assert.equal(report.count, 1);
@@ -65,7 +67,7 @@ test('a twin core cannot build is the report\'s error verdict, not a throw', asy
   assert.ok(report.server.html?.includes('<!--f:l'), 'the server side rendered and is kept');
 });
 
-test('a walker output missing an element is a structural difference', async () => {
+test('a server output missing an element is a structural difference', async () => {
   const report = await run('nested-islands', 0, html => html.replace('<hr>', ''));
   assert.equal(report.verdict, 'different');
   assert.ok(report.structural > 0, summarize(report));

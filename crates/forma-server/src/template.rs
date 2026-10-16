@@ -404,7 +404,7 @@ mod tests {
             .html
             .contains("<div id=\"app\" data-forma-build=\"test\"></div>"));
         // Check that the #app div does NOT have the SSR attribute
-        assert!(!page.html.contains("<div id=\"app\" data-forma-ssr>"));
+        assert!(!page.html.contains("data-forma-ssr"));
     }
 
     #[test]

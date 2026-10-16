@@ -142,7 +142,9 @@ export function stripTransport(root: CanonNode, side: Side, rootPath = ''): Stri
 
 export type DiffKind =
   | 'tag' | 'namespace' | 'attribute-missing' | 'attribute-extra' | 'missing' | 'extra'
-  | 'attribute-value' | 'attribute-namespace' | 'text' | 'comment' | 'key';
+  | 'attribute-value' | 'attribute-namespace' | 'text' | 'comment' | 'key'
+  // P2: a mutation record during activation, and an activation error (console or forma:error).
+  | 'mutation' | 'activation-error';
 /** A difference in what nodes exist; the stop rule (e2e/parity/README.md, 'The stop rule') counts these. */
 export const STRUCTURAL_KINDS: ReadonlySet<DiffKind> = new Set(['tag', 'namespace', 'attribute-missing', 'attribute-extra', 'missing', 'extra']);
 
@@ -317,6 +319,12 @@ export interface Report {
   readonly refusal?: { readonly code: string; readonly path?: string; readonly message?: string };
   readonly error?: string;
   readonly state?: unknown;
+  /** P2: island hosts on the page, and how many hold core's disposer after activation. */
+  readonly activation?: { readonly hosts: number; readonly activated: number };
+  /** The typed path's bind or load refusals, when the low-level path rendered in its place. */
+  readonly bind?: readonly { readonly code: string; readonly path: string; readonly message: string }[];
+  /** P1, when not equal: the compiler's diagnostics for the module's page, which often explain a difference. */
+  readonly compiler?: readonly string[];
 }
 
 export function makeReport(

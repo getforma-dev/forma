@@ -2,18 +2,20 @@
  * Generated states for the parity harness (FORMA-183, DR-9; e2e/parity/README.md, 'Generated states').
  *
  * A generated state is one value assignment for a declared props schema (FMIR v3 section 0x0005,
- * FORMA-102's closed set), drawn deterministically from a seed, an index and the schema alone:
- * the same three inputs give the same bytes on any platform. Each leaf type has an ordered edge
- * list, and each field a rotation into it: its rank among the same-typed fields of the schema, in
- * schema order (the first string field 0, the second 1, ...). State `i` takes edge
- * `(i + rank) mod edges.length`. So the first `edges.length` states of a field visit every edge of
- * its type once, two same-typed fields hold different edges in every one of those states (a value
- * routed into the wrong slot cannot pass), and the first fields still meet the ticket's priority
- * edges (empty, long, `</script>`, NUL, CRLF) within ten states, which a hash of the path would
- * scatter across the whole list. After the list, a coin decides
- * between an edge and a random draw. The string domain includes every `input` of the shared rule-1 vectors
- * (crates/forma-ir/tests/fixtures/parity/normalization.json), so a vector added there joins the
- * generator without a code change.
+ * FORMA-102's closed set), drawn deterministically from a seed, an index, the schema and the
+ * module's list key paths: the same inputs give the same bytes on any platform. Each leaf type has
+ * an ordered edge list, and each field a rank among the same-typed fields of the schema, in schema
+ * order. State `i` takes the field's edge rotated by its rank inside the list's priority block
+ * first (the first ten edges: empty, one character, long, `</script>`, a marker's spelling, the
+ * escapable five, NUL, CRLF, CR, a leading line feed) and over the rest after (`edgeIndex`). So
+ * every field meets every priority edge within ten states, two same-typed fields hold different
+ * edges in every state below the list's length (a value routed into another prop's slot cannot
+ * pass), and each field visits every edge once. After the list, a coin decides between an edge and
+ * a random draw. An optional's presence follows bit `rank` of the index (`present`), so `k`
+ * optionals reach all `2^k` combinations. A list key's field gets unique identities in each array
+ * (FORMA-181: a string or a safe integer, never repeated). The string domain includes every `input`
+ * of the shared rule-1 vectors (crates/forma-ir/tests/fixtures/parity/normalization.json), so a
+ * vector added there joins the generator without a code change.
  *
  * Output is the wire's own JSON: an absent optional object field is omitted, an absent optional
  * array element is `null`, a date is epoch milliseconds. The server's typed API and the browser's
@@ -142,13 +144,18 @@ export const DATE_EDGES: readonly number[] = [0, -1, 1, 8.64e15, -8.64e15, 1_792
 
 export const ARRAY_LENGTH_EDGES: readonly number[] = [0, 1, 2, 3, 32];
 
-/** Values the typed API must refuse (not parity cases: the typed path's refusal table, FORMA-183's second slice). */
-export const REFUSALS: readonly { readonly type: SchemaType['kind']; readonly value: number; readonly code: string }[] = [
-  { type: 'number', value: Number.NaN, code: 'RENDER-402' },
-  { type: 'number', value: Number.POSITIVE_INFINITY, code: 'RENDER-402' },
-  { type: 'number', value: Number.NEGATIVE_INFINITY, code: 'RENDER-402' },
+/**
+ * Values the typed API must refuse, in wire form (JSON carries no NaN or infinity, so those travel
+ * as `{"$number": ...}`, which the server harness's `DynProps` reads): not parity cases, but the
+ * table that checks the typed path refuses each with its code, at the value's declared path.
+ */
+export const REFUSALS: readonly { readonly type: 'number' | 'date'; readonly value: Json; readonly code: string }[] = [
+  { type: 'number', value: { $number: 'NaN' }, code: 'RENDER-402' },
+  { type: 'number', value: { $number: 'Infinity' }, code: 'RENDER-402' },
+  { type: 'number', value: { $number: '-Infinity' }, code: 'RENDER-402' },
   { type: 'date', value: 8.64e15 + 1, code: 'RENDER-403' },
   { type: 'date', value: -8.64e15 - 1, code: 'RENDER-403' },
+  { type: 'date', value: { $number: 'NaN' }, code: 'RENDER-403' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -182,21 +189,93 @@ function randomDate(rng: Rng): number {
 // The generator
 // ---------------------------------------------------------------------------
 
-/** Edge `(index + offset) mod n` first; past the list, a coin between an edge and a random draw. */
-function pick<T>(edges: readonly T[], index: number, offset: number, rng: Rng, random: () => T): T {
-  if (index < edges.length) return edges[(index + offset) % edges.length]!;
+/** The size of each edge list's priority block: the edges every field must meet within ten states. */
+export const PRIORITY = 10;
+
+/**
+ * Which edge state `index` takes for a field of rank `rank`: inside the priority block first
+ * (`(index + rank) mod P`, so every field meets every priority edge within `P` states), then over
+ * the rest (`P + (index - P + rank) mod (n - P)`). Each field visits every edge once. Two fields of
+ * different rank hold different edges in every state below `n` while their ranks differ modulo
+ * both `P` and `n - P`: with more same-typed fields than the smaller of the two, ranks wrap (the
+ * numbers' remainder after the block is 4 edges, so a fifth number field shares edges with the
+ * first after state 9).
+ */
+export function edgeIndex(n: number, index: number, rank: number): number {
+  const block = Math.min(PRIORITY, n);
+  if (index < block) return (index + rank) % block;
+  return block + ((index - block + rank) % (n - block));
+}
+
+/** The rotated edge first; past the list, a coin between an edge and a random draw. */
+function pick<T>(edges: readonly T[], index: number, rank: number, rng: Rng, random: () => T): T {
+  if (index < edges.length) return edges[edgeIndex(edges.length, index, rank)]!;
   return rng.int(2) === 0 ? edges[rng.int(edges.length)]! : random();
 }
 
 /**
- * Each field's rotation into its edge list, keyed by the field's path pattern in the schema
- * (`rows[].id`; `a?` for an optional's presence, `a#length` for an array's length). Derived from
- * the schema alone, never from a state, so a field keeps its rotation in every state (an absent
- * optional or a shorter array never shifts another field's). The offset is the field's rank among
- * the fields of its family (string, number, boolean, date, one enum's literal set, optional
- * presence, array length) in schema order, modulo the list's length.
+ * Whether an optional of rank `rank` is present at state `index`: bit `rank` of the index is 0. The
+ * first optional alternates every state, the second every two, and so on, so `k` optionals reach
+ * all `2^k` present/absent combinations within `2^k` states (all present at state 0).
+ */
+export function present(index: number, rank: number): boolean {
+  return ((index >>> (rank % 30)) & 1) === 0;
+}
+
+/** The inner value's own index: the state index with the presence bit removed, so it advances once per presence. */
+function innerIndex(index: number, rank: number): number {
+  const bit = rank % 30;
+  return ((index >>> (bit + 1)) << bit) | (index & ((1 << bit) - 1));
+}
+
+/**
+ * List keys (FORMA-181, DR-8): a key is a string or an integer within ±(2^53 − 1), and the rows of
+ * one list must not repeat one. A generated array of objects that holds a key path's field gets
+ * unique identities there: integers stepping by one from a base (away from the safe bound), or an
+ * edge string suffixed with the row's position (unique even where rule 1 makes two edges one text).
+ */
+export const KEY_INTEGER_BASES: readonly number[] = [0, 1, -1, 2 ** 53 - 1, -(2 ** 53 - 1), 42];
+
+function keyValue(kind: 'number' | 'string', index: number, row: number): Json {
+  if (kind === 'number') {
+    const base = KEY_INTEGER_BASES[index % KEY_INTEGER_BASES.length]!;
+    return base >= 2 ** 52 ? base - row : base + row;
+  }
+  return `${STRING_EDGES[(index + row) % STRING_EDGES.length]}#${row}`;
+}
+
+/** The declared kind at `segments` under an object type, unwrapping optionals; null when not a number or string. */
+function keyKind(schema: Schema, type: SchemaType, segments: readonly string[]): 'number' | 'string' | null {
+  let current: SchemaType = type;
+  for (const segment of segments) {
+    while (current.kind === 'optional') current = current.inner;
+    if (current.kind !== 'object') return null;
+    const field = schema[current.object]?.find(f => f.name === segment);
+    if (!field) return null;
+    current = field.type;
+  }
+  while (current.kind === 'optional') current = current.inner;
+  return current.kind === 'number' || current.kind === 'string' ? current.kind : null;
+}
+
+function setKey(row: Json, segments: readonly string[], value: Json): void {
+  let target = row;
+  for (const segment of segments.slice(0, -1)) {
+    if (!target || typeof target !== 'object' || Array.isArray(target)) return;
+    target = (target as { [key: string]: Json })[segment] ?? null;
+  }
+  if (target && typeof target === 'object' && !Array.isArray(target)) (target as { [key: string]: Json })[segments[segments.length - 1]!] = value;
+}
+
+/**
+ * Each field's rank, keyed by the field's path pattern in the schema (`rows[].id`; `a?` for an
+ * optional's presence, `a#length` for an array's length): its position among the fields of its
+ * family (string, number, boolean, date, one enum's literal set, optional presence, array length)
+ * in schema order. Derived from the schema alone, never from a state, so a field keeps its rank in
+ * every state (an absent optional or a shorter array never shifts another field's).
  */
 type Offsets = ReadonlyMap<string, number>;
+/** By schema identity: a schema is treated as immutable once generated from (they come from `describe`). */
 const offsetCache = new WeakMap<Schema, Offsets>();
 
 export function fieldOffsets(schema: Schema): Offsets {
@@ -208,7 +287,7 @@ export function fieldOffsets(schema: Schema): Offsets {
     if (size === 0 || offsets.has(key)) return;
     const rank = ranks.get(family) ?? 0;
     ranks.set(family, rank + 1);
-    offsets.set(key, rank % size);
+    offsets.set(key, rank);
   };
   const visit = (type: SchemaType, key: string, active: number[]): void => {
     switch (type.kind) {
@@ -229,7 +308,7 @@ export function fieldOffsets(schema: Schema): Offsets {
   return offsets;
 }
 
-interface Walk { readonly schema: Schema; readonly offsets: Offsets; readonly active: number[] }
+interface Walk { readonly schema: Schema; readonly offsets: Offsets; readonly active: number[]; readonly keyPaths: readonly (readonly string[])[] }
 
 function leaf(type: SchemaType, walk: Walk, index: number, rng: Rng, path: string, key: string): Json | undefined {
   const offset = (suffix = '') => walk.offsets.get(key + suffix) ?? 0;
@@ -242,11 +321,12 @@ function leaf(type: SchemaType, walk: Walk, index: number, rng: Rng, path: strin
       if (type.variants.length === 0) throw new Error(`${path}: enum with no variants`);
       return pick(type.variants, index, offset(), rng, () => type.variants[rng.int(type.variants.length)]!);
     }
-    case 'optional':
-      // Present and absent alternate (by the field's own phase), so both occur for every Option
-      // within two states; the inner value advances once per presence, so ten states visit five
-      // inner edges.
-      return (index + offset('?')) % 2 === 0 ? leaf(type.inner, walk, index >> 1, rng.fork('some'), path, key) : undefined;
+    case 'optional': {
+      // Presence follows bit `rank` of the index (`present`); the inner value advances once per
+      // presence, so the first optional's inner value visits five edges in ten states.
+      const rank = offset('?');
+      return present(index, rank) ? leaf(type.inner, walk, innerIndex(index, rank), rng.fork('some'), path, key) : undefined;
+    }
     case 'array': {
       const length = pick(ARRAY_LENGTH_EDGES, index, offset('#length'), rng, () => rng.int(9));
       const out: Json[] = [];
@@ -254,6 +334,10 @@ function leaf(type: SchemaType, walk: Walk, index: number, rng: Rng, path: strin
         // Each element has its own stream and its own edge step, so elements differ.
         const value = leaf(type.element, walk, index + i, rng.fork(`[${i}]`), `${path}[${i}]`, `${key}[]`);
         out.push(value === undefined ? null : value);
+      }
+      for (const segments of walk.keyPaths) {
+        const kind = keyKind(walk.schema, type.element, segments);
+        if (kind) out.forEach((row, i) => setKey(row, segments, keyValue(kind, index, i)));
       }
       return out;
     }
@@ -279,6 +363,8 @@ function object(id: number, walk: Walk, index: number, rng: Rng, path: string, k
 export interface GenerateOptions {
   /** Names the module, so two modules with equal schemas get different states under one seed. */
   readonly module?: string;
+  /** The module's list key paths (FMIR section 0x0006, `describe`'s `keys`): their fields get unique identities. */
+  readonly keyPaths?: readonly (readonly string[])[];
 }
 
 /** State `index` for `schema` under `seed`: object 0's fields, as wire JSON. */
@@ -286,7 +372,7 @@ export function generate(schema: Schema, seed: string | number, index: number, o
   if (!Number.isInteger(index) || index < 0) throw new RangeError(`state index must be a non-negative integer, got ${index}`);
   if (schema.length === 0) throw new Error('schema has no object 0');
   const rng = splitmix32(fnv1a(`${seed}:${options.module ?? ''}:${index}`));
-  return object(0, { schema, offsets: fieldOffsets(schema), active: [] }, index, rng, '', '');
+  return object(0, { schema, offsets: fieldOffsets(schema), active: [], keyPaths: options.keyPaths ?? [] }, index, rng, '', '');
 }
 
 /** The edge list of a scalar kind, for tests and documentation. */

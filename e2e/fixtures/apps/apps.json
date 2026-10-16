@@ -774,14 +774,13 @@
       "message": "computed declared values remain outside the native subset",
       "file": "negative/computed-condition/app.tsx",
       "why": "the first construct the old tenant login used that 3.0.0 does not admit; the fixture passes a declared boolean instead"
-    },
+    }
+  ],
+  "positive": [
     {
       "name": "list-island",
-      "entry": "negative/list-island/app.tsx",
-      "fails": "size",
-      "code": "BUILD-819",
-      "message": "over its size ceiling",
-      "why": "an island with a client-side list is over N2's 25,500 B of Forma code today; the finding is recorded in FORMA-188's log and the ksx and fauth pages keep their lists outside islands until it is decided"
+      "entry": "positive/list-island/app.tsx",
+      "why": "L-58 admits a client createList island within the emitted route size policy; the fixture must build with a passing report."
     }
   ]
 }
