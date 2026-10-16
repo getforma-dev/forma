@@ -1,8 +1,93 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
-import { changelogEntry, measurementsNotes, releaseNotes, releaseTitle } from './release-record.mjs';
+import { changelogEntry, measurementsNotes, releaseNotes, releaseTitle, qualificationEvidence } from './release-record.mjs';
 import { ROOT, json, releaseMilestone } from './release-set.mjs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { recordEvidence } from './release-evidence.mjs';
+import { auditInputManifest, AUDIT_FILES } from './release-audit.mjs';
+
+const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+const encode = value => JSON.stringify(value, null, 2) + '\n';
+async function evidenceFixture(t, { rc = false } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'forma-record-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+  git('init', '--quiet'); git('config', 'user.name', 'Finite control'); git('config', 'user.email', 'control@example.invalid');
+  writeFileSync(join(root, 'runtime.js'), 'export const actual = true;\n');
+  git('add', '.'); git('commit', '--quiet', '-m', 'review input');
+  const reviewed = git('rev-parse', 'HEAD');
+  if (rc) {
+    const input = auditInputManifest(reviewed, root), inputBytes = encode(input);
+    const raw = ['finite author model evidence', 'finite different model review', 'finite accepted review'];
+    const report = { contract: 'd14-whole-release-v1', reviewedCommit: reviewed, reviewedTree: input.tree, inputManifestSha256: digest(inputBytes),
+      authorModel: { provider: 'test', id: 'author', sessionEvidenceSha256: digest(raw[0]) },
+      reviewerModel: { provider: 'test', id: 'reviewer', sessionEvidenceSha256: digest(raw[1]) },
+      reviewedAt: '2026-10-16T10:00:00Z', accepted: true, findings: [], blockingFindings: [], acceptanceEvidenceSha256: digest(raw[2]) };
+    mkdirSync(join(root, 'docs/release'), { recursive: true });
+    writeFileSync(join(root, 'docs/release/d14-input-manifest.json'), inputBytes);
+    writeFileSync(join(root, 'docs/release/d14-report.json'), encode(report));
+    writeFileSync(join(root, 'docs/release/d14-review-evidence.json'), encode({ contract: 'd14-review-evidence-v1', entries: raw.map(content => ({ content, sha256: digest(content) })) }));
+    git('add', '.'); git('commit', '--quiet', '-m', 'record accepted review');
+  }
+  const commit = git('rev-parse', 'HEAD'), directory = join(root, 'output'), p17 = join(root, 'evidence');
+  mkdirSync(directory); mkdirSync(join(p17, 'raw'), { recursive: true });
+  const reportPath = join(p17, 'p17.json'), report = { commit, passed: true, measurements: { full: 'retained' } };
+  writeFileSync(reportPath, encode(report)); writeFileSync(join(p17, 'raw/trace.json'), '[1,2,3]\n');
+  const manifestSha256 = await recordEvidence(p17);
+  const set = { commit, run: '12345', tag: rc ? 'v3.0.0-rc.1' : 'v3.0.0-beta.1' };
+  const env = { GITHUB_SHA: commit, GITHUB_RUN_ID: '12345', GITHUB_RUN_ATTEMPT: '2', P17_MANIFEST_SHA256: manifestSha256 };
+  return { root, directory, reportPath, set, env, report, p17, git };
+}
+
+test('DS12 names the actual authenticated nested P17 artifact without requiring D14 for beta', async t => {
+  const f = await evidenceFixture(t), result = await qualificationEvidence(f);
+  assert.deepEqual(result.fields, { p17Evidence: { runId: 12345, runAttempt: 2, artifactName: 'release-p17', manifestSha256: f.env.P17_MANIFEST_SHA256 } });
+  assert.deepEqual(result.assets, []); assert.deepEqual(result.report, f.report);
+  writeFileSync(join(f.p17, 'raw/trace.json'), 'changed actual raw evidence');
+  await assert.rejects(qualificationEvidence(f), /tree differs/);
+});
+
+test('DS12 refuses absent, malformed or mismatched workflow and manifest identities', async t => {
+  const f = await evidenceFixture(t);
+  for (const env of [
+    { ...f.env, GITHUB_RUN_ID: '12346' }, { ...f.env, GITHUB_RUN_ID: '012345' },
+    { ...f.env, GITHUB_RUN_ATTEMPT: '0' }, { ...f.env, GITHUB_RUN_ATTEMPT: undefined },
+    { ...f.env, GITHUB_RUN_ATTEMPT: '9007199254740992' }, { ...f.env, GITHUB_SHA: 'a'.repeat(40) },
+    { ...f.env, P17_MANIFEST_SHA256: undefined }, { ...f.env, P17_MANIFEST_SHA256: 'a'.repeat(64) },
+  ]) await assert.rejects(qualificationEvidence({ ...f, env }));
+});
+
+test('RC emits all four actual D14 assets and hashes their exact bytes', async t => {
+  const f = await evidenceFixture(t, { rc: true }), result = await qualificationEvidence(f);
+  assert.deepEqual(Object.keys(result.fields.d14), AUDIT_FILES);
+  assert.deepEqual(result.assets, AUDIT_FILES.map(name => join(f.directory, name)));
+  for (const [name, hash] of Object.entries(result.fields.d14)) assert.equal(digest(readFileSync(join(f.directory, name))), hash);
+  for (const name of AUDIT_FILES.filter(name => name !== 'd14-rc-binding.json')) {
+    assert.deepEqual(readFileSync(join(f.directory, name)), readFileSync(join(f.root, 'docs/release', name)));
+  }
+  assert.equal(json(join(f.directory, 'd14-rc-binding.json')).rcCommit, f.set.commit);
+  const reportFile = join(f.root, 'docs/release/d14-report.json'), report = json(reportFile);
+  report.accepted = false; writeFileSync(reportFile, encode(report));
+  await assert.rejects(qualificationEvidence(f), /not accepted/);
+});
+
+test('RC cannot record without a real audit, nor with changed production after review', async t => {
+  const missing = await evidenceFixture(t);
+  await assert.rejects(qualificationEvidence({ ...missing, set: { ...missing.set, tag: 'v3.0.0-rc.1' } }), /ENOENT/);
+  const f = await evidenceFixture(t, { rc: true });
+  writeFileSync(join(f.root, 'runtime.js'), 'changed production');
+  f.git('add', 'runtime.js'); f.git('commit', '--quiet', '-m', 'unreviewed product');
+  const commit = f.git('rev-parse', 'HEAD');
+  // Rebind the authentic P17 report/manifest to the new commit: D14 must still fail.
+  rmSync(join(f.p17, 'EVIDENCE-SHA256.json'));
+  writeFileSync(f.reportPath, encode({ ...f.report, commit }));
+  const manifestSha256 = await recordEvidence(f.p17);
+  await assert.rejects(qualificationEvidence({ ...f, set: { ...f.set, commit }, env: { ...f.env, GITHUB_SHA: commit, P17_MANIFEST_SHA256: manifestSha256 } }), /production\/harness changed/);
+});
 
 test('the GitHub Release names the milestone, where it went on npm, and every gate still open before later milestones', () => {
   const contracts = json(join(ROOT, 'scripts/release-contracts.json'));

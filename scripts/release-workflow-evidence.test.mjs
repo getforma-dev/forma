@@ -45,6 +45,12 @@ test('actual release workflow retains failed P17 bytes without changing publish 
 });
 
 const mutations = [
+  ['missing RC/final qualification', 'K9', doc => { doc.jobs.check.steps = doc.jobs.check.steps.filter(step => step.run !== 'node scripts/check-release-qualification.mjs'); }],
+  ['qualification with a different token source', 'K9', doc => { doc.jobs.check.steps.find(step => step.run === 'node scripts/check-release-qualification.mjs').env.GH_TOKEN = '${{ secrets.PAT }}'; }],
+  ['shallow RC qualification checkout', 'K9', doc => { delete doc.jobs.check.steps.find(step => step.uses?.startsWith('actions/checkout@')).with['fetch-depth']; }],
+  ['shallow DS12 audit checkout', 'K9', doc => { doc.jobs.record.steps.find(step => step.uses?.startsWith('actions/checkout@')).with['fetch-depth'] = 1; }],
+  ['DS12 loses P17 artifact identity', 'K9', doc => { delete doc.jobs.record.steps.find(step => step.run?.startsWith('node scripts/release-record.mjs')).env.P17_MANIFEST_SHA256; }],
+  ['DS12 records the DS11 hash as P17', 'K9', doc => { doc.jobs.record.steps.find(step => step.run?.startsWith('node scripts/release-record.mjs')).env.P17_MANIFEST_SHA256 = '${{ needs.pack.outputs.record-sha256 }}'; }],
   ['missing failure retention', 'K7', doc => { delete upload(doc).if; }],
   ['failure-only upload loses successful proof', 'K7', doc => { upload(doc).if = 'failure()'; }],
   ['different evidence path', 'K7', doc => { upload(doc).with.path = '${{ runner.temp }}/release/'; }],

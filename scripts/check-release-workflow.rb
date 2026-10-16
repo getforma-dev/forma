@@ -126,6 +126,12 @@ def violations(doc)
   }
   required.each { |name, line| out << "K1 #{name} missing mandatory gate" unless steps(jobs[name]).any? { |s| s['run'] == line } }
   out << 'K6 support history must be checked before any publishing dependency' unless steps(jobs['check']).any? { |s| s['run'] == 'node scripts/check-release-support.mjs' }
+  qualification = steps(jobs['check']).select { |s| s['run'] == 'node scripts/check-release-qualification.mjs' }
+  out << 'K9 exact release qualification must run before publishing' unless qualification.length == 1 && qualification.first['env'] == { 'GH_TOKEN' => '${{ github.token }}' }
+  %w[check record].each do |name|
+    checkout = steps(jobs[name]).select { |s| action(s) == 'actions/checkout' }
+    out << "K9 #{name} requires the tagged full history without credentials for the audit binding" unless checkout.length == 1 && checkout.first['with'] == { 'persist-credentials' => false, 'fetch-depth' => 0 }
+  end
   %w[pack verify].each do |name|
     out << "K2 #{name} must install locked dependencies with scripts off" unless steps(jobs[name]).any? { |s| s['run'] == 'bash scripts/install-deps.sh' }
     steps(jobs[name]).each do |s|
@@ -155,6 +161,7 @@ def violations(doc)
              record_steps[downloads.first]['with'] == { 'name' => 'release-p17', 'path' => '${{ runner.temp }}/p17', 'digest-mismatch' => 'error' } &&
              record_steps[evidence_checks.first]['env'] == { 'RECORD_SHA256' => '${{ needs.verify.outputs.report-sha256 }}' }
   out << 'K8 record must authenticate the complete nested P17 tree against the verifier output before writing DS12' unless anchored
+  out << 'K9 DS12 must retain the verifier manifest identity' unless writers.length == 1 && record_steps[writers.first].dig('env', 'P17_MANIFEST_SHA256') == '${{ needs.verify.outputs.report-sha256 }}'
   out
 end
 

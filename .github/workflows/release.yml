@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version
@@ -40,6 +41,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/check-release-support.mjs
+      - name: Require the RC audit or final burn-in evidence before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/check-release-qualification.mjs
 
   # The existing reusable suite runs Chromium, Firefox and WebKit on this tag.
   engines:
@@ -223,6 +228,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version
@@ -250,4 +256,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_STARTED_AT: ${{ needs.check.outputs.started-at }}
           CI_RUN: ${{ needs.check.outputs.ci-run }}
+          P17_MANIFEST_SHA256: ${{ needs.verify.outputs.report-sha256 }}
         run: node scripts/release-record.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"
