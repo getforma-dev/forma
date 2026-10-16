@@ -3,13 +3,11 @@
 FORMA-187 prepares the merged repository for one release of seven packages.
 The checked-in contract record, `scripts/release-contracts.json`, states which
 tickets gate which milestone (alpha, beta, rc, final); a tag publishes only when
-every gate of its milestone and of the earlier milestones is done. Today the
-alpha's gates are done and the later milestones' are open, so `v3.0.0-alpha.N`
-may publish and `v3.0.0-beta.1`, `v3.0.0-rc.1` and `v3.0.0` are refused. See
-[the milestone gate](#milestone-gate) below and, for the alpha day itself,
-[docs/release/ALPHA-RUNBOOK.md](release/ALPHA-RUNBOOK.md). A2 dry runs
-establish the pipeline; they do not assert that the later milestones' contracts
-exist.
+every gate of its milestone and of the earlier milestones is done. Read that
+record for the candidate's current readiness; a version string alone does not
+authorize publication. See [the milestone gate](#milestone-gate) below and the
+historical [alpha runbook](release/ALPHA-RUNBOOK.md). Earlier alpha and A2 results
+retain their original scope and do not establish beta, RC or final qualification.
 
 ## Prepare and test
 
@@ -17,7 +15,7 @@ Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime
 and crate MSRV floors remain independent and retain their CI matrix.
 
 ```
-node scripts/release-set.mjs version 3.0.0-alpha.1
+node scripts/release-set.mjs version 3.0.0-beta.1
 bash scripts/install-deps.sh
 npm run check
 ```
@@ -26,8 +24,10 @@ The version command changes seven manifests, their exact internal requirements,
 the workspace locks, npm repository metadata and release template ranges. It
 creates neither tags nor commits. A `3.0.0-dev` version aligns only the packages
 and workspace locks, preserving A2 template pins until FORMA-144 migrates them.
-Add a root CHANGELOG entry headed `## [3.0.0-alpha.1]`, review and commit the
-release PR, and tag the green main commit with `v3.0.0-alpha.1`.
+Use the next unpublished version for the intended milestone. Add its root
+CHANGELOG heading (for example `## [3.0.0-beta.1]`), close only evidenced gates,
+review and merge the release PR, and tag the exact main commit after its required
+CI and packed qualification are green. Use merge commits and never move a tag.
 
 ## Milestone gate
 
@@ -178,24 +178,21 @@ network ingestion latency; the recorded timing basis states this limitation.
 
 ## Current development integration
 
-Between releases `main` carries the next version with the `-dev` suffix: the current
-seven-package set is staged at `3.0.0-dev` again after `v3.0.0-alpha.2` published
-(2026-10-15), by the post-release pull request that runs
-`node scripts/release-set.mjs version 3.0.0-dev`; the released sections stay in every
-changelog under a fresh `## [Unreleased]`, and the crate READMEs keep naming the last
-published pre-release, which is what crates.io shows. A `-dev` version names no
-milestone and never publishes. The contract record names
-FMIR v3. P17 compares the packed compiler's writer triple and canonical dumps with
-the packed reader's actual version and frozen corpus. Version preparation updates
-all three Cargo locks (root, e2e and fuzz) without changing external resolutions.
+Development revisions can use `3.0.0-dev`, which names no milestone and cannot
+publish. Release preparation aligns all seven packages, internal requirements,
+three Cargo locks (root, e2e and fuzz), template ranges and current version
+documentation with the candidate, without changing external resolutions. Keep
+historical changelog entries and archived evidence attached to their released
+versions. The FMIR v3 contract is independent of the package prerelease suffix;
+P17 compares the packed compiler's writer triple and canonical dumps with the
+packed reader's actual version and frozen corpus.
 
-The source templates still carry their A2 Cargo requirements and API usage; FORMA-144
-owns their milestone migration. Packing may stage candidate checksums, but that does
-not make those source requirements compatible with v3. A current-development dry run
-is labeled `v3-development-dry-run`, and a template refusal remains a failed P17 result.
-Do not weaken its locked checks or describe that result as complete template acceptance.
-The later milestones' gates stay `pending` in the contract until their tickets close.
-The archived A2 dry-run evidence continues to describe the original published set.
+The current source templates use the typed 3.0 startup API. Their packed locks
+still require the candidate's actual archive checksums, as described above; a
+source template build does not replace packed template acceptance. A development
+dry run is labeled `v3-development-dry-run`, and any template refusal remains a
+failed P17 result. Later milestone gates remain `pending` until their evidence is
+reviewed. Archived A2 dry runs continue to describe only the original set.
 
 ## Local dry run
 
