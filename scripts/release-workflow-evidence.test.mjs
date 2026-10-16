@@ -15,6 +15,7 @@ const workflow = JSON.parse(parsed.stdout);
 const upload = doc => doc.jobs.verify.steps.find(step => step.with?.name === 'release-p17');
 const p17 = doc => doc.jobs.verify.steps.find(step => step.name === 'P17 packed corpus and both templates');
 const record = doc => doc.jobs.verify.steps.find(step => step.id === 'record');
+const evidenceCheck = doc => doc.jobs.record.steps.find(step => step.name === 'Verify P17 evidence');
 
 function lint(doc) {
   const directory = mkdtempSync(join(tmpdir(), 'forma-release-evidence-'));
@@ -58,6 +59,13 @@ const mutations = [
   ['P17 condition skips verification', 'E1', doc => { p17(doc).if = 'false'; }],
   ['P17 shell swallows failure', 'K7', doc => { p17(doc).run = p17(doc).run.trimEnd() + ' || true\n'; }],
   ['record replaces proof hash', 'K7', doc => { record(doc).run = 'echo "report-sha256=forged" >> "$GITHUB_OUTPUT"\n'; }],
+  ['success recorder falls back to flat DS11 tool', 'K7', doc => { record(doc).run = record(doc).run.replace('node scripts/release-evidence.mjs', 'bash scripts/release-artifacts.sh'); }],
+  ['record job loses nested evidence verification', 'K8', doc => { doc.jobs.record.steps = doc.jobs.record.steps.filter(step => step !== evidenceCheck(doc)); }],
+  ['record job trusts a different digest', 'K8', doc => { evidenceCheck(doc).env.RECORD_SHA256 = '${{ needs.pack.outputs.record-sha256 }}'; }],
+  ['record job verifies a different path', 'K8', doc => { evidenceCheck(doc).run = evidenceCheck(doc).run.replace('/p17', '/other'); }],
+  ['record job verifies after writing DS12', 'K8', doc => { const steps = doc.jobs.record.steps; const step = evidenceCheck(doc); steps.splice(steps.indexOf(step), 1); steps.push(step); }],
+  ['record job downloads evidence elsewhere', 'K8', doc => { doc.jobs.record.steps.find(step => step.with?.name === 'release-p17').with.path = '${{ runner.temp }}/other'; }],
+  ['record job falls back to flat verification', 'K8', doc => { evidenceCheck(doc).run = evidenceCheck(doc).run.replace('node scripts/release-evidence.mjs', 'bash scripts/release-artifacts.sh'); }],
   ['publisher ignores failed needs', 'J3', doc => { doc.jobs['publish-crates'].if = "always() && startsWith(github.ref, 'refs/tags/v')"; }],
   ['publisher drops verify dependency', 'J2', doc => { doc.jobs['publish-npm'].needs = doc.jobs['publish-npm'].needs.filter(name => name !== 'verify'); }],
 ];

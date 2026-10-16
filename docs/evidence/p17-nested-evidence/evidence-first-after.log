@@ -1,0 +1,33 @@
+✔ nested P17 bytes survive recording and an artifact-copy verification while flat DS11 still refuses (39.889792ms)
+✔ authenticated evidence refuses same-length changed bytes (14.60875ms)
+✔ authenticated evidence refuses missing file (12.043083ms)
+✔ authenticated evidence refuses unlisted file (15.559375ms)
+✔ authenticated evidence refuses added empty directory (12.60425ms)
+✔ authenticated evidence refuses removed empty directory (11.903625ms)
+✔ untrusted manifest bytes fail authentication before JSON parsing or path use (11.17975ms)
+✔ even authenticated metadata refuses traversal (9.043583ms)
+✔ even authenticated metadata refuses absolute (8.8325ms)
+✔ even authenticated metadata refuses backslash (8.835166ms)
+✔ even authenticated metadata refuses hidden name (11.454458ms)
+✔ even authenticated metadata refuses duplicate (11.082917ms)
+✔ even authenticated metadata refuses unsorted (8.476708ms)
+✔ even authenticated metadata refuses missing parent (10.062541ms)
+✔ even authenticated metadata refuses unknown fields (9.043875ms)
+✔ even authenticated metadata refuses wrong schema (9.915667ms)
+✔ even authenticated metadata refuses invalid length (12.238042ms)
+✔ even authenticated metadata refuses invalid hash (12.619834ms)
+✔ even authenticated metadata refuses reserved path (15.501375ms)
+✔ even authenticated metadata refuses excess entries (27.838458ms)
+✔ actual unsafe names are rejected rather than silently omitted (14.847709ms)
+✔ links at the root, in a directory or at a file never authorize reading outside evidence (5.898292ms)
+✔ a special file is refused without opening or blocking on it (9.029583ms)
+✔ manifest size is bounded before reading its body (14.79125ms)
+✔ a real file changing during streamed hashing refuses completion (36.312708ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 429.369209

@@ -24,8 +24,9 @@ ACTIONS = %w[actions/checkout actions/setup-node actions/download-artifact dtoln
 P17_RUN = "mkdir \"$RUNNER_TEMP/p17\"\nnode scripts/verify-release-set.mjs \"$RUNNER_TEMP/release\" \"$RUNNER_TEMP/p17/p17.json\"\n".freeze
 P17_RECORD = {
   'name' => "Record P17's evidence", 'id' => 'record',
-  'run' => "REPORT_SHA256=$(bash scripts/release-artifacts.sh record \"$RUNNER_TEMP/p17\")\necho \"report-sha256=$REPORT_SHA256\" >> \"$GITHUB_OUTPUT\"\n"
+  'run' => "REPORT_SHA256=$(node scripts/release-evidence.mjs record \"$RUNNER_TEMP/p17\")\necho \"report-sha256=$REPORT_SHA256\" >> \"$GITHUB_OUTPUT\"\n"
 }.freeze
+P17_VERIFY = 'node scripts/release-evidence.mjs verify "$RUNNER_TEMP/p17" "$RECORD_SHA256"'.freeze
 P17_UPLOAD = {
   'uses' => 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9',
   'if' => 'always()',
@@ -145,6 +146,15 @@ def violations(doc)
               verify_steps[-2] == P17_RECORD && p17_positions.first == verify_steps.length - 3 &&
               jobs['verify']['outputs'] == { 'report-sha256' => '${{ steps.record.outputs.report-sha256 }}' }
   out << 'K7 exact final P17 upload must retain diagnostics after failure without changing the success proof' unless retention
+  record_steps = steps(jobs['record'])
+  downloads = record_steps.each_index.select { |i| action(record_steps[i]) == 'actions/download-artifact' && record_steps[i].dig('with', 'name') == 'release-p17' }
+  evidence_checks = record_steps.each_index.select { |i| record_steps[i]['run'] == P17_VERIFY }
+  writers = record_steps.each_index.select { |i| record_steps[i]['run'] == required['record'] }
+  anchored = downloads.length == 1 && evidence_checks.length == 1 && writers.length == 1 &&
+             downloads.first < evidence_checks.first && evidence_checks.first < writers.first &&
+             record_steps[downloads.first]['with'] == { 'name' => 'release-p17', 'path' => '${{ runner.temp }}/p17', 'digest-mismatch' => 'error' } &&
+             record_steps[evidence_checks.first]['env'] == { 'RECORD_SHA256' => '${{ needs.verify.outputs.report-sha256 }}' }
+  out << 'K8 record must authenticate the complete nested P17 tree against the verifier output before writing DS12' unless anchored
   out
 end
 

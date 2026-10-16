@@ -1,0 +1,46 @@
+{
+  "scope": "actual local files-only ZIP roundtrip modeled on exact pinned Actions upload behavior; no network upload or performance measurement",
+  "base": "f01150fe50aa096aea8b008360a3930ac83057b0",
+  "recordExit": 0,
+  "recordStdout": "447b706c03ffebe9743b1236018ab8f1fb5d1aff3ece69a26b8cae3bb2661a19\n",
+  "verifyExit": 0,
+  "verifyStdout": "verified P17 evidence {\"files\":4,\"entries\":6,\"sha256\":\"447b706c03ffebe9743b1236018ab8f1fb5d1aff3ece69a26b8cae3bb2661a19\"}\n",
+  "allOriginalBytesUnchanged": true,
+  "allDownloadedFilesEqual": true,
+  "directoryEntriesInZip": 0,
+  "zipFiles": [
+    "EVIDENCE-SHA256.json",
+    "p17.json",
+    "performance-attempt-control/attempt.json",
+    "performance-attempt-control/manifest.jsonl",
+    "security/hostile-widgets.json"
+  ],
+  "zipSha256": "5bb896bfe8f158718fe2cbc517f268817b569d87aa2f69554cb0537493e6e133",
+  "files": [
+    {
+      "path": "EVIDENCE-SHA256.json",
+      "bytes": 932,
+      "sha256": "447b706c03ffebe9743b1236018ab8f1fb5d1aff3ece69a26b8cae3bb2661a19"
+    },
+    {
+      "path": "p17.json",
+      "bytes": 168,
+      "sha256": "025f1c92aee76913786dfb306eba501df039aea56305e3a38909149a488c7ea7"
+    },
+    {
+      "path": "performance-attempt-control/attempt.json",
+      "bytes": 103,
+      "sha256": "fa24d99f4792f810c22467d89d1ac90e966cf389ddd600ce674520b06b4506eb"
+    },
+    {
+      "path": "performance-attempt-control/manifest.jsonl",
+      "bytes": 151,
+      "sha256": "c1926804ddaa3e2e3a0c87c3d40b7d7cf8915f5f790d0873a7dbbc24d07130c9"
+    },
+    {
+      "path": "security/hostile-widgets.json",
+      "bytes": 364877,
+      "sha256": "c61b1d83e7b99b29c7ad76a41a0348c58235bace06d65000d88ca57ca62b1079"
+    }
+  ]
+}
