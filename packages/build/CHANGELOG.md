@@ -2,6 +2,55 @@
 
 ## [Unreleased]
 
+### The preview frame's runtime is minified in the application's output (FORMA-190)
+
+- With `previewFrame: true`, a production build writes core's
+  `dist/formajs-frame.global.js` into `dist/` **minified** (an esbuild
+  transform: whitespace and names, ES2022, no comments, deterministic) instead
+  of copying it unchanged. forma-server writes these bytes into every preview
+  document under `no-store`, so every load paid core's 164 KB readable file
+  (the A2 audit's F1); it is now about half that, and about 29 KB gzip against
+  39.6. Core's published file stays readable: the readable-distribution policy
+  holds for anything published to npm, so the saving is made here, in the
+  application's output. The transform runs before the hashing pass: the
+  `forma-runtime.<hash>.js` name, the manifest's SRI and the SHA-256
+  forma-server computes for the frame's policy are those of the bytes served.
+  `BUILD-806`'s check (`</script`, `<!--`, a carriage return, a NUL, not UTF-8,
+  empty) runs on core's file as before and again on the minified bytes.
+- **`BUILD-823`** is new: esbuild cannot parse core's frame runtime for ES2022
+  (a file something rewrote). It fails the build before anything is written,
+  strict mode or not.
+- The size report's **frame-document row** reports the served bytes and, in
+  `sourceRaw`, core's file before the build minified it.
+- **Watch mode copies core's bytes unchanged**, as before: a development
+  build, readable in the browser's tools.
+- Tests: `tests/preview-frame.test.ts` > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published", "the minified runtime does what core's does, and two builds write the same bytes", "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"; the frame e2e lane (`e2e/frame/`) asserts the served file is minified, named and listed by its own hash, embedded and allowed by forma-server, and run in Chromium under the hash-only policy.
+
+### Retention and the security mark — FORMA-186 (DR-29, L-25, L-16, SR45)
+
+- New `BuildConfig.previousDist`: the previous release's `dist/`, kept by the
+  application's pipeline. The build copies that release's own hashed assets into
+  the new `dist/`, listed in the manifest `{ immutable: true, retained: true,
+  integrity }`, so forma-server serves them as immutable and a tab one deploy old
+  still loads its chunks from the one `dist/` the application embeds. One
+  generation (what the previous release retained is not copied again); never
+  `manifest.json`, `sw.js`, `.ir` modules or non-immutable files; a file both
+  builds emit is the new build's own. Each copied file is checked against the
+  SHA-384 the previous manifest recorded: `BUILD-821` for a missing, linked,
+  altered or colliding file, `BUILD-820` for a path that is not a usable previous
+  release (missing, no manifest, another app, a dev build, flat-name violations,
+  overlapping `outputDir`). A schema-1 previous dist retains nothing and says so.
+  Copied before compression, inside the staging directory, so a failure leaves the
+  existing output untouched (L-21). The identity does not depend on it.
+- New `BuildConfig.security` and `FORMA_SECURITY_RELEASE=1`: a release marked
+  security retains nothing from `previousDist` (a `false` does not unmark it).
+  Both option names, and the environment variable, are approved (L-57).
+- `FORMA_SECURITY_RELEASE` is parsed as `FORMA_STRICT` is (trimmed, case-insensitive):
+  `1`/`true` marks, unset/empty/`0`/`false` does not, any other value fails the build
+  with `BUILD-822`, so a mark can never fail open. The previous `dist/` is trusted like
+  the source: the SHA-384 check catches damage or alteration, not a rewritten manifest.
+- Watch mode ignores both options, with a note.
+
 ### N2 is 27,500 B (L-58)
 
 - The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
@@ -48,6 +97,11 @@
   same route objects, with the new fields `class`, `canvas`, `worker`,
   `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
   empty). Both are empty in watch mode.
+
+### BUILD-616 is mandatory — FORMA-181, FORMA-183 finding F1
+
+- The compiler's new BUILD-616 (a `createList` source that is provably not a function) is an
+  error in every mode, like BUILD-610 to BUILD-613.
 
 ### The deployment identity — FORMA-186 (DR-29, L-6 as amended by L-56)
 

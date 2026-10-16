@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "215e61f52013220be493dfb319f78bdbcfa1889b",
+  "sha256": {
+    "BUILD-701-pass.tsx": {
+      "bytes": 336,
+      "sha256": "2b615e1913c11a22e7a51e4403d9dd7731dab2c79205d7affa2ace88015252d2"
+    },
+    "BUILD-612-pass.tsx": {
+      "bytes": 219,
+      "sha256": "2ae8597702acc68992364c662d093d6df78bb33dfb78ebaf9e248dbc98a67ec6"
+    },
+    "BUILD-613-pass.tsx": {
+      "bytes": 232,
+      "sha256": "26b005138c7eadfa61aeb7e2117e5ec775206d2dc3e0d1212d3370aec1e57164"
+    },
+    "BUILD-616-pass.tsx": {
+      "bytes": 219,
+      "sha256": "2ae8597702acc68992364c662d093d6df78bb33dfb78ebaf9e248dbc98a67ec6"
+    },
+    "BUILD-107-pass.tsx": {
+      "bytes": 340,
+      "sha256": "b7f576e00f1c48cbb0bd879c0283ebceb22c7c92f480bc1e64581c4ba342b35c"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.dump": {
+      "bytes": 1363,
+      "sha256": "07deef490b509c539ca5f4ce5ad8922263c1b8fce0e09de597a941d895f31e5c"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.state.json": {
+      "bytes": 242,
+      "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.html": {
+      "bytes": 2471,
+      "sha256": "69287450f982c0ceb0ff2845366a0ac24b39b4f438271d08eaa12662cbab7ef7"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.ir": {
+      "bytes": 585,
+      "sha256": "7aa2d7f7ef456b19f012e3600cb116d978c78cae2aa4b220947d978e88c7fb3e"
+    },
+    "packages/compiler/tests/list-source.test.ts": {
+      "bytes": 9673,
+      "sha256": "62481224c35db786fef7174faa729802406a4a3c33509ae339104c673dac4bda"
+    },
+    "packages/compiler/tests/keyed-list-archive.test.ts": {
+      "bytes": 9302,
+      "sha256": "885010cdb41e1d0529273aa52b168b301712b2be0d6374d71db16196b55bf675"
+    },
+    "packages/compiler/tests/keyed-list-proof.test.ts": {
+      "bytes": 5342,
+      "sha256": "37faefac18983c8e218395431c0f320af62f879276a08defc779b4982c1480ab"
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/list-same-source/app.ts": {
+      "bytes": 389,
+      "sha256": "d15c7503e8b9026155d3cdf90ed706a69101534aa157df245d657de944ec2761"
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/list-same-source/page.ts": {
+      "bytes": 1203,
+      "sha256": "7706da3dfdf3741393b92f6d80c14a4a9e061fdaa6bcf76613481dbc15c7e2a2"
+    }
+  }
+}
