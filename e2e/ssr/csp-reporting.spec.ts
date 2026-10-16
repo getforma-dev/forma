@@ -45,12 +45,17 @@ test('actual native policies enforce and deliver a blocked local image report', 
     await expect.poll(() => page.evaluate(() => (window as any).__cspViolations)).toEqual([
       { directive: 'img-src', disposition: 'enforce', blocked },
     ]);
+    let delivered: Array<{ document: string; directive: string; disposition: string | null }> = [];
     await expect.poll(async () => {
       const result = await fetch(`${SSR_ORIGIN}/__csp-reports?after=${before.cursor}`).then(r => r.json());
-      return result.reports.filter((report: { document: string }) => report.document === path);
+      delivered = result.reports.filter((report: { document: string }) => report.document === path);
+      return delivered.map(({ document, directive }) => ({ document, directive }));
     }, { timeout: 5_000, message: 'actual HTTP report delivered by this browser' }).toEqual([
-      { document: path, directive: 'img-src', disposition: 'enforce' },
+      { document: path, directive: 'img-src' },
     ]);
+    // Legacy WebKit omits this HTTP field. The separate actual browser event
+    // above proves enforcement, and the reachable image origin receives nothing.
+    expect(['enforce', null]).toContain(delivered[0].disposition);
     expect(imageRequests, 'enforced policy prevented all outbound image requests').toBe(0);
     expect(errors).toEqual([]);
   } finally { imageServer.closeAllConnections(); await new Promise<void>(resolve => imageServer.close(() => resolve())); }
