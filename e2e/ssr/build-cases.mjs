@@ -40,6 +40,7 @@ const expectedIslands = {
   namespaces: ['NamespaceVectors'],
   'edited-controls': ['Controls'],
   'sanitized-controls': ['SanitizedControls'],
+  'conditional-element': ['ConditionalElement', 'ConditionalElement'],
   'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],
   'keyed-moves': ['KeyedRows'],

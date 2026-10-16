@@ -54,6 +54,7 @@ const CASES = {
   select: 'island',
   'edited-controls': 'island',
   'sanitized-controls': 'island',
+  'conditional-element': 'island',
   'ledger-arrival': 'island',
   'keyed-moves': 'island',
   'keyed-indexed': 'island',
