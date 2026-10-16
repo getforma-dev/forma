@@ -8,6 +8,14 @@
 - Add a typed empty-props About route sharing the stylesheet. Its native product has no islands or JavaScript; Dashboard remains explicitly Browser. Dependency manifests and lock seeds are unchanged.
 - Source controls pair the actual emitted metadata and browser entry. Final zero-write adoption and zero-network qualification still require the integrated104/105 packed consumers; slice3 release/size work remains open.
 
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.6.2. Part of the seven-package set 3.0.0-alpha.1; both templates on the 3.0 API (FORMA-144 slice 1), the manifest-2 scaffold (FORMA-112) and the scripts-off install policy (FORMA-117) below are the alpha's gates. Island state adoption in the templates (slice 2) is pending before the beta and the final template cleanup (slice 3) before the final. The packed templates pin the set's exact versions and checksums. See the root CHANGELOG for the set and the pending gates.
+
 ### Changed — FORMA-144 slice 1
 
 - Source templates now call the current typed Pages API, bind declared props and finalize before listening. Minimal declares a numeric count in TypeScript and Rust; dashboard remains explicitly browser-rendered.

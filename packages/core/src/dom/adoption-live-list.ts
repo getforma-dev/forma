@@ -2,11 +2,14 @@
  * spans; fresh materialization supplies an empty, newly allocated range. */
 import { AdoptionDomError } from './adoption-plan.js';
 import { AdoptionRow, materializeRows } from './adoption-row.js';
+import { canonicalKeyText } from './key-text.js';
 import { longestIncreasingSubsequence } from './list.js';
 import { createSignal } from '../reactive/signal.js';
 import { untrack } from '../reactive/untrack.js';
 import type { PreparedGroup } from '../reactive/adoption-lifecycle.js';
-export type ListKey=string|number;
+/** A row's canonical key text (FORMA-181): the cache identity, so a
+ * type-only change such as 1 to "1" keeps the same row. */
+export type ListKey=string;
 export type ListItems={items:unknown[];keys:ListKey[]};
 export type LiveListRow={owner:PreparedGroup<unknown>;span:AdoptionRow;item:unknown;setIndex:(value:number)=>void};
 export interface LiveListState {
@@ -18,15 +21,21 @@ export interface LiveListOptions {
   rerender:boolean;removeChildren:(element:HTMLElement)=>void;
 }
 function refuse():never {throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');}
-export function listItems(values:unknown,keyFn:(item:unknown)=>ListKey):ListItems {
+/** Items and their canonical keys (`canonicalKeyText`, the walker's
+ * `data-forma-key` text). A key outside the domain or a repeated canonical
+ * key refuses FORMA_E_HYDRATE_KEY. */
+export function listItems(values:unknown,keyFn:(item:unknown)=>unknown):ListItems {
   if(!Array.isArray(values))refuse();
-  const output:ListKey[]=[],seen=new Set<string>();
+  const keys:ListKey[]=[],seen=new Set<ListKey>();
   for(let i=0;i<values.length;i++){
-    if(!Object.hasOwn(values,i))refuse();const key=untrack(()=>keyFn(values[i]));
-    if(typeof key!=='string'&&(typeof key!=='number'||!Number.isFinite(key)))refuse();
-    const printed=String(key);if(seen.has(printed))refuse();seen.add(printed);output.push(key);
+    if(!Object.hasOwn(values,i))refuse();
+    // The key function's own exception propagates as it is; only its
+    // value is judged against the key domain.
+    const key=canonicalKeyText(untrack(()=>keyFn(values[i])));
+    if(key===undefined||seen.has(key))throw new AdoptionDomError('FORMA_E_HYDRATE_KEY');
+    seen.add(key);keys.push(key);
   }
-  return {items:values.slice(),keys:output};
+  return {items:values.slice(),keys};
 }
 export function liveList(options:LiveListOptions,initial:LiveListState):{update:(value:unknown)=>void;clear:()=>void} {
   const {range,owner,live,keys,render,rerender,removeChildren}=options;

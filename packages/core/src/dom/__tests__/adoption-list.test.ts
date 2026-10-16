@@ -73,9 +73,12 @@ describe('private prepared list rows',()=>{
     expect([...shared.host.childNodes]).toEqual(nodes);expect(shared.records()).toEqual([]);shared.disconnect();
     const empty=fixture('','section'),plan=prepareAdoption(empty.host,()=>h('section',null,createList(()=>[1,2],item=>item,()=>fragment() as unknown as HTMLElement)));plan.commit();expect(empty.records()).toEqual([]);expect(empty.host.childNodes).toHaveLength(2);plan.dispose();empty.disconnect();
   });
-  it('retains the explicit pre181 key-order limitation without moving mismatched rows',()=>{
+  // FORMA-181 checkpoint C retires the pre-181 initial key-order limitation (original in
+  // docs/archive/2026-10-15-pre-key-adoption/): served keys bind their own rows in any order.
+  it('binds reversed served keys to their own rows without moving them',()=>{
     const f=fixture('<li data-forma-key="2">2</li><li data-forma-key="1">1</li>'),before=[...f.host.childNodes],render=vi.fn((item:number)=>h('li',null,item));
-    expect(()=>prepareAdoption(f.host,()=>h('ul',null,createList(()=>[1,2],item=>item,render)))).toThrow('FORMA_E_HYDRATE_STRUCTURE');expect(render).not.toHaveBeenCalled();expect([...f.host.childNodes]).toEqual(before);expect(f.records()).toEqual([]);f.disconnect();
+    const plan=prepareAdoption(f.host,()=>h('ul',null,createList(()=>[1,2],item=>item,render)));plan.commit();
+    expect(render).toHaveBeenCalledTimes(2);expect([...f.host.childNodes]).toEqual(before);expect(f.records()).toEqual([]);plan.dispose();f.disconnect();
   });
   it('tears down all partial row observations and leaves callbacks dormant after a late row mismatch',()=>{
     const f=fixture('<li><!--f:t0-->1<!--/f:t0--></li><li>wrong</li>'),[n,setN]=createSignal(1),read=vi.fn(n),effect=vi.fn(),cleanup=vi.fn();
