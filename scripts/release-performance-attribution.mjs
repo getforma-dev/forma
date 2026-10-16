@@ -40,11 +40,12 @@ const browserEvents = new Set([
   'Paint','PaintTimingVisualizer::LayoutObjectPainted','PaintTimingVisualizer::Viewport',
   'Layerize','Layer:created','Commit','UpdateLayer','BeginCommitCompositorFrame',
   'AnimationFrame','AnimationFrame::Render','AnimationFrame::StyleAndLayout',
+  'LayoutImageUnsized','ResourceChangePriority',
 ]);
 // ScriptCatchup is retrospective source metadata, not execution. It is still
 // unknown inside a candidate layout task and therefore prevents exclusion there.
 const scriptEvent = e => !(e.name==='ScriptCatchup' && ['disabled-by-default-devtools.v8-source-rundown','disabled-by-default-devtools.v8-source-rundown-sources'].includes(e.cat)) && /script|compile|evaluate|functioncall|microtask/i.test(e.name);
-const refs = e => [e.args?.frame,e.args?.data?.frame,e.args?.data?.frameID,e.args?.beginData?.frame,e.args?.data?.page].filter(x=>x!==undefined);
+const refs = e => [e.args?.frame,e.args?.data?.frame,e.args?.data?.frameID,e.args?.data?.frameId,e.args?.beginData?.frame,e.args?.data?.page].filter(x=>x!==undefined);
 
 export function attributeMobileTasks(lhr,trace) {
   const events = trace?.traceEvents;
@@ -71,12 +72,22 @@ export function attributeMobileTasks(lhr,trace) {
     if(matches.length===1){
       const task=matches[0],end=task.ts+task.dur;traceIndex=task.index;
       reason='not-proven-pre-application-layout';
-      // No later navigation may have reused this renderer before the task ends.
-      const anotherNavigation=thread.some(e=>e.name==='navigationStart' && e.ts>origin && e.ts<end);
+      // No later valid navigation may have reused this renderer before the task ends.
+      // Chromium marks empty documentLoaderURL navigationStart events as ignorable.
+      const anotherNavigation=thread.some(e=>e.name==='navigationStart' && e.ts>origin && e.ts<end && e.args?.data?.documentLoaderURL!=='');
       const children=thread.filter(e=>e.index!==task.index && (e.ts>=task.ts && e.ts<end || e.dur>0 && e.ts<task.ts && e.ts+e.dur>task.ts));
       const pure=children.length>0 && children.every(e=>{
         if(!browserEvents.has(e.name) || refs(e).some(f=>f!==frame))return false;
         if(e.dur!==undefined && (e.ph!=='X' || e.ts<task.ts || e.ts+e.dur>end))return false;
+        if(e.name==='LayoutImageUnsized' && (e.cat!=='devtools.timeline' || e.ph!=='I' || e.args?.data?.frameId!==frame || !Number.isInteger(e.args?.data?.nodeId) || e.args.data.nodeId<=0))return false;
+        if(e.name==='ResourceChangePriority'){
+          const data=e.args?.data,requestId=data?.requestId;
+          if(e.cat!=='devtools.timeline' || e.ph!=='X' || !nonnegative(e.dur) || typeof requestId!=='string' || !requestId || !['VeryLow','Low','Medium','High','VeryHigh'].includes(data.priority))return false;
+          const sends=thread.filter(candidate=>candidate.name==='ResourceSendRequest' && candidate.ts>=origin && candidate.ts<=e.ts && candidate.args?.data?.requestId===requestId);
+          if(sends.length!==1)return false;
+          const send=sends[0];
+          if(send.cat!=='devtools.timeline' || send.ph!=='I' || send.dur!==undefined || send.args.data.frame!==frame || send.args.data.resourceType!=='Image' || send.args.data.initiator?.type!=='parser' || send.args.data.initiator.url!==lhr.requestedUrl)return false;
+        }
         if(e.name==='EventDispatch' && !['resize','pagereveal'].includes(e.args?.data?.type))return false;
         if(e.name==='WebDXFeatureUsage' && e.args?.scriptId!==-1)return false;
         return true;
