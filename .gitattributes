@@ -94,3 +94,6 @@ packages/compiler/tests/keyed-list-proof.test.ts text eol=lf
 
 # Authentic pre-139 compiler source/product evidence, never checkout-normalized.
 docs/archive/FORMA-139-html-context/** -text
+
+# FORMA-139: byte-exact original R17 title fixture and observed CI refusal.
+docs/archive/FORMA-139-e2e-title/** -text

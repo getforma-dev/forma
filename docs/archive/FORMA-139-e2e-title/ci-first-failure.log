@@ -1,0 +1,26 @@
+2026-10-16T01:19:15.7543236Z Error [FormaStrictBuildError]: @getforma/build: 1 SSR diagnostic is an error; 3.0 requires the published server-renderable subset:
+2026-10-16T01:19:15.7545330Z /home/runner/work/forma/forma/e2e/ssr/cases/title/app.tsx:15:9  BUILD-619  BUILD-619 /home/runner/work/forma/forma/e2e/ssr/cases/title/app.tsx:15:9: a component HTML <title> does not own the document title; pass the page title to the server render call
+2026-10-16T01:19:15.7547047Z     why: An HTML title emitted inside the component does not own the page document title.
+2026-10-16T01:19:15.7547945Z     fix: Pass the page title to the server render call; an SVG title remains component content.
+2026-10-16T01:19:15.7548964Z Each code, with its fix: https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md
+2026-10-16T01:19:15.7549919Z     at strictFailure (file:///home/runner/work/forma/forma/packages/build/dist/index.js:526:17)
+2026-10-16T01:19:15.7550818Z     at buildInto (file:///home/runner/work/forma/forma/packages/build/dist/index.js:2066:34)
+2026-10-16T01:19:15.7551855Z     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+2026-10-16T01:19:15.7552716Z     at async build4 (file:///home/runner/work/forma/forma/packages/build/dist/index.js:1733:14)
+2026-10-16T01:19:15.7553465Z     at async file:///home/runner/work/forma/forma/e2e/ssr/build-cases.mjs:90:24 {
+2026-10-16T01:19:15.7553976Z   diagnostics: [
+2026-10-16T01:19:15.7554225Z     {
+2026-10-16T01:19:15.7554455Z       code: 'BUILD-619',
+2026-10-16T01:19:15.7554736Z       severity: 'error',
+2026-10-16T01:19:15.7555158Z       page: 'title',
+2026-10-16T01:19:15.7555569Z       file: '/home/runner/work/forma/forma/e2e/ssr/cases/title/app.tsx',
+2026-10-16T01:19:15.7556006Z       line: 15,
+2026-10-16T01:19:15.7556249Z       column: 9,
+2026-10-16T01:19:15.7557183Z       message: 'BUILD-619 /home/runner/work/forma/forma/e2e/ssr/cases/title/app.tsx:15:9: a component HTML <title> does not own the document title; pass the page title to the server render call',
+2026-10-16T01:19:15.7558317Z       why: 'An HTML title emitted inside the component does not own the page document title.',
+2026-10-16T01:19:15.7559129Z       fix: 'Pass the page title to the server render call; an SVG title remains component content.'
+2026-10-16T01:19:15.7559718Z     }
+2026-10-16T01:19:15.7559965Z   ]
+2026-10-16T01:19:15.7560201Z }
+2026-10-16T01:19:15.7560338Z 
+2026-10-16T01:19:15.7560459Z Node.js v24.21.0
