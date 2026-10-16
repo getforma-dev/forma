@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {validateDecoder} from './release-performance-decoder.mjs';
 import {N1_SHAPES,PERFORMANCE_CONTRACT,MOBILE_PROFILE} from './release-performance-spec.mjs';
 export const finite = (n,label) => {assert(Number.isFinite(n)&&n>=0,`${label}: missing finite nonnegative figure`);return n;};
 export function percentile(samples,fraction) {assert(samples.length>0);const sorted=[...samples].sort((a,b)=>a-b);return sorted[Math.ceil(sorted.length*fraction)-1];}
@@ -124,10 +125,10 @@ export function validatePerformanceRecord(performance,{baseline=null}={}){
  assert(machine?.profile&&machine?.node&&machine?.cpuModel,'performance: machine/profile missing');
  assert.deepEqual(controls,{deadActivationRefused:true,longTaskRefused:true},'N3: paired controls did not refuse');
  validateNative({schema:1,pilot:false,profile:performance.nativeProfile,n1:performance.n1,n5:performance.n5,boundaries:performance.boundaries},baseline);
- validateMobile(performance.mobile);validateComparison(performance.client);return performance;
+ validateMobile(performance.mobile);validateComparison(performance.client);validateDecoder(performance.decoder);return performance;
 }
-export function completePerformance({native,mobile,client,baseline,machine,controls}){
+export function completePerformance({native,mobile,client,decoder,baseline,machine,controls}){
  assert(['bootstrap','comparable'].includes(baseline?.status),'performance: no authenticated baseline');
  validateNative(native,baseline);
- return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,passed:true,machine,baseline,controls,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client},{baseline});
+ return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,passed:true,machine,baseline,controls,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client,decoder},{baseline});
 }

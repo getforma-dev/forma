@@ -13,6 +13,7 @@
 ### Packed release measurements — FORMA-191
 
 - P17 records the five consumer-shaped native N1 pages, N5 time/allocation growth, public output/iteration boundary refusals, actual Lighthouse mobile and island response measurements, and the restored three-engine founder client comparison. An authenticated prior DS12 supplies the N1 regression baseline. Missing or invalid declared figures refuse the release.
+- FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. Missing evidence or any sample above12ms refuses.
 - Lighthouse13.5.0 and the historical comparison libraries are exact-pinned development tools; no runtime dependency changes. The fixture HTTP server and measurement binary now share their unchanged typed input constructors.
 
 ### Lexical JSX SVG namespaces — FORMA-171

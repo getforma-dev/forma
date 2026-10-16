@@ -7,6 +7,7 @@ import {ROOT,json,run,digest} from './release-set.mjs';
 import {readPerformanceBaseline,PERFORMANCE_CONTRACT,compareReleaseTags} from './release-performance-baseline.mjs';
 import {completePerformance,validateNative,validateMobile} from './release-performance-contract.mjs';
 import {measureMobileRoute,mobileControls} from './release-performance-mobile.mjs';
+import {measurePackedDecoder,validateDecoder} from './release-performance-decoder.mjs';
 import {machineProfile} from './release-measurements.mjs';
 import {withOwnedServer} from './owned-server.mjs';
 
@@ -29,6 +30,14 @@ export async function verifyPackedPerformance({staged,set,test,target,before,rep
   let baseline;
   await test('performance: the previous published DS12 is authentic, complete and earlier than this run',async()=>{
    baseline=await readPerformanceBaseline({currentTag:target.tag,before});attempt.baseline=baseline;
+  });
+  let decoder;
+  await test('performance: public packed decoder, forty samples per one-MiB shape at four-times CPU slowdown',async()=>{
+   attempt.decoderObservations=[];
+   decoder=await measurePackedDecoder({corePath:join(project,'node_modules/@getforma/core'),compilerPath:join(project,'node_modules/@getforma/compiler'),onSample:sample=>attempt.decoderObservations.push(sample)});
+   attempt.decoder=decoder;
+   validateDecoder(decoder);
+   delete attempt.decoderObservations;
   });
   await test('performance: ordinary release binaries use the same exact packed crate lock',async()=>{
    for(const key of Object.keys(process.env))assert(!key.startsWith('CARGO_PROFILE_RELEASE_'),'performance requires the default application release profile');
@@ -59,7 +68,7 @@ export async function verifyPackedPerformance({staged,set,test,target,before,rep
    client=json(clientPath);attempt.client=client;
   });
   const machine={...machineProfile({rustc:set.toolchain,npm:set.npm}),profile:'packed npm and crates; ordinary cargo release; N1 prepared typed inputs; Lighthouse13.5.0 applied mobile; serial Chromium/Firefox/WebKit comparison'};
-  const result=completePerformance({native,mobile,client,baseline,machine,controls:controls.controls});
+  const result=completePerformance({native,mobile,client,decoder,baseline,machine,controls:controls.controls});
   delete report.performanceAttempt;
   return {...result,rehearsal:target.rehearsal,targetTag:target.tag,controlObservations:controls.observations,toolingLockSha256:digest(join(ROOT,'package-lock.json')),nativeExecutableSha256:digest(executable('fixture-measure'))};
  }finally{rmSync(output,{recursive:true,force:true});}

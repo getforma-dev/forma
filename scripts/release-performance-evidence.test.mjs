@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {validateComparison,validateMobile} from './release-performance-contract.mjs';
+import {validateComparison,validateMobile,validatePerformanceRecord} from './release-performance-contract.mjs';
 import {validateBaselineRecord} from './release-performance-baseline.mjs';
 import {comparison,mobile,performanceRecord} from './release-performance-test-fixtures.mjs';
 const context={tag:'v3.0.0-beta.1',currentTag:'v3.0.0-rc.1',publishedAt:'2026-10-16T00:00:00Z',before:'2026-10-17T00:00:00Z',digest:'a'.repeat(64)};
@@ -22,4 +22,12 @@ test('release metadata checks import without any optional browser tooling instal
  const loader=`export async function resolve(specifier,context,next){if(/^(?:lighthouse|chrome-launcher|@playwright\\/test)(?:\\/|$)/.test(specifier))throw Object.assign(new Error('Browser tooling unavailable: '+specifier),{code:'ERR_MODULE_NOT_FOUND'});return next(specifier,context);}`;
  const imports=['release-performance-baseline.mjs','release-performance-contract.mjs','verify-release-set.mjs'].map(file=>`await import(${JSON.stringify(new URL(file,import.meta.url).href)});`).join('\n');
  execFileSync(process.execPath,['--no-warnings','--experimental-loader',`data:text/javascript,${encodeURIComponent(loader)}`,'--input-type=module','-e',imports],{stdio:'pipe'});
+});
+
+test('new and previous DS12 require the public decoder raw observations and enforce every sample',()=>{
+ validatePerformanceRecord(performanceRecord());
+ for(const edit of [p=>delete p.decoder,p=>p.decoder.cases[1].samples[39].elapsedMs=12.0001,p=>p.decoder.cases[0].samples.pop(),p=>delete p.decoder.compiler]){
+  const current=performanceRecord();edit(current);assert.throws(()=>validatePerformanceRecord(current));
+  const prior=baseline();edit(prior.measurements.measurements.performance);assert.throws(()=>validateBaselineRecord(prior,context));
+ }
 });

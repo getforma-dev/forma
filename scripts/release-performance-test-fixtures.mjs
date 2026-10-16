@@ -1,5 +1,6 @@
 // Test evidence only: deterministic complete samples, never release measurements.
 import {createHash} from 'node:crypto';
+import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderPayload} from './release-performance-decoder.mjs';
 import {MOBILE_PROFILE} from './release-performance-mobile.mjs';
 const hash='a'.repeat(64);
 export function native(){return {schema:1,pilot:false,profile:'cargo build --release --locked',n1:[300,1500,10000,15000,20000].map(n=>{const time=n===300?200000:n*500;return {nominalNodes:n,nodes:n,walks:20000,samplesNanoseconds:Array(20000).fill(time),p50Nanoseconds:time,p99Nanoseconds:time,p50NodesPerSecond:n*1e9/time,p99NodesPerSecond:n*1e9/time,moduleSha256:hash,inputSha256:hash,outputSha256:hash}}),n5:{points:[100,200,400,800,1600,3200].map(rows=>({rows,allocations:rows*12,allocatedBytes:rows*400,samplesNanoseconds:Array(41).fill(rows*500),medianNanoseconds:rows*500,moduleSha256:hash,inputSha256:hash})),pairedRounds:41,pairedTimeRatios:Array(41).fill(32),medianTimeRatio:32},boundaries:{exactPass:true,partialHtmlReturned:false,exactIterations:400,exactBytes:50000,onePastIteration:{code:'RENDER-302',limit:399},onePastOutput:{code:'RENDER-301',limit:49999}}};}
@@ -17,4 +18,29 @@ export function mobile(){
   return {run:i+1,lighthouse:{version:'13.5.0',throttlingMethod:'devtools',benchmarkIndex:123,tbtMs:0,lcpMs:123,longTasks:[],rawLhr,sha256:createHash('sha256').update(rawLhr).digest('hex')},activation:{expected:count,active:count,responded:count,firstPaintMs:100,lastResponseMs:200,longTasks:[],errors:[]}};
  })}));
 }
-export function performanceRecord(){const n=native();return {contract:'measured-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true},n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison()};}
+export function performanceRecord(){const n=native();return {contract:'measured-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true},n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison(),decoder:decoder()};}
+
+const sha=value=>createHash('sha256').update(value).digest('hex');
+// Synthetic finite validator inputs only. These figures are never used as
+// release measurements; the producer supplies actual browser observations.
+export function decoder() {
+  const cases=DECODER_FIXTURES.map(fixture=>{
+    const payload=decoderPayload(fixture);
+    const observation=run=>({run,elapsedMs:12,calls:1,valueSha256:payload.valueSha256,valueLength:payload.value.length,
+      mutations:0,hostStatus:'pending',stateBlocks:1,pageErrors:[],consoleErrors:[],browserConsoleErrors:[],policyViolations:[]});
+    return {id:fixture.id,registration:{h:fixture.h,mode:0,schema:fixture.schema},sourceSha256:fixture.sourceSha256,irSha256:fixture.irSha256,
+      payloadBytes:payload.bytes,payloadSha256:payload.sha256,warmups:Array.from({length:5},(_,i)=>observation(i+1)),
+      samples:Array.from({length:40},(_,i)=>observation(i+1)),summary:{minMs:12,medianMs:12,p95Ms:12,maxMs:12}};
+  });
+  const first=decoderPayload(DECODER_FIXTURES[0]);
+  const controls=['oversize-one-byte','malformed-json'].map((id,i)=>{
+    const text=i===0?first.text+' ':first.text.slice(0,-1);
+    const errors=[`[forma] FORMA_E_ISLAND_STATE: ${i===0?'state block exceeds one MiB':'invalid state JSON'}`];
+    return {id,payloadBytes:Buffer.byteLength(text),payloadSha256:sha(text),observation:{elapsedMs:null,calls:0,valueSha256:null,
+      valueLength:null,mutations:0,hostStatus:'pending',stateBlocks:1,pageErrors:[],consoleErrors:errors,browserConsoleErrors:errors,policyViolations:[]}};
+  });
+  return {schema:1,pilot:false,profile:{...DECODER_PROFILE},responsePolicy:DECODER_CSP,browserVersion:'test-only',recordedAt:'2026-10-15T00:00:00.000Z',
+    artifact:{file:'dist/forma.esm.js',sha256:'a'.repeat(64),bytes:100},
+    compiler:{file:'dist/index.js',sha256:'a'.repeat(64),fixtures:DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}}))},
+    machine:{node:'test',platform:'test',release:'test',architecture:'test',cpu:'test',logicalCpus:1,memoryBytes:1},cases,controls};
+}

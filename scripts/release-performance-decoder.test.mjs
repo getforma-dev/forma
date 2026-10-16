@@ -3,30 +3,8 @@ import {test} from 'node:test';
 import {createHash} from 'node:crypto';
 import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderSource,decoderPayload,validateDecoder} from './release-performance-decoder.mjs';
 
+import {decoder as valid} from './release-performance-test-fixtures.mjs';
 const sha=value=>createHash('sha256').update(value).digest('hex');
-// Synthetic finite validator inputs only. These figures are never used as
-// release measurements; the producer supplies actual browser observations.
-function valid() {
-  const cases=DECODER_FIXTURES.map(fixture=>{
-    const payload=decoderPayload(fixture);
-    const observation=run=>({run,elapsedMs:12,calls:1,valueSha256:payload.valueSha256,valueLength:payload.value.length,
-      mutations:0,hostStatus:'pending',stateBlocks:1,pageErrors:[],consoleErrors:[],browserConsoleErrors:[],policyViolations:[]});
-    return {id:fixture.id,registration:{h:fixture.h,mode:0,schema:fixture.schema},sourceSha256:fixture.sourceSha256,irSha256:fixture.irSha256,
-      payloadBytes:payload.bytes,payloadSha256:payload.sha256,warmups:Array.from({length:5},(_,i)=>observation(i+1)),
-      samples:Array.from({length:40},(_,i)=>observation(i+1)),summary:{minMs:12,medianMs:12,p95Ms:12,maxMs:12}};
-  });
-  const first=decoderPayload(DECODER_FIXTURES[0]);
-  const controls=['oversize-one-byte','malformed-json'].map((id,i)=>{
-    const text=i===0?first.text+' ':first.text.slice(0,-1);
-    const errors=[`[forma] FORMA_E_ISLAND_STATE: ${i===0?'state block exceeds one MiB':'invalid state JSON'}`];
-    return {id,payloadBytes:Buffer.byteLength(text),payloadSha256:sha(text),observation:{elapsedMs:null,calls:0,valueSha256:null,
-      valueLength:null,mutations:0,hostStatus:'pending',stateBlocks:1,pageErrors:[],consoleErrors:errors,browserConsoleErrors:errors,policyViolations:[]}};
-  });
-  return {schema:1,pilot:false,profile:{...DECODER_PROFILE},responsePolicy:DECODER_CSP,browserVersion:'test-only',recordedAt:'2026-10-15T00:00:00.000Z',
-    artifact:{file:'dist/forma.esm.js',sha256:'a'.repeat(64),bytes:100},
-    compiler:{file:'dist/index.js',sha256:'a'.repeat(64),fixtures:DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}}))},
-    machine:{node:'test',platform:'test',release:'test',architecture:'test',cpu:'test',logicalCpus:1,memoryBytes:1},cases,controls};
-}
 test('both finite payload shapes pin the complete UTF-8 envelope to exactly one MiB',()=>{
   for(const fixture of DECODER_FIXTURES) {
     const payload=decoderPayload(fixture);

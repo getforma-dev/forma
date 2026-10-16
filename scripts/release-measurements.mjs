@@ -121,6 +121,6 @@ export function releaseNotesLine(measurements) {
   const { p17, n2, machine } = measurements;
   const worst = n2.reduce((a, b) => (b.formaGzip > a.formaGzip ? b : a));
   const performance = measurements.performance;
-  const extra = performance ? ` N1 slowest p99: ${fmt(Math.floor(Math.min(...performance.n1.map(row=>row.p99NodesPerSecond))))} nodes/s; N5 median paired ratio ${performance.n5.medianTimeRatio.toFixed(2)}; mobile worst p95 TBT ${Math.max(...performance.mobile.map(row=>row.p95TbtMs)).toFixed(1)} ms. All three client comparison engines and both public budget refusals are recorded; ${performance.machine.profile}.` : "";
+  const extra = performance ? ` N1 slowest p99: ${fmt(Math.floor(Math.min(...performance.n1.map(row=>row.p99NodesPerSecond))))} nodes/s; N5 median paired ratio ${performance.n5.medianTimeRatio.toFixed(2)}; mobile worst p95 TBT ${Math.max(...performance.mobile.map(row=>row.p95TbtMs)).toFixed(1)} ms. Public decoder worst sample ${Math.max(...performance.decoder.cases.map(row=>row.summary.maxMs)).toFixed(2)} ms at four-times CPU slowdown. All three client comparison engines and both public budget refusals are recorded; ${performance.machine.profile}.` : "";
   return `P17 ran ${Math.round(p17.seconds)} s of ${fmt(p17.limitSeconds)} s; the most Forma code on any fixture route is ${fmt(worst.formaGzip)} B of ${fmt(worst.limit)} B gzip -9 (${worst.app} ${worst.route}); measured on ${machine.runner}, ${machine.cpus} CPUs, Node ${machine.node}.${extra}`;
 }
