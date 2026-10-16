@@ -201,8 +201,28 @@ describe('shared load scheduling', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(done).toBe(true); expect(overlap).toBe(true);
     await Promise.all([ready, other]);
-    expect(second).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(kind === 'promotion' ? 1 : 0);
+    expect(vi.getTimerCount()).toBe(0);
     deactivateAllIslands(); expect(hasScheduledOrActiveIslands()).toBe(false);
+  });
+
+  it('consumes nested input promotion once and cancels the timer after both active loads finish', async () => {
+    document.body.innerHTML = host('A') + host('B'); installState();
+    const [a, b] = document.querySelectorAll<HTMLElement>('[data-forma-island]');
+    const seen: string[] = [];
+    let registry: ReturnType<typeof emptyRegistry>, overlap: Promise<void> | undefined;
+    registry = emptyRegistry({
+      A: () => {seen.push('A'); a!.click(); b!.click(); overlap = activateIslands(registry); return tree('A');},
+      B: () => {seen.push('B'); a!.click(); return tree('B');},
+    });
+    vi.mocked(performance.now).mockReturnValueOnce(0).mockReturnValue(13);
+    const ready = activateIslands(registry);
+    expect(seen).toEqual([]); expect(vi.getTimerCount()).toBe(1);
+    a!.click();
+    await Promise.all([ready, overlap]);
+    expect(seen).toEqual(['A', 'B']); expect(vi.getTimerCount()).toBe(0);
+    vi.runAllTimers(); a!.click(); b!.click();
+    expect(seen).toEqual(['A', 'B']);
   });
 
   it.each(['timer', 'promotion', 'cancel', 'partial-setup'])('settles ownership after a throwing removal during %s and attempts every listener cleanup', async kind => {
