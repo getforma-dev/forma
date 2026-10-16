@@ -12,11 +12,11 @@ afterEach(()=>{vi.restoreAllMocks();for(const root of roots.splice(0))rmSync(roo
 const imports="import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n";
 const page=(tree:string,extra='')=>imports+extra+`\nexport function Page(){return ${tree};}\nmount(()=>Page(),'#app');\n`;
 const island=(tree:string,extra='',body='')=>imports+extra+`\nexport function Island(){${body}return ${tree};}\nexport function Page(){return h('main',null,Island());}\nactivateIslands({Island});mount(()=>Page(),'#app');\n`;
-function emit(source:string,files:Record<string,string>={}) {
+function emit(source:string,files:Record<string,string>={},fileName='app.tsx') {
  const root=realpathSync(mkdtempSync(join(tmpdir(),'forma-html-context-')));roots.push(root);
- for(const [name,text] of Object.entries({'app.tsx':source,...files})){const path=join(root,name);mkdirSync(join(path,'..'),{recursive:true});writeFileSync(path,text);}
+ for(const [name,text] of Object.entries({[fileName]:source,...files})){const path=join(root,name);mkdirSync(join(path,'..'),{recursive:true});writeFileSync(path,text);}
  vi.spyOn(console,'warn').mockImplementation(()=>{});
- let failure:unknown;const {result,diagnostics}=collectDiagnostics(()=>{try{return generateRealIr(join(root,'app.tsx'));}catch(error){failure=error;return null;}});
+ let failure:unknown;const {result,diagnostics}=collectDiagnostics(()=>{try{return generateRealIr(join(root,fileName));}catch(error){failure=error;return null;}});
  return {result,diagnostics,failure};
 }
 const repaired:[string,string][]=[
@@ -111,3 +111,20 @@ it.each(['','div x','café'])('an invalid native tag %s cannot prove an owned is
 it('unknown annotation encoding cannot hide a possible HTML title',()=>{const got=emit(page("h('math',null,h('annotation-xml',{encoding:()=> 'text/html'},h('title',null,'Page')))"));expect(got.failure).toMatchObject({code:'BUILD-619'});});
 
 it.each(["Fragment()","h(Fragment,null)"])('a local Fragment namesake %s cannot prove native ownership',tree=>{const source=island(tree,"function Fragment(){return h('section',null,'helper');}").replace(',Fragment,browserOnly',',browserOnly');expect(emit(source).failure).toMatchObject({code:'BUILD-621'});});
+
+// Review regressions retain .ts source so undefined's original lexical binding
+// is exercised without esbuild renaming or rewriting the reference first.
+it.each([
+ ["h('button',null,h('a',{href:undefined,href:'/x'},'link'))",''],
+ ["h('button',null,h('input',{type:'hidden',type:'text'}))",''],
+ ["h('button',null,h('input',{type:'text',type:'hidden'}))",''],
+ ["h('button',null,h('a',{href:undefined},'link'))","const undefined='/x';"],
+])('conflicting or shadowed interactive attribute refuses: %s',(tree,extra)=>{expect(emit(page(tree,extra),{},'app.ts').failure).toMatchObject({code:'BUILD-618'});});
+it.each([
+ "h('button',null,h('a',{href:undefined},'link'))",
+ "h('button',null,h('input',{type:'hidden',type:'hidden'}))",
+ "h('section',null,h('style',null,undefined))",
+])('proven noninteractive and absent near miss stays admitted: %s',tree=>{expect(emit(page(tree),{},'app.ts').failure).toBeUndefined();});
+it('shadowed undefined is not a raw-text literal exemption',()=>{expect(emit(page("h('section',null,h('style',null,undefined))","const undefined='.x{color:red}';"),{},'app.ts').failure).toMatchObject({code:'BUILD-620'});});
+it.each(['async function','function*'])('%s registered root is not an Element',prefix=>{expect(emit(island("h('section',null,'root')").replace('export function Island',`export ${prefix} Island`),{},'app.ts').failure).toMatchObject({code:'BUILD-621'});});
+it.each(['async function','function*'])('%s ordinary root helper is not an Element',prefix=>{expect(emit(island('Helper()',`${prefix} Helper(){return h('section',null,'root');}`),{},'app.ts').failure).toMatchObject({code:'BUILD-621'});});

@@ -51,6 +51,7 @@ export function createIslandRootProofs(load:ModuleLoader,isRegistered:(identity:
   return (t.VISITOR_KEYS[node.type]??[]).some(key=>{const value=(node as any)[key];return (Array.isArray(value)?value:[value]).some(child=>child&&typeof child.type==='string'&&containsReturn(child));});
  }
  function returned(mod:Module,fn:ComponentFunction):t.Expression {
+  if(fn.async||fn.generator)fail(mod,fn,'an async or generator function returns a Promise or iterator, not an owned Element');
   if(!t.isBlockStatement(fn.body))return fn.body;
   for(const statement of fn.body.body) {
    if(t.isReturnStatement(statement)){if(statement.argument)return statement.argument;break;}

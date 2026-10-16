@@ -58,7 +58,9 @@ of a/button and content beyond a label's one labelled control. Explicit siblings
 nested lists, a label's own control and mutually exclusive alternative controls
 remain valid. A repeated list cannot supply one label with several controls.
 Attribute-sensitive interactive categories retain their conditions (for example,
-input type=hidden and an a without href are not interactive). The option/select
+input type=hidden and an a without href are not interactive). Disagreeing duplicate
+attributes cannot prove a safe category, because HTML and JavaScript may retain
+different values. Only an originally unbound `undefined` proves absence. The option/select
 rule is this release's deliberately narrow subset, not every current HTML model.
 
 HTML component title is BUILD-619; pass document title to the server render call.
@@ -528,9 +530,9 @@ their real lifecycle tests.
 
 ### BUILD-621 — SSR island without one stable owned Element
 
-**Why.** The registered SSR component has text, empty, multiple, conditional/control-flow, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.
+**Why.** The registered SSR component has text, empty, multiple, conditional/control-flow, async/generator, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.
 
-**Fix.** Return one authored Element, directly or through an ordinary resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.
+**Fix.** Return one authored Element, directly or through an ordinary synchronous resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.
 
 **Build result.** Error: publication is refused.
 

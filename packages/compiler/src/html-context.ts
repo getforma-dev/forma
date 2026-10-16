@@ -1,6 +1,9 @@
 /** Finite HTML-context subset for 3.0.0. This is not a complete HTML validator.
  * Ancestors describe emitted nesting, so helpers never reset parser context. */
 import * as t from '@babel/types';
+import {parse} from '@babel/parser';
+import _traverse from '@babel/traverse';
+import {readSourceFile} from './source-snapshot';
 import {PropsSchemaError} from './props-schema';
 import {originalPosition} from './diagnostics';
 
@@ -16,25 +19,44 @@ const LIST_BARRIER=new Set('applet area article aside base basefont bgsound bloc
 const P_SCOPE=new Set('applet button caption html table td th marquee object template'.split(' '));
 const ALWAYS_INTERACTIVE=new Set('button details embed iframe label select textarea'.split(' '));
 const LABELABLE=new Set('button meter output progress select textarea'.split(' '));
+const traverse=(typeof _traverse==='function'?_traverse:(_traverse as any).default) as typeof _traverse;
+const undefinedModules=new Map<string,{source:string;unbound:Set<string>}>();
+function unboundUndefined(node:t.Node,file:string):boolean {
+ if(!t.isIdentifier(node,{name:'undefined'})||!node.loc)return false;
+ try {
+  const source=readSourceFile(file);let saved=undefinedModules.get(file);
+  if(!saved||saved.source!==source){
+   const unbound=new Set<string>(),ast=parse(source,{sourceType:'module',plugins:['typescript','jsx']});
+   traverse(ast,{Identifier(path){if(path.node.name==='undefined'&&!path.scope.getBinding('undefined'))unbound.add(`${path.node.loc!.start.line}:${path.node.loc!.start.column+1}`);}});
+   saved={source,unbound};undefinedModules.set(file,saved);
+  }
+  const at=originalPosition(file,node.loc.start);return saved.unbound.has(`${at.line}:${at.column}`);
+ }catch{return false;}
+}
 const key=(node:t.Node):string|undefined=>t.isIdentifier(node)||t.isStringLiteral(node)?(t.isIdentifier(node)?node.name:node.value):undefined;
-function prop(props:t.Node|undefined,names:readonly string[]):string|boolean|symbol|undefined {
+function prop(props:t.Node|undefined,names:readonly string[],file:string):string|boolean|symbol|undefined {
  if(!t.isObjectExpression(props))return undefined;
+ const values:(string|boolean|symbol|undefined)[]=[];
  for(const entry of props.properties) {
   if(!t.isObjectProperty(entry)||entry.computed)continue;
   const name=key(entry.key)?.toLowerCase();if(!name||!names.includes(name))continue;
   const value=entry.value;
-  if(t.isNullLiteral(value)||t.isBooleanLiteral(value,{value:false})||t.isIdentifier(value,{name:'undefined'}))return undefined;
-  if(t.isStringLiteral(value))return value.value;if(t.isNumericLiteral(value))return String(value.value);if(t.isBooleanLiteral(value))return value.value;
-  return UNKNOWN;
+  if(t.isNullLiteral(value)||t.isBooleanLiteral(value,{value:false})||unboundUndefined(value,file))values.push(undefined);
+  else if(t.isStringLiteral(value))values.push(value.value);
+  else if(t.isNumericLiteral(value))values.push(String(value.value));
+  else if(t.isBooleanLiteral(value))values.push(value.value);
+  else values.push(UNKNOWN);
  }
- return undefined;
+ // Native duplicate attributes can retain their first value while a JS object
+ // retains its last. Disagreeing values cannot establish safe ancestry.
+ return values.some(value=>value!==values[0])?UNKNOWN:values[0];
 }
-const present=(props:t.Node|undefined,name:string)=>prop(props,[name])!==undefined;
-const hiddenInput=(props:t.Node|undefined):boolean=>{const type=prop(props,['type']);return typeof type==='string'&&type.toLowerCase()==='hidden';};
-const interactive=(tag:string,props:t.Node|undefined):boolean=>ALWAYS_INTERACTIVE.has(tag)
- ||tag==='a'&&present(props,'href')||(tag==='audio'||tag==='video')&&present(props,'controls')
- ||tag==='img'&&present(props,'usemap')||tag==='input'&&!hiddenInput(props);
-const labelable=(tag:string,props:t.Node|undefined)=>LABELABLE.has(tag)||tag==='input'&&!hiddenInput(props);
+const present=(props:t.Node|undefined,name:string,file:string)=>prop(props,[name],file)!==undefined;
+const hiddenInput=(props:t.Node|undefined,file:string):boolean=>{const type=prop(props,['type'],file);return typeof type==='string'&&type.toLowerCase()==='hidden';};
+const interactive=(tag:string,props:t.Node|undefined,file:string):boolean=>ALWAYS_INTERACTIVE.has(tag)
+ ||tag==='a'&&present(props,'href',file)||(tag==='audio'||tag==='video')&&present(props,'controls',file)
+ ||tag==='img'&&present(props,'usemap',file)||tag==='input'&&!hiddenInput(props,file);
+const labelable=(tag:string,props:t.Node|undefined,file:string)=>LABELABLE.has(tag)||tag==='input'&&!hiddenInput(props,file);
 function compatible(a:Conditions,b:Conditions):boolean {for(const [key,value] of a)if(b.has(key)&&b.get(key)!==value)return false;return true;}
 function fail(file:string,node:t.Node,code:'BUILD-618'|'BUILD-619'|'BUILD-620',detail:string):never {
  const at=originalPosition(file,node.loc?.start??{line:1,column:0});throw new PropsSchemaError(file,at.line,at.column,detail,code);
@@ -51,7 +73,7 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
  if(namespace==='html'&&tag==='svg')namespace='svg';else if(namespace==='html'&&tag==='math')namespace='math';
  let childNamespace=namespace;
  if(namespace==='svg'&&['foreignobject','desc','title'].includes(tag))childNamespace='html';
- if(namespace==='math'&&(['mi','mo','mn','ms','mtext'].includes(tag)||tag==='annotation-xml'&&(prop(props,['encoding'])===UNKNOWN||['text/html','application/xhtml+xml'].includes(String(prop(props,['encoding'])).toLowerCase()))))childNamespace='html';
+ if(namespace==='math'&&(['mi','mo','mn','ms','mtext'].includes(tag)||tag==='annotation-xml'&&(prop(props,['encoding'],file)===UNKNOWN||['text/html','application/xhtml+xml'].includes(String(prop(props,['encoding'],file)).toLowerCase()))))childNamespace='html';
  const htmlAncestors=ancestors.filter(frame=>frame.namespace==='html');
  let labelControl=false;
  if(namespace==='html') {
@@ -66,7 +88,7 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
    if(select<0)refuse('is outside <select> in the native subset');
    for(const frame of htmlAncestors.slice(select+1))if(frame.tag==='option'||tag==='optgroup'&&frame.tag==='optgroup')refuse(`would implicitly close its ancestor <${frame.tag}>`);
   }
-  const isInteractive=interactive(tag,props),isLabelable=labelable(tag,props);
+  const isInteractive=interactive(tag,props,file),isLabelable=labelable(tag,props,file);
   if(isInteractive) {
    const outer=htmlAncestors.find(frame=>frame.tag==='a'||frame.tag==='button'||frame.labelControl);
    if(outer)refuse(`is interactive content inside <${outer.tag}>${outer.labelControl?' (the label\'s control)':''}`);
@@ -74,12 +96,12 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
   const label=[...htmlAncestors].reverse().find(frame=>frame.label)?.label;
   if(label&&(isInteractive||isLabelable)) {
    if(!isLabelable)refuse('is interactive content in a label beyond its labelled control');
-   if(label.target!==undefined&&(typeof label.target!=='string'||prop(props,['id'])!==label.target))refuse('does not prove the explicit label\'s target control');
+   if(label.target!==undefined&&(typeof label.target!=='string'||prop(props,['id'],file)!==label.target))refuse('does not prove the explicit label\'s target control');
    if(context.repetition>label.repetition||label.controls.some(previous=>compatible(previous,context.conditions)))refuse('would give one label several controls');
    label.controls.push(context.conditions);labelControl=true;
   }
  }
- const target=tag==='label'?prop(props,['for','htmlfor']):undefined;
+ const target=tag==='label'?prop(props,['for','htmlfor'],file):undefined;
  const frame:ElementContext={tag,namespace,childNamespace,labelControl,...(namespace==='html'&&tag==='label'?{label:{target:typeof target==='string'?target:target===undefined?undefined:UNKNOWN,controls:[],repetition:context.repetition}}:{})};
  return {...context,ancestors:[...ancestors,frame]};
 }
@@ -88,7 +110,7 @@ export function checkRawTextChildren(tag:string,children:readonly t.Node[],file:
  for(const child of children) {
   let value=child;while(t.isTSAsExpression(value)||t.isTSTypeAssertion(value)||t.isTSNonNullExpression(value)||t.isTSSatisfiesExpression(value)||t.isParenthesizedExpression(value))value=value.expression;
   if(t.isStringLiteral(value)||t.isNumericLiteral(value)||t.isBooleanLiteral(value)||t.isNullLiteral(value))continue;
-  if(t.isIdentifier(value)&&value.name==='undefined')continue;
+  if(unboundUndefined(value,file))continue;
   fail(file,child,'BUILD-620',`dynamic or reactive child of <${tag}> is executable CSS/JavaScript content; keep authored literal text here and pass data through ordinary text or declared attributes`);
  }
 }
