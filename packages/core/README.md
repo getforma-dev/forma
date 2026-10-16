@@ -38,21 +38,25 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
+This checkout prepares `3.0.0-beta.1`; it has not been published by this
+preparation. After the coordinated beta is published, install it explicitly:
+
 ```bash
-npm install @getforma/core
+npm install @getforma/core@3.0.0-beta.1
 ```
 
-Or use a CDN — no build step, no bundler:
+For the separate stable 2.1.0 runtime, a CDN needs no build step or bundler.
+These pinned stable examples do not select the prepared beta or its new APIs:
 
 ```html
 <!-- jsDelivr (recommended) -->
-<script src="https://cdn.jsdelivr.net/npm/@getforma/core@latest/dist/formajs-runtime.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@getforma/core@2.1.0/dist/formajs-runtime.global.js"></script>
 
 <!-- unpkg -->
-<script src="https://unpkg.com/@getforma/core/dist/formajs-runtime.global.js"></script>
+<script src="https://unpkg.com/@getforma/core@2.1.0/dist/formajs-runtime.global.js"></script>
 ```
 
-> **Production:** Pin the version (e.g., `@getforma/core@2.1.0`) instead of `@latest`.
+> **Production:** Pin the qualified version instead of a moving dist-tag.
 
 Any bundler works — Vite, esbuild, tsup, webpack, Rollup. FormaJS ships standard ESM and CJS via `package.json` exports. No plugins, no special config. For JSX, set `jsx: "react"`, `jsxFactory: "h"`, `jsxFragmentFactory: "Fragment"`.
 

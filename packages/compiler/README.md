@@ -11,8 +11,11 @@ The Vite plugins (`formaCompiler`, `formaServer`), `compileFormaJSX` and `transf
 
 ## Install
 
+This checkout prepares the unpublished `3.0.0-beta.1` candidate. After its
+coordinated publication, select that prerelease explicitly:
+
 ```bash
-npm install -D @getforma/compiler
+npm install -D @getforma/compiler@3.0.0-beta.1
 ```
 
 ## esbuild SSR Plugin — `formaSsrPlugin`
@@ -160,7 +163,7 @@ imports are not package exports. The runtime surface is pinned by
 ## Peer Dependencies
 
 - `esbuild >=0.17.0` (optional — for esbuild SSR plugin)
-- `@getforma/core ^3.0.0` for the current minor; the coordinated `3.0.0-dev` package is an explicit prerelease alternative. Patch differences are compatible.
+- `@getforma/core ^3.0.0` for the current minor; the coordinated `=3.0.0-beta.1` package is the explicit prerelease alternative. Patch differences are compatible.
 
 ## Part of the Forma Stack
 

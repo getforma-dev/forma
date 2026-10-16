@@ -8,9 +8,12 @@ FMIR binary format parser, walker, and HTML generator for the [Forma Stack](http
 
 ## Install
 
+This checkout prepares the unpublished `3.0.0-beta.1` candidate. After the
+coordinated release, request the prerelease explicitly:
+
 ```toml
 [dependencies]
-forma-ir = "0.2.2"
+forma-ir = "=3.0.0-beta.1"
 ```
 
 ## What It Does
@@ -56,7 +59,7 @@ islands open where the walk stopped. It catches a panic inside the walk as
 
 ## FMIR v3 development
 
-The current set is `3.0.0-alpha.2`, a pre-release on crates.io (the development version between releases is `3.0.0-dev`). Modules carry a 24-byte signature/version/length/CRC
+The prepared set is `3.0.0-beta.1`; its publication and release qualification remain pending. Modules carry a 24-byte signature/version/length/CRC
 header and a variable section table; the reader accepts writers of its own major up to its own minor; patch is ignored.
 Package prerelease suffixes are absent from the numeric wire triple.
 V2 modules require rebuilding. `IrModule::parse` validates every bytecode string reference,
