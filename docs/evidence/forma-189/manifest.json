@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "files": {
+    "msrv-forma-ir-derive-first.log": "6b4365d9ba8ee1002e3c9add9fd3411dc9fd0abb226f0027bdf6749ae371bae0",
+    "forma-ir.source-commit.txt": "a2ff5af957bac8af4501520565f6f824fd33fd1370b9d2c2e65654801f39ada8",
+    "msrv-forma-server-first.log": "f75bc3fbcd6e68c4cd411942cd7e1b5f83d223c042b6ee77ecf3430d04b47a1a",
+    "forma-ir.fresh.Cargo.lock": "77f729f48524d85b0f87ac1aa9126b195894da3a550981f1aaa0438c06169269",
+    "support-history-actual-beta-preflight.json": "c8fd74e51c7eb7c9f8e4c37688903034c9d5b518eeb33191e17c6698b1e0a9b0",
+    "forma-server.fresh.Cargo.lock": "77f729f48524d85b0f87ac1aa9126b195894da3a550981f1aaa0438c06169269",
+    "forma-ir-derive.source-commit.txt": "a2ff5af957bac8af4501520565f6f824fd33fd1370b9d2c2e65654801f39ada8",
+    "forma-ir-derive.fresh.Cargo.lock": "77f729f48524d85b0f87ac1aa9126b195894da3a550981f1aaa0438c06169269",
+    "forma-server.source-commit.txt": "a2ff5af957bac8af4501520565f6f824fd33fd1370b9d2c2e65654801f39ada8",
+    "msrv-forma-ir-first.log": "ebc4a9742c8a4958e017d836e1206391dcb105e611d4b91372f512f6b4fb581c"
+  }
+}

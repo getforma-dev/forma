@@ -36,6 +36,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/check-release-ci.mjs
+      - name: Validate published support history and next-major spacing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/check-release-support.mjs
 
   # The existing reusable suite runs Chromium, Firefox and WebKit on this tag.
   engines:
