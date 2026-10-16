@@ -240,8 +240,12 @@ when P17's wall time passes G6's 1,800 s, when Forma's code on any fixture route
 with the machine and profile, in `report.measurements` (which `release-record.mjs` embeds in DS12 and
 summarises in one line of the Release's notes): P17's time, N2 per route in gzip and Brotli beside the
 application's own bytes, and the walker's node, byte and list counts of the consumer-shaped pages
-(recorded, not gated). FORMA-191 adds N1, N3 and N5 rows to the same record. The skew drill is not called
-yet: it is FORMA-186's lane, and `stageFixtureProject()` returns what its call will take.
+(recorded, not gated). FORMA-191 adds N1, N3 and N5 rows to the same record. For the
+`deploymentSkew: "native-v1"` contract, `scripts/verify-release-set.mjs` calls
+`verifyPackedSkew()` before the fixture applications. The drill exercises the packed
+deployment identity, retained assets, rollback and inert-or-reload behavior in Chromium,
+Firefox and WebKit. Its result is recorded separately; a passing drill does not imply
+that the complete P17 run or its performance checks passed.
 
 Rehearse it as the runner sees it: commit, `pack` a dry-run DS11, delete `packages/*/dist`, then run P17.
 
