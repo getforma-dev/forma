@@ -23,10 +23,9 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 
 ## Usage
 
-This checkout prepares `3.0.0-beta.1`; publication and release qualification
-remain pending. The registry commands below are for use after that coordinated
-beta is published. For an unpublished set, use the packed candidate workflow
-described below.
+These registry commands target `3.0.0-beta.1` and require its coordinated
+publication. For an unpublished set, use the packed candidate workflow
+described below. Release records report the qualification of each published set.
 
 ```bash
 npx @getforma/create-app@3.0.0-beta.1 my-app

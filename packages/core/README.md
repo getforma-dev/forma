@@ -38,8 +38,8 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-This checkout prepares `3.0.0-beta.1`; it has not been published by this
-preparation. After the coordinated beta is published, install it explicitly:
+These examples target the `3.0.0-beta.1` prerelease and require its coordinated
+publication. Install it explicitly:
 
 ```bash
 npm install @getforma/core@3.0.0-beta.1
@@ -70,7 +70,7 @@ Gzipped sizes, measured by `npm run check:size` on the 3.0.0-dev build at `91a50
 | CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 47.7 KiB (48,836 B) | 49,136 B |
 | Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 37.8 KiB (38,687 B) | 40,000 B |
 
-The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less: the measured Counter route loads 26,213 B gzip -9 of Forma code, which `@getforma/build` reports per route and fails over 28,100 B (N2, decision brief L-64). The current indexed SSR route measures 28,071 B. L-64 permits the extra 100 B only if the full 20-run performance campaign passes the original 50 ms N3 ceiling; that qualification remains pending. The L-58 package caps above remain separate from N2. The first and fourth rows grew from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). The gzipped figures are a measurement and rot; the CI limits are not, because a test reads them back out of the gate script.
+The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less: the measured Counter route loads 26,213 B gzip -9 of Forma code, which `@getforma/build` reports per route and fails over 28,100 B (N2, decision brief L-64). At the same measured source, the indexed SSR route loads 28,071 B. L-64 permits the extra 100 B only if the full 20-run performance campaign passes the original 50 ms N3 ceiling; the release record reports the complete qualification result. The L-58 package caps above remain separate from N2. The first and fourth rows grew from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). The gzipped figures are a measurement and rot; the CI limits are not, because a test reads them back out of the gate script.
 
 Verified by `src/__tests__/docs-truth.test.ts` > "the size table quotes the limits the CI gate actually enforces"
 

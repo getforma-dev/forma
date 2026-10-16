@@ -59,7 +59,7 @@ islands open where the walk stopped. It catches a panic inside the walk as
 
 ## FMIR v3 development
 
-The prepared set is `3.0.0-beta.1`; its publication and release qualification remain pending. Modules carry a 24-byte signature/version/length/CRC
+The `3.0.0-beta.1` package set implements FMIR v3. Modules carry a 24-byte signature/version/length/CRC
 header and a variable section table; the reader accepts writers of its own major up to its own minor; patch is ignored.
 Package prerelease suffixes are absent from the numeric wire triple.
 V2 modules require rebuilding. `IrModule::parse` validates every bytecode string reference,
