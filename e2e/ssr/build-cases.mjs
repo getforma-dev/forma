@@ -42,6 +42,7 @@ const expectedIslands = {
   'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],
   'keyed-moves': ['KeyedRows'],
+  'keyed-indexed': ['IndexedRows', 'IndexedRows'],
   'root-fragment': [],
   select: ['Picker'],
   'textarea-child': ['Editor'],

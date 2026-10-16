@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Extend indexed initial-value proof to declared arrays and their ancestors: eager writes, mutating methods and unknown escapes before or after the factory refuse BUILD-622. Immutable declared-data aliases, array-length reads, disjoint props and deferred intrinsic events retain admission within the existing component subset.
+
+- Indexed handle admission refuses eager mutation and unknown escapes hidden in variable initializers (BUILD-622). Original lexical handle aliases and provably deferred intrinsic event callbacks, including local handler aliases, remain supported; no mutation evaluator or runtime restriction was added.
+
+- Add compiler proof and native lowering for `createKeyedRows` with the two-argument `createList` overload. Original lexical factories, required/closed arrays, synchronous key paths and unconditional component LISTs are required (BUILD-622); item getters keep row provenance without acquiring signal capture or early-edit writeback authority. Existing corpus bytes and the LIST/PROP/key-path wire contract are unchanged. Actual typed native/browser qualification and the unchanged indexed-operation timing requirements pass across three engines on the integrated local stack; exact source, products and raw samples are retained in `docs/evidence/forma-181-indexed/integrated/`.
+
 ### Lexical JSX SVG namespaces — FORMA-171
 
 - Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.
@@ -10,7 +16,6 @@
 ### Shared physical SSR and Browser entries — FORMA-186
 
 - Split builds separate graph-wide component hooks from SSR-only entry edits. A paired Browser entry reads the same captured source with component hooks and its original mount/registry, while native metadata continues to name the actual physical source. Changes during either load refuse the whole paired result.
-
 
 - FORMA-139: refuse the finite parser/interactive-content nesting conflicts (BUILD-618), component HTML title (619), dynamic style/script children (620), and SSR island roots lacking one stable owned Element (621). Preserve transparent one-Element Fragments and helpers; keep ranges inside their host. Exact original source/products and canonical admitted near misses are retained. SVG title, browserOnly client bodies, and the existing keyed-row613 proof keep their separate contracts.
 

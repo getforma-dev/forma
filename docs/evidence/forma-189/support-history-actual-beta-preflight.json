@@ -1,0 +1,25 @@
+{
+  "releases": [
+    {
+      "tag": "v3.0.0-alpha.2",
+      "commit": "119c12c60eee77a5320b3a2d239925e64cc5af98",
+      "publishedAt": "2026-10-15T16:59:04Z",
+      "prerelease": true
+    }
+  ],
+  "sources": [
+    {
+      "tag": "v3.0.0-alpha.2",
+      "commit": "119c12c60eee77a5320b3a2d239925e64cc5af98",
+      "sha256": "24609247c729506cd304ae922ef04d0f4fa0a4fdf2b82726e1eee997b325a006",
+      "publishedAt": "2026-10-15T16:59:04Z"
+    }
+  ],
+  "inventorySha256": "6507966a7042ebe93786884031f9f0da7794bc9a0420c322afc9666cf5d3c457",
+  "support": {
+    "schema": 1,
+    "state": "prerelease",
+    "lines": [],
+    "nextMajorNotBefore": null
+  }
+}

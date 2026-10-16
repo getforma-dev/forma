@@ -192,6 +192,12 @@ function declarations(scope: PropsScope, fn: ComponentFunction, ctx?: IrEmitCont
   for (const statement of fn.body.body) if (t.isVariableDeclaration(statement)) for (const declaration of statement.declarations) {
     if (!declaration.init) continue;
     if (t.isIdentifier(declaration.id)) {
+      if(t.isIdentifier(declaration.init)&&localName(declaration.init,scope)&&scope.unsupported.has(declaration.init.name)) {
+        // A pure alias does not execute the unsupported initializer. Retain its
+        // refusal provenance for actual prop reads; indexed handle proof uses
+        // the original lexical factory separately.
+        scope.unsupported.set(declaration.id.name,scope.unsupported.get(declaration.init.name)!);continue;
+      }
       if (t.isIdentifier(declaration.init) && localName(declaration.init, scope) && scope.objects.has(declaration.init.name)) {
         scope.objects.set(declaration.id.name, scope.objects.get(declaration.init.name)!);
       } else {
@@ -300,7 +306,7 @@ export function listItemHint(scope:PropsScope,source:t.Node):number {
 }
 
 /** A row uses its own local projection root, never a handler-addressed slot. */
-export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source: t.Node, itemSlot: number): PropsScope {
+export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source: t.Node, itemSlot: number, getter=false): PropsScope {
   const path = propPath(source, parent);
   if (!path) return parent;
   const type = inner(propType(path, parent, source));
@@ -312,8 +318,8 @@ export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source
   // This key exists only in the compiler's lexical environment, never on wire.
   const key = `\0row:${itemSlot}`;
   scope.views.set(key, { slot: itemSlot, type: type.element });
-  scope.aliases.set(param.name, [key]);
-  scope.objects.delete(param.name); scope.signals.delete(param.name);
+  scope.objects.delete(param.name);scope.aliases.delete(param.name);scope.signals.delete(param.name);
+  (getter?scope.signals:scope.aliases).set(param.name,[key]);
   declarations(scope, fn); validateBindings(scope, fn);
   return scope;
 }

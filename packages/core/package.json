@@ -197,7 +197,7 @@
     "url": "https://github.com/getforma-dev/formajs/issues"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22"
   },
   "devEngines": {
     "runtime": {

@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "sourceCommit": "a9f5eebd894c7e10e6f4070744f4e6ecc84fb687",
+  "node": "v24.22.0",
+  "nativeProfile": "release",
+  "nativeHeaders": {
+    "cache-control": "no-store",
+    "content-security-policy": "default-src 'none'; script-src 'nonce-dqVZAyxQaO+ifUa6e0OeEOkGMYl3gpRZKOjnIqhB3Ro=' 'strict-dynamic' 'self'; style-src 'nonce-dqVZAyxQaO+ifUa6e0OeEOkGMYl3gpRZKOjnIqhB3Ro=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+    "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+    "content-type": "text/html; charset=utf-8",
+    "cross-origin-opener-policy": "same-origin",
+    "permissions-policy": "geolocation=(), camera=(), microphone=()",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-content-type-options": "nosniff"
+  },
+  "files": {
+    "e2e/ssr/cases/keyed-indexed/app.tsx": {
+      "bytes": 362,
+      "sha256": "6238e80775408c72db2943f26fe2464b47c715c990dca46610b7939bf01184b6"
+    },
+    "e2e/ssr/cases/keyed-indexed/page.tsx": {
+      "bytes": 1388,
+      "sha256": "25c60cbb5746a37b9e674eee0f366a706b0cb3483467b1a2191fd816718573a9"
+    },
+    "e2e/ssr/cases/keyed-indexed/slots.json": {
+      "bytes": 27,
+      "sha256": "29918876949dbcb4c24f71497e6be14fea1caf8bf67636ab44022c95ff1b24c5"
+    },
+    "e2e/ssr/render/src/main.rs": {
+      "bytes": 9157,
+      "sha256": "db368a15c966f0ba1c10125a145bfc1326bdfc5140d83c463648f7f6b24494f1"
+    },
+    "e2e/ssr/build.sh": {
+      "bytes": 3534,
+      "sha256": "209e80191116cda32c0ed80a372e750dcafa32f54656c873708635d439d3d2b6"
+    },
+    "e2e/ssr/indexed-products.spec.ts": {
+      "bytes": 15115,
+      "sha256": "c626b86a843db58dae9bd85fd344bcf8b5bba25e78b366328ff7905d2eccb2b0"
+    },
+    "e2e/target/release/forma-e2e-render": {
+      "bytes": 1597680,
+      "sha256": "4a1538d418f24537dfa712c8d909af065c0aa3c59ca6f433bdc5e0bee6904b87"
+    },
+    "packages/compiler/dist/index.js": {
+      "bytes": 430353,
+      "sha256": "97af4f9a3352c12e82b6fae2342999b32402fa96605fa189f927b621aa2afd84"
+    },
+    "packages/build/dist/index.js": {
+      "bytes": 111701,
+      "sha256": "f975fa0ddf1c9e858dbeb4266d94a3e312753c59ddc1874a8c99f42e62a571a1"
+    },
+    "packages/core/dist/index.js": {
+      "bytes": 33789,
+      "sha256": "0a0de50881c14062ea0c97eaf1f0d4361258b1904321bb1eccf97b2f946c357e"
+    },
+    "e2e/ssr/out/build/keyed-indexed/manifest.json": {
+      "bytes": 1253,
+      "sha256": "6f12ff32abeaa6530746bb226071ceb1db30657ba3f818ca128e184c9d6220fb"
+    },
+    "e2e/ssr/out/build/keyed-indexed/size-report.json": {
+      "bytes": 2098,
+      "sha256": "0c4a3152fe21033ecf53e5b1acec556596fdd12a7ba596a0b73514247b33e349"
+    },
+    "e2e/ssr/out/build/keyed-indexed/keyed-indexed.fe37ee61.ir": {
+      "bytes": 1602,
+      "sha256": "fe37ee61ae6366642d30d30d00063547f5f068f7bf545aeed924a36410f5f560"
+    },
+    "e2e/ssr/out/build/keyed-indexed/keyed-indexed.3c6430b6.js": {
+      "bytes": 82608,
+      "sha256": "3c6430b6ae0c834fd4bb542d401db3531be8eee001a04c91237298ce1c98bc38"
+    },
+    "e2e/ssr/out/site/_assets/keyed-indexed.fe37ee61.ir": {
+      "bytes": 1602,
+      "sha256": "fe37ee61ae6366642d30d30d00063547f5f068f7bf545aeed924a36410f5f560"
+    },
+    "e2e/ssr/out/site/_assets/keyed-indexed.3c6430b6.js": {
+      "bytes": 82608,
+      "sha256": "3c6430b6ae0c834fd4bb542d401db3531be8eee001a04c91237298ce1c98bc38"
+    },
+    "e2e/ssr/out/site/keyed-indexed/index.html": {
+      "bytes": 410452,
+      "sha256": "12edcee6f53a291f8ee7b7d29b71be8c1ce4346df91c0f3f4bbbc8cdd59eac14"
+    },
+    "e2e/ssr/out/site/keyed-indexed/index.headers.json": {
+      "bytes": 929,
+      "sha256": "978148fc06827862dc67c69755fbced5d3fcfa274df56a9a78a63656b9c44f26"
+    }
+  },
+  "nativeDump": {
+    "bytes": 3407,
+    "sha256": "486205318a1769a304ca8189ed2d1470fb3934b354770ac95fba087f4d0a1cba"
+  },
+  "nativeState": {
+    "bytes": 83090,
+    "sha256": "220b068db48d0cf4cadd20884ddb3974b42839e96403dad96d85ab1e096f0624",
+    "rows": [
+      {
+        "name": "small",
+        "count": 200,
+        "first": {
+          "id": "row-0",
+          "label": "Label 0"
+        },
+        "last": {
+          "id": "row-199",
+          "label": "Label 199"
+        }
+      },
+      {
+        "name": "large",
+        "count": 2000,
+        "first": {
+          "id": "row-0",
+          "label": "Label 0"
+        },
+        "last": {
+          "id": "row-1999",
+          "label": "Label 1999"
+        }
+      }
+    ]
+  },
+  "routeBudgets": {
+    "version": 1,
+    "ceilings": {
+      "forma": 28000,
+      "page": 76800,
+      "canvas": 373760
+    },
+    "routes": [
+      {
+        "route": "/",
+        "class": "islands",
+        "canvas": false,
+        "files": [
+          {
+            "file": "keyed-indexed.3c6430b6.js",
+            "raw": 82608,
+            "gzip": 28007,
+            "brotli": 24955,
+            "forma": {
+              "raw": 81836,
+              "gzip": 27745,
+              "brotli": 24722
+            }
+          }
+        ],
+        "raw": 82608,
+        "gzip": 28007,
+        "brotli": 24955,
+        "forma": {
+          "raw": 81836,
+          "gzip": 27745,
+          "brotli": 24722
+        },
+        "application": {
+          "raw": 772,
+          "gzip": 262,
+          "brotli": 233
+        },
+        "worker": {
+          "raw": 3221,
+          "gzip": 1533,
+          "brotli": 1305
+        },
+        "javascript": {
+          "raw": 85829,
+          "gzip": 29540,
+          "brotli": 26260
+        },
+        "ceilings": {
+          "forma": 28000,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      },
+      {
+        "route": "/csr",
+        "class": "whole-page-mount",
+        "canvas": false,
+        "files": [
+          {
+            "file": "keyed-indexed-csr.6efd5072.js",
+            "raw": 80792,
+            "gzip": 27370,
+            "brotli": 24424,
+            "forma": {
+              "raw": 80020,
+              "gzip": 27108,
+              "brotli": 24191
+            }
+          }
+        ],
+        "raw": 80792,
+        "gzip": 27370,
+        "brotli": 24424,
+        "forma": {
+          "raw": 80020,
+          "gzip": 27108,
+          "brotli": 24191
+        },
+        "application": {
+          "raw": 772,
+          "gzip": 262,
+          "brotli": 233
+        },
+        "worker": {
+          "raw": 3221,
+          "gzip": 1533,
+          "brotli": 1305
+        },
+        "javascript": {
+          "raw": 84013,
+          "gzip": 28903,
+          "brotli": 25729
+        },
+        "ceilings": {
+          "forma": 28000,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      }
+    ],
+    "worker": {
+      "file": "sw.js",
+      "raw": 3221,
+      "gzip": 1533,
+      "brotli": 1305
+    }
+  },
+  "registration": {
+    "mode": "ssr",
+    "digest": "7c7f126594e01a8e",
+    "schema": [
+      [
+        {
+          "name": "name",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "rows",
+          "type": {
+            "kind": "array",
+            "element": {
+              "kind": "object",
+              "object": 1
+            }
+          }
+        }
+      ],
+      [
+        {
+          "name": "id",
+          "type": {
+            "kind": "string"
+          }
+        },
+        {
+          "name": "label",
+          "type": {
+            "kind": "string"
+          }
+        }
+      ]
+    ]
+  }
+}

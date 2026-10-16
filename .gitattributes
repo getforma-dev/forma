@@ -97,6 +97,9 @@ packages/compiler/tests/list-source.test.ts text eol=lf
 packages/compiler/tests/keyed-list-archive.test.ts text eol=lf
 packages/compiler/tests/keyed-list-proof.test.ts text eol=lf
 
+# Actual N3 timing/product evidence hashes are byte-exact across checkouts.
+docs/evidence/forma-181-indexed/*.json -text
+
 # Authentic pre-139 compiler source/product evidence, never checkout-normalized.
 docs/archive/FORMA-139-html-context/** -text
 
@@ -108,3 +111,7 @@ docs/archive/FORMA-139-e2e-title/** -text
 
 # Original founder comparison source is preserved byte-for-byte on Windows.
 e2e/performance/archive/8bd8b65/** -text
+
+# Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
+docs/evidence/forma-189/** -text
+docs/evidence/forma-181-indexed/integrated/*.json -text

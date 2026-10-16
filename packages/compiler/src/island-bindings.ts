@@ -1,4 +1,4 @@
-import {createListProofs} from './list-proof';
+import {createListProofs,keyedFactory} from './list-proof';
 /** Resolve semantic binding identities from original component source, before JSX
  * lowering can round an integer literal or erase lexical/type information. */
 import { parse } from '@babel/parser';
@@ -545,6 +545,12 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
     // grammar as a native binding; that grammar never invokes accessors,
     // constructors, arbitrary helpers, optional calls, or nested effects.
     if (isFunction(node)) return;
+    if(t.isCallExpression(node)&&coreName(node.callee,env.module)==='createKeyedRows') {
+      listProofs.factory(env.module.file,env.module.source,node);
+      // Only the initial array executes here; the pure key path is checked by
+      // original-source proof. This creates no signal capture or writeback.
+      expression(node.arguments[0]!,env,0,false);return;
+    }
     if (t.isIdentifier(node)) { binding(node, env); return; }
     const savedIds = new Map(captureIds), savedCount = captures.length;
     try { expression(node, env, 0, false); }
@@ -716,20 +722,22 @@ export function analyzeIslandBindings(source: string, file: string, exportedName
       }
       if (core === 'createList') {
         const site=listProofs.original(env.module.file,env.module.source,node);
-        const [source, key, map] = node.arguments;
+        const indexed=site.indexed?keyedFactory(node.arguments[0],node=>env.module.references.get(node),callee=>coreName(callee,env.module)==='createKeyedRows'):undefined;
+        const source=indexed?indexed.arguments[0]:node.arguments[0],key=indexed?indexed.arguments[1]:node.arguments[1],map=indexed?node.arguments[1]:node.arguments[2];
         if (!source || !key || !isFunction(key) || !isFunction(map) || !t.isIdentifier(key.params[0]) || !t.isIdentifier(map.params[0])) fail(env.module, node, 'createList needs named key and row callbacks');
         // The legacy callback-shape refusal above keeps its precedence; the original
         // key-path and row-root proof (BUILD-612/613) runs on a call of the old shape.
         const proof=site.prove();
         const ordinal = nextRow++, nested = environment(env.module, env), keyEnv = environment(env.module, env);
         const rowBinding = binding(map.params[0], nested);
-        nested.values.set(rowBinding, { kind: 'row', id: ordinal, path: [] });
+        const rowValue:BindingValue={kind:'row',id:ordinal,path:[]};
+        nested.values.set(rowBinding,indexed?{resolve:readGetter=>{if(!readGetter)fail(env.module,map.params[0]!,'an indexed row getter must be called before reading its item');return rowValue;},callable:()=>true}:rowValue);
         if (map.params[0].typeAnnotation) nested.restrictedInputs.add(rowBinding);
         keyEnv.values.set(binding(key.params[0], keyEnv), { kind: 'row', id: ordinal, path: [] });
         const keyReturn = returnExpressionOf(key); if (!keyReturn) fail(env.module, key, 'list key has no return');
         const keyPath = expression(keyReturn, keyEnv); if (keyPath.kind !== 'row' || keyPath.id !== ordinal) fail(env.module, key, 'list key must be a literal row path');
         if(keyPath.path.length!==proof.key.length||keyPath.path.some((part,i)=>part!==proof.key[i]))throw new PropsSchemaError(env.module.file,node.loc?.start.line??1,(node.loc?.start.column??0)+1,'original LIST path disagrees with canonical row binding','BUILD-612');
-        const value = expression(source, env), body: BindingRecord[] = []; adoption.rows.push({id:ordinal,source:value}); functionBody(map, nested, body);
+        const value = expression(source, env,0,!indexed), body: BindingRecord[] = []; adoption.rows.push({id:ordinal,source:value}); functionBody(map, nested, body);
         records.push({ kind: 'list', value, key: keyPath.path, body }); return;
       }
       if (t.isIdentifier(node.callee)) {

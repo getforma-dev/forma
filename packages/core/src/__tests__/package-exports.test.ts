@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const ROOT = process.cwd();
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8'));
@@ -122,14 +123,10 @@ describe('engines', () => {
   });
 
   it('the engines floor is a version CI actually runs', () => {
-    // engines said >=18 while the matrix was 20/22/24 and the dev toolchain
-    // could not even install on 18 — an untested promise. The floor's major
-    // must be the lowest major the matrix executes.
-    const ci = readFileSync(resolve(ROOT, '../../.github/workflows/ci.yml'), 'utf8');
-    const matrix = /node-version:\s*\[([^\]]+)\]/.exec(ci);
-    expect(matrix, 'node-version matrix in ci.yml').not.toBeNull();
-    const majors = matrix![1].split(',').map((s) => Number(s.trim()));
+    const script = resolve(ROOT, '../../scripts/toolchain-matrix.mjs');
+    const majors = JSON.parse(execFileSync(process.execPath, [script], { encoding: 'utf8', timeout: 5000 }));
     expect(rangeFloor(pkg.engines.node)[0]).toBe(Math.min(...majors));
+    // The parsed workflow/seeded-drift check in R17 verifies CI consumes this producer.
   });
 
   it('declares a dev floor no installed devDependency undercuts', () => {

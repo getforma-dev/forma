@@ -217,6 +217,10 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'The registered SSR component has text, empty, multiple, conditional/control-flow, async/generator, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.',
     'Return one authored Element, directly or through an ordinary synchronous resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.'),
 
+  entry('BUILD-622', 'Indexed rows without matching eager native validation',
+    'An indexed factory validates its initial keys eagerly, but a deferred, conditional, unused or unproved LIST cannot perform the same native validation. Optional or derived initial arrays, effectful key callbacks, eager handle or initial-data mutations and unknown escapes also lack a matching native contract.',
+    'Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths. Keep declared initial arrays and their ancestors unmodified and unescaped during construction. Mutate or expose them or the handle only in proved deferred intrinsic event callbacks, including immutable local handler aliases.'),
+
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
     "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
