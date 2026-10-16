@@ -1,0 +1,64 @@
+[
+  {
+    "label": "before",
+    "passed": false,
+    "error": "decoder string-array-20000 sample 1: exceeds 12ms",
+    "artifact": {
+      "file": "dist/forma.esm.js",
+      "sha256": "c955a11456ec3ea424e9f53ce4f4d0c425b7a66ef62ac97fa355559e68f54063",
+      "bytes": 201265
+    },
+    "rawSha256": "faca0f97300b083ebf18438e0d644056776cdc88da91c9638b65f1788b4f81fe",
+    "cases": [
+      {
+        "id": "ascii-string",
+        "summary": {
+          "minMs": 3.900000002235174,
+          "medianMs": 4.650000000372529,
+          "p95Ms": 5.600000001490116,
+          "maxMs": 6.399999998509884
+        }
+      },
+      {
+        "id": "string-array-20000",
+        "summary": {
+          "minMs": 10.399999998509884,
+          "medianMs": 11.599999999627471,
+          "p95Ms": 12.799999997019768,
+          "maxMs": 18.699999999254942
+        }
+      }
+    ]
+  },
+  {
+    "label": "after",
+    "passed": false,
+    "error": "decoder string-array-20000 sample 6: exceeds 12ms",
+    "artifact": {
+      "file": "dist/forma.esm.js",
+      "sha256": "e1986c8a88fd1f63b7533febf965dbc13969cef8df9209a3a3cb03a87fdc0bfc",
+      "bytes": 201311
+    },
+    "rawSha256": "01a1c609105f0c940d3a42d4004502412ffbcbbb0f47673fae2d9a0763255c31",
+    "cases": [
+      {
+        "id": "ascii-string",
+        "summary": {
+          "minMs": 4.199999999254942,
+          "medianMs": 5,
+          "p95Ms": 5.699999999254942,
+          "maxMs": 7.199999999254942
+        }
+      },
+      {
+        "id": "string-array-20000",
+        "summary": {
+          "minMs": 10,
+          "medianMs": 11.199999999254942,
+          "p95Ms": 12.199999999254942,
+          "maxMs": 17.799999997019768
+        }
+      }
+    ]
+  }
+]

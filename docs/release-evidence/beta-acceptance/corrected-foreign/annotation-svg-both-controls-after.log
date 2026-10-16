@@ -1,0 +1,15 @@
+
+ RUN  v3.2.7 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/forma/packages/compiler
+
+stderr | tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > checks original registered reactive roots
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-foreign-names-jHw7LT/app.tsx:1:206: attribute TabIndex parses as tabindex in svg; use the canonical spelling tabindex or Browser mode
+
+ ✓ tests/foreign-attribute-names.test.ts (102 tests) 500ms
+ ✓ tests/html-context.test.ts (112 tests) 610ms
+ ✓ tests/attribute-aliases.test.ts (34 tests) 148ms
+
+ Test Files  3 passed (3)
+      Tests  248 passed (248)
+   Start at  01:33:23
+   Duration  1.39s (transform 253ms, setup 0ms, collect 834ms, tests 1.26s, environment 0ms, prepare 102ms)
+

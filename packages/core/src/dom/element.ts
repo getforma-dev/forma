@@ -27,6 +27,7 @@ import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, re
 // builds is the DOM the browser parses from the walker's HTML. Raw HTML,
 // style and event sinks keep their own typed paths and are not routed here.
 import { normalizeDomText } from './normalize-text.js';
+import { attributeName } from './attribute-name.js';
 
 declare const __FORMA_DEV_BUILD__: boolean | undefined;
 // Every development warning below is guarded by the build flag at its site, in
@@ -704,6 +705,7 @@ for (const attr of BOOLEAN_ATTRS) {
 
 /** Apply a single prop to an element (supports both HTML and SVG). */
 function applyProp(el: Element, key: string, value: unknown): void {
+  key = attributeName(key);
   if (isFormControlProperty(el, key)) {
     if (typeof value === 'function') {
       internalEffect(() => writeFormControlProperty(el, key, (value as () => unknown)()));
@@ -746,6 +748,7 @@ function applyProp(el: Element, key: string, value: unknown): void {
 // ---------------------------------------------------------------------------
 
 function applyStaticProp(el: Element, key: string, value: unknown): void {
+  key = attributeName(key);
   if (value == null || value === false) return;
 
   if (key === 'class' || key === 'className') {

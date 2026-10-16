@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Refuse native attribute spellings whose HTML-parsed name or namespace differs from current Browser creation (BUILD-610). Preserve canonical SVG/MathML adjustments and supported XLink attributes; propagate actual integration-point context, including both possible namespaces for unknown MathML annotation encoding. Browser attribute behavior is unchanged.
+
+- Emit `className`, `htmlFor` and `tabIndex` with the same exact native names as browser creation/adoption, and use those names in island binding identities. Refuse competing alias-normalized or ASCII-case-colliding attribute props on one native element with BUILD-610, including HTML-parsed SVG/MathML; unrelated spellings and distinct elements remain independent.
+
 - Extend indexed initial-value proof to declared arrays and their ancestors: eager writes, mutating methods and unknown escapes before or after the factory refuse BUILD-622. Immutable declared-data aliases, array-length reads, disjoint props and deferred intrinsic events retain admission within the existing component subset.
 
 - Indexed handle admission refuses eager mutation and unknown escapes hidden in variable initializers (BUILD-622). Original lexical handle aliases and provably deferred intrinsic event callbacks, including local handler aliases, remain supported; no mutation evaluator or runtime restriction was added.

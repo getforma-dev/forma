@@ -44,6 +44,8 @@ import { SSR_ORIGIN as ORIGIN } from './origin';
  * page has none and loads no script (DR-6).
  */
 const CASES = {
+  'attribute-aliases': 'island',
+  'foreign-attributes': 'island',
   'generic-state': 'island',
   'mixed-entry': 'island',
   namespaces: 'island',
@@ -53,6 +55,8 @@ const CASES = {
   title: 'island',
   select: 'island',
   'edited-controls': 'island',
+  'sanitized-controls': 'island',
+  'conditional-element': 'island',
   'ledger-arrival': 'island',
   'keyed-moves': 'island',
   'keyed-indexed': 'island',

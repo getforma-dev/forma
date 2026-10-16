@@ -17,7 +17,7 @@
     "typescript": "^5.7.0"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,

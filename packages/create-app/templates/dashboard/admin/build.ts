@@ -3,8 +3,8 @@ import { build } from '@getforma/build';
 // This dashboard is rendered in the browser on purpose — see the "Phase 1 by
 // design" section of the README for the measurement behind that. Its entry
 // declares it (`ssr: false`), the server serves its pages through
-// `render_browser_shell`, and nothing here turns SSR on: an SSR build of this
-// app emits island placeholders the client cannot adopt.
+// `render_browser_shell`. Native rendering requires declared page props and
+// registered islands; it is not enabled by changing this flag alone.
 await build({
   app: '{{APP_NAME}}',
   entryPoints: [

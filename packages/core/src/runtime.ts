@@ -2625,6 +2625,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           const init: RequestInit = { method, signal: ctrl.signal };
           if (verdict) {
             init.credentials = verdict.credentials;
+            // The grant authorizes this URL, not a server's redirect target.
+            // Browsers hide Location on manual redirects, so refuse before a
+            // second request can escape its method/path/cookie boundary.
+            init.redirect = 'error';
             if (mount!.used) {
               mount!.used.methods.add(method);
               mount!.used.paths.add(verdict.path);
@@ -2635,6 +2639,13 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
             .then(r => {
               if (verdict && !r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);
               return r.json();
+            }, err => {
+              // Fetch intentionally gives network and redirect failures the
+              // same rejection. Do not claim to identify which one occurred.
+              if (verdict && !ctrl.signal.aborted) {
+                throw new Error('FORMA_E_FETCH_REQUEST: data-fetch failed before a response; redirects are not followed');
+              }
+              throw err;
             })
             .then(data => {
               if (!inflight.has(stop)) return;
@@ -2824,8 +2835,11 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
   // `removeChild`, so that node is still in the snapshot and no longer in the
   // tree. Binding it evaluated the row's expressions against the PARENT scope,
   // where `item` does not exist — silently undefined under the old parser, and
-  // a bogus "item is not declared" diagnostic under this one. A detached node
-  // has no parent, which is the O(1) test for "an earlier bind removed this".
+  // a bogus "item is not declared" diagnostic under this one. The template's
+  // descendants still have parents inside that detached subtree, so test their
+  // membership in this captured scope root, not only their immediate parent.
+  // A scope may itself be detached or inside a shadow root: document-level
+  // isConnected would incorrectly skip those legitimate descendants.
   // Verified by: src/__tests__/failure-semantics.test.ts > "a data-list row template is not bound against the parent scope"
   let boundCount = 0;
   const selector = mount ? null : buildDirectiveSelector();
@@ -2836,7 +2850,7 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
   const targets = scanAll ? root.querySelectorAll('*') : root.querySelectorAll(selector);
   for (let i = 0; i < targets.length; i++) {
     const el = targets[i]!;
-    if (el.parentNode === null) continue;
+    if (!root.contains(el)) continue;
     if (scanAll && !hasDirective(el)) continue;
     if (ownedBelow(el, root)) continue;
     bindElement(el, scope, disposers);

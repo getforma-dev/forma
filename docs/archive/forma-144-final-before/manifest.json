@@ -1,0 +1,100 @@
+{
+  "sourceCommit": "dbf3f987a2e3ec4df2613b85b68613fff5d861b0",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 47162,
+      "sha256": "b2be2b19baf0f441100f7204850835a86ce4175150f53e90e859afe6f52e379e"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 377019,
+      "sha256": "9f1ff6b7971fb95dcbdfeda9664cf760c13bda449d5f01ad63af48bd12cbef1a"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1210,
+      "sha256": "cb0a7f09623cfbd68802ae208a4406e12f14672b23ce1512450d8adf69c09d72"
+    },
+    {
+      "path": "packages/build/package.json",
+      "bytes": 1234,
+      "sha256": "a87fcd53ac06322e60b9cb99951801f696492d3bcb8e9f1af80036efa5089e67"
+    },
+    {
+      "path": "packages/compiler/package.json",
+      "bytes": 1270,
+      "sha256": "f6f310325dc92656d4d560575948437b7a6ef1cafa9e4c43c2826f50e096a299"
+    },
+    {
+      "path": "packages/core/package.json",
+      "bytes": 6620,
+      "sha256": "e3ee122d842483bc25eead85ac50e6574ab8949b582b3e2278acee036b34e25f"
+    },
+    {
+      "path": "packages/create-app/CHANGELOG.md",
+      "bytes": 42351,
+      "sha256": "d91cfb787ab38adca123eee6a4782771b67e802a76c9ac02867c38528a5be8a1"
+    },
+    {
+      "path": "packages/create-app/README.md",
+      "bytes": 9972,
+      "sha256": "ed75f18134883781d4a470125939cdaeb2aa13f9398319de32c95f90be763fb0"
+    },
+    {
+      "path": "packages/create-app/docs/TEMPLATES.md",
+      "bytes": 4347,
+      "sha256": "06837fed365bd6f047142fe86a51769fe2a27ad30d01e8d7adabbd72d7d57d80"
+    },
+    {
+      "path": "packages/create-app/package.json",
+      "bytes": 917,
+      "sha256": "9dc1c08d1042becc2b201288113d6d6044dea5137c07ea850d7d984e72d639c0"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/build.ts",
+      "bytes": 1109,
+      "sha256": "7dce4fd8e4bac8e0a1eac186deb2d963d5b0d250f4499ed73c8532b5cab9204a"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
+      "bytes": 75012,
+      "sha256": "6933b09c56c73269f6eb98753d8f02c71178a127fc31060c261328e71fa65722"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package.json",
+      "bytes": 638,
+      "sha256": "6e2f2931cc495532d42e6389a83ea13094ed75854cfe02e9fb6bdd5fe7c9b2c0"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package-lock.json",
+      "bytes": 85367,
+      "sha256": "f069f5b1f2471746289b9d35efb4f7aeb9c3084c4f254eabf49568661a064f31"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package.json",
+      "bytes": 579,
+      "sha256": "1fed5df88d434fd4192dd5eee9258b3d37a760f4124813f6bc28d4ebb824eccb"
+    },
+    {
+      "path": "packages/create-app/tests/templates.test.ts",
+      "bytes": 36483,
+      "sha256": "e73564ced994349e03ca41606514dc835b6ea839ee919ea63612f5334b5cd9c7"
+    },
+    {
+      "path": "scripts/release-set.mjs",
+      "bytes": 28817,
+      "sha256": "08a258f24612f4a8003ff98ad8afae982060109798278a798057fc17a3f11dc9"
+    },
+    {
+      "path": "scripts/release-template-source.test.mjs",
+      "bytes": 4888,
+      "sha256": "633720e0031966cb5ee0b70e239573694182e61c29bd4c10abb3824d763b3e97"
+    },
+    {
+      "path": "scripts/release.test.mjs",
+      "bytes": 23172,
+      "sha256": "8f311007178a0d546665b84addf00601c023b945d6e642318f455c2b60ddbd0b"
+    }
+  ]
+}

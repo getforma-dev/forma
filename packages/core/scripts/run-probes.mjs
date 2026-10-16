@@ -27,6 +27,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve, join } from 'node:path';
+import { expressionProbeFloor } from './expression-probe-floor.mjs';
 
 const ROOT = process.cwd();
 const CORPUS = resolve(ROOT, 'probes/corpus.json');
@@ -38,6 +39,8 @@ const checkOnly = args.includes('--check');
 const only = flag('only')?.split(',');
 const tag = flag('tag');
 const floor = flag('floor') ? Number(flag('floor')) : null;
+const expressionFloor = flag('expr-floor') === undefined ? null : Number(flag('expr-floor'));
+if (expressionFloor !== null && (!Number.isFinite(expressionFloor) || expressionFloor < 0 || expressionFloor > 100)) throw new Error('invalid expression floor');
 
 const corpus = JSON.parse(readFileSync(CORPUS, 'utf8'));
 const selected = corpus.filter(
@@ -53,7 +56,7 @@ const selected = corpus.filter(
  * It is excluded here, and it is the only file that may be.
  */
 const SELF_REFERENTIAL = '**/probe-corpus.test.ts';
-const VITEST_ARGS = ['--reporter=dot', '--bail=1', '--exclude', SELF_REFERENTIAL];
+const VITEST_ARGS = ['--reporter=dot', '--bail=1', '--maxWorkers=2', '--exclude', SELF_REFERENTIAL];
 
 const vitest = join(ROOT, 'node_modules', 'vitest', 'vitest.mjs');
 if (!checkOnly && !existsSync(vitest)) {
@@ -141,6 +144,13 @@ const survivors = results.filter((r) => r.status === 'SURVIVED');
 if (survivors.length) {
   console.log('\nsurvivors (each one is a property nothing defends):');
   for (const s of survivors) console.log(`  ${s.id.padEnd(40)} ${s.note}`);
+}
+
+if (expressionFloor !== null) {
+  const expression = expressionProbeFloor(selected, results, expressionFloor);
+  writeFileSync(resolve(ROOT, 'probes/expression-floor.json'), JSON.stringify(expression, null, 2) + '\n');
+  console.log(`expression ${expression.caught}/${expression.caught + expression.survived} = ${expression.rate.toFixed(2)}%`);
+  if (!expression.passed) process.exit(1);
 }
 
 if (floor !== null && overall < floor) {

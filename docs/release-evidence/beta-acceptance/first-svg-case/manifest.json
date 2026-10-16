@@ -1,0 +1,112 @@
+{
+  "sourceCommit": "a9f202fdb8376acaee28872ebde5ac99ffc072a6",
+  "runtimeState": "encoder restored to e3d04502 before build; 13 experiment correctness tests retained",
+  "result": "3 engines confirm native TabIndex/data-Foo HYDRATE_VALUE refusal and working Browser counterparts; canonical sibling works in both modes",
+  "files": [
+    {
+      "path": "browser-results.json",
+      "bytes": 25857,
+      "sha256": "3d2a261c5fe82d755fc23437be6ea1148967ac027eafc5e69d047af5493145b2"
+    },
+    {
+      "path": "browser.log",
+      "bytes": 25857,
+      "sha256": "3d2a261c5fe82d755fc23437be6ea1148967ac027eafc5e69d047af5493145b2"
+    },
+    {
+      "path": "browser.mjs",
+      "bytes": 3637,
+      "sha256": "0786659f4e2793abc01f8060d4aa1ee5a9292172e4cec66cc4811c3bf0084a43"
+    },
+    {
+      "path": "build.log",
+      "bytes": 1571,
+      "sha256": "2f7ec5d2f4dee9112393cef1b64a04a85875542046d0d688469ca127d6c3077e"
+    },
+    {
+      "path": "build.mjs",
+      "bytes": 923,
+      "sha256": "e8290de78759f98af993754b3338d50a651519c031c9cc544aa3238bb62b5e61"
+    },
+    {
+      "path": "cases/probe/app.tsx",
+      "bytes": 796,
+      "sha256": "02ab4c2ef5ebab9659c9407fafb08cefd36bbe73f31f3f6ec9a223423fa24cd1"
+    },
+    {
+      "path": "compile.json",
+      "bytes": 1336,
+      "sha256": "06ed8eb9f40453ddd0e2b8aa1d0c9ef3620006ac737b5d9bac4aacf22ec01c44"
+    },
+    {
+      "path": "native.log",
+      "bytes": 83,
+      "sha256": "13be32a9c68fa897932264283fe1032cea665f4e437674caec51ea7f56e516de"
+    },
+    {
+      "path": "out/build/probe/probe-csr.060f9ee5.js",
+      "bytes": 75549,
+      "sha256": "060f9ee56d2697457e2338134e232ec7f10ce87c88ece2cdfbd60b3eac95a121"
+    },
+    {
+      "path": "out/build/probe/probe-csr.060f9ee5.js.br",
+      "bytes": 22769,
+      "sha256": "8ba9d1f770a5cc1621c809874c5b80999dff1e81799624752f6b342c4eddbf17"
+    },
+    {
+      "path": "out/build/probe/probe-csr.060f9ee5.js.gz",
+      "bytes": 25465,
+      "sha256": "79a36266d0347f3c55ab32f6f46de9285dac573620c8265d5e42bb848b995354"
+    },
+    {
+      "path": "out/build/probe/probe.a20f0ada.ir",
+      "bytes": 871,
+      "sha256": "a20f0adaa353b10579fde8ba06fb17bf71914ff1c8387e1590698b71260d48ce"
+    },
+    {
+      "path": "out/build/probe/probe.b0997828.js",
+      "bytes": 77546,
+      "sha256": "b0997828d14a28fb2487fa0c65ee6150d29cd84fac62b92bbe5739deb2b39c31"
+    },
+    {
+      "path": "out/build/probe/probe.b0997828.js.br",
+      "bytes": 23414,
+      "sha256": "0fa50d37aa9061f90548b3a488b5b639839192726912e4e4a4a02c7815e535dc"
+    },
+    {
+      "path": "out/build/probe/probe.b0997828.js.gz",
+      "bytes": 26181,
+      "sha256": "bb25364f546a1a70495d143f686d2d445abbcd1c63b999507aff7cb9bd412f63"
+    },
+    {
+      "path": "out/build/probe/size-report.json",
+      "bytes": 2082,
+      "sha256": "03b422a279cf94e5e4749ff73a95c2e99ef8c000c4261593c518f9d8d916b8f8"
+    },
+    {
+      "path": "out/build/probe/sw.js",
+      "bytes": 3219,
+      "sha256": "ccf43f7dd1d4dc3bccf16feeddba9fde9bb43138b5ca3eea99602655be991121"
+    },
+    {
+      "path": "out/site/probe/csr.headers.json",
+      "bytes": 929,
+      "sha256": "85aff870a1f22dc9b0831b2437a56da81fe002976b96d7e338d65416376e883c"
+    },
+    {
+      "path": "out/site/probe/csr.html",
+      "bytes": 708,
+      "sha256": "da9ba616363cf96b083069271106031fd0bac36be1da0cf4916e807c2a9b76e5"
+    },
+    {
+      "path": "out/site/probe/index.headers.json",
+      "bytes": 929,
+      "sha256": "71157a242dbb3b97d9ed340b948e7554ec733abf9bd208b804512ea2464f0fa4"
+    },
+    {
+      "path": "out/site/probe/index.html",
+      "bytes": 1686,
+      "sha256": "3210a6e9362d623c72e7f541a99c41230ea3122b89e1a2b33792358518755857"
+    }
+  ]
+}

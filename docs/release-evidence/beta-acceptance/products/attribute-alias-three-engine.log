@@ -1,0 +1,25 @@
+[WebServer] (node:78836) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 6 tests using 2 workers
+
+(node:78837) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78838) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/ssr/attribute-aliases.spec.ts:9:5 › typed native attribute aliases match static, reactive and SVG browser writes (353ms)
+  ✓  2 [chromium] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners (497ms)
+(node:78849) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78850) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  4 [firefox] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners (1.4s)
+  ✓  3 [firefox] › e2e/ssr/attribute-aliases.spec.ts:9:5 › typed native attribute aliases match static, reactive and SVG browser writes (1.1s)
+(node:78870) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78872) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  5 [webkit] › e2e/ssr/attribute-aliases.spec.ts:9:5 › typed native attribute aliases match static, reactive and SVG browser writes (983ms)
+  ✓  6 [webkit] › e2e/ssr/conditional-element.spec.ts:10:5 › native element ternaries retain their nodes without writes and own later branch listeners (1.3s)
+
+  6 passed (6.0s)

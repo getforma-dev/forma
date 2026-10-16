@@ -1,0 +1,134 @@
+{
+  "conditional-element/app.tsx": {
+    "bytes": 844,
+    "sha256": "ffa924199fe30a2d30e72f07aade4f8b5e271f2e02e2113c04832076aabb2dd2"
+  },
+  "conditional-element/index.html": {
+    "bytes": 1671,
+    "sha256": "08b76442a5ea4143363e70845588a61f2ff1c675b42d0a1b7cd4e43542c31578"
+  },
+  "conditional-element/csr.html": {
+    "bytes": 736,
+    "sha256": "0168f3cca552807ed6e80f268734ab4251ea3764ad78bf6b0e4d3fc67ca3e17b"
+  },
+  "conditional-element/build/conditional-element.0da2d6a9.js.gz": {
+    "bytes": 26185,
+    "sha256": "7bad2605d50c227add3c24d98060494430396753e5cc799d7b735a602a23e69d"
+  },
+  "conditional-element/build/conditional-element-csr.f97ae343.js.gz": {
+    "bytes": 25455,
+    "sha256": "4ccbd7572fff2cb4abd0135c8507f0c231a9adb85a1f73c7637aea6a5462b608"
+  },
+  "conditional-element/build/conditional-element-csr.f97ae343.js": {
+    "bytes": 75413,
+    "sha256": "f97ae343913ca22d6e7ae449a745d13e4faaeff1c48568b0b991834a1bd3c571"
+  },
+  "conditional-element/build/size-report.json": {
+    "bytes": 2110,
+    "sha256": "feb1655b705a60e562edeb17f1ce17b0273e232052a082c03a2c4115d886dab5"
+  },
+  "conditional-element/build/conditional-element.0da2d6a9.js": {
+    "bytes": 77377,
+    "sha256": "0da2d6a98ae1b5cf98a4c0d8cc4a6ad48b85356b26b577e8fdb28cc9e7824eb3"
+  },
+  "conditional-element/build/conditional-element.bc17a2bb.ir": {
+    "bytes": 940,
+    "sha256": "bc17a2bb37bb374730ad6cdc3722dd2037d0148a976fb3277bf2a2fbee64ecc1"
+  },
+  "conditional-element/build/manifest.json": {
+    "bytes": 1325,
+    "sha256": "35f4eeaea288fc005b5e89e70fcebdba0c7b97e483c76adac85587597a5c79e4"
+  },
+  "conditional-element/build/conditional-element-csr.f97ae343.js.br": {
+    "bytes": 22827,
+    "sha256": "41542ccf67481fd1b86c78203959fc38f563624a96d4f8e51ea52b4a4bddb274"
+  },
+  "conditional-element/build/conditional-element.0da2d6a9.js.br": {
+    "bytes": 23428,
+    "sha256": "792a2253fdca0401b49c5dfa8214c9977870bcca7e2eb45b9c86f5e09dfec9df"
+  },
+  "conditional-element/build/sw.js": {
+    "bytes": 3233,
+    "sha256": "3bc0883c9f57d7bc29f464aba53f894ba849050fed24ac82757fe3662ae2ad05"
+  },
+  "attribute-aliases/app.tsx": {
+    "bytes": 920,
+    "sha256": "6fd4915ab1f13289969f034e48ea855dd383b5a04619d5d83a55a7d0f5d735e7"
+  },
+  "attribute-aliases/index.html": {
+    "bytes": 1479,
+    "sha256": "1f582c9b4dfa675e9399ef699f3b25c328fb1f07ac22ada96b336d847488ebd0"
+  },
+  "attribute-aliases/csr.html": {
+    "bytes": 732,
+    "sha256": "59e804975c56d0cdeffd5287276daa0e10e2510ea6540f50034de06bbbaa99aa"
+  },
+  "attribute-aliases/build/attribute-aliases.12091bc2.js": {
+    "bytes": 77551,
+    "sha256": "12091bc2dd0adb9500c8382dfce59b7481d764f55acccdfc68533a0f0bf4a97a"
+  },
+  "attribute-aliases/build/attribute-aliases.12091bc2.js.gz": {
+    "bytes": 26228,
+    "sha256": "c27df50d381e00d63f3f0320a23e354d2d65889e13989dcb4a7ee4cfb8282970"
+  },
+  "attribute-aliases/build/attribute-aliases-csr.19f105b5.js.gz": {
+    "bytes": 25532,
+    "sha256": "7336e09149dbe1e05fd1666d0e30e77bb78d740c0a4b3000320b7721daf8a146"
+  },
+  "attribute-aliases/build/size-report.json": {
+    "bytes": 2106,
+    "sha256": "80ee45414b1ffd1b9db6af38c8450bc556ff827f5fd91d0a13f936efacc38f74"
+  },
+  "attribute-aliases/build/attribute-aliases-csr.19f105b5.js": {
+    "bytes": 75640,
+    "sha256": "19f105b5307f857f76f2237d776cc4e488baa67b6c920e8ef74618f666885d91"
+  },
+  "attribute-aliases/build/manifest.json": {
+    "bytes": 1301,
+    "sha256": "e2b49ca0fdca7ed7967ad792f880a517a03fc67d10638d6a6e73377db3ccf5dd"
+  },
+  "attribute-aliases/build/attribute-aliases.f8360134.ir": {
+    "bytes": 1014,
+    "sha256": "f8360134670b305081dadf4f310aeb3877b8be3449d65d4b3ac9d1ebdf17d8cf"
+  },
+  "attribute-aliases/build/attribute-aliases-csr.19f105b5.js.br": {
+    "bytes": 22806,
+    "sha256": "7093bdb96945de28ded25b999a4a5b40fa98737525fa7905b87a0f50dc76891a"
+  },
+  "attribute-aliases/build/sw.js": {
+    "bytes": 3229,
+    "sha256": "7afd64bd1f685dc871bce6b1dceeb7340f02ee60f1a0e4e358581905472e8c73"
+  },
+  "attribute-aliases/build/attribute-aliases.12091bc2.js.br": {
+    "bytes": 23459,
+    "sha256": "5441689e0163cdc8a2e3d57fed63f525289d8511d6b3d55a56fdb1d00c07da86"
+  },
+  "packages/core/dist/forma.esm.js": {
+    "bytes": 201436,
+    "sha256": "f59711d62ed1e0340083b120e2066b841c4959820d3005ea4d54f6afec35f16a"
+  },
+  "packages/compiler/dist/index.js": {
+    "bytes": 431512,
+    "sha256": "0bbd998cc69e48ee8fe318fb1ce54b98393cfb2790b51c159e909ea214ba37e7"
+  },
+  "packages/build/dist/index.js": {
+    "bytes": 111701,
+    "sha256": "f975fa0ddf1c9e858dbeb4266d94a3e312753c59ddc1874a8c99f42e62a571a1"
+  },
+  "attribute-aliases/index.headers.json": {
+    "bytes": 929,
+    "sha256": "dd82af5077430bc003d86481daa42253f04a2a562545fa65ad38c2497f97af8c"
+  },
+  "attribute-aliases/csr.headers.json": {
+    "bytes": 929,
+    "sha256": "ed6c826636c789727f37b0f9a63ac265a41afc02160ecd4bdf4f9a55169e3d6d"
+  },
+  "conditional-element/index.headers.json": {
+    "bytes": 929,
+    "sha256": "fe33e6c5446f5f56e289ec2f43768318ddba80dd2e8395f271bf14b0f32d94b0"
+  },
+  "conditional-element/csr.headers.json": {
+    "bytes": 929,
+    "sha256": "46485ae1c0af921ed6e31ee7d2cc7c7e558f92586b00ad542d63b2c09f7e5be7"
+  }
+}

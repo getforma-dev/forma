@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "sourceCommit": "afb51eba8e29e0d9f7f9c40029d4cf70acab2188",
+  "meaning": "Actual npm-packed core adapter qualification; not the complete seven-package P17 run and not a future release proof.",
+  "files": {
+    "combined-core-build.log": "31c7fa496d53228ad5778577fb2a90ff15543de894131aa39bea846046fef928",
+    "combined-core-sizes.log": "b311f2ffc79be5a2a2418185f339e4ed69c67cb86ebccb9727452d77445fad05",
+    "combined-core-tests.log": "f7a6927b4ec4c73ae48997f51da2adca168038c40fdbe1e73e6f5d1ce6962509",
+    "combined-core-types.log": "b4d0ae90960eaac9debc2258b68be6a4c6af1ecaf2474294fe3990730e8ab31c",
+    "combined-probes-check.log": "f6a589b4f5b48a7062ffe7761d67fe76ddf6b0a53e5d4eda818939a758b1da68",
+    "combined-security-finite-afb.log": "bd51e850e2a7e6ed5f28b2f65cd7d847fbad671fbc0334f2b080ad93a12bb0c6",
+    "guard-before.json": "779312f05175949ddec48eb62dad77325e78fc44610a7ba171006ab9f74bf417",
+    "guard-corrected.json": "888431d9b9e850b22423e335baae113d59b62cd5aa90cd09407d0ba68b06a280",
+    "guard-mutant.json": "e270e7f2825b2d2ad48488f840f9ddf4e88890f76769387e5381723db9b20ddc",
+    "guard-qualification.json": "df4bbdbbb1e8b04e6af970290a8dacf352a0750ce960095d434580b0b76a50ba",
+    "hostile-widgets.json": "c6752b7b2237328a21ea0b2f4a2d300517b710546764a53a32676cfa7f266d4a",
+    "mutation-before.json": "1dd04422c7c360c834db40845cd50de889f0366107eb2921a2394d6981cb3d35",
+    "mutation-corrected.json": "d84c3cd7b189e6a43b02ea3f5dee5c68588f389598e71c19aead20ea74d75884",
+    "mutation-mutant.json": "2a9c8282208890785220b9b808cd2fbe5c500bb5810c9c6fda152f308976cbdf",
+    "mutation-qualification.json": "11d02e555ca12c88135906a493b6bd6ca45558491d231d6a4ebcd605dae204dd",
+    "packed-security-final-afb.log": "f06e5c1cd2f594ef930e535c33626f8bd8dfd2a500a1fa2a151746488a8553ef",
+    "security.json": "3392016ec98aa996e5350645c3670206e7c9ecfc6f8e42d9f37711fdf07c176c"
+  }
+}

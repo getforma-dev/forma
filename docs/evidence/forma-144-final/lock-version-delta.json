@@ -1,0 +1,2960 @@
+[
+  {
+    "path": "node_modules/@bcoe/v8-coverage",
+    "before": null,
+    "after": "1.0.2",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/@standard-schema/spec",
+    "before": null,
+    "after": "1.1.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/@types/whatwg-mimetype",
+    "before": null,
+    "after": "3.0.2",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/@types/ws",
+    "before": null,
+    "after": "8.18.2",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/@vitest/coverage-v8",
+    "before": null,
+    "after": "4.1.12",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/@vitest/expect",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/@vitest/mocker",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/@vitest/pretty-format",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/@vitest/runner",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/@vitest/snapshot",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/@vitest/spy",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/@vitest/utils",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/argparse",
+    "before": null,
+    "after": "2.0.1",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/ast-v8-to-istanbul",
+    "before": null,
+    "after": "1.0.7",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/ast-v8-to-istanbul/node_modules/js-tokens",
+    "before": null,
+    "after": "10.0.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/brace-expansion",
+    "before": "1.1.18",
+    "after": "1.1.21",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/buffer-image-size",
+    "before": null,
+    "after": "0.6.4",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/chai",
+    "before": "5.3.3",
+    "after": "6.3.0",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/check-error",
+    "before": "2.1.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/compression",
+    "before": "1.8.1",
+    "after": "1.8.2",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/convert-source-map",
+    "before": null,
+    "after": "2.0.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/deep-eql",
+    "before": "5.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/destroy",
+    "before": null,
+    "after": "1.2.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/entities",
+    "before": null,
+    "after": "4.5.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/es-module-lexer",
+    "before": "1.7.0",
+    "after": "2.3.2",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/fast-uri",
+    "before": "3.1.5",
+    "after": "3.1.8",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/happy-dom",
+    "before": null,
+    "after": "20.14.6",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/happy-dom/node_modules/entities",
+    "before": null,
+    "after": "7.0.1",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/html-escaper",
+    "before": null,
+    "after": "2.0.2",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/istanbul-lib-coverage",
+    "before": null,
+    "after": "3.2.2",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/istanbul-lib-report",
+    "before": null,
+    "after": "3.0.1",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/istanbul-reports",
+    "before": null,
+    "after": "3.2.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/linkify-it",
+    "before": null,
+    "after": "5.0.2",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/loupe",
+    "before": "3.2.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/magicast",
+    "before": null,
+    "after": "0.5.5",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/make-dir",
+    "before": null,
+    "after": "4.0.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/markdown-it",
+    "before": null,
+    "after": "14.3.3",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/mdurl",
+    "before": null,
+    "after": "2.1.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/obug",
+    "before": null,
+    "after": "2.2.1",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/pathval",
+    "before": "2.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/punycode.js",
+    "before": null,
+    "after": "2.3.1",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/semver",
+    "before": null,
+    "after": "7.8.5",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/source-map-js",
+    "before": "1.2.1",
+    "after": "1.2.2",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/std-env",
+    "before": "3.10.0",
+    "after": "4.3.0",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/strip-literal",
+    "before": "3.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/strip-literal/node_modules/js-tokens",
+    "before": "9.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/tinypool",
+    "before": "1.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/tinyrainbow",
+    "before": "2.0.0",
+    "after": "3.2.0",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/tinyspy",
+    "before": "4.0.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/uc.micro",
+    "before": null,
+    "after": "2.1.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/vite-node",
+    "before": "3.2.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "node_modules/vitest",
+    "before": "3.2.7",
+    "after": "4.1.12",
+    "change": "version"
+  },
+  {
+    "path": "node_modules/vitest/node_modules/tinyexec",
+    "before": null,
+    "after": "1.3.1",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/whatwg-mimetype",
+    "before": null,
+    "after": "3.0.0",
+    "change": "add"
+  },
+  {
+    "path": "node_modules/ws",
+    "before": null,
+    "after": "8.22.0",
+    "change": "add"
+  },
+  {
+    "path": "packages/core/node_modules/@babel/helper-string-parser",
+    "before": "7.27.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@babel/helper-validator-identifier",
+    "before": "7.28.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@babel/parser",
+    "before": "7.29.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@babel/types",
+    "before": "7.29.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@bcoe/v8-coverage",
+    "before": "1.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/aix-ppc64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/android-arm",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/android-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/android-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/darwin-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/darwin-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/freebsd-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/freebsd-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-arm",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-ia32",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-loong64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-mips64el",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-ppc64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-riscv64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-s390x",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/linux-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/netbsd-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/netbsd-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/openbsd-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/openbsd-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/openharmony-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/sunos-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/win32-arm64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/win32-ia32",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@esbuild/win32-x64",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@jridgewell/gen-mapping",
+    "before": "0.3.13",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@jridgewell/resolve-uri",
+    "before": "3.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@jridgewell/sourcemap-codec",
+    "before": "1.5.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@jridgewell/trace-mapping",
+    "before": "0.3.31",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@oxc-project/types",
+    "before": "0.143.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@playwright/test",
+    "before": "1.62.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-android-arm64",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-darwin-arm64",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-darwin-x64",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-freebsd-x64",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-linux-arm-gnueabihf",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-linux-arm64-gnu",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-linux-arm64-musl",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-linux-ppc64-gnu",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-linux-s390x-gnu",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-linux-x64-gnu",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-linux-x64-musl",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-openharmony-arm64",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-win32-arm64-msvc",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/binding-win32-x64-msvc",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rolldown/pluginutils",
+    "before": "1.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-android-arm-eabi",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-android-arm64",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-darwin-arm64",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-darwin-x64",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-freebsd-arm64",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-freebsd-x64",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-arm-gnueabihf",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-arm-musleabihf",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-arm64-gnu",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-arm64-musl",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-loong64-gnu",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-loong64-musl",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-ppc64-gnu",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-ppc64-musl",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-riscv64-gnu",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-riscv64-musl",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-s390x-gnu",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-x64-gnu",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-linux-x64-musl",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-openbsd-x64",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-openharmony-arm64",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-win32-arm64-msvc",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-win32-ia32-msvc",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-win32-x64-gnu",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@rollup/rollup-win32-x64-msvc",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@standard-schema/spec",
+    "before": "1.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@types/chai",
+    "before": "5.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@types/deep-eql",
+    "before": "4.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@types/estree",
+    "before": "1.0.8",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@types/node",
+    "before": "26.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@types/whatwg-mimetype",
+    "before": "3.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@types/ws",
+    "before": "8.18.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/coverage-v8",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/expect",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/mocker",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/pretty-format",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/runner",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/snapshot",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/spy",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@vitest/utils",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/@zeit/schemas",
+    "before": "2.36.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/acorn",
+    "before": "8.16.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ajv",
+    "before": "8.18.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ansi-align",
+    "before": "3.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ansi-align/node_modules/ansi-regex",
+    "before": "5.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ansi-align/node_modules/emoji-regex",
+    "before": "8.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ansi-align/node_modules/string-width",
+    "before": "4.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ansi-align/node_modules/strip-ansi",
+    "before": "6.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ansi-regex",
+    "before": "6.2.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ansi-styles",
+    "before": "6.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/any-promise",
+    "before": "1.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/arch",
+    "before": "2.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/arg",
+    "before": "5.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/argparse",
+    "before": "2.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/assertion-error",
+    "before": "2.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ast-v8-to-istanbul",
+    "before": "1.0.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/balanced-match",
+    "before": "1.0.2",
+    "after": "4.0.4",
+    "change": "version"
+  },
+  {
+    "path": "packages/core/node_modules/boxen",
+    "before": "7.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/brace-expansion",
+    "before": "1.1.18",
+    "after": "5.0.12",
+    "change": "version"
+  },
+  {
+    "path": "packages/core/node_modules/buffer-image-size",
+    "before": "0.6.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/bundle-require",
+    "before": "5.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/bytes",
+    "before": "3.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/cac",
+    "before": "6.7.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/camelcase",
+    "before": "7.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/chai",
+    "before": "6.2.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/chalk",
+    "before": "5.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/chalk-template",
+    "before": "0.4.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/chalk-template/node_modules/ansi-styles",
+    "before": "4.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/chalk-template/node_modules/chalk",
+    "before": "4.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/chokidar",
+    "before": "4.0.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/cli-boxes",
+    "before": "3.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/clipboardy",
+    "before": "3.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/color-convert",
+    "before": "2.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/color-name",
+    "before": "1.1.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/commander",
+    "before": "4.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/compressible",
+    "before": "2.0.18",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/compression",
+    "before": "1.8.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/compression/node_modules/debug",
+    "before": "2.6.9",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/compression/node_modules/ms",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/concat-map",
+    "before": "0.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/confbox",
+    "before": "0.1.8",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/consola",
+    "before": "3.4.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/content-disposition",
+    "before": "0.5.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/convert-source-map",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/cross-spawn",
+    "before": "7.0.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/debug",
+    "before": "4.4.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/deep-extend",
+    "before": "0.6.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/detect-libc",
+    "before": "2.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/eastasianwidth",
+    "before": "0.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/emoji-regex",
+    "before": "9.2.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/entities",
+    "before": "7.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/es-module-lexer",
+    "before": "2.3.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/esbuild",
+    "before": "0.28.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/estree-walker",
+    "before": "3.0.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/execa",
+    "before": "5.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/expect-type",
+    "before": "1.4.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/fast-deep-equal",
+    "before": "3.1.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/fast-uri",
+    "before": "3.1.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/fdir",
+    "before": "6.5.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/fix-dts-default-cjs-exports",
+    "before": "1.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/fsevents",
+    "before": "2.3.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/get-stream",
+    "before": "6.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/happy-dom",
+    "before": "20.11.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/has-flag",
+    "before": "4.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/html-escaper",
+    "before": "2.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/human-signals",
+    "before": "2.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ini",
+    "before": "1.3.8",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/is-docker",
+    "before": "2.2.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/is-fullwidth-code-point",
+    "before": "3.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/is-port-reachable",
+    "before": "4.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/is-stream",
+    "before": "2.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/is-wsl",
+    "before": "2.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/isexe",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/istanbul-lib-coverage",
+    "before": "3.2.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/istanbul-lib-report",
+    "before": "3.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/istanbul-reports",
+    "before": "3.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/joycon",
+    "before": "3.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/js-tokens",
+    "before": "10.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/json-schema-traverse",
+    "before": "1.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-android-arm64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-darwin-arm64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-darwin-x64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-freebsd-x64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-linux-arm-gnueabihf",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-linux-arm64-gnu",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-linux-arm64-musl",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-linux-x64-gnu",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-linux-x64-musl",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-win32-arm64-msvc",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lightningcss-win32-x64-msvc",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lilconfig",
+    "before": "3.1.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/lines-and-columns",
+    "before": "1.2.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/linkify-it",
+    "before": "5.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/load-tsconfig",
+    "before": "0.2.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/magic-string",
+    "before": "0.30.21",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/magicast",
+    "before": "0.5.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/make-dir",
+    "before": "4.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/markdown-it",
+    "before": "14.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/markdown-it/node_modules/entities",
+    "before": "4.5.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/mdurl",
+    "before": "2.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/merge-stream",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/mime-db",
+    "before": "1.54.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/mime-types",
+    "before": "2.1.18",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/mime-types/node_modules/mime-db",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/mimic-fn",
+    "before": "2.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/minimatch",
+    "before": "3.1.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/minimist",
+    "before": "1.2.8",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/mlly",
+    "before": "1.8.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ms",
+    "before": "2.1.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/mz",
+    "before": "2.7.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/nanoid",
+    "before": "3.3.18",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/negotiator",
+    "before": "0.6.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/npm-run-path",
+    "before": "4.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/object-assign",
+    "before": "4.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/obug",
+    "before": "2.1.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/on-headers",
+    "before": "1.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/onetime",
+    "before": "5.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/path-is-inside",
+    "before": "1.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/path-key",
+    "before": "3.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/path-to-regexp",
+    "before": "3.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/pathe",
+    "before": "2.0.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/picocolors",
+    "before": "1.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/picomatch",
+    "before": "4.0.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/pirates",
+    "before": "4.0.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/pkg-types",
+    "before": "1.3.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/playwright",
+    "before": "1.62.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/playwright-core",
+    "before": "1.62.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/playwright/node_modules/fsevents",
+    "before": "2.3.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/postcss",
+    "before": "8.5.26",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/postcss-load-config",
+    "before": "6.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/punycode.js",
+    "before": "2.3.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/range-parser",
+    "before": "1.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/rc",
+    "before": "1.2.8",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/readdirp",
+    "before": "4.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/registry-auth-token",
+    "before": "3.3.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/registry-url",
+    "before": "3.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/require-from-string",
+    "before": "2.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/resolve-from",
+    "before": "5.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/rolldown",
+    "before": "1.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/rollup",
+    "before": "4.59.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/safe-buffer",
+    "before": "5.2.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/semver",
+    "before": "7.7.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/serve",
+    "before": "14.2.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/serve-handler",
+    "before": "6.1.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/serve-handler/node_modules/bytes",
+    "before": "3.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/shebang-command",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/shebang-regex",
+    "before": "3.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/siginfo",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/signal-exit",
+    "before": "3.0.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/source-map",
+    "before": "0.7.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/source-map-js",
+    "before": "1.2.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/stackback",
+    "before": "0.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/std-env",
+    "before": "4.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/string-width",
+    "before": "5.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/strip-ansi",
+    "before": "7.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/strip-final-newline",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/strip-json-comments",
+    "before": "2.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/sucrase",
+    "before": "3.35.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/supports-color",
+    "before": "7.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/thenify",
+    "before": "3.3.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/thenify-all",
+    "before": "1.6.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/tinybench",
+    "before": "2.9.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/tinyexec",
+    "before": "0.3.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/tinyglobby",
+    "before": "0.2.17",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/tinyrainbow",
+    "before": "3.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/tree-kill",
+    "before": "1.2.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ts-interface-checker",
+    "before": "0.1.13",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/tsup",
+    "before": "8.5.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/type-fest",
+    "before": "2.19.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/typedoc/node_modules/balanced-match",
+    "before": "4.0.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/typedoc/node_modules/brace-expansion",
+    "before": "5.0.9",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/typescript",
+    "before": "5.9.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/uc.micro",
+    "before": "2.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ufo",
+    "before": "1.6.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/undici-types",
+    "before": "8.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/update-check",
+    "before": "1.5.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/vary",
+    "before": "1.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/vite",
+    "before": "8.2.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/vitest",
+    "before": "4.1.10",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/vitest/node_modules/tinyexec",
+    "before": "1.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/whatwg-mimetype",
+    "before": "3.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/which",
+    "before": "2.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/why-is-node-running",
+    "before": "2.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/widest-line",
+    "before": "4.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/wrap-ansi",
+    "before": "8.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/core/node_modules/ws",
+    "before": "8.21.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/aix-ppc64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/android-arm",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/android-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/android-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/darwin-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/darwin-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/freebsd-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/freebsd-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-arm",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-ia32",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-loong64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-mips64el",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-ppc64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-riscv64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-s390x",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/linux-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/netbsd-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/netbsd-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/openbsd-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/openbsd-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/openharmony-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/sunos-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/win32-arm64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/win32-ia32",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@esbuild/win32-x64",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@jridgewell/gen-mapping",
+    "before": "0.3.13",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@jridgewell/resolve-uri",
+    "before": "3.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@jridgewell/sourcemap-codec",
+    "before": "1.6.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@jridgewell/trace-mapping",
+    "before": "0.3.31",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@napi-rs/lzma-linux-x64-gnu",
+    "before": "1.5.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@oxc-project/types",
+    "before": "0.154.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-android-arm-eabi",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-android-arm64",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-darwin-arm64",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-darwin-x64",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-freebsd-x64",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-linux-arm-gnueabihf",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-linux-arm64-gnu",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-linux-arm64-musl",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-linux-ppc64-gnu",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-linux-s390x-gnu",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-linux-x64-gnu",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-linux-x64-musl",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-openharmony-arm64",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-win32-arm64-msvc",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/binding-win32-x64-msvc",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rolldown/pluginutils",
+    "before": "1.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-android-arm-eabi",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-android-arm64",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-darwin-arm64",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-darwin-x64",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-freebsd-arm64",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-freebsd-x64",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-arm-gnueabihf",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-arm-musleabihf",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-arm64-gnu",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-arm64-musl",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-loong64-gnu",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-loong64-musl",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-ppc64-gnu",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-ppc64-musl",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-riscv64-gnu",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-riscv64-musl",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-s390x-gnu",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-x64-gnu",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-linux-x64-musl",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-openbsd-x64",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-openharmony-arm64",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-win32-arm64-msvc",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-win32-ia32-msvc",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-win32-x64-gnu",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@rollup/rollup-win32-x64-msvc",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@standard-schema/spec",
+    "before": "1.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@types/chai",
+    "before": "5.2.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@types/deep-eql",
+    "before": "4.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@types/estree",
+    "before": "1.0.9",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@vitest/expect",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@vitest/mocker",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@vitest/pretty-format",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@vitest/runner",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@vitest/snapshot",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@vitest/spy",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/@vitest/utils",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/acorn",
+    "before": "8.19.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/any-promise",
+    "before": "1.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/assertion-error",
+    "before": "2.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/bundle-require",
+    "before": "5.1.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/cac",
+    "before": "6.7.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/chai",
+    "before": "6.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/chokidar",
+    "before": "4.0.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/commander",
+    "before": "4.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/confbox",
+    "before": "0.1.8",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/consola",
+    "before": "3.4.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/convert-source-map",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/debug",
+    "before": "4.4.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/detect-libc",
+    "before": "2.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/es-module-lexer",
+    "before": "2.3.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/esbuild",
+    "before": "0.27.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/estree-walker",
+    "before": "3.0.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/expect-type",
+    "before": "1.4.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/fdir",
+    "before": "6.5.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/fix-dts-default-cjs-exports",
+    "before": "1.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/fsevents",
+    "before": "2.3.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/joycon",
+    "before": "3.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-android-arm64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-darwin-arm64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-darwin-x64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-freebsd-x64",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-linux-arm-gnueabihf",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-linux-arm64-gnu",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-linux-arm64-musl",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-linux-x64-gnu",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-linux-x64-musl",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-win32-arm64-msvc",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lightningcss-win32-x64-msvc",
+    "before": "1.33.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lilconfig",
+    "before": "3.1.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/lines-and-columns",
+    "before": "1.2.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/load-tsconfig",
+    "before": "0.2.5",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/magic-string",
+    "before": "0.30.21",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/mlly",
+    "before": "1.8.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/ms",
+    "before": "2.1.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/mz",
+    "before": "2.7.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/nanoid",
+    "before": "3.3.20",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/object-assign",
+    "before": "4.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/obug",
+    "before": "2.2.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/pathe",
+    "before": "2.0.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/picocolors",
+    "before": "1.1.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/picomatch",
+    "before": "4.0.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/pirates",
+    "before": "4.0.7",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/pkg-types",
+    "before": "1.3.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/postcss",
+    "before": "8.5.30",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/postcss-load-config",
+    "before": "6.0.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/readdirp",
+    "before": "4.1.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/resolve-from",
+    "before": "5.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/rolldown",
+    "before": "1.2.14",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/rollup",
+    "before": "4.64.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/siginfo",
+    "before": "2.0.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/source-map",
+    "before": "0.7.6",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/source-map-js",
+    "before": "1.2.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/stackback",
+    "before": "0.0.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/std-env",
+    "before": "4.3.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/sucrase",
+    "before": "3.35.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/thenify",
+    "before": "3.3.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/thenify-all",
+    "before": "1.6.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/tinybench",
+    "before": "2.9.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/tinyexec",
+    "before": "0.3.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/tinyglobby",
+    "before": "0.2.17",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/tinyrainbow",
+    "before": "3.2.0",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/tree-kill",
+    "before": "1.2.2",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/ts-interface-checker",
+    "before": "0.1.13",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/tsup",
+    "before": "8.5.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/typescript",
+    "before": "5.9.3",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/ufo",
+    "before": "1.6.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/vite",
+    "before": "8.3.4",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/vitest",
+    "before": "4.1.11",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/vitest/node_modules/tinyexec",
+    "before": "1.3.1",
+    "after": null,
+    "change": "remove"
+  },
+  {
+    "path": "packages/create-app/node_modules/why-is-node-running",
+    "before": "2.3.0",
+    "after": null,
+    "change": "remove"
+  }
+]

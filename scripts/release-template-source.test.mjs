@@ -1,26 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, copyFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { ROOT, digest, run, stageCargoLock, stageNpmLock, withStagedTemplates } from './release-set.mjs';
+import { ROOT, digest, run, stageCargoLock, stageNpmLock, withStagedTemplates, versionFiles } from './release-set.mjs';
 import { SEED_MARKER, readTemplateSeeds } from './template-lock-seeds.mjs';
 
-const version = JSON.parse(readFileSync(join(ROOT, 'packages/create-app/package.json'))).version;
-function fixture() {
+const SOURCE_VERSION = JSON.parse(readFileSync(join(ROOT, 'packages/create-app/package.json'))).version;
+function fixture(version = SOURCE_VERSION) {
   const root = mkdtempSync(join(tmpdir(), 'forma-template-source-'));
   const before = new Map();
+  const prepared = versionFiles(ROOT, version);
   const write = (path, text) => { mkdirSync(dirname(path),{recursive:true}); writeFileSync(path,text); };
-  write(join(root,SEED_MARKER),readFileSync(join(ROOT,SEED_MARKER)));
+  write(join(root,SEED_MARKER),prepared.get(SEED_MARKER));
   write(join(root,'packages/create-app/package.json'),JSON.stringify({version}));
-  copyFileSync(join(ROOT,'Cargo.lock'),join(root,'Cargo.lock'));
-  for (const [template,files] of readTemplateSeeds(ROOT,version)) {
+  write(join(root,'Cargo.lock'),prepared.get('Cargo.lock'));
+  for (const [template,files] of readTemplateSeeds(ROOT,SOURCE_VERSION)) {
+    for (const file of files.keys()) files.set(file, prepared.get(`packages/create-app/templates/${template}/${file}`));
     files.set('src/main.rs',readFileSync(join(ROOT,'packages/create-app/templates',template,'src/main.rs'),'utf8'));
     for(const [file,text] of files){const path=join(root,'packages/create-app/templates',template,file);write(path,text);before.set(path,readFileSync(path));}
   }
   const packages=[];
   for(const name of ['core','compiler','build']) {
-    const dir=join(root,'npm',name);write(join(dir,'package/package.json'),readFileSync(join(ROOT,'packages',name,'package.json')));
+    const dir=join(root,'npm',name);write(join(dir,'package/package.json'),prepared.get(`packages/${name}/package.json`));
     const file=`${name}.tgz`;run('tar',['-czf',join(root,file),'-C',dir,'package']);
     packages.push({registry:'npm',name:`@getforma/${name}`,version,file,sha256:digest(join(root,file))});
   }
@@ -37,8 +39,8 @@ function fixture() {
   return {root,before,packages};
 }
 
-test('source templates already use finalized typed APIs; packaging never replaces Rust source', () => {
-  const {root,before,packages}=fixture();
+for (const version of [SOURCE_VERSION, '3.0.0-beta.1', '3.0.0']) test(`${version}: template ranges preserve exact locks and unchanged typed Rust source`, () => {
+  const {root,before,packages}=fixture(version);
   try {
     let visited=false;
     withStagedTemplates(root,packages,root,()=>{
@@ -50,6 +52,14 @@ test('source templates already use finalized typed APIs; packaging never replace
         assert(main.indexOf('pages.finalize()')<main.indexOf('tokio::net::TcpListener::bind'));
         assert(!/\b(?:try_render|load_ir_modules_strict|RenderMode|SlotData|config_script)\b/.test(main));
         const manifest=JSON.parse(readFileSync(join(dir,'admin/package.json'))),lock=JSON.parse(readFileSync(join(dir,'admin/package-lock.json')));
+        const expected = `${version.includes('-') ? '=' : '^'}${version}`;
+        assert.equal(manifest.dependencies['@getforma/core'], expected);
+        assert.equal(manifest.devDependencies['@getforma/build'], expected);
+        assert.equal(lock.packages['node_modules/@getforma/core'].version, version);
+        const cargoManifest=readFileSync(join(dir,'Cargo.toml'),'utf8');
+        const directForma = [...cargoManifest.matchAll(/^(forma-[\w-]+) = "([^"]+)"$/gm)];
+        assert.deepEqual(directForma.map(match => match[1]), template === 'minimal' ? ['forma-ir', 'forma-server'] : ['forma-server']);
+        for (const [line, name, requirement] of directForma) assert.equal(requirement, expected, `${template}: ${name}`);
         stageNpmLock(manifest,lock,packages,root,true); // Existing strict shipped-lock validator.
         const cargo=readFileSync(join(dir,'Cargo.lock'),'utf8');
         stageCargoLock(cargo,packages,true);
