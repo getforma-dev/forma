@@ -72,6 +72,7 @@ describe('data-fetch timeout', () => {
     await vi.advanceTimersByTimeAsync(29_999);
     expect(text(container, 'busy')).toBe('true');
     expect(text(container, 'failed')).toBe('');
+    expect(requests[0]?.init.signal).toBeDefined();
     expect(requests[0]!.init.signal!.aborted).toBe(false);
 
     await vi.advanceTimersByTimeAsync(1);
