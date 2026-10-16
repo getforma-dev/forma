@@ -43,9 +43,9 @@ export async function runBrowserCase(input) {
     const expression = input.payload;
     switch (input.context) {
       case 'computed': extra = ` data-computed="derived = ${attr(expression)}"`;
-        // Syntax refusal occurs while binding, before a getter exists. Other
-        // refusals must be reached through the lazy computed getter.
-        markup = input.code === 'FORMA_E_UNSUPPORTED' ? '<p id="out">computed syntax refusal</p>' : p('derived'); break;
+        // Compiler/validator refusals leave no getter. Runtime refusals must
+        // still be reached through a live lazy-computed consumer.
+        markup = input.compileRefusal ? '<p id="out">computed compile refusal</p>' : p('derived'); break;
       case 'text': markup = p(expression); break;
       case 'show': markup = `<p id="out" data-show="${binding(expression)}">untouched</p>`; break;
       case 'if': markup = `<p id="out" data-if="${binding(expression)}">untouched</p>`; break;
@@ -70,6 +70,9 @@ export async function runBrowserCase(input) {
     // Let real image/SVG/parser events run while the mounted tree is retained.
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     eq(root.querySelector('#alive')?.textContent, '3', 'live mount control');
+    if (input.kind === 'expression' && input.context === 'computed') {
+      eq(typeof root.firstElementChild.__formaScope.getters.derived, input.compileRefusal ? 'undefined' : 'function', 'computed getter phase');
+    }
     const codes = runtime.getDiagnostics().map(item => item.code);
     const expectedCode = input.kind === 'expression' ? input.code : input.kind === 'fetch' ? 'FORMA_E_GRANT_FETCH' : input.kind === 'value' && input.context === 'srcdoc' ? 'FORMA_E_RUNTIME_SRCDOC' : null;
     if (expectedCode ? codes.length === 0 || codes.some(code => code !== expectedCode) : codes.length !== 0) {

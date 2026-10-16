@@ -45,6 +45,9 @@ export const valueContexts = ['state', 'computed', 'text', 'show', 'if', 'model'
 // data-model/data-persist accept assignable state/member paths, not arbitrary
 // expression programs. Every literal payload still runs through their live
 // value path; inventing an expression position there would create inert tests.
+// Validator refusals happen before data-computed installs its lazy getter.
+// Dynamic keys and global names reach evaluation; they retain a live consumer.
+const compileRefusals = new Set(['constructor', 'prototype', 'chain', 'map-constructor', 'callback-constructor', 'arrow-block']);
 export const expressionContexts = ['computed', 'text', 'show', 'if', 'class', 'attribute', 'event', 'list', 'list-row-text', 'list-row-attribute'];
 export const profiles = ['none', 'typical', 'all'];
 
@@ -60,7 +63,7 @@ export function cases() {
     // Its anchored URL mini-DSL does not admit embedded newlines; that payload
     // remains covered in all19 live value contexts instead of counting a no-op.
     for (const [id, payload] of valuePayloads.filter(([id]) => ['javascript', 'mixed-scheme', 'tab-scheme', 'control-prefix', 'data-document', 'svg-data', 'vbscript'].includes(id))) out.push({ id: `fetch/${id}/${profile}`, kind: 'fetch', context: 'fetch-url', payload, profile });
-    for (const [id, payload, code] of expressionPayloads) for (const context of expressionContexts) out.push({ id: `expression/${id}/${context}/${profile}`, kind: 'expression', payload, code, context, profile });
+    for (const [id, payload, code] of expressionPayloads) for (const context of expressionContexts) out.push({ id: `expression/${id}/${context}/${profile}`, kind: 'expression', payload, code, compileRefusal: compileRefusals.has(id), context, profile });
     for (const [id, payload] of valuePayloads.filter(([id]) => ['script', 'script-close', 'image-handler', 'svg-handler', 'math-parser', 'quote-breakout', 'single-quote'].includes(id))) out.push({ id: `markup/${id}/${profile}`, kind: 'markup', payload, profile });
   }
   if (new Set(out.map(item => item.id)).size !== out.length) throw new Error('duplicate hostile case id');

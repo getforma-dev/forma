@@ -16,6 +16,11 @@
     "import-call.json": "79034a0f68550c1b073f3e77db36197618f9c386be17415cfdcdca3cafcff951",
     "import-call.log": "e0e6fad03ac9ba483f94439de5ef7d9277fda5e30429202ee08d1ffe251b81ea",
     "svg-image.json": "14c95513d6d997ab8e12768f09437b6eb2f9b85ff1d069b5b9b67734efedd6db",
-    "svg-image.log": "71e8310d6921d5b667b5dc452c0c265bfb599f711d293e298aa79bb0aaedfb02"
+    "svg-image.log": "71e8310d6921d5b667b5dc452c0c265bfb599f711d293e298aa79bb0aaedfb02",
+    "catalogue-before-strict-phase.mjs": "173cbdb1a45cec38dcda186eb531f5c27788244e0101a26b274354fac6774460",
+    "strict-computed-phase.json": "0dcaabdbca330cff2428c3f1bb0b359f11838b887187fc0f715e681b2b39394f",
+    "README.md": "ecfd163f0560f8de12cd591b41a39e8a686276a0b5b35011be9748caaeb552e1",
+    "browser-case-before-strict-phase.mjs": "0d6f755f06919d720976e0ac6a31a06518b99cf515e3be3250af600584555323",
+    "strict-computed-phase.log": "de2c3d326f1930ef1b28dd542489d1bc8ba0e3c840758f43c10be93bab569879"
   }
 }
