@@ -1,0 +1,3 @@
+packed core: complete hostile widget matrix and actual removed-selector-guard control
+committed expression source: 100000 cases, real removed-cost control and corrected replay
+{"commit":"afb51eba8e29e0d9f7f9c40029d4cf70acab2188","passed":true,"scratch":"/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma129-packed-security-gnqRoO","archive":"/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma129-packed-security-gnqRoO/getforma-core-3.0.0-dev.tgz","evidenceDir":"/Users/victorvillacis/dev/Forma/work/FORMA-129/tmp/packed-security-final","runtimeSha256":"b9a14f2596b4ec1924297b51146c28efba4926b13b3a83b02c1b773b3495e23c","cases":1686,"controls":30}
