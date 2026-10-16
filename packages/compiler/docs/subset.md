@@ -43,13 +43,14 @@ must resolve to the original core import through immutable local aliases.
 Initial rows must be a required declared array (including required ancestors)
 or a closed dense literal array. Keys use a synchronous expression callback
 reading a literal property path of its own row, and each synchronous row callback
-returns one stable Element. The item parameter is a zero-argument getter;
+returns one stable Element; row-root helpers must also be synchronous. The item parameter is a zero-argument getter;
 read fields as `item().field`, not `item.field`.
 
 The factory eagerly validates all keys in the browser. Its native component
 must therefore contain its LIST unconditionally in the same return. Deferred
 or conditional LISTs, unused factories, effectful keys and optional initial
-arrays refuse with BUILD-622. Multiple unconditional views of the same handle
+arrays refuse with BUILD-622. A native component module cannot eagerly create
+a collection at module scope; create it inside the component owning its LIST. Multiple unconditional views of the same handle
 are admitted. The runtime API can share independently disposed views; this
 compiler restriction does not broaden initial adoption or writable state.
 Internal item getters never become captured createSignal slots, early-edit

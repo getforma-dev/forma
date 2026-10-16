@@ -194,7 +194,8 @@ Static item fields (`src: item.art`) bake into the element when the row renders
 
 `createKeyedRows(initial, keyFn)` stores plain items by their canonical keys.
 Pass that handle to the two-argument `createList(rows, renderRow)` overload;
-the row callback receives a stable item getter and the usual index getter.
+the row callback receives a stable read-only item getter and the usual index getter.
+Replace items through the handle; passing an argument to the item getter cannot write it.
 
 ```ts
 import { createKeyedRows, createList, h } from "@getforma/core";
