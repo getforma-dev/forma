@@ -1,0 +1,64 @@
+[
+  {
+    "label": "before",
+    "passed": false,
+    "error": "decoder string-array-20000 sample 1: exceeds 12ms",
+    "artifact": {
+      "file": "dist/forma.esm.js",
+      "sha256": "26afb61d1a9144d938686c9f77828bff1f23accf017da0a9dc76d5b0849e911c",
+      "bytes": 200807
+    },
+    "rawSha256": "260cf647866aec9bc1b1bed9f9241ecf1c6a80cd66037ac0c90cc85c764260b7",
+    "cases": [
+      {
+        "id": "ascii-string",
+        "summary": {
+          "minMs": 4,
+          "medianMs": 4.900000000372529,
+          "p95Ms": 5.800000000745058,
+          "maxMs": 6.5
+        }
+      },
+      {
+        "id": "string-array-20000",
+        "summary": {
+          "minMs": 11.100000001490116,
+          "medianMs": 12.100000001490116,
+          "p95Ms": 13.599999997764826,
+          "maxMs": 14
+        }
+      }
+    ]
+  },
+  {
+    "label": "after",
+    "passed": false,
+    "error": "decoder string-array-20000 sample 2: exceeds 12ms",
+    "artifact": {
+      "file": "dist/forma.esm.js",
+      "sha256": "c955a11456ec3ea424e9f53ce4f4d0c425b7a66ef62ac97fa355559e68f54063",
+      "bytes": 201265
+    },
+    "rawSha256": "01816d684336cda0036831c9d04c218b0eabfd760d74d7f2256f18e323d385cc",
+    "cases": [
+      {
+        "id": "ascii-string",
+        "summary": {
+          "minMs": 4.100000001490116,
+          "medianMs": 5,
+          "p95Ms": 5.5,
+          "maxMs": 7
+        }
+      },
+      {
+        "id": "string-array-20000",
+        "summary": {
+          "minMs": 9.600000001490116,
+          "medianMs": 11,
+          "p95Ms": 12.399999998509884,
+          "maxMs": 19.700000002980232
+        }
+      }
+    ]
+  }
+]

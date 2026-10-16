@@ -112,3 +112,9 @@ docs/evidence/forma-181-indexed/integrated/*.json -text
 
 # Attribute alias transition preserves original source/products byte-for-byte.
 docs/archive/attribute-alias-transition/** -text
+
+# Immutable recovered beta measurements and first-failure evidence.
+docs/release-evidence/beta-acceptance/decoder/** -text
+docs/release-evidence/beta-acceptance/products/** -text
+docs/release-evidence/beta-acceptance/first-svg-case/** -text
+docs/release-evidence/beta-acceptance/corrected-foreign/** -text

@@ -82,8 +82,8 @@ describe('native foreign attribute spelling and namespace proof',()=>{
     expect(()=>emitDeclaredPage(`${head} function Child(p:{TabIndex:string}){return h('svg',{'data-safe':p.TabIndex});} export function Page(){return Child({TabIndex:'x'});}`)).not.toThrow();
   });
   it('does not Unicode-fold names or widen downstream ASCII name admission',()=>{
-    // This exercises lexical compilation only. Native name validation remains
-    // a separate refusal boundary; these are not admitted native attributes.
+    // This exercises lexical compilation only. The downstream native ASCII
+    // name filter omits these attributes; this does not prove their admission.
     expect(()=>compile(`h('svg',{'data-Ä':'x','data-ä':'y'})`)).not.toThrow();
   });
 });

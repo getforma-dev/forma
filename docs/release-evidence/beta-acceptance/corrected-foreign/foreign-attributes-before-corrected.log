@@ -1,0 +1,470 @@
+
+ RUN  v3.2.7 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/forma/packages/compiler
+
+ ❯ tests/foreign-attribute-names.test.ts (94 tests | 90 failed) 414ms
+   × native foreign attribute spelling and namespace proof > refuses original SVG spelling TabIndex 24ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses original SVG spelling data-Foo 5ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses original SVG spelling aria-Label 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses original SVG spelling viewbox 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses original SVG spelling VIEWBOX 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses original SVG spelling preserveaspectratio 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling attributeName 6ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling attributeType 8ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling baseFrequency 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling baseProfile 5ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling calcMode 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling clipPathUnits 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling diffuseConstant 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling edgeMode 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling filterUnits 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling glyphRef 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling gradientTransform 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling gradientUnits 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling kernelMatrix 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling kernelUnitLength 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keyPoints 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keySplines 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keyTimes 5ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling lengthAdjust 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling limitingConeAngle 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerHeight 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerUnits 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerWidth 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling maskContentUnits 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling maskUnits 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling numOctaves 7ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pathLength 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternContentUnits 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternTransform 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternUnits 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtX 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtY 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtZ 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling preserveAlpha 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling preserveAspectRatio 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling primitiveUnits 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling refX 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling refY 5ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling repeatCount 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling repeatDur 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling requiredExtensions 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling requiredFeatures 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling specularConstant 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling specularExponent 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling spreadMethod 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling startOffset 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling stdDeviation 7ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling stitchTiles 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling surfaceScale 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling systemLanguage 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling tableValues 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling targetX 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling targetY 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling textLength 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling viewBox 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling viewTarget 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling xChannelSelector 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling yChannelSelector 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling zoomAndPan 3ms
+     → expected [Function] to throw an error
+   ✓ native foreign attribute spelling and namespace proof > keeps the exact aliases and ordinary lowercase foreign attributes 2ms
+   × native foreign attribute spelling and namespace proof > admits MathML definitionURL and refuses its unadjusted spelling 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits standard foreign xlink:actuate only with exact namespace spelling 5ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits standard foreign xlink:arcrole only with exact namespace spelling 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits standard foreign xlink:href only with exact namespace spelling 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits standard foreign xlink:role only with exact namespace spelling 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits standard foreign xlink:show only with exact namespace spelling 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits standard foreign xlink:title only with exact namespace spelling 14ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > admits standard foreign xlink:type only with exact namespace spelling 5ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xlink:custom 2ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xlink:Href 1ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xml:lang 1ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xml:space 1ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xmlns 1ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xmlns:xlink 1ms
+     → expected [Function] to throw an error
+   ✓ native foreign attribute spelling and namespace proof > preserves ordinary HTML mixed case, XML null namespace, and unrelated colon names 3ms
+   × native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > checks the integration element itself in its foreign namespace 2ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > retains MathML for mglyph under a text integration point 3ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through h('g',{TabIndex:1}) 9ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through Child() 9ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through createShow(visible,()=>h('g',{TabIndex:1})) 4ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through createList(rows,item=>item.id,item=>h('g',{TabIndex:1})) 4ms
+     → expected [Function] to throw an error
+   ✓ native foreign attribute spelling and namespace proof > permits a spelling proved in both possible annotation namespaces 2ms
+   × native foreign attribute spelling and namespace proof > checks original registered reactive roots 43ms
+     → expected [Function] to throw an error
+   × native foreign attribute spelling and namespace proof > checks list/helper context without changing component prop names 3ms
+     → expected [Function] to throw an error
+   ✓ native foreign attribute spelling and namespace proof > does not Unicode-fold names or widen downstream ASCII name admission 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 90 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses original SVG spelling TabIndex
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses original SVG spelling data-Foo
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses original SVG spelling aria-Label
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses original SVG spelling viewbox
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses original SVG spelling VIEWBOX
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses original SVG spelling preserveaspectratio
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:17:141
+     15| describe('native foreign attribute spelling and namespace proof',()=>{
+     16|   for(const name of ['TabIndex','data-Foo','aria-Label','viewbox','VIE…
+     17|     for(const value of ["'1'",'value'])expect(()=>compile(`h('svg',{${…
+       |                                                                                                                                             ^
+     18|   });
+     19|   for(const name of svgNames)it(`admits exactly the adjusted SVG spell…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling attributeName
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling attributeType
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling baseFrequency
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling baseProfile
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling calcMode
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling clipPathUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling diffuseConstant
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling edgeMode
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling filterUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling glyphRef
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling gradientTransform
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling gradientUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling kernelMatrix
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling kernelUnitLength
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keyPoints
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keySplines
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling keyTimes
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling lengthAdjust
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling limitingConeAngle
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerHeight
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling markerWidth
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling maskContentUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling maskUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling numOctaves
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pathLength
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternContentUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternTransform
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling patternUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtX
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtY
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling pointsAtZ
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling preserveAlpha
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling preserveAspectRatio
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling primitiveUnits
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling refX
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling refY
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling repeatCount
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling repeatDur
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling requiredExtensions
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling requiredFeatures
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling specularConstant
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling specularExponent
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling spreadMethod
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling startOffset
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling stdDeviation
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling stitchTiles
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling surfaceScale
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling systemLanguage
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling tableValues
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling targetX
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling targetY
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling textLength
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling viewBox
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling viewTarget
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling xChannelSelector
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling yChannelSelector
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits exactly the adjusted SVG spelling zoomAndPan
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:22:65
+     20|     const {binary}=compile(`h('svg',{${name}:'1'})`);
+     21|     expect(renderDefaults(binary,{stripMarkers:true})).toContain(` ${n…
+     22|     expect(()=>compile(`h('svg',{${name.toLowerCase()}:'1'})`)).toThro…
+       |                                                                 ^
+     23|   });
+     24|   it('keeps the exact aliases and ordinary lowercase foreign attribute…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits MathML definitionURL and refuses its unadjusted spelling
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:29:58
+     27|   it('admits MathML definitionURL and refuses its unadjusted spelling'…
+     28|     expect(()=>compile(`h('math',{definitionURL:'x'})`)).not.toThrow();
+     29|     expect(()=>compile(`h('math',{definitionurl:'x'})`)).toThrow(/BUIL…
+       |                                                          ^
+     30|     expect(()=>compile(`h('svg',{definitionURL:'x'})`)).toThrow(/BUILD…
+     31|     expect(()=>compile(`h('math',{viewBox:'x'})`)).toThrow(/BUILD-610.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits standard foreign xlink:actuate only with exact namespace spelling
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits standard foreign xlink:arcrole only with exact namespace spelling
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits standard foreign xlink:href only with exact namespace spelling
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits standard foreign xlink:role only with exact namespace spelling
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits standard foreign xlink:show only with exact namespace spelling
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits standard foreign xlink:title only with exact namespace spelling
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > admits standard foreign xlink:type only with exact namespace spelling
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:35:60
+     33|   for(const name of xlinkNames)it(`admits standard foreign xlink:${nam…
+     34|     for(const tag of ['svg','math'])expect(()=>compile(`h('${tag}',{'x…
+     35|     expect(()=>compile(`h('svg',{'XLINK:${name}':'#x'})`)).toThrow(/BU…
+       |                                                            ^
+     36|     expect(()=>compile(`h('div',{'xlink:${name}':'#x'})`)).toThrow(/BU…
+     37|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xlink:custom
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xlink:Href
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xml:lang
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xml:space
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xmlns
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > refuses foreign namespace mismatch xmlns:xlink
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:39:102
+     37|   });
+     38|   for(const name of ['xlink:custom','xlink:Href','xml:lang','xml:space…
+     39|     for(const tag of ['svg','math'])expect(()=>compile(`h('${tag}',{${…
+       |                                                                                                      ^
+     40|   });
+     41|   it('preserves ordinary HTML mixed case, XML null namespace, and unre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > uses the HTML namespace below an integration point and foreign again at svg
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:52:59
+     50|   ])it('uses the HTML namespace below an integration point and foreign…
+     51|     expect(()=>compile(wrapper(`h('div',{TabIndex:1,'data-Foo':'x'})`)…
+     52|     expect(()=>compile(wrapper(`h('svg',{TabIndex:1})`))).toThrow(/BUI…
+       |                                                           ^
+     53|   });
+     54|   it('checks the integration element itself in its foreign namespace',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > checks the integration element itself in its foreign namespace
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:55:92
+     53|   });
+     54|   it('checks the integration element itself in its foreign namespace',…
+     55|     expect(()=>compile(`h('svg',null,h('foreignObject',{TabIndex:1},h(…
+       |                                                                                            ^
+     56|     expect(()=>compile(`h('math',null,h('mtext',{TabIndex:1},'x'))`)).…
+     57|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > retains MathML for mglyph under a text integration point
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:60:84
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through h('g',{TabIndex:1})
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through Child()
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through createShow(visible,()=>h('g',{TabIndex:1}))
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > preserves unknown annotation encoding through createList(rows,item=>item.id,item=>h('g',{TabIndex:1}))
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:64:42
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > checks original registered reactive roots
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:70:258
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/90]⎯
+
+ FAIL  tests/foreign-attribute-names.test.ts > native foreign attribute spelling and namespace proof > checks list/helper context without changing component prop names
+AssertionError: expected [Function] to throw an error
+
+- Expected: 
+null
+
++ Received: 
+undefined
+
+ ❯ tests/foreign-attribute-names.test.ts:73:139
+     71|   });
+     72|   it('checks list/helper context without changing component prop names…
+     73|     expect(()=>compile(`h('svg',null,createList(rows,item=>item.id,ite…
+       |                                                                                                                                           ^
+     74|     expect(()=>emitDeclaredPage(`${head} function Child(p:{TabIndex:st…
+     75|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/90]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  90 failed | 4 passed (94)
+   Start at  01:25:40
+   Duration  921ms (transform 220ms, setup 0ms, collect 362ms, tests 414ms, environment 0ms, prepare 33ms)
+
