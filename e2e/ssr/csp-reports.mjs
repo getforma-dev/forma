@@ -9,11 +9,15 @@ export function createCspReports({ maxBytes = 65_536, maxReports = 1_024 } = {})
     let document;
     try { document = new URL(report['document-uri']); } catch { return null; }
     if (!['http:', 'https:'].includes(document.protocol)) return null;
+    if (document.pathname.length > 256) return null;
     if (!/^\/(?:[a-z0-9-]+\/(?:csr)?|__csp-control\/[a-f0-9-]{36})$/.test(document.pathname)) return null;
     const directive = report['effective-directive'];
     if (typeof directive !== 'string' || !/^[a-z-]{1,64}$/.test(directive)) return null;
-    const disposition = report.disposition;
-    if (disposition !== 'enforce' && disposition !== 'report') return null;
+    // WebKit's legacy report-uri envelope omits disposition. Retain that
+    // absence explicitly; never infer enforcement from receiving a report.
+    const disposition = report.disposition === undefined ? null : report.disposition;
+    if (disposition !== null && disposition !== 'enforce' && disposition !== 'report') return null;
+    if (report.disposition === null) return null;
     return { document: document.pathname, directive, disposition };
   }
   async function handle(req, res, url) {
