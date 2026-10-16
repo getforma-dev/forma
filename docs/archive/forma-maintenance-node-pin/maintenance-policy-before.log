@@ -1,0 +1,27 @@
+Source 22547c596ab4cd92a0455522f88d475237fc916a; actual floating maintenance selectors remain unchanged.
+Declared build pin: 24.22.0
+{
+  actualStatus: 0,
+  stdout: 'Toolchain policy: all four Node floors, dated matrix, and three locked/fresh MSRV checks agree.\n',
+  stderr: ''
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Maintenance policy must reject the actual floating Node 24 selection below the declared pin
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-node-toolchain/forma/[eval1]:8:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async node:internal/modules/esm/loader:223:26
+    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:220:20)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 0,
+  operator: 'notStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.0

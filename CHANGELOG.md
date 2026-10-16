@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- Maintenance CI, release browser checks and nightly qualification now use the declared Node build pin. Parsed policy controls reject maintenance selector and private engine drift while retaining the published packages’ dated compatibility matrix.
+
 - P17 keeps completed native, mobile and client measurements in one bounded, byte-authenticated attempt journal outside disposable fixtures. A killed or failing producer retains completed evidence; completion requires unchanged performance validators, verified record hashes and all final metadata. Measurement intervals and acceptance thresholds are unchanged.
 
 - Watch tests wait for every initial nonsplit entry context before editing files, preventing another context's initial build from satisfying the requested rebuild. A real three-entry barrier control preserves the failure; watch deadlines and production behavior are unchanged.
