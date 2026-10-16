@@ -14,6 +14,8 @@ import { verifyMinimalIsland, verifyStaticTemplate } from './release-template-is
 import { withOwnedServer } from './owned-server.mjs';
 import { linkPackedPackages, assertPackedResolution } from './release-packed-resolution.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
+import { verifyPackedFixtures } from './release-fixture-apps.mjs';
+import { completeMeasurements, machineProfile } from './release-measurements.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
 async function freePort() {
@@ -233,6 +235,14 @@ export async function verify(dir, reportPath) {
   assert([undefined, null, 'sha384-v1'].includes(set.contracts.assetIntegrity), 'P17 has no verifier for the recorded asset integrity contract');
   assert([undefined, null, 'declared-v1', 'islands-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.stateBlock), 'P17 has no verifier for the recorded state block contract');
+  assert([undefined, null, 'declared-v1'].includes(set.contracts.fixtureApps), 'P17 has no verifier for the recorded fixture applications contract');
+  if (set.contracts.fixtureApps) {
+    // The fixtures are 3.0.0 pages: declared props, the state block, strict adoption (FORMA-188).
+    assert.equal(set.contracts.props, 'declared-v1', 'fixture applications require declared props');
+    assert.equal(set.contracts.stateBlock, 'declared-v1', 'fixture applications require declared state');
+    assert.equal(set.contracts.boundRender, 'finalized-v1', 'fixture applications require finalized rendering');
+    assert.equal(set.contracts.sourceTemplates, 'islands-v1', 'fixture applications require strict adoption');
+  }
   const islandTemplates = set.contracts.sourceTemplates === 'islands-v1';
   if (set.contracts.sourceTemplates) assert.equal(set.contracts.boundRender, 'finalized-v1');
   if (islandTemplates) assert.equal(set.contracts.stateBlock, 'declared-v1', 'islands templates require declared state');
@@ -557,6 +567,12 @@ export async function verify(dir, reportPath) {
           report.templates.push({ template, npmLockSha256: npmHash, packedPackages: set.packages.map(p => `${p.name}@${p.version}`) });
         });
       }
+      // The fixture applications (FORMA-188): the same sources and checks as the source lane, against the
+      // packed set. The skew drill is FORMA-186's lane and is not called here yet; stageFixtureProject
+      // returns what it will take (project, build, targetDir, cratesDir).
+      if (set.contracts.fixtureApps) {
+        report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report });
+      }
     } finally { await browser.close(); }
     // A live set publishes only for the milestone its tag names, and only when every gate of
     // that milestone and the earlier ones is done. Dry runs exercise the contracts unenforced.
@@ -564,8 +580,16 @@ export async function verify(dir, reportPath) {
       const milestone = assertMilestoneReady(set.contracts, set.tag.slice(1));
       assert.equal(set.milestone?.name, milestone.name, 'packed set names another milestone');
     }
-    report.passed = true;
     report.elapsedSeconds = (Date.now() - started) / 1000;
+    if (report.fixtures) {
+      // The measurement step (FORMA-188): P17's time against G6, Forma's code per fixture route against
+      // N2, the machine and profile; a missing or over-limit figure fails P17 naming it. FORMA-191 adds rows.
+      const { n2, shapes, expectedRoutes } = report.fixtures;
+      report.measurements = completeMeasurements({
+        machine: machineProfile({ rustc: set.toolchain, npm: set.npm }), seconds: report.elapsedSeconds, n2, shapes, expectedRoutes,
+      });
+    }
+    report.passed = true;
     save(reportPath, report);
   } finally {
     if (!report.passed) save(reportPath, { ...report, elapsedSeconds: (Date.now() - started) / 1000 });

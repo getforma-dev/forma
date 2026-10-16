@@ -1,0 +1,864 @@
+{
+  "schema": 1,
+  "note": "The index of the fixture applications (FORMA-188). Each page is shaped after a consumer's page (element structure, island count, prop types, list sizes) and written new with neutral, synthetic labels, class names and values; none of it is taken from an application. `state` is the oracle: the values the handler serves, in wire names, which the spec compares with the page's state envelope.",
+  "apps": {
+    "ledger": {
+      "css": "ledger/src/styles/app.css",
+      "shapeSource": "shaped after a household finance app's arrival island: its signals, one conditional summary, a status line moved by the island's own request, a retry button",
+      "routes": {
+        "/household": {
+          "page": "household",
+          "entry": "ledger/src/household/app.tsx",
+          "kind": "page",
+          "propsType": "ArrivalProps",
+          "propsFile": "ledger/src/household/arrival.tsx",
+          "islands": [
+            "HouseholdArrival"
+          ],
+          "state": {
+            "HouseholdArrival": {
+              "arrivalTitle": "Rivera household",
+              "arrivalDate": "2026-09-13",
+              "arrivalCash": "$12,345.67",
+              "arrivalBills": "$34.00",
+              "arrivalIncome": "$2,000.00",
+              "arrivalStatus": "Loading",
+              "arrivalSummary": true
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#arrival-title",
+              "text": "Rivera household"
+            },
+            {
+              "selector": "#arrival-date",
+              "text": "2026-09-13"
+            },
+            {
+              "selector": "#arrival-cash",
+              "text": "$12,345.67"
+            },
+            {
+              "selector": "#arrival-bills",
+              "text": "$34.00"
+            },
+            {
+              "selector": "#arrival-income",
+              "text": "$2,000.00"
+            },
+            {
+              "selector": "#arrival-status",
+              "text": "Loading"
+            }
+          ],
+          "path": "/household"
+        }
+      }
+    },
+    "fauth": {
+      "css": "fauth/src/styles/app.css",
+      "shapeSource": "shaped after an authentication service's pages: a tenant's hosted login (modes, providers, signup rules), a get-started page of provider booleans, a results page of rows",
+      "routes": {
+        "/t/:slug/login": {
+          "page": "tenant-login",
+          "entry": "fauth/src/tenant-login/app.tsx",
+          "kind": "page",
+          "propsType": "TenantLoginProps",
+          "propsFile": "fauth/src/tenant-login/login.tsx",
+          "islands": [
+            "OAuthButtons",
+            "AuthForm"
+          ],
+          "state": {
+            "OAuthButtons": {
+              "hasGoogle": true,
+              "hasGithub": true,
+              "hasEmail": true
+            },
+            "AuthForm": {
+              "startLogin": true,
+              "startRegister": false,
+              "allowPublicSignup": true,
+              "inviteOnly": false,
+              "inviteNotice": ""
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#tenant-name",
+              "text": "Acme Cloud"
+            },
+            {
+              "selector": "#auth-subtitle",
+              "text": "Sign in to your account"
+            },
+            {
+              "selector": "#oauth-google",
+              "text": "Continue with Google"
+            },
+            {
+              "selector": "#oauth-github",
+              "text": "Continue with GitHub"
+            },
+            {
+              "selector": "#lc-submit-in",
+              "text": "Sign in"
+            },
+            {
+              "selector": "#lc-toggle",
+              "text": "Don't have an account? Sign up"
+            }
+          ],
+          "path": "/t/acme/login",
+          "variants": [
+            {
+              "name": "invite-only tenant",
+              "path": "/t/lockbox/login",
+              "state": {
+                "OAuthButtons": {
+                  "hasGoogle": false,
+                  "hasGithub": false,
+                  "hasEmail": true
+                },
+                "AuthForm": {
+                  "startLogin": true,
+                  "startRegister": false,
+                  "allowPublicSignup": false,
+                  "inviteOnly": true,
+                  "inviteNotice": "Registration here is by invitation only. Ask for an invitation link."
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#tenant-name",
+                  "text": "Lockbox"
+                },
+                {
+                  "selector": "#invite-notice",
+                  "text": "Registration here is by invitation only. Ask for an invitation link."
+                }
+              ]
+            },
+            {
+              "name": "invite link on an invite-only tenant, starting in register mode",
+              "path": "/t/lockbox/login?invite_token=abc&mode=register",
+              "state": {
+                "OAuthButtons": {
+                  "hasGoogle": false,
+                  "hasGithub": false,
+                  "hasEmail": true
+                },
+                "AuthForm": {
+                  "startLogin": false,
+                  "startRegister": true,
+                  "allowPublicSignup": true,
+                  "inviteOnly": true,
+                  "inviteNotice": "An invitation was found. You may sign in or register with it."
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#auth-subtitle",
+                  "text": "Create your account"
+                },
+                {
+                  "selector": "#invite-notice",
+                  "text": "An invitation was found. You may sign in or register with it."
+                },
+                {
+                  "selector": "#lc-submit-up",
+                  "text": "Create account"
+                }
+              ]
+            }
+          ]
+        },
+        "/platform/onboarding": {
+          "page": "onboarding",
+          "entry": "fauth/src/onboarding/app.tsx",
+          "kind": "page",
+          "propsType": "OnboardingProps",
+          "propsFile": "fauth/src/onboarding/registration.tsx",
+          "islands": [
+            "RegistrationForm"
+          ],
+          "state": {
+            "RegistrationForm": {
+              "clientId": "onboarding-client",
+              "serverUrl": "https://auth.example.test",
+              "hasGoogle": true,
+              "hasGithub": false,
+              "hasOAuth": true
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#ob-title",
+              "text": "Get started"
+            },
+            {
+              "selector": "#ob-client",
+              "text": "Client onboarding-client"
+            }
+          ]
+        },
+        "/platform/benchmark": {
+          "page": "benchmark",
+          "entry": "fauth/src/benchmark/app.tsx",
+          "kind": "page",
+          "propsType": "BenchmarkProps",
+          "propsFile": "fauth/src/benchmark/table.tsx",
+          "islands": [
+            "FilterBar",
+            "ResultsToolbar"
+          ],
+          "state": {
+            "FilterBar": {
+              "query": "gate",
+              "sortColumn": "score",
+              "rowCount": 3
+            },
+            "ResultsToolbar": {
+              "failureCount": 1,
+              "hasError": false,
+              "noRows": false,
+              "rows": [
+                {
+                  "id": 1,
+                  "name": "gate-allow",
+                  "score": 98.5,
+                  "verdict": "pass",
+                  "passed": true
+                },
+                {
+                  "id": 2,
+                  "name": "gate-deny",
+                  "score": 71.25,
+                  "verdict": "pass",
+                  "passed": true
+                },
+                {
+                  "id": 3,
+                  "name": "gate-timeout",
+                  "score": 12,
+                  "verdict": "fail",
+                  "passed": false,
+                  "failure": "timed out after 30 s"
+                }
+              ]
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#bm-title",
+              "text": "Benchmark results"
+            },
+            {
+              "selector": "#bm-summary",
+              "text": "Showing 3 results for \"gate\", by score."
+            },
+            {
+              "selector": "#bm-failures",
+              "text": "Failures only (1)"
+            },
+            {
+              "selector": "tr[data-row=\"3\"] td:nth-child(4)",
+              "text": "timed out after 30 s"
+            }
+          ],
+          "variants": [
+            {
+              "name": "no results",
+              "path": "/platform/benchmark?q=zzz&sort=name",
+              "state": {
+                "FilterBar": {
+                  "query": "zzz",
+                  "sortColumn": "name",
+                  "rowCount": 0
+                },
+                "ResultsToolbar": {
+                  "failureCount": 0,
+                  "hasError": false,
+                  "noRows": true,
+                  "rows": []
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#bm-summary",
+                  "text": "Showing 0 results for \"zzz\", by name."
+                },
+                {
+                  "selector": "#bm-empty",
+                  "text": "No results yet."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "ksx": {
+      "css": "ksx/src/styles/app.css",
+      "shapeSource": "shaped after a controller studio's button-check screen: a nested roster payload, derived booleans, a chip grid, a keyboard echo",
+      "routes": {
+        "/check": {
+          "page": "check",
+          "entry": "ksx/src/check/app.tsx",
+          "kind": "page",
+          "propsType": "CheckProps",
+          "propsFile": "ksx/src/check/screen.tsx",
+          "islands": [
+            "FeedStatus",
+            "LiveEcho"
+          ],
+          "state": {
+            "FeedStatus": {
+              "sessionLine": "Idle.",
+              "feedHint": "Press a key to see which inputs respond.",
+              "feedLine": "Waiting for input.",
+              "lossLine": "2 frames skipped.",
+              "framesSeen": 1001,
+              "hasLoss": true,
+              "quiet": true,
+              "running": false
+            },
+            "LiveEcho": {
+              "hint": "Press a key to see which inputs respond.",
+              "chips": [
+                {
+                  "id": 1,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "A",
+                  "label": "A",
+                  "keys": "G"
+                },
+                {
+                  "id": 2,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "B",
+                  "label": "B",
+                  "keys": "H"
+                },
+                {
+                  "id": 3,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "dpad.up",
+                  "label": "D-pad ↑",
+                  "keys": "W ArrowUp"
+                },
+                {
+                  "id": 4,
+                  "slot": "1",
+                  "player": "P1",
+                  "control": "lt",
+                  "label": "LT",
+                  "keys": ""
+                },
+                {
+                  "id": 5,
+                  "slot": "2",
+                  "player": "P2",
+                  "control": "A",
+                  "label": "✕",
+                  "keys": "G"
+                },
+                {
+                  "id": 6,
+                  "slot": "2",
+                  "player": "P2",
+                  "control": "B",
+                  "label": "○",
+                  "keys": "H"
+                }
+              ],
+              "hasSlots": true
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#check-title",
+              "text": "Input monitor"
+            },
+            {
+              "selector": "#session-line",
+              "text": "Idle."
+            },
+            {
+              "selector": "#frames-seen",
+              "text": "1001"
+            },
+            {
+              "selector": "#loss-line",
+              "text": "2 frames skipped."
+            },
+            {
+              "selector": "#generated",
+              "text": "Roster read 2026-10-15T12:00:00Z from fixture."
+            },
+            {
+              "selector": "#chips li:first-child",
+              "text": "P1 A"
+            }
+          ],
+          "variants": [
+            {
+              "name": "no controller",
+              "path": "/check?state=empty",
+              "state": {
+                "FeedStatus": {
+                  "sessionLine": "Idle.",
+                  "feedHint": "Press a key to see which inputs respond.",
+                  "feedLine": "Waiting for input.",
+                  "lossLine": "2 frames skipped.",
+                  "framesSeen": 1001,
+                  "hasLoss": true,
+                  "quiet": true,
+                  "running": false
+                },
+                "LiveEcho": {
+                  "hint": "Press a key to see which inputs respond.",
+                  "chips": [],
+                  "hasSlots": false
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#empty h2",
+                  "text": "No device configured"
+                },
+                {
+                  "selector": "#frames-seen",
+                  "text": "1001"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "bench": {
+      "css": "bench/src/styles/app.css",
+      "shapeSource": "design.md A4 (the consumers' heaviest pages): a login 300 nodes and 2 islands, a console 1,500 and 10, a document 10,000 and 5, a canvas 15,000 and 50, a year of transactions 20,000 (2,000 rows of 10 nodes) and 5; plus N3's page of 100 islands. Synthetic data, no consumer code.",
+      "routes": {
+        "/pages/300": {
+          "page": "login300",
+          "entry": "bench/src/login300/app.tsx",
+          "kind": "page",
+          "propsType": "Login300Props",
+          "propsFile": "bench/src/login300/page.tsx",
+          "islands": [
+            "Tile",
+            "Tile"
+          ],
+          "shape": {
+            "consumer": "a tenant login",
+            "targetNodes": 300,
+            "islands": 2
+          },
+          "statePrefix": {
+            "Tile": [
+              {
+                "id": 0,
+                "label": "Tile 0",
+                "count": 7,
+                "on": false
+              }
+            ]
+          },
+          "serverValues": [
+            {
+              "selector": "[data-tile=\"0\"] .tile-count",
+              "text": "7"
+            },
+            {
+              "selector": "h1",
+              "text": "Sign in to Acme"
+            }
+          ]
+        },
+        "/pages/1500": {
+          "page": "console1500",
+          "entry": "bench/src/console1500/app.tsx",
+          "kind": "page",
+          "propsType": "Console1500Props",
+          "propsFile": "bench/src/console1500/page.tsx",
+          "islands": [
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile"
+          ],
+          "shape": {
+            "consumer": "an administration console",
+            "targetNodes": 1500,
+            "islands": 10
+          },
+          "statePrefix": {
+            "Tile": [
+              {
+                "id": 0,
+                "label": "Tile 0",
+                "count": 7,
+                "on": false
+              }
+            ]
+          },
+          "serverValues": [
+            {
+              "selector": "[data-tile=\"0\"] .tile-count",
+              "text": "7"
+            },
+            {
+              "selector": "h1",
+              "text": "Operations console"
+            }
+          ]
+        },
+        "/pages/10000": {
+          "page": "doc10000",
+          "entry": "bench/src/doc10000/app.tsx",
+          "kind": "page",
+          "propsType": "Doc10000Props",
+          "propsFile": "bench/src/doc10000/page.tsx",
+          "islands": [
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile"
+          ],
+          "shape": {
+            "consumer": "a document viewer",
+            "targetNodes": 10000,
+            "islands": 5
+          },
+          "statePrefix": {
+            "Tile": [
+              {
+                "id": 0,
+                "label": "Tile 0",
+                "count": 7,
+                "on": false
+              }
+            ]
+          },
+          "serverValues": [
+            {
+              "selector": "[data-tile=\"0\"] .tile-count",
+              "text": "7"
+            },
+            {
+              "selector": "h1",
+              "text": "Field notes"
+            }
+          ]
+        },
+        "/pages/15000": {
+          "page": "canvas15000",
+          "entry": "bench/src/canvas15000/app.tsx",
+          "kind": "page",
+          "propsType": "Canvas15000Props",
+          "propsFile": "bench/src/canvas15000/page.tsx",
+          "islands": [
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile"
+          ],
+          "shape": {
+            "consumer": "a canvas of 50 modules",
+            "targetNodes": 15000,
+            "islands": 50
+          },
+          "statePrefix": {
+            "Tile": [
+              {
+                "id": 0,
+                "label": "Module 0",
+                "count": 7,
+                "on": false
+              }
+            ]
+          },
+          "serverValues": [
+            {
+              "selector": "[data-tile=\"0\"] .tile-count",
+              "text": "7"
+            },
+            {
+              "selector": "h1",
+              "text": "Canvas"
+            }
+          ]
+        },
+        "/pages/20000": {
+          "page": "ledger20000",
+          "entry": "bench/src/ledger20000/app.tsx",
+          "kind": "page",
+          "propsType": "Ledger20000Props",
+          "propsFile": "bench/src/ledger20000/page.tsx",
+          "islands": [
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile"
+          ],
+          "shape": {
+            "consumer": "a year of transactions",
+            "targetNodes": 20000,
+            "islands": 5
+          },
+          "statePrefix": {
+            "Tile": [
+              {
+                "id": 0,
+                "label": "Tile 0",
+                "count": 7,
+                "on": false
+              }
+            ]
+          },
+          "serverValues": [
+            {
+              "selector": "[data-tile=\"0\"] .tile-count",
+              "text": "7"
+            },
+            {
+              "selector": "h1",
+              "text": "Transactions 2025"
+            }
+          ]
+        },
+        "/pages/islands-100": {
+          "page": "islands100",
+          "entry": "bench/src/islands100/app.tsx",
+          "kind": "page",
+          "propsType": "Islands100Props",
+          "propsFile": "bench/src/islands100/page.tsx",
+          "islands": [
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile",
+            "Tile"
+          ],
+          "shape": {
+            "consumer": "N3's page of 100 islands",
+            "targetNodes": null,
+            "islands": 100
+          },
+          "statePrefix": {
+            "Tile": [
+              {
+                "id": 0,
+                "label": "Tile 0",
+                "count": 7,
+                "on": false
+              },
+              {
+                "id": 1,
+                "label": "Tile 1",
+                "count": 1001,
+                "on": false
+              }
+            ]
+          },
+          "serverValues": [
+            {
+              "selector": "[data-tile=\"0\"] .tile-count",
+              "text": "7"
+            },
+            {
+              "selector": "[data-tile=\"1\"] .tile-count",
+              "text": "1001"
+            },
+            {
+              "selector": "[data-tile=\"99\"] .tile-label",
+              "text": "Tile 99"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "negative": [
+    {
+      "name": "record-bindings",
+      "entry": "negative/record-bindings/app.tsx",
+      "fails": "diagnostic",
+      "code": "BUILD-610",
+      "message": "generic or namespace props types are not supported",
+      "file": "negative/record-bindings/app.tsx",
+      "why": "acceptance 4: a props type outside the closed type set (a map from control name to key list, the studio payload's wire type) fails the build with the declared-contract code, naming the file, line and column; the ksx fixture is its near miss"
+    },
+    {
+      "name": "computed-condition",
+      "entry": "negative/computed-condition/app.tsx",
+      "fails": "diagnostic",
+      "code": "BUILD-610",
+      "message": "computed declared values remain outside the native subset",
+      "file": "negative/computed-condition/app.tsx",
+      "why": "the first construct the old tenant login used that 3.0.0 does not admit; the fixture passes a declared boolean instead"
+    }
+  ],
+  "positive": [
+    {
+      "name": "list-island",
+      "entry": "positive/list-island/app.tsx",
+      "why": "L-58 admits a client createList island within the emitted route size policy; the fixture must build with a passing report."
+    }
+  ]
+}
