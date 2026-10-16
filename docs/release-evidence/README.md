@@ -580,3 +580,29 @@ block does not depend on the checkout's builds: its staging, run alone with the 
 packed libraries outside the checkout, proves each import resolves inside the install, and builds all four
 applications with the packed `build()` (5.6 s); the build hashes of all four applications built with the packed set equal those of the working
 tree's build (`7b976f527291`, `dccd4063fcb2`, `e4164a114b44`, `8e9620ba2f21`). The `cargo` and browser stages need the same machine as any P17 run.
+
+## FORMA-188: list islands and an unbuilt-workspace packed rehearsal
+
+`fixture-list-islands-{set,p17,rehearsal}.json` and `fixture-list-islands-SHA256SUMS`
+record the clean source commit `990b3080c60784e9283ae31eec38277a1693d755`, which
+includes the reviewed integration/main synchronization and the 27,500 B N2 policy.
+All four `packages/*/dist` directories were removed after packing and remained
+absent after the full P17 run. The packed dependency-resolution guard, template
+checks and fixture checks passed in **130.482 seconds** on Node 24.22.0, with
+`CARGO_BUILD_JOBS=3`. This resolves the unbuilt-workspace rehearsal gap recorded
+in the preceding historical fixture report; those original records stay intact.
+
+The fAuth result rows and ksx controller chips now belong to their interactive
+islands. Both read actual typed server arrays, adopt their keyed rows without
+writes, reverse the existing nodes and continue handling input. The updated
+state oracle checks those arrays. All 15 fixture page/variant observations record
+zero initial mutations; the source fixture lane passed 55/55 with two Playwright
+workers. The accepted list-island fixture is also built with the packed build
+and its complete emitted size report is retained.
+
+All 12 N2 rows pass, with the largest Forma share **26,755 of 27,500 B gzip -9**
+on ksx `/check`; the positive list island measures 26,506 B. Both Forma and total
+JavaScript ceilings and verdicts are checked against `size-report.json`.
+The seven archives are an unpublished `3.0.0-dev` dry run. This records fixture
+qualification, not the separate deployment-skew drill or a release milestone's
+completion. No tag or registry publication was made.
