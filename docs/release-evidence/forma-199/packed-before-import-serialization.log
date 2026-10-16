@@ -1,0 +1,115 @@
+
+added 3 packages in 248ms
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/packages/create-app
+
+ ❯ tests/scaffold.test.ts (57 tests | 1 failed | 56 skipped) 10912ms
+       ↓ produces exactly the template tree, with configuration dotfiles restored
+       ↓ restores the scripts-off npm policy and never leaves _npmrc in a scaffold
+       ↓ leaves no unreplaced placeholder anywhere
+       ↓ names the crate after the project
+       ↓ puts the project's own Cargo.lock entry where cargo sorts it
+       ↓ tells an npm user to install with npm ci, which leaves the shipped lockfile as it is
+       ↓ writes a .gitignore and no _gitignore
+       ↓ refuses to scaffold over the directory it just created
+       ↓ produces exactly the template tree, with configuration dotfiles restored
+       ↓ restores the scripts-off npm policy and never leaves _npmrc in a scaffold
+       ↓ leaves no unreplaced placeholder anywhere
+       ↓ names the crate after the project
+       ↓ puts the project's own Cargo.lock entry where cargo sorts it
+       ↓ tells an npm user to install with npm ci, which leaves the shipped lockfile as it is
+       ↓ writes a .gitignore and no _gitignore
+       ↓ refuses to scaffold over the directory it just created
+       ↓ refuses ../escape (path traversal) before writing anything, naming the rule
+       ↓ refuses .. (parent directory) before writing anything, naming the rule
+       ↓ refuses a/b (forward slash) before writing anything, naming the rule
+       ↓ refuses a\b (backslash) before writing anything, naming the rule
+       ↓ refuses /abs (absolute path) before writing anything, naming the rule
+       ↓ refuses C:tricky (drive-relative path) before writing anything, naming the rule
+       ↓ refuses My-App (upper case) before writing anything, naming the rule
+       ↓ refuses 0app (leading digit) before writing anything, naming the rule
+       ↓ refuses -leading (leading hyphen) before writing anything, naming the rule
+       ↓ refuses _leading (leading underscore) before writing anything, naming the rule
+       ↓ refuses fn (Rust keyword) before writing anything, naming the rule
+       ↓ refuses build (cargo's build directory) before writing anything, naming the rule
+       ↓ refuses test (Rust's test library) before writing anything, naming the rule
+       ↓ refuses con (Windows device name) before writing anything, naming the rule
+       ↓ refuses xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (over-long name) before writing anything, naming the rule
+       ↓ rejects an unknown template without touching the filesystem
+       ↓ rejects --template with no value
+       ↓ rejects --template followed by another flag
+       ↓ accepts a project name that happens to equal the template name
+       ↓ --dry-run creates nothing
+       ↓ refuses to scaffold onto a dangling symlink
+       ↓ --version prints the package version
+     ↓ dashboard: npm ci, frontend build, cargo check --locked
+     ↓ minimal: npm ci, frontend build, cargo check --locked
+     ↓ minimal: build:ssr emits real IR, not a placeholder
+     ↓ minimal: a corrupt module stops the server before it binds, and a failed render answers 500, with neither its error nor a shell
+     ↓ minimal: build:ssr is strict: a construct the server cannot render fails the build, naming its code, file and line
+     ↓ minimal: declared count reaches SSR and invalid bindings refuse before listening
+     × minimal: packed native island adopts without writes and static route requests no code in all engines 10699ms
+     ↓ dashboard: serves each page as its browser shell, by declaration (ssr: false)
+     ↓ dashboard: chart tooltip keeps API values as text under enforced policy in all engines
+     ↓ dashboard: no locked crate needs a newer Rust than the template declares
+     ↓ minimal: no locked crate needs a newer Rust than the template declares
+     ↓ dashboard: a user's own cargo update keeps every crate within the template's rust-version
+     ↓ minimal: a user's own cargo update keeps every crate within the template's rust-version
+     ↓ minimal scaffolded as tracing, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it
+     ↓ dashboard scaffolded as serde, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it
+     ↓ minimal: build:ssr reads ssrEntryPoints by page name
+     ↓ dashboard: every page answers no-store with a fresh nonce per fetch, and registers no service worker
+     ↓ minimal: every page answers no-store with a fresh nonce per fetch, and registers no service worker
+     ↓ cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/scaffold.test.ts > scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: packed native island adopts without writes and static route requests no code in all engines
+Error: page.evaluate: ReferenceError: __vite_ssr_dynamic_import__ is not defined
+    at eval (eval at evaluate (:370:30), <anonymous>:5:37)
+    at Array.map (<anonymous>)
+    at eval (eval at evaluate (:370:30), <anonymous>:5:26)
+    at UtilityScript.evaluate (<anonymous>:372:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+ ❯ awaitPageModules ../../scripts/release-module-completion.mjs:4:14
+      2| // a test-only global. The module map shares evaluation, including aut…
+      3| export async function awaitPageModules(page, urls, timeout) {
+      4|   await page.evaluate(async ({urls, timeout}) => {
+       |              ^
+      5|     let timer;
+      6|     try {
+ ❯ verifyMinimalIsland ../../scripts/release-template-islands.mjs:112:27
+ ❯ profile tests/scaffold.test.ts:521:26
+ ❯ withOwnedServer ../../scripts/owned-server.mjs:25:16
+ ❯ tests/scaffold.test.ts:514:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 56 skipped (57)
+   Start at  16:42:57
+   Duration  11.28s (transform 68ms, setup 0ms, import 275ms, tests 10.91s, environment 0ms)
+
+JSON report written to /Users/victorvillacis/dev/Forma/work/FORMA-199/evidence/minimal-vitest.json
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+1 !== 0
+
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-199/run-packed.mjs:22:46
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.0

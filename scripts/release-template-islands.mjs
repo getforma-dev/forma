@@ -1,6 +1,7 @@
 // Packed-template observations. The browser runs the actual served candidate;
 // these helpers neither replace source nor synthesize an activation registry.
 import assert from 'node:assert/strict';
+import {awaitPageModules} from './release-module-completion.mjs';
 
 function policy(response) {
   assert(response, 'template navigation has no response');
@@ -108,7 +109,7 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
       return { count: entry.p.count, hash: entry.h, nodes: nodes.length };
     }, expectedCount);
     release();
-    await settle(page);
+    await awaitPageModules(page, [entry], timeout);
     const adoption = await page.evaluate(() => {
       const check = globalThis.__formaTemplateAdoption;
       check.records.push(...check.observer.takeRecords()); check.observer.disconnect();

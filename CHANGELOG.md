@@ -12,6 +12,8 @@
 
 - Restore strict mobile startup qualification: every application/unattributed task and every independent observer task must be at most50ms across all twenty cold runs per route. Keep conservative pre-application layout attribution, descriptive p95, raw whole-page measurements and the existing response/TBT requirements. Historical L63 results remain historical; exception retirement requires a fresh complete pass.
 
+- Await real module evaluation before closing packed template and fixture adoption observations; native bootstraps await cooperative load completion without reactivating islands (FORMA-199).
+
 - FORMA-197: mutation kills require structured Vitest assertion evidence from a previously passing test. Clean before/restored baselines, explicit test-failure bail tracking and retained raw reports prevent compiler, collection, timeout and generic process failures from inflating the unchanged detection floors; workspace-hoisted Vitest is resolved normally.
 
 - Keep dashboard chart tooltip API values in persistent text nodes under enforced Trusted Types; packed template checks cover ordinary hover and hostile API text in all three engines.
