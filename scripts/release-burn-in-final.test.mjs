@@ -56,7 +56,7 @@ test('a self-supplied empty expected case list refuses before accepting a report
 
 // Real Git objects and the existing version-preparation function exercise the
 // final handoff; this is synthetic provenance, never a real D14 acceptance.
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -65,7 +65,7 @@ import { ROOT, versionFiles } from './release-set.mjs';
 import { finalDiffBinding } from './release-burn-in-final.mjs';
 import { checkReleaseQualification } from './check-release-qualification.mjs';
 const sha = value => createHash('sha256').update(value).digest('hex');
-function versionFixture(t) {
+function versionFixture(t, documents = {}) {
   const root = mkdtempSync(join(tmpdir(), 'burn-in-final-git-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   git('init', '--quiet'); git('config', 'core.autocrlf', 'false');
@@ -73,6 +73,7 @@ function versionFixture(t) {
   const write = (path, text) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), text); };
   for (const [path, text] of versionFiles(ROOT, '3.0.0-rc.1')) write(path, text);
   write('runtime.js', 'original product bytes\n');
+  for (const [path, text] of Object.entries(documents)) write(path, text);
   write('scripts/release-contracts.json', JSON.stringify({ milestones: { final: { gates: { 'FORMA-145': { status: 'pending', scope: 'burn-in' } } } } }));
   git('add', '.'); git('commit', '--quiet', '-m', 'synthetic audited RC');
   const rcCommit = git('rev-parse', 'HEAD');
@@ -80,10 +81,10 @@ function versionFixture(t) {
   write('scripts/release-contracts.json', JSON.stringify({ milestones: { final: { gates: { 'FORMA-145': { status: 'done', scope: 'burn-in' } } } } }));
   git('add', '.'); git('commit', '--quiet', '-m', 'synthetic final versions and gate');
   const finalCommit = git('rev-parse', 'HEAD');
-  const changes = git('diff', '--name-only', rcCommit, finalCommit).split('\n').sort().map(path => ({ path, before: git('rev-parse', `${rcCommit}:${path}`), afterSha256: sha(execFileSync('git', ['show', `${finalCommit}:${path}`], { cwd: root })) }));
+  const reviewedChanges = commit => git('diff', '--name-only', rcCommit, commit).split('\n').sort().map(path => ({ path, before: git('rev-parse', `${rcCommit}:${path}`), afterSha256: sha(execFileSync('git', ['show', `${commit}:${path}`], { cwd: root })) }));
   const content = 'synthetic independent exact diff review';
-  const reference = { contract: 'rc-burn-in-reference-v1', rcTag: 'v3.0.0-rc.1', rcCommit, finalVersion: '3.0.0', reviewedChanges: changes, reviewEvidence: { content, sha256: sha(content) }, runId: 123, runAttempt: 1, manifestSha256: 'a'.repeat(64) };
-  return { root, git, write, reference, finalCommit };
+  const reference = { contract: 'rc-burn-in-reference-v1', rcTag: 'v3.0.0-rc.1', rcCommit, finalVersion: '3.0.0', reviewedChanges: reviewedChanges(finalCommit), reviewEvidence: { content, sha256: sha(content) }, runId: 123, runAttempt: 1, manifestSha256: 'a'.repeat(64) };
+  return { root, git, write, reference, finalCommit, reviewedChanges };
 }
 
 test('exact coordinated final versions bind, while product drift and forged reviewed diffs refuse', t => {
@@ -92,6 +93,45 @@ test('exact coordinated final versions bind, while product drift and forged revi
   assert.throws(() => finalDiffBinding({ ...f.reference, reviewedChanges: [] }, f.finalCommit, f.root), /reviewed binding/);
   f.write('runtime.js', 'changed product bytes\n'); f.git('add', '.'); f.git('commit', '--quiet', '-m', 'forbidden product edit');
   assert.throws(() => finalDiffBinding(f.reference, f.git('rev-parse', 'HEAD'), f.root), /product\/harness drift/);
+});
+
+test('existing release READMEs and core policy documents can update only with the exact reviewed final diff', t => {
+  const paths = ['README.md',
+    ...['core', 'compiler', 'build', 'create-app'].map(name => `packages/${name}/README.md`),
+    ...['forma-ir', 'forma-ir-derive', 'forma-server'].map(name => `crates/${name}/README.md`),
+    'packages/core/CSP.md', 'packages/core/SECURITY.md'];
+  const documents = Object.fromEntries(paths.map(path => [path, readFileSync(join(ROOT, path), 'utf8')]));
+  const f = versionFixture(t, documents);
+  for (const [path, text] of Object.entries(documents)) f.write(path, `${text}\nFinal 3.0.0 release documentation.\n`);
+  f.git('add', '.'); f.git('commit', '--quiet', '-m', 'synthetic reviewed release documentation');
+  const commit = f.git('rev-parse', 'HEAD');
+  const reference = { ...f.reference, reviewedChanges: f.reviewedChanges(commit) };
+  assert.deepEqual(finalDiffBinding(reference, commit, f.root), reference.reviewedChanges);
+  assert.throws(() => finalDiffBinding(f.reference, commit, f.root), /reviewed binding/);
+});
+
+test('release documentation permission does not admit production, config or other README paths', t => {
+  const paths = ['runtime.js', 'packages/core/vite.config.ts', 'packages/other/README.md',
+    'packages/core/docs/README.md', 'crates/README.md', 'SECURITY.md'];
+  const f = versionFixture(t, Object.fromEntries(paths.map(path => [path, 'original bytes\n'])));
+  for (const path of paths) {
+    f.write(path, 'changed bytes\n'); f.git('add', '.'); f.git('commit', '--quiet', '-m', `forbidden edit ${path}`);
+    assert.throws(() => finalDiffBinding(f.reference, f.git('rev-parse', 'HEAD'), f.root), error => {
+      assert.equal(error.message, `final product/harness drift: ${path}`); return true;
+    });
+    f.write(path, 'original bytes\n'); f.git('add', '.'); f.git('commit', '--quiet', '-m', `restore ${path}`);
+  }
+});
+
+test('release documentation permission still refuses new paths and existing-file removal or mode changes', t => {
+  const f = versionFixture(t, { 'README.md': 'original release documentation\n' });
+  f.write('packages/core/README.md', 'new documentation\n'); f.git('add', '.'); f.git('commit', '--quiet', '-m', 'new README');
+  assert.throws(() => finalDiffBinding(f.reference, f.git('rev-parse', 'HEAD'), f.root), /final adds\/removes\/changes mode: packages\/core\/README\.md/);
+  f.git('rm', 'packages/core/README.md'); f.git('commit', '--quiet', '-m', 'remove new README');
+  f.git('update-index', '--chmod=+x', 'README.md'); f.git('commit', '--quiet', '-m', 'executable README');
+  assert.throws(() => finalDiffBinding(f.reference, f.git('rev-parse', 'HEAD'), f.root), /final adds\/removes\/changes mode: README\.md/);
+  f.git('rm', '-f', 'README.md'); f.git('commit', '--quiet', '-m', 'remove existing README');
+  assert.throws(() => finalDiffBinding(f.reference, f.git('rev-parse', 'HEAD'), f.root), /final adds\/removes\/changes mode: README\.md/);
 });
 
 test('pre-publication final dispatch requires the actual pointer and propagates failed hosted authentication', async t => {
