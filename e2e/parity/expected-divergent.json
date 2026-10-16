@@ -9,7 +9,16 @@
       "path": "page > section:nth-child(1) > a:nth-child(4)[href]",
       "ticket": "FORMA-101: DR-1 release B, BUILD-206 a build error (F4)",
       "note": "href: () => docsHref() cannot be evaluated at compile time. In warning mode the compiler reports BUILD-206 (docs/DIAGNOSTICS.md: the attribute is omitted from the server HTML and appears only on activation), so the two trees can never agree on it: the server has no value to write. DR-1's migration makes strict the only mode in release B (3.0.0, FORMA-101), where BUILD-206 is a build error: then this page does not compile, the corpus fixture must move the attribute behind browserOnly() or drop it, and this entry fails the run as an unexpected pass. Structural, and counted by the stop rule until then.",
-      "match": "^ \u2192 /docs$"
+      "match": "^ → /docs$"
+    },
+    {
+      "module": "props-contract",
+      "index": "*",
+      "check": "P1",
+      "kind": "error",
+      "match": "TypeError: .*insertBefore",
+      "ticket": "FORMA-016: createShow takes a string or number branch as a text node (F5)",
+      "note": "Step 1, found 2026-10-15; assigned by the lead to FORMA-016. createShow(() => props.user.active, () => props.title): the branch returns a string. The walker renders the text; core's createShow inserts the branch's result as a Node and throws when it is a non-empty string (Chromium: parameter 1 is not of type 'Node'; Firefox and WebKit say the same of insertBefore), so core's render cannot be compared in those states. The compiler accepts the string branch. FORMA-016 makes core's createShow accept a string or number branch as a text node, matching the walker and h(); this entry then fails the run as an unexpected pass."
     }
   ]
 }

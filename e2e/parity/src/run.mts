@@ -1,10 +1,14 @@
 /**
- * The parity suite over the corpus (FORMA-183): every module of `corpus.json` at its states,
- * P1 and, for pages with islands, P2; the expected divergences applied; the totals, the structural
- * classes the stop rule counts, and the wall time by phase.
+ * The parity suite over the corpus (FORMA-183): every module of `corpus.json` up to the step at
+ * its states, P1, P2 for pages with islands and P3 for a module with a setter (`no-setter`
+ * otherwise); the expected divergences applied; the totals, the structural classes the stop rule
+ * counts, and the wall time by phase.
  *
- *   node e2e/parity/src/run.mts [--seed forma-183] [--states 10] [--module name ...]
- *                               [--engine chromium|firefox|webkit] [--low-level] [--report file.jsonl]
+ *   node e2e/parity/src/run.mts [--step 1] [--states 10] [--seed forma-183] [--module name ...]
+ *                               [--browser chromium|firefox|webkit] [--low-level] [--report file.jsonl]
+ *
+ * `--browser` picks the engine (`--engine` is the same flag): Chromium per merge, Firefox and
+ * WebKit per release (DR-9).
  *
  * Exit status: 0 when every report is equal or expected-divergent and every expected divergence
  * still occurs; 1 otherwise (an unexpected difference, refusal or error, or an unexpected pass).
@@ -30,6 +34,8 @@ export interface SuiteResult {
 export interface SuiteOptions {
   readonly seed: string;
   readonly states: number;
+  /** The ratchet step: the corpus up to and including it (all of it by default). */
+  readonly step?: number;
   readonly modules?: readonly string[];
   readonly engine: Engine;
   readonly lowLevel?: boolean;
@@ -39,7 +45,7 @@ export interface SuiteOptions {
 export async function runSuite(options: SuiteOptions): Promise<SuiteResult> {
   const started = performance.now();
   const timings: Timings = { prepare: 0, launch: 0, server: 0, browser: 0 };
-  const corpus = readCorpus().filter(entry => !options.modules?.length || options.modules.includes(entry.name));
+  const corpus = readCorpus(options.step).filter(entry => !options.modules?.length || options.modules.includes(entry.name));
   if (options.modules?.length && corpus.length !== options.modules.length) {
     throw new Error(`corpus.json has no module ${options.modules.filter(name => !corpus.some(entry => entry.name === name)).join(', ')}`);
   }
@@ -99,14 +105,16 @@ export function holderAmbiguous(reports: readonly Report[]): number {
 export function totals(reports: readonly Report[]): Record<string, Record<string, number>> {
   const out: Record<string, Record<string, number>> = {};
   for (const report of reports) {
-    const check = (out[report.check] ??= { equal: 0, different: 0, 'expected-divergent': 0, 'server-refused': 0, error: 0 });
+    const check = (out[report.check] ??= report.check === 'P3'
+      ? { equal: 0, different: 0, 'expected-divergent': 0, error: 0, 'no-setter': 0 }
+      : { equal: 0, different: 0, 'expected-divergent': 0, 'server-refused': 0, error: 0 });
     check[report.verdict] = (check[report.verdict] ?? 0) + 1;
   }
   return out;
 }
 
 export function passed(result: SuiteResult): boolean {
-  return result.unexpectedPasses.length === 0 && result.reports.every(report => report.verdict === 'equal' || report.verdict === 'expected-divergent');
+  return result.unexpectedPasses.length === 0 && result.reports.every(report => ['equal', 'expected-divergent', 'no-setter'].includes(report.verdict));
 }
 
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
@@ -141,22 +149,28 @@ async function main(): Promise<number> {
     options: {
       seed: { type: 'string', default: 'forma-183' },
       states: { type: 'string', default: '10' },
+      step: { type: 'string' },
       module: { type: 'string', multiple: true },
-      engine: { type: 'string', default: 'chromium' },
+      browser: { type: 'string' },
+      engine: { type: 'string' },
       'low-level': { type: 'boolean', default: false },
       report: { type: 'string' },
     },
   });
-  const engine = values.engine as Engine;
-  if (!['chromium', 'firefox', 'webkit'].includes(engine)) throw new Error(`unknown engine ${engine}`);
+  const engine = (values.browser ?? values.engine ?? 'chromium') as Engine;
+  if (!['chromium', 'firefox', 'webkit'].includes(engine)) throw new Error(`unknown browser ${engine}`);
   const states = Number(values.states);
   if (!Number.isInteger(states) || states < 1) throw new Error(`--states must be a positive integer, got ${values.states}`);
-  const result = await runSuite({ seed: values.seed!, states, engine, ...(values.module ? { modules: values.module } : {}), lowLevel: values['low-level']! });
+  const step = values.step === undefined ? undefined : Number(values.step);
+  if (step !== undefined && (!Number.isInteger(step) || step < 0)) throw new Error(`--step must be a non-negative integer, got ${values.step}`);
+  const result = await runSuite({
+    seed: values.seed!, states, engine, ...(step !== undefined ? { step } : {}), ...(values.module ? { modules: values.module } : {}), lowLevel: values['low-level']!,
+  });
   process.stdout.write(`${summaryText(result)}\n`);
   if (values.report) {
     mkdirSync(dirname(values.report), { recursive: true });
     const summary = {
-      summary: true, seed: values.seed, engine, modules: result.modules, states: result.states, totals: totals(result.reports),
+      summary: true, seed: values.seed, engine, step: step ?? 'all', statesPerModule: states, modules: result.modules, states: result.states, totals: totals(result.reports),
       structuralClasses: structuralClasses(result.reports), holderAmbiguous: holderAmbiguous(result.reports), unexpectedPasses: result.unexpectedPasses,
       timingsMs: Object.fromEntries(Object.entries(result.timings).map(([k, v]) => [k, Math.round(v)])), passed: passed(result),
     };

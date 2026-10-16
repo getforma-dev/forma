@@ -120,16 +120,20 @@ test('the positive control runs on P2\'s own observer: an observer watching a de
   assert.equal(honest.find(report => report.check === 'P2')!.verdict, 'equal', 'the same state passes on the served root');
 });
 
-test('a state whose boot never finishes is that state\'s error, and the run goes on to the next state', async () => {
-  let calls = 0;
-  const firstWithoutBoot = (html: string) => (calls++ === 0 ? html.replace(/<script type="module"[^>]*parity-boot\.js[^>]*><\/script>/, '') : html);
-  const reports = await check([await nestedPlan(2)], { seed: 'forma-183', states: 2, browser, bootTimeout: 1500, alterServerHtml: firstWithoutBoot }, timings());
-  const at = (index: number, kind: string) => reports.find(report => report.index === index && report.check === kind)!;
-  assert.equal(at(0, 'P1').verdict, 'error');
-  assert.match(at(0, 'P1').error ?? '', /^boot: the boot did not finish in 1500 ms/);
-  assert.equal(at(0, 'P2').verdict, 'error');
-  assert.equal(at(1, 'P1').verdict, 'equal');
-  assert.equal(at(1, 'P2').verdict, 'equal');
+test('a module whose boot never finishes: its first state times out, its other states are errors at once, and the run goes on to the next module', async () => {
+  const withoutBoot = (html: string) => (html.includes('data-forma-island') ? html.replace(/<script type="module"[^>]*parity-boot\.js[^>]*><\/script>/, '') : html);
+  const showPlan = await prepare(readCorpus().find(entry => entry.name === 'create-show')!, { seed: 'forma-183', states: 1 });
+  const reports = await check([await nestedPlan(3), showPlan], { seed: 'forma-183', states: 3, browser, bootTimeout: 1500, alterServerHtml: withoutBoot }, timings());
+  const at = (module: string, index: number, kind: string) => reports.find(report => report.module === module && report.index === index && report.check === kind)!;
+  assert.equal(at('nested-islands', 0, 'P1').verdict, 'error');
+  assert.match(at('nested-islands', 0, 'P1').error ?? '', /^boot: the boot did not finish in 1500 ms/);
+  for (const index of [1, 2]) {
+    for (const kind of ['P1', 'P2']) {
+      assert.equal(at('nested-islands', index, kind).verdict, 'error');
+      assert.equal(at('nested-islands', index, kind).error, "not run: the module's boot did not finish at state 0", `${kind} #${index} is not attempted`);
+    }
+  }
+  assert.equal(at('create-show', 0, 'P1').verdict, 'equal', 'the next module runs');
   assert.equal(passed(result(reports)), false);
 });
 
