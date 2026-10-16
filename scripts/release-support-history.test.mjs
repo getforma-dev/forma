@@ -46,11 +46,23 @@ test('first final and rerun use real publication metadata; preflight can recover
   const f = fixture(); f.metadata.assets = [];
   const options = { targetTag: f.record.tag, fetchImpl: transport([[f.metadata]], f.bytes) };
   const preflight = await readSupportHistory(options);
-  assert.equal(preflight.support.state, 'prerelease');
+  assert.equal(preflight.currentRecordPending, true);
+  assert.equal(preflight.support.state, 'stable');
   assert.equal(assertPublicationAllowed(preflight, f.record.tag, new Date('2028-01-01T00:00:00Z')).lines[0].until, '2027-04-30');
   const published = await readSupportHistory({ ...options, currentRecord: f.record, currentMetadata: f.metadata });
   assert.equal(published.support.lines[0].until, '2027-04-30');
+  assert.equal(published.currentRecordPending, false);
   await assert.rejects(readSupportHistory({ ...options, currentRecord: f.record, currentMetadata: { ...f.metadata, published_at: '2027-01-01T00:00:00Z' } }), /changed/);
+});
+test('rerunning a first final after a published patch retains the original support start', async () => {
+  const current = fixture(), patch = fixture('v3.0.1', '2027-01-01T00:00:00Z');
+  current.metadata.assets = [];
+  const history = await readSupportHistory({ targetTag: current.record.tag,
+    fetchImpl: transport([[current.metadata, patch.metadata]], patch.bytes) });
+  assert.equal(history.currentRecordPending, true);
+  assert.deepEqual(history.sources.map(r => r.tag), ['v3.0.1']);
+  assert.equal(history.support.lines[0].until, '2027-04-30');
+  assert.equal(assertPublicationAllowed(history, current.record.tag, new Date('2028-01-01T00:00:00Z')).lines[0].until, '2027-04-30');
 });
 test('prospective release guard rejects too-close next majors before publication without printing a provisional date', async () => {
   const f = fixture();

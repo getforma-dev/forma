@@ -82,7 +82,14 @@ export async function readSupportHistory({ targetTag, currentRecord, currentMeta
     sources.push({ tag: current.tag, commit: current.commit, publishedAt: current.publishedAt, source: 'current verified DS11 and P17' });
     assertPublishedHistory(releases, inventory);
   } else assertPublishedHistory(releases, inventory.filter(r => r.tag_name !== targetTag));
-  return { releases, sources, targetMetadata, inventorySha256: sha(Buffer.from(JSON.stringify(inventory))), support: supportRecord(releases) };
+  // On a rerun of the first final, later patch records are not a complete
+  // support history by themselves. Keep the validated original publication in
+  // arithmetic while explicitly marking its DS12 as pending the record stage.
+  const currentRecordPending = Boolean(targetMetadata && !currentRecord);
+  const supportHistory = currentRecordPending ? [...releases, {
+    tag: targetTag, publishedAt: targetMetadata.published_at, prerelease: targetMetadata.prerelease,
+  }] : releases;
+  return { releases, sources, targetMetadata, currentRecordPending, inventorySha256: sha(Buffer.from(JSON.stringify(inventory))), support: supportRecord(supportHistory) };
 }
 
 export function assertPublicationAllowed(history, targetTag, now = new Date()) {
