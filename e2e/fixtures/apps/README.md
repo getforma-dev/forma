@@ -38,7 +38,7 @@ the walker and not guessed.
 
 ## What the checks are
 
-`apps.spec.ts` (and `lib/verify-page.mjs`, which P17 runs against the packed set):
+`apps.spec.ts` (with `lib/verify-page.mjs` and `lib/behaviours.mjs`, which P17 runs unchanged against the packed set):
 
 - every application builds with `strict: true` and nothing above a note, a native module per route, one
   script per route with islands;

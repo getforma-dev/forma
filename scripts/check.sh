@@ -76,6 +76,8 @@ step "packed compiler API and actual optional-compiler compatibility"
 node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test.mjs
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
+step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
+node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core
