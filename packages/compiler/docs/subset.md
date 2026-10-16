@@ -17,6 +17,18 @@ explicitly. There is no silent placeholder IR or warning-only SSR escape hatch.
   use one spelling (BUILD-610). HTML tokenization also folds attribute tokens
   on SVG and MathML before their namespace adjustments, so this collision
   proof applies to every native element without rewriting its emitted names.
+  A foreign SVG/MathML attribute must also retain its exact spelling and
+  namespace after HTML parsing (BUILD-610). Use canonical SVG names such as
+  `viewBox`/`preserveAspectRatio`, MathML `definitionURL`, and lowercase
+  `data-*`/`aria-*`; `TabIndex` and `data-Foo` on SVG are unsupported. The seven
+  standard lowercase XLink names are supported on foreign elements. Parser
+  XML/XMLNS attributes and nonstandard XLink names do not match the current
+  Browser writer's namespace and require Browser mode or another attribute.
+  Exact `xlink:` props on ordinary HTML are likewise unsupported. Ordinary
+  HTML mixed-case attributes and component input names retain their behavior.
+  Integration-point children use their actual possible namespaces; an unknown
+  MathML annotation encoding must prove both HTML and MathML. This lexical
+  proof does not widen the downstream ASCII-only attribute-name policy.
 - Named local components and relative source imports, including supported export
   aliases, with at most three inlining levels. npm component implementations and
   recursive composition are outside this subset.
