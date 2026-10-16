@@ -24,7 +24,12 @@ const html = readFileSync(join(site, 'index.html'), 'utf8');
 const profile = process.env.FORMA_SSR_PROFILE ?? 'debug';
 assert(['debug', 'release'].includes(profile), 'unknown native renderer profile');
 const headers = JSON.parse(readFileSync(join(site, 'index.headers.json'), 'utf8'));
-if (profile === 'release') assert(!('content-security-policy-report-only' in headers), 'release fixture unexpectedly has a report-only policy');
+assert.match(headers['content-security-policy'], /(?:^|; )require-trusted-types-for 'script'(?:;|$)/, 'the native product must enforce Trusted Types');
+if ('content-security-policy-report-only' in headers) {
+  // The integrated fixture configures a real receiver in both profiles. An
+  // endpoint-less debug policy is still invalid product qualification.
+  assert.match(headers['content-security-policy-report-only'], /(?:^|; )report-uri \/__csp-reports(?:;|$)/, 'report-only policy must use the fixture receiver');
+}
 const found = [...html.matchAll(/<script\b[^>]*\bdata-island-state\b[^>]*>([^<]*)<\/script>/g)];
 assert.equal(found.length, 1, 'expected one real native state block');
 const state = JSON.parse(found[0][1]);
@@ -64,6 +69,7 @@ const report = {
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   node: process.version,
   nativeProfile: profile,
+  nativeHeaders: headers,
   files,
   nativeDump: { bytes: dump.length, sha256: sha(dump) },
   nativeState: { bytes: stateBytes.length, sha256: sha(stateBytes), rows: expected.map(instance => ({ name: instance.name, count: instance.rows.length, first: instance.rows[0], last: instance.rows.at(-1) })) },

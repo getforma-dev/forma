@@ -11,13 +11,20 @@ test.beforeAll(async () => {
   expect(state.site).toBe(join(realpathSync(__dirname), 'out', 'site'));
   expect(state.built).toBe(true);
 });
+test.afterEach(async ({ page }) => {
+  expect(await page.evaluate(() => (window as any).__indexedPolicyViolations)).toEqual([]);
+  const received = await fetch(`${SSR_ORIGIN}/__csp-reports`).then(response => response.json());
+  expect(received.reports.filter((report: { document: string }) => report.document === '/keyed-indexed/')).toEqual([]);
+});
 async function observe(page: Page) {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.addInitScript(() => {
     (window as any).__indexedErrors = [];
+    (window as any).__indexedPolicyViolations = [];
     document.addEventListener('forma:error', event => (window as any).__indexedErrors.push((event as CustomEvent).detail));
+    document.addEventListener('securitypolicyviolation', event => (window as any).__indexedPolicyViolations.push({ directive: event.effectiveDirective, disposition: event.disposition }));
   });
   return errors;
 }
