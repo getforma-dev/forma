@@ -26,6 +26,7 @@ import {closedBinding,closedSlot,closedHint,closedListRows,emitClosedText,type C
 import { parse } from '@babel/parser';
 import type * as T from '@babel/types';
 import * as t from '@babel/types';
+import {attributeName} from './attribute-name';
 import {
   IrEmitContext,
   SLOT_SOURCE_CLIENT,
@@ -1064,6 +1065,7 @@ export function walkHTree(
   }
 
   if (hasProps && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
+    const attributeNames=new Set<string>();
     for (const prop of propsArg.properties) {
       // `{...rest}`: the walker cannot know what is in it, so none of it is
       // rendered server-side. Silently dropping it is how an element ships
@@ -1090,12 +1092,12 @@ export function walkHTree(
         continue;
       }
 
-      const key = t.isIdentifier(prop.key)
+      const rawKey = t.isIdentifier(prop.key)
         ? prop.key.name
         : t.isStringLiteral(prop.key)
           ? prop.key.value
           : null;
-      if (key === null) {
+      if (rawKey === null) {
         warnDegraded(
           walkCtx,
           'BUILD-203',
@@ -1105,6 +1107,7 @@ export function walkHTree(
         );
         continue;
       }
+      const key=attributeName(rawKey);
 
       // Rule 7: Skip event handlers. Not a degradation: an event listener has
       // no server-side representation by design, and the client attaches it.
@@ -1112,6 +1115,11 @@ export function walkHTree(
 
       // `ref` is a callback, not an attribute — nothing to render.
       if (key === 'ref') continue;
+      if(attributeNames.has(key)) {
+        const file=walkCtx.sourceFile??'',at=originalPosition(file,prop.loc?.start??{line:1,column:0});
+        throw new PropsSchemaError(file,at.line,at.column,`multiple props map to native attribute ${key}; keep one canonical attribute`);
+      }
+      attributeNames.add(key);
 
       // A method-valued prop (`{ title() { … } }`) is a function the walker
       // has no binding form for once it is not an event handler.

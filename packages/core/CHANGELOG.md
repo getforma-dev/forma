@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Share exact `className`/`htmlFor`/`tabIndex` normalization between static/reactive `h()` writes and adoption. HTML and SVG attributes now use the same declared alias policy; ordinary browser object property order remains intact.
+
 ### Indexed item replacement — FORMA-181
 
 - `createKeyedRows(initial, keyFn)` supplies a nominal keyed collection to the two-argument `createList(rows, renderRow)` overload. The callback receives a stable item getter and index getter. `set` validates and replaces an existing canonical key, notifying that item's readers without rerunning row factories or structural reconciliation; `replace` validates the whole candidate and batches retained values with membership/order changes. Missing keys, key changes, sparse arrays and duplicate canonical keys refuse before publication.

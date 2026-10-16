@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Emit `className`, `htmlFor` and `tabIndex` with the same exact native names as browser creation/adoption, and use those names in island binding identities. Refuse competing normalized attribute props on one native element with BUILD-610; unrelated spellings and distinct elements remain independent.
+
 - Extend indexed initial-value proof to declared arrays and their ancestors: eager writes, mutating methods and unknown escapes before or after the factory refuse BUILD-622. Immutable declared-data aliases, array-length reads, disjoint props and deferred intrinsic events retain admission within the existing component subset.
 
 - Indexed handle admission refuses eager mutation and unknown escapes hidden in variable initializers (BUILD-622). Original lexical handle aliases and provably deferred intrinsic event callbacks, including local handler aliases, remain supported; no mutation evaluator or runtime restriction was added.
