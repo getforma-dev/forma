@@ -1,6 +1,8 @@
 # Forma Stack — architecture and design rationale
 
-**Status:** living document. First written 2026-08-05, against `forma`
+**Status:** historical architecture and rationale. For the current seven-package
+workspace and 3.0 contracts, start with [Forma 3.0 architecture](ARCHITECTURE-3.0.md).
+First written 2026-08-05, against `forma`
 `fix/hardening-pass`, `formajs` and `forma-tools` `fix/ksx-dogfood-findings`.
 The repository inventory and FMIR v2 discussion below describe that historical
 baseline. The merged workspace now uses the maintained

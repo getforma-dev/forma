@@ -169,7 +169,7 @@ imports are not package exports. The runtime surface is pinned by
 | Package | Description |
 |---|---|
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | **This package** — h() optimization, server transforms, IR emission |
+| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | **This package** — h() optimization, declared props and islands, IR emission |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
 
 ### Backend (Rust)
@@ -177,7 +177,7 @@ imports are not package exports. The runtime surface is pinned by
 | Package | Description |
 |---|---|
 | [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser and native HTML walker |
-| [forma-server](https://crates.io/crates/forma-server) | Axum middleware — SSR page rendering, asset serving, CSP headers |
+| [forma-server](https://crates.io/crates/forma-server) | Typed SSR and Axum responses — page rendering, asset serving, CSP headers |
 
 ### Full Framework
 
