@@ -24,7 +24,8 @@ maintenance = {
   'ci.yml' => %w[check toolchains],
   'e2e-engines.yml' => %w[e2e parity],
   'nightly-probes.yml' => %w[expressions probes],
-  'value-rules.yml' => %w[qualify]
+  'value-rules.yml' => %w[qualify],
+  'release-plane-observe.yml' => %w[observe]
 }
 maintenance.each do |file, names|
   workflow = YAML.load_file(File.join(root, '.github/workflows', file))
