@@ -24,7 +24,7 @@ async function execute(body:string, prefix='') {
   const got=spawnSync(process.execPath,[output],{encoding:'utf8'});expect(got.status,got.stderr).toBe(0);
   return {value:JSON.parse(got.stdout),code:readFileSync(output,'utf8')};
 }
-function namespaces(tree:any):string[]{return typeof tree==='object'&&tree!==null?[`${tree.tag}:${tree.ns}`,...(tree.children??[]).flatMap(namespaces)]:[];}
+function namespaces(tree:any):string[]{return Array.isArray(tree)?tree.flatMap(namespaces):typeof tree==='object'&&tree!==null?[`${tree.tag}:${tree.ns}`,...(tree.children??[]).flatMap(namespaces)]:[];}
 it('creates lexical SVG dual-use JSX elements after their already evaluated arguments',async()=>{
   const {value}=await execute(`const events=[];const mark=x=>(events.push(x),x);globalThis.result={tree:<svg><a {...{href:mark('prop')}}><title>{mark('child')}</title></a></svg>,events};`);
   expect(namespaces(value.tree)).toEqual(['svg:svg','a:svg','title:svg']);expect(value.events).toEqual(['prop','child']);
@@ -54,6 +54,11 @@ it('composes an explicit default JSX pragma and preserves the directive prologue
   expect(namespaces(value)).toEqual(['svg:svg','a:svg']);
 });
 it('preserves JSX files with a custom h binding in an inner scope',async()=>{
-  const {value}=await execute(`function local(h){return <a/>}globalThis.result=local(tag=>({tag,ns:'custom',children:[]}));`);
-  expect(namespaces(value)).toEqual(['a:custom']);
+  const {value}=await execute(`function local(h){return <a/>}globalThis.result={local:local(tag=>({tag,ns:'custom',children:[]})),lexical:<svg><a/></svg>};`);
+  expect(namespaces(value.local)).toEqual(['a:custom']);expect(namespaces(value.lexical)).toEqual(['svg:svg','a:html']);
+});
+
+it('lowers style and font through JSX fragments without evaluating either branch twice',async()=>{
+  const {value}=await execute(`const events=[];const value=x=>(events.push(x),x);globalThis.result={tree:<svg><><style>{value('style')}</style><font>{value('font')}</font></></svg>,events};`);
+  const fragment=value.tree.children[0];expect(namespaces(fragment.children)).toEqual(['style:svg','font:svg']);expect(value.events).toEqual(['style','font']);
 });

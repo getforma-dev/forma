@@ -19,7 +19,7 @@ async function assertVectors(page:Page){
 }
 function errors(page:Page){const found:string[]=[];page.on('pageerror',error=>found.push(error.message));page.on('console',message=>{if(message.type()==='error')found.push(message.text())});return found;}
 test('actual typed native products parse to the six canonical namespace trees',async({browser})=>{
-  const context=await browser.newContext({javaScriptEnabled:false});try{const page=await context.newPage();await page.goto(`${ORIGIN}/namespaces/`);await expect(page.locator('[data-forma-island="NamespaceVectors"]')).toHaveCount(1);await assertVectors(page);}finally{await context.close();}
+  const context=await browser.newContext({javaScriptEnabled:false});try{const page=await context.newPage();await page.goto(`${ORIGIN}/namespaces/`);await expect(page.locator('[data-forma-island][data-forma-component="NamespaceVectors"]')).toHaveCount(1);await assertVectors(page);}finally{await context.close();}
 });
 test('compiled fresh JSX preserves namespace vectors and the script refusal',async({page})=>{
   const seen=errors(page);await page.goto('/namespaces/csr');await expect(page.locator('#namespace-root')).toHaveCount(1);await assertVectors(page);
