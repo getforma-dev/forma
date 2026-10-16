@@ -79,26 +79,6 @@
       "match": "TypeError: .*insertBefore",
       "ticket": "FORMA-016: createShow takes a string or number branch as a text node (F5)",
       "note": "Step 1, found 2026-10-15; assigned by the lead to FORMA-016. createShow(() => props.user.active, () => props.title): the branch returns a string. The walker renders the text; core's createShow inserts the branch's result as a Node and throws when it is a non-empty string (Chromium: parameter 1 is not of type 'Node'; Firefox and WebKit say the same of insertBefore), so core's render cannot be compared in those states. The compiler accepts the string branch. FORMA-016 makes core's createShow accept a string or number branch as a text node, matching the walker and h(); this entry then fails the run as an unexpected pass."
-    },
-    {
-      "module": "aggregate-fallback",
-      "index": "*",
-      "check": "P2",
-      "kind": "mutation",
-      "path": "root > main[node 1] > section[node 2][data-forma-status]",
-      "match": "^pending → error$",
-      "ticket": "FORMA-181: adoption by canonical key text, checkpoint C (F6)",
-      "note": "Step 1. A keyed row whose string key holds CR or NUL: the walker writes data-forma-key as the rule-1 text (canonical_key_text: CR to LF, NUL to U+FFFD), while core's adoption compares the attribute with String(key) (adoption.ts), not canonicalKeyText, which checkpoint C wires in. Adoption refuses the island (FORMA_E_HYDRATE_STRUCTURE) and writes data-forma-status=\"error\"."
-    },
-    {
-      "module": "aggregate-fallback",
-      "index": "*",
-      "check": "P2",
-      "kind": "activation-error",
-      "match": "FORMA_E_HYDRATE_STRUCTURE",
-      "ticket": "FORMA-181: adoption by canonical key text, checkpoint C (F6)",
-      "note": "Step 1. The forma:error event and the console line of the same refusal (F6).",
-      "path": "root"
     }
   ]
 }
