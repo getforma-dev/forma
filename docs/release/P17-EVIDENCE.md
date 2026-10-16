@@ -1,0 +1,9 @@
+# P17 evidence transfer
+
+P17 writes its report beside nested security and performance observations. The verify job records that entire tree with `node scripts/release-evidence.mjs record DIRECTORY`. The command writes `EVIDENCE-SHA256.json` and returns its SHA-256; the digest travels separately as a job output. The record job runs `node scripts/release-evidence.mjs verify DIRECTORY EXPECTED_SHA256` after downloading the artifact and before writing DS12.
+
+The manifest records every regular file and every nonempty directory, using portable relative paths, exact byte lengths and SHA-256 hashes. It is authenticated before its entries are parsed. Verification requires exact tree equality, including no added, missing or changed files or directories. It never extracts an archive or changes evidence bytes. Symlinks, special files, unsafe names, case-fold collisions, changed files and empty directories refuse. Empty directories cannot survive the pinned Actions uploader's files-only ZIP, and no current successful producer needs them. Hidden or otherwise unsupported names are rejected, never silently excluded. Metadata limits are 16 MiB, 16,384 entries, 32 path segments and 4,096 path characters; file contents are streamed without a new measurement-size ceiling.
+
+The existing flat `release-artifacts.sh` contract and every DS11 caller remain unchanged. Public `release-record.json`, `p17.json` and DS12 fields remain unchanged. Failed P17 still uploads all actual diagnostics with `if: always()`; its success hash step does not run, and downstream publishing remains blocked.
+
+The complete packed deployment-skew drill runs before fixture performance. This lets every functional packed check finish before a performance refusal, while the unchanged decoder, native, mobile and client measurements remain mandatory. A failed measurement still exits nonzero and leaves `passed: false`; there is no functional-only success mode.

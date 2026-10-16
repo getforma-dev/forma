@@ -109,9 +109,6 @@ docs/archive/FORMA-139-e2e-title/** -text
 # Exact native multi-entry failure products.
 /docs/archive/FORMA-186-native-multiple-entries/** -text
 
-# Original founder comparison source is preserved byte-for-byte on Windows.
-e2e/performance/archive/8bd8b65/** -text
-
 # FORMA-129: the historical93-probe original is authenticated byte-for-byte.
 docs/archive/FORMA-129-historical-probes/** -text
 
@@ -130,12 +127,21 @@ packages/core/e2e/hostile-widgets/probe-provenance.json text eol=lf
 docs/archive/FORMA-129-matrix-expectations/** -text
 docs/evidence/forma-129/** -text
 
+# Original founder comparison source is preserved byte-for-byte on Windows.
+e2e/performance/archive/8bd8b65/** -text
+
 # Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
-docs/archive/forma-191-performance-durability/** -text
-docs/evidence/forma-191-performance-durability/** -text
 
+# Attribute alias transition preserves original source/products byte-for-byte.
+docs/archive/attribute-alias-transition/** -text
+
+# Immutable recovered beta measurements and first-failure evidence.
+docs/release-evidence/beta-acceptance/decoder/** -text
+docs/release-evidence/beta-acceptance/products/** -text
+docs/release-evidence/beta-acceptance/first-svg-case/** -text
+docs/release-evidence/beta-acceptance/corrected-foreign/** -text
 
 # FORMA-108: authenticated A2 originals before the explicit-tier migration.
 docs/archive/FORMA-108-A2-bridge/** -text
@@ -154,21 +160,9 @@ docs/archive/FORMA-108-mutation-reporting/** -text
 # Exact explicit-runtime qualification reports and logs.
 docs/evidence/forma-108/** -text
 
-# Attribute alias transition preserves original source/products byte-for-byte.
-docs/archive/attribute-alias-transition/** -text
-
-# Immutable recovered beta measurements and first-failure evidence.
-docs/release-evidence/beta-acceptance/decoder/** -text
-docs/release-evidence/beta-acceptance/products/** -text
-docs/release-evidence/beta-acceptance/first-svg-case/** -text
-docs/release-evidence/beta-acceptance/corrected-foreign/** -text
-
 # FORMA-144 archived sources and qualification evidence use byte-exact hashes.
 docs/archive/forma-144-final-before/** -text
 docs/evidence/forma-144-final/** -text
-
-# FORMA-145 preserves prior staged guides byte-for-byte.
-docs/archive/forma-145-guide-before/** -text
 
 # Original Vite configuration and its first failure are byte-authenticated.
 docs/archive/forma-144-vite7-config/** -text
@@ -178,16 +172,34 @@ docs/archive/release-p17-failure-retention/** -text
 
 # Original fixture tool path and actual hosted failure are byte-authenticated.
 docs/archive/forma-144-fixture-tool/** -text
-docs/archive/FORMA-108-root-full-stack/** -text
 
 # Byte-exact watch-readiness original source and failure evidence.
 docs/archive/forma-watch-readiness/** -text
 
+# FORMA-145 preserves prior staged guides byte-for-byte.
+docs/archive/forma-145-guide-before/** -text
+
+docs/archive/FORMA-108-root-full-stack/** -text
+
+docs/archive/forma-191-performance-durability/** -text
+docs/evidence/forma-191-performance-durability/** -text
+
 # Exact dynamic fetch fixture source and authoritative integrated failure.
 docs/archive/FORMA-108-fetch-fixture/** -text
-
 # Preserve the original shipped CSP example as byte-exact qualification evidence.
 docs/archive/FORMA-108-csp-example/** -text
-
 # Original runtime guides retain their exact pre-correction bytes.
 docs/archive/FORMA-108-guide-residue/** -text
+
+# Original nested P17 failure and actual files-only transfer qualification.
+docs/archive/p17-nested-evidence/** -text
+docs/evidence/p17-nested-evidence/** -text
+
+# Exact pre-repair Node policy sources and hosted warning evidence.
+docs/archive/forma-maintenance-node-pin/** -text
+
+# Preserve original deployment-drill failures and actual browser controls.
+docs/archive/skew-failure-diagnostics/** -text
+
+# Preserve the actual same-target reload interruption and scoped controls.
+docs/archive/skew-expected-reload/** -text

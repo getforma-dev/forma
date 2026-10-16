@@ -576,11 +576,13 @@ export async function verify(dir, reportPath) {
       }
       // The fixture applications (FORMA-188): the same sources and checks as the source lane, against the
       // packed set. The deployment drill uses those same packed libraries and crates in all engines.
-      if (set.contracts.fixtureApps) {
-        report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report, performanceTarget: measurementTarget, before: new Date(started).toISOString(), evidenceDirectory: dirname(resolve(reportPath)) });
-      }
+      // Finish every functional packed check before entering the mandatory
+      // performance block. A performance refusal still fails this entire run.
       if (set.contracts.deploymentSkew === 'native-v1') {
         report.deploymentSkew = await verifyPackedSkew({ set, dir, scratch, browser, firefox, webkit, test });
+      }
+      if (set.contracts.fixtureApps) {
+        report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report, performanceTarget: measurementTarget, before: new Date(started).toISOString(), evidenceDirectory: dirname(resolve(reportPath)) });
       }
     } finally { await browser.close(); }
     // A live set publishes only for the milestone its tag names, and only when every gate of

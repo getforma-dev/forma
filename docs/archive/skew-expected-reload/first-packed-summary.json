@@ -1,0 +1,230 @@
+{
+  "head": "1c210a580e5e95759eefc9b6db355c27d51a2c55",
+  "passed": false,
+  "exitCode": 1,
+  "elapsedSeconds": 191.219,
+  "passedChecks": 42,
+  "drillChecksBeforeFailure": 10,
+  "failure": "Firefox intentional normal /csr reload interrupted initial same-target navigation before second commit",
+  "fixturesReached": false,
+  "performanceReached": false,
+  "sourceDistributionsRestored": true,
+  "failedEvidenceExternalDigest": "bc224d5ebca445ddfca019c7976d00085336370f2fd4973fe96dcb5bd864029f",
+  "files": [
+    {
+      "file": "actual-skew-diagnostics.json",
+      "bytes": 4643,
+      "sha256": "5cee923cd27d5ecb7b862a2ff60de7263e6c5f91d25e3b569362017aba3b1737"
+    },
+    {
+      "file": "compared-previous-packed-members.diff",
+      "bytes": 4314,
+      "sha256": "314a9a35f96cc755f4b49c5338a176d1a47ae233ff32671d7c6cb986f92757f4"
+    },
+    {
+      "file": "compared-previous-packed-members.json",
+      "bytes": 991,
+      "sha256": "731ae2800dd60bb65987f346b31b266d4ddcaddab4f16247c9d4992b6cd1c91b"
+    },
+    {
+      "file": "ds11-match.log",
+      "bytes": 85,
+      "sha256": "0e6ddd40de3c76cad44f78bcb17700fe2dc5e97087f3ae5225c606f98ebf877b"
+    },
+    {
+      "file": "ds11-record-sha256.txt",
+      "bytes": 65,
+      "sha256": "f4b779fa329f3047535e2fd193ad1e40e1a0b40a335277850414ae8792f9d7b3"
+    },
+    {
+      "file": "ds11-verify.log",
+      "bytes": 912,
+      "sha256": "6d1829f51e31f7ec63406c54a062f2082c544a45522e3683bc87b3d36c49b6eb"
+    },
+    {
+      "file": "evidence/EVIDENCE-SHA256.json",
+      "bytes": 1954,
+      "sha256": "bc224d5ebca445ddfca019c7976d00085336370f2fd4973fe96dcb5bd864029f"
+    },
+    {
+      "file": "evidence/p17.json",
+      "bytes": 536667,
+      "sha256": "6f6d5c628148e09688beb33dcab394ddafa07f62d814733b9867bcfec2f1f123"
+    },
+    {
+      "file": "evidence/security/guard-before.json",
+      "bytes": 16060,
+      "sha256": "83e5d07b828e406f5de5675ebcfab71877e81d7cf1446316b51ebda81f52c5d5"
+    },
+    {
+      "file": "evidence/security/guard-corrected.json",
+      "bytes": 16060,
+      "sha256": "1b75af8b9c9aacea70062c002e7a8568b745669bdd1e6b32e88c2d41aa3b669c"
+    },
+    {
+      "file": "evidence/security/guard-mutant.json",
+      "bytes": 6956,
+      "sha256": "d34bdaf0a6db4afe27fbb2f3160208f21337d66a1830516acbfe8525dd138e93"
+    },
+    {
+      "file": "evidence/security/guard-qualification.json",
+      "bytes": 918,
+      "sha256": "d650358cbc05ff191a922aeba4037bb47fbbd6c872ab2297da7e8758817747b8"
+    },
+    {
+      "file": "evidence/security/hostile-widgets.json",
+      "bytes": 364908,
+      "sha256": "004541c2814b8ccd97c6028ed1469e7fe0e8840133eaa358d1aec2ce88b13d61"
+    },
+    {
+      "file": "evidence/security/mutation-before.json",
+      "bytes": 5135,
+      "sha256": "932416d521fdfd7d82b1fc6d2daf1a3a9f9b4d51eec08181cb31aae50f8b41e8"
+    },
+    {
+      "file": "evidence/security/mutation-corrected.json",
+      "bytes": 5128,
+      "sha256": "4bbddb45a905ed7d5b75a823755b9ea567b4c86822f97dd5032455592d4f759d"
+    },
+    {
+      "file": "evidence/security/mutation-mutant.json",
+      "bytes": 5287,
+      "sha256": "d2064e8d62966fcb1c5a7b1ded40447fe91f3ebd61befea591aff0c1c3cd10de"
+    },
+    {
+      "file": "evidence/security/mutation-qualification.json",
+      "bytes": 3535,
+      "sha256": "dda6c5ae57e1f67037d5848ab383dfa5410ebe133ee2b06c1b20112bc9202b9d"
+    },
+    {
+      "file": "exit.json",
+      "bytes": 111,
+      "sha256": "bbf1045ba3a6c5781b12f3771180c1cd279a4a3b54810692a47deaecbbea69ed"
+    },
+    {
+      "file": "failed-evidence-sha256.txt",
+      "bytes": 65,
+      "sha256": "beae3725fe56f27c0ee3bbcfd987fa1c4171fb8c4aab3b62e26ef68783c9132c"
+    },
+    {
+      "file": "failed-evidence-verify.log",
+      "bytes": 124,
+      "sha256": "bdf2bca356efc9cf4dbfd5cdd92f3a70e4f6dd20e5599c3c4c9abc13c5eb8e2d"
+    },
+    {
+      "file": "host/after-verifier.txt",
+      "bytes": 55169,
+      "sha256": "89bf780f7d369bf75bb83b5ee9f54019ff873269cdfe4d54ae377ba1a4a45171"
+    },
+    {
+      "file": "host/before-pack.txt",
+      "bytes": 59487,
+      "sha256": "d867fd4e7d920c213011bc03533f09d57053b44aedb2f6e649e5769e283fcf05"
+    },
+    {
+      "file": "host/before-verifier.txt",
+      "bytes": 59072,
+      "sha256": "2d26a51a0680ae0311f90f76e7e0c515f5eb2ca39f67761461e9645f942db557"
+    },
+    {
+      "file": "host/elapsed-00030s.txt",
+      "bytes": 57593,
+      "sha256": "ce2100eb88695e926db7ddc5d7483389a7ba3fec91aa9d0c9b66a093637793fd"
+    },
+    {
+      "file": "host/elapsed-00060s.txt",
+      "bytes": 59983,
+      "sha256": "9b71b4d22005749af609ababf09a11a2add64aa54cc7819b363822cffb195049"
+    },
+    {
+      "file": "host/elapsed-00090s.txt",
+      "bytes": 56184,
+      "sha256": "b0ab3b133daad3f1a7793f48255fc8fdf61ce803905aa726822f2a28137deca6"
+    },
+    {
+      "file": "host/elapsed-00120s.txt",
+      "bytes": 55252,
+      "sha256": "de293b0d44856ada4348d9495a4668399845303582e6f7cd8fd3b922230b1a66"
+    },
+    {
+      "file": "host/elapsed-00150s.txt",
+      "bytes": 55979,
+      "sha256": "2fca82225becf393239ae0130cfdb932b371d811d10d8ca47147d5718dd94415"
+    },
+    {
+      "file": "host/elapsed-00180s.txt",
+      "bytes": 56456,
+      "sha256": "c92e8525fa97671fd96a652d48e7cfefcebeab306dfa5032a0f407e8bad6ba5f"
+    },
+    {
+      "file": "launch-policy.json",
+      "bytes": 534,
+      "sha256": "9b7737558c14454d391f09350f793d0a4e32988e1aebd80547344a3a8caf4530"
+    },
+    {
+      "file": "pack.log",
+      "bytes": 8464,
+      "sha256": "6d25d84f4fcf1b2ab6834721c7bd1c7c5de0eca10671591bc8fb71a7d1d2e374"
+    },
+    {
+      "file": "packages/Cargo.lock",
+      "bytes": 21109,
+      "sha256": "77f729f48524d85b0f87ac1aa9126b195894da3a550981f1aaa0438c06169269"
+    },
+    {
+      "file": "packages/SHA256SUMS",
+      "bytes": 831,
+      "sha256": "7b459ee53cee7914537c141f254048e8327c6dbd5c9ca2d652ee286bf5d73f42"
+    },
+    {
+      "file": "packages/forma-ir-3.0.0-dev.crate",
+      "bytes": 260007,
+      "sha256": "e4c639b55118202fe95290da9b502515db3a1caff455fa8eaaf4584049972af2"
+    },
+    {
+      "file": "packages/forma-ir-derive-3.0.0-dev.crate",
+      "bytes": 5947,
+      "sha256": "767306e9401e0f4e7c3851c29d9a5db937be9c3b9ef8a3de50416018aa431510"
+    },
+    {
+      "file": "packages/forma-server-3.0.0-dev.crate",
+      "bytes": 196073,
+      "sha256": "3e5169fd68842ca35ce1f3b95f97048ecb71a236c61285ed12541c34ee9fd66f"
+    },
+    {
+      "file": "packages/getforma-build-3.0.0-dev.tgz",
+      "bytes": 85340,
+      "sha256": "e488337421b05879175dc2b6f7b8e7e93ab35d1638dc2b7821d6ac3af0f15cc0"
+    },
+    {
+      "file": "packages/getforma-compiler-3.0.0-dev.tgz",
+      "bytes": 125957,
+      "sha256": "6d0cd05828857ea8b299a58dc48fdf66460e5af943b16e5411ee6a3ef48e32dd"
+    },
+    {
+      "file": "packages/getforma-core-3.0.0-dev.tgz",
+      "bytes": 2066474,
+      "sha256": "0c56500adeeef0e9f8b640cb2114ced66682034666c9d26e7a04a7d825a3c644"
+    },
+    {
+      "file": "packages/getforma-create-app-3.0.0-dev.tgz",
+      "bytes": 73419,
+      "sha256": "219fbd6bb8b77c0f73e527c97ecaab5ff16fa0554b3346d78c870405937b63f8"
+    },
+    {
+      "file": "packages/release-set.json",
+      "bytes": 8843,
+      "sha256": "7e372417f97ccc2c200b4d2950f6b0f66d296e80ce8be2698ae05abdc641fa99"
+    },
+    {
+      "file": "source-dist-preserved.json",
+      "bytes": 13347,
+      "sha256": "708898f8d98578cc38798fffe2b94f39da259227c0212bd7ecd786f3f5878d7e"
+    },
+    {
+      "file": "verify.log",
+      "bytes": 42113,
+      "sha256": "b4336b14d3ac47dbaf2c5f419879cf6af9186b34311f183da000c7eb0d338e0f"
+    }
+  ]
+}

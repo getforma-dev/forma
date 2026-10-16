@@ -1,0 +1,53 @@
+{
+  "scope": "one focused diagnostic, unchanged assertions/timeouts and existing R17 products; failure-catch instrumentation only",
+  "passed": true,
+  "checks": 11,
+  "originalP17RemainsFailed": true,
+  "files": [
+    {
+      "file": "host-after.txt",
+      "bytes": 58284,
+      "sha256": "94acb37972e9fedb9bf4f8a384c11bba37d0e327398208c1eca3f5ec42cdae41"
+    },
+    {
+      "file": "host-before.txt",
+      "bytes": 58478,
+      "sha256": "c1d37fe210ff69f3e09b5c42257731c3c3a62c5e80743416cc94c6010d7ceb4a"
+    },
+    {
+      "file": "instrumentation.diff",
+      "bytes": 1325,
+      "sha256": "ef0a5b2a6e8b2afee6a228c5f3c7a009fb0181067d7379300ee577092ed27865"
+    },
+    {
+      "file": "result.json",
+      "bytes": 7807,
+      "sha256": "d56aa14d01541dd931b21bcce879e12e8eff4af4440e14c8db6dbb66fa9c929e"
+    },
+    {
+      "file": "run-drill.instrumented.mjs",
+      "bytes": 10471,
+      "sha256": "66d0bd343d30de7fb77e44da745b2b8753d9f492fe34bcd9db53925e37beb2c9"
+    },
+    {
+      "file": "run-drill.original.mjs",
+      "bytes": 10121,
+      "sha256": "1769d897ef779e88625e04bc0cc89a32b1f2c9e03ec598127371b34cb1a00875"
+    },
+    {
+      "file": "run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "run.mjs",
+      "bytes": 990,
+      "sha256": "4945012b553dde7b586638ea4a944413665e0d1713d82d4c15bff947a59e1f8e"
+    },
+    {
+      "file": "source-hashes.json",
+      "bytes": 545,
+      "sha256": "3798b68353025c9cbffad3e103a9c4c33c03dae5b3e0981085e9177f1a18e0ab"
+    }
+  ]
+}

@@ -10,6 +10,43 @@ failures = []
 out, status = Open3.capture2('node', File.join(root, 'scripts/toolchain-matrix.mjs'))
 abort 'toolchain matrix producer failed' unless status.success?
 lines = JSON.parse(out)
+# Maintenance qualifies the private workspace with its declared build pin.
+# Published-package compatibility deliberately keeps the separate dated matrix.
+pin_path = File.join(root, '.node-version')
+abort 'missing maintenance Node pin' unless File.file?(pin_path)
+pin = File.read(pin_path).strip
+abort 'maintenance Node pin must be a complete release version' unless pin.match?(/\A(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\z/)
+major = pin.split('.').first.to_i
+failures << 'maintenance Node major is outside the supported matrix' unless lines.include?(major)
+private_pkg = JSON.parse(File.read(File.join(root, 'package.json')))
+failures << 'private workspace Node range must agree with the maintenance pin' unless private_pkg.dig('engines', 'node') == ">=#{pin} <#{major + 1}"
+maintenance = {
+  'ci.yml' => %w[check toolchains],
+  'e2e-engines.yml' => %w[e2e parity],
+  'nightly-probes.yml' => %w[expressions probes],
+  'value-rules.yml' => %w[qualify]
+}
+maintenance.each do |file, names|
+  workflow = YAML.load_file(File.join(root, '.github/workflows', file))
+  names.each do |name|
+    job = workflow.fetch('jobs', {}).fetch(name, {})
+    setup = Array(job['steps']).select { |s| s['uses'].to_s.start_with?('actions/setup-node@') }
+    step = setup.first || {}
+    options = step.fetch('with', {})
+    unless setup.length == 1 && options['node-version-file'] == '.node-version' && !options.key?('node-version') &&
+        !job.key?('if') && !job.key?('continue-on-error') && !step.key?('if') && !step.key?('continue-on-error')
+      failures << "#{file}/#{name}: maintenance must unconditionally use only the declared Node pin"
+    end
+  end
+end
+# These existing literal pins already match; keep them checked without changing
+# their setup behavior in this repair.
+{ 'ci.yml' => 'deny', 'advisories.yml' => 'audit' }.each do |file, name|
+  workflow = YAML.load_file(File.join(root, '.github/workflows', file))
+  setup = Array(workflow.fetch('jobs', {}).fetch(name, {})['steps']).select { |s| s['uses'].to_s.start_with?('actions/setup-node@') }
+  options = (setup.first || {}).fetch('with', {})
+  failures << "#{file}/#{name}: literal maintenance Node differs from the pin" unless setup.length == 1 && options['node-version'] == pin && !options.key?('node-version-file')
+end
 %w[core compiler build create-app].each do |name|
   pkg = JSON.parse(File.read(File.join(root, "packages/#{name}/package.json")))
   failures << "#{name}: engines.node must equal the tested floor" unless pkg.dig('engines', 'node') == ">=#{lines.min}"
@@ -42,4 +79,4 @@ failures << 'MSRV setup does not install the declared floor' unless msrv_steps.a
   failures << "missing mandatory MSRV check: #{command}" unless msrv_steps.any? { |s| s['run'] == command && !s.key?('if') && !s.key?('continue-on-error') }
 end
 abort failures.join("\n") unless failures.empty?
-puts "Toolchain policy: all four Node floors, dated matrix, and three locked/fresh MSRV checks agree."
+puts "Toolchain policy: maintenance Node #{pin}, private range, four published floors, dated matrix, and three locked/fresh MSRV checks agree."

@@ -1,0 +1,14 @@
+
+Running 3 tests using 2 workers
+
+(node:46232) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46231) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/skew/skew.spec.ts:17:5 › a real navigation timeout retains bounded drill context in its emitted stack (11.5s)
+(node:46273) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [firefox] › e2e/skew/skew.spec.ts:17:5 › a real navigation timeout retains bounded drill context in its emitted stack (12.6s)
+  ✓  3 [webkit] › e2e/skew/skew.spec.ts:17:5 › a real navigation timeout retains bounded drill context in its emitted stack (12.3s)
+
+  3 passed (25.6s)

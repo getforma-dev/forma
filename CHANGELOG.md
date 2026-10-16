@@ -10,11 +10,13 @@
 
 ## [Unreleased]
 
-- FORMA-145: reconcile the main upgrade, compatibility and declared-props guides with the seven-package release, typed Pages startup, island adoption, explicit runtime ownership, strict native subset and current asset/skew policy. Preserve the prior staged guides and link the template migration. Release qualification and publication remain separate gates.
+- Maintenance CI, release browser checks and nightly qualification now use the declared Node build pin. Parsed policy controls reject maintenance selector and private engine drift while retaining the published packages’ dated compatibility matrix.
 
-- P17 keeps completed native, mobile and client measurements in one bounded, byte-authenticated attempt journal outside disposable fixtures. A killed or failing producer retains completed evidence; completion requires unchanged performance validators, verified record hashes and all final metadata. Measurement intervals and acceptance thresholds are unchanged.
+- Authenticate the complete nested P17 evidence tree with a dedicated manifest, preserving the flat DS11 artifact contract. Run the existing packed deployment drill before mandatory performance checks so a measurement failure retains all earlier functional results.
 
 - Watch tests wait for every initial nonsplit entry context before editing files, preventing another context's initial build from satisfying the requested rebuild. A real three-entry barrier control preserves the failure; watch deadlines and production behavior are unchanged.
+
+- P17 keeps completed native, mobile and client measurements in one bounded, byte-authenticated attempt journal outside disposable fixtures. A killed or failing producer retains completed evidence; completion requires unchanged performance validators, verified record hashes and all final metadata. Measurement intervals and acceptance thresholds are unchanged.
 
 - FORMA-183: the integrated P1/P2/P3 corpus now blocks R17 at step 1 with 100 generated states per declared schema. Firefox and WebKit parity block release at 10 states. Every gate requires an empty expected-divergent list and retains the actual counts and timing report.
 
@@ -24,11 +26,14 @@
 - FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. Missing evidence or any sample above12ms refuses.
 - Lighthouse13.5.0 and the historical comparison libraries are exact-pinned development tools; no runtime dependency changes. The fixture HTTP server and measurement binary now share their unchanged typed input constructors.
 
+
 ### Explicit HTML runtime mounts — FORMA-108
 
 - HTML bindings now require `mountMarkup(root, trustedHtml(markup), { tier, grants, config })` and the returned update/unmount handle. Removed auto scanning, the body observer, tierless lifecycle calls and global configuration setters. Omitted grants refuse fetch and activation and confine DOM traversal to the handed root; every fetch keeps the grant's method/path/cookie/timeout policy and treats non-2xx responses as errors.
 - A handle captures its scopes, so unmount also disposes a scope the application detached or moved. Unreviewed refusals retain distinct mount names, tiers and counts. The obsolete manual attribute produces one development-only migration hint; it has no binding authority.
 - Monorepo fixtures and measurement helpers use actual explicit mounts. Byte-exact A2 sources and all260 old mutation records remain archived with per-ID dispositions; current qualification and its nine extra explicit-mount controls are reported separately from historical results. FMIR remains restricted to modules from the application's own build; external module admission requires the deferred M9 boundary.
+
+- FORMA-145: reconcile the main upgrade, compatibility and declared-props guides with the seven-package release, typed Pages startup, island adoption, explicit runtime ownership, strict native subset and current asset/skew policy. Preserve the prior staged guides and link the template migration. Release qualification and publication remain separate gates.
 
 ### Final template packaging — FORMA-144
 
