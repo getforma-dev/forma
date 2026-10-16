@@ -28,8 +28,8 @@ const CSP = read('CSP.md');
 const CHANGELOG = read('CHANGELOG.md');
 // A -dev staging set has not been published, and a pre-release (-alpha.N, -beta.N,
 // -rc.N) publishes on npm `next`, which plain ranges and the CDN's `latest` never
-// serve (L-41). In both cases the CDN snippets, the CSP history and the support
-// table keep naming the last stable release, the first X.Y.Z heading in the
+// serve (L-41). The CSP history and support table keep naming the last stable
+// release, the first X.Y.Z heading in the
 // CHANGELOG (a pre-release heading does not match it). A stable version pins itself.
 const shippedVersion = /-(?:dev|alpha|beta|rc)(?:\.|$)/.test(pkg.version)
   ? /^## \[([0-9]+\.[0-9]+\.[0-9]+)\]/m.exec(CHANGELOG)?.[1]
@@ -67,13 +67,32 @@ const ISLAND_TEST_FILES = [
 ];
 
 describe('version pins', () => {
-  it('every documented CDN pin is the current package version', () => {
-    // Scanned across the README and both pages that carry CDN snippets, so a
-    // version bump cannot leave a stale pin behind in docs/.
-    const pinned = [README, RUNTIME_DOC, CDN_DOC].join('\n');
-    const pins = [...pinned.matchAll(/@getforma\/core@([\d.]+)/g)].map((m) => m[1]);
+  function expectPins(text: string, version: string): void {
+    // Read the complete token, including prerelease/build suffixes or malformed
+    // suffix characters. Never accept a stale pin by matching only its prefix.
+    const pins = [...text.matchAll(/@getforma\/core@([0-9][^\s/"'`<>)]*)/g)].map((m) => m[1]);
     expect(pins.length, 'the docs should still contain concrete pins').toBeGreaterThan(0);
-    for (const pin of pins) expect(pin).toBe(shippedVersion);
+    for (const pin of pins) expect(pin).toBe(version);
+  }
+
+  it('current registry pins match the package; explicitly historical CDN pins match their release', () => {
+    const historical = /For the separate stable (\d+\.\d+\.\d+) runtime,[\s\S]*?(?=\nAny bundler works)/.exec(README);
+    expect(historical, 'the stable CDN examples need an explicit bounded historical section').not.toBeNull();
+    const section = historical![0], version = historical![1]!;
+    expect(CHANGELOG).toContain(`## [${version}]`);
+    expect(CDN_DOC).toContain(`Every \`@getforma/core@${version}\` below is a retained pin to that historical`);
+    expect(RUNTIME_DOC).toContain(`Historical published ${version} artifact; not the 3.x mount contract.`);
+    expectPins(README.replace(section, ''), pkg.version);
+    for (const text of [section, RUNTIME_DOC, CDN_DOC]) expectPins(text, version);
+  });
+
+  it('pin checks retain complete prerelease suffixes and reject stale or malformed suffixes', () => {
+    expectPins('npm install @getforma/core@3.0.0-beta.1', '3.0.0-beta.1');
+    expectPins('https://cdn.jsdelivr.net/npm/@getforma/core@3.0.0-rc.2+build.7/dist/forma.esm.js', '3.0.0-rc.2+build.7');
+    for (const pin of ['3.0.0', '3.0.0-beta.2', '3.0.0-beta.1-extra', '3.0.0-beta.1_invalid']) {
+      expect(() => expectPins(`npm install @getforma/core@${pin}`, '3.0.0-beta.1')).toThrow();
+    }
+    expect(() => expectPins('@getforma/core@1.9.0', '2.1.0')).toThrow();
   });
 
   it('the unreleased runtime header documents the explicit mount and its authority boundary', () => {
