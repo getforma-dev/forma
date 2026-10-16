@@ -717,7 +717,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       const target = join(distDir, FRAME_RUNTIME_ASSET);
       if (config.watch) writeFileAtomic(target, frame.bytes);
       else writeFileSync(target, frame.bytes);
-      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}`);
+      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}${frame.minified ? `; minified ${frame.sourceBytes.toLocaleString('en-US')} -> ${frame.bytes.length.toLocaleString('en-US')} B` : ''}`);
     }
     // The dev manifest names it as itself, as it names every watched asset.
     const frameAssets: Record<string, string> = frame ? { [FRAME_RUNTIME_ASSET]: FRAME_RUNTIME_ASSET } : {};
@@ -1099,7 +1099,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       ceilings: REPORT_CEILINGS,
       routes: sizes,
       worker,
-      ...(frameFile ? { frame: frameSize(frameFile, distDir) } : {}),
+      ...(frameFile && frame ? { frame: frameSize(frameFile, distDir, frame.sourceBytes) } : {}),
       times,
     };
     console.log(`\n${formatSizeReport(sizeReport).join('\n')}`);
