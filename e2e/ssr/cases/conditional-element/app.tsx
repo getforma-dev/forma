@@ -6,9 +6,9 @@ function ConditionalElement(p:{label:string;initial:boolean}) {
   const [on,setOn]=createSignal(p.initial);
   const [hits,setHits]=createSignal(0);
   return <section data-case={p.label}>
-    <button className="toggle" onClick={()=>setOn(!on())}>Toggle</button>
+    <button class="toggle" onClick={()=>setOn(!on())}>Toggle</button>
     <output>{()=>hits()}</output>
-    {()=>on()?<button className="branch" onClick={()=>setHits(hits()+1)}>Branch</button>:null}
+    {()=>on()?<button class="branch" onClick={()=>setHits(hits()+1)}>Branch</button>:null}
   </section>;
 }
 function Page() {
