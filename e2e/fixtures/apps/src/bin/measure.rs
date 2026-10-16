@@ -16,6 +16,9 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
+#[path = "../performance_evidence.rs"]
+mod performance_evidence;
+use performance_evidence::Journal;
 
 #[derive(Embed)]
 #[folder = "out/bench/dist/"]
@@ -133,7 +136,7 @@ fn n1(p: Prepared, nominal: usize, samples: usize) -> Value {
     let p99 = percentile(&sorted, 99, 100);
     json!({"nominalNodes":nominal,"nodes":counts.nodes,"bytes":counts.bytes,"listIterations":counts.list_iterations,"walks":samples,"p50Nanoseconds":p50,"p99Nanoseconds":p99,"p50NodesPerSecond":counts.nodes as f64*1e9/p50 as f64,"p99NodesPerSecond":counts.nodes as f64*1e9/p99 as f64,"samplesNanoseconds":durations,"moduleSha256":p.module_hash,"inputSha256":p.input_hash,"outputSha256":output_hash})
 }
-fn n5(dist: &Path) -> Value {
+fn n5(dist: &Path, journal: Option<&Journal>) -> Value {
     let mut points = Vec::new();
     for rows in [100, 200, 400, 800, 1600, 3200] {
         let p = prepare(dist, "/pages/1500", &console_with_rows(rows));
@@ -155,6 +158,9 @@ fn n5(dist: &Path) -> Value {
         let mut sorted = times.clone();
         sorted.sort_unstable();
         points.push(json!({"rows":rows,"allocations":allocations,"allocatedBytes":bytes,"medianNanoseconds":percentile(&sorted,50,100),"samplesNanoseconds":times,"moduleSha256":p.module_hash,"inputSha256":p.input_hash}));
+        if let Some(journal) = journal {
+            journal.write(&format!("native-n5-{rows}"), points.last().unwrap());
+        }
     }
     let small = prepare(dist, "/pages/1500", &console_with_rows(100));
     let large = prepare(dist, "/pages/1500", &console_with_rows(3200));
@@ -248,34 +254,62 @@ fn main() {
     let pilot = args.get(2).is_some_and(|arg| arg == "pilot");
     assert!(args.len() == 2 || pilot, "unknown mode");
     let dist = Path::new(&args[0]);
+    let journal = Journal::from_env(Path::new(&args[1]));
     let samples = if pilot { 100 } else { 20000 };
     let mut rows = vec![n1(
         prepare(dist, "/pages/300", &login_props()),
         300,
         samples,
     )];
+    if let Some(journal) = &journal {
+        journal.write("native-n1-300", rows.last().unwrap());
+    }
     if !pilot {
         rows.push(n1(
             prepare(dist, "/pages/1500", &console_props()),
             1500,
             samples,
         ));
+        if let Some(journal) = &journal {
+            journal.write("native-n1-1500", rows.last().unwrap());
+        }
         rows.push(n1(
             prepare(dist, "/pages/10000", &document_props()),
             10000,
             samples,
         ));
+        if let Some(journal) = &journal {
+            journal.write("native-n1-10000", rows.last().unwrap());
+        }
         rows.push(n1(
             prepare(dist, "/pages/15000", &canvas_props()),
             15000,
             samples,
         ));
+        if let Some(journal) = &journal {
+            journal.write("native-n1-15000", rows.last().unwrap());
+        }
         rows.push(n1(
             prepare(dist, "/pages/20000", &ledger_props()),
             20000,
             samples,
         ));
+        if let Some(journal) = &journal {
+            journal.write("native-n1-20000", rows.last().unwrap());
+        }
     }
-    let report = json!({"schema":1,"pilot":pilot,"profile":"cargo build --release --locked; default application release profile; typed projection and parsing outside timer; returned output disposal outside N1 timer","n1":rows,"n5":n5(dist),"boundaries":boundaries()});
-    std::fs::write(&args[1], serde_json::to_vec_pretty(&report).unwrap()).unwrap();
+    let growth = n5(dist, journal.as_ref());
+    if let Some(journal) = &journal {
+        journal.write("native-n5", &growth);
+    }
+    let boundary = boundaries();
+    if let Some(journal) = &journal {
+        journal.write("native-boundaries", &boundary);
+    }
+    let report = json!({"schema":1,"pilot":pilot,"profile":"cargo build --release --locked; default application release profile; typed projection and parsing outside timer; returned output disposal outside N1 timer","n1":rows,"n5":growth,"boundaries":boundary});
+    if let Some(journal) = &journal {
+        journal.write("native-report", &report);
+    } else {
+        std::fs::write(&args[1], serde_json::to_vec_pretty(&report).unwrap()).unwrap();
+    }
 }

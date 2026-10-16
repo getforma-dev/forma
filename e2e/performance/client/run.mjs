@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {writePerformanceRecord} from '../../../scripts/release-performance-journal.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const packedCore = process.env.FORMA_BENCH_CORE;
@@ -18,6 +19,9 @@ if (!process.env.FORMA_BENCH_OUTPUT) throw new Error("FORMA_BENCH_OUTPUT is requ
 const fixtureDirectory = path.dirname(fileURLToPath(import.meta.url));
 const resultJsonPath = path.resolve(process.env.FORMA_BENCH_OUTPUT);
 const resultMarkdownPath = resultJsonPath.replace(/\.json$/, "") + ".md";
+const evidenceDirectory=process.env.FORMA_PERFORMANCE_EVIDENCE;
+if(evidenceDirectory&&resultJsonPath!==path.join(evidenceDirectory,'client-report.json'))throw new Error('client evidence output must belong to the P17 attempt');
+const checkpoint=(kind,value)=>{if(evidenceDirectory)writePerformanceRecord(evidenceDirectory,kind.replaceAll('_','-'),value);};
 const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "forma-browser-bench-"));
 
 const options = parseArguments(process.argv.slice(2));
@@ -41,6 +45,7 @@ try {
       broker,
       options,
     });
+    checkpoint(`client-engine-${browserName}`,browserReports[browserName]);
     await browser.close();
     activeBrowsers.splice(activeBrowsers.indexOf(browser), 1);
   }
@@ -73,15 +78,21 @@ try {
     browsers: browserReports,
   };
 
-  process.stdout.write(`${renderConsoleSummary(report)}\n`);
   if (options.writeResults) {
-    await writeFile(resultJsonPath, `${JSON.stringify(report, null, 2)}\n`);
-    await writeFile(resultMarkdownPath, renderMarkdown(report));
+    if(evidenceDirectory){
+      // The raw aggregate survives even if presentation formatting fails next.
+      checkpoint('client-report',report);
+      checkpoint('client-markdown',{markdown:renderMarkdown(report)});
+    }else{
+      await writeFile(resultJsonPath, `${JSON.stringify(report, null, 2)}\n`);
+      await writeFile(resultMarkdownPath, renderMarkdown(report));
+    }
     process.stdout.write(`Wrote ${path.relative(root, resultJsonPath)}\n`);
-    process.stdout.write(`Wrote ${path.relative(root, resultMarkdownPath)}\n`);
+    if(!evidenceDirectory)process.stdout.write(`Wrote ${path.relative(root, resultMarkdownPath)}\n`);
   } else {
     process.stdout.write("Quick wiring checks do not overwrite recorded evidence.\n");
   }
+  process.stdout.write(`${renderConsoleSummary(report)}\n`);
 } finally {
   await Promise.all(activeBrowsers.map((browser) => browser.close()));
   await new Promise((resolve) => {
@@ -307,6 +318,7 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
           resetBeforeEach: true,
           ...options,
         });
+        checkpoint(`client-${browserName}-${framework}-mount-${count}`,runtime[framework][`mount_${count}`]);
       }
       await resetPage(page);
       await page.evaluate((count) => globalThis.__frameworkBench.mountWidgets(count), options.updateCount);
@@ -317,6 +329,7 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
         normalizeBy: 5_000,
         ...options,
       });
+      checkpoint(`client-${browserName}-${framework}-update-one-${options.updateCount}`,runtime[framework][`update_one_of_${options.updateCount}`]);
       runtime[framework][`update_all_${options.updateCount}`] = await sampleOperation({
         page,
         operation: "updateAllMany",
@@ -324,6 +337,7 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
         normalizeBy: 20,
         ...options,
       });
+      checkpoint(`client-${browserName}-${framework}-update-all-${options.updateCount}`,runtime[framework][`update_all_${options.updateCount}`]);
       await resetPage(page);
       await page.evaluate((count) => globalThis.__frameworkBench.mountList(count), options.listCount);
       runtime[framework][`reverse_${options.listCount}`] = await sampleOperation({
@@ -333,11 +347,13 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
         normalizeBy: 10,
         ...options,
       });
+      checkpoint(`client-${browserName}-${framework}-reverse-${options.listCount}`,runtime[framework][`reverse_${options.listCount}`]);
       if (browserName === "chromium") {
         runtime[framework][`memory_${options.updateCount}`] = await measureMemory(
           page,
           options.updateCount,
         );
+        checkpoint(`client-${browserName}-${framework}-memory-${options.updateCount}`,runtime[framework][`memory_${options.updateCount}`]);
       }
     }
 
@@ -349,6 +365,7 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
       mode: "isolated",
       ...options,
     });
+    checkpoint(`client-${browserName}-server-forma-isolated`,serverState.forma_isolated);
     serverState.forma_shared = await sampleServerState({
       page: formaQueryPage,
       broker,
@@ -356,6 +373,7 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
       mode: "shared",
       ...options,
     });
+    checkpoint(`client-${browserName}-server-forma-shared`,serverState.forma_shared);
     serverState.react_query = await sampleServerState({
       page: queryPage,
       broker,
@@ -363,6 +381,7 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
       mode: null,
       ...options,
     });
+    checkpoint(`client-${browserName}-server-react-query`,serverState.react_query);
 
     return {
       version: await browser.version(),

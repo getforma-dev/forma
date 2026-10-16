@@ -75,18 +75,23 @@ export async function audit(url,{saveArtifacts}={}){
   return {version:lhr.lighthouseVersion,throttlingMethod:lhr.configSettings.throttlingMethod,benchmarkIndex:lhr.environment.benchmarkIndex,tbtMs:lhr.audits['total-blocking-time'].numericValue,lcpMs:lhr.audits['largest-contentful-paint'].numericValue,longTasks:tasks.details.items.map(row=>({duration:row.duration,startTime:row.startTime})),sha256:createHash('sha256').update(rawLhr).digest('hex'),rawLhr};
  }finally{await chrome.kill();}
 }
-export async function measureMobileRoute({url,id,runs=20,onProgress=()=>{},onSample=()=>{}}){
+export async function measureMobileRoute({url,id,runs=20,onProgress=()=>{},onSample=()=>{},onPhase=()=>{}}){
  assert(runs===20||runs===1,'only full measurement or explicit one-run pilot');
  const results=[];
  for(let run=0;run<runs;run++){
-  const lighthouse=await audit(url),activation=await measureActivation(url,id);
+  const lighthouse=await audit(url);
+  await onPhase({id,run:run+1,phase:'lighthouse',observation:lighthouse});
+  const activation=await measureActivation(url,id);
+  await onPhase({id,run:run+1,phase:'activation',observation:activation});
   results.push({run:run+1,lighthouse,activation});onSample(results.at(-1));onProgress(`${id}: ${run+1}/${runs} cold Lighthouse and activation runs`);
  }
  return {id,pilot:runs!==20,profile:MOBILE_PROFILE,runs:results,p95TbtMs:percentile(results.map(r=>r.lighthouse.tbtMs),.95)};
 }
-export async function mobileControls(url){
+export async function mobileControls(url,onPhase=()=>{}){
  const dead=await measureActivation(url,'islands-100',{disabled:true});
+ await onPhase({phase:'dead',observation:dead});
  const slow=await measureActivation(url,'islands-100',{longTask:true});
+ await onPhase({phase:'slow',observation:slow});
  const observations={dead,slow};
  return {controls:validateMobileControls(observations),observations};
 }
