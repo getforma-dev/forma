@@ -138,6 +138,8 @@ jobs:
           REPORT_SHA256=$(bash scripts/release-artifacts.sh record "$RUNNER_TEMP/p17")
           echo "report-sha256=$REPORT_SHA256" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        # Keep actual failed P17 diagnostics; verify still fails and blocks publishing.
+        if: always()
         with:
           name: release-p17
           path: ${{ runner.temp }}/p17/

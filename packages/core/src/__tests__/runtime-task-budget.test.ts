@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * FORMA-028: one budget per task, not per binding.
  *
@@ -45,14 +46,14 @@ describe('the task budget (FORMA-028)', () => {
   beforeEach(async () => {
     await tick();
     runtime.clearDiagnostics();
-    runtime.setDiagnostics(true);
+
     vi.spyOn(console, 'error').mockImplementation(() => {});
     container = document.createElement('div');
     document.body.appendChild(container);
   });
 
   afterEach(async () => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     await settle(2);
     runtime.clearDiagnostics();
@@ -75,7 +76,7 @@ describe('the task budget (FORMA-028)', () => {
     // Each binding spends 200,000 units; one task holds one of them.
     const ps = Array.from({ length: 10 }, () => `<p data-out data-text="{${spending(200_000)}}">server</p>`).join('');
     container.innerHTML = `<div data-forma-state='{}'>${ps}</div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts().filter((t) => t === '199990')).toHaveLength(1);
     expect(texts().filter((t) => t === 'server')).toHaveLength(9);
     await tick();
@@ -92,7 +93,7 @@ describe('the task budget (FORMA-028)', () => {
     const steps = 'Array.from({length: 12000}).map((x, i) => i).filter(i => i % 2).length';
     const ps = Array.from({ length: 4 }, () => `<p data-out data-text="{${steps}}">server</p>`).join('');
     container.innerHTML = `<div data-forma-state='{}'>${ps}</div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts()).toEqual(['6000', 'server', 'server', 'server']);
     await settle();
     expect(texts()).toEqual(Array(4).fill('6000'));
@@ -105,7 +106,7 @@ describe('the task budget (FORMA-028)', () => {
       <p data-out data-text="{${spending(200_000)}}">server</p>
       <p data-out data-text="{${spending(300_010)}}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     // The first is refused in a task it started: reported at once. Its refused
     // charge never ran, so the second fits. The third asks for more than the
     // whole budget, which no task could hold: reported at once too, though
@@ -135,7 +136,7 @@ describe('the task budget (FORMA-028)', () => {
       <p data-out data-text="{[$dispatch('priced'), ${spending(300_010)}][1]}">server</p>
       <p data-out data-text="{${spending(200_000)}}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts()).toEqual(['99990', 'server', 'server']);
     expect(codes()).toEqual(['FORMA_E_BUDGET']);
     expect(priced).toBe(1);
@@ -154,11 +155,11 @@ describe('the task budget (FORMA-028)', () => {
     // for String(); one that waits should read none of it.
     const widget = async (state: Record<string, unknown>, html: string): Promise<string[]> => {
       container.innerHTML = `<div data-forma-state='${JSON.stringify(Object.fromEntries(Object.keys(state).map((k) => [k, null])))}'>${html}</div>`;
-      runtime.mount(container);
+      mountFixture(container);
       for (const [k, v] of Object.entries(state)) runtime.setScopeValue(container.firstElementChild!, k, v);
       await settle(60);
       const out = texts();
-      runtime.unmount(container);
+      unmountFixture(container);
       return out;
     };
     const p = (expr: string): string => `<p data-out data-text="{${expr} === null ? '' : ${expr}}">server</p>`;
@@ -202,7 +203,7 @@ describe('the task budget (FORMA-028)', () => {
       ${'<p data-out data-text="{label}">server</p>'.repeat(200)}
       <p data-out data-text="{big}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     const out = texts();
     const joined = names.join(', ');
     expect(out.slice(0, 2)).toEqual(['99990', 'server']);
@@ -230,7 +231,7 @@ describe('the task budget (FORMA-028)', () => {
     for (const [k, rendered, refusedReading] of [[2600, 0, 6], [2400, 25, 10]] as const) {
       const p = (expr: string): string => `<p data-out data-text="{c === null ? '' : ${expr}}">server</p>`;
       container.innerHTML = `<div data-forma-state='{"a":null,"b":null,"c":null,"label":"item"}'>${p('a') + p('b') + p('c').repeat(400) + p('label.toUpperCase()') + p('label')}</div>`;
-      runtime.mount(container);
+      mountFixture(container);
       const root = container.firstElementChild!;
       const c = counted(k);
       reads.n = 0;
@@ -253,7 +254,7 @@ describe('the task budget (FORMA-028)', () => {
       expect(out.slice(2, 402).every((t) => t === list), `${k}: every binding renders`).toBe(true);
       expect(out.slice(402)).toEqual(['ITEM', 'item']);
       expect(codes()).toEqual([]);
-      runtime.unmount(container);
+      unmountFixture(container);
     }
   });
 
@@ -274,7 +275,7 @@ describe('the task budget (FORMA-028)', () => {
       const p = (k: string): string => `<p data-out data-text="{${k} === null ? '' : ${k}}">server</p>`;
       const ping = `<p data-out data-text="{${on} === null ? '' : [$dispatch('ping'), 1][1]}">server</p>`;
       container.innerHTML = `<div data-forma-state='{"a":null,"b":null,"c":null,"n":0}' data-on:ping="{n = n + 1}">${p('a') + p('b') + ping + p('c').repeat(10)}</div>`;
-      runtime.mount(container);
+      mountFixture(container);
       const root = container.firstElementChild!;
       const c = counted(60_000);
       reads.n = 0;
@@ -289,7 +290,7 @@ describe('the task budget (FORMA-028)', () => {
       await settle(60);
       expect(texts().slice(3).every((t) => t === c.join(',')), `${on}: every binding renders`).toBe(true);
       expect(codes()).toEqual([]);
-      runtime.unmount(container);
+      unmountFixture(container);
     }
   });
 
@@ -301,7 +302,7 @@ describe('the task budget (FORMA-028)', () => {
       <p data-out data-text="{1 + 2 * 3}">server</p>
       <p data-out data-text="{${spending(150_000)} + ${spending(150_000)}}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts()).toEqual(['7', 'server']);
     expect(codes()).toEqual(['FORMA_E_BUDGET']);
     await settle();
@@ -317,7 +318,7 @@ describe('the task budget (FORMA-028)', () => {
         data-computed="a = ${spending(150_000)}; b = ${spending(150_000)} + a">
       <p data-out data-text="{b}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts()).toEqual(['server']);
     await settle();
     expect(texts()).toEqual(['299980']);
@@ -332,7 +333,7 @@ describe('the task budget (FORMA-028)', () => {
       <p data-out data-text="{${spending(200_000)} + a}">server</p>
       <p data-out data-text="{a}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts()).toEqual(['server', 'server']);
     await settle();
     expect(texts()).toEqual(['299980', '99990']);
@@ -349,7 +350,7 @@ describe('the task budget (FORMA-028)', () => {
       </div>
       <p data-out data-text="{inner + '/' + outer}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts()).toEqual(['0/0']);
     await tick();
     (container.querySelector('#inner') as HTMLElement).click();
@@ -371,7 +372,7 @@ describe('the task budget (FORMA-028)', () => {
       <button id="go" data-on:click="{n = ${spending(200_000)}}">go</button>
       <p data-out data-text="{n === 0 ? 'none' : ${spending(100_000)} + n}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts()).toEqual(['none']);
     await tick();
     (container.querySelector('#go') as HTMLElement).click();
@@ -390,7 +391,7 @@ describe('the task budget (FORMA-028)', () => {
       <input id="q" data-model="{q}">
       <p data-out data-text="{${spending(200_000)} + q.length}">server</p>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
     const input = container.querySelector('#q') as HTMLInputElement;
     for (const text of ['a', 'ab', 'abc']) {
@@ -406,7 +407,7 @@ describe('the task budget (FORMA-028)', () => {
     container.innerHTML = `<div data-forma-state='{"rows": [0,1,2,3,4,5,6,7,8,9]}'>
       <ul data-list="{rows}"><li data-out data-text="{${spending(100_000)} + item}">row</li></ul>
     </div>`;
-    runtime.mount(container);
+    mountFixture(container);
     expect(texts().filter((t) => t !== 'row')).toHaveLength(2);
     await settle();
     expect(texts()).toEqual(Array.from({ length: 10 }, (_, i) => String(99_990 + i)));

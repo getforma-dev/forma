@@ -78,16 +78,14 @@ test.describe('the flagship example under Content-Security-Policy: script-src \'
   test('renders, filters and reacts with zero CSP violations', async ({ page }) => {
     const { violations, errors } = await withStrictCsp(page);
 
-    await page.goto('/flagship.html');
+    const response = await page.goto('/flagship.html');
 
-    // The header really is on the response — otherwise this whole spec is a
-    // no-op that would pass with `unsafe-eval` in place.
-    const applied = await page.evaluate(() => {
-      // Best-effort: if the document parsed at all, the runtime script loaded
-      // under 'self', which is the only source the policy allows.
-      return document.querySelectorAll('script[src]').length;
-    });
-    expect(applied).toBe(1);
+    // Read the actual enforced header; the separate application script now
+    // explicitly mounts the fixture under the same self-only script policy.
+    expect(response!.headers()['content-security-policy']).toBe(CSP);
+    const scripts = await page.locator('script[src]').evaluateAll(elements =>
+      elements.map(element => element.getAttribute('src')));
+    expect(scripts).toEqual(['/formajs-runtime.global.js', '/mount-fixture.js']);
 
     // The documented behaviour, in a real browser.
     await expect(page.locator('#count')).toHaveText('Found 5 results');

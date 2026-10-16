@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * $refs magic — data-ref directive tests.
  *
@@ -5,7 +6,7 @@
  * similar to Alpine.js's x-ref / $refs pattern.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mount, unmount } from '../runtime';
+
 
 describe('$refs magic', () => {
   let container: HTMLDivElement;
@@ -16,7 +17,7 @@ describe('$refs magic', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
   });
 
@@ -27,7 +28,7 @@ describe('$refs magic', () => {
         <p data-text="{$refs.search.value}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const p = container.querySelector('p')!;
     expect(p.textContent).toBe('hello');
   });
@@ -39,7 +40,7 @@ describe('$refs magic', () => {
         <button data-on:click="{$refs.nameInput.focus()}">Focus</button>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const btn = container.querySelector('button')!;
     expect(() => btn.click()).not.toThrow();
   });
@@ -50,7 +51,7 @@ describe('$refs magic', () => {
         <p data-text="{$refs.missing ?? 'none'}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const p = container.querySelector('p')!;
     // $refs.missing is undefined, nullish coalescing falls through to 'none'
     expect(p.textContent).toBe('none');
@@ -65,7 +66,7 @@ describe('$refs magic', () => {
         <p id="out2" data-text="{$refs.second.value}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     expect(container.querySelector('#out1')!.textContent).toBe('A');
     expect(container.querySelector('#out2')!.textContent).toBe('B');
   });
@@ -82,7 +83,7 @@ describe('$refs magic', () => {
         <button data-on:click="{$refs.panel.classList.toggle('open')}">Toggle</button>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const panel = container.querySelector('.panel')!;
     const btn = container.querySelector('button')!;
 
@@ -101,7 +102,7 @@ describe('$refs magic', () => {
         <p data-text="{$refs.info.dataset.custom}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const p = container.querySelector('p')!;
     expect(p.textContent).toBe('metadata');
   });
@@ -117,7 +118,7 @@ describe('$refs magic', () => {
         <p id="p2" data-text="{$refs.shared.value}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     expect(container.querySelector('#p1')!.textContent).toBe('scope1');
     expect(container.querySelector('#p2')!.textContent).toBe('scope2');
   });

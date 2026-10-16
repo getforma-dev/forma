@@ -144,30 +144,32 @@ for (const runtime of RUNTIMES) {
         const root = document.createElement('div');
         root.setAttribute('data-forma-state', JSON.stringify({ v: null, ...(c.state ?? {}) }));
         root.innerHTML = c.html;
-        document.body.append(root);
+        const host = document.createElement('div'); document.body.append(host);
+        const markup = window.FormaRuntime.trustedHtml(root.outerHTML);
         const tasks = [];
         let s = performance.now();
-        window.FormaRuntime.mount(root);
+        const handle = window.FormaRuntime.mountMarkup(host, markup, { tier: 'reviewed' });
+        const scope = host.firstElementChild;
         tasks.push(performance.now() - s);
         const settle = async () => { for (let i = 0; i < 2000 && window.__pending > 0; i++) await new Promise((res) => requestAnimationFrame(res)); };
         if (c.data) {
           await settle();
           s = performance.now();
-          window.FormaRuntime.setScopeValue(root, 'v', window.__v);
+          window.FormaRuntime.setScopeValue(scope, 'v', window.__v);
           tasks.push(performance.now() - s);
         }
         if (c.click) {
           await settle();
           s = performance.now();
-          root.querySelector(c.click).click();
+          scope.querySelector(c.click).click();
           tasks.push(performance.now() - s);
         }
         await settle();
         tasks.push(...window.__tasks);
-        const texts = [...root.querySelectorAll('[data-out]')].map((e) => { const t = e.textContent; return t.length > 30 ? `${t.slice(0, 12)}…(${t.length})` : t; });
+        const texts = [...scope.querySelectorAll('[data-out]')].map((e) => { const t = e.textContent; return t.length > 30 ? `${t.slice(0, 12)}…(${t.length})` : t; });
         const diags = window.FormaRuntime.getDiagnostics().map((d) => `${d.code}x${d.count}`);
-        window.FormaRuntime.unmount(root);
-        root.remove();
+        handle.unmount();
+        host.remove();
         window.__v = undefined;
         return { tasks, texts, diags };
       }, { c });

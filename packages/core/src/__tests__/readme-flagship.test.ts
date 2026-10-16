@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * The shop window, executed.
  *
@@ -34,7 +35,7 @@ const DOC = readFileSync(resolve(process.cwd(), DOC_PATH), 'utf8');
  * reason: a line number is stale the first time anyone edits the file above it.
  */
 function extractFlagshipBlock(markdown: string): string {
-  const heading = '## Everything in one file';
+  const heading = '## A complete widget';
   const at = markdown.indexOf(heading);
   if (at < 0) throw new Error(`${DOC_PATH} no longer contains the flagship heading`);
   const open = markdown.indexOf('```html', at);
@@ -68,7 +69,7 @@ describe('the documented flagship example', () => {
   });
 
   afterEach(() => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     runtime.clearDiagnostics();
     localStorage.clear();
@@ -76,7 +77,7 @@ describe('the documented flagship example', () => {
 
   async function mountFlagship(): Promise<void> {
     container.innerHTML = mountableMarkup();
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
   }
 

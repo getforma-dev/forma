@@ -11,6 +11,7 @@ import { startServer } from './server.mjs';
 import { runBrowserCase } from './browser-case.mjs';
 import { installObservers, observerControls } from './observers.mjs';
 import { capabilityCases, runCapability } from './capabilities.mjs';
+import { runExplicitControls } from './explicit-controls.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '../..');
@@ -32,22 +33,23 @@ const report = { schema: 1, passed: false, completeMatrix: !only, selection: onl
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   sourceClean: execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim() === '',
   catalogueSha256: createHash('sha256').update(JSON.stringify(catalogue)).digest('hex'),
-  requested: selected.length, requestedCapabilityControls: capabilities.length, cases: [], capabilities: [], observers: [], pageErrors: [], requests: [] };
+  requested: selected.length, requestedCapabilityControls: capabilities.length, cases: [], capabilities: [], explicitMount: [], observers: [], pageErrors: [], requests: [] };
 const save = () => writeFile(output, JSON.stringify(report, null, 2) + '\n');
 const started = performance.now();
 let server, other, browser;
 try {
-  const sourceFiles = ['catalogue.mjs', 'browser-case.mjs', 'capabilities.mjs', 'observers.mjs', 'server.mjs', 'run.mjs', 'probe-provenance.json'];
+  const sourceFiles = ['catalogue.mjs', 'browser-case.mjs', 'capabilities.mjs', 'observers.mjs', 'server.mjs', 'run.mjs', 'probe-provenance.json', 'explicit-controls.mjs'];
   report.harnessSources = {};
   for (const name of sourceFiles) report.harnessSources[name] = createHash('sha256').update(await readFile(join(here, name))).digest('hex');
   const provenance = JSON.parse(await readFile(join(here, 'probe-provenance.json'), 'utf8'));
-  for (const inventory of [provenance.historical, provenance.current]) {
+  for (const inventory of [provenance.historical, provenance.a2, provenance.current]) {
     const bytes = await readFile(resolve(root, '../..', inventory.path));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), inventory.sha256, 'frozen probe inventory changed');
-    const originals = JSON.parse(bytes).filter(item => inventory === provenance.historical || item.tags.includes('security'));
+    assert.equal(JSON.parse(bytes).length, inventory.total, 'probe total must match authenticated source');
+    const originals = JSON.parse(bytes).filter(item => inventory !== provenance.current || item.tags.includes('security'));
     assert.deepEqual(inventory.rows.map(item => item.id), originals.map(item => item.id), 'every original probe must have a disposition');
   }
-  report.provenance = { historical: provenance.historical.total, current: provenance.current.total, currentSecurity: provenance.current.rows.length };
+  report.provenance = { historical: provenance.historical.total, a2: provenance.a2.total, retiredA2: provenance.a2.rows.filter(row => row.disposition.kind === 'retired-api').length, current: provenance.current.total, currentSecurity: provenance.current.rows.length };
   const requests = [];
   other = await startServer(runtimePath, '', requests);
   server = await startServer(runtimePath, other.url, requests);
@@ -66,6 +68,21 @@ try {
     assert.deepEqual(observer, { executions: 1, secret: 'secret-1290300', outsideReads: 1, response: 200, unexpectedResponse: 404, trustedTypesRefused: true });
     assert.deepEqual(server.requests.slice(-2).map(request => request.path), ['/api/observer-control', '/observer-unexpected']);
     report.observers.push({ profile, ...observer });
+    if (!only) {
+      const before = server.requests.length;
+      const controls = await page.evaluate(runExplicitControls, profile);
+      assert.equal(server.requests.length, before, 'omitted grants sent a request');
+      for (const control of controls) {
+        if (control.id.startsWith('no-auto/')) assert.deepEqual(control, { id: `no-auto/${profile}`, served: 'raw', injected: 'raw' });
+        else {
+          assert.equal(control.live, true); assert.equal(control.reach, 'confined');
+          assert.equal(control.failed, 'data-fetch denied: the mount grants no fetch');
+          assert.equal(control.activations, 0); assert.equal(control.outsideReads, 0);
+          assert.deepEqual(control.codes, ['FORMA_E_GRANT_FETCH', 'FORMA_E_GRANT_NAVIGATE']);
+        }
+      }
+      report.explicitMount.push(...controls.map(control => ({ ...control, unauthorizedRequests: 0 })));
+    }
     for (const input of selected.filter(item => item.profile === profile)) {
       const before = server.requests.length;
       report.current = input;

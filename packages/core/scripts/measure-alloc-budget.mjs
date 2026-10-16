@@ -222,22 +222,24 @@ async function timeBinding(expr, builder, n) {
       const span = document.createElement('span');
       span.setAttribute('data-text', `{v === null ? '' : ${expr}}`);
       root.append(span);
-      document.body.append(root);
-      window.FormaRuntime.mount(root);
+      const host = document.createElement('div'); document.body.append(host);
+      const handle = window.FormaRuntime.mountMarkup(host, window.FormaRuntime.trustedHtml(root.outerHTML), { tier: 'reviewed' });
+      const scope = host.firstElementChild;
+      const output = scope.querySelector('span');
       const value = build(n);
       if (builder === 'pairsAndIntegers') {
-        window.FormaRuntime.setScopeValue(root, 'w', Array.from({ length: 99_999 }, (_, i) => i));
+        window.FormaRuntime.setScopeValue(scope, 'w', Array.from({ length: 99_999 }, (_, i) => i));
       }
       if (forceGc) window.gc();
       // The budget is one per task (FORMA-028): the timed evaluation starts a
       // task of its own, as a page's update would.
       await new Promise((res) => setTimeout(res, 0));
       const start = performance.now();
-      window.FormaRuntime.setScopeValue(root, 'v', value);
+      window.FormaRuntime.setScopeValue(scope, 'v', value);
       times.push(performance.now() - start);
-      text = span.textContent;
-      window.FormaRuntime.unmount(root);
-      root.remove();
+      text = output.textContent;
+      handle.unmount();
+      host.remove();
     }
     window.removeEventListener('formajs:diagnostic', onDiagnostic);
     return { times, text, refused };

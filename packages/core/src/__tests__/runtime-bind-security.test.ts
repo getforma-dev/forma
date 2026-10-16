@@ -1,10 +1,11 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * Security: data-bind:* and list-template attribute interpolation must not be
  * able to inject javascript: URLs or inline event handlers, in EITHER the
  * standard or hardened build (the setAttribute sink is identical in both).
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, unmount } from '../runtime';
+
 import { isDangerousUrl } from '../security/url-safety';
 
 // Spy on the real implementation (behaviour unchanged) so the tests below can
@@ -22,7 +23,7 @@ describe('data-bind: attribute injection', () => {
     document.body.appendChild(container);
   });
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
   });
 
@@ -31,7 +32,7 @@ describe('data-bind: attribute injection', () => {
       <div data-forma-state='{"u": "javascript:alert(document.cookie)"}'>
         <a id="t" data-bind:href="{u}">link</a>
       </div>`;
-    mount(container);
+    mountFixture(container);
     const a = container.querySelector('#t')!;
     expect(a.getAttribute('href') ?? '').not.toMatch(/script:/i);
   });
@@ -43,7 +44,7 @@ describe('data-bind: attribute injection', () => {
       <div data-forma-state='{"u": "java\\tscript:alert(1)"}'>
         <a id="t" data-bind:href="{u}">link</a>
       </div>`;
-    mount(container);
+    mountFixture(container);
     const a = container.querySelector('#t')!;
     // sanity: the payload actually parsed into state (tab present in the value)
     // is not directly observable here, but href must never carry the scheme.
@@ -55,7 +56,7 @@ describe('data-bind: attribute injection', () => {
       <div data-forma-state='{"code": "alert(1)"}'>
         <div id="t" data-bind:onclick="{code}">x</div>
       </div>`;
-    mount(container);
+    mountFixture(container);
     const el = container.querySelector('#t')! as HTMLElement;
     expect(el.getAttribute('onclick')).toBeNull();
   });
@@ -70,7 +71,7 @@ describe('data-bind: attribute injection', () => {
         <a id="a" data-bind:href="{u}">link</a>
         <img id="i" data-bind:src="{u}">
       </div>`;
-    mount(container);
+    mountFixture(container);
 
     const calls = vi.mocked(isDangerousUrl).mock.calls;
     expect(calls.some(([, tag]) => tag === 'a')).toBe(true);
@@ -82,7 +83,7 @@ describe('data-bind: attribute injection', () => {
       <div data-forma-state='{"u": "https://example.com", "t": "hello"}'>
         <a id="t" data-bind:href="{u}" data-bind:title="{t}">link</a>
       </div>`;
-    mount(container);
+    mountFixture(container);
     const a = container.querySelector('#t')!;
     expect(a.getAttribute('href')).toBe('https://example.com');
     expect(a.getAttribute('title')).toBe('hello');
@@ -94,7 +95,7 @@ describe('data-bind: attribute injection', () => {
         <button id="t" data-active="initial" data-bind:data-active="{active}"
           data-class:on="{active}" data-on:click="active = true">activate</button>
       </div>`;
-    mount(container);
+    mountFixture(container);
     const button = container.querySelector('#t')! as HTMLButtonElement;
 
     expect(button.hasAttribute('data-active')).toBe(false);
@@ -113,7 +114,7 @@ describe('data-list row-template attribute injection', () => {
     document.body.appendChild(container);
   });
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
   });
 
@@ -124,7 +125,7 @@ describe('data-list row-template attribute injection', () => {
           <li data-key="{item.id}"><a href="{item.url}" data-text="{item.label}"></a></li>
         </ul>
       </div>`;
-    mount(container);
+    mountFixture(container);
     await new Promise((r) => setTimeout(r, 0));
     const a = container.querySelector('li a');
     expect(a).not.toBeNull(); // row rendered

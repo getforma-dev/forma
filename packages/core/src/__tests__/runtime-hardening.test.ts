@@ -1,5 +1,6 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
- * The security model, driven through `mount()` rather than through the
+ * The security model, driven through `mountFixture()` rather than through the
  * interpreter's own API.
  *
  * src/expr/__tests__/adversarial.test.ts attacks the engine directly. This file
@@ -17,14 +18,7 @@
  * other way round: what does the page get, and is it only what it declared?
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  mount,
-  unmount,
-  setDiagnostics,
-  getDiagnostics,
-  clearDiagnostics,
-  getScopes,
-} from '../runtime';
+import { getDiagnostics, clearDiagnostics, getScopes } from '../runtime';
 
 function tick(): Promise<void> {
   return new Promise((r) => setTimeout(r, 0));
@@ -34,7 +28,7 @@ describe('runtime expression hardening', () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    setDiagnostics(true);
+
     clearDiagnostics();
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -43,9 +37,9 @@ describe('runtime expression hardening', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
-    setDiagnostics(false);
+
     clearDiagnostics();
     vi.restoreAllMocks();
   });
@@ -57,7 +51,7 @@ describe('runtime expression hardening', () => {
         <button id="btn" data-on:click="${handler}">go</button>
         <p id="out" data-text="{out}"></p>
       </div>`;
-    mount(container);
+    mountFixture(container);
     await tick();
     (container.querySelector('#btn') as HTMLButtonElement).click();
     await tick();
@@ -82,7 +76,7 @@ describe('runtime expression hardening', () => {
       clearDiagnostics();
       expect(await runHandler('{"x":{},"out":0,"k":"constructor"}', handler), handler).toBe('0');
       expect(codes(), handler).toContain('FORMA_E_KEY_DENIED');
-      unmount(container);
+      unmountFixture(container);
     }
   });
 
@@ -98,7 +92,7 @@ describe('runtime expression hardening', () => {
         expect(({} as Record<string, unknown>).polluted, handler).toBeUndefined();
         expect(Object.prototype, handler).not.toHaveProperty('polluted');
         expect(codes(), handler).toContain('FORMA_E_KEY_DENIED');
-        unmount(container);
+        unmountFixture(container);
       }
     } finally {
       delete (Object.prototype as Record<string, unknown>).polluted;
@@ -112,7 +106,7 @@ describe('runtime expression hardening', () => {
       <div data-forma-state='{"x":{}}'>
         <p id="out" data-text="{x['constr' + 'uctor'].name}">kept</p>
       </div>`;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     const out = container.querySelector('#out')!;
@@ -148,7 +142,7 @@ describe('runtime expression hardening', () => {
         <p id="out" data-text="{safe}"></p>
       </div>`;
     try {
-      mount(container);
+      mountFixture(container);
       await tick();
       expect(container.querySelector('#out')!.textContent).toBe('1');
       expect(({} as Record<string, unknown>).polluted).toBeUndefined();
@@ -159,28 +153,18 @@ describe('runtime expression hardening', () => {
   });
 
   it('a state value that is a function cannot be invoked from markup', async () => {
-    // An app can put a function in state; it can never be called with
-    // attacker-chosen arguments, because bare `f(x)` has no call form at all.
-    container.innerHTML = `
-      <div data-forma-state='{"out":0}'>
-        <p id="out" data-text="{fn(1)}">kept</p>
-      </div>`;
-    mount(container);
-    await tick();
-    const scope = (container.firstElementChild as unknown as {
-      __formaScope: { getters: Record<string, () => unknown> };
+    container.innerHTML = `<div data-forma-state='{"fn":null,"out":"kept"}'>
+      <button data-on:click="{out = fn(1)}">run</button><p id="out" data-text="{out}">initial</p></div>`;
+    mountFixture(container);
+    const scope = (container.firstElementChild as Element & {
+      __formaScope: { setters: Record<string, (value: unknown) => void> };
     }).__formaScope;
-    let called = false;
-    scope.getters.fn = () => () => { called = true; };
-
-    // Re-mount so the expression compiles against the extended scope.
-    unmount(container);
-    clearDiagnostics();
-    mount(container);
-    await tick();
-
-    expect(called).toBe(false);
+    const called = vi.fn(() => 'escaped');
+    scope.setters.fn!(() => called);
+    container.querySelector('button')!.click(); await tick();
+    expect(called).not.toHaveBeenCalled();
     expect(container.querySelector('#out')!.textContent).toBe('kept');
+    expect(codes()).toEqual(['FORMA_E_CALL_DENIED']);
   });
 
   it('a page-wide budget refuses a runaway expression instead of hanging', async () => {
@@ -191,7 +175,7 @@ describe('runtime expression hardening', () => {
       <div data-forma-state='{"rows":${rows}}'>
         <p id="out" data-text="{rows.map(a => rows.map(b => b)).length}">kept</p>
       </div>`;
-    mount(container);
+    mountFixture(container);
     await tick();
 
     expect(container.querySelector('#out')!.textContent).toBe('kept');

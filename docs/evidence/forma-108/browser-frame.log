@@ -1,0 +1,36 @@
+[WebServer] (node:85253) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:85284) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 21 tests using 2 workers
+
+(node:85287) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:85288) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 [chromium] › e2e/frame.spec.ts:72:1 › the frame renders a module in tier (c), with an opaque origin, and answers only ready, resize and error (274ms)
+  ✓   3 [chromium] › e2e/frame.spec.ts:97:1 › a module's data-fetch to the application's API sends no request, and $el stops at the root (96ms)
+  ✓   4 [chromium] › e2e/frame.spec.ts:117:1 › markup injected outside the root stays unbound: the frame never watches body (190ms)
+  ✓   5 [chromium] › e2e/frame.spec.ts:138:1 › a message of any other type changes nothing, and a port posted later is ignored (310ms)
+  ✓   1 [firefox] › e2e/frame.spec.ts:72:1 › the frame renders a module in tier (c), with an opaque origin, and answers only ready, resize and error (1.0s)
+  ✓   7 [firefox] › e2e/frame.spec.ts:97:1 › a module's data-fetch to the application's API sends no request, and $el stops at the root (224ms)
+  ✓   8 [firefox] › e2e/frame.spec.ts:117:1 › markup injected outside the root stays unbound: the frame never watches body (308ms)
+  ✓   9 [firefox] › e2e/frame.spec.ts:138:1 › a message of any other type changes nothing, and a port posted later is ignored (439ms)
+  ✓   6 [chromium] › e2e/frame.spec.ts:182:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (1.7s)
+  ✓  10 [firefox] › e2e/frame.spec.ts:182:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (1.8s)
+  ✓  11 [chromium] › e2e/frame.spec.ts:230:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (1.8s)
+  ✓  13 [chromium] › e2e/frame.spec.ts:277:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (1.7s)
+  ✓  12 [firefox] › e2e/frame.spec.ts:230:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (1.9s)
+(node:85345) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  15 [webkit] › e2e/frame.spec.ts:72:1 › the frame renders a module in tier (c), with an opaque origin, and answers only ready, resize and error (707ms)
+  ✓  16 [webkit] › e2e/frame.spec.ts:97:1 › a module's data-fetch to the application's API sends no request, and $el stops at the root (227ms)
+  ✓  17 [webkit] › e2e/frame.spec.ts:117:1 › markup injected outside the root stays unbound: the frame never watches body (323ms)
+  ✓  14 [firefox] › e2e/frame.spec.ts:277:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (1.8s)
+  ✓  18 [webkit] › e2e/frame.spec.ts:138:1 › a message of any other type changes nothing, and a port posted later is ignored (436ms)
+  ✓  19 [webkit] › e2e/frame.spec.ts:182:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (1.9s)
+  ✓  20 [webkit] › e2e/frame.spec.ts:230:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (1.9s)
+  ✓  21 [webkit] › e2e/frame.spec.ts:277:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (1.9s)
+
+  21 passed (14.9s)

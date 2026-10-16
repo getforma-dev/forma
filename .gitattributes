@@ -137,6 +137,23 @@ docs/archive/forma-191-performance-durability/** -text
 docs/evidence/forma-191-performance-durability/** -text
 
 
+# FORMA-108: authenticated A2 originals before the explicit-tier migration.
+docs/archive/FORMA-108-A2-bridge/** -text
+
+docs/archive/FORMA-108-owned-scope-cleanup/** -text
+
+# Exact first failure/source bytes for FORMA-108 documentation migration.
+docs/archive/FORMA-108-documentation-checks/** -text
+
+# Exact first actual browser migration evidence.
+docs/archive/FORMA-108-browser-migration/** -text
+
+# Original strict qualifier refusal, with byte-exact actual JSON/logs.
+docs/archive/FORMA-108-mutation-reporting/** -text
+
+# Exact explicit-runtime qualification reports and logs.
+docs/evidence/forma-108/** -text
+
 # Attribute alias transition preserves original source/products byte-for-byte.
 docs/archive/attribute-alias-transition/** -text
 
@@ -153,8 +170,21 @@ docs/evidence/forma-144-final/** -text
 # Original Vite configuration and its first failure are byte-authenticated.
 docs/archive/forma-144-vite7-config/** -text
 
+# Original release workflow and actual failure-retention controls.
+docs/archive/release-p17-failure-retention/** -text
+
 # Original fixture tool path and actual hosted failure are byte-authenticated.
 docs/archive/forma-144-fixture-tool/** -text
+docs/archive/FORMA-108-root-full-stack/** -text
 
 # Byte-exact watch-readiness original source and failure evidence.
 docs/archive/forma-watch-readiness/** -text
+
+# Exact dynamic fetch fixture source and authoritative integrated failure.
+docs/archive/FORMA-108-fetch-fixture/** -text
+
+# Preserve the original shipped CSP example as byte-exact qualification evidence.
+docs/archive/FORMA-108-csp-example/** -text
+
+# Original runtime guides retain their exact pre-correction bytes.
+docs/archive/FORMA-108-guide-residue/** -text

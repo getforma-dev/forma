@@ -1,0 +1,222 @@
+{
+  "config": {
+    "argv": [
+      "/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin/node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/node_modules/.bin/playwright",
+      "test",
+      "e2e/csp-example.spec.ts",
+      "--workers=2",
+      "--reporter=list,json"
+    ],
+    "configFile": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/playwright.config.ts",
+    "rootDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 10000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 10000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 2,
+    "webServer": {
+      "command": "npx serve e2e/fixtures -l 3498 --no-clipboard",
+      "port": 3498,
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "csp-example.spec.ts",
+      "file": "csp-example.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "the shipped CSP example explicitly owns its counter, filter and DOM handler",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 657,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T06:36:29.270Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7f30927680162f394cc6-02e7936b600076c3921c",
+          "file": "csp-example.spec.ts",
+          "line": 49,
+          "column": 1
+        },
+        {
+          "title": "the shipped CSP example explicitly owns its counter, filter and DOM handler",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 10000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1757,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T06:36:29.270Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7f30927680162f394cc6-b6a1fb2efa2920a484ad",
+          "file": "csp-example.spec.ts",
+          "line": 49,
+          "column": 1
+        },
+        {
+          "title": "the shipped CSP example explicitly owns its counter, filter and DOM handler",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1462,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-16T06:36:30.635Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7f30927680162f394cc6-b1306566ed80514c20c7",
+          "file": "csp-example.spec.ts",
+          "line": 49,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-16T06:36:28.015Z",
+    "duration": 4571.113,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

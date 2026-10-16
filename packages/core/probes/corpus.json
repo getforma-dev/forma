@@ -7,7 +7,7 @@
   ],
   "find": "const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);",
   "replace": "const FORBIDDEN_PROP_KEYS = new Set<string>([]);",
-  "note": "SECURITY.md 'Island props sanitized' — stripping removed"
+  "note": "SECURITY.md 'Island props sanitized' \u2014 stripping removed"
  },
  {
   "id": "batch/no-batching",
@@ -15,7 +15,7 @@
   "tags": [],
   "find": "  startBatch();\n  try {\n    fn();\n  } finally {\n    endBatch();\n  }",
   "replace": "  fn();",
-  "note": "batch() no longer batches — effects run per write"
+  "note": "batch() no longer batches \u2014 effects run per write"
  },
  {
   "id": "bus/emit-no-snapshot",
@@ -23,7 +23,7 @@
   "tags": [],
   "find": "      for (const handler of [...set]) {",
   "replace": "      for (const handler of set) {",
-  "note": "bus emit iterates live Set — off() during emit corrupts iteration"
+  "note": "bus emit iterates live Set \u2014 off() during emit corrupts iteration"
  },
  {
   "id": "bus/once-no-off",
@@ -73,7 +73,7 @@
   "tags": [],
   "find": "      const camel = prop.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());",
   "replace": "      const camel = prop;",
-  "note": "kebab-case CSS props no longer camelised — string styles silently drop"
+  "note": "kebab-case CSS props no longer camelised \u2014 string styles silently drop"
  },
  {
   "id": "el/static-onattr-guard-off",
@@ -329,7 +329,7 @@
   ],
   "find": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff\\u2000-\\u20cf\\u2100-\\u2125]/);",
   "replace": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff\\u2000-\\u20cf\\u2100-\\u214f]/);",
-  "note": "the case-mapped letterlike symbols (Ω U+2126, K U+212A, Å U+212B) are charged as symbols that map to themselves. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+  "note": "the case-mapped letterlike symbols (\u03a9 U+2126, K U+212A, \u00c5 U+212B) are charged as symbols that map to themselves. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
  },
  {
   "id": "expr/costly-set-too-broad",
@@ -349,7 +349,7 @@
   ],
   "find": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff\\u2000-\\u20cf\\u2100-\\u2125]/);",
   "replace": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff]/);",
-  "note": "one curly apostrophe, dash, € or ™ puts a record's lowercasing in the costly tier, refusing an ordinary English search past about 1,700 records (review R4-1). Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+  "note": "one curly apostrophe, dash, \u20ac or \u2122 puts a record's lowercasing in the costly tier, refusing an ordinary English search past about 1,700 records (review R4-1). Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
  },
  {
   "id": "expr/data-args-charged",
@@ -557,7 +557,7 @@
   "tags": [],
   "find": "function cloneEntry<V>(v: V, seen?: WeakSet<object>): V {",
   "replace": "function cloneEntry<V>(v: V, seen?: WeakSet<object>): V { if (v && typeof v === 'object') return v;",
-  "note": "history entries alias live objects — undo/redo returns mutated state"
+  "note": "history entries alias live objects \u2014 undo/redo returns mutated state"
  },
  {
   "id": "http/ws-random-unchecked",
@@ -605,7 +605,7 @@
   "tags": [],
   "find": "  if (e.ctrlKey !== parsed.ctrl) return false;",
   "replace": "",
-  "note": "ctrl modifier ignored — 's' fires a 'ctrl+s' binding"
+  "note": "ctrl modifier ignored \u2014 's' fires a 'ctrl+s' binding"
  },
  {
   "id": "keyboard/no-meta-check",
@@ -641,7 +641,7 @@
   ],
   "find": "      if (lisFlags[i]) {",
   "replace": "      if (!lisFlags[i]) {",
-  "note": "the LIS rows are the ones skipped-as-in-place — final order corrupted",
+  "note": "the LIS rows are the ones skipped-as-in-place \u2014 final order corrupted",
   "all": true
  },
  {
@@ -652,7 +652,7 @@
   ],
   "find": "  for (const li of lisOfReused) {\n    lisFlags[reusedPositions[li]!] = 1;\n  }",
   "replace": "",
-  "note": "every reused row is moved — LIS optimisation dead",
+  "note": "every reused row is moved \u2014 LIS optimisation dead",
   "all": true
  },
  {
@@ -661,7 +661,7 @@
   "tags": [],
   "find": "export function longestIncreasingSubsequence(arr: number[]): number[] {",
   "replace": "export function longestIncreasingSubsequence(arr: number[]): number[] { if (arr.length > 1) return [];",
-  "note": "LIS always empty — every keyed item moves (O(n) DOM churn, identity loss)"
+  "note": "LIS always empty \u2014 every keyed item moves (O(n) DOM churn, identity loss)"
  },
  {
   "id": "list/no-onInsert-hook",
@@ -708,8 +708,8 @@
   "tags": [],
   "find": "  if (oldLen < SMALL_LIST_THRESHOLD) {",
   "replace": "  if (oldLen < 1) {",
-  "note": "small-list path never taken — all lists go through the Map path",
-  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes — that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
+  "note": "small-list path never taken \u2014 all lists go through the Map path",
+  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes \u2014 that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
  },
  {
   "id": "list/small-threshold-huge",
@@ -717,8 +717,8 @@
   "tags": [],
   "find": "  if (oldLen < SMALL_LIST_THRESHOLD) {",
   "replace": "  if (oldLen < 100000) {",
-  "note": "large-list Map path never taken — all lists go through the flat scan",
-  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes — that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
+  "note": "large-list Map path never taken \u2014 all lists go through the flat scan",
+  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes \u2014 that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
  },
  {
   "id": "mount/container-namespace-ignored",
@@ -745,7 +745,7 @@
   "find": "    if (value !== undefined) {\n      (el.style as any)[key] = value;\n    }",
   "replace": "    (el.style as any)[key] = value;",
   "note": "undefined style values written through",
-  "equivalent": "CSSOM stringifies an assigned value, and \"undefined\" is not a valid declaration value, so the property is left unchanged either way. The guard saves a wasted assignment, not a wrong one — see the note on setStyle in src/dom-utils/mutate.ts."
+  "equivalent": "CSSOM stringifies an assigned value, and \"undefined\" is not a valid declaration value, so the property is left unchanged either way. The guard saves a wasted assignment, not a wrong one \u2014 see the note on setStyle in src/dom-utils/mutate.ts."
  },
  {
   "id": "mutate/setText-uses-innerHTML",
@@ -817,7 +817,7 @@
   "tags": [],
   "find": "    return () => {\n      removeMountedNode();\n    };",
   "replace": "    return () => { /* mutation: portal never detaches its node */ };",
-  "note": "portal never detaches the previous node — the target accumulates on every re-render and on dispose"
+  "note": "portal never detaches the previous node \u2014 the target accumulates on every re-render and on dispose"
  },
  {
   "id": "portal/target-namespace-ignored",
@@ -835,7 +835,7 @@
   "tags": [],
   "find": "  const resolvedTarget = typeof target === 'string'\n    ? document.querySelector(target)\n    : (target ?? document.body);",
   "replace": "  const resolvedTarget = typeof target === 'string'\n    ? document.body\n    : (target ?? document.body);",
-  "note": "string portal selector ignored — always body"
+  "note": "string portal selector ignored \u2014 always body"
  },
  {
   "id": "reactive/batch-flush-under-caller-root",
@@ -853,7 +853,7 @@
   "tags": [],
   "find": "export function untrack",
   "replace": "export function untrackDISABLED_UNUSED_SHIM_NOT_EXPORTED_PLACEHOLDER",
-  "note": "compile-break sentinel (expect CAUGHT — harness sanity check)"
+  "note": "compile-break sentinel (expect CAUGHT \u2014 harness sanity check)"
  },
  {
   "id": "reconcile/remove-all-skips-hook",
@@ -991,7 +991,7 @@
   ],
   "find": "const DANGEROUS_SCHEME_RE = /^(?:javascript|vbscript|data:text\\/html)/i;",
   "replace": "const DANGEROUS_SCHEME_RE = /(?:javascript|vbscript|data:text\\/html)/i;",
-  "note": "substring match — https://example.com/guides/javascript now blocked"
+  "note": "substring match \u2014 https://example.com/guides/javascript now blocked"
  },
  {
   "id": "sec/svg-any-tag-is-image",
@@ -1143,7 +1143,7 @@
   ],
   "find": "  if ((v as any)[PROXY]) return false;\n  return true;\n}",
   "replace": "  if ((v as any)[PROXY]) return false;\n  return !Array.isArray(v);\n}",
-  "note": "arrays no longer plain — array reactivity path dead"
+  "note": "arrays no longer plain \u2014 array reactivity path dead"
  },
  {
   "id": "store/deepClone-identity",
@@ -1151,7 +1151,7 @@
   "tags": [],
   "find": "function deepClone(obj: unknown, seen?: WeakSet<object>): unknown {",
   "replace": "function deepClone(obj: unknown, seen?: WeakSet<object>): unknown { if (obj && typeof obj === 'object') return obj;",
-  "note": "store deepClone becomes identity — snapshots alias live state"
+  "note": "store deepClone becomes identity \u2014 snapshots alias live state"
  },
  {
   "id": "store/no-array-method-patch",
@@ -1167,7 +1167,7 @@
   "tags": [],
   "find": "      let entry = cache.get(val);",
   "replace": "      let entry = undefined as any;",
-  "note": "switch branch cache disabled — new node identity each visit"
+  "note": "switch branch cache disabled \u2014 new node identity each visit"
  },
  {
   "id": "switch/cases-outside-namespace",
@@ -1185,7 +1185,7 @@
   "tags": [],
   "find": "        // Scoop DOM nodes back into the fragment for cache reuse\n        while (startMarker.nextSibling && startMarker.nextSibling !== endMarker) {\n          currentNode.appendChild(startMarker.nextSibling);\n        }\n",
   "replace": "        // Scoop DOM nodes back into the fragment for cache reuse\n",
-  "note": "cached fragment branch not scooped back — 3rd visit renders empty/duplicated"
+  "note": "cached fragment branch not scooped back \u2014 3rd visit renders empty/duplicated"
  },
  {
   "id": "traverse/siblings-includes-self",
@@ -1601,7 +1601,7 @@
   "tags": [
    "security"
   ],
-  "find": "    $el: hostObject('element', el, '$el', scope.mount?.bound),",
+  "find": "    $el: hostObject('element', el, '$el', scope.mount.bound),",
   "replace": "    $el: hostObject('element', el, '$el'),",
   "note": "a tiered mount's $el is the tierless wrapper: $el.closest('body') reaches the page (SR16, L-36). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
  },
@@ -1611,7 +1611,7 @@
   "tags": [
    "security"
   ],
-  "find": "    const wrapped = hostObject('event', e, '$event', scope.mount?.bound);",
+  "find": "    const wrapped = hostObject('event', e, '$event', scope.mount.bound);",
   "replace": "    const wrapped = hostObject('event', e, '$event');",
   "note": "$event in a tiered mount's handler is the tierless wrapper, so $event.target reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
  },
@@ -1621,7 +1621,7 @@
   "tags": [
    "security"
   ],
-  "find": "  const refsHost = hostObject('refs', refsMap, '$refs', mount?.bound);",
+  "find": "  const refsHost = hostObject('refs', refsMap, '$refs', mount.bound);",
   "replace": "  const refsHost = hostObject('refs', refsMap, '$refs');",
   "note": "$refs in a tiered mount is the tierless wrapper, so $refs.x.closest('section') reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
  },
@@ -1631,9 +1631,9 @@
   "tags": [
    "security"
   ],
-  "find": "  if (parent.mount) {\n    child.mount = parent.mount;\n    child.budget = parent.budget;\n  }",
-  "replace": "",
-  "note": "a child scope (each element's, each handler's, each list row's) loses its mount, so its data-fetch is sent as a tierless one and its failures are reported without the mount. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
+  "find": "    mount: parent.mount,",
+  "replace": "    mount: { ...parent.mount, bound: { ...parent.mount.bound, dom: true, navigate: true } },",
+  "note": "A child scope carries escalated authority instead of its parent's captured mount bound. This valid-context mutant tests the current mandatory-context boundary without counting a missing-context TypeError as a kill. Verified by the runtime-tiered event-host control: the actual event target must remain confined by its parent mount."
  },
  {
   "id": "tiered/fetch-denial-sent",
@@ -1641,7 +1641,7 @@
   "tags": [
    "security"
   ],
-  "find": "      if (verdict && !verdict.ok) {",
+  "find": "      if (!verdict.ok) {",
   "replace": "      if (false) {",
   "note": "a data-fetch the mount's grants do not cover is sent anyway (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
  },
@@ -1711,7 +1711,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "            if (verdict && !r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);",
+  "find": "            if (!r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);",
   "replace": "",
   "note": "a tiered mount's data-fetch answered 404 parses the error body into the data target (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a 404 with a JSON body lands in the error: target, not the data target\""
  },
@@ -1721,8 +1721,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "      const timeoutMs = verdict ? verdict.timeoutMs : FETCH_TIMEOUT_MS;",
-  "replace": "      const timeoutMs = FETCH_TIMEOUT_MS;",
+  "find": "        const timeoutMs = verdict.timeoutMs;",
+  "replace": "        const timeoutMs = FETCH_TIMEOUT_MS;",
   "note": "a fetch grant's shorter timeout is ignored: the request waits 30 s (L-46). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a fetch grant's timeout shortens the abort\""
  },
  {
@@ -1731,19 +1731,9 @@
   "tags": [
    "security"
   ],
-  "find": "  const registry = mount ? mount.refetch : _refetchRegistry;\n  const refetchHost",
-  "replace": "  const registry = _refetchRegistry;\n  const refetchHost",
-  "note": "a tiered mount's $refetch reaches the page's data-fetch ids. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
- },
- {
-  "id": "tiered/refetch-registers-on-page",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "          const registry = mount ? mount.refetch : _refetchRegistry;",
-  "replace": "          const registry = _refetchRegistry;",
-  "note": "a tiered mount's data-fetch-id registers on the page, where the page's $refetch reaches it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
+  "find": "    refetch: new Map(),",
+  "replace": "    refetch: ((globalThis as any).__formaProbeSharedRefetch ??= new Map()),",
+  "note": "Every explicit mount incorrectly shares the same refetch registry. Verified by runtime-tiered-mount $refetch reaches only the fetches of its own mount, which asserts request paths and counts across three actual handles."
  },
  {
   "id": "tiered/tierless-binds-under-root",
@@ -1753,7 +1743,7 @@
   ],
   "find": "  if (ownerOf(root) !== mount) return;\n  // Idempotency guard",
   "replace": "  // Idempotency guard",
-  "note": "a tierless path (the observer, mount(), the DOMContentLoaded scan) binds markup under a tiered root with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+  "note": "Mandatory mountScope context must match the actual nearest owner. The former auto/tierless entry path is removed; this defense-in-depth mutant remains in the corpus without claiming its historical trigger still exists."
  },
  {
   "id": "tiered/outer-scope-binds-mount",
@@ -1763,7 +1753,7 @@
   ],
   "find": "    if (ownedBelow(el, root)) continue;\n    bindElement(el, scope, disposers);",
   "replace": "    bindElement(el, scope, disposers);",
-  "note": "a tierless scope around a tiered root binds the mount's elements against its own scope, with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+  "note": "Scope binding must skip a descendant already owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
  },
  {
   "id": "tiered/outer-refs-into-mount",
@@ -1773,17 +1763,7 @@
   ],
   "find": "    if (ownedBelow(el, root)) continue;\n    const name = el.getAttribute('data-ref');",
   "replace": "    const name = el.getAttribute('data-ref');",
-  "note": "a scope around a tiered root gets $refs to the mount's elements. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
- },
- {
-  "id": "tiered/tierless-disposes-mount",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (ownerOf(root) !== mount) return;\n  const disposers",
-  "replace": "  const disposers",
-  "note": "the tierless unmount() and destroyRuntime() dispose a tiered mount's bindings, which its handle owns. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+  "note": "Scope ref collection must skip a descendant owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
  },
  {
   "id": "tiered/denial-silenced",
@@ -1791,8 +1771,8 @@
   "tags": [
    "security"
   ],
-  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
-  "replace": "  if (kind !== 'markup-refused' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
+  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && mount?.diagnostics === false) return;",
+  "replace": "  if (kind !== 'markup-refused' && mount?.diagnostics === false) return;",
   "note": "a denied grant is silent when the mount's diagnostics are off: SR37's coded diagnostic for every denial is lost. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a mount takes its diagnostics switch from its call, not the page\""
  },
  {
@@ -1836,32 +1816,12 @@
   "note": "a mount whose grants leave out dom reaches the page anyway. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
  },
  {
-  "id": "tiered/default-none",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "      dom: true,\n      navigate: true,\n    };",
-  "replace": "      dom: false,\n      navigate: false,\n    };",
-  "note": "A2's bridge default of every grant becomes none, a 3.0.0 change shipped in a minor (DR-15, FORMA-108). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
- },
- {
-  "id": "tiered/prior-bindings-kept",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  for (const scope of Array.from(root.querySelectorAll('[data-forma-state]'))) unmountScope(scope);\n  tieredRoots.set(root, ctx);",
-  "replace": "  tieredRoots.set(root, ctx);",
-  "note": "bindings a tierless path made under the root before it was handed over keep running, with every power, on nodes the mount has removed. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"bindings a tierless path made under the root go first, with what they rendered\""
- },
- {
   "id": "tiered/report-fetch-unrecorded",
   "file": "src/runtime.ts",
   "tags": [
    "correctness"
   ],
-  "find": "            mount!.used.methods.add(method);",
+  "find": "            mount.used.methods.add(method);",
   "replace": "",
   "note": "the development report leaves out a mount's data-fetch methods, so a grant written from it denies the widget's own requests (DR-15). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the development report lists exactly the grants a fixture widget used\""
  },
@@ -1874,36 +1834,6 @@
   "find": "      use: used ? (grant: ExprGrant) => { used[grant] = true; } : noUse,",
   "replace": "      use: noUse,",
   "note": "the development report leaves out dom and navigate. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the development report lists exactly the grants a fixture widget used\""
- },
- {
-  "id": "tiered/directive-map-read",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  const known = scope.mount ? null : getDirectives(el);",
-  "replace": "  const known = getDirectives(el);",
-  "note": "a tiered mount reads the page's directive map, configuration not from its call. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a tiered mount ignores the page directive map\""
- },
- {
-  "id": "tiered/directive-selector-read",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  const selector = mount ? null : buildDirectiveSelector();",
-  "replace": "  const selector = buildDirectiveSelector();",
-  "note": "a tiered mount binds only the elements the page's directive map names. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a tiered mount ignores the page directive map\""
- },
- {
-  "id": "runtime/reconcile-no-deprecation",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    warnDeprecated('FORMA_W_DEPRECATED_RECONCILE');",
-  "replace": "",
-  "note": "the tierless reconcile() says nothing in development about its removal in 3.0.0 (DR-14's bridge). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"reconcile behaves as at 2.0.x and warns once in development\""
  },
  {
   "id": "selector/pseudo-element",
@@ -2006,16 +1936,6 @@
   "note": "the module's diagnostics and denials never reach the host. Verified by: src/__tests__/runtime-frame.test.ts > \"takes one port from its parent, renders each module in tier (c) and answers only ready, resize and error\""
  },
  {
-  "id": "frame/auto-mount",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "&& !_manualMount\n  && !(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__)) {",
-  "replace": "&& !_manualMount) {",
-  "note": "the preview frame's runtime mounts the page's data-forma-state on load and watches body, so markup injected outside the root is bound. Verified by: src/__tests__/runtime-frame.test.ts > \"the frame runtime is one classic script a server can inline as it is\""
- },
- {
   "id": "frame/source-map",
   "file": "tsup.config.ts",
   "tags": [
@@ -2024,66 +1944,6 @@
   "find": "    entry: { 'formajs-frame': 'src/runtime-frame.ts' },\n    format: ['iife'],\n    outDir: 'dist',\n    minify: false,\n    sourcemap: false,",
   "replace": "    entry: { 'formajs-frame': 'src/runtime-frame.ts' },\n    format: ['iife'],\n    outDir: 'dist',\n    minify: false,\n    sourcemap: true,",
   "note": "the frame runtime ends in a sourceMappingURL comment, which an opaque-origin frame would try to fetch. Verified by: src/__tests__/runtime-frame.test.ts > \"the frame runtime is one classic script a server can inline as it is\""
- },
- {
-  "id": "tiered/mount-switch-ignored",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "const _manualMount = readMountSwitch();",
-  "replace": "const _manualMount = false;",
-  "note": "data-forma-mount=\"manual\" is ignored: the page auto-mounts and watches body, so markup injected outside a tiered root is bound (SR16 in 2.x). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-own-script-unread",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (own?.getAttribute('data-forma-mount') === 'manual') return true;\n",
-  "replace": "",
-  "note": "a CDN build ignores the switch on its own script element, the place the docs tell a page to put it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the mount switch is read once, from the runtime's own script element\""
- },
- {
-  "id": "tiered/mount-switch-esm-unread",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  return document.querySelector('script[data-forma-mount=\"manual\"]') !== null;",
-  "replace": "  return false;",
-  "note": "an ESM build, which has no script element of its own, never sees the switch on the application's module script. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-auto-init",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "if (typeof document !== 'undefined' && !_manualMount\n",
-  "replace": "if (typeof document !== 'undefined'\n",
-  "note": "a page with the switch still runs the auto-mount on load. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-calls-bind",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (_manualMount) {\n    throw mountError(",
-  "replace": "  if (false) {\n    throw mountError(",
-  "note": "on a page with the switch, mount(), initRuntime() and reconcile() still bind with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-any-value",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (own?.getAttribute('data-forma-mount') === 'manual') return true;",
-  "replace": "  if (own?.hasAttribute('data-forma-mount')) return true;",
-  "note": "any value of the switch turns the auto-mount off, so data-forma-mount=\"auto\" breaks a page that meant the default. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the mount switch is read once, from the runtime's own script element\""
  },
  {
   "id": "trusted/mount-clear-string",
@@ -2353,7 +2213,7 @@
   ],
   "find": "      cache['innerHTML'] = null;\n",
   "replace": "",
-  "note": "a reactive dangerouslySetInnerHTML going A → null → A stays empty: the null branch keeps A's markup cached (FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"A → null → A shows A again, client-rendered and adopted\""
+  "note": "a reactive dangerouslySetInnerHTML going A \u2192 null \u2192 A stays empty: the null branch keeps A's markup cached (FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"A \u2192 null \u2192 A shows A again, client-rendered and adopted\""
  },
  {
   "id": "adopt/inner-html-rewritten",
@@ -2451,8 +2311,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
-  "replace": "  if (kind !== 'grant-denied' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
+  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && mount?.diagnostics === false) return;",
+  "replace": "  if (kind !== 'grant-denied' && mount?.diagnostics === false) return;",
   "note": "a removed <link> goes unreported when the mount's diagnostics are off, so the host never learns the module carried one. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no <link>: each is removed before the markup reaches the document\""
  },
  {
@@ -2528,5 +2388,65 @@
   "find": "if(BOOLEAN_ATTRS.has(qualified))return next?'':null;",
   "replace": "if(BOOLEAN_ATTRS.has(qualified))return '';",
   "note": "An empty string or zero enables a boolean attribute during adoption instead of matching fresh core omission (FORMA-182 F3 review)."
+ },
+ {
+  "id": "explicit/default-dom",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  if (grants === undefined) return { fetch: null, dom: false, navigate: false };",
+  "replace": "  if (grants === undefined) return { fetch: null, dom: true, navigate: false };",
+  "note": "Omitted grants escape the handed root. Verified by explicit-mount compiled/reviewed omitted-grants controls: actual closest result must remain confined."
+ },
+ {
+  "id": "explicit/default-navigate",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  if (grants === undefined) return { fetch: null, dom: false, navigate: false };",
+  "replace": "  if (grants === undefined) return { fetch: null, dom: false, navigate: true };",
+  "note": "Omitted grants activate a link. Verified by explicit-mount compiled/reviewed omitted-grants controls: the actual target click listener must never run."
+ },
+ {
+  "id": "explicit/detached-scope-kept",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "    for (const scope of Array.from(ctx.scopes)) unmountScope(scope, ctx);",
+  "replace": "    for (const scope of Array.from(root.querySelectorAll('[data-forma-state]'))) unmountScope(scope, ctx);",
+  "note": "Handle disposal incorrectly relies on current DOM ancestry and leaves moved or detached bound scopes active. Both explicit owned-scope cases assert the original counter remains unchanged after disposal and an independent mount stays live."
+ },
+ {
+  "id": "explicit/ancestry-disposal",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  if (((root as any).__formaScope as Scope | undefined)?.mount !== mount) return;",
+  "replace": "  if (ownerOf(root) !== mount) return;",
+  "note": "Captured scope ownership is replaced by current DOM ancestry. Both explicit owned-scope cases assert an old detached/moved counter cannot run after its owner handle unmounts."
+ },
+ {
+  "id": "explicit/refusal-without-mount",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      code,\n      mount,\n    );",
+  "replace": "      code,\n    );",
+  "note": "Unreviewed refusals lose their mount identity and deduplicate across handles. The actual two-mount explicit control requires two distinct names/tiers/counts."
+ },
+ {
+  "id": "explicit/manual-warning",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    warnDeprecated('FORMA_W_MANUAL_MOUNT_REMOVED');",
+  "replace": "",
+  "note": "The obsolete manual attribute silently loses its development migration hint. The explicit control requires one warning across two imports and the exact replacement call."
  }
 ]

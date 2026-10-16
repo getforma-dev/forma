@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, unmount } from '../runtime';
+import { mountFixture, unmountFixture } from './runtime-fixture';
 
 describe('data-transition', () => {
   let container: HTMLDivElement;
@@ -10,7 +10,7 @@ describe('data-transition', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
     vi.useRealTimers();
   });
@@ -21,7 +21,7 @@ describe('data-transition', () => {
         <div id="panel" data-show="{open}">Panel</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
 
     const root = container.querySelector('[data-forma-state]') as any;
     const panel = container.querySelector('#panel') as HTMLElement;
@@ -48,7 +48,7 @@ describe('data-transition', () => {
         >Panel</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
 
     const root = container.querySelector('[data-forma-state]') as any;
     const panel = container.querySelector('#panel') as HTMLElement;
@@ -79,7 +79,7 @@ describe('data-transition', () => {
         >Panel</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
 
     const root = container.querySelector('[data-forma-state]') as any;
     const panel = container.querySelector('#panel') as HTMLElement;
@@ -105,7 +105,7 @@ describe('data-transition', () => {
         >Content</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const root = container.querySelector('[data-forma-state]') as any;
     const target = container.querySelector('#target') as HTMLElement;
 
@@ -131,7 +131,7 @@ describe('data-transition', () => {
         >Content</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
 
     expect(container.querySelector('#target')).toBeNull();
 
@@ -156,7 +156,7 @@ describe('data-transition', () => {
         >Content</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const root = container.querySelector('[data-forma-state]') as any;
 
     root.__formaScope.setters.show(false);
@@ -177,7 +177,7 @@ describe('data-transition', () => {
         <div id="target" data-if="show">Content</div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const root = container.querySelector('[data-forma-state]') as any;
 
     expect(container.querySelector('#target')).not.toBeNull();

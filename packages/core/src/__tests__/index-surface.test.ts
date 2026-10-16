@@ -47,10 +47,8 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
   './runtime': {
     load: () => import('../runtime'),
     exports: [
-      'applyContainmentHints', 'clearDiagnostics', 'destroyRuntime',
-      'getDiagnostics', 'getScopes', 'initRuntime', 'mount', 'mountMarkup', 'reconcile',
-      'resetScope', 'setDebug', 'setDiagnostics', 'setDirectiveMap',
-      'setScopeValue', 'trustedHtml', 'unmount', 'yieldToMain',
+      'applyContainmentHints', 'clearDiagnostics', 'getDiagnostics', 'getScopes',
+      'mountMarkup', 'resetScope', 'setScopeValue', 'trustedHtml', 'yieldToMain',
     ],
   },
   './http': {

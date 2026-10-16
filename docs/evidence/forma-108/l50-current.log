@@ -1,0 +1,11 @@
+Apple M1 Pro, 10 cores, load average 2.0 2.3 3.2
+
+/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/dist/formajs-runtime.global.js
+Chromium 151.0.7922.34, CPU throttling 4x, 5 runs; the worst task of each run: p50 / p99 / max ms
+  S6 reduce building 1,150 names                      1.9    8.7    8.7  >=50ms  0/5  tasks  4  -  ["25300"]
+  F1 ten data-text of a 240,000-unit list             8.8   18.7   18.7  >=50ms  0/5  tasks 13  -  ["0,1,2,3,4,5,…(348889)","0,1,2,3,4,5,…(348889)","0,1,2,3,4,
+  F2 twenty data-text of a 240,000-unit list          9.9   11.8   11.8  >=50ms  0/5  tasks 23  -  ["0,1,2,3,4,5,…(348889)","0,1,2,3,4,5,…(348889)","0,1,2,3,4,
+  F3 5,000 units, then twenty of 248,000              9.5   11.8   11.8  >=50ms  0/5  tasks 24  -  ["0,1,2,3,4,5,…(5139)","0,1,2,3,4,5,…(360889)","0,1,2,3,4,5,
+  F4 a wait, then 400 of 10,400 (over the cap)       11.4   11.7   11.7  >=50ms  0/5  tasks 22  -  ["0,1,2,3,4,5,…(2499)","0,1,2,3,4,5,…(123999)","0,1,2,3,4,5,
+  F5 a wait, then 400 of 9,600 (under the cap)       13.8   14.7   14.7  >=50ms  0/5  tasks 20  -  ["0,1,2,3,4,5,…(2499)","0,1,2,3,4,5,…(123999)","0,1,2,3,4,5,
+  O3 search 9,000 Greek                              50.4   60.7   60.7  >=50ms  3/5  tasks  4  -  ["900"]

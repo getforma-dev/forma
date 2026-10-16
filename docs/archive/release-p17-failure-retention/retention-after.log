@@ -1,0 +1,25 @@
+✔ actual release workflow retains failed P17 bytes without changing publish success dependencies (81.677ms)
+✔ release evidence refuses missing failure retention (83.21625ms)
+✔ release evidence refuses failure-only upload loses successful proof (83.636334ms)
+✔ release evidence refuses different evidence path (86.646958ms)
+✔ release evidence refuses different artifact name (84.755625ms)
+✔ release evidence refuses missing-file warning (89.366041ms)
+✔ release evidence refuses unpinned evidence action (85.994083ms)
+✔ release evidence refuses upload before P17 (86.134791ms)
+✔ release evidence refuses duplicate evidence upload (84.975083ms)
+✔ release evidence refuses ignored P17 failure (84.62825ms)
+✔ release evidence refuses ignored verify failure (84.4575ms)
+✔ release evidence refuses success record runs after failure (84.977542ms)
+✔ release evidence refuses P17 condition skips verification (82.41925ms)
+✔ release evidence refuses P17 shell swallows failure (84.093958ms)
+✔ release evidence refuses record replaces proof hash (81.906208ms)
+✔ release evidence refuses publisher ignores failed needs (80.184959ms)
+✔ release evidence refuses publisher drops verify dependency (80.771208ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1566.7705

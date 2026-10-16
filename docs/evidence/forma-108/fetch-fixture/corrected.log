@@ -1,0 +1,18 @@
+[WebServer] (node:21179) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:21210) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 2 workers
+
+(node:21211) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21212) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/data-fetch.spec.ts:26:1 › a data-fetch to a stalled endpoint aborts at 30 s into its error: target (398ms)
+(node:21223) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [firefox] › e2e/data-fetch.spec.ts:26:1 › a data-fetch to a stalled endpoint aborts at 30 s into its error: target (1.7s)
+  ✓  3 [webkit] › e2e/data-fetch.spec.ts:26:1 › a data-fetch to a stalled endpoint aborts at 30 s into its error: target (2.4s)
+
+  3 passed (5.6s)
