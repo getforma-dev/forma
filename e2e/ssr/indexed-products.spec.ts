@@ -1,6 +1,7 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { join } from 'node:path';
 import { realpathSync } from 'node:fs';
+import { arch, cpus, platform, release } from 'node:os';
 import { SSR_ORIGIN } from './origin';
 
 test.use({ baseURL: SSR_ORIGIN });
@@ -121,9 +122,16 @@ test('indexed products: complete public set in 2000 rows stays within a frame an
     }
     const quantile = (values: number[], q: number) => [...values].sort((a, b) => a - b)[Math.ceil(values.length * q) - 1]!;
     const summary = Object.fromEntries(Object.entries(samples).map(([name, values]) => [name, { median: quantile(values, 0.5), p95: quantile(values, 0.95) }])) as Record<'small' | 'large', { median: number; p95: number }>;
-    return { protocol: '101 alternating paired samples; each sample is mean complete set duration across 256 edits; 5000 warmup edits per owner; single-operation maxima sampled separately', batch, rounds, samples, summary, maximumSingle, rows: [document.querySelectorAll('#small li').length, document.querySelectorAll('#large li').length], labels: [...document.querySelectorAll('#small li:first-child b, #large li:first-child b')].map(node => node.textContent), userAgent: navigator.userAgent };
+    const noOp = { small: [] as number[], large: [] as number[] };
+    for (let round = 0; round < rounds; round++) for (const name of ['small', 'large'] as const) {
+      const began = performance.now();
+      for (let i = 0; i < batch; i++) handles[name].set('row-0', values[1]);
+      noOp[name].push((performance.now() - began) / batch);
+    }
+    const spread = Object.fromEntries(Object.entries(samples).map(([name, values]) => [name, { min: Math.min(...values), p05: quantile(values, 0.05), max: Math.max(...values) }]));
+    return { noOp, spread, protocol: '101 alternating paired samples; each sample is mean complete set duration across 256 edits; 5000 warmup edits per owner; single-operation maxima sampled separately', batch, rounds, samples, summary, maximumSingle, rows: [document.querySelectorAll('#small li').length, document.querySelectorAll('#large li').length], labels: [...document.querySelectorAll('#small li:first-child b, #large li:first-child b')].map(node => node.textContent), userAgent: navigator.userAgent };
   });
-  await info.attach('indexed-public-set.json', { body: JSON.stringify(report, null, 2), contentType: 'application/json' });
+  await info.attach('indexed-public-set.json', { body: JSON.stringify({ ...report, machine: { platform: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model, logicalCpus: cpus().length }, engine: info.project.name }, null, 2), contentType: 'application/json' });
   expect(report.rows).toEqual([200, 2000]); expect(report.labels).toEqual(['Timing B', 'Timing B']);
   expect(report.summary.small.median).toBeGreaterThan(0);
   expect(report.maximumSingle).toBeLessThan(16); expect(report.summary.large.p95).toBeLessThan(16);

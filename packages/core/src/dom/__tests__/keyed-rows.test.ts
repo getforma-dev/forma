@@ -34,6 +34,18 @@ describe('indexed whole-item replacement', () => {
     (before[0] as HTMLElement).click(); expect(clicked).toEqual(['next']);
   });
 
+  it('exposes only a read accessor to row callbacks, including untyped calls with arguments', () => {
+    const rows = make(values()); let read!: () => Item, dispose!: () => void;
+    const host = createRoot(stop => { dispose = stop; return dom.h('ul', null, dom.createList(rows, item => {
+      if (item().id === 'a') read = item;
+      return dom.h('li', null, () => item().label);
+    })); });
+    expect((read as any)({ id: 'changed', label: 'bypass' })).toEqual({ id: 'a', label: 'A' });
+    expect(host.textContent).toBe('AB');
+    rows.set('a', { id: 'a', label: 'allowed' }); expect(host.textContent).toBe('allowedB');
+    dispose();
+  });
+
   it('shares values between independently owned views and disposes only the removed view', () => {
     const rows = make(values());
     const mount = () => { let dispose!: () => void; const host = createRoot(stop => { dispose = stop; return dom.h('ul', null, dom.createList(rows, item => dom.h('li', null, () => item().label))); }); return { host, dispose }; };
