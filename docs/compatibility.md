@@ -5,8 +5,10 @@ FORMA-185 FMIR v3 format. The seven packages share a release version:
 `forma-ir`, `forma-ir-derive`, `forma-server`, `@getforma/core`,
 `@getforma/compiler`, `@getforma/build`, and `@getforma/create-app`.
 It is not a declaration that the remaining 3.0.0 milestone work has shipped.
-`scripts/release-contracts.json` keeps `liveReleaseReady: false` and identifies
-remaining contracts. Historical A2 and partial FMIR-v3 release evidence is retained.
+`scripts/release-contracts.json` states which tickets gate which milestone: the
+alpha's gates are done, the beta's, rc's and final's are pending, and a tag
+publishes only for a milestone whose gates are all done (`docs/RELEASING.md`,
+"Milestone gate"). Historical A2 and partial FMIR-v3 release evidence is retained.
 
 ## Window and upgrade order
 
@@ -72,8 +74,10 @@ server-rendered form and the browser shell); core's compare is a later FORMA-186
 filename to `{ immutable, integrity?, retained? }`. The build emits SHA-384/base64
 integrity from final uncompressed bytes; compressed sidecars, the manifest and
 worker are excluded. The server validates the digest syntax when present;
-FORMA-111 still owns byte-integrity enforcement. A `retained` marker can be read,
-but FORMA-186 owns producing and retaining prior builds.
+FORMA-111 still owns byte-integrity enforcement. `retained: true` marks a file of the
+previous release that the build copied in for tabs still open on it (FORMA-186,
+`previousDist`; one generation, checked against the previous manifest's SHA-384);
+a retained entry is always `immutable`.
 
 Routes declare `mode: "ssr" | "browser"`, JS/CSS/fonts, optional static
 `modulepreload`, and an IR filename only for SSR. A declared SSR route without IR

@@ -500,7 +500,7 @@ Two disjoint namespaces share the prefix. Do not confuse them.
 | `data-forma-status` | walker (`pending`); core writes `error` on a failed adoption (with one `forma:error` event), `disposed` on disposal, `active` only on the `browserOnly` path; a successful strict SSR activation writes nothing | nothing in core; informational | `pending`/`error`/`disposed`/`active` (`hydrating` is never written) |
 | `data-forma-hydrate` | walker | trigger dispatch | `load`/`visible`/`interaction`/`idle` |
 | `data-forma-state`, `data-forma-h` | walker, on the island root | the state decoder: the occurrence's index in the head block, and the compiled digest it must match (§3.5) | decimal index; 16 lowercase hex |
-| `data-forma-key` | walker (`LIST_ITEM_KEY`) | list adoption key match | row key |
+| `data-forma-key` | walker, on each keyed row's root, from FMIR section `0x0006` (FORMA-181; `LIST_ITEM_KEY` is never emitted) | strict list adoption binds each client item to the row whose decoded attribute equals its canonical key | canonical key text: a safe integer in decimal, or a string under value rule 1 |
 
 **B. The zero-build HTML runtime's directive set** — `data-forma-state`,
 `data-forma-id`, `data-forma-expr-error`, `data-forma-unsafe-eval`,
@@ -918,7 +918,7 @@ Known sharp edges. Each is real today unless marked otherwise.
 | # | Sharp edge | Consequence | Tracked |
 |---|---|---|---|
 | B1 | **6 of 18 opcodes are never emitted by the compiler**: `SWITCH`, `TRY_START`, `FALLBACK`, `PRELOAD`, `COMMENT`, `LIST_ITEM_KEY` (`ir-walk.ts` constants list vs `format.rs:Opcode`). | Walker code paths for them are exercised only by hand-built modules and tests. `PropsMode::ScriptTag` and `Deferred` are likewise never emitted; `Deferred` is not implemented on *either* side and is indistinguishable from "no props". | Documented at `format.rs:PropsMode`; **not otherwise tracked — worth an explicit "dormant surface" note** |
-| B2 | **Compiled lists carry no `data-forma-key`.** `LIST_ITEM_KEY` is never emitted, and its operand is a *static* string index anyway — so every row would get the same key. | Client list adoption falls back to **index-based matching** for every compiled page (`hydrate.ts:useIndexFallback`). Fine for lists that never reorder; a reorder mis-adopts. | LIMITATION documented at `format.rs:Opcode::ListItemKey`; per-item keys need a v-bump |
+| B2 | ~~**Compiled lists carry no `data-forma-key`.**~~ `LIST_ITEM_KEY` is still never emitted (its operand was a static string index). | Historical: client list adoption used index-based matching for every compiled page, and a reorder mis-adopted. | FIXED by FORMA-181: the compiler proves each list's key path into FMIR section `0x0006`, the walker writes each row's canonical key on its root, and strict adoption binds rows by key (`docs/parity-rules.md`, "Keyed rows") |
 | B3 | `SWITCH` emits no hydration marker. | A switched region is server-rendered only; the client cannot re-render it. Also no default case — a non-matching value renders nothing. | Documented at `walker.rs`, Switch handler |
 | B4 | Literal-source lists still fall back to document-order positional names. | Reordering the page silently renames the slot; injection misses, no warning. | dogfood #3 (MOSTLY RESOLVED / residual ask) |
 | B5 | `SlotData::from_json` **silently ignores unknown keys**. | Every slot-name change fails soft. A stale injection key just stops working. | `slot.rs:from_json`; migration notes in forma-tools CHANGELOG |

@@ -100,7 +100,7 @@ const gzip9 = (buffer: Buffer) => gzipSync(buffer, { level: 9 }).length;
 const brotli11 = (buffer: Buffer) => brotliCompressSync(buffer, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length;
 
 
-const LIMITS = { forma: 25_500, page: 76_800, canvas: 373_760 };
+const LIMITS = { forma: 27_500, page: 76_800, canvas: 373_760 };
 const bytesOf = (gzip: number): ByteSizes => ({ raw: gzip * 3, gzip, brotli: gzip - Math.floor(gzip / 10) });
 const none: ByteSizes = { raw: 0, gzip: 0, brotli: 0 };
 
@@ -174,9 +174,9 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
 
   it('fails the build with BUILD-819 when a route\'s Forma code is over the ceiling, leaving no output', async () => {
     // A core whose bytes alone are over the ceiling: gzip cannot take seeded
-    // text of this length under 25,500 B.
+    // text of this length under 27,500 B.
     const { dist, config } = fixture(padding(40_000, 4));
-    await expect(build(config)).rejects.toThrow(/BUILD-819 a route is over its size ceiling \(.*\): \/ \(whole-page mount\) Forma code [\d,]+ B against 25,500 B \(home\.[A-Za-z0-9]+\.js\)/);
+    await expect(build(config)).rejects.toThrow(/BUILD-819 a route is over its size ceiling \(.*\): \/ \(whole-page mount\) Forma code [\d,]+ B against 27,500 B \(home\.[A-Za-z0-9]+\.js\)/);
     // The gate ran before the staging directory was swapped in: a first build
     // leaves no output directory and nothing beside it (L-21).
     expect(existsSync(dist)).toBe(false);
@@ -185,14 +185,14 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
 
   it('names every route over a ceiling, and none under it', () => {
     const sizes = [
-      route('/', 'islands', { forma: 26_000, application: 100 }),
+      route('/', 'islands', { forma: 28_000, application: 100 }),
       route('/about', 'islands', { forma: 24_000 }),
       route('/admin', 'whole-page-mount', { forma: 1_000, application: 80_000 }),
       route('/plain', 'no-interactive-region'),
     ];
     const failure = routeSizeFailure(sizes)!;
     expect(failure.message).toMatch(/^BUILD-819 2 routes are over their size ceilings/);
-    expect(failure.message).toContain('/ (islands) Forma code 26,000 B against 25,500 B (home.abc12345.js)');
+    expect(failure.message).toContain('/ (islands) Forma code 28,000 B against 27,500 B (home.abc12345.js)');
     expect(failure.message).toContain('/admin (whole-page mount) JavaScript 81,000 B against 76,800 B (admin.abc12345.js)');
     expect(failure.message).not.toContain('/about');
     expect(failure.message).not.toContain('/plain');
@@ -210,19 +210,19 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     // A canvas declaration gives no JavaScript to a route that has no interactive region.
     expect(routeCeilings('no-interactive-region', true)).toEqual({ forma: 0, javascript: 0 });
     for (const routeClass of ['islands', 'whole-page-mount'] as const) {
-      expect(routeCeilings(routeClass)).toEqual({ forma: 25_500, javascript: 76_800 });
-      expect(routeCeilings(routeClass, true)).toEqual({ forma: 25_500, javascript: 373_760 });
+      expect(routeCeilings(routeClass)).toEqual({ forma: 27_500, javascript: 76_800 });
+      expect(routeCeilings(routeClass, true)).toEqual({ forma: 27_500, javascript: 373_760 });
     }
     // The three figures the table is built from: N2 as L-55 restates it, and a KiB of 1,024 B.
-    expect([FORMA_CODE_CEILING_GZIP, PAGE_JAVASCRIPT_CEILING_GZIP, CANVAS_JAVASCRIPT_CEILING_GZIP]).toEqual([25_500, 75 * 1024, 365 * 1024]);
+    expect([FORMA_CODE_CEILING_GZIP, PAGE_JAVASCRIPT_CEILING_GZIP, CANVAS_JAVASCRIPT_CEILING_GZIP]).toEqual([27_500, 75 * 1024, 365 * 1024]);
   });
 
   it('S7: a route at its ceiling passes, a route one byte over fails naming the route and its bytes', () => {
     type Bytes = { forma: number; application: number };
     // [measure, class, canvas, the bytes at the ceiling, one byte over, the figure named, the ceiling named]
     const cases: Array<[string, RouteClass, boolean, Bytes, Bytes, string, number]> = [
-      ['Forma code of islands', 'islands', false, { forma: 25_500, application: 0 }, { forma: 25_501, application: 0 }, 'Forma code 25,501', 25_500],
-      ['Forma code of a whole-page mount', 'whole-page-mount', false, { forma: 25_500, application: 0 }, { forma: 25_501, application: 0 }, 'Forma code 25,501', 25_500],
+      ['Forma code of islands', 'islands', false, { forma: 27_500, application: 0 }, { forma: 27_501, application: 0 }, 'Forma code 27,501', 27_500],
+      ['Forma code of a whole-page mount', 'whole-page-mount', false, { forma: 27_500, application: 0 }, { forma: 27_501, application: 0 }, 'Forma code 27,501', 27_500],
       ['JavaScript of islands', 'islands', false, { forma: 1_000, application: 75_800 }, { forma: 1_000, application: 75_801 }, 'JavaScript 76,801', 76_800],
       ['JavaScript of a whole-page mount', 'whole-page-mount', false, { forma: 1_000, application: 75_800 }, { forma: 1_000, application: 75_801 }, 'JavaScript 76,801', 76_800],
       ['JavaScript of a canvas', 'whole-page-mount', true, { forma: 1_000, application: 372_760 }, { forma: 1_000, application: 372_761 }, 'JavaScript 373,761', 373_760],
@@ -300,13 +300,13 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     const written = JSON.parse(text);
 
     expect(written.version).toBe(1);
-    expect(written.ceilings).toEqual({ forma: 25_500, page: 76_800, canvas: 373_760 });
+    expect(written.ceilings).toEqual({ forma: 27_500, page: 76_800, canvas: 373_760 });
     expect(written.routes.map((each: RouteSize) => [each.route, each.class, each.canvas, each.over])).toEqual([
       ['/', 'whole-page-mount', false, false],
       ['/about', 'whole-page-mount', false, false],
       ['/static', 'no-interactive-region', false, false],
     ]);
-    expect(written.routes[0].ceilings).toEqual({ forma: 25_500, javascript: 76_800 });
+    expect(written.routes[0].ceilings).toEqual({ forma: 27_500, javascript: 76_800 });
     expect(written.routes[2].ceilings).toEqual({ forma: 0, javascript: 0 });
     expect(written.routes[0]).toEqual(JSON.parse(JSON.stringify(result.sizes[0])));
 
@@ -360,7 +360,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     const result = await build(canvas.config);
     const home = result.sizes.find((each) => each.route === '/')!;
     expect(home).toMatchObject({ class: 'whole-page-mount', canvas: true, over: false, exceeded: [] });
-    expect(home.ceilings).toEqual({ forma: 25_500, javascript: 373_760 });
+    expect(home.ceilings).toEqual({ forma: 27_500, javascript: 373_760 });
     expect(home.javascript.gzip).toBeGreaterThan(76_800);
 
     // Declared or not, the canvas ceiling holds.

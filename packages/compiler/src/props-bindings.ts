@@ -13,6 +13,7 @@ import type { PropsSchema, SchemaType } from './fmir-payload';
 import type { ComponentFunction } from './export-resolver';
 import { PropsSchemaError, type DeclaredPageProps } from './props-schema';
 import { closedExpression, constantAssignable, schemaHint } from './closed-expression';
+import { refuseBooleanText } from './value-rules';
 
 type Path = readonly string[];
 export interface PropsScope {
@@ -317,14 +318,46 @@ export function listPropsScope(parent: PropsScope, fn: ComponentFunction, source
   return scope;
 }
 
-/** Boolean children are omitted by core's h(), for direct and reactive reads. */
+/**
+ * A declared read in a text position. A declared boolean, optional or not, is
+ * BUILD-614 (value rule 6, docs/parity-rules.md): core's h() writes nothing for
+ * a boolean child, the walker would write the word. `String(flag)` on a
+ * non-optional declared boolean is the admitted near miss: DYN_TEXT on the
+ * boolean slot itself, which the walker writes as the word String() gives.
+ * Every other String() or Number() of a declared prop stays BUILD-610.
+ */
 export function emitPropText(node: t.Node, scope: PropsScope | undefined, ctx: IrEmitContext): boolean {
-  const path = propPath(node, scope);
-  const slot = propSlot(node, scope, ctx, 'text');
+  const word = scope ? stringOfDeclaredBoolean(node, scope) : undefined;
+  const path = word ? undefined : propPath(node, scope);
+  // The read's own refusals (an optional intermediate, an aggregate) come first.
+  const slot = propSlot(word ?? node, scope, ctx, 'text');
   if (slot === undefined) return false;
-  if (path && scope && inner(propType(path, scope, node)).kind === 'boolean') return true;
+  if (path && scope) {
+    const type = propType(path, scope, node);
+    if (inner(type).kind === 'boolean') {
+      refuseBooleanText(scope.file, node, `declared boolean ${path.filter(part => !part.startsWith('\0')).join('.') || 'prop'}`, type.kind === 'optional' ? 'ternary' : 'string');
+    }
+  }
   ctx.emit(C.OP_DYN_TEXT); ctx.emitU16(slot); ctx.emitU16(ctx.nextMarker());
   return true;
+}
+
+/** Value rule 7: whether a declared read is boolean-typed (optional admitted:
+ * absent reads as false on both sides); undefined when it is not a declared read. */
+export function declaredKind(node: t.Node | null | undefined, scope: PropsScope | undefined): 'boolean' | 'other' | undefined {
+  const path = propPath(node, scope);
+  if (!path || !scope || !node) return undefined;
+  return inner(propType(path, scope, node)).kind === 'boolean' ? 'boolean' : 'other';
+}
+
+/** The argument of `String(x)` (read through a getter) when x is a non-optional declared boolean. */
+function stringOfDeclaredBoolean(node: t.Node, scope: PropsScope): t.Node | undefined {
+  const call = unwrap(node);
+  if (!t.isCallExpression(call) || !t.isIdentifier(call.callee) || call.callee.name !== 'String') return undefined;
+  const argument = call.arguments[0];
+  if (call.arguments.length !== 1 || !argument || t.isSpreadElement(argument) || t.isArgumentPlaceholder(argument)) return undefined;
+  const path = propPath(argument, scope);
+  return path && propType(path, scope, argument).kind === 'boolean' ? argument : undefined;
 }
 
 function containsDeclared(node: t.Node, scope: PropsScope): boolean {

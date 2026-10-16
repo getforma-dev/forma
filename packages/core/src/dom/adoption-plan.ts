@@ -7,7 +7,7 @@ const HTML_NS = 'http://www.w3.org/1999/xhtml';
 type MarkerKind = 't' | 's' | 'l' | 'i';
 type Marker = { kind: MarkerKind; id: number; closing: boolean };
 type Code = 'FORMA_E_HYDRATE_NODE' | 'FORMA_E_HYDRATE_MARKER'
-  | 'FORMA_E_HYDRATE_STRUCTURE' | 'FORMA_E_HYDRATE_VALUE' | 'FORMA_E_HYDRATE_LIST_COUNT';
+  | 'FORMA_E_HYDRATE_STRUCTURE' | 'FORMA_E_HYDRATE_VALUE' | 'FORMA_E_HYDRATE_LIST_COUNT' | 'FORMA_E_HYDRATE_KEY';
 
 export class AdoptionDomError extends Error {
   constructor(readonly code: Code, detail?:string) { super(`[forma] ${code}${detail ? `: ${detail}` : ''}`); this.name = 'AdoptionDomError'; }
@@ -30,6 +30,15 @@ export interface AdoptionRange {
   readonly id: number;
   readonly start: Comment;
   readonly end: Comment;
+}
+/** One served keyed row (FORMA-181): its root Element, or the registered
+ * child's `f:i` envelope that wholly encloses it; `key` is the decoded
+ * `data-forma-key` the root carries. */
+export interface AdoptionUnit {
+  readonly key: string | null;
+  /** The row's first node and the node after its last (the next row's first, or the range end). */
+  readonly start: Node;
+  readonly next: Node | null;
 }
 /** One exact initial row piece; text offsets can share a parser-coalesced node.
  * No split or marker insertion occurs while these observations are captured. */
@@ -157,6 +166,36 @@ export class AdoptionDom {
   rangeAt(start: Node): AdoptionRange | undefined {
     return this.ranges.get(start as Comment);
   }
+
+  rows(range: AdoptionRange): AdoptionUnit[] | undefined {
+    // The served rows of a keyed LIST range in physical order (FORMA-181), or
+    // undefined when no row root carries `data-forma-key` (an unkeyed range,
+    // consumed in order). A keyed range holds nothing but rows: each is one
+    // root Element, or one `f:i` envelope holding exactly its host, and every
+    // root carries a key (a root without one, or a repeated key, cannot match
+    // the client's unique keys: adoption refuses FORMA_E_HYDRATE_KEY); any
+    // other node at the rows' level is STRUCTURE.
+    // (Inside the body: the unminified dist keeps a comment before a class
+    // member, and the size gate weighs it.)
+    // Verified by: src/dom/__tests__/adoption-keyed-list.test.ts
+    const units: AdoptionUnit[] = [];
+    let keyed = false, stray = false;
+    for (let node = range.start.nextSibling; node !== range.end; node = node.nextSibling) {
+      if (!node) refuse('FORMA_E_HYDRATE_STRUCTURE');
+      const inner = this.rangeAt(node), root = (inner ? node.nextSibling : node) as Element | null;
+      // Undefined for a node that is not an element, null for an element without
+      // a key; "" is a key.
+      const key = root?.getAttribute?.('data-forma-key');
+      if (key != null) keyed = true;
+      if (key === undefined || inner && (inner.kind !== 'i' || root!.nextSibling !== inner.end)) stray = true;
+      if (inner) node = inner.end;
+      if (!stray) units.push({ key: key!, start: inner?.start ?? node, next: node.nextSibling });
+    }
+    if (!keyed) return;
+    if (stray) refuse('FORMA_E_HYDRATE_STRUCTURE');
+    return units;
+  }
+
 
   /**
    * Parse only a visited parent's immediate children. A raw HTML region is

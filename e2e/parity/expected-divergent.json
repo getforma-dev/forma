@@ -2,15 +2,6 @@
   "note": "Known divergences (FORMA-183; e2e/parity/README.md, 'Expected divergence'). Each entry is run, must still occur (an entry that matches nothing fails the run as an unexpected pass, so it is removed the day its fix lands) and names the ticket that clears it; Every entry found at step 0 (2026-10-15) was reported to the lead, who named its ticket. FORMA-181 checkpoint B and FORMA-182 rules 2 to 7 add their own entries here as they land.",
   "entries": [
     {
-      "module": "list-same-source",
-      "index": 0,
-      "check": "P1",
-      "kind": "error",
-      "match": "items is not a function",
-      "ticket": "FORMA-181: a non-function list source (F1)",
-      "note": "The corpus source passes a plain array to createList (createList(todos, ...)); core 3.0's createList takes an accessor (items: () => T[]) and throws, while the compiler accepts the array and emits the list. Per the lead: after FORMA-181's checkpoint C the compiler refuses a non-function list source with a coded error, so this module stops building (an error the run reports) and its source changes; this entry then fails the run as an unexpected pass."
-    },
-    {
       "module": "jsx-page",
       "index": 0,
       "check": "P1",

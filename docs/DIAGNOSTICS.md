@@ -636,6 +636,98 @@ The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/
 [passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx) pin the
 original TSX position of the list.
 
+### BUILD-614 Boolean in text
+
+**Why.** FORMA-182, value rule 6 ([parity rules](parity-rules.md)): `h()` writes nothing for a
+boolean child whatever its value, while the walker writes `true` or `false` for a boolean slot,
+so a boolean read into text either breaks parity between the server's HTML and the browser's
+DOM or shows nothing at all. The compiler refuses a text position whose value it can prove is
+boolean: a declared boolean prop (optional included), a signal whose default is a boolean, a
+closed boolean (an aggregate field, a list-row field, a module-level `const` initialized with
+`true` or `false`), or an expression that can only be a boolean (`!ready()`, `count() > 0`, `a()
+&& b()` of booleans), read eagerly or through a getter, as a child or as a `createShow` or
+ternary branch. A boolean literal child writes nothing on both sides and is admitted. A mixed
+expression whose boolean result stands for nothing (`ready() && 'Go'`) is admitted: eagerly it
+folds, and through a getter the server writes an empty range when its default is the boolean,
+as the browser does. This refusal is mandatory without strict mode.
+
+**Fix.** The message gives the form that builds for its source. Write the word with
+`String(flag)` on a non-optional declared boolean (it binds the text to the boolean slot, which
+the walker writes as the word `String()` gives), on a boolean signal, and on an expression the
+compiler evaluates (they fold to the same word). On an optional declared boolean (`String()`
+would print `undefined` when it is absent), a closed value or a module `const` (`String()` of
+those is not folded), write the word with a ternary, `() => (flag ? 'yes' : 'no')`. For
+content, use `createShow(() => flag(), …)` or a ternary.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-614/pass/app.tsx) pin the
+original TSX position of the text.
+
+### BUILD-615 Condition that is not boolean-typed
+
+**Why.** FORMA-182, value rule 7 ([parity rules](parity-rules.md)): the walker picks a
+`SHOW_IF` branch by the condition's value, with ECMAScript truthiness for anything that is not a
+boolean, and a page whose condition is a number or a string only imitates what the author meant
+(React's `{count && …}` printing `0` is the shape kept out). The compiler refuses a
+`createShow` condition or a ternary test it can prove is not boolean-typed: a declared prop of
+another type (an optional boolean is admitted: absent reads as false on both sides), a signal
+whose literal default is a number, a string or `null`, a closed value (an aggregate or list-row
+field, a module-level `const`) of another type, a literal, or an expression whose result is not
+always a boolean (`a() && count()`, `name() || 'x'`). A signal getter passed to `createShow`
+itself (`createShow(count, …)`) is read as its call, since `createShow` calls it; a getter named
+without its call anywhere else in a condition (`() => open ? a : b`, `() => open`,
+`ready() && open`) is a function, always truthy in the browser, and is refused with a message
+naming the missing call. A boolean signal, a negation, a comparison,
+`Boolean(x)`, `&&` and `||` of booleans, and a module-level boolean `const` are admitted, and
+`Boolean(x)` and the module `const` are folded, so the server renders the branch the browser
+takes. A condition the compiler cannot type at all stays BUILD-302. This refusal is mandatory
+without strict mode.
+
+**Fix.** Compare explicitly so the condition is a boolean: `() => count() > 0`,
+`() => name() !== ''`, `() => item() !== null`, or `!!x` when truthiness is what is meant.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-615/pass/app.tsx) pin the
+original TSX position of the condition.
+
+### BUILD-616 List source that is not a function
+
+**Why.** FORMA-183's parity harness, finding F1: core's `createList(items, key, row)` calls
+`items()` to read the rows, so a list source that is not a function fails in the browser with
+`items is not a function` even though the native module renders it (the page's list array is a
+named slot the module never evaluates). The compiler refuses a source it can prove is not a
+function: a literal (an array, an object, a string, a number, `null`, `undefined`), a binding
+whose value is one (an immutable local binding, or an immutable named export of an imported module),
+a provably immutable data-valued core getter result (`rows()` from `createSignal`,
+`createComputed` or `createMemo`), or a field that an inline parameter type
+declares as data (`p.rows` with `p: { rows: Row[] }`). A function, a getter, and anything the
+compiler cannot see through (an untyped parameter's field, another call's result) stay admitted.
+A signal may hold a function and a computed callback may return one. A captured signal setter
+prevents using its initializer as proof; object fields can change through aliases or getter reads,
+so their initial values are not proof either. Callable and unknown results pass this callability check.
+The refusal names the call's own argument. This refusal is mandatory without strict mode.
+
+Callable sources still need native value provenance. A declared array prop or a
+closed literal-default signal is admitted through its getter or an explicit
+callback. An arbitrary getter, derived filter/map, mutable getter result or
+unproved function field is refused separately with BUILD-610. The current
+list-same-source corpus uses a two-row signal and renders both projections in
+Rust and core; its previous empty-native stage is preserved under
+`docs/archive/FORMA-101-unproved-list-sources/`.
+
+**Fix.** Pass the getter itself or a function returning the rows: `createList(rows, …)` with
+`const [rows] = createSignal([...])` or `createList(() => p.rows, …)`.
+
+**In strict mode.** An error (and an error without strict mode).
+
+The [refusal fixture](../packages/compiler/tests/fixtures/conformance/BUILD-616/fail/app.tsx) and
+[passing fixture](../packages/compiler/tests/fixtures/conformance/BUILD-616/pass/app.tsx) pin the
+original TSX position of the list.
+
 ### BUILD-701 Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
@@ -953,8 +1045,8 @@ decision brief L-55):
 | Class | Chosen by | Forma's code | All of the route's JavaScript |
 | --- | --- | --- | --- |
 | `no-interactive-region` | a server-rendered route whose page has no island, or a route that lists no script | none | none: a service worker counted |
-| `islands` | a server-rendered route with at least one island | 25,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
-| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as islands |
+| `islands` | a server-rendered route with at least one island | 27,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
+| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 27,500 B | as islands |
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed from
 the bundler's metafile (each input's share of the file's raw bytes, applied to
@@ -979,6 +1071,50 @@ Verified by `packages/build/tests/route-size.test.ts` > "S7: a route at its
 ceiling passes, a route one byte over fails naming the route and its bytes" and
 "fails the build with BUILD-819 when a route's Forma code is over the ceiling,
 leaving no output".
+
+### BUILD-820 The previous release for retention is not usable
+
+`previousDist` (FORMA-186, DR-29, L-25) names something that is not the previous
+release's `dist/`: a path that does not exist or is not a directory, a directory
+with no readable `manifest.json`, another application's dist (its `app` differs), a
+watch build's (`build` is `dev`), a manifest listing an asset whose name is not a
+flat file name, or a directory that is, holds or sits inside `outputDir`, which the
+build replaces whole. It is checked before anything is bundled, and the build fails
+without writing. A previous dist whose manifest is not schema 2 (the first 3.0.0
+deploy over a 2.x release) is not this error: nothing is retained, and the build
+says so.
+
+**Fix.** Pass the directory of the release that is live, kept apart from
+`outputDir`, or leave `previousDist` out for a first deploy. Verified by
+`packages/build/tests/retention.test.ts` > "refuses %s (BUILD-820)".
+
+### BUILD-821 A retained asset cannot be vouched for
+
+A file the previous manifest lists immutable is missing from the previous dist, is
+not a regular file (a link or a directory), or its bytes no longer match the SHA-384
+the manifest recorded for it; or this build emitted a file of the same name with
+other bytes than the previous release recorded. Retained files are executed by
+browsers under this release's name, so the build copies only bytes it can check, and
+fails before writing any output rather than let its own manifest re-bless whatever
+was copied.
+
+**Fix.** Keep the whole release artifact unaltered and pass that directory. If it
+was damaged, restore it from the artifact store, or mark this release security
+(`security: true` or `FORMA_SECURITY_RELEASE=1`) to retain nothing. Verified by
+`packages/build/tests/retention.test.ts` > "refuses bytes that do not match the
+recorded SHA-384, a missing file, a link and a directory (BUILD-821)".
+
+### BUILD-822 FORMA_SECURITY_RELEASE is not a value the build understands
+
+`FORMA_SECURITY_RELEASE` marks a release that fixes a vulnerability: nothing is
+retained from the previous release (SR45). It is read as `FORMA_STRICT` is, trimmed and
+case-insensitive: `1` or `true` marks, unset, empty, `0` or `false` leaves it unmarked,
+and any other value fails the build, since reading `yes` as unmarked would retain a
+revoked build's assets in the release that exists to remove them.
+
+**Fix.** Set it to `1` (or `true`), or unset it. Verified by
+`packages/build/tests/retention.test.ts` > "reads FORMA_SECURITY_RELEASE as FORMA_STRICT
+is read, and refuses any other value (BUILD-822)".
 
 ### Native island request state
 
@@ -1013,7 +1149,8 @@ unchanged.
 | Code | Boundary | Meaning and corrective action |
 | --- | --- | --- |
 | `FORMA_E_HYDRATE_NODE` | node matching; retained code | The expected node kind, tag or namespace does not match the served node. Keep the server and client component structure consistent; adoption does not replace the node. |
-| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts of an unkeyed list differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_KEY` | keyed list matching (FORMA-181) | A served keyed row and the client's items do not pair by canonical key: a key on one side only, a served key twice, a served row without `data-forma-key` beside keyed rows, two client keys with the same canonical text (1 and `"1"`), or a client key outside the domain (not a string or a safe integer, or a string with an unpaired surrogate). Refused before any row runs, writing nothing. Give the client the server's rows (in any order) with their own keys. |
 | `FORMA_E_HYDRATE_MARKER` | marker validation | A required marker is missing, malformed, duplicated, out of range or incorrectly nested. Preserve the compiler/native marker grammar and paired output. |
 | `FORMA_E_HYDRATE_STRUCTURE` | structural validation | A claimed node/range, topology or ownership relationship is invalid or changed during preparation, or the private walker cannot validate the context. Do not move or replace the prepared structure before commit. The [private raw noscript limitation](../packages/core/docs/ADOPTION-PREPARATION.md) also uses this code. |
 | `FORMA_E_HYDRATE_VALUE` | initial value/default validation | Initial text, attributes, branch/list values or normalized control defaults disagree with the served content/state, or a prepared observation was invalidated. Fix the initial server/client disagreement; do not rely on an early user edit to hide it. |

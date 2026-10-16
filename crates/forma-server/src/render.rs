@@ -749,12 +749,12 @@ mod tests {
             counts: RenderCounts::default(),
             cause,
         };
-        let keyed = walk(IrError::InvalidListKey(Box::new(ListKeyViolation {
-            list_offset: 30,
-            row: 2,
-            path: "user.id".into(),
-            reason: ListKeyReason::Duplicate { first_row: 0 },
-        })));
+        let keyed = walk(IrError::InvalidListKey(Box::new(ListKeyViolation::new(
+            30,
+            2,
+            "user.id",
+            ListKeyReason::Duplicate { first_row: 0 },
+        ))));
         assert_eq!(keyed.code(), "RENDER-503");
         assert_eq!(keyed.component_path(), ["Rows".to_string()]);
         let text = keyed.to_string();

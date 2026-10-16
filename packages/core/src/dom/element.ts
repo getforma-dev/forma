@@ -309,31 +309,26 @@ function innerHtmlOf(value: unknown): unknown {
   return html;
 }
 
-/** Handle class / className prop. */
+/**
+ * Handle class / className prop. The value follows the attribute presence
+ * table of the value rules (docs/parity-rules.md, rules 5 and 6): null,
+ * undefined and false remove the attribute (the walker omits a DYN_ATTR whose
+ * slot is Null or false), true is the bare attribute, anything else its string
+ * under rule 1.
+ * Verified by: src/dom/__tests__/value-rule-5-null.test.ts > "$id: a null or undefined attribute is absent, static, reactive and on adoption, and a later null removes it"
+ */
 function handleClass(el: Element, _key: string, value: unknown): void {
-  if (typeof value === 'function') {
-    internalEffect(() => {
-      const v = normalizeDomText((value as () => string)());
-      const cache = getCache(el);
-      if (cache['class'] === v) return;
-      cache['class'] = v;
-      if (el instanceof HTMLElement) {
-        el.className = v;
-      } else {
-        el.setAttribute('class', v);
-      }
-    });
-  } else {
+  const write = (raw: unknown): void => {
+    const v = raw == null || raw === false ? null : raw === true ? '' : normalizeDomText(String(raw));
     const cache = getCache(el);
-    const v = typeof value === 'string' ? normalizeDomText(value) : value;
     if (cache['class'] === v) return;
     cache['class'] = v;
-    if (el instanceof HTMLElement) {
-      el.className = v as string;
-    } else {
-      el.setAttribute('class', v as string);
-    }
-  }
+    if (v === null) el.removeAttribute('class');
+    else if (el instanceof HTMLElement) el.className = v;
+    else el.setAttribute('class', v);
+  };
+  if (typeof value === 'function') internalEffect(() => write((value as () => unknown)()));
+  else write(value);
 }
 
 /**
@@ -750,7 +745,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   if (value == null || value === false) return;
 
   if (key === 'class' || key === 'className') {
-    const v = typeof value === 'string' ? normalizeDomText(value) : value as string;
+    const v = value === true ? '' : normalizeDomText(String(value));
     if (el instanceof HTMLElement) {
       el.className = v;
     } else {
