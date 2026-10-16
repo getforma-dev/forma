@@ -4,8 +4,9 @@ One tree, three implementations: the Rust walker writes HTML, `h()` in `@getform
 DOM, strict adoption compares them. This lane keeps them equal by test: for every corpus module
 and generated state, the server's HTML parsed by a real browser against core's render of the same
 state (P1), adoption making zero mutation records (P2), a transition equal to a fresh server
-render (P3). It runs non-blocking in CI and is ratcheted up; this file says what is here
-now and the rules it runs by.
+render (P3). It blocks merges through R17 at step 1 with 100 generated states per
+declared schema. Firefox and WebKit block release at 10 states. Every live case must
+agree; the gate refuses any nonempty expected-divergent list.
 
 ## What is here
 
@@ -36,8 +37,8 @@ now and the rules it runs by.
 npx tsc --noEmit -p e2e/parity
 node --test "e2e/parity/tests/*.test.mts"
 
-# the suite over the corpus, as CI's non-blocking `parity` job runs it; exit 0 when every
-# difference is expected and every expected difference occurred
+# the suite over the corpus; R17 first requires the expected list to be empty,
+# then runs --step 1 --states 100 (the standalone CLI also supports historical expectations)
 node e2e/parity/src/run.mts [--step 1] [--states 10] [--seed forma-183] [--module nested-islands ...]
                             [--browser chromium|firefox|webkit] [--low-level] [--report out.jsonl]
 
@@ -211,8 +212,8 @@ The F2/F3 attribute fixes were verified against the expanded 28-module corpus on
 
 | Step | Modules | States each | When |
 |---|---|---|---|
-| 0 | the 14 js-emitter modules | 10 for `nested-islands`, the one module with declared page props; 1 for the other 13 (their source state) | now, non-blocking |
-| 1 | + the props-contract page (nine fields, every type), the 12 island-emitter fixtures (all but `browser`, a browserOnly island whose server host is empty by design) and the P3 fixture: 28 modules | 10 (Firefox and WebKit, per release); 100 (Chromium, per merge, measured) | now, non-blocking |
+| 0 | the 14 js-emitter modules | 10 for `nested-islands`, the one module with declared page props; 1 for the other 13 (their source state) | blocking in R17 |
+| 1 | + the props-contract page (nine fields, every type), the 12 island-emitter fixtures (all but `browser`, a browserOnly island whose server host is empty by design) and the P3 fixture: 28 modules | 10 (Firefox and WebKit, per release); 100 (Chromium, per merge, measured) | blocking in R17 |
 | 2 | the same | 100 | after the switch |
 | 3 | + FORMA-188's fixture applications and consumer-shaped pages, as they land (nothing is copied out of an application repository: L-54, DR-34) | 100 | FORMA-188 |
 
@@ -277,3 +278,14 @@ Chromium is the default; `options.engine` selects another engine and `options.br
 caller-owned browser without closing it. The helper closes browsers it creates, including on
 failure. `renderBoth` is not a supported `@getforma/core` export (Q11, L-57, FORMA-184).
 FORMA-016 verification on the expanded corpus removes F5 only after an actual unexpected pass: all 28 typed modules and 118 states complete, with props-contract text branches agreeing. Historical step-1 findings above remain the discovery record.
+
+## Blocking switch, 2026-10-15
+
+The combined F1–F6 fixes passed at `f5a62484dd9f0e0e28372cc52fc99d58fddeca7e`:
+28 typed modules and 118 states, P1=118 equal, P2=99 equal, P3=10 equal, zero
+expected divergences, refusals or errors, in 9.3 seconds. R17 now requires the
+expectation list to stay empty and runs step 1 at 100 states; the separate
+non-blocking Chromium job is removed. Firefox/WebKit release jobs require the
+same empty list and their results now block the calling release workflow.
+The per-run JSONL reports retain actual counts and wall time, including no-setter
+and holder-ambiguity counts. Historical failing products and reports remain intact.
