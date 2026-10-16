@@ -22,8 +22,8 @@ npm run check
 
 The version command changes seven manifests, their exact internal requirements,
 the workspace locks, npm repository metadata and release template ranges. It
-creates neither tags nor commits. A `3.0.0-dev` version aligns only the packages
-and workspace locks, preserving A2 template pins until FORMA-144 migrates them.
+creates neither tags nor commits. A `-dev` version also aligns the current
+template source seeds; it names no publishable milestone.
 Use the next unpublished version for the intended milestone. Add its root
 CHANGELOG heading (for example `## [3.0.0-beta.1]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
