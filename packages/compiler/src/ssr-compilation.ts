@@ -1,3 +1,4 @@
+import {collectJsxNamespaceEdits} from '../../shared/jsx-namespace.mjs';
 import {realpathSync} from 'node:fs';
 import type {BuildOptions,Plugin,PluginBuild} from 'esbuild';
 import type {IslandRegistry} from './island-registry';
@@ -24,7 +25,7 @@ interface Prepared {snapshot:SourceSnapshot;sources:Map<string,string>;browserSo
 class CompilationContext {
   readonly participants=new Map<Setup,Participant>();
   private prepared?:Prepared;
-  constructor(readonly expected:ReadonlySet<Setup>) {}
+  constructor(readonly expected:ReadonlySet<Setup>,readonly namespaceOptions:{factory:string;runtime?:string}) {}
   get setupComplete():boolean {return this.participants.size===this.expected.size;}
   begin(setup:Setup):void {
     const current=this.participants.get(setup)!;
@@ -59,6 +60,7 @@ class CompilationContext {
       // helper reads use the same union snapshot and are guarded at publication.
       const hooks=withSourceSnapshot(snapshot,()=>collectAdoptionEdits(registries));
       for(const [file,edits] of hooks)byFile.set(file,[...edits]);
+      for(const [file,source] of snapshot.files)if(/\.[jt]sx$/.test(file))byFile.set(file,[...(byFile.get(file)??[]),...collectJsxNamespaceEdits(source,this.namespaceOptions)]);
       for(const input of inputs)if(input.entry) {
         const edits=entryEdits.get(input.entry)??[];
         for(const edit of input.edits)if(!edits.some(previous=>previous.start===edit.start&&previous.end===edit.end&&previous.text===edit.text))edits.push(edit);
@@ -82,7 +84,13 @@ class CompilationContext {
     this.prepared={snapshot,sources:transform(true),browserSources:transform(false)};return this.prepared;
   }
   read(file:string,entryPolicy=true):{contents:string;watchFiles:string[];watchDirs:string[]}|undefined {
-    const prepared=this.prepare(),source=(entryPolicy?prepared.sources:prepared.browserSources).get(realpathSync(file));
+    const prepared=this.prepare(),canonical=realpathSync(file),sources=entryPolicy?prepared.sources:prepared.browserSources;
+    let source=sources.get(canonical);
+    if(source===undefined&&/\.[jt]sx$/.test(canonical)) {
+      const original=prepared.snapshot.read(canonical);
+      source=applySourceEdits(original,collectJsxNamespaceEdits(original,this.namespaceOptions));
+      prepared.sources.set(canonical,source);prepared.browserSources.set(canonical,source);
+    }
     if(source===undefined)return undefined;
     return {contents:source,watchFiles:[...prepared.snapshot.files.keys(),...prepared.snapshot.dependencies],watchDirs:[...prepared.snapshot.directories]};
   }
@@ -109,7 +117,7 @@ export function joinSsrCompilation(build:PluginBuild,setup:Setup):{
   let context=contexts.get(build.initialOptions);
   if(context?.setupComplete)context=undefined;
   else if(context?.participants.has(setup))throw new Error('BUILD-611 overlapping setup with the same options object is ambiguous; use a distinct options object for concurrent builds');
-  if(!context){context=new CompilationContext(expected);contexts.set(build.initialOptions,context);}
+  if(!context){context=new CompilationContext(expected,{factory:build.initialOptions.jsxFactory??'React.createElement',runtime:build.initialOptions.jsx});contexts.set(build.initialOptions,context);}
   if(context.expected.size!==expected.size||[...expected].some(member=>!context!.expected.has(member)))throw new Error('BUILD-611 SSR plugin membership changed during setup');
   context.participants.set(setup,{epoch:0,done:false});
   const captured=context;

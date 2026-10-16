@@ -37,6 +37,7 @@ const assetsDir = join(outDir, 'site', '_assets');
 const expectedIslands = {
   'browser-only': ['Chart'],
   'mixed-entry': ['Local', 'Panel'],
+  namespaces: ['NamespaceVectors'],
   'edited-controls': ['Controls'],
   'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],

@@ -12,6 +12,11 @@
   28,000 B passes, 28,001 B refuses before publication. Page/canvas JavaScript
   ceilings, static zero-JavaScript policy and package-size gates are unchanged.
 
+### Lexical JSX SVG namespaces — FORMA-171
+
+- Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.
+- Compiler and build loaders share the original source snapshot with adoption hooks and SSR/Browser entry ownership. Handwritten `h`, separate component bodies, custom JSX factories and the deferred dynamic SVG title adoption boundary keep their existing contracts.
+
 ### Shared physical SSR and Browser entries — FORMA-186
 
 - A split build now gives an explicit Browser root that collides with an SSR client source its own entry identity. It keeps its mount while dependencies and core remain shared. Both role products use the compiler's same source snapshot, graph mapping, deployment identity and watch publication boundary.
