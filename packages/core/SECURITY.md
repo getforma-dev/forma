@@ -241,6 +241,9 @@ nested objects and array elements. Identity and schema checks complete before
 any requested component or trigger runs. Legacy inline and shared-spill channels
 are refused. `sanitizePropsDeep(props)` remains a standalone iterative utility
 for other data paths; it is not the state decoder or a schema bypass.
+It mutates in place and throws `TypeError` if a forbidden own key cannot be
+deleted. The input may already be partially modified when it throws and must
+not be used as sanitized data. Harmless frozen data is accepted.
 
 Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "island activation projects only declared safe fields at every depth for both instances"
 Verified by: `src/dom/__tests__/activate-isolation.test.ts` > "standalone sanitization still strips props nested 10,000 deep"

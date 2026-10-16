@@ -168,6 +168,10 @@ export function hasScheduledOrActiveIslands(): boolean {
  * stack and a WeakSet, so neither deeply nested nor cyclic props can overflow
  * the stack or loop forever.
  *
+ * Throws TypeError if an own forbidden key cannot be deleted, including on a
+ * frozen or sealed object. Earlier deletions remain in place when it throws;
+ * callers must not use the partially sanitized input after a refusal.
+ *
  * Verified by: src/dom/__tests__/activate-isolation.test.ts > "sanitizePropsDeep strips forbidden keys at every depth"
  * Verified by: src/dom/__tests__/activate-isolation.test.ts > "sanitizePropsDeep terminates on cyclic props"
  */
@@ -183,9 +187,9 @@ export function sanitizePropsDeep<T>(props: T): T {
 
     for (const key of FORBIDDEN_PROP_KEYS) {
       if (Object.prototype.hasOwnProperty.call(current, key)) {
-        const desc = Object.getOwnPropertyDescriptor(current, key);
-        // A non-configurable key cannot be deleted; skipping it beats throwing.
-        if (desc?.configurable) delete (current as Record<string, unknown>)[key];
+        if (!Reflect.deleteProperty(current, key)) {
+          throw new TypeError(`sanitizePropsDeep: cannot delete ${key}`);
+        }
       }
     }
 
