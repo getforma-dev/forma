@@ -94,26 +94,9 @@ describe('--strict', () => {
     expect(failure!.message).toContain(`${entries.about}:3:`);
     expect(failure!.message).toContain('BUILD-207');
     expect(failure!.message).toMatch(/why: .*\n {4}fix: /);
-    expect(failure!.message).toContain('docs/DIAGNOSTICS.md');
+    expect(failure!.message).toContain('packages/compiler/docs/subset.md');
     // A failed build leaves no output (FORMA-018's staging directory).
     expect(existsSync(outDir)).toBe(false);
-  }, 30_000);
-
-  it('without --strict the same build succeeds, prints its lines as before, and returns the diagnostics', async () => {
-    const entries = twoBrokenPages();
-    const result = await build(config(entries));
-    expect(existsSync(join(outDir, 'manifest.json'))).toBe(true);
-    expect(result.diagnostics.map((d) => [d.page, d.code, d.severity])).toEqual([
-      ['home', 'BUILD-206', 'warning'],
-      ['about', 'BUILD-207', 'warning'],
-    ]);
-    // One line each, in the 0.3.6 shape plus the code and the position (the
-    // pages compile in parallel, so the lines come in either order).
-    const irLines = warnings.filter((w) => w.includes('IR: '));
-    expect(irLines).toHaveLength(2);
-    expect(irLines.find((line) => line.includes('home.ts'))).toMatch(
-      /^ {3}IR: BUILD-206 .*home\.ts:3:\d+/s,
-    );
   }, 30_000);
 
   it('uses the required application identity without a legacy unnamed-worker diagnostic', async () => {
@@ -188,7 +171,7 @@ describe('the JSON report', () => {
     // A live previous build, and a strict build that fails: the report must
     // not reach it through a symlink (a junction on Windows) or, where the
     // filesystem ignores case, through another spelling.
-    await build(config(entries));
+    await build(config({ ready: page('ready', [`mount(() => h('main', null, 'previous'), '#app');`]) }));
     const before = readFileSync(join(outDir, 'manifest.json'), 'utf8');
     const link = join(tmpRoot, 'reports');
     symlinkSync(outDir, link, process.platform === 'win32' ? 'junction' : 'dir');
@@ -205,7 +188,7 @@ describe('the JSON report', () => {
 
     // Beside it is fine, `..` as a segment included.
     const beside = join(outDir, '..', 'dist-diagnostics.json');
-    await build(config(entries, { diagnosticsJson: beside }));
+    await expect(build(config(entries, { diagnosticsJson: beside }))).rejects.toThrow(/SSR diagnostics are errors/);
     expect(existsSync(join(tmpRoot, 'dist-diagnostics.json'))).toBe(true);
   }, 60_000);
 
@@ -228,20 +211,20 @@ describe('the JSON report', () => {
 });
 
 describe('where strict comes from', () => {
-  it('takes strict from the config, else from FORMA_STRICT, and reads no command-line flag', () => {
+  it('keeps accepted strict switches as no-ops and validates environment spelling', () => {
     const base = config({});
-    expect(resolveDiagnosticOptions(base, {})).toEqual({ strict: false });
+    expect(resolveDiagnosticOptions(base, {})).toEqual({ strict: true });
     expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '1' })).toEqual({ strict: true });
     expect(resolveDiagnosticOptions(base, { FORMA_STRICT: 'true' })).toEqual({ strict: true });
-    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '0' })).toEqual({ strict: false });
-    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '' })).toEqual({ strict: false });
+    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '0' })).toEqual({ strict: true });
+    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '' })).toEqual({ strict: true });
     // A switch that fails open passes the pages it was set to check: refused.
     expect(() => resolveDiagnosticOptions(base, { FORMA_STRICT: 'yes' })).toThrow(/FORMA_STRICT is 'yes'/);
-    // The config wins over the environment, both ways.
-    expect(resolveDiagnosticOptions({ ...base, strict: false }, { FORMA_STRICT: '1' })).toEqual({ strict: false });
+    // An explicit compatibility flag cannot disable native publication checks.
+    expect(resolveDiagnosticOptions({ ...base, strict: false }, { FORMA_STRICT: '1' })).toEqual({ strict: true });
     expect(resolveDiagnosticOptions({ ...base, strict: true }, {})).toEqual({ strict: true });
     expect(resolveDiagnosticOptions({ ...base, diagnosticsJson: 'a.json' }, {}))
-      .toEqual({ strict: false, diagnosticsJson: 'a.json' });
+      .toEqual({ strict: true, diagnosticsJson: 'a.json' });
   });
 
   it('applies FORMA_STRICT=1 to a build whose config does not set it', async () => {
@@ -249,7 +232,7 @@ describe('where strict comes from', () => {
     vi.stubEnv('FORMA_STRICT', '1');
     try {
       await expect(build(config(entries))).rejects.toThrow(
-        /strict mode \(strict: true or FORMA_STRICT=1\): 2 SSR diagnostics are errors; without it they are warnings/,
+        /2 SSR diagnostics are errors; 3.0 requires the published server-renderable subset/,
       );
     } finally {
       vi.unstubAllEnvs();
@@ -263,8 +246,7 @@ describe('where strict comes from', () => {
     const argv = process.argv;
     process.argv = [...argv, '--strict', '--diagnostics-json=never.json'];
     try {
-      const result = await build(config(entries));
-      expect(result.diagnostics.map((d) => d.severity)).toEqual(['warning', 'warning']);
+      await expect(build(config(entries))).rejects.toThrow(/2 SSR diagnostics are errors/);
       expect(existsSync('never.json')).toBe(false);
     } finally {
       process.argv = argv;
@@ -323,7 +305,7 @@ describe('FORMA-182 value rules 6 and 7 without --strict', () => {
       expect(failure, name).toBeDefined();
       expect(String(failure)).toContain(code);
       const json = JSON.parse(readFileSync(report, 'utf8'));
-      expect(json.strict).toBe(false);
+      expect(json.strict).toBe(true);
       expect(json.diagnostics.map((d: BuildDiagnostic) => [d.page, d.code, d.line, d.severity])).toEqual([[name, code, 3, 'error']]);
       expect(existsSync(outDir)).toBe(false);
     }

@@ -23,6 +23,10 @@ e2e/ssr/out/
 # (e2e/frame/build.sh). e2e/frame/app/node_modules is covered by node_modules/.
 e2e/frame/out/
 
+# The fixture applications' output: the builds, their reports, the negative builds
+# (e2e/fixtures/apps/build.sh). e2e/fixtures/apps/node_modules is covered by node_modules/.
+e2e/fixtures/apps/out/
+
 # P17 owns and removes these temporary packed-template checkouts.
 /.release-verify-*/
 

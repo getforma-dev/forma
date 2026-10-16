@@ -1,8 +1,8 @@
 /** The archived pre-attribute-values corpus outputs (docs/archive/2026-10-15-pre-attribute-values)
  *  stay byte-exact, and the ledger names every live corpus file FORMA-182's F2/F3 regenerated,
- *  with its before (archived) and after (live) hash. */
+ *  with its before and after hashes (later stages preserve the earlier output). */
 import {describe, expect, it} from 'vitest';
-import {readFileSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {join, resolve} from 'node:path';
 
@@ -21,9 +21,10 @@ describe('archived pre-attribute-values corpus outputs', () => {
     ]);
     for (const [name, expected] of Object.entries(manifest.sha256)) expect(hash(join(ARCHIVE, name)), name).toEqual(expected);
   });
-  it('records a before and after hash for every regenerated corpus file, each changed', () => {
+  it('records each attribute migration, retaining its exact output before later strict-corpus changes', () => {
     for (const [live, entry] of Object.entries(ledger.files)) {
-      expect(hash(join(ROOT, live)), live).toEqual(entry.after);
+      const beforeStrict = join(ROOT, 'docs/archive/FORMA-101-strict-corpus', live);
+      expect(hash(existsSync(beforeStrict) ? beforeStrict : join(ROOT, live)), live).toEqual(entry.after);
       expect(manifest.sha256[entry.archived], live).toEqual(entry.before);
       expect(entry.before.sha256, live).not.toBe(entry.after.sha256);
     }

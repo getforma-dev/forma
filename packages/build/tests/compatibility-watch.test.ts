@@ -2,12 +2,13 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { stopOwnedWatcher } from './helpers/watch';
+import { writeFileAtomic } from '../src/output';
 
 const roots: string[] = [];
 afterEach(() => roots.splice(0).forEach(root => rmSync(root, {recursive: true, force: true, maxRetries: 10, retryDelay: 100})));
@@ -19,9 +20,8 @@ it('registers existing and missing ancestor metadata even when its first watched
   const lock = (path: string, version: string) => {
     // These cases change complete versions. An in-place truncate/write can let
     // onStart correctly refuse an empty intermediate file instead of this version.
-    const next = `${path}.next`;
-    writeFileSync(next, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
-    renameSync(next, path);
+    // Use the bounded Windows retry while the watcher has the old file open.
+    writeFileAtomic(path, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
   };
   lock(ancestor, '2.9.0');
   const runner = join(root, 'runner.mjs'), outputFile = join(root, 'result.js');

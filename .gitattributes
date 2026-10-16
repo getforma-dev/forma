@@ -65,5 +65,33 @@ crates/forma-ir/tests/fixtures/parity/*.json text eol=lf
 docs/archive/2026-10-15-pre-attribute-values/** -text
 
 docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
+# FORMA-181 F1: the pre-list-source originals are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-list-source/** -text
+# FORMA-181 F1: tests/list-source.test.ts hashes the live corpus sources against the ledger.
+packages/compiler/tests/fixtures/ir-corpus/list-same-source/*.ts text eol=lf
 # FORMA-181 checkpoint C: the pre-key-adoption test originals are authenticated by SHA-256.
 docs/archive/2026-10-15-pre-key-adoption/** -text
+# FORMA-182 F2/F3: archived pre-attribute-values corpus outputs are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-attribute-values/** -text
+
+docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
+
+# FORMA-101: authenticated historical sources/products and live migration ledgers.
+docs/archive/FORMA-101-* -text
+docs/archive/FORMA-101-*/** -text
+packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/*.ts text eol=lf
+packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/*.ts text eol=lf
+packages/compiler/tests/attribute-values-archive.test.ts text eol=lf
+
+# FORMA-101: preserved pre-native-source originals and wire products are authenticated byte-for-byte.
+docs/archive/FORMA-101-unproved-list-sources/** -text
+
+# FORMA-101: the native LIST migration ledger also hashes these live sources and tests.
+packages/compiler/tests/fixtures/conformance/BUILD-701/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-612/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-616/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-107/pass/app.tsx text eol=lf
+packages/compiler/tests/list-source.test.ts text eol=lf
+packages/compiler/tests/keyed-list-archive.test.ts text eol=lf
+packages/compiler/tests/keyed-list-proof.test.ts text eol=lf

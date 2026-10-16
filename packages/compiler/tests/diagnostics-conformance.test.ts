@@ -19,10 +19,11 @@
  * 805 to 807, the preview frame's runtime, in packages/build/tests/preview-frame.test.ts),
  * BUILD-810 to BUILD-814 (the raw-entry lint, forma-raw-lint, whose corpus is
  * packages/build/tests/fixtures/raw-lint), server-directive removal (BUILD-808) and
- * BUILD-819 (the size report's gate, packages/build/tests/route-size.test.ts). Each has its own
+ * BUILD-819 (the size report's gate, packages/build/tests/route-size.test.ts) and BUILD-820, BUILD-821 and
+ * BUILD-822 (retention's previous release, packages/build/tests/retention.test.ts). Each has its own
  * test, here or in the build package.
  *
- * The catalogue, the fixtures and `docs/DIAGNOSTICS.md` are checked against
+ * The catalogue, the fixtures and `packages/compiler/docs/subset.md` are checked against
  * each other, so a code cannot be added to one and not the others.
  */
 
@@ -40,12 +41,12 @@ import { originalPosition, registerSourceMap } from '../src/diagnostics';
 import { transformJsxSource } from '../src/module-loader';
 
 const CORPUS = resolve(__dirname, 'fixtures/conformance');
-const CATALOGUE_DOC = resolve(__dirname, '../../../docs/DIAGNOSTICS.md');
+const CATALOGUE_DOC = resolve(__dirname, '../docs/subset.md');
 
 /** Codes with no page that can trigger them; each is tested on its own. */
 const NOT_A_PAGE = new Set([
   'BUILD-606', 'BUILD-801', 'BUILD-805', 'BUILD-806', 'BUILD-807', 'BUILD-808',
-  'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819',
+  'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819', 'BUILD-820', 'BUILD-821', 'BUILD-822', 'BUILD-823',
 ]);
 
 interface Marker { code: string; file: string; line: number }
@@ -127,6 +128,13 @@ afterEach(() => {
 });
 
 describe('the code catalogue', () => {
+  it.each(['BUILD-206', 'BUILD-617'])('the direct plugin refuses %s even with strict:false, and admits its near miss', async code => {
+    const errors = await strictBuild(join(CORPUS, code, 'fail'), false);
+    expect(errors.map(error => error.id)).toContain(code);
+    expect(errors.find(error => error.id === code)?.location?.line).toBeGreaterThan(0);
+    expect(await strictBuild(join(CORPUS, code, 'pass'), false)).toEqual([]);
+  });
+
   it('numbers every code by family, once', () => {
     const codes = DIAGNOSTIC_CATALOGUE.map((e) => e.code);
     expect(new Set(codes).size).toBe(codes.length);
@@ -148,13 +156,14 @@ describe('the code catalogue', () => {
     }
   });
 
-  it('documents every code, with its fix, in docs/DIAGNOSTICS.md', () => {
+  it('documents every code, with its fix, in packages/compiler/docs/subset.md', () => {
     const doc = readFileSync(CATALOGUE_DOC, 'utf8');
     const documented = [...doc.matchAll(/^### (BUILD-\d{3})\b/gm)].map((m) => m[1]);
     expect(documented).toEqual(DIAGNOSTIC_CATALOGUE.map((e) => e.code));
     for (const e of DIAGNOSTIC_CATALOGUE) {
       const section = doc.slice(doc.indexOf(`### ${e.code}`)).split(/\n### /)[0]!;
-      expect(section, e.code).toContain('**Fix.**');
+      expect(section, e.code).toContain(`**Why.** ${e.why}`);
+      expect(section, e.code).toContain(`**Fix.** ${e.fix}`);
     }
   });
 
@@ -171,7 +180,7 @@ describe('the code catalogue', () => {
     }
     expect([...used]).toEqual(expect.arrayContaining([
       'BUILD-801', 'BUILD-805', 'BUILD-806', 'BUILD-807', 'BUILD-808',
-      'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819',
+      'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819', 'BUILD-820', 'BUILD-821', 'BUILD-822',
     ]));
     for (const code of used) expect(catalogued.has(code), code).toBe(true);
     // Every walker report names a code: no warnDegraded call without one.
@@ -264,7 +273,7 @@ describe('BUILD-606', () => {
     const lines: string[] = [];
     vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => { lines.push(args.join(' ')); });
     // A directory where the entry should be: reading it throws inside the
-    // compiler, which falls back to a placeholder, as at 0.3.6.
+    // compiler, which cannot supply a native product and refuses publication.
     const { result, diagnostics } = collectDiagnostics(() => generateRealIr(CORPUS));
     expect(result).toBeNull();
     expect(diagnostics.map((d) => d.code)).toEqual(['BUILD-606']);
@@ -326,9 +335,9 @@ describe('retired fallback source forms remain unconditional refusals',()=>{
     const {diagnostics}=compile(dir);
     expect(reportedAndExpected(dir,diagnostics).reported).toEqual(reportedAndExpected(dir,diagnostics).expected);
     const errors=await strictBuild(dir,false);
-    expect(errors).toHaveLength(1);expect(errors[0]!.text).toMatch(/^BUILD-610 /);
+    expect(errors.map(error => error.id).sort()).toEqual([...new Set(diagnostics.filter(d => d.strict).map(d => d.code))].sort());
     const expected=markers(dir,'BUILD-610')[0]!;
-    expect(errors[0]!.location).toMatchObject({file:expected.file,line:expected.line});
+    expect(errors.find(error => error.id === 'BUILD-610')!.location).toMatchObject({file:expected.file,line:expected.line});
   });
 });
 
@@ -339,9 +348,8 @@ describe('unresolved scalar text refuses without strict mode', () => {
     const { diagnostics } = compile(dir);
     expect(reportedAndExpected(dir, diagnostics).reported).toEqual(reportedAndExpected(dir, diagnostics).expected);
     const errors = await strictBuild(dir, false);
-    expect(errors).toHaveLength(1);
-    expect(errors[0]!.text).toMatch(/^BUILD-610 /);
+    expect(errors.map(error => error.id)).toEqual(['BUILD-301', 'BUILD-610']);
     const expected = markers(dir, 'BUILD-610')[0]!;
-    expect(errors[0]!.location).toMatchObject({ file: expected.file, line: expected.line });
+    expect(errors.find(error => error.id === 'BUILD-610')!.location).toMatchObject({ file: expected.file, line: expected.line });
   });
 });

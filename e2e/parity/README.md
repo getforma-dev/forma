@@ -4,7 +4,7 @@ One tree, three implementations: the Rust walker writes HTML, `h()` in `@getform
 DOM, strict adoption compares them. This lane keeps them equal by test: for every corpus module
 and generated state, the server's HTML parsed by a real browser against core's render of the same
 state (P1), adoption making zero mutation records (P2), a transition equal to a fresh server
-render (P3, not yet). It runs non-blocking in CI and is ratcheted up; this file says what is here
+render (P3). It runs non-blocking in CI and is ratcheted up; this file says what is here
 now and the rules it runs by.
 
 ## What is here
@@ -17,14 +17,16 @@ now and the rules it runs by.
 | `src/server.mts` | Drives `crates/forma-server/examples/parity_render.rs` (built once by cargo, then run directly): `describe`, the low-level `render`, and `typed`, the application's path for a batch of modules. |
 | `src/manifest.mts` | A schema-2 manifest around one module, with the boot as the route's script and SHA-384 integrity for both. |
 | `src/bundle.mts` | The twin (the page function) and the production entry (`app.ts` through the compiler's `formaSsrPlugin`, as `@getforma/build` builds a page); the entry's `.ir` must be the committed module. |
-| `src/boot.mts` | The one script the served document loads: serializes the served root, runs P2, renders and serializes the twin. |
-| `src/browser.mts` | One Chromium page, a fresh Document per state, every URL fulfilled by `page.route` (no port). |
+| `src/boot.mts` | The one script the served document loads: serializes the served root, runs P2, moves the page with the module's setter and serializes it again (P3), renders and serializes the twin. |
+| `src/island-emitter.mts` | Rebuilds the island-emitter family's sources from the compiler's own test (its syntax tree, never executed). |
+| `src/browser.mts` | One page in Chromium, Firefox or WebKit, a fresh Document per state, every URL fulfilled by `page.route` (no port). |
 | `src/suite.mts` | The pipeline: prepare, serve, browse, report. |
 | `src/expected.mts`, `expected-divergent.json` | Known divergences as data, and the unexpected-pass rule. |
 | `src/run.mts` | The suite over the corpus: totals, structural classes, wall time by phase, the verdict. |
-| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 owns the public form. |
-| `corpus.json` | Step 0: the 14 js-emitter modules. |
-| `tests/` | `node --test`: the generator, the comparison and the expected list on hand-written cases; the serializer against Chromium's parser; the server half, including the typed path and its refusal table; `renderBoth` and the suite end to end, including seeded server changes that P1 and P2 must report. |
+| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 adds the internal explicit-state form. |
+| `corpus.json` | Step 0: the 14 js-emitter modules; step 1: the props-contract page, the P3 fixture and the island-emitter family. |
+| `fixtures/transition/` | The P3 fixture: one island seeded from declared props, whose module exports the setter. |
+| `tests/` | `node --test`: the generator, the comparison and the expected list on hand-written cases; the serializer against Chromium's parser; the server half, including the typed path and its refusal table; `renderBoth` and the suite end to end, including seeded server changes that P1 and P2 must report; step 1, the family's exact rebuild, P3 equal state after state and P3 failing on a wrong setter (`tests/fixtures/transition-off-by-one/`). |
 
 ## Run
 
@@ -36,8 +38,8 @@ node --test "e2e/parity/tests/*.test.mts"
 
 # the suite over the corpus, as CI's non-blocking `parity` job runs it; exit 0 when every
 # difference is expected and every expected difference occurred
-node e2e/parity/src/run.mts [--states 10] [--seed forma-183] [--module nested-islands ...]
-                            [--engine chromium|firefox|webkit] [--low-level] [--report out.jsonl]
+node e2e/parity/src/run.mts [--step 1] [--states 10] [--seed forma-183] [--module nested-islands ...]
+                            [--browser chromium|firefox|webkit] [--low-level] [--report out.jsonl]
 
 # one module at one state: P1, and P2 for a page with islands; exit 0 equal, 1 different,
 # 2 refused or harness error
@@ -166,7 +168,8 @@ counts, the holder count, both canonical trees, the server's document and, when 
 the compiler's diagnostics for the page (BUILD-206 often explains an attribute the server omits).
 The suite's summary totals the holder count over the run. A page error, console error or policy
 violation during the render, or a twin core cannot build, is an `error`, never a pass and never a
-throw.
+throw. Its error test renders the archived pre-F1 `list-same-source` page through the
+`renderBoth` page seam; the current corpus uses a function source under BUILD-616.
 
 ## Expected divergence
 
@@ -181,29 +184,36 @@ report is `expected-divergent` only when every difference in it is matched. The 
 skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
 run as an unexpected pass, so the entry is removed the day its fix lands.
 
-The entries today, each found at step 0 and assigned by the lead:
+The recorded findings (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
-| F1 | `list-same-source`: the source passes a plain array to `createList`, which core 3.0 calls as an accessor (`items is not a function`) | P1 error | FORMA-181, after checkpoint C: the compiler refuses a non-function list source with a code |
-| F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
-| F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
 
-F4 can never become equal: the server has no value to write. In warning mode the compiler reports
-BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
-(`docs/DIAGNOSTICS.md`; DR-1's release-A bridge). DR-1 makes strict the only mode in release B
-(3.0.0, FORMA-101), where BUILD-206 is a build error. The difference then ends because the page no
-longer compiles, not because the trees agree; the corpus fixture has to move the attribute behind
-`browserOnly()` or drop it, and the entry fails the run as an unexpected pass.
+F1, F2, F3 and F6 are resolved by the integrated list-source, attribute-value and
+keyed-adoption changes. F4's original unknown getter is preserved byte-exact in
+[the strict corpus archive](../../docs/archive/FORMA-101-strict-corpus/README.md)
+and tested as a source-located BUILD-206 publication refusal even with
+`strict:false`. The admitted live page uses a closed `createSignal('/docs')`;
+the real compiler/native renderer and browser now agree on its actual href.
+The preceding run proved the old F4 entry an unexpected pass before its removal.
+The duplicate-name scopes original similarly remains a BUILD-503 refusal, while
+the live page uses `panelCount` and preserves its actual defaults. Corpus emission
+requires zero error diagnostics. The integrated FORMA-016 text-branch fix also
+resolves F5; its earlier unexpected-pass report is preserved. With both fixes
+present, `expected-divergent.json` is empty and every live case must agree.
+
+Checkpoint C resolves F6: the merged integration run on 2026-10-15 observed both canonical-key adoption entries as unexpected passes, with all 99 P2 checks equal. The two resolved entries were removed; the original failure report is preserved in the release work evidence.
+
+The F2/F3 attribute fixes were verified against the expanded 28-module corpus on 2026-10-15: all six listed entries became unexpected passes. Their removal leaves only F4 and F5; the original failing expectation report is preserved in the release work evidence.
 
 ## The corpus and its ratchet
 
 | Step | Modules | States each | When |
 |---|---|---|---|
 | 0 | the 14 js-emitter modules | 10 for `nested-islands`, the one module with declared page props; 1 for the other 13 (their source state) | now, non-blocking |
-| 1 | + the props-contract page (nine fields, every type) and the 11 island-emitter fixtures | 10 | before the switch to blocking |
-| 2 | the same | 100 | after the switch, measured |
+| 1 | + the props-contract page (nine fields, every type), the 12 island-emitter fixtures (all but `browser`, a browserOnly island whose server host is empty by design) and the P3 fixture: 28 modules | 10 (Firefox and WebKit, per release); 100 (Chromium, per merge, measured) | now, non-blocking |
+| 2 | the same | 100 | after the switch |
 | 3 | + FORMA-188's fixture applications and consumer-shaped pages, as they land (nothing is copied out of an application repository: L-54, DR-34) | 100 | FORMA-188 |
 
 The corpus sources are read where they are (`packages/compiler/tests/fixtures/ir-corpus/`);
@@ -218,6 +228,17 @@ classes (both in `dynamic-attrs`); 0 holder-ambiguous positions. On CI's `parity
 4.3 s with a warm Rust cache and 14.5 s cold (building the example dominates); the whole job,
 installs and builds included, took 1m22s.
 
+**Step 1, 2026-10-15:** 28 modules. At 10 states (118 states): P1 104 equal and 14
+expected-divergent, P2 98 equal and 1 expected-divergent, P3 10 equal (the fixture's transitions)
+and 27 `no-setter`; the same in Firefox and WebKit. At 100 states (1,018 states): P1 908 equal and
+110 expected-divergent, P2 877 and 32, P3 100 equal and 27 `no-setter`; 2 structural classes; 314
+holder-ambiguous positions; every module on the typed path. Locally 72 s for the 1,018 states in
+Chromium (about 70 ms a state); on CI's `e2e-engines` jobs step 1 at 10 states runs in 34 s in
+Firefox and in WebKit. CI's figure for the per-merge job at 100 states is in the ticket. The new entries: F2's case in
+`nullish` and `closed-nullish`; F5, `props-contract`'s `createShow` branch that returns a string
+(core throws, the walker renders the text; FORMA-016); F6, `aggregate-fallback`'s keys that hold CR
+or NUL (adoption compares the raw key, not the rule-1 key text; FORMA-181 checkpoint C).
+
 ## The stop rule
 
 A **structural class** is the set of structural differences sharing (module, path without its
@@ -230,7 +251,29 @@ against the walker or core.
 
 ## Not here yet
 
-P3 (a transition through a module-exported setter named in `corpus.json`; modules without one
-report `P3: no-setter`), the key check against the expected key text (with FORMA-181 checkpoint
-B), step 1 of the corpus, `--engine` runs in Firefox and WebKit per release, the ratchet to 100
-states, and the switch to blocking.
+The key check against the expected key text (`data-forma-key` is lifted from the server tree; the
+expected text per row is FORMA-181's `canonicalKeyText` once rows are mapped to their list), the
+switch to blocking (when step 1's expected list is empty for P1 and P2), and step 3's fixture
+applications (FORMA-188).
+
+## Render one component at an explicit state (Forma-internal)
+
+`src/test-utils.mts` exports `renderBoth(component, state, options?)` for tests in this repository.
+The component is a name from `corpus.json` or a `CorpusEntry` source descriptor; the helper compiles
+that entry and renders the exact JSON state through the typed Rust renderer and core in a browser.
+It returns the P1 report, including `server.tree`, `client.tree`, native HTML and any first difference
+or refusal. It does not apply expected-divergent exemptions. The suite separately checks P2 and P3.
+
+```ts
+import { renderBoth } from './src/test-utils.mts';
+const report = await renderBoth('nested-islands', {
+  panelClass: 'panel', badgeTitle: 'a specific regression',
+});
+assert.equal(report.verdict, 'equal');
+assert.deepEqual(report.server.tree, report.client.tree);
+```
+
+Chromium is the default; `options.engine` selects another engine and `options.browser` reuses a
+caller-owned browser without closing it. The helper closes browsers it creates, including on
+failure. `renderBoth` is not a supported `@getforma/core` export (Q11, L-57, FORMA-184).
+FORMA-016 verification on the expanded corpus removes F5 only after an actual unexpected pass: all 28 typed modules and 118 states complete, with props-contract text branches agreeing. Historical step-1 findings above remain the discovery record.
