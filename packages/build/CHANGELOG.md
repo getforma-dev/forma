@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Legacy import warning — FORMA-141
+
+- `formaAlias` still resolves bare `formajs` imports throughout 3.x. Each `build()`
+  call now warns once, on the console and in its result, listing the importing
+  source files and `@getforma/core` replacement. Subpaths, TypeScript-only imports
+  and re-exports are covered; duplicate imports and both identity passes share
+  one warning. No legacy import means no warning.
+
 ### Mandatory SSR admission — FORMA-101
 
 - Default SSR, legacy false flags and direct compiler builds all refuse unsupported native constructs. Complete per-entry diagnostic reports use error severity; failed production and watch cycles preserve the prior product. The published subset and catalogue live at `packages/compiler/docs/subset.md`.

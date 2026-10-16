@@ -1,0 +1,1967 @@
+{
+  "contract": "INV1 ASCII names, no on* attributes, raw-NUL refusal and conservative case-insensitive URL prefixes; see docs/INV1.md",
+  "names": [
+    {
+      "id": "ascii",
+      "name": "data-safe",
+      "valid": true,
+      "written": true
+    },
+    {
+      "id": "case",
+      "name": "viewBox",
+      "valid": true,
+      "written": true
+    },
+    {
+      "id": "underscore",
+      "name": "_private",
+      "valid": true,
+      "written": true
+    },
+    {
+      "id": "colon",
+      "name": "xml:lang",
+      "valid": true,
+      "written": true
+    },
+    {
+      "id": "dot",
+      "name": "data.v",
+      "valid": true,
+      "written": true
+    },
+    {
+      "id": "dash",
+      "name": "aria-label",
+      "valid": true,
+      "written": true
+    },
+    {
+      "id": "xlink",
+      "name": "xlink:href",
+      "valid": true,
+      "written": true
+    },
+    {
+      "id": "unicode",
+      "name": "café",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "unicode-start",
+      "name": "Δelta",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "empty",
+      "name": "",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "digit",
+      "name": "2leading",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "dash-start",
+      "name": "-leading",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "dot-start",
+      "name": ".leading",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "space",
+      "name": "foo bar",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "double-quote",
+      "name": "foo\"bar",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "single-quote",
+      "name": "foo'bar",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "equals",
+      "name": "foo=bar",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "open",
+      "name": "foo<bar",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "close",
+      "name": "foo>bar",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "slash",
+      "name": "a/b",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "newline",
+      "name": "href\n",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "nul",
+      "name": "safe\u0000name",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "handler",
+      "name": "onclick",
+      "valid": true,
+      "written": false
+    },
+    {
+      "id": "handler-case",
+      "name": "ONCLICK",
+      "valid": true,
+      "written": false
+    },
+    {
+      "id": "on-prefix",
+      "name": "only",
+      "valid": true,
+      "written": false
+    },
+    {
+      "id": "two-char-on",
+      "name": "on",
+      "valid": true,
+      "written": false
+    },
+    {
+      "id": "xlink-empty",
+      "name": "xlink:",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "xlink-double-colon",
+      "name": "xlink:foo:bar",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "xlink-digit",
+      "name": "xlink:2name",
+      "valid": false,
+      "written": false
+    },
+    {
+      "id": "xlink-dash",
+      "name": "xlink:-name",
+      "valid": false,
+      "written": false
+    }
+  ],
+  "urlAttributes": [
+    "href",
+    "src",
+    "action",
+    "formaction",
+    "xlink:href",
+    "poster",
+    "background",
+    "data"
+  ],
+  "urls": [
+    {
+      "id": "href-script",
+      "tag": "a",
+      "name": "href",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-script-case",
+      "tag": "a",
+      "name": "href",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-tab",
+      "tag": "a",
+      "name": "href",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-newline",
+      "tag": "a",
+      "name": "href",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-space",
+      "tag": "a",
+      "name": "href",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-c0",
+      "tag": "a",
+      "name": "href",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-del",
+      "tag": "a",
+      "name": "href",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-c1",
+      "tag": "a",
+      "name": "href",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-vb",
+      "tag": "a",
+      "name": "href",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "href-html",
+      "tag": "a",
+      "name": "href",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "href-script-prefix",
+      "tag": "a",
+      "name": "href",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "href-vb-prefix",
+      "tag": "a",
+      "name": "href",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "href-html-prefix",
+      "tag": "a",
+      "name": "href",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "href-raw-nul-relative",
+      "tag": "a",
+      "name": "href",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "href-raw-nul-scheme",
+      "tag": "a",
+      "name": "href",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "href-relative",
+      "tag": "a",
+      "name": "href",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "href-nested",
+      "tag": "a",
+      "name": "href",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "href-query",
+      "tag": "a",
+      "name": "href",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "href-fragment",
+      "tag": "a",
+      "name": "href",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "href-mailto",
+      "tag": "a",
+      "name": "href",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "href-png",
+      "tag": "a",
+      "name": "href",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "href-nbsp",
+      "tag": "a",
+      "name": "href",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "href-replacement",
+      "tag": "a",
+      "name": "href",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "href-empty",
+      "tag": "a",
+      "name": "href",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "src-script",
+      "tag": "img",
+      "name": "src",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-script-case",
+      "tag": "img",
+      "name": "src",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-tab",
+      "tag": "img",
+      "name": "src",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-newline",
+      "tag": "img",
+      "name": "src",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-space",
+      "tag": "img",
+      "name": "src",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-c0",
+      "tag": "img",
+      "name": "src",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-del",
+      "tag": "img",
+      "name": "src",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-c1",
+      "tag": "img",
+      "name": "src",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-vb",
+      "tag": "img",
+      "name": "src",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "src-html",
+      "tag": "img",
+      "name": "src",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "src-script-prefix",
+      "tag": "img",
+      "name": "src",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "src-vb-prefix",
+      "tag": "img",
+      "name": "src",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "src-html-prefix",
+      "tag": "img",
+      "name": "src",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "src-raw-nul-relative",
+      "tag": "img",
+      "name": "src",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "src-raw-nul-scheme",
+      "tag": "img",
+      "name": "src",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "src-relative",
+      "tag": "img",
+      "name": "src",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "src-nested",
+      "tag": "img",
+      "name": "src",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "src-query",
+      "tag": "img",
+      "name": "src",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "src-fragment",
+      "tag": "img",
+      "name": "src",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "src-mailto",
+      "tag": "img",
+      "name": "src",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "src-png",
+      "tag": "img",
+      "name": "src",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "src-nbsp",
+      "tag": "img",
+      "name": "src",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "src-replacement",
+      "tag": "img",
+      "name": "src",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "src-empty",
+      "tag": "img",
+      "name": "src",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "action-script",
+      "tag": "form",
+      "name": "action",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-script-case",
+      "tag": "form",
+      "name": "action",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-tab",
+      "tag": "form",
+      "name": "action",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-newline",
+      "tag": "form",
+      "name": "action",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-space",
+      "tag": "form",
+      "name": "action",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-c0",
+      "tag": "form",
+      "name": "action",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-del",
+      "tag": "form",
+      "name": "action",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-c1",
+      "tag": "form",
+      "name": "action",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-vb",
+      "tag": "form",
+      "name": "action",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "action-html",
+      "tag": "form",
+      "name": "action",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "action-script-prefix",
+      "tag": "form",
+      "name": "action",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "action-vb-prefix",
+      "tag": "form",
+      "name": "action",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "action-html-prefix",
+      "tag": "form",
+      "name": "action",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "action-raw-nul-relative",
+      "tag": "form",
+      "name": "action",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "action-raw-nul-scheme",
+      "tag": "form",
+      "name": "action",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "action-relative",
+      "tag": "form",
+      "name": "action",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "action-nested",
+      "tag": "form",
+      "name": "action",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "action-query",
+      "tag": "form",
+      "name": "action",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "action-fragment",
+      "tag": "form",
+      "name": "action",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "action-mailto",
+      "tag": "form",
+      "name": "action",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "action-png",
+      "tag": "form",
+      "name": "action",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "action-nbsp",
+      "tag": "form",
+      "name": "action",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "action-replacement",
+      "tag": "form",
+      "name": "action",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "action-empty",
+      "tag": "form",
+      "name": "action",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "formaction-script",
+      "tag": "button",
+      "name": "formaction",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-script-case",
+      "tag": "button",
+      "name": "formaction",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-tab",
+      "tag": "button",
+      "name": "formaction",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-newline",
+      "tag": "button",
+      "name": "formaction",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-space",
+      "tag": "button",
+      "name": "formaction",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-c0",
+      "tag": "button",
+      "name": "formaction",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-del",
+      "tag": "button",
+      "name": "formaction",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-c1",
+      "tag": "button",
+      "name": "formaction",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-vb",
+      "tag": "button",
+      "name": "formaction",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-html",
+      "tag": "button",
+      "name": "formaction",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "formaction-script-prefix",
+      "tag": "button",
+      "name": "formaction",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "formaction-vb-prefix",
+      "tag": "button",
+      "name": "formaction",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "formaction-html-prefix",
+      "tag": "button",
+      "name": "formaction",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "formaction-raw-nul-relative",
+      "tag": "button",
+      "name": "formaction",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "formaction-raw-nul-scheme",
+      "tag": "button",
+      "name": "formaction",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "formaction-relative",
+      "tag": "button",
+      "name": "formaction",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "formaction-nested",
+      "tag": "button",
+      "name": "formaction",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "formaction-query",
+      "tag": "button",
+      "name": "formaction",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "formaction-fragment",
+      "tag": "button",
+      "name": "formaction",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "formaction-mailto",
+      "tag": "button",
+      "name": "formaction",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "formaction-png",
+      "tag": "button",
+      "name": "formaction",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "formaction-nbsp",
+      "tag": "button",
+      "name": "formaction",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "formaction-replacement",
+      "tag": "button",
+      "name": "formaction",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "formaction-empty",
+      "tag": "button",
+      "name": "formaction",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "xlink:href-script",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-script-case",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-tab",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-newline",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-space",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-c0",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-del",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-c1",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-vb",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-html",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "xlink:href-script-prefix",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "xlink:href-vb-prefix",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "xlink:href-html-prefix",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "xlink:href-raw-nul-relative",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "xlink:href-raw-nul-scheme",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "xlink:href-relative",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "xlink:href-nested",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "xlink:href-query",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "xlink:href-fragment",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "xlink:href-mailto",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "xlink:href-png",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "xlink:href-nbsp",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "xlink:href-replacement",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "xlink:href-empty",
+      "tag": "use",
+      "name": "xlink:href",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "poster-script",
+      "tag": "video",
+      "name": "poster",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-script-case",
+      "tag": "video",
+      "name": "poster",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-tab",
+      "tag": "video",
+      "name": "poster",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-newline",
+      "tag": "video",
+      "name": "poster",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-space",
+      "tag": "video",
+      "name": "poster",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-c0",
+      "tag": "video",
+      "name": "poster",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-del",
+      "tag": "video",
+      "name": "poster",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-c1",
+      "tag": "video",
+      "name": "poster",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-vb",
+      "tag": "video",
+      "name": "poster",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "poster-html",
+      "tag": "video",
+      "name": "poster",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "poster-script-prefix",
+      "tag": "video",
+      "name": "poster",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "poster-vb-prefix",
+      "tag": "video",
+      "name": "poster",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "poster-html-prefix",
+      "tag": "video",
+      "name": "poster",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "poster-raw-nul-relative",
+      "tag": "video",
+      "name": "poster",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "poster-raw-nul-scheme",
+      "tag": "video",
+      "name": "poster",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "poster-relative",
+      "tag": "video",
+      "name": "poster",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "poster-nested",
+      "tag": "video",
+      "name": "poster",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "poster-query",
+      "tag": "video",
+      "name": "poster",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "poster-fragment",
+      "tag": "video",
+      "name": "poster",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "poster-mailto",
+      "tag": "video",
+      "name": "poster",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "poster-png",
+      "tag": "video",
+      "name": "poster",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "poster-nbsp",
+      "tag": "video",
+      "name": "poster",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "poster-replacement",
+      "tag": "video",
+      "name": "poster",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "poster-empty",
+      "tag": "video",
+      "name": "poster",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "background-script",
+      "tag": "body",
+      "name": "background",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-script-case",
+      "tag": "body",
+      "name": "background",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-tab",
+      "tag": "body",
+      "name": "background",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-newline",
+      "tag": "body",
+      "name": "background",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-space",
+      "tag": "body",
+      "name": "background",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-c0",
+      "tag": "body",
+      "name": "background",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-del",
+      "tag": "body",
+      "name": "background",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-c1",
+      "tag": "body",
+      "name": "background",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-vb",
+      "tag": "body",
+      "name": "background",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "background-html",
+      "tag": "body",
+      "name": "background",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "background-script-prefix",
+      "tag": "body",
+      "name": "background",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "background-vb-prefix",
+      "tag": "body",
+      "name": "background",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "background-html-prefix",
+      "tag": "body",
+      "name": "background",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "background-raw-nul-relative",
+      "tag": "body",
+      "name": "background",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "background-raw-nul-scheme",
+      "tag": "body",
+      "name": "background",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "background-relative",
+      "tag": "body",
+      "name": "background",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "background-nested",
+      "tag": "body",
+      "name": "background",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "background-query",
+      "tag": "body",
+      "name": "background",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "background-fragment",
+      "tag": "body",
+      "name": "background",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "background-mailto",
+      "tag": "body",
+      "name": "background",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "background-png",
+      "tag": "body",
+      "name": "background",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "background-nbsp",
+      "tag": "body",
+      "name": "background",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "background-replacement",
+      "tag": "body",
+      "name": "background",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "background-empty",
+      "tag": "body",
+      "name": "background",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "data-script",
+      "tag": "object",
+      "name": "data",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-script-case",
+      "tag": "object",
+      "name": "data",
+      "value": "JaVaScRiPt:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-tab",
+      "tag": "object",
+      "name": "data",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-newline",
+      "tag": "object",
+      "name": "data",
+      "value": "java\nscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-space",
+      "tag": "object",
+      "name": "data",
+      "value": "java script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-c0",
+      "tag": "object",
+      "name": "data",
+      "value": "\u0001javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-del",
+      "tag": "object",
+      "name": "data",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-c1",
+      "tag": "object",
+      "name": "data",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-vb",
+      "tag": "object",
+      "name": "data",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "data-html",
+      "tag": "object",
+      "name": "data",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "data-script-prefix",
+      "tag": "object",
+      "name": "data",
+      "value": "javascript-guide",
+      "written": false
+    },
+    {
+      "id": "data-vb-prefix",
+      "tag": "object",
+      "name": "data",
+      "value": "vbscript-guide",
+      "written": false
+    },
+    {
+      "id": "data-html-prefix",
+      "tag": "object",
+      "name": "data",
+      "value": "data:text/htmlx,hello",
+      "written": false
+    },
+    {
+      "id": "data-raw-nul-relative",
+      "tag": "object",
+      "name": "data",
+      "value": "/assets/a\u0000.png",
+      "written": false
+    },
+    {
+      "id": "data-raw-nul-scheme",
+      "tag": "object",
+      "name": "data",
+      "value": "java\u0000script:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-relative",
+      "tag": "object",
+      "name": "data",
+      "value": "/relative/javascript-guide",
+      "written": true
+    },
+    {
+      "id": "data-nested",
+      "tag": "object",
+      "name": "data",
+      "value": "https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "data-query",
+      "tag": "object",
+      "name": "data",
+      "value": "?q=vbscript",
+      "written": true
+    },
+    {
+      "id": "data-fragment",
+      "tag": "object",
+      "name": "data",
+      "value": "#javascript",
+      "written": true
+    },
+    {
+      "id": "data-mailto",
+      "tag": "object",
+      "name": "data",
+      "value": "mailto:a@example.test",
+      "written": true
+    },
+    {
+      "id": "data-png",
+      "tag": "object",
+      "name": "data",
+      "value": "data:image/png;base64,aA==",
+      "written": true
+    },
+    {
+      "id": "data-nbsp",
+      "tag": "object",
+      "name": "data",
+      "value": "java script:alert(1)",
+      "written": true
+    },
+    {
+      "id": "data-replacement",
+      "tag": "object",
+      "name": "data",
+      "value": "/assets/a�.png",
+      "written": true
+    },
+    {
+      "id": "data-empty",
+      "tag": "object",
+      "name": "data",
+      "value": "",
+      "written": true
+    },
+    {
+      "id": "svg-img-href",
+      "tag": "img",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-img-src",
+      "tag": "img",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-img-data",
+      "tag": "img",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-image-href",
+      "tag": "image",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-image-src",
+      "tag": "image",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-image-data",
+      "tag": "image",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-video-href",
+      "tag": "video",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-video-src",
+      "tag": "video",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-video-data",
+      "tag": "video",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-audio-href",
+      "tag": "audio",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-audio-src",
+      "tag": "audio",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-audio-data",
+      "tag": "audio",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-source-href",
+      "tag": "source",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-source-src",
+      "tag": "source",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-source-data",
+      "tag": "source",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-body-href",
+      "tag": "body",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-body-src",
+      "tag": "body",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-body-data",
+      "tag": "body",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-table-href",
+      "tag": "table",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-table-src",
+      "tag": "table",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-table-data",
+      "tag": "table",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-thead-href",
+      "tag": "thead",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-thead-src",
+      "tag": "thead",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-thead-data",
+      "tag": "thead",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tbody-href",
+      "tag": "tbody",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tbody-src",
+      "tag": "tbody",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tbody-data",
+      "tag": "tbody",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tfoot-href",
+      "tag": "tfoot",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tfoot-src",
+      "tag": "tfoot",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tfoot-data",
+      "tag": "tfoot",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tr-href",
+      "tag": "tr",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tr-src",
+      "tag": "tr",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-tr-data",
+      "tag": "tr",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-td-href",
+      "tag": "td",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-td-src",
+      "tag": "td",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-td-data",
+      "tag": "td",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-th-href",
+      "tag": "th",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-th-src",
+      "tag": "th",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-th-data",
+      "tag": "th",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": true
+    },
+    {
+      "id": "svg-iframe-href",
+      "tag": "iframe",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-iframe-src",
+      "tag": "iframe",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-iframe-data",
+      "tag": "iframe",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-object-href",
+      "tag": "object",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-object-src",
+      "tag": "object",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-object-data",
+      "tag": "object",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-a-href",
+      "tag": "a",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-a-src",
+      "tag": "a",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-a-data",
+      "tag": "a",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-use-href",
+      "tag": "use",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-use-src",
+      "tag": "use",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-use-data",
+      "tag": "use",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-div-href",
+      "tag": "div",
+      "name": "href",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-div-src",
+      "tag": "div",
+      "name": "src",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "svg-div-data",
+      "tag": "div",
+      "name": "data",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "uppercase-name",
+      "tag": "A",
+      "name": "HREF",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "data-twin",
+      "tag": "div",
+      "name": "data-href",
+      "value": "javascript:alert(1)",
+      "written": true
+    },
+    {
+      "id": "ordinary-url-text",
+      "tag": "div",
+      "name": "title",
+      "value": "javascript:alert(1)",
+      "written": true
+    }
+  ],
+  "payloads": [
+    {
+      "value": "<script>alert(1)</script>",
+      "text": "&lt;script&gt;alert(1)&lt;/script&gt;",
+      "attribute": "&lt;script&gt;alert(1)&lt;/script&gt;"
+    },
+    {
+      "value": "\"><img src=x onerror=alert(1)>",
+      "text": "\"&gt;&lt;img src=x onerror=alert(1)&gt;",
+      "attribute": "&quot;&gt;&lt;img src=x onerror=alert(1)&gt;"
+    },
+    {
+      "value": "' onfocus='alert(1)",
+      "text": "' onfocus='alert(1)",
+      "attribute": "' onfocus='alert(1)"
+    },
+    {
+      "value": "&lt;script&gt;alert(1)&lt;/script&gt;",
+      "text": "&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;",
+      "attribute": "&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;"
+    },
+    {
+      "value": "</textarea><script>alert(1)</script>",
+      "text": "&lt;/textarea&gt;&lt;script&gt;alert(1)&lt;/script&gt;",
+      "attribute": "&lt;/textarea&gt;&lt;script&gt;alert(1)&lt;/script&gt;"
+    }
+  ]
+}

@@ -52,6 +52,7 @@ const CASES = {
   select: 'island',
   'edited-controls': 'island',
   'ledger-arrival': 'island',
+  'keyed-moves': 'island',
   'browser-only': 'island',
 } as const;
 type CaseName = keyof typeof CASES;
@@ -284,7 +285,7 @@ test.describe('root-fragment', () => {
   });
 });
 
-// ── textarea and title: RCDATA (audit verification run 2) ─────────────────
+// ── textarea: RCDATA (audit verification run 2) ───────────────────────────
 
 test.describe('textarea-child', () => {
   test('textarea-child: before JavaScript the value and FormData are "hello"', async ({ browser }) => {
@@ -356,27 +357,37 @@ test.describe('textarea-value', () => {
   });
 });
 
+// FORMA-139: document metadata is owned by the server renderer. The original
+// body title and its assertions remain authenticated in the migration archive.
 test.describe('title', () => {
-  test('title: before JavaScript the element text is "hello"', async ({ browser }) => {
+  test('title: the server owns one head title before JavaScript', async ({ browser }) => {
     const noJs = await openWithoutJs(browser, '/title/');
     await expectServerRendered(noJs.page);
-    const text = await noJs.page.locator('#title-host > title#tt').textContent();
+    await expect(noJs.page.locator('head > title')).toHaveCount(1);
+    await expect(noJs.page.locator('body title')).toHaveCount(0);
+    await expect(noJs.page.locator('#heading')).toHaveText('hello');
+    expect(await noJs.page.title()).toBe('Server-owned fixture title');
     await noJs.close();
-    expect(text, "the server's value is in the element").toContain('hello');
-
-    // Fixed by FORMA-002 (DR-7 b): no f: markers inside RCDATA parents.
-    // Before it, the element's text was `<!--f:t0-->hello<!--/f:t0-->`.
-    expect(text).toBe('hello');
   });
 
-  test('title: after activation the element text follows the signal; document.title stays the page title', async ({ page }) => {
+  test('title: an adopted heading updates without changing server metadata', async ({ page }) => {
     await openActivated(page, 'title');
-    await expect(page.locator('#tt')).toHaveText('hello', SETTLE);
+    await expect(page.locator('#heading')).toHaveText('hello', SETTLE);
     await page.click('#update');
-    await expect(page.locator('#tt')).toHaveText('updated', SETTLE);
-    // render_page writes the page's <title> into <head> first, so a
-    // component's <title> never becomes the document title.
-    expect(await page.title()).toBe('Forma SSR fixture');
+    await expect(page.locator('#heading')).toHaveText('updated', SETTLE);
+    await expect(page.locator('head > title')).toHaveCount(1);
+    await expect(page.locator('body title')).toHaveCount(0);
+    expect(await page.title()).toBe('Server-owned fixture title');
+  });
+
+  test('title: the Browser shell owns the same metadata while its heading updates', async ({ page }) => {
+    await openClientRendered(page, 'title');
+    await expect(page.locator('#heading')).toHaveText('hello', SETTLE);
+    await page.click('#update');
+    await expect(page.locator('#heading')).toHaveText('updated', SETTLE);
+    await expect(page.locator('head > title')).toHaveCount(1);
+    await expect(page.locator('body title')).toHaveCount(0);
+    expect(await page.title()).toBe('Server-owned fixture title');
   });
 });
 
@@ -553,4 +564,48 @@ test.describe('browser-only', () => {
     await expect(page.locator('#chart-caption')).toHaveText('Sales: 3 points');
     await expect(page.locator('#report-title')).toHaveText('Quarterly report');
   });
+});
+
+
+// FORMA-181 D: unlike the low-level core seam, these bytes come from the current compiler,
+// typed Rust Pages handler and full browser entry. No registration or state is hand-authored.
+test('keyed-moves: typed server rows adopt with zero writes and a focused row moves without losing its listeners', async ({ page }) => {
+  const errors = watchErrors(page);
+  const held = await openHeld(page, 'keyed-moves');
+  const before = await page.evaluate(() => {
+    const host = document.querySelector('#keyed-rows')!;
+    const rows = [...host.querySelectorAll('li')];
+    const input = rows[0]!.querySelector('input')!;
+    input.focus(); input.setSelectionRange(1, 4, 'backward');
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver(batch => records.push(...batch));
+    observer.observe(host, { subtree: true, childList: true, characterData: true, attributes: true });
+    Object.assign(window as any, { keyedProduct: { rows, input, records, observer } });
+    const state = JSON.parse(document.querySelector('script[data-island-state]')!.textContent!);
+    return { keys: rows.map(row => row.getAttribute('data-forma-key')), values: rows.map(row => row.querySelector('input')!.value), state: state.i.map((entry: any) => entry.p) };
+  });
+  expect(before).toEqual({ keys: ['alpha', 'beta', 'gamma'], values: ['Alpha', 'Beta', 'Gamma'], state: [{ rows: [{ id: 'alpha', label: 'Alpha' }, { id: 'beta', label: 'Beta' }, { id: 'gamma', label: 'Gamma' }] }] });
+  await held.activate();
+  const adopted = await page.evaluate(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const state = (window as any).keyedProduct;
+    state.records.push(...state.observer.takeRecords());
+    const records = state.records.length; state.records.length = 0;
+    return { records, focused: document.activeElement === state.input, selection: [state.input.selectionStart, state.input.selectionEnd, state.input.selectionDirection], retained: [...document.querySelectorAll('#keyed-rows li')].every((node, i) => node === state.rows[i]) };
+  });
+  expect(adopted).toEqual({ records: 0, focused: true, selection: [1, 4, 'backward'], retained: true });
+  await page.keyboard.press('F2');
+  const moved = await page.evaluate(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const state = (window as any).keyedProduct;
+    state.records.push(...state.observer.takeRecords()); state.observer.disconnect();
+    const touched = state.records.flatMap((record: MutationRecord) => [...record.addedNodes, ...record.removedNodes]);
+    return { order: [...document.querySelectorAll('#keyed-rows li')].map(row => state.rows.indexOf(row)), records: state.records.length, touched: touched.length, onlyMovedRow: touched.every((node: Node) => node === state.rows[0]), focused: document.activeElement === state.input, selection: [state.input.selectionStart, state.input.selectionEnd, state.input.selectionDirection] };
+  });
+  expect(moved).toEqual({ order: [1, 2, 0], records: 2, touched: 2, onlyMovedRow: true, focused: true, selection: [1, 4, 'backward'] });
+  await page.keyboard.insertText('Z');
+  await expect(page.locator('#keyed-edit')).toHaveText('alpha:AZa');
+  await page.locator('#keyed-rows li').last().locator('button').click();
+  await expect(page.locator('#keyed-click')).toHaveText('alpha');
+  expect(errors).toEqual([]);
 });

@@ -636,3 +636,7 @@ than rendering wrong; a static one is unaffected.
 The namespace-stack and dynamic SVG-title proposals in steps 2–3 remain
 explicit 3.1 work under decision L-57. Relocating and replaying the existing
 static vectors does not expand admission or silently implement that proposal.
+
+INV1 attribute-name and URL checks are specified in [INV1.md](INV1.md) and share
+`inv1.json` beside these value vectors (FORMA-140). A rejected served attribute
+refuses strict adoption; initial DOM is never repaired.

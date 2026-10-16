@@ -351,6 +351,7 @@ describe('renderer contract: the table covers every sink', () => {
     const NON_SINKS: Record<string, string> = {
       'src/dom-utils/mutate.ts': 'setAttr() helper — covered by mutate.test.ts',
       'src/dom/activate.ts': 'writes only data-forma-* status, a fixed internal name',
+      'src/dom/skew.ts': 'writes only data-forma-status="skew"; fixed internal name and value, verified by skew.test.ts',
       'src/dom/adoption-controls.ts': 'fixed control attributes only on new detached-document normalization mirrors; retained native MutationObserver plus live setter controls prove no writes to the observed document (adoption-controls.spec.ts)',
       'src/dom/form-control.ts': 'writes only fixed value/checked/selected names, covered by h/prepared-adopt sinks and form-control.test.ts',
       'src/dom/reconcile.ts': 'copies attributes DOM→DOM between two already-guarded elements; writes no on* or script src, and mints a trusted srcdoc (trusted-html.test.ts)',
