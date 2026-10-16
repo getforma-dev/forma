@@ -18,5 +18,5 @@ function Page(props: { rows: Row[] }) {
   return <main><Results rows={props.rows} /></main>;
 }
 
-activateIslands({ Results });
+await activateIslands({ Results });
 mount(() => Page({ rows: [] }), '#app');

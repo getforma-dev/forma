@@ -31,7 +31,7 @@ function Home(props: HomeProps) {
   );
 }
 
-activateIslands({ Counter });
+await activateIslands({ Counter });
 // SSR uses this call to select Home, then removes it from the browser product.
 // An explicit Browser build retains the mount and its independent zero default.
 mount(() => Home({ count: 0 }), '#app');

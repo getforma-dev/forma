@@ -10,6 +10,7 @@
 // never activated cannot pass the second half; an adoption that rewrote the server's
 // values cannot pass the first.
 import assert from 'node:assert/strict';
+import {awaitPageModules} from '../../../../scripts/release-module-completion.mjs';
 
 /** The response policy every fixture page carries (DR-5/M20 enforced Trusted Types). */
 export async function requirePolicy(response) {
@@ -123,11 +124,11 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
     }
 
     open();
-    // Activation is proven by the island's own first request when it makes one; otherwise by
-    // the network going quiet. Then a frame and a microtask, so every synchronous write has landed.
+    // The authored await keeps module evaluation pending through every requested
+    // load island. Network idle and DOMContentLoaded are not completion signals.
+    // Resource requests stay held until adoption has been observed.
+    await awaitPageModules(page, scripts, timeout);
     if (holds.length) await Promise.all(holds.map(each => each.seen));
-    else await page.waitForLoadState('networkidle');
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => queueMicrotask(resolve))));
 
     const adoption = await page.evaluate(() => {
       const check = globalThis.__fixtureAdoption;
