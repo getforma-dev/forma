@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-197: replace the `untrack-noop` compile-break sentinel with a runnable mutation that retains the public API while allowing unintended signal subscriptions. Compilation failures remain unqualified; the 252-probe corpus count, strict assertion requirement and detection floors are unchanged.
+
 - FORMA-198: repair stale island microbenchmarks with fresh-document declared head state and registered callbacks. Retain 10/100-island payload and reactive work, await activation, and compare complete bulk/individual disposal cycles against markup parsing. These Happy DOM measurements do not replace packed N3 qualification.
 
 - Serialize mutation-probe files and explicitly concurrent tests under fail-fast execution, so one assertion cannot interrupt another worker's completion evidence. Incomplete test results remain unqualified; the corpus, clean/restored baselines and detection floors are unchanged.
