@@ -32,6 +32,6 @@
     "tsup.config.ts",
     "scripts/**/*.mjs",
     "bench/**/*.ts",
-    "vitest.bench.config.ts"
+    "vitest*.config.ts"
   ]
 }

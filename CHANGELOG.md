@@ -14,6 +14,7 @@
 
 ### Final template packaging — FORMA-144
 
+- Match core test and benchmark JSX configuration to the locked Vite 7 transform, and typecheck every Vitest configuration.
 - Stable template manifests use coordinated caret requirements; prereleases and source seeds remain exact. Packed lockfiles still authenticate the exact candidate archives, and failed packaging restores all template source files. Both templates now declare the approved Node 22 floor.
 - Update and deduplicate the workspace test dependencies to patched Vitest 4.1.12 and compatible transitive fixes. The separate dashboard watcher advisory remains documented; its locked graph is not covered by the workspace’s zero-finding audit.
 - Add the 0.6.x template migration guide and record the deliberate retention of both authenticated template esbuild copies. Final packed template, size and release qualification remain required.
