@@ -8,6 +8,8 @@ export { h, svg, Fragment, fragment, cleanup } from './element.js';
 export { createText } from './text.js';
 export { mount } from './mount.js';
 export { createList, reconcileList } from './list.js';
+export { createKeyedRows } from './keyed-rows.js';
+export type { KeyedRows } from './keyed-rows.js';
 export type { ReconcileResult, ListTransitionHooks, CreateListOptions } from './list.js';
 export { createShow } from './show.js';
 export { createSwitch } from './switch.js';

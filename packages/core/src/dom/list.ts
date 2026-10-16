@@ -18,6 +18,8 @@ import { createSignal, internalEffect, untrack, createRoot, registerDisposer, __
 import { describingAdoption } from './adoption-description.js';
 import { deactivateIsland, hasScheduledOrActiveIslands } from './activate.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
+import { keyedRowsSource, type KeyedRows } from './keyed-rows.js';
+import { cleanup } from './element.js';
 
 declare const __FORMA_DEV_BUILD__: boolean | undefined;
 // Every development warning below is guarded by the build flag at its site, in
@@ -528,6 +530,38 @@ export function reconcileList<T>(
  * ```
  */
 export function createList<T>(
+  items: KeyedRows<T>,
+  renderFn: (item: () => T, index: () => number) => HTMLElement,
+): DocumentFragment;
+export function createList<T>(
+  items: () => T[],
+  keyFn: (item: T) => string | number,
+  renderFn: (item: T, index: () => number) => HTMLElement,
+  options?: CreateListOptions,
+): DocumentFragment;
+export function createList<T>(
+  items: (() => T[]) | KeyedRows<T>,
+  keyFn: ((item: T) => string | number) | ((item: () => T, index: () => number) => HTMLElement),
+  renderFn?: (item: T, index: () => number) => HTMLElement,
+  options?: CreateListOptions,
+): DocumentFragment {
+  const indexed = keyedRowsSource<T>(items);
+  if (indexed) {
+    if (arguments.length !== 2) throw new TypeError('createList: indexed rows accept only a row getter callback');
+    const render = keyFn as (item: () => T, index: () => number) => HTMLElement;
+    return createList(indexed, entry => entry.key, (entry, index) => {
+      const node = render(entry.get, index);
+      if (!describingAdoption) registerDisposer(() => {
+        cleanup(node);
+        for (const child of node.querySelectorAll('*')) cleanup(child);
+      });
+      return node;
+    });
+  }
+  return createArrayList(items as () => T[], keyFn as (item: T) => string | number, renderFn!, options);
+}
+
+function createArrayList<T>(
   items: () => T[],
   keyFn: (item: T) => string | number,
   renderFn: (item: T, index: () => number) => HTMLElement,

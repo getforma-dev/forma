@@ -28,7 +28,7 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
     exports: [
       '$', '$$', 'Fragment', '__adoptionChild', '__adoptionConditional', '__adoptionSignal', '__adoptionWritable', '__islandRegistration', 'activateIslands', 'addClass', 'batch', 'browserOnly', 'children',
       'cleanup', 'closest', 'createBus', 'createComputed', 'createContext',
-      'createEffect', 'createErrorBoundary', 'createHistory', 'createList',
+      'createEffect', 'createErrorBoundary', 'createHistory', 'createKeyedRows', 'createList',
       'createMemo', 'createPortal', 'createReducer', 'createRef',
       'createResource', 'createRoot', 'createShow', 'createSignal',
       'createStore', 'createSuspense', 'createSwitch', 'createText',

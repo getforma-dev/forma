@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Indexed item replacement — FORMA-181 core stage
+
+- `createKeyedRows(initial, keyFn)` supplies a nominal keyed collection to the two-argument `createList(rows, renderRow)` overload. The callback receives a stable item getter and index getter. `set` validates and replaces an existing canonical key, notifying that item's readers without rerunning row factories or structural reconciliation; `replace` validates the whole candidate and batches retained values with membership/order changes. Missing keys, key changes, sparse arrays and duplicate canonical keys refuse before publication.
+- Views retain their owned effects and listeners independently. Internal item signals grant no early-edit writeback authority. Adopted text holes check their own retained markers, parent, ownership and last-written text before a live write; detached or rewritten holes abort through the existing owner failure path. Initial whole-island validation is unchanged.
+- This commit establishes the core API and its tests. Compiler admission, typed native products, package/route measurements and the actual 200/2,000-row N3 timing qualification remain pending; it makes no release-performance claim.
+
 ### Retained row focus — FORMA-181 checkpoint D, first slice
 
 - A keyed row relocation previously blurred its focused input in Chromium, Firefox and WebKit even though the input node and selection survived. The private live reconciler now uses state-preserving `moveBefore` for retained rows where supported. Its `insertBefore` fallback restores lost focus and text selection only while the owner remains live and no callback has focused another control. Detached new rows still use ordinary insertion.
