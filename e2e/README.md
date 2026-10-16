@@ -6,10 +6,25 @@ Browser-level verification of the entire Forma pipeline. Tests run in a real Chr
 
 | Test Group | Tests | What It Verifies |
 |------------|-------|-----------------|
-| **HTML Runtime** | 8 | data-text, data-on:click, data-model, data-show, data-class, data-computed, $refs |
+| **HTML Runtime** | 9 | data-text, data-on:click, data-model, data-show, data-class, data-computed, $refs, explicit root ownership and handle disposal |
 | **Programmatic h() API** | 2 | createSignal + h() + mount() renders DOM, signals update reactively |
 | **Reviewed template path** | 3 | template(trustedHtml()) + cloneNode() creates working DOM with reactive effects |
 | **Cross-cutting** | 2 | No console errors on page load, all three approaches coexist |
+
+The runtime fixture's application script explicitly calls `mountMarkup()` with
+its reviewed subtree and retains the handle. It grants no fetch, outside-DOM or
+navigation access. Loading the runtime bundle does not bind directives; a
+deliberately unowned sibling remains inert, and disposing the handle stops the
+owned controls. The component `mount()` tests remain a separate public API.
+The prior auto-binding fixture and its nine actual CI failures are preserved in
+[`docs/archive/FORMA-108-root-full-stack/`](../docs/archive/FORMA-108-root-full-stack/).
+
+Run this static fixture in all three engines after syncing the current bundles:
+
+```bash
+bash e2e/sync-fixtures.sh
+npx playwright test --config e2e/full-stack.config.ts --workers=2
+```
 
 ## The SSR lane: compiler, forma walker, FormaJS (`e2e/ssr/`)
 

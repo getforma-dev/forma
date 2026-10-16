@@ -7,8 +7,8 @@
   "packedTarSha256": "8ebf5bf72b9a10636a5cb2e203d8882b852380547f43e8b287e7c884f05d553e",
   "files": {
     "README.md": {
-      "bytes": 7204,
-      "sha256": "44b5e551094ff87388439badb2b654996c3e6386d340aad1a5c3b3e28b7d88d9"
+      "bytes": 8518,
+      "sha256": "7ca4ff9e8e1c4bb796d02c7cef46c5e80341ee8c3c8f7fb8dcd3ab5f05710405"
     },
     "browser-csp-corrected.log": {
       "bytes": 1469,
@@ -373,7 +373,20 @@
     "runtime-mutations-complete.log": {
       "bytes": 144,
       "sha256": "b498f3a7966482ac12de74b1e4d43de137ac8e9231a4c04d7af928df68294ecf"
+    },
+    "root-full-stack/qualification.json": {
+      "bytes": 2264,
+      "sha256": "499898161f93724d4ad636f4002b635a052419f27b338a450ddc083acec674cf"
+    },
+    "root-full-stack/root-full-stack-disposal-corrected.json": {
+      "bytes": 7094,
+      "sha256": "3e8768983b682fa2e3b65b9efe3a1cc105d83ae75f521861084f2408ba0662ca"
+    },
+    "root-full-stack/root-full-stack-disposal-corrected.log": {
+      "bytes": 1228,
+      "sha256": "fe74ee38ff1e89f7be48fe4e073a7e04306f246bffa6b04fc5008483ece7defa"
     }
   },
-  "combinedSourceCommit": "0d3d570f7b248097e12fd038178bba738c31f348"
+  "combinedSourceCommit": "0d3d570f7b248097e12fd038178bba738c31f348",
+  "rootFullStackSourceCommit": "7f2b0b26b42fe729995ee92d4e8a1ad0a9f037a3"
 }

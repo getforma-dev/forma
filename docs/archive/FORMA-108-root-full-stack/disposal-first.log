@@ -1,0 +1,149 @@
+[WebServer] (node:9557) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 51 tests using 2 workers
+
+(node:9558) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:9559) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/51] [firefox] › e2e/full-stack.spec.ts:19:5 › the bundles are the fresh sync, not a stale copy
+[2/51] [chromium] › e2e/full-stack.spec.ts:19:5 › the bundles are the fresh sync, not a stale copy
+[3/51] [chromium] › e2e/full-stack.spec.ts:37:7 › HTML Runtime — data-* directives › renders initial state as text
+[4/51] [chromium] › e2e/full-stack.spec.ts:42:7 › HTML Runtime — data-* directives › increments counter on click
+[5/51] [chromium] › e2e/full-stack.spec.ts:49:7 › HTML Runtime — data-* directives › resets counter
+[6/51] [chromium] › e2e/full-stack.spec.ts:57:7 › HTML Runtime — data-* directives › two-way binding with data-model
+[7/51] [chromium] › e2e/full-stack.spec.ts:62:7 › HTML Runtime — data-* directives › data-show toggles visibility
+[8/51] [chromium] › e2e/full-stack.spec.ts:73:7 › HTML Runtime — data-* directives › data-class toggles CSS class
+[9/51] [chromium] › e2e/full-stack.spec.ts:82:7 › HTML Runtime — data-* directives › data-computed derives values
+[10/51] [chromium] › e2e/full-stack.spec.ts:90:7 › HTML Runtime — data-* directives › $refs resolves data-ref elements
+[11/51] [chromium] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts
+[12/51] [firefox] › e2e/full-stack.spec.ts:37:7 › HTML Runtime — data-* directives › renders initial state as text
+[13/51] [firefox] › e2e/full-stack.spec.ts:42:7 › HTML Runtime — data-* directives › increments counter on click
+[14/51] [firefox] › e2e/full-stack.spec.ts:49:7 › HTML Runtime — data-* directives › resets counter
+[15/51] [firefox] › e2e/full-stack.spec.ts:57:7 › HTML Runtime — data-* directives › two-way binding with data-model
+[16/51] [firefox] › e2e/full-stack.spec.ts:62:7 › HTML Runtime — data-* directives › data-show toggles visibility
+[17/51] [firefox] › e2e/full-stack.spec.ts:73:7 › HTML Runtime — data-* directives › data-class toggles CSS class
+[18/51] [firefox] › e2e/full-stack.spec.ts:82:7 › HTML Runtime — data-* directives › data-computed derives values
+[19/51] [firefox] › e2e/full-stack.spec.ts:90:7 › HTML Runtime — data-* directives › $refs resolves data-ref elements
+[20/51] [firefox] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts
+  1) [chromium] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts 
+
+    Test timeout of 15000ms exceeded.
+
+    Error: page.click: Test timeout of 15000ms exceeded.
+    Call log:
+      - waiting for locator('#rt-inc')
+
+
+      102 |       (window as Window & { fullStackRuntimeHandle: { unmount(): void } }).fullStackRuntimeHandle.unmount();
+      103 |     });
+    > 104 |     await page.click('#rt-inc');
+          |                ^
+      105 |     await expect(page.locator('#rt-count')).toHaveText('1');
+      106 |     await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+      107 |   });
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e/full-stack.spec.ts:104:16
+
+    Error Context: ../tmp/root-full-stack-fixed-results/full-stack-HTML-Runtime-—--34071-ng-when-its-handle-unmounts-chromium/error-context.md
+
+
+(node:9682) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[21/51] [chromium] › e2e/full-stack.spec.ts:115:7 › Programmatic h() API › mount() renders h() tree into DOM
+[22/51] [chromium] › e2e/full-stack.spec.ts:120:7 › Programmatic h() API › signal updates DOM reactively
+[23/51] [chromium] › e2e/full-stack.spec.ts:133:7 › Reviewed template path — template() + cloneNode() › template creates DOM from reviewed markup
+[24/51] [chromium] › e2e/full-stack.spec.ts:137:7 › Reviewed template path — template() + cloneNode() › cloneNode produces working DOM with reactive text
+[25/51] [chromium] › e2e/full-stack.spec.ts:141:7 › Reviewed template path — template() + cloneNode() › createEffect updates cloned text node on signal change
+[26/51] [chromium] › e2e/full-stack.spec.ts:156:7 › Cross-cutting › no browser errors on page load
+[27/51] [chromium] › e2e/full-stack.spec.ts:167:7 › Cross-cutting › all three approaches coexist on same page
+(node:9697) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[28/51] [webkit] › e2e/full-stack.spec.ts:19:5 › the bundles are the fresh sync, not a stale copy
+  2) [firefox] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts 
+
+    Test timeout of 15000ms exceeded.
+
+    Error: page.click: Test timeout of 15000ms exceeded.
+    Call log:
+      - waiting for locator('#rt-inc')
+
+
+      102 |       (window as Window & { fullStackRuntimeHandle: { unmount(): void } }).fullStackRuntimeHandle.unmount();
+      103 |     });
+    > 104 |     await page.click('#rt-inc');
+          |                ^
+      105 |     await expect(page.locator('#rt-count')).toHaveText('1');
+      106 |     await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+      107 |   });
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e/full-stack.spec.ts:104:16
+
+    Error Context: ../tmp/root-full-stack-fixed-results/full-stack-HTML-Runtime-—--34071-ng-when-its-handle-unmounts-firefox/error-context.md
+
+
+(node:9718) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[29/51] [firefox] › e2e/full-stack.spec.ts:115:7 › Programmatic h() API › mount() renders h() tree into DOM
+[30/51] [webkit] › e2e/full-stack.spec.ts:37:7 › HTML Runtime — data-* directives › renders initial state as text
+[31/51] [webkit] › e2e/full-stack.spec.ts:42:7 › HTML Runtime — data-* directives › increments counter on click
+[32/51] [webkit] › e2e/full-stack.spec.ts:49:7 › HTML Runtime — data-* directives › resets counter
+[33/51] [webkit] › e2e/full-stack.spec.ts:57:7 › HTML Runtime — data-* directives › two-way binding with data-model
+[34/51] [webkit] › e2e/full-stack.spec.ts:62:7 › HTML Runtime — data-* directives › data-show toggles visibility
+[35/51] [webkit] › e2e/full-stack.spec.ts:73:7 › HTML Runtime — data-* directives › data-class toggles CSS class
+[36/51] [firefox] › e2e/full-stack.spec.ts:120:7 › Programmatic h() API › signal updates DOM reactively
+[37/51] [webkit] › e2e/full-stack.spec.ts:82:7 › HTML Runtime — data-* directives › data-computed derives values
+[38/51] [firefox] › e2e/full-stack.spec.ts:133:7 › Reviewed template path — template() + cloneNode() › template creates DOM from reviewed markup
+[39/51] [webkit] › e2e/full-stack.spec.ts:90:7 › HTML Runtime — data-* directives › $refs resolves data-ref elements
+[40/51] [firefox] › e2e/full-stack.spec.ts:137:7 › Reviewed template path — template() + cloneNode() › cloneNode produces working DOM with reactive text
+[41/51] [webkit] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts
+[42/51] [firefox] › e2e/full-stack.spec.ts:141:7 › Reviewed template path — template() + cloneNode() › createEffect updates cloned text node on signal change
+[43/51] [firefox] › e2e/full-stack.spec.ts:156:7 › Cross-cutting › no browser errors on page load
+[44/51] [firefox] › e2e/full-stack.spec.ts:167:7 › Cross-cutting › all three approaches coexist on same page
+  3) [webkit] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts 
+
+    Test timeout of 15000ms exceeded.
+
+    Error: page.click: Test timeout of 15000ms exceeded.
+    Call log:
+      - waiting for locator('#rt-inc')
+
+
+      102 |       (window as Window & { fullStackRuntimeHandle: { unmount(): void } }).fullStackRuntimeHandle.unmount();
+      103 |     });
+    > 104 |     await page.click('#rt-inc');
+          |                ^
+      105 |     await expect(page.locator('#rt-count')).toHaveText('1');
+      106 |     await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+      107 |   });
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e/full-stack.spec.ts:104:16
+
+    Error Context: ../tmp/root-full-stack-fixed-results/full-stack-HTML-Runtime-—--34071-ng-when-its-handle-unmounts-webkit/error-context.md
+
+
+(node:9843) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[45/51] [webkit] › e2e/full-stack.spec.ts:115:7 › Programmatic h() API › mount() renders h() tree into DOM
+[46/51] [webkit] › e2e/full-stack.spec.ts:120:7 › Programmatic h() API › signal updates DOM reactively
+[47/51] [webkit] › e2e/full-stack.spec.ts:133:7 › Reviewed template path — template() + cloneNode() › template creates DOM from reviewed markup
+[48/51] [webkit] › e2e/full-stack.spec.ts:137:7 › Reviewed template path — template() + cloneNode() › cloneNode produces working DOM with reactive text
+[49/51] [webkit] › e2e/full-stack.spec.ts:141:7 › Reviewed template path — template() + cloneNode() › createEffect updates cloned text node on signal change
+[50/51] [webkit] › e2e/full-stack.spec.ts:156:7 › Cross-cutting › no browser errors on page load
+[51/51] [webkit] › e2e/full-stack.spec.ts:167:7 › Cross-cutting › all three approaches coexist on same page
+  3 failed
+    [chromium] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts 
+    [firefox] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts 
+    [webkit] › e2e/full-stack.spec.ts:94:7 › HTML Runtime — data-* directives › binds only the owned root and stops responding when its handle unmounts 
+  48 passed (44.4s)
