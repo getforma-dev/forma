@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { runSkewDrill, SKEW_DRILL_CHECKS } from './run-drill.mjs';
 
@@ -45,7 +45,9 @@ test('a real navigation timeout retains bounded drill context in its emitted sta
   expect(blocked).toBe(1);
   expect(failure?.name).toBe('TimeoutError');
   const emitted = `P17: ${failure?.stack}`; // The actual release CLI prints stack, not message.
-  await info.attach('forced-skew-timeout', { body: emitted, contentType: 'text/plain' });
+  const evidence = info.outputPath('forced-skew-timeout.txt');
+  writeFileSync(evidence, emitted);
+  await info.attach('forced-skew-timeout', { path: evidence, contentType: 'text/plain' });
   expect(emitted).toContain('page.goto: Timeout 10000ms exceeded');
   const marker = '\nSkew drill diagnostics: ';
   expect(emitted).toContain(marker);
