@@ -150,11 +150,20 @@
 
 - `e2e/fixtures/formajs-runtime.global.js` and `e2e/fixtures/formajs.global.js` are no longer tracked; `e2e/sync-fixtures.sh` writes them from `packages/core/dist` and `scripts/check.sh` runs it first. The committed copies predated `trustedHtml()` and failed five cases of `e2e/full-stack.spec.ts` whenever the lane ran without a fresh sync. The spec now refuses to run without the bundles, naming the sync script, and the sync script prints core's build output when that build fails instead of exiting silently. Verified by `e2e/full-stack.spec.ts` > `the bundles are the fresh sync, not a stale copy`.
 
-## [3.0.0-beta.1] - 2026-10-16
+## [3.0.0-beta.1]
 
-- Prepare all seven package versions, internal requirements and template lock seeds as one `3.0.0-beta.1` candidate, preserving external dependency resolutions.
-- Update registry install examples to select the prerelease explicitly after publication; retain clearly identified stable 2.1.0 CDN examples.
-- This is release preparation, not a publication or qualification result. Beta gates, current versioned-source R17 and packed P17 remain pending; no tag or registry publication is created by the version command.
+Candidate changes since `3.0.0-alpha.2`. Full release qualification and final CI remain pending.
+
+- **Checked island adoption.** Native islands use declared props and one bounded, inert state envelope. Activation validates the served nodes before attaching behavior, preserves those nodes without initial repair, and refuses mismatched islands while valid siblings remain eligible. Calling `mount()` on marked SSR content now throws `FORMA_E_MOUNT_SSR`; register islands with `activateIslands({ Counter })` instead.
+- **Activation readiness.** `activateIslands()` returns `Promise<void>` and can schedule load activation across browser tasks. Await it before work that depends on load islands being ready. Deferred triggers settle readiness when armed; the promise does not mean every deferred island has activated.
+- **Keyed rows.** Native rows carry stable keys, and adoption matches rows by canonical key. `createKeyedRows(initial, keyFn)` with `createList(rows, renderRow)` supports replacing retained item values without rerunning row factories. Invalid or duplicate canonical keys are refused; retained rows keep their owned effects and listeners.
+- **Strict native compilation.** Unsupported SSR source now fails even without `--strict`. Native islands and list rows need one stable Element root, and list sources need declared rows or admitted literal defaults. Boolean text needs an explicit textual representation; conditions must be boolean. Use declared presentation props, `browserOnly` islands or explicit Browser routes for unsupported shapes. See the [native subset](packages/compiler/docs/subset.md).
+- **Consistent rendered values.** Ordinary text and attributes normalize line endings and NUL consistently. Nullish values and `false` remove class attributes; `true` on a non-boolean attribute becomes the string `"true"`. Use strings for ARIA's `"false"` token. These rules can change output without a source edit; rebuild compiler and runtime products together. See [parity rules](docs/parity-rules.md).
+- **Explicit HTML-runtime ownership.** Replace automatic scanning and tierless lifecycle/configuration calls with `mountMarkup(root, trustedHtml(markup), { tier, grants, config })`, then use its update/unmount handle. Omitted grants allow no fetch or outside-root traversal. Removing a root alone does not dispose its handle.
+- **Deployment continuity.** Build identity checks before `mount()` and `activateIslands()` detect mismatched HTML and bundles, emit `forma:skew`, and use a bounded reload policy. `previousDist` can retain one prior deployment's hashed assets; `security: true` disables retention. Deploy native modules, manifest and assets together.
+- **Static routes and templates.** Static SSR routes omit browser entries and reject contradictory island, preload or executable-config declarations. Browser routes remain explicit with `ssr: false`. Both templates require Node 22+ and Rust 1.85+; prerelease dependencies remain exact.
+
+Upgrade the coordinated seven-package set and its matching dependency closure together, keep both npm and Cargo lockfiles, and rebuild assets and server. Follow the [3.0 upgrade guide](docs/UPGRADING-3.0.md) and [template migration guide](packages/create-app/docs/UPGRADING-3.0.md).
 
 ## [3.0.0-alpha.2] - 2026-10-15
 
