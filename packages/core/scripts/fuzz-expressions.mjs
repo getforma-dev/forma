@@ -6,12 +6,12 @@ import { spawn, execFileSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, readdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = new Map();
 for (const arg of process.argv.slice(2)) {
-  const match = /^--(seed|cases|out|timeout-ms)=(.+)$/.exec(arg);
+  const match = /^--(seed|cases|out|timeout-ms|mutation)=(.+)$/.exec(arg);
   if (!match || args.has(match[1])) throw new Error(`invalid or duplicate argument ${arg}`);
   args.set(match[1], match[2]);
 }
@@ -21,9 +21,11 @@ function integer(key, fallback, min, max) {
   return Number(raw);
 }
 const seed = integer('seed', 1290300, 0, 0xffff_ffff);
-const count = integer('cases', 100_000, 58, 1_000_000);
+const count = integer('cases', 100_000, 70, 1_000_000);
 const timeoutMs = integer('timeout-ms', 120_000, 100, 600_000);
 const output = resolve(root, args.get('out') ?? 'fuzz/expressions/out/report.json');
+const mutation = args.get('mutation');
+if (mutation !== undefined && mutation !== 'remove-array-from') throw new Error('unknown mutation');
 await mkdir(dirname(output), { recursive: true });
 const temporary = await mkdtemp(join(tmpdir(), 'forma-expr-fuzz-'));
 const files = [];
@@ -44,14 +46,35 @@ const metadata = {
   sourceSha256: sourceHash.digest('hex'),
 };
 try {
+  const plugins = [];
+  if (mutation) {
+    const path = join(root, 'src/expr/cost.ts');
+    const before = await readFile(path, 'utf8');
+    // Remove the real registration, with its function body, in an owned scratch
+    // copy. Neither production files nor the independent oracle are edited.
+    const registration = /rows\(\(_, a, room\) => \{\n  const x = a\[0\];[\s\S]*?\n\}, 'Array\.from'\);/g;
+    const matches = [...before.matchAll(registration)];
+    if (matches.length !== 1) throw new Error('Array.from mutation anchor must match exactly once');
+    const after = before.replace(registration, '// FORMA-129 qualification mutant: registration removed.');
+    const scratch = join(temporary, 'cost-mutant.ts');
+    await writeFile(scratch, after);
+    metadata.mutation = { name: mutation, path: 'src/expr/cost.ts', beforeSha256: createHash('sha256').update(before).digest('hex'), afterSha256: createHash('sha256').update(after).digest('hex'), removedSource: matches[0][0] };
+    plugins.push({ name: 'isolated-cost-mutation', setup(builder) {
+      builder.onLoad({ filter: /[\\/]expr[\\/]cost\.ts$/ }, async info => info.path === path ? { contents: await readFile(scratch, 'utf8'), loader: 'ts', resolveDir: dirname(path) } : undefined);
+    } });
+  }
   const bundle = join(temporary, 'worker.mjs');
-  await build({ entryPoints: [join(root, 'src/expr/__tests__/fuzz/worker.ts')], outfile: bundle, bundle: true, platform: 'node', format: 'esm', target: 'node24', logLevel: 'silent' });
+  const engine = join(temporary, 'engine.mjs');
+  const options = { bundle: true, platform: 'node', format: 'esm', target: 'node24', logLevel: 'silent', plugins };
+  await build({ ...options, entryPoints: [join(root, 'src/expr/__tests__/fuzz/worker.ts')], outfile: bundle });
+  await build({ ...options, entryPoints: [join(root, 'src/expr/index.ts')], outfile: engine });
   metadata.workerSha256 = createHash('sha256').update(await readFile(bundle)).digest('hex');
+  metadata.engineSha256 = createHash('sha256').update(await readFile(engine)).digest('hex');
   const metadataFile = join(temporary, 'metadata.json');
   await writeFile(metadataFile, JSON.stringify(metadata));
   // A child that fails before its first batch cannot leave a prior pass behind.
   await writeFile(output, JSON.stringify({ ...metadata, passed: false, status: 'starting' }, null, 2) + '\n');
-  const child = spawn(process.execPath, [bundle, String(seed), String(count), output, metadataFile], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [bundle, String(seed), String(count), output, metadataFile, pathToFileURL(engine).href], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
   let bytes = 0;
   let termination;
   const stop = reason => { termination ??= reason; child.kill('SIGKILL'); };

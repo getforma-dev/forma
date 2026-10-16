@@ -1,8 +1,9 @@
 import { readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { CampaignFailure, runCampaign } from './campaign';
+import { CampaignFailure, runCampaign, replayRegressions } from './campaign';
+import { runPreflight } from './preflight';
 
-const [seedText, countText, output, metadataFile] = process.argv.slice(2);
-if (!seedText || !countText || !output || !metadataFile) throw new Error('missing campaign arguments');
+const [seedText, countText, output, metadataFile, engineUrl] = process.argv.slice(2);
+if (!seedText || !countText || !output || !metadataFile || !engineUrl) throw new Error('missing campaign arguments');
 const metadata = JSON.parse(readFileSync(metadataFile, 'utf8'));
 const write = (value: unknown): void => {
   // Undefined is an expected Array.from element, so do not silently record it
@@ -14,7 +15,9 @@ const write = (value: unknown): void => {
 
 try {
   const report = runCampaign(Number(seedText), Number(countText), progress => write({ ...metadata, passed: false, status: 'running', report: progress }));
-  write({ ...metadata, passed: true, status: 'complete', report });
+  const regressions = replayRegressions();
+  const preflight = await runPreflight(() => import(engineUrl));
+  write({ ...metadata, passed: true, status: 'complete', report, regressions, preflight });
   process.stdout.write(JSON.stringify({ passed: true, completed: report.completed, admitted: report.admitted, refused: report.refused, elapsedMs: report.elapsedMs }) + '\n');
 } catch (error) {
   write({

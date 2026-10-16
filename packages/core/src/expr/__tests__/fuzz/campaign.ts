@@ -3,6 +3,7 @@ import { compileExpression, compileHandler, evaluateExpression, runHandler, isEx
 import { COSTS } from '../../cost';
 import { COST_OPERATIONS } from './cost-cases';
 import { generateCase, randomSource, MANDATORY_CASE_COUNT, type GeneratedCase } from './generate';
+import { regressions } from './regressions';
 
 export interface CampaignReport {
   seed: number;
@@ -34,7 +35,7 @@ export function executeCase(input: GeneratedCase, astKinds: Record<string, numbe
     getters[key] = () => state[key];
     setters[key] = value => { state[key] = value; };
   }
-  const meter: Meter = { steps: 0, cost: 0 };
+  const meter: Meter = { ...(input.initialMeter ?? { steps: 0, cost: 0 }) };
   let value: unknown;
   let refusal: string | undefined;
   try {
@@ -53,6 +54,9 @@ export function executeCase(input: GeneratedCase, astKinds: Record<string, numbe
   }
   const expectedRefusal = 'refused' in input ? input.refused : undefined;
   if (refusal !== expectedRefusal) throw new Error(`refusal: expected ${expectedRefusal ?? 'admitted'}, received ${refusal ?? 'admitted'}`);
+  if (input.expectedMeterCost !== undefined && meter.cost !== input.expectedMeterCost) {
+    throw new Error(`meter cost: expected ${input.expectedMeterCost}, received ${meter.cost}`);
+  }
   if (refusal) return { refused: true, meter };
   deepStrictEqual(value, input.expected, 'generated expression value');
   if ('expectedState' in input && input.expectedState) deepStrictEqual(state, input.expectedState, 'generated handler state');
@@ -69,6 +73,13 @@ export class CampaignFailure extends Error {
   constructor(readonly report: CampaignReport, readonly index: number, readonly input: GeneratedCase, cause: unknown) {
     super(`expression campaign seed${report.seed} case${index}: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
   }
+}
+
+export function replayRegressions(): string[] {
+  for (const { id, input } of regressions) {
+    try { executeCase(input); } catch (cause) { throw new Error(`expression regression ${id}`, { cause }); }
+  }
+  return regressions.map(item => item.id);
 }
 
 /** All expectations are assertions; caught non-engine exceptions remain failures. */

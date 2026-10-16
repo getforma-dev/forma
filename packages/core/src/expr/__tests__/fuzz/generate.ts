@@ -1,6 +1,7 @@
-import { COST_OPERATIONS, costCase, type CostCase } from './cost-cases';
+import { COST_OPERATIONS, costCase } from './cost-cases';
+import { CONTROL_COUNT, controlCase } from './controls';
 
-export type GeneratedCase = CostCase | {
+export interface GeneratedCase {
   operation: string;
   source: string;
   state: Record<string, unknown>;
@@ -9,7 +10,9 @@ export type GeneratedCase = CostCase | {
   handler?: true;
   expectedState?: Record<string, unknown>;
   refused?: string;
-};
+  initialMeter?: { steps: number; cost: number };
+  expectedMeterCost?: number;
+}
 
 /** Mulberry32: the recorded seed and index completely determine the input. */
 export function randomSource(seed: number): () => number {
@@ -54,12 +57,14 @@ const REFUSALS = [
   ['x +', 'FORMA_E_SYNTAX'],
 ] as const;
 
-export const MANDATORY_CASE_COUNT = COST_OPERATIONS.length + GRAMMAR_FAMILIES + REFUSALS.length;
+export const MANDATORY_CASE_COUNT = COST_OPERATIONS.length + GRAMMAR_FAMILIES + REFUSALS.length + CONTROL_COUNT;
 
 /** Cost rows, grammar and refusals all have mandatory scheduled coverage. */
 export function generateCase(random: () => number, index: number): GeneratedCase {
   const family = index % MANDATORY_CASE_COUNT;
   if (family < COST_OPERATIONS.length) return costCase(COST_OPERATIONS[family]!, 1 + Math.floor(random() * 64));
+  const controlsStart = COST_OPERATIONS.length + GRAMMAR_FAMILIES + REFUSALS.length;
+  if (family >= controlsStart) return controlCase(family - controlsStart, 1024 + Math.floor(random() * 1024));
   const x = Math.floor(random() * 2001) - 1000;
   const n = numeric(random, x, 2 + Math.floor(random() * 2));
   const make = (operation: string, source: string, state: Record<string, unknown>, expected: unknown): GeneratedCase =>
