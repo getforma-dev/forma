@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — typed keyed row product coverage (FORMA-181 D)
+
+- Add a compiler → typed Rust `Pages` → emitted browser island fixture for keyed row movement. Its three-engine checks retain the native rows, focus, backward selection and listeners through activation and a minimal move. A reproducible evidence script records actual source, native state/dump, registration and served asset hashes. The SSR build harness can select the release renderer for production CSP behavior. This slice adds coverage; indexed row replacement and N3 remain separate.
+
 ## [Unreleased]
 
 ### Value rules 2 to 7 — FORMA-182
