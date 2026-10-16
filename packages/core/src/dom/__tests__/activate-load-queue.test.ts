@@ -30,17 +30,19 @@ describe('shared load scheduling', () => {
   });
 
   it('promotes the first load on its input before the initial timer without completing unrelated work', async () => {
-    document.body.innerHTML = '<button data-forma-island="A" data-forma-component="A">A</button>' + host('B'); installState();
+    document.body.innerHTML = '<main><button data-forma-island="A" data-forma-component="A">A</button></main><aside>' + host('B') + '</aside>'; installState();
     const button = document.querySelector('button')!, clicks = vi.fn(), second = vi.fn(() => tree('B'));
     const first = vi.fn(() => h('button', { onClick: clicks }, 'A'));
     const registry = emptyRegistry({ A: first, B: second });
-    let done = false;
+    let done = false, overlapDone = false;
     const ready = activateIslands(registry).then(() => { done = true; });
-    const overlap = activateIslands(registry, button);
+    const overlap = activateIslands(registry, document.querySelector('main')!).then(() => { overlapDone = true; });
     expect(first).not.toHaveBeenCalled(); expect(second).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(overlapDone).toBe(false);
     button.click(); await overlap;
     expect(first).toHaveBeenCalledOnce(); expect(clicks).toHaveBeenCalledOnce();
-    expect(second).not.toHaveBeenCalled(); expect(done).toBe(false);
+    expect(second).not.toHaveBeenCalled(); expect(done).toBe(false); expect(overlapDone).toBe(true);
     expect(vi.getTimerCount()).toBe(1);
     vi.runAllTimers(); await ready;
     expect(second).toHaveBeenCalledOnce(); expect(done).toBe(true);
