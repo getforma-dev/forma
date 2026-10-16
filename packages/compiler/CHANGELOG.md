@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
+
 ### Value rule 7: conditions are boolean-typed — FORMA-182
 
 - **Breaking: a condition that is not boolean-typed no longer builds (`BUILD-615`).** A `createShow` condition or a ternary test the compiler can prove is not a boolean fails the build, strict mode or not (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 7): a declared prop of another type (an optional boolean is admitted), a signal whose default is a number, a string or `null`, a closed value of another type (an aggregate, an aggregate or list-row field, a module-level `const`), a non-boolean literal, or a mix such as `a() && count()` or `name() || 'x'`. The common shapes are `createShow(() => count(), …)`, `createShow(count, …)` (a getter passed to `createShow` itself is now read as its call; a getter named without its call in a ternary test or an operand, `() => open ? a : b`, is refused with a message naming the missing call, since the browser always takes the first branch), a ternary on a `null`-default signal (`() => user() ? a : b`) and on a string signal (`() => name() ? …`). Fix: compare explicitly, `count() > 0`, `user() !== null`, `name() !== ''`, or `!!x`. A condition the compiler cannot type keeps `BUILD-302`. Conformance pair in `tests/fixtures/conformance/BUILD-615/`.
@@ -14,6 +20,10 @@
 - `String(flag)` on a non-optional declared boolean binds `DYN_TEXT` to the boolean slot (the walker writes the word); the evaluator folds `String()` of a boolean, so `() => String(done())` builds where it was refused, also as a ternary branch, where a `String()`/`Number()` cast the evaluator folds is now a value rather than a component. `String()` of an optional declared boolean stays `BUILD-610`.
 - **Rendered output changes with no source change:** the idiom `() => ready() && 'Go'` at a boolean default no longer serves the word `false` (its slot default is empty, an empty range), and a `true` literal in a ternary branch no longer serves `true` (nothing), matching `h()`. A page compiled by an earlier compiler and adopted by this release's core refuses at that idiom (`FORMA_E_HYDRATE_VALUE`); compiler and core move together in 3.0.0.
 - Migrated `tests/props-bindings.test.ts` (a trailing declared boolean child) and `tests/ssr-emission.test.ts` (a boolean signal read as text to name its slot); the originals are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-614` by `tests/value-rules-archive.test.ts`. The FMIR corpus and the declared-props fixtures are byte-identical.
+
+### A list source must be a function: BUILD-616 — FORMA-181 (FORMA-183 finding F1)
+
+- Core's `createList(items, key, row)` calls `items()` to read the rows, and a page list's source is never evaluated by the native module (its array is a named slot), so a plain array compiled and then failed in the browser with `items is not a function`. The original list proof now refuses, on the page and island paths alike, a source it can prove is not a function: a literal, a binding to one (local, or a named export of an imported module), a provably immutable data-valued core getter result (`rows()`), or a field an inline parameter type declares as data (`p.rows` with `p: { rows: Row[] }`). New mandatory code BUILD-616 with a conformance pair; functions, getters and sources the compiler cannot see through stay admitted. A captured signal setter and mutable object fields prevent using their initial values as proof. The js-emitter corpus case `list-same-source` passes `const todos = () => [...]`; its original source is archived in `docs/archive/2026-10-15-pre-list-source/` (still asserted to refuse), and every compiled output of the case is byte-identical.
 
 ### Keyed rows, checkpoint A: original key-path proof and section 6 — FORMA-181
 

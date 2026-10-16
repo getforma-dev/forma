@@ -318,6 +318,8 @@ const config: BuildConfig = {
   },
   // strict: true,                   // Fail on every coded SSR diagnostic (or FORMA_STRICT=1); see below
   // diagnosticsJson: "ssr-diagnostics.json", // Also write them as JSON, outside outputDir
+  // previousDist: "../previous-release/dist", // Keep the live release's assets for open tabs; see "Retention"
+  // security: true,                  // This release fixes a vulnerability: retain nothing (or FORMA_SECURITY_RELEASE=1)
   previewFrame: false,                // true: write core's frame runtime, minified, as forma-runtime.js (forma-server's PageResponse::frame)
   watch: false,                       // Rebuild on change; writes a dev manifest and, with ssr, each page's .ir
   budgetThreshold: 200_000,           // Warn at 200KB brotli per route
@@ -327,6 +329,48 @@ const config: BuildConfig = {
 
 await build(config);
 ```
+
+### Retention: a tab opened before a deploy
+
+While a deploy rolls out, and for as long as a tab stays open, a page of the
+previous release asks for hashed files (a lazily imported chunk) that the new
+binary does not embed. Your pipeline keeps the previous release's `dist/` as a
+release artifact (the one that is live) and passes its path as `previousDist`.
+The build copies that release's own hashed assets into the new `dist/`, listed in
+`manifest.json` as `{ "immutable": true, "retained": true, "integrity": ... }`, and
+forma-server serves them as it serves any immutable asset, so you embed one
+`dist/` and a one-deploy-old tab still loads its chunks.
+
+- **One generation.** What the previous release itself retained is not copied
+  again, so the assets at most double and a tab two deploys old gets a 404 for a
+  chunk it asks for, which your code handles as it handles any failed `import()`.
+- **Never copied:** `manifest.json`, `sw.js`, the `.ir` modules, and files that
+  are not immutable (unhashed fonts). A file the new build also emitted under the
+  same name is its own and is not flagged.
+- **Checked.** Each copied file's bytes must match the SHA-384 the previous
+  manifest recorded; a missing, linked or altered file fails the build with
+  `BUILD-821`. A path that is not a usable previous release fails it with
+  `BUILD-820`: it must be another directory than `outputDir` (which the build
+  replaces whole), of the same `app`, not a watch build. A previous dist whose
+  manifest is not schema 2 (your first 3.0.0 deploy over a 2.x release) retains
+  nothing, and the build says so.
+- **First deploy:** leave `previousDist` out; nothing is copied.
+- **Security releases (L-16, SR45):** mark every release that fixes a
+  vulnerability, a Forma security upgrade included, with `security: true` or
+  `FORMA_SECURITY_RELEASE=1` (a `false` in the config does not unmark it). The
+  build then retains nothing and the revoked build's files are not served; a
+  revoked build's open tabs meet 404s for their lazy chunks.
+- **Trust.** The SHA-384 check catches a damaged or altered file, not someone who can
+  also rewrite the previous `manifest.json`: the previous `dist/` is trusted like your
+  source. Keep it as a protected release artifact.
+- `FORMA_SECURITY_RELEASE` is read like `FORMA_STRICT`: `1` or `true` (any case,
+  trimmed) marks; unset, empty, `0` or `false` does not; anything else fails the build
+  (`BUILD-822`).
+- Watch mode ignores both options.
+
+The identity does not depend on the retained set: the same inputs give the same
+`build`, the same non-retained entries and, with the same previous release, a
+byte-identical `dist/`.
 
 ## Output Structure
 

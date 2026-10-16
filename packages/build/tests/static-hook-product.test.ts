@@ -69,7 +69,7 @@ function execute(f:ReturnType<typeof fixture>,manifest:AssetManifest) {
 }
 it('publishes actual core hooks/shared chunks, exact native products and a static route together',async()=>{
  const f=fixture(),result=await build(f.config);paired(f,result.manifest);execute(f,result.manifest);
-});
+},30_000);// a real build plus a child process that executes it: seconds on a busy machine
 it('keeps actual package/IR/manifest bytes on refusal and publishes a recovered coherent generation',async()=>{
  const f=fixture();await watching(f.config,async watcher=>{
   await watcher.ready();const accepted=watcher.manifest() as AssetManifest;paired(f,accepted);execute(f,accepted);

@@ -166,7 +166,8 @@ counts, the holder count, both canonical trees, the server's document and, when 
 the compiler's diagnostics for the page (BUILD-206 often explains an attribute the server omits).
 The suite's summary totals the holder count over the run. A page error, console error or policy
 violation during the render, or a twin core cannot build, is an `error`, never a pass and never a
-throw.
+throw. Its error test renders the archived pre-F1 `list-same-source` page through the
+`renderBoth` page seam; the current corpus uses a function source under BUILD-616.
 
 ## Expected divergence
 
@@ -185,7 +186,6 @@ The entries today, each found at step 0 and assigned by the lead:
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
-| F1 | `list-same-source`: the source passes a plain array to `createList`, which core 3.0 calls as an accessor (`items is not a function`) | P1 error | FORMA-181, after checkpoint C: the compiler refuses a non-function list source with a code |
 | F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
 | F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
