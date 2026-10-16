@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, writeFileSync, writeSync } from 'node:fs';
+import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmdirSync, rmSync, writeFileSync, writeSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROOT, digest, json, run } from './release-set.mjs';
@@ -94,7 +94,7 @@ export async function worker({ tag, commit, attempt, work }) {
         const seed = index * 4 + targetIndex, log = join(directory, `${target}.log`), findings = join(directory, `findings-${target}`); mkdirSync(findings);
         await task(round, `fuzz:${target}`, directory, async start => {
           await loggedChild(staged.binaries[target], [join(staged.fuzz, 'corpus', target), '-max_total_time=60', '-timeout=10', '-rss_limit_mb=2048', '-max_len=65536', `-seed=${seed}`, '-print_final_stats=1', `-artifact_prefix=${findings}/`], { cwd: staged.fuzz, log, timeout: 120_000, env: { ...process.env, ASAN_OPTIONS: 'abort_on_error=1:detect_leaks=1' } });
-          assert.deepEqual(readdirSync(findings), [], 'fuzzer produced a finding'); rmSync(findings); // Empty directories are not evidence.
+          assert.deepEqual(readdirSync(findings), [], 'fuzzer produced a finding'); rmdirSync(findings); // Empty directories are not evidence.
           const completed = readFuzzCompletion(readFileSync(log, 'utf8'), String(now() - start)); active += BigInt(completed.activeNanoseconds);
           return { proof: { target, seed, ...completed, logSha256: digest(log), binarySha256: before[staged.binaries[target]].sha256 }, fields: { seed, ...completed } };
         });

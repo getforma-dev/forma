@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Pre-RC setup rehearsal only. This entry point cannot create burn-in evidence.
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmdirSync, rmSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROOT, digest, json, run } from './release-set.mjs';
@@ -50,7 +50,7 @@ export async function rehearseSetup({ directory, recordSha256, commit, work, evi
       await loggedChild(staged.binaries[target], [join(staged.fuzz, 'corpus', target), '-runs=1000', '-max_total_time=30', '-timeout=10', '-rss_limit_mb=2048', '-max_len=65536', `-seed=${100 + index}`, `-artifact_prefix=${findings}/`], {
         cwd: staged.fuzz, log, timeout: 45_000, env: { ...process.env, ASAN_OPTIONS: 'abort_on_error=1:detect_leaks=1' },
       });
-      assert.deepEqual(readdirSync(findings), [], 'ASan seed replay produced a finding'); rmSync(findings);
+      assert.deepEqual(readdirSync(findings), [], 'ASan seed replay produced a finding'); rmdirSync(findings);
       const result = seedReplay(readFileSync(log, 'utf8'));
       report.seeds.push({ target, ...result, logSha256: digest(log), binarySha256: digest(staged.binaries[target]) });
     }
