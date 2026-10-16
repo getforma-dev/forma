@@ -16,6 +16,18 @@ function host(name: string, trigger = 'load') {
 }
 
 describe('shared load scheduling', () => {
+  it('does not strand a reserved deferred host when a later refusal reaches a throwing diagnostic', async () => {
+    document.body.innerHTML = host('Good', 'interaction') + host('Bad'); installState();
+    document.head.querySelector('script')!.textContent = JSON.stringify({v: 1, s: [], i: [{h: '0123456789abcdef', p: {}}, null]});
+    vi.spyOn(console, 'error').mockImplementation(() => {throw Error('diagnostic callback failed');});
+    const good = vi.fn(() => tree('Good'));
+    let ready: Promise<void> | undefined;
+    expect(() => {ready = activateIslands(emptyRegistry({Good: good, Bad: () => tree('Bad')}));}).not.toThrow();
+    await ready;
+    document.querySelector<HTMLElement>('[data-forma-component="Good"]')!.dispatchEvent(new Event('pointerdown'));
+    expect(good).toHaveBeenCalledOnce();
+  });
+
   it('counts atomic preflight time against the first slice and resolves after actual load completion', async () => {
     document.body.innerHTML = host('A'); installState();
     const component = vi.fn(() => tree('A'));
@@ -154,6 +166,58 @@ describe('shared load scheduling', () => {
     button.dispatchEvent(new Event('click', { bubbles: true }));
     vi.runAllTimers();
     expect(second).not.toHaveBeenCalled();
+  });
+
+  it.each(['promotion', 'cancel'])('settles both callers when timer cancellation throws during %s', async kind => {
+    document.body.innerHTML = host('A') + host('B'); installState();
+    const target = document.querySelector<HTMLElement>('[data-forma-component="B"]')!;
+    const second = vi.fn(() => tree('B'));
+    const registry = emptyRegistry({A: () => {now += 13; return tree('A');}, B: second});
+    let done = false, overlap = false;
+    const ready = activateIslands(registry).then(() => {done = true;});
+    const other = activateIslands(registry).then(() => {overlap = true;});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const clear = globalThis.clearTimeout;
+    vi.spyOn(globalThis, 'clearTimeout').mockImplementation(handle => {clear(handle); throw Error('timer cancellation wrapper failed');});
+    if (kind === 'promotion') expect(() => target.click()).not.toThrow();
+    else expect(() => deactivateIsland(target)).not.toThrow();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(done).toBe(true); expect(overlap).toBe(true);
+    await Promise.all([ready, other]);
+    expect(second).not.toHaveBeenCalled();
+    deactivateAllIslands(); expect(hasScheduledOrActiveIslands()).toBe(false);
+  });
+
+  it.each(['timer', 'promotion', 'cancel', 'partial-setup'])('settles ownership after a throwing removal during %s and attempts every listener cleanup', async kind => {
+    document.body.innerHTML = host('A') + host('B'); installState();
+    const target = document.querySelector<HTMLElement>('[data-forma-component="B"]')!;
+    const add = target.addEventListener.bind(target), remove = target.removeEventListener.bind(target);
+    const attempts: string[] = [], second = vi.fn(() => tree('B'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(target, 'removeEventListener').mockImplementation((type, callback, options) => {
+      attempts.push(type); remove(type, callback, options);
+      if (type === 'pointerdown') throw Error('native removal completed then wrapper failed');
+    });
+    if (kind === 'partial-setup') vi.spyOn(target, 'addEventListener').mockImplementation((type, callback, options) => {
+      add(type, callback, options);
+      if (type === 'focusin') throw Error('partial setup failed');
+    });
+    const registry = emptyRegistry({A: () => {now += 13; return tree('A');}, B: second});
+    let done = false, overlap = false;
+    const ready = activateIslands(registry).then(() => {done = true;});
+    const other = activateIslands(registry).then(() => {overlap = true;});
+    if (kind === 'timer') expect(() => vi.runAllTimers()).not.toThrow();
+    if (kind === 'promotion') expect(() => target.click()).not.toThrow();
+    if (kind === 'cancel') expect(() => deactivateIsland(target)).not.toThrow();
+    // Flush readiness without assuming a fixed number of promise microtasks.
+    await vi.advanceTimersByTimeAsync(0);
+    expect(done).toBe(true); expect(overlap).toBe(true);
+    await Promise.all([ready, other]);
+    expect(attempts.sort()).toEqual(['click', 'focusin', 'pointerdown']);
+    expect(second).not.toHaveBeenCalled();
+    target.click(); vi.runAllTimers();
+    expect(second).not.toHaveBeenCalled();
+    deactivateAllIslands(); expect(hasScheduledOrActiveIslands()).toBe(false);
   });
 });
 useFreshDocument();

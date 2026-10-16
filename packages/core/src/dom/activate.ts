@@ -32,83 +32,72 @@ export type IslandHydrateFn = (el: HTMLElement, props: Record<string, unknown> |
 type ActivationPhase = 'scheduled'|'preparing'|'live'|'error'|'disposed';
 const activationPhase = new WeakMap<Element,ActivationPhase>();
 
-type LoadCompletion = { remaining: number; resolve: () => void };
-type LoadWork = {
-  value: ValidatedIsland;
-  children: ReadonlyMap<Element, ValidatedIsland>;
-  completion: LoadCompletion;
-  waiters?: LoadCompletion[];
-  index: number;
-  run: () => void;
-};
-const loadQueue: (LoadWork | undefined)[] = [];
+type LoadWork = ((event?: Event | false) => void) & { ready: Promise<void> };
+const loadQueue = new Set<LoadWork>();
 const pendingLoad = new WeakMap<HTMLElement, LoadWork>();
 const loadEvents = ['pointerdown', 'focusin', 'click'] as const;
-let loadNext = 0, loadPending = 0, loadEnrolling = 0, loadRunning = false;
+let loadEnrolling = 0, loadRunning = false;
 let loadTimer: ReturnType<typeof setTimeout> | undefined;
 
-function completeLoad(completion: LoadCompletion): void {
-  if (--completion.remaining === 0) completion.resolve();
+function reportActivationError(error: unknown): void {
+  // User-replaced diagnostics cannot strand independent scheduled hosts.
+  try { console.error(error instanceof Error ? error.message : error); } catch { /* retain sibling progress */ }
 }
 
-/** Consume ownership without disposing the host; promotion and FIFO use this
- * same operation so an input event cannot race a later timer into a second run. */
-function takeLoad(work: LoadWork): boolean {
-  if (loadQueue[work.index] !== work) return false;
-  loadQueue[work.index] = undefined;
-  if (--loadPending === 0) {
-    clearTimeout(loadTimer); loadTimer = undefined;
-    loadQueue.length = 0; loadNext = 0;
-  }
-  for (const type of loadEvents) work.value.host.removeEventListener(type, work.run, true);
-  return true;
+function setupFailed(island: HTMLElement, error: unknown): void {
+  try { deactivateIsland(island); } catch (cleanupError) { reportActivationError(cleanupError); }
+  reportActivationError(error);
 }
 
-function finishLoad(work: LoadWork): void {
-  pendingLoad.delete(work.value.host);
-  completeLoad(work.completion);
-  for (const completion of work.waiters ?? []) completeLoad(completion);
-}
-
-function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, ValidatedIsland>, completion: LoadCompletion): LoadWork {
-  const work: LoadWork = { value, children, completion, index: loadQueue.length, run: () => {
-    if (!takeLoad(work)) return;
+function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, ValidatedIsland>): LoadWork {
+  let complete!: () => void;
+  const work = ((event?: Event | false) => {
+    // Deletion is the atomic take shared by FIFO, input promotion and cancel.
+    // Keep pendingLoad until finally so reentrant callers share real readiness.
+    if (!loadQueue.delete(work)) return;
     const running = loadRunning;
     loadRunning = true;
-    try { hydrateIslandRoot(value, children); }
+    try {
+      let failed = false;
+      if (!loadQueue.size) {
+        const timer = loadTimer; loadTimer = undefined;
+        try { clearTimeout(timer); } catch (error) { failed = true; reportActivationError(error); }
+      }
+      for (const type of loadEvents) {
+        try { value.host.removeEventListener(type, work, true); }
+        catch (error) { failed = true; reportActivationError(error); }
+      }
+      if (failed || event === false) deactivateIsland(value.host);
+      else hydrateIslandRoot(value, children);
+    } catch (error) { setupFailed(value.host, error); }
     finally {
-      finishLoad(work); loadRunning = running;
-      // Input promotion is synchronous but nested activation joins the FIFO.
-      if (!running && loadPending && loadTimer === undefined) loadTimer = setTimeout(drainLoads, 0);
+      pendingLoad.delete(value.host); complete(); loadRunning = running;
+      // Input promotion is synchronous; reentrant activation joins this FIFO.
+      if (!running && !loadEnrolling && loadQueue.size && loadTimer === undefined) loadTimer = setTimeout(drainLoads, 0);
     }
-  } };
-  completion.remaining++; loadPending++;
-  loadQueue.push(work); pendingLoad.set(value.host, work);
+  }) as LoadWork;
+  work.ready = new Promise<void>(resolve => { complete = resolve; });
+  loadQueue.add(work); pendingLoad.set(value.host, work);
   return work;
 }
 
 function drainLoads(deadline = performance.now() + 12): void {
   loadTimer = undefined; loadRunning = true;
   try {
-    while (loadPending && performance.now() < deadline) loadQueue[loadNext++]?.run();
+    for (const work of loadQueue) {
+      if (performance.now() >= deadline) break;
+      work();
+    }
   } finally {
     loadRunning = false;
-    if (loadPending) loadTimer = setTimeout(drainLoads, 0);
+    if (loadQueue.size) loadTimer = setTimeout(drainLoads, 0);
   }
 }
 
 function startLoads(deadline: number): void {
-  if (!loadPending || loadEnrolling || loadRunning || loadTimer !== undefined) return;
+  if (!loadQueue.size || loadEnrolling || loadRunning || loadTimer !== undefined) return;
   if (performance.now() < deadline) drainLoads(deadline);
   else loadTimer = setTimeout(drainLoads, 0);
-}
-
-function setupFailed(island: HTMLElement, error: unknown): void {
-  try { deactivateIsland(island); }
-  finally {
-    // A user-replaced diagnostic must not prevent independent siblings arming.
-    try { console.error(error instanceof Error ? error.message : error); } catch { /* retain sibling progress */ }
-  }
 }
 
 const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
@@ -237,29 +226,29 @@ export function activateIslands(
   const checked = preflightIslands(registry, root);
   const children = new Map<Element, ValidatedIsland>();
   for (const result of checked) if ('value' in result) children.set(result.host, result.value);
-  const completion: LoadCompletion = { remaining: 1, resolve: () => {} };
-  const ready = new Promise<void>(resolve => { completion.resolve = resolve; });
+  const ready: Promise<void>[] = [];
   const scheduled: { value: ValidatedIsland; trigger: string; work?: LoadWork }[] = [];
   loadEnrolling++;
   try {
     // Reserve the entire admitted set before any trigger can invoke user code.
     for (const result of checked) {
-      if ('error' in result) { console.error(result.error.message); continue; }
+      if ('error' in result) { reportActivationError(result.error); continue; }
       const value = result.value, island = value.host;
       const pending = pendingLoad.get(island);
       if (pending) {
-        (pending.waiters ??= []).push(completion); completion.remaining++;
+        ready.push(pending.ready);
         continue;
       }
       if (activationPhase.has(island) || (island as any).__formaScheduled) continue;
       try { checkIslandClaim(value); } catch (error) {
-        console.error(error instanceof Error ? error.message : error); continue;
+        reportActivationError(error); continue;
       }
       delete (island as any).__formaDisposed;
       trackIsland(island); activationPhase.set(island, 'scheduled');
       const trigger = island.getAttribute('data-forma-hydrate') || 'load';
       const work = trigger === 'visible' || trigger === 'idle' || trigger === 'interaction'
-        ? undefined : queueLoad(value, children, completion);
+        ? undefined : queueLoad(value, children);
+      if (work) ready.push(work.ready);
       scheduled.push({ value, trigger, work });
     }
     for (const { value, trigger, work } of scheduled) {
@@ -267,8 +256,8 @@ export function activateIslands(
       if (activationPhase.get(island) !== 'scheduled') continue;
       try {
         if (work) {
-          // Priority activation preserves the first real event without replay.
-          for (const type of loadEvents) island.addEventListener(type, work.run, true);
+          // Retained SSR targets can receive the same event after priority activation.
+          for (const type of loadEvents) island.addEventListener(type, work, true);
         } else if (trigger === 'visible') {
           (island as any).__formaScheduled = true;
           const observer = new IntersectionObserver(entries => {
@@ -303,13 +292,13 @@ export function activateIslands(
           island.addEventListener('focusin', hydrate, { capture: true, once: true });
         }
       } catch (error) {
-        try { setupFailed(island, error); } catch { /* a failed cleanup cannot strand siblings */ }
+        setupFailed(island, error);
       }
     }
   } finally {
-    loadEnrolling--; completeLoad(completion); startLoads(deadline);
+    loadEnrolling--; startLoads(deadline);
   }
-  return ready;
+  return Promise.all(ready).then(() => {});
 }
 
 /**
@@ -340,8 +329,7 @@ export function deactivateIsland(el: HTMLElement): void {
     el.removeEventListener('focusin', interactionHandler, true);
     delete (el as any).__formaInteractionHandler;
   }
-  const load = pendingLoad.get(el);
-  if (load && takeLoad(load)) finishLoad(load);
+  pendingLoad.get(el)?.(false);
   const idleCancel = (el as any).__formaIdleCancel as (() => void) | undefined;
   if (idleCancel) {
     idleCancel();

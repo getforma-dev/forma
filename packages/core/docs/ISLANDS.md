@@ -39,8 +39,11 @@ existing diagnostics rather than rejecting the promise.
 
 Queued load islands listen for pointerdown, focusin and click so their first
 input can promote that island synchronously before normal event handling. This
-priority path retains the original event and native default action; it does not
-replay events or split an island transaction. Input promotion can exceed the
+priority path preserves the first event for retained SSR targets and leaves
+native default actions intact. Browser-only replacement creates a new target,
+which cannot receive an event already dispatching on the old target; callers
+that need its handlers ready must await activation. No event is replayed and
+no island transaction is split. Input promotion can exceed the
 background slice. Other islands continue in FIFO order, and disposal releases
 pending activation and its temporary listeners.
 
