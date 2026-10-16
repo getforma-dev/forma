@@ -48,6 +48,29 @@ export function validateActivation(probe,{islands}) {
  assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.duration,'N3 long task')<=50),'N3: task over50ms');
  assert.deepEqual(probe.errors,[],'N3: browser errors');return afterPaint;
 }
+export function validateMobileControls(observations){
+ const {dead,slow}=observations??{};
+ for(const [name,probe] of [['dead',dead],['slow',slow]]){
+  assert.equal(probe?.expected,100,`N3 ${name} control: expected islands absent`);
+  assert.equal(probe.hosts,100,`N3 ${name} control: served hosts absent`);
+  assert.equal(probe.hostStatuses?.length,100,`N3 ${name} control: host observations absent`);
+  assert(probe.hostStatuses.every(status=>status==='pending'),'N3 control: native host status changed');
+  assert.equal(probe.done,true);finite(probe.firstPaintMs,'N3 control first paint');assert.deepEqual(probe.errors,[]);
+  assert(Array.isArray(probe.longTasks),'N3 control: long-task observations absent');
+  for(const task of probe.longTasks){finite(task.startTime,'N3 control task start');assert(finite(task.duration,'N3 control task duration')>0);}
+ }
+ assert.equal(dead.active,0,'N3 dead control unexpectedly activated');assert.equal(dead.responded,0,'N3 dead control unexpectedly responded');assert.equal(dead.lastResponseMs,null);
+ assert.equal(slow.active,100,'N3 slow control did not activate');assert.equal(slow.responded,100,'N3 slow control did not respond');finite(slow.lastResponseMs,'N3 slow control last response');
+ const injected=slow.injectedTask;assert(injected,'N3 injected task interval absent');
+ finite(injected.startTime,'N3 injected task start');finite(injected.endTime,'N3 injected task end');
+ // Long-task durations may be rounded to a millisecond. Attribute the actual
+ // ninety-millisecond injection, not a different slow application task.
+ assert(injected.endTime-injected.startTime>=89,'N3 injected task did not run for ninety milliseconds');
+ assert(slow.longTasks.some(task=>task.duration>=89&&task.startTime<=injected.startTime&&task.startTime+task.duration>=injected.endTime-1),'N3 injected task was not observed');
+ assert.throws(()=>validateActivation(dead,{islands:100}),/did not activate|did not respond/);
+ assert.throws(()=>validateActivation(slow,{islands:100}),/later than500ms|over50ms/);
+ return {deadActivationRefused:true,longTaskRefused:true};
+}
 export function validateMobile(rows) {
  exactKeys(rows?.map(row=>row.id)??[],['tenant-login','islands-100'],'N3 routes');
  for(const row of rows){assert.equal(row.pilot,false,'N3: pilot cannot qualify a release');assert.deepEqual(row.profile,MOBILE_PROFILE,'N3: actual mobile profile differs');assert.equal(row.runs?.length,20,'N3: require20 cold runs');
@@ -123,12 +146,12 @@ export function validatePerformanceRecord(performance,{baseline=null}={}){
  assert.equal(performance?.contract,PERFORMANCE_CONTRACT,'performance: contract absent');assert.equal(performance.passed,true,'performance: failed measurements');
  const {machine,controls}=performance;
  assert(machine?.profile&&machine?.node&&machine?.cpuModel,'performance: machine/profile missing');
- assert.deepEqual(controls,{deadActivationRefused:true,longTaskRefused:true},'N3: paired controls did not refuse');
+ assert.deepEqual(controls,validateMobileControls(performance.controlObservations),'N3: paired controls did not refuse');
  validateNative({schema:1,pilot:false,profile:performance.nativeProfile,n1:performance.n1,n5:performance.n5,boundaries:performance.boundaries},baseline);
  validateMobile(performance.mobile);validateComparison(performance.client);validateDecoder(performance.decoder);return performance;
 }
-export function completePerformance({native,mobile,client,decoder,baseline,machine,controls}){
+export function completePerformance({native,mobile,client,decoder,baseline,machine,controls,controlObservations}){
  assert(['bootstrap','comparable'].includes(baseline?.status),'performance: no authenticated baseline');
  validateNative(native,baseline);
- return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,passed:true,machine,baseline,controls,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client,decoder},{baseline});
+ return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,passed:true,machine,baseline,controls,controlObservations,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client,decoder},{baseline});
 }

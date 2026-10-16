@@ -18,7 +18,7 @@ export function mobile(){
   return {run:i+1,lighthouse:{version:'13.5.0',throttlingMethod:'devtools',benchmarkIndex:123,tbtMs:0,lcpMs:123,longTasks:[],rawLhr,sha256:createHash('sha256').update(rawLhr).digest('hex')},activation:{expected:count,active:count,responded:count,firstPaintMs:100,lastResponseMs:200,longTasks:[],errors:[]}};
  })}));
 }
-export function performanceRecord(){const n=native();return {contract:'measured-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true},n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison(),decoder:decoder()};}
+export function performanceRecord(){const n=native();return {contract:'measured-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true},controlObservations:controlObservations(),n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison(),decoder:decoder()};}
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 // Synthetic finite validator inputs only. These figures are never used as
@@ -43,4 +43,9 @@ export function decoder() {
     artifact:{file:'dist/forma.esm.js',sha256:'a'.repeat(64),bytes:100},
     compiler:{file:'dist/index.js',sha256:'a'.repeat(64),fixtures:DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}}))},
     machine:{node:'test',platform:'test',release:'test',architecture:'test',cpu:'test',logicalCpus:1,memoryBytes:1},cases,controls};
+}
+
+export function controlObservations(){
+ const common={expected:100,hosts:100,hostStatuses:Array(100).fill('pending'),firstPaintMs:100,longTasks:[],errors:[],done:true};
+ return {dead:{...structuredClone(common),active:0,responded:0,lastResponseMs:null},slow:{...structuredClone(common),active:100,responded:100,lastResponseMs:300,longTasks:[{startTime:150,duration:91}],injectedTask:{startTime:150.2,endTime:240.2}}};
 }

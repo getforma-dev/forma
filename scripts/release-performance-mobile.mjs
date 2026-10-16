@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {MOBILE_PROFILE} from './release-performance-spec.mjs';
 export {MOBILE_PROFILE} from './release-performance-spec.mjs';
-import {percentile,validateActivation} from './release-performance-contract.mjs';
+import {percentile,validateMobileControls} from './release-performance-contract.mjs';
 
 
 // Serialized into each fresh page before any application script executes.
@@ -38,7 +38,7 @@ export function activationInstrumentation({kind,longTask}) {
   }
   if(!result.done)requestAnimationFrame(tick);
  }
- if(longTask)addEventListener('DOMContentLoaded',()=>{const until=performance.now()+90;while(performance.now()<until){}},{once:true});
+ if(longTask)addEventListener('DOMContentLoaded',()=>{const startTime=performance.now(),until=startTime+90;while(performance.now()<until){}result.injectedTask={startTime,endTime:performance.now()};},{once:true});
  setTimeout(()=>{result.done=true;},8000);requestAnimationFrame(tick);
 }
 export async function measureActivation(url,kind,{disabled=false,longTask=false}={}){
@@ -87,8 +87,6 @@ export async function measureMobileRoute({url,id,runs=20,onProgress=()=>{},onSam
 export async function mobileControls(url){
  const dead=await measureActivation(url,'islands-100',{disabled:true});
  const slow=await measureActivation(url,'islands-100',{longTask:true});
- assert.throws(()=>validateActivation(dead,{islands:100}),/did not activate|did not respond/);
- assert(slow.longTasks.some(t=>t.duration>50),'positive long-task injection was not observed');
- assert.throws(()=>validateActivation(slow,{islands:100}),/later than500ms|over50ms/);
- return {controls:{deadActivationRefused:true,longTaskRefused:true},observations:{dead,slow}};
+ const observations={dead,slow};
+ return {controls:validateMobileControls(observations),observations};
 }

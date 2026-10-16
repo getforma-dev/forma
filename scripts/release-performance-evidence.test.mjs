@@ -31,3 +31,19 @@ test('new and previous DS12 require the public decoder raw observations and enfo
   const prior=baseline();edit(prior.measurements.measurements.performance);assert.throws(()=>validateBaselineRecord(prior,context));
  }
 });
+
+test('paired mobile controls require the injected task itself and durable raw observations',()=>{
+ validatePerformanceRecord(performanceRecord());
+ for(const edit of [
+  p=>delete p.controlObservations,
+  p=>delete p.controlObservations.slow.injectedTask,
+  p=>p.controlObservations.slow.longTasks=[{startTime:500,duration:100}],
+  p=>p.controlObservations.slow.injectedTask.endTime=151,
+  p=>p.controlObservations.dead.responded=1,
+  p=>p.controlObservations.dead.hosts=0,
+  p=>p.controlObservations.slow.responded=99,
+ ]){
+  const current=performanceRecord();edit(current);assert.throws(()=>validatePerformanceRecord(current));
+  const prior=baseline();edit(prior.measurements.measurements.performance);assert.throws(()=>validateBaselineRecord(prior,context));
+ }
+});

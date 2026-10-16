@@ -89,7 +89,7 @@ export async function verifyPackedPerformance({staged,set,test,target,before,rep
    client=json(clientPath);attempt.client=client;
   });
   const machine={...machineProfile({rustc:set.toolchain,npm:set.npm}),profile:'packed npm and crates; ordinary cargo release; N1 prepared typed inputs; Lighthouse13.5.0 applied mobile; serial Chromium/Firefox/WebKit comparison'};
-  const result=completePerformance({native,mobile,client,decoder,baseline,machine,controls:controls.controls});
+  const result=completePerformance({native,mobile,client,decoder,baseline,machine,controls:controls.controls,controlObservations:controls.observations});
   delete report.performanceAttempt;
   return {...result,rehearsal:target.rehearsal,targetTag:target.tag,controlObservations:controls.observations,toolingLockSha256:digest(join(ROOT,'package-lock.json')),nativeExecutableSha256:digest(executable('fixture-measure'))};
  }finally{rmSync(output,{recursive:true,force:true});}
