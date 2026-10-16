@@ -5,6 +5,22 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT, digest, run } from './release-set.mjs';
 import { assertResolvesInside, expectedFor, fixtureCargoToml, fixtureManifest, nearestPackage, pruneCargoLock, stageFixtureNpm } from './release-fixture-apps.mjs';
+import {inertEntryDocument} from '../e2e/fixtures/apps/lib/verify-page.mjs';
+
+test('the inert-module control changes only its exact native entry script/preload integrity', () => {
+  const sri = `sha384-${'A'.repeat(64)}`, nonce = 'retained-nonce';
+  const preload = `<link rel="modulepreload" nonce="${nonce}" href="/_assets/app.js" integrity="${sri}" crossorigin="anonymous">`;
+  const script = `<script type="module" nonce="${nonce}" src="/_assets/app.js" integrity="${sri}" crossorigin="anonymous"></script>`;
+  const unrelated = `<link rel="stylesheet" href="/_assets/app.css" integrity="${sri}" crossorigin="anonymous">`;
+  const html = `<!doctype html><head>${preload}${unrelated}</head><body><p>1001</p>${script}</body>`;
+  const assets = {'app.js': {integrity: sri}};
+  const emptySri = 'sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb';
+  assert.equal(inertEntryDocument(html, ['app.js'], assets, ''), html.replace(preload, preload.replace(sri, emptySri)).replace(script, script.replace(sri, emptySri)));
+  for (const broken of [html.replace(preload, ''), html + script, html.replace(script, script.replace(sri, `sha384-${'B'.repeat(64)}`)), html.replace(script, script.replace('type="module"', 'type="text/javascript"')), html.replace(script, script.replace('nonce="retained-nonce"', 'nonce=""')), html.replace(script, script.replace('src="/_assets/app.js"', "src='/_assets/app.js'")), html.replace('</script>', 'unexpected</script>')]) {
+    assert.throws(() => inertEntryDocument(broken, ['app.js'], assets, ''), /inert control/);
+  }
+  assert.throws(() => inertEntryDocument(html, ['app.js'], {}, ''), /original entry integrity/);
+});
 
 const temp = prefix => mkdtempSync(join(tmpdir(), prefix));
 const lockText = [
