@@ -203,3 +203,7 @@ docs/archive/skew-failure-diagnostics/** -text
 
 # Preserve the actual same-target reload interruption and scoped controls.
 docs/archive/skew-expected-reload/** -text
+
+# Original Playwright graph and actual transport investigation retain exact bytes.
+docs/archive/playwright-firefox-channel/** -text
+docs/evidence/playwright-firefox-channel/** -text

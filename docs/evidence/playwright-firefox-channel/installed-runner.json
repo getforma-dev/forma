@@ -1,0 +1,30 @@
+{
+  "node": "v24.22.0",
+  "resolutions": {
+    ".": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/core": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/compiler": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/build": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/create-app": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    }
+  },
+  "executables": {
+    "chromium": "/Users/victorvillacis/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+    "firefox": "/Users/victorvillacis/Library/Caches/ms-playwright/firefox-1555/firefox/Nightly.app/Contents/MacOS/firefox",
+    "webkit": "/Users/victorvillacis/Library/Caches/ms-playwright/webkit-2370/pw_run.sh"
+  }
+}

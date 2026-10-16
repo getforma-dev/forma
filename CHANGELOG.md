@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- Update the workspace browser runner to Playwright 1.64.1, whose official Firefox transport assigns a unique channel identity after COOP browsing-context replacement. Preserve the deployment drill's response headers, navigation assertions and timeouts; the dashboard template keeps its existing separate 1.64.1 lock.
+
 - Maintenance CI, release browser checks and nightly qualification now use the declared Node build pin. Parsed policy controls reject maintenance selector and private engine drift while retaining the published packages’ dated compatibility matrix.
 
 - Authenticate the complete nested P17 evidence tree with a dedicated manifest, preserving the flat DS11 artifact contract. Run the existing packed deployment drill before mandatory performance checks so a measurement failure retains all earlier functional results.
