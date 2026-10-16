@@ -118,7 +118,7 @@ Verified by `src/__tests__/readme-examples.test.ts` > "the intro counter works w
 
 **Three entry points, one engine.** Start with a CDN script tag, graduate to a full build pipeline without rewriting.
 
-**Islands over SPAs.** Compiled `activateIslands()` validates each original SSR region before activation: successful adoption makes zero initial DOM writes, mismatches refuse without repair, and failures remain isolated per island. Deferred triggers (`visible`, `idle`, `interaction`) delay activation; disposal releases owned work. → [docs/ISLANDS.md](docs/ISLANDS.md)
+**Islands over SPAs.** Compiled `activateIslands()` validates each original SSR region before activation: successful adoption makes zero initial DOM writes, mismatches refuse without repair, and failures remain isolated per island. Load work cooperatively yields between whole islands; await `activateIslands()` for requested load completion. Deferred triggers (`visible`, `idle`, `interaction`) settle readiness once armed; disposal releases owned work. → [docs/ISLANDS.md](docs/ISLANDS.md)
 
 **CSP-safe.** The HTML runtime evaluates expressions with an allowlist AST interpreter. **Zero `eval()`, zero `new Function()`, zero `with()` in every shipped artifact** — there is no opt-in fallback to leave switched on by mistake, because the fallback was deleted. Asserted by `scripts/verify-dist.mjs`, which greps the built files as the last step of `npm run build`, and by a Playwright spec that serves the flagship fixture under a real CSP header.
 

@@ -169,11 +169,11 @@ export async function measurePackedDecoder({corePath,compilerPath=resolve(corePa
         elapsedMs=entered-begin;calls++;observed=props.value;
         return h('div',null);
       },metadata);
-      const observer=new MutationObserver(()=>{});
+      const records=[],observer=new MutationObserver(batch=>records.push(...batch));
       observer.observe(document,{subtree:true,childList:true,attributes:true,characterData:true});
       const registry={Decoder};
-      begin=performance.now();activateIslands(registry);
-      const mutations=observer.takeRecords().length;observer.disconnect();
+      begin=performance.now();await activateIslands(registry);
+      const mutations=records.length+observer.takeRecords().length;observer.disconnect();
       let valueSha256=null;
       if(calls) {
         const bytes=new TextEncoder().encode(JSON.stringify(observed));

@@ -54,6 +54,9 @@ function text(value:unknown):string {
   if(typeof value==='string'||typeof value==='number')return normalizeDomText(String(value));
   return refuse();
 }
+function collectText(children:unknown[]):()=>string {
+  return ()=>children.map(child=>text(typeof child==='function'?(child as ()=>unknown)():child)).join('');
+}
 function ownProps(props:Record<string,unknown>):[string,unknown][] {
   // Snapshot every descriptor before validating, then reuse these private pairs.
   const entries:[string,unknown][]=Object.entries(Object.getOwnPropertyDescriptors(props));
@@ -127,20 +130,14 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   }
   function textarea(element:Element,children:unknown[]):void {
     const reads=children.filter(child=>typeof child==='function') as (()=>unknown)[];
-    const collect=()=>children.map(child=>{
-      const value=typeof child==='function'?(child as ()=>unknown)():child;
-      return value==null||typeof value==='boolean'?'':text(value);
-    }).join('');
+    const collect=collectText(children);
     // A sole original compiler wrapper retains its exact getter authority;
     // composed text remains a reactive binding with no invented setter.
     control(element,'text',reads.length?collect:collect(),children.length===1&&reads.length===1?reads[0]:undefined);
   }
 
   function title(element:Element,children:unknown[]):void {
-    const collect=()=>children.map(child=>{
-      const value=typeof child==='function'?(child as ()=>unknown)():child;
-      return value==null||typeof value==='boolean'?'':text(value);
-    }).join('');
+    const collect=collectText(children);
     let previous:string;
     const write=(next:string)=>{if(next!==previous){element.textContent=next;previous=next;}};
     const initial=children.some(child=>typeof child==='function')?scope.observe(collect,write):collect();

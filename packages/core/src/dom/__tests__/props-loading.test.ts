@@ -28,11 +28,11 @@ describe('props loading', () => {
     observer.disconnect(); error.mockRestore();
   });
 
-  it('loads declared scalar and array props from the first head state block', () => {
+  it('loads declared scalar and array props from the first head state block', async () => {
     hosts(2);
     installState([{ name: 'Alice', count: 42 }, { items: [1, 2, 3] }]);
     const first = vi.fn(() => h('div', null, h('p', null, 'Content 0'))), second = vi.fn(() => h('div', null, h('p', null, 'Content 1')));
-    activateIslands({
+    await activateIslands({
       Comp0: compiled(first, [[{ name: 'name', type: { kind: 'string' } }, { name: 'count', type: { kind: 'number' } }]]),
       Comp1: compiled(second, [[{ name: 'items', type: { kind: 'array', element: { kind: 'number' } } }]]),
     });
@@ -52,12 +52,12 @@ describe('props loading', () => {
     error.mockRestore();
   });
 
-  it('a malformed state entry stays inert while a valid sibling activates', () => {
+  it('a malformed state entry stays inert while a valid sibling activates', async () => {
     hosts(2); installState([{}, { label: 'working' }]);
     document.head.querySelector('script')!.textContent = JSON.stringify({ v: 1, s: [], i: [null, { h: FIXTURE_HASH, p: { label: 'working' } }] });
     const first = vi.fn(), second = vi.fn(() => h('div', null, h('p', null, 'Content 1'))), error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const firstHost = document.querySelector('[data-forma-island="0"]')!, before = firstHost.outerHTML;
-    activateIslands({ Comp0: compiled(first), Comp1: compiled(second, [[{ name: 'label', type: { kind: 'string' } }]]) });
+    await activateIslands({ Comp0: compiled(first), Comp1: compiled(second, [[{ name: 'label', type: { kind: 'string' } }]]) });
     expect(first).not.toHaveBeenCalled(); expect(firstHost.outerHTML).toBe(before);
     expect(typeof (document.querySelector('[data-forma-island="1"]') as any).__formaDispose).toBe('function');
     expect(second).toHaveBeenCalledExactlyOnceWith({ label: 'working' });
@@ -66,16 +66,16 @@ describe('props loading', () => {
     error.mockRestore();
   });
 
-  it('preserves quoted strings in head JSON without attribute decoding', () => {
+  it('preserves quoted strings in head JSON without attribute decoding', async () => {
     hosts(); installState([{ label: 'Say "hello" & <goodbye>' }]);
     const component = vi.fn(() => h('div', null, h('p', null, 'Content 0')));
-    activateIslands({ Comp0: compiled(component, [[{ name: 'label', type: { kind: 'string' } }]]) });
+    await activateIslands({ Comp0: compiled(component, [[{ name: 'label', type: { kind: 'string' } }]]) });
     expect(typeof (document.querySelector('[data-forma-island]') as any).__formaDispose).toBe('function');
     expect(component).toHaveBeenCalledExactlyOnceWith({ label: 'Say "hello" & <goodbye>' });
     expect(document.querySelector('[data-forma-island]')!.textContent).toBe('Content 0');
   });
 
-  it('refuses scalar and array props roots while accepting declared object and array fields', () => {
+  it('refuses scalar and array props roots while accepting declared object and array fields', async () => {
     const invalid = [null, 7, 0, 'text', true, false, [1, 2]];
     hosts(invalid.length + 2); installState();
     document.head.querySelector('script')!.textContent = JSON.stringify({ v: 1, s: [], i: [...invalid, { rows: [1, 2] }, { ok: true, nested: { undeclared: 1 } }].map(p => ({ h: FIXTURE_HASH, p })) });
@@ -85,7 +85,7 @@ describe('props loading', () => {
     registry.Comp8 = compiled(components[8]!, [[{ name: 'ok', type: { kind: 'boolean' } }, { name: 'nested', type: { kind: 'object', object: 1 } }], []]);
     const before = [...document.querySelectorAll('[data-forma-island]')].slice(0, invalid.length).map(host => host.outerHTML);
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    activateIslands(registry);
+    await activateIslands(registry);
     for (let i = 0; i < invalid.length; i++) {
       expect(components[i]).not.toHaveBeenCalled();
       expect(document.querySelector(`[data-forma-island="${i}"]`)!.outerHTML).toBe(before[i]);

@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 - Serialize mutation-probe files and explicitly concurrent tests under fail-fast execution, so one assertion cannot interrupt another worker's completion evidence. Incomplete test results remain unqualified; the corpus, clean/restored baselines and detection floors are unchanged.
 
+- `activateIslands()` now returns load-readiness as `Promise<void>` and yields between whole load-island transactions after a cooperative 12 ms slice, including preflight time. Overlapping calls share queued ownership, input promotes pending SSR activation without event replay, and trigger setup failures remain isolated. This changes completion semantics; callers requiring all load islands must await the result. Deferred triggers settle once armed, and a single island or preflight remains atomic rather than subject to a hard duration bound.
+
 - Allocate detached HTML prototypes when their tags are first requested, instead of creating 40 common-tag prototypes on the first `h()` call. Later calls still return independent shallow clones; this change makes no timing-gate claim.
 
 - Share exact `className`/`htmlFor`/`tabIndex` normalization between static/reactive `h()` writes and adoption. HTML and SVG attributes now use the same declared alias policy; ordinary browser object property order remains intact.

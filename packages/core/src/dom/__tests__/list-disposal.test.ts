@@ -268,6 +268,7 @@ describe('island teardown on row removal', () => {
   it('deactivates a scheduled island that never hydrated inside a removed row', () => {
     const [items, setItems] = createSignal([{ id: 1 }]);
     let island!: HTMLElement;
+    const hydrate = vi.fn(() => h('span', null, 'ssr'));
 
     createRoot(() => {
       const frag = createList(
@@ -275,7 +276,9 @@ describe('island teardown on row removal', () => {
         (item) => item.id,
         (item) => {
           const row = document.createElement('div');
-          island = activateIslandIn(row, item.id, () => {}, 'interaction');
+          island = mountOriginal(row, item.id);
+          island.setAttribute('data-forma-hydrate', 'interaction');
+          activateIslands(emptyRegistry({Widget: hydrate}), row);
           return row;
         },
       );
@@ -284,11 +287,14 @@ describe('island teardown on row removal', () => {
 
     // Scheduled, never hydrated: no reactive root yet, only the pointerdown /
     // focusin listeners — the leak the guard must not reintroduce.
-    expect((island as any).__formaScheduled).toBe(true);
+    expect(hydrate).not.toHaveBeenCalled();
+    expect(scansForPlainRowRemoval()).toBe(3);
     expect(island.getAttribute('data-forma-status')).toBeNull();
 
     setItems([]);
-    expect((island as any).__formaScheduled).toBeUndefined();
+    island.dispatchEvent(new Event('pointerdown'));
+    island.dispatchEvent(new Event('focusin'));
+    expect(hydrate).not.toHaveBeenCalled();
     expect((island as any).__formaInteractionHandler).toBeUndefined();
     expect((island as any).__formaDisposed).toBe(true);
     expect(scansForPlainRowRemoval()).toBe(0);
