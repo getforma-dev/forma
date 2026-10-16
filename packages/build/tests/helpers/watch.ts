@@ -26,7 +26,9 @@ export interface Watcher {
   output(): string;
   /** Wait for every initial watch registration; initial-refusal tests intentionally omit this. */
   ready(): Promise<void>;
-  /** Apply a change only between completed watch cycles, then await the next one. */
+  /** Apply a change after initial registration, then await a completed cycle.
+   * An already-running cycle may finish first. Callers must separately await
+   * the semantic publication they need, including recovery from a failed cycle. */
   change(update: () => void): Promise<void>;
 }
 
