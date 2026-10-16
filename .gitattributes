@@ -170,3 +170,6 @@ docs/archive/FORMA-108-fetch-fixture/** -text
 
 # Preserve the original shipped CSP example as byte-exact qualification evidence.
 docs/archive/FORMA-108-csp-example/** -text
+
+# Original runtime guides retain their exact pre-correction bytes.
+docs/archive/FORMA-108-guide-residue/** -text

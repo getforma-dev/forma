@@ -165,8 +165,13 @@ The hardened build is the same runtime under a second, tree-shaken bundling. It
 is no longer a stronger guarantee — every build is equally eval-free:
 
 ```html
+<!-- Historical published 2.1.0 artifact; not the 3.x mount contract. -->
 <script src="https://cdn.jsdelivr.net/npm/@getforma/core@2.1.0/dist/formajs-runtime-hardened.global.js"></script>
 ```
+
+For 3.x, serve the installed `dist/formajs-runtime-hardened.global.js` locally
+and use the same explicit mount call shown above. No published 3.x CDN URL is
+assumed here.
 
 Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Function or a with() scope wrapper"
 
@@ -241,11 +246,12 @@ Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "handle.unmount() st
 
 ## Mounting markup you did not write: tiers and grants
 
-The script-tag runtime binds every `data-forma-state` on the page and, through
-a `MutationObserver` on `body`, every one inserted later, with every power the
-grammar has. That is right for a page you wrote. For markup a generator wrote,
-such as a widget a model produced and an application admitted, `mountMarkup()`
-mounts it under a root you hand it, in a **tier**, with **grants**:
+Every 3.x runtime binding belongs to an explicit `mountMarkup()` call, whether
+the application wrote the markup or admitted a generated widget. Loading the
+script and inserting markup do not bind it. Hand the reviewed markup to an
+owned root, name its **tier**, grant only the required authority, and retain
+the handle for updates and disposal. For example, a widget allowed to make
+GET requests only under its own path is mounted with:
 
 ```ts
 import { mountMarkup, trustedHtml } from '@getforma/core/runtime';
