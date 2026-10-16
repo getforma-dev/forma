@@ -438,11 +438,12 @@ export async function verify(dir, reportPath) {
                 requireAssetIntegrity(resources, json(join(admin, 'dist/manifest.json')));
                 report.tests.push({ name: `${template}: actual packed server resource tags carry manifest SHA-384 and nonces`, passed: true, resources });
               }
+              let dashboardTooltip;
               if (template === 'minimal') {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count span').filter({ hasText: islandTemplates ? /^8$/ : /^1$/ }).waitFor();
               } else {
-                await interactDashboard(page);
+                dashboardTooltip = await interactDashboard(page);
               }
               // Historical activation removed status markers. Strict adoption keeps
               // the original DOM; its separate held-module observer proves success.
@@ -464,7 +465,8 @@ export async function verify(dir, reportPath) {
               assert.deepEqual(observation.violations, [], 'CSP violation in packed template');
               assert.deepEqual(errors, [], 'browser error in packed template');
               report.tests.push({ name: `${template}: served policy and zero CSP violations during positive browser interaction`, passed: true,
-                trustedTypesContract: set.contracts.trustedTypes ?? null, servedPolicy, browserPolicy, ...observation, pageErrors: errors });
+                trustedTypesContract: set.contracts.trustedTypes ?? null, servedPolicy, browserPolicy, ...observation, pageErrors: errors,
+                ...(dashboardTooltip ? { dashboardTooltip } : {}) });
             } finally { await page.close(); }
             if (template === 'minimal' && islandTemplates) {
               const manifest = json(join(admin, 'dist/manifest.json'));

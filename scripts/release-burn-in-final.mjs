@@ -70,6 +70,14 @@ export function validateFixtureProof(proof, expectedIds = fixtureCheckIds()) {
   assert.deepEqual(island.transitions, [7, 8, 0, 1]); assert.deepEqual(island.adoption.mutations, []); assert.equal(island.adoption.sameNodes, true); assert.equal(island.adoption.sameHost, true);
   assert.equal(staticPage.executableScripts, 0); assert.equal(staticPage.modulepreloads, 0); assert.deepEqual(staticPage.errors, []); assert.deepEqual(staticPage.violations, []);
   assert.equal(proof.templates.dashboard.interacted, true); assert.deepEqual(proof.templates.dashboard.pageErrors, []); assert.deepEqual(proof.templates.dashboard.violations, []);
+  const tooltip = proof.templates.dashboard.tooltip;
+  assert.equal(tooltip?.apiTextStayedText, true, 'dashboard tooltip safety evidence missing');
+  assert.deepEqual(tooltip.normal.map(point => point.hour), ['00:00', '23:00']);
+  assert.equal(tooltip.hostile.hour, '<img data-forma-tooltip-probe src="/__forma_tooltip_probe__" onerror="globalThis.__formaTooltipExecuted=true">');
+  for (const point of [...tooltip.normal, tooltip.hostile]) {
+    assert.equal(point.hiddenOnLeave, true);
+    assert(Array.isArray(point.values) && point.values.length === 2 && point.values.every(value => typeof value === 'string' && value.length > 0));
+  }
   return proof;
 }
 export function validateBurnInFiles(directory, expected, report = json(join(directory, 'burn-in.json'))) {

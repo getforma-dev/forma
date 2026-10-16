@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { chromium, firefox, webkit } from '@playwright/test';
-import { verifyMinimalIsland, verifyStaticTemplate } from '../../../scripts/release-template-islands.mjs';
+import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
 import { TEMPLATES, validateProjectName } from '../src/scaffold';
 import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures, recordObservation } from './helpers';
 
@@ -571,6 +571,28 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
         expect(body, route).toContain(`nonce="${nonce}"`);
       }
     });
+  }, 900_000);
+
+  it('dashboard: chart tooltip keeps API values as text under enforced policy in all engines', async () => {
+    const name = 'e2e-dashboard-tooltip';
+    expect(runCli([name, '--template', 'dashboard'], tmp).status).toBe(0);
+    const dest = path.join(tmp, name), admin = path.join(dest, 'admin');
+    const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
+    expect(install.status, install.stderr).toBe(0);
+    const build = run('npm', ['run', 'build'], admin);
+    expect(build.status, build.stdout + build.stderr).toBe(0);
+    const cargo = run('cargo', ['build', '--locked', '--release'], dest);
+    expect(cargo.status, cargo.stderr).toBe(0);
+    await withServer(dest, name, async (_body, response) => {
+      expect(response.headers.get('content-security-policy-report-only')).toBeNull();
+      for (const [engine, launcher] of Object.entries({ chromium, firefox, webkit })) {
+        const browser = await launcher.launch();
+        try {
+          const observation = await verifyDashboardTemplate(browser, new URL(response.url).origin);
+          recordObservation(`dashboard: ${engine} tooltip text and policy`, { engine, profile: 'release', ...observation });
+        } finally { await browser.close(); }
+      }
+    }, { profile: 'release' });
   }, 900_000);
   /**
    * The locked crates whose own `rust-version` is above the project's.

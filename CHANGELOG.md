@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- Keep dashboard chart tooltip API values in persistent text nodes under enforced Trusted Types; packed template checks cover ordinary hover and hostile API text in all three engines.
+
 - Add a read-only hosted RC burn-in against all seven original published archives, with at least 3,600 completed positive-input native fuzz seconds plus every hostile, three-engine deployment and fixture check per round. Authenticate actual D14/P17 provenance before the RC/final release, retain bounded raw evidence and verify owned cleanup; implementation is not a completed campaign.
 - Repair the separate fuzz workspace lock to include the existing exact `ryu-js` 1.0.3 dependency; current locked ASan qualification is tracked by FORMA-194.
 

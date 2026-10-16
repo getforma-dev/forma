@@ -68,8 +68,28 @@ function RequestVolumeChart({ data }: { data: RequestVolumePoint[] }) {
 
   // Create persistent tooltip element
   const tooltip = document.createElement('div');
+  tooltip.setAttribute('role', 'tooltip');
   tooltip.className = 'absolute top-0 pointer-events-none bg-gruvbox-bg-hard border border-gruvbox-border rounded-md px-3 py-2 text-xs shadow-lg z-10';
   tooltip.style.display = 'none';
+  // API values remain text. Reuse the nodes rather than entering an HTML sink.
+  const tooltipHour = document.createTextNode('');
+  const tooltipSuccess = document.createTextNode('');
+  const tooltipErrors = document.createTextNode('');
+  tooltip.appendChild(
+    <div class="space-y-1">
+      <div class="text-gruvbox-fg font-medium">{tooltipHour}</div>
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-gruvbox-blue inline-block"></span>
+        <span class="text-gruvbox-gray">Success:</span>
+        <span class="text-gruvbox-fg font-mono">{tooltipSuccess}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-gruvbox-red inline-block"></span>
+        <span class="text-gruvbox-gray">Errors:</span>
+        <span class="text-gruvbox-fg font-mono">{tooltipErrors}</span>
+      </div>
+    </div>,
+  );
 
   // Reactively update hover elements when hoverIdx changes
   createEffect(() => {
@@ -103,19 +123,9 @@ function RequestVolumeChart({ data }: { data: RequestVolumePoint[] }) {
     // Update tooltip
     const leftPct = (pt.x / W) * 100;
     tooltip.style.cssText = `left: ${leftPct}%; transform: translateX(-50%); position: absolute; top: 0;`;
-    tooltip.innerHTML = `<div class="space-y-1">
-      <div class="text-gruvbox-fg font-medium">${d.hour}</div>
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-gruvbox-blue inline-block"></span>
-        <span class="text-gruvbox-gray">Success:</span>
-        <span class="text-gruvbox-fg font-mono">${d.success.toLocaleString()}</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-gruvbox-red inline-block"></span>
-        <span class="text-gruvbox-gray">Errors:</span>
-        <span class="text-gruvbox-fg font-mono">${d.error.toLocaleString()}</span>
-      </div>
-    </div>`;
+    tooltipHour.data = d.hour;
+    tooltipSuccess.data = d.success.toLocaleString();
+    tooltipErrors.data = d.error.toLocaleString();
   });
 
   const onMouseMove = (e: MouseEvent) => {

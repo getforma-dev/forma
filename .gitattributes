@@ -249,3 +249,7 @@ docs/evidence/forma-191-startup-policy/** -text
 # Preserve the original watch-recovery failure and actual regression output.
 docs/archive/watch-recovery-2026-10-16/** -text
 docs/evidence/watch-recovery-2026-10-16/** -text
+
+# Preserve dashboard tooltip originals and actual regression evidence.
+docs/archive/dashboard-tooltip-2026-10-16/** -text
+docs/evidence/dashboard-tooltip-2026-10-16/** -text

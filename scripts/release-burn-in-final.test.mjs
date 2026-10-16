@@ -18,7 +18,11 @@ function fixture() {
         island: { errors: [], violations: [], transitions: [7, 8, 0, 1], adoption: { mutations: [], sameNodes: true, sameHost: true } },
         static: { errors: [], violations: [], executableScripts: 0, modulepreloads: 0 },
       },
-      dashboard: { interacted: true, pageErrors: [], violations: [] },
+      dashboard: { interacted: true, pageErrors: [], violations: [], tooltip: {
+        apiTextStayedText: true,
+        normal: [{ hour: '00:00', values: ['1,200', '12'], hiddenOnLeave: true }, { hour: '23:00', values: ['1,300', '10'], hiddenOnLeave: true }],
+        hostile: { hour: '<img data-forma-tooltip-probe src="/__forma_tooltip_probe__" onerror="globalThis.__formaTooltipExecuted=true">', values: ['1,234', '7'], hiddenOnLeave: true },
+      } },
     },
   };
 }
@@ -32,6 +36,11 @@ test('raw fixture evidence must retain every independent source case and real be
     p => p.templates.minimal.island.errors.push('runtime failed'),
     p => { p.templates.minimal.static.executableScripts = 1; },
     p => { p.templates.dashboard.interacted = false; },
+    p => { delete p.templates.dashboard.tooltip; },
+    p => { p.templates.dashboard.tooltip.apiTextStayedText = false; },
+    p => { p.templates.dashboard.tooltip.normal.pop(); },
+    p => { p.templates.dashboard.tooltip.hostile.hour = 'safe'; },
+    p => { p.templates.dashboard.tooltip.hostile.hiddenOnLeave = false; },
   ]) { const changed = structuredClone(original); edit(changed); assert.throws(() => validateFixtureProof(changed)); }
   assert.throws(() => validateFixtureProof(original, []), /expectations differ/);
 });
