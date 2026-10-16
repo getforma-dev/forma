@@ -7,8 +7,8 @@
   "packedTarSha256": "8ebf5bf72b9a10636a5cb2e203d8882b852380547f43e8b287e7c884f05d553e",
   "files": {
     "README.md": {
-      "bytes": 8518,
-      "sha256": "7ca4ff9e8e1c4bb796d02c7cef46c5e80341ee8c3c8f7fb8dcd3ab5f05710405"
+      "bytes": 11597,
+      "sha256": "221eaebf4a922fe111a1af045678b3a4e147fc35181254b6be903f40d6e52f00"
     },
     "browser-csp-corrected.log": {
       "bytes": 1469,
@@ -70,9 +70,45 @@
       "bytes": 9,
       "sha256": "2b796b748c85883d00cfea9775eaa143435f0dc06c69311b444cf0dfc98214bc"
     },
+    "csp-example/corrected.json": {
+      "bytes": 6392,
+      "sha256": "c7faef6bcd9ad03abe53926b31057bc8fba27e75a733fe92f0038777573c7598"
+    },
+    "csp-example/corrected.log": {
+      "bytes": 1339,
+      "sha256": "d19d7e9d587fc63d8b0703d6fdabe902081618bce1717fdde6da48210e642cb1"
+    },
+    "csp-example/default-none-qualification.json": {
+      "bytes": 1840,
+      "sha256": "05d41182087d0c5356f1da4f2d64d376ecd2d6041059df1bfea1495ef018ff2a"
+    },
+    "csp-example/default-none.json": {
+      "bytes": 6392,
+      "sha256": "38d46bae270f3f114b310bfcc14f1b4ca492f37ca2f8b2b61a22ca6dea9a4795"
+    },
+    "csp-example/default-none.log": {
+      "bytes": 1339,
+      "sha256": "fdd1661a16bfd1be2353d90a5a0fa3b8269cb20b98c27d9d0593e113fd504c19"
+    },
+    "csp-example/qualification.json": {
+      "bytes": 1998,
+      "sha256": "8e47e1c788ad8a926a8d47cb1a2a513020cc2b89012b0aed9f674e6a7aad6280"
+    },
     "docs-after-historical.log": {
       "bytes": 254,
       "sha256": "7d3fedbde52781f353f003304fae46c60961a41699b0f65c9270676729f2704b"
+    },
+    "fetch-fixture/corrected.json": {
+      "bytes": 6377,
+      "sha256": "3295c3e47262c5ee9604d791a7cd84a838c3f9dad3476745b0b67ed7ae544950"
+    },
+    "fetch-fixture/corrected.log": {
+      "bytes": 1327,
+      "sha256": "4c4073cfa0f95bdfbe39c3273429c6e1df9fdfc8520104bd9023508003756f32"
+    },
+    "fetch-fixture/qualification.json": {
+      "bytes": 1156,
+      "sha256": "64f6d90348a536773c39a37224e1430e613f50e33efa73e27c0872bb114b74d3"
     },
     "l50-current-metadata.json": {
       "bytes": 608,
@@ -129,6 +165,18 @@
     "packed-security-108-first.log": {
       "bytes": 682,
       "sha256": "e5eb26f69c314d19ab378b71a1461cdac665f96e50333450b7dca96a774e31f4"
+    },
+    "root-full-stack/qualification.json": {
+      "bytes": 2264,
+      "sha256": "499898161f93724d4ad636f4002b635a052419f27b338a450ddc083acec674cf"
+    },
+    "root-full-stack/root-full-stack-disposal-corrected.json": {
+      "bytes": 7094,
+      "sha256": "3e8768983b682fa2e3b65b9efe3a1cc105d83ae75f521861084f2408ba0662ca"
+    },
+    "root-full-stack/root-full-stack-disposal-corrected.log": {
+      "bytes": 1228,
+      "sha256": "fe74ee38ff1e89f7be48fe4e073a7e04306f246bffa6b04fc5008483ece7defa"
     },
     "run-l50-final.sh": {
       "bytes": 1886,
@@ -373,18 +421,6 @@
     "runtime-mutations-complete.log": {
       "bytes": 144,
       "sha256": "b498f3a7966482ac12de74b1e4d43de137ac8e9231a4c04d7af928df68294ecf"
-    },
-    "root-full-stack/qualification.json": {
-      "bytes": 2264,
-      "sha256": "499898161f93724d4ad636f4002b635a052419f27b338a450ddc083acec674cf"
-    },
-    "root-full-stack/root-full-stack-disposal-corrected.json": {
-      "bytes": 7094,
-      "sha256": "3e8768983b682fa2e3b65b9efe3a1cc105d83ae75f521861084f2408ba0662ca"
-    },
-    "root-full-stack/root-full-stack-disposal-corrected.log": {
-      "bytes": 1228,
-      "sha256": "fe74ee38ff1e89f7be48fe4e073a7e04306f246bffa6b04fc5008483ece7defa"
     }
   },
   "combinedSourceCommit": "0d3d570f7b248097e12fd038178bba738c31f348",

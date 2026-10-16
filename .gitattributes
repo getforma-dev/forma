@@ -183,3 +183,10 @@ docs/archive/FORMA-108-root-full-stack/** -text
 
 docs/archive/forma-191-performance-durability/** -text
 docs/evidence/forma-191-performance-durability/** -text
+
+# Exact dynamic fetch fixture source and authoritative integrated failure.
+docs/archive/FORMA-108-fetch-fixture/** -text
+# Preserve the original shipped CSP example as byte-exact qualification evidence.
+docs/archive/FORMA-108-csp-example/** -text
+# Original runtime guides retain their exact pre-correction bytes.
+docs/archive/FORMA-108-guide-residue/** -text

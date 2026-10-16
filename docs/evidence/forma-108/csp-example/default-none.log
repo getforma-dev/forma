@@ -1,0 +1,18 @@
+[WebServer] (node:25058) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:25090) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 2 workers
+
+(node:25092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25091) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [chromium] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler (722ms)
+(node:25103) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [firefox] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler (2.1s)
+  ✓  3 [webkit] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler (1.3s)
+
+  3 passed (4.4s)

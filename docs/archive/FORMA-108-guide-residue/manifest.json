@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "sourceCommit": "e7b3d20dcec5eafe470b6cf2c4e1ef9d6c78fc20",
+  "files": [
+    {
+      "path": "packages/core/docs/HTML-RUNTIME.md",
+      "sourceCommit": "e7b3d20dcec5eafe470b6cf2c4e1ef9d6c78fc20",
+      "bytes": 30840,
+      "sha256": "f113356a510e44ae832670649df67a79e7e35db992057083d8b734a7b73b1e9e"
+    },
+    {
+      "path": "packages/core/docs/CDN-AND-EXPORTS.md",
+      "sourceCommit": "e7b3d20dcec5eafe470b6cf2c4e1ef9d6c78fc20",
+      "bytes": 11799,
+      "sha256": "4a2d6b78790c4ede39efc0629ed553f72c03191c1d419ca68a8fd213b5f8ecba"
+    },
+    {
+      "path": "packages/core/SECURITY.md",
+      "sourceCommit": "e7b3d20dcec5eafe470b6cf2c4e1ef9d6c78fc20",
+      "bytes": 42473,
+      "sha256": "e5f3e9c16c5ea32159d753b1a3d949c9895d4777a9cd823de36dde0bb33bec45"
+    }
+  ]
+}
