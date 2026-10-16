@@ -44,3 +44,15 @@ project outside the checkout, with lifecycle scripts disabled and unchanged lock
 library's dependencies and peers must resolve inside that project; candidate archives and registry
 signatures are audited before any deployment is built. Merely unpacking core beside the harness
 can miss a nested dependency, as the preserved first P17 failure demonstrated.
+
+## Qualification on 2026-10-15
+
+At source `46cffd6bead960a9265f0dbe328e998f56cffa4f`, the actual packed P17 run
+passed all 52 checks in 164.424 seconds with all four workspace package `dist` directories
+removed. Each of Chromium, Firefox and WebKit passed all eleven deployment checks.
+Five deliberately broken products were detected at their intended checks: missing retained
+assets, an extra retained generation, security retention, a removed skew guard and a guard
+blind to its reload marker. [The qualification record](qualification.json) records package,
+report and lock hashes plus the exact check inventory and mutation method. The failed first
+packed run and mutation setup failures remain preserved in the release work evidence.
+This is evidence for this source; the final integrated release still requires its own P17 run.
