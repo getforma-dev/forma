@@ -1,0 +1,31 @@
+{
+  "originalCommit": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "hostedHead": "e5345eed4c651758f53cbef8674c6b791c82917f",
+  "files": [
+    {
+      "path": "CI-38943365115-check.log",
+      "bytes": 809404,
+      "sha256": "2de85bde109d11a21c02d482e2a35d2b2b6bbfbe24cdfd4536df804b74ebfede"
+    },
+    {
+      "path": "watch-control-before.log",
+      "bytes": 5306,
+      "sha256": "64915db0bc54c2a153c76dbc529b6ea9906c214c9bd622037fde315c2d58fd7b"
+    },
+    {
+      "path": "watch-control-unchanged-edit-path-failure.log",
+      "bytes": 5557,
+      "sha256": "efc042f54fbadc056cc382d23ea53238cd861e21d0e045bb2cf9797f5183e59e"
+    },
+    {
+      "path": "worker-build-contract.first-control.ts",
+      "bytes": 9096,
+      "sha256": "d4d62095be52e505c8998baa38dddcba4c983c01a9de9bc78275731e7dd6960f"
+    },
+    {
+      "path": "worker-build-contract.original.ts",
+      "bytes": 5262,
+      "sha256": "5333f1c9b1bba921698883a735ba256a35de3415b1228b739ec9b1264f0435e9"
+    }
+  ]
+}

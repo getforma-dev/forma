@@ -1,0 +1,86 @@
+
+ RUN  v3.2.7 /Users/victorvillacis/dev/Forma/work/FORMA-watch-recovery/forma/packages/build
+
+stdout | tests/worker-build-contract.test.ts > publishes a coherent table after final JS/CSS/chunk bytes and preserves it through a failed build then recovery
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/app.LXP55LCP.js  92b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/chunk.3QAVEVUV.js  67b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/app.B3PG4T7I.css  16b
+
+   4 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  whole-page mount  Forma 39 of 28,000 B  JavaScript 1,708 of 76,800 B  (Brotli: Forma 34, JavaScript 1,466)  app.LXP55LCP.js
+   Service worker   sw.js  3,301 B raw, 1,598 B gzip, 1,370 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       24 ms: bundle 21 ms, hash 0 ms, compress 2 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/manifest.json (build: 29f763f71864...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+✘ [ERROR] Unexpected ";"
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/later.ts:1:21:
+      1 │ export const value = ;
+        ╵                      ^
+
+stdout | tests/worker-build-contract.test.ts > publishes a coherent table after final JS/CSS/chunk bytes and preserves it through a failed build then recovery
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/app.BWQ6KUFE.js  92b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/chunk.RKWBFUON.js  83b
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/app.B3PG4T7I.css  16b
+
+   4 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  whole-page mount  Forma 39 of 28,000 B  JavaScript 1,709 of 76,800 B  (Brotli: Forma 34, JavaScript 1,470)  app.BWQ6KUFE.js
+   Service worker   sw.js  3,301 B raw, 1,599 B gzip, 1,374 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       27 ms: bundle 25 ms, hash 0 ms, compress 2 ms, manifest 0 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/manifest.json (build: 51850b489bd6...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-rajQKt/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+ ✓ tests/watch-readiness.test.ts (2 tests) 835ms
+   ✓ waits for every actual initial watch context before allowing edits (split=false)  522ms
+   ✓ waits for every actual initial watch context before allowing edits (split=true)  312ms
+ ❯ tests/worker-build-contract.test.ts (4 tests | 1 failed) 1612ms
+   ✓ publishes a coherent table after final JS/CSS/chunk bytes and preserves it through a failed build then recovery  423ms
+   ✓ uses real final WASM bytes when an immutable graph asset is supplied, without a legacy WASM build stage 2ms
+   ✓ keeps development network-only while failed watch cycles preserve metadata and recovery hashes current bytes (pending failed cycle: false)  526ms
+   × keeps development network-only while failed watch cycles preserve metadata and recovery hashes current bytes (pending failed cycle: true) 661ms
+     → a failed cycle completion is not a recovered publication: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/worker-build-contract.test.ts > keeps development network-only while failed watch cycles preserve metadata and recovery hashes current bytes (pending failed cycle: true)
+AssertionError: a failed cycle completion is not a recovered publication: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/worker-build-contract.test.ts:153:100
+    151|       const settledBeforePublication = settled;
+    152|       writeFileSync(join(root, 'release-recovery'), 'release');
+    153|       expect(settledBeforePublication, 'a failed cycle completion is n…
+       |                                                                                                    ^
+    154|     }
+    155|     const outcome = await result;
+ ❯ Module.watching tests/helpers/watch.ts:103:5
+ ❯ tests/worker-build-contract.test.ts:117:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 5 passed (6)
+   Start at  14:08:38
+   Duration  1.91s (transform 333ms, setup 0ms, collect 235ms, tests 2.45s, environment 0ms, prepare 70ms)
+
