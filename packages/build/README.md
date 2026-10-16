@@ -316,7 +316,7 @@ const config: BuildConfig = {
     home: "src/home/app.tsx",         // the file with mount()/activateIslands()
     dashboard: "src/dashboard/app.tsx",
   },
-  // strict: true,                   // Fail on every coded SSR diagnostic (or FORMA_STRICT=1); see below
+  // strict: true,                   // Legacy no-op: 3.0 always refuses unsupported SSR
   // diagnosticsJson: "ssr-diagnostics.json", // Also write them as JSON, outside outputDir
   // previousDist: "../previous-release/dist", // Keep the live release's assets for open tabs; see "Retention"
   // security: true,                  // This release fixes a vulnerability: retain nothing (or FORMA_SECURITY_RELEASE=1)
@@ -524,54 +524,28 @@ Islands re-render with core's `h()`; server rendering uses the native Rust walke
 
 Verified by `tests/server-functions-removed.test.ts` (directive and near-miss fixtures).
 
-### SSR diagnostics and strict mode
+### SSR diagnostics and the server-renderable subset
 
-Every construct the compiler cannot represent in a page's module is reported
-with a stable code, file, line and column, one line of why and one of fix
-([the catalogue](https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md),
-one entry per code). By default they are warnings, printed as before, and the
-build succeeds as before. `build()` returns them as `result.diagnostics`, each
-with its `code`, `severity`, `page`, `file`, `line`, `column`, `message`, `why`
-and `fix`.
+SSR builds always enforce the [published subset](../compiler/docs/subset.md).
+Every unsupported construct is reported with its stable code, original source
+file, line, column, reason and fix. `build()` collects every page's diagnostics
+before refusing publication; a failure leaves the previous output unchanged.
+The direct compiler plugin applies the same gate.
 
-- **Strict mode** (`strict: true`, or `FORMA_STRICT=1` in the environment
-  when the config leaves `strict` unset) fails the build on every diagnostic
-  but a note, after every page is compiled, with all of them at once:
+`strict: true`, `strict: false` and the legacy `FORMA_STRICT` values `1`, `true`,
+`0`, `false` or empty are compatibility inputs. They all select the same strict
+behavior. The build reads no command-line flags. A watch rebuild that fails keeps
+the page's last good product, then publishes normally after the source is fixed.
 
-  ```
-  Error: @getforma/build strict mode (strict: true or FORMA_STRICT=1): 2 SSR diagnostics are errors; without it they are warnings:
-  /app/src/home/app.tsx:12:11  BUILD-101  call expression helpers.extra(...) in /app/src/home/app.tsx:12:11 — emitted as an empty island shell, …
-      why: The call becomes an anonymous island (`island_<n>`) that no registry names: …
-      fix: Write the subtree as h() calls, a component in a relative file, …
-  ```
+`diagnosticsJson: "<path>"` writes `{ version, strict: true, diagnostics }`, including
+on failure. Each diagnostic carries `code`, `severity`, `page`, `file`, `line`,
+`column`, `message`, `why` and `fix`. Its path must be outside `outputDir`, including
+through symlinks. Additive report fields do not change the schema version;
+renaming, removing or changing a field's meaning does.
 
-  `build()` reads no command-line flag, as for `ssr` and `watch`: a build
-  script that takes `--strict` maps it to the config.
-
-  ```ts
-  // `|| undefined` leaves `strict` unset without the flag, so FORMA_STRICT=1
-  // still applies; `false` would turn strict mode off whatever the variable says.
-  await build({ /* … */ ssr: isSsr, strict: process.argv.includes("--strict") || undefined });
-  ```
-
-  `strict: false` ignores `FORMA_STRICT`; a value of it other than `1`,
-  `true`, `0`, `false` or empty is refused. A failed build leaves the previous
-  output as it was. It needs `@getforma/compiler` 0.3.7 or later; with an older
-  one the build refuses strict mode rather than pass pages it never checked. In
-  watch mode a page with an error keeps its last good module and logs its
-  first error. 3.0.0 makes strict the only mode.
-- **JSON** (`diagnosticsJson: "<path>"`): the build writes
-  `{ version, strict, diagnostics }` to that path, also when strict mode fails
-  it. The path must be outside `outputDir`, which the build replaces whole and
-  serves; one inside is refused before anything is written, inside as the
-  filesystem sees it (through real paths, so a symlink into `outputDir`
-  counts; case-insensitively where the filesystem ignores case). A field may be
-  added to the report without a change of `version`; renaming or removing one,
-  or changing what one means, increments it.
-
-A browser-only subtree is declared with `browserOnly()` from `@getforma/core`
-(see the compiler's README); a route the server never renders, with
-`ssr: false` on its entry.
+Use a registered `browserOnly()` component for an explicitly browser-rendered
+subtree, or `ssr: false` on an entry for a whole browser-only route. An unsupported
+SSR expression cannot opt out of the gate merely by setting `strict: false`.
 
 ### Development service worker
 
@@ -650,7 +624,7 @@ directories, or leave committed bundles out with `--exclude` (for example
 cannot parse (`BUILD-814`); 2, a usage error or an allowlist it cannot use
 (`BUILD-812`). An entry that lists fewer uses than its count, or none
 (`BUILD-813`), is a note. The codes
-are in the build diagnostics catalogue, [`docs/DIAGNOSTICS.md`](https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md).
+are in the build diagnostics catalogue, [`docs/DIAGNOSTICS.md`](https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md).
 
 ```text
 BUILD-810 error body_prefix in src/server/mod.rs:772:9 (in index_handler): body_prefix: body_prefix set to a value not traced to RawHtml::trusted (a string still works in 0.2.x); not on the allowlist

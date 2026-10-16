@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- FORMA-139: refuse the finite parser/interactive-content nesting conflicts (BUILD-618), component HTML title (619), dynamic style/script children (620), and SSR island roots lacking one stable owned Element (621). Preserve transparent one-Element Fragments and helpers; keep ranges inside their host. Exact original source/products and canonical admitted near misses are retained. SVG title, browserOnly client bodies, and the existing keyed-row613 proof keep their separate contracts.
+
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
 - FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
 
 ### Rule 6's attribute table: findings F2 and F3 — FORMA-182
@@ -9,10 +16,12 @@
 - **Rendered output changes with no source change.** A static `true` attribute is bare only on an HTML boolean attribute (`HTML_BOOLEAN_ATTRIBUTES` in `src/value-rules.ts`, core's list); on any other it is the word, `data-live="true"`, `class="true"`, where it was bare (F2). A reactive boolean still lands in a `TYPE_BOOL` slot, which the walker now writes by the same rule.
 - An attribute whose server value is the empty string is written as a static `name=""` (F3): a signal created with `''` bound to an attribute (`value: () => query()`, `value: query`) or a value that evaluates to `''`. A client slot cannot carry an empty default (zero default bytes read as null), so the server used to drop the attribute where `h()` writes it. The js-emitter `dynamic-attrs` module regenerates; `tests/ssr-render.test.ts`'s stated limit "omits an attribute whose value evaluates to the empty string" became "writes an attribute whose server value is the empty string".
 - Tests: `tests/value-rule-6-attributes.test.ts` (the shared `compiled` shapes and the boolean set), `tests/attribute-values-archive.test.ts` (the archived corpus outputs and their ledger).
-### Native LIST sources must carry real rows — FORMA-101
+### Strict server-renderable subset — FORMA-101
 
-- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
-- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+- SSR builds and the direct plugin now refuse every unsupported native construct, including default builds and legacy `strict:false`/`FORMA_STRICT=0`. The build reports every entry's available diagnostics and retains prior output on failure. Removed the obsolete placeholder helper; original guides and tests remain archived.
+- Published `packages/compiler/docs/subset.md` as the admission contract and diagnostic catalogue. BUILD-617 refuses an independently registered option/optgroup island beneath another owner's value-bound select; unregistered helpers within the select owner and unbound selects remain admitted.
+- Callable LIST sources now also need declared array props or closed literal-default signals (BUILD-610). The preserved list-same-source corpus is migrated to real two-row local defaults, with native rendering assertions; BUILD-616 retains its separate non-callable meaning. Island-own-root and finite parser-repair proof remain the FORMA-139 gate.
+- The corpus emitter now rejects error diagnostics. The original unknown href getter and duplicate signal-name page remain authenticated BUILD-206/503 publication negatives; live examples use a real closed href and `panelCount`. Their regenerated products carry a before/after ledger, preserve all other corpus modules, and remove F4 only after native/browser equality proves the old exception an unexpected pass.
 
 
 ### Value rule 7: conditions are boolean-typed — FORMA-182

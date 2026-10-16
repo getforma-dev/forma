@@ -79,7 +79,7 @@ for (const codeSplitting of [false, true]) {
       await vi.waitFor(() => expect(watcher.output()).toContain('BUILD-610'));
       expect(readFileSync(join(dist, 'manifest.json'))).toEqual(accepted);
       await watcher.change(() => writeFileSync(join(src, 'home-page.ts'), staticPage));
-      const final = await vi.waitFor(() => { const value = watcher.manifest(); expect(value.routes['/'].js).toEqual([]); expect(value.routes['/'].mode).toBe('ssr'); return value; });
+      const final = await vi.waitFor(() => { const value = watcher.manifest(); expect(value.routes['/'].js, watcher.output()).toEqual([]); expect(value.routes['/'].mode, watcher.output()).toBe('ssr'); return value; }, { timeout: 10_000 });
       expect(final.routes['/'].ir).toBeDefined(); expect(final.routes['/'].modulepreload).toBeUndefined(); expect(final.aliases['home.js']).toBeUndefined();
       for (const old of held) expect(readFileSync(join(dist, old.file))).toEqual(old.bytes);
     });

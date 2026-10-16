@@ -10,6 +10,10 @@
   and re-exports are covered; duplicate imports and both identity passes share
   one warning. No legacy import means no warning.
 
+### Mandatory SSR admission — FORMA-101
+
+- Default SSR, legacy false flags and direct compiler builds all refuse unsupported native constructs. Complete per-entry diagnostic reports use error severity; failed production and watch cycles preserve the prior product. The published subset and catalogue live at `packages/compiler/docs/subset.md`.
+
 ### The preview frame's runtime is minified in the application's output (FORMA-190)
 
 - With `previewFrame: true`, a production build writes core's

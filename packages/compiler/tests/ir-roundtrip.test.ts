@@ -23,7 +23,7 @@ import { COMPILER_WRITER_VERSION, readFmirContainer } from '../src/fmir';
 import { describe, it, expect, vi } from 'vitest';
 import { resolve } from 'node:path';
 import { IrEmitContext } from '../src/ir-emit';
-import { generateRealIr, generatePlaceholderIr } from '../src/esbuild-ssr-plugin';
+import { generateRealIr } from '../src/esbuild-ssr-plugin';
 import {
   assertBinaryInvariants,
   getIslands,
@@ -268,39 +268,4 @@ describe('IR roundtrip validation', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // Explicit placeholder helper — declared native refusal never uses it
-  // -------------------------------------------------------------------------
-
-  it('placeholder IR from the SSR plugin has valid structure', () => {
-    // Calls the SHIPPED generatePlaceholderIr. A copy of its body inlined here
-    // would keep passing even if the real fallback were gutted.
-    const binary = generatePlaceholderIr('test-page');
-
-    // Valid FMIR magic + version
-    expect(Array.from(binary.slice(0, 8))).toEqual(Array.from(SIGNATURE));
-    expect(readFmirContainer(binary).writer).toEqual(COMPILER_WRITER_VERSION);
-
-    expect(getStrings(binary)).toEqual(['div', 'id', 'app', 'data-forma-page', 'test-page']);
-    expect(parseOpcodeList(binary)).toEqual([
-      'OPEN_TAG div id="app" data-forma-page="test-page"',
-      'CLOSE_TAG div',
-    ]);
-    expect(getSlots(binary)).toEqual([]);
-    expect(getIslands(binary)).toEqual([]);
-    assertBinaryInvariants(binary);
-
-    // OPEN_TAG: 1 + 4 + 2 + 2*(4+4) = 23 bytes; CLOSE_TAG: 1 + 4 = 5 bytes.
-    expect(readSections(binary).opcodeSize).toBe(23 + 5);
-  });
-
-  it('placeholder IR names the page it was generated for', () => {
-    // The page name is the only thing that varies between placeholders — it is
-    // what the client-side mount keys off.
-    const strings = readStringTable(
-      generatePlaceholderIr('tenant-dashboard'),
-      readSections(generatePlaceholderIr('tenant-dashboard')).stringTableOffset,
-    );
-    expect(strings).toEqual(['div', 'id', 'app', 'data-forma-page', 'tenant-dashboard']);
-  });
 });

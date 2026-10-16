@@ -29,6 +29,7 @@ import {
   RAW_SOURCE_DEV_GLOBAL,
 } from './build-defines.mjs';
 import { parseImportSpecifiers, collectGraph } from './check-size.mjs';
+import { checkBuildIdentity } from './check-build-identity.mjs';
 
 const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8'));
@@ -192,6 +193,8 @@ const DEVELOPMENT_DEV_INITIALIZER = /^(?:true|!0)$/;
 
 for (const rel of jsArtifacts()) {
   const code = read(rel);
+  const identityError = checkBuildIdentity(code, code.includes('forma:skew'));
+  if (identityError) fail(`${rel}: ${identityError}`);
   if (code.includes(RAW_SOURCE_DEV_GLOBAL)) {
     fail(`${rel} contains ${RAW_SOURCE_DEV_GLOBAL}: __DEV__ is computed at runtime, not fixed at build time`);
   }
@@ -204,6 +207,14 @@ for (const rel of jsArtifacts()) {
       fail(`${rel} binds __DEV__ to ${initializer}; a ${isDevelopment(rel) ? 'development' : 'production'} artifact must bind it to the constant ${isDevelopment(rel) ? 'true' : 'false'}`);
     }
   }
+}
+
+// The two public activation APIs are shipped by these entries. Their complete
+// graphs must retain the application-defined deployment identity tripwire.
+for (const rel of ['dist/index.js', 'dist/index.cjs', `${DEV_OUT_DIR}/index.js`, `${DEV_OUT_DIR}/index.cjs`, BROWSER_ESM_OUTPUT]) {
+  if (!existsSync(resolve(ROOT, rel))) continue;
+  const graph = collectGraph(rel, ROOT).files.map(read).join('\n');
+  if (!graph.includes('forma:skew')) fail(`${rel} lost the deployment mismatch guard`);
 }
 
 // The development entries really are development builds, and the production

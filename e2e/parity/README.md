@@ -23,7 +23,7 @@ now and the rules it runs by.
 | `src/suite.mts` | The pipeline: prepare, serve, browse, report. |
 | `src/expected.mts`, `expected-divergent.json` | Known divergences as data, and the unexpected-pass rule. |
 | `src/run.mts` | The suite over the corpus: totals, structural classes, wall time by phase, the verdict. |
-| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 owns the public form. |
+| `src/render-both.mts` | `renderBoth` and its CLI: one module at one state by the same pipeline. Forma-internal; FORMA-184 adds the internal explicit-state form. |
 | `corpus.json` | Step 0: the 14 js-emitter modules; step 1: the props-contract page, the P3 fixture and the island-emitter family. |
 | `fixtures/transition/` | The P3 fixture: one island seeded from declared props, whose module exports the setter. |
 | `tests/` | `node --test`: the generator, the comparison and the expected list on hand-written cases; the serializer against Chromium's parser; the server half, including the typed path and its refusal table; `renderBoth` and the suite end to end, including seeded server changes that P1 and P2 must report; step 1, the family's exact rebuild, P3 equal state after state and P3 failing on a wrong setter (`tests/fixtures/transition-off-by-one/`). |
@@ -184,19 +184,24 @@ report is `expected-divergent` only when every difference in it is matched. The 
 skips (TESTING.md P7): an entry that matches nothing in a run that covered its module fails the
 run as an unexpected pass, so the entry is removed the day its fix lands.
 
-The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
+The recorded findings (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found at step 1; each assigned by the lead):
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
-| F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | FORMA-016: core's `createShow` takes a string or number branch as a text node |
 
-F4 can never become equal: the server has no value to write. In warning mode the compiler reports
-BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
-(`docs/DIAGNOSTICS.md`; DR-1's release-A bridge). DR-1 makes strict the only mode in release B
-(3.0.0, FORMA-101), where BUILD-206 is a build error. The difference then ends because the page no
-longer compiles, not because the trees agree; the corpus fixture has to move the attribute behind
-`browserOnly()` or drop it, and the entry fails the run as an unexpected pass.
+F1, F2, F3 and F6 are resolved by the integrated list-source, attribute-value and
+keyed-adoption changes. F4's original unknown getter is preserved byte-exact in
+[the strict corpus archive](../../docs/archive/FORMA-101-strict-corpus/README.md)
+and tested as a source-located BUILD-206 publication refusal even with
+`strict:false`. The admitted live page uses a closed `createSignal('/docs')`;
+the real compiler/native renderer and browser now agree on its actual href.
+The preceding run proved the old F4 entry an unexpected pass before its removal.
+The duplicate-name scopes original similarly remains a BUILD-503 refusal, while
+the live page uses `panelCount` and preserves its actual defaults. Corpus emission
+requires zero error diagnostics. The integrated FORMA-016 text-branch fix also
+resolves F5; its earlier unexpected-pass report is preserved. With both fixes
+present, `expected-divergent.json` is empty and every live case must agree.
 
 Checkpoint C resolves F6: the merged integration run on 2026-10-15 observed both canonical-key adoption entries as unexpected passes, with all 99 P2 checks equal. The two resolved entries were removed; the original failure report is preserved in the release work evidence.
 
@@ -250,3 +255,25 @@ The key check against the expected key text (`data-forma-key` is lifted from the
 expected text per row is FORMA-181's `canonicalKeyText` once rows are mapped to their list), the
 switch to blocking (when step 1's expected list is empty for P1 and P2), and step 3's fixture
 applications (FORMA-188).
+
+## Render one component at an explicit state (Forma-internal)
+
+`src/test-utils.mts` exports `renderBoth(component, state, options?)` for tests in this repository.
+The component is a name from `corpus.json` or a `CorpusEntry` source descriptor; the helper compiles
+that entry and renders the exact JSON state through the typed Rust renderer and core in a browser.
+It returns the P1 report, including `server.tree`, `client.tree`, native HTML and any first difference
+or refusal. It does not apply expected-divergent exemptions. The suite separately checks P2 and P3.
+
+```ts
+import { renderBoth } from './src/test-utils.mts';
+const report = await renderBoth('nested-islands', {
+  panelClass: 'panel', badgeTitle: 'a specific regression',
+});
+assert.equal(report.verdict, 'equal');
+assert.deepEqual(report.server.tree, report.client.tree);
+```
+
+Chromium is the default; `options.engine` selects another engine and `options.browser` reuses a
+caller-owned browser without closing it. The helper closes browsers it creates, including on
+failure. `renderBoth` is not a supported `@getforma/core` export (Q11, L-57, FORMA-184).
+FORMA-016 verification on the expanded corpus removes F5 only after an actual unexpected pass: all 28 typed modules and 118 states complete, with props-contract text branches agreeing. Historical step-1 findings above remain the discovery record.
