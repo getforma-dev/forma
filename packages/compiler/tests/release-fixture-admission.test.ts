@@ -23,3 +23,13 @@ describe('R17 SSR fixture admission',()=>{
   for(const [name,sha] of Object.entries(manifest.files))expect(createHash('sha256').update(readFileSync(join(archive,name))).digest('hex'),name).toBe(sha);
  });
 });
+
+// These repository-owned synthetic applications also run in R17. Their declared
+// negative controls remain refusals; admission is never inferred from labels.
+const appsRoot=join(root,'e2e/fixtures/apps');
+const index=JSON.parse(readFileSync(join(appsRoot,'apps.json'),'utf8'));
+const appEntries=[...Object.values(index.apps).flatMap((app:any)=>Object.values(app.routes).map((route:any)=>route.entry)),...index.positive.map((entry:any)=>entry.entry)];
+describe('R17 synthetic fixture application admission',()=>{
+ it.each(appEntries)('%s remains admitted',entry=>{const {result,diagnostics}=collectDiagnostics(()=>generateRealIr(join(appsRoot,entry)));expect(diagnostics).toEqual([]);expect(result?.binary.length).toBeGreaterThan(0);});
+ it.each(index.negative)('$name retains its declared refusal',entry=>{let failure:unknown;const {result,diagnostics}=collectDiagnostics(()=>{try{return generateRealIr(join(appsRoot,entry.entry));}catch(error){failure=error;return null;}});expect(result).toBeNull();expect(failure).toMatchObject({code:entry.code});expect(diagnostics.map(d=>d.code)).toContain(entry.code);});
+});
