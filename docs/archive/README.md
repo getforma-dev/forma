@@ -23,6 +23,7 @@ it was wrong the first time.
 | File | Retired | Replacement and reason |
 |---|---|---|
 | [`2026-10-15-pre-key-adoption/`](2026-10-15-pre-key-adoption/) | 2026-10-15 | The three core list adoption test files from before FORMA-181 checkpoint C bound keyed rows by key. Five cases changed expectation on purpose (initial key order, keyed counts and duplicate served keys now adopt or refuse `FORMA_E_HYDRATE_KEY`); the mapping is in its README. |
+| [`2026-10-15-pre-attribute-values/`](2026-10-15-pre-attribute-values/) | 2026-10-15 | The js-emitter contract corpus outputs from before FORMA-182's attribute table (findings F2 and F3): a reactive `true` on a non-boolean attribute is the word `"true"`, and an attribute whose server value is `""` is a static `value=""`. Regenerated with a before/after ledger (`dynamic-attrs` `.ir`/`.dump`/`.html`, `jsx-page.html`, `sub-component-scopes.html`). |
 | [`2026-10-15-pre-value-rules/`](2026-10-15-pre-value-rules/) | 2026-10-15 | The inline compiler test sources from before FORMA-182's value rules 6 and 7 refused a boolean in text (BUILD-614) and a condition that is not boolean-typed (BUILD-615). The tests were migrated to the admitted forms; the archived sources stay executable as refusal evidence ([`docs/parity-rules.md`](../parity-rules.md)). |
 
 | [`2026-10-15-pre-list-source/`](2026-10-15-pre-list-source/) | 2026-10-15 | The `list-same-source` corpus sources from before BUILD-616 refused a `createList` source that is not a function (FORMA-183 finding F1): the page passed its array itself. Only the source text changed; every compiled output is byte-identical. The archived page still compiles to BUILD-616 and is the parity harness's twin that cannot build. |
@@ -147,3 +148,5 @@ inputs use typed handlers and identified source lock seeds; packed candidates
 carry actual archive checksums. Island adoption remains a later slice.
 
 - [Signal defaults before explicit closed constants](2026-10-15-state-signal-defaults/README.md): original array/object warning and handler-injection advice, replaced by FORMA-103 native constant provenance.
+
+- [Boolean attribute review originals](2026-10-15-boolean-attribute-review/README.md): FORMA-182 native/core tests before scalar-presence correction, authenticated at b5f1905.

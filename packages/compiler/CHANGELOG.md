@@ -7,6 +7,13 @@
 - A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
 - Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
 
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+### Rule 6's attribute table: findings F2 and F3 — FORMA-182
+
+- **Rendered output changes with no source change.** A static `true` attribute is bare only on an HTML boolean attribute (`HTML_BOOLEAN_ATTRIBUTES` in `src/value-rules.ts`, core's list); on any other it is the word, `data-live="true"`, `class="true"`, where it was bare (F2). A reactive boolean still lands in a `TYPE_BOOL` slot, which the walker now writes by the same rule.
+- An attribute whose server value is the empty string is written as a static `name=""` (F3): a signal created with `''` bound to an attribute (`value: () => query()`, `value: query`) or a value that evaluates to `''`. A client slot cannot carry an empty default (zero default bytes read as null), so the server used to drop the attribute where `h()` writes it. The js-emitter `dynamic-attrs` module regenerates; `tests/ssr-render.test.ts`'s stated limit "omits an attribute whose value evaluates to the empty string" became "writes an attribute whose server value is the empty string".
+- Tests: `tests/value-rule-6-attributes.test.ts` (the shared `compiled` shapes and the boolean set), `tests/attribute-values-archive.test.ts` (the archived corpus outputs and their ledger).
 
 ### Value rule 7: conditions are boolean-typed — FORMA-182
 

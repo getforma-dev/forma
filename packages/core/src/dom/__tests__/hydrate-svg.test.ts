@@ -328,8 +328,12 @@ describe('reactive attributes at adoption', () => {
     expect(button.hasAttribute('disabled')).toBe(false);
     expect(writesDuring(app, () => setDisabled(true))).toEqual(['attributes:button:disabled']);
     expect(button.getAttribute('disabled')).toBe('');
-    expect(writesDuring(app, () => setBusy(true))).toEqual(['attributes:a:aria-busy']);
-    expect(link.getAttribute('aria-busy')).toBe('');
+    // FORMA-182 rule 6's attribute table: `true` on aria-busy is the word
+    // "true", so it is the value the server already holds and writes nothing.
+    expect(writesDuring(app, () => setBusy(true))).toEqual([]);
+    expect(link.getAttribute('aria-busy')).toBe('true');
+    expect(writesDuring(app, () => setBusy(false))).toEqual(['attributes:a:aria-busy']);
+    expect(link.hasAttribute('aria-busy')).toBe(false);
   });
 });
 

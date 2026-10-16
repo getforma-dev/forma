@@ -67,3 +67,7 @@ docs/archive/2026-10-15-pre-list-source/** -text
 packages/compiler/tests/fixtures/ir-corpus/list-same-source/*.ts text eol=lf
 # FORMA-181 checkpoint C: the pre-key-adoption test originals are authenticated by SHA-256.
 docs/archive/2026-10-15-pre-key-adoption/** -text
+# FORMA-182 F2/F3: archived pre-attribute-values corpus outputs are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-attribute-values/** -text
+
+docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
