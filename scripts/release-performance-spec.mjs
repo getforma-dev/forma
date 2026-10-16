@@ -24,9 +24,9 @@ export const MOBILE_PROFILE=Object.freeze({
   "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36"
 });
 
-// L63 startup-only release exception. The original target is still reported.
-// Sustained update, N3 indexed-update, security and whole-page TBT budgets stay.
+// Strict startup qualification; historical L63 evidence remains historical.
+// Restoring the gate is not proof that a fresh full campaign has passed it.
 export const MOBILE_STARTUP_POLICY = Object.freeze({
- id:'L63-startup-v1',targetMs:50,p95MaxTaskMs:75,maxTaskMs:100,
+ id:'N3-startup-strict50-v1',targetMs:50,maxTaskMs:50,
  runsPerRoute:20,responseAfterPaintMs:500,p95TbtMs:200,
 });

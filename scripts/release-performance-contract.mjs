@@ -46,7 +46,7 @@ export function validateActivation(probe,{islands}) {
  assert.equal(probe.expected,islands);assert.equal(probe.active,islands,'N3: islands did not activate');assert.equal(probe.responded,islands,'N3: islands did not respond to real events');
  finite(probe.firstPaintMs,'N3 first paint');finite(probe.lastResponseMs,'N3 last response');
  const afterPaint=Math.max(0,probe.lastResponseMs-probe.firstPaintMs);assert(afterPaint<=MOBILE_STARTUP_POLICY.responseAfterPaintMs,'N3: islands respond later than500ms after first paint');
- assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=MOBILE_STARTUP_POLICY.maxTaskMs),'N3: task over100ms');
+ assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=MOBILE_STARTUP_POLICY.maxTaskMs),'N3: task over50ms');
  assert.deepEqual(probe.errors,[],'N3: browser errors');return afterPaint;
 }
 export function validateMobileControls(observations){
@@ -70,7 +70,7 @@ export function validateMobileControls(observations){
  assert(slow.longTasks.some(task=>task.duration>=109&&task.startTime<=injected.startTime&&task.startTime+task.duration>=injected.endTime-1),'N3 injected task was not observed');
  assert.throws(()=>validateActivation(dead,{islands:100}),/did not activate|did not respond/);
  // Isolate the task oracle: a late response must not make this control pass.
- assert.throws(()=>validateActivation({...slow,lastResponseMs:slow.firstPaintMs},{islands:100}),/over100ms/);
+ assert.throws(()=>validateActivation({...slow,lastResponseMs:slow.firstPaintMs},{islands:100}),/over50ms/);
  return {deadActivationRefused:true,longTaskRefused:true};
 }
 export function validateMobile(rows) {
@@ -95,8 +95,7 @@ export function validateMobile(rows) {
   }
   const startup=summarizeMobileStartup(row.runs);
   assert.deepEqual(row.startup,startup,'N3: startup summary differs from raw evidence');
-  assert(startup.maxTaskMs<=MOBILE_STARTUP_POLICY.maxTaskMs,'N3: application/unattributed task over100ms');
-  assert(startup.p95MaxTaskMs<=MOBILE_STARTUP_POLICY.p95MaxTaskMs,'N3: p95 startup maximum over75ms');
+  assert(startup.maxTaskMs<=MOBILE_STARTUP_POLICY.maxTaskMs,'N3: application/unattributed task over50ms');
   const tbt=percentile(row.runs.map(run=>run.lighthouse.tbtMs),.95);assert(tbt<MOBILE_STARTUP_POLICY.p95TbtMs,'N3: p95 TBT at or above200ms');assert.equal(row.p95TbtMs,tbt);
  }
  return rows;
