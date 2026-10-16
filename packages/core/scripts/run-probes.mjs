@@ -61,7 +61,10 @@ const selected = corpus.filter(
  * It is excluded here, and it is the only file that may be.
  */
 const SELF_REFERENTIAL = '**/probe-corpus.test.ts';
-const VITEST_ARGS = ['--reporter=dot', '--reporter', fileURLToPath(new URL('./probe-reporter.mjs', import.meta.url)), '--bail=1', '--maxWorkers=2', '--exclude', SELF_REFERENTIAL];
+// Parallel bail can interrupt a second failing test before its completion
+// event (observed in hosted run 38956279949). Serialize both files and explicit
+// concurrent tests; do not turn incomplete assertion records into kills.
+const VITEST_ARGS = ['--reporter=dot', '--reporter', fileURLToPath(new URL('./probe-reporter.mjs', import.meta.url)), '--bail=1', '--maxWorkers=1', '--maxConcurrency=1', '--exclude', SELF_REFERENTIAL];
 
 // Resolve the installed workspace package; it may be hoisted by npm ci.
 const require = createRequire(import.meta.url);
