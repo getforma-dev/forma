@@ -18,9 +18,12 @@
  *                       checked by frame.spec.ts);
  *   out/lane.json       what frame.spec.ts checks the server against.
  *
- * Fails loudly unless the build copied core's `dist/formajs-frame.global.js`
- * byte for byte, and never core's `dist/forma-runtime.js` (the CDN alias of
- * the auto-mounting runtime, which shares the target's name).
+ * Fails loudly unless the build wrote core's `dist/formajs-frame.global.js`
+ * minified (FORMA-190: the bytes forma-server inlines into every preview
+ * document, named by their own hash and listed in the manifest with their own
+ * SRI) and left core's file as published, readable and unchanged; and never
+ * core's `dist/forma-runtime.js` (the CDN alias of the auto-mounting runtime,
+ * which shares the target's name).
  */
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, appendFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -72,15 +75,23 @@ const config = (outputDir, extra = {}) => ({
 for (const dir of ['dist-on', 'dist-off', 'dist-tampered']) rmSync(join(out, dir), { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 
+// Core's file as published, read before the build and again after it.
+const frame = readFileSync(join(core, 'dist', 'formajs-frame.global.js'));
 const on = await build(config(join(out, 'dist-on'), { previewFrame: true }));
 const asset = on.manifest.aliases['forma-runtime.js'];
 if (!asset) fail(`previewFrame: true wrote no assets["forma-runtime.js"]: ${JSON.stringify(on.manifest.aliases)}`);
-const frame = readFileSync(join(core, 'dist', 'formajs-frame.global.js'));
 const written = readFileSync(join(out, 'dist-on', asset));
-if (!written.equals(frame)) fail(`${asset} is not core's dist/formajs-frame.global.js byte for byte`);
+if (!readFileSync(join(core, 'dist', 'formajs-frame.global.js')).equals(frame)) fail("the build changed core's dist/formajs-frame.global.js");
+if (frame.toString('utf8').split('\n').length < 1000) fail("core's dist/formajs-frame.global.js is not the readable file it ships as");
+if (written.equals(frame)) fail(`${asset} is core's dist/formajs-frame.global.js, not minified`);
+if (written.length >= frame.length * 0.6) fail(`${asset} is ${written.length} bytes against core's ${frame.length}: not minified`);
+if (written.toString('utf8').split('\n').length > 100) fail(`${asset} still has its line structure`);
 const cdnAlias = join(core, 'dist', 'forma-runtime.js');
 if (existsSync(cdnAlias) && readFileSync(cdnAlias).equals(written)) fail(`${asset} is core's dist/forma-runtime.js, the CDN alias`);
-if (asset !== `forma-runtime.${sha256(frame, 'hex').slice(0, 8)}.js`) fail(`${asset} is not named by its content hash`);
+if (asset !== `forma-runtime.${sha256(written, 'hex').slice(0, 8)}.js`) fail(`${asset} is not named by its content hash`);
+const integrity = `sha384-${createHash('sha384').update(written).digest('base64')}`;
+if (on.manifest.assets[asset]?.integrity !== integrity) fail(`${asset}'s SRI in the manifest is not that of the bytes written`);
+if (on.sizeReport.frame?.raw !== written.length || on.sizeReport.frame?.sourceRaw !== frame.length) fail("the size report's frame row is not the served bytes beside core's");
 
 const off = await build(config(join(out, 'dist-off')));
 if ('forma-runtime.js' in off.manifest.aliases) fail('the build without previewFrame names a runtime');
@@ -91,9 +102,9 @@ appendFileSync(join(out, 'dist-tampered', asset), TAMPER);
 const corePackage = JSON.parse(readFileSync(join(core, 'package.json'), 'utf8'));
 const lane = {
   core: { version: corePackage.version, dir: core, frameSha256: sha256(frame, 'base64'), frameBytes: frame.length },
-  on: { dist: join(out, 'dist-on'), asset, manifest: on.manifest },
+  on: { dist: join(out, 'dist-on'), asset, servedSha256: sha256(written, 'base64'), servedBytes: written.length, manifest: on.manifest },
   off: { dist: join(out, 'dist-off'), manifest: off.manifest },
   tamper: TAMPER,
 };
 writeFileSync(join(out, 'lane.json'), JSON.stringify(lane, null, 2) + '\n');
-console.log(`frame build-app: @getforma/core ${corePackage.version}: ${asset} (${frame.length} bytes, sha256-${lane.core.frameSha256})`);
+console.log(`frame build-app: @getforma/core ${corePackage.version}: ${asset} (${written.length} bytes minified from core's ${frame.length}, sha256-${lane.on.servedSha256})`);

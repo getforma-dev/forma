@@ -29,18 +29,27 @@
  *   alias of the auto-mounting runtime: inlined, it would bind the whole frame
  *   document with every power instead of rendering the host's module in tier
  *   (c) with none.
- * - **The bytes are copied unchanged**: no minify, no transform, no line
- *   endings rewritten. forma-server hashes the bytes it inlines; the browser
- *   hashes the script it parses. Any rewrite between core's build and the
- *   frame is a runtime that does not run.
+ * - **A production build writes it minified** (FORMA-190, from the A2 audit's
+ *   F1): forma-server writes these bytes into every preview document under
+ *   `no-store`, so each load pays them, and core's file is 164 KB readable.
+ *   Core's published file stays readable (the readable-distribution policy of
+ *   everything published to npm); the application's output carries an esbuild
+ *   transform of it, whitespace and names, made before the hashing pass, so
+ *   the file's name, the manifest's SRI and the SHA-256 forma-server computes
+ *   for the frame's policy are those of the bytes served. The transform is
+ *   deterministic. Watch mode copies the bytes unchanged: a development
+ *   build, readable in the browser's tools. Either way the file is written
+ *   once, here, and never touched again: forma-server hashes the bytes it
+ *   inlines, and the browser hashes the script it parses.
  * - **It refuses what forma-server refuses** (FRAME-103), at build time, with
  *   a coded diagnostic, before anything is written: a runtime that is empty or
  *   not UTF-8, or contains `</script` or `<!--` in any case (they would end
  *   or confuse its element), a carriage return or a NUL (the HTML parser
- *   rewrites them before the script runs, so it would not match its hash).
+ *   rewrites them before the script runs, so it would not match its hash),
+ *   checked on core's file and again on the bytes the build would write.
  *   BUILD-805 when there is no runtime to copy, BUILD-806 when it cannot be
- *   inlined, BUILD-807 when the bundles import more than one. Each fails the
- *   build, strict mode or not.
+ *   inlined, BUILD-807 when the bundles import more than one, BUILD-823 when
+ *   esbuild cannot minify it. Each fails the build, strict mode or not.
  *
  * Verified by: packages/build/tests/preview-frame.test.ts
  */
@@ -65,7 +74,12 @@ const FRAME_RUNTIME_SINCE = '2.1.0';
 
 /** The runtime the build writes as `forma-runtime.js`, read and checked. */
 export interface FrameRuntime {
+  /** The bytes the build writes: core's, minified in a production build, unchanged in watch mode. */
   bytes: Buffer;
+  /** The length of core's file, before the build minified it. */
+  sourceBytes: number;
+  /** `bytes` are the minified ones. */
+  minified: boolean;
   /** Core's `dist/formajs-frame.global.js` it was read from. */
   source: string;
   /** That core's `version`, as its package.json says. */
@@ -83,6 +97,10 @@ const CATALOGUE = {
   'BUILD-806': {
     why: "Core's dist/formajs-frame.global.js is empty, not UTF-8, or contains `</script`, `<!--`, a carriage return or a NUL: it is inlined as it is into the frame's `<script>` and allowed by its hash, so it would end early or not match its hash, and forma-server would refuse it (FRAME-103).",
     fix: 'Reinstall @getforma/core and leave the file as published: no editor, formatter, patch or CRLF checkout may rewrite it.',
+  },
+  'BUILD-823': {
+    why: "`previewFrame` is on, and esbuild cannot minify dist/formajs-frame.global.js of the @getforma/core the bundles import: a production build writes the frame's runtime minified, so the file must be JavaScript esbuild can parse for ES2022.",
+    fix: 'Reinstall @getforma/core and leave the file as published: no editor, formatter or patch may rewrite it.',
   },
   'BUILD-807': {
     why: "`previewFrame` is on, and the bundles import more than one @getforma/core, whose frame runtimes differ (entries from packages with their own cores, or a library bundling its own): the frame runs one runtime, so the build would have to pick the core it renders previews with, and the page could mount the module with another.",
@@ -308,6 +326,55 @@ function inlineProblem(bytes: Uint8Array): { reason: string; index?: number; tex
 // ---------------------------------------------------------------------------
 
 /**
+ * The runtime a production build writes: core's, as an esbuild transform
+ * (whitespace and names, ES2022, legal comments kept, no source map), checked for
+ * what forma-server refuses as core's own file is. A classic script goes in
+ * and a classic script comes out, so it keeps its `"use strict"` and its
+ * top-level scope; the same bytes in, the same bytes out. esbuild escapes
+ * `</script` and `<!--` inside strings, so a runtime that passed the check
+ * stays inlinable; the check on the output is there for the day it does not.
+ *
+ * Verified by: packages/build/tests/preview-frame.test.ts > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published"
+ * Verified by: packages/build/tests/preview-frame.test.ts > "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"
+ * Verified by: packages/build/tests/preview-frame-minified-check.test.ts > "BUILD-806: bytes the build would write that hold </script fail the build, before anything is written"
+ */
+async function minified(read: FrameRuntime): Promise<FrameRuntime> {
+  let code: string;
+  try {
+    ({ code } = await esbuild.transform(read.bytes.toString('utf8'), {
+      loader: 'js',
+      minify: true,
+      // The target core builds the frame for (tsup.config.ts, the formajs-frame
+      // entry): a different one would lower or refuse syntax core wrote.
+      target: 'es2022',
+      // A licence banner in core's file, if it ever has one, is served with it.
+      legalComments: 'inline',
+      sourcemap: false,
+      logLevel: 'silent',
+    }));
+  } catch (error) {
+    const first = (error as { errors?: Array<{ text: string; location?: { line: number; column: number } | null }> }).errors?.[0];
+    const at = first?.location ? { line: first.location.line, column: first.location.column + 1 } : {};
+    throw refusal(
+      'BUILD-823',
+      `@getforma/core ${read.version}'s ${FRAME_RUNTIME_SOURCE} cannot be minified: ${first?.text ?? (error as Error).message}`,
+      { file: read.source, ...at },
+    );
+  }
+  const bytes = Buffer.from(code, 'utf8');
+  const problem = inlineProblem(bytes);
+  if (problem) {
+    // No file or position: they would point into core's file for a fault of the
+    // minified copy, whose lines are not core's.
+    throw refusal(
+      'BUILD-806',
+      `the minified copy of @getforma/core ${read.version}'s ${FRAME_RUNTIME_SOURCE} that the build would write ${problem.reason}; core's own file passed the same check, so the fault is the minifier's (esbuild), not the file's`,
+    );
+  }
+  return { ...read, bytes, minified: true };
+}
+
+/**
  * Find, read and check the runtime `previewFrame` copies, before the build
  * writes anything. `shared` is the bundles' esbuild options. Throws BUILD-805,
  * BUILD-806 or BUILD-807 (a {@link FrameRuntimeError}), writing it as the
@@ -321,7 +388,8 @@ function inlineProblem(bytes: Uint8Array): { reason: string; index?: number; tex
  */
 export async function readFrameRuntime(config: BuildConfig, shared: esbuild.BuildOptions, strict: boolean): Promise<FrameRuntime> {
   try {
-    return await readChecked(config, shared);
+    const read = await readChecked(config, shared);
+    return config.watch ? read : await minified(read);
   } catch (error) {
     const diagnostics = (error as Partial<FrameRuntimeError>).diagnostics;
     if (config.diagnosticsJson && diagnostics) writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
@@ -395,5 +463,5 @@ async function readChecked(config: BuildConfig, shared: esbuild.BuildOptions): P
     throw refusal('BUILD-806', `@getforma/core ${core.version}'s ${FRAME_RUNTIME_SOURCE} ${problem.reason}`, { file: core.source, ...at });
   }
   if (cores.length > 1) found += `, the same runtime as the ${cores.length - 1} other ${cores.length === 2 ? 'copy' : 'copies'} they import`;
-  return { bytes: core.bytes, source: core.source, version: core.version, found };
+  return { bytes: core.bytes, sourceBytes: core.bytes.length, minified: false, source: core.source, version: core.version, found };
 }
