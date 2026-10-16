@@ -22,7 +22,7 @@ export async function startServer(runtimePath, otherOrigin = '', requests = []) 
     if (url.pathname === '/runtime.js') { res.writeHead(200, { 'content-type': 'text/javascript' }).end(runtime); return; }
     if (url.pathname === '/') {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-security-policy': policy, 'cache-control': 'no-store', 'set-cookie': 'hostile_fixture=secret; SameSite=Strict; Path=/' });
-      res.end(`<!doctype html><html><head><meta charset="utf-8"><title>Hostile widget qualification</title></head><body><section id="outside" data-secret="secret-1290300"><span id="outside-secret">secret-1290300</span><div id="root"></div></section><script nonce="${nonce}" src="/runtime.js" data-forma-mount="manual" data-forma-diagnostics="true"></script></body></html>`);
+      res.end(`<!doctype html><html><head><meta charset="utf-8"><title>Hostile widget qualification</title></head><body><section id="outside" data-secret="secret-1290300"><span id="outside-secret">secret-1290300</span><div id="root"></div></section><section data-forma-state='{"n":1}'><p id="unowned-served" data-text="{n}">raw</p></section><script nonce="${nonce}" src="/runtime.js"></script></body></html>`);
       return;
     }
     res.writeHead(404).end();

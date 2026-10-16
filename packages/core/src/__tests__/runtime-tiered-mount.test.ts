@@ -7,9 +7,7 @@
  * expressions `$el` through a wrapper whose traversal stops at the root, and
  * checks three grants: `fetch`, `dom` beyond the root and `navigate`. Every
  * denial is a coded `formajs:diagnostic`; a development build reports the
- * grants each mount used. The tierless paths (`reconcile()`, the auto-mount,
- * the `body` observer) keep 2.0.x's behaviour and never reach under a tiered
- * root.
+ * grants each mount used. All bindings enter through an explicit mount handle.
  *
  * The page around each root is the application's: `#app` carries a secret in
  * an attribute and a sibling `aside`, so a reach past the root has something
@@ -25,7 +23,6 @@ import * as runtime from '../runtime';
 import type { GrantReport, MountHandle, MountOptions, TrustedHtml } from '../runtime';
 import { compileExpression, evaluateExpression, hostObject, isExprError, isHost, type Bound } from '../expr';
 import { ELEMENT_HOST_PROPS, ELEMENT_METHOD_RESULT, EVENT_HOST_PROPS } from '../expr/allowlist';
-import { DEPRECATIONS } from '../deprecated';
 
 const { mountMarkup } = runtime;
 
@@ -64,7 +61,7 @@ const click = (id: string): void => { (document.getElementById(id) as HTMLElemen
 const denials = (): Detail[] => events.filter((e) => e.kind === 'grant-denied');
 const codes = (): string[] => denials().map((e) => e.code);
 
-/** Let the tierless `body` observer drain what it queued. */
+/** Let scheduled bindings and fetch continuations settle. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 3; i++) await new Promise((r) => setTimeout(r, 0));
 }
@@ -99,7 +96,6 @@ afterEach(() => {
   handles = [];
   document.body.replaceChildren();
   window.removeEventListener('formajs:diagnostic', onDiagnostic);
-  runtime.setDiagnostics(true);
   vi.unstubAllGlobals();
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -107,82 +103,30 @@ afterEach(() => {
 
 describe('SR16: binding only under the root handed in', () => {
   it('binds only under the root it is handed: markup injected outside it stays unbound', async () => {
-    // A page that loads no tierless path, as 3.0.0's and the preview frame's
-    // do: the observer 2.x still starts on `body` is stopped first.
-    runtime.destroyRuntime();
-    try {
-      const root = page();
-      const handle = mountOn(root, `<div data-forma-state='{"n":1}'><p id="inside" data-text="{n}">0</p></div>`, {
-        tier: 'reviewed',
-        grants: {},
-      });
-      const injected = (id: string): string => `<div data-forma-state='{"n":2}'><p id="${id}" data-text="{n}">raw</p></div>`;
-      document.getElementById('app')!.insertAdjacentHTML('beforeend', injected('beside'));
-      document.body.insertAdjacentHTML('beforeend', injected('in-body'));
-      root.insertAdjacentHTML('beforebegin', injected('before'));
-      await settle();
-
-      expect(text('inside')).toBe('1');
-      expect([text('beside'), text('in-body'), text('before')]).toEqual(['raw', 'raw', 'raw']);
-
-      // An update renders under the root again, and only there.
-      handle.update(runtime.trustedHtml(`<div data-forma-state='{"m":3}'><p id="inside" data-text="{m}">0</p></div>`));
-      await settle();
-      expect(text('inside')).toBe('3');
-      expect([text('beside'), text('in-body'), text('before')]).toEqual(['raw', 'raw', 'raw']);
-    } finally {
-      document.body.replaceChildren();
-      runtime.initRuntime();
-    }
-    // The control: the same injection where 2.x's tierless observer runs is
-    // bound, by that path. The mount is not what binds it.
-    document.body.insertAdjacentHTML('beforeend', `<div data-forma-state='{"n":2}'><p id="observed" data-text="{n}">raw</p></div>`);
+    const root = page();
+    const handle = mountOn(root, `<div data-forma-state='{"n":1}'><p id="inside" data-text="{n}">0</p></div>`, { tier: 'reviewed' });
+    const injected = (id: string): string => `<div data-forma-state='{"n":2}'><p id="${id}" data-text="{n}">raw</p></div>`;
+    document.getElementById('app')!.insertAdjacentHTML('beforeend', injected('beside'));
+    document.body.insertAdjacentHTML('beforeend', injected('in-body'));
+    root.insertAdjacentHTML('beforebegin', injected('before'));
+    document.dispatchEvent(new Event('DOMContentLoaded'));
     await settle();
-    expect(text('observed')).toBe('2');
+    expect(text('inside')).toBe('1');
+    expect([text('beside'), text('in-body'), text('before')]).toEqual(['raw', 'raw', 'raw']);
+    handle.update(runtime.trustedHtml(`<div data-forma-state='{"m":3}'><p id="inside" data-text="{m}">0</p></div>`));
+    await settle();
+    expect(text('inside')).toBe('3');
+    expect([text('beside'), text('in-body'), text('before')]).toEqual(['raw', 'raw', 'raw']);
   });
 
-  it('no tierless path binds markup under a tiered root', async () => {
+  it('DOM insertion and state-attribute edits do not rebind an existing mount', async () => {
     const root = page();
-    mountOn(
-      root,
-      `<div data-forma-state='{"n":0}'>` +
-        `<p id="reach" data-text="{$el.closest('body') ? 'reached' : 'confined'}">initial</p>` +
-        `<button id="inc" data-on:click="{n++}">+</button><p id="n" data-text="{n}">-</p></div>`,
-      { tier: 'reviewed', grants: {} },
-    );
-    expect(text('reach')).toBe('confined');
-    expect(text('n')).toBe('0');
-
-    // Markup the page inserts under the root later: the observer does not bind it.
+    mountOn(root, `<div data-forma-state='{"n":0}'><p id="reach" data-text="{$el.closest('body') ? 'reached' : 'confined'}">initial</p><button id="inc" data-on:click="{n++}">+</button><p id="n" data-text="{n}">-</p></div>`, { tier: 'reviewed' });
     root.insertAdjacentHTML('beforeend', `<div data-forma-state='{"x":1}'><p id="late" data-text="{x}">raw</p></div>`);
-    await settle();
-    expect(text('late')).toBe('raw');
-
-    // The tierless mount() and the DOMContentLoaded scan pass it by, and do
-    // not bind the mount's own markup again with every power.
-    runtime.mount(document.body);
-    runtime.initRuntime();
-    expect(text('late')).toBe('raw');
-    expect(text('reach')).toBe('confined');
-
-    // A tierless scope around the root binds its own elements, never the mount's.
-    // Nor do its $refs reach into the mount.
-    const app = document.getElementById('app')!;
-    app.setAttribute('data-forma-state', '{"t":"app"}');
-    document.getElementById('title')!.setAttribute('data-text', "{$refs.counter ? 'into the mount' : t}");
-    document.getElementById('n')!.setAttribute('data-ref', 'counter');
-    runtime.mount(app);
-    expect(text('title')).toBe('app');
-    expect(text('reach')).toBe('confined');
-
-    // The attribute the observer watches, changed under the root: ignored.
     root.querySelector('[data-forma-state]')!.setAttribute('data-forma-state', '{"n":5}');
+    document.dispatchEvent(new Event('DOMContentLoaded'));
     await settle();
-
-    // Tierless unmount() and destroyRuntime() leave the mount bound.
-    runtime.unmount(document.body);
-    runtime.destroyRuntime();
-    runtime.initRuntime();
+    expect(text('late')).toBe('raw');
     click('inc');
     expect(text('n')).toBe('1');
     expect(text('reach')).toBe('confined');
@@ -191,7 +135,7 @@ describe('SR16: binding only under the root handed in', () => {
   it('a mount nested in another binds with its own grants, and the outer one never binds its markup', () => {
     const root = page();
     mountOn(root, probe(`$el.closest('section') ? 'outer reached' : 'confined'`, '<div id="inner-root"></div>'), {
-      tier: 'compiled', // every grant
+      tier: 'compiled', grants: { dom: true }, // explicit outside-DOM authority
     });
     expect(text('out')).toBe('outer reached');
     const inner = document.getElementById('inner-root')!;
@@ -208,109 +152,6 @@ describe('SR16: binding only under the root handed in', () => {
     expect(text('asks')).toBe('initial');
     expect(codes()).toEqual(['FORMA_E_GRANT_DOM']);
     expect(denials()[0]!.mount).toBe('#inner-root');
-  });
-});
-
-describe("SR16 in 2.x: the page's mount switch", () => {
-  // Each case loads a fresh copy of the runtime, as a page does, after setting
-  // up the page it starts on. The copy this file imports, which auto-mounts,
-  // is stopped meanwhile, so the page has one runtime.
-  const served = `<div data-forma-state='{"n":1}'><p id="served" data-text="{n}">raw</p></div><div id="root"></div>`;
-  const injected = (id: string): string => `<div data-forma-state='{"n":2}'><p id="${id}" data-text="{n}">raw</p></div>`;
-
-  async function freshRuntime(): Promise<typeof runtime> {
-    vi.resetModules();
-    return import('../runtime');
-  }
-
-  it("with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound", async () => {
-    runtime.destroyRuntime();
-    const script = document.createElement('script');
-    script.setAttribute('data-forma-mount', 'manual');
-    document.head.appendChild(script);
-    document.body.innerHTML = served;
-    const fresh = await freshRuntime();
-    try {
-      await settle();
-      // No auto-mount on load: the server's own data-forma-state is not bound.
-      expect(text('served')).toBe('raw');
-      const widget = fresh.mountMarkup(document.getElementById('root')!,
-        runtime.trustedHtml(`<div data-forma-state='{"w":3}'><p id="inside" data-text="{w}">-</p></div>`), { tier: 'reviewed', grants: {} });
-      expect(text('inside')).toBe('3');
-
-      // No body observer: markup injected beside the root stays unbound.
-      document.body.insertAdjacentHTML('beforeend', injected('outside'));
-      await settle();
-      expect(text('outside')).toBe('raw');
-
-      // The tierless calls refuse, and bind nothing.
-      const scratch = document.createElement('div');
-      document.body.appendChild(scratch);
-      for (const call of [
-        () => fresh.mount(document.body),
-        () => fresh.initRuntime(),
-        () => fresh.reconcile(scratch, runtime.trustedHtml(injected('reconciled'))),
-      ]) {
-        expect(call).toThrow(/FORMA_E_MOUNT_MANUAL/);
-      }
-      expect(scratch.innerHTML).toBe('');
-      expect([text('served'), text('outside')]).toEqual(['raw', 'raw']);
-
-      // Read once: removing the switch later turns nothing back on.
-      script.remove();
-      document.body.insertAdjacentHTML('beforeend', injected('later'));
-      await settle();
-      expect(text('later')).toBe('raw');
-      expect(() => fresh.mount(document.body)).toThrow(/FORMA_E_MOUNT_MANUAL/);
-      widget.unmount();
-    } finally {
-      fresh.destroyRuntime();
-      script.remove();
-    }
-
-    // The control: the same page without the switch auto-mounts, as at 2.0.x.
-    document.body.innerHTML = served;
-    const auto = await freshRuntime();
-    try {
-      expect(text('served')).toBe('1');
-      document.body.insertAdjacentHTML('beforeend', injected('observed'));
-      await settle();
-      expect(text('observed')).toBe('2');
-    } finally {
-      auto.destroyRuntime();
-      document.body.replaceChildren();
-      vi.resetModules();
-      runtime.initRuntime();
-    }
-  });
-
-  it("the mount switch is read once, from the runtime's own script element", async () => {
-    // A CDN build reads its own <script> (document.currentScript). Here that
-    // element is not in the document, so nothing but the own-element read can
-    // see it.
-    runtime.destroyRuntime();
-    const own = document.createElement('script');
-    own.setAttribute('data-forma-mount', 'manual');
-    Object.defineProperty(document, 'currentScript', { configurable: true, get: () => own });
-    document.body.innerHTML = served;
-    try {
-      const fresh = await freshRuntime();
-      expect(text('served')).toBe('raw');
-      expect(() => fresh.mount(document.body)).toThrow(/FORMA_E_MOUNT_MANUAL/);
-      fresh.destroyRuntime();
-
-      // Any other value is the default.
-      own.setAttribute('data-forma-mount', 'auto');
-      document.body.innerHTML = served;
-      const auto = await freshRuntime();
-      expect(text('served')).toBe('1');
-      auto.destroyRuntime();
-    } finally {
-      delete (document as unknown as Record<string, unknown>).currentScript;
-      document.body.replaceChildren();
-      vi.resetModules();
-      runtime.initRuntime();
-    }
   });
 });
 
@@ -331,12 +172,12 @@ describe('L-36: $el, $event and $refs stop at the mount root', () => {
     expect(text('out')).toBe('DIV');
     handles.pop()!.unmount();
 
-    // With dom, and under A2's default of every grant, it reaches the page.
+    // Only explicit dom authority reaches the page; omission stays confined.
     mountOn(root, probe(expr), { tier: 'reviewed', grants: { dom: true } });
     expect(text('out')).toBe('reached');
     handles.pop()!.unmount();
     mountOn(root, probe(expr), { tier: 'reviewed' });
-    expect(text('out')).toBe('reached');
+    expect(text('out')).toBe('confined');
     expect(denials()).toEqual([]);
   });
 
@@ -739,10 +580,10 @@ describe('DR-15: grants', () => {
       });
       handles.pop()!.unmount();
     }
-    // And the A2 default sends them as a tierless mount does, same-origin.
+    // Omission has no fetch authority and sends no fourth request.
     mountOn(root, `<div data-forma-state='{}'><div data-fetch="GET /api/me → me"></div></div>`, { tier: 'reviewed' });
     await settle();
-    expect(requests.map((r) => r.init.credentials)).toEqual(['same-origin', 'omit', 'omit', 'same-origin']);
+    expect(requests.map((r) => r.init.credentials)).toEqual(['same-origin', 'omit', 'omit']);
   });
 
   it("a fetch grant's timeout shortens the abort", async () => {
@@ -778,35 +619,34 @@ describe('DR-15: grants', () => {
     const widget = (url: string, call: string, button: string): string =>
       `<div data-forma-state='{}'><div data-fetch="GET ${url} → x" data-fetch-id="load"></div>` +
       `<button id="${button}" data-on:click="{$refetch('${call}')}">r</button></div>`;
-    mountOn(document.getElementById('a')!, widget('/api/a', 'load', 'a-load'), { tier: 'reviewed' });
-    mountOn(document.getElementById('b')!, widget('/api/b', 'admin', 'b-admin'), { tier: 'reviewed' });
+    mountOn(document.getElementById('a')!, widget('/api/a', 'load', 'a-load'), { tier: 'reviewed', grants: { fetch: { paths: ['/api/'] } } });
+    mountOn(document.getElementById('b')!, widget('/api/b', 'admin', 'b-admin'), { tier: 'reviewed', grants: { fetch: { paths: ['/api/'] } } });
     const legacy = document.getElementById('legacy')!;
     legacy.innerHTML =
       `<div data-forma-state='{}'><div data-fetch="GET /api/admin → y" data-fetch-id="admin"></div>` +
       `<button id="legacy-load" data-on:click="{$refetch('load')}">r</button></div>`;
-    runtime.mount(legacy);
+    mountOn(legacy, legacy.innerHTML, { tier: 'reviewed', config: { diagnostics: false }, grants: { fetch: { paths: ['/api/'] } } });
     await settle();
     const count = (url: string): number => requests.filter((r) => r.url === url).length;
     expect([count('/api/a'), count('/api/b'), count('/api/admin')]).toEqual([1, 1, 1]);
 
     click('a-load'); // its own: sent again
     click('b-admin'); // the page's id, from a mount: reaches nothing
-    click('legacy-load'); // a mount's id, from the page: reaches nothing
+    click('legacy-load'); // another explicit mount's id: reaches nothing
     await settle();
     expect([count('/api/a'), count('/api/b'), count('/api/admin')]).toEqual([2, 1, 1]);
-    runtime.unmount(legacy);
+
   });
 });
 
 describe("SR37's runtime half: every denied grant is a coded diagnostic", () => {
   it("a seeded denial raises one coded diagnostic, whatever the page's diagnostics switch says", async () => {
     answers();
-    runtime.setDiagnostics(false);
     const root = page();
     const seeded =
       `<div data-forma-state='{}'><div data-fetch="GET /api/items → items |error:failed"></div>` +
       `<div data-fetch="GET /api/items → items |error:failed"></div></div>`;
-    mountOn(root, seeded, { tier: 'reviewed', grants: {}, config: { name: 'widget-a' } });
+    mountOn(root, seeded, { tier: 'reviewed', grants: {}, config: { name: 'widget-a', diagnostics: false } });
 
     expect(events).toEqual([{
       kind: 'grant-denied',
@@ -827,30 +667,27 @@ describe("SR37's runtime half: every denied grant is a coded diagnostic", () => 
     mountOn(second, seeded, { tier: 'reviewed', grants: {}, config: { name: 'widget-b' } });
     expect(events.map((e) => e.mount)).toEqual(['widget-a', 'widget-b']);
 
-    // The page's switch still silences what it governs: an ordinary failure
-    // in a tierless scope.
+    // The per-mount switch still silences ordinary expression diagnostics.
     const legacy = document.createElement('div');
     legacy.innerHTML = `<div data-forma-state='{}'><p data-text="{nope.x}">-</p></div>`;
     document.body.appendChild(legacy);
-    runtime.mount(legacy);
+    mountOn(legacy, legacy.innerHTML, { tier: 'reviewed', config: { diagnostics: false }, grants: { fetch: { paths: ['/api/'] } } });
     expect(events).toHaveLength(2);
-    runtime.unmount(legacy);
+
     await settle();
     expect(requests).toEqual([]);
   });
 
   it('a mount takes its diagnostics switch from its call, not the page', () => {
     const root = page();
-    runtime.setDiagnostics(false);
     mountOn(root, probe('nope.x'), { tier: 'reviewed', grants: {} });
     expect(events.map((e) => e.code)).toEqual(['FORMA_E_UNRESOLVED']);
     handles.pop()!.unmount();
-    runtime.setDiagnostics(true);
     runtime.clearDiagnostics();
     mountOn(root, probe('nope.y'), { tier: 'reviewed', grants: {}, config: { diagnostics: false } });
     expect(events).toHaveLength(1);
     handles.pop()!.unmount();
-    // A denied grant is reported whatever either switch says.
+    // A denied grant is reported even when this mount disables diagnostics.
     mountOn(root, probe(`$el.matches('body *')`), { tier: 'reviewed', grants: {}, config: { diagnostics: false } });
     expect(events.map((e) => e.code)).toEqual(['FORMA_E_UNRESOLVED', 'FORMA_E_GRANT_DOM']);
   });
@@ -869,7 +706,7 @@ describe('the development report of the grants each mount used', () => {
   it('the development report lists exactly the grants a fixture widget used', async () => {
     answers();
     const root = page();
-    const handle = mountOn(root, fixture, { tier: 'reviewed' });
+    const handle = mountOn(root, fixture, { tier: 'reviewed', grants: { dom: true, navigate: true, fetch: { methods: ['GET', 'POST'], paths: ['/api/'], cookies: true } } });
     await settle();
     expect(text('out')).toBe('app');
     expect(handle.grantsUsed()).toEqual({
@@ -1154,21 +991,15 @@ describe('tiers and configuration', () => {
     expect(() => mountMarkup(root, runtime.trustedHtml(''), { tier: 'compiled' })).toThrow(/FORMA_E_MOUNT_TWICE/);
   });
 
-  it('bindings a tierless path made under the root go first, with what they rendered', () => {
+  it('handle.update disposes removed bindings without leaving detached nodes active', () => {
     const root = page();
-    root.innerHTML = `<div data-forma-state='{"n":0}'><button id="old" data-on:click="{n++}">+</button><p id="old-n" data-text="{n}">-</p></div>`;
-    runtime.mount(root);
+    const handle = mountOn(root, `<div data-forma-state='{"n":0}'><button id="old" data-on:click="{n++}">+</button><p id="old-n" data-text="{n}">-</p></div>`, { tier: 'reviewed' });
     const old = document.getElementById('old')!;
     const oldN = document.getElementById('old-n')!;
-    old.click();
-    expect(oldN.textContent).toBe('1');
-
-    mountOn(root, probe('1 + 1'), { tier: 'reviewed', grants: {} });
-    expect(text('out')).toBe('2');
-    expect(root.contains(old)).toBe(false);
-    // The tierless bindings were disposed, not left running on detached nodes.
-    old.click();
-    expect(oldN.textContent).toBe('1');
+    old.click(); expect(oldN.textContent).toBe('1');
+    handle.update(runtime.trustedHtml(`<div data-forma-state='{"fresh":2}'><p id="out" data-text="{fresh}">-</p></div>`));
+    expect(text('out')).toBe('2'); expect(root.contains(old)).toBe(false);
+    old.click(); expect(oldN.textContent).toBe('1');
   });
 
   it('takes trustedHtml() markup and refuses look-alikes', () => {
@@ -1202,21 +1033,11 @@ describe('tiers and configuration', () => {
     expect(text('out')).toBe('42');
   });
 
-  it('a tiered mount ignores the page directive map', () => {
+  it('binds all declared directives without a global directive map', () => {
     const root = page();
-    runtime.setDirectiveMap({ w: ['data-show'] });
-    try {
-      mountOn(
-        root,
-        `<div data-forma-state='{}'><p id="out" data-forma-id="w" data-text="{'bound'}">initial</p>` +
-          `<p id="unmapped" data-text="{'also bound'}">initial</p></div>`,
-        { tier: 'reviewed' },
-      );
-      expect(text('out')).toBe('bound');
-      expect(text('unmapped')).toBe('also bound');
-    } finally {
-      runtime.setDirectiveMap(null);
-    }
+    mountOn(root, `<div data-forma-state='{}'><p id="out" data-forma-id="w" data-text="{'bound'}">initial</p><p id="unmapped" data-text="{'also bound'}">initial</p></div>`, { tier: 'reviewed' });
+    expect(text('out')).toBe('bound');
+    expect(text('unmapped')).toBe('also bound');
   });
 });
 
@@ -1234,11 +1055,6 @@ describe('configuration only from the call', () => {
     const fresh = await import('../runtime');
     try {
       document.body.innerHTML = '<div id="legacy"></div><div id="tiered"></div><div id="configured"></div>';
-      const legacy = document.getElementById('legacy')!;
-      legacy.innerHTML = `<div data-forma-state='{}'><p id="l" data-text="{${heavy}}">-</p></div>`;
-      fresh.mount(legacy);
-      expect(text('l')).toBe('50000');
-
       await new Promise((r) => setTimeout(r, 0)); // a fresh task: a fresh meter
       const tiered = fresh.mountMarkup(document.getElementById('tiered')!, runtime.trustedHtml(`<div data-forma-state='{}'><p id="t" data-text="{${heavy}}">-</p></div>`), {
         tier: 'reviewed',
@@ -1255,41 +1071,10 @@ describe('configuration only from the call', () => {
       expect(text('c')).toBe('50000');
       tiered.unmount();
       configured.unmount();
-      fresh.unmount(legacy);
     } finally {
-      fresh.destroyRuntime();
       script.remove();
       vi.resetModules();
     }
-  });
-});
-
-describe('the tierless reconcile() keeps 2.0.x', () => {
-  const LOGGED = Symbol.for('@getforma/core#deprecations');
-
-  it('reconcile behaves as at 2.0.x and warns once in development', async () => {
-    delete (globalThis as Record<symbol, unknown>)[LOGGED];
-    const warn = vi.mocked(console.warn);
-    answers(404, { error: 'missing' });
-    page();
-    const container = document.getElementById('root')!;
-    const markup =
-      `<div data-forma-state='{}'><div data-fetch="GET /api/items → items |error:failed"></div>` +
-      `<p id="reach" data-text="{$el.closest('section').getAttribute('data-secret')}">-</p>` +
-      `<p id="items" data-text="{items?.error}">-</p><p id="failed" data-text="{failed}">-</p></div>`;
-    runtime.reconcile(container, runtime.trustedHtml(markup));
-    await settle();
-    // Every power, as at 2.0.x: the page's attribute, and a 404's body as data.
-    expect(text('reach')).toBe('s3cret');
-    expect(text('items')).toBe('missing');
-    expect(text('failed')).toBe('');
-    expect(denials()).toEqual([]);
-
-    runtime.reconcile(container, runtime.trustedHtml(markup.replace('items?.error', 'items?.error ?? 0')));
-    const logged = warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes('FORMA_W_DEPRECATED_RECONCILE'));
-    expect(logged).toEqual([`[forma] FORMA_W_DEPRECATED_RECONCILE: ${DEPRECATIONS.FORMA_W_DEPRECATED_RECONCILE}`]);
-    expect(logged[0]).toContain('mountMarkup(root, markup, { tier, grants })');
-    runtime.unmount(container);
   });
 });
 
@@ -1311,9 +1096,9 @@ async function buildRuntimeIife(overrides: Options = {}): Promise<string> {
 }
 
 describe('the production build (the real tsup config)', () => {
-  it("a production build carries neither the grant report nor reconcile's warning", { timeout: 120_000 }, async () => {
+  it("a production build carries neither the grant report nor the obsolete manual-switch warning", { timeout: 120_000 }, async () => {
     const code = await buildRuntimeIife();
-    expect(code).not.toContain('FORMA_W_DEPRECATED_RECONCILE');
+    expect(code).not.toContain('FORMA_W_MANUAL_MOUNT_REMOVED');
     expect(code).not.toContain('grantReport');
     expect(code).not.toContain('sourceIsDev');
     // What enforces the grants is there: the build did not drop everything.
@@ -1325,7 +1110,7 @@ describe('the production build (the real tsup config)', () => {
   it('a build without the production flag keeps them', { timeout: 120_000 }, async () => {
     // The control: nothing replaces `__FORMA_DEV_BUILD__`.
     const code = await buildRuntimeIife({ define: {} });
-    expect(code).toContain('FORMA_W_DEPRECATED_RECONCILE');
+    expect(code).toContain('FORMA_W_MANUAL_MOUNT_REMOVED');
     expect(code).toContain('grantReport');
   });
 });

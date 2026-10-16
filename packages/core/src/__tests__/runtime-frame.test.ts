@@ -290,11 +290,11 @@ describe('the frame runtime build (the real tsup config)', () => {
     expect(code).toContain('"unreviewed"');
   });
 
-  it('without the frame flag the same entry would auto-mount the page', { timeout: 120_000 }, async () => {
-    // The control for the test above: the flag, not the entry, keeps the
-    // tierless path out.
+  it('without the frame flag the same entry stays inert and does not connect', { timeout: 120_000 }, async () => {
+    // The flag controls the frame connection. Explicit mounting is universal.
     const code = await buildFrame({ define: { ...FRAME_DEFINE, [FRAME_BUILD_FLAG]: 'false' } });
-    expect(code).toContain('DOMContentLoaded');
+    expect(code).not.toContain('DOMContentLoaded');
+    expect(code).not.toContain('MutationObserver');
     expect(code).not.toContain('connectFrame(window)');
   });
 

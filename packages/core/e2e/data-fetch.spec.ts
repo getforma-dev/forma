@@ -10,8 +10,15 @@ import { test, expect, type Page } from '@playwright/test';
 async function serve(page: Page, body: string): Promise<void> {
   await page.route('**/fetch-timeout.html', (route) => route.fulfill({
     contentType: 'text/html',
-    body: `<!doctype html><html><head><meta charset="utf-8"><title>data-fetch</title></head><body>${body}` +
-      '<script src="/formajs-runtime.global.js"></script></body></html>',
+    body: `<!doctype html><html><head><meta charset="utf-8"><title>data-fetch</title></head><body><main id="fetch-fixture">${body}</main>` +
+      '<script src="/formajs-runtime.global.js"></script>' +
+      `<script>
+        const root = document.getElementById('fetch-fixture');
+        window.fetchFixtureHandle = FormaRuntime.mountMarkup(root, FormaRuntime.trustedHtml(root.innerHTML), {
+          tier: 'reviewed',
+          grants: { fetch: { methods: ['GET'], paths: ['/api/stalled', '/api/answers'], cookies: false, timeoutMs: 30000 } },
+        });
+      </script></body></html>`,
   }));
   await page.goto('/fetch-timeout.html');
 }

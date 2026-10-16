@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "3c3a48b2855160b0e4734a42b1d268861d3c58e9",
+  "sourceClean": true,
+  "startedAt": "2026-10-16T05:22:39.706456+00:00",
+  "node": "v24.22.0",
+  "runtimeSha256": "828ce6ac426cb7d4f996e8175ae8003014519aa431309e22dde4899543594259",
+  "harnessSha256": "af1a580b2361acc55d9468a8d2415bd587c4acb4a39812b226da8b028c1380e3",
+  "runs": 5,
+  "rate": 4,
+  "only": [
+    "F",
+    "O3",
+    "S6"
+  ],
+  "classification": "Diagnostic timing qualification with historical context-dependent slow-search residual retained; not a universal 50ms pass.",
+  "runtimeRestored": true,
+  "sourceCleanAfter": true
+}

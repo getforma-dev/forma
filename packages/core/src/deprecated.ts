@@ -1,9 +1,8 @@
-/** Runtime reconcile deprecation; its removal belongs to FORMA-108. */
+/** Removed A2 manual opt-out: a development-only migration hint. */
 export const DEPRECATIONS = {
-  FORMA_W_DEPRECATED_RECONCILE:
-    'reconcile() from @getforma/core/runtime binds markup with every power the runtime has (the tierless ' +
-    'path) and will be removed in 3.0.0. Mount through mountMarkup(root, markup, { tier, grants }), ' +
-    'which binds only under the root it is handed, with the grants it names.',
+  FORMA_W_MANUAL_MOUNT_REMOVED:
+    'data-forma-mount="manual" is obsolete: automatic mounting was removed in 3.0.0. ' +
+    'Use mountMarkup(root, markup, { tier, grants }) and the returned update/unmount handle.',
 } as const;
 
 /** The code a deprecated entry logs. */
@@ -31,7 +30,7 @@ export function sourceIsDev(): boolean {
  * `globalThis` under a `Symbol.for` key, so a second copy of an entry (a test
  * that resets modules, a development server that reloads one) stays quiet.
  *
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "reconcile behaves as at 2.0.x and warns once in development"
+ * Verified by: src/__tests__/runtime-explicit-mount.test.ts > "warns once about the obsolete manual switch and names the replacement mount call"
  */
 export function warnDeprecated(code: DeprecationCode): void {
   const host = globalThis as unknown as Record<symbol, Set<string> | undefined>;

@@ -13,7 +13,6 @@ type Runtime = {
   trustedHtml(markup: string): unknown;
   mountMarkup(root: Element, markup: unknown, options: unknown): { grantsUsed(): unknown; unmount(): void };
   getDiagnostics(): Array<{ kind: string; code: string; grant?: string }>;
-  reconcile(container: Element, html: unknown): void;
 };
 
 async function bare(page: Page): Promise<void> {
@@ -114,17 +113,17 @@ test("SR16 and SR31 in a browser: $el.closest('body') reaches nothing, and an un
   expect(requests).toBe(1);
 });
 
-test('the production build has no grant report and reconcile() warns nothing', async ({ page }) => {
+test('the production build has no grant report or obsolete manual warning', async ({ page }) => {
   const warnings: string[] = [];
   page.on('console', (msg) => { if (msg.type() === 'warning') warnings.push(msg.text()); });
   await bare(page);
   const report = await page.evaluate(() => {
     const { FormaRuntime } = window as unknown as { FormaRuntime: Runtime };
     const handle = FormaRuntime.mountMarkup(document.getElementById('root')!,
-      FormaRuntime.trustedHtml(`<div data-forma-state='{}'><p data-text="{$el.closest('section').id}">-</p></div>`), { tier: 'reviewed' });
+      FormaRuntime.trustedHtml(`<div data-forma-state='{}'><p data-text="{$el.closest('section').id}">-</p></div>`), { tier: 'reviewed', grants: { dom: true } });
     const other = document.createElement('div');
     document.body.appendChild(other);
-    FormaRuntime.reconcile(other, FormaRuntime.trustedHtml(`<div data-forma-state='{"n":1}'><p id="n" data-text="{n}">-</p></div>`));
+    FormaRuntime.mountMarkup(other, FormaRuntime.trustedHtml(`<div data-forma-state='{"n":1}'><p id="n" data-text="{n}">-</p></div>`), { tier: 'reviewed' });
     return handle.grantsUsed();
   });
   expect(report).toBeNull();
@@ -132,40 +131,23 @@ test('the production build has no grant report and reconcile() warns nothing', a
   expect(warnings.filter((w) => w.includes('FORMA_W_'))).toEqual([]);
 });
 
-test("SR16 in 2.x: with data-forma-mount=\"manual\" on the runtime's script, only mountMarkup binds", async ({ page }) => {
-  await page.route('**/manual-mount.html', (route) => route.fulfill({
-    contentType: 'text/html',
-    body: '<!doctype html><html><head><meta charset="utf-8"><title>manual</title></head><body>' +
-      `<div data-forma-state='{"n":1}'><p id="served" data-text="{n}">raw</p></div><div id="root"></div>` +
-      '<script src="/formajs-runtime.global.js" data-forma-mount="manual"></script></body></html>',
-  }));
-  await page.goto('/manual-mount.html');
-  const result = await page.evaluate(async () => {
-    const { FormaRuntime } = window as unknown as { FormaRuntime: Runtime & { mount(el: Element): void } };
-    FormaRuntime.mountMarkup(document.getElementById('root')!,
-      FormaRuntime.trustedHtml(`<div data-forma-state='{"w":3}'><p id="inside" data-text="{w}">-</p></div>`), { tier: 'reviewed', grants: {} });
-    const inject = (id: string) => document.body.insertAdjacentHTML('beforeend',
-      `<div data-forma-state='{"n":2}'><p id="${id}" data-text="{n}">raw</p></div>`);
-    inject('outside');
-    // The switch is read once: removing it later turns nothing back on.
-    document.querySelector('script[data-forma-mount]')!.removeAttribute('data-forma-mount');
-    inject('later');
-    await new Promise((r) => setTimeout(r, 100));
-    const refused: string[] = [];
-    for (const call of [() => FormaRuntime.mount(document.body), () => FormaRuntime.reconcile(document.createElement('div'), FormaRuntime.trustedHtml('<p></p>'))]) {
-      try { call(); } catch (err) { refused.push(String((err as { code?: string }).code)); }
-    }
-    const text = (id: string) => document.getElementById(id)!.textContent;
-    return { inside: text('inside'), served: text('served'), outside: text('outside'), later: text('later'), refused };
+for (const attribute of ['', ' data-forma-mount="manual"']) {
+  test(`only an explicit mount binds, with obsolete attribute ${Boolean(attribute)}`, async ({ page }) => {
+    await page.route('**/explicit-mount.html', route => route.fulfill({ contentType: 'text/html', body:
+      `<!doctype html><html><body><div data-forma-state='{"n":1}'><p id="served" data-text="{n}">raw</p></div><div id="root"></div><script src="/formajs-runtime.global.js"${attribute}></script></body></html>` }));
+    await page.goto('/explicit-mount.html');
+    const result = await page.evaluate(async () => {
+      const { FormaRuntime } = window as unknown as { FormaRuntime: Runtime };
+      FormaRuntime.mountMarkup(document.getElementById('root')!, FormaRuntime.trustedHtml(`<div data-forma-state='{"w":3}'><p id="inside" data-text="{w}">-</p></div>`), { tier: 'reviewed' });
+      document.body.insertAdjacentHTML('beforeend', `<div data-forma-state='{"n":2}'><p id="outside" data-text="{n}">raw</p></div>`);
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await new Promise(resolve => setTimeout(resolve, 0));
+      const text = (id: string) => document.getElementById(id)!.textContent;
+      return { inside: text('inside'), served: text('served'), outside: text('outside'), exports: Object.keys(FormaRuntime).sort() };
+    });
+    expect(result).toEqual({ inside: '3', served: 'raw', outside: 'raw', exports: ['applyContainmentHints', 'clearDiagnostics', 'getDiagnostics', 'getScopes', 'mountMarkup', 'resetScope', 'setScopeValue', 'trustedHtml', 'yieldToMain'].sort() });
   });
-  expect(result).toEqual({
-    inside: '3',
-    served: 'raw',
-    outside: 'raw',
-    later: 'raw',
-    refused: ['FORMA_E_MOUNT_MANUAL', 'FORMA_E_MOUNT_MANUAL'],
-  });
-});
+}
 
 test("closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time", async ({ page }) => {
   // formajs#30's review, B1, as the reviewer measured it on the CDN build.

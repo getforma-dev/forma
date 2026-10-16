@@ -1,0 +1,272 @@
+[WebServer] (node:82850) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:82881) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 186 tests using 2 workers
+
+(node:82882) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82883) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘    2 [chromium] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations (334ms)
+  ✓    1 [chromium] › e2e/expr-cost.spec.ts:12:1 › a hostile Array.from in a binding is refused before it allocates, with no long task (436ms)
+  ✓    3 [chromium] › e2e/expr-cost.spec.ts:91:1 › FORMA-028: each round-2 rope case is refused before the long task (108ms)
+(node:82896) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    4 [chromium] › e2e/expr-cost.spec.ts:110:1 › FORMA-028: ten bindings at the cap render one task at a time, none over 50 ms (202ms)
+  ✓    5 [chromium] › e2e/csp.spec.ts:120:3 › the flagship example under Content-Security-Policy: script-src 'self' › a blocked inline script is seen as a violation in this engine (137ms)
+  ✓    6 [chromium] › e2e/expr-cost.spec.ts:130:1 › FORMA-025: data-text of a value heavier than the budget is refused before it is converted (105ms)
+  ✓    7 [chromium] › e2e/csp.spec.ts:132:3 › the flagship example under Content-Security-Policy: script-src 'self' › the runtime reports no diagnostics for the flagship markup (98ms)
+  ✓    8 [chromium] › e2e/runtime.spec.ts:8:3 › data-text › renders initial state values as text (92ms)
+  ✓    9 [chromium] › e2e/csp.spec.ts:146:3 › the flagship example under Content-Security-Policy: script-src 'self' › the shipped bundle contains no dynamic-code construct (52ms)
+  ✓   10 [chromium] › e2e/runtime.spec.ts:13:3 › data-text › evaluates expressions in text bindings (75ms)
+  ✓   12 [chromium] › e2e/runtime.spec.ts:17:3 › data-text › updates text when state changes via click handler (143ms)
+  ✓   13 [chromium] › e2e/runtime.spec.ts:23:3 › data-text › counter increments via click (141ms)
+  ✓   14 [chromium] › e2e/runtime.spec.ts:33:3 › data-show › element is visible when condition is true (85ms)
+  ✓   15 [chromium] › e2e/runtime.spec.ts:37:3 › data-show › element hides when condition becomes false (106ms)
+  ✓   16 [chromium] › e2e/runtime.spec.ts:42:3 › data-show › element reappears when toggled back (152ms)
+  ✓   17 [chromium] › e2e/runtime.spec.ts:51:3 › data-if › element is removed from DOM when condition is false (73ms)
+  ✓   18 [chromium] › e2e/runtime.spec.ts:56:3 › data-if › element is added to DOM when condition becomes true (92ms)
+  ✓   19 [chromium] › e2e/runtime.spec.ts:62:3 › data-if › element is removed again when toggled back (135ms)
+  ✓   20 [chromium] › e2e/runtime.spec.ts:71:3 › data-model › typing into input updates bound text (82ms)
+  ✓   21 [chromium] › e2e/runtime.spec.ts:76:3 › data-model › clearing input clears bound text (90ms)
+  ✓   22 [chromium] › e2e/runtime.spec.ts:85:3 › data-class:name › class is absent when condition is false (76ms)
+  ✓   23 [chromium] › e2e/runtime.spec.ts:90:3 › data-class:name › class is added when condition becomes true (95ms)
+  ✓   24 [chromium] › e2e/runtime.spec.ts:95:3 › data-class:name › class is removed when toggled back (140ms)
+  ✓   25 [chromium] › e2e/runtime.spec.ts:104:3 › data-bind:attr › sets href attribute from state (77ms)
+  ✓   26 [chromium] › e2e/runtime.spec.ts:108:3 › data-bind:attr › sets disabled attribute from state (131ms)
+  ✓   27 [chromium] › e2e/runtime.spec.ts:112:3 › data-bind:attr › removes disabled when state changes (92ms)
+  ✓   28 [chromium] › e2e/runtime.spec.ts:119:3 › data-computed › renders computed value (73ms)
+  ✓   29 [chromium] › e2e/runtime.spec.ts:123:3 › data-computed › computed updates when dependency changes (90ms)
+  ✓   30 [chromium] › e2e/runtime.spec.ts:130:3 › data-on:click › increments counter on click (141ms)
+  ✓   31 [chromium] › e2e/runtime.spec.ts:138:3 › data-on:click › reset button sets counter to zero (144ms)
+  ✓   32 [chromium] › e2e/runtime.spec.ts:148:3 › data-list › renders initial list items (77ms)
+  ✓   33 [chromium] › e2e/runtime.spec.ts:156:3 › data-list › adds item to list (100ms)
+  ✓   34 [chromium] › e2e/runtime.spec.ts:165:3 › independent scopes › each scope has its own state (76ms)
+  ✓   35 [chromium] › e2e/runtime.spec.ts:170:3 › independent scopes › clicking one scope does not affect the other (143ms)
+  ✓   36 [chromium] › e2e/runtime.spec.ts:182:3 › data-persist › persist syncs value to localStorage (81ms)
+  ✓   11 [chromium] › e2e/sr33.spec.ts:112:1 › SR33: every permitted native refuses a hostile size before it allocates, with no task over 50 ms (2.9s)
+  ✓   37 [chromium] › e2e/tiered-mount.spec.ts:32:1 › an event's target outside the root is refused: a light-DOM child slotted into the mount (138ms)
+  ✓   38 [chromium] › e2e/tiered-mount.spec.ts:56:1 › a selector that reads past the element needs dom: the browser matches it against the page (66ms)
+  ✓   40 [chromium] › e2e/tiered-mount.spec.ts:79:1 › SR16 and SR31 in a browser: $el.closest('body') reaches nothing, and an ungranted data-fetch sends nothing (83ms)
+  ✓   41 [chromium] › e2e/tiered-mount.spec.ts:116:1 › the production build has no grant report or obsolete manual warning (68ms)
+  ✓   39 [chromium] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, Report-Only › flagship.html renders, filters and reacts with no Trusted Types violation (Report-Only) (230ms)
+  ✓   42 [chromium] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute false (61ms)
+  ✓   44 [chromium] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute true (55ms)
+  ✓   45 [chromium] › e2e/tiered-mount.spec.ts:152:1 › closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time (58ms)
+  ✓   43 [chromium] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, Report-Only › runtime.html's every directive runs with no Trusted Types violation (Report-Only) (442ms)
+  ✓   47 [chromium] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, Report-Only › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (Report-Only) (167ms)
+  ✓   48 [chromium] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, Report-Only › expr-cost.html refuses its hostile binding with no Trusted Types violation (Report-Only) (179ms)
+  ✓   46 [chromium] › e2e/tiered-mount.spec.ts:179:1 › $dispatch of an activation event needs navigate: nothing navigates, submits or resets without it (621ms)
+  ✓   49 [chromium] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, Report-Only › every raw sink given trustedHtml(), and core's own clears, raise no violation (Report-Only) (190ms)
+(node:82968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   50 [chromium] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, enforced › flagship.html renders, filters and reacts with no Trusted Types violation (enforced) (210ms)
+  ✓   52 [chromium] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, enforced › runtime.html's every directive runs with no Trusted Types violation (enforced) (442ms)
+  ✓   53 [chromium] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, enforced › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (enforced) (208ms)
+  ✓   54 [chromium] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, enforced › expr-cost.html refuses its hostile binding with no Trusted Types violation (enforced) (176ms)
+  ✓   55 [chromium] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, enforced › every raw sink given trustedHtml(), and core's own clears, raise no violation (enforced) (188ms)
+  ✓   56 [chromium] › e2e/trusted-types.spec.ts:295:1 › the shared registry holds no policy object, and its forma-runtime handle mints nothing from a string (enforced) (173ms)
+  ✓   57 [chromium] › e2e/trusted-types.spec.ts:342:3 › the controls: the policy is live in this engine › under Report-Only a string written to innerHTML raises one report and still renders (174ms)
+  ✓   58 [chromium] › e2e/trusted-types.spec.ts:357:3 › the controls: the policy is live in this engine › enforced, a string written to innerHTML is refused and raises one violation (174ms)
+  ✓   59 [chromium] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (Report-Only) (177ms)
+  ✓   60 [chromium] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (Report-Only) (258ms)
+  ✘   51 [firefox] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations (876ms)
+  ✓   61 [chromium] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (enforced) (168ms)
+(node:83011) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   62 [chromium] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (enforced) (253ms)
+  ✓   64 [chromium] › e2e/trusted-types.spec.ts:444:1 › the shared forma mint is callable by page scripts while duplicate named policy creation is refused (64ms)
+(node:83015) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   63 [firefox] › e2e/csp.spec.ts:120:3 › the flagship example under Content-Security-Policy: script-src 'self' › a blocked inline script is seen as a violation in this engine (828ms)
+  ✓   66 [firefox] › e2e/csp.spec.ts:132:3 › the flagship example under Content-Security-Policy: script-src 'self' › the runtime reports no diagnostics for the flagship markup (339ms)
+  ✓   65 [firefox] › e2e/expr-cost.spec.ts:12:1 › a hostile Array.from in a binding is refused before it allocates, with no long task (902ms)
+  ✓   67 [firefox] › e2e/csp.spec.ts:146:3 › the flagship example under Content-Security-Policy: script-src 'self' › the shipped bundle contains no dynamic-code construct (147ms)
+  ✓   69 [firefox] › e2e/runtime.spec.ts:8:3 › data-text › renders initial state values as text (205ms)
+  ✓   68 [firefox] › e2e/expr-cost.spec.ts:91:1 › FORMA-028: each round-2 rope case is refused before the long task (351ms)
+  ✓   70 [firefox] › e2e/runtime.spec.ts:13:3 › data-text › evaluates expressions in text bindings (195ms)
+  ✓   71 [firefox] › e2e/expr-cost.spec.ts:110:1 › FORMA-028: ten bindings at the cap render one task at a time, none over 50 ms (296ms)
+  ✓   72 [firefox] › e2e/runtime.spec.ts:17:3 › data-text › updates text when state changes via click handler (245ms)
+  ✓   73 [firefox] › e2e/expr-cost.spec.ts:130:1 › FORMA-025: data-text of a value heavier than the budget is refused before it is converted (195ms)
+  ✓   74 [firefox] › e2e/runtime.spec.ts:23:3 › data-text › counter increments via click (297ms)
+  ✓   76 [firefox] › e2e/runtime.spec.ts:33:3 › data-show › element is visible when condition is true (204ms)
+  ✓   77 [firefox] › e2e/runtime.spec.ts:37:3 › data-show › element hides when condition becomes false (269ms)
+  ✓   75 [firefox] › e2e/sr33.spec.ts:112:1 › SR33: every permitted native refuses a hostile size before it allocates, with no task over 50 ms (719ms)
+  ✓   79 [firefox] › e2e/tiered-mount.spec.ts:32:1 › an event's target outside the root is refused: a light-DOM child slotted into the mount (305ms)
+  ✓   80 [firefox] › e2e/tiered-mount.spec.ts:56:1 › a selector that reads past the element needs dom: the browser matches it against the page (168ms)
+  ✓   78 [firefox] › e2e/runtime.spec.ts:42:3 › data-show › element reappears when toggled back (723ms)
+  ✓   81 [firefox] › e2e/tiered-mount.spec.ts:79:1 › SR16 and SR31 in a browser: $el.closest('body') reaches nothing, and an ungranted data-fetch sends nothing (201ms)
+  ✓   82 [firefox] › e2e/runtime.spec.ts:51:3 › data-if › element is removed from DOM when condition is false (211ms)
+  ✓   83 [firefox] › e2e/tiered-mount.spec.ts:116:1 › the production build has no grant report or obsolete manual warning (195ms)
+  ✓   84 [firefox] › e2e/runtime.spec.ts:56:3 › data-if › element is added to DOM when condition becomes true (238ms)
+  ✓   86 [firefox] › e2e/runtime.spec.ts:62:3 › data-if › element is removed again when toggled back (289ms)
+  ✓   85 [firefox] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute false (617ms)
+  ✓   87 [firefox] › e2e/runtime.spec.ts:71:3 › data-model › typing into input updates bound text (201ms)
+  ✓   88 [firefox] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute true (200ms)
+  ✓   89 [firefox] › e2e/runtime.spec.ts:76:3 › data-model › clearing input clears bound text (221ms)
+  ✓   90 [firefox] › e2e/tiered-mount.spec.ts:152:1 › closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time (181ms)
+  ✓   91 [firefox] › e2e/runtime.spec.ts:85:3 › data-class:name › class is absent when condition is false (195ms)
+  ✓   93 [firefox] › e2e/runtime.spec.ts:90:3 › data-class:name › class is added when condition becomes true (235ms)
+  ✓   94 [firefox] › e2e/runtime.spec.ts:95:3 › data-class:name › class is removed when toggled back (300ms)
+  ✓   92 [firefox] › e2e/tiered-mount.spec.ts:179:1 › $dispatch of an activation event needs navigate: nothing navigates, submits or resets without it (771ms)
+  ✓   95 [firefox] › e2e/runtime.spec.ts:104:3 › data-bind:attr › sets href attribute from state (209ms)
+  ✓   96 [firefox] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, Report-Only › flagship.html renders, filters and reacts with no Trusted Types violation (Report-Only) (407ms)
+  ✓   97 [firefox] › e2e/runtime.spec.ts:108:3 › data-bind:attr › sets disabled attribute from state (660ms)
+  ✓   99 [firefox] › e2e/runtime.spec.ts:112:3 › data-bind:attr › removes disabled when state changes (252ms)
+  ✓  100 [firefox] › e2e/runtime.spec.ts:119:3 › data-computed › renders computed value (185ms)
+  ✓   98 [firefox] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, Report-Only › runtime.html's every directive runs with no Trusted Types violation (Report-Only) (977ms)
+  ✓  101 [firefox] › e2e/runtime.spec.ts:123:3 › data-computed › computed updates when dependency changes (240ms)
+  ✓  102 [firefox] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, Report-Only › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (Report-Only) (277ms)
+  ✓  103 [firefox] › e2e/runtime.spec.ts:130:3 › data-on:click › increments counter on click (348ms)
+  ✓  104 [firefox] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, Report-Only › expr-cost.html refuses its hostile binding with no Trusted Types violation (Report-Only) (303ms)
+  ✓  105 [firefox] › e2e/runtime.spec.ts:138:3 › data-on:click › reset button sets counter to zero (334ms)
+  ✓  106 [firefox] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, Report-Only › every raw sink given trustedHtml(), and core's own clears, raise no violation (Report-Only) (308ms)
+  ✓  107 [firefox] › e2e/runtime.spec.ts:148:3 › data-list › renders initial list items (203ms)
+  ✓  109 [firefox] › e2e/runtime.spec.ts:156:3 › data-list › adds item to list (240ms)
+  ✓  108 [firefox] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, enforced › flagship.html renders, filters and reacts with no Trusted Types violation (enforced) (419ms)
+  ✓  110 [firefox] › e2e/runtime.spec.ts:165:3 › independent scopes › each scope has its own state (435ms)
+  ✓  112 [firefox] › e2e/runtime.spec.ts:170:3 › independent scopes › clicking one scope does not affect the other (390ms)
+  ✓  113 [firefox] › e2e/runtime.spec.ts:182:3 › data-persist › persist syncs value to localStorage (689ms)
+  ✓  111 [firefox] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, enforced › runtime.html's every directive runs with no Trusted Types violation (enforced) (1.6s)
+(node:83090) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  114 [firefox] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, enforced › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (enforced) (306ms)
+  ✓  116 [firefox] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, enforced › expr-cost.html refuses its hostile binding with no Trusted Types violation (enforced) (301ms)
+  ✓  117 [firefox] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, enforced › every raw sink given trustedHtml(), and core's own clears, raise no violation (enforced) (317ms)
+  ✓  118 [firefox] › e2e/trusted-types.spec.ts:295:1 › the shared registry holds no policy object, and its forma-runtime handle mints nothing from a string (enforced) (288ms)
+  ✓  119 [firefox] › e2e/trusted-types.spec.ts:342:3 › the controls: the policy is live in this engine › under Report-Only a string written to innerHTML raises one report and still renders (281ms)
+  ✘  115 [webkit] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations (709ms)
+  ✓  120 [firefox] › e2e/trusted-types.spec.ts:357:3 › the controls: the policy is live in this engine › enforced, a string written to innerHTML is refused and raises one violation (289ms)
+(node:83109) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  121 [firefox] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (Report-Only) (292ms)
+  ✓  122 [webkit] › e2e/csp.spec.ts:120:3 › the flagship example under Content-Security-Policy: script-src 'self' › a blocked inline script is seen as a violation in this engine (441ms)
+  ✓  123 [firefox] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (Report-Only) (468ms)
+  ✓  124 [webkit] › e2e/csp.spec.ts:132:3 › the flagship example under Content-Security-Policy: script-src 'self' › the runtime reports no diagnostics for the flagship markup (238ms)
+  ✓  125 [firefox] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (enforced) (329ms)
+  ✓  126 [webkit] › e2e/csp.spec.ts:146:3 › the flagship example under Content-Security-Policy: script-src 'self' › the shipped bundle contains no dynamic-code construct (179ms)
+  ✓  128 [webkit] › e2e/expr-cost.spec.ts:12:1 › a hostile Array.from in a binding is refused before it allocates, with no long task (341ms)
+  ✓  129 [webkit] › e2e/expr-cost.spec.ts:91:1 › FORMA-028: each round-2 rope case is refused before the long task (221ms)
+  ✓  127 [firefox] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (enforced) (869ms)
+  ✓  130 [webkit] › e2e/expr-cost.spec.ts:110:1 › FORMA-028: ten bindings at the cap render one task at a time, none over 50 ms (310ms)
+  ✓  131 [firefox] › e2e/trusted-types.spec.ts:444:1 › the shared forma mint is callable by page scripts while duplicate named policy creation is refused (190ms)
+  ✓  132 [webkit] › e2e/expr-cost.spec.ts:130:1 › FORMA-025: data-text of a value heavier than the budget is refused before it is converted (215ms)
+(node:83138) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  133 [webkit] › e2e/sr33.spec.ts:112:1 › SR33: every permitted native refuses a hostile size before it allocates, with no task over 50 ms (569ms)
+  ✓  135 [webkit] › e2e/tiered-mount.spec.ts:32:1 › an event's target outside the root is refused: a light-DOM child slotted into the mount (288ms)
+  ✓  134 [webkit] › e2e/runtime.spec.ts:8:3 › data-text › renders initial state values as text (436ms)
+  ✓  136 [webkit] › e2e/tiered-mount.spec.ts:56:1 › a selector that reads past the element needs dom: the browser matches it against the page (202ms)
+  ✓  137 [webkit] › e2e/runtime.spec.ts:13:3 › data-text › evaluates expressions in text bindings (219ms)
+  ✓  138 [webkit] › e2e/tiered-mount.spec.ts:79:1 › SR16 and SR31 in a browser: $el.closest('body') reaches nothing, and an ungranted data-fetch sends nothing (213ms)
+  ✓  139 [webkit] › e2e/runtime.spec.ts:17:3 › data-text › updates text when state changes via click handler (241ms)
+  ✓  140 [webkit] › e2e/tiered-mount.spec.ts:116:1 › the production build has no grant report or obsolete manual warning (204ms)
+  ✓  141 [webkit] › e2e/runtime.spec.ts:23:3 › data-text › counter increments via click (275ms)
+  ✓  142 [webkit] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute false (187ms)
+  ✓  144 [webkit] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute true (181ms)
+  ✓  143 [webkit] › e2e/runtime.spec.ts:33:3 › data-show › element is visible when condition is true (208ms)
+  ✓  145 [webkit] › e2e/tiered-mount.spec.ts:152:1 › closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time (195ms)
+  ✓  146 [webkit] › e2e/runtime.spec.ts:37:3 › data-show › element hides when condition becomes false (246ms)
+  ✓  148 [webkit] › e2e/runtime.spec.ts:42:3 › data-show › element reappears when toggled back (275ms)
+  ✓  149 [webkit] › e2e/runtime.spec.ts:51:3 › data-if › element is removed from DOM when condition is false (203ms)
+  ✓  147 [webkit] › e2e/tiered-mount.spec.ts:179:1 › $dispatch of an activation event needs navigate: nothing navigates, submits or resets without it (757ms)
+  ✓  150 [webkit] › e2e/runtime.spec.ts:56:3 › data-if › element is added to DOM when condition becomes true (237ms)
+  ✓  152 [webkit] › e2e/runtime.spec.ts:62:3 › data-if › element is removed again when toggled back (273ms)
+  ✓  151 [webkit] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, Report-Only › flagship.html renders, filters and reacts with no Trusted Types violation (Report-Only) (396ms)
+  ✓  153 [webkit] › e2e/runtime.spec.ts:71:3 › data-model › typing into input updates bound text (218ms)
+  ✓  155 [webkit] › e2e/runtime.spec.ts:76:3 › data-model › clearing input clears bound text (208ms)
+  ✓  156 [webkit] › e2e/runtime.spec.ts:85:3 › data-class:name › class is absent when condition is false (196ms)
+  ✓  154 [webkit] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, Report-Only › runtime.html's every directive runs with no Trusted Types violation (Report-Only) (748ms)
+  ✓  157 [webkit] › e2e/runtime.spec.ts:90:3 › data-class:name › class is added when condition becomes true (227ms)
+  ✓  159 [webkit] › e2e/runtime.spec.ts:95:3 › data-class:name › class is removed when toggled back (259ms)
+  ✓  158 [webkit] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, Report-Only › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (Report-Only) (291ms)
+  ✓  160 [webkit] › e2e/runtime.spec.ts:104:3 › data-bind:attr › sets href attribute from state (215ms)
+  ✓  161 [webkit] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, Report-Only › expr-cost.html refuses its hostile binding with no Trusted Types violation (Report-Only) (319ms)
+  ✓  162 [webkit] › e2e/runtime.spec.ts:108:3 › data-bind:attr › sets disabled attribute from state (201ms)
+  ✓  163 [webkit] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, Report-Only › every raw sink given trustedHtml(), and core's own clears, raise no violation (Report-Only) (319ms)
+  ✓  164 [webkit] › e2e/runtime.spec.ts:112:3 › data-bind:attr › removes disabled when state changes (237ms)
+  ✓  166 [webkit] › e2e/runtime.spec.ts:119:3 › data-computed › renders computed value (204ms)
+  ✓  165 [webkit] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, enforced › flagship.html renders, filters and reacts with no Trusted Types violation (enforced) (365ms)
+  ✓  167 [webkit] › e2e/runtime.spec.ts:123:3 › data-computed › computed updates when dependency changes (234ms)
+  ✓  169 [webkit] › e2e/runtime.spec.ts:130:3 › data-on:click › increments counter on click (309ms)
+  ✓  170 [webkit] › e2e/runtime.spec.ts:138:3 › data-on:click › reset button sets counter to zero (311ms)
+  ✓  168 [webkit] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, enforced › runtime.html's every directive runs with no Trusted Types violation (enforced) (746ms)
+  ✓  171 [webkit] › e2e/runtime.spec.ts:148:3 › data-list › renders initial list items (213ms)
+  ✓  172 [webkit] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, enforced › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (enforced) (301ms)
+  ✓  173 [webkit] › e2e/runtime.spec.ts:156:3 › data-list › adds item to list (249ms)
+  ✓  175 [webkit] › e2e/runtime.spec.ts:165:3 › independent scopes › each scope has its own state (222ms)
+  ✓  174 [webkit] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, enforced › expr-cost.html refuses its hostile binding with no Trusted Types violation (enforced) (376ms)
+  ✓  176 [webkit] › e2e/runtime.spec.ts:170:3 › independent scopes › clicking one scope does not affect the other (261ms)
+  ✓  177 [webkit] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, enforced › every raw sink given trustedHtml(), and core's own clears, raise no violation (enforced) (310ms)
+  ✓  178 [webkit] › e2e/runtime.spec.ts:182:3 › data-persist › persist syncs value to localStorage (222ms)
+  ✓  179 [webkit] › e2e/trusted-types.spec.ts:295:1 › the shared registry holds no policy object, and its forma-runtime handle mints nothing from a string (enforced) (320ms)
+  ✓  180 [webkit] › e2e/trusted-types.spec.ts:342:3 › the controls: the policy is live in this engine › under Report-Only a string written to innerHTML raises one report and still renders (311ms)
+  ✓  181 [webkit] › e2e/trusted-types.spec.ts:357:3 › the controls: the policy is live in this engine › enforced, a string written to innerHTML is refused and raises one violation (311ms)
+  ✓  182 [webkit] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (Report-Only) (301ms)
+  ✓  183 [webkit] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (Report-Only) (396ms)
+  ✓  184 [webkit] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (enforced) (319ms)
+  ✓  185 [webkit] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (enforced) (385ms)
+  ✓  186 [webkit] › e2e/trusted-types.spec.ts:444:1 › the shared forma mint is callable by page scripts while duplicate named policy creation is refused (199ms)
+
+
+  1) [chromium] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 2
+
+      88 |       return document.querySelectorAll('script[src]').length;
+      89 |     });
+    > 90 |     expect(applied).toBe(1);
+         |                     ^
+      91 |
+      92 |     // The documented behaviour, in a real browser.
+      93 |     await expect(page.locator('#count')).toHaveText('Found 5 results');
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e/csp.spec.ts:90:21
+
+    Error Context: test-results/csp-the-flagship-example-u-db449-ts-with-zero-CSP-violations-chromium/error-context.md
+
+  2) [firefox] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 2
+
+      88 |       return document.querySelectorAll('script[src]').length;
+      89 |     });
+    > 90 |     expect(applied).toBe(1);
+         |                     ^
+      91 |
+      92 |     // The documented behaviour, in a real browser.
+      93 |     await expect(page.locator('#count')).toHaveText('Found 5 results');
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e/csp.spec.ts:90:21
+
+    Error Context: test-results/csp-the-flagship-example-u-db449-ts-with-zero-CSP-violations-firefox/error-context.md
+
+  3) [webkit] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 2
+
+      88 |       return document.querySelectorAll('script[src]').length;
+      89 |     });
+    > 90 |     expect(applied).toBe(1);
+         |                     ^
+      91 |
+      92 |     // The documented behaviour, in a real browser.
+      93 |     await expect(page.locator('#count')).toHaveText('Found 5 results');
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e/csp.spec.ts:90:21
+
+    Error Context: test-results/csp-the-flagship-example-u-db449-ts-with-zero-CSP-violations-webkit/error-context.md
+
+  3 failed
+    [chromium] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations 
+    [firefox] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations 
+    [webkit] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations 
+  183 passed (33.7s)

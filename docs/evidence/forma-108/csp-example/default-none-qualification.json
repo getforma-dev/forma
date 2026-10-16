@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "sourceCommit": "eb5dfd4687c7a2beb1eb6a2d9980633552f7dcff",
+  "sourceClean": true,
+  "node": "v24.22.0",
+  "workers": 2,
+  "retries": 0,
+  "engines": [
+    "chromium",
+    "firefox",
+    "webkit"
+  ],
+  "runtime": {
+    "bytes": 156351,
+    "sha256": "70a816472d37cb8453eb6ba36f94c7829355cbf6d043b26b1309aec0fcec2334"
+  },
+  "runtimeQualification": "Existing hardened artifact, identical to both prior CSP replays; current integrated release candidate must still rebuild and run its own qualification.",
+  "sources": {
+    "packages/core/examples/csp/index.html": {
+      "bytes": 1601,
+      "sha256": "71fdb3d3983cb8546e2de6779e5a0c1eb26f22845d50ae718d43724cbf545d04"
+    },
+    "packages/core/examples/csp/mount.js": {
+      "bytes": 352,
+      "sha256": "77773cd84d01456855ea97ac2b19373916aa1e7f67ce68c7bd28526dcb013a8f"
+    },
+    "packages/core/e2e/csp-example.spec.ts": {
+      "bytes": 6435,
+      "sha256": "160ad7284b4cd0bd556fdf29147e4b79d17f87d2fda15e35978fba085cc67f58"
+    },
+    "packages/core/playwright.config.ts": {
+      "bytes": 1620,
+      "sha256": "d4b72bfc136b1a3ac7b44d5136c9ed076f03b8a8c7d6df03b9175d89ba9c0786"
+    }
+  },
+  "stats": {
+    "startTime": "2026-10-16T06:39:26.253Z",
+    "duration": 4440.705,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "report": {
+    "bytes": 6392,
+    "sha256": "38d46bae270f3f114b310bfcc14f1b4ca492f37ca2f8b2b61a22ca6dea9a4795"
+  },
+  "authority": "reviewed tier with omitted grants/default-none",
+  "qualification": "Actual HTTP-served original remains inert. Current grant-free owner counter/reset/filter/class-toggle works with original self-only CSP and zero diagnostics, page errors or CSP violations; actual injected inline script is blocked and observed. Current downloaded hardened bytes hashed in every browser."
+}

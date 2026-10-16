@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "sourceCommit": "9e867e4a534c9ba625e301e2c19c9e829e504f56",
+  "ciRun": 38857234217,
+  "ciJob": 116831595193,
+  "files": [
+    {
+      "path": "original/e2e/fixtures/full-stack.html",
+      "originalPath": "e2e/fixtures/full-stack.html",
+      "bytes": 3200,
+      "sha256": "e289334a0cd0c207d62917349ab1965499d6d257e8d116d88c69db09e65e76fb"
+    },
+    {
+      "path": "original/e2e/full-stack.spec.ts",
+      "originalPath": "e2e/full-stack.spec.ts",
+      "bytes": 7862,
+      "sha256": "500da6311b34089354a3c977a18a3e7e34cc491ad963619f2cd648b8519988e6"
+    },
+    {
+      "path": "original/e2e/README.md",
+      "originalPath": "e2e/README.md",
+      "bytes": 16464,
+      "sha256": "abadbffa871a841a66d36939d84fa920867368d58506fea003f566445dc597d6"
+    },
+    {
+      "path": "original/playwright.config.ts",
+      "originalPath": "playwright.config.ts",
+      "bytes": 1385,
+      "sha256": "a34197f72ef2b5dd34a7561b7263d5fafdc7e3500bceb5f2062e967054d8c4f9"
+    },
+    {
+      "path": "ci-38857234217-check.log",
+      "bytes": 924784,
+      "sha256": "2faed3275d644ddcb2da0876d5e2bfd5958a2370479648bdc13031bd7e232ff2"
+    },
+    {
+      "path": "disposal-first.spec.ts",
+      "bytes": 8662,
+      "sha256": "a190a45d30cd9cdaaa1af4906407ff0c4961da70787a974b84fd85f4d843b095",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first.log",
+      "bytes": 11048,
+      "sha256": "b83b726bfb19ed09b2bcaf431e99719b4673f37df4f0b97988721fc5de9da16a",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first.json",
+      "bytes": 68584,
+      "sha256": "8683d5b02f5415e96cd57e43c1d9146343e99de67bf2ca411475e814379b3a38",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "fixed-fixture-sync.log",
+      "bytes": 212,
+      "sha256": "7bc13efb1c40f0bf52d0471d1ef58811d1c7d8b450435126a27d566e0ababd12",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/.last-run.json",
+      "bytes": 194,
+      "sha256": "ebf71cc9cb73ed0cd383263c938d50e63ddaa26c80f973cfc84004d6ef5452fc",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/full-stack-HTML-Runtime-\u2014--34071-ng-when-its-handle-unmounts-chromium/error-context.md",
+      "bytes": 11016,
+      "sha256": "5562a36c9e295e526a530640dbdb095ece33030301dc354537859cec8c008fa2",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/full-stack-HTML-Runtime-\u2014--34071-ng-when-its-handle-unmounts-firefox/error-context.md",
+      "bytes": 11016,
+      "sha256": "5562a36c9e295e526a530640dbdb095ece33030301dc354537859cec8c008fa2",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first-results/full-stack-HTML-Runtime-\u2014--34071-ng-when-its-handle-unmounts-webkit/error-context.md",
+      "bytes": 11016,
+      "sha256": "5562a36c9e295e526a530640dbdb095ece33030301dc354537859cec8c008fa2",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    }
+  ]
+}

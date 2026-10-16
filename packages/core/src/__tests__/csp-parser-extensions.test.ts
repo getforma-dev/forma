@@ -1,10 +1,6 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  mount,
-  unmount,
-  getDiagnostics,
-  clearDiagnostics,
-} from '../runtime';
+import { getDiagnostics, clearDiagnostics } from '../runtime';
 
 function waitForEffects(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -20,7 +16,7 @@ describe('CSP-safe parser extensions', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
   });
 
@@ -33,7 +29,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{str.trim().toUpperCase()}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('HELLO');
     });
@@ -44,7 +40,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{str.trim().toLowerCase()}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('world');
     });
@@ -55,7 +51,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{str.trim().toLowerCase()}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('hello world');
     });
@@ -66,7 +62,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{items.concat(x).length}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       // concat returns a new array with x appended, length should be 3
       // But x is 3 (a number), not an array. concat(3) -> [1,2,3], length = 3
@@ -79,7 +75,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{user.name}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('Alice');
     });
@@ -90,7 +86,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{user.address.city}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('NYC');
     });
@@ -101,7 +97,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{str.trim()}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('test');
     });
@@ -112,7 +108,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{items.length}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('3');
     });
@@ -123,7 +119,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{Math.floor(x)}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('3');
     });
@@ -138,7 +134,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{user?.name}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('Alice');
     });
@@ -149,7 +145,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{user?.name}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('');
     });
@@ -160,7 +156,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{obj?.a?.b}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('deep');
     });
@@ -171,7 +167,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{obj?.a?.b}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('');
     });
@@ -182,7 +178,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{str?.trim()}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('hello');
     });
@@ -193,7 +189,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{str?.trim()}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('');
     });
@@ -204,7 +200,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{obj?.name.toUpperCase()}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       // obj?.name returns "alice", then .toUpperCase() chains
       // Wait -- this is "alice".toUpperCase() -> "ALICE"
@@ -218,7 +214,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{user?.name}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(getDiagnostics()).toHaveLength(0);
     });
@@ -234,7 +230,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="btn" data-on:click="{items = [1, 2, 3]}">set</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('0');
       container.querySelector<HTMLButtonElement>('#btn')!.click();
@@ -249,7 +245,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="btn" data-on:click="{items = []}">clear</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('2');
       container.querySelector<HTMLButtonElement>('#btn')!.click();
@@ -264,7 +260,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="btn" data-on:click="{items = ['a', 'b', 'c']}">set</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       container.querySelector<HTMLButtonElement>('#btn')!.click();
       await waitForEffects();
@@ -278,7 +274,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="btn" data-on:click="{items = [x, x, x]}">set</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       container.querySelector<HTMLButtonElement>('#btn')!.click();
       await waitForEffects();
@@ -291,7 +287,7 @@ describe('CSP-safe parser extensions', () => {
           <p id="out" data-text="{items.length}"></p>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#out')?.textContent).toBe('3');
     });
@@ -307,7 +303,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="add" data-on:click="{if (newTodo.trim()) { todos = todos.concat(newTodo.trim()); newTodo = '' }}">add</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#count')?.textContent).toBe('0');
       container.querySelector<HTMLButtonElement>('#add')!.click();
@@ -322,7 +318,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="add" data-on:click="{if (newTodo.trim()) { todos = todos.concat(newTodo.trim()); newTodo = '' }}">add</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       expect(container.querySelector('#count')?.textContent).toBe('0');
       container.querySelector<HTMLButtonElement>('#add')!.click();
@@ -338,7 +334,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="btn" data-on:click="{if (input.trim()) { result = input.trim().toUpperCase() }}">go</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       container.querySelector<HTMLButtonElement>('#btn')!.click();
       await waitForEffects();
@@ -351,7 +347,7 @@ describe('CSP-safe parser extensions', () => {
           <button id="btn" data-on:click="{if (y.trim()) { x = x.concat(y) }}">go</button>
         </div>
       `;
-      mount(container);
+      mountFixture(container);
       await waitForEffects();
       container.querySelector<HTMLButtonElement>('#btn')!.click();
       await waitForEffects();

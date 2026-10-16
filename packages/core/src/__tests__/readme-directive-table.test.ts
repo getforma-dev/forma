@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * The documented directive reference table, executed row by row.
  *
@@ -99,7 +100,7 @@ describe('the documented directive reference table', () => {
   });
 
   afterEach(() => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     runtime.clearDiagnostics();
     vi.unstubAllGlobals();
@@ -122,7 +123,7 @@ describe('the documented directive reference table', () => {
         ${ROWS.map((row, i) => elementFor(row, i)).join('\n')}
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container, { grants: { fetch: { paths: ['/api/items'] } } });
     await tick();
 
     // Attribute the failure to its row rather than reporting "something on the
@@ -153,7 +154,7 @@ describe('the documented directive reference table', () => {
     `;
     const seen: unknown[] = [];
     container.addEventListener('selected', (e) => seen.push((e as CustomEvent).detail));
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const click = (id: string): void => (container.querySelector(id) as HTMLButtonElement).click();
@@ -185,7 +186,7 @@ describe('the documented directive reference table', () => {
         <p id="out" data-text="{q}"></p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const input = container.querySelector('#in') as HTMLInputElement;
