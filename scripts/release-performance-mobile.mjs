@@ -5,9 +5,10 @@ import {createHash} from 'node:crypto';
 import lighthouse from 'lighthouse';
 import * as chromeLauncher from 'chrome-launcher';
 import {chromium} from '@playwright/test';
-import {defaultSettings} from 'lighthouse/core/config/constants.js';
+import {MOBILE_PROFILE} from './release-performance-spec.mjs';
+export {MOBILE_PROFILE} from './release-performance-spec.mjs';
 import {percentile,validateActivation} from './release-performance-contract.mjs';
-export const MOBILE_PROFILE=Object.freeze({formFactor:'mobile',throttlingMethod:'devtools',throttling:{...defaultSettings.throttling},screenEmulation:{...defaultSettings.screenEmulation},emulatedUserAgent:defaultSettings.emulatedUserAgent});
+
 
 // Serialized into each fresh page before any application script executes.
 export function activationInstrumentation({kind,longTask}) {

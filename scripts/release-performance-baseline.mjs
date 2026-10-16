@@ -4,8 +4,9 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {SEMVER, NPM, CRATES} from './release-set.mjs';
 
-export const PERFORMANCE_CONTRACT = 'measured-v1';
-export const N1_SHAPES = [300, 1500, 10000, 15000, 20000];
+import {PERFORMANCE_CONTRACT} from './release-performance-spec.mjs';
+export {PERFORMANCE_CONTRACT,N1_SHAPES} from './release-performance-spec.mjs';
+import {validatePerformanceRecord} from './release-performance-contract.mjs';
 const API = 'https://api.github.com/repos/getforma-dev/forma';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -24,7 +25,7 @@ export function compareReleaseTags(left, right) {
 /** The writer embeds the complete P17 report under record.measurements. */
 export function validateBaselineRecord(record, {tag, currentTag, publishedAt, before, digest}) {
   assert(compareReleaseTags(tag, currentTag) < 0, 'DS12: baseline is not a prior version');
-  assert(Number.isFinite(Date.parse(publishedAt)) && Number.isFinite(Date.parse(before)) && Date.parse(publishedAt) < Date.parse(before), 'DS12: baseline is not an earlier published release');
+  assert(validUtc(publishedAt) && validUtc(before) && Date.parse(publishedAt) < Date.parse(before), 'DS12: baseline is not an earlier published release');
   assert.equal(record.schema, 1, 'DS12: unsupported record schema');
   assert.equal(record.dryRun, false, 'DS12: a dry run is not a published baseline');
   assert.equal(record.tag, tag, 'DS12: asset tag differs from release');
@@ -50,35 +51,37 @@ export function validateBaselineRecord(record, {tag, currentTag, publishedAt, be
   assert.equal(contract, PERFORMANCE_CONTRACT, 'DS12: unsupported performance contract');
   const performance = record.measurements.measurements?.performance;
   assert.equal(performance?.contract, PERFORMANCE_CONTRACT, 'DS12: declared performance record missing');
-  assert.equal(performance.passed, true, 'DS12: previous performance gate failed');
-  assert(performance.machine?.profile && performance.machine?.cpuModel && performance.machine?.node, 'DS12: performance machine/profile missing');
-  assert(performance.nativeProfile?.includes('cargo build --release --locked'), 'DS12: comparable native profile missing');
-  assert.deepEqual(performance.controls, {deadActivationRefused:true,longTaskRefused:true}, 'DS12: performance controls missing');
-  assert.deepEqual(performance.n5?.points?.map(p=>p.rows).sort((a,b)=>a-b), [100,200,400,800,1600,3200], 'DS12: N5 figures missing');
-  assert(Number.isFinite(performance.n5.medianTimeRatio) && performance.n5.medianTimeRatio>0 && performance.n5.medianTimeRatio<64, 'DS12: invalid N5 time');
-  assert.equal(performance.boundaries?.onePastIteration?.code, 'RENDER-302', 'DS12: iteration boundary missing');
-  assert.equal(performance.boundaries?.onePastOutput?.code, 'RENDER-301', 'DS12: output boundary missing');
-  assert.deepEqual(performance.mobile?.map(p=>p.id).sort(), ['islands-100','tenant-login'], 'DS12: mobile figures missing');
-  for (const mobile of performance.mobile) {
-    assert.equal(mobile.runs?.length,20,'DS12: mobile samples missing');
-    assert(Number.isFinite(mobile.p95TbtMs) && mobile.p95TbtMs>=0 && mobile.p95TbtMs<200,'DS12: invalid mobile TBT');
-    for (const run of mobile.runs) assert(typeof run.lighthouse?.rawLhr==='string' && run.activation?.responded===(mobile.id==='islands-100'?100:2),'DS12: mobile raw report or responses missing');
-  }
-  assert.deepEqual(Object.keys(performance.client?.browsers??{}).sort(), ['chromium','firefox','webkit'], 'DS12: client comparison figures missing');
-
-  assert(Array.isArray(performance.n1), 'DS12: N1 figures missing');
-  assert.deepEqual(performance.n1.map(row => row.nominalNodes).sort((a,b)=>a-b), N1_SHAPES, 'DS12: N1 shape set differs');
-  for (const row of performance.n1) {
-    assert.equal(row.walks, 20000, 'DS12: N1 sample count differs');
-    assert(Number.isFinite(row.p99NodesPerSecond) && row.p99NodesPerSecond >= 1_500_000, 'DS12: invalid N1 rate');
-  }
+  validatePerformanceRecord(performance);
   return {...provenance, status:'comparable', n1:performance.n1.map(({nominalNodes,p99NodesPerSecond})=>({nominalNodes,p99NodesPerSecond}))};
 }
 
+// Validate recognized unified rows before classification can exclude any row.
+function validUtc(value){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value))return false;
+ const time=Date.parse(value);if(!Number.isFinite(time))return false;
+ return new Date(time).toISOString()===value.replace(/(?:\.(\d{1,3}))?Z$/,(_,fraction)=>`.${(fraction??'').padEnd(3,'0')}Z`);
+}
+function validateInventory(releases){
+ const tags=new Set(),ids=new Set();
+ return releases.filter(row=>{
+  assert(row&&typeof row==='object'&&!Array.isArray(row),'DS12: malformed release inventory row');
+  assert(typeof row.tag_name==='string','DS12: inventory tag missing');
+  if(!/^v\d/.test(row.tag_name))return false;
+  version(row.tag_name);
+  assert.equal(typeof row.draft,'boolean','DS12: inventory draft must be boolean');
+  assert.equal(typeof row.prerelease,'boolean','DS12: inventory prerelease must be boolean');
+  assert.equal(row.prerelease,row.tag_name.includes('-'),'DS12: inventory classification disagrees with tag');
+  assert(Number.isSafeInteger(row.id)&&row.id>0,'DS12: inventory release identity missing');
+  assert(!tags.has(row.tag_name)&&!ids.has(row.id),'DS12: duplicate unified release identity');tags.add(row.tag_name);ids.add(row.id);
+  if(!row.draft)assert(validUtc(row.published_at),'DS12: inventory publication is not a real UTC timestamp');
+  else assert(row.published_at===null||validUtc(row.published_at),'DS12: malformed draft publication');
+  return true;
+ });
+}
 /** Read all relevant release pages; do not infer absence from a failed fetch. */
 export async function readPerformanceBaseline({currentTag, before, token=process.env.GH_TOKEN, fetchImpl=fetch}) {
   version(currentTag);
-  assert(Number.isFinite(Date.parse(before)), 'DS12: missing current run start');
+  assert(validUtc(before), 'DS12: missing or malformed current run start');
   const headers = {'User-Agent':'getforma-release-measurements', Accept:'application/vnd.github+json', ...(token ? {Authorization:`Bearer ${token}`} : {})};
   async function request(url, accept) {
     assert(url.startsWith(`${API}/`), 'DS12: untrusted API asset URL');
@@ -94,7 +97,7 @@ export async function readPerformanceBaseline({currentTag, before, token=process
     releases.push(...batch);
     if (batch.length < 100) break;
   }
-  const eligible = releases.filter(r=>!r.draft && /^v\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$/.test(r.tag_name) && compareReleaseTags(r.tag_name,currentTag)<0);
+  const eligible = validateInventory(releases).filter(r=>!r.draft && compareReleaseTags(r.tag_name,currentTag)<0);
   eligible.sort((a,b)=>compareReleaseTags(b.tag_name,a.tag_name));
   const prior = eligible[0];
   assert(prior, 'DS12: no previous published unified release');
