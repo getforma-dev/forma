@@ -496,6 +496,9 @@ describe('generateRealIr — signals in the scopes the walk inlines', () => {
 
 describe('generateRealIr — inline mount', () => {
   it('names signal slots on an inline-mount entry', () => {
+    // FORMA-182 rule 6: `open` is read by an attribute, not as text; the
+    // original `h('i', null, () => open())` is a boolean in text (BUILD-614),
+    // archived in docs/archive/2026-10-15-pre-value-rules.
     // The old code asked for an exported function literally named
     // `__inline__`, a lookup that could never match, so an inline-mount page
     // had ZERO named slots and every binding landed in an anonymous one.
@@ -505,7 +508,7 @@ describe('generateRealIr — inline mount', () => {
         const [status] = createSignal('idle');
         mount(() => {
           const [open] = createSignal(false);
-          return h('div', { id: 'app' }, h('b', null, () => status()), h('i', null, () => open()));
+          return h('div', { id: 'app' }, h('b', null, () => status()), h('i', { hidden: () => open() }));
         }, '#app');
       `,
     }, 'app.ts');

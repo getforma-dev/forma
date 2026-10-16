@@ -24,6 +24,17 @@
   build, readable in the browser's tools.
 - Tests: `tests/preview-frame.test.ts` > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published", "the minified runtime does what core's does, and two builds write the same bytes", "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"; the frame e2e lane (`e2e/frame/`) asserts the served file is minified, named and listed by its own hash, embedded and allowed by forma-server, and run in Chromium under the hash-only policy.
 
+## Unreleased — N2 is 27,500 B (L-58)
+
+- The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
+  **27,500 B gzip -9**, up from 25,500 B: the founder's decision L-58 (decision
+  brief commit `f27cce6`), one ceiling for all routes, 1 KB = 1,000 B. An island
+  holding a client `createList` loads 26,366 B of Forma code (FORMA-188's
+  `negative/list-island`), over the old figure and under the new. `BUILD-819`,
+  `size-report.json` (`ceilings.forma`, each route's `ceilings.forma`) and the
+  printed report read the constant; the page and canvas JavaScript ceilings (75
+  and 365 KiB) are unchanged. Not configurable.
+
 ## Unreleased — the size report with route classes and ceilings (FORMA-190)
 
 - **One report, extended.** The size report of FORMA-021 now classifies each
@@ -121,6 +132,10 @@
 
 
 ## [Unreleased]
+
+### Value rules 6 and 7 are mandatory refusals in the report — FORMA-182
+
+- The diagnostics report and `result.diagnostics` label `BUILD-614` (a boolean in text) and `BUILD-615` (a condition that is not boolean-typed) `error` with or without `--strict`, as they do `BUILD-610` to `BUILD-613`. The compiler refuses both whatever the mode, so a default build already failed on them, but its report and `--diagnostics-json` called them `warning`. Verified by `tests/strict.test.ts` > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are".
 
 ### Static SSR entry products — FORMA-105
 
