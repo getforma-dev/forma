@@ -40,3 +40,5 @@ e2e/fixtures/formajs.global.js
 
 # Seeded expression-campaign reports; selected release evidence is archived explicitly.
 packages/core/fuzz/expressions/out/
+packages/core/e2e/hostile-widgets/out/
+packages/core/probes/expression-floor.json

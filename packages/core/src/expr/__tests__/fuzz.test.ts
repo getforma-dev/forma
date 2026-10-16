@@ -4,8 +4,15 @@ import { COST_OPERATIONS, costCase } from './fuzz/cost-cases';
 import { generateCase, MANDATORY_CASE_COUNT, randomSource } from './fuzz/generate';
 import { executeCase, runCampaign, replayRegressions } from './fuzz/campaign';
 import { runPreflight } from './fuzz/preflight';
+import { runResiduals } from './fuzz/residuals';
 
 describe('FORMA-129 independent expression campaign', () => {
+  it('keeps the named L50 current boundaries separate from historical thresholds', () => {
+    const report = runResiduals();
+    expect(report).toHaveLength(12);
+    expect(report.filter(item => item.rows === 1717).every(item => !item.refused)).toBe(true);
+    expect(report.filter(item => item.refused).map(item => item.rows)).toEqual([9200, 9200, 1500]);
+  });
   it('replays every committed bounded regression', () => {
     expect(replayRegressions()).toEqual(['removed-array-from-row-seed1290300-case37', 'constructor-chain', 'grown-string-charge']);
   });

@@ -109,3 +109,8 @@ docs/archive/FORMA-129-fetch-redirect/** -text
 
 # FORMA-129: observed detached-template failures and corrected unit replay.
 docs/archive/FORMA-129-list-template/** -text
+
+# FORMA-129: source/probe evidence is authenticated across platform checkouts.
+packages/core/probes/corpus.json text eol=lf
+packages/core/e2e/hostile-widgets/*.mjs text eol=lf
+packages/core/e2e/hostile-widgets/probe-provenance.json text eol=lf

@@ -83,6 +83,9 @@ npm run typecheck -w packages/core
 npm run check:size -w packages/core
 npm run check:pack -w packages/core
 (cd packages/core && node scripts/run-probes.mjs --check)
+step "expression qualification:100000 generated cases, removed-charge control and independent nightly floor"
+node --test packages/core/scripts/expression-probe-floor.test.mjs
+node packages/core/scripts/qualify-expression-mutation.mjs
 step "build: the packed forma-raw-lint bin"
 node packages/build/scripts/test-raw-lint-bin.mjs
 
@@ -110,6 +113,9 @@ npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.test.mjs
 npx playwright test
 npm run test:e2e -w packages/core
+step "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
+node packages/core/e2e/hostile-widgets/run.mjs
+node packages/core/e2e/hostile-widgets/qualify-guard.mjs
 
 step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
 npx tsc --noEmit -p e2e/parity

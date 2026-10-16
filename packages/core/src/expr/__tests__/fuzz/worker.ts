@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { CampaignFailure, runCampaign, replayRegressions } from './campaign';
 import { runPreflight } from './preflight';
+import { runResiduals } from './residuals';
 
 const [seedText, countText, output, metadataFile, engineUrl] = process.argv.slice(2);
 if (!seedText || !countText || !output || !metadataFile || !engineUrl) throw new Error('missing campaign arguments');
@@ -16,8 +17,9 @@ const write = (value: unknown): void => {
 try {
   const report = runCampaign(Number(seedText), Number(countText), progress => write({ ...metadata, passed: false, status: 'running', report: progress }));
   const regressions = replayRegressions();
+  const residuals = runResiduals();
   const preflight = await runPreflight(() => import(engineUrl));
-  write({ ...metadata, passed: true, status: 'complete', report, regressions, preflight });
+  write({ ...metadata, passed: true, status: 'complete', report, regressions, residuals, preflight });
   process.stdout.write(JSON.stringify({ passed: true, completed: report.completed, admitted: report.admitted, refused: report.refused, elapsedMs: report.elapsedMs }) + '\n');
 } catch (error) {
   write({
