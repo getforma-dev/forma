@@ -1,0 +1,358 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completeMatrix": false,
+  "selection": "fetch-",
+  "node": "v24.22.0",
+  "sourceCommit": "3710e517caa69fbfde701fd26354466095945e63",
+  "sourceClean": false,
+  "catalogueSha256": "d21180522d2238799ab3896484ccb5adb3a0567ed6bad3986cfb36af1beb17a3",
+  "requested": 0,
+  "requestedCapabilityControls": 18,
+  "cases": [],
+  "capabilities": [
+    {
+      "id": "fetch-get/none",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the mount grants no fetch",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-post/none",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the mount grants no fetch",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-prefix/none",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the mount grants no fetch",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-dot/none",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the mount grants no fetch",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-encoded/none",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the mount grants no fetch",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-redirect/none",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the mount grants no fetch",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-get/typical",
+      "live": true,
+      "codes": [],
+      "result": "true",
+      "failed": "",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/widget/items",
+          "cookie": ""
+        }
+      ]
+    },
+    {
+      "id": "fetch-post/typical",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the fetch grant does not allow POST",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-prefix/typical",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the fetch grant does not cover /api/widget-other/items",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-dot/typical",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the fetch grant does not cover /api/admin",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-encoded/typical",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the path of /api/widget/%2fadmin hides a separator in an escape",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-redirect/typical",
+      "live": true,
+      "codes": [],
+      "result": "",
+      "failed": "FORMA_E_FETCH_REQUEST: data-fetch failed before a response; redirects are not followed",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/widget/redirect",
+          "cookie": ""
+        }
+      ]
+    },
+    {
+      "id": "fetch-get/all",
+      "live": true,
+      "codes": [],
+      "result": "true",
+      "failed": "",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/widget/items",
+          "cookie": "hostile_fixture=secret"
+        }
+      ]
+    },
+    {
+      "id": "fetch-post/all",
+      "live": true,
+      "codes": [],
+      "result": "true",
+      "failed": "",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/widget/items",
+          "cookie": "hostile_fixture=secret"
+        }
+      ]
+    },
+    {
+      "id": "fetch-prefix/all",
+      "live": true,
+      "codes": [],
+      "result": "true",
+      "failed": "",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/widget-other/items",
+          "cookie": "hostile_fixture=secret"
+        }
+      ]
+    },
+    {
+      "id": "fetch-dot/all",
+      "live": true,
+      "codes": [],
+      "result": "true",
+      "failed": "",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/admin",
+          "cookie": "hostile_fixture=secret"
+        }
+      ]
+    },
+    {
+      "id": "fetch-encoded/all",
+      "live": true,
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "result": "",
+      "failed": "data-fetch denied: the path of /api/widget/%2fadmin hides a separator in an escape",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": []
+    },
+    {
+      "id": "fetch-redirect/all",
+      "live": true,
+      "codes": [],
+      "result": "",
+      "failed": "FORMA_E_FETCH_REQUEST: data-fetch failed before a response; redirects are not followed",
+      "outsideReads": 0,
+      "submits": 0,
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/api/widget/redirect",
+          "cookie": "hostile_fixture=secret"
+        }
+      ]
+    }
+  ],
+  "observers": [
+    {
+      "profile": "none",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "trustedTypesRefused": true
+    },
+    {
+      "profile": "typical",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "trustedTypesRefused": true
+    },
+    {
+      "profile": "all",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "trustedTypesRefused": true
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret"
+    },
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret"
+    },
+    {
+      "method": "GET",
+      "path": "/api/widget/items",
+      "cookie": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/widget/redirect",
+      "cookie": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret"
+    },
+    {
+      "method": "GET",
+      "path": "/api/widget/items",
+      "cookie": "hostile_fixture=secret"
+    },
+    {
+      "method": "POST",
+      "path": "/api/widget/items",
+      "cookie": "hostile_fixture=secret"
+    },
+    {
+      "method": "GET",
+      "path": "/api/widget-other/items",
+      "cookie": "hostile_fixture=secret"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin",
+      "cookie": "hostile_fixture=secret"
+    },
+    {
+      "method": "GET",
+      "path": "/api/widget/redirect",
+      "cookie": "hostile_fixture=secret"
+    }
+  ],
+  "provenance": {
+    "historical": 93,
+    "current": 260,
+    "currentSecurity": 151
+  },
+  "runtimeSha256": "3851529869776f6942b98c452e7d94685471f503e8552784dcef1f2c1fb8cf9c",
+  "policy": "default-src 'none'; script-src 'nonce-ZnXfZhsvMS4xiyHjXb4OGI50vojSJzyB' 'strict-dynamic'; connect-src 'self' ; img-src 'none'; style-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+  "browser": "151.0.7922.34",
+  "current": {
+    "item": {
+      "id": "fetch-redirect",
+      "method": "GET",
+      "path": "/api/widget/redirect",
+      "typical": true,
+      "redirect": true
+    },
+    "profile": "all",
+    "id": "fetch-redirect/all"
+  },
+  "elapsedMs": 517.3088339999999
+}
