@@ -146,6 +146,26 @@ jobs:
           FORMA_PARITY_BROWSER: ${{ matrix.browser }}
         run: node --test e2e/parity/tests/html-context.test.mts
 
+      - name: Build typed indexed SSR products
+        env:
+          FORMA_SSR_PROFILE: release
+        run: bash e2e/ssr/build.sh
+      - name: Indexed adoption, row ownership and tamper controls
+        run: >-
+          npx playwright test --config e2e/ssr/indexed-products.config.ts --project=${{ matrix.browser }} --workers=2 --grep-invert 'indexed products: complete public set' --output test-results/indexed-functional-${{ matrix.browser }}
+      # This step begins only after all other browser/native work on this runner
+      # has exited. Same required operation and limits, with no timing retries.
+      - name: Indexed public-set timing, serial
+        run: >-
+          npx playwright test --config e2e/ssr/indexed-products.config.ts --project=${{ matrix.browser }} --workers=1 --grep 'indexed products: complete public set' --output test-results/indexed-${{ matrix.browser }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: indexed-results-${{ matrix.browser }}
+          path: test-results/indexed-*/
+          if-no-files-found: warn
+          retention-days: 14
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:

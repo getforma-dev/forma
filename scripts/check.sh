@@ -108,12 +108,16 @@ cargo clippy --locked --manifest-path e2e/fixtures/apps/Cargo.toml --all-targets
 step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
 npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs
-npx playwright test
+# N3 timing runs as its own required serial phase after all other tests.
+npx playwright test --grep-invert 'indexed products: complete public set'
 npm run test:e2e -w packages/core
 
 step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
 npx tsc --noEmit -p e2e/parity
 node --test "e2e/parity/tests/*.test.mts"
+
+step "N3: actual indexed public-set timing, serial Chromium"
+npx playwright test --config e2e/ssr/indexed-products.config.ts --project=chromium --workers=1 --grep 'indexed products: complete public set' --output test-results/indexed-chromium
 
 echo
 echo "check: every gate passed in $(( $(date +%s) - started ))s"

@@ -160,6 +160,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: indexed-public-set-chromium
+          path: test-results/indexed-chromium/**/indexed-public-set.json
+          if-no-files-found: warn
+          retention-days: 14
+
   # The parity harness over its corpus (FORMA-183, DR-9; e2e/parity/README.md):
   # every module of step 1 at 100 states through the server's typed path, its
   # document parsed in Chromium against core's render of the same state (P1),
