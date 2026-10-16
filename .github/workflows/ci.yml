@@ -182,7 +182,23 @@ jobs:
   # what packages/core's `engines.node` may claim: a floor no job executes is an
   # untested promise. Keep them in step.
   # Verified by: src/__tests__/package-exports.test.ts > "the engines floor is a version CI actually runs"
+  toolchains:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      node-versions: ${{ steps.matrix.outputs.node_versions }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+      - id: matrix
+        run: node scripts/toolchain-matrix.mjs --github-output
+
   node:
+    needs: toolchains
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -192,7 +208,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 22, 24]
+        node-version: ${{ fromJSON(needs.toolchains.outputs.node-versions) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -340,6 +356,10 @@ jobs:
           # AND version stops the legs evicting each other's cache.
           key: msrv-${{ matrix.crate }}-${{ matrix.rust }}
       - run: cargo check -p ${{ matrix.crate }} --all-targets --locked
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249
+        with:
+          toolchain: stable
+      - run: bash scripts/check-msrv-fresh.sh "${{ matrix.crate }}" "${{ matrix.rust }}"
 
   # deny.toml ships in the repo; running it is what makes it a policy rather
   # than a file. It checks the committed lock, the graph the crates ship with.
@@ -454,6 +474,10 @@ jobs:
         run: bash scripts/test-release-artifacts.sh
       - name: After a publish, a different checksum fails and a late version warns
         run: bash scripts/test-check-published-crate.sh
+      - name: Support history and toolchain drift controls
+        run: |
+          node --test scripts/release-support.test.mjs scripts/release-support-history.test.mjs scripts/toolchain-policy.test.mjs
+          ruby scripts/check-toolchain-policy.rb
 
   # Candidate archives are always built and tested, even while registry versions
   # are unpublished. No publication credential or registry preflight gates these.

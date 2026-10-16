@@ -5,6 +5,8 @@ import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { json, save, run, ROOT, assertMilestoneReady } from './release-set.mjs';
 import { releaseNotesLine } from './release-measurements.mjs';
+import { githubReleaseMetadata, readSupportHistory } from './release-support-history.mjs';
+import { renderSecurity } from './release-support.mjs';
 
 /** P17's measurement step in one line of the Release's notes (FORMA-188); nothing when P17 took none. */
 export function measurementsNotes(report) {
@@ -71,10 +73,18 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   record.recordedAt = now.toISOString();
   record.elapsedSeconds = (now.getTime() - started) / 1000;
   record.timingBasis = 'GitHub tag-triggered workflow created_at to acknowledged GitHub Release write (queue included; push ingestion latency not available in Actions)';
+  const metadata = await githubReleaseMetadata(set.tag);
+  const history = await readSupportHistory({ targetTag: set.tag, currentRecord: record, currentMetadata: metadata });
+  // published_at is immutable across record reruns; recordedAt is not a support clock.
+  record.publishedAt = metadata.published_at;
+  record.support = history.support;
+  record.supportHistory = { sources: history.sources, inventorySha256: history.inventorySha256 };
+  const securityPath = join(dir, 'SECURITY.md');
+  writeFileSync(securityPath, renderSecurity(readFileSync(join(ROOT, 'SECURITY.md'), 'utf8'), history.support));
   save(recordPath, record);
   notes = notes.replace(/Tag-event run to record: [^;]+;/, `Tag-event run to acknowledged release write: ${record.elapsedSeconds.toFixed(1)} seconds;`);
   writeFileSync(notesPath, notes);
   run('gh', ['release', 'edit', set.tag, '--notes-file', notesPath]);
-  run('gh', ['release', 'upload', set.tag, recordPath, reportPath, join(dir, 'SHA256SUMS'), '--clobber']);
+  run('gh', ['release', 'upload', set.tag, recordPath, reportPath, securityPath, join(dir, 'SHA256SUMS'), '--clobber']);
   assert(run('gh', ['release', 'view', set.tag, '--json', 'assets']).includes('release-record.json'), 'SR2: GitHub Release has no compatibility record');
 } catch (error) { console.error(`release-record: ${error.message}`); process.exitCode = 1; }

@@ -111,6 +111,7 @@ def violations(doc)
     'record' => 'node scripts/release-record.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"'
   }
   required.each { |name, line| out << "K1 #{name} missing mandatory gate" unless steps(jobs[name]).any? { |s| s['run'] == line } }
+  out << 'K6 support history must be checked before any publishing dependency' unless steps(jobs['check']).any? { |s| s['run'] == 'node scripts/check-release-support.mjs' }
   %w[pack verify].each do |name|
     out << "K2 #{name} must install locked dependencies with scripts off" unless steps(jobs[name]).any? { |s| s['run'] == 'bash scripts/install-deps.sh' }
     steps(jobs[name]).each do |s|
@@ -197,6 +198,7 @@ if ARGV.include?('--self-test') && errors.empty?
     ['a status failure ignored', 'E1', ->(d) { d['jobs']['verify']['continue-on-error'] = true }],
     ['skip P17', 'E2', ->(d) { d['jobs']['verify']['if'] = 'false' }],
     ['missing live CI check', 'K1', ->(d) { d['jobs']['check']['steps'].reject! { |s| s['run'] == 'node scripts/check-release-ci.mjs' } }],
+    ['missing support history check', 'K6', ->(d) { d['jobs']['check']['steps'].reject! { |s| s['run'] == 'node scripts/check-release-support.mjs' } }],
     ['no release record', 'K1', ->(d) { d['jobs']['record']['steps'].reject! { |s| s['run'] } }]
   ]
   ['if false; then CHECK; fi', 'exit 0\nCHECK', 'f() { CHECK; }', 'CHECK || true', '"set" +e\nCHECK'].each do |wrapper|

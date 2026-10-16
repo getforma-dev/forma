@@ -108,4 +108,6 @@ docs/archive/FORMA-139-e2e-title/** -text
 
 # Exact native multi-entry failure products.
 /docs/archive/FORMA-186-native-multiple-entries/** -text
+# Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
+docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
