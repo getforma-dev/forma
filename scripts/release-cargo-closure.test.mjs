@@ -42,6 +42,33 @@ test('recorded Cargo runtime closure adds derive and a second exact external ver
   assert.equal(mergeRecordedCargoLock(staged, candidates, recorded), staged, 'staging is deterministic and idempotent');
 });
 
+test('new runtime records use Cargo order and preserve original package bytes', () => {
+  const { recorded } = fixture();
+  recorded.lock = recorded.lock.replace(' "forma-ir-derive",', ' "forma-ir-derive",\n "ryu-js",') + block('ryu-js', '1.0.3', [], '2');
+  recorded.packages[0].dependencies.push(dependency('ryu-js', null, '=1.0.3'));
+  const oldRyu = block('ryu', '1.0.23', [], '3');
+  const tail = block('zmij', '1.0.21', [], '4');
+  const original = lock(block('app', '0.1.0', ['forma-ir', 'ryu', 'zmij'], 'a', null), block('forma-ir', '0.2.2'), oldRyu, tail);
+  const staged = mergeRecordedCargoLock(original, candidates, recorded);
+  const names = [...staged.matchAll(/^name = "([^"]+)"$/gm)].map(match => match[1]);
+  assert.deepEqual(names, ['app', 'forma-ir', 'forma-ir-derive', 'ryu', 'ryu-js', 'syn', 'unicode-ident', 'zmij']);
+  assert(staged.includes(oldRyu)); assert(staged.includes(tail));
+  assert.equal(mergeRecordedCargoLock(staged, candidates, recorded), staged);
+});
+
+test('Cargo identity order uses numeric versions, prereleases, build identifiers and source ties', () => {
+  const { recorded } = fixture();
+  const versions = ['1.9.0', '1.10.0-alpha', '1.10.0-alpha.2', '1.10.0-alpha.11', '1.10.0-rc.1', '1.10.0', '1.10.0+0', '1.10.0+00', '1.10.0+1', '1.10.0+01', '1.10.0+2', '1.10.0+10', '1.10.0+x', '2.0.119', '3.0.9'];
+  const original = lock(block('app', '0.1.0', ['forma-ir'], 'a', null), block('forma-ir', '0.2.2'), ...versions.filter(version => version !== '2.0.119').map(version => block('syn', version, [], 'b')));
+  const staged = mergeRecordedCargoLock(original, candidates, recorded);
+  const records = staged.split(/(?=^\[\[package\]\])/m).filter(raw => /^name = "syn"$/m.test(raw));
+  assert.deepEqual(records.map(raw => /^version = "([^"]+)"$/m.exec(raw)[1]), versions, 'inserted 2.0.119 precedes 3.0.9 while numeric and prerelease ordering is retained');
+  const alternative = 'registry+https://example.invalid/alternative';
+  const ties = lock(block('app', '0.1.0', ['forma-ir'], 'a', null), block('forma-ir', '0.2.2'), block('syn', '2.0.119', [], 'b', null), block('syn', '2.0.119', [], 'b', alternative));
+  const tied = mergeRecordedCargoLock(ties, candidates, recorded).split(/(?=^\[\[package\]\])/m).filter(raw => /^name = "syn"$/m.test(raw));
+  assert.deepEqual(tied.map(raw => /^source = "([^"]+)"$/m.exec(raw)?.[1] ?? null), [null, alternative, registry]);
+});
+
 test('Cargo closure refuses an already ambiguous original reference instead of guessing its old target', () => {
   const { original, recorded } = fixture();
   assert.throws(() => mergeRecordedCargoLock(original + block('syn', '1.0.0'), candidates, recorded), /template existing-macro: missing or ambiguous dependency syn/);

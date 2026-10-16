@@ -56,7 +56,7 @@ export interface BuildConfig {
   cssEntries?: CssEntry[];
   /** Output directory for all built assets */
   outputDir: string;
-  /** Package name to resolve 'formajs' imports to (e.g. '@getforma/core') */
+  /** 3.x migration bridge for 'formajs'; warns once per build() with importing files. Prefer '@getforma/core'. */
   formaAlias?: string;
   /** Bundle one shared ESM graph, preserving import() as separately loaded chunks. */
   codeSplitting?: boolean;

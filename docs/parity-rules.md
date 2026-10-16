@@ -1,13 +1,15 @@
 # Parity rules: the marker vocabulary and the value rules
 
-**Status:** rule 1 is stated and implemented for the body/DOM slice (FORMA-182,
-checkpoint 2), and rules 2 to 7 are stated with their shared vectors, each
-read by the Rust and TypeScript suites and, where the rule reaches the DOM,
-replayed in Chromium, Firefox and WebKit; the marker vocabulary below
-describes what the walker writes today. Changes that need a broader decision
-are written as proposals at the end, not as code. FORMA-182 is not complete
-while the namespace-vector relocation, `renderBoth` (FORMA-184) and the
-ticket's large-scale (fuzzed) qualification remain open.
+**Status:** all seven value rules have shared Rust/TypeScript vectors and
+finite browser gates. The FORMA-182 qualification follow-up extends rule 1
+to ordinary SSR/browser-shell metadata, relocates the frozen namespace vectors
+with a real native producer, and adds the seeded three-path campaign in
+`e2e/value-rules/`. Its first pilot found and preserved a rule-2 decimal tie
+regression. The full million-comparisons-per-rule qualification and exact
+release evidence remain required; the pilot is not a completion claim.
+`renderBoth` is FORMA-184's private harness helper. Namespace-stack/dynamic
+SVG-title and native non-boolean `SHOW_IF` refusals remain explicit 3.1
+proposals under L-57.
 
 **Why one document.** Three implementations produce or consume the same tree:
 the Rust walker (`crates/forma-ir/src/walker.rs`) writes HTML, `h()` in
@@ -168,11 +170,14 @@ protection, static `html` and marker-separated `htmlDynamic`, and the parsed
 surrogate cannot be a vector: `serde_json` refuses the file, so the Rust reader
 panics rather than failing one case.
 
-**Not in this slice.**
+**Document metadata and remaining scope.**
 
-- `forma-server`'s `template.rs::escape_html` serializes the document title,
-  body class and head metadata separately; it is not routed through the crate
-  helper. Extending rule 1 to it is a separate cross-crate decision.
+- `forma-server`'s document writer serializes the document title,
+  body class and head metadata separately. The qualification follow-up now
+  applies the same shared vectors through `escape_dom_html` on both SSR and
+  browser-shell writers; nonces, digests, build identity, state and configuration
+  JSON keep their existing encoding. `e2e/value-rules/metadata.mjs` parses those
+  actual complete documents in each browser engine.
 - The walker selects text-only parents by tag spelling in any namespace; a
   contextual namespace mechanism is written as a proposal below ("Namespace
   context for the walker"), with the SVG `title` disagreement it would close.
@@ -205,7 +210,12 @@ that gains one; the walker has no such formatter today.
 reached through `SlotValue::to_text` for `DYN_TEXT`, `DYN_ATTR`, control text
 and select values. TypeScript: `String(n)` in `h()`'s number children and
 attribute writers, `childText`, adoption's `text()` and `prepareAttribute`.
-No code changed for this rule; the vectors pin it.
+The qualification campaign found an exact shortest-decimal tie where Rust's
+`LowerExp` chose `.63` and JavaScript chose `.62`. The formatter now uses
+`ryu-js` 1.0.3 for ECMAScript's tie choice as well as exponent thresholds. The
+original binary64 bits, seed and observations are retained in
+`crates/forma-ir/tests/fixtures/parity/regressions/rule-2-seed1820300-index460.json`;
+the shared number vectors include both signs and adjacent binary64 values.
 
 **Vectors.** `crates/forma-ir/tests/fixtures/parity/numbers.json`, section
 `values` (`lexeme`, `expected`): zero and −0, integers, fractions, the
@@ -244,7 +254,12 @@ with `JSON.parse`, so an admitted integer is a safe integer there and
 check finiteness only), then `SlotValue::to_text` writes the digits. The
 client has no admission of its own: the boundary is the server's, and the
 engine's `Number.isSafeInteger` is the oracle the vectors are checked against.
-No code changed for this rule; the vectors pin it.
+The qualification campaign found an exact shortest-decimal tie where Rust's
+`LowerExp` chose `.63` and JavaScript chose `.62`. The formatter now uses
+`ryu-js` 1.0.3 for ECMAScript's tie choice as well as exponent thresholds. The
+original binary64 bits, seed and observations are retained in
+`crates/forma-ir/tests/fixtures/parity/regressions/rule-2-seed1820300-index460.json`;
+the shared number vectors include both signs and adjacent binary64 values.
 
 **Vectors.** `crates/forma-ir/tests/fixtures/parity/integers.json`: `exact`
 (`kind` the Rust origin, `lexeme` the exact decimal, `admitted`) at zero, an
@@ -588,7 +603,7 @@ catalogue's owner to name the code.
 The walker chooses a text-only parent (`title`, `textarea`, `style`, `script`)
 and the `pre`/`listing`/`textarea` first-line-feed rule by tag spelling in any
 namespace; it has no namespace stack. Static text agrees: FORMA-026's vectors
-(`packages/core/src/__tests__/vectors/namespaces.json`, read by core's
+(`crates/forma-ir/tests/fixtures/parity/namespaces.json`, read by core's
 `renderer-contract.test.ts` and `e2e/adoption.spec.ts`) cover an SVG `<title>`
 with literal text. A dynamic child does not: adoption treats only the HTML
 `title` as text-only (`packages/core/src/dom/adoption.ts` checks its
@@ -599,9 +614,10 @@ with `FORMA_E_HYDRATE_MARKER` (checked while writing this; the same markup with
 the range adopts). The same holds for an SVG `style` or `script`, which the
 parser builds as ordinary children in foreign content. Proposed:
 
-1. Move `namespaces.json` to `crates/forma-ir/tests/fixtures/parity/` and give
-   forma-ir a reader for it, so each vector's server markup is the walker's own
-   output for its tree (today the markup is hand-written).
+1. Completed by the qualification follow-up: `namespaces.json` lives in
+   `crates/forma-ir/tests/fixtures/parity/`, with a native reader that emits
+   FMIR for every frozen tree and compares the real walker output. The six
+   admitted cases and the intentional script reference/refusal are preserved.
 2. Add a namespace stack to the walker's state: push `svg` at `<svg>`, `mathml`
    at `<math>`, back to `html` inside the integration points (`foreignObject`,
    `desc` and `title` in SVG; `annotation-xml` with an HTML encoding in MathML),
@@ -617,10 +633,9 @@ Order: after FORMA-181 checkpoint B merges, since both change the walker's state
 Until then a dynamic value inside an SVG `title` refuses adoption loudly rather
 than rendering wrong; a static one is unaffected.
 
-FORMA-026's SVG and MathML namespace vectors stay at
-`packages/core/src/__tests__/vectors/namespaces.json` until their relocation is
-coordinated; no Rust reader references that file yet.
-
+The namespace-stack and dynamic SVG-title proposals in steps 2–3 remain
+explicit 3.1 work under decision L-57. Relocating and replaying the existing
+static vectors does not expand admission or silently implement that proposal.
 
 INV1 attribute-name and URL checks are specified in [INV1.md](INV1.md) and share
 `inv1.json` beside these value vectors (FORMA-140). A rejected served attribute

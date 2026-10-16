@@ -330,6 +330,15 @@ const config: BuildConfig = {
 await build(config);
 ```
 
+`formaAlias` remains a migration bridge throughout 3.x. If the build's source
+graph imports `formajs` or one of its subpaths, one warning lists the importing
+files and the `@getforma/core` replacement. The same warning appears in
+`BuildResult.warnings`; duplicate imports and the two production identity passes
+do not repeat it. Erased TypeScript imports and re-exports are included. A
+`build()` call with no legacy imports is quiet, including its initial watch
+build. The alias still resolves as configured; omitting it does not make the
+unavailable bare package resolve.
+
 ### Retention: a tab opened before a deploy
 
 While a deploy rolls out, and for as long as a tab stays open, a page of the
@@ -848,3 +857,13 @@ deployments, upgrade, rollback and retirement using `forma-server`'s actual
 off-worker response. The release rehearsal injects its unpacked build package into
 the same harness and requires every named observation. Its HTTP-cache clearing is
 limited to the fresh browser context so HTTP caching cannot mask CacheStorage.
+
+When `codeSplitting` is enabled, one physical entry may be configured both as an
+SSR entry and with `ssr: false`. The Browser root keeps its whole-page mount;
+the SSR root keeps only its activation policy. Both use the same captured
+compiler sources and share ordinary dependencies, including core, in one graph.
+Each logical Browser root executes its own entry body. Ordinary imports of that
+physical entry retain its SSR identity; a re-exporting facade does not opt into
+a second whole-page mount. Keep reusable components and module singletons in
+ordinary shared modules and declare the mount source itself as the Browser
+entry.

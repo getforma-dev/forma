@@ -77,7 +77,7 @@ node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
-node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs
+node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core
@@ -101,13 +101,14 @@ bash e2e/sync-fixtures.sh
 bash e2e/ssr/build.sh
 bash e2e/frame/build.sh
 bash e2e/fixtures/apps/build.sh
+bash e2e/skew/build.sh
 # After the build: the servers embed what it wrote, and the embed needs the folders to exist.
 step "fixture applications' servers: rustfmt and clippy (FORMA-188; an e2e workspace member)"
 cargo fmt --manifest-path e2e/fixtures/apps/Cargo.toml --check
 cargo clippy --locked --manifest-path e2e/fixtures/apps/Cargo.toml --all-targets -- -D warnings
 step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
 npm run test:browser -w packages/build
-node --test scripts/template-islands-browser.test.mjs
+node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.test.mjs
 # N3 timing runs as its own required serial phase after all other tests.
 npx playwright test --grep-invert 'indexed products: complete public set'
 npm run test:e2e -w packages/core
@@ -115,6 +116,11 @@ npm run test:e2e -w packages/core
 step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
 npx tsc --noEmit -p e2e/parity
 node --test "e2e/parity/tests/*.test.mts"
+
+step "value rules: deterministic generator, actual native metadata, 1,000 comparisons/rule"
+node --test e2e/value-rules/*.test.mjs
+node e2e/value-rules/metadata.mjs --engine chromium
+node e2e/value-rules/run.mjs --count 1000
 
 step "N3: actual indexed public-set timing, serial Chromium"
 npx playwright test --config e2e/ssr/indexed-products.config.ts --project=chromium --workers=1 --grep 'indexed products: complete public set' --output test-results/indexed-chromium

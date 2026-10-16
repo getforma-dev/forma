@@ -237,20 +237,20 @@ impl HeadLink {
 
     /// The element, every value escaped for its attribute.
     pub(crate) fn write(&self, head: &mut String) {
-        use crate::template::escape_html;
+        use crate::template::escape_dom_html;
         head.push_str("<link rel=\"");
-        head.push_str(&escape_html(&self.rel));
+        head.push_str(&escape_dom_html(&self.rel));
         head.push_str("\" href=\"");
-        head.push_str(&escape_html(&self.href));
+        head.push_str(&escape_dom_html(&self.href));
         head.push('"');
         if let Some(mime) = &self.mime {
             head.push_str(" type=\"");
-            head.push_str(&escape_html(mime));
+            head.push_str(&escape_dom_html(mime));
             head.push('"');
         }
         if let Some(sizes) = &self.sizes {
             head.push_str(" sizes=\"");
-            head.push_str(&escape_html(sizes));
+            head.push_str(&escape_dom_html(sizes));
             head.push('"');
         }
         head.push_str(">\n");

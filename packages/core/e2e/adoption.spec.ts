@@ -499,7 +499,7 @@ test('a list whose client array differs in count from the server rows leaves the
 // through h() and renderToString; here the browser parses the server markup,
 // h() builds the tree, and adoption binds the parsed markup.
 type NsTree = [string, Record<string, unknown> | null, ...unknown[]];
-const NS_VECTORS = (JSON.parse(readFileSync(new URL('../src/__tests__/vectors/namespaces.json', import.meta.url), 'utf8')) as {
+const NS_VECTORS = (JSON.parse(readFileSync(new URL('../../../crates/forma-ir/tests/fixtures/parity/namespaces.json', import.meta.url), 'utf8')) as {
   vectors: Array<{ name: string; server: string; tree: NsTree; namespaces: string[] }>;
 }).vectors;
 

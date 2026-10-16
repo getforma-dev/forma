@@ -6,13 +6,13 @@ import type { BuildConfig, BuildDiagnostic } from './types.js';
 import { writeDiagnosticsJson } from './diagnostics.js';
 
 /** Every source module in the bundle is checked, including watch rebuilds. */
-export function serverDirectiveGuard(): esbuild.Plugin {
+export function serverDirectiveGuard(legacyImports?: Set<string>): esbuild.Plugin {
   return {
     name: 'forma-no-server-functions',
     setup(builder) {
       builder.onLoad({ filter: /\.[cm]?[jt]sx?$/, namespace: 'file' }, args => {
         const source = readFileSync(args.path, 'utf8');
-        if (!source.includes('use server')) return;
+        if (!source.includes('use server') && !(legacyImports && source.includes('formajs'))) return;
         // Parse directive nodes: comments and an ordinary string value are not RPC code.
         const ast = parse(source, { sourceType: 'unambiguous', allowReturnOutsideFunction: true, plugins: [
           ...(/\.[cm]?tsx?$/.test(args.path) ? ['typescript' as const] : []),
@@ -24,6 +24,11 @@ export function serverDirectiveGuard(): esbuild.Plugin {
           if (!node || typeof node !== 'object') return;
           if (Array.isArray(node)) { node.forEach(visit); return; }
           const item = node as { type?: string; value?: { value?: string }; loc?: { start: { line: number; column: number } } };
+          const imported = node as { type?: string; source?: { value?: unknown }; argument?: { value?: unknown }; expression?: { value?: unknown } };
+          const specifier = ['ImportDeclaration', 'ExportNamedDeclaration', 'ExportAllDeclaration'].includes(imported.type ?? '')
+            ? imported.source?.value : imported.type === 'TSImportType' ? imported.argument?.value
+            : imported.type === 'TSExternalModuleReference' ? imported.expression?.value : undefined;
+          if (typeof specifier === 'string' && /^formajs(?:\/|$)/.test(specifier)) legacyImports?.add(args.path);
           if (item.type === 'Directive' && item.value?.value === 'use server') {
             const diagnostic: BuildDiagnostic = {
               code: 'BUILD-808', severity: 'error', page: basename(args.path, extname(args.path)),
@@ -44,7 +49,7 @@ export function serverDirectiveGuard(): esbuild.Plugin {
 }
 
 /** Check the full browser/SSR source graphs before touching output, including initial watch. */
-export async function assertNoServerFunctions(config: BuildConfig, options: esbuild.BuildOptions): Promise<void> {
+export async function assertNoServerFunctions(config: BuildConfig, options: esbuild.BuildOptions, legacyImports?: Set<string>): Promise<void> {
   const entries = [...new Set(config.entryPoints.flatMap(entry => {
     const ssrEntry = config.ssr && entry.ssr !== false
       ? config.ssrEntryPoints?.[basename(entry.outfile, '.js')]
@@ -53,7 +58,17 @@ export async function assertNoServerFunctions(config: BuildConfig, options: esbu
   }))];
   if (!entries.length) return;
   try {
-    await esbuild.build({ ...options, entryPoints: Object.fromEntries(entries.map((entry, i) => [`entry-${i}`, entry])), outdir: config.outputDir, write: false, minify: false, sourcemap: false, logLevel: 'error', plugins: [serverDirectiveGuard()] });
+    await esbuild.build({ ...options, entryPoints: Object.fromEntries(entries.map((entry, i) => [`entry-${i}`, entry])), outdir: config.outputDir, write: false, minify: false, sourcemap: false, logLevel: 'error', plugins: [serverDirectiveGuard(legacyImports), {
+      name: 'forma-legacy-imports',
+      setup(builder) {
+        // onResolve sees the authored specifier before esbuild applies alias.
+        // Observe only: its normal resolver still owns package/subpath resolution.
+        if (legacyImports) builder.onResolve({ filter: /^formajs(?:\/|$)/ }, args => {
+          if (args.importer) legacyImports.add(args.importer);
+          return undefined;
+        });
+      },
+    }] });
   } catch (error) {
     const diagnostics = ((error as esbuild.BuildFailure).errors ?? []).map(e => e.detail as BuildDiagnostic).filter(d => d?.code === 'BUILD-808');
     if (diagnostics.length) {
