@@ -98,11 +98,18 @@ test.describe('HTML Runtime — data-* directives', () => {
     // The same bundle is demonstrably live inside the explicitly handed root.
     await page.click('#rt-inc');
     await expect(page.locator('#rt-count')).toHaveText('1');
+    const button = await page.locator('#rt-inc').elementHandle();
+    const counter = await page.locator('#rt-count').elementHandle();
+    expect(button).not.toBeNull();
+    expect(counter).not.toBeNull();
     await page.evaluate(() => {
       (window as Window & { fullStackRuntimeHandle: { unmount(): void } }).fullStackRuntimeHandle.unmount();
     });
-    await page.click('#rt-inc');
-    await expect(page.locator('#rt-count')).toHaveText('1');
+    await expect(page.locator('#test-runtime')).toBeEmpty();
+    // The handle clears its root. Exercise the retained detached node to prove
+    // its former listener and reactive binding were disposed, not just hidden.
+    await button!.evaluate(element => (element as HTMLButtonElement).click());
+    expect(await counter!.textContent()).toBe('1');
     await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
   });
 });

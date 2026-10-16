@@ -32,6 +32,30 @@
       "path": "ci-38857234217-check.log",
       "bytes": 924784,
       "sha256": "2faed3275d644ddcb2da0876d5e2bfd5958a2370479648bdc13031bd7e232ff2"
+    },
+    {
+      "path": "disposal-first.spec.ts",
+      "bytes": 8662,
+      "sha256": "a190a45d30cd9cdaaa1af4906407ff0c4961da70787a974b84fd85f4d843b095",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first.log",
+      "bytes": 11048,
+      "sha256": "b83b726bfb19ed09b2bcaf431e99719b4673f37df4f0b97988721fc5de9da16a",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "disposal-first.json",
+      "bytes": 68584,
+      "sha256": "8683d5b02f5415e96cd57e43c1d9146343e99de67bf2ca411475e814379b3a38",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
+    },
+    {
+      "path": "fixed-fixture-sync.log",
+      "bytes": 212,
+      "sha256": "7bc13efb1c40f0bf52d0471d1ef58811d1c7d8b450435126a27d566e0ababd12",
+      "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec"
     }
   ]
 }

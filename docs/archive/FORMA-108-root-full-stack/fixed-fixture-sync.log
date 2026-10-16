@@ -1,0 +1,8 @@
+v24.22.0
+Building FormaJS...
+Copying fixtures...
+
+  e2e/fixtures/formajs.global.js  206.5kb
+
+⚡ Done in 11ms
+✓ E2E fixtures synced from /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/dist/
