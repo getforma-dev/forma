@@ -1,0 +1,13 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core
+
+
+ Test Files  207 passed (207)
+      Tests  3254 passed (3254)
+   Start at  00:39:14
+   Duration  32.26s (transform 1.67s, setup 0ms, import 7.37s, tests 12.46s, environment 28.10s)
+

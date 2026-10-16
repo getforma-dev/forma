@@ -6,20 +6,20 @@
 
 Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeScript frontend, fully wired.
 
-> **Where this sits.** One product, four repos:
+> **Where this sits.** One repository, seven coordinated packages:
 >
 > ```
-> TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
->          forma-tools                          forma                    formajs
->                              THIS REPO scaffolds a project that uses all three
+> TS/JSX → @getforma/compiler → FMIR 3 → forma-ir → forma-server → HTML
+>          @getforma/build joins the assets       @getforma/core adopts islands
+>          @getforma/create-app supplies the templates; forma-ir-derive types props
 > ```
 >
 > **You are here:** the front door. New to the stack? Read
 > **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)**
-> — it explains the whole pipeline and the reasoning behind it. Neighbours:
-> [formajs](https://github.com/getforma-dev/formajs) (client runtime) ·
-> [forma-tools](https://github.com/getforma-dev/forma-tools) (compiler + build) ·
-> [forma](https://github.com/getforma-dev/forma) (Rust parser, walker, server).
+> — it explains the pipeline. All seven packages live in
+> [getforma-dev/forma](https://github.com/getforma-dev/forma) and publish as one set.
+> Existing 0.6.x projects can follow the
+> [3.0 template migration](docs/UPGRADING-3.0.md).
 
 ## Usage
 

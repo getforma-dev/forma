@@ -1,0 +1,13 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run --maxWorkers=2 src/dom/__tests__/jsx.test.tsx src/__tests__/build-config.test.ts
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-144-final/forma/packages/core
+
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  01:19:10
+   Duration  572ms (transform 272ms, setup 0ms, import 504ms, tests 16ms, environment 369ms)
+

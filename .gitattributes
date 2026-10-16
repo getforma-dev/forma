@@ -147,3 +147,10 @@ docs/archive/FORMA-108-mutation-reporting/** -text
 
 # Exact explicit-runtime qualification reports and logs.
 docs/evidence/forma-108/** -text
+
+# FORMA-144 archived sources and qualification evidence use byte-exact hashes.
+docs/archive/forma-144-final-before/** -text
+docs/evidence/forma-144-final/** -text
+
+# Original Vite configuration and its first failure are byte-authenticated.
+docs/archive/forma-144-vite7-config/** -text

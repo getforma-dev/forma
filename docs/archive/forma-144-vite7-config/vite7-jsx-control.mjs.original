@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile,rm} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {createServer} from '../forma/node_modules/vite/dist/node/index.js';
+
+// Actual Vite loading and transformation; no config-object-only assertion.
+const root=resolve('packages/core');
+const dir=await mkdtemp(join(root,'.vite-jsx-control-'));
+const file=join(dir,'probe.tsx');
+const failures=[];
+try {
+  // A conflicting local default prevents the package tsconfig from masking an
+  // ignored config property. The public Vite config must supply h/Fragment.
+  await writeFile(join(dir,'tsconfig.json'),JSON.stringify({compilerOptions:{jsx:'react',jsxFactory:'WrongFactory',jsxFragmentFactory:'WrongFragment'}}));
+  await writeFile(file,`const h=(tag: unknown,props: unknown,...children: unknown[])=>({tag,props,children});
+const Fragment='fragment';
+export const tree=<><span data-value="ok">text</span></>;
+`);
+  for(const name of ['vitest.config.ts','vitest.bench.config.ts']){
+    const server=await createServer({configFile:join(root,name),root,server:{middlewareMode:true,watch:null,hmr:false},optimizeDeps:{noDiscovery:true},appType:'custom',logLevel:'error'});
+    try {
+      const transformed=await server.transformRequest(file,{ssr:true});
+      assert.ok(transformed);
+      assert.doesNotMatch(transformed.code,/WrongFactory|WrongFragment|jsx-runtime|React\.createElement/);
+      const loaded=await server.ssrLoadModule(file);
+      assert.deepEqual(loaded.tree,{tag:'fragment',props:null,children:[{tag:'span',props:{'data-value':'ok'},children:['text']}]});
+      console.log(name,'PASS actual classic h/Fragment transform and executed tree');
+    }catch(error){failures.push(name);console.error(name,'FAIL',error.message);}
+    finally{await server.close();}
+  }
+}finally{await rm(dir,{recursive:true,force:true});}
+if(failures.length)process.exitCode=1;
