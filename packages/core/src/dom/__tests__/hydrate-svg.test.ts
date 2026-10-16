@@ -42,6 +42,17 @@ function writesDuring(root: Node, run: () => void): string[] {
   return recordsDuring(root, run).map((r) => `${r.type}:${(r.target as Element).localName ?? r.target.nodeName}:${r.attributeName ?? ''}`);
 }
 
+/** Async counterpart for activation readiness without ending observation early. */
+async function writesDuringAsync(root: Node, run: () => Promise<void>): Promise<string[]> {
+  const records: MutationRecord[] = [];
+  const observer = new MutationObserver(batch => records.push(...batch));
+  observer.observe(root, { subtree: true, childList: true, attributes: true, characterData: true });
+  await run();
+  records.push(...observer.takeRecords());
+  observer.disconnect();
+  return records.map((r) => `${r.type}:${(r.target as Element).localName ?? r.target.nodeName}:${r.attributeName ?? ''}`);
+}
+
 /** The ticket's fixture: an icon button whose SVG has a title and a path. */
 const ICON = '<svg viewBox="0 0 10 10"><title>Close</title><path d="M0 0L10 10"/></svg>';
 
@@ -78,7 +89,7 @@ describe('adopting inline SVG', () => {
     expect(app.querySelectorAll('svg, title, path')).toHaveLength(3);
   });
 
-  it('adopts the inline SVG of every island in place, each on its own', () => {
+  it('adopts the inline SVG of every island in place, each on its own', async () => {
     document.body.innerHTML = [0, 1].map((id) =>
       `<span data-forma-island="${id}" data-forma-component="Icon">${ICON}</span>`,
     ).join('');
@@ -88,7 +99,7 @@ describe('adopting inline SVG', () => {
     const paths = islands.map((island) => island.querySelector('path')!);
     const setters: Array<(d: string) => void> = [];
 
-    const writes = writesDuring(document.body, () => {
+    const writes = await writesDuringAsync(document.body, () =>
       activateIslands(emptyRegistry({
         Icon: () => {
           const [d, setD] = createSignal('M0 0L10 10');
@@ -96,8 +107,8 @@ describe('adopting inline SVG', () => {
           return h('span', null,
             h('svg', { viewBox: '0 0 10 10' }, h('title', null, 'Close'), h('path', { d: () => d() })));
         },
-      }));
-    });
+      })),
+    );
 
     expect(writes).toEqual([]);
     expect(islands.map((i) => i.getAttribute('data-forma-status'))).toEqual([null, null]);

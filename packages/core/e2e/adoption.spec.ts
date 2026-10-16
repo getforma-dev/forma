@@ -254,7 +254,7 @@ test('components returning real DOM nodes are refused without replacing original
     (window as any).afterDirectAdoption = true;
     const metadata = { h: '0123456789abcdef', schema: [[]], mode: 0 as const };
     const el = document.querySelector('[data-forma-component="Imp"]') as HTMLElement;
-    activateIslands({
+    await activateIslands({
       Imp: __islandRegistration(() => {
         const [n, setN] = createSignal(0);
         const button = el.querySelector('button')!;
@@ -299,7 +299,7 @@ test('a detached real-Node description reports STRUCTURE while a healthy sibling
     catch(error) { mountError=(error as Error).message; }
     (window as any).__healthyCalls=0;
     const metadata={h:'0123456789abcdef',schema:[[]],mode:0 as const};
-    activateIslands({
+    await activateIslands({
       Detached:__islandRegistration(()=>document.createElement('span'),metadata),
       Healthy:__islandRegistration(()=>h('button',{id:'healthy',onClick:()=>{(window as any).__healthyCalls++;}},'healthy'),metadata),
     });
@@ -493,10 +493,9 @@ test('a list whose client array differs in count from the server rows leaves the
       h('button', { id: name, onClick: () => clicks.push(name) }, 'go'),
       h('ul', null, createList(items, (x: string) => x, (x: string) => h('li', null, x))));
     const metadata = { h: '0123456789abcdef', schema: [[]], mode: 0 as const };
-    activateIslands({ Fewer: __islandRegistration(island('fewer', fewer), metadata),
+    await activateIslands({ Fewer: __islandRegistration(island('fewer', fewer), metadata),
       More: __islandRegistration(island('more', more), metadata),
       Equal: __islandRegistration(island('equal', equal), metadata) });
-    await new Promise((resolve) => setTimeout(resolve, 0));
     records.push(...observer.takeRecords().map((r) => `${r.type}:late`));
     observer.disconnect();
     return { records, codes };

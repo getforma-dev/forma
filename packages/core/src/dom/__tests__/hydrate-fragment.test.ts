@@ -78,7 +78,7 @@ describe('Fragment adoption', () => {
     expect(app.childNodes).toHaveLength(2);
   });
 
-  it('compiled island Fragment roots refuse while the public facade adopts independent ranges', () => {
+  it('compiled island Fragment roots refuse while the public facade adopts independent ranges', async () => {
     document.body.innerHTML = [0, 1].map((id) =>
       `<div data-forma-island="${id}" data-forma-component="Pair">` +
       `<span class="n"><!--f:t0-->${id}<!--/f:t0--></span><button class="inc">+</button></div>`,
@@ -87,7 +87,7 @@ describe('Fragment adoption', () => {
 
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const server = Array.from(document.querySelectorAll('span, button'));
-    activateIslands({
+    await activateIslands({
       Pair: compiled((props: { id: number }) => {
         const [n, setN] = createSignal(props.id);
         return h(Fragment, null,
@@ -206,7 +206,7 @@ describe('Fragment adoption', () => {
     expect(app.innerHTML).toBe(before);
   });
 
-  it('an imperative island returning its own element refuses without running its deferred effect', () => {
+  it('an imperative island returning its own element refuses without running its deferred effect', async () => {
     // 2.0.1's imperative pattern: wire the server DOM by hand, return `el`.
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Imp"><button>0</button></div>' +
@@ -215,7 +215,7 @@ describe('Fragment adoption', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const originalButtons = Array.from(document.querySelectorAll('button'));
     let runs = 0;
-    activateIslands({
+    await activateIslands({
       Imp: compiled((props: { id: number }) => {
         const el = document.querySelector<HTMLElement>(`[data-forma-island="${props.id}"]`)!;
         const [n, setN] = createSignal(0);
@@ -240,13 +240,13 @@ describe('Fragment adoption', () => {
     expect(buttons.map((b) => b.textContent)).toEqual(['0', '0']);
   });
 
-  it('an island that returns a detached DOM node is marked error with its code, its sibling unaffected', () => {
+  it('an island that returns a detached DOM node is marked error with its code, its sibling unaffected', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Bad"><span>x</span></div>' +
       '<div data-forma-island="1" data-forma-component="Good"><span>y</span></div>';
     installState();
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       Bad: () => document.createElement('span'),
       Good: () => h('div', null, h('span', null, 'y')),
     }));
@@ -259,7 +259,7 @@ describe('Fragment adoption', () => {
     expect(document.querySelector('[data-forma-island="0"]')!.innerHTML).toBe('<span>x</span>');
   });
 
-  it('an imperative append-and-return fragment is refused and its deferred effect never runs', () => {
+  it('an imperative append-and-return fragment is refused and its deferred effect never runs', async () => {
     // Preserve the archived imperative input: returning its emptied fragment
     // is now a strict refusal, and deferred effects never acquire ownership.
     document.body.innerHTML = [0, 1].map((id) =>
@@ -269,7 +269,7 @@ describe('Fragment adoption', () => {
     const originalParagraphs = Array.from(document.querySelectorAll('p'));
     let runs = 0;
     const setters: Array<(v: number) => void> = [];
-    activateIslands({
+    await activateIslands({
       Many: compiled((props: { id: number }) => {
         const el = document.querySelector<HTMLElement>(`[data-forma-island="${props.id}"]`)!;
         const fragment = templateMany(trustedHtml('<button>0</button><i>tail</i>'));
@@ -296,7 +296,7 @@ describe('Fragment adoption', () => {
     expect(islands[0]!.textContent).toBe('server 00tail');
   });
 
-  it('onError receives FORMA_E_HYDRATE_STRUCTURE from activateIslands, caller-owned adoption and hydrateIsland()', () => {
+  it('onError receives FORMA_E_HYDRATE_STRUCTURE from activateIslands, caller-owned adoption and hydrateIsland()', async () => {
     const received: Array<[string, string | undefined]> = [];
     const off = onError((err, info) => {
       received.push([String((err as { code?: unknown }).code), info?.source]);
@@ -307,7 +307,7 @@ describe('Fragment adoption', () => {
         '<div data-forma-island="0" data-forma-component="Detached"><span>x</span></div>' +
         '<div id="app" data-forma-ssr><p>m</p></div><div id="direct" data-forma-ssr><p>d</p></div>';
       installState();
-      activateIslands(emptyRegistry({ Detached: () => document.createElement('span') }));
+      await activateIslands(emptyRegistry({ Detached: () => document.createElement('span') }));
       adoptInRoot(() => document.createElement('p') as unknown as HTMLElement, '#app');
       hydrateIsland(() => document.createElement('p'), document.getElementById('direct')!);
     } finally {
@@ -325,7 +325,7 @@ describe('Fragment adoption', () => {
     nextDocument.body.innerHTML = '<div data-forma-island="0" data-forma-component="Fine"><b>ok</b></div>';
     installState(undefined, nextDocument);
     const off2 = onError((err) => received.push([String(err), 'unexpected']));
-    activateIslands(emptyRegistry({ Fine: () => h('div', null, h('b', null, 'ok')) }), nextDocument);
+    await activateIslands(emptyRegistry({ Fine: () => h('div', null, h('b', null, 'ok')) }), nextDocument);
     expect(nextDocument.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBeNull();
     deactivateAllIslands(nextDocument);
     off2();
@@ -405,12 +405,12 @@ describe('Fragment adoption', () => {
     expect(document.querySelector('#list li')).toBe(serverRows[1]);
   });
 
-  it('an imperative component that writes then returns nothing is refused, never marked active', () => {
+  it('an imperative component that writes then returns nothing is refused, never marked active', async () => {
     document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Imperative"><b>0</b></div>';
     installState();
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const original = document.querySelector('b');
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       Imperative: () => {
         const el = document.querySelector<HTMLElement>('[data-forma-component="Imperative"]')!;
         el.querySelector('b')!.textContent = 'set by the island';

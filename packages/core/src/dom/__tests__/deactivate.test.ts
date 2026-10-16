@@ -15,13 +15,13 @@ afterEach(() => {
 });
 
 describe('deactivateIsland', () => {
-  it('calls the dispose function stored on the island element', () => {
+  it('calls the dispose function stored on the island element', async () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Test" data-forma-status="pending"><span>Content</span></div>
     `;
     installState();
 
-    activateIslands(emptyRegistry({ Test: () => h('div', null, h('span', null, 'Content')) }));
+    await activateIslands(emptyRegistry({ Test: () => h('div', null, h('span', null, 'Content')) }));
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(island.getAttribute('data-forma-status')).toBe('pending');
@@ -33,13 +33,13 @@ describe('deactivateIsland', () => {
     expect((island as any).__formaDispose).toBeUndefined();
   });
 
-  it('is idempotent — double disposal does not throw', () => {
+  it('is idempotent — double disposal does not throw', async () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Test" data-forma-status="pending"><span>Content</span></div>
     `;
     installState();
 
-    activateIslands(emptyRegistry({ Test: () => h('div', null, h('span', null, 'Content')) }));
+    await activateIslands(emptyRegistry({ Test: () => h('div', null, h('span', null, 'Content')) }));
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
 
     deactivateIsland(island);
@@ -57,7 +57,7 @@ describe('deactivateIsland', () => {
     expect(() => deactivateIsland(el)).not.toThrow();
   });
 
-  it('stops effects from running after disposal', () => {
+  it('stops effects from running after disposal', async () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="EffectTest" data-forma-status="pending"><span>x</span></div>
     `;
@@ -66,7 +66,7 @@ describe('deactivateIsland', () => {
     let effectCount = 0;
     const [count, setCount] = createSignal(0);
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       EffectTest: () => {
         createEffect(() => {
           count(); // track dependency
@@ -96,13 +96,13 @@ describe('deactivateIsland', () => {
 });
 
 describe('deactivateAllIslands', () => {
-  it('disposes all active islands under the given root', () => {
+  it('disposes all active islands under the given root', async () => {
     document.body.innerHTML = `
       <div id="stage"><div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><span>A</span></div><div data-forma-island="1" data-forma-component="B" data-forma-status="pending"><span>B</span></div></div>
     `;
     installState();
 
-    activateIslands(emptyRegistry({ A: () => h('div', null, h('span', null, 'A')), B: () => h('div', null, h('span', null, 'B')) }));
+    await activateIslands(emptyRegistry({ A: () => h('div', null, h('span', null, 'A')), B: () => h('div', null, h('span', null, 'B')) }));
 
     const islands = document.querySelectorAll('[data-forma-island]');
     expect(islands[0]?.getAttribute('data-forma-status')).toBe('pending');
@@ -115,26 +115,26 @@ describe('deactivateAllIslands', () => {
     expect(islands[1]?.getAttribute('data-forma-status')).toBe('disposed');
   });
 
-  it('defaults to document when no root is provided', () => {
+  it('defaults to document when no root is provided', async () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Solo" data-forma-status="pending"><span>Solo</span></div>
     `;
     installState();
 
-    activateIslands(emptyRegistry({ Solo: () => h('div', null, h('span', null, 'Solo')) }));
+    await activateIslands(emptyRegistry({ Solo: () => h('div', null, h('span', null, 'Solo')) }));
     deactivateAllIslands();
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(island.getAttribute('data-forma-status')).toBe('disposed');
   });
 
-  it('skips islands that are not active (error, pending, disposed)', () => {
+  it('skips islands that are not active (error, pending, disposed)', async () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Active" data-forma-status="pending"><span>Active</span></div><div data-forma-island="1" data-forma-component="Missing" data-forma-status="error"><span>Error</span></div>
     `;
     installState();
 
-    activateIslands(emptyRegistry({ Active: () => h('div', null, h('span', null, 'Active')) }));
+    await activateIslands(emptyRegistry({ Active: () => h('div', null, h('span', null, 'Active')) }));
 
     // Island 0 is active, Island 1 has status "error" (no registry entry)
     deactivateAllIslands();

@@ -42,18 +42,18 @@ function makeIsland(id: number, component: string, trigger?: string): HTMLElemen
 }
 
 describe('activateIslands visible trigger', () => {
-  it('hydrates load-trigger islands immediately', () => {
+  it('hydrates load-trigger islands by readiness', async () => {
     const el = makeIsland(1, 'Counter', 'load');
     const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
-    activateIslands(emptyRegistry({ Counter: hydrateFn }));
+    await activateIslands(emptyRegistry({ Counter: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledOnce();
     expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
 
-  it('hydrates islands with no trigger attribute immediately', () => {
+  it('hydrates islands with no trigger attribute by readiness', async () => {
     const el = makeIsland(1, 'Counter');
     const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
-    activateIslands(emptyRegistry({ Counter: hydrateFn }));
+    await activateIslands(emptyRegistry({ Counter: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledOnce();
     expect(el.getAttribute('data-forma-status')).toBe('pending');
   });

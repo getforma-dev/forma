@@ -7,24 +7,24 @@ import { activateIslands } from '../activate';
 afterEach(() => { document.body.innerHTML = ''; });
 
 describe('activateIslands re-invocation guard (F1)', () => {
-  it('does not re-run a load island when activateIslands is called twice', () => {
+  it('does not re-run a load island when activateIslands is called twice', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Dup" data-forma-status="pending">' +
       '<span>x</span></div>';
     installState();
     const hydrateFn = vi.fn(() => h('div', null, h('span', null, 'x')));
 
-    activateIslands(emptyRegistry({ Dup: hydrateFn }));
+    await activateIslands(emptyRegistry({ Dup: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(island.getAttribute('data-forma-status')).toBe('pending');
 
-    activateIslands(emptyRegistry({ Dup: hydrateFn }));
+    await activateIslands(emptyRegistry({ Dup: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
     expect(island.getAttribute('data-forma-status')).toBe('pending');
   });
 
-  it('does not attach duplicate handlers on re-activation', () => {
+  it('does not attach duplicate handlers on re-activation', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Btn" data-forma-status="pending">' +
       '<button>click</button></div>';
@@ -34,28 +34,30 @@ describe('activateIslands re-invocation guard (F1)', () => {
       return h('div', null, h('button', { onClick: () => { attachCount++; } }, 'click'));
     });
 
-    activateIslands(emptyRegistry({ Btn: hydrateFn }));
-    activateIslands(emptyRegistry({ Btn: hydrateFn }));
+    await Promise.all([
+      activateIslands(emptyRegistry({ Btn: hydrateFn })),
+      activateIslands(emptyRegistry({ Btn: hydrateFn })),
+    ]);
 
     const btn = document.querySelector('button') as HTMLButtonElement;
     btn.dispatchEvent(new Event('click', { bubbles: true }));
     expect(attachCount).toBe(1);
   });
 
-  it('does not grant a second activation by resetting the public status attribute', () => {
+  it('does not grant a second activation by resetting the public status attribute', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Fresh" data-forma-status="pending">' +
       '<span>x</span></div>';
     installState();
     const hydrateFn = vi.fn(() => h('div', null, h('span', null, 'x')));
 
-    activateIslands(emptyRegistry({ Fresh: hydrateFn }));
+    await activateIslands(emptyRegistry({ Fresh: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     island.setAttribute('data-forma-status', 'pending');
 
-    activateIslands(emptyRegistry({ Fresh: hydrateFn }));
+    await activateIslands(emptyRegistry({ Fresh: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
     expect(island.getAttribute('data-forma-status')).toBe('pending');
   });

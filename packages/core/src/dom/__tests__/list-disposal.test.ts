@@ -8,6 +8,7 @@ import { createEffect } from '../../reactive/effect';
 import { createRoot, registerDisposer } from '../../reactive/root';
 
 const originalHosts = new Map<number, HTMLElement>();
+const activationReady: Promise<void>[] = [];
 
 function mountOriginal(container: HTMLElement, id: number): HTMLElement {
   const island = originalHosts.get(id)!;
@@ -155,7 +156,7 @@ function activateIslandIn(
 ): HTMLElement {
   const island = mountOriginal(container, id);
   if (trigger) island.setAttribute('data-forma-hydrate', trigger);
-  activateIslands(emptyRegistry({ Widget: () => { registerDisposer(() => onDispose(id)); return h('span', null, 'ssr'); } }), container);
+  activationReady.push(activateIslands(emptyRegistry({ Widget: () => { registerDisposer(() => onDispose(id)); return h('span', null, 'ssr'); } }), container));
   return island;
 }
 
@@ -183,7 +184,7 @@ function scansForPlainRowRemoval(): number {
 }
 
 describe('island teardown on row removal', () => {
-  it('deactivates an island inside a removed row', () => {
+  it('deactivates an island inside a removed row', async () => {
     const disposed: number[] = [];
     const [items, setItems] = createSignal([{ id: 1 }, { id: 2 }]);
 
@@ -199,6 +200,7 @@ describe('island teardown on row removal', () => {
       );
       mountFragment(frag);
     });
+    await Promise.all(activationReady);
 
     expect(disposed).toEqual([]);
 
@@ -212,7 +214,7 @@ describe('island teardown on row removal', () => {
     expect(disposed).toEqual([2, 1]);
   });
 
-  it('deactivates an island that IS the removed row element', () => {
+  it('deactivates an island that IS the removed row element', async () => {
     const disposed: number[] = [];
     const [items, setItems] = createSignal([{ id: 1 }, { id: 2 }]);
 
@@ -228,6 +230,7 @@ describe('island teardown on row removal', () => {
       );
       mountFragment(frag);
     });
+    await Promise.all(activationReady);
 
     setItems([{ id: 2 }]);
     expect(disposed).toEqual([1]);
@@ -236,12 +239,13 @@ describe('island teardown on row removal', () => {
     expect(disposed).toEqual([1, 2]);
   });
 
-  it('defers island deactivation until an animated row is actually removed', () => {
+  it('defers island deactivation until an animated row is actually removed', async () => {
     const disposed: number[] = [];
     const parent = document.createElement('div');
     const rowA = document.createElement('div');
     activateIslandIn(rowA, 1, (id) => disposed.push(id));
     parent.appendChild(rowA);
+    await Promise.all(activationReady);
 
     let finish: (() => void) | undefined;
     reconcileList(
@@ -278,7 +282,7 @@ describe('island teardown on row removal', () => {
           const row = document.createElement('div');
           island = mountOriginal(row, item.id);
           island.setAttribute('data-forma-hydrate', 'interaction');
-          activateIslands(emptyRegistry({Widget: hydrate}), row);
+          void activateIslands(emptyRegistry({Widget: hydrate}), row);
           return row;
         },
       );
@@ -313,9 +317,10 @@ describe('the scheduled-or-active island count', () => {
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('scans every removed row while an island is live', () => {
+  it('scans every removed row while an island is live', async () => {
     const holder = document.createElement('div');
     const island = activateIslandIn(holder, 1, () => {});
+    await Promise.all(activationReady);
 
     // The control for the test above: with the count non-zero the scan happens,
     // so a zero there is the guard working, not a broken spy.
@@ -325,7 +330,7 @@ describe('the scheduled-or-active island count', () => {
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('still deactivates a live island after a different island was deactivated', () => {
+  it('still deactivates a live island after a different island was deactivated', async () => {
     const disposed: number[] = [];
     const holder = document.createElement('div');
     const other = activateIslandIn(holder, 1, (id) => disposed.push(id));
@@ -343,6 +348,7 @@ describe('the scheduled-or-active island count', () => {
       );
       mountFragment(frag);
     });
+    await Promise.all(activationReady);
 
     deactivateIsland(other);
     expect(disposed).toEqual([1]);
@@ -352,7 +358,7 @@ describe('the scheduled-or-active island count', () => {
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('still deactivates a live island after the same island was deactivated twice', () => {
+  it('still deactivates a live island after the same island was deactivated twice', async () => {
     const disposed: number[] = [];
     const holder = document.createElement('div');
     const other = activateIslandIn(holder, 1, (id) => disposed.push(id));
@@ -370,6 +376,7 @@ describe('the scheduled-or-active island count', () => {
       );
       mountFragment(frag);
     });
+    await Promise.all(activationReady);
 
     // deactivateIsland is documented idempotent; the second call must not
     // decrement a second time and hide the island still inside the list.
@@ -382,23 +389,24 @@ describe('the scheduled-or-active island count', () => {
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('stops scanning once every island has been deactivated with deactivateAllIslands', () => {
+  it('stops scanning once every island has been deactivated with deactivateAllIslands', async () => {
     const holder = document.createElement('div');
     activateIslandIn(holder, 1, () => {});
     activateIslandIn(holder, 2, () => {});
+    await Promise.all(activationReady);
     expect(scansForPlainRowRemoval()).toBe(3);
 
     deactivateAllIslands(holder);
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('stops scanning after an island whose hydrate function threw', () => {
+  it('stops scanning after an island whose hydrate function threw', async () => {
     const holder = document.createElement('div');
     const island = mountOriginal(holder, 1);
     island.setAttribute('data-forma-component', 'Broken');
 
     const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
-    activateIslands(emptyRegistry({ Broken: () => { throw new Error('boom'); } }), holder);
+    await activateIslands(emptyRegistry({ Broken: () => { throw new Error('boom'); } }), holder);
     errors.mockRestore();
 
     expect(island.getAttribute('data-forma-status')).toBe('error');
@@ -408,14 +416,14 @@ describe('the scheduled-or-active island count', () => {
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('moves the count to the replacement of an explicit BrowserOnly island', () => {
+  it('moves the count to the replacement of an explicit BrowserOnly island', async () => {
     const warns = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const holder = document.createElement('div');
     const shell = mountOriginal(holder, 1);
     shell.textContent = '';
 
     let disposed = false;
-    activateIslands({
+    await activateIslands({
       Widget: compiled(() => {
         registerDisposer(() => { disposed = true; });
         // Replacement is permitted only by explicit BrowserOnly registration.
@@ -436,14 +444,14 @@ describe('the scheduled-or-active island count', () => {
     expect(scansForPlainRowRemoval()).toBe(0);
   });
 
-  it('refuses an empty SSR shell without replacing it or retaining a scan count', () => {
+  it('refuses an empty SSR shell without replacing it or retaining a scan count', async () => {
     const holder = document.createElement('div');
     const shell = mountOriginal(holder, 1);
     shell.textContent = '';
     const original = shell.outerHTML;
     const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      activateIslands(emptyRegistry({ Widget: () => h('article') }), holder);
+      await activateIslands(emptyRegistry({ Widget: () => h('article') }), holder);
       expect(holder.firstElementChild).toBe(shell);
       expect(shell.getAttribute('data-forma-status')).toBe('error');
       expect(shell.outerHTML.replace(' data-forma-status="error"', '')).toBe(original);
@@ -453,10 +461,11 @@ describe('the scheduled-or-active island count', () => {
     } finally { errors.mockRestore(); }
   });
 
-  it('does not double-count an island that activateIslands is called on twice', () => {
+  it('does not double-count an island that activateIslands is called on twice', async () => {
     const holder = document.createElement('div');
     const island = activateIslandIn(holder, 1, () => {});
-    activateIslands(emptyRegistry({ Widget: () => {} }), holder); // HMR / SPA re-mount
+    await Promise.all(activationReady);
+    await activateIslands(emptyRegistry({ Widget: () => {} }), holder); // HMR / SPA re-mount
     expect(scansForPlainRowRemoval()).toBe(3);
 
     deactivateIsland(island);
@@ -466,6 +475,7 @@ describe('the scheduled-or-active island count', () => {
 
 useFreshDocument();
 beforeEach(() => {
+  activationReady.length = 0;
   originalHosts.clear();
   for (const id of [1, 2]) {
     const host = document.createElement('span');
