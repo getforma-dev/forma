@@ -7,6 +7,8 @@
 ## [Unreleased]
 
 - FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+- FORMA-184: the repository-only `renderBoth(component, state)` test helper renders an explicit JSON state through the typed native renderer and core, returning both canonical trees and the P1 report. It shares the parity pipeline, preserves refusal/difference evidence, and adds no public package export.
+
 ### Native LIST sources must carry real rows — FORMA-101
 
 - A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
