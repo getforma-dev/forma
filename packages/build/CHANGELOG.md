@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### N2 is 28,000 B (L-59)
+
+- The founder approved a one-time increase from 27,500 to **28,000 B gzip -9**
+  on 2026-10-15. The combined indexed-row and deployment-identity route measures
+  27,724 B with its representative fixture and safety checks intact; its Browser
+  mount measures 27,077 B. This changes the shared Forma-code ceiling only.
+  BUILD-819, printed/returned reports and size-report.json retain the same gate:
+  28,000 B passes, 28,001 B refuses before publication. Page/canvas JavaScript
+  ceilings, static zero-JavaScript policy and package-size gates are unchanged.
+
 ### Mandatory SSR admission — FORMA-101
 
 - Default SSR, legacy false flags and direct compiler builds all refuse unsupported native constructs. Complete per-entry diagnostic reports use error severity; failed production and watch cycles preserve the prior product. The published subset and catalogue live at `packages/compiler/docs/subset.md`.

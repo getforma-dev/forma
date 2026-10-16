@@ -2,19 +2,21 @@
  * The size report per route: Forma's code and the route's own, the route's
  * class and its ceilings, the service worker, the preview frame's document,
  * and the build's times; and the gate on it (FORMA-021, FORMA-190; decision
- * brief L-55, DR-34, DR-35). One report: the build prints it, returns it as
+ * brief L-59, DR-34, DR-35). One report: the build prints it, returns it as
  * `BuildResult.sizeReport`, and writes it beside the manifest as
  * `size-report.json`.
  *
- * N2 as restated by L-55 and raised by L-58: Forma's own browser code, `@getforma/core` and its
+ * N2 as restated by L-55 and raised by L-58 and L-59: Forma's own browser code, `@getforma/core` and its
  * signal library `alien-signals` as the route's bundles carry them, is at most
- * 27,500 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
+ * 28,000 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
  * reported beside it; the application's own code is outside that ceiling. The
  * 10 KB of v2's appendix C is unreachable under the accepted strict adoption
  * (FORMA-104) and the declared island state block (FORMA-103), so the ceiling
  * is the measured Forma code rounded up to the next 500 B (DR-35's fallback):
  * 25,500 B under L-55, 27,500 B under the founder's L-58, which a client
  * `createList` in an island needs (26,366 B, FORMA-188's `negative/list-island`).
+ * L-59 (2026-10-15) raises only N2 to 28,000 B after the combined indexed-row
+ * and deployment-identity route measured 27,724 B; its runtime and fixture stay intact.
  *
  * The route classes (DR-35; the manifest decides them, see `generateManifest`)
  * and what each may ship, in gzip -9 bytes (1 KiB = 1,024 B):
@@ -24,7 +26,7 @@
  *   forma-server writes the worker's registration only on a page that publishes
  *   a JavaScript entry.
  * - `islands`: a server-rendered page that activates its islands. Forma's code
- *   at most 27,500 B; all of its JavaScript at most 75 KiB, the "other
+ *   at most 28,000 B; all of its JavaScript at most 75 KiB, the "other
  *   server-rendered pages" ceiling of N2, or 365 KiB if the route is declared a
  *   canvas (`canvas: true` on the route).
  * - `whole-page-mount`: a route whose page the browser mounts whole (a declared
@@ -68,8 +70,8 @@ import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { IDENTITY_BANNER_HEAD } from './identity.js';
 import type { RouteManifest } from './types.js';
 
-/** N2's ceiling: Forma's code per route, bytes gzip -9 (L-55; 27,500 B since L-58). */
-export const FORMA_CODE_CEILING_GZIP = 27_500;
+/** N2's ceiling: Forma's code per route, bytes gzip -9 (28,000 B since L-59). */
+export const FORMA_CODE_CEILING_GZIP = 28_000;
 
 /** N2's "other server-rendered pages": all of a route's JavaScript, bytes gzip -9 (75 KiB). */
 export const PAGE_JAVASCRIPT_CEILING_GZIP = 75 * 1024;
@@ -416,7 +418,7 @@ export function formatSizeReport(report: SizeReport): string[] {
   const label = (name: string): string => `   ${name.padEnd(14)}   `;
   const lines = [
     '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;',
-    `   N2's ceilings are policy (decision brief L-55, DR-35): Forma code ${bytes(report.ceilings.forma)} B, the JavaScript of a page ${bytes(report.ceilings.page)} B, of a canvas ${bytes(report.ceilings.canvas)} B, a route with no interactive region none.`,
+    `   N2's ceilings are policy (decision brief L-59, DR-35): Forma code ${bytes(report.ceilings.forma)} B, the JavaScript of a page ${bytes(report.ceilings.page)} B, of a canvas ${bytes(report.ceilings.canvas)} B, a route with no interactive region none.`,
   ];
   for (const size of routes) {
     const route = size.route.padEnd(routeWidth);
@@ -476,7 +478,7 @@ export function routeSizeFailure(sizes: readonly RouteSize[]): Error | undefined
     .join('; ');
   return new Error(
     `BUILD-819 ${over.length === 1 ? 'a route is over its size ceiling' : `${over.length} routes are over their size ceilings`} ` +
-      `(gzip -9; decision brief L-55 and DR-35; 1 KB = 1,000 B, 1 KiB = 1,024 B): ${listed}. ` +
+      `(gzip -9; decision brief L-59 and DR-35; 1 KB = 1,000 B, 1 KiB = 1,024 B): ${listed}. ` +
       'Trim what the route imports or ships, split it, or declare a heavy page\'s route `canvas: true` (365 KiB of JavaScript instead of 75 KiB); the ceilings are policy and not configurable.',
   );
 }
