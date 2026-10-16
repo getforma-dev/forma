@@ -234,3 +234,7 @@ docs/evidence/forma-116-live-deferral/** -text
 
 # Original hosted failure and primary parser specification evidence.
 docs/archive/html-document-parser-control/** -text
+
+# Preserve the original watch-recovery failure and actual regression output.
+docs/archive/watch-recovery-2026-10-16/** -text
+docs/evidence/watch-recovery-2026-10-16/** -text
