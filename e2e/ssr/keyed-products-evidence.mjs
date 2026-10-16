@@ -21,6 +21,10 @@ const emitted = generateRealIr(join(source, 'app.tsx'));
 assert(emitted, 'the current source did not emit a native module');
 assert.deepEqual(ir, Buffer.from(emitted.binary), 'served native module differs from current compiler emission');
 const html = readFileSync(join(site, 'index.html'), 'utf8');
+const profile = process.env.FORMA_SSR_PROFILE ?? 'debug';
+assert(['debug', 'release'].includes(profile), 'unknown native renderer profile');
+const headers = JSON.parse(readFileSync(join(site, 'index.headers.json'), 'utf8'));
+if (profile === 'release') assert(!('content-security-policy-report-only' in headers), 'release fixture unexpectedly has a report-only policy');
 const found = [...html.matchAll(/<script\b[^>]*\bdata-island-state\b[^>]*>([^<]*)<\/script>/g)];
 assert.equal(found.length, 1, 'expected one real native state block');
 const state = JSON.parse(found[0][1]);
@@ -35,7 +39,9 @@ const servedAssets = [manifest.routes['/'].ir, ...manifest.routes['/'].js].map(n
 });
 const products = [
   ...['app.tsx', 'page.tsx', 'slots.json'].map(name => join(source, name)),
-  join(here, 'render/src/main.rs'), join(dist, 'manifest.json'), join(dist, manifest.routes['/'].ir),
+  join(here, 'render/src/main.rs'), join(here, 'build.sh'),
+  ...['compiler', 'build', 'core'].map(name => join(root, 'packages', name, 'dist/index.js')),
+  join(dist, 'manifest.json'), join(dist, manifest.routes['/'].ir),
   ...manifest.routes['/'].js.map(name => join(dist, name)), ...servedAssets,
   join(site, 'index.html'), join(site, 'index.headers.json'),
 ];
@@ -47,6 +53,7 @@ const report = {
   schema: 1,
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   node: process.version,
+  nativeProfile: profile,
   files,
   nativeDump: { bytes: dump.length, sha256: sha(dump) },
   nativeState: { bytes: stateBytes.length, sha256: sha(stateBytes), value: state },
