@@ -117,8 +117,8 @@
   "originals": [
     {
       "file": "docs/archive/forma-191-startup-policy/ORIGINALS.json",
-      "bytes": 2889,
-      "sha256": "67f213b88029b491397ac6c6e948657881f9cab9469433ab7590b06f1ee963ce"
+      "bytes": 3069,
+      "sha256": "0dfb9f1f74877f84b07cf87a8386e53f331c8076bff69530d14c82c84f1604d3"
     },
     {
       "file": "docs/archive/forma-191-startup-policy/original-source/.gitattributes",

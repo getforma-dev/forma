@@ -48,6 +48,11 @@
       "sha256": "42a3c6e74f1f2c6c32f7cff9f1b39460eb16df2af1c295d082e3c04571b2acea"
     },
     {
+      "file": "scripts/release-performance-evidence.test.mjs",
+      "bytes": 4811,
+      "sha256": "5cebe3cdce76f0e33f608847a4178938c6b26dc6b65dfdcf6c8e499941932e9c"
+    },
+    {
       "file": "scripts/release-performance-mobile-phases.test.mjs",
       "bytes": 1141,
       "sha256": "d4a56a6311512c83a315b74b31deab3df7f81210f16e17e7ee56a63aa6eae748"
