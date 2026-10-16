@@ -2,7 +2,7 @@
 import {createHash} from 'node:crypto';
 import {MOBILE_PROFILE} from './release-performance-spec.mjs';
 import {encodeMobileTrace,attributeMobileTasks} from './release-performance-attribution.mjs';
-export function traceFixture({duration=60,scriptAt=200,startTime=100,imageLayout=false}={}) {
+export function traceFixture({duration=60,scriptAt=200,startTime=100,imageLayout=false,mainThreadFrame=false}={}) {
   const origin=1000000,frame='test-frame',url='http://fixture.invalid/';
   const event=(name,ts,extra={})=>({name,ph:'I',pid:10,tid:20,ts:origin+ts*1000,args:{},...extra});
   const trace={traceEvents:[
@@ -10,6 +10,7 @@ export function traceFixture({duration=60,scriptAt=200,startTime=100,imageLayout
     event('FrameCommittedInBrowser',1,{pid:1,tid:2,args:{data:{frame,processId:10,url,isOutermostMainFrame:true}}}),
     ...imageLayout?[event('ResourceSendRequest',startTime-20,{cat:'devtools.timeline',args:{data:{frame,requestId:'10.4',resourceType:'Image',initiator:{type:'parser',url}}}})]:[],
     event('RunTask',startTime,{ph:'X',dur:duration*1000}),
+    ...mainThreadFrame?[event('BeginMainThreadFrame',startTime+.1,{cat:'disabled-by-default-devtools.timeline.frame',args:{layerTreeId:1,data:{frameId:0}}})]:[],
     event('Layout',startTime+1,{ph:'X',dur:(duration-2)*1000,args:{beginData:{frame}}}),
     ...imageLayout?[
       event('LayoutImageUnsized',startTime+2,{cat:'devtools.timeline',s:'t',args:{data:{frameId:frame,nodeId:3}}}),

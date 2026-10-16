@@ -45,7 +45,10 @@ const browserEvents = new Set([
 // ScriptCatchup is retrospective source metadata, not execution. It is still
 // unknown inside a candidate layout task and therefore prevents exclusion there.
 const scriptEvent = e => !(e.name==='ScriptCatchup' && ['disabled-by-default-devtools.v8-source-rundown','disabled-by-default-devtools.v8-source-rundown-sources'].includes(e.cat)) && /script|compile|evaluate|functioncall|microtask/i.test(e.name);
-const refs = e => [e.args?.frame,e.args?.data?.frame,e.args?.data?.frameID,e.args?.data?.frameId,e.args?.beginData?.frame,e.args?.data?.page].filter(x=>x!==undefined);
+// BeginMainThreadFrame uses a numeric compositor sequence, not a Page.FrameId.
+// Exempt only that exact native shape; every document-frame field still matches.
+const nativeMainThreadFrame = e => e.cat==='disabled-by-default-devtools.timeline.frame' && e.ph==='I' && e.dur===undefined && Number.isSafeInteger(e.args?.data?.frameId) && e.args.data.frameId>=0 && Number.isSafeInteger(e.args?.layerTreeId) && e.args.layerTreeId>0;
+const refs = (e,ignoreFrameId=false) => [e.args?.frame,e.args?.data?.frame,e.args?.data?.frameID,ignoreFrameId?undefined:e.args?.data?.frameId,e.args?.beginData?.frame,e.args?.data?.page].filter(x=>x!==undefined);
 
 export function attributeMobileTasks(lhr,trace) {
   const events = trace?.traceEvents;
@@ -77,7 +80,9 @@ export function attributeMobileTasks(lhr,trace) {
       const anotherNavigation=thread.some(e=>e.name==='navigationStart' && e.ts>origin && e.ts<end && e.args?.data?.documentLoaderURL!=='');
       const children=thread.filter(e=>e.index!==task.index && (e.ts>=task.ts && e.ts<end || e.dur>0 && e.ts<task.ts && e.ts+e.dur>task.ts));
       const pure=children.length>0 && children.every(e=>{
-        if(!browserEvents.has(e.name) || refs(e).some(f=>f!==frame))return false;
+        const mainThreadFrame=e.name==='BeginMainThreadFrame';
+        if(mainThreadFrame && !nativeMainThreadFrame(e))return false;
+        if(!browserEvents.has(e.name) || refs(e,mainThreadFrame).some(f=>f!==frame))return false;
         if(e.dur!==undefined && (e.ph!=='X' || e.ts<task.ts || e.ts+e.dur>end))return false;
         if(e.name==='LayoutImageUnsized' && (e.cat!=='devtools.timeline' || e.ph!=='I' || e.args?.data?.frameId!==frame || !Number.isInteger(e.args?.data?.nodeId) || e.args.data.nodeId<=0))return false;
         if(e.name==='ResourceChangePriority'){
