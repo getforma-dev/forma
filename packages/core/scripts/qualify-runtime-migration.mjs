@@ -51,7 +51,9 @@ export function assertIntendedKill(report, control) {
 }
 
 export function qualifyRuntimeMigration(output) {
-  mkdirSync(output, { recursive: true });
+  // An interrupted prior execution must never supply a stale Vitest JSON.
+  mkdirSync(dirname(output), { recursive: true });
+  mkdirSync(output); // exclusive: an existing directory is refused, even empty
   const corpusBytes = readFileSync(join(core, 'probes/corpus.json'));
   const corpus = JSON.parse(corpusBytes);
   const git = args => {
@@ -60,6 +62,7 @@ export function qualifyRuntimeMigration(output) {
   };
   const report = { schema: 1, passed: false, sourceCommit: git(['rev-parse', 'HEAD']), sourceClean: git(['status', '--porcelain', '--untracked-files=no']) === '', node: process.version,
     corpusSha256: sha(corpusBytes), harnessSha256: sha(readFileSync(fileURLToPath(import.meta.url))), sources: {}, controls: [] };
+  assert.equal(report.sourceClean, true, 'qualification requires the exact clean tracked source commit');
   const destination = join(output, 'runtime-migration.json');
   const save = () => writeFileSync(destination, JSON.stringify(report, null, 2) + '\n');
   const originals = new Map();
@@ -107,7 +110,21 @@ export function qualifyRuntimeMigration(output) {
     for (const [path, original] of originals) assert.deepEqual(readFileSync(path), original, 'source was not restored');
     report.passed = true;
   } catch (error) { report.error = error.stack; throw error; }
-  finally { for (const [path, original] of originals) writeFileSync(path, original); report.elapsedMs = performance.now() - start; save(); }
+  finally {
+    const hashes = {}, errors = [];
+    for (const [path, original] of originals) {
+      try {
+        writeFileSync(path, original);
+        const expected = sha(original), actual = sha(readFileSync(path));
+        hashes[path.slice(core.length + 1)] = { expected, actual, verified: expected === actual };
+        assert.equal(actual, expected, 'source restoration hash mismatch');
+      } catch (error) { errors.push(String(error)); }
+    }
+    report.sourceRestored = { verified: errors.length === 0, hashes };
+    if (errors.length) { report.passed = false; report.restorationErrors = errors; }
+    report.elapsedMs = performance.now() - start; save();
+    assert.deepEqual(errors, [], 'source restoration failed');
+  }
   return report;
 }
 
