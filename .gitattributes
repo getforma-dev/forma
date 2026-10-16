@@ -130,3 +130,5 @@ docs/evidence/forma-181-indexed/integrated/*.json -text
 
 # FORMA-108: authenticated A2 originals before the explicit-tier migration.
 docs/archive/FORMA-108-A2-bridge/** -text
+
+docs/archive/FORMA-108-owned-scope-cleanup/** -text

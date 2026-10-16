@@ -1,0 +1,67 @@
+
+ RUN  v4.1.10 /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts (9 tests | 3 failed) 303ms
+     × attributes identical unreviewed refusals to each mount independently 8ms
+     × unmount disposes an owned scope that was detached without disposing another mount 4ms
+     × unmount disposes an owned scope that was moved without disposing another mount 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > attributes identical unreviewed refusals to each mount independently
+AssertionError: expected [ { …(4) } ] to deeply equal [ { …(4) }, { …(4) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "code": "FORMA_E_UNREVIEWED_LINK",
+-     "count": 1,
+-     "mount": "first",
+-     "tier": "unreviewed",
+-   },
+-   {
+-     "code": "FORMA_E_UNREVIEWED_LINK",
+-     "count": 1,
+-     "mount": "second",
+-     "tier": "unreviewed",
++     "count": 2,
++     "mount": undefined,
++     "tier": undefined,
+    },
+  ]
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts:93:108
+     91|       expect(root.querySelector('link')).toBeNull();
+     92|     }
+     93|     expect(runtime.getDiagnostics().map(({ code, mount, tier, count })…
+       |                                                                                                            ^
+     94|       { code: 'FORMA_E_UNREVIEWED_LINK', mount: 'first', tier: 'unrevi…
+     95|       { code: 'FORMA_E_UNREVIEWED_LINK', mount: 'second', tier: 'unrev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > unmount disposes an owned scope that was detached without disposing another mount
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > unmount disposes an owned scope that was moved without disposing another mount
+AssertionError: expected '2' to be '1' // Object.is equality
+
+Expected: "1"
+Received: "2"
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts:108:64
+    106|     scope.remove(); if (placement === 'moved') other.append(scope);
+    107|     button.click(); expect(value.textContent).toBe('1');
+    108|     owner.unmount(); button.click(); expect(value.textContent).toBe('1…
+       |                                                                ^
+    109|     expect((scope as Element & { __formaScope?: unknown }).__formaScop…
+    110|     other.querySelector<HTMLButtonElement>('#other-counter')!.click();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  00:33:25
+   Duration  545ms (transform 211ms, setup 0ms, import 24ms, tests 303ms, environment 128ms)
+

@@ -359,6 +359,8 @@ interface MountCtx {
   /** What the interpreter checks on every element hop and grant-needing call. */
   bound: Bound;
   refetch: Map<string, () => void>;
+  /** Actual binding ownership survives movement or removal from the DOM. */
+  scopes: Set<Element>;
   /** Development builds only. */
   used: UsedGrants | null;
 }
@@ -2475,6 +2477,7 @@ function mountScope(root: Element, mount: MountCtx): void {
   // Expose scope for devtools (State Inspector panel)
   (root as any).__formaScope = scope;
   (root as any).__formaInitialState = root.getAttribute('data-forma-state') ?? '{}';
+  mount.scopes.add(root);
   if (_debug) dbg('mountScope: DONE —', boundCount, 'elements bound,', disposers.length, 'disposers');
 }
 
@@ -2485,7 +2488,9 @@ function mountScope(root: Element, mount: MountCtx): void {
  * mount's scopes are disposed through its handle only.
  */
 function unmountScope(root: Element, mount: MountCtx): void {
-  if (ownerOf(root) !== mount) return;
+  // DOM ancestry can change after binding. Dispose by captured ownership.
+  if (((root as any).__formaScope as Scope | undefined)?.mount !== mount) return;
+  mount.scopes.delete(root);
   const disposers = (root as any).__formaDisposers as (() => void)[] | undefined;
   if (disposers) {
     for (const d of disposers) {
@@ -2613,7 +2618,8 @@ function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): 
       el.outerHTML.slice(0, 200),
       `unreviewed markup renders no ${what}: ${live ? 'one reached the document after the strip; removed, and the markup refused' : 'removed'}`,
       code,
-        );
+      mount,
+    );
   };
   for (const link of Array.from(content.querySelectorAll('link'))) {
     refuse(link, '<link>', 'FORMA_E_UNREVIEWED_LINK');
@@ -2706,6 +2712,7 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
       use: used ? (grant: ExprGrant) => { used[grant] = true; } : noUse,
     },
     refetch: new Map(),
+    scopes: new Set(),
     used,
   };
 
@@ -2725,7 +2732,7 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
     strip: tier === 'unreviewed' ? (fragment) => { refuseUnreviewed(fragment, ctx, false); } : undefined,
   });
   const disposeAll = (): void => {
-    for (const scope of Array.from(root.querySelectorAll('[data-forma-state]'))) unmountScope(scope, ctx);
+    for (const scope of Array.from(ctx.scopes)) unmountScope(scope, ctx);
   };
   const clear = (): void => {
     disposeAll();

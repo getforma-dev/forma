@@ -83,6 +83,34 @@ describe('FORMA-108: every binding has a named tier and explicit authority', () 
     expect(document.getElementById('served')?.textContent).toBe('raw');
   });
 
+  it('attributes identical unreviewed refusals to each mount independently', () => {
+    vi.stubGlobal('origin', 'null');
+    for (const name of ['first', 'second']) {
+      const root = document.createElement('div'); document.body.append(root);
+      handles.push(runtime.mountMarkup(root, runtime.trustedHtml('<link rel="stylesheet" href="/blocked.css">'), { tier: 'unreviewed', config: { name, diagnostics: false } }));
+      expect(root.querySelector('link')).toBeNull();
+    }
+    expect(runtime.getDiagnostics().map(({ code, mount, tier, count }) => ({ code, mount, tier, count }))).toEqual([
+      { code: 'FORMA_E_UNREVIEWED_LINK', mount: 'first', tier: 'unreviewed', count: 1 },
+      { code: 'FORMA_E_UNREVIEWED_LINK', mount: 'second', tier: 'unreviewed', count: 1 },
+    ]);
+  });
+
+  it.each(['detached', 'moved'] as const)('unmount disposes an owned scope that was %s without disposing another mount', placement => {
+    const root = document.getElementById('root')!;
+    const other = document.createElement('div'); document.body.append(other);
+    const counter = (id: string) => `<section data-forma-state='{"n":0}'><button id="${id}" data-on:click="{n++}">inc</button><p data-text="{n}"></p></section>`;
+    const owner = runtime.mountMarkup(root, runtime.trustedHtml(counter('owned-counter')), { tier: 'reviewed' }); handles.push(owner);
+    handles.push(runtime.mountMarkup(other, runtime.trustedHtml(counter('other-counter')), { tier: 'reviewed' }));
+    const scope = root.firstElementChild!; const button = scope.querySelector('button')!; const value = scope.querySelector('p')!;
+    scope.remove(); if (placement === 'moved') other.append(scope);
+    button.click(); expect(value.textContent).toBe('1');
+    owner.unmount(); button.click(); expect(value.textContent).toBe('1');
+    expect((scope as Element & { __formaScope?: unknown }).__formaScope).toBeUndefined();
+    other.querySelector<HTMLButtonElement>('#other-counter')!.click();
+    expect(other.querySelector('p')!.textContent).toBe('1');
+  });
+
   it('exports only explicit mount lifecycle and host inspection helpers', () => {
     expect(Object.keys(runtime).sort()).toEqual([
       'applyContainmentHints', 'clearDiagnostics', 'getDiagnostics', 'getScopes', 'mountMarkup',
