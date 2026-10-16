@@ -115,3 +115,5 @@ e2e/performance/archive/8bd8b65/** -text
 # Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
+docs/archive/forma-191-performance-durability/** -text
+docs/evidence/forma-191-performance-durability/** -text

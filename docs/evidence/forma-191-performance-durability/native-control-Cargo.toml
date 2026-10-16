@@ -1,0 +1,10 @@
+[package]
+name="forma-journal-control"
+version="0.0.0"
+edition="2021"
+[workspace]
+[dependencies]
+serde_json="=1.0.154"
+sha2="=0.11.1"
+[lib]
+path="/Users/victorvillacis/dev/Forma/work/FORMA-191/forma/e2e/fixtures/apps/src/performance_evidence.rs"
