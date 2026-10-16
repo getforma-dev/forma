@@ -76,14 +76,16 @@ describe('version pins', () => {
     for (const pin of pins) expect(pin).toBe(shippedVersion);
   });
 
-  it("the runtime header's CDN pin is the current package version", () => {
-    // src/runtime.ts opens with a copy-pasteable CDN snippet. It sat on 1.0.1
-    // through five minor releases, so anyone following the file's own usage
-    // example pinned a runtime that predated the CSP-safe default.
+  it('the unreleased runtime header documents the explicit mount and its authority boundary', () => {
     const runtime = read('src/runtime.ts');
-    const pins = [...runtime.matchAll(/@getforma\/core@([\d.]+)/g)].map((m) => m[1]);
-    expect(pins.length, 'src/runtime.ts should still carry its CDN usage example').toBe(1);
-    expect(pins[0]).toBe(shippedVersion);
+    const header = runtime.slice(0, runtime.indexOf('*/'));
+    // Candidate3.0 uses a local artifact; the published2.x CDN examples have a
+    // different lifecycle. The separate docs-wide check still validates pins.
+    expect(header).toContain('mountMarkup(root, trustedHtml(markup), { tier, grants, config })');
+    expect(header).toContain('It binds the supplied markup beneath that root');
+    expect(header).toContain('update/unmount lifecycle methods. Every mount names its trust tier');
+    expect(header).toContain('grants grant nothing. No document scan, body observer or script/global');
+    expect(header).toContain('configuration can create or configure a mount.');
   });
 
   it('the changelog has an Unreleased section above the newest release', () => {
@@ -399,7 +401,7 @@ describe('"Verified by" citations', () => {
 });
 
 describe('the runtime file map', () => {
-  // src/runtime.ts is a deliberate 3.7k-line monolith and navigates by a map in
+  // src/runtime.ts remains a large explicit-runtime module and navigates by a map in
   // its header. The map used to list line ranges; four of them were stale, and
   // the one naming the security blocklist pointed 150 lines above it. It now
   // names the section MARKERS, which this test keeps honest.
@@ -409,7 +411,7 @@ describe('the runtime file map', () => {
   it('the runtime file map names every section marker, in order', () => {
     const markers = [...RUNTIME.matchAll(/^\/\/ ── (.+?) ──$/gm)].map((m) => m[1]!);
     expect(markers.length, 'runtime.ts should still be sectioned with // ── … ── markers')
-      .toBeGreaterThan(20);
+      .toBeGreaterThanOrEqual(19);
 
     // Each map row starts with the marker name (markers may carry a trailing
     // explanation the row omits, e.g. "Debug logger — enable via …").

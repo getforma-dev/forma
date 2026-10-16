@@ -132,3 +132,6 @@ docs/evidence/forma-181-indexed/integrated/*.json -text
 docs/archive/FORMA-108-A2-bridge/** -text
 
 docs/archive/FORMA-108-owned-scope-cleanup/** -text
+
+# Exact first failure/source bytes for FORMA-108 documentation migration.
+docs/archive/FORMA-108-documentation-checks/** -text

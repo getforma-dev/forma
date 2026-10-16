@@ -7,6 +7,30 @@
  * grants grant nothing. No document scan, body observer or script/global
  * configuration can create or configure a mount.
  *
+ * ── FILE MAP
+ *   Attribute safety & scope
+ *   $refetch registry
+ *   Configuration & diagnostics
+ *   Mount boundaries
+ *   Performance utilities
+ *   Pre-compiled regexes (avoid re-creation in hot paths)
+ *   Per-scope evaluator cache
+ *   Compiled template cache
+ *   Parsing utilities
+ *   Template text caching for data-list
+ *   CSS Transitions
+ *   Expression evaluator
+ *   Handler compiler
+ *   State initialization
+ *   DOM scanner
+ *   Element binding
+ *   Scope mounting / unmounting (single data-forma-state element)
+ *   DevTools API — State Inspector
+ *   Tiered mount
+ *
+ * ── SUPPORTED DIRECTIVES
+ * See docs/HTML-RUNTIME.md for the current directive grammar and mount contract.
+ *
  * The allowlist expression interpreter is shared by every runtime build.
  * Unreviewed markup is confined to the opaque-origin preview frame.
  */
@@ -45,7 +69,7 @@ import { sourceIsDev, warnDeprecated } from './deprecated';
  * sourceIsDev())`, written out at each site: every build folds it there to a
  * literal, chunked or not, where a `const` holding it is not inlined into the
  * IIFE. Run from source, it follows NODE_ENV, as `__DEV__` does.
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a production build carries neither the grant report nor the manual-attribute warning"
+ * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a production build carries neither the grant report nor the obsolete manual-switch warning"
  */
 declare const __FORMA_DEV_BUILD__: boolean | undefined;
 

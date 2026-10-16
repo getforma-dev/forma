@@ -1,0 +1,68 @@
+
+ RUN  v4.1.10 /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core
+
+ ❯ src/__tests__/docs-truth.test.ts (19 tests | 3 failed) 78ms
+     × the runtime header's CDN pin is the current package version 4ms
+     × every code comment citation resolves to a test that exists 40ms
+     × the runtime file map names every section marker, in order 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/__tests__/docs-truth.test.ts > version pins > the runtime header's CDN pin is the current package version
+AssertionError: src/runtime.ts should still carry its CDN usage example: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/__tests__/docs-truth.test.ts:85:84
+     83|     const runtime = read('src/runtime.ts');
+     84|     const pins = [...runtime.matchAll(/@getforma\/core@([\d.]+)/g)].ma…
+     85|     expect(pins.length, 'src/runtime.ts should still carry its CDN usa…
+       |                                                                                    ^
+     86|     expect(pins[0]).toBe(shippedVersion);
+     87|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/__tests__/docs-truth.test.ts > "Verified by" citations > every code comment citation resolves to a test that exists
+AssertionError: fix or remove these citations: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src/runtime.ts:48 → no test named \"a production build carries neither the grant report nor the manual-attribute warning\" in src/__tests__/runtime-tiered-mount.test.ts",
++ ]
+
+ ❯ src/__tests__/docs-truth.test.ts:396:53
+    394|       }
+    395|     }
+    396|     expect(broken, 'fix or remove these citations').toEqual([]);
+       |                                                     ^
+    397|     expect(checked, 'the source should still carry citations').toBeGre…
+    398|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/__tests__/docs-truth.test.ts > the runtime file map > the runtime file map names every section marker, in order
+AssertionError: runtime.ts should still be sectioned with // ── … ── markers: expected 19 to be greater than 20
+ ❯ src/__tests__/docs-truth.test.ts:412:8
+    410|     const markers = [...RUNTIME.matchAll(/^\/\/ ── (.+?) ──$/gm)].map(…
+    411|     expect(markers.length, 'runtime.ts should still be sectioned with …
+    412|       .toBeGreaterThan(20);
+       |        ^
+    413|
+    414|     // Each map row starts with the marker name (markers may carry a t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 210 passed (211)
+      Tests  3 failed | 3272 passed (3275)
+   Start at  00:56:51
+   Duration  32.94s (transform 1.61s, setup 0ms, import 7.36s, tests 12.92s, environment 28.55s)
+
