@@ -37,3 +37,6 @@ e2e/fixtures/apps/out/
 # packages/core/.gitignore for core's own copy.
 e2e/fixtures/formajs-runtime.global.js
 e2e/fixtures/formajs.global.js
+
+# Seeded expression-campaign reports; selected release evidence is archived explicitly.
+packages/core/fuzz/expressions/out/

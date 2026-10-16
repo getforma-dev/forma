@@ -1,0 +1,7 @@
+# Expression campaign foundation
+
+This repository-internal harness executes real parsed/validated expressions and handlers, compares their values or state changes with a bounded generative semantic model, and checks actual charged units against an independent table of minimum native-call costs. It does not import production cost functions to calculate its oracle. The production row-name inventory is checked only after numerical assertions, so it cannot replace the removed-cost mutation control.
+
+`node scripts/fuzz-expressions.mjs --seed=1290300 --cases=100000` from packages/core bundles an internal Node worker and writes `fuzz/expressions/out/report.json`. The launcher bounds time and output, records source/worker hashes and clean status, and preserves failures and per10,000-case progress. An actual timeout is failure, never an expected interpreter refusal. Every normal campaign must exercise all13 expression and4 statement AST kinds, all38 native cost rows, admitted cases and coded refusals.
+
+The per-merge test currently replays a1,160-case fixed sample plus nonvacuous charge assertions. The initial exact source-model pilot passed1,020 admitted cases and140 known refusals; the deliberately bounded timeout failed as intended. This is foundation evidence, not completed FORMA-129 qualification. Operator/cumulative/native-preflight controls, the authenticated regression and residual records, a real removed-cost mutant, the nightly100,000 run and the full hostile-widget browser corpus remain release gates. No production budget or grant is changed here.
