@@ -84,7 +84,10 @@ export function enterHtmlElement(parent:HtmlContext|undefined,tagName:string,pro
   inherited=parentFrame.attributeNamespaces.every(value=>value==='math')?['math']:[...inherited,'math'];
  }
  const attributeNamespaces=[...new Set(inherited.map(ns=>{
-  return ns==='html'&&tag==='svg'?'svg':ns==='html'&&tag==='math'?'math':ns;
+  // The tree-construction dispatcher handles a direct svg child of MathML
+  // annotation-xml with HTML rules regardless of the annotation's encoding.
+  if(tag==='svg'&&(ns==='html'||parentFrame?.tag==='annotation-xml'&&parentFrame.attributeNamespaces.includes('math')))return 'svg';
+  return ns==='html'&&tag==='math'?'math':ns;
  }))] as AttributeNamespace[];
  const attributeChildren=[...new Set(attributeNamespaces.flatMap((ns):AttributeNamespace[]=>{
   if(ns==='svg'&&['foreignobject','desc','title'].includes(tag)||ns==='math'&&['mi','mo','mn','ms','mtext'].includes(tag))return ['html'];

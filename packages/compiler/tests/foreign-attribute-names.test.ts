@@ -66,6 +66,11 @@ describe('native foreign attribute spelling and namespace proof',()=>{
   it('permits a spelling proved in both possible annotation namespaces',()=>{
     expect(()=>emitDeclaredPage(`${head} export function Page(p:{encoding:string}){return h('math',null,h('annotation-xml',{encoding:()=>p.encoding},h('g',{'data-safe':'x'})));}`)).not.toThrow();
   });
+  for(const props of ["null","{encoding:'application/xml'}","{encoding:()=>p.encoding}"]){
+    const page=(attributes:string)=>`${head} export function Page(p:{encoding:string}){return h('math',null,h('annotation-xml',${props},h('svg',{${attributes}})));}`;
+    it(`direct svg in MathML annotation-xml admits viewBox with ${props}`,()=>expect(()=>emitDeclaredPage(page("viewBox:'0 0 1 1'"))).not.toThrow());
+    it(`direct svg in MathML annotation-xml refuses definitionURL with ${props}`,()=>expect(()=>emitDeclaredPage(page("definitionURL:'x'"))).toThrow(/BUILD-610.*attribute/s));
+  }
   it('checks original registered reactive roots',()=>{
     expect(()=>entry(`${head} import {mount} from '@getforma/core'; function Bad(p:{value:string}){const[value]=createSignal(p.value);return h('svg',{TabIndex:value});} function Page(){return Bad({value:'1'});} activateIslands({Bad});mount(Page,'#app');`)).toThrow(/BUILD-610.*attribute/s);
   });
