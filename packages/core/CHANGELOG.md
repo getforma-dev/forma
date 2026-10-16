@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Deployment identity guard — FORMA-186 S4
 
+- The reviewed guard measures 46,997 B for the core entry and 47,095 B for browser ESM, exceeding the previous gates by 220 and 291 B. L-58 re-anchors these two gates to measured +300 B: 47,297 and 47,395 B. All three runtime artifacts are unchanged. The actual Counter route measures 25,585 B of Forma code gzip -9 (Browser mount 24,944 B), both below N2's unchanged 27,500 B ceiling.
+
 - `activateIslands` and `mount` compare the consuming build identity against forma-server's actual root before any component, preflight or trigger. A mismatch preserves served content, marks island hosts as skew, and dispatches the cancelable Document event `forma:skew` with `{ page, bundle, reload }`. Reload happens at most once per full page identity with working session storage; cancellation or unavailable storage leaves the page inert. Absent identities remain unchecked; direct `hydrateIsland` stays caller owned. Published artifacts retain the guarded free `__FORMA_BUILD__` identifier for the consuming build to define.
 
 ### Shared attribute-name and URL policy — FORMA-140
