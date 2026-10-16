@@ -117,7 +117,7 @@ const exactBootstrapRundown = children => {
   const seen=new Set();
   for(const event of metadata){
     const data=event.args?.data,expected=auditBootstrapSources.get(data?.sourceUrl);
-    if(!expected || event.ph!=='X' || !nonnegative(event.dur) || data.url!=='' || data.hasSourceUrl!==true || data.isModule!==false || typeof data.isolate!=='string' || !data.isolate || !Number.isSafeInteger(data.scriptId) || !Number.isSafeInteger(data.executionContextId) || seen.has(data.sourceUrl))return false;
+    if(!expected || event.ph!=='X' || !nonnegative(event.dur) || data.url!=='' || data.hasSourceUrl!==true || data.isModule!==false || typeof data.isolate!=='string' || !data.isolate || !Number.isSafeInteger(data.scriptId) || data.scriptId<=0 || !Number.isSafeInteger(data.executionContextId) || data.executionContextId<=0 || seen.has(data.sourceUrl))return false;
     const matching=sources.filter(source=>source.ph==='X' && nonnegative(source.dur) && source.args?.data?.isolate===data.isolate && source.args?.data?.scriptId===data.scriptId);
     if(matching.length!==1)return false;
     const source=matching[0].args.data;
@@ -158,24 +158,34 @@ const exactNavigationBootstrap = ({children,thread,task,end,frame,navigationId,u
       if(data?.frame!==frame || data.page!==frame || data.url!==url || data.isMainFrame!==true || data.isOutermostMainFrame!==true)return false;
     }
   }
-  for(const name of ['DocumentLoader::CommitNavigation','DocumentLoader::CreateParserPostCommit','DocumentLoader::BodyDataReceivedImpl','DecodedDataDocumentParser::AppendBytes','CommitLoad'])if(complete.filter(event=>event.name===name).length!==1)return false;
-  if(!complete.some(event=>event.name==='LocalWindowProxy::Initialize') || children.filter(event=>event.name==='FrameStartedLoading').length!==1)return false;
+  const one=name=>{const matches=complete.filter(event=>event.name===name);return matches.length===1?matches[0]:null;};
+  const inside=(child,parent)=>child && parent && child.ts>=parent.ts && child.ts+(child.dur??0)<=parent.ts+parent.dur;
+  // Chromium's DocumentLoader commit creates the document, parser and window.
+  // Require that exact causal nesting; trace flows remain metadata only.
+  const commit=one('DocumentLoader::CommitNavigation'),commitLoad=one('CommitLoad'),parser=one('DocumentLoader::CreateParserPostCommit');
+  const bodyStart=one('NavigationBodyLoader::StartLoadingBody'),bodyReadable=one('NavigationBodyLoader::OnReadable'),bodyPipe=one('NavigationBodyLoader::ReadFromDataPipe'),body=one('DocumentLoader::BodyDataReceivedImpl'),handle=one('DocumentLoader::HandleData'),commitData=one('DocumentLoader::CommitData'),append=one('DecodedDataDocumentParser::AppendBytes'),preloads=one('HTMLDocumentParser::MaybeFetchQueuedPreloads');
+  const contexts=complete.filter(event=>event.cat==='v8'),initializers=contexts.filter(event=>event.name==='LocalWindowProxy::Initialize');
+  if(!inside(commitLoad,commit) || !inside(parser,commit) || !contexts.length || !contexts.every(event=>inside(event,commit)) || !initializers.some(event=>inside(event,parser)))return false;
+  if(!inside(bodyStart,parser) || !inside(bodyReadable,bodyStart) || !inside(bodyPipe,bodyReadable) || !inside(body,bodyPipe) || !inside(handle,body) || !inside(commitData,handle) || !inside(append,commitData) || !inside(preloads,append))return false;
+  const rundown=children.filter(event=>event.name==='ScriptCatchup');
+  if(rundown.some(event=>!initializers.some(context=>inside(event,context))) || children.filter(event=>event.name==='FrameStartedLoading').length!==1)return false;
   const sends=children.filter(e=>e.name==='ResourceSendRequest'),ids=sends.map(e=>e.args?.data?.requestId);
   if(ids.some(id=>typeof id!=='string' || !id) || new Set(ids).size!==ids.length)return false;
   const documents=sends.filter(e=>e.args.data.resourceType==='Document');
   if(documents.length!==1 || documents[0].args.data.requestId!==navigationId || documents[0].args.data.url!==url || documents[0].args.data.frame!==frame || documents[0].args.data.requestMethod!=='GET' || documents[0].args.data.initiator!==undefined)return false;
   const responses=children.filter(e=>e.name==='ResourceReceiveResponse');
   if(responses.length!==1 || responses[0].args?.data?.requestId!==navigationId || responses[0].args.data.frame!==frame || responses[0].args.data.statusCode!==200 || responses[0].args.data.mimeType!=='text/html' || responses[0].args.data.fromCache!==false || responses[0].args.data.fromServiceWorker!==false)return false;
+  if(!(documents[0].ts<responses[0].ts && responses[0].ts<commit.ts))return false;
   const received=children.filter(e=>e.name==='ResourceReceivedData');
-  if(received.length!==1 || received[0].args?.data?.requestId!==navigationId || received[0].args.data.frame!==frame || !Number.isSafeInteger(received[0].args.data.encodedDataLength) || received[0].args.data.encodedDataLength<=0)return false;
+  if(received.length!==1 || received[0].args?.data?.requestId!==navigationId || received[0].args.data.frame!==frame || !Number.isSafeInteger(received[0].args.data.encodedDataLength) || received[0].args.data.encodedDataLength<=0 || !inside(received[0],body))return false;
   const firstScript=thread.filter(e=>e.ts===firstScriptUs && scriptEvent(e));
   const firstScriptUrls=new Set(firstScript.map(e=>e.args?.data?.url ?? e.args?.fileName).filter(Boolean));
   const subresources=sends.filter(e=>e.args.data.resourceType!=='Document');
-  if(subresources.length===0 || subresources.some(e=>!['Stylesheet','Script','Image'].includes(e.args.data.resourceType) || e.args.data.frame!==frame || e.args.data.requestMethod!=='GET' || e.args.data.initiator?.type!=='parser' || e.args.data.initiator.url!==url || !sameOrigin(e.args.data.url,url)))return false;
+  if(subresources.length===0 || subresources.some(e=>!inside(e,append) || !['Stylesheet','Script','Image'].includes(e.args.data.resourceType) || e.args.data.frame!==frame || e.args.data.requestMethod!=='GET' || e.args.data.initiator?.type!=='parser' || e.args.data.initiator.url!==url || !sameOrigin(e.args.data.url,url)))return false;
   const scripts=sends.filter(e=>e.args.data.resourceType==='Script');
   if(scripts.length!==1 || scripts[0].args.data.isLinkPreload!==true || !firstScriptUrls.has(scripts[0].args.data.url))return false;
   const preload=children.filter(e=>e.name==='PreloadRenderBlockingStatusChange');
-  if(preload.length!==1 || preload[0].args?.data?.requestId!==scripts[0].args.data.requestId || preload[0].args.data.url!==scripts[0].args.data.url)return false;
+  if(preload.length!==1 || !inside(preload[0],append) || preload[0].args?.data?.requestId!==scripts[0].args.data.requestId || preload[0].args.data.url!==scripts[0].args.data.url)return false;
   return exactBootstrapRundown(children);
 };
 const excludedKinds = new Set(['pre-application-browser-layout','pre-application-navigation-audit-bootstrap']);

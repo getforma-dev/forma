@@ -287,7 +287,10 @@ requires a new complete campaign under `N3-startup-strict50-v2`. The earlier
 `N3-startup-strict50-v1` layout-only classifier remains historical evidence.
 The current classifier may also separate a main-document commit task only when
 the same trace proves the exact navigation request, committed frame, response,
-parser and V8-context chain before the first application script. The only
+parser and V8-context chain before the first application script. The request
+must precede its response and commit; the commit must contain load, parser and
+context creation; and the parser's nested response-body chain must contain the
+received bytes, parser-fed bytes and resulting parser subresource requests. The only
 admitted script-related records in that chain are source-bound Lighthouse and
 Puppeteer new-document bootstrap records; any application execution, unexpected script,
 event handler work, foreign identity, mixed or unknown event counts the whole
