@@ -1,0 +1,31 @@
+{
+  "source": "697898c0732d55ef359e407c91e6c88c1e5028ab",
+  "ciRun": 38855398022,
+  "ciJob": 116825593076,
+  "files": {
+    "layout-before.log": {
+      "bytes": 1214,
+      "sha256": "7c715e1fd37deb9779c98b8c0f43cbf79f43cd72cc0b3516631092f2f62ca98d"
+    },
+    "README.md": {
+      "bytes": 1248,
+      "sha256": "1f2c69dbadb5c0ea49980d5650ccc03b6ef846c2066a8a849aae7052d00d061d"
+    },
+    "actual-workspace-sync.log": {
+      "bytes": 209,
+      "sha256": "9ac6276e15a571e029a3bab2dd06f9d4621cae2f199fe788133a1cbeb971ac28"
+    },
+    "ci-38855398022-check.log": {
+      "bytes": 834367,
+      "sha256": "899c480766a21c74a42c700b16b73a985523b72584ac70481b2132b1859657a3"
+    },
+    "sync-fixtures.sh.original": {
+      "bytes": 2002,
+      "sha256": "ad1cba1c4ed8436a5193afbb3537291d2a0cd41a10bb99267749a3cc9ff0f91a"
+    },
+    "layout-after.log": {
+      "bytes": 274,
+      "sha256": "f18291a8d8a9189307d0ae4c42fe3bb8eb3c6a1c9fd79e2f5a08ef7998813de4"
+    }
+  }
+}

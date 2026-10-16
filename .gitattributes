@@ -118,3 +118,6 @@ docs/evidence/forma-144-final/** -text
 
 # Original Vite configuration and its first failure are byte-authenticated.
 docs/archive/forma-144-vite7-config/** -text
+
+# Original fixture tool path and actual hosted failure are byte-authenticated.
+docs/archive/forma-144-fixture-tool/** -text
