@@ -25,3 +25,19 @@ export function normalizeDomText(value: string): string {
   if (value.indexOf('\r') === -1 && value.indexOf('\0') === -1) return value;
   return value.replace(/\r\n?|\0/g, match => (match === '\0' ? '�' : '\n'));
 }
+
+/**
+ * What a control-flow branch or row contributes: a string or number is a Text
+ * node under rule 1, as `h()` writes the same value as a child and as the
+ * walker writes the branch's DYN_TEXT; null, undefined and booleans write
+ * nothing (rules 5 and 6); anything else is the Node it is (FORMA-016 F5).
+ */
+export function branchNode(value: unknown): Node | null {
+  if (value == null || typeof value === 'boolean') return null;
+  return typeof value === 'string' || typeof value === 'number'
+    ? new Text(normalizeDomText(String(value)))
+    : (value as Node);
+}
+
+/** What a branch, case or row function may return. */
+export type Branch = Node | string | number | boolean | null | undefined;

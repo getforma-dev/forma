@@ -1,10 +1,10 @@
 // A button-check screen for the 3.0.0 contract: the controller roster and every control chip
-// are server markup read from one nested payload, and the two islands own the live parts.
+// start as server markup read from one nested payload; the echo island owns its chip list.
 // The booleans the old page's server injected under `show:` names (`hasSlots`, `noSlots`,
 // `hasLoss`, `quiet`) are plain declared props now, named by the handler, never by the
 // walker. The wire type of a slot's bindings is an array of {control, keys}: the old
 // map from control name to key list is outside the closed type set (negative/record-bindings).
-import { h, createShow, createSignal } from '@getforma/core';
+import { h, createList, createShow, createSignal } from '@getforma/core';
 
 export type Binding = { control: string; keys: string[] };
 export type Slot = {
@@ -87,7 +87,9 @@ export function FeedStatus(props: {
 }
 
 /** The live echo: a key the panel sends lights every chip it drives, on every slot at once. */
-export function LiveEcho(props: { hint: string }) {
+export function LiveEcho(props: { hint: string; chips: Chip[]; hasSlots: boolean }) {
+  const [chips, setChips] = createSignal(props.chips);
+  const [hasSlots] = createSignal(props.hasSlots);
   const [last, setLast] = createSignal('none');
   const [echoes, setEchoes] = createSignal(0);
   const [listening, setListening] = createSignal(false);
@@ -108,6 +110,23 @@ export function LiveEcho(props: { hint: string }) {
   }
   return (
     <section id="echo" aria-label="Live echo" ref={() => listen()}>
+      {createShow(
+        () => hasSlots(),
+        () => (
+          <ul class="chips" id="chips">
+            {createList(
+              () => chips(),
+              (chip) => chip.id,
+              (chip) => (
+                <li class="chip" data-chip={chip.id} data-slot={chip.slot} data-control={chip.control} data-keys={chip.keys}>
+                  <b>{chip.player}</b> <span>{chip.label}</span>
+                </li>
+              ),
+            )}
+          </ul>
+        ),
+      )}
+      <button id="echo-reverse" type="button" onClick={() => setChips([...chips()].reverse())}>Reverse chips</button>
       <p id="echo-hint">{props.hint}</p>
       <p id="echo-last">Last key: {() => last()}</p>
       <p id="echo-count">Chips lit: {() => echoes()}</p>

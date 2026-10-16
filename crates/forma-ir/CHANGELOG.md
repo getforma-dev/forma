@@ -2,12 +2,10 @@
 
 ## [Unreleased]
 
-- FORMA-181 checkpoint C (review follow-ups of B): `ListKeyViolation` is `#[non_exhaustive]`
-  with a constructor, `ListKeyViolation::new`; a key path segment holding a dot or a bracket,
-  or an empty one, is quoted in the diagnostic (`["user.id"]`); a row's key is held once (one
-  `Rc<str>` shared by the duplicate set and the row's guard). `keys.json` string vectors carry
-  the `served` markup the walker writes, pinned by a walker test and decoded by the three
-  browser engines in core's `keyed-adoption.spec.ts`.
+### Shared attribute-name and URL policy — FORMA-140
+
+- Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
+
 - FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
 
 - FORMA-182, rule 6's attribute table (finding F2), **rendered output changes with no source
@@ -20,6 +18,12 @@
   `sub-component-scopes.html` regenerated, originals archived with a ledger in
   `docs/archive/2026-10-15-pre-attribute-values/`.
 
+- FORMA-181 checkpoint C (review follow-ups of B): `ListKeyViolation` is `#[non_exhaustive]`
+  with a constructor, `ListKeyViolation::new`; a key path segment holding a dot or a bracket,
+  or an empty one, is quoted in the diagnostic (`["user.id"]`); a row's key is held once (one
+  `Rc<str>` shared by the duplicate set and the row's guard). `keys.json` string vectors carry
+  the `served` markup the walker writes, pinned by a walker test and decoded by the three
+  browser engines in core's `keyed-adoption.spec.ts`.
 - FORMA-181 checkpoint B (DR-8, L-7): the walker reads FMIR section `0x0006`. For each
   `LIST` it names, every row's value at the key path becomes the row root's
   `data-forma-key`, as canonical text: a string under value rule 1, a safe integer in
