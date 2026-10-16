@@ -154,3 +154,6 @@ docs/evidence/forma-144-final/** -text
 
 # Original Vite configuration and its first failure are byte-authenticated.
 docs/archive/forma-144-vite7-config/** -text
+
+# Original release workflow and actual failure-retention controls.
+docs/archive/release-p17-failure-retention/** -text

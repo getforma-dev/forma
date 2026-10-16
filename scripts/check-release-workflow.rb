@@ -21,6 +21,16 @@ NEEDS = {
   'record' => %w[check pack verify publish-crates publish-npm]
 }.freeze
 ACTIONS = %w[actions/checkout actions/setup-node actions/download-artifact dtolnay/rust-toolchain rust-lang/crates-io-auth-action].freeze
+P17_RUN = "mkdir \"$RUNNER_TEMP/p17\"\nnode scripts/verify-release-set.mjs \"$RUNNER_TEMP/release\" \"$RUNNER_TEMP/p17/p17.json\"\n".freeze
+P17_RECORD = {
+  'name' => "Record P17's evidence", 'id' => 'record',
+  'run' => "REPORT_SHA256=$(bash scripts/release-artifacts.sh record \"$RUNNER_TEMP/p17\")\necho \"report-sha256=$REPORT_SHA256\" >> \"$GITHUB_OUTPUT\"\n"
+}.freeze
+P17_UPLOAD = {
+  'uses' => 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9',
+  'if' => 'always()',
+  'with' => { 'name' => 'release-p17', 'path' => '${{ runner.temp }}/p17/', 'if-no-files-found' => 'error', 'overwrite' => true }
+}.freeze
 
 def steps(job)
   job.is_a?(Hash) && job['steps'].is_a?(Array) ? job['steps'] : []
@@ -60,7 +70,10 @@ def violations(doc)
     end
     out << "E2 #{name} cannot skip a gate" if job.key?('if') && !PUBLISH.key?(name)
     steps(job).each do |step|
-      out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || step.key?('if')
+      # Only this exact diagnostic upload may run after failure. The failed verify
+      # job still blocks every downstream publisher; its success record is not run.
+      evidence_upload = name == 'verify' && step == P17_UPLOAD
+      out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || (step.key?('if') && !evidence_upload)
       out << "E5 #{name} shell must fail fast" if step.key?('shell') && !%w[bash sh].include?(step['shell'])
       if step['uses']
         out << "S3 #{name} action must be SHA-pinned" unless step['uses'].match?(%r{\A[\w-]+/[\w./-]+@[a-f0-9]{40}\z})
@@ -123,6 +136,15 @@ def violations(doc)
   end
   out << 'K4 pack must consume committed locks (no fresh resolution)' if steps(jobs['pack']).any? { |s| s.fetch('run', '').match?(/generate-lockfile|npm\s+install/) }
   out << 'K5 P17 must run before publishing' unless steps(jobs['verify']).any? { |s| s.fetch('run', '').lines.map(&:strip).include?('node scripts/verify-release-set.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"') }
+  verify_steps = steps(jobs['verify'])
+  # Pin the gate, success-only hash record, and final diagnostic upload together.
+  # This must not become a general exception for conditional or ignored gates.
+  p17_positions = verify_steps.each_index.select { |i| verify_steps[i]['run'] == P17_RUN }
+  uploads = verify_steps.select { |s| action(s) == 'actions/upload-artifact' }
+  retention = p17_positions.length == 1 && uploads == [P17_UPLOAD] && verify_steps[-1] == P17_UPLOAD &&
+              verify_steps[-2] == P17_RECORD && p17_positions.first == verify_steps.length - 3 &&
+              jobs['verify']['outputs'] == { 'report-sha256' => '${{ steps.record.outputs.report-sha256 }}' }
+  out << 'K7 exact final P17 upload must retain diagnostics after failure without changing the success proof' unless retention
   out
 end
 

@@ -1,0 +1,32 @@
+✖ actual release workflow retains failed P17 bytes without changing publish success dependencies (0.976875ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 174.646958
+
+✖ failing tests:
+
+test at scripts/release-workflow-evidence.test.mjs:33:1
+✖ actual release workflow retains failed P17 bytes without changing publish success dependencies (0.976875ms)
+  AssertionError [ERR_ASSERTION]: failed P17 must retain its actual diagnostic directory
+  + actual - expected
+  
+  + undefined
+  - 'always()'
+  
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/scripts/release-workflow-evidence.test.mjs:34:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'always()',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
