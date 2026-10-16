@@ -3,12 +3,28 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT, digest, json, packedRuntimeLock, run, save } from './release-set.mjs';
-import { stageCandidateProject } from './candidate-scaffold.mjs';
+import { stageCandidateProject, validateCandidate } from './candidate-scaffold.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { stageFixtureProject, pruneCargoLock } from './release-fixture-apps.mjs';
 import { preparePackedSkew } from './release-skew-drill.mjs';
 import { FUZZ_TARGETS } from './release-burn-in-report.mjs';
+
+// Candidate scaffolding needs a descriptor beside its archives. A published RC
+// starts with seven authenticated registry archives, whereas a dry pack already
+// supplies its original DS11 descriptor. Never replace the latter's exact bytes.
+export function scaffoldDescriptor({ set, archives }) {
+  const path = join(archives, 'release-set.json');
+  const fields = ['schema', 'dryRun', 'tag', 'commit', 'contracts', 'packages'];
+  const view = Object.fromEntries(fields.filter(key => key in set).map(key => [key, set[key]]));
+  const existing = existsSync(path);
+  if (!existing) writeFileSync(path, JSON.stringify(view, null, 2) + '\n', { flag: 'wx' });
+  const sha256 = digest(path);
+  const descriptor = validateCandidate(archives, sha256, set.commit);
+  const actualView = Object.fromEntries(fields.filter(key => key in descriptor).map(key => [key, descriptor[key]]));
+  assert.deepEqual(actualView, view, 'staging descriptor differs from authenticated set');
+  return { path, sha256, kind: existing ? 'existing-original-descriptor' : 'derived-authenticated-staging-view' };
+}
 
 export async function prepareBurnIn({ authenticated, work, test }) {
   const { set, archives: dir } = authenticated;
@@ -35,8 +51,8 @@ export async function prepareBurnIn({ authenticated, work, test }) {
   run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], cli, { stdio: 'inherit' });
   assert.equal(digest(join(cli, 'package-lock.json')), cliLock); const cliSignatures = auditCandidateSignatures(cli, set.packages, dir);
   // The existing scaffold stager authenticates DS11, then localizes only Forma.
-  const ds11Path = join(dir, 'release-set.json');
-  const contextPath = join(work, 'context.json'); save(contextPath, { dir, recordSha256: digest(ds11Path), commit: set.commit, work });
+  const descriptor = scaffoldDescriptor(authenticated);
+  const contextPath = join(work, 'context.json'); save(contextPath, { dir, recordSha256: descriptor.sha256, commit: set.commit, work });
   const templates = {};
   for (const template of ['minimal', 'dashboard']) {
     const name = `burn-in-${template}`, project = join(work, name), admin = join(project, 'admin');
@@ -73,5 +89,5 @@ export async function prepareBurnIn({ authenticated, work, test }) {
   const triple = /^host: (.+)$/m.exec(run('rustc', ['-vV'], fuzz, { env: fuzzEnv }))?.[1]; assert(triple);
   const binaries = Object.fromEntries(FUZZ_TARGETS.map(name => [name, join(fuzz, 'target', triple, 'release', name)]));
   for (const path of Object.values(binaries)) assert(existsSync(path), `missing precompiled ASan target ${path}`);
-  return { extracted, templates, fixtures, skew, fuzz, binaries, sourceReport, templateSources, cliSignatures, cliLock, fuzzLock, metadata };
+  return { extracted, templates, fixtures, skew, fuzz, binaries, sourceReport, templateSources, cliSignatures, cliLock, fuzzLock, metadata, descriptor };
 }

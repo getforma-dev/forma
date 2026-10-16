@@ -1,0 +1,48 @@
+✖ published RC shape creates a clearly derived descriptor from authenticated fields, without fabricating original DS11 (4.004834ms)
+✖ dry-pack descriptor keeps its exact noncanonical bytes and mismatched views refuse without overwrite (5.988792ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.797834
+
+✖ failing tests:
+
+test at scripts/release-burn-in-stage.test.mjs:18:1
+✖ published RC shape creates a clearly derived descriptor from authenticated fields, without fabricating original DS11 (4.004834ms)
+  Error: ENOENT: no such file or directory, open '/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/burn-in-descriptor-doohLc/release-set.json'
+      at Object.openSync (node:fs:621:18)
+      at readFileSync (node:fs:487:35)
+      at digest (file:///Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/scripts/release-set.mjs:21:102)
+      at scaffoldDescriptor (file:///Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/scripts/release-burn-in-stage.mjs:18:26)
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/scripts/release-burn-in-stage.test.mjs:21:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/burn-in-descriptor-doohLc/release-set.json'
+  }
+
+test at scripts/release-burn-in-stage.test.mjs:26:1
+✖ dry-pack descriptor keeps its exact noncanonical bytes and mismatched views refuse without overwrite (5.988792ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/scripts/release-burn-in-stage.test.mjs:30:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /descriptor differs/,
+    operator: 'throws',
+    diff: 'simple'
+  }

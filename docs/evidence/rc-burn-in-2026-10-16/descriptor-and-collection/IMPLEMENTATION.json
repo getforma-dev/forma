@@ -1,0 +1,65 @@
+{
+  "baseCommit": "8b1cd7fa1428fd760563f2694f33f3399c0531ae",
+  "files": [
+    {
+      "path": "e2e/fixtures/apps/lib/behaviours.mjs",
+      "bytes": 13296,
+      "sha256": "c8a7eeb22cc6d047b4d1c420104f33ded10b0cb78a6af090d5dcb25f24092f6e"
+    },
+    {
+      "path": "scripts/release-burn-in-setup.mjs",
+      "bytes": 6392,
+      "sha256": "c23b8bc49702f315027b7e77146b234fcb18f1adbc58f1f89a9355e1e0288a30"
+    },
+    {
+      "path": "scripts/release-burn-in-stage.mjs",
+      "bytes": 8090,
+      "sha256": "0624bc056939d57ff5dd90a10ae2169c3616ef82625f70a710da8fc41d33dcb3"
+    },
+    {
+      "path": "scripts/release-burn-in.mjs",
+      "bytes": 14674,
+      "sha256": "47f13b36d50a853e86db838354b3668674b8c02ae6181e21297ad05384c33aae"
+    },
+    {
+      "path": "scripts/release-burn-in-stage.test.mjs",
+      "bytes": 2580,
+      "sha256": "ddb041f9ff68d362a2e2fc6d816e7517df851612674ff12f89129a43af9d8a54"
+    }
+  ],
+  "descriptor": {
+    "beforeFailed": 2,
+    "afterPassed": 7,
+    "afterDurationMs": 344.224042,
+    "liveView": "exclusive derived authenticated fields; not original DS11",
+    "existingDryDs11": "exact byte preservation; actual mismatched/tampered inputs refuse"
+  },
+  "collection": {
+    "before": 49,
+    "after": 55,
+    "removed": [],
+    "added": [
+      "  [chromium] \u203a fixtures/apps/apps.spec.ts:180:11 \u203a fixture application ledger: other branches \u203a /household: a failed load names the attempt, keeps the snapshot, and Retry recovers",
+      "  [chromium] \u203a fixtures/apps/apps.spec.ts:180:11 \u203a fixture application fauth: other branches \u203a /t/quote/login: a tenant named with script and markup renders as text and runs nothing",
+      "  [chromium] \u203a fixtures/apps/apps.spec.ts:180:11 \u203a fixture application fauth: other branches \u203a /t/unknown/login: an unknown tenant is a 404, not a page",
+      "  [chromium] \u203a fixtures/apps/apps.spec.ts:180:11 \u203a fixture application fauth: other branches \u203a /t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch",
+      "  [chromium] \u203a fixtures/apps/apps.spec.ts:180:11 \u203a fixture application ksx: other branches \u203a /check?state=empty: with no controller the empty section replaces the chips, and the roster is empty",
+      "  [chromium] \u203a fixtures/apps/apps.spec.ts:180:11 \u203a fixture application ksx: other branches \u203a /check: the roster and the chips are the nested payload read through paths and rows"
+    ],
+    "bodiesEqualCommit": "51486f74dfbe3667cc45df03d9cda4069bdb61ed"
+  },
+  "limitations": {
+    "actualBrowserExecuted": false,
+    "actualSetupExecuted": false,
+    "rcAuthenticationExecuted": false,
+    "burnInExecuted": false
+  },
+  "firstHostedFailure": {
+    "runId": 38947468985,
+    "jobId": 117130122961,
+    "head": "ca755186bb43eb95355bd4f3518e4115b5a94236",
+    "passedBrowserCases": 139,
+    "failedInventoryCases": 3,
+    "cause": "name references defeated unchanged literal-name collection, caught by existing inventory guards"
+  }
+}

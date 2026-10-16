@@ -1,0 +1,15 @@
+✔ actual failed child retains its original bytes and never returns success (46.397708ms)
+✔ exclusive fsynced logical records cannot overwrite or exceed the explicit bound (32.634ms)
+✔ setup requires exact current dry-pack source and seven original archive hashes (206.630541ms)
+✔ 1000 completed seed inputs may take zero seconds and always earn zero soak credit (4.146584ms)
+✔ setup completion requires raw seed records and completed ownership, and never claims RC acceptance (16.140917ms)
+✔ published RC shape creates a clearly derived descriptor from authenticated fields, without fabricating original DS11 (4.643ms)
+✔ dry-pack descriptor keeps its exact noncanonical bytes and mismatched views refuse without overwrite (4.456625ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 344.224042

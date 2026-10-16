@@ -1,0 +1,51 @@
+Listing tests:
+  [chromium] › fixtures/apps/apps.spec.ts:112:9 › fixture application ledger › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application ledger › /household: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application ledger › /household: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:112:9 › fixture application fauth › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite-only tenant): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite-only tenant): adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /t/:slug/login (invite link on an invite-only tenant, starting in register mode): adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/onboarding: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/onboarding: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application fauth › /platform/benchmark (no results): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application fauth › /platform/benchmark (no results): adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:112:9 › fixture application ksx › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application ksx › /check: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application ksx › /check: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application ksx › /check (no controller): the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application ksx › /check (no controller): adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:112:9 › fixture application bench › builds in strict mode with nothing above a note, one native module per route, and one script per route with islands
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application bench › /pages/300: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application bench › /pages/300: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application bench › /pages/1500: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application bench › /pages/1500: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application bench › /pages/10000: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application bench › /pages/10000: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application bench › /pages/15000: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application bench › /pages/15000: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application bench › /pages/20000: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application bench › /pages/20000: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:129:13 › fixture application bench › /pages/islands-100: the server's values are in the HTML with JavaScript off, and the state envelope is the handler's values
+  [chromium] › fixtures/apps/apps.spec.ts:142:13 › fixture application bench › /pages/islands-100: adoption writes nothing, every island keeps its server values, and then the islands work
+  [chromium] › fixtures/apps/apps.spec.ts:174:9 › fixture application ledger: other branches › every extra check in lib/behaviours.mjs is run by name
+  [chromium] › fixtures/apps/apps.spec.ts:174:9 › fixture application fauth: other branches › every extra check in lib/behaviours.mjs is run by name
+  [chromium] › fixtures/apps/apps.spec.ts:174:9 › fixture application ksx: other branches › every extra check in lib/behaviours.mjs is run by name
+  [chromium] › fixtures/apps/apps.spec.ts:174:9 › fixture application bench: other branches › every extra check in lib/behaviours.mjs is run by name
+  [chromium] › fixtures/apps/apps.spec.ts:196:7 › activation is required, not assumed › a page with no behaviour that proves activation is refused
+  [chromium] › fixtures/apps/apps.spec.ts:201:7 › activation is required, not assumed › a variant whose islands never activate fails its behaviour (the reviewer's probe)
+  [chromium] › fixtures/apps/apps.spec.ts:235:7 › fixture type refusals and accepted N2 shapes › a props type outside the closed type set (the studio payload's Record of key lists) fails the build with BUILD-610, naming the file, line and column
+  [chromium] › fixtures/apps/apps.spec.ts:249:7 › fixture type refusals and accepted N2 shapes › a condition the compiler would have to evaluate fails with BUILD-610 and the fix is a declared boolean
+  [chromium] › fixtures/apps/apps.spec.ts:256:7 › fixture type refusals and accepted N2 shapes › an island holding a client-side list builds inside the emitted size policy (L-58)
+  [chromium] › fixtures/apps/apps.spec.ts:284:9 › fixture application bench: the consumers' heaviest pages › /pages/300 (a tenant login): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB
+  [chromium] › fixtures/apps/apps.spec.ts:284:9 › fixture application bench: the consumers' heaviest pages › /pages/1500 (an administration console): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB
+  [chromium] › fixtures/apps/apps.spec.ts:284:9 › fixture application bench: the consumers' heaviest pages › /pages/10000 (a document viewer): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB
+  [chromium] › fixtures/apps/apps.spec.ts:284:9 › fixture application bench: the consumers' heaviest pages › /pages/15000 (a canvas of 50 modules): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB
+  [chromium] › fixtures/apps/apps.spec.ts:284:9 › fixture application bench: the consumers' heaviest pages › /pages/20000 (a year of transactions): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB
+  [chromium] › fixtures/apps/apps.spec.ts:284:9 › fixture application bench: the consumers' heaviest pages › /pages/islands-100 (N3's page of 100 islands): the walker's node count is within 3% of the consumer's figure, with its islands and a state envelope under 1 MiB
+Total: 49 tests in 1 file

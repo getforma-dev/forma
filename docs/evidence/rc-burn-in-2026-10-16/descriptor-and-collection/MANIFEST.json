@@ -1,0 +1,69 @@
+{
+  "files": [
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/ORIGINALS.json",
+      "bytes": 1460,
+      "sha256": "742034e43b8df267769ff7793fcadcf13d61245c1490a0b246c7b6393cb0a7cf"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/burn-in-descriptor-before.log",
+      "bytes": 2600,
+      "sha256": "7d725661c5732220103e1288fd617a9d5e811da6e7c230402fdec5209e8520bc"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/burn-in-descriptor-before.mjs",
+      "bytes": 7438,
+      "sha256": "e5a33214a9195265ebefb2fcede26d5f48cff88fc9558b3101a4c689a3233ff2"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/burn-in-descriptor-original-probes.test.mjs",
+      "bytes": 2580,
+      "sha256": "ddb041f9ff68d362a2e2fc6d816e7517df851612674ff12f89129a43af9d8a54"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/burn-in-fixture-collection-before.log",
+      "bytes": 10153,
+      "sha256": "d2f259232b2c395a55bb8c586cb15cd70619d10f45cda1f10b26df15d40a23a6"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/ci-38947468985-check.log",
+      "bytes": 946318,
+      "sha256": "5fa25684d3c0ce3405fd7f7b1a00120d78a9d0e76db7f07d40110804af8f6e15"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/e2e/fixtures/apps/lib/behaviours.mjs",
+      "bytes": 12960,
+      "sha256": "3f7cf6e82ee1a2302c18005c5288a7de4871e8a8bdbc3b103fd49ba9216eaf6d"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/scripts/release-burn-in-setup.mjs",
+      "bytes": 6361,
+      "sha256": "29b3c95cc80953a0cf458dd5776a8279aa03021d31f1d98b8627367bef0d08f8"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/scripts/release-burn-in-stage.mjs",
+      "bytes": 6968,
+      "sha256": "dee8c779bd71a2172e0c039ebfb1a57346cccf2309742ea21eaff052e02716f2"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/scripts/release-burn-in.mjs",
+      "bytes": 14643,
+      "sha256": "e77a028ebf9867bc48ad783291e0178d7ea2d191a05547ef43d8222248bec7cc"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/descriptor-and-collection/IMPLEMENTATION.json",
+      "bytes": 3047,
+      "sha256": "8e843bf478b13605b7dd435b15470243bc2dd184b95c16cd1ec95d089f479c34"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/descriptor-and-collection/burn-in-descriptor-after.log",
+      "bytes": 864,
+      "sha256": "02bb0d89028a96efb177b7871e70f3352800c074ac95233204e20ca9ea2d2bde"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/descriptor-and-collection/burn-in-fixture-collection-after.log",
+      "bytes": 11257,
+      "sha256": "3fe7751bb34fb53efe005c123648d32cf849fccf3e63b60ea45e9b34c8d61c1e"
+    }
+  ]
+}

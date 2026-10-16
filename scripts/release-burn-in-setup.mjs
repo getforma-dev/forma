@@ -37,7 +37,7 @@ export async function rehearseSetup({ directory, recordSha256, commit, work, evi
     const staged = await prepareBurnIn({ authenticated, work, test: async (name, fn) => {
       await fn(); report.steps.push(name);
     } });
-    report.prepared = { templateSources: staged.templateSources, cliLock: staged.cliLock,
+    report.prepared = { descriptor: staged.descriptor, templateSources: staged.templateSources, cliLock: staged.cliLock,
       fuzzLock: staged.fuzzLock, metadata: staged.metadata, sourceReport: staged.sourceReport,
       tools: { node: process.version, nightly: run('rustc', ['-Vv'], staged.fuzz,
         { env: { ...process.env, RUSTUP_TOOLCHAIN: 'nightly-2026-10-01' } }),
