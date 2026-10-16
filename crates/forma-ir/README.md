@@ -18,7 +18,7 @@ forma-ir = "0.2.2"
 - Parses `.ir` binary files (FMIR format) into a validated `IrModule`
 - Walks the opcode stream and generates HTML with proper escaping
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
-- Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, etc.) for [FormaJS](https://github.com/getforma-dev/formajs) client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
+- Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, etc.) for [@getforma/core](https://github.com/getforma-dev/forma/tree/main/packages/core) client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
 - Writes form-control values as HTML reads them: a `textarea`'s `value` as its text, a `select`'s as `selected` on the matching option
 - Renders a list in O(rows), with a committed regression gate that fails the build if that changes (`tests/list_scaling.rs`)
 

@@ -1,20 +1,20 @@
 # FormaJS
 
-[![CI](https://github.com/getforma-dev/formajs/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/formajs/actions/workflows/ci.yml)
+[![CI](https://github.com/getforma-dev/forma/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/forma/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@getforma/core)](https://www.npmjs.com/package/@getforma/core)
 [![Socket Badge](https://socket.dev/api/badge/npm/package/@getforma/core)](https://socket.dev/npm/package/@getforma/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Reactive DOM library with fine-grained signals. No virtual DOM — signals update only the DOM nodes that changed. Components run once.
 
-> **Where this sits.** One product, four repos:
+> **Where this sits.** One product, one repository, seven packages:
 >
 > ```
 > TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
->          forma-tools                          forma                    THIS REPO
+>          packages/compiler                    crates/forma-ir          packages/core
 > ```
 >
-> **You are here:** the client runtime — signals, `h()`, islands, hydration, and the zero-build HTML runtime. It works entirely on its own; the rest of the stack is opt-in. New to the stack? Read **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)** first. Neighbours: [forma-tools](https://github.com/getforma-dev/forma-tools) (compiler + build) · [forma](https://github.com/getforma-dev/forma) (Rust parser, walker, server) · [create-forma-app](https://github.com/getforma-dev/create-forma-app) (scaffolder).
+> **You are here:** the client runtime — signals, `h()`, islands, hydration, and the zero-build HTML runtime. It works entirely on its own; the rest of the stack is opt-in. New to the stack? Read **[the 3.0 architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md)** first. The [Forma workspace](https://github.com/getforma-dev/forma) also contains the compiler, build pipeline, Rust crates and scaffolder.
 
 ```tsx
 import { createSignal, h, mount } from "@getforma/core";
