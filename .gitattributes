@@ -67,3 +67,6 @@ docs/archive/2026-10-15-pre-list-source/** -text
 packages/compiler/tests/fixtures/ir-corpus/list-same-source/*.ts text eol=lf
 # FORMA-181 checkpoint C: the pre-key-adoption test originals are authenticated by SHA-256.
 docs/archive/2026-10-15-pre-key-adoption/** -text
+
+# FORMA-101: preserved pre-native-source originals and wire products are authenticated byte-for-byte.
+docs/archive/FORMA-101-unproved-list-sources/** -text
