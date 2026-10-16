@@ -213,6 +213,17 @@ docs/archive/skew-expected-reload/** -text
 docs/archive/playwright-firefox-channel/** -text
 docs/evidence/playwright-firefox-channel/** -text
 
+# Preserve the actual WebKit failure and native baseline byte-for-byte.
+docs/archive/webkit-native-select-baseline/** -text
+
+# Preserve the first exact select-repair qualification and frame failures.
+docs/evidence/webkit-native-select-baseline/** -text
+
+# Preserve the exact phase-only frame TCP diagnostic and original failures.
+docs/archive/frame-tcp-control-diagnostic/** -text
+
+# Preserve the causal frame-control repair qualification.
+docs/evidence/frame-tcp-control-repair/** -text
 # Byte-exact lazy native prototype originals and scoped correctness evidence.
 docs/archive/forma-191-lazy-prototype/** -text
 docs/evidence/forma-191-lazy-prototype/** -text
@@ -220,3 +231,6 @@ docs/evidence/forma-191-lazy-prototype/** -text
 # Preserve the original FORMA-116 rollout and approved L-60 disposition evidence.
 docs/archive/forma-116-live-deferral/** -text
 docs/evidence/forma-116-live-deferral/** -text
+
+# Original hosted failure and primary parser specification evidence.
+docs/archive/html-document-parser-control/** -text

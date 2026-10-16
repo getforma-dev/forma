@@ -1,0 +1,47 @@
+{
+  "sourceHead": "9ac71d6e0c9c7c959117b2d8ca673d1cb872ab93",
+  "base": "cf869f8302ea0a07d144f39b808a8452485df970",
+  "node": "v24.22.0",
+  "playwright": "1.64.1",
+  "workers": 2,
+  "CARGO_BUILD_JOBS": 3,
+  "port": 3469,
+  "focused": {
+    "command": "npx playwright test e2e/adoption-controls.spec.ts --grep \"external select peers and ordinary implicit defaults\" --workers=2 --reporter=list",
+    "cwd": "packages/core",
+    "exitCode": 0,
+    "passed": 3,
+    "reportedSeconds": 3.4
+  },
+  "fullWebkit": {
+    "command": "npm run test:e2e:engines --workspace=packages/core -- --project=webkit --workers=2 --reporter=list",
+    "coreBuildPassed": true,
+    "exitCode": 1,
+    "passed": 408,
+    "failed": 3,
+    "reportedDuration": "1.4m",
+    "failures": [
+      {
+        "path": "packages/core/e2e/frame.spec.ts",
+        "line": 182,
+        "error": "read ECONNRESET"
+      },
+      {
+        "path": "packages/core/e2e/frame.spec.ts",
+        "line": 230,
+        "error": "read ECONNRESET"
+      },
+      {
+        "path": "packages/core/e2e/frame.spec.ts",
+        "line": 277,
+        "error": "read ECONNRESET"
+      }
+    ],
+    "repairedCasePassed": true
+  },
+  "retry": false,
+  "fullSuitePassed": false,
+  "hostedRepairCiPending": true,
+  "productionSourceChanged": false,
+  "serverPortClosedAfterExit": true
+}

@@ -1,0 +1,42 @@
+{
+  "diagnosticSource": "58df2a79e96de906b5418228ec81818ca2537950",
+  "exitCode": 1,
+  "elapsedSeconds": 10.553235292434692,
+  "testCount": 3,
+  "actualWorkers": 1,
+  "workerCap": 2,
+  "ports": [
+    {
+      "port": 3903,
+      "preControlConnections": 0,
+      "acceptedOnlyAfterPositiveControl": 4,
+      "positiveControlResets": 3,
+      "errorsOtherThanReset": 0,
+      "closed": true
+    },
+    {
+      "port": 3906,
+      "preControlConnections": 0,
+      "acceptedOnlyAfterPositiveControl": 4,
+      "positiveControlResets": 3,
+      "errorsOtherThanReset": 0,
+      "closed": true
+    },
+    {
+      "port": 3909,
+      "preControlConnections": 0,
+      "acceptedOnlyAfterPositiveControl": 4,
+      "positiveControlResets": 3,
+      "errorsOtherThanReset": 0,
+      "closed": true
+    }
+  ],
+  "EADDRINUSEObserved": false,
+  "listenerPortsAbsentAfterExit": [
+    3469,
+    3903,
+    3906,
+    3909
+  ],
+  "retry": false
+}

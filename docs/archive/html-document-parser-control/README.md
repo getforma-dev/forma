@@ -1,0 +1,7 @@
+# Archived document parser control failure
+
+Exact PR106 source 15bcb4d699404c359eddec5ba56b3aec37077274 failed hosted E2E 38887218208 after all 411 core WebKit cases passed. The later FORMA-139 Node test parsed an original native page with `template.innerHTML`; Linux WebKit preserved nested forms in that template context. The real admitted native products passed, as did Chromium/Firefox and both parity jobs. No run was retried. The Node failure emitted no test-results artifact; all four available run artifacts were downloaded separately under the working evidence directory.
+
+The original test was introduced by 83da5b07 and changed only for engine selection by 5beb6475. This failure concerns its parser context, not the compiler's existing BUILD-618 nested-form refusal.
+
+Primary causal references: https://github.com/whatwg/html/issues/12257 and https://github.com/whatwg/html/pull/12911. The latter changes template-content form-pointer handling; document parsing is a different context. Raw GitHub API records and exact merged specification commit 9ed7f27762e6e34622bcca9ebc93cedd1c996e99 are retained. Its form start-tag rule explicitly separates template-content and document parsing. The proposed correction parses the same exact original native bytes as a full text/html document with DOMParser, preserving serialization-change and forbidden-nesting assertions for every archived case. No engine-specific exception or production change.

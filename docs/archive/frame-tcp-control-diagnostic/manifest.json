@@ -1,0 +1,70 @@
+{
+  "diagnosticSource": "58df2a79e96de906b5418228ec81818ca2537950",
+  "files": [
+    {
+      "path": "PROPOSAL.md",
+      "bytes": 1221,
+      "sha256": "bca19dfd59366d3845b97839edb4faccfc7aa08f4e8cfbbc73c3e186d37c43eb"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1508,
+      "sha256": "4937e1af423a39b04e8ef870e72bc7f360c9345e57ea7e356a167bb8834efdb4"
+    },
+    {
+      "path": "command.json",
+      "bytes": 851,
+      "sha256": "690d711b27067479362ac82d4c8738911ef82c20dc63e29c4048acfe331d44f1"
+    },
+    {
+      "path": "execution.json",
+      "bytes": 1090,
+      "sha256": "516e58a03cdc70e89fc187078fece615c7e2ee2558f29dfd490cbab575a06f1d"
+    },
+    {
+      "path": "frame-diagnostic.spec.ts",
+      "bytes": 17535,
+      "sha256": "4401b9ee220a08e2d3dccef6ca6b8bdd3d4bbdd98bf7e3cd59e5b78174e33b9c"
+    },
+    {
+      "path": "frame-original.spec.ts",
+      "bytes": 16435,
+      "sha256": "f34b77b3cc0d668af66d34eaed586d4040846dbf1cdd6c388ae517191d34d583"
+    },
+    {
+      "path": "result.json",
+      "bytes": 930,
+      "sha256": "3a47c7e3174cdcf0a584023c344fd388095fc1b7712974e7061bb7c72773c251"
+    },
+    {
+      "path": "run.log",
+      "bytes": 9425,
+      "sha256": "aad60ce6b17a02d34b1da8beab19d92f96d1bf5fc57e12813b305eb853564cdf"
+    },
+    {
+      "path": "source-manifest.json",
+      "bytes": 1079,
+      "sha256": "99a8551aa699a8b097e9f632608ae574abca3ef2a75d32df6f72d602409a7107"
+    },
+    {
+      "path": "test-results/.last-run.json",
+      "bytes": 194,
+      "sha256": "65691fc3b5336c3db4d535576fe9b15510337b2538f9dd30f7038eff0631954e"
+    },
+    {
+      "path": "test-results/frame-a-module-s-iframe-sr-693a3--bound-and-nothing-connects-webkit/error-context.md",
+      "bytes": 683,
+      "sha256": "18da39ddf283e28252a25de6d0dfd6f3ec5eb21935987c1b7310c975077d2852"
+    },
+    {
+      "path": "test-results/frame-a-module-s-link-open-edc15-efetch-preload-a-bound-href-webkit/error-context.md",
+      "bytes": 600,
+      "sha256": "2cc3ed6ab557799ae5190eeab1ce44b7daf6d1576cab0301fbc925bac6cd7201"
+    },
+    {
+      "path": "test-results/frame-a-module-s-link-surv-21274-er-render-and-after-update--webkit/error-context.md",
+      "bytes": 768,
+      "sha256": "2b95dee07e725f6cd1b0d8d9d7e1a7e7c984ab50845bdd23de8cae1e974ebf73"
+    }
+  ]
+}
