@@ -86,20 +86,26 @@ test('native boolean presence and coded default-before-edit refusal never repair
  });
  expect(result).toEqual({values:[{edited:false,value:''},{edited:false,value:''},{edited:false,value:''}],mismatch:'FORMA_E_HYDRATE_VALUE',invalid:'FORMA_E_HYDRATE_INPUT_TARGET',mutations:0,positive:1,text:'user',number:''});
 });
-test('external select peers and ordinary implicit defaults remain eligible while ambiguous winners refuse',async({page,browserName})=>{
+test('external select peers and ordinary implicit defaults remain eligible while ambiguous winners refuse',async({page})=>{
  await serve(page,'<select><option id="plain">one</option><option>two</option></select><select><optgroup id="group"><option id="inside" selected>A</option></optgroup><option id="outside" selected>B</option></select><section id="ambiguous"><select><optgroup disabled><option id="disabled" value="d">D</option></optgroup><option id="enabled" value="a">A</option><option id="unaffected" value="b">B</option></select></section><section id="sized"><select size="2"><optgroup disabled><option value="d">D</option></optgroup><option id="sizeOption" value="a">A</option></select><select multiple><optgroup disabled><option value="d">D</option></optgroup><option id="multipleOption" value="a">A</option></select></section><section id="allDisabled"><select><optgroup disabled><option id="allDisabledFirst">A</option><option>B</option></optgroup></select></section>');
  const result=await page.evaluate(async()=>{
-  const {AdoptionControls,observeMutations}=await import('/control-kernel.mjs' as string),get=(id:string)=>document.getElementById(id)!;
+  const get=(id:string)=>document.getElementById(id)!;
+  const disabledSelect=get('allDisabledFirst').closest('select')!;
+  const nativeDisabled=()=>({selected:[...disabledSelect.options].map(option=>option.selected),index:disabledSelect.selectedIndex});
+  // Native defaults can change between engine versions/ports. Capture the
+  // untouched parser result before importing or constructing the Forma oracle.
+  const disabledBefore=nativeDisabled();
+  const {AdoptionControls,observeMutations}=await import('/control-kernel.mjs' as string);
   const finishObservation=observeMutations();
   const plain=new AdoptionControls(get('plain'));plain.add({element:get('plain'),key:'selected',initial:false});const implicit=plain.finish().map(({edited,value}:any)=>({edited,value}));plain.check();plain.release();
   const group=new AdoptionControls(get('group'));group.add({element:get('inside'),key:'selected',initial:true});const grouped=group.finish().map(({edited,value}:any)=>({edited,value}));group.check();group.release();
   const codes=[];for(const id of ['disabled','enabled']){const controls=new AdoptionControls(get('ambiguous'));controls.add({element:get(id),key:'selected',initial:false,codec:'boolean'});try{controls.finish();codes.push('PASS');}catch(error){codes.push((error as any).code);}controls.release();}
   const unaffected=new AdoptionControls(get('ambiguous'));unaffected.add({element:get('unaffected'),key:'selected',initial:false});const other=unaffected.finish().map(({edited,value}:any)=>({edited,value}));unaffected.release();
   const sized=new AdoptionControls(get('sized'));for(const id of ['sizeOption','multipleOption'])sized.add({element:get(id),key:'selected',initial:false});const noImplicit=sized.finish().map(({edited,value}:any)=>({edited,value}));sized.release();
-  const disabled=new AdoptionControls(get('allDisabled'));disabled.add({element:get('allDisabledFirst'),key:'selected',initial:false});const allDisabled=disabled.finish().map(({edited,value}:any)=>({edited,value}));disabled.release();
-  const result={implicit,grouped,codes,other,noImplicit,allDisabled,...await finishObservation()};return result;
+  const disabled=new AdoptionControls(get('allDisabled'));disabled.add({element:get('allDisabledFirst'),key:'selected',initial:false});const allDisabled=disabled.finish().map(({edited,value}:any)=>({edited,value}));disabled.check();disabled.release();const disabledAfter=nativeDisabled();
+  const result={implicit,grouped,codes,other,noImplicit,allDisabled,disabledBefore,disabledAfter,...await finishObservation()};return result;
  });
- expect(result).toEqual({implicit:[{edited:false,value:true}],grouped:[{edited:false,value:false}],codes:['FORMA_E_HYDRATE_VALUE','FORMA_E_HYDRATE_VALUE'],other:[{edited:false,value:false}],noImplicit:[{edited:false,value:false},{edited:false,value:false}],allDisabled:[{edited:false,value:browserName==='webkit'}],mutations:0,positive:1});
+ expect(result).toEqual({implicit:[{edited:false,value:true}],grouped:[{edited:false,value:false}],codes:['FORMA_E_HYDRATE_VALUE','FORMA_E_HYDRATE_VALUE'],other:[{edited:false,value:false}],noImplicit:[{edited:false,value:false},{edited:false,value:false}],allDisabled:[{edited:false,value:result.disabledBefore.selected[0]}],disabledBefore:result.disabledBefore,disabledAfter:result.disabledBefore,mutations:0,positive:1});
 });
 for(const codec of [undefined,'string'] as const)test(`color alpha/display-p3 defaults stay untouched with ${codec??'readonly'} binding`,async({page})=>{
  await serve(page,'<section id="host"><input id="i" type="color" alpha colorspace="display-p3" value="color(display-p3 1 0 0 / 0.5)"></section>');
