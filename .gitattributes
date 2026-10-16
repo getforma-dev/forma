@@ -126,4 +126,7 @@ packages/core/e2e/hostile-widgets/probe-provenance.json text eol=lf
 # FORMA-129: original calibration failures and actual source qualification bytes.
 docs/archive/FORMA-129-matrix-expectations/** -text
 docs/evidence/forma-129/** -text
+
+# Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
+docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
