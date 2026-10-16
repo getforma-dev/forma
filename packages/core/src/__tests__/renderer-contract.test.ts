@@ -93,11 +93,14 @@ const ATTR_TAG: Record<string, string> = {
   src: 'img',
   action: 'form',
   formaction: 'button',
+  'xlink:href': 'use',
   poster: 'video',
   background: 'table',
   data: 'object',
-  'xlink:href': 'use',
 };
+// Collect cases from the expected contract. A production-set regression must
+// not remove its own tests or change the identities of later collected cases.
+const URL_ATTRIBUTE_CASES = Object.keys(ATTR_TAG);
 
 const SVG_DATA_URL =
   'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>';
@@ -422,7 +425,7 @@ describe('renderer contract: the table covers every sink', () => {
     expect(frame.getAttribute('srcdoc')).toBe('<b>typed</b>');
   });
 
-  it.each([...URL_ATTRS])('strict preparation refuses object coercion at %s before any write', attr => {
+  it.each(URL_ATTRIBUTE_CASES)('strict preparation refuses object coercion at %s before any write', attr => {
     const prepared = SINKS.find(sink => sink.name === 'prepared-adopt')!;
     const convert = vi.fn(() => 'javascript:alert(1)');
     expect(() => prepared.write(ATTR_TAG[attr]!, attr, { toString: convert })).toThrow('FORMA_E_HYDRATE_STRUCTURE');
@@ -442,7 +445,7 @@ describe('renderer contract: the table covers every sink', () => {
 // ---------------------------------------------------------------------------
 
 describe.each(SINKS)('renderer contract [$name]: dangerous URLs', (sink) => {
-  it.each([...URL_ATTRS])('drops every script scheme written to %s', (attr) => {
+  it.each(URL_ATTRIBUTE_CASES)('drops every script scheme written to %s', (attr) => {
     for (const url of DANGEROUS_URLS) {
       const el = sink.write(ATTR_TAG[attr]!, attr, url);
       expect(readAttr(el, attr), `${JSON.stringify(url)} on ${attr}`).toBeNull();
@@ -452,7 +455,7 @@ describe.each(SINKS)('renderer contract [$name]: dangerous URLs', (sink) => {
     }
   });
 
-  it.each([...URL_ATTRS])('keeps ordinary URLs on %s', (attr) => {
+  it.each(URL_ATTRIBUTE_CASES)('keeps ordinary URLs on %s', (attr) => {
     for (const url of SAFE_URLS) {
       const el = sink.write(ATTR_TAG[attr]!, attr, url);
       expect(readAttr(el, attr), `${url} on ${attr}`).toBe(url);
@@ -491,7 +494,7 @@ function changingString(first: string, later: string): { toString(): string } {
 }
 
 describe.each(OBJECT_SINKS)('renderer contract [$name]: one conversion per write', (sink) => {
-  it.each([...URL_ATTRS])('writes %s as the string the URL guard checked, not a second conversion', (attr) => {
+  it.each(URL_ATTRIBUTE_CASES)('writes %s as the string the URL guard checked, not a second conversion', (attr) => {
     // formajs#29's review (B1): the srcdoc path wrote every object as itself,
     // so setAttribute converted it a second time, after isDangerousUrl had
     // passed the first string.
