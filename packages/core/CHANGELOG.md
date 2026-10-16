@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Serialize mutation-probe files and explicitly concurrent tests under fail-fast execution, so one assertion cannot interrupt another worker's completion evidence. Incomplete test results remain unqualified; the corpus, clean/restored baselines and detection floors are unchanged.
+
 - Allocate detached HTML prototypes when their tags are first requested, instead of creating 40 common-tag prototypes on the first `h()` call. Later calls still return independent shallow clones; this change makes no timing-gate claim.
 
 - Share exact `className`/`htmlFor`/`tabIndex` normalization between static/reactive `h()` writes and adoption. HTML and SVG attributes now use the same declared alias policy; ordinary browser object property order remains intact.

@@ -50,6 +50,12 @@ test('reported failure needs actual execution, completion, timing and no retry',
     const data = failed(); Object.assign(data.modules[0].tests[0], change); assert.throws(() => classify(data));
   }
 });
+test('a completed assertion does not excuse a second interrupted assertion', () => {
+  const baseline = clean(); baseline.push({ ...baseline[0], id: 'two', name: 'second assertion' });
+  const data = failed(); data.reason = 'interrupted'; data.cancellations = ['test-failure', 'test-failure'];
+  data.modules[0].tests.push({ ...data.modules[0].tests[0], id: 'two', name: 'second assertion', finished: false, duration: 0 });
+  assert.throws(() => classifyProbe(encode(data), { ...processResult, status: 1 }, baseline), /not executed to completion/);
+});
 test('missing tests, unknown identities and a previously skipped test cannot kill', () => {
   let data = failed(); data.modules[0].tests = []; assert.throws(() => classify(data), /no tests/);
   data = failed(); data.modules[0].tests[0].id = 'other'; assert.throws(() => classify(data), /missing from clean baseline/);
