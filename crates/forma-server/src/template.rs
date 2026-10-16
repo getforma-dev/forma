@@ -24,6 +24,16 @@ pub(crate) fn escape_html(s: &str) -> String {
         .replace('"', "&quot;")
 }
 
+/// Rule 1 applies to ordinary DOM values before HTML escaping. Transport
+/// data, nonces, digests, and build identity keep their existing exact encoding.
+pub(crate) fn escape_dom_html(s: &str) -> String {
+    escape_html(
+        &s.replace("\r\n", "\n")
+            .replace('\r', "\n")
+            .replace('\0', "\u{fffd}"),
+    )
+}
+
 /// Build the common `<head>` content shared by both render paths.
 ///
 /// `preloads` and `links` are the typed homes a [`RenderCtx`] carries;
@@ -39,13 +49,13 @@ fn build_head(
     let mut head = String::with_capacity(2048);
     head.push_str("<meta charset=\"utf-8\">\n");
     head.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-    head.push_str(&format!("<title>{}</title>\n", escape_html(title)));
+    head.push_str(&format!("<title>{}</title>\n", escape_dom_html(title)));
 
     // Font preloads
     for font in &assets.fonts {
         head.push_str(&format!(
             "<link rel=\"preload\" href=\"{}\" as=\"font\" type=\"font/woff2\" crossorigin>\n",
-            escape_html(font)
+            escape_dom_html(font)
         ));
     }
 
@@ -53,7 +63,7 @@ fn build_head(
     for css in &assets.css_urls {
         head.push_str(&format!(
             "<link rel=\"stylesheet\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
-            escape_html(&css.url),
+            escape_dom_html(&css.url),
             escape_html(&css.integrity)
         ));
     }
@@ -67,7 +77,7 @@ fn build_head(
         head.push_str(&format!(
             "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
             escape_html(nonce),
-            escape_html(&js.url),
+            escape_dom_html(&js.url),
             escape_html(&js.integrity)
         ));
     }
@@ -80,7 +90,7 @@ fn build_head(
         head.push_str(&format!(
             "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
             escape_html(nonce),
-            escape_html(&file.url),
+            escape_dom_html(&file.url),
             escape_html(&file.integrity)
         ));
     }
@@ -166,7 +176,7 @@ struct BodyParts {
 fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> BodyParts {
     let body_class_attr = config
         .body_class
-        .map(|c| format!(" class=\"{}\"", escape_html(c)))
+        .map(|c| format!(" class=\"{}\"", escape_dom_html(c)))
         .unwrap_or_default();
     let body_prefix = config
         .body_prefix
@@ -188,16 +198,19 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> B
         })
         .unwrap_or_default();
 
+    // Route `js` contains declared entry modules in order. Dependency chunks
+    // live in the separate modulepreload table and must not execute eagerly.
     let page_js_tag = js_urls
-        .last()
+        .iter()
         .map(|url| {
             format!(
                 "<script type=\"module\" nonce=\"{nonce}\" src=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\"></script>",
-                escape_html(&url.url),
+                escape_dom_html(&url.url),
                 escape_html(&url.integrity)
             )
         })
-        .unwrap_or_default();
+        .collect::<Vec<_>>()
+        .join("\n");
 
     // Registration belongs only to pages that publish a JavaScript entry.
     // Static pages never bootstrap a worker, even in an enabled application.

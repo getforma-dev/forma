@@ -1,0 +1,2 @@
+/*forma-build:923ea4429c980142*/
+import{a as r}from"./chunk.GUIJACKW.js";import{a as n,b as i,c as a,d as o,f as e,i as m}from"./chunk.KDTMCUSE.js";function s(){let[t,d]=n(262,i(0));return a("button",{id:"mixed-local",onClick:()=>d(t()+1)},()=>t())}globalThis.mixedEntryIdentity={core:a,shared:m};e({Local:o(s,{h:"049c3149a95ef744",schema:[[]],mode:0}),Panel:o(r,{h:"b046e601a85a9c37",schema:[[]],mode:0})});

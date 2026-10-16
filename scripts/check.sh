@@ -108,7 +108,7 @@ cargo fmt --manifest-path e2e/fixtures/apps/Cargo.toml --check
 cargo clippy --locked --manifest-path e2e/fixtures/apps/Cargo.toml --all-targets -- -D warnings
 step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
 npm run test:browser -w packages/build
-node --test scripts/template-islands-browser.test.mjs
+node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.test.mjs
 npx playwright test
 npm run test:e2e -w packages/core
 
@@ -119,6 +119,11 @@ node --test --test-concurrency=2 "e2e/parity/tests/*.test.mts"
 step "blocking parity: step 1, 100 states, typed P1/P2/P3 with no exceptions"
 node --input-type=module -e 'import assert from "node:assert/strict"; import {readExpected} from "./e2e/parity/src/expected.mts"; assert.equal(readExpected().length, 0, "blocking parity requires an empty expected-divergent list");'
 node e2e/parity/src/run.mts --step 1 --states 100 --report "${RUNNER_TEMP:-$PWD/test-results}/parity/report.jsonl"
+
+step "value rules: deterministic generator, actual native metadata, 1,000 comparisons/rule"
+node --test e2e/value-rules/*.test.mjs
+node e2e/value-rules/metadata.mjs --engine chromium
+node e2e/value-rules/run.mjs --count 1000
 
 echo
 echo "check: every gate passed in $(( $(date +%s) - started ))s"

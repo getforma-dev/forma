@@ -45,6 +45,7 @@ import { SSR_ORIGIN as ORIGIN } from './origin';
  */
 const CASES = {
   'generic-state': 'island',
+  'mixed-entry': 'island',
   'root-fragment': 'static',
   'textarea-child': 'island',
   'textarea-value': 'island',
@@ -566,6 +567,29 @@ test.describe('browser-only', () => {
   });
 });
 
+// A same-source SSR/Browser pair must keep fresh mount semantics while the SSR
+// product still adopts real local/shared islands and shares core with an add-on.
+test.describe('mixed-entry',()=>{
+ for(const mode of ['ssr','browser'] as const)test(`mixed-entry: ${mode} local and shared Show/List remain live`,async({page})=>{
+  const errors=watchErrors(page);
+  if(mode==='ssr'){
+   const held=await openHeld(page,'mixed-entry');
+   await expect(page.locator('#mixed-rows > li')).toHaveText(['A','B']);
+   await page.evaluate(()=>{(window as any).mixedHeld=[document.querySelector('#mixed-local'),document.querySelector('#mixed-panel'),...document.querySelectorAll('#mixed-rows > li')];});
+   await held.activate();
+   expect(await page.evaluate(()=>{const old=(window as any).mixedHeld;return old.every((node:Node,index:number)=>node===[document.querySelector('#mixed-local'),document.querySelector('#mixed-panel'),...document.querySelectorAll('#mixed-rows > li')][index]);})).toBe(true);
+   expect(await page.evaluate(()=>{const a=(window as any).mixedEntryIdentity,b=(window as any).mixedAddonIdentity;return a.core===b.core&&a.shared===b.shared;})).toBe(true);
+   await expect(page.locator('#mixed-addon-count')).toHaveText('10');await page.click('#mixed-addon-count');await expect(page.locator('#mixed-addon-count')).toHaveText('11');
+  }else await openClientRendered(page,'mixed-entry');
+  await expect(page.locator('#mixed-local')).toHaveText('0');await page.click('#mixed-local');await expect(page.locator('#mixed-local')).toHaveText('1');
+  await expect(page.locator('#mixed-open')).toHaveText('open');await page.click('#mixed-toggle');await expect(page.locator('#mixed-closed')).toHaveText('closed');
+  await expect(page.locator('#mixed-rows > li')).toHaveText(['A','B']);
+  await page.evaluate(()=>{(window as any).mixedRows=[...document.querySelectorAll('#mixed-rows > li')];});
+  await page.click('#mixed-reorder');await expect(page.locator('#mixed-rows > li')).toHaveText(['B','A']);
+  expect(await page.evaluate(()=>{const old=(window as any).mixedRows,rows=[...document.querySelectorAll('#mixed-rows > li')];return rows[0]===old[1]&&rows[1]===old[0];})).toBe(true);
+  expect(errors).toEqual([]);
+ });
+});
 
 // FORMA-181 D: unlike the low-level core seam, these bytes come from the current compiler,
 // typed Rust Pages handler and full browser entry. No registration or state is hand-authored.

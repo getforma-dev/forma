@@ -57,6 +57,9 @@ export interface SsrPluginOptions {
   entryPoint?: string;
   /** Browser entry whose literal registry receives the paired metadata. */
   clientEntryPoint?: string;
+  /** Private entry aliases supplied by the shared build graph for this same
+   * physical client entry in explicit Browser mode. Dependencies remain shared. */
+  browserEntryPoints?: readonly { path: string; entryPoint: string }[];
   /** Legacy compatibility option. All unsupported native constructs fail in 3.0;
    * false cannot restore warning-only publication. */
   strict?: boolean;
@@ -545,6 +548,26 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
       const entry=options.entryPoint?realpathSync(options.entryPoint):undefined;
       const client=options.clientEntryPoint?realpathSync(options.clientEntryPoint):entry;
       const compilation=joinSsrCompilation(build,plugin.setup);
+      const browserEntries=new Map((options.browserEntryPoints??[]).map(alias=>{
+        const physical=realpathSync(alias.entryPoint);
+        if(physical!==client||!alias.path.startsWith('forma-browser-entry:'))throw new Error('BUILD-611 Browser entry alias must name its paired physical client entry');
+        return [alias.path.slice('forma-browser-entry:'.length),physical];
+      }));
+      if(browserEntries.size) {
+        build.onResolve({filter:/^forma-browser-entry:/},args=>{
+          const key=args.path.slice('forma-browser-entry:'.length);
+          if(args.kind!=='entry-point'||!browserEntries.has(key))return;
+          return {path:key,namespace:'forma-browser-entry'};
+        });
+        build.onLoad({filter:/.*/,namespace:'forma-browser-entry'},args=>{
+          const file=browserEntries.get(args.path);if(!file)return;
+          const captured=compilation.read(file,false);
+          if(!captured)throw new Error('BUILD-610 Browser entry has no paired original source snapshot');
+          const loader=extname(file).slice(1).replace(/^[cm](?=[jt]s$)/,'') as Loader;
+          return {...captured,loader,resolveDir:dirname(file)};
+        });
+      }
+
       let snapshot:SourceSnapshot,bytes:Uint8Array|undefined,product:IrResult|null;
       let diagnostics:Diagnostic[]=[],fatal:Error|undefined;
       build.onStart(()=>{
