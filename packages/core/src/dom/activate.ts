@@ -12,6 +12,7 @@ import { prepareAdoption, type PreparedAdoption } from './adoption.js';
 import { AdoptionScope } from '../reactive/adoption-scope.js';
 import { currentAdoptionDiagnostic, type AdoptionDiagnostic } from '../reactive/adoption-diagnostics.js';
 import { preflightIslands, checkIslandClaim, IslandStateError, type ValidatedIsland } from './island-state.js';
+import { skewed } from './skew.js';
 
 /**
  * Function that hydrates an island.
@@ -147,6 +148,7 @@ export function activateIslands(
   registry: Record<string, (...args: never[]) => unknown>,
   root: ParentNode = document,
 ): void {
+  if (skewed(root)) return;
   // Materialize every requested result before running any component or arming
   // any trigger. An earlier component cannot alter a later host's input state.
   const checked = preflightIslands(registry, root);

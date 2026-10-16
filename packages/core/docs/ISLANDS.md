@@ -29,6 +29,36 @@ This is the 3.0 development contract. Legacy `(element, props)` registrations,
 page and browser entry together. An uncompiled SSR callback is refused; a
 Browser-shell route remains an ordinary browser mount without this preflight.
 
+## Deployment mismatch
+
+Before state preflight or any trigger, `activateIslands` compares the consuming
+bundle's build identity with `data-forma-build` on forma-server's actual page
+root: the direct body child `div#app`. It does not search arbitrary stamped
+elements or descendants. A requested subtree uses its original Document's root,
+and the first verdict is retained for that Document. Either identity absent or
+empty means unchecked, preserving older servers and bundles built without Forma.
+
+On a mismatch, no island component, observer, timer or interaction listener runs.
+Served content and node identity remain intact; island hosts receive
+`data-forma-status="skew"`. Core dispatches a cancelable `forma:skew` CustomEvent
+on the Document with `detail: { page, bundle, reload }`. `reload` is eligibility
+for automatic reload: readable session storage has no record for that full page
+identity. Cancel the event to supply application UI instead. Cancellation keeps
+the page inert and does not consume eligibility.
+
+Otherwise core records the identity before reloading once. A storage access,
+read or write failure leaves the page inert without navigation. The reloaded
+Document can report the mismatch again, but cannot automatically reload for the
+same identity in that tab. Different identities have separate records.
+
+`mount()` applies the same Document guard before component execution or DOM
+replacement and returns an inert disposal callback on mismatch. Public direct
+`hydrateIsland` is caller owned and is not gated. Core does not import island
+chunks; failures of application-owned `import()` calls remain the application's
+to handle. See `src/dom/__tests__/skew.test.ts` and the three-engine
+`e2e/skew.spec.ts` checks. The rolling-deployment product drill is a separate
+release qualification.
+
 ## SSR with server data
 
 Seed local signals from the declared props argument. A server value of 1001 must

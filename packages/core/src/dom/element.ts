@@ -17,6 +17,7 @@ import {
   isDangerousUrl,
   isEventHandlerAttr,
   isRawHtmlAttr,
+  isSafeAttrName,
   isUnsafeAttrWrite,
   isUrlAttr,
 } from '../security/url-safety.js';
@@ -1069,7 +1070,7 @@ export function fillElement<E extends Element>(
   if (props) {
     let hasDynamic = false;
     for (const key in props) {
-      if (key === 'ref') continue;
+      if (key === 'ref' || !isSafeAttrName(key)) continue;
       const value = props[key];
 
       // A select cannot select an option until its children exist, and input
