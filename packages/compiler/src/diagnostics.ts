@@ -291,6 +291,10 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     "Set FORMA_SECURITY_RELEASE=1 (or true) for a release that fixes a vulnerability, or unset it."),
 
 
+  entry('BUILD-823', 'Preview frame runtime that cannot be minified',
+    "`previewFrame` is on, and esbuild cannot minify dist/formajs-frame.global.js of the @getforma/core the bundles import: a production build writes the frame's runtime minified (its bytes are on every preview document), so the file must be JavaScript esbuild can parse for ES2022.",
+    'Reinstall @getforma/core and leave the file as published: no editor, formatter or patch may rewrite it.'),
+
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);
 

@@ -96,15 +96,17 @@ runtime):
    (`e2e/frame/build-app.mjs`): `out/dist-on` with `previewFrame: true`,
    `out/dist-off` without it, and `out/dist-tampered`, dist-on with a
    `</script>` appended to its runtime. The script fails unless the build's
-   `forma-runtime.<hash>.js` is core's `dist/formajs-frame.global.js` byte for
-   byte, and never core's `dist/forma-runtime.js`.
+   `forma-runtime.<hash>.js` is core's `dist/formajs-frame.global.js` minified
+   (FORMA-190: the application's output carries the small file, core's own
+   stays as published and readable, and the file is named by its own hash and
+   listed with its own SRI), and never core's `dist/forma-runtime.js`.
 2. `e2e/frame/server/` (Rust) is a small forma-server application from a
    forma checkout that embeds the three outputs at compile time and, at start,
    calls `PreviewFrame::load` on each as an application does; it serves the
    frame (`PageResponse::frame` from dist-on) and a host page that frames it
    as forma-server's `frame` module docs prescribe.
 3. The spec starts the server on a free port (so clones never meet) and checks
-   that forma-server accepts dist-on's runtime and hashes core's bytes; that in
+   that forma-server accepts dist-on's runtime and hashes the bytes served; that in
    Chromium, under the frame's hash-only policy, the runtime answers `ready`
    and mounts a module sent over the port, in tier (c), with an opaque origin
    and no CSP violation; that dist-off is refused with FRAME-101 and
@@ -223,3 +225,12 @@ e2e/
 | "formajs-frame.global.js not found" | FORMAJS_DIR must be a FormaJS checkout with FORMA-128's frame runtime, built |
 | "@getforma/core depends on …, which e2e/frame/app/package-lock.json does not pin" | core gained or moved a dependency: add it to `e2e/frame/app/package.json`, run `npm install --package-lock-only` there, commit both |
 | "the lock file needs to be updated" (cargo, frame lane) | `cargo build --manifest-path e2e/frame/server/Cargo.toml` once, commit `e2e/frame/server/Cargo.lock` |
+
+## The fixture applications (`e2e/fixtures/apps/`)
+
+Three consumer-shaped applications (a household finance page, an authentication service's pages, a
+controller studio's check screen), each built in strict mode and served by forma-server through a
+`#[derive(PageProps)]` handler bound at start (FORMA-188). `e2e/fixtures/apps/build.sh` builds them from
+this working tree; `apps.spec.ts` starts each server and checks the values, strict adoption and
+behaviour of every page. P17 runs the same sources against the packed set. See
+[`fixtures/apps/README.md`](fixtures/apps/README.md).

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
-import { changelogEntry, releaseNotes, releaseTitle } from './release-record.mjs';
+import { changelogEntry, measurementsNotes, releaseNotes, releaseTitle } from './release-record.mjs';
 import { ROOT, json, releaseMilestone } from './release-set.mjs';
 
 test('the GitHub Release names the milestone, where it went on npm, and every gate still open before later milestones', () => {
@@ -15,6 +15,13 @@ test('the GitHub Release names the milestone, where it went on npm, and every ga
   assert.match(notes, /\n- before final \(M5\): .*FORMA-191: the per-release measurements in P17/);
   assert.match(notes, /\| forma-ir \| 3\.0\.0-alpha\.1 \| `b{64}` \|/);
   assert.match(notes, /Tag-event run to record: 12\.3 seconds/);
+  const measured = releaseNotes(set, { ciRun: 2, elapsedSeconds: 12.34, measurements: { measurements: {
+    p17: { seconds: 301.4, limitSeconds: 1800 },
+    n2: [{ app: 'ledger', route: '/household', formaGzip: 25366, limit: 27500 }],
+    machine: { runner: 'Linux X64', cpus: 4, node: 'v24.22.0' },
+  } } }, '## [3.0.0-alpha.1]\n\nFirst alpha.', milestone);
+  assert.match(measured, /Milestone: alpha \(M2\)/);
+  assert.match(measured, /P17 ran 301 s of 1,800 s; the most Forma code on any fixture route is 25,366 B of 27,500 B/);
   assert.equal(releaseTitle('3.0.0-alpha.1', milestone), 'Forma 3.0.0-alpha.1 (alpha, M2)');
   const done = structuredClone(contracts);
   for (const m of Object.values(done.milestones)) for (const gate of Object.values(m.gates)) gate.status = 'done';
@@ -42,4 +49,11 @@ test('stable tags cannot select prereleases or other version prefixes', () => {
   const source = '## [3.0.0-alpha.1]\n\nPreview.\n\n## 3.0.01\n\nDifferent version.\n';
   assert.throws(() => changelogEntry(source, '3.0.0'), /missing CHANGELOG/);
   assert.throws(() => changelogEntry('## [3.0.0]\n\n## [2.1.0]\nOld.', '3.0.0'), /empty CHANGELOG/);
+});
+
+test('the Release notes carry one line of P17\'s measurements when it took them, and nothing otherwise', () => {
+  assert.equal(measurementsNotes({ passed: true }), '');
+  const machine = { runner: 'Linux X64', cpus: 4, node: 'v24.22.0' };
+  const line = measurementsNotes({ measurements: { p17: { seconds: 301.4, limitSeconds: 1800 }, n2: [{ app: 'ledger', route: '/household', formaGzip: 25366, limit: 25500 }], machine } });
+  assert.match(line, /^\nP17 ran 301 s of 1,800 s; the most Forma code on any fixture route is 25,366 B of 25,500 B gzip -9 \(ledger \/household\)/);
 });

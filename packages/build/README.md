@@ -161,8 +161,8 @@ turns the setting on:
 await build({ ...config, previewFrame: true });
 ```
 
-The build then copies `dist/formajs-frame.global.js` from the
-`@getforma/core` the bundles import (core 2.1.0 and later), byte for byte, as
+The build then writes `dist/formajs-frame.global.js` from the
+`@getforma/core` the bundles import (core 2.1.0 and later), minified, as
 `forma-runtime.<hash>.js`, and names it in the manifest:
 
 ```json
@@ -188,18 +188,30 @@ The build then copies `dist/formajs-frame.global.js` from the
 - **Never core's `dist/forma-runtime.js`.** That file shares the target's
   name, but it is the CDN alias of the auto-mounting runtime, which would bind
   the whole frame document instead of rendering the host's module in tier (c).
-- **The bytes are core's, unchanged**: no minify, no transform, no line
-  endings rewritten, so the hash forma-server computes is the hash of core's
-  file, and the script the browser runs is the one hashed. It is inlined,
-  never fetched: no route loads it, it gets no `.br` or `.gz` copy, and the
-  worker's lists leave it out.
+- **Minified in the output, as published in core** (FORMA-190, from the A2
+  audit's F1). forma-server writes this runtime into every preview document
+  under `no-store`, so each load pays its bytes: core's file is 164 KB
+  readable. Core's published file stays readable (anything published to npm
+  does); a production build writes an esbuild transform of it (whitespace and
+  names, ES2022, deterministic) into `dist`, before the hashing pass, so the
+  file's name, its SRI in the manifest and the SHA-256 forma-server computes
+  for the frame's policy are those of the bytes served, and the script the
+  browser runs is the one hashed. The size report's frame row reports those
+  served bytes beside core's file. No source map is written: the script is
+  inlined in an opaque-origin frame with `connect-src 'none'`, so a map could
+  not be fetched, and its comment would be part of the hashed bytes. Watch mode
+  copies core's bytes unchanged (a development build, readable in the browser's
+  tools): that is the copy to debug. It is inlined, never
+  fetched: no route loads it, it gets no `.br` or `.gz` copy, and the worker's
+  lists leave it out.
 - **It refuses what forma-server would refuse** (FRAME-103), before anything is
   written, so the previous output stays as it was: `BUILD-805` when the core
   the bundles import has no frame runtime (older than 2.1.0) or no core is
   found, `BUILD-806` when the runtime is empty, not UTF-8, or contains
   `</script` or `<!--` (in any case), a carriage return or a NUL, and
-  `BUILD-807` as above. Each fails the build with or without strict mode
-  (`docs/DIAGNOSTICS.md`).
+  `BUILD-807` as above, and `BUILD-823` when esbuild cannot minify it. The
+  `BUILD-806` check runs on core's file and again on the minified bytes. Each
+  fails the build with or without strict mode (`docs/DIAGNOSTICS.md`).
 - **Watch mode** writes it unhashed as `forma-runtime.js`, and the dev manifest
   names it as itself, as it does every watched asset.
 - **Off** (the default, or `false`), nothing is read and the output is
@@ -259,8 +271,8 @@ a route ships.
 
 | Step | What happens |
 |------|-------------|
-| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`) |
-| **Frame runtime** | (Optional, `previewFrame: true`) Copies the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, unchanged, as `forma-runtime.js`, hashed with the other assets and left uncompressed |
+| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`, and `BUILD-823` when it cannot be minified) |
+| **Frame runtime** | (Optional, `previewFrame: true`) Writes the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, minified (core's file stays readable; watch mode copies it unchanged), as `forma-runtime.js`, hashed with the other assets and left uncompressed |
 | **Bundle** | esbuild bundles each entry point with JSX transform (`jsxFactory: "h"`) |
 | **CSS** | Runs Tailwind CLI or concatenates CSS files |
 | **Hash** | SHA-256 content hash appended to filenames (`app.a1b2c3d4.js`) |
@@ -308,7 +320,7 @@ const config: BuildConfig = {
   // diagnosticsJson: "ssr-diagnostics.json", // Also write them as JSON, outside outputDir
   // previousDist: "../previous-release/dist", // Keep the live release's assets for open tabs; see "Retention"
   // security: true,                  // This release fixes a vulnerability: retain nothing (or FORMA_SECURITY_RELEASE=1)
-  previewFrame: false,                // true: copy core's frame runtime as forma-runtime.js (forma-server's PageResponse::frame)
+  previewFrame: false,                // true: write core's frame runtime, minified, as forma-runtime.js (forma-server's PageResponse::frame)
   watch: false,                       // Rebuild on change; writes a dev manifest and, with ssr, each page's .ir
   budgetThreshold: 200_000,           // Warn at 200KB brotli per route
   formaAlias: "@getforma/core",       // What bare 'formajs' imports resolve to
@@ -371,7 +383,7 @@ dist/
 ├── home.e5f6g7h8.css.br
 ├── dashboard.i9j0k1l2.js
 ├── home.m3n4o5p6.ir          # FMIR binary (if ssr: true)
-├── forma-runtime.y5z6a7b8.js # Core's preview-frame runtime, unchanged and uncompressed (if previewFrame: true)
+├── forma-runtime.y5z6a7b8.js # Core's preview-frame runtime, minified and uncompressed (if previewFrame: true)
 ├── inter.woff2                # Copied fonts (never hashed)
 ├── sw.js                      # Service worker (generated last, never hashed)
 └── manifest.json              # Asset manifest (generated last, never compressed)

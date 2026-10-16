@@ -836,7 +836,7 @@ Printed as `@getforma/build: BUILD-805 @getforma/core 2.0.3 at <dir> (imported b
 
 ### BUILD-806 Preview frame runtime that cannot be inlined
 
-**Why.** Core's dist/formajs-frame.global.js is empty, not UTF-8, or contains `</script`, `<!--`, a carriage return or a NUL: it is inlined as it is into the frame's `<script>` and allowed by its hash, so it would end early or not match its hash, and forma-server would refuse it (FRAME-103).
+**Why.** Core's dist/formajs-frame.global.js is empty, not UTF-8, or contains `</script`, `<!--`, a carriage return or a NUL (the same check runs on the minified bytes a production build would write): it is inlined as it is into the frame's `<script>` and allowed by its hash, so it would end early or not match its hash, and forma-server would refuse it (FRAME-103).
 
 **Fix.** Reinstall @getforma/core and leave the file as published: no editor, formatter, patch or CRLF checkout may rewrite it.
 
@@ -1115,6 +1115,16 @@ revoked build's assets in the release that exists to remove them.
 **Fix.** Set it to `1` (or `true`), or unset it. Verified by
 `packages/build/tests/retention.test.ts` > "reads FORMA_SECURITY_RELEASE as FORMA_STRICT
 is read, and refuses any other value (BUILD-822)".
+
+### BUILD-823 Preview frame runtime that cannot be minified
+
+**Why.** `previewFrame` is on, and esbuild cannot minify `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import. A production build writes the frame's runtime minified into the application's output (forma-server writes its bytes into every preview document under `no-store`; core's published file stays readable), so the file must be JavaScript esbuild can parse for ES2022.
+
+**Fix.** Reinstall `@getforma/core` and leave the file as published: no editor, formatter or patch may rewrite it.
+
+**In strict mode.** An error, and without strict mode too: the build fails before it writes anything.
+
+Printed with the file, line and column esbuild reports, as `@getforma/build: BUILD-823 <core>/dist/formajs-frame.global.js:1:24: @getforma/core 2.1.0's dist/formajs-frame.global.js cannot be minified: Unexpected ";"` (`packages/build/tests/preview-frame.test.ts` > "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"). Watch mode copies the runtime unchanged and does not minify it.
 
 ### Native island request state
 
