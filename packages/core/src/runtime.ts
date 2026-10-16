@@ -1,161 +1,14 @@
 /**
- * FormaJS HTML Runtime
+ * Explicit HTML runtime (FORMA-108; DR-14/DR-15).
  *
- * Declarative reactive UI via data-* attributes, powered by fine-grained
- * signals (alien-signals 3.x). Zero build step required.
+ * mountMarkup(root, trustedHtml(markup), { tier, grants, config }) is the only
+ * binding entry. It binds the supplied markup beneath that root and returns
+ * update/unmount lifecycle methods. Every mount names its trust tier; omitted
+ * grants grant nothing. No document scan, body observer or script/global
+ * configuration can create or configure a mount.
  *
- * CSP posture: EVERY build evaluates expressions with the allowlist AST
- * interpreter in src/expr/ — lexer, precedence-climbing parser, validator,
- * tree-walking interpreter. There is no eval(), no new Function() and no
- * opt-in switch that could reach one, in any artifact. An expression outside
- * the grammar is reported and NOT evaluated; the binding keeps whatever was
- * already in the DOM rather than writing an empty string.
- * Verified by: src/__tests__/runtime-csp-default.test.ts > "no build can reach new Function, with any configuration"
- * Verified by: src/__tests__/build-artifacts.test.ts > "no build emits new Function or a with() scope wrapper"
- *
- * Design inspirations:
- *   Alpine.js   — data-* directive model, progressive enhancement
- *   SolidJS     — fine-grained signals, [getter, setter] tuple, real DOM
- *   Qwik        — deferred hydration triggers (idle, interaction, visible)
- *   Astro       — islands architecture, independent interactive regions
- *   Hotwire     — server-driven UI, reconciler with scope modes
- *   Lit         — root element access during hydration, (el, props) pattern
- *
- * ┌─────────────────────────────────────────────────────────────────────┐
- * │  Yes, this file is ~2,400 lines. It's a monolith on purpose.        │
- * │                                                                     │
- * │  The HTML Runtime is a self-contained unit: directive binding,      │
- * │  handler compilation, transition system, DOM scanner and observer   │
- * │  all share mutable state (debug flags, caches, config). Keeping     │
- * │  them in one file avoids circular imports, simplifies the build     │
- * │  (single IIFE for CDN), and means `grep` always finds what you      │
- * │  need. The sections are clearly marked — use the map below.         │
- * │                                                                     │
- * │  The expression language is the one thing that is NOT here: it      │
- * │  lives in src/expr/ because its security properties are stated as   │
- * │  "nothing outside this directory can reach X", and a directory is   │
- * │  a boundary a CI grep can check. See src/expr/__tests__/            │
- * │  no-escape-hatch.test.ts.                                           │
- * │                                                                     │
- * │  Will it be split further someday? Maybe. But today it works, it's  │
- * │  tested, and the CDN runtime bundle ships at ~31KB gzipped. If      │
- * │  you're judging the line count — fair. But read the code first. :)  │
- * └─────────────────────────────────────────────────────────────────────┘
- *
- * This file is the HTML Runtime — a subpath of @getforma/core:
- *   import '@getforma/core/runtime'          (ESM)
- *   <script src="...runtime.global.js">      (CDN)
- *
- * It is separate from the main @getforma/core entry point, which exports
- * signals, h(), mount, stores, etc. The main entry has zero network code.
- * HTTP/storage/server are at @getforma/core/http, /storage, /server.
- *
- * Usage (CDN — the pin below tracks the published package version):
- *   <script src="https://unpkg.com/@getforma/core@2.1.0/dist/formajs-runtime.global.js"></script>
- *   <div data-forma-state='{"count": 0}'>
- *     <p data-text="{count}"></p>
- *     <button data-on:click="{count++}">+1</button>
- *   </div>
- * Verified by: src/__tests__/docs-truth.test.ts > "the runtime header's CDN pin is the current package version"
- *
- * Build outputs from this source file:
- *   dist/runtime.js                        ESM (import '@getforma/core/runtime')
- *   dist/runtime.cjs                       CommonJS (require)
- *   dist/formajs-runtime.global.js         IIFE for <script> tags (auto-inits)
- *   dist/runtime-hardened.js               ESM, tree-shaken, no code splitting
- *   dist/formajs-runtime-hardened.global.js IIFE, tree-shaken, no code splitting
- *
- * The "hardened" pair is the same source. It was once the build with the
- * `new Function` fallback compiled out; the fallback is gone from every build,
- * so the only difference left is bundling strategy. Both names stay because
- * they are documented CDN URLs and exports-map targets.
- *
- * ── FILE MAP ──────────────────────────────────────────────────────────
- *
- * Search for the marker, not a line number. This map used to carry line
- * ranges; they were four sections out of date by the time anyone read them,
- * which is the failure mode of every hand-maintained line index. The names
- * below are the literal `// ── … ──` markers in this file, in order, and a
- * test fails if one is renamed, removed, or moved out of order.
- *
- *   Attribute safety & scope                  isUnsafeAttrBinding, Scope, createChildScope
- *   $refetch registry                         imperative data-fetch triggers
- *   Debug logger                              dbg(), window.__FORMA_DEBUG
- *   Configuration & diagnostics               RuntimeConfig, RuntimeDiagnostic
- *   Mount boundaries                          tiers, grants, ownerOf, fetchVerdict
- *   Performance utilities                     yieldToMain, applyContainmentHints
- *   Pre-compiled regexes                      hot-path RegExp literals
- *   Per-scope evaluator cache                 compiled expression/handler reuse
- *   Compiled template cache                   data-list template compilation
- *   Parsing utilities                         readBalancedSegment
- *   Template text caching for data-list       clone + interpolate list rows
- *   CSS Transitions                           parse spec, enter/leave phases
- *   Expression evaluator                      buildEvaluator over src/expr
- *   Handler compiler                          buildHandler over src/expr
- *   State initialization                      parseState, initScope
- *   DOM scanner                               directive discovery
- *   Element binding                           bindElement — the directive processor
- *   Scope mounting / unmounting               mountScope, unmountScope
- *   Pre-compiled Directive Map                server-supplied directive sidecar
- *   MutationObserver                          auto-discovery of new scopes
- *   Main init                                 initRuntime/destroyRuntime, mount/unmount
- *   DevTools API — State Inspector            getScopes, setScopeValue, resetScope
- *   Reconciler                                createReconciler bridge (tierless, deprecated)
- *   Tiered mount                              mountMarkup: roots handed in, grants, exports
- *
- * Verified by: src/__tests__/docs-truth.test.ts > "the runtime file map names every section marker, in order"
- *
- * ── SUPPORTED DIRECTIVES ──────────────────────────────────────────────
- *
- *   State & Reactivity:
- *     data-forma-state='{"key": val}'    Declare reactive state (valid JSON)
- *     data-computed="name = expr"        Derived value (lazy, cached)
- *     data-persist="{prop}"              Sync state to localStorage
- *
- *   Content Binding:
- *     data-text="{expr}"                 Bind text content
- *     data-show="{expr}"                 Toggle visibility (display: none)
- *     data-if="{expr}"                   Conditional render (remove/insert DOM)
- *     data-model="{prop}"                Two-way input binding
- *     data-list="{expr}"                 List rendering (keyed reconciliation)
- *
- *   Attributes & Classes:
- *     data-on:event="{expr}"             Event handler (e.g. data-on:click)
- *     data-class:name="{expr}"           Conditional CSS class
- *     data-bind:attr="{expr}"            Dynamic attribute binding
- *
- *   Transitions (for data-show and data-if):
- *     data-transition:enter="classes"        Classes during enter phase
- *     data-transition:enter-from="classes"   Classes at enter start
- *     data-transition:enter-to="classes"     Classes at enter end
- *     data-transition:leave="classes"        Classes during leave phase
- *     data-transition:leave-from="classes"   Classes at leave start
- *     data-transition:leave-to="classes"     Classes at leave end
- *
- *   Refs:
- *     data-ref="name"                    Register element for $refs.name access
- *
- *   Data Fetching:
- *     data-fetch="GET /url → prop"       Fetch data into state
- *     data-fetch="POST /url → prop"      POST with state as body
- *     data-fetch-id="name"               Register for $refetch('name')
- *
- *   Configuration (on <script> tag):
- *     data-forma-diagnostics="true"      Enable expression diagnostics
- *     data-forma-auto-containment="true" Enable CSS containment hints
- *     data-forma-expr-budget="100000"    Interpreter step budget, one per task
- *
- * ── MAGIC VARIABLES ──────────────────────────────────────────────────
- *
- *   Available in all expressions and handlers:
- *     $el          The current DOM element, wrapped — reads and calls are
- *                  restricted to the tables in src/expr/allowlist.ts
- *     $dispatch    Fire a CustomEvent: $dispatch('name', detail?)
- *                  Events bubble and cross Shadow DOM (composed: true)
- *     $event       The DOM event object (in data-on:* handlers only)
- *     event        Alias for $event (also in data-on:* handlers)
- *     $refs        Named element references: $refs.myInput (via data-ref="myInput")
- *     $refetch     Re-trigger a data-fetch: $refetch('fetch-id')
+ * The allowlist expression interpreter is shared by every runtime build.
+ * Unreviewed markup is confined to the opaque-origin preview frame.
  */
 import { createSignal, internalEffect, createComputed, batch } from './reactive';
 import { reconcileList, type ListTransitionHooks } from './dom/list';
@@ -163,7 +16,6 @@ import { createReconciler } from './dom/reconcile';
 import { isTrustedHtml, trustedHtml, RUNTIME_SRCDOC_CODE, type TrustedHtml } from './dom/trusted-html';
 import { isDangerousUrl, isUrlAttr, isEventHandlerAttr, isRawHtmlAttr } from './security/url-safety';
 import {
-  clearExpressionCache,
   compileExpression,
   exprError,
   compileHandler,
@@ -176,7 +28,6 @@ import {
   LIMITS,
   runHandler,
   running,
-  setStepBudget,
   weigh,
   type Bound,
   type ExprGrant,
@@ -188,17 +39,15 @@ import { sourceIsDev, warnDeprecated } from './deprecated';
 
 /**
  * The build flag (FORMA-169). What only a development build does here (the
- * report of the grants a mount used, `reconcile()`'s deprecation) is guarded
+ * report of the grants a mount used and the obsolete manual-attribute warning) is guarded
  * by the condition `(typeof __FORMA_DEV_BUILD__ === 'boolean' &&
  * __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' &&
  * sourceIsDev())`, written out at each site: every build folds it there to a
  * literal, chunked or not, where a `const` holding it is not inlined into the
  * IIFE. Run from source, it follows NODE_ENV, as `__DEV__` does.
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a production build carries neither the grant report nor reconcile's warning"
+ * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a production build carries neither the grant report nor the manual-attribute warning"
  */
 declare const __FORMA_DEV_BUILD__: boolean | undefined;
-/** True only in the preview frame's runtime (FORMA-128); see `tsup.config.ts`. */
-declare const __FORMA_FRAME_BUILD__: boolean | undefined;
 
 // ── Attribute safety & scope ──
 
@@ -227,16 +76,15 @@ type Setter = (v: unknown) => void;
 interface Scope {
   getters: Record<string, Getter>;
   setters: Record<string, Setter>;
-  /** The tiered mount this scope was bound under; absent for a tierless one. */
-  mount?: MountCtx;
+  /** Every bound scope belongs to an explicit mount. */
+  mount: MountCtx;
   /** The mount's step budget, read by the interpreter (`ScopeLike.budget`). */
-  budget?: number;
+  budget: number;
 }
 
 // ── $refetch registry ──
 // Maps data-fetch-id values to their doFetch() functions so handlers can
 // trigger imperative refetches via $refetch('id').
-const _refetchRegistry = new Map<string, () => void>();
 
 /**
  * How long a `data-fetch` request may take, in ms, before it is aborted into
@@ -246,12 +94,11 @@ const _refetchRegistry = new Map<string, () => void>();
 const FETCH_TIMEOUT_MS = 30_000;
 
 /**
- * Run the `data-fetch` registered as `id`: the page's registry for a tierless
- * scope, the mount's own for a tiered one, so a widget reaches only its own
- * fetches and nothing else reaches them.
+ * Run the `data-fetch` registered as `id` in this mount's own registry, so
+ * a widget reaches only its own fetches and nothing else reaches them.
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "$refetch reaches only the fetches of its own mount"
  */
-function $refetch(id: string, registry: Map<string, () => void> = _refetchRegistry): void {
+function $refetch(id: string, registry: Map<string, () => void>): void {
   const fn = registry.get(id);
   if (fn) {
     fn();
@@ -277,31 +124,21 @@ function createChildScope(parent: Scope, locals: Record<string, unknown>): Scope
       },
     }),
     setters: parent.setters,
+    mount: parent.mount,
+    budget: parent.budget,
   };
-  if (parent.mount) {
-    child.mount = parent.mount;
-    child.budget = parent.budget;
-  }
   return child;
 }
 
-// ── Debug logger — enable via FormaRuntime.debug = true or window.__FORMA_DEBUG = true ──
-let _debug = false;
+// Internal debug branches are compiled away; configuration belongs to mounts.
+const _debug = false;
 
 // ── Configuration & diagnostics ──
 
-let _diagnosticsEnabled = true;
 function dbg(...args: unknown[]): void {
-  if (_debug || (typeof window !== 'undefined' && (window as any).__FORMA_DEBUG)) {
+  if (_debug) {
     console.log('[FormaJS]', ...args);
   }
-}
-
-interface RuntimeConfig {
-  diagnostics?: boolean;
-  autoContainment?: boolean;
-  /** Interpreter step budget, one per task (`data-forma-expr-budget`). */
-  exprBudget?: number;
 }
 
 interface RuntimeDiagnostic {
@@ -322,79 +159,6 @@ interface RuntimeDiagnostic {
 
 const diagnostics = new Map<string, RuntimeDiagnostic>();
 
-function parseBooleanFlag(raw: string | null | undefined): boolean | undefined {
-  if (raw == null) return undefined;
-  const normalized = raw.trim().toLowerCase();
-  if (normalized === '1' || normalized === 'true' || normalized === 'on' || normalized === 'yes') return true;
-  if (normalized === '0' || normalized === 'false' || normalized === 'off' || normalized === 'no') return false;
-  return undefined;
-}
-
-// Script attributes that carry runtime configuration. Used to locate the
-// configuring <script> in module builds, where document.currentScript is null.
-const CONFIG_SCRIPT_SELECTOR = [
-  'script[data-forma-diagnostics]',
-  'script[data-forma-auto-containment]',
-  'script[data-forma-expr-budget]',
-].join(',');
-
-/**
- * The <script> tag that configures the runtime.
- *
- * `document.currentScript` is the right answer for the IIFE builds, but it is
- * null by spec while a `<script type="module">` runs — so the ESM builds
- * (dist/runtime.js) would ignore every `data-forma-*` switch. Falling back to
- * the first script tag that carries one keeps the switches working identically
- * in every build. Module scripts are deferred, so the whole document is parsed
- * by the time this runs. Anyone who can add such a script tag can already run
- * script on the page, so the fallback grants no new capability.
- * Verified by: src/__tests__/runtime-csp-default.test.ts > "honours a data-forma-* script attribute when document.currentScript is null (ESM builds)"
- */
-function findConfigScript(): HTMLScriptElement | null {
-  const current = document.currentScript as HTMLScriptElement | null;
-  if (current) return current;
-  return document.querySelector(CONFIG_SCRIPT_SELECTOR) as HTMLScriptElement | null;
-}
-
-function readRuntimeConfig(): RuntimeConfig {
-  const config: RuntimeConfig = {};
-
-  if (typeof window !== 'undefined') {
-    const globalConfig = (window as any).__FORMA_RUNTIME_CONFIG as RuntimeConfig | undefined;
-    if (globalConfig) {
-      if (typeof globalConfig.exprBudget === 'number') {
-        config.exprBudget = globalConfig.exprBudget;
-      }
-      if (typeof globalConfig.diagnostics === 'boolean') {
-        config.diagnostics = globalConfig.diagnostics;
-      }
-      if (typeof globalConfig.autoContainment === 'boolean') {
-        config.autoContainment = globalConfig.autoContainment;
-      }
-    }
-  }
-
-  if (typeof document !== 'undefined') {
-    const script = findConfigScript();
-    if (script) {
-      const budgetFromAttr = Number(script.getAttribute('data-forma-expr-budget'));
-      if (Number.isFinite(budgetFromAttr) && budgetFromAttr > 0) {
-        config.exprBudget = budgetFromAttr;
-      }
-      const diagnosticsFromAttr = parseBooleanFlag(script.getAttribute('data-forma-diagnostics'));
-      if (diagnosticsFromAttr !== undefined) {
-        config.diagnostics = diagnosticsFromAttr;
-      }
-      const containmentFromAttr = parseBooleanFlag(script.getAttribute('data-forma-auto-containment'));
-      if (containmentFromAttr !== undefined) {
-        config.autoContainment = containmentFromAttr;
-      }
-    }
-  }
-
-  return config;
-}
-
 /**
  * Record a diagnostic, and the first time it is seen log it and dispatch it as
  * `formajs:diagnostic` on `window`.
@@ -414,7 +178,7 @@ function reportDiagnostic(
   mount?: MountCtx | null,
   grant?: RuntimeDiagnostic['grant'],
 ): void {
-  if (kind !== 'grant-denied' && kind !== 'markup-refused' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;
+  if (kind !== 'grant-denied' && kind !== 'markup-refused' && mount?.diagnostics === false) return;
 
   const key = mount ? `${kind}|${mount.id}|${reason}|${expr}` : `${kind}|${reason}|${expr}`;
   const now = Date.now();
@@ -448,50 +212,18 @@ function reportDiagnostic(
   }
 }
 
-const runtimeConfig = readRuntimeConfig();
-if (typeof runtimeConfig.exprBudget === 'number') {
-  setStepBudget(runtimeConfig.exprBudget);
-}
-if (typeof runtimeConfig.diagnostics === 'boolean') {
-  _diagnosticsEnabled = runtimeConfig.diagnostics;
-}
-const _autoContainment = runtimeConfig.autoContainment === true;
-
-/**
- * The page's mount switch (FORMA-128): `data-forma-mount="manual"` on a
- * `<script>` element turns every tierless binding path off, so only
- * `mountMarkup()` binds: no auto-mount on load, no `body` observer, and
- * `mount()`, `initRuntime()` and `reconcile()` throw `FORMA_E_MOUNT_MANUAL`.
- * Without it the runtime auto-mounts as at 2.0.x.
- *
- * It is read once, here, when the runtime first runs, before any bind, and
- * never again: removing or changing the attribute later changes nothing. It
- * comes from the runtime's own `<script>` element where there is one (the
- * CDN builds, `document.currentScript`), else from any `<script>` that
- * carries it (an ESM build has no element of its own; the switch goes on the
- * module script that loads the application). Only `manual` counts, and any
- * one element saying so is enough, so the switch only ever removes binding
- * paths: markup cannot use it to turn one back on. It needs no inline script.
- *
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound"
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "the mount switch is read once, from the runtime's own script element"
- */
-function readMountSwitch(): boolean {
-  if (typeof document === 'undefined') return false;
+/** The removed A2 opt-out can only produce a development migration warning. */
+function warnManualMountRemoved(): void {
+  if (typeof document === 'undefined') return;
   const own = document.currentScript as HTMLScriptElement | null;
-  if (own?.getAttribute('data-forma-mount') === 'manual') return true;
-  return document.querySelector('script[data-forma-mount="manual"]') !== null;
-}
-const _manualMount = readMountSwitch();
-
-/** Refuse a tierless binding call on a page whose mount switch is `manual`. */
-function assertTierless(what: string): void {
-  if (_manualMount) {
-    throw mountError(
-      'FORMA_E_MOUNT_MANUAL',
-      `${what} binds with every power, and this page mounts only through mountMarkup() (data-forma-mount="manual")`,
-    );
+  if (own?.getAttribute('data-forma-mount') === 'manual'
+    || document.querySelector('[data-forma-mount="manual"]')) {
+    warnDeprecated('FORMA_W_MANUAL_MOUNT_REMOVED');
   }
+}
+if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
+  || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && sourceIsDev())) {
+  warnManualMountRemoved();
 }
 
 // ── Mount boundaries ──
@@ -535,8 +267,7 @@ export interface FetchGrant {
 
 /**
  * A mount's grants (DR-15). A grant absent from the object is not given;
- * the whole object absent gives every grant, A2's bridge default, which
- * 3.0.0 turns to none (FORMA-108).
+ * an absent object also grants nothing (FORMA-108).
  */
 export interface MountGrants {
   /** `data-fetch`. */
@@ -599,8 +330,6 @@ interface FetchPrefix {
 
 /** A mount's `fetch` grant, resolved. */
 interface FetchRule {
-  /** The A2 default: any request, sent as a tierless mount sends it. */
-  any: boolean;
   methods: ReadonlySet<string>;
   prefixes: readonly FetchPrefix[];
   cookies: boolean;
@@ -642,11 +371,9 @@ function mountError(code: string, message: string): Error {
 }
 
 /**
- * Every live tiered mount, by its root. A tierless path (the auto-mount, the
- * `body` observer, `mount()`, `unmount()`, `destroyRuntime()`, `reconcile()`)
- * neither binds nor disposes a scope a tiered mount owns, and a tiered mount
- * binds nothing that another mount owns: its handle alone does.
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "no tierless path binds markup under a tiered root"
+ * Every explicit mount, by its root. A mount binds and disposes only its own
+ * scopes; nested mounts retain their own grants and lifecycle handles.
+ * Verified by: src/__tests__/runtime-explicit-mount.test.ts > "import, DOMContentLoaded, injected nodes and state-attribute changes never bind without a handed root"
  */
 const tieredRoots = new WeakMap<Node, MountCtx>();
 let tieredCount = 0;
@@ -693,16 +420,7 @@ function resolveGrants(tier: MountTier, grants: MountGrants | undefined): { fetc
     }
     return { fetch: null, dom: false, navigate: false };
   }
-  if (grants === undefined) {
-    // A2's bridge (DR-15): every grant, so a host moves to the mount call
-    // without changing what its widgets can do, and the development report
-    // shows what each one used. 3.0.0 makes this none (FORMA-108).
-    return {
-      fetch: { any: true, methods: FETCH_METHODS, prefixes: [], cookies: true, timeoutMs: FETCH_TIMEOUT_MS },
-      dom: true,
-      navigate: true,
-    };
-  }
+  if (grants === undefined) return { fetch: null, dom: false, navigate: false };
   if (typeof grants !== 'object' || grants === null) {
     throw mountError('FORMA_E_MOUNT_ARGS', 'grants must be an object');
   }
@@ -721,7 +439,6 @@ function resolveGrants(tier: MountTier, grants: MountGrants | undefined): { fetc
       throw mountError('FORMA_E_MOUNT_ARGS', `fetch.timeoutMs: 1 to ${FETCH_TIMEOUT_MS}`);
     }
     fetchRule = {
-      any: false,
       methods: new Set(methods),
       prefixes: f.paths.map(parsePrefix),
       cookies: f.cookies === true,
@@ -760,7 +477,6 @@ function fetchVerdict(rule: FetchRule | null, method: string, raw: string): Fetc
   }
   const sameOrigin = url !== null && url.origin === location.origin;
   const path = url === null ? raw : sameOrigin ? url.pathname : url.origin + url.pathname;
-  if (rule.any) return { ok: true, credentials: 'same-origin', timeoutMs: rule.timeoutMs, path, cookies: sameOrigin };
   if (!rule.methods.has(method)) return { ok: false, reason: `the fetch grant does not allow ${method}` };
   if (url === null || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
     return { ok: false, reason: `the fetch grant does not cover ${raw}` };
@@ -1118,7 +834,7 @@ function evaluateCompiledTemplate(compiled: CompiledTemplate, item: unknown): st
  * Clone a template element and apply item data to all text node placeholders.
  * Stores the original template text in a WeakMap so updates can re-apply without re-cloning.
  */
-function cloneWithTemplateData(template: Element, item: unknown, mount?: MountCtx): Element {
+function cloneWithTemplateData(template: Element, item: unknown, mount: MountCtx): Element {
   const clone = template.cloneNode(true) as Element;
   const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
@@ -1822,7 +1538,7 @@ function buildHandler(expr: string, scope: Scope, el: Element | null): HandlerBu
     const outer = eventLocals.$event;
     // Under a tiered mount the event carries the mount's bound, so
     // `$event.target` cannot hand back an element outside the root.
-    const wrapped = hostObject('event', e, '$event', scope.mount?.bound);
+    const wrapped = hostObject('event', e, '$event', scope.mount.bound);
     eventLocals.$event = wrapped;
     eventLocals.event = wrapped;
     // A handler cannot be retried later, so an event it has not seen starts a
@@ -1895,7 +1611,7 @@ function parseState(raw: string): Record<string, unknown> {
 
 // ── DOM scanner ──
 
-function initScope(stateEl: Element, mount: MountCtx | null): Scope {
+function initScope(stateEl: Element, mount: MountCtx): Scope {
   const raw = stateEl.getAttribute('data-forma-state') ?? '{}';
   const state = parseState(raw);
   const keys = Object.keys(state);
@@ -1924,16 +1640,11 @@ function initScope(stateEl: Element, mount: MountCtx | null): Scope {
 
   // $refetch is a captured callable, not a bare function in scope. A tiered
   // mount's reaches its own registry only.
-  const registry = mount ? mount.refetch : _refetchRegistry;
+  const registry = mount.refetch;
   const refetchHost = hostFn('$refetch', (id: unknown) => $refetch(String(id), registry), 1);
   getters['$refetch'] = () => refetchHost;
 
-  const scope: Scope = { getters, setters };
-  if (mount) {
-    scope.mount = mount;
-    scope.budget = mount.budget;
-  }
-  return scope;
+  return { getters, setters, mount, budget: mount.budget };
 }
 
 // ── Element binding ──
@@ -1958,7 +1669,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   // Under a tiered mount `$el` carries the mount's bound (L-36): no hop from
   // it reaches past the mount root without the `dom` grant.
   const elMagics: Record<string, unknown> = {
-    $el: hostObject('element', el, '$el', scope.mount?.bound),
+    $el: hostObject('element', el, '$el', scope.mount.bound),
     $dispatch: hostFn('$dispatch', (name: unknown, detail?: unknown) => {
       const type = String(name);
       const mount = scope.mount;
@@ -2016,15 +1727,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
     };
   };
 
-  // When the server provides a directive map, we know exactly which directives
-  // this element has. Skip getAttribute calls for directives it doesn't have.
-  // `known` is null when no map is available (fallback: check everything).
-  // A tiered mount never reads the page's map: its configuration comes only
-  // from its call, and the map is the page's.
-  const known = scope.mount ? null : getDirectives(el);
-
   // data-computed="name = expr" or "a = expr1; b = expr2"
-  const computedAttr = (!known || known.has('data-computed')) ? el.getAttribute('data-computed') : null;
+  const computedAttr = el.getAttribute('data-computed');
   if (computedAttr) {
     // Split multi-statement computed: "a = expr1; b = expr2; c = expr3"
     // Uses lookahead to split at "; identifier =" boundaries without
@@ -2082,7 +1786,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   }
 
   // data-text="{expr}"
-  const textExpr = (!known || known.has('data-text')) ? el.getAttribute('data-text') : null;
+  const textExpr = el.getAttribute('data-text');
   if (textExpr) {
     const evaluate = evaluator(textExpr, asText);
     const dispose = internalEffect(() => {
@@ -2094,7 +1798,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   }
 
   // data-show="{expr}"
-  const showExpr = (!known || known.has('data-show')) ? el.getAttribute('data-show') : null;
+  const showExpr = el.getAttribute('data-show');
   if (showExpr) {
     const evaluate = evaluator(showExpr);
     const transition = parseTransitionSpec(el);
@@ -2119,7 +1823,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   }
 
   // data-if="{expr}" — conditional DOM insertion/removal with optional transitions
-  const ifExpr = (!known || known.has('data-if')) ? el.getAttribute('data-if') : null;
+  const ifExpr = el.getAttribute('data-if');
   if (ifExpr) {
     const evaluate = evaluator(ifExpr);
     const transition = parseTransitionSpec(el);
@@ -2167,7 +1871,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   }
 
   // data-model="{prop}"
-  const modelExpr = (!known || known.has('data-model')) ? el.getAttribute('data-model') : null;
+  const modelExpr = el.getAttribute('data-model');
   if (modelExpr) {
     const prop = modelExpr.replace(RE_STRIP_BRACES, '').trim();
     let getter = scope.getters[prop];
@@ -2247,12 +1951,11 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
 
   // Single-pass over attributes for data-on:*, data-class:*, data-bind:*
   // When directive map is available, skip the loop entirely if none of these are present.
-  const hasColonDirectives = !known || hasAnyPrefix(known, 'data-on:', 'data-class:', 'data-bind:');
   // Snapshot the NamedNodeMap before binding. data-bind effects run
   // synchronously and can add/remove attributes; iterating the live map would
   // otherwise skip the following directive when its indices shift.
   const attrs = Array.from(el.attributes);
-  if (hasColonDirectives) for (let i = 0; i < attrs.length; i++) {
+  for (let i = 0; i < attrs.length; i++) {
     const attr = attrs[i]!;
     const name = attr.name;
 
@@ -2344,7 +2047,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   }
 
   // data-persist="{prop}"
-  const persistExpr = (!known || known.has('data-persist')) ? el.getAttribute('data-persist') : null;
+  const persistExpr = el.getAttribute('data-persist');
   if (persistExpr) {
     const prop = persistExpr.replace(RE_STRIP_BRACES, '').trim();
     const getter = scope.getters[prop];
@@ -2365,7 +2068,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   }
 
   // data-list="{expr}" — keyed reconciliation with LIS
-  const listExpr = (!known || known.has('data-list')) ? el.getAttribute('data-list') : null;
+  const listExpr = el.getAttribute('data-list');
   if (listExpr) {
     const templateEl = el.children[0] as Element | undefined;
     if (templateEl) {
@@ -2543,7 +2246,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   }
 
   // data-fetch="[METHOD] url → prop [|loading:prop] [|error:prop] [|poll:ms]"
-  const fetchExpr = (!known || known.has('data-fetch')) ? el.getAttribute('data-fetch') : null;
+  const fetchExpr = el.getAttribute('data-fetch');
   if (fetchExpr) {
     const arrowMatch = fetchExpr.match(RE_FETCH);
     if (arrowMatch) {
@@ -2587,16 +2290,16 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       // Under a tiered mount the request must be one its `fetch` grant
       // covers (DR-15). One it does not is never sent, polled or registered
       // for `$refetch`: it is reported as a coded denial and its `error:`
-      // target says so. A tierless mount sends every request, as at 2.0.x.
+      // target says so. Every request has this explicit mount verdict.
       // Verified by: src/__tests__/runtime-tiered-mount.test.ts > "with explicit empty grants a generated tree binds neither data-fetch nor $el.click()"
       const mount = scope.mount;
-      const verdict = mount ? fetchVerdict(mount.fetch, method, url) : null;
-      if (verdict && !verdict.ok) {
+      const verdict = fetchVerdict(mount.fetch, method, url);
+      if (!verdict.ok) {
         reportDiagnostic('grant-denied', fetchExpr, verdict.reason, 'FORMA_E_GRANT_FETCH', mount, 'fetch');
         el.setAttribute('data-forma-expr-error', 'unsupported');
         if (errorTarget) scope.setters[errorTarget]!(`data-fetch denied: ${verdict.reason}`);
       } else {
-        const timeoutMs = verdict ? verdict.timeoutMs : FETCH_TIMEOUT_MS;
+        const timeoutMs = verdict.timeoutMs;
 
         // A request the server never answers is aborted after FETCH_TIMEOUT_MS
         // (or a tiered mount's shorter grant), its own timer per request, and the
@@ -2607,9 +2310,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // flight: its timer is cleared and the request aborted. (Rationale: a
         // request checks it is still in flight before writing, so a stopped one
         // does not write into the disposed scope's signals.)
-        // Under a tiered mount, a response with a status outside 200-299 is an
-        // error, written to the error: target and never to the data target; a
-        // tierless mount parses every response as data, as at 2.0.x.
+        // Every response outside 200-299 is an error, written to the error:
+        // target and never to the data target.
         // Verified by: src/__tests__/runtime-fetch-timeout.test.ts > "a data-fetch to a stalled endpoint aborts at 30 s into its error: target"
         // Verified by: src/__tests__/runtime-fetch-timeout.test.ts > "a data-fetch answered before 30 s lands in its target and is never aborted"
         // Verified by: src/__tests__/runtime-fetch-timeout.test.ts > "unmount() stops every in-flight request of a polling data-fetch, and removing the element does too"
@@ -2623,26 +2325,24 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           const stop = () => { clearTimeout(timer); ctrl.abort(); };
           inflight.add(stop);
           const init: RequestInit = { method, signal: ctrl.signal };
-          if (verdict) {
-            init.credentials = verdict.credentials;
-            // The grant authorizes this URL, not a server's redirect target.
-            // Browsers hide Location on manual redirects, so refuse before a
-            // second request can escape its method/path/cookie boundary.
-            init.redirect = 'error';
-            if (mount!.used) {
-              mount!.used.methods.add(method);
-              mount!.used.paths.add(verdict.path);
-              if (verdict.cookies) mount!.used.cookies = true;
-            }
+          init.credentials = verdict.credentials;
+          // The grant authorizes this URL, not a server's redirect target.
+          // Browsers hide Location on manual redirects, so refuse before a
+          // second request can escape its method/path/cookie boundary.
+          init.redirect = 'error';
+          if (mount.used) {
+            mount.used.methods.add(method);
+            mount.used.paths.add(verdict.path);
+            if (verdict.cookies) mount.used.cookies = true;
           }
           fetch(url, init)
             .then(r => {
-              if (verdict && !r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);
+              if (!r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);
               return r.json();
             }, err => {
               // Fetch intentionally gives network and redirect failures the
               // same rejection. Do not claim to identify which one occurred.
-              if (verdict && !ctrl.signal.aborted) {
+              if (!ctrl.signal.aborted) {
                 throw new Error('FORMA_E_FETCH_REQUEST: data-fetch failed before a response; redirects are not followed');
               }
               throw err;
@@ -2668,11 +2368,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           inflight.clear();
         });
 
-        // Register in $refetch registry if data-fetch-id is present: the
-        // page's, or the tiered mount's own.
+        // Register only in this mount's $refetch registry.
         const fetchId = el.getAttribute('data-fetch-id');
         if (fetchId) {
-          const registry = mount ? mount.refetch : _refetchRegistry;
+          const registry = mount.refetch;
           registry.set(fetchId, doFetch);
           disposers.push(() => registry.delete(fetchId));
         }
@@ -2690,16 +2389,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
 
 // ── Scope mounting / unmounting (single data-forma-state element) ──
 
-/**
- * Fast check: does this element have any Forma directive attribute?
- *
- * This is the fallback scan, used when the server sent no directive map. It
- * replaced a `DIRECTIVE_SELECTOR` constant that claimed to "avoid scanning
- * every descendant" while being referenced by nothing: mountScope has always
- * called querySelectorAll('*') and filtered with this predicate. The targeted
- * selector the claim described is the one buildDirectiveSelector() constructs
- * from the server's map.
- */
+/** Filter the captured descendant snapshot to actual directive elements. */
 function hasDirective(el: Element): boolean {
   const attrs = el.attributes;
   for (let i = 0; i < attrs.length; i++) {
@@ -2716,82 +2406,14 @@ function hasDirective(el: Element): boolean {
   return false;
 }
 
-// ── Pre-compiled Directive Map ──
-//
-// When the server sends a directive_map sidecar (data-forma-id → directive names),
-// the runtime uses it in two ways:
-//
-// 1. mountScope(): targeted CSS selector queries only directive-bearing elements
-//    instead of querySelectorAll('*') + attribute scan on every descendant.
-//
-// 2. bindElement(): skips getAttribute calls for directives the element doesn't
-//    have, avoiding unnecessary work for elements with only 1-2 directives.
-
-/** Full map: data-forma-id → Set of directive attribute names. */
-let _directiveMap: Map<string, Set<string>> | null = null;
-
-/**
- * Load a pre-compiled directive map from the server.
- * Keys are data-forma-id values, values are arrays of directive attribute names.
- */
-function setDirectiveMap(map: Record<string, string[]> | null): void {
-  if (!map || Object.keys(map).length === 0) {
-    _directiveMap = null;
-    return;
-  }
-  _directiveMap = new Map();
-  for (const id in map) {
-    _directiveMap.set(id, new Set(map[id]!));
-  }
-}
-
-/**
- * Build a CSS selector that targets only elements with known directives.
- * Returns null when the map has too many entries (selector would be huge)
- * or when no map is available.
- */
-function buildDirectiveSelector(): string | null {
-  if (!_directiveMap || _directiveMap.size === 0) return null;
-  // Cap at 200 IDs to avoid pathologically long selectors.
-  // Above that, querySelectorAll('*') + Set check is likely faster.
-  if (_directiveMap.size > 200) return null;
-  const parts: string[] = [];
-  for (const id of _directiveMap.keys()) {
-    parts.push(`[data-forma-id="${id}"]`);
-  }
-  return parts.join(',');
-}
-
-/** Get the directive set for an element, or null if unknown. */
-function getDirectives(el: Element): Set<string> | null {
-  if (!_directiveMap) return null;
-  const id = el.getAttribute('data-forma-id');
-  if (!id) return null;
-  return _directiveMap.get(id) ?? null;
-}
-
-/** Check if any entry in a Set starts with one of the given prefixes. */
-function hasAnyPrefix(set: Set<string>, ...prefixes: string[]): boolean {
-  for (const entry of set) {
-    for (const prefix of prefixes) {
-      if (entry.startsWith(prefix)) return true;
-    }
-  }
-  return false;
-}
-
 /**
  * Bind one `data-forma-state` element and the directive-bearing elements under
- * it. `mount` is the tiered mount doing so, or null for a tierless path; a
- * scope whose owner is another (a tierless path reaching under a tiered root,
- * or a mount reaching into one nested in it) is left alone, and so is every
- * element under it that belongs to a mount nested inside.
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "no tierless path binds markup under a tiered root"
+ * it. The mount context is required. A scope owned by a different nested
+ * mount is left alone, as are that mount's directive descendants.
+ * Verified by: src/__tests__/runtime-explicit-mount.test.ts > "import, DOMContentLoaded, injected nodes and state-attribute changes never bind without a handed root"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a mount nested in another binds with its own grants, and the outer one never binds its markup"
  */
-function mountScope(root: Element, mount: MountCtx | null = null): void {
-  // On a page whose mount switch is `manual`, no tierless path binds anything.
-  if (mount === null && _manualMount) return;
+function mountScope(root: Element, mount: MountCtx): void {
   if (ownerOf(root) !== mount) return;
   // Idempotency guard — never double-bind
   if ((root as any).__formaDisposers) {
@@ -2820,17 +2442,13 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
   // element came out unwrapped and `$refs.r.ownerDocument.location.href` read
   // the real page URL from inside a "CSP-safe" expression, with no diagnostic.
   // Verified by: src/expr/__tests__/adversarial.test.ts > "$refs.r.ownerDocument.location.href is denied"
-  const refsHost = hostObject('refs', refsMap, '$refs', mount?.bound);
+  const refsHost = hostObject('refs', refsMap, '$refs', mount.bound);
   scope.getters['$refs'] = () => refsHost;
 
   // Bind the root itself
   bindElement(root, scope, disposers);
 
-  // Bind only directive-bearing descendants (skip inert elements).
-  // When the server provides a directive map, we build a targeted CSS selector
-  // that queries only elements with known directives — no querySelectorAll('*').
-  //
-  // Both queries take a SNAPSHOT, and binding an earlier element can detach a
+  // The descendant query takes a SNAPSHOT, and binding an earlier element can detach a
   // later one: `data-list` lifts its first child out as the row template with
   // `removeChild`, so that node is still in the snapshot and no longer in the
   // tree. Binding it evaluated the row's expressions against the PARENT scope,
@@ -2842,16 +2460,11 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
   // isConnected would incorrectly skip those legitimate descendants.
   // Verified by: src/__tests__/failure-semantics.test.ts > "a data-list row template is not bound against the parent scope"
   let boundCount = 0;
-  const selector = mount ? null : buildDirectiveSelector();
-  // Without a server-supplied map the query is `*`, so every element on the
-  // page is visited and the attribute scan is the filter. Hoisted out of the
-  // loop because that is the hot path.
-  const scanAll = selector === null;
-  const targets = scanAll ? root.querySelectorAll('*') : root.querySelectorAll(selector);
+  const targets = root.querySelectorAll('*');
   for (let i = 0; i < targets.length; i++) {
     const el = targets[i]!;
     if (!root.contains(el)) continue;
-    if (scanAll && !hasDirective(el)) continue;
+    if (!hasDirective(el)) continue;
     if (ownedBelow(el, root)) continue;
     bindElement(el, scope, disposers);
     boundCount++;
@@ -2862,7 +2475,7 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
   // Expose scope for devtools (State Inspector panel)
   (root as any).__formaScope = scope;
   (root as any).__formaInitialState = root.getAttribute('data-forma-state') ?? '{}';
-  if (_debug) dbg('mountScope: DONE —', boundCount, 'elements bound,', disposers.length, 'disposers', selector ? '(targeted)' : '(full scan)');
+  if (_debug) dbg('mountScope: DONE —', boundCount, 'elements bound,', disposers.length, 'disposers');
 }
 
 /**
@@ -2871,7 +2484,7 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
  * Like `mountScope`, it leaves alone a scope another mount owns: a tiered
  * mount's scopes are disposed through its handle only.
  */
-function unmountScope(root: Element, mount: MountCtx | null = null): void {
+function unmountScope(root: Element, mount: MountCtx): void {
   if (ownerOf(root) !== mount) return;
   const disposers = (root as any).__formaDisposers as (() => void)[] | undefined;
   if (disposers) {
@@ -2883,216 +2496,6 @@ function unmountScope(root: Element, mount: MountCtx | null = null): void {
     delete (root as any).__formaInitialState;
   }
 }
-
-// ── MutationObserver — auto-discovery of new data-forma-state elements ──
-//
-// Cost: O(addedNodes) per mutation batch. Never re-scans the whole document.
-// The observer only fires for childList mutations (nodes added/removed) and
-// attribute mutations on the `data-forma-state` attribute specifically.
-
-let _observer: MutationObserver | null = null;
-const ELEMENT_NODE = 1;
-const MUTATION_CHUNK_SIZE = 40;
-let _pendingMutations: MutationRecord[] = [];
-let _drainingMutations = false;
-
-function processMutation(mutation: MutationRecord): void {
-  // Under a tiered root nothing added or changed is the observer's to bind:
-  // `mountScope` and `unmountScope` refuse a scope a tiered mount owns
-  // (FORMA-128). A scope removed from inside a mount is detached, so it is
-  // disposed here as any other; a whole mount moved elsewhere stays bound.
-  // ── Removed nodes: clean up disposers to prevent memory leaks ──
-  for (let i = 0; i < mutation.removedNodes.length; i++) {
-    const node = mutation.removedNodes[i]!;
-    if (node.nodeType !== ELEMENT_NODE) continue;
-    const el = node as Element;
-    if (el.hasAttribute('data-forma-state')) {
-      if (_debug) dbg('MutationObserver: REMOVED scope');
-      unmountScope(el);
-    }
-    const removed = el.querySelectorAll('[data-forma-state]');
-    for (let j = 0; j < removed.length; j++) {
-      unmountScope(removed[j]!);
-    }
-  }
-
-  // ── Added nodes: auto-mount new scopes ──
-  for (let i = 0; i < mutation.addedNodes.length; i++) {
-    const node = mutation.addedNodes[i]!;
-    if (node.nodeType !== ELEMENT_NODE) continue;
-    const el = node as Element;
-    if (el.closest('[data-forma-leaving]')) continue;
-    if (el.hasAttribute('data-forma-state')) {
-      if (_debug) dbg('MutationObserver: ADDED scope via mutation');
-      mountScope(el);
-    }
-    const added = el.querySelectorAll('[data-forma-state]');
-    if (_debug && added.length > 0) {
-      dbg('MutationObserver: found', added.length, 'nested scope(s) in added subtree');
-    }
-    for (let j = 0; j < added.length; j++) {
-      const desc = added[j]!;
-      if (desc.closest('[data-forma-leaving]')) continue;
-      mountScope(desc);
-    }
-  }
-
-  // ── Attribute change: data-forma-state added/removed/changed ──
-  if (mutation.type === 'attributes' && mutation.attributeName === 'data-forma-state') {
-    const target = mutation.target as Element;
-    // Always unmount first (cleans up old bindings)
-    unmountScope(target);
-    // Re-mount if the attribute still exists (value may have changed)
-    if (target.hasAttribute('data-forma-state')) {
-      mountScope(target);
-    }
-  }
-}
-
-async function drainMutationQueue(): Promise<void> {
-  try {
-    while (_pendingMutations.length > 0) {
-      const batch = _pendingMutations.splice(0, MUTATION_CHUNK_SIZE);
-      for (let i = 0; i < batch.length; i++) {
-        processMutation(batch[i]!);
-      }
-      if (_pendingMutations.length > 0) {
-        await yieldToMain();
-      }
-    }
-  } finally {
-    _drainingMutations = false;
-    // Handle races where new mutations were queued after the while-check.
-    if (_pendingMutations.length > 0 && !_drainingMutations) {
-      _drainingMutations = true;
-      void drainMutationQueue();
-    }
-  }
-}
-
-function handleMutations(mutations: MutationRecord[]): void {
-  if (_debug) dbg('MutationObserver: queued', mutations.length, 'mutation(s)');
-  _pendingMutations.push(...mutations);
-  if (_drainingMutations) return;
-  _drainingMutations = true;
-  void drainMutationQueue();
-}
-
-function startObserver(): void {
-  if (_observer) return;
-  _observer = new MutationObserver(handleMutations);
-  const target = document.body || document.documentElement;
-  if (target) {
-    _observer.observe(target, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['data-forma-state'],
-    });
-  }
-}
-
-function stopObserver(): void {
-  if (_observer) {
-    _observer.disconnect();
-    _observer = null;
-  }
-}
-
-// ── Main init ──
-
-function initRuntime(): void {
-  assertTierless('initRuntime()');
-  if (_autoContainment) {
-    applyContainmentHints(document, { skipIfAlreadySet: true });
-  }
-  const stateRoots = document.querySelectorAll('[data-forma-state]');
-  if (_debug) dbg('initRuntime: found', stateRoots.length, 'scope(s)');
-  for (const root of Array.from(stateRoots)) {
-    mountScope(root);
-  }
-  // Start auto-discovery after initial scan
-  startObserver();
-  if (_debug) dbg('initRuntime: MutationObserver started');
-}
-
-/**
- * Dispose all FormaJS scopes — clears effects, intervals, event listeners, and
- * stops the observer.
- *
- * The per-scope closure caches are WeakMaps keyed by the scope, so they go with
- * the scopes. The module-level compiled-AST cache in src/expr is keyed by source
- * TEXT and shared across scopes, so it has to be dropped explicitly or a torn
- * down page keeps up to 2,048 parsed programs alive.
- */
-function destroyRuntime(): void {
-  stopObserver();
-  const stateRoots = document.querySelectorAll('[data-forma-state]');
-  for (const root of Array.from(stateRoots)) {
-    unmountScope(root);
-  }
-  clearExpressionCache();
-  // Nothing mounted is left to retry, and the next init starts a fresh task.
-  staleCells.clear();
-  meter.steps = meter.cost = meter.lost = 0;
-  meter.cap = Infinity;
-}
-
-/**
- * Mount a specific element or subtree — scans for `data-forma-state`
- * elements and initializes their reactive bindings.
- *
- * Use this for manual control when injecting HTML dynamically.
- * With the MutationObserver active, this is usually not needed.
- *
- * @param el - The root element to scan (checks itself and all descendants).
- */
-function mount(el: Element): void {
-  assertTierless('mount()');
-  if (el.hasAttribute('data-forma-state')) {
-    mountScope(el);
-  }
-  const descendants = el.querySelectorAll('[data-forma-state]');
-  for (const desc of Array.from(descendants)) {
-    mountScope(desc);
-  }
-}
-
-/**
- * Unmount a specific element or subtree — disposes all reactive bindings
- * for `data-forma-state` elements within.
- *
- * @param el - The root element to clean up (checks itself and all descendants).
- */
-function unmount(el: Element): void {
-  if (el.hasAttribute('data-forma-state')) {
-    unmountScope(el);
-  }
-  const descendants = el.querySelectorAll('[data-forma-state]');
-  for (const desc of Array.from(descendants)) {
-    unmountScope(desc);
-  }
-}
-
-// Auto-init in browser contexts on DOMContentLoaded (or immediately if already
-// loaded): the tierless auto-mount, deprecated, removed in 3.0.0; not on a page
-// whose mount switch is `manual`, and not in the preview frame's runtime, built
-// with the frame flag, which binds only the module its host sends (FORMA-128).
-// Verified by: src/__tests__/runtime-tiered-mount.test.ts > "with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound"
-// Verified by: src/__tests__/runtime-frame.test.ts > "the frame runtime is one classic script a server can inline as it is"
-if (typeof document !== 'undefined' && !_manualMount
-  && !(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__)) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initRuntime);
-  } else {
-    initRuntime();
-  }
-}
-
-/** Enable/disable debug logging. Also toggleable via window.__FORMA_DEBUG = true */
-function setDebug(on: boolean): void { _debug = on; }
-/** Enable/disable runtime diagnostics for unsupported expressions/handlers. */
-function setDiagnostics(on: boolean): void { _diagnosticsEnabled = on; }
 
 /** Runtime diagnostics captured while parsing/binding templates. */
 function getDiagnostics(): RuntimeDiagnostic[] {
@@ -3169,65 +2572,6 @@ function resetScope(element: Element): void {
   });
 }
 
-// ── Reconciler ──
-
-let _reconciler: ((container: Element, html: TrustedHtml) => void) | null = null;
-
-/** The `body` observer pauses while a reconciler patches, so it does not see the patch. */
-function disconnectObserver(): void {
-  if (_observer) {
-    _observer.disconnect();
-  }
-}
-
-function reconnectObserver(): void {
-  if (_observer) {
-    const target = document.body || document.documentElement;
-    if (target) {
-      _observer.observe(target, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['data-forma-state'],
-      });
-    }
-  }
-}
-
-function getReconciler() {
-  if (!_reconciler) {
-    _reconciler = createReconciler({
-      mountScope: (el) => mountScope(el),
-      unmountScope: (el) => unmountScope(el),
-      disconnectObserver,
-      reconnectObserver,
-      batch,
-    });
-  }
-  return _reconciler;
-}
-
-/**
- * Reconcile a container's DOM against new markup. A raw sink: pass
- * `trustedHtml(markup)` (DR-19); plain strings are refused before parsing.
- *
- * The tierless path: it binds the markup with every power the runtime has,
- * wherever the container is. It behaves as at 2.0.x; in a development build
- * its first call logs `FORMA_W_DEPRECATED_RECONCILE`, and 3.0.0 removes it
- * (FORMA-108). Mount through `mountMarkup()` with a tier and grants instead.
- *
- * @deprecated Removed in 3.0.0. Use `mountMarkup(root, markup, { tier, grants })`.
- * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "reconcile behaves as at 2.0.x and warns once in development"
- */
-function reconcile(container: Element, html: TrustedHtml): void {
-  assertTierless('reconcile()');
-  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__)
-    || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && sourceIsDev())) {
-    warnDeprecated('FORMA_W_DEPRECATED_RECONCILE');
-  }
-  getReconciler()(container, html);
-}
-
 // ── Tiered mount ──
 
 /**
@@ -3269,8 +2613,7 @@ function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): 
       el.outerHTML.slice(0, 200),
       `unreviewed markup renders no ${what}: ${live ? 'one reached the document after the strip; removed, and the markup refused' : 'removed'}`,
       code,
-      mount,
-    );
+        );
   };
   for (const link of Array.from(content.querySelectorAll('link'))) {
     refuse(link, '<link>', 'FORMA_E_UNREVIEWED_LINK');
@@ -3298,7 +2641,7 @@ function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): 
  * - **Grants** (DR-15): `fetch` (methods, path prefixes, cookies or not, a
  *   timeout up to 30 s), `dom` (the page beyond the root) and `navigate`
  *   (`click()`). A grant the object leaves out is not given; leaving out the
- *   whole object gives every grant, A2's bridge (3.0.0 gives none). Every
+ *   whole object also gives none. Every
  *   denial is a coded `formajs:diagnostic` (`kind: 'grant-denied'`).
  * - **`$el`, `$event`, `$refs`** reach only the root's descendants: a hop
  *   to any other element, or a selector asking about one, needs `dom` (L-36).
@@ -3309,11 +2652,8 @@ function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): 
  *
  * The shared responsibility (v2 10.1): the application chooses the tier and
  * passes grants only for content whose hash matches what its reviewer
- * approved (L-47); Forma enforces what the mount grants. In 2.x the tierless
- * paths (the auto-mount, the `body` observer, `mount()`, `reconcile()`) still
- * run where the page loads them, unless it sets `data-forma-mount="manual"`
- * (see `readMountSwitch`); none of them binds or disposes anything under a
- * tiered root.
+ * approved (L-47); Forma enforces what the mount grants. DOM binding begins
+ * only at this call and subsequent handle.update calls; handle.unmount ends it.
  *
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "binds only under the root it is handed: markup injected outside it stays unbound"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount refuses any origin but an opaque one, and any grant"
@@ -3369,9 +2709,6 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
     used,
   };
 
-  // Bindings a tierless path made under the root before it was handed over
-  // go first, with what they rendered: the mount renders what it is given.
-  for (const scope of Array.from(root.querySelectorAll('[data-forma-state]'))) unmountScope(scope);
   tieredRoots.set(root, ctx);
   tieredCount++;
   root.replaceChildren();
@@ -3379,8 +2716,9 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
   const reconcileInto = createReconciler({
     mountScope: (el) => mountScope(el, ctx),
     unmountScope: (el) => unmountScope(el, ctx),
-    disconnectObserver,
-    reconnectObserver,
+    // Shared reconciler hooks: the explicit runtime has no body observer.
+    disconnectObserver: () => {},
+    reconnectObserver: () => {},
     batch,
     // Unreviewed markup is parsed once, in the root's context, stripped on
     // those nodes, and written as nodes (see refuseUnreviewed).
@@ -3456,18 +2794,10 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
 export type { TrustedHtml };
 
 export {
-  initRuntime,
-  destroyRuntime,
-  mount,
-  unmount,
-  reconcile,
   mountMarkup,
   trustedHtml,
-  setDebug,
   yieldToMain,
   applyContainmentHints,
-  setDirectiveMap,
-  setDiagnostics,
   getDiagnostics,
   clearDiagnostics,
   getScopes,
