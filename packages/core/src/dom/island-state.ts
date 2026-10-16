@@ -265,7 +265,19 @@ function project(input: Record<string, unknown>, schema: IslandSchema): Record<s
       case 'array': {
         if (!Array.isArray(work.value)) return fail();
         const out: unknown[] = [];
-        value = out; pending.push({ kind: 'array', value: work.value, type: type.element, out, index: 0 }); break;
+        value = out;
+        const kind = type.element.kind;
+        if (kind === 'string' || kind === 'boolean' || kind === 'number') {
+          // These immutable leaves need no nested work frame. Keep the same
+          // per-value budget and type checks while copying into a fresh array.
+          for (let i = 0; i < work.value.length; i++) {
+            const item = work.value[i];
+            if (++count > MAX_STATE_BYTES || typeof item !== kind
+              || (kind === 'number' && !Number.isFinite(item))) fail();
+            out[i] = item;
+          }
+        } else pending.push({ kind: 'array', value: work.value, type: type.element, out, index: 0 });
+        break;
       }
     }
     (work.out as Record<string | number, unknown>)[work.key] = value;
