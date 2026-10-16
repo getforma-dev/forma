@@ -2835,8 +2835,11 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
   // `removeChild`, so that node is still in the snapshot and no longer in the
   // tree. Binding it evaluated the row's expressions against the PARENT scope,
   // where `item` does not exist — silently undefined under the old parser, and
-  // a bogus "item is not declared" diagnostic under this one. A detached node
-  // has no parent, which is the O(1) test for "an earlier bind removed this".
+  // a bogus "item is not declared" diagnostic under this one. The template's
+  // descendants still have parents inside that detached subtree, so test their
+  // membership in this captured scope root, not only their immediate parent.
+  // A scope may itself be detached or inside a shadow root: document-level
+  // isConnected would incorrectly skip those legitimate descendants.
   // Verified by: src/__tests__/failure-semantics.test.ts > "a data-list row template is not bound against the parent scope"
   let boundCount = 0;
   const selector = mount ? null : buildDirectiveSelector();
@@ -2847,7 +2850,7 @@ function mountScope(root: Element, mount: MountCtx | null = null): void {
   const targets = scanAll ? root.querySelectorAll('*') : root.querySelectorAll(selector);
   for (let i = 0; i < targets.length; i++) {
     const el = targets[i]!;
-    if (el.parentNode === null) continue;
+    if (!root.contains(el)) continue;
     if (scanAll && !hasDirective(el)) continue;
     if (ownedBelow(el, root)) continue;
     bindElement(el, scope, disposers);

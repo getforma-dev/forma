@@ -106,3 +106,6 @@ docs/archive/FORMA-129-historical-probes/** -text
 
 # FORMA-129: authentic real-server redirect failure and corrected replay.
 docs/archive/FORMA-129-fetch-redirect/** -text
+
+# FORMA-129: observed detached-template failures and corrected unit replay.
+docs/archive/FORMA-129-list-template/** -text

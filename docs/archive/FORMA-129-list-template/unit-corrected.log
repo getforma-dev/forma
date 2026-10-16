@@ -1,0 +1,13 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run --maxWorkers=2 src/__tests__/runtime-list-template-snapshot.test.ts src/expr/__tests__/fuzz.test.ts src/__tests__/failure-semantics.test.ts
+
+
+ RUN  v4.1.10 /Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core
+
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  23:19:09
+   Duration  1.03s (transform 549ms, setup 0ms, import 677ms, tests 287ms, environment 449ms)
+
