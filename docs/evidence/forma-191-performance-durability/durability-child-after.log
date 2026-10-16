@@ -1,0 +1,10 @@
+✔ actual client producer retains the completed metric before its next operation fails (41.36475ms)
+✔ malformed child JSON and failed native validation retain originals without a complete marker (37.864125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218.988375

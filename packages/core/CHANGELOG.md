@@ -17,6 +17,15 @@ All notable changes to this project will be documented in this file.
 
 - FORMA-129: tiered `data-fetch` refuses redirects before another URL can escape its grant. Network/redirect rejection before a response has stable generic `FORMA_E_FETCH_REQUEST` error-target text; existing HTTP, JSON and abort handling remains intact. The old tierless path remains unchanged until FORMA-108 retires it.
 
+- Stop listener installation when a reentrant callback disposes the adoption plan. The currently installing callback is removed even if disposal happens before native attachment or installation then throws; unrelated listeners are retained.
+
+- Reduce temporary allocation while capturing an adoption DOM snapshot. The constructor keeps the same observed fields, traversal order, template contents, opaque child boundaries and validation, without an intermediate position object or work record per node.
+- Store captured attribute namespace/local/value triples without a temporary object per attribute, and reuse private property-descriptor pairs after taking the complete descriptor snapshot. Attribute checks, descriptor order, accessor refusal and symbol handling are unchanged.
+
+### Avoid unused control-oracle startup work — FORMA-191
+
+- Attribute snapshots use deterministic code-unit ordering without initializing locale collation. Strict adoption scans document radio peers only when it owns a named radio group, and skips detached form oracles when no control bindings can read them. Every topology, focus, captured-value and radio-peer check remains in place before empty observations are returned.
+
 ### Indexed item replacement — FORMA-181
 
 - `createKeyedRows(initial, keyFn)` supplies a nominal keyed collection to the two-argument `createList(rows, renderRow)` overload. The callback receives a stable item getter and index getter. `set` validates and replaces an existing canonical key, notifying that item's readers without rerunning row factories or structural reconciliation; `replace` validates the whole candidate and batches retained values with membership/order changes. Missing keys, key changes, sparse arrays and duplicate canonical keys refuse before publication.
