@@ -37,10 +37,12 @@ const assetsDir = join(outDir, 'site', '_assets');
 const expectedIslands = {
   'browser-only': ['Chart'],
   'mixed-entry': ['Local', 'Panel'],
+  namespaces: ['NamespaceVectors'],
   'edited-controls': ['Controls'],
   'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],
   'keyed-moves': ['KeyedRows'],
+  'keyed-indexed': ['IndexedRows', 'IndexedRows'],
   'root-fragment': [],
   select: ['Picker'],
   'textarea-child': ['Editor'],

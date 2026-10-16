@@ -40,7 +40,7 @@ export interface RouteMapping {
    * Declare the route a canvas (N2, FORMA-190): a page that hosts many modules
    * and is JavaScript-heavy by design. The size report holds all of its
    * JavaScript to 365 KiB gzip -9 instead of the 75 KiB of other pages; Forma's
-   * own code stays under N2's 27,500 B either way. It raises nothing for a
+   * own code stays under N2's 28,000 B either way. It raises nothing for a
    * route without JavaScript. A heavy page that is not a canvas is trimmed or
    * split, not declared.
    */
@@ -232,8 +232,8 @@ export interface BuildResult {
    * (`@getforma/core` and `alien-signals` as bundled) beside the application's,
    * the service worker it registers, and its ceilings. A production build fails
    * with `BUILD-819` before writing its output when a route is over one:
-   * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (27,500 B; decision brief
-   * L-55), all of its JavaScript over its class's (none for a route without an
+   * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (28,000 B; decision brief
+   * L-59), all of its JavaScript over its class's (none for a route without an
    * interactive region, 75 KiB, 365 KiB for a canvas). Empty in watch mode,
    * whose unminified bytes are not what a route ships. The same objects as
    * `sizeReport.routes`.

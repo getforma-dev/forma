@@ -46,6 +46,7 @@ import { SSR_ORIGIN as ORIGIN } from './origin';
 const CASES = {
   'generic-state': 'island',
   'mixed-entry': 'island',
+  namespaces: 'island',
   'root-fragment': 'static',
   'textarea-child': 'island',
   'textarea-value': 'island',
@@ -54,6 +55,7 @@ const CASES = {
   'edited-controls': 'island',
   'ledger-arrival': 'island',
   'keyed-moves': 'island',
+  'keyed-indexed': 'island',
   'browser-only': 'island',
 } as const;
 type CaseName = keyof typeof CASES;

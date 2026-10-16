@@ -29,8 +29,8 @@ function execute(f:ReturnType<typeof fixture>,result:BuildResult):unknown {
  for(const output of result.outputFiles!)if(output.path.endsWith('.js')){mkdirSync(dirname(output.path),{recursive:true});writeFileSync(output.path,output.contents);}
  writeFileSync(join(f.root,'package.json'),'{"type":"module"}');
  writeFileSync(join(f.root,'run.mjs'),'import "./dist/a.js";import "./dist/b.js";console.log(JSON.stringify(globalThis.events));');
- const child=spawnSync(process.execPath,[join(f.root,'run.mjs')],{encoding:'utf8'});
- expect(child.status,child.stderr).toBe(0);return JSON.parse(child.stdout);
+ const child=spawnSync(process.execPath,[join(f.root,'run.mjs')],{encoding:'utf8',timeout:25_000});
+ expect(child.status,[child.stderr,child.error?.message].filter(Boolean).join('\n')).toBe(0);return JSON.parse(child.stdout);
 }
 function deferred(){let resolve!:()=>void;const promise=new Promise<void>(r=>{resolve=r});return {promise,resolve};}
 
@@ -52,7 +52,9 @@ describe('build-scoped original compilation coordinator',()=>{
    expect(execute(first,results[0]!)).toEqual(['shared once',['A'],['B']]);
    expect(execute(second,results[1]!)).toEqual(['shared once',['A'],['B']]);
   } finally {release.resolve();await pending.catch(()=>{});}
- });
+  // Windows reached 6.645s in this interleaved build/child execution case.
+  // Both Node children are individually bounded at 25s; retain the full oracle.
+ },60_000);
  it('permits sequential reuse of one options object with distinct fresh result records',async()=>{
   const f=fixture(),first=await build(f.options),second=await build(f.options);
   expect(getSsrEntryProducts(second)).toEqual(getSsrEntryProducts(first));

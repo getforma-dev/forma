@@ -19,6 +19,8 @@ export type { SignalGetter, SignalSetter, SignalOptions, Owner, Ref, Dispatch, R
 
 // DOM
 export { h, svg, Fragment, fragment, createText, mount, createList, cleanup, createShow, createSwitch, createPortal, createErrorBoundary, createSuspense, hydrateIsland, activateIslands, deactivateIsland, deactivateAllIslands, sanitizePropsDeep, reconcileList, template, templateMany } from './dom';
+export { createKeyedRows } from './dom';
+export type { KeyedRows } from './dom';
 export type { IslandHydrateFn, ReconcileResult, ListTransitionHooks, CreateListOptions, SwitchCase } from './dom';
 // Compiler-internal registry metadata; application code uses activateIslands.
 export { __islandRegistration } from './dom/island-state';
