@@ -237,6 +237,7 @@ export async function verify(dir, reportPath) {
   assert([undefined, null, 'declared-v1', 'islands-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.stateBlock), 'P17 has no verifier for the recorded state block contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.fixtureApps), 'P17 has no verifier for the recorded fixture applications contract');
+  assert([undefined, null, 'native-v1'].includes(set.contracts.deploymentSkew), 'P17 has no verifier for the recorded deployment skew contract');
   if (set.contracts.fixtureApps) {
     // The fixtures are 3.0.0 pages: declared props, the state block, strict adoption (FORMA-188).
     assert.equal(set.contracts.props, 'declared-v1', 'fixture applications require declared props');
