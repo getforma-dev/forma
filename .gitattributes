@@ -216,3 +216,6 @@ docs/evidence/webkit-native-select-baseline/** -text
 
 # Preserve the exact phase-only frame TCP diagnostic and original failures.
 docs/archive/frame-tcp-control-diagnostic/** -text
+
+# Preserve the causal frame-control repair qualification.
+docs/evidence/frame-tcp-control-repair/** -text
