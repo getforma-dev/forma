@@ -59,6 +59,40 @@ function accepts(version, requirement) {
     : min[1] > 0 || lower[3] === undefined ? [0, min[1] + 1, 0] : [0, 0, min[2] + 1];
   return compare(v, min) >= 0 && compare(v, upper) < 0;
 }
+const compare = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+// Cargo orders package identities by name, Rust semver::Version (including its
+// build-metadata tie-break), then source. Keep numeric components exact and use
+// ASCII ordering, never locale collation. Empty source denotes a path package.
+function compareVersion(a, b) {
+  if (a === b) return 0;
+  const parseVersion = value => {
+    const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$/.exec(value);
+    assert(match, `unsupported recorded Cargo version ${value}`);
+    return match;
+  };
+  const left = parseVersion(a), right = parseVersion(b);
+  for (let i = 1; i <= 3; i++) {
+    const order = compare(BigInt(left[i]), BigInt(right[i]));
+    if (order) return order;
+  }
+  function identifiers(a, b, prerelease) {
+    if (a === b) return 0;
+    if (!a || !b) return prerelease ? (a ? -1 : 1) : (a ? 1 : -1);
+    const left = a.split('.'), right = b.split('.');
+    for (let i = 0; i < Math.min(left.length, right.length); i++) {
+      const x = left[i], y = right[i];
+      const nx = /^\d+$/.test(x), ny = /^\d+$/.test(y);
+      const order = nx && ny ? compare(BigInt(x), BigInt(y)) || compare(x.length, y.length)
+        : nx !== ny ? (nx ? -1 : 1) : compare(x, y);
+      if (order) return order;
+    }
+    return compare(left.length, right.length);
+  }
+  return identifiers(left[4], right[4], true) || identifiers(left[5], right[5], false);
+}
+function comparePackage(a, b) {
+  return compare(a.name, b.name) || compareVersion(a.version, b.version) || compare(a.source ?? '', b.source ?? '');
+}
 function writeDependencies(raw, refs) {
   const newline = raw.includes('\r\n') ? '\r\n' : '\n';
   const replacement = refs.length ? `dependencies = [${newline}${refs.map(ref => ` ${JSON.stringify(ref)},${newline}`).join('')}]` : '';
@@ -68,7 +102,7 @@ function writeDependencies(raw, refs) {
 }
 
 /**
- * Append the candidate runtime closure from its reviewed lock, using packed
+ * Merge the candidate runtime closure from its reviewed lock, using packed
  * Cargo metadata to exclude dev-only roots/edges. Existing external records keep
  * all metadata and resolutions; only an edge's spelling may gain qualification
  * when an added version makes its original short name ambiguous.
@@ -132,6 +166,7 @@ export function mergeRecordedCargoLock(text, packages, recorded) {
   const records = original.records.map(p => candidateByName.get(p.name) ?? p);
   const seen = new Set(records.map(identity));
   for (const p of selected.values()) if (!seen.has(identity(p))) { records.push(p); seen.add(identity(p)); }
+  records.sort(comparePackage);
   const render = p => {
     const newEdges = edges.get(p);
     if (newEdges) return writeDependencies(p.raw, newEdges.map(dep => reference(dep, records)));

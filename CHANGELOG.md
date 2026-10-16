@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+- FORMA-182 release qualification: the e2e locked graph now carries the same pinned `ryu-js` formatter as the native workspace. Packed template runtime additions are placed in Cargo package order, preserving existing external versions and checksums, so a fresh scaffold does not rewrite `Cargo.lock` on its first Cargo command.
+
 ### Native LIST sources must carry real rows — FORMA-101
 
 - A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
