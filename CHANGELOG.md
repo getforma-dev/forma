@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- FORMA-197: mutation kills require structured Vitest assertion evidence from a previously passing test. Clean before/restored baselines, explicit test-failure bail tracking and retained raw reports prevent compiler, collection, timeout and generic process failures from inflating the unchanged detection floors; workspace-hoisted Vitest is resolved normally.
+
 - Keep dashboard chart tooltip API values in persistent text nodes under enforced Trusted Types; packed template checks cover ordinary hover and hostile API text in all three engines.
 - FORMA-196: refuse native script elements with BUILD-623 and unrepresentable srcdoc markup with BUILD-624, matching core's existing Trusted Types and bundle-only boundaries. Preserve literal style, absent null/false srcdoc and explicit Browser typed raw APIs; retain the superseded FORMA-139 source/product evidence.
 

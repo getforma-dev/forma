@@ -86,4 +86,5 @@ jobs:
           path: |
             packages/core/probes/results.json
             packages/core/probes/expression-floor.json
+            packages/core/probes/runs/
           retention-days: 30
