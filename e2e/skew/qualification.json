@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "date": "2026-10-15",
+  "scope": "Pre-integration deployment-drill qualification; final release requires a new integrated packed set.",
+  "source": "46cffd6bead960a9265f0dbe328e998f56cffa4f",
+  "node": "v24.22.0",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuModel": "Apple M1 Pro",
+    "cpus": 10,
+    "memoryGiB": 16,
+    "node": "v24.22.0",
+    "npm": "11.19.1",
+    "rustc": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+    "runner": "local",
+    "profile": "cargo debug binaries; npm packages from DS11; Chromium; P17 scratch install"
+  },
+  "packed": {
+    "passed": true,
+    "checks": 52,
+    "seconds": 164.424,
+    "workspaceDistAbsent": [
+      "core",
+      "compiler",
+      "build",
+      "create-app"
+    ],
+    "reportSha256": "660723b856926a67fe1de6db88f574b3182b3d521873d222b4c5bdcb8c836ed8",
+    "packages": [
+      {
+        "name": "forma-ir",
+        "version": "3.0.0-dev",
+        "file": "forma-ir-3.0.0-dev.crate",
+        "sha256": "2207093b0a8b71300a90e0b8734c672a34f285e5ea58d7a9496d7fb18769e4bc"
+      },
+      {
+        "name": "forma-ir-derive",
+        "version": "3.0.0-dev",
+        "file": "forma-ir-derive-3.0.0-dev.crate",
+        "sha256": "6ae5824d91839ffbfc8eb323bbde8718947b2c020a48e9fdb8b02bcca4589d1f"
+      },
+      {
+        "name": "forma-server",
+        "version": "3.0.0-dev",
+        "file": "forma-server-3.0.0-dev.crate",
+        "sha256": "6cb3be9a7fdf44b3912e3e61585cecc528dfbcc8b5037f7eb607b45065589796"
+      },
+      {
+        "name": "@getforma/core",
+        "version": "3.0.0-dev",
+        "file": "getforma-core-3.0.0-dev.tgz",
+        "sha256": "c0417a234990f19223e29bc7a5a78818251d6193553165d8ce9afce085e66256"
+      },
+      {
+        "name": "@getforma/compiler",
+        "version": "3.0.0-dev",
+        "file": "getforma-compiler-3.0.0-dev.tgz",
+        "sha256": "684bb5b60c0da04596dde98cf95e7a2d80a857c9505b2f5d65b9c6420c927aa9"
+      },
+      {
+        "name": "@getforma/build",
+        "version": "3.0.0-dev",
+        "file": "getforma-build-3.0.0-dev.tgz",
+        "sha256": "91abbed430706b8315dd4a801011ce58b32a48bb4243c3e31299f79a2c8e6af5"
+      },
+      {
+        "name": "@getforma/create-app",
+        "version": "3.0.0-dev",
+        "file": "getforma-create-app-3.0.0-dev.tgz",
+        "sha256": "7dbbec50eca690039f0978013be664b478d83ff20fea269c4a40d1a2fc625adf"
+      }
+    ],
+    "engines": {
+      "chromium": {
+        "checks": [
+          "typed native page adopts its own bundle and remains interactive",
+          "rolling instances refuse a missing lazy panel and the application retries it",
+          "one-old tab loads byte-identical retained immutable assets",
+          "rollback keeps old tabs honest and serves a consistent fresh page",
+          "identical re-upgrade serves the same failed panel without reloading the tab",
+          "third release retains exactly one generation",
+          "security release serves no revoked retained assets",
+          "mismatched native page reloads once then stays inert",
+          "blocked storage and cancellation keep mismatched pages inert without reloading",
+          "missing page identity permits ordinary activation",
+          "explicit Browser mount obeys the same skew boundary"
+        ],
+        "builds": {
+          "A": "58c0ab2ae10b5507",
+          "B": "bbde8e1ed14bf435",
+          "B2": "bbde8e1ed14bf435",
+          "C": "dc06b2d531e8a39e",
+          "S": "7f89c47e30585e21"
+        }
+      },
+      "firefox": {
+        "checks": [
+          "typed native page adopts its own bundle and remains interactive",
+          "rolling instances refuse a missing lazy panel and the application retries it",
+          "one-old tab loads byte-identical retained immutable assets",
+          "rollback keeps old tabs honest and serves a consistent fresh page",
+          "identical re-upgrade serves the same failed panel without reloading the tab",
+          "third release retains exactly one generation",
+          "security release serves no revoked retained assets",
+          "mismatched native page reloads once then stays inert",
+          "blocked storage and cancellation keep mismatched pages inert without reloading",
+          "missing page identity permits ordinary activation",
+          "explicit Browser mount obeys the same skew boundary"
+        ],
+        "builds": {
+          "A": "58c0ab2ae10b5507",
+          "B": "bbde8e1ed14bf435",
+          "B2": "bbde8e1ed14bf435",
+          "C": "dc06b2d531e8a39e",
+          "S": "7f89c47e30585e21"
+        }
+      },
+      "webkit": {
+        "checks": [
+          "typed native page adopts its own bundle and remains interactive",
+          "rolling instances refuse a missing lazy panel and the application retries it",
+          "one-old tab loads byte-identical retained immutable assets",
+          "rollback keeps old tabs honest and serves a consistent fresh page",
+          "identical re-upgrade serves the same failed panel without reloading the tab",
+          "third release retains exactly one generation",
+          "security release serves no revoked retained assets",
+          "mismatched native page reloads once then stays inert",
+          "blocked storage and cancellation keep mismatched pages inert without reloading",
+          "missing page identity permits ordinary activation",
+          "explicit Browser mount obeys the same skew boundary"
+        ],
+        "builds": {
+          "A": "58c0ab2ae10b5507",
+          "B": "bbde8e1ed14bf435",
+          "B2": "bbde8e1ed14bf435",
+          "C": "dc06b2d531e8a39e",
+          "S": "7f89c47e30585e21"
+        }
+      }
+    },
+    "npmLockSha256": "013fd6a9b126bc376a32b43deddd7875824b1cf4765817368d286f5581de228e",
+    "cargoLockSha256": "86ceecbc9338f319a8b29f4d0af31ab9f9455c0d34fe24ef06bbe219d87a068b"
+  },
+  "mutants": [
+    {
+      "name": "missing-retained",
+      "killed": true,
+      "failedCheck": "one-old tab loads byte-identical retained immutable assets",
+      "reportSha256": "3e15ffb5b6c8f37e1e2c87c3c78115eecbd00dd4f1fc6b77e073ce32b8eff011"
+    },
+    {
+      "name": "extra-generation",
+      "killed": true,
+      "failedCheck": "third release retains exactly one generation",
+      "reportSha256": "8a11f217e41ec9761ff8b7735ad76ec93c134846b1a77758803525564d83d40d"
+    },
+    {
+      "name": "security-retains",
+      "killed": true,
+      "failedCheck": "security release serves no revoked retained assets",
+      "reportSha256": "955ed539f93db3b7998843dbc441feeff214076c8a2dc3410b4b91b350896c9f"
+    },
+    {
+      "name": "skip-skew",
+      "killed": true,
+      "failedCheck": "mismatched native page reloads once then stays inert",
+      "reportSha256": "7040bc2c17c7ba464d9046fc704a998ac7412f5c8fefc59c4457da937b6edc55"
+    },
+    {
+      "name": "storage-blind",
+      "killed": true,
+      "failedCheck": "mismatched native page reloads once then stays inert",
+      "reportSha256": "8a8299fc2db77a4295bcaa8ddbf441c1a5bbf96163407b53b35fd6cf9380b962"
+    }
+  ],
+  "firstPackedFailure": {
+    "source": "9a1c9e2463cca24e8488a8f39db97aa6c365d4dc",
+    "reportSha256": "1f978660aec53bbaeae7cbd52ea48373bb24368c8d0583b0a2b4b5510ee9d29f",
+    "reason": "The first46 checks passed; the new drill could not resolve core dependency alien-signals. The final adapter installs and audits the complete locked npm closure outside the checkout."
+  },
+  "mutationMethod": "Retention mutants modify isolated built distributions before native embedding. Runtime mutants rebuild a private core copy with the normal tsup/post-build pipeline but omit verify-dist only in that intentional mutant copy: verify-dist independently caught the removed guard before browser execution. The normal candidate build retains verify-dist."
+}

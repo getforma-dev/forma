@@ -64,7 +64,10 @@ the walker and not guessed.
   `#[props(rename = "hasOAuth")]`, and bind says so (BIND-101 names both spellings).
 - **A reactive boolean `aria-pressed` writes `""`** for true and removes the attribute for false, which is
   not the string a screen reader needs; the fixture writes the string in the click.
-- **L-58 admits an island with a client-side list.** The positive `positive/list-island` entry builds
-  under the accepted N2 policy. Its test reads the emitted `size-report.json`, requires a single
-  island route, and checks both measured byte counts, their report ceilings and the passing verdict.
-  The full ksx/fauth list migration and packed report measurement follow in FORMA-188's integration slice.
+- **L-58 admits a client-side list under N2.** The controller chips and authentication results table
+  are keyed lists inside their islands, seeded from the server's declared props. Their behaviour checks
+  reverse the rows and require the existing DOM nodes to move with their keys, then restore the order.
+  `positive/list-island` keeps the original smallest reproducer as an admitted build. Both the source
+  lane and P17 read its emitted `size-report.json`; P17 records its bytes alongside every fixture route.
+  The report's route ceilings and both its Forma and JavaScript verdicts must agree with the measured
+  bytes. No measurement script extracts policy by matching a symbol in bundled JavaScript.

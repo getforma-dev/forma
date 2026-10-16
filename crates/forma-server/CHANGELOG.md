@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Execute every declared route JavaScript entry in manifest order with its nonce, integrity and crossorigin attributes. Earlier entries are no longer merely preloaded while only the last runs; dependency-only modulepreloads remain hints. Both typed SSR and Browser documents charge all entry tags to their complete output budget.
+
 ### Ordinary document metadata — FORMA-182
 
 - Normalize CRLF/CR to LF and NUL to U+FFFD before escaping ordinary title,

@@ -18,6 +18,7 @@ import { createSignal, internalEffect, untrack, createRoot, registerDisposer, __
 import { describingAdoption } from './adoption-description.js';
 import { deactivateIsland, hasScheduledOrActiveIslands } from './activate.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
+import { branchNode } from './normalize-text.js';
 
 declare const __FORMA_DEV_BUILD__: boolean | undefined;
 // Every development warning below is guarded by the build flag at its site, in
@@ -530,7 +531,7 @@ export function reconcileList<T>(
 export function createList<T>(
   items: () => T[],
   keyFn: (item: T) => string | number,
-  renderFn: (item: T, index: () => number) => HTMLElement,
+  renderFn: (item: T, index: () => number) => HTMLElement | string | number,
   options?: CreateListOptions,
 ): DocumentFragment {
   if (describingAdoption) {
@@ -578,7 +579,7 @@ export function createList<T>(
       dispose();
       throw failure;
     }
-    return { element: element!, dispose };
+    return { element: branchNode(element) as HTMLElement, dispose };
   };
 
   internalEffect(() => {

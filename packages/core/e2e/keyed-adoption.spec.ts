@@ -220,3 +220,109 @@ test('keyed registered children keep their own host, state and occurrence when t
   await expect(buttons).toHaveText(['23', '11']);
   expect(errors).toEqual([]);
 });
+
+// Checkpoint D: identity alone is insufficient. Removing and reinserting an existing node can
+// keep its JS identity while losing browser focus, selection, or the row's listener ownership.
+for (const forceFallback of [false, true]) test(`one moved row in 2000 retains its focused input, selection and listeners without rebuilding (${forceFallback ? 'insertBefore fallback' : 'native move when available'})`, async ({ page }) => {
+  const count = 2000;
+  const markup = Array.from({ length: count }, (_, id) =>
+    `<li data-forma-key="${id}"><input value="row-${id}"><button>Count</button></li>`).join('');
+  await serve(page, `<div id="focused-list"><ul><!--f:l0-->${markup}<!--/f:l0--></ul></div>`);
+  const initial = await page.evaluate(async ({ count, forceFallback }) => {
+    const { h, createList, createSignal } = await import('/adoption-core.mjs' as string);
+    const { adoptMatching } = await import('/test-owned-adoption.mjs' as string);
+    const values = Array.from({ length: count }, (_, id) => ({ id, text: `row-${id}` }));
+    const [items, setItems] = createSignal(values);
+    const observed: MutationRecord[] = [], clicks: number[] = [], edits: [number, string][] = [];
+    const observer = new MutationObserver(batch => observed.push(...batch));
+    const root = document.querySelector('#focused-list')!;
+    if (forceFallback) Object.defineProperty(root.firstElementChild, 'moveBefore', { value: undefined });
+    observer.observe(root, { subtree: true, childList: true, attributes: true, characterData: true });
+    const rows = [...root.querySelectorAll('li')], input = rows[0]!.querySelector('input')!;
+    input.focus(); input.setSelectionRange(1, 4, 'backward');
+    let factories = 0;
+    const dispose = adoptMatching(() => h('ul', null, createList(items,
+      (item: { id: number }) => item.id,
+      (item: { id: number; text: string }) => {
+        factories++;
+        return h('li', null,
+          h('input', { value: item.text, onInput: (event: Event) => edits.push([item.id, (event.target as HTMLInputElement).value]) }),
+          h('button', { onClick: () => clicks.push(item.id) }, 'Count'));
+      })), root);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    observed.push(...observer.takeRecords());
+    const records = observed.length; observed.length = 0;
+    Object.assign(window as any, { keyedMove: { values, setItems, root, rows, input, observed, observer, clicks, edits, dispose, factories: () => factories } });
+    return { records, focused: document.activeElement === input, selection: [input.selectionStart, input.selectionEnd, input.selectionDirection], factories };
+  }, { count, forceFallback });
+  expect(initial).toEqual({ records: 0, focused: true, selection: [1, 4, 'backward'], factories: count });
+
+  // Programmatic source update leaves focus alone; a click on a reorder button would hide a
+  // browser focus-loss bug by focusing that button before the list actually moved.
+  const moved = await page.evaluate(async () => {
+    const state = (window as any).keyedMove;
+    state.setItems([...state.values.slice(1), state.values[0]]);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    state.observed.push(...state.observer.takeRecords());
+    const rows = [...state.root.querySelectorAll('li')];
+    const mutations = state.observed as MutationRecord[];
+    const touched = mutations.flatMap(record => [...record.addedNodes, ...record.removedNodes]);
+    state.observer.disconnect();
+    return {
+      order: rows.every((row, index) => row === state.rows[(index + 1) % state.rows.length]),
+      records: mutations.length,
+      childListsOnly: mutations.every(record => record.type === 'childList'),
+      touched: touched.length,
+      onlyMovedRow: touched.every(node => node === state.rows[0]),
+      focused: document.activeElement === state.input,
+      selection: [state.input.selectionStart, state.input.selectionEnd, state.input.selectionDirection],
+      factories: state.factories(),
+    };
+  });
+  expect(moved).toEqual({ order: true, records: 2, childListsOnly: true, touched: 2, onlyMovedRow: true,
+    focused: true, selection: [1, 4, 'backward'], factories: count });
+
+  await page.keyboard.insertText('Z');
+  await page.locator('#focused-list li').last().locator('button').click();
+  const ownership = await page.evaluate(() => {
+    const state = (window as any).keyedMove;
+    const before = { clicks: [...state.clicks], edits: [...state.edits] };
+    state.dispose();
+    state.input.dispatchEvent(new Event('input', { bubbles: true }));
+    state.rows[0].querySelector('button').click();
+    return { before, after: { clicks: state.clicks, edits: state.edits } };
+  });
+  expect(ownership.before).toEqual({ clicks: [0], edits: [[0, 'rZ0']] });
+  expect(ownership.after).toEqual(ownership.before);
+});
+
+
+test('fallback restoration respects a focus callback that chooses another control', async ({ page }) => {
+  await serve(page, '<input id="elsewhere"><div id="focus-callback"><ul><!--f:l0--><li data-forma-key="a"><input value="a"></li><li data-forma-key="b"><input value="b"></li><li data-forma-key="c"><input value="c"></li><!--/f:l0--></ul></div>');
+  const result = await page.evaluate(async () => {
+    const { h, createList, createSignal } = await import('/adoption-core.mjs' as string);
+    const { adoptMatching } = await import('/test-owned-adoption.mjs' as string);
+    const elsewhere = document.querySelector<HTMLInputElement>('#elsewhere')!;
+    const root = document.querySelector('#focus-callback')!;
+    Object.defineProperty(root.firstElementChild, 'moveBefore', { value: undefined });
+    const [items, setItems] = createSignal(['a', 'b', 'c']);
+    let activated = false;
+    const events: string[] = [];
+    const dispose = adoptMatching(() => h('ul', null, createList(items, (id: string) => id,
+      (id: string) => h('li', null, h('input', { value: id, onFocus: () => {
+        if (activated && id === 'a') { events.push('row focus'); elsewhere.focus(); }
+      }, onBlur: () => {
+        if (activated && id === 'a') { events.push('row blur'); elsewhere.focus(); }
+      } })))), root);
+    const input = root.querySelector('input')!;
+    input.focus(); input.setSelectionRange(0, 1);
+    activated = true;
+    setItems(['b', 'c', 'a']);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const focused = document.activeElement === elsewhere;
+    dispose();
+    return { focused, events, rowMoved: root.querySelector('li:last-child input') === input };
+  });
+  expect(result).toMatchObject({ focused: true, rowMoved: true });
+  expect(result.events.length).toBeGreaterThan(0);
+});

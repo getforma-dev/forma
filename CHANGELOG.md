@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — typed keyed row product coverage (FORMA-181 D)
+
+- Add a compiler → typed Rust `Pages` → emitted browser island fixture for keyed row movement. Its three-engine checks retain the native rows, focus, backward selection and listeners through activation and a minimal move. A reproducible evidence script records actual source, native state/dump, registration and served asset hashes. The SSR build harness can select the release renderer for production CSP behavior. This slice adds coverage; indexed row replacement and N3 remain separate.
+
 ## Unreleased — the client list fixture is admitted (FORMA-188, L-58)
 
 - Move the client-list island fixture to the positive corpus after the accepted N2 increase. Its strict build must emit one island route with positive Forma/JavaScript byte counts below the report's own ceilings and an empty exceeded verdict; the obsolete BUILD-819 wording assertion is removed.
@@ -24,6 +28,13 @@
 - Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
 
 - FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+- FORMA-184: the repository-only `renderBoth(component, state)` test helper renders an explicit JSON state through the typed native renderer and core, returning both canonical trees and the P1 report. It shares the parity pipeline, preserves refusal/difference evidence, and adds no public package export.
+
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
 
 ### Strict server-renderable subset — FORMA-101
 
@@ -61,7 +72,7 @@
 - P17's measurement step (`scripts/release-measurements.mjs`): P17's time against G6's 1,800 s, Forma's code per fixture route against the packed size report's N2 ceiling (L-58: 27,500 B gzip -9), and the walker's counts of the consumer-shaped pages, with the machine and profile, in `report.measurements` (DS12) and one line of the Release's notes. A figure over its limit or missing fails P17 naming it.
 - `e2e/fixtures/apps/`: three applications shaped after consumers' pages (neutral, synthetic labels and values; nothing is taken from an application) (a household arrival island, an authentication service's tenant login, get-started and results pages, a controller studio's button-check screen), each a 3.0.0 page set: TypeScript props types, `#[derive(PageProps)]` handlers bound at start, islands with declared props. They build under `strict: true` with nothing above a note and are served by forma-server. `e2e/fixtures/apps/build.sh` is part of `scripts/check.sh`; `apps.spec.ts` checks, per page, the server's values with JavaScript off, the state envelope against the handler's values, adoption that writes nothing (the island module held, then released, a positive control on the observer) and the page's behaviour.
 - `bench/`: the consumers' heaviest pages as synthetic data for FORMA-191's measurements (design.md A4): about 300, 1,500, 10,000, 15,000 and 20,000 nodes by the walker's own count (298, 1,497, 9,995, 15,053 and 19,961) with 2, 10, 5, 50 and 5 islands, and a page of 100 islands whose first two are seeded 7 and 1001. The server reports the walker's counts in an `x-fixture-counts` header.
-- `negative/` holds the shapes the contract refuses: a props type outside the closed type set (BUILD-610 with file, line and column) and a condition the compiler would have to evaluate (BUILD-610). L-58 admits the client-list island in `positive/list-island`; its emitted size report is checked against the current policy. The full page-list migration follows in the integration slice.
+- `negative/` holds the shapes the contract refuses: a props type outside the closed type set (BUILD-610 with file, line and column), and a condition the compiler would have to evaluate (BUILD-610). L-58 moves the client-side keyed-list reproducer to `positive/list-island`; the controller chips and authentication results now live inside islands, with server-state, adoption and keyed-reorder checks. P17 records the positive build's emitted size report and reads all route ceilings and verdicts from those reports.
 
 ### Value rule 1: line endings and NUL — FORMA-182
 

@@ -77,7 +77,7 @@ node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
-node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs
+node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core
@@ -101,6 +101,7 @@ bash e2e/sync-fixtures.sh
 bash e2e/ssr/build.sh
 bash e2e/frame/build.sh
 bash e2e/fixtures/apps/build.sh
+bash e2e/skew/build.sh
 # After the build: the servers embed what it wrote, and the embed needs the folders to exist.
 step "fixture applications' servers: rustfmt and clippy (FORMA-188; an e2e workspace member)"
 cargo fmt --manifest-path e2e/fixtures/apps/Cargo.toml --check

@@ -8,13 +8,19 @@ import {prepare,check,type CorpusEntry} from '../src/suite.mts';
 import {launch,type Engine} from '../src/browser.mts';
 import {renderStates,REPO} from '../src/server.mts';
 
+// R17 provisions Chromium; the blocking release matrix invokes this exact
+// suite once with each selected engine. Invalid selection fails, never skips.
+const selected=process.env.FORMA_PARITY_BROWSER??'chromium';
+assert.ok(['chromium','firefox','webkit'].includes(selected), 'FORMA_PARITY_BROWSER must name chromium, firefox or webkit');
+const engines=[selected as Engine];
+
 const cases=[
  ['jsx-fragment',"<><section><button onClick={()=>setShown(!shown())}>toggle</button>{createShow(shown,()=>h('b',null,'shown'),()=>h('i',null,'hidden'))}{createList(rows,r=>r.id,r=>h('span',null,r.label))}</section></>"],
  ['h-fragment',"h(Fragment,null,h('section',null,h('button',{onClick:()=>setShown(!shown())},'toggle'),createShow(shown,()=>h('b',null,'shown'),()=>h('i',null,'hidden')),createList(rows,r=>r.id,r=>h('span',null,r.label))))"],
  ['named-fragment',"<Fragment><section><button onClick={()=>setShown(!shown())}>toggle</button>{createShow(shown,()=>h('b',null,'shown'),()=>h('i',null,'hidden'))}{createList(rows,r=>r.id,r=>h('span',null,r.label))}</section></Fragment>"],
  ['helper',"Host()"],
 ] as const;
-for(const engine of ['chromium','firefox','webkit'] as const)test(`139 admitted owned roots activate from real typed native products in ${engine}`,async()=>{
+for(const engine of engines)test(`139 admitted owned roots activate from real typed native products in ${engine}`,async()=>{
  const root=mkdtempSync(join(tmpdir(),'forma-139-parity-')),plans=[];
  try{
   for(const [name,tree] of cases){
@@ -33,7 +39,7 @@ for(const engine of ['chromium','firefox','webkit'] as const)test(`139 admitted 
  }finally{rmSync(root,{recursive:true,force:true});}
 });
 
-for(const engine of ['chromium','firefox','webkit'] as const)test(`139 archived parser repair remains observable in ${engine}`,async()=>{
+for(const engine of engines)test(`139 archived parser repair remains observable in ${engine}`,async()=>{
  const archive=join(REPO,'docs/archive/FORMA-139-html-context'),manifest=JSON.parse(readFileSync(join(archive,'manifest.json'),'utf8'));
  const browser=await launch(engine);const page=await browser.newPage();try{
   // These are the original native products, not hand-written invalid HTML.
