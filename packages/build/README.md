@@ -9,14 +9,17 @@ Production build pipeline for [FormaJS](https://github.com/getforma-dev/forma) a
 
 ## Install
 
+This checkout prepares the unpublished `3.0.0-beta.1` candidate. After its
+coordinated publication, select that prerelease explicitly:
+
 ```bash
-npm install -D @getforma/build
+npm install -D @getforma/build@3.0.0-beta.1
 ```
 
 This installs `esbuild` automatically. For SSR features (FMIR emission), also install the compiler:
 
 ```bash
-npm install -D @getforma/compiler
+npm install -D @getforma/compiler@3.0.0-beta.1
 ```
 
 ## Quick Start
@@ -601,7 +604,7 @@ nowhere or loops is a `BUILD-814` (exclude it if it is not source), and a
 file reached by two paths is read once. It needs nothing beyond this package:
 an application that does not build with `@getforma/build` (a Rust-only one,
 or one that uses `@getforma/core` alone) runs it with
-`npx -p @getforma/build forma-raw-lint …`.
+`npx -p @getforma/build@3.0.0-beta.1 forma-raw-lint …` after beta publication.
 
 **Point it at source, not build output.** A bundle that includes core carries
 core's own raw entries: the registry key survives minification, and a

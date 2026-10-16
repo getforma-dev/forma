@@ -139,6 +139,12 @@
 
 - `e2e/fixtures/formajs-runtime.global.js` and `e2e/fixtures/formajs.global.js` are no longer tracked; `e2e/sync-fixtures.sh` writes them from `packages/core/dist` and `scripts/check.sh` runs it first. The committed copies predated `trustedHtml()` and failed five cases of `e2e/full-stack.spec.ts` whenever the lane ran without a fresh sync. The spec now refuses to run without the bundles, naming the sync script, and the sync script prints core's build output when that build fails instead of exiting silently. Verified by `e2e/full-stack.spec.ts` > `the bundles are the fresh sync, not a stale copy`.
 
+## [3.0.0-beta.1] - 2026-10-16
+
+- Prepare all seven package versions, internal requirements and template lock seeds as one `3.0.0-beta.1` candidate, preserving external dependency resolutions.
+- Update registry install examples to select the prerelease explicitly after publication; retain clearly identified stable 2.1.0 CDN examples.
+- This is release preparation, not a publication or qualification result. Beta gates, current versioned-source R17 and packed P17 remain pending; no tag or registry publication is created by the version command.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 The tag `v3.0.0-alpha.1` on `8ba2930` never published: its release run (38764599499) passed

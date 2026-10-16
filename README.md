@@ -9,6 +9,11 @@ IR (FMIR), and Rust crates that render that IR to HTML on the server, so the
 server never needs a JavaScript runtime. One product, one repository, seven
 packages.
 
+This checkout prepares the coordinated `3.0.0-beta.1` candidate. It is not a
+publication announcement: release gates and qualification remain pending.
+After publication, select the explicit `3.0.0-beta.1` version in the package
+install commands; unversioned npm commands select the stable `latest` channel.
+
 ```
 TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
          packages/compiler                    crates/forma-ir            packages/core
