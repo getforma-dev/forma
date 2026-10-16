@@ -1,0 +1,395 @@
+{
+  "schema": 1,
+  "note": "The index of the fixture applications (FORMA-188). Each page is shaped after a consumer's page (element structure, island count, prop types, list sizes) and written new with neutral, synthetic labels, class names and values; none of it is taken from an application. `state` is the oracle: the values the handler serves, in wire names, which the spec compares with the page's state envelope.",
+  "apps": {
+    "ledger": {
+      "css": "ledger/src/styles/app.css",
+      "shapeSource": "shaped after a household finance app's arrival island: its signals, one conditional summary, a status line moved by the island's own request, a retry button",
+      "routes": {
+        "/household": {
+          "page": "household",
+          "entry": "ledger/src/household/app.tsx",
+          "kind": "page",
+          "propsType": "ArrivalProps",
+          "propsFile": "ledger/src/household/arrival.tsx",
+          "islands": [
+            "HouseholdArrival"
+          ],
+          "state": {
+            "HouseholdArrival": {
+              "arrivalTitle": "Rivera household",
+              "arrivalDate": "2026-09-13",
+              "arrivalCash": "$12,345.67",
+              "arrivalBills": "$34.00",
+              "arrivalIncome": "$2,000.00",
+              "arrivalStatus": "Loading",
+              "arrivalSummary": true
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#arrival-title",
+              "text": "Rivera household"
+            },
+            {
+              "selector": "#arrival-date",
+              "text": "2026-09-13"
+            },
+            {
+              "selector": "#arrival-cash",
+              "text": "$12,345.67"
+            },
+            {
+              "selector": "#arrival-bills",
+              "text": "$34.00"
+            },
+            {
+              "selector": "#arrival-income",
+              "text": "$2,000.00"
+            },
+            {
+              "selector": "#arrival-status",
+              "text": "Loading"
+            }
+          ],
+          "path": "/household"
+        }
+      }
+    },
+    "fauth": {
+      "css": "fauth/src/styles/app.css",
+      "shapeSource": "shaped after an authentication service's pages: a tenant's hosted login (modes, providers, signup rules), a get-started page of provider booleans, a results page of rows",
+      "routes": {
+        "/t/:slug/login": {
+          "page": "tenant-login",
+          "entry": "fauth/src/tenant-login/app.tsx",
+          "kind": "page",
+          "propsType": "TenantLoginProps",
+          "propsFile": "fauth/src/tenant-login/login.tsx",
+          "islands": [
+            "OAuthButtons",
+            "AuthForm"
+          ],
+          "state": {
+            "OAuthButtons": {
+              "hasGoogle": true,
+              "hasGithub": true,
+              "hasEmail": true
+            },
+            "AuthForm": {
+              "startLogin": true,
+              "startRegister": false,
+              "allowPublicSignup": true,
+              "inviteOnly": false,
+              "inviteNotice": ""
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#tenant-name",
+              "text": "Acme Cloud"
+            },
+            {
+              "selector": "#auth-subtitle",
+              "text": "Sign in to your account"
+            },
+            {
+              "selector": "#oauth-google",
+              "text": "Continue with Google"
+            },
+            {
+              "selector": "#oauth-github",
+              "text": "Continue with GitHub"
+            },
+            {
+              "selector": "#lc-submit-in",
+              "text": "Sign in"
+            },
+            {
+              "selector": "#lc-toggle",
+              "text": "Don't have an account? Sign up"
+            }
+          ],
+          "path": "/t/acme/login",
+          "variants": [
+            {
+              "name": "invite-only tenant",
+              "path": "/t/lockbox/login",
+              "state": {
+                "OAuthButtons": {
+                  "hasGoogle": false,
+                  "hasGithub": false,
+                  "hasEmail": true
+                },
+                "AuthForm": {
+                  "startLogin": true,
+                  "startRegister": false,
+                  "allowPublicSignup": false,
+                  "inviteOnly": true,
+                  "inviteNotice": "Registration here is by invitation only. Ask for an invitation link."
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#tenant-name",
+                  "text": "Lockbox"
+                },
+                {
+                  "selector": "#invite-notice",
+                  "text": "Registration here is by invitation only. Ask for an invitation link."
+                }
+              ]
+            },
+            {
+              "name": "invite link on an invite-only tenant, starting in register mode",
+              "path": "/t/lockbox/login?invite_token=abc&mode=register",
+              "state": {
+                "OAuthButtons": {
+                  "hasGoogle": false,
+                  "hasGithub": false,
+                  "hasEmail": true
+                },
+                "AuthForm": {
+                  "startLogin": false,
+                  "startRegister": true,
+                  "allowPublicSignup": true,
+                  "inviteOnly": true,
+                  "inviteNotice": "An invitation was found. You may sign in or register with it."
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#auth-subtitle",
+                  "text": "Create your account"
+                },
+                {
+                  "selector": "#invite-notice",
+                  "text": "An invitation was found. You may sign in or register with it."
+                },
+                {
+                  "selector": "#lc-submit-up",
+                  "text": "Create account"
+                }
+              ]
+            }
+          ]
+        },
+        "/platform/onboarding": {
+          "page": "onboarding",
+          "entry": "fauth/src/onboarding/app.tsx",
+          "kind": "page",
+          "propsType": "OnboardingProps",
+          "propsFile": "fauth/src/onboarding/registration.tsx",
+          "islands": [
+            "RegistrationForm"
+          ],
+          "state": {
+            "RegistrationForm": {
+              "clientId": "onboarding-client",
+              "serverUrl": "https://auth.example.test",
+              "hasGoogle": true,
+              "hasGithub": false,
+              "hasOAuth": true
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#ob-title",
+              "text": "Get started"
+            },
+            {
+              "selector": "#ob-client",
+              "text": "Client onboarding-client"
+            }
+          ]
+        },
+        "/platform/benchmark": {
+          "page": "benchmark",
+          "entry": "fauth/src/benchmark/app.tsx",
+          "kind": "page",
+          "propsType": "BenchmarkProps",
+          "propsFile": "fauth/src/benchmark/table.tsx",
+          "islands": [
+            "FilterBar",
+            "ResultsToolbar"
+          ],
+          "state": {
+            "FilterBar": {
+              "query": "gate",
+              "sortColumn": "score",
+              "rowCount": 3
+            },
+            "ResultsToolbar": {
+              "failureCount": 1,
+              "hasError": false,
+              "noRows": false
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#bm-title",
+              "text": "Benchmark results"
+            },
+            {
+              "selector": "#bm-summary",
+              "text": "Showing 3 results for \"gate\", by score."
+            },
+            {
+              "selector": "#bm-failures",
+              "text": "Failures only (1)"
+            },
+            {
+              "selector": "tr[data-row=\"3\"] td:nth-child(4)",
+              "text": "timed out after 30 s"
+            }
+          ],
+          "variants": [
+            {
+              "name": "no results",
+              "path": "/platform/benchmark?q=zzz&sort=name",
+              "state": {
+                "FilterBar": {
+                  "query": "zzz",
+                  "sortColumn": "name",
+                  "rowCount": 0
+                },
+                "ResultsToolbar": {
+                  "failureCount": 0,
+                  "hasError": false,
+                  "noRows": true
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#bm-summary",
+                  "text": "Showing 0 results for \"zzz\", by name."
+                },
+                {
+                  "selector": "#bm-empty",
+                  "text": "No results yet."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "ksx": {
+      "css": "ksx/src/styles/app.css",
+      "shapeSource": "shaped after a controller studio's button-check screen: a nested roster payload, derived booleans, a chip grid, a keyboard echo",
+      "routes": {
+        "/check": {
+          "page": "check",
+          "entry": "ksx/src/check/app.tsx",
+          "kind": "page",
+          "propsType": "CheckProps",
+          "propsFile": "ksx/src/check/screen.tsx",
+          "islands": [
+            "FeedStatus",
+            "LiveEcho"
+          ],
+          "state": {
+            "FeedStatus": {
+              "sessionLine": "Idle.",
+              "feedHint": "Press a key to see which inputs respond.",
+              "feedLine": "Waiting for input.",
+              "lossLine": "2 frames skipped.",
+              "framesSeen": 1001,
+              "hasLoss": true,
+              "quiet": true,
+              "running": false
+            },
+            "LiveEcho": {
+              "hint": "Press a key to see which inputs respond."
+            }
+          },
+          "serverValues": [
+            {
+              "selector": "#check-title",
+              "text": "Input monitor"
+            },
+            {
+              "selector": "#session-line",
+              "text": "Idle."
+            },
+            {
+              "selector": "#frames-seen",
+              "text": "1001"
+            },
+            {
+              "selector": "#loss-line",
+              "text": "2 frames skipped."
+            },
+            {
+              "selector": "#generated",
+              "text": "Roster read 2026-10-15T12:00:00Z from fixture."
+            },
+            {
+              "selector": "#chips li:first-child",
+              "text": "P1 A"
+            }
+          ],
+          "variants": [
+            {
+              "name": "no controller",
+              "path": "/check?state=empty",
+              "state": {
+                "FeedStatus": {
+                  "sessionLine": "Idle.",
+                  "feedHint": "Press a key to see which inputs respond.",
+                  "feedLine": "Waiting for input.",
+                  "lossLine": "2 frames skipped.",
+                  "framesSeen": 1001,
+                  "hasLoss": true,
+                  "quiet": true,
+                  "running": false
+                },
+                "LiveEcho": {
+                  "hint": "Press a key to see which inputs respond."
+                }
+              },
+              "serverValues": [
+                {
+                  "selector": "#empty h2",
+                  "text": "No device configured"
+                },
+                {
+                  "selector": "#frames-seen",
+                  "text": "1001"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "negative": [
+    {
+      "name": "record-bindings",
+      "entry": "negative/record-bindings/app.tsx",
+      "fails": "diagnostic",
+      "code": "BUILD-610",
+      "message": "generic or namespace props types are not supported",
+      "file": "negative/record-bindings/app.tsx",
+      "why": "acceptance 4: a props type outside the closed type set (a map from control name to key list, the studio payload's wire type) fails the build with the declared-contract code, naming the file, line and column; the ksx fixture is its near miss"
+    },
+    {
+      "name": "computed-condition",
+      "entry": "negative/computed-condition/app.tsx",
+      "fails": "diagnostic",
+      "code": "BUILD-610",
+      "message": "computed declared values remain outside the native subset",
+      "file": "negative/computed-condition/app.tsx",
+      "why": "the first construct the old tenant login used that 3.0.0 does not admit; the fixture passes a declared boolean instead"
+    },
+    {
+      "name": "list-island",
+      "entry": "negative/list-island/app.tsx",
+      "fails": "size",
+      "code": "BUILD-819",
+      "message": "over N2's ceiling",
+      "why": "an island with a client-side list is over N2's 25,500 B of Forma code today; the finding is recorded in FORMA-188's log and the ksx and fauth pages keep their lists outside islands until it is decided"
+    }
+  ]
+}
