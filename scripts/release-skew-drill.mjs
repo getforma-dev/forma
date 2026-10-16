@@ -20,7 +20,7 @@ export function requireSkewChecks(report) {
 export async function verifyPackedSkew({ set, scratch, browser, firefox, webkit, test }) {
   const root = join(scratch, 'skew-drill'), server = join(root, 'server');
   mkdirSync(join(server, 'src'), { recursive: true });
-  const sources = ['build-app.mjs', 'balancer.mjs', 'run-drill.mjs', 'server/Cargo.toml', 'server/src/main.rs'];
+  const sources = ['build-app.mjs', 'balancer.mjs', 'run-drill.mjs', 'server/Cargo.toml', 'server/src/main.rs', 'Cargo.release.lock'];
   const sourceHashes = {};
   for (const file of sources) {
     const path = `e2e/skew/${file}`, original = readFileSync(join(ROOT, path));
@@ -36,7 +36,7 @@ export async function verifyPackedSkew({ set, scratch, browser, firefox, webkit,
   copyFileSync(join(ROOT, 'e2e/skew/server/src/main.rs'), join(server, 'src/main.rs'));
   const version = set.packages[0].version;
   writeFileSync(join(server, 'Cargo.toml'), fixtureCargoToml(readFileSync(join(ROOT, 'e2e/skew/server/Cargo.toml'), 'utf8'), version, join(scratch, 'crates')));
-  writeFileSync(join(server, 'Cargo.lock'), pruneCargoLock(readFileSync(join(ROOT, 'e2e/Cargo.lock'), 'utf8'), 'forma-e2e-skew', version));
+  writeFileSync(join(server, 'Cargo.lock'), pruneCargoLock(readFileSync(join(ROOT, 'e2e/skew/Cargo.release.lock'), 'utf8'), 'forma-e2e-skew', version));
   const target = join(scratch, 'target');
   await test('deployment drill: actual embedded native servers built locked from the packed crates', async () => {
     run('cargo', ['build', '--locked'], server, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: target, CARGO_INCREMENTAL: '0' } });

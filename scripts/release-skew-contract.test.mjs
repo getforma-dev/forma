@@ -1,9 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { verify } from './verify-release-set.mjs';
+import { ROOT } from './release-set.mjs';
+import { pruneCargoLock } from './release-fixture-apps.mjs';
+
+test('the standalone deployment lock preserves pinned dependencies without unrelated workspace features', () => {
+  const version = '9.9.9';
+  const workspace = pruneCargoLock(readFileSync(join(ROOT, 'e2e/Cargo.lock'), 'utf8'), 'forma-e2e-skew', version);
+  const standalone = pruneCargoLock(readFileSync(join(ROOT, 'e2e/skew/Cargo.release.lock'), 'utf8'), 'forma-e2e-skew', version);
+  // The e2e workspace enables this optional edge elsewhere. Carrying it into
+  // this standalone crate makes cargo --locked refuse before the drill runs.
+  const expected = workspace.split(/(?=^\[\[package\]\]\n)/m)
+    .filter(block => !/^name = "valuable"$/m.test(block))
+    .map(block => /^name = "tracing-core"$/m.test(block) ? block.replace(' "valuable",\n', '') : block)
+    .join('').trimEnd() + '\n';
+  assert.notEqual(workspace, standalone, 'the standalone seed must not inherit workspace-only feature edges');
+  assert.equal(standalone, expected, 'no third-party version, checksum or other dependency may drift');
+  for (const name of ['forma-ir', 'forma-ir-derive', 'forma-server']) {
+    assert(standalone.includes(`name = "${name}"\nversion = "${version}"`));
+  }
+});
 
 test('P17 refuses unknown deployment contracts before inspecting packages', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-skew-contract-'));

@@ -32,3 +32,9 @@ R17 runs the Chromium spec with the other lanes. P17 builds the same sources wit
 packed libraries and locked packed crates, then runs all three engines. The source commit and hashes,
 build identities, exact check inventory and HTTP observations are recorded in the packed report.
 The helper is repository infrastructure and is not a published package export.
+
+The packed server uses the committed standalone `Cargo.release.lock`, authenticated against the
+candidate commit along with its sources. Its feature graph excludes the unrelated workspace's
+optional `tracing-core` → `valuable` edge. Every retained third-party version and checksum matches
+the workspace seed; the packed build changes only the Forma set version and runs `cargo build --locked`.
+The original workspace-pruned seed's locked-build refusal is preserved as qualification evidence.
