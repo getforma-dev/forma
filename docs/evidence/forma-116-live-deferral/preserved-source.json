@@ -1,0 +1,232 @@
+{
+  "base": "9c98162c52156b52b8239879ecc8614e653ffffb",
+  "allOtherContractFieldsIdentical": true,
+  "codeownersMappingsIdentical": true,
+  "files": [
+    {
+      "path": "scripts/release-set.mjs",
+      "bytes": 29648,
+      "sha256": "e5e08e6387a7cc2f45288934d353af212ae6f3c4a9c7dbc79eee505f71c1e384"
+    },
+    {
+      "path": "scripts/security-mutation-probes.py",
+      "bytes": 7484,
+      "sha256": "4f3446969540a2b2a9b7c6cd76297606910c7e76c2a75bdc3b2a68d7b5abf8ba"
+    },
+    {
+      "path": "scripts/security-mutation-probes.test.py",
+      "bytes": 2431,
+      "sha256": "8332345f0f165acd038395fe3f590826217549247e54b7aa32a8c2dece9805a7"
+    },
+    {
+      "path": "scripts/release-plane-events.mjs",
+      "bytes": 7146,
+      "sha256": "035ddc450f4aafa879513f18726e4e142d3de62b6acd9a6125c624655af1b35c"
+    },
+    {
+      "path": "scripts/release-plane-events.test.mjs",
+      "bytes": 3741,
+      "sha256": "12055d6ab94b9a31089eeed4bf8e697ff8ba25580208d6bf649694b234286278"
+    },
+    {
+      "path": "scripts/release-plane-observe.mjs",
+      "bytes": 4209,
+      "sha256": "7d22c217fa4d7ee05fbce730a9b3f26c0360fe618ebf4c387d4635389183e528"
+    },
+    {
+      "path": ".github/workflows/security-probes.yml",
+      "bytes": 1285,
+      "sha256": "5c2889191fc1f22742dd3fedf3a0a186b5e962fb7e94a9ca2acd0f13dc30996d"
+    },
+    {
+      "path": ".github/workflows/release-plane-observe.yml",
+      "bytes": 4275,
+      "sha256": "ac4b8b485935cb3a33d12d214e4efd1bef8372b0a91aea8cc21849e4a60928ba"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 30559,
+      "sha256": "e76348bae9542bb7c135908dd1fbc65560ed6b932c898160dff6964dee093757"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "bytes": 9930,
+      "sha256": "e4c2a74eebf6527977518e9e1d966d1b7938f2dd46319030e6c5cf09e78dec81"
+    },
+    {
+      "path": "docs/governance/main-protection.proposed.json",
+      "bytes": 790,
+      "sha256": "7eeec5e0696209e90acd4924eacb51003c840ca92c240e7fdf7902c91131e071"
+    },
+    {
+      "path": "crates/forma-ir/src/walker.rs",
+      "bytes": 321520,
+      "sha256": "9e0934093a5f27f183a6ae140db6056bd81e20141e9e5e3d32de1b9eed561ec7"
+    },
+    {
+      "path": "docs/archive/forma-116-maintenance-node/README.md",
+      "bytes": 942,
+      "sha256": "b5be1a6d03c3e93974c1820eb0e374b6e37d54384d979a1861dfd3919be02b6a"
+    },
+    {
+      "path": "docs/archive/forma-116-maintenance-node/manifest.json",
+      "bytes": 1005,
+      "sha256": "f2861ffe3e00e19976e7530afec8a14a93b757b30260fb9a8414260206756997"
+    },
+    {
+      "path": "docs/archive/forma-116-maintenance-node/originals/.github/workflows/release-plane-observe.yml",
+      "bytes": 4259,
+      "sha256": "858034b2c0976378792eeef1b02061bb9b1a7c4fde862f0261ef57491fd1963b"
+    },
+    {
+      "path": "docs/archive/forma-116-maintenance-node/originals/scripts/check-toolchain-policy.rb",
+      "bytes": 3345,
+      "sha256": "54727684441d7a286ebf35d041fe67606b428f0aa8d0fb6a123483894b240702"
+    },
+    {
+      "path": "docs/archive/forma-116-maintenance-node/originals/scripts/toolchain-policy.test.mjs",
+      "bytes": 2861,
+      "sha256": "60e3ff065fd4e0bc062864b627be2ed7bfe88eafb4b00013ed8b0d41b769949c"
+    },
+    {
+      "path": "docs/evidence/forma-116/README.md",
+      "bytes": 1507,
+      "sha256": "403bab5b14302b09a3ffee4922a07dca97829e436b5ed496dd8212e9807e1ad7"
+    },
+    {
+      "path": "docs/evidence/forma-116/environments-readonly-first.json",
+      "bytes": 4161,
+      "sha256": "21d714e563138396259806cdf1074837bb8bceff4953a4ff1af6e228b8807c37"
+    },
+    {
+      "path": "docs/evidence/forma-116/identities-readonly.json",
+      "bytes": 376,
+      "sha256": "d62bfddf07fb7ee7a4b35f66515dd62aa663b06db96b07682286dbf8fb7cfe1a"
+    },
+    {
+      "path": "docs/evidence/forma-116/manifest.json",
+      "bytes": 3253,
+      "sha256": "aa9d1c6fd6f099d5a192fbad234449f4c946bd7bc517d47c89e9013cdc84138d"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/attribute-bounded-before.log",
+      "bytes": 555,
+      "sha256": "e2f825355133c39e409cad02afc0f5a9d37123ef0af54a172f1e264d5872048d"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/attribute-bounded-corrected.log",
+      "bytes": 555,
+      "sha256": "d1cb391951733da74aacde55c2c62b09e446f716549f9dea30fe745c47bcee3a"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/attribute-bounded-mutant.log",
+      "bytes": 1028,
+      "sha256": "8434faff80c0848f36d51c027f543fe58e7b5122be2874100cff77ae2f33ad03"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/attribute-fast-before.log",
+      "bytes": 532,
+      "sha256": "393ca4c571235f8e18b95e6d55a81cafd7119a5ae586052db5a39380c4c0f700"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/attribute-fast-corrected.log",
+      "bytes": 532,
+      "sha256": "1421bc515b601c41de04a6c0ed3f27e86f45bc5e631ddb10a0ab2f5df50ae8d7"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/attribute-fast-mutant.log",
+      "bytes": 935,
+      "sha256": "5eea235a74d41b0de14f7020c7684c2a38ad7ea5f0a45271670e9c422eed27f3"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/name-tail-before.log",
+      "bytes": 543,
+      "sha256": "cee76ade78eae663f3ff130c4b4733e1f89df6da08079eb55df2ecd7616147b7"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/name-tail-corrected.log",
+      "bytes": 543,
+      "sha256": "0ad5c266cbaed1b7a98dd3377502f74cdc6b90f41225fffc838b316c7485ef60"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/name-tail-mutant.log",
+      "bytes": 957,
+      "sha256": "dd5d335baa85c27e260e57354fd53e482364cd44532a618341b03e978d29cdc2"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/qualification.json",
+      "bytes": 6306,
+      "sha256": "f6371faf24e9af800bcb2794313c69ad292be4273f3b7e9e7adcd6866900ce50"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/script-policy-before.log",
+      "bytes": 2587,
+      "sha256": "5a0bbedc1ae32f938088474594e9a07320a337823762360a73533fab7a48e4df"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/script-policy-corrected.log",
+      "bytes": 536,
+      "sha256": "373f491c30d0ad7b9a32ac47f03928e071e3db52e673439f2849ea3bbe01e8e9"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/script-policy-mutant.log",
+      "bytes": 893,
+      "sha256": "ea501e8ce91a426dc136a5c76eb894c7866ff04aa9d813de9900e15789fada3b"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/text-bounded-before.log",
+      "bytes": 550,
+      "sha256": "857db6cb2cf14af3a039d9d96347820f546faab512de6a6ecf19b8ba058d1ef1"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/text-bounded-corrected.log",
+      "bytes": 550,
+      "sha256": "b52df545e2c806061518389f340acc9a4b7f994b90494438fd202721a9af3008"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/text-bounded-mutant.log",
+      "bytes": 978,
+      "sha256": "28a2add687036dea118257a2af346fd6b3b6968347865c2e4fe95905c3f60077"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/text-fast-before.log",
+      "bytes": 1238,
+      "sha256": "d013a5790368655566ff80b1d6cf2d1aeda2a2b4d611e2be22575af2d4bf0f46"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/text-fast-corrected.log",
+      "bytes": 532,
+      "sha256": "4f866ba7212313baca6ba9b3c09a78063bcd2f878e452b2556081d8a0459de75"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-corrected/text-fast-mutant.log",
+      "bytes": 967,
+      "sha256": "8efdd590d829a74e311c9356b745f807d82ca2a58e8e79c8b4a828265f0654bb"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-first/qualification.json",
+      "bytes": 1390,
+      "sha256": "8c2a4d11a6ba14d51fb03a5e656e6dc88e6274ef33c562c6e25a2a8917db516c"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-first/text-fast-before.log",
+      "bytes": 1238,
+      "sha256": "8e5d1b61f8cffb551d5f1bdad9939721c7add7c12fbfe12e52c62e90419f4c3d"
+    },
+    {
+      "path": "docs/evidence/forma-116/mutations-first/text-fast-mutant.log",
+      "bytes": 967,
+      "sha256": "9367a89381c1315c08efe07796078583e3dd5bf6539516a102a3c27350aba902"
+    },
+    {
+      "path": "docs/evidence/forma-116/npm-readonly-corrected.json",
+      "bytes": 31198,
+      "sha256": "101eb5b18bc494261df7c4d4eaf227a1dbbc24d52fb6496b750f79274dca677c"
+    },
+    {
+      "path": "docs/evidence/forma-116/npm-readonly-first.json",
+      "bytes": 222,
+      "sha256": "02ef70870d3b2ab079e1925de09d83c86ee2a304ad7f16c0e6d9284d1d0d08df"
+    }
+  ]
+}

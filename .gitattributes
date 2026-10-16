@@ -134,6 +134,11 @@ e2e/performance/archive/8bd8b65/** -text
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
 
+docs/evidence/forma-116/** -text
+
+# FORMA-116: preserve pre-convergence workflow and policy source bytes.
+docs/archive/forma-116-maintenance-node/** -text
+
 # Attribute alias transition preserves original source/products byte-for-byte.
 docs/archive/attribute-alias-transition/** -text
 
@@ -211,3 +216,7 @@ docs/evidence/playwright-firefox-channel/** -text
 # Byte-exact lazy native prototype originals and scoped correctness evidence.
 docs/archive/forma-191-lazy-prototype/** -text
 docs/evidence/forma-191-lazy-prototype/** -text
+
+# Preserve the original FORMA-116 rollout and approved L-60 disposition evidence.
+docs/archive/forma-116-live-deferral/** -text
+docs/evidence/forma-116-live-deferral/** -text

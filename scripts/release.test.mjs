@@ -9,6 +9,33 @@ import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemp
 
 const contracts = () => json(join(ROOT, 'scripts/release-contracts.json'));
 const seededContract = mutate => { const c = contracts(); mutate(c); return c; };
+test('L-60 defers live governance only; source probes and other release gates still block', () => {
+  const c = contracts();
+  const live = c.informational['FORMA-116 live rollout'];
+  assert.equal(live?.status, 'deferred');
+  assert.equal(live.decision, 'L-60 (2026-10-16)');
+  assert.equal(live.owner, 'Victor');
+  for (const milestone of Object.values(c.milestones)) assert(!('FORMA-116 live rollout' in milestone.gates));
+  assert.match(c.milestones.rc.gates['FORMA-116'].scope, /SR14/);
+  const complete = structuredClone(c);
+  for (const milestone of Object.values(complete.milestones)) for (const gate of Object.values(milestone.gates)) gate.status = 'done';
+  assert.equal(assertMilestoneReady(complete, '3.0.0').ready, true);
+  assert.equal(complete.informational['FORMA-116 live rollout'].status, 'deferred');
+  for (const [milestone, ticket] of [
+    ['rc', 'FORMA-116'], ['rc', 'FORMA-145 audit'],
+    ['final', 'FORMA-191'], ['final', 'FORMA-145 soak'],
+  ]) {
+    const pending = structuredClone(complete);
+    pending.milestones[milestone].gates[ticket].status = 'pending';
+    const result = releaseMilestone(pending, '3.0.0');
+    assert.equal(result.ready, false);
+    assert.deepEqual(result.blocking, [`${ticket} (${milestone}): ${pending.milestones[milestone].gates[ticket].scope}`]);
+    assert.throws(() => assertMilestoneReady(pending, '3.0.0'), /nothing may publish/);
+  }
+  const invalid = structuredClone(c);
+  invalid.milestones.rc.gates['FORMA-116'].status = 'deferred';
+  assert.throws(() => releaseMilestone(invalid, '3.0.0'), /done\/pending status/);
+});
 test('L-57 external application runs are informational while documentation and the real RC soak still block', () => {
   const c = contracts();
   const final = releaseMilestone(c, '3.0.0');

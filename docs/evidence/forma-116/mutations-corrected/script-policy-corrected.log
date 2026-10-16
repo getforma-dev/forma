@@ -1,0 +1,9 @@
+   Compiling forma-server v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.66s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/target/debug/deps/forma_server-654682ffb379a24b)
+
+running 1 test
+test csp::tests::csp_is_strict ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 111 filtered out; finished in 0.00s
+

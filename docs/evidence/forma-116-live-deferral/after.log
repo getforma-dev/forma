@@ -1,0 +1,17 @@
+✔ L-60 defers live governance only; source probes and other release gates still block (4.515416ms)
+✔ L-57 external application runs are informational while documentation and the real RC soak still block (0.237875ms)
+✔ milestone gate: the checked-in contract lets the alpha publish; beta, rc and final still wait (2.292917ms)
+✔ milestone gate: an open gate in the milestone or any earlier one refuses; a malformed contract refuses every milestone (1.517667ms)
+✔ npm pre-releases publish on next and finals on latest; Cargo publishes the pre-release version itself (0.2095ms)
+✔ SR13 accepts only the latest exact-SHA main CI run (0.471334ms)
+✔ SR13 missing or unreadable status refuses publication (0.142708ms)
+✔ SR13 a skipped or missing R17/probe job cannot be a successful gate (0.672292ms)
+✔ a live tag cannot publish mixed A2 versions, dev versions or a partial set (0.299916ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 91.911458

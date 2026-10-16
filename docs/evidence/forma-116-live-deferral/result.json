@@ -1,0 +1,15 @@
+{
+  "sourceBase": "9c98162c52156b52b8239879ecc8614e653ffffb",
+  "node": "v24.22.0",
+  "command": [
+    "node",
+    "--test",
+    "--test-concurrency=2",
+    "--test-name-pattern=L-60|L-57|milestone gate|SR13|npm pre-releases|a live tag",
+    "scripts/release.test.mjs"
+  ],
+  "startedAt": "2026-10-16T09:55:53.660882+00:00",
+  "finishedAt": "2026-10-16T09:55:53.938050+00:00",
+  "exitCode": 0,
+  "scope": "finite contract, original SR13/publication controls only; no build/browser"
+}

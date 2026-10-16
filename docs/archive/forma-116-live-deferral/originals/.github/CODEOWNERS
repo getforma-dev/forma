@@ -1,0 +1,12 @@
+# FORMA-116. Enforce with the reviewed branch protection proposal.
+# Every change to this file is itself owned. No team or bot substitutes for
+# the founder on the release plane and security-critical emitters.
+/.github/ @Victor-Villacis
+/crates/forma-ir/src/walker.rs @Victor-Villacis
+/crates/forma-ir/src/text.rs @Victor-Villacis
+/crates/forma-server/src/csp.rs @Victor-Villacis
+/crates/forma-server/src/template.rs @Victor-Villacis
+/packages/core/src/security/url-safety.ts @Victor-Villacis
+/scripts/security-mutation-probes.py @Victor-Villacis
+/scripts/release-plane-* @Victor-Villacis
+/docs/governance/ @Victor-Villacis
