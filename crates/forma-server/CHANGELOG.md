@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### The build's size report is not served — FORMA-190
+
+- `serve_asset` refuses `size-report.json` (404), as it refuses `manifest.json`: `@getforma/build` 3.0 writes the report beside the manifest, in the directory an application embeds, and it lists every route with its class, ceilings and bytes. The report is not an asset, and an embed that carries it never serves it. Tests: `assets::tests::denied_names_are_never_served` (the name), and `assets::tests::an_embedded_size_report_is_not_served_through_the_route` (the route, with the file really embedded).
+
 ### The deployment identity on the page's root — FORMA-186 (DR-29)
 
 - Every page's root names the build the manifest names: `<div id="app" data-forma-build="<manifest.build>" data-forma-ssr>` for a server-rendered page, `<div id="app" data-forma-build="<manifest.build>"></div>` for a browser shell. `@getforma/core` compares it with the identity `@getforma/build` compiled into the bundle before it activates anything (a later FORMA-186 slice); a page from an older server has no attribute and is unchecked. The value is the manifest's `build`, escaped as any attribute value is; no render input can set or override it. The preview-frame document is not stamped.

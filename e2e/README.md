@@ -117,11 +117,13 @@ The spec fails, naming `build.sh`, when the lane is not built; running
 ## The parity lane: walker against core, state by state (`e2e/parity/`)
 
 FORMA-183's harness renders each corpus module at generated states through the
-real walker (`crates/forma-server/examples/parity_render.rs`) and through core
-in Chromium, and compares the two parsed trees with transport removed. It is a
-`node --test` suite with its own browser, not a Playwright test file, so
-`playwright.config.ts` ignores the folder and `scripts/check.sh` runs it as its
-own step. [`e2e/parity/README.md`](parity/README.md) says what it compares,
+server's typed path (`crates/forma-server/examples/parity_render.rs`) and
+through core in Chromium, compares the two parsed trees with transport removed
+(P1), and checks that the page's production entry activates its islands
+without a single DOM write (P2). Its own tests are a `node --test` suite with
+its own browser, not Playwright test files, so `playwright.config.ts` ignores
+the folder and `scripts/check.sh` runs them as their own step; the corpus run
+is CI's non-blocking `parity` job. [`e2e/parity/README.md`](parity/README.md) says what it compares,
 how states are generated, the corpus and its ratchet, and the stop rule.
 
 ## How to Run

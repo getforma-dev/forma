@@ -62,6 +62,16 @@ export function resolveDiagnosticOptions(
 }
 
 /**
+ * The compiler's mandatory refusals: the build fails on them with or without
+ * `--strict`, so the report labels them errors either way (BUILD-610 declared
+ * props, BUILD-611 entry policy, BUILD-612/613 list keys and rows, FORMA-181;
+ * BUILD-614 a boolean in text and BUILD-615 a condition that is not
+ * boolean-typed, FORMA-182's value rules 6 and 7).
+ * Verified by: packages/build/tests/strict.test.ts > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are"
+ */
+const MANDATORY: ReadonlySet<string> = new Set(['BUILD-610', 'BUILD-611', 'BUILD-612', 'BUILD-613', 'BUILD-614', 'BUILD-615']);
+
+/**
  * The diagnostics of one build, page by page. A page's latest compilation
  * replaces its earlier one, so in watch mode the list describes the modules
  * as they are now. Pages are listed in the order of the config's entries,
@@ -101,7 +111,7 @@ export class DiagnosticsCollector {
   private toBuildDiagnostic(d: CompilerDiagnostic, page: string): BuildDiagnostic {
     return {
       code: d.code,
-      severity: d.code === 'BUILD-610' || d.code === 'BUILD-611' || d.code === 'BUILD-612' || d.code === 'BUILD-613' ? 'error' : !d.strict ? 'note' : this.strict ? 'error' : 'warning',
+      severity: MANDATORY.has(d.code) ? 'error' : !d.strict ? 'note' : this.strict ? 'error' : 'warning',
       page,
       file: d.file,
       line: d.line,
