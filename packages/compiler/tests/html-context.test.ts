@@ -128,3 +128,6 @@ it.each([
 it('shadowed undefined is not a raw-text literal exemption',()=>{expect(emit(page("h('section',null,h('style',null,undefined))","const undefined='.x{color:red}';"),{},'app.ts').failure).toMatchObject({code:'BUILD-620'});});
 it.each(['async function','function*'])('%s registered root is not an Element',prefix=>{expect(emit(island("h('section',null,'root')").replace('export function Island',`export ${prefix} Island`),{},'app.ts').failure).toMatchObject({code:'BUILD-621'});});
 it.each(['async function','function*'])('%s ordinary root helper is not an Element',prefix=>{expect(emit(island('Helper()',`${prefix} Helper(){return h('section',null,'root');}`),{},'app.ts').failure).toMatchObject({code:'BUILD-621'});});
+
+it('transformed global undefined keeps its attribute absence proof',()=>{expect(emit(page("h('button',null,h('a',{href:undefined},'link'))")).failure).toBeUndefined();});
+it('transformed raw undefined retains the existing native void refusal',()=>{expect(emit(page("h('section',null,h('style',null,undefined))")).failure).toMatchObject({code:'BUILD-610'});});

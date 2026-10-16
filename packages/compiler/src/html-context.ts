@@ -22,6 +22,8 @@ const LABELABLE=new Set('button meter output progress select textarea'.split(' '
 const traverse=(typeof _traverse==='function'?_traverse:(_traverse as any).default) as typeof _traverse;
 const undefinedModules=new Map<string,{source:string;unbound:Set<string>}>();
 function unboundUndefined(node:t.Node,file:string):boolean {
+ // esbuild spells the global undefined as literal void 0 in transformed TSX.
+ if(t.isUnaryExpression(node,{operator:'void'})&&t.isNumericLiteral(node.argument,{value:0}))return true;
  if(!t.isIdentifier(node,{name:'undefined'})||!node.loc)return false;
  try {
   const source=readSourceFile(file);let saved=undefinedModules.get(file);

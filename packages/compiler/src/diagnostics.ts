@@ -214,8 +214,8 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     'A dynamic or reactive style/script child enters a CSS or JavaScript context that ordinary HTML escaping cannot make safe.',
     'Keep authored literal style/script text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.'),
   entry('BUILD-621', 'SSR island without one stable owned Element',
-    'The registered SSR component has text, empty, multiple, conditional/control-flow, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.',
-    'Return one authored Element, directly or through an ordinary resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.'),
+    'The registered SSR component has text, empty, multiple, conditional/control-flow, async/generator, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.',
+    'Return one authored Element, directly or through an ordinary synchronous resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.'),
 
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
