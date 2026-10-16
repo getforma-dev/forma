@@ -600,6 +600,7 @@ describe('DR-15: grants', () => {
       grants: { fetch: { paths: ['/api/'], timeoutMs: 5_000 } },
     });
     await vi.advanceTimersByTimeAsync(4_999);
+    expect(requests[0]?.init.signal).toBeDefined();
     expect(requests[0]!.init.signal!.aborted).toBe(false);
     expect(text('failed')).toBe('');
     await vi.advanceTimersByTimeAsync(1);
